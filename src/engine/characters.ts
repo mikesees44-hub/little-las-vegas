@@ -221,7 +221,7 @@ export function monthlyDeathChance(a: number, health: number): number {
   else if (a < 80) annual = 0.085;
   else annual = 0.18;
   const healthFactor = health >= 70 ? 0.6 : health >= 50 ? 1 : health >= 30 ? 2.2 : health >= 15 ? 5 : 12;
-  return Math.min(0.6, 1 - Math.pow(1 - annual * healthFactor, 1 / 12));
+  return Math.min(0.6, 1 - Math.pow(1 - Math.min(0.97, annual * healthFactor), 1 / 12));
 }
 
 export function displayName(c: Character): string {
