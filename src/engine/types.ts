@@ -159,16 +159,19 @@ export type Effect =
   | ({ type: 'heat'; bar: HeatBar; amount: number } & EffectBase)
   | ({ type: 'opinion'; from: string; to: string; amount: number; reason: string; decay?: number } & EffectBase)
   | ({ type: 'meter'; from: string; to: string; meter: 'fear' | 'trust' | 'grievance'; amount: number } & EffectBase)
-  | ({ type: 'crewOpinion'; amount: number; reason: string } & EffectBase)
+  | ({ type: 'crewOpinion'; amount: number; reason: string; traitMods?: Partial<Record<Trait, number>> } & EffectBase)
   | ({ type: 'familyOpinion'; amount: number; reason: string } & EffectBase)
   | ({ type: 'rivalOpinion'; rival: RivalId; amount: number; reason: string } & EffectBase)
   | ({ type: 'influence'; district: string; faction: FactionId; amount: number } & EffectBase)
   | ({ type: 'schedule'; key: string; minWeeks: number; maxWeeks: number; chance: number; hint: string; params?: Record<string, string | number> } & EffectBase)
-  | ({ type: 'kill'; charId: string; cause: string } & EffectBase)
+  | ({ type: 'kill'; charId: string; cause: string; killer?: FactionId } & EffectBase)
+  | ({ type: 'imprison'; charId: string; weeks: number } & EffectBase)
+  | ({ type: 'rank'; charId: string; rank: Rank; district?: string } & EffectBase)
+  | ({ type: 'closeBusiness'; businessId: string; weeks: number } & EffectBase)
   | ({ type: 'recruit'; charId: string } & EffectBase)
   | ({ type: 'health'; charId: string; amount: number } & EffectBase)
   | ({ type: 'debt'; lender: string; principal: number; weeklyPayment: number; weeks: number } & EffectBase)
-  | ({ type: 'skimReset'; charId: string; recover: number } & EffectBase)
+  | ({ type: 'skimReset'; charId: string } & EffectBase)
   | ({ type: 'addBusiness'; business: Business } & EffectBase)
   | ({ type: 'flag'; key: string; value: number } & EffectBase)
   | ({ type: 'rivalResource'; rival: RivalId; money?: number; muscle?: number; exposure?: number } & EffectBase);
@@ -270,7 +273,7 @@ export interface WeeklyReport {
 
 export interface GameOver {
   week: number;
-  reason: 'no_heir' | 'bankrupt';
+  reason: 'no_heir';
   text: string;
 }
 

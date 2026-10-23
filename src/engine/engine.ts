@@ -1,0 +1,209 @@
+import { dateOfWeek, monthKey, seasonInfo } from './calendar';
+import { crew, displayName, hasTrait, isFree, player } from './characters';
+import { fireConsequences } from './consequences';
+import { monthlyLife, validatePlayer } from './dynasty';
+import { applyEffects } from './effects';
+import { buildHealthEvent, generateWeekEvents, MAX_POPUPS } from './events';
+import { operationalHeat, runEconomy } from './economy';
+import { heatConsequences, heatDecay } from './heat';
+import { heat, newCtx, reconcile, type Ctx } from './ledger';
+import { addOpinion, decayAllRelations, opinion } from './relations';
+import { chance } from './rng';
+import { rivalSuccession, rivalWeek } from './rivals';
+import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
+
+/**
+ * The simulation entry points. Both are pure with respect to their input:
+ * the state is deep-cloned first and only the clone is touched.
+ */
+
+export function cloneState(s: GameState): GameState {
+  return JSON.parse(JSON.stringify(s)) as GameState;
+}
+
+function snapshot(s: GameState) {
+  return { money: s.money, respect: s.respect, heat: { ...s.heat } };
+}
+
+function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
+  const s = ctx.s;
+  if (choices.successionLaw && choices.successionLaw !== s.successionLaw) {
+    s.successionLaw = choices.successionLaw;
+    ctx.log.push(`Succession law is now: ${choices.successionLaw}.`);
+  }
+  if (choices.designatedHeirId !== undefined) s.designatedHeirId = choices.designatedHeirId || undefined;
+  const pending = s.pendingEvents;
+  s.pendingEvents = [];
+  for (const ev of pending) {
+    const wanted = choices.choices?.[ev.iid];
+    let ch = ev.choices.find((c) => c.id === wanted && !c.disabledReason);
+    if (!ch) ch = ev.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev.choices[0];
+    if (!ch) continue;
+    // Skip choices referencing characters that died since the event was raised.
+    const charId = ev.meta?.charId ? String(ev.meta.charId) : undefined;
+    if (charId && !s.characters[charId]?.alive && ev.defId !== 'funeral' && ev.defId !== 'recruit') continue;
+    if (s.gameOver) break;
+    applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
+    s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
+  }
+}
+
+/** Monthly bookkeeping: aging/health/death, opinion decay, crew loyalty, rival successions. */
+function monthlyTick(ctx: Ctx): void {
+  const s = ctx.s;
+  const { warnings } = monthlyLife(ctx);
+  for (const c of warnings) if (c.alive && (c.id === s.playerId || c.dynasty)) s.eventQueue.push(buildHealthEvent(s, c));
+  decayAllRelations(s);
+  rivalSuccession(ctx);
+  // Disloyal men may walk out.
+  const boss = player(s);
+  for (const m of crew(s)) {
+    if (!isFree(s, m) || m.dynasty || hasTrait(m, 'Loyal-to-a-fault')) continue;
+    const op = opinion(s, m.id, boss.id);
+    if (op <= -45 && chance(s, 0.25)) {
+      const rival = s.rivals.find((r) => r.id === 'manno' || r.id === 'kessler');
+      m.faction = rival?.id ?? 'none';
+      for (const d of s.districts) if (d.capoId === m.id) d.capoId = undefined;
+      ctx.log.push(`${displayName(m)} walked out on the crew${rival ? ` and went over to ${rival.shortName}` : ''}.`);
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(m)} deserted the crew.`, kind: 'misc' });
+      if (m.rank === 'capo' || m.rank === 'underboss') {
+        const replacement = crew(s).filter((c) => c.rank === 'soldier' && isFree(s, c)).sort((a, b) => b.attributes.leadership - a.attributes.leadership)[0];
+        const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= 40);
+        if (replacement && d) {
+          replacement.rank = 'capo';
+          d.capoId = replacement.id;
+          addOpinion(s, replacement.id, boss.id, 'Made me a capo', 20, 1);
+          ctx.log.push(`${displayName(replacement)} takes over ${d.name}.`);
+        }
+      }
+    }
+  }
+}
+
+function weeklyHousekeeping(ctx: Ctx): void {
+  const s = ctx.s;
+  // Releases from prison.
+  for (const c of Object.values(s.characters)) {
+    if (c.alive && c.imprisonedUntil !== undefined && c.imprisonedUntil <= s.week) {
+      c.imprisonedUntil = undefined;
+      if (c.faction === 'player') {
+        ctx.log.push(`${displayName(c)} is out of jail.`);
+        if (c.rank === 'capo' || c.rank === 'underboss') {
+          const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= 40);
+          if (c.rank === 'capo' && d) d.capoId = c.id;
+        }
+      }
+    }
+  }
+  // Fill empty capo seats in districts we control with a capo who has no district.
+  for (const d of s.districts) {
+    if (d.capoId || (d.influence.player ?? 0) < 40) continue;
+    const idle = crew(s).find((c) => c.rank === 'capo' && isFree(s, c) && !s.districts.some((x) => x.capoId === c.id));
+    if (idle) d.capoId = idle.id;
+  }
+  // The informant (starting problem) leaks to the FBI.
+  if (s.flags.informant) {
+    const rat = s.characters[`c${s.flags.informant}`];
+    if (rat?.alive && rat.faction === 'player' && isFree(s, rat)) {
+      if (s.week % 3 === 0) heat(ctx, 'federal', 1, 'The FBI seems to know a lot lately (a leak in the crew?)', 'heat');
+    } else s.flags.informant = 0;
+  }
+}
+
+export function emptyReport(s: GameState): WeeklyReport {
+  const info = seasonInfo(s.date);
+  return {
+    week: s.week, date: { ...s.date }, seasonLabel: info.label, multiplier: info.multiplier, grossIncome: 0,
+    start: snapshot(s), end: snapshot(s), lines: [], log: [],
+  };
+}
+
+/**
+ * Advance one week. Order of operations:
+ *  1. resolve the player's choices for this week's pending events
+ *  2. delayed consequences that come due
+ *  3. the economy ledger (income, kick-ups, costs, debts)
+ *  4. rival AI moves
+ *  5. heat from operations, heat consequences (80+), heat decay
+ *  6. housekeeping; monthly tick if the month rolls over
+ *  7. move the calendar and generate next week's events
+ */
+export function advanceWeek(input: GameState, choices: PlayerChoices = {}): AdvanceResult {
+  if (input.gameOver) {
+    const s = cloneState(input);
+    const report = emptyReport(s);
+    return { state: s, report, log: [] };
+  }
+  const s = cloneState(input);
+  const ctx = newCtx(s);
+  const start = snapshot(s);
+  const info = seasonInfo(s.date);
+  const weekOf = s.week;
+  const dateOf = { ...s.date };
+
+  resolveChoices(ctx, choices);
+  if (!s.gameOver) fireConsequences(ctx);
+  if (!s.gameOver) runEconomy(ctx);
+  if (!s.gameOver) rivalWeek(ctx);
+  if (!s.gameOver) {
+    operationalHeat(ctx);
+    heatConsequences(ctx);
+    heatDecay(ctx);
+    weeklyHousekeeping(ctx);
+  }
+
+  // Calendar.
+  const prevMonth = monthKey(s.date);
+  s.week += 1;
+  s.date = dateOfWeek(s.week);
+  if (!s.gameOver && monthKey(s.date) !== prevMonth) monthlyTick(ctx);
+
+  if (!s.gameOver) {
+    const errs = validatePlayer(s);
+    if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
+    s.pendingEvents = generateWeekEvents(s);
+    ctx.popups = s.pendingEvents.length;
+  } else {
+    s.pendingEvents = [];
+  }
+
+  const report: WeeklyReport = {
+    week: weekOf,
+    date: dateOf,
+    seasonLabel: info.label,
+    multiplier: info.multiplier,
+    grossIncome: ctx.gross,
+    start,
+    end: snapshot(s),
+    lines: ctx.lines,
+    log: ctx.log,
+  };
+  const errs = reconcile(report);
+  if (errs.length) throw new Error(`Ledger does not reconcile in week ${weekOf}: ${errs.join('; ')}`);
+  s.lastReport = report;
+  if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
+  return { state: s, report, log: ctx.log };
+}
+
+/**
+ * Advance until the calendar month changes. Only the first week uses the
+ * supplied choices; later weeks take each event's default choice.
+ */
+export function advanceMonth(input: GameState, choices: PlayerChoices = {}): { state: GameState; reports: WeeklyReport[]; log: string[] } {
+  let s = input;
+  const reports: WeeklyReport[] = [];
+  const log: string[] = [];
+  const startMonth = monthKey(input.date);
+  let first = true;
+  for (let i = 0; i < 6; i++) {
+    const r = advanceWeek(s, first ? choices : {});
+    first = false;
+    s = r.state;
+    reports.push(r.report);
+    log.push(...r.log);
+    if (s.gameOver || monthKey(s.date) !== startMonth) break;
+  }
+  return { state: s, reports, log };
+}
+
+export { MAX_POPUPS };
