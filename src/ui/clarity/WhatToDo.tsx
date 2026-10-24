@@ -40,8 +40,8 @@ export function WhatToDoPanel({ s, onTab, answered = 0, compact }: { s: GameStat
   return (
     <section className="space-y-2" data-testid="what-to-do">
       <div className="flex items-baseline justify-between gap-2">
-        <div className="font-display text-base uppercase tracking-[0.18em] text-gold-400">What should I do?</div>
-        <span className="text-[10px] text-stone-500">ranked by what is at stake</span>
+        <div className="font-display text-base uppercase tracking-[0.12em] text-gold-400 whitespace-nowrap">What should I do?</div>
+        <span className="hidden text-[10px] text-stone-500 2xl:inline">ranked by what is at stake</span>
       </div>
       <ol className="space-y-1.5">
         {items.map((o, i) => (

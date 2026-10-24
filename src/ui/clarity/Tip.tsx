@@ -22,7 +22,7 @@ export function Tip({ text, term, children, side = 'bottom', className }: { text
       {children}
       <span
         role="tooltip"
-        className={`pointer-events-none absolute left-1/2 z-[60] w-56 max-w-[78vw] -translate-x-1/2 rounded border border-gold-600/50 bg-noir-950/95 px-2 py-1.5 text-left text-[11px] font-normal normal-case leading-snug tracking-normal text-stone-300 shadow-lg shadow-black/60 ${side === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} ${open ? 'visible' : 'invisible group-hover/tip:visible group-focus-within/tip:visible'}`}
+        className={`pointer-events-none absolute left-1/2 z-[60] w-56 max-w-[78vw] -translate-x-1/2 rounded border border-gold-600/50 bg-noir-950/95 px-2 py-1.5 text-left text-[11px] font-normal normal-case leading-snug tracking-normal text-stone-300 shadow-lg shadow-black/60 ${side === 'top' ? 'bottom-full mb-1' : 'top-full mt-1'} ${open ? 'block' : 'hidden group-hover/tip:block group-focus-within/tip:block'}`}
       >
         {g && <span className="block font-semibold text-gold-300">{g.term}</span>}
         {body}

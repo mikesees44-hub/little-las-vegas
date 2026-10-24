@@ -273,17 +273,19 @@ function seatRole(s: GameState, seat: Seat, pool: Character[]): Raw[] {
     const pros = [skillChip(pool, c, info.skill), ...ch.pros];
     const cons = [...ch.cons];
     if (seat === 'bagman' || seat === 'consigliere') pros.push(c.attributes.discipline >= 60 ? pro(`Discipline ${c.attributes.discipline}: keeps quiet`, 6) : con(`Discipline ${c.attributes.discipline}: loose lips`, 4));
-    if (cur && cur.id === c.id) pros.push(pro('Already in the seat', 4));
+    const sitting = cur?.id === c.id;
+    if (sitting) pros.push(pro('In the seat now: no change, no hard feelings', 12));
+    else if (cur && pow < curPow) cons.push(con(`Worse at it than ${cur.firstName} (×${curPow.toFixed(2)} now)`, 18));
     const task = TASKS[s.council[seat].task];
     return {
       id: c.id, name: displayName(c), charId: c.id,
-      upside: 30 + v * 0.7,
-      outcome: `${task.name} at ×${pow.toFixed(2)}${cur && cur.id !== c.id ? ` (now ×${curPow.toFixed(2)})` : ''}`,
+      upside: 30 + v * 0.7 - (cur && !sitting && pow < curPow ? (curPow - pow) * 60 : 0),
+      outcome: sitting ? `In the seat: ${task.name} at ×${pow.toFixed(2)}` : `${task.name} at ×${pow.toFixed(2)}${cur ? ` (now ×${curPow.toFixed(2)})` : ''}`,
       pros, cons, risk: ch.risk,
-      opportunityCost: opportunityCost(s, c, info.name),
+      opportunityCost: sitting ? undefined : opportunityCost(s, c, info.name),
       keepJob: info.name,
-      action: cur?.id === c.id ? undefined : { kind: 'appoint', seat, charId: c.id },
-      disabledReason: cur?.id === c.id ? 'Already in that seat' : !isFree(s, c) ? 'He is in jail' : undefined,
+      action: sitting ? undefined : { kind: 'appoint', seat, charId: c.id },
+      disabledReason: !isFree(s, c) ? 'He is in jail' : undefined,
     };
   });
 }

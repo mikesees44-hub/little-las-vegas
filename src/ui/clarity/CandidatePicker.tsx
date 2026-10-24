@@ -67,7 +67,7 @@ export function CandidateCard({ s, c, ranking, picked, onPick, pickLabel }: {
             {rec && <span className="rounded bg-gold-500 px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-noir-950" data-testid="badge-recommended">Recommended</span>}
             {alt && <span className="rounded border border-sky-600 px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-sky-300" data-testid="badge-alternative">{ranking.alternativeWhy ?? 'Alternative'}</span>}
           </div>
-          <div className="truncate text-sm font-semibold text-stone-100">{ch ? <CharLink s={s} id={ch.id}>{c.name}</CharLink> : c.name}</div>
+          <div className="text-sm font-semibold leading-tight text-stone-100 break-words">{ch ? <CharLink s={s} id={ch.id}>{c.name}</CharLink> : c.name}</div>
           <div className="text-[11px] leading-snug text-gold-300">{c.outcome}</div>
         </div>
       </div>
@@ -90,7 +90,9 @@ export function CandidateCard({ s, c, ranking, picked, onPick, pickLabel }: {
           <button type="button" className={picked ? 'btn-ghost w-full py-1 text-xs' : 'btn-gold w-full py-1 text-xs'} onClick={onPick} data-testid="pick">
             {pickLabel ?? (picked ? 'Picked' : 'Pick')}
           </button>
-        ) : null}
+        ) : (
+          <div className="text-center text-[11px] text-stone-500">Already where he is: keep him</div>
+        )}
       </div>
     </div>
   );

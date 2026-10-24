@@ -87,7 +87,9 @@ export function advisorPick(s: GameState, seat: AdvisorSeat, ranking: Ranking): 
   const ok = ranking.candidates.filter((c) => !c.disabledReason);
   if (!ok.length) return undefined;
   const w = selfInterest(s, a);
-  const stepUp = (ranking.role.kind === 'seat' && ranking.role.seat === 'underboss' && seat === 'consigliere') || ranking.role.kind === 'capo';
+  // He backs himself for a step up, or to keep the seat he already has.
+  const keeps = ranking.role.kind === 'seat' && s.council[ranking.role.seat]?.holderId === a.id;
+  const stepUp = keeps || (ranking.role.kind === 'seat' && ranking.role.seat === 'underboss' && seat === 'consigliere') || ranking.role.kind === 'capo';
   let best: { c: Candidate; v: number; tie?: string } | undefined;
   for (const c of ok) {
     const ch = c.charId ? s.characters[c.charId] : undefined;
