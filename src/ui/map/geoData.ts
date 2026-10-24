@@ -11,7 +11,15 @@ import type { GeometryCollection, Topology } from 'topojson-specification';
 
 type Topo = Topology;
 
+/** Map data is embedded in the page as gzip+base64 (single-file hosting); fall back to fetching ./geo/<name>. */
 export async function getGeo<T = unknown>(name: string): Promise<T> {
+  const el = typeof document !== 'undefined' ? document.getElementById(`geo:${name}`) : null;
+  if (el && el.textContent && typeof DecompressionStream !== 'undefined') {
+    const bin = Uint8Array.from(atob(el.textContent.trim()), (c) => c.charCodeAt(0));
+    const stream = new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const text = await new Response(stream).text();
+    return JSON.parse(text) as T;
+  }
   const res = await fetch(`./geo/${name}`);
   if (!res.ok) throw new Error(`Map data ${name}: ${res.status}`);
   return (await res.json()) as T;
