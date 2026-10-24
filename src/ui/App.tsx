@@ -32,6 +32,11 @@ import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
+import { ClarityContext, type ClarityApi } from './clarity/context';
+import { PickerModal } from './clarity/CandidatePicker';
+import { GlossaryOverlay, HelpButton } from './clarity/Glossary';
+import { WhatToDoModal } from './clarity/WhatToDo';
+import type { Candidate, Role } from '../engine/candidates';
 
 export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'gifts';
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
@@ -78,6 +83,16 @@ export function App() {
   const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
   const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
+
+  const [picker, setPicker] = useState<{ role: Role; pool?: string[]; onPick?: (c: Candidate) => void } | undefined>();
+  const [help, setHelp] = useState<{ focus?: string } | undefined>();
+  const [advice, setAdvice] = useState(false);
+  const clarityApi = useMemo<ClarityApi>(() => ({
+    openPicker: (role, opts) => { setSheet(undefined); setPicker({ role, pool: opts?.pool, onPick: opts?.onPick }); },
+    openHelp: (focus) => setHelp({ focus }),
+    openAdvice: () => setAdvice(true),
+    goTab: (t) => setTab(t as Tab),
+  }), []);
 
   useEffect(() => saveGame(s), [s]);
   const [speed, setSpeed] = useState<Speed>(0);
@@ -155,7 +170,7 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!sheet || !!planner || !!reports || cues.length > 0;
+  const busy = !!current || !!sheet || !!planner || !!reports || !!picker || advice || !!help || cues.length > 0;
   useClock({
     speed, s, busy, unanswered: unanswered.length,
     step: () => run('week', answers, true),
@@ -178,6 +193,7 @@ export function App() {
 
   return (
     <SheetContext.Provider value={sheetApi}>
+    <ClarityContext.Provider value={clarityApi}>
     <PlannerContext.Provider value={plannerApi}>
     <OrdersContext.Provider value={ordersApi}>
     <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
@@ -188,6 +204,8 @@ export function App() {
             <MusicToggle />
             <button className="btn-gold py-1.5" onClick={() => startAdvance('week')}>Advance Week</button>
             <button className="btn-ghost py-1.5" onClick={() => startAdvance('month')}>Advance Month</button>
+            <button className="btn-ghost py-1.5 border-gold-600 text-gold-300" onClick={() => setAdvice(true)} data-testid="wsid-button">What should I do?</button>
+            <HelpButton onClick={() => setHelp({})} />
             <div className="text-xs text-stone-400">
               {s.pendingEvents.length ? (
                 <>
@@ -278,10 +296,14 @@ export function App() {
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {reports && !current && !sheet && !planner && !cues.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
+      {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
+      {advice && !current && !sheet && !picker && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => setTab(t as Tab)} onClose={() => setAdvice(false)} />}
+      {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>
     </OrdersContext.Provider>
     </PlannerContext.Provider>
+    </ClarityContext.Provider>
     </SheetContext.Provider>
   );
 }

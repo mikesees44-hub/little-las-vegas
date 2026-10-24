@@ -5,6 +5,8 @@ import { opinion } from '../../engine/relations';
 import type { Character, GameState, SuccessionLaw } from '../../engine/types';
 import { OpinionBadge } from './CrewList';
 import { CharLink, Face } from './People';
+import { CandidatePicker } from '../clarity/CandidatePicker';
+import { rankCandidates } from '../../engine/candidates';
 
 export function FamilyTree({ s, pendingLaw, pendingHeir, onLaw, onHeir }: {
   s: GameState;
@@ -47,6 +49,18 @@ export function FamilyTree({ s, pendingLaw, pendingHeir, onLaw, onHeir }: {
             ))}
           </select>
         )}
+        {law === 'appointed' && candidates.length > 0 && (
+          <div className="mt-2" data-testid="heir-picker">
+            <CandidatePicker s={s} role={{ kind: 'heir' }} selected={[pendingHeir ?? s.designatedHeirId ?? '']} onPick={(c) => onHeir(c.id)} limit={3} />
+          </div>
+        )}
+        {law !== 'appointed' && candidates.length > 1 && (() => {
+          const r = rankCandidates(s, { kind: 'heir' });
+          const best = r.candidates.find((c) => c.id === r.recommendedId);
+          return best && best.id !== preview.heir?.id ? (
+            <p className="mt-2 text-xs text-amber-200">By the numbers the best heir is {best.name} ({best.pros[0]?.text ?? best.outcome}). Under {SUCCESSION_LAWS[law].name} law he does not inherit; switch to Appointed to name him.</p>
+          ) : null;
+        })()}
         <p className="mt-2 text-sm">
           If {boss.firstName} died today:{' '}
           {preview.heir ? (

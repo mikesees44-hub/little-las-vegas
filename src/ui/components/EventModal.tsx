@@ -1,4 +1,6 @@
+import { compareChoices } from '../../engine/advice';
 import { displayName } from '../../engine/characters';
+import { ChoiceWhy } from '../clarity/WhyPanel';
 import type { EventInstance, GameState } from '../../engine/types';
 import { Chips } from './Chips';
 import { Face } from './People';
@@ -15,6 +17,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
 }) {
   const ids = ev.actors ?? (ev.meta?.charId ? [String(ev.meta.charId)] : []);
   const actors = ids.map((id) => s.characters[id]).filter((c): c is NonNullable<typeof c> => !!c).slice(0, 3);
+  const advice = compareChoices(s, ev.choices);
   return (
     <Modal onClose={onClose}>
       <div className="p-4 sm:p-6">
@@ -41,21 +44,23 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         </div>
         <p className="mt-2 text-stone-300 leading-relaxed">{ev.text}</p>
         <div className="mt-4 space-y-2">
-          {ev.choices.map((c) => {
+          {ev.choices.map((c, i) => {
             return (
-              <button
+              <div
                 key={c.id}
-                disabled={!!c.disabledReason}
-                onClick={() => onChoose(c.id)}
-                className={`w-full text-left rounded-md border px-3 py-2.5 transition-colors ${
+                className={`rounded-md border transition-colors ${
                   selected === c.id ? 'border-gold-400 bg-gold-500/10' : 'border-noir-600 bg-noir-800 hover:border-gold-500'
-                } disabled:opacity-40`}
+                } ${c.disabledReason ? 'opacity-40' : ''}`}
+                data-testid="event-choice"
               >
-                <div className="font-semibold text-stone-100">{c.label}</div>
-                {c.detail && <div className="text-xs text-stone-400 mt-0.5">{c.detail}</div>}
-                <Chips s={s} effects={c.effects} />
-                {c.disabledReason && <div className="text-xs text-red-400 mt-1">{c.disabledReason}</div>}
-              </button>
+                <button type="button" disabled={!!c.disabledReason} onClick={() => onChoose(c.id)} className="w-full text-left px-3 pt-2.5 pb-1 disabled:cursor-not-allowed">
+                  <div className="font-semibold text-stone-100">{c.label}</div>
+                  {c.detail && <div className="text-xs text-stone-400 mt-0.5">{c.detail}</div>}
+                  <Chips s={s} effects={c.effects} />
+                  {c.disabledReason && <div className="text-xs text-red-400 mt-1">{c.disabledReason}</div>}
+                </button>
+                <div className="px-3 pb-2"><ChoiceWhy a={advice[i]} /></div>
+              </div>
             );
           })}
         </div>

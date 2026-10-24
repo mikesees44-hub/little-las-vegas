@@ -11,6 +11,9 @@ import type { Character, CouncilTask, CrewPolicy, EdictId, GameState, Rank, Seat
 import { fmt$, signed } from '../format';
 import { ActionCard, useOrders } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
+import { useClarity } from '../clarity/context';
+import { TaskAdvice } from '../clarity/TaskAdvice';
+import { capoDistrict } from '../../engine/candidates';
 
 const RANK_ORDER: Rank[] = ['underboss', 'consigliere', 'capo', 'soldier', 'associate'];
 
@@ -41,6 +44,7 @@ export function CrewList({ s }: { s: GameState }) {
 
 function Council({ s }: { s: GameState }) {
   const { queue } = useOrders();
+  const { openPicker } = useClarity();
   return (
     <section>
       <div className="panel-title">The administration</div>
@@ -73,6 +77,7 @@ function Council({ s }: { s: GameState }) {
                 {tasks.map((t) => <option key={t} value={t}>{TASKS[t].name}</option>)}
               </select>
               <div className="text-[11px] text-stone-400 mt-0.5">{TASKS[seat.task].text}</div>
+              <TaskAdvice s={s} seat={st} />
               {TASKS[seat.task].targeted && (
                 <select className="mt-1 w-full rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={seat.target ?? ''} onChange={(e) => queue({ kind: 'councilTask', seat: st, task: seat.task, target: e.target.value })}>
                   <option value="">— pick a rival —</option>
@@ -80,10 +85,9 @@ function Council({ s }: { s: GameState }) {
                 </select>
               )}
               {cands.length > 0 && (
-                <select className="mt-1 w-full rounded bg-noir-900 border border-noir-600 p-1 text-xs" value="" onChange={(e) => e.target.value && queue({ kind: 'appoint', seat: st, charId: e.target.value })} aria-label={`Appoint ${info.name}`}>
-                  <option value="">{h ? 'Replace with…' : 'Appoint…'}</option>
-                  {cands.slice(0, 12).map((c) => <option key={c.id} value={c.id}>{c.firstName} {c.lastName} ({info.skill} {c.attributes[info.skill]}, {c.rank}{seatOf(s, c.id) ? `, now ${SEAT_INFO[seatOf(s, c.id)!].name.toLowerCase()}` : ''})</option>)}
-                </select>
+                <button type="button" className={`mt-1.5 w-full rounded border px-2 py-1 text-xs font-semibold ${h ? 'border-noir-600 text-stone-300 hover:border-gold-500' : 'border-gold-500 text-gold-300 hover:bg-gold-500/15'}`} onClick={() => openPicker({ kind: 'seat', seat: st })} data-testid={`compare-${st}`}>
+                  {h ? 'Compare candidates…' : `Appoint: compare ${cands.length} candidates…`}
+                </button>
               )}
             </div>
           );
@@ -99,6 +103,7 @@ function Vassals({ s }: { s: GameState }) {
     <section>
       <div className="panel-title">Capos</div>
       <p className="text-xs text-stone-500">Each capo holds a district and keeps a share of its take under his contract ({Math.round(CAPO_CUT * 100)}% is the custom). Squeeze the contract and he may refuse — and remember.</p>
+      <NextCapo s={s} />
       <div className="mt-2 space-y-1.5">
         {list.map((c) => {
           const d = s.districts.find((x) => x.capoId === c.id);
@@ -125,6 +130,19 @@ function Vassals({ s }: { s: GameState }) {
         {list.length === 0 && <div className="text-xs text-stone-500">No capos. Promote a soldier from his sheet.</div>}
       </div>
     </section>
+  );
+}
+
+/** A district with no capo: who should step up, compared. */
+function NextCapo({ s }: { s: GameState }) {
+  const { openPicker } = useClarity();
+  const d = capoDistrict(s);
+  if (!d || s.gameOver) return null;
+  return (
+    <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-700/50 bg-amber-900/10 px-2.5 py-1.5 text-xs text-amber-200" data-testid="next-capo">
+      <span>{d.name} has no capo: the take leaks until someone runs it.</span>
+      <button type="button" className="rounded border border-gold-500 px-2 py-0.5 font-semibold text-gold-300 hover:bg-gold-500/15" onClick={() => openPicker({ kind: 'capo', district: d.id })}>Who should run it? Compare…</button>
+    </div>
   );
 }
 

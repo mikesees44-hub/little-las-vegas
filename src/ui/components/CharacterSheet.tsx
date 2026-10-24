@@ -18,10 +18,19 @@ import { Modal } from './Modal';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
+import { Tip } from '../clarity/Tip';
 import { fam } from '../../engine/familyState';
 import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
+const SKILL_HELP: Record<string, string> = {
+  leadership: 'Runs men: the underboss seat, capos\' kick-ups, an heir the capos follow.',
+  business: 'Makes money: the bagman seat, capos\' take, managers.',
+  diplomacy: 'Talks: the fixer seat, envoys, befriending and swaying.',
+  intrigue: 'Plots: the consigliere seat, schemes, secrets.',
+  force: 'Muscle: the enforcer seat, hits, heists.',
+  discipline: 'Keeps his mouth shut and his hand out of the till.',
+};
 const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
 
 export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; onClose: () => void }) {
@@ -84,7 +93,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
 
         <div className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs">
           {SKILLS.map((k) => (
-            <div key={k} className="rounded bg-noir-800 border border-noir-700 px-2 py-1">
+            <div key={k} className="rounded bg-noir-800 border border-noir-700 px-2 py-1" title={SKILL_HELP[k]}>
               <div className="text-stone-500">{SKILL_LABEL[k]}</div>
               <div className="tabular-nums text-stone-100 text-base font-semibold">{c.attributes[k]}</div>
             </div>
@@ -100,7 +109,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
               {c.imprisonedUntil && c.imprisonedUntil > s.week && <div className="text-red-300">In jail until week {c.imprisonedUntil}</div>}
               {!showsLife && (c.record ?? 0) > 0 && <div>Record: {c.record} arrest{c.record! > 1 ? 's' : ''}</div>}
               {!showsLife && (isBoss || (c.evidence ?? 0) > 0) && <EvidenceLine s={s} c={c} />}
-              {!isBoss && rel && <div>Fear {rel.fear} · Trust {rel.trust} · Grievance {rel.grievance}</div>}
+              {!isBoss && rel && <div><Tip term="fear"><span>Fear {rel.fear} · Trust {rel.trust} · Grievance {rel.grievance}</span></Tip></div>}
               {c.traits.map((t) => <div key={t} className="text-stone-500"><span className="text-stone-300">{t}:</span> {TRAIT_INFO[t]}</div>)}
             </div>
           </section>

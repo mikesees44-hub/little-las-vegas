@@ -128,3 +128,20 @@ Single-page dashboard (`src/ui`): header with date, season countdown, treasury, 
 Advance Week / Advance Month; an event modal with choice buttons and effect chips; a weekly report modal showing
 every line of "why it changed"; tabs for the island (districts, rivals, rackets), crew (traits, opinion breakdown),
 family tree (with succession law and heir preview) and the chronicle. Saves automatically to `localStorage`.
+
+## The clarity layer (wave 2): why do this, why him
+
+Every order, interaction, decision option and "pick a person" choice explains itself. Engine side is pure and
+deterministic and reads the same previews the order cards show, so a tooltip cannot disagree with what gets applied
+(tests check it against the ledger).
+
+| File | What it does |
+|---|---|
+| `advice.ts` | `explainAction(s, action)`: purpose, gains/costs as named effects with ranges ("now", "if accepted", "per week", "if it works"), risks with odds and their source, what it sets up, "best when" conditions, a verdict ("Good idea now", "Risky", "Not yet: needs …"). `explainChoice` / `compareChoices` for decision options ("Best value", "Cheapest", "Safest"). `taskAdvice` for council tasks |
+| `candidates.ts` | `rankCandidates(s, role, pool?)` for every pick (seat, capo, membership, voucher, manager, scheme agent / hit team, envoy, heir, marriage, Table lobbying): predicted outcome, top 3 pros and cons, opinion and capo loyalty, risk flags, opportunity cost, Recommended + Alternative ("Safest choice" / "Highest upside") |
+| `advisors.ts` | The consigliere's and underboss's in-character pick, biased by their own interests (friends, kin, own men, themselves) and shown with their opinion of the man they back |
+| `opportunities.ts` | "What should I do?": the 3–5 best opportunities and threats, each linked to its action or picker; the "This week" checklist tied to the early-goals ladder |
+| `glossary.ts` | Plain-words help for heat, respect, opinion, the Table, schemes, kick-up, laundering, succession; tooltips quote the engine's constants |
+
+UI: `src/ui/clarity/*` (`WhyPanel`, `ChoiceWhy`, `CandidatePicker`, `PickerModal`, `AdvisorQuotes`, `Tip`, `WhatToDoPanel`,
+`GlossaryOverlay`, `TaskAdvice`; open a picker from anywhere with `useClarity().openPicker(role)`).
