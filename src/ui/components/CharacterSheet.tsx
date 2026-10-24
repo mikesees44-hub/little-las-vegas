@@ -54,7 +54,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
       <div className="p-4 sm:p-5" data-testid="character-sheet">
         <div className="flex justify-between items-start gap-3">
           <div className="flex gap-3 min-w-0">
-            <Portrait c={c} seed={s.seed} date={s.date} size={104} tint={FACTION_TINT[c.faction]} />
+            <Portrait c={c} seed={s.seed} date={s.date} size={104} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && !isBoss ? total : undefined} />
             <div className="min-w-0">
               <h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2>
               {c.maidenName && <div className="text-xs text-stone-500">née {c.maidenName}</div>}

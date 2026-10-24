@@ -83,7 +83,7 @@ export function TreeNode({ s, c, size = 44, sub, compact }: { s: GameState; c: C
   return (
     <button type="button" onClick={() => open(c.id)} className="group flex min-w-0 items-center gap-2 text-left" data-testid="tree-node" title={`${displayName(c)}${op !== undefined ? ` — thinks ${op} of you` : ''}`}>
       <span className={`relative shrink-0 rounded-md ring-2 ${ringFor(s, c)} ${c.alive ? '' : 'opacity-60'} group-hover:ring-gold-300`}>
-        <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} />
+        <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={op} />
         {badge && size >= 40 && <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-noir-950/95 border border-noir-600 px-1 text-[9px] uppercase tracking-wider text-gold-300">{badge}</span>}
       </span>
       <span className="min-w-0">

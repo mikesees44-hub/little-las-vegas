@@ -1,3 +1,4 @@
+import { opinion } from '../../engine/relations';
 import { createContext, useContext, type ReactNode } from 'react';
 import { displayName, TRAIT_INFO } from '../../engine/characters';
 import type { Character, FactionId, GameState, Trait } from '../../engine/types';
@@ -30,7 +31,7 @@ export function Face({ s, c, size = 48, className }: { s: GameState; c: Characte
   const { open } = useSheet();
   return (
     <button type="button" className={`shrink-0 rounded-md hover:ring-2 hover:ring-gold-400 ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }} title={displayName(c)}>
-      <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} />
+      <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined} />
     </button>
   );
 }

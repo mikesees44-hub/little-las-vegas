@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { Portrait } from '../src/ui/portrait/Portrait';
+import { moodFor, Portrait } from '../src/ui/portrait/Portrait';
 import { founderGenes, genesOf, LOCI } from '../src/ui/portrait/genes';
 import { newGame } from '../src/engine/newGame';
 import type { Character } from '../src/engine/types';
@@ -33,5 +33,17 @@ describe('portraits', () => {
     expect(dead).toContain('feColorMatrix');
     const jailed = renderToStaticMarkup(createElement(Portrait, { c: { ...c, imprisonedUntil: s.week + 50 }, seed: s.seed, date: s.date }));
     expect(jailed).toContain('JAIL');
+  });
+  it('strong feelings about the boss show on the face', () => {
+    const s = newGame('portrait-mood');
+    const c = Object.values(s.characters).find((x) => x.gender === 'M' && x.faction === 'player' && x.id !== s.playerId) as Character;
+    const plain = { ...c, traits: [] };
+    expect(moodFor(plain, 40, -60)).toBe('scowl');
+    expect(moodFor(plain, 40, -20)).toBe('wary');
+    expect(moodFor(plain, 40, 70)).toBe('warm');
+    expect(moodFor(plain, 40, 5)).toBe(moodFor(plain, 40));
+    const hate = renderToStaticMarkup(createElement(Portrait, { c: plain, seed: s.seed, date: s.date, opinion: -80 }));
+    const love = renderToStaticMarkup(createElement(Portrait, { c: plain, seed: s.seed, date: s.date, opinion: 80 }));
+    expect(hate).not.toBe(love);
   });
 });

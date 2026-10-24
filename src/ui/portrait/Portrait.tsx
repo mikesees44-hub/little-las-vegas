@@ -1,7 +1,7 @@
 import { memo, type ReactElement } from 'react';
 import { ageOn, compareDates, dateOfWeek } from '../../engine/calendar';
 import type { Character, GameDate } from '../../engine/types';
-import { expressionOf, genesOf, hash, rng } from './genes';
+import { expressionOf, genesOf, hash, rng, type Expression } from './genes';
 import { paintPortrait, type Look } from './paint';
 
 /**
@@ -28,12 +28,24 @@ export interface PortraitProps {
   /** Faction tint for the background. */
   tint?: string;
   className?: string;
+  /** What he thinks of the boss (-100..100): strong feelings show on the face. */
+  opinion?: number;
+}
+
+/** Strong feelings about the boss override the trait expression; mild ones don't. */
+export function moodFor(c: Pick<Character, 'traits'>, age: number, opinion?: number): Expression {
+  if (opinion !== undefined && age >= 12) {
+    if (opinion <= -40) return 'scowl';
+    if (opinion <= -15) return 'wary';
+    if (opinion >= 50) return 'warm';
+  }
+  return expressionOf(c, age);
 }
 
 const cache = new Map<string, ReactElement>();
 const CACHE_MAX = 600;
 
-function lookOf(c: Character, seed: string, date: GameDate, tint: string | undefined): Look {
+function lookOf(c: Character, seed: string, date: GameDate, tint: string | undefined, opinion?: number): Look {
   const age = Math.max(0, ageOn(c.birth, c.death ? c.death.date : date));
   const jailed = c.alive && c.imprisonedUntil !== undefined && compareDates(dateOfWeek(c.imprisonedUntil), date) > 0;
   return {
@@ -50,19 +62,19 @@ function lookOf(c: Character, seed: string, date: GameDate, tint: string | undef
     jailed,
     tint,
     genes: genesOf(seed, c),
-    mood: expressionOf(c, age),
+    mood: moodFor(c, age, opinion),
     r: rng(hash(`${seed}:look:${c.id}`)),
     serial: hash(`${seed}:serial:${c.id}`) % 90000 + 10000,
   };
 }
 
-function PortraitImpl({ c, seed, date, size = 64, tint, className }: PortraitProps) {
+function PortraitImpl({ c, seed, date, size = 64, tint, className, opinion }: PortraitProps) {
   const age = Math.max(0, ageOn(c.birth, c.death ? c.death.date : date));
   const jailed = c.alive && c.imprisonedUntil !== undefined && compareDates(dateOfWeek(c.imprisonedUntil), date) > 0;
-  const key = [seed, c.id, c.fatherId ?? '', c.motherId ?? '', c.gender, c.ethnicity, age, c.rank, c.office ?? '', c.specialty ?? '', c.alive ? 1 : 0, jailed ? 1 : 0, tint ?? '', (c.traits ?? []).join(','), c.firstName, c.lastName].join('|');
+  const key = [seed, c.id, c.fatherId ?? '', c.motherId ?? '', c.gender, c.ethnicity, age, c.rank, c.office ?? '', c.specialty ?? '', c.alive ? 1 : 0, jailed ? 1 : 0, tint ?? '', (c.traits ?? []).join(','), c.firstName, c.lastName, moodFor(c, age, opinion)].join('|');
   let art = cache.get(key);
   if (!art) {
-    art = paintPortrait(lookOf(c, seed, date, tint));
+    art = paintPortrait(lookOf(c, seed, date, tint, opinion));
     if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value as string);
     cache.set(key, art);
   }
