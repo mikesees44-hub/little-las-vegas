@@ -185,3 +185,21 @@ describe('aging and death', () => {
     expect(marriages).toBeGreaterThan(0);
   });
 });
+
+describe('stale events after a succession', () => {
+  it('an event raised for the old boss cannot demote the new boss', async () => {
+    const { forceDeath } = await import('../src/engine/engine');
+    const { s, boss } = controlledHouse('stale1');
+    const son = addChild(s, boss, 'M', 20);
+    // A pending Sunday-dinner style choice that would bring the son into the crew as an associate.
+    s.pendingEvents = [{
+      iid: 'evX', defId: 'sunday', title: 'Sunday dinner', text: '', week: s.week, mandatory: false, priority: 1, defaultChoiceId: 'bring',
+      choices: [{ id: 'bring', label: 'Bring him in', because: 'brought him in', effects: [{ type: 'rank', charId: son.id, rank: 'associate' }, { type: 'recruit', charId: son.id }] }],
+    }];
+    const after = forceDeath(s, boss.id, 'test').state;
+    expect(after.playerId).toBe(son.id);
+    const next = advanceWeek(after, { choices: { evX: 'bring' } }).state;
+    expect(validatePlayer(next)).toEqual([]);
+    expect(next.characters[son.id].rank).toBe('boss');
+  });
+});

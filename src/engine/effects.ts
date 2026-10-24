@@ -210,7 +210,8 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     }
     case 'recruit': {
       const c = s.characters[e.charId];
-      if (c?.alive) {
+      // Stale events (raised before a succession) must never demote the new boss.
+      if (c?.alive && c.id !== s.playerId) {
         c.faction = 'player';
         if (c.rank === 'civilian') c.rank = 'associate';
         ctx.log.push(`${displayName(c)} is with us now.`);
@@ -219,7 +220,7 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     }
     case 'rank': {
       const c = s.characters[e.charId];
-      if (c?.alive) {
+      if (c?.alive && c.id !== s.playerId) {
         c.rank = e.rank;
         if (e.district) {
           const d = s.districts.find((x) => x.id === e.district);

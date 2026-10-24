@@ -42,6 +42,8 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     // Skip choices referencing characters that died since the event was raised.
     const charId = ev.meta?.charId ? String(ev.meta.charId) : undefined;
     if (charId && !s.characters[charId]?.alive && ev.defId !== 'funeral' && ev.defId !== 'recruit') continue;
+    // An event about a crew member who has since become the boss (succession) is moot.
+    if (charId === s.playerId && ev.defId !== 'health_warning') continue;
     if (s.gameOver) break;
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
