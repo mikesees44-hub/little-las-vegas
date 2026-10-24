@@ -2,7 +2,8 @@ import { previewUnderbelly } from './underbelly';
 import { LAWYER, RETAINER } from './longgame';
 import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
-import { CATALOG, SHOP_KINDS } from './catalog';
+import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
+import { commitEcon, econActions, previewEcon } from './econ';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
@@ -217,6 +218,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   dynasty: {
     preview: (s, a) => previewDynasty(s, a.op),
     commit: (ctx, a) => commitDynasty(ctx, a.op),
+  },
+  econ: {
+    preview: (s, a) => previewEcon(s, a.op),
+    commit: (ctx, a) => commitEcon(ctx, a.op),
   },
   declareWar: {
     preview: (s, a) => {
@@ -615,6 +620,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       let why: string | undefined;
       why = need(!!d, 'Unknown district', why);
       why = need(!def.hidden, 'Not for sale', why);
+      why = need(availableIn(a.biz, s.date.y), `Not before ${def.minYear}`, why);
       why = need((d?.influence.player ?? 0) >= 20, `You need 20% of ${d?.name ?? 'the district'} first`, why);
       const slots = playerSlots(s, a.district);
       why = need(def.category === 'property' || slots.used < slots.max, `No storefronts left for you in ${d?.name ?? 'the district'} (${slots.used}/${slots.max}) — push in further`, why);
@@ -881,6 +887,7 @@ export function availableActions(s: GameState): PlayerAction[] {
   const official = Object.values(s.characters).find((c) => c.alive && c.office && OFFICE_BRIBE[c.office] && (s.week % 3 === 0));
   if (official) out.push({ kind: 'interact', id: 'bribe', target: official.id });
   out.push(...dynastyActions(s));
+  out.push(...econActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 3; }));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {

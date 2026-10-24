@@ -1,3 +1,4 @@
+import { initEcon } from './econ';
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
@@ -330,5 +331,6 @@ export function newGame(seed: string | number = Date.now()): GameState {
   s.pendingEvents = generateWeekEvents(s);
   initDynasty(s);
   initPolitics(s);
+  initEcon(s);
   return s;
 }

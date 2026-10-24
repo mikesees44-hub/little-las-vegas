@@ -254,3 +254,21 @@ describe('politics: careers and population', () => {
     expect(previewAction(s, { kind: 'pol', op: { op: 'declare', charId: kid.id, office: 'us_house_nj2' } }).disabledReason).toBeTruthy();
   });
 });
+
+describe('politics: permits', () => {
+  it('a commissioner you own speeds permits; an honest inspector blocks them when you are hot', async () => {
+    const { permitAuthority, inspector } = await import('../src/engine/polPermits');
+    const s = fresh('permits');
+    const lot = { zone: 'boardwalk' } as unknown as Parameters<typeof permitAuthority>[1];
+    const ins = inspector(s)!;
+    expect(ins).toBeDefined();
+    s.pol!.people[ins.id] = { ...ins, integrity: 90 };
+    s.heat.local = 80;
+    let blocked = false;
+    for (let i = 0; i < 40 && !blocked; i++) blocked = permitAuthority(s, lot)?.verdict === 'blocked';
+    expect(blocked).toBe(true);
+    const com = holder(s, 'ww_commission', 1)!;
+    s.pol!.ctl[com.id] = { personal: 95, financial: 95, independence: 5, legitimacy: 60, exposure: 0, resentment: 0, since: 1 };
+    expect(permitAuthority(s, lot)?.verdict).toBe('fast');
+  });
+});

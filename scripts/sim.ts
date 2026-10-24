@@ -45,6 +45,8 @@ const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
 /** Chance per week of a political order (cultivate, payroll, favors, campaigns, lobbying, kids, recruits). */
 const POL_RATE = Number(arg('politics', '0.12'));
+/** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
+const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
 
@@ -79,7 +81,15 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   if (boss && !boss.lifestyle) add(pickOne(h, LIFESTYLE_IDS.map((focus) => ({ kind: 'lifestyle', focus }) as PlayerAction)));
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
-  if (rand(h) < POL_RATE) add(pickOne(h, polActions(s).filter((a) => !previewAction(s, a).disabledReason)));
+  // Political orders, when there is money to spare (a payroll is a weekly bill).
+  if (rand(h) < POL_RATE) {
+    const spare = s.money - 20000;
+    add(pickOne(h, polActions(s).filter((a) => {
+      const p = previewAction(s, a);
+      return !p.disabledReason && p.cost <= spare && !(a.op.op === 'payroll' && a.op.on && spare < 15000);
+    })));
+  }
+  if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
   return { choices, actions };
 }
 
@@ -117,6 +127,8 @@ interface GameResult {
   peakUnwashed: number;
   /** Dynasty-layer counters at the end of the game (familyState.ts). */
   dyn?: Record<string, number>;
+  /** Economy-layer counters at the end of the game (econState.ts). */
+  econ?: Record<string, number>;
   hierarchyErrors: string[];
   crew: { defections: number; coups: number; flips: number; makings: number; rivalCrewMoves: number };
   popupKeys: Record<string, number>;
@@ -234,6 +246,7 @@ function playOne(gi: number): GameResult {
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
+  if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
 
@@ -282,6 +295,12 @@ console.log(`  Businesses at the end (median): ${quantile(results.map((r) => r.f
 const orders: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.orders)) orders[k] = (orders[k] ?? 0) + v;
 console.log(`  Orders per game:            ${Object.entries(orders).map(([k, v]) => `${k} ${(v / GAMES).toFixed(1)}`).join(', ')}`);
+
+const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
+if (econGames.length) {
+  const keys = Object.keys(econGames[0].econ!);
+  console.log(`  Economy layer per game (mean): ${keys.map((k) => `${k} ${(econGames.reduce((a, r) => a + (r.econ![k] ?? 0), 0) / econGames.length).toFixed(1)}`).join(', ')}`);
+}
 
 console.log(`\nDYNASTY`);
 console.log(`  Games where the boss died:  ${pct(gamesWithBossDeath, GAMES)}  (${bossDeaths} boss deaths total)`);

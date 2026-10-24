@@ -1,5 +1,7 @@
 import { capos, displayName, isFree } from './characters';
 import { registerDeathHandler } from './dynasty';
+import { registerPermitAuthority } from './econ';
+import { permitAuthority } from './polPermits';
 import { fmtMoney } from './effects';
 import { heat, type Ctx } from './ledger';
 import { chance, rand } from './rng';
@@ -25,6 +27,7 @@ function register(): void {
   if (registered) return;
   registered = true;
   registerDeathHandler((ctx, id, cause, character) => onDeath(ctx, id, cause, character?.id));
+  registerPermitAuthority(permitAuthority);
 }
 
 /** Called by newGame; also lazily for old saves. */

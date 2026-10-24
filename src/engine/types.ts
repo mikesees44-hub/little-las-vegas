@@ -6,6 +6,7 @@
 
 import type { DynAction, DynOp, DynState } from './familyState';
 import type { PolAction, PolOp, PolState } from './polState';
+import type { EconAction, EconOp, EconState } from './econState';
 
 export interface GameDate {
   y: number;
@@ -321,7 +322,10 @@ export type BusinessKind =
   | 'numbers' | 'bookmaking' | 'loansharking' | 'cardgame' | 'vice' | 'stag' | 'blackmail' | 'jewel' | 'bankcrew'
   | 'fencing' | 'narcotics'
   // property
-  | 'safehouse';
+  | 'safehouse'
+  // economy pillar (wave 2): transport, services, entertainment, nightlife
+  | 'cargo' | 'trucking' | 'towing' | 'waste' | 'cleaning' | 'bidrig' | 'labor' | 'taxi' | 'pawn' | 'label' | 'talent'
+  | 'burlesque' | 'gentsclub' | 'hoodclub' | 'supperclub' | 'adulttheater' | 'filmdist' | 'deli';
 
 export interface Business {
   id: string;
@@ -487,7 +491,9 @@ export type Effect =
   | ({ type: 'flip'; charId: string } & EffectBase)
   | ({ type: 'retire'; charId: string } & EffectBase)
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
-  | ({ type: 'checkBackground'; charId: string } & EffectBase);
+  | ({ type: 'checkBackground'; charId: string } & EffectBase)
+  /** The economy & property layer (econState.ts / econ.ts). */
+  | ({ type: 'econ'; op: EconOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -791,6 +797,8 @@ export interface GameState {
   eventCooldowns?: Record<string, number>;
   /** Politics, law-makers and the living world (optional for old saves). */
   pol?: PolState;
+  /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
+  econ?: EconState;
 }
 
 export interface PlayerChoices {
@@ -835,7 +843,8 @@ export type PlayerAction =
   | { kind: 'propose'; charId: string; voucherId?: string }
   | { kind: 'background'; charId: string }
   | { kind: 'order'; key: string; via: OrderVia }
-  | { kind: 'pol'; op: PolAction };
+  | { kind: 'pol'; op: PolAction }
+  | { kind: 'econ'; op: EconAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
