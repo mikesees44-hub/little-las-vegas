@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import { previewAction, queuedCost } from '../../engine/actions';
+import type { Acceptance } from '../../engine/interactions';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Chips } from './Chips';
@@ -48,7 +49,27 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         </button>
       </div>
       <Chips s={s} effects={p.effects} />
+      {p.acceptance && <AcceptanceLine a={p.acceptance} />}
+      {p.refuseEffects && p.refuseEffects.length > 0 && (
+        <div className="mt-1 text-[11px] text-stone-500">If he says no: <Chips s={s} effects={p.refuseEffects} /></div>
+      )}
       {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
+    </div>
+  );
+}
+
+/** "Will accept: 62%" with the reasons, CK style. */
+export function AcceptanceLine({ a }: { a: Acceptance }) {
+  const pct = Math.round(a.chance * 100);
+  return (
+    <div className="mt-1.5 text-[11px]">
+      <span className={`font-semibold ${pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}`}>Will accept: {pct}%</span>
+      <span className="text-stone-500"> — </span>
+      {a.reasons.map((r, i) => (
+        <span key={i} className={`mr-2 whitespace-nowrap ${r.label === 'Base' ? 'text-stone-500' : r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+          {r.value > 0 ? '+' : r.value < 0 ? '−' : ''}{Math.abs(r.value)} {r.label}
+        </span>
+      ))}
     </div>
   );
 }

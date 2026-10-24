@@ -96,6 +96,10 @@ export interface Character {
   frontMan?: boolean;
   /** What the law has on him, 0-100 (grand jury at 60, indictment at 80). */
   evidence?: number;
+  /** Weeks without the boss's attention (associates/soldiers). */
+  neglect?: number;
+  /** 0 none · 1 seen with a rival · 2 about to walk. */
+  defectStage?: number;
 }
 
 export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'fixer';
@@ -245,7 +249,9 @@ export type Effect =
   | ({ type: 'favor'; amount: number } & EffectBase)
   | ({ type: 'goal'; key: 'bank' | 'land' | 'sellLand' | 'license' } & EffectBase)
   | ({ type: 'unwashed'; amount: number } & EffectBase)
-  | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase);
+  | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase)
+  | ({ type: 'exile'; charId: string } & EffectBase)
+  | ({ type: 'wealth'; charId: string; amount: number } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -271,6 +277,8 @@ export interface EventInstance {
   /** Higher shows first */
   priority: number;
   meta?: Record<string, string | number>;
+  /** Characters shown with portraits on the event card. */
+  actors?: string[];
 }
 
 export interface ScheduledConsequence {
@@ -410,7 +418,13 @@ export type PlayerAction =
   | { kind: 'lend'; amount: number }
   | { kind: 'findFrontMan' }
   | { kind: 'charterBank' }
-  | { kind: 'casino'; sell?: boolean };
+  | { kind: 'casino'; sell?: boolean }
+  | { kind: 'interact'; id: InteractionId; target: string }
+  | { kind: 'pushDistrict'; district: string };
+
+export type InteractionId =
+  | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
+  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn';
 
 export interface AdvanceResult {
   state: GameState;

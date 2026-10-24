@@ -64,6 +64,17 @@ const HANDLERS: Record<string, Handler> = {
       effects: [{ type: 'kill', charId: victim.id, cause: 'found in a car trunk in Camden (Philadelphia\'s message about narcotics)', killer: 'philly' }, { type: 'respect', amount: -4 }],
     };
   },
+  exile_turns: (ctx, sc) => {
+    const s = ctx.s;
+    const c = s.characters[String(sc.params.charId)];
+    if (!c?.alive || c.faction !== 'none') return undefined;
+    const r = s.rivals.filter((x) => x.kind === 'mob' && s.characters[x.leaderId]?.alive)[0];
+    if (!r) return undefined;
+    c.faction = r.id;
+    c.rank = 'soldier';
+    r.muscle = Math.min(100, r.muscle + 4);
+    return { text: `${c.firstName} ${c.lastName} turned up in ${r.shortName}'s crew, telling them everything he knows`, effects: [{ type: 'rivalResource', rival: r.id, muscle: 4 }, { type: 'heat', bar: 'local', amount: 2 }] };
+  },
   vice_scandal: (ctx, sc) => (ctx.s.businesses.some((b) => b.owner === 'player' && b.kind === 'blackmail')
     ? { text: `a councilman's name turned up in the books at ${sc.params.biz} — and your camera man was ready`, effects: [{ type: 'heat', bar: 'local', amount: 4 }, { type: 'favor', amount: 1 }] }
     : { text: `the vice squad raided ${sc.params.biz} and the Leader printed the story`, effects: [{ type: 'heat', bar: 'local', amount: 8 }, { type: 'respect', amount: -2 }] }),

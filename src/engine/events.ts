@@ -67,6 +67,7 @@ export function buildBagman(s: GameState): EventInstance {
     priority: 80,
     defaultChoiceId: 'full',
     meta: { envelope: env },
+    actors: [mid],
     choices: [
       {
         id: 'full',

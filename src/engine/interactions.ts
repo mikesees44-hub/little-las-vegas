@@ -1,0 +1,324 @@
+import { ageOn } from './calendar';
+import { capos, displayName, hasTrait, isFree, player, relationLabel } from './characters';
+import { fmtMoney } from './effects';
+import { getRelation, opinion } from './relations';
+import { FACTION_NAMES } from './world';
+import type { Character, Effect, GameState, InteractionId } from './types';
+
+/**
+ * Character interactions (the CK-style right-click menu). Each interaction
+ * has who it applies to, what it does (as labelled effects), and — when the
+ * other person can say no — acceptance odds broken down into reasons, e.g.
+ * "+12 Opinion of you", "−20 Greedy", "+15 Fears you".
+ */
+
+export interface Reason {
+  label: string;
+  value: number;
+}
+
+export interface Acceptance {
+  /** 0..1 */
+  chance: number;
+  reasons: Reason[];
+}
+
+export interface InteractionPreview {
+  id: InteractionId;
+  title: string;
+  detail: string;
+  effects: Effect[];
+  refuseEffects?: Effect[];
+  acceptance?: Acceptance;
+  cost: number;
+  because: string;
+  disabledReason?: string;
+}
+
+export type Relationship = 'self' | 'crew' | 'family' | 'rival' | 'civilian';
+
+export function relationshipTo(s: GameState, c: Character): Relationship {
+  if (c.id === s.playerId) return 'self';
+  if (c.faction === 'player' && c.rank !== 'civilian') return 'crew';
+  if (c.dynasty) return 'family';
+  if (s.rivals.some((r) => r.id === c.faction)) return 'rival';
+  return 'civilian';
+}
+
+export const INTERACTION_ORDER: InteractionId[] = [
+  'dinner', 'gift_small', 'gift_large', 'favor', 'demand', 'threaten', 'recruit', 'bringIn', 'make', 'promote', 'demote', 'exile', 'whack',
+];
+
+function clampChance(base: number, reasons: Reason[]): Acceptance {
+  const sum = reasons.reduce((a, r) => a + r.value, base);
+  return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons.filter((r) => r.value !== 0)] };
+}
+
+function opinionReason(s: GameState, c: Character, mult = 0.5): Reason {
+  const op = opinion(s, c.id, s.playerId);
+  return { label: op >= 0 ? 'Opinion of you' : 'Dislikes you', value: Math.round(op * mult) };
+}
+
+function fearReason(s: GameState, c: Character, mult = 0.4): Reason {
+  return { label: 'Fears you', value: Math.round((getRelation(s, c.id, s.playerId)?.fear ?? 0) * mult) };
+}
+
+function respectReason(s: GameState): Reason {
+  return { label: 'Your reputation', value: Math.round((s.respect - 40) / 3) };
+}
+
+function traitReasons(c: Character, table: Partial<Record<string, number>>): Reason[] {
+  return c.traits.filter((t) => table[t] !== undefined).map((t) => ({ label: t, value: table[t]! }));
+}
+
+function free(s: GameState, c: Character): string | undefined {
+  return isFree(s, c) ? undefined : 'He is in jail';
+}
+
+/** All interactions for a character, in menu order (some disabled). */
+export function interactionsFor(s: GameState, targetId: string): InteractionPreview[] {
+  return INTERACTION_ORDER.map((id) => previewInteraction(s, id, targetId)).filter((p): p is InteractionPreview => !!p);
+}
+
+/** Returns undefined when the interaction makes no sense for this person at all. */
+export function previewInteraction(s: GameState, id: InteractionId, targetId: string): InteractionPreview | undefined {
+  const c = s.characters[targetId];
+  const boss = player(s);
+  if (!c || !c.alive || c.id === boss.id) return undefined;
+  const rel = relationshipTo(s, c);
+  const nm = displayName(c);
+  const first = c.firstName;
+  const adult = ageOn(c.birth, s.date) >= 16;
+  switch (id) {
+    case 'dinner': {
+      if (rel !== 'family' && rel !== 'crew') return undefined;
+      if (!adult) return undefined;
+      const label = `Sunday dinner: ${first}`;
+      return {
+        id, title: `Invite ${first} to Sunday dinner`, detail: 'Gravy at two. Nobody leaves before the cannoli.', cost: 150,
+        effects: [
+          { type: 'money', amount: -150, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: rel === 'family' ? 8 : 12, reason: 'Broke bread at the boss\'s table', decay: 1, label },
+          { type: 'meter', from: c.id, to: boss.id, meter: 'trust', amount: 5, label },
+        ],
+        because: `had ${first} to Sunday dinner`,
+        disabledReason: free(s, c),
+      };
+    }
+    case 'gift_small':
+    case 'gift_large': {
+      const amt = id === 'gift_small' ? 500 : 2500;
+      const label = `Gift to ${first}`;
+      const greedy = hasTrait(c, 'Greedy') ? 1.5 : hasTrait(c, 'Honest') ? 0.6 : 1;
+      const value = Math.round((id === 'gift_small' ? 8 : 22) * greedy);
+      return {
+        id, title: id === 'gift_small' ? `Send ${first} a gift (${fmtMoney(amt)})` : `Send ${first} something special (${fmtMoney(amt)})`,
+        detail: id === 'gift_small' ? 'A case of Canadian Club, a box of cigars.' : 'A new Cadillac. A mink for his wife.',
+        cost: amt,
+        effects: [
+          { type: 'money', amount: -amt, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: value, reason: 'Sent me a generous gift', decay: 2, label },
+        ],
+        because: `sent ${first} a gift`,
+        disabledReason: s.money < amt ? `Needs ${fmtMoney(amt)}` : undefined,
+      };
+    }
+    case 'favor': {
+      if (rel !== 'rival' && rel !== 'civilian') return undefined;
+      if (rel === 'civilian' && !c.frontMan && c.rank !== 'civilian') return undefined;
+      const label = `Favor from ${first}`;
+      const acceptance = clampChance(20, [
+        opinionReason(s, c, 0.6),
+        fearReason(s, c, 0.3),
+        respectReason(s),
+        ...(hasTrait(boss, 'Charming') ? [{ label: 'You are Charming', value: 10 }] : []),
+        ...traitReasons(c, { Honest: -15, Paranoid: -10, Greedy: -5, Charming: 5, Patient: 5 }),
+      ]);
+      return {
+        id, title: `Ask ${first} for a favor`, detail: 'He does something for you; you owe him a little less goodwill.', cost: 0,
+        effects: [
+          { type: 'favor', amount: 1, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: -6, reason: 'Called in a favor', decay: 1, label },
+        ],
+        refuseEffects: [{ type: 'respect', amount: -1, label: `${first} turned you down` }],
+        acceptance,
+        because: `asked ${first} for a favor`,
+      };
+    }
+    case 'demand': {
+      if (rel !== 'crew' || c.rank === 'associate') return undefined;
+      const take = Math.max(200, Math.round(c.wealth * 0.25 / 100) * 100);
+      const label = `Demand from ${first}`;
+      const acceptance = clampChance(45, [
+        opinionReason(s, c),
+        fearReason(s, c, 0.5),
+        respectReason(s),
+        ...traitReasons(c, { Greedy: -20, 'Loyal-to-a-fault': 25, Ambitious: -10, Cowardly: 15, 'Hot-headed': -10, Honest: 5 }),
+      ]);
+      return {
+        id, title: `Demand ${fmtMoney(take)} from ${first}`, detail: `A quarter of what he has put away (${fmtMoney(c.wealth)}).`, cost: 0,
+        effects: [
+          { type: 'money', amount: take, label },
+          { type: 'wealth', charId: c.id, amount: -take, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: -12, reason: 'Shook me down', decay: 1, label },
+        ],
+        refuseEffects: [
+          { type: 'respect', amount: -2, label: `${first} refused your demand` },
+          { type: 'meter', from: c.id, to: boss.id, meter: 'grievance', amount: 10, label: `${first} refused your demand` },
+        ],
+        acceptance,
+        because: `demanded money from ${first}`,
+        disabledReason: c.wealth < 400 ? 'He has nothing worth taking' : free(s, c),
+      };
+    }
+    case 'threaten': {
+      if (rel === 'family' || rel === 'self') return undefined;
+      const label = `Threatened ${first}`;
+      const hot = hasTrait(c, 'Hot-headed') || hasTrait(c, 'Vengeful');
+      return {
+        id, title: `Threaten ${first}`, detail: hot ? 'He does not take threats quietly.' : 'Remind him what happens to people who forget.', cost: 0,
+        effects: [
+          { type: 'meter', from: c.id, to: boss.id, meter: 'fear', amount: 20, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: -15, reason: 'Threatened me', decay: 1, label },
+          ...(hot ? [{ type: 'meter', from: c.id, to: boss.id, meter: 'grievance', amount: 20, label } as Effect] : []),
+          ...(rel === 'rival' ? [{ type: 'heat', bar: 'local', amount: 1, label } as Effect] : []),
+        ],
+        because: `threatened ${first}`,
+      };
+    }
+    case 'recruit': {
+      if (rel !== 'rival' && rel !== 'civilian') return undefined;
+      if (c.frontMan || c.rank === 'boss' || (rel === 'rival' && s.rivals.some((r) => r.leaderId === c.id))) return undefined;
+      if (c.gender !== 'M' || !adult) return undefined;
+      const label = `Recruit ${first}`;
+      const acceptance = clampChance(rel === 'rival' ? 10 : 35, [
+        opinionReason(s, c),
+        respectReason(s),
+        { label: 'Signing money', value: 15 },
+        ...(rel === 'rival' ? [{ label: `Loyal to ${FACTION_NAMES[c.faction]}`, value: -25 }] : []),
+        ...traitReasons(c, { Ambitious: 10, Greedy: 10, 'Loyal-to-a-fault': -40, Cowardly: -10, Paranoid: -10 }),
+      ]);
+      return {
+        id, title: `Recruit ${first}`, detail: rel === 'rival' ? `Poach him from ${FACTION_NAMES[c.faction]}. They will not like it.` : 'Bring him in as an associate.', cost: 1000,
+        effects: [
+          { type: 'money', amount: -1000, label },
+          { type: 'recruit', charId: c.id, label },
+          { type: 'rank', charId: c.id, rank: 'associate', label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: 15, reason: 'Gave me my chance', decay: 1, label },
+          ...(rel === 'rival' ? [{ type: 'rivalOpinion', rival: c.faction as never, amount: -15, reason: 'Poached my man', label } as Effect] : []),
+        ],
+        refuseEffects: [{ type: 'money', amount: -1000, label: `${first} kept the signing money and said no` }],
+        acceptance,
+        because: `recruited ${nm}`,
+        disabledReason: s.money < 1000 ? 'Needs $1,000' : free(s, c),
+      };
+    }
+    case 'bringIn': {
+      if (rel !== 'family' || c.gender !== 'M' || c.rank !== 'civilian' || ageOn(c.birth, s.date) < 18) return undefined;
+      const label = `${first} joins the business`;
+      return {
+        id, title: `Bring ${first} into the business`, detail: `Your ${relationLabel(s, boss, c)}, ${ageOn(c.birth, s.date)}. The women of the house will not be happy.`, cost: 0,
+        effects: [
+          { type: 'rank', charId: c.id, rank: 'associate', label },
+          { type: 'recruit', charId: c.id, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: 15, reason: 'Trusted me with the family business', label },
+          { type: 'familyOpinion', amount: -3, reason: 'Pulled a boy into the life', label },
+        ],
+        because: `brought ${first} into the life`,
+      };
+    }
+    case 'make': {
+      if (rel !== 'crew' || c.rank !== 'associate') return undefined;
+      const label = `Made man: ${first}`;
+      return {
+        id, title: `Make ${first} (the ceremony)`, detail: 'A burning saint card, a drop of blood, an oath. $1,000 to Philadelphia for opening the books.', cost: 1000,
+        effects: [
+          { type: 'money', amount: -1000, label },
+          { type: 'rank', charId: c.id, rank: 'soldier', label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: 25, reason: 'Made me', decay: 0, label },
+          { type: 'meter', from: c.id, to: boss.id, meter: 'trust', amount: 15, label },
+          { type: 'crewOpinion', amount: 2, reason: 'Rewards loyalty', label },
+          { type: 'respect', amount: 1, label },
+        ],
+        because: `made ${nm} a member of the family`,
+        disabledReason: s.money < 1000 ? 'Needs $1,000' : free(s, c),
+      };
+    }
+    case 'promote': {
+      if (rel !== 'crew' || (c.rank !== 'soldier' && c.rank !== 'capo')) return undefined;
+      if (c.rank === 'soldier') {
+        const d = s.districts.find((x) => (!x.capoId || !s.characters[x.capoId]?.alive) && (x.influence.player ?? 0) >= 40);
+        const label = `Promoted ${first} to capo`;
+        return {
+          id, title: `Make ${first} a capo${d ? ` of ${d.name}` : ''}`, detail: d ? 'He runs the district and kicks up to you.' : 'No district needs a capo right now.', cost: 0,
+          effects: [
+            { type: 'rank', charId: c.id, rank: 'capo', district: d?.id, label },
+            { type: 'opinion', from: c.id, to: boss.id, amount: 20, reason: 'Made me a capo', decay: 1, label },
+            { type: 'crewOpinion', amount: 0, reason: 'Passed over for capo', traitMods: { Ambitious: -6 }, label },
+          ],
+          because: `made ${nm} a capo`,
+          disabledReason: d ? free(s, c) : 'Every district you hold already has a capo',
+        };
+      }
+      const hasUb = capos(s).length >= 0 && Object.values(s.characters).some((x) => x.alive && x.faction === 'player' && x.rank === 'underboss');
+      const label = `Promoted ${first} to underboss`;
+      return {
+        id, title: `Make ${first} underboss`, detail: 'Second in command. Takes the chair under the "underboss" succession law.', cost: 0,
+        effects: [
+          { type: 'rank', charId: c.id, rank: 'underboss', label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: 20, reason: 'Made me underboss', decay: 1, label },
+        ],
+        because: `made ${nm} underboss`,
+        disabledReason: hasUb ? 'You already have an underboss' : free(s, c),
+      };
+    }
+    case 'demote': {
+      if (rel !== 'crew' || (c.rank !== 'capo' && c.rank !== 'underboss' && c.rank !== 'consigliere')) return undefined;
+      const label = `Demoted ${first}`;
+      return {
+        id, title: `Break ${first} down to soldier`, detail: 'He will remember this.', cost: 0,
+        effects: [
+          { type: 'rank', charId: c.id, rank: 'soldier', label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: -30, reason: 'Broke me down to soldier', decay: 1, label },
+          { type: 'meter', from: c.id, to: boss.id, meter: 'grievance', amount: 30, label },
+          { type: 'respect', amount: 1, label },
+        ],
+        because: `broke ${nm} down to soldier`,
+      };
+    }
+    case 'exile': {
+      if (rel !== 'crew') return undefined;
+      const label = `Exiled ${first}`;
+      return {
+        id, title: `Exile ${first} from Wildwood`, detail: 'Florida, Las Vegas, anywhere but here. He may land with a rival.', cost: 0,
+        effects: [
+          { type: 'exile', charId: c.id, label },
+          { type: 'crewOpinion', amount: -2, reason: 'Threw out one of our own', traitMods: { Cruel: 2, Paranoid: 2 }, label },
+          { type: 'schedule', key: 'exile_turns', minWeeks: 3, maxWeeks: 10, chance: 0.4, hint: 'he may go over to a rival', params: { charId: c.id }, label },
+        ],
+        because: `exiled ${nm}`,
+      };
+    }
+    case 'whack': {
+      if (rel !== 'crew') return undefined;
+      const label = `Whacked ${first}`;
+      return {
+        id, title: `Have ${first} whacked`, detail: 'Quick and quiet, by his own people. Everyone will know why — or wonder.', cost: 0,
+        effects: [
+          { type: 'kill', charId: c.id, cause: 'whacked on the boss\'s orders', killer: 'player', label },
+          { type: 'heat', bar: 'local', amount: 6, label },
+          { type: 'respect', amount: 2, label },
+          { type: 'crewOpinion', amount: -5, reason: 'Killed one of our own', traitMods: { Cruel: 7, Paranoid: -3 }, label },
+          { type: 'schedule', key: 'example_widow', minWeeks: 2, maxWeeks: 6, chance: 0.3, hint: 'his family may talk to the cops', label },
+        ],
+        because: `had ${nm} whacked`,
+      };
+    }
+  }
+}
+
+/** Short summary of odds for buttons: "Will accept: 62%". */
+export function oddsLabel(a?: Acceptance): string {
+  if (!a) return 'Certain';
+  return `${Math.round(a.chance * 100)}% to accept`;
+}

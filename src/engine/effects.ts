@@ -88,6 +88,14 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return `${signed(e.amount)} Political favor${Math.abs(e.amount) === 1 ? '' : 's'}`;
     case 'goal':
       return e.key === 'bank' ? 'Bank chartered' : e.key === 'land' ? 'Land optioned in Atlantic City' : e.key === 'sellLand' ? 'Land sold' : 'License application filed';
+    case 'exile': {
+      const c = s.characters[e.charId];
+      return `${c ? c.firstName + ' ' + c.lastName : '?'} leaves Wildwood`;
+    }
+    case 'wealth': {
+      const c = s.characters[e.charId];
+      return `${c ? c.firstName : '?'}'s own money ${e.amount >= 0 ? '+' : '−'}${fmtMoney(Math.abs(e.amount))}`;
+    }
     case 'loanResolve': {
       const l = s.loans.find((x) => x.id === e.loanId);
       const amt = l ? fmtMoney(l.principal) : '';
@@ -298,6 +306,23 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
         s.goals.casinoSince = s.week;
       }
       break;
+    case 'exile': {
+      const c = s.characters[e.charId];
+      if (!c?.alive || c.id === s.playerId) break;
+      c.faction = 'none';
+      c.rank = 'civilian';
+      for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
+      for (const b of s.businesses) if (b.staffIds) b.staffIds = b.staffIds.filter((id) => id !== c.id);
+      addOpinion(s, c.id, s.playerId, 'Exiled me from Wildwood', -40, 0);
+      changeMeter(s, c.id, s.playerId, 'grievance', 40);
+      ctx.log.push(`${displayName(c)} packed a suitcase and left the island.`);
+      break;
+    }
+    case 'wealth': {
+      const c = s.characters[e.charId];
+      if (c) c.wealth = Math.max(0, c.wealth + e.amount);
+      break;
+    }
     case 'loanResolve': {
       const l = s.loans.find((x) => x.id === e.loanId);
       if (!l) break;

@@ -364,7 +364,7 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
 function dealEvent(s: GameState, r: Rival): EventInstance | undefined {
   const leader = leaderOf(s, r);
   const nm = displayName(leader);
-  const base = { iid: `ev${s.nextId++}`, defId: `deal_${r.id}`, week: s.week, mandatory: false, priority: 40, meta: { rival: r.id } };
+  const base = { iid: `ev${s.nextId++}`, defId: `deal_${r.id}`, week: s.week, mandatory: false, priority: 40, meta: { rival: r.id }, actors: [leader.id] };
   const gain = Math.round(2500 + rand(s) * 2500);
   switch (r.id) {
     case 'manno':

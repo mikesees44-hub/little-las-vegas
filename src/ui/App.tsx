@@ -1,21 +1,26 @@
 import { useEffect, useMemo, useState } from 'react';
+import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
 import type { GameState, PlayerAction, PlayerChoices, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { Businesses } from './components/Businesses';
-import { OrdersContext, OrdersTray } from './components/Orders';
+import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
 import { EventModal } from './components/EventModal';
 import { FamilyTree } from './components/FamilyTree';
 import { Header } from './components/Header';
+import { IslandMap } from './components/IslandMap';
+import { AlertRail, DistrictPanel, PlayerCard } from './components/MapSide';
+import { OrdersContext, OrdersTray } from './components/Orders';
 import { Overview } from './components/Overview';
+import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-type Tab = 'island' | 'business' | 'crew' | 'family' | 'chronicle';
+export type Tab = 'map' | 'business' | 'crew' | 'family' | 'chronicle';
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'island', label: 'The Island' },
+  { id: 'map', label: 'The Island' },
   { id: 'business', label: 'Rackets & Fronts' },
   { id: 'crew', label: 'Crew' },
   { id: 'family', label: 'Family' },
@@ -34,7 +39,9 @@ export function App() {
   const [mode, setMode] = useState<Mode>('week');
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
-  const [tab, setTab] = useState<Tab>('island');
+  const [tab, setTab] = useState<Tab>('map');
+  const [district, setDistrict] = useState<string | undefined>();
+  const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
   const [seedInput, setSeedInput] = useState('');
@@ -44,10 +51,12 @@ export function App() {
     queue: (a: PlayerAction) => setOrders((o) => [...o, a]),
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
+  const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
 
   useEffect(() => saveGame(s), [s]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
+  const alertList = useMemo(() => computeAlerts(s), [s]);
 
   function run(m: Mode, a: Record<string, string>) {
     const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders };
@@ -81,7 +90,6 @@ export function App() {
     const next = { ...answers, [ev.iid]: choiceId };
     setAnswers(next);
     if (!advancing) {
-      // Reviewing: walk through events in order, then close.
       setEventIdx(eventIdx + 1 < s.pendingEvents.length ? eventIdx + 1 : null);
       return;
     }
@@ -97,46 +105,47 @@ export function App() {
     setOrders([]);
     setReports(null);
     setEventIdx(null);
-    setTab('island');
+    setSheet(undefined);
+    setDistrict(undefined);
+    setTab('map');
+  }
+
+  function onAlert(a: Alert) {
+    if (a.charId) setSheet(a.charId);
+    else if (a.tab) setTab(a.tab as Tab);
+    else if (a.kind === 'decision') { setAdvancing(false); setEventIdx(0); }
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
 
   return (
+    <SheetContext.Provider value={sheetApi}>
     <OrdersContext.Provider value={ordersApi}>
-    <div className="mx-auto max-w-5xl px-4 py-4 sm:py-6 space-y-4">
-      <Header s={s} />
+    <div className="mx-auto max-w-6xl px-3 sm:px-4 py-3 sm:py-5 space-y-3">
+      <Header s={s}>
+        {!s.gameOver && (
+          <>
+            <button className="btn-gold py-1.5" onClick={() => startAdvance('week')}>Advance Week</button>
+            <button className="btn-ghost py-1.5" onClick={() => startAdvance('month')}>Advance Month</button>
+            <div className="text-xs text-stone-400">
+              {s.pendingEvents.length ? (
+                <>
+                  {s.pendingEvents.length - unanswered.length}/{s.pendingEvents.length} decisions made ·{' '}
+                  <button className="underline text-gold-300" onClick={() => { setAdvancing(false); setEventIdx(0); }}>review</button>
+                </>
+              ) : 'Nothing on the table this week.'}
+              {orders.length > 0 && <> · {orders.length} order{orders.length > 1 ? 's' : ''} queued</>}
+              {s.lastReport && <> · <button className="underline text-gold-300" onClick={() => setReports([s.lastReport!])}>last report</button></>}
+            </div>
+          </>
+        )}
+      </Header>
 
-      {s.gameOver ? (
+      {s.gameOver && (
         <div className="panel p-6 text-center">
           <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
           <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
           <button className="btn-gold mt-4" onClick={() => restart()}>Start a new dynasty</button>
-        </div>
-      ) : (
-        <div className="panel p-3 flex flex-wrap items-center gap-2 sticky top-0 z-20">
-          <button className="btn-gold flex-1 sm:flex-none" onClick={() => startAdvance('week')}>
-            Advance Week
-          </button>
-          <button className="btn-ghost flex-1 sm:flex-none" onClick={() => startAdvance('month')}>
-            Advance Month
-          </button>
-          <div className="text-xs text-stone-400 w-full sm:w-auto sm:ml-2">
-            {s.pendingEvents.length ? (
-              <>
-                {s.pendingEvents.length - unanswered.length}/{s.pendingEvents.length} decisions made ·{' '}
-                <button className="underline text-gold-300" onClick={() => { setAdvancing(false); setEventIdx(0); }}>review</button>
-              </>
-            ) : (
-              'Nothing on the table this week.'
-            )}
-            {s.lastReport && (
-              <>
-                {' · '}
-                <button className="underline text-gold-300" onClick={() => setReports([s.lastReport!])}>last report</button>
-              </>
-            )}
-          </div>
         </div>
       )}
 
@@ -144,49 +153,51 @@ export function App() {
 
       <nav className="flex overflow-x-auto border-b border-noir-700">
         {TABS.map((t) => (
-          <button key={t.id} className={`tab ${tab === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>
-            {t.label}
-          </button>
+          <button key={t.id} className={`tab ${tab === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </nav>
 
-      <main className="panel p-3 sm:p-4">
-        {tab === 'island' && <Overview s={s} />}
-        {tab === 'business' && <Businesses s={s} />}
-        {tab === 'crew' && <CrewList s={s} />}
-        {tab === 'family' && (
-          <FamilyTree s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
-        )}
-        {tab === 'chronicle' && <Chronicle s={s} />}
-      </main>
+      {tab === 'map' ? (
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
+          <div className="panel relative overflow-hidden">
+            <IslandMap s={s} selected={district} onSelect={setDistrict} />
+            <div className="absolute left-2 bottom-2 z-10"><PlayerCard s={s} /></div>
+            <div className="absolute right-2 top-12 z-20"><AlertRail s={s} items={alertList} onAlert={onAlert} /></div>
+          </div>
+          <aside className="panel p-3 sm:p-4 lg:max-h-[82vh] lg:overflow-y-auto">
+            {district ? (
+              <>
+                <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setDistrict(undefined)}>← the whole island</button>
+                <DistrictPanel s={s} id={district} onOpenBusiness={() => setTab('business')} />
+              </>
+            ) : <Overview s={s} />}
+          </aside>
+        </div>
+      ) : (
+        <main className="panel p-3 sm:p-4">
+          {tab === 'business' && <Businesses s={s} />}
+          {tab === 'crew' && <CrewList s={s} />}
+          {tab === 'family' && (
+            <FamilyTree s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
+          )}
+          {tab === 'chronicle' && <Chronicle s={s} />}
+        </main>
+      )}
 
       <footer className="panel p-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
         <span>Seed: <span className="text-stone-300">{s.seed}</span></span>
-        <input
-          value={seedInput}
-          onChange={(e) => setSeedInput(e.target.value)}
-          placeholder="seed (optional)"
-          className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-36"
-        />
-        <button className="btn-ghost text-xs py-1" onClick={() => window.confirm('Abandon this game and start over?') && restart(seedInput.trim())}>
-          New game
-        </button>
+        <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed (optional)" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-36" />
+        <button className="btn-ghost text-xs py-1" onClick={() => window.confirm('Abandon this game and start over?') && restart(seedInput.trim())}>New game</button>
         <span className="ml-auto">Saved automatically in this browser.</span>
       </footer>
 
       {current && (
-        <EventModal
-          s={s}
-          ev={current}
-          index={eventIdx!}
-          total={s.pendingEvents.length}
-          selected={answers[current.iid]}
-          onChoose={choose}
-          onClose={() => { setEventIdx(null); setAdvancing(false); }}
-        />
+        <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
-      {reports && !current && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {reports && !current && !sheet && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
     </div>
     </OrdersContext.Provider>
+    </SheetContext.Provider>
   );
 }

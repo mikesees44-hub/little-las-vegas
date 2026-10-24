@@ -4,6 +4,7 @@ import { bloodLine, chooseHeir, SUCCESSION_LAWS } from '../../engine/dynasty';
 import { opinion } from '../../engine/relations';
 import type { Character, GameState, SuccessionLaw } from '../../engine/types';
 import { OpinionBadge } from './CrewList';
+import { CharLink, Face } from './People';
 
 export function FamilyTree({ s, pendingLaw, pendingHeir, onLaw, onHeir }: {
   s: GameState;
@@ -79,11 +80,12 @@ export function FamilyTree({ s, pendingLaw, pendingHeir, onLaw, onHeir }: {
 function Person({ s, boss, c }: { s: GameState; boss: Character; c: Character }) {
   const rel = c.id === boss.id ? 'head of the house' : relationLabel(s, boss, c);
   return (
-    <div className={`rounded border px-2.5 py-1.5 ${c.alive ? 'border-noir-700 bg-noir-800/70' : 'border-noir-800 bg-noir-900/40 opacity-60'}`}>
-      <div className="flex justify-between gap-2">
+    <div className={`rounded border px-2.5 py-1.5 flex gap-2 ${c.alive ? 'border-noir-700 bg-noir-800/70' : 'border-noir-800 bg-noir-900/40 opacity-60'}`}>
+      <Face s={s} c={c} size={36} />
+      <div className="flex justify-between gap-2 flex-1 min-w-0">
         <div className="min-w-0">
           <div className="text-sm font-semibold text-stone-100 truncate">
-            {displayName(c)}
+            <CharLink s={s} id={c.id} />
             {c.maidenName && <span className="text-stone-500 font-normal"> (née {c.maidenName})</span>}
           </div>
           <div className="text-xs text-stone-400">

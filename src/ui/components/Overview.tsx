@@ -1,91 +1,50 @@
-import { displayName, shortName } from '../../engine/characters';
-import { districtTake } from '../../engine/economy';
+import { displayName } from '../../engine/characters';
 import { opinion } from '../../engine/relations';
-import { FACTION_NAMES } from '../../engine/world';
-import type { FactionId, GameState } from '../../engine/types';
+import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { OpinionBadge } from './CrewList';
+import { CharLink, Face } from './People';
 
-const FACTION_COLOR: Record<FactionId, string> = {
-  player: 'bg-gold-500', manno: 'bg-blood-500', feldstein: 'bg-indigo-500', kessler: 'bg-emerald-600',
-  philly: 'bg-purple-600', law: 'bg-sky-600', none: 'bg-noir-600',
-};
-
+/** The map's side panel when no district is selected: your situation and the people across the board. */
 export function Overview({ s }: { s: GameState }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {s.startingProblem && (
         <div className="rounded-md border border-amber-700/50 bg-amber-900/10 px-3 py-2 text-sm text-amber-200">
           <span className="font-semibold">Your situation: </span>{s.startingProblem}
         </div>
       )}
+      <p className="text-xs text-stone-500">Click a district on the map to see who holds it. Click any face or name to open their sheet and deal with them.</p>
       <section>
-        <div className="panel-title">The island</div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          {s.districts.map((d) => {
-            const capo = d.capoId ? s.characters[d.capoId] : undefined;
-            const entries = (Object.entries(d.influence) as [FactionId, number][]).filter(([, v]) => v > 0).sort((a, b) => (b[0] === 'player' ? 1 : 0) - (a[0] === 'player' ? 1 : 0) || b[1] - a[1]);
-            return (
-              <div key={d.id} className="rounded-md border border-noir-700 bg-noir-800/70 p-2.5">
-                <div className="flex justify-between gap-2">
-                  <div className="font-semibold text-stone-100">{d.name}</div>
-                  <div className="text-xs text-gold-300 tabular-nums">{fmt$(districtTake(s, d.id))}/wk</div>
-                </div>
-                <div className="text-xs text-stone-500">{capo ? `Capo: ${shortName(capo)}` : 'No capo — the take leaks'}</div>
-                <div className="mt-1.5 flex h-2 rounded overflow-hidden" title={entries.map(([f, v]) => `${FACTION_NAMES[f]} ${v}%`).join(', ')}>
-                  {entries.map(([f, v]) => (
-                    <div key={f} className={FACTION_COLOR[f]} style={{ width: `${v}%` }} />
-                  ))}
-                </div>
-                <div className="mt-1 text-[11px] text-stone-400 flex flex-wrap gap-x-2">
-                  {entries.map(([f, v]) => (
-                    <span key={f}><span className={`inline-block w-2 h-2 rounded-sm mr-0.5 ${FACTION_COLOR[f]}`} />{FACTION_NAMES[f]} {v}%</span>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section>
-        <div className="panel-title">Rivals</div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+        <div className="panel-title text-base">Across the board</div>
+        <ul className="mt-2 space-y-2">
           {s.rivals.map((r) => {
             const leader = s.characters[r.leaderId];
+            if (!leader) return null;
             return (
-              <div key={r.id} className="rounded-md border border-noir-700 bg-noir-800/70 p-2.5">
-                <div className="flex justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-semibold text-stone-100">{r.name}</div>
-                    <div className="text-xs text-stone-400 truncate">{displayName(leader)} · {leader.traits.join(', ')}</div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-[10px] uppercase tracking-widest text-stone-500">Of you</div>
+              <li key={r.id} className="flex gap-2 items-start">
+                <Face s={s} c={leader} size={44} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex justify-between gap-2">
+                    <div className="text-sm font-semibold text-stone-100 truncate">{r.name}</div>
                     <OpinionBadge v={opinion(s, r.leaderId, s.playerId)} />
                   </div>
+                  <div className="text-xs text-stone-400 truncate"><CharLink s={s} id={leader.id}>{displayName(leader)}</CharLink></div>
+                  <div className="text-[11px] text-stone-500">Wants to <span className="text-stone-300">{r.goal}</span> · muscle {r.muscle}{r.kind === 'mob' ? ` · ${fmt$(r.money)}` : ''}</div>
+                  {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
                 </div>
-                <div className="text-xs text-stone-500 mt-1">
-                  Goal: <span className="text-stone-300 capitalize">{r.goal}</span> · muscle {r.muscle} · exposure {r.exposure}
-                </div>
-                {r.lastMove && <div className="text-xs text-stone-300 mt-1 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </section>
-
       <section>
-        <div className="panel-title">Money</div>
+        <div className="panel-title text-base">Money</div>
         <p className="text-sm text-stone-400 mt-1">
           {s.businesses.filter((b) => b.owner === 'player').length} businesses · unwashed cash {fmt$(s.unwashed)} · {s.favors} political favor{s.favors === 1 ? '' : 's'}
           {s.loans.length ? ` · ${s.loans.length} loans on the street` : ''}
         </p>
-        {s.debts.length > 0 && (
-          <div className="mt-2 text-xs text-amber-300">
-            Debts: {s.debts.map((d) => `${d.lender} ${fmt$(d.weeklyPayment)}/wk × ${d.weeksLeft}`).join('; ')}
-          </div>
-        )}
+        {s.debts.length > 0 && <div className="mt-1 text-xs text-amber-300">Debts: {s.debts.map((d) => `${d.lender} ${fmt$(d.weeklyPayment)}/wk × ${d.weeksLeft}`).join('; ')}</div>}
       </section>
     </div>
   );

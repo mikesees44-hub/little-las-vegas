@@ -20,5 +20,7 @@ describe('architecture', () => {
     const html = renderToString(createElement(App));
     expect(html).toContain('Little Las Vegas');
     expect(html).toContain('Advance Week');
+    expect(html).toContain('data-testid="island-map"');
+    expect(html).toContain('data-testid="player-card"');
   });
 });

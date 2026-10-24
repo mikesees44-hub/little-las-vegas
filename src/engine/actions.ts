@@ -5,7 +5,13 @@ import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE
 import { reached } from './history';
 import type { Ctx } from './ledger';
 import { bookCapacity, LEND_AMOUNTS } from './loans';
-import type { Effect, GameState, LedgerCategory, PlayerAction } from './types';
+import { previewInteraction, type Acceptance } from './interactions';
+import { chance } from './rng';
+import { FACTION_NAMES } from './world';
+import type { Effect, FactionId, GameState, LedgerCategory, PlayerAction, RivalId } from './types';
+
+export const PUSH_COST = 2000;
+export const PUSH_GAIN = 6;
 
 /**
  * Player orders. Every action previews as a list of labelled effects (the UI
@@ -24,6 +30,10 @@ export interface ActionPreview {
   because: string;
   disabledReason?: string;
   category: LedgerCategory;
+  /** If the other side can say no: the odds and why. */
+  acceptance?: Acceptance;
+  /** What happens if they say no. */
+  refuseEffects?: Effect[];
 }
 
 type ActionOf<K extends PlayerAction['kind']> = Extract<PlayerAction, { kind: K }>;
@@ -45,6 +55,52 @@ function need(cond: boolean, reason: string, prev?: string): string | undefined 
 export const MAX_PER_KIND = 4;
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  interact: {
+    preview: (s, a) => {
+      const p = previewInteraction(s, a.id, a.target);
+      if (!p) return { title: 'Nothing to do', effects: [], cost: 0, because: '', disabledReason: 'Not possible', category: 'event' };
+      return {
+        title: p.title,
+        detail: p.detail,
+        effects: p.effects,
+        refuseEffects: p.refuseEffects,
+        acceptance: p.acceptance,
+        cost: p.cost,
+        because: p.because,
+        disabledReason: p.disabledReason ?? (p.cost > s.money ? `Needs ${fmtMoney(p.cost)}` : undefined),
+        category: 'event',
+      };
+    },
+  },
+  pushDistrict: {
+    preview: (s, a) => {
+      const d = s.districts.find((x) => x.id === a.district);
+      const label = `Push into ${d?.name ?? '?'}`;
+      if (!d) return { title: label, effects: [], cost: 0, because: '', disabledReason: 'Unknown district', category: 'event' };
+      const owner = (Object.keys(d.influence) as FactionId[])
+        .filter((f) => f !== 'player' && f !== 'none' && (d.influence[f] ?? 0) > 0)
+        .sort((x, y) => (d.influence[y] ?? 0) - (d.influence[x] ?? 0))[0] as RivalId | undefined;
+      const neutral = d.influence.none ?? 0;
+      const effects: Effect[] = [
+        { type: 'money', amount: -PUSH_COST, label },
+        { type: 'influence', district: d.id, faction: 'player', amount: PUSH_GAIN, label },
+        { type: 'heat', bar: 'local', amount: 2, label },
+      ];
+      if (owner && neutral < PUSH_GAIN && s.rivals.some((r) => r.id === owner)) {
+        effects.push({ type: 'rivalOpinion', rival: owner, amount: -10, reason: `Pushed into ${d.name}`, label });
+        effects.push({ type: 'schedule', key: 'retaliation', minWeeks: 1, maxWeeks: 5, chance: 0.4, hint: `${FACTION_NAMES[owner]} may hit back`, params: { rival: owner }, label });
+      }
+      return {
+        title: label,
+        detail: `Men on the corners, envelopes for the bartenders. You hold ${d.influence.player ?? 0}% (${neutral}% is up for grabs).`,
+        effects,
+        cost: PUSH_COST,
+        because: `pushed into ${d.name}`,
+        disabledReason: (d.influence.player ?? 0) >= 95 ? 'You already run it' : s.money < PUSH_COST ? `Needs ${fmtMoney(PUSH_COST)}` : undefined,
+        category: 'event',
+      };
+    },
+  },
   buyBusiness: {
     preview: (s, a) => {
       const def = CATALOG[a.biz];
@@ -206,7 +262,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
 export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
   const def = DEFS[a.kind] as Def<typeof a.kind>;
   const p = def.preview(s, a as never);
-  return { ...p, effects: named(p.title, p.effects) };
+  return { ...p, effects: named(p.title, p.effects), refuseEffects: p.refuseEffects ? named(`${p.title}: refused`, p.refuseEffects) : undefined };
 }
 
 /** Projected treasury after the queued orders (for UI affordability). */
@@ -226,8 +282,15 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[]): void
       ctx.log.push(`Order not carried out — ${p.title}: ${p.disabledReason}.`);
       continue;
     }
+    if (p.acceptance && !chance(s, p.acceptance.chance)) {
+      if (p.refuseEffects?.length) applyEffects(ctx, p.refuseEffects, { label: `${p.title}: refused`, because: p.because, category: p.category });
+      ctx.log.push(`${p.title} — refused.`);
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You tried: ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}. The answer was no.`, kind: 'decision' });
+      continue;
+    }
     applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
     def.commit?.(ctx, a as never);
+    if (p.acceptance) ctx.log.push(`${p.title} — accepted.`);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${p.because}.`, kind: 'decision' });
   }
 }
@@ -246,6 +309,13 @@ export function availableActions(s: GameState): PlayerAction[] {
   for (const b of owned(s)) if (b.kind !== 'casino' && !isOpen(s, b)) out.push({ kind: 'sellBusiness', businessId: b.id });
   for (const amount of LEND_AMOUNTS) out.push({ kind: 'lend', amount });
   out.push({ kind: 'findFrontMan' }, { kind: 'charterBank' }, { kind: 'casino' });
+  for (const d of s.districts) if ((d.influence.player ?? 0) < 90) out.push({ kind: 'pushDistrict', district: d.id });
+  // A couple of interactions with random people.
+  const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
+  if (people.length) {
+    const c = people[s.week % people.length];
+    for (const id of ['gift_small', 'dinner', 'make', 'promote', 'demand'] as const) out.push({ kind: 'interact', id, target: c.id });
+  }
   return out;
 }
 
