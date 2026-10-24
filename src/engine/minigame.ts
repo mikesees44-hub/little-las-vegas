@@ -331,3 +331,8 @@ export function applyMinigameEffect(ctx: Ctx, e: Extract<Effect, { type: 'miniga
 export function minigameFirst(evs: EventInstance[]): EventInstance[] {
   return [...evs.filter(eventHasMinigame), ...evs.filter((e) => !eventHasMinigame(e))];
 }
+
+/** A stable hash (for per-thing traits that must not touch any dice). */
+export function hashOf(x: string): number {
+  return hashSeed(x);
+}

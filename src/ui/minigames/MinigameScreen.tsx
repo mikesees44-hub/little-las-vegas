@@ -7,6 +7,7 @@ import { MgStill } from './MgStill';
 import { NewspaperReel, type ReelPhoto } from './NewspaperReel';
 import { TrialPanel } from './TrialPanel';
 import { CinematicBeat } from './Cinematic';
+import { CardsPanel, CollectionPanel, ElectionPanel, HeistPanel, SitdownPanel, SweepPanel } from './Panels';
 
 const CINEMATIC: Partial<Record<MinigameId, boolean>> = { madeboss: true, ceremony: true };
 
@@ -21,6 +22,12 @@ export type PanelProps = { s: GameState; ses: MgSession; onMove: (id: string) =>
 const PANELS: Partial<Record<MinigameId, ComponentType<PanelProps>>> = {
   trial: TrialPanel as ComponentType<PanelProps>,
   arraignment: TrialPanel as ComponentType<PanelProps>,
+  cards: CardsPanel as ComponentType<PanelProps>,
+  sitdown: SitdownPanel as ComponentType<PanelProps>,
+  collection: CollectionPanel as ComponentType<PanelProps>,
+  heist: HeistPanel as ComponentType<PanelProps>,
+  sweep: SweepPanel as ComponentType<PanelProps>,
+  election: ElectionPanel as ComponentType<PanelProps>,
 };
 export function registerPanel(id: MinigameId, c: ComponentType<PanelProps>): void {
   PANELS[id] = c;
@@ -29,6 +36,7 @@ export function registerPanel(id: MinigameId, c: ComponentType<PanelProps>): voi
 const PHOTO: Partial<Record<MinigameId, ReelPhoto>> = { trial: 'courthouse', arraignment: 'courthouse', heist: 'car', cards: 'restaurant', sitdown: 'restaurant', collection: 'window', sweep: 'window', election: 'courthouse' };
 
 const PHASE_LABEL: Record<string, string> = {
+  buyin: 'The buy-in', bet: 'Betting', between: 'Between hands', last: 'Last hand', talk: 'The sit-down', round: 'The rounds', plan: 'The plan', run: 'The job', alarm: 'The alarm', search: 'The search', found: 'The bug', count: 'The count',
   side: 'Which side?', arraign: 'The plea', bail: 'Bail', flip: 'The offer', path: 'After', lawyer: 'The lawyer', jury: 'Jury selection', tamper: 'The jury',
   case: "The government's case", cross: 'Cross-examination', deal: 'The offer', defense: 'The defense', closing: 'Closing arguments', verdict: 'The verdict', sentence: 'Sentencing', knock: '6:10 a.m.',
 };
@@ -129,7 +137,7 @@ export function MinigameScreen({ s, game, iid, params, parts, onDone, onCancel }
                 </div>
                 {!ses.done && (
                   <div className="space-y-1.5" data-testid="mg-options">
-                    {opts.filter((x) => !(ses.phase === 'jury' && x.id.startsWith('strike_'))).map((x) => (
+                    {opts.filter((x) => !(ses.phase === 'jury' && x.id.startsWith('strike_')) && !x.id.startsWith('search_')).map((x) => (
                       <button key={x.id} disabled={!!x.disabled} onClick={() => move(x.id)} data-testid="mg-option"
                         className={`w-full text-left rounded-md border px-3 py-2 transition-colors disabled:opacity-40 ${x.tone === 'dirty' ? 'border-blood-500/50 bg-blood-500/10 hover:border-blood-400' : x.drastic ? 'border-amber-500/50 bg-amber-500/5 hover:border-amber-400' : 'border-noir-600 bg-noir-800 hover:border-gold-500'}`}>
                         <div className="flex justify-between gap-2">
