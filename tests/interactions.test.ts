@@ -61,8 +61,16 @@ describe('character interactions', () => {
     const soldier = crew(s).find((x) => x.rank === 'soldier')!;
     s.money = 50000;
     s = advanceWeek(s, { actions: [{ kind: 'interact', id: 'make', target: assoc.id }, { kind: 'interact', id: 'exile', target: soldier.id }] }).state;
-    expect(s.characters[assoc.id].rank).toBe('soldier');
+    // Making goes through the membership pipeline: proposed, then made when Philadelphia's books open.
+    expect(s.characters[assoc.id].rank).toBe('associate');
+    expect(s.characters[assoc.id].proposedWeek).toBeDefined();
     expect(s.characters[soldier.id].faction).toBe('none');
+    s.books = { open: true, slots: 2, nextChange: s.week + 30 };
+    for (let w = 0; w < 6 && s.characters[assoc.id].rank === 'associate'; w++) {
+      const ev = s.pendingEvents.find((e) => e.defId === 'making' && e.meta?.charId === assoc.id);
+      s = advanceWeek(s, ev ? { choices: { [ev.iid]: 'make' } } : {}).state;
+    }
+    expect(s.characters[assoc.id].rank).toBe('soldier');
     const victim = crew(s).find((x) => x.rank === 'soldier' && x.id !== assoc.id)!;
     s = advanceWeek(s, { actions: [{ kind: 'interact', id: 'whack', target: victim.id }] }).state;
     expect(s.characters[victim.id].alive).toBe(false);

@@ -29,8 +29,10 @@ export function contractAcceptance(s: GameState, c: Character, cut: number): Acc
   return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: 50 }, ...reasons.filter((r) => r.value !== 0)] };
 }
 import { chance } from './rng';
+import { ORDERS } from './events';
+import { capoOf, obeyOdds, orderAgent, validCapo } from './hierarchy';
 import { FACTION_NAMES } from './world';
-import type { Effect, FactionId, GameState, LedgerCategory, PlayerAction, RivalId } from './types';
+import type { Effect, FactionId, GameState, LedgerCategory, OrderVia, PlayerAction, RivalId } from './types';
 
 export const PUSH_COST = 2000;
 export const PUSH_GAIN = 6;
@@ -80,7 +82,103 @@ function need(cond: boolean, reason: string, prev?: string): string | undefined 
 
 export const MAX_PER_KIND = 4;
 
+/** How long an order takes and how insulated the boss is, by channel. */
+export const VIA_INFO: Record<OrderVia, { name: string; text: string }> = {
+  direct: { name: 'Yourself', text: 'Done this week. Your fingerprints are on it.' },
+  underboss: { name: 'Through the underboss', text: 'Takes a week. Little comes back to you, but he may change it or sit on it.' },
+  capo: { name: 'Through a capo', text: 'Takes a week. Insulated — but the capo does it his way.' },
+};
+
+/** Names of the general orders when they cannot be previewed. */
+export const ORDER_TITLES: Record<string, string> = {
+  shakedown: 'Lean on the Pacific Avenue bars', expand: 'Push into a district', laylow: 'Tell everyone to lay low', parish: 'Donate to St. Ann\'s',
+  cops: 'Grease the Chief of Police', business: 'Open a new place', hitback: 'Hit back', shylock: 'Collect on the shylock book',
+  clambake: 'Throw the crew a clambake', gift: 'Send a gift to Sal Moretti', recruit: 'Bring along a couple of young guys', kessler: 'Squeeze Danny Kessler\'s clubs', launder: 'Wash money through the motels',
+};
+
+/** Evidence an order leaves on the boss when he gives it himself. */
+export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, hitback: 6, kessler: 4, cops: 3, shylock: 3, launder: 2 };
+
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  order: {
+    preview: (s, a) => {
+      const def = ORDERS.find((o) => o.key === a.key);
+      if (!def) return { title: 'Unknown order', effects: [], cost: 0, because: '', disabledReason: 'No such order', category: 'event' };
+      if (!def.available(s)) return { title: ORDER_TITLES[a.key] ?? a.key, effects: [], cost: 0, because: '', disabledReason: 'Not possible right now', category: 'event' };
+      const ch = def.build({ ...s });
+      const agent = a.via === 'direct' ? undefined : orderAgent(s, a.via);
+      const prints = ORDER_PRINTS[a.key] ?? 1;
+      const label = `Order: ${ch.label}`;
+      const cost = ch.effects.reduce((acc, e) => acc + (e.type === 'money' && e.amount < 0 ? -e.amount : 0), 0);
+      let why: string | undefined;
+      why = need(def.available(s), 'Not possible right now', why);
+      why = need(a.via === 'direct' || !!agent, a.via === 'underboss' ? 'You have no underboss to pass it through' : 'No capo free to carry it', why);
+      why = need(s.money >= cost, `Needs ${fmtMoney(cost)}`, why);
+      if (a.via === 'direct') {
+        return {
+          title: `${ch.label} (yourself)`, detail: ch.detail, cost, because: ch.because, category: 'event', disabledReason: why,
+          effects: [...ch.effects, ...(prints ? [{ type: 'evidence', charId: s.playerId, amount: prints, label: `${label}: your fingerprints` } as Effect] : [])],
+        };
+      }
+      const odds = agent ? obeyOdds(s, agent) : { obey: 0, distort: 0 };
+      return {
+        title: `${ch.label} (through ${agent ? agent.firstName : 'nobody'})`,
+        detail: `${ch.detail ? ch.detail + ' ' : ''}${VIA_INFO[a.via].text}`,
+        effects: [{ type: 'schedule', key: 'delegated_order', minWeeks: 1, maxWeeks: 1, chance: 1, hint: `${agent?.firstName ?? 'He'} carries it out next week`, params: { key: a.key, via: a.via, agent: agent?.id ?? '' }, label }],
+        odds: { chance: odds.obey, reasons: [{ label: `Done as told`, value: Math.round(odds.obey * 100) }, { label: 'Done his way', value: Math.round(odds.distort * 100) }, { label: 'Ignored', value: -Math.round((1 - odds.obey - odds.distort) * 100) }] },
+        warning: `What it would do: ${ch.effects.map((e) => e.type === 'money' ? `${e.amount > 0 ? '+' : ''}${fmtMoney(e.amount)}` : e.type).filter((x) => x !== 'schedule').slice(0, 4).join(', ')}`,
+        cost: 0, because: `${ch.because} (through ${agent?.firstName ?? 'the chain'})`, disabledReason: why, category: 'event',
+      };
+    },
+  },
+  reassign: {
+    preview: (s, a) => {
+      const c = s.characters[a.charId];
+      const k = validCapo(s, a.capoId);
+      const prev = c ? capoOf(s, c) : undefined;
+      const label = `Move ${c?.firstName ?? '?'} to ${k ? `${k.firstName}'s crew` : '?'}`;
+      let why: string | undefined;
+      why = need(!!c && c.alive && c.faction === 'player' && (c.rank === 'soldier' || c.rank === 'associate'), 'Only soldiers and associates move between crews', why);
+      why = need(!!k, 'Not a capo', why);
+      why = need(prev?.id !== k?.id, 'He is already in that crew', why);
+      return {
+        title: label,
+        detail: prev ? `${prev.firstName} loses a man and will not thank you. ${c?.firstName} thinks ${opinion(s, a.charId, prev.id)} of his old capo, ${k ? opinion(s, a.charId, k.id) : 0} of the new one.` : 'He joins a crew.',
+        effects: c && k ? [{ type: 'assign', charId: c.id, capoId: k.id, label: `${c.firstName} → ${k.firstName}'s crew` }] : [],
+        cost: 0, because: `moved ${c?.firstName ?? 'a man'} to ${k?.firstName ?? 'another'}'s crew`, disabledReason: why, category: 'event',
+      };
+    },
+  },
+  propose: {
+    preview: (s, a) => {
+      const c = s.characters[a.charId];
+      const v = (a.voucherId ? s.characters[a.voucherId] : undefined) ?? (c ? capoOf(s, c) : undefined) ?? s.characters[s.playerId];
+      const label = `Membership: ${c?.firstName ?? '?'} ${c?.lastName ?? ''}`.trim();
+      let why: string | undefined;
+      why = need(!!c && c.alive && c.faction === 'player' && c.rank === 'associate' && !c.specialty, 'Only associates of the family can be proposed', why);
+      why = need(c?.proposedWeek === undefined, 'His name is already with Philadelphia', why);
+      why = need(s.money >= 500, 'Needs $500', why);
+      return {
+        title: `Propose ${c?.firstName ?? '?'} for membership`,
+        detail: `${v ? `${v.id === s.playerId ? 'You vouch' : `${v.firstName} vouches`} for him — if he goes bad, it is on ${v.id === s.playerId ? 'you' : 'him'}. ` : ''}${s.books?.open ? `The books are open (${s.books.slots} left).` : 'The books are closed: he waits until Philadelphia opens them.'}`,
+        effects: c ? [{ type: 'money', amount: -500, label: `${label}: envelope for Philadelphia` }, { type: 'propose', charId: c.id, voucherId: v?.id ?? s.playerId, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 10, reason: 'Put my name up', decay: 1, label }] : [],
+        cost: 500, because: `proposed ${c?.firstName ?? 'a man'} for membership`, disabledReason: why, category: 'event',
+      };
+    },
+  },
+  background: {
+    preview: (s, a) => {
+      const c = s.characters[a.charId];
+      const label = `Background check: ${c?.firstName ?? '?'}`;
+      return {
+        title: `Have ${c?.firstName ?? '?'} looked into`, detail: 'Phone records and a cop who owes you. Two weeks. Plants and informants turn up this way.',
+        effects: c ? [{ type: 'money', amount: -600, label }, { type: 'checkBackground', charId: c.id, label }] : [],
+        cost: 600, because: `ran a background check on ${c?.firstName ?? 'a man'}`,
+        disabledReason: !c || c.faction !== 'player' ? 'Not one of yours' : c.checkedWeek !== undefined && s.week - c.checkedWeek < 26 ? 'Checked recently' : s.money < 600 ? 'Needs $600' : undefined,
+        category: 'event',
+      };
+    },
+  },
   declareWar: {
     preview: (s, a) => {
       const r = s.rivals.find((x) => x.id === a.rival);
@@ -615,6 +713,15 @@ export function availableActions(s: GameState): PlayerAction[] {
     const t = tasks[s.week % tasks.length];
     out.push({ kind: 'councilTask', seat, task: t, target: TASKS[t].targeted ? 'feldstein' : undefined });
   }
+  for (const o of ORDERS) if (o.key !== 'narcotics') out.push({ kind: 'order', key: o.key, via: (['direct', 'underboss', 'capo'] as const)[(s.week + o.key.length) % 3] });
+  const assoc = men.filter((c) => c.rank === 'associate');
+  if (assoc.length) {
+    const a0 = assoc[s.week % assoc.length];
+    out.push({ kind: 'propose', charId: a0.id }, { kind: 'background', charId: a0.id });
+  }
+  const capoList = men.filter((c) => c.rank === 'capo');
+  const movers = men.filter((c) => c.rank === 'soldier' || c.rank === 'associate');
+  if (capoList.length >= 2 && movers.length) out.push({ kind: 'reassign', charId: movers[s.week % movers.length].id, capoId: capoList[s.week % capoList.length].id });
   const ed = (['omerta', 'blitz', 'nojunk', 'lowprofile'] as const)[s.week % 4];
   out.push({ kind: 'edict', edict: ed, on: !s.edicts[ed] });
   const free = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank !== 'civilian' && c.id !== s.playerId && !s.schemes.some((x) => x.agents.includes(c.id)));

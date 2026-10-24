@@ -9,6 +9,7 @@ import { Businesses } from './components/Businesses';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
+import { CrewTree } from './components/CrewTree';
 import { EventModal } from './components/EventModal';
 import { FamilyTree } from './components/FamilyTree';
 import { Header } from './components/Header';
@@ -20,9 +21,10 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'family' | 'chronicle';
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'family' | 'chronicle';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'The Island' },
+  { id: 'tree', label: 'The Crew' },
   { id: 'business', label: 'Rackets & Fronts' },
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
@@ -183,6 +185,7 @@ export function App() {
       ) : (
         <main className="panel p-3 sm:p-4">
           {tab === 'business' && <Businesses s={s} />}
+          {tab === 'tree' && <CrewTree s={s} />}
           {tab === 'crew' && <CrewList s={s} />}
           {tab === 'schemes' && <SchemesPanel s={s} />}
           {tab === 'table' && <TablePanel s={s} />}

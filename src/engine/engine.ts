@@ -3,7 +3,10 @@ import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
 import { runGoals } from './goals';
 import { runCouncil } from './council';
-import { crewMonth, crewWeek, revealIntel } from './crewlife';
+import { crewMonth, crewWeek, defect, factionsWeek, revealIntel } from './crewlife';
+import { tidyRegimes } from './hierarchy';
+import { regimesMonth, regimesWeek } from './regimes';
+import { rivalCrewWeek } from './rivalcrew';
 import { rivalSchemes, runSchemes } from './schemes';
 import { secretsMonth } from './secrets';
 import { rivalDisputes, tableWeek } from './table';
@@ -44,7 +47,9 @@ function deepCopy(v: unknown): unknown {
   const o = v as Record<string, unknown>;
   for (const k in o) {
     const x = o[k];
-    if (x !== undefined) out[k] = deepCopy(x);
+    // Personal chronicles are append-only lists of immutable entries: copy the list, share the entries.
+    if (k === 'story' && Array.isArray(x)) out[k] = x.slice();
+    else if (x !== undefined) out[k] = deepCopy(x);
   }
   return out;
 }
@@ -99,18 +104,16 @@ function monthlyTick(ctx: Ctx): void {
   rivalSuccession(ctx);
   crewMonth(ctx);
   secretsMonth(s);
-  // Disloyal men may walk out.
+  regimesMonth(ctx);
+  // Disloyal men may walk out (a capo takes the men loyal to him).
   const boss = player(s);
   for (const m of crew(s)) {
-    if (!isFree(s, m) || m.dynasty || hasTrait(m, 'Loyal-to-a-fault')) continue;
+    if (!m.alive || m.faction !== 'player' || !isFree(s, m) || m.dynasty || hasTrait(m, 'Loyal-to-a-fault')) continue;
     const op = opinion(s, m.id, boss.id);
     if (op <= -45 && chance(s, 0.25)) {
-      const rival = s.rivals.find((r) => r.id === 'manno' || r.id === 'kessler');
-      m.faction = rival?.id ?? 'none';
-      for (const d of s.districts) if (d.capoId === m.id) d.capoId = undefined;
-      ctx.log.push(`${displayName(m)} walked out on the crew${rival ? ` and went over to ${rival.shortName}` : ''}.`);
-      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(m)} deserted the crew.`, kind: 'misc' });
-      if (m.rank === 'capo' || m.rank === 'underboss') {
+      const wasCapo = m.rank === 'capo' || m.rank === 'underboss';
+      defect(ctx, m, 'desert');
+      if (wasCapo) {
         const replacement = crew(s).filter((c) => c.rank === 'soldier' && isFree(s, c)).sort((a, b) => b.attributes.leadership - a.attributes.leadership)[0];
         const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= 40);
         if (replacement && d) {
@@ -118,6 +121,7 @@ function monthlyTick(ctx: Ctx): void {
           d.capoId = replacement.id;
           addOpinion(s, replacement.id, boss.id, 'Made me a capo', 20, 1);
           ctx.log.push(`${displayName(replacement)} takes over ${d.name}.`);
+          tidyRegimes(s);
         }
       }
     }
@@ -210,11 +214,14 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     runEconomy(ctx);
     runCouncil(ctx);
     crewWeek(ctx);
+    regimesWeek(ctx);
+    factionsWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
   }
   if (!s.gameOver) {
     rivalWeek(ctx);
+    rivalCrewWeek(ctx);
     rivalSchemes(ctx);
     runSchemes(ctx);
     warWeek(ctx);
@@ -237,6 +244,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver && monthKey(s.date) !== prevMonth) monthlyTick(ctx);
 
   if (!s.gameOver) {
+    tidyRegimes(s);
     const errs = validatePlayer(s);
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);

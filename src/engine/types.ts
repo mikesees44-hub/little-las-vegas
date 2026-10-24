@@ -112,6 +112,74 @@ export interface Character {
   office?: string;
   /** This man secretly informs for another faction. */
   informantFor?: FactionId;
+
+  /* ---- Crew & hierarchy (crew-life pillar) ---- */
+  /** Soldiers, associates and outside guys: the capo whose regime he belongs to (undefined = unassigned). */
+  capoId?: string;
+  /** What he is good at on the street. */
+  craft?: Craft;
+  /** Outside guys (not members): bookie, fence, numbers runner, a cop or politician on the pad. */
+  outside?: OutsideRole;
+  /** What he wants out of life. */
+  goal?: PersonalGoal;
+  /** Weaknesses (kept non-explicit). */
+  vices?: Vice[];
+  /** Wife and kids, by name (lightweight: not full characters). */
+  household?: Household;
+  /** What he brought in last week (gross, before your cut). */
+  lastEarn?: number;
+  /** His personal chronicle (most recent last, capped). */
+  story?: StoryEntry[];
+  /** The made man who vouched for him (responsible if he goes bad). */
+  vouchedBy?: string;
+  /** Proposed to Philadelphia for membership on this week (waiting for the books). */
+  proposedWeek?: number;
+  /** A background check has been run on him (week). */
+  checkedWeek?: number;
+  /** He owes a rival's shylock. */
+  debtTo?: { rival: RivalId; amount: number; week: number };
+  /** A rival has been courting him (since week). */
+  courtedBy?: { rival: RivalId; week: number };
+  /** Week he was last the subject of a popup (per-character cooldown). */
+  lastAskWeek?: number;
+  /** Took the oath (week). */
+  madeWeek?: number;
+}
+
+export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
+export type OutsideRole = 'bookie' | 'fence' | 'runner' | 'cop' | 'politician';
+export type PersonalGoal = 'get_made' | 'own_bar' | 'become_capo' | 'get_out' | 'get_rich' | 'take_chair';
+export type Vice = 'horses' | 'women' | 'booze' | 'cards' | 'debt';
+
+export interface Household {
+  wife?: string;
+  kids: { name: string; male: boolean; born: number }[];
+}
+
+export interface StoryEntry {
+  week: number;
+  text: string;
+}
+
+/** Philadelphia's membership books. */
+export interface Books {
+  open: boolean;
+  /** Makings left while open. */
+  slots: number;
+  /** Week the books next open or close. */
+  nextChange: number;
+}
+
+/** How an order reaches the street. */
+export type OrderVia = 'direct' | 'underboss' | 'capo';
+
+/** Counters for the simulator and the chronicle. */
+export interface CrewStats {
+  defections: number;
+  coups: number;
+  flips: number;
+  makings: number;
+  rivalCrewMoves: number;
 }
 
 export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'doctor';
@@ -161,7 +229,19 @@ export interface Faction {
   targetId?: string;
   since: number;
   ultimatumWeek?: number;
+  /** What they say they want (CK faction agenda). Defaults from `demand`. */
+  agenda?: FactionAgenda;
+  /** For 'underboss': the man they want in the seat. */
+  candidateId?: string;
+  /** 0 demand · 1 ultimatum · 2 gone to Philadelphia behind your back · 3 coup. */
+  stage?: number;
+  /** Week of the last escalation. */
+  stageWeek?: number;
+  /** Display name: "the Boardwalk guys". */
+  name?: string;
 }
+
+export type FactionAgenda = 'kickup' | 'underboss' | 'narcotics' | 'contracts' | 'abdicate' | 'head';
 
 export interface OpinionModifier {
   id: string;
@@ -335,7 +415,20 @@ export type Effect =
   | ({ type: 'lobby'; disputeId: string; memberId: string; amount: number } & EffectBase)
   | ({ type: 'plea'; disputeId: string; amount: number } & EffectBase)
   | ({ type: 'sanction'; targetId: string; weeks: number } & EffectBase)
-  | ({ type: 'ruling'; disputeId: string; comply: boolean } & EffectBase);
+  | ({ type: 'ruling'; disputeId: string; comply: boolean } & EffectBase)
+  | ({ type: 'evidence'; charId: string; amount: number } & EffectBase)
+  | ({ type: 'assign'; charId: string; capoId?: string } & EffectBase)
+  | ({ type: 'story'; charId: string; text: string } & EffectBase)
+  | ({ type: 'propose'; charId: string; voucherId: string } & EffectBase)
+  | ({ type: 'making'; charId: string } & EffectBase)
+  | ({ type: 'courted'; charId: string; rival?: RivalId } & EffectBase)
+  | ({ type: 'debtTo'; charId: string; clear: true } & EffectBase)
+  | ({ type: 'household'; charId: string; wife?: string; kid?: { name: string; male: boolean } } & EffectBase)
+  | ({ type: 'goalSet'; charId: string; goal?: PersonalGoal } & EffectBase)
+  | ({ type: 'flip'; charId: string } & EffectBase)
+  | ({ type: 'retire'; charId: string } & EffectBase)
+  | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
+  | ({ type: 'checkBackground'; charId: string } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -619,6 +712,12 @@ export interface GameState {
   sanctions: Record<string, number>;
   wars: War[];
   disputes: Dispute[];
+  /** Philadelphia's membership books (optional for old saves). */
+  books?: Books;
+  /** Crew counters (defections, coups, flips, makings). */
+  crewStats?: CrewStats;
+  /** Event key -> week last shown (per-event cooldowns for crew decisions). */
+  eventCooldowns?: Record<string, number>;
 }
 
 export interface PlayerChoices {
@@ -651,7 +750,11 @@ export type PlayerAction =
   | { kind: 'policy'; charId: string; policy: CrewPolicy }
   | { kind: 'contract'; charId: string; keep: number }
   | { kind: 'edict'; edict: EdictId; on: boolean }
-  | { kind: 'hire'; specId: string };
+  | { kind: 'hire'; specId: string }
+  | { kind: 'reassign'; charId: string; capoId: string }
+  | { kind: 'propose'; charId: string; voucherId?: string }
+  | { kind: 'background'; charId: string }
+  | { kind: 'order'; key: string; via: OrderVia };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

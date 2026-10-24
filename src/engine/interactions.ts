@@ -300,20 +300,19 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
       };
     }
     case 'make': {
-      if (rel !== 'crew' || c.rank !== 'associate') return undefined;
-      const label = `Made man: ${first}`;
+      if (rel !== 'crew' || c.rank !== 'associate' || c.specialty) return undefined;
+      const label = `Membership: ${first}`;
+      const v = (c.capoId ? s.characters[c.capoId] : undefined) ?? boss;
+      const waiting = c.proposedWeek !== undefined;
       return {
-        id, title: `Make ${first} (the ceremony)`, detail: 'A burning saint card, a drop of blood, an oath. $1,000 to Philadelphia for opening the books.', cost: 1000,
+        id, title: `Propose ${first} for membership`, detail: `${v.id === boss.id ? 'You vouch' : `${v.firstName} vouches`} for him and his name goes to Philadelphia ($500). When the books open he is made in the ceremony.`, cost: 500,
         effects: [
-          { type: 'money', amount: -1000, label },
-          { type: 'rank', charId: c.id, rank: 'soldier', label },
-          { type: 'opinion', from: c.id, to: boss.id, amount: 25, reason: 'Made me', decay: 0, label },
-          { type: 'meter', from: c.id, to: boss.id, meter: 'trust', amount: 15, label },
-          { type: 'crewOpinion', amount: 2, reason: 'Rewards loyalty', label },
-          { type: 'respect', amount: 1, label },
+          { type: 'money', amount: -500, label: `${label}: envelope for Philadelphia` },
+          { type: 'propose', charId: c.id, voucherId: v.id, label },
+          { type: 'opinion', from: c.id, to: boss.id, amount: 10, reason: 'Put my name up', decay: 1, label },
         ],
-        because: `made ${nm} a member of the family`,
-        disabledReason: s.money < 1000 ? 'Needs $1,000' : free(s, c),
+        because: `proposed ${nm} for membership`,
+        disabledReason: waiting ? `Waiting for the books (proposed week ${c.proposedWeek})` : s.money < 500 ? 'Needs $500' : free(s, c),
       };
     }
     case 'promote': {

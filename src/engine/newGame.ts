@@ -4,6 +4,7 @@ import { autoStaff, newBusiness } from './business';
 import { emptyCouncil, fillCouncil } from './council';
 import { refreshHirePool } from './crewlife';
 import { seedSecrets } from './secrets';
+import { seedHierarchy } from './hierarchy';
 import { addOpinion, changeMeter } from './relations';
 import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
@@ -71,6 +72,8 @@ function emptyState(seed: string): GameState {
     sanctions: {},
     wars: [],
     disputes: [],
+    crewStats: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 },
+    eventCooldowns: {},
   };
 }
 
@@ -317,6 +320,7 @@ export function newGame(seed: string | number = Date.now()): GameState {
   s.dynastyHistory.push({ week: 1, date: { ...s.date }, text: `${displayName(boss)} is head of the house of ${s.houseName}.` });
 
   fillCouncil(s);
+  seedHierarchy(s);
   refreshHirePool(s);
   autoStaff(s);
   s.pendingEvents = generateWeekEvents(s);

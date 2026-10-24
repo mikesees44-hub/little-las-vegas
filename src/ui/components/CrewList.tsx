@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { ageOn } from '../../engine/calendar';
 import { capos, crew, displayName, isFree } from '../../engine/characters';
 import { holder, SEAT_INFO, SEATS, seatOf, seatPower, TASKS } from '../../engine/council';
-import { EDICTS, factionPower, POLICY_LABEL, SPECIALTY_INFO } from '../../engine/crewlife';
+import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from '../../engine/crewlife';
+import { BooksPanel, FactionsPanel, GeneralOrders } from './CrewTree';
 import { CAPO_CUT, skimRate } from '../../engine/economy';
 import { opinion } from '../../engine/relations';
+import { regime } from '../../engine/hierarchy';
 import type { Character, CouncilTask, CrewPolicy, EdictId, GameState, Rank, Seat } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { ActionCard, useOrders } from './Orders';
@@ -22,8 +24,10 @@ export function CrewList({ s }: { s: GameState }) {
   return (
     <div className="space-y-6">
       <Council s={s} />
+      <GeneralOrders s={s} />
       <Vassals s={s} />
-      {s.factions.length > 0 && <Factions s={s} />}
+      <FactionsPanel s={s} />
+      <BooksPanel s={s} />
       <section>
         <div className="panel-title">The men</div>
         <p className="text-xs text-stone-500">Soldiers and associates hustle for themselves. You decide how much of it comes to you. Men nobody talks to start drifting toward rivals.</p>
@@ -104,7 +108,7 @@ function Vassals({ s }: { s: GameState }) {
               <Face s={s} c={c} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
-                <div className="text-[11px] text-stone-400">keeps {Math.round(keep * 100)}% · skims ~{Math.round(skimRate(s, c) * 100)}% · own money {fmt$(c.wealth)}</div>
+                <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · skims ~{Math.round(skimRate(s, c) * 100)}% · treasury {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
                 <TraitIcons c={c} />
               </div>
               <div className="text-right">
@@ -120,21 +124,6 @@ function Vassals({ s }: { s: GameState }) {
         })}
         {list.length === 0 && <div className="text-xs text-stone-500">No capos. Promote a soldier from his sheet.</div>}
       </div>
-    </section>
-  );
-}
-
-function Factions({ s }: { s: GameState }) {
-  return (
-    <section className="rounded-md border border-blood-500/60 bg-blood-500/10 p-3">
-      <div className="panel-title text-red-300">Factions against you</div>
-      {s.factions.map((f) => (
-        <div key={f.id} className="mt-1 text-sm">
-          <CharLink s={s} id={f.leaderId} /> leads {f.memberIds.length} men ({Math.round(factionPower(s, f) * 100)}% of the crew's muscle). They want {f.demand === 'contracts' ? 'bigger contracts' : f.demand === 'abdicate' ? 'you to step aside' : 'a head'}.
-          <div className="flex -space-x-2 mt-1">{f.memberIds.map((id) => s.characters[id]).filter(Boolean).map((c) => <Face key={c.id} s={s} c={c} size={32} />)}</div>
-        </div>
-      ))}
-      <p className="text-[11px] text-stone-400 mt-1">Win the members back (dinners, gifts, better contracts) before they issue an ultimatum — or deal with the ringleader.</p>
     </section>
   );
 }

@@ -8,7 +8,7 @@ export const MALE_FIRST: Record<Ethnicity, string[]> = {
     'Rocco', 'Pasquale', 'Carlo', 'Gaetano', 'Philip', 'Louis', 'Ralph', 'Paul', 'Peter', 'Thomas',
     'Albert', 'Emilio', 'Gennaro', 'Giuseppe', 'Leonard', 'Mario', 'Nunzio', 'Raymond', 'Santo', 'Victor',
     'Alphonse', 'Aniello', 'Benedetto', 'Charles', 'Ettore', 'Felix', 'Guido', 'John', 'Lorenzo', 'Matteo',
-    'Ottavio', 'Patsy', 'Richard', 'Sabato', 'Silvio', 'Tullio', 'Umberto', 'Vito', 'Arthur', 'Eugene',
+    'Ottavio', 'Patsy', 'Richard', 'Sabato', 'Silvio', 'Tullio', 'Umberto', 'Arthur', 'Eugene',
   ],
   Irish: [
     'Patrick', 'Thomas', 'James', 'John', 'Francis', 'Michael', 'Edward', 'William', 'Joseph', 'Daniel',
@@ -18,7 +18,7 @@ export const MALE_FIRST: Record<Ethnicity, string[]> = {
   Jewish: [
     'Irving', 'Morris', 'Samuel', 'Abraham', 'Isadore', 'Louis', 'Meyer', 'Benjamin', 'Harold', 'Herbert',
     'Jacob', 'Nathan', 'Solomon', 'Sidney', 'Max', 'Milton', 'Seymour', 'Bernard', 'Saul', 'Julius',
-    'Hyman', 'Emanuel', 'Leonard', 'Murray', 'Norman', 'Reuben', 'Sheldon', 'Stanley', 'Arnold', 'David',
+    'Emanuel', 'Leonard', 'Murray', 'Norman', 'Reuben', 'Sheldon', 'Stanley', 'Arnold', 'David',
   ],
 };
 
@@ -40,9 +40,9 @@ export const FEMALE_FIRST: Record<Ethnicity, string[]> = {
 
 export const SURNAMES: Record<Ethnicity, string[]> = {
   Italian: [
-    'Bruno', 'Esposito', 'Russo', 'Romano', 'Ricci', 'Marino', 'Greco', 'Bianchi', 'DeLuca', 'Costa',
+    'Brunetti', 'Esposito', 'Russo', 'Romano', 'Ricci', 'Marino', 'Greco', 'Bianchi', 'DeLuca', 'Costa',
     'Gallo', 'Conti', 'Mancini', 'Lombardo', 'Barbieri', 'Fontana', 'Caruso', 'Ferraro', 'Rizzo', 'Morelli',
-    'Amato', 'Bellini', 'Cappelli', 'D\'Angelo', 'DiNapoli', 'Falcone', 'Giordano', 'Iacono', 'LaRosa', 'Lucchese',
+    'Amato', 'Bellini', 'Cappelli', 'D\'Angelo', 'DiNapoli', 'Falcone', 'Giordano', 'Iacono', 'LaRosa', 'Lupo',
     'Marchetti', 'Napolitano', 'Orlando', 'Palermo', 'Pellegrino', 'Rinaldi', 'Sabatini', 'Santoro', 'Testa', 'Vitale',
     'Abruzzo', 'Calabrese', 'Cusumano', 'DelVecchio', 'Fusco', 'Guarino', 'Mastrangelo', 'Pagano', 'Scarpa', 'Tedesco',
     'Avellino', 'Buscemi', 'Castellano', 'Dragonetti', 'Infantino', 'Lo Bianco', 'Pirone', 'Scalia', 'Troisi', 'Zito',
@@ -60,11 +60,11 @@ export const SURNAMES: Record<Ethnicity, string[]> = {
 };
 
 export const NICKNAMES: string[] = [
-  'The Bull', 'Skinny', 'Fat Tony', 'Little Nicky', 'The Professor', 'Chickie', 'Bobo', 'Sonny', 'Butch', 'Lefty',
-  'The Hat', 'Big Ears', 'Specs', 'The Shoe', 'Blackie', 'Red', 'Whitey', 'Junior', 'Patsy Pockets', 'The Barber',
-  'Knuckles', 'The Undertaker', 'Tommy Guns', 'Dapper', 'Cigars', 'The Saint', 'Chin', 'Bootsie', 'The Weasel', 'Moose',
-  'Sally Boy', 'Jimmy Brass', 'The Fox', 'Mousey', 'Pretty Boy', 'Dutch', 'The Ox', 'Scarface', 'Tippy', 'Chubby',
-  'The Greek', 'Shorty', 'Frankie Ice', 'Bats', 'Buckles', 'The Count', 'Gyp', 'Hooks', 'Peanuts', 'Ritzy',
+  'The Mule', 'Slim', 'Fat Patsy', 'Little Sal', 'The Professor', 'Cookie', 'Bobo', 'Sunny Jim', 'Butch', 'Southpaw',
+  'The Hat', 'Big Ears', 'Specs', 'The Shoe', 'Blackie', 'Red', 'Whitey', 'Kid Gloves', 'Patsy Pockets', 'The Barber',
+  'Knuckles', 'The Undertaker', 'Tommy Guns', 'Spats', 'Cigars', 'The Saint', 'Elbows', 'Bootsie', 'The Ferret', 'Moose',
+  'Sally Boy', 'Jimmy Brass', 'The Fox', 'Mousey', 'Pretty Boy', 'Dutch', 'The Ox', 'Stitches', 'Tippy', 'Chubby',
+  'The Greek', 'Shorty', 'Frankie Ice', 'Bats', 'Buckles', 'The Count', 'Gimpy', 'Hooks', 'Peanuts', 'Ritzy',
   'The Tailor', 'Trigger', 'Cappy', 'The Deacon', 'Doc', 'Fingers', 'Slick', 'Mumbles', 'The Clam', 'Two Times',
   'Saltwater', 'Boardwalk', 'The Pier', 'Taffy', 'Sandbar', 'Tides', 'Gull', 'The Ferris', 'Neon', 'Jukebox',
 ];

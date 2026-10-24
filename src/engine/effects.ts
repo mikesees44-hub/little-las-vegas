@@ -1,9 +1,9 @@
-import { crew, displayName, hasTrait, livingDynasty, player } from './characters';
+import { crew, displayName, hasTrait, livingDynasty, pickNickname, player } from './characters';
 import { killCharacter } from './dynasty';
 import { hireFrontMan } from './goals';
 import { bookLoan } from './loans';
 import { heat, money, respect, type Ctx } from './ledger';
-import { addOpinion, changeMeter, setModifier } from './relations';
+import { addOpinion, changeMeter, opinion, setModifier } from './relations';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, hireFromPool, POLICY_LABEL } from './crewlife';
 import { CAPO_CUT } from './economy';
@@ -12,6 +12,9 @@ import { changeScore, endWar, startWar } from './war';
 import { chance, randInt } from './rng';
 import { FACTION_NAMES } from './world';
 import type { Effect, FactionId, GameState, HeatBar, LedgerCategory, ScheduledConsequence } from './types';
+import { addEvidence, addStory, assignTo, bumpStat, capoOf, giveBio, GOAL_INFO, tidyRegimes, validCapo } from './hierarchy';
+import { voucherBlame } from './regimes';
+import { maybePlant } from './rivalcrew';
 
 const HEAT_NAMES: Record<HeatBar, string> = { local: 'Local heat', family: 'Family heat', federal: 'Federal heat' };
 
@@ -168,6 +171,46 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
     }
     case 'unwashed':
       return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
+    case 'evidence': {
+      const c = s.characters[e.charId];
+      if (!c) return undefined;
+      return `${c.id === s.playerId ? 'Your' : `${c.firstName}'s`} evidence file ${signed(e.amount)}`;
+    }
+    case 'assign': {
+      const c = s.characters[e.charId];
+      const k = e.capoId ? s.characters[e.capoId] : undefined;
+      return `${c?.firstName ?? '?'} → ${k ? `${k.firstName}'s crew` : 'reports to you'}`;
+    }
+    case 'story':
+      return undefined;
+    case 'propose': {
+      const c = s.characters[e.charId];
+      return `${c?.firstName ?? '?'}'s name goes to Philadelphia`;
+    }
+    case 'making': {
+      const c = s.characters[e.charId];
+      return `${c?.firstName ?? '?'} becomes a made man`;
+    }
+    case 'courted':
+      return e.rival ? `${FACTION_NAMES[e.rival]} keeps courting him` : undefined;
+    case 'debtTo':
+      return 'Debt cleared';
+    case 'household':
+      return e.wife ? undefined : e.kid ? `A new ${e.kid.male ? 'son' : 'daughter'}` : undefined;
+    case 'goalSet':
+      return e.goal ? `Now wants: ${GOAL_INFO[e.goal].toLowerCase()}` : undefined;
+    case 'flip': {
+      const c = s.characters[e.charId];
+      return `${c?.firstName ?? '?'} turns state's witness`;
+    }
+    case 'retire': {
+      const c = s.characters[e.charId];
+      return `${c?.firstName ?? '?'} retires`;
+    }
+    case 'faction2':
+      return e.op === 'remove' ? 'One fewer in the faction' : undefined;
+    case 'checkBackground':
+      return 'Results in 2 weeks';
     case 'rivalResource': {
       const parts: string[] = [];
       if (e.muscle) parts.push(`muscle ${signed(e.muscle)}`);
@@ -308,18 +351,162 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       if (c?.alive && c.id !== s.playerId) {
         c.faction = 'player';
         if (c.rank === 'civilian') c.rank = 'associate';
+        // Someone coming back may find his old nickname taken by a newer man.
+        if (c.nickname && Object.values(s.characters).some((o) => o.id !== c.id && o.alive && o.faction === 'player' && o.nickname === c.nickname)) c.nickname = pickNickname(s, 'player');
+        if (!c.dynasty) {
+          giveBio(s, c);
+          maybePlant(s, c);
+        }
+        if (!c.story?.length) addStory(s, c, 'Came into the family as an associate.');
+        tidyRegimes(s);
         ctx.log.push(`${displayName(c)} is with us now.`);
       }
+      break;
+    }
+    case 'evidence': {
+      const c = s.characters[e.charId];
+      if (c?.alive) addEvidence(s, c, e.amount);
+      break;
+    }
+    case 'assign': {
+      const c = s.characters[e.charId];
+      if (c?.alive && c.faction === 'player' && c.id !== s.playerId && (c.rank === 'soldier' || c.rank === 'associate')) {
+        const k = validCapo(s, e.capoId);
+        const prev = capoOf(s, c);
+        assignTo(s, c, k?.id, k ? `Moved to ${displayName(k)}'s crew.` : 'Reports straight to the boss now.');
+        if (prev && prev.id !== k?.id) addOpinion(s, prev.id, boss.id, `Took ${c.firstName} out of my crew`, -6, 1);
+        if (k && prev?.id !== k.id) addOpinion(s, k.id, boss.id, 'Gave me another man', 4, 1);
+        if (prev && k && prev.id !== k.id) addOpinion(s, c.id, boss.id, opinion(s, c.id, prev.id) > opinion(s, c.id, k.id) ? 'Moved me away from my capo' : 'Moved me to a better crew', opinion(s, c.id, prev.id) > opinion(s, c.id, k.id) ? -6 : 4, 1);
+      }
+      break;
+    }
+    case 'story': {
+      const c = s.characters[e.charId];
+      if (c) addStory(s, c, e.text);
+      break;
+    }
+    case 'propose': {
+      const c = s.characters[e.charId];
+      const v = s.characters[e.voucherId];
+      if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined) {
+        c.proposedWeek = s.week;
+        c.vouchedBy = v?.alive ? v.id : undefined;
+        addStory(s, c, `${v ? displayName(v) : 'The boss'} put his name up for membership.`);
+        if (v) addStory(s, v, `Vouched for ${displayName(c)}.`);
+        ctx.log.push(`${displayName(c)}'s name goes to Philadelphia${s.books?.open ? '' : ' (the books are closed — he waits)'}.`);
+      }
+      break;
+    }
+    case 'making': {
+      const c = s.characters[e.charId];
+      if (c?.alive && c.faction === 'player' && c.rank === 'associate') {
+        c.rank = 'soldier';
+        c.madeWeek = s.week;
+        c.proposedWeek = undefined;
+        c.goal = c.goal === 'get_made' ? (c.attributes.leadership >= 55 ? 'become_capo' : 'get_rich') : c.goal;
+        addOpinion(s, c.id, boss.id, 'Made me', 25, 0);
+        changeMeter(s, c.id, boss.id, 'trust', 15);
+        const v = c.vouchedBy ? s.characters[c.vouchedBy] : undefined;
+        if (v?.alive) addOpinion(s, c.id, v.id, 'Stood for me at my making', 15, 0);
+        for (const m of crew(s)) if (m.id !== c.id) addOpinion(s, m.id, boss.id, 'Rewards loyalty', 1, 1);
+        respect(ctx, 1, label, cat);
+        if (s.books) s.books.slots = Math.max(0, s.books.slots - 1);
+        bumpStat(s, 'makings');
+        addStory(s, c, 'Took the oath and became a made man.');
+        if (s.cutscenes.length < 2) s.cutscenes.push({ key: 'making', title: 'The ceremony', text: `${displayName(c)} is a made man.`, week: s.week });
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(c)} was made in the back room of the Bolero.`, kind: 'family' });
+      }
+      break;
+    }
+    case 'courted': {
+      const c = s.characters[e.charId];
+      if (c) c.courtedBy = e.rival ? { rival: e.rival, week: c.courtedBy?.week ?? s.week } : undefined;
+      break;
+    }
+    case 'debtTo': {
+      const c = s.characters[e.charId];
+      if (c) c.debtTo = undefined;
+      break;
+    }
+    case 'household': {
+      const c = s.characters[e.charId];
+      if (!c) break;
+      const h = c.household ?? (c.household = { kids: [] });
+      if (e.wife) h.wife = e.wife;
+      if (e.kid) h.kids.push({ name: e.kid.name, male: e.kid.male, born: s.date.y });
+      break;
+    }
+    case 'goalSet': {
+      const c = s.characters[e.charId];
+      if (c) c.goal = e.goal;
+      break;
+    }
+    case 'flip': {
+      const c = s.characters[e.charId];
+      if (!c?.alive || c.faction !== 'player' || c.id === s.playerId) break;
+      const k = capoOf(s, c);
+      c.faction = 'law';
+      c.rank = 'civilian';
+      c.capoId = undefined;
+      c.imprisonedUntil = undefined;
+      c.courtedBy = undefined;
+      for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
+      for (const b of s.businesses) if (b.staffIds) b.staffIds = b.staffIds.filter((id) => id !== c.id);
+      addEvidence(s, boss, 18);
+      if (k) addEvidence(s, k, 15);
+      heat(ctx, 'federal', 8, `${displayName(c)} is talking to the Prosecutor`, cat);
+      addOpinion(s, boss.id, c.id, 'Rat', -60, 0);
+      for (const m of crew(s)) addOpinion(s, m.id, c.id, 'Rat', -40, 0);
+      addStory(s, c, 'Turned state\'s witness. The FBI moved his family off the island.');
+      bumpStat(s, 'flips');
+      voucherBlame(ctx, c, 'turned rat');
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(c)} became a government witness.`, kind: 'heat' });
+      tidyRegimes(s);
+      break;
+    }
+    case 'retire': {
+      const c = s.characters[e.charId];
+      if (!c?.alive || c.faction !== 'player' || c.id === s.playerId) break;
+      c.faction = 'none';
+      c.rank = 'civilian';
+      c.capoId = undefined;
+      c.goal = undefined;
+      for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
+      for (const b of s.businesses) if (b.staffIds) b.staffIds = b.staffIds.filter((id) => id !== c.id);
+      addOpinion(s, c.id, boss.id, 'Let me go in peace', 20, 0);
+      addStory(s, c, 'Retired from the life.');
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(c)} retired from the family.`, kind: 'misc' });
+      tidyRegimes(s);
+      break;
+    }
+    case 'faction2': {
+      const f = s.factions.find((x) => x.id === e.factionId);
+      if (!f) break;
+      if (e.op === 'remove' && e.memberId) {
+        f.memberIds = f.memberIds.filter((id) => id !== e.memberId);
+        if (f.memberIds.length < 2 || !f.memberIds.includes(f.leaderId)) s.factions = s.factions.filter((x) => x !== f);
+      } else if (e.op === 'stage') {
+        f.stage = (f.stage ?? 0) + 1;
+        f.stageWeek = s.week;
+      }
+      break;
+    }
+    case 'checkBackground': {
+      const c = s.characters[e.charId];
+      if (c?.alive) scheduleConsequence(s, 'background_result', 2, 2, src.because, { charId: c.id });
       break;
     }
     case 'rank': {
       const c = s.characters[e.charId];
       if (c?.alive && c.id !== s.playerId) {
+        const was = c.rank;
         c.rank = e.rank;
         if (e.district) {
           const d = s.districts.find((x) => x.id === e.district);
           if (d) d.capoId = c.id;
         }
+        if (was !== e.rank) addStory(s, c, `Became ${e.rank === 'associate' ? 'an associate' : `${e.rank === 'underboss' ? 'the underboss' : `a ${e.rank}`}`}${was !== 'civilian' ? ` (was ${was})` : ''}.`);
+        tidyRegimes(s);
       }
       break;
     }

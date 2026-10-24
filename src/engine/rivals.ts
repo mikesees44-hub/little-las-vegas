@@ -85,6 +85,7 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
   const out: Candidate[] = [];
   const goal: RivalGoal = r.kind === 'mob' && (getRelation(s, r.leaderId, s.playerId)?.grievance ?? 0) >= 50 ? 'revenge' : r.goal;
   const targets: FactionId[] = ['player', ...s.rivals.filter((x) => x.id !== r.id && x.kind === 'mob').map((x) => x.id)];
+  const pMuscle = playerMuscle(s);
   for (const move of KIND_MOVES[r.kind]) {
     const cd = r.moveCooldowns[move] ?? 0;
     if (cd > s.week) continue;
@@ -100,7 +101,7 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
     for (const t of targets) {
       let sc = base;
       const op = rivalOpinionOf(s, r, t);
-      const tMuscle = t === 'player' ? playerMuscle(s) : (s.rivals.find((x) => x.id === t)?.muscle ?? 50);
+      const tMuscle = t === 'player' ? pMuscle : (s.rivals.find((x) => x.id === t)?.muscle ?? 50);
       switch (move) {
         case 'strike':
           sc *= 1 + Math.max(0, -op) / 35;
@@ -124,7 +125,7 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
           break;
         case 'offer_deal':
           sc *= t === 'player' ? (op < -30 ? 0.2 : 1 + Math.max(0, op) / 50) : 0.5;
-          if (t === 'player' && s.pendingEvents.some((e) => e.defId === `deal_${r.id}`)) sc = 0;
+          if (t === 'player' && (s.pendingEvents.some((e) => e.defId === `deal_${r.id}`) || s.eventQueue.some((e) => e.defId === `deal_${r.id}`) || s.week - (s.eventCooldowns?.[`deal_${r.id}`] ?? -999) < 10)) sc = 0;
           break;
         case 'inform': {
           const exp = t === 'player' ? playerExposure(s) : (s.rivals.find((x) => x.id === t)?.exposure ?? 0);
@@ -162,7 +163,7 @@ export function rivalWeek(ctx: Ctx): void {
     const choice = weightedPick(s, cands, (c) => Math.pow(c.score, gamble));
     if (!choice) continue;
     executeMove(ctx, r, choice);
-    r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? 3 : choice.move === 'offer_deal' ? 4 : 1);
+    r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? 3 : choice.move === 'offer_deal' ? (r.kind === 'philly' ? 12 : 8) : 1);
   }
 }
 
@@ -247,6 +248,8 @@ export function executeMove(ctx: Ctx, r: Rival, c: Candidate): void {
         const ev = dealEvent(s, r);
         if (ev) {
           s.eventQueue.push(ev);
+          if (!s.eventCooldowns) s.eventCooldowns = {};
+          s.eventCooldowns[`deal_${r.id}`] = s.week;
           record(ctx, r, 'offer_deal', 'player', `${nm} sends word: he has a proposition.`);
         }
         return;
@@ -433,15 +436,21 @@ function dealEvent(s: GameState, r: Rival): EventInstance | undefined {
           { id: 'refuse', label: 'North Wildwood will be ours anyway', because: 'snubbed Danny Kessler', effects: [{ type: 'rivalOpinion', rival: 'kessler', amount: -10, reason: 'Snubbed me' }, { type: 'respect', amount: 1 }] },
         ],
       };
-    case 'philly':
+    case 'philly': {
+      const v = pick(s, [
+        { ask: 'needs a man from Philadelphia kept out of sight in one of your motels for a few weeks. No questions.', because: 'hid Moretti\'s man', title: 'Moretti needs a favor' },
+        { ask: 'wants a truck of Philadelphia cigarettes stored in a garage on the bay side until the tax men lose interest.', because: 'stored Moretti\'s cigarettes', title: 'Moretti needs a garage' },
+        { ask: 'wants his nephew given a summer job on your boardwalk — a real job, and nobody lays a finger on him.', because: 'gave Moretti\'s nephew a summer job', title: 'Moretti\'s nephew' },
+        { ask: 'needs a councilman in Camden reminded, gently, by a face nobody in Camden knows.', because: 'sent a man to Camden for Moretti', title: 'A job in Camden' },
+      ]);
       return {
         ...base,
-        title: 'Moretti needs a favor',
-        text: `${nm} needs a man from Philadelphia kept out of sight in one of your motels for a few weeks. No questions.`,
+        title: v.title,
+        text: `${nm} ${v.ask}`,
         defaultChoiceId: 'accept',
         choices: [
           {
-            id: 'accept', label: 'Of course', because: 'hid Moretti\'s man',
+            id: 'accept', label: 'Of course', because: v.because,
             effects: [
               { type: 'heat', bar: 'family', amount: -6 }, { type: 'heat', bar: 'federal', amount: 3 },
               { type: 'rivalOpinion', rival: 'philly', amount: 15, reason: 'Does what is asked' },
@@ -451,6 +460,7 @@ function dealEvent(s: GameState, r: Rival): EventInstance | undefined {
           { id: 'refuse', label: 'Too hot right now', because: 'turned down Moretti', effects: [{ type: 'heat', bar: 'family', amount: 5 }, { type: 'rivalOpinion', rival: 'philly', amount: -12, reason: 'Refused a favor' }] },
         ],
       };
+    }
     default:
       return undefined;
   }

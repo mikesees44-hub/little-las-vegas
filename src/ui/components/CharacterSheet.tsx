@@ -1,5 +1,8 @@
-import { ageOn, formatDate } from '../../engine/calendar';
-import { displayName, player, relationLabel, TRAIT_INFO } from '../../engine/characters';
+import { ageOn, dateOfWeek, formatDate } from '../../engine/calendar';
+import { capoLoyalty, capoOf, CRAFT_INFO, GOAL_INFO, OUTSIDE_INFO, outsideGuys, regime, VICE_INFO } from '../../engine/hierarchy';
+import { warningsFor } from './CrewTree';
+import { opinion } from '../../engine/relations';
+import { capos, displayName, player, relationLabel, TRAIT_INFO } from '../../engine/characters';
 import { relationshipTo } from '../../engine/interactions';
 import { interactionsFor, playerHook } from '../../engine/interactions';
 import { SCHEME_INFO } from '../../engine/schemes';
@@ -13,7 +16,7 @@ import { fmt$, signed } from '../format';
 import { Portrait } from '../portrait/Portrait';
 import { Modal } from './Modal';
 import { ActionCard } from './Orders';
-import { CharLink, FACTION_TINT, TraitIcons } from './People';
+import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
@@ -88,7 +91,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
           <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
             <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Particulars</div>
             <div className="text-xs text-stone-300 mt-1 space-y-0.5">
-              <div>Ambition: <span className="text-stone-100">{c.ambition}</span></div>
+              {!c.goal && <div>Ambition: <span className="text-stone-100">{c.ambition}</span></div>}
               <div>Own money: <span className="text-stone-100">{fmt$(c.wealth)}</span></div>
               {c.imprisonedUntil && c.imprisonedUntil > s.week && <div className="text-red-300">In jail until week {c.imprisonedUntil}</div>}
               {(c.record ?? 0) > 0 && <div>Record: {c.record} arrest{c.record! > 1 ? 's' : ''}</div>}
@@ -123,6 +126,8 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
             </section>
           )}
         </div>
+
+        {(c.faction === 'player' || c.outside) && !isBoss && <HisLife s={s} c={c} />}
 
         <section className="mt-3">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Family</div>
@@ -170,6 +175,81 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
         )}
       </div>
     </Modal>
+  );
+}
+
+function LoyaltyBar({ label, v }: { label: string; v: number }) {
+  const pct = Math.max(0, Math.min(100, (v + 100) / 2));
+  return (
+    <div className="flex items-center gap-2 text-[11px]">
+      <span className="w-28 shrink-0 truncate text-stone-400">{label}</span>
+      <div className="relative h-2 flex-1 rounded bg-noir-700" role="meter" aria-label={label} aria-valuenow={v} aria-valuemin={-100} aria-valuemax={100}>
+        <div className="absolute inset-y-0 left-1/2 w-px bg-noir-500" />
+        <div className={`absolute inset-y-0 ${v >= 0 ? 'left-1/2' : ''} rounded ${v >= 25 ? 'bg-emerald-500' : v <= -25 ? 'bg-red-500' : 'bg-amber-500'}`} style={v >= 0 ? { width: `${pct - 50}%` } : { left: `${pct}%`, width: `${50 - pct}%` }} />
+      </div>
+      <span className={`w-8 text-right tabular-nums ${v >= 25 ? 'text-emerald-300' : v <= -25 ? 'text-red-300' : 'text-stone-200'}`}>{signed(v)}</span>
+    </div>
+  );
+}
+
+/** Who the man is: his crew, his loyalties, his trade, his family, his weaknesses, his story. */
+function HisLife({ s, c }: { s: GameState; c: Character }) {
+  const k = capoOf(s, c);
+  const capoLoy = capoLoyalty(s, c);
+  const bossLoy = opinion(s, c.id, s.playerId);
+  const men = c.rank === 'capo' ? regime(s, c.id) : [];
+  const outside = c.rank === 'capo' ? outsideGuys(s, c.id) : [];
+  const kids = c.household?.kids ?? [];
+  const story = (c.story ?? []).slice().reverse();
+  const warns = warningsFor(s, c);
+  return (
+    <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="his-life">
+      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">His life</div>
+      <div className="mt-1 grid gap-3 sm:grid-cols-2">
+        <div className="space-y-1 text-xs text-stone-300">
+          {c.rank === 'capo' ? (
+            <div>Runs a crew of {men.length}{outside.length ? ` and ${outside.length} outside guy${outside.length > 1 ? 's' : ''}` : ''} · kicks up {Math.round((1 - (c.keep ?? 0.3)) * 100)}% · his treasury {fmt$(c.wealth)}</div>
+          ) : c.outside ? (
+            <div>{OUTSIDE_INFO[c.outside]}{k ? <> for <CharLink s={s} id={k.id} />'s crew</> : ''} · not a member</div>
+          ) : (
+            <div>{k ? <>In <CharLink s={s} id={k.id} />'s crew</> : 'Reports straight to you'}{c.craft ? ` · ${CRAFT_INFO[c.craft].name}` : ''}</div>
+          )}
+          {c.goal && <div>Wants to: <span className="text-stone-100">{GOAL_INFO[c.goal].toLowerCase()}</span></div>}
+          {c.lastEarn !== undefined && <div>Brought in {fmt$(c.lastEarn)} last week · stash {fmt$(c.wealth)}</div>}
+          <div>Record: {c.record ?? 0} arrest{(c.record ?? 0) === 1 ? '' : 's'} · the law's file on him {c.evidence ?? 0}/100</div>
+          {c.household?.wife && <div>Wife: {c.household.wife}{kids.length ? ` · ${kids.map((x) => `${x.name} (${Math.max(0, s.date.y - x.born)})`).join(', ')}` : ''}</div>}
+          {!c.household?.wife && kids.length > 0 && <div>Kids: {kids.map((x) => x.name).join(', ')}</div>}
+          {(c.vices ?? []).length > 0 && <div className="text-amber-200">{(c.vices ?? []).map((v) => VICE_INFO[v]).join('. ')}.</div>}
+          {c.debtTo && <div className="text-red-300">Owes {fmt$(c.debtTo.amount)} to a {FACTION_NAMES[c.debtTo.rival]} shylock.</div>}
+          {c.courtedBy && <div className="text-red-300">{FACTION_NAMES[c.courtedBy.rival]} has been courting him since week {c.courtedBy.week}.</div>}
+          {c.proposedWeek !== undefined && <div className="text-gold-300">Proposed for membership (week {c.proposedWeek}){c.vouchedBy ? <>, vouched for by <CharLink s={s} id={c.vouchedBy} /></> : ''}.</div>}
+          {c.madeWeek !== undefined && <div className="text-gold-300">Made in week {c.madeWeek}{c.vouchedBy ? <>; <CharLink s={s} id={c.vouchedBy} /> stood for him</> : ''}.</div>}
+        </div>
+        <div className="space-y-1.5">
+          {c.faction === 'player' && <LoyaltyBar label="Loyalty to you" v={bossLoy} />}
+          {capoLoy !== undefined && k && <LoyaltyBar label={`Loyalty to ${k.firstName}`} v={capoLoy} />}
+          {capoLoy !== undefined && capoLoy > bossLoy + 10 && <div className="text-[11px] text-amber-300">His capo's man first. If {k?.firstName} walks, he follows.</div>}
+          {warns.length > 0 && <ul className="text-[11px] text-stone-400">{warns.map((w, i) => <li key={i}>{w.g} {w.label}</li>)}</ul>}
+          {men.length > 0 && (
+            <div className="flex flex-wrap gap-1 pt-1">{men.map((m) => <Face key={m.id} s={s} c={m} size={28} />)}</div>
+          )}
+        </div>
+      </div>
+      {story.length > 0 && (
+        <div className="mt-2">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">His chronicle</div>
+          <ul className="mt-1 space-y-0.5 text-xs">
+            {story.map((e, i) => <li key={i} className="text-stone-300"><span className="text-stone-500 tabular-nums">{formatDate(dateOfWeek(Math.max(1, e.week)))}</span> — {e.text}</li>)}
+          </ul>
+        </div>
+      )}
+      {c.alive && c.faction === 'player' && !s.gameOver && (c.rank === 'soldier' || c.rank === 'associate') && !c.specialty && (
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {capos(s).filter((x) => x.id !== c.capoId).slice(0, 4).map((x) => <ActionCard key={x.id} s={s} action={{ kind: 'reassign', charId: c.id, capoId: x.id }} compact />)}
+          {c.rank === 'associate' && <ActionCard s={s} action={{ kind: 'background', charId: c.id }} compact />}
+        </div>
+      )}
+    </section>
   );
 }
 

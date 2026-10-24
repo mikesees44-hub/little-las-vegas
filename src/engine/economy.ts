@@ -97,6 +97,7 @@ export function runEconomy(ctx: Ctx): void {
     const skim = Math.round(owed * skimRate(s, capo));
     const kick = Math.round(owed - skim);
     capo.wealth += Math.round(capoShare) + skim;
+    capo.lastEarn = Math.round(take);
     if (skim > 0) capo.skimmed = (capo.skimmed ?? 0) + skim;
     if (kick > 0) {
       const k = money(ctx, kick, `Kick-up: ${shortName(capo)} (${d.name})`, 'kickup');

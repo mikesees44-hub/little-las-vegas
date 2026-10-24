@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { newGame, STARTING_MONEY } from '../src/engine/newGame';
 import { advanceWeek } from '../src/engine/engine';
 import { crew, usedNicknames } from '../src/engine/characters';
-import { buildSitDown, MAX_POPUPS } from '../src/engine/events';
+import { buildSitDown, MAX_POPUPS, ORDERS } from '../src/engine/events';
+import { previewAction } from '../src/engine/actions';
 import { randomChoices } from './helpers';
 
 describe('new game', () => {
@@ -22,7 +23,14 @@ describe('new game', () => {
       }
       expect(s.startingProblem.length).toBeGreaterThan(10);
       expect(s.rivals).toHaveLength(5);
-      expect(s.pendingEvents.some((e) => e.defId === 'sitdown')).toBe(true);
+      // The first week opens with decisions brought by named men of the crew, with their faces.
+      const crewEv = s.pendingEvents.filter((e) => e.meta?.crew);
+      expect(crewEv.length).toBeGreaterThanOrEqual(1);
+      for (const e of crewEv) {
+        expect(e.actors?.length).toBeGreaterThan(0);
+        expect(s.characters[e.actors![0]].faction).toBe('player');
+      }
+      expect(s.pendingEvents.some((e) => e.defId === 'sitdown')).toBe(false);
     }
   });
   it('no duplicate nicknames within a crew', () => {
@@ -50,20 +58,36 @@ describe('new game', () => {
 });
 
 describe('events', () => {
-  it('the sit-down offers exactly 3 orders with no repeats two weeks running', () => {
+  it('general orders replace the weekly sit-down: always on offer, previews are pure, delegated ones resolve a week later', () => {
     let s = newGame('sit');
-    let prev: string[] = [];
-    for (let w = 0; w < 120 && !s.gameOver; w++) {
-      const sd = s.pendingEvents.find((e) => e.defId === 'sitdown');
-      if (sd) {
-        const orders = String(sd.meta!.orders).split(',');
-        expect(orders).toHaveLength(3);
-        expect(new Set(orders).size).toBe(3);
-        for (const o of orders) expect(prev).not.toContain(o);
-        prev = orders;
-      } else prev = [];
+    for (let w = 0; w < 40 && !s.gameOver; w++) {
+      expect(s.pendingEvents.some((e) => e.defId === 'sitdown')).toBe(false);
+      const before = JSON.stringify(s);
+      const legal = ORDERS.map((o) => ({ kind: 'order', key: o.key, via: 'direct' }) as const).filter((a) => !previewAction(s, a).disabledReason);
+      expect(JSON.stringify(s)).toBe(before);
+      expect(legal.length).toBeGreaterThanOrEqual(3);
       s = advanceWeek(s, randomChoices(s, w)).state;
     }
+    // Through the underboss: nothing now, a "Because you …" consequence next week.
+    let t = newGame('sit2');
+    t.money = 50000;
+    const r1 = advanceWeek(t, { actions: [{ kind: 'order', key: 'shakedown', via: 'underboss' }] });
+    expect(r1.report.lines.some((l) => l.label.includes('Lean on the Pacific Avenue bars'))).toBe(false);
+    expect(r1.state.scheduled.some((x) => x.key === 'delegated_order')).toBe(true);
+    t = r1.state;
+    let resolved = false;
+    for (let w = 0; w < 2 && !resolved; w++) {
+      const r = advanceWeek(t, {});
+      resolved = r.state.chronicle.some((c) => c.kind === 'consequence' && /order|half-did|went further/.test(c.text));
+      t = r.state;
+    }
+    expect(resolved).toBe(true);
+    // Giving it yourself leaves fingerprints on the boss's file.
+    const d = newGame('sit3');
+    const ev0 = d.characters[d.playerId].evidence ?? 0;
+    const r2 = advanceWeek(d, { actions: [{ kind: 'order', key: 'shakedown', via: 'direct' }] });
+    expect(r2.report.lines.some((l) => l.label.includes('Lean on the Pacific Avenue bars'))).toBe(true);
+    expect(r2.state.characters[r2.state.playerId].evidence ?? 0).toBeGreaterThan(ev0 - 1);
   });
   it('the bagman comes monthly from week 3 and the envelope scales with earnings', () => {
     let s = newGame('bag');

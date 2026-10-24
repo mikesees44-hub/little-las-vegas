@@ -5,12 +5,13 @@ import { UNWASHED_SAFE } from './economy';
 import { opinion } from './relations';
 import { getRelation } from './relations';
 import type { GameState } from './types';
+import { factionAgendaText, factionPower, factionStageText } from './crewlife';
 
 /**
  * The alert rail (CK's right-hand icons): things that need the boss's
  * attention. Pure, derived from the state each render.
  */
-export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family';
+export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family' | 'rival' | 'courted' | 'debt' | 'evidence' | 'faction' | 'books';
 
 export interface Alert {
   kind: AlertKind;
@@ -37,6 +38,25 @@ export function alerts(s: GameState): Alert[] {
     const g = getRelation(s, c.id, boss.id)?.grievance ?? 0;
     if (g >= 60 && c.rank !== 'capo') out.push({ kind: 'unhappy', severity: 'warn', title: `${c.firstName} holds a grudge`, text: `Grievance ${g}.`, charId: c.id });
   }
+  // Rivals moving on your people (named, recent).
+  for (const r of s.rivals.filter((x) => x.lastMove && x.lastMove.target === 'player' && s.week - x.lastMove.week <= 2).sort((a, b) => b.lastMove!.week - a.lastMove!.week).slice(0, 2)) {
+    const m = r.lastMove!;
+    out.push({ kind: 'rival', severity: m.move === 'strike' ? 'danger' : 'warn', title: `${r.shortName} made a move`, text: `Week ${m.week}: ${m.text}`, charId: r.leaderId });
+  }
+  for (const f of s.factions) {
+    const L = s.characters[f.leaderId];
+    out.push({ kind: 'faction', severity: (f.stage ?? 0) >= 1 ? 'danger' : 'warn', title: `${(f.name ?? 'A faction').replace(/^the /, 'The ')}`, text: `${factionAgendaText(s, f)} — ${factionStageText(f).toLowerCase()} (${Math.round(factionPower(s, f) * 100)}% of the muscle)${L ? `, led by ${displayName(L)}` : ''}.`, tab: 'tree' });
+  }
+  for (const c of crew(s)) {
+    if (c.courtedBy) {
+      const r = s.rivals.find((x) => x.id === c.courtedBy!.rival);
+      out.push({ kind: 'courted', severity: c.rank === 'capo' ? 'danger' : 'warn', title: `${r?.shortName ?? 'A rival'} is courting ${c.firstName}`, text: `${displayName(c)} has been seen with ${r?.name ?? 'a rival'} since week ${c.courtedBy.week}.`, charId: c.id });
+    }
+    if (c.debtTo) out.push({ kind: 'debt', severity: 'info', title: `${c.firstName} owes a shylock`, text: `${displayName(c)} owes $${c.debtTo.amount.toLocaleString('en-US')} to ${s.rivals.find((x) => x.id === c.debtTo!.rival)?.shortName ?? 'a rival'}'s people.`, charId: c.id });
+    if ((c.evidence ?? 0) >= 65 && isFree(s, c)) out.push({ kind: 'evidence', severity: 'warn', title: `The law is close to ${c.firstName}`, text: `The file on ${displayName(c)} is at ${c.evidence}/100. Men under pressure talk.`, charId: c.id });
+  }
+  if ((boss.evidence ?? 0) >= 40) out.push({ kind: 'evidence', severity: (boss.evidence ?? 0) >= 65 ? 'danger' : 'warn', title: 'Your own file is thick', text: `The Prosecutor's file on you is at ${boss.evidence}/100. Give orders through the chain.`, tab: 'tree' });
+  if (s.books?.open && crew(s).some((c) => c.rank === 'associate' && c.proposedWeek === undefined && !c.specialty)) out.push({ kind: 'books', severity: 'info', title: 'The books are open', text: `Philadelphia will make ${s.books.slots} more of your men. Propose an associate.`, tab: 'tree' });
   if (s.heat.federal >= 70) out.push({ kind: 'heat', severity: 'danger', title: 'The feds are close', text: `Federal heat ${s.heat.federal}. At 80 they start making arrests.` });
   if (s.heat.local >= 70) out.push({ kind: 'heat', severity: 'warn', title: 'The cops are restless', text: `Local heat ${s.heat.local}. At 80 they raid.` });
   if (s.heat.family >= 70) out.push({ kind: 'heat', severity: 'danger', title: 'Philadelphia is angry', text: `Family heat ${s.heat.family}. At 80 they summon you.` });
