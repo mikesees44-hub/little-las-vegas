@@ -1,4 +1,4 @@
-import { drawLots, LOT_ZOOM } from './lotPins';
+import { drawLots, LOT_ZOOM, type LotView } from './lotPins';
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import { owned } from '../../engine/business';
@@ -48,6 +48,8 @@ export interface WorldMapProps {
   onLevel?: (l: Level) => void;
   /** Imperative fly-to requests from breadcrumbs (bump the nonce to repeat). */
   flyTo?: { level: Level; nonce: number };
+  /** The property layer's timeline (year shown, new-since-1960 highlight). */
+  lots?: LotView;
 }
 
 export function WorldMap(props: WorldMapProps) {
@@ -88,7 +90,7 @@ export function WorldMap(props: WorldMapProps) {
 
   useEffect(() => {
     api.current?.update(props);
-  }, [props.s, props.mode, props.selectedDistrict]);
+  }, [props.s, props.mode, props.selectedDistrict, props.lots?.year, props.lots?.since1960]);
 
   useEffect(() => {
     if (props.flyTo) api.current?.fly(props.flyTo.level);
@@ -376,7 +378,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   function drawDistricts(p: WorldMapProps) {
     if (!districtsGeo) return;
     const s = p.s;
-    drawLots(L, lotLayer, s, districtsGeo);
+    drawLots(L, lotLayer, s, districtsGeo, p.lots);
     districtLayer.clearLayers();
     districtPins.clearLayers();
     L.geoJSON(districtsGeo as never, {

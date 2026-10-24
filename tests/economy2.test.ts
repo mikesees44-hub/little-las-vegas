@@ -7,9 +7,10 @@ import { econActions, econWeek } from '../src/engine/econ';
 import { ensureEcon } from '../src/engine/econState';
 import { GIFTS, GIFTS_BY_ID, giftAvailable, giftOpinion, tastes, type GiftCat } from '../src/engine/gifts';
 import { BUG_WEEKS, HQ_INFO, hqWeek } from '../src/engine/hq';
+import { registerPermitAuthority } from '../src/engine/construction';
 import { newCtx, reconcile } from '../src/engine/ledger';
 import { newGame } from '../src/engine/newGame';
-import { BUILD_STAGES, districtTilt, propertyNet, stageWeeks, USES, USES_BY_ID, ZONES, zoneSeason } from '../src/engine/property';
+import { BUILD_STAGES, buildCost, buildWeeks, districtTilt, propertyNet, stageWeeks, USES, USES_BY_ID, ZONES, zoneSeason } from '../src/engine/property';
 import { RACKET_TREES } from '../src/engine/rackets';
 import { rand } from '../src/engine/rng';
 import type { BusinessKind, GameState, PlayerAction } from '../src/engine/types';
@@ -87,6 +88,7 @@ describe('economy pillar: construction', () => {
     l.use = 'icecream';
     l.stage = 'permits';
     l.stageWeek = 0;
+    l.inspected = ['framing', 'interior', 'fire']; // inspections are tested on their own
     const seen: string[] = [];
     let weeks = 0;
     while ((l.stage as string) !== 'open' && weeks < 100) {
@@ -96,7 +98,7 @@ describe('economy pillar: construction', () => {
       weeks++;
       seen.push(l.stage!);
     }
-    expect(weeks).toBe(use.weeks);
+    expect(weeks).toBe(buildWeeks(l, use, w));
     // Every build stage was visited, in order.
     const order = [...new Set(['permits', ...seen])];
     expect(order).toEqual(['permits', 'siteprep', 'foundation', 'framing', 'exterior', 'interior', 'open']);
@@ -331,5 +333,86 @@ describe('economy pillar: random play', () => {
       expect(JSON.parse(JSON.stringify(s))).toEqual(s);
     }
     expect(built).toBeGreaterThan(0);
+  });
+});
+
+describe('economy pillar: permits, inspections, the supply chain, the town', () => {
+  it('a build waits on the inspector and the zoning commission; a favor clears both', () => {
+    let s = rich('permit');
+    const e = ensureEcon(s);
+    const l = e.lots.find((x) => x.status === 'sale' && !x.use)!;
+    l.status = 'owned';
+    l.owner = 'player';
+    l.stage = 'purchase';
+    s = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'build', lotId: l.id, use: 'duplex' } }] }).state;
+    const l2 = s.econ!.lots.find((x) => x.id === l.id)!;
+    expect(l2.stage).toBe('permits');
+    expect(l2.permit).toBeDefined();
+    if ((l2.permit!.zoning || l2.permit!.inspector) && s.favors > 0) {
+      s = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'permits', lotId: l.id } }] }).state;
+      expect(s.econ!.lots.find((x) => x.id === l.id)!.stage).not.toBe('permits');
+    }
+  });
+  it('the permit authority is pluggable (an official of yours pushes zoning through)', () => {
+    const s = rich('puppet');
+    const e = ensureEcon(s);
+    const l = e.lots.find((x) => x.status === 'sale' && !x.use)!;
+    l.status = 'owned';
+    l.owner = 'player';
+    l.stage = 'permits';
+    l.use = 'duplex';
+    l.permit = { zoning: 3, inspector: 0 };
+    const a: PlayerAction = { kind: 'econ', op: { type: 'puppetPermit', lotId: l.id } };
+    expect(previewAction(s, a).disabledReason).toMatch(/No official/);
+    const boss = s.characters[s.playerId];
+    registerPermitAuthority(() => ({ zoning: 'the commission', waits: () => ({ zoning: 3, inspector: 1 }), puppet: () => boss }));
+    try {
+      expect(previewAction(s, a).disabledReason).toBeUndefined();
+    } finally {
+      registerPermitAuthority(undefined);
+    }
+  });
+  it('a failed inspection is a stop-work order that holds the site until it is lifted', () => {
+    const s = rich('stop');
+    const e = ensureEcon(s);
+    const l = e.lots.find((x) => x.status === 'sale' && !x.use)!;
+    Object.assign(l, { status: 'owned', owner: 'player', use: 'duplex', stage: 'framing', stageWeek: 1, stopWork: { weeks: 3, reason: 'test' } });
+    const ctx = newCtx(s);
+    econWeek(ctx);
+    expect(l.stageWeek).toBe(1);
+    expect(l.stalled).toMatch(/Stop-work/);
+    const r = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'fixCode', lotId: l.id } }] });
+    expect(r.state.econ!.lots.find((x) => x.id === l.id)!.stopWork).toBeUndefined();
+    expect(r.report.lines.some((x) => x.label.startsWith('Fix the code'))).toBe(true);
+  });
+  it('owning the supply chain makes your builds cheaper and faster', () => {
+    const s = rich('supply');
+    s.businesses = s.businesses.filter((b) => !['construction', 'concrete', 'lumber', 'trucking'].includes(b.kind));
+    const l = ensureEcon(s).lots.find((x) => x.status === 'sale' && !x.use)!;
+    const u = USES_BY_ID.apartments;
+    const c0 = buildCost(l, u, s);
+    const w0 = buildWeeks(l, u, s);
+    for (const k of ['construction', 'concrete', 'lumber', 'trucking'] as const) s.businesses.push({ id: `t-${k}`, name: k, kind: k, districtId: 'downtown', owner: 'player', weeklyBase: 100, upkeep: 0, heat: 0 });
+    expect(buildCost(l, u, s)).toBeLessThan(c0 * 0.75);
+    expect(buildWeeks(l, u, s)).toBeLessThan(w0);
+  });
+  it('the town builds on its own: years later the lots fill in, the Crest gets its motels', () => {
+    let s = newGame('town');
+    const vacant0 = s.econ!.lots.filter((l) => !l.use).length;
+    for (let i = 0; i < 160; i++) s = advanceWeek(s, randomChoices(s, i)).state;
+    const e = s.econ!;
+    expect(e.stats.npcBuilt).toBeGreaterThan(3);
+    expect(e.lots.filter((l) => !l.use).length).toBeLessThan(vacant0);
+    expect(e.lots.some((l) => l.zone === 'crest' && l.use === 'motel' && (l.started ?? 0) >= 1960)).toBe(true);
+  });
+  it('a rival bidding on the same lot can outbid you', () => {
+    const s = rich('outbid');
+    const e = ensureEcon(s);
+    const l = e.lots.find((x) => x.status === 'sale')!;
+    l.bidder = 'manno';
+    const p = previewAction(s, { kind: 'econ', op: { type: 'buyLot', lotId: l.id } });
+    expect(p.acceptance).toBeDefined();
+    expect(p.acceptance!.reasons.some((r) => r.label.includes('deep pockets'))).toBe(true);
+    expect(p.refuseEffects?.some((x) => x.type === 'econ')).toBe(true);
   });
 });

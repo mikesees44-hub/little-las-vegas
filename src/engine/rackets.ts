@@ -144,6 +144,21 @@ export const RACKET_TREES: Partial<Record<BusinessKind, TreeStep[]>> = {
     T('A pressing plant contract', 5000, 0.25, 'Your own records, pressed cheap.'),
     T('A national distributor', 9000, 0.35, 'The doo-wop act goes national.'),
   ],
+  construction: [
+    T('A second crew and a crane', 5000, 0.25, 'Two jobs at once; builds go faster.'),
+    T('Union men who owe you', 6000, 0.2, 'No strikes on your sites.', { heat: 0.05 }),
+    T('Prequalified for state work', 10000, 0.3, 'The Parkway and the bridges.'),
+  ],
+  concrete: [
+    T('Two more mixer trucks', 4000, 0.25, 'Pour two foundations a day.'),
+    T('A gravel pit in Rio Grande', 6000, 0.25, 'You own the sand too.'),
+    T('The county road contract', 9000, 0.3, 'Every curb in Cape May County.', { heat: 0.05 }),
+  ],
+  lumber: [
+    T('A railroad siding', 3000, 0.2, 'Lumber by the carload, cheaper.'),
+    T('A millwork shop', 5000, 0.25, 'Windows and trim made to order.'),
+    T('Credit for every contractor on the island', 8000, 0.3, 'They owe you money; they owe you favors.'),
+  ],
   trucking: [
     T('Four more rigs', 5000, 0.25, 'Produce runs to Philadelphia.'),
     T('A cold-storage warehouse', 7000, 0.2, 'Somewhere to keep things.'),
@@ -252,7 +267,7 @@ export function racketWeek(ctx: Ctx, b: Business, amt: number, label: string): {
     // The expected take is a 10% hold on the handle. Some weeks the favorites win.
     const handle = Math.round(amt / 0.1);
     const sd = steps.some((st) => st.steady) ? 0.035 : 0.07;
-    const hold = Math.max(-0.12, 0.1 + gauss(e) * sd);
+    const hold = Math.max(-0.06, 0.1 + gauss(e) * sd);
     const onCredit = Math.round(handle * 0.015);
     const paidIn = Math.round((r.markers ?? 0) * 0.15);
     r.handle = handle;

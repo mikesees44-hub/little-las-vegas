@@ -7,6 +7,7 @@ import type { FactionId, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
 import { StageBar } from './Holdings';
+import { lotSvg } from '../map/lotIcons';
 
 /** One glyph per construction stage (the same marks the map uses). */
 export const STAGE_GLYPH: Record<StageId, string> = {
@@ -14,7 +15,7 @@ export const STAGE_GLYPH: Record<StageId, string> = {
 };
 
 export const STATUS_LABEL: Record<Lot['status'], string> = {
-  sale: 'For sale', lease: 'For lease', private: 'Privately held', owned: 'Yours', leased: 'Yours (leased)', rival: 'Rival-owned',
+  sale: 'For sale', lease: 'For lease', private: 'Privately held', owned: 'Yours', leased: 'Yours (leased)', rival: 'Rival-owned', public: 'The city',
 };
 
 /** The real-estate market: every lot in a district, what's on it and what it costs. */
@@ -59,7 +60,7 @@ export function StreetStrip({ s, lots }: { s: GameState; lots: Lot[] }) {
       {lots.map((l) => (
         <div key={l.id} title={`${lotName(l)} — ${STATUS_LABEL[l.status]}${l.stage ? ` · ${STAGE_LABEL[l.stage]}` : ''}`}
           className={`shrink-0 w-12 h-12 rounded border flex flex-col items-center justify-center text-[10px] ${tileClass(l)}`}>
-          <span className="text-base leading-none">{l.stage ? STAGE_GLYPH[l.stage] : '·'}</span>
+          <span className="leading-none" dangerouslySetInnerHTML={{ __html: lotSvg(l, { size: 26 }) }} />
           <span className="truncate w-full text-center px-0.5">{l.use ? USES_BY_ID[l.use].name.split(' ')[0] : 'lot'}</span>
         </div>
       ))}

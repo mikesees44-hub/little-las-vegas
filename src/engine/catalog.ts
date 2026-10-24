@@ -87,6 +87,9 @@ export const CATALOG: Record<BusinessKind, BusinessDef> = {
   filmdist: { kind: 'filmdist', name: 'Film distributor', category: 'front', blurb: 'Prints in cans to theaters from Baltimore to Providence. Interstate, lawyered, and watched.', cost: 14000, base: 320, season: [1.1, 1.0], upkeep: 60, heat: 0.15, fedHeat: 0.2, staff: 1, launder: 600, minYear: 1971 },
   deli: { kind: 'deli', name: 'Sandwich shop & deli', category: 'front', blurb: 'Hoagies, provolone hanging from the ceiling and a phone in the back that rings for the book.', cost: 2000, base: 75, season: [1.8, 0.9], upkeep: 15, heat: 0, fedHeat: 0, staff: 0, launder: 300 },
 
+  concrete: { kind: 'concrete', name: 'Concrete & ready-mix plant', category: 'front', blurb: 'Three mixer trucks and a batch plant on the bay. Every foundation on the island is poured by somebody; better you.', cost: 9000, base: 160, season: [1.5, 0.6], upkeep: 55, heat: 0.05, fedHeat: 0.01, staff: 0, launder: 1200 },
+  lumber: { kind: 'lumber', name: 'Lumber & supply yard', category: 'front', blurb: 'Two-by-fours, drywall and a forklift. Contractors buy on credit and pay in favors.', cost: 7000, base: 130, season: [1.4, 0.7], upkeep: 40, heat: 0, fedHeat: 0, staff: 0, launder: 800 },
+
   /* ---------------- property ---------------- */
   safehouse: { kind: 'safehouse', name: 'Safehouse', category: 'property', blurb: 'A quiet house with a cellar. Hides cash from raids and the boss from gunmen.', cost: 6000, base: 0, season: [1, 1], upkeep: 60, heat: 0, fedHeat: 0, staff: 0, launder: 150, max: 3 },
 };
@@ -149,6 +152,8 @@ export const BIZ_NAMES: Record<BusinessKind, string[]> = {
   adulttheater: ['The Paris Cinema', 'The Pike Theater', 'The Rialto Art Cinema'],
   filmdist: ['Atlantic Film Exchange', 'Delaware Valley Distributors', 'Coastal Pictures'],
   deli: ['Sal\'s Hoagies', 'Ninth Street Deli', 'Lou\'s Italian Sandwiches', 'Shore Hoagie Shop'],
+  concrete: ['Bayshore Ready-Mix', 'Island Concrete Co.', 'Cape Sand & Gravel'],
+  lumber: ['Rio Grande Lumber & Supply', 'Shore Builders Supply', 'Atlantic Millwork'],
   safehouse: ['Safehouse on Hand Ave', 'Cellar house in the Crest', 'Bayside bungalow', 'Farmhouse in Rio Grande'],
 };
 

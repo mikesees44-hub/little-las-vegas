@@ -1,5 +1,5 @@
 import { hashSeed } from './rng';
-import type { FactionId, GameState } from './types';
+import type { Character, FactionId, GameState } from './types';
 
 /**
  * The economy & property layer's state: racket books, upgrade tiers, lots and
@@ -40,7 +40,7 @@ export type ZoneId = 'boardwalk' | 'pacific' | 'piers' | 'downtown' | 'docks' | 
 export type StageId = 'purchase' | 'permits' | 'siteprep' | 'foundation' | 'framing' | 'exterior' | 'interior' | 'open';
 export const STAGES: StageId[] = ['purchase', 'permits', 'siteprep', 'foundation', 'framing', 'exterior', 'interior', 'open'];
 
-export type LotStatus = 'sale' | 'lease' | 'private' | 'owned' | 'leased' | 'rival';
+export type LotStatus = 'sale' | 'lease' | 'private' | 'owned' | 'leased' | 'rival' | 'public';
 
 export interface Lot {
   id: string;
@@ -50,7 +50,7 @@ export interface Lot {
   /** Street address. */
   address: string;
   status: LotStatus;
-  owner: FactionId | 'private';
+  owner: FactionId | 'private' | 'city';
   /** Asking price (sale) — land, or land and building. */
   price: number;
   /** Weekly lease (lease lots, or what a tenant pays you when you own the building). */
@@ -75,6 +75,22 @@ export interface Lot {
   boughtWeek?: number;
   /** What the player has put into it (for resale). */
   invested?: number;
+  /** Permits still pending (weeks left on each); 0 = granted. */
+  permit?: { zoning: number; inspector: number; bribed?: boolean };
+  /** A stop-work order: no progress until it is lifted. */
+  stopWork?: { weeks: number; reason: string };
+  /** Inspections passed during this build (stage ids). */
+  inspected?: string[];
+  /** Who is building it when it is not you (a rival, a developer, the city). */
+  developer?: string;
+  /** Your construction company holds the contract on someone else's build. */
+  contractor?: boolean;
+  /** Year construction started. */
+  started?: number;
+  /** What stood here before (burned, torn down) — for the map's timeline. */
+  past?: { use: string; from: number; to: number; why: string }[];
+  /** A rival is bidding for this lot too. */
+  bidder?: FactionId;
 }
 
 /* ---------------- managers & staff ---------------- */
@@ -197,6 +213,12 @@ export interface EconStats {
   skimsCaught: number;
   bigScores: number;
   staffMoves: number;
+  npcBuilt: number;
+  fires: number;
+  inspectionsFailed: number;
+  contractsWon: number;
+  outbid: number;
+  inspectorPaid?: number;
 }
 
 export interface EconState {
@@ -217,6 +239,12 @@ export interface EconState {
   /** No-show jobs handed out as favors: weekly salary by character id. */
   jobs: Record<string, number>;
   cooldowns: Record<string, number>;
+  /** The town's building inspector. He lives here rather than among the game's characters, so that adding him does not reshuffle the rest of the world. */
+  inspector?: Character;
+  /** Public and private contracts your companies are working (weekly payments). */
+  contracts: { id: string; name: string; weekly: number; weeksLeft: number; kind: 'city' | 'rival' | 'private' }[];
+  /** City jobs open for bids this month. */
+  tenders: { id: string; name: string; value: number; weeks: number; closes: number }[];
   /** Short-capo cases the boss is looking at (the truth is hidden from the UI). */
   cases: Record<string, { skimming: boolean; shortfall: number; week: number }>;
   stats: EconStats;
@@ -241,7 +269,10 @@ export type EconOp =
   | { op: 'gift'; to: string; giftId: string; fit: number; value: number }
   | { op: 'ticket'; team: TeamId; holderId: string; box: boolean }
   | { op: 'lotSold'; lotId: string; to: FactionId | 'private'; price: number }
-  | { op: 'tenant'; lotId: string; name?: string };
+  | { op: 'tenant'; lotId: string; name?: string }
+  | { op: 'clearStop'; lotId: string }
+  | { op: 'bribeStop'; lotId: string }
+  | { op: 'outbid'; lotId: string };
 
 /** Player orders (inside `{ kind: 'econ', op }`), previewed and committed by econ.ts. */
 export type EconAction =
@@ -253,6 +284,11 @@ export type EconAction =
   | { type: 'renovate'; lotId: string }
   | { type: 'sellLot'; lotId: string }
   | { type: 'permits'; lotId: string }
+  | { type: 'bribeInspector'; lotId: string }
+  | { type: 'puppetPermit'; lotId: string }
+  | { type: 'fixCode'; lotId: string }
+  | { type: 'slowRival'; lotId: string }
+  | { type: 'bid'; contractId: string }
   | { type: 'manager'; key: string; source: ManagerSource; charId?: string; pro?: number }
   | { type: 'oversight'; key: string; level: Oversight }
   | { type: 'audit'; key: string }
@@ -283,14 +319,21 @@ export function blankEcon(s: GameState): EconState {
     jobs: {},
     cooldowns: {},
     cases: {},
-    stats: { built: 0, lotsBought: 0, rivalBuys: 0, upgrades: 0, gifts: 0, leverage: 0, projects: 0, bugs: 0, bugsFound: 0, skimsCaught: 0, bigScores: 0, staffMoves: 0 },
+    contracts: [],
+    tenders: [],
+    stats: { built: 0, lotsBought: 0, rivalBuys: 0, upgrades: 0, gifts: 0, leverage: 0, projects: 0, bugs: 0, bugsFound: 0, skimsCaught: 0, bigScores: 0, staffMoves: 0, npcBuilt: 0, fires: 0, inspectionsFailed: 0, contractsWon: 0, outbid: 0 },
   };
 }
 
 /** Engine-side accessor: the layer's state, created if missing. */
 export function ensureEcon(s: GameState): EconState {
   if (!s.econ) s.econ = blankEcon(s);
-  return s.econ;
+  const e = s.econ;
+  // Saves from before the construction update.
+  e.contracts ??= [];
+  e.tenders ??= [];
+  for (const k of ['npcBuilt', 'fires', 'inspectionsFailed', 'contractsWon', 'outbid'] as const) e.stats[k] ??= 0;
+  return e;
 }
 
 export function eid(e: EconState, prefix: string): string {

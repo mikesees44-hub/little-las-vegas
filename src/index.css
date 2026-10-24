@@ -114,3 +114,9 @@ body {
 .llv-lot-lease span { background: #6aa7c9; }
 .llv-lot-owned span, .llv-lot-leased span { background: #e7c25a; border-color: #ecd38f; }
 .llv-lot-rival span { background: #b0302a; color: #f3e6c4; }
+
+/* Building icons on the map: the crane swings while a site is under construction. */
+.llv-lotico { background: none; border: none; }
+.llv-crane { transform-origin: 19px 22px; animation: llv-crane 3.2s ease-in-out infinite alternate; }
+@keyframes llv-crane { from { transform: rotate(-9deg); } to { transform: rotate(7deg); } }
+@media (prefers-reduced-motion: reduce) { .llv-crane { animation: none; } }

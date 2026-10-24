@@ -8,9 +8,10 @@ import {
   OVERSIGHT, ROLE_LABEL, SOURCE_LABEL, assistantCandidates, crewCandidates, familyCandidates, isClub, managerSkimRate, proCandidates, staffAmbition,
 } from '../../engine/managers';
 import {
-  BUILD_STAGES, STAGE_LABEL, USES, USES_BY_ID, USE_CAT_LABEL, ZONES_BY_ID, buildCost, buildWeeks, lotName, ownedLots, propertyNet, stageWeeks, underConstruction,
+  BUILD_STAGES, SUPPLY, STAGE_LABEL, USES, USES_BY_ID, supplyChain, USE_CAT_LABEL, ZONES_BY_ID, buildCost, buildWeeks, lotName, ownedLots, propertyNet, stageWeeks, underConstruction,
 } from '../../engine/property';
 import { nextStep, racketSummary, stepsOf, tree } from '../../engine/rackets';
+import { permitAuthority } from '../../engine/construction';
 import type { Business, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
@@ -50,6 +51,8 @@ export function Holdings({ s }: { s: GameState }) {
         </ul>
       </section>
 
+      <SupplyChain s={s} />
+
       <section>
         <div className="panel-title">Buildings & land</div>
         {lots.length === 0 && <p className="text-xs text-stone-500">No property yet. The real-estate market is on the map and under Real Estate.</p>}
@@ -58,6 +61,42 @@ export function Holdings({ s }: { s: GameState }) {
         </ul>
       </section>
     </div>
+  );
+}
+
+/** The construction supply chain, the city's bids, your contracts, and rival builds you could slow. */
+function SupplyChain({ s }: { s: GameState }) {
+  const sc = supplyChain(s);
+  const e = s.econ;
+  const rivalSites = (e?.lots ?? []).filter((l) => underConstruction(l) && l.status === 'rival').slice(0, 4);
+  return (
+    <section data-testid="supply-chain">
+      <div className="panel-title">Construction supply chain</div>
+      <div className="mt-1 grid gap-1 sm:grid-cols-4 text-xs">
+        {SUPPLY.map((x) => (
+          <div key={x.kind} className={`rounded border px-2 py-1 ${sc.owned.includes(x.kind) ? 'border-gold-500 text-gold-200' : 'border-noir-700 text-stone-500'}`}>
+            <div className="font-semibold">{CATALOG[x.kind].name}</div>
+            <div>{sc.owned.includes(x.kind) ? 'yours' : 'not yours'} · −{Math.round(x.cost * 100)}% cost{x.time ? `, −${Math.round(x.time * 100)}% time` : ''}</div>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-stone-500 mt-1">Your own builds: −{Math.round(sc.cost * 100)}% cost, −{Math.round(sc.time * 100)}% time, fewer failed inspections. Others' builds pay your companies when you hold the contract or supply them. {e?.stats.contractsWon ? `${e.stats.contractsWon} contracts won so far.` : ''}</p>
+      {(e?.contracts.length ?? 0) > 0 && (
+        <ul className="text-xs mt-1">
+          {e!.contracts.map((c) => <li key={c.id} className="text-stone-300">{c.name} — {fmt$(c.weekly)}/wk, {c.weeksLeft} wk left</li>)}
+        </ul>
+      )}
+      {(e?.tenders.length ?? 0) > 0 && (
+        <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          {e!.tenders.map((t) => <ActionCard key={t.id} s={s} action={{ kind: 'econ', op: { type: 'bid', contractId: t.id } }} />)}
+        </div>
+      )}
+      {rivalSites.length > 0 && (
+        <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+          {rivalSites.map((l) => <ActionCard key={l.id} s={s} action={{ kind: 'econ', op: { type: 'slowRival', lotId: l.id } }} compact />)}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -114,7 +153,7 @@ function LotRow({ s, l, m }: { s: GameState; l: Lot; m?: Manager }) {
   const [use, setUse] = useState<string>('');
   const z = ZONES_BY_ID[l.zone];
   const net = l.stage === 'open' && !l.bizId ? (l.tenant && !l.operating ? { rev: l.rent, exp: 0 } : propertyNet(s, l)) : undefined;
-  const fits = USES.filter((x) => (x.zones ? x.zones.includes(l.zone) : z.cats.includes(x.cat)) && (x.minYear ?? 0) <= s.date.y);
+  const fits = USES.filter((x) => !x.npcOnly && (x.zones ? x.zones.includes(l.zone) : z.cats.includes(x.cat)) && (x.minYear ?? 0) <= s.date.y);
   return (
     <li className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="holding-lot">
       <div className="flex flex-wrap justify-between gap-x-3 gap-y-1">
@@ -132,8 +171,14 @@ function LotRow({ s, l, m }: { s: GameState; l: Lot; m?: Manager }) {
       {underConstruction(l) && <StageBar s={s} l={l} />}
       {l.stalled && <div className="text-[11px] text-red-400 mt-1">Stalled: {l.stalled}</div>}
       {l.stage === 'open' && !l.bizId && (!l.tenant || l.operating) && <ManagerLine s={s} k={`lot:${l.id}`} m={m} />}
+      {l.stage === 'permits' && l.permit && (
+        <div className="text-[11px] text-stone-400 mt-1">Permits: building inspector {l.permit.inspector ? `${l.permit.inspector} wk` : 'signed'} · {permitAuthority(s).zoning} {l.permit.zoning ? `${l.permit.zoning} wk` : 'approved'}</div>
+      )}
       <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
         {l.stage === 'permits' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'permits', lotId: l.id } }} compact />}
+        {(l.stage === 'permits' || l.stopWork) && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'bribeInspector', lotId: l.id } }} compact />}
+        {l.stage === 'permits' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'puppetPermit', lotId: l.id } }} compact />}
+        {l.stopWork && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'fixCode', lotId: l.id } }} compact />}
         {l.stage === 'open' && u && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'renovate', lotId: l.id } }} compact />}
         {l.status === 'owned' && !underConstruction(l) && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'sellLot', lotId: l.id } }} compact />}
       </div>
@@ -143,7 +188,7 @@ function LotRow({ s, l, m }: { s: GameState; l: Lot; m?: Manager }) {
             <option value="">Build what? ({fits.length} uses fit {z.name})</option>
             {(Object.keys(USE_CAT_LABEL) as (keyof typeof USE_CAT_LABEL)[]).map((c) => (
               <optgroup key={c} label={USE_CAT_LABEL[c]}>
-                {fits.filter((x) => x.cat === c).map((x) => <option key={x.id} value={x.id}>{x.name} — {fmt$(buildCost(l, x))}, {buildWeeks(l, x)} wk</option>)}
+                {fits.filter((x) => x.cat === c).map((x) => <option key={x.id} value={x.id}>{x.name} — {fmt$(buildCost(l, x, s))}, {buildWeeks(l, x, s)} wk</option>)}
               </optgroup>
             ))}
           </select>
@@ -157,9 +202,8 @@ function LotRow({ s, l, m }: { s: GameState; l: Lot; m?: Manager }) {
 /** The construction stages as a bar: done, current (with weeks), to come. */
 export function StageBar({ s, l }: { s: GameState; l: Lot }) {
   const u = USES_BY_ID[l.use!];
-  const w = stageWeeks(buildWeeks(l, u));
+  const w = stageWeeks(buildWeeks(l, u, s));
   const cur = BUILD_STAGES.indexOf(l.stage as (typeof BUILD_STAGES)[number]);
-  void s;
   return (
     <div className="mt-1.5" data-testid="stage-bar">
       <div className="flex gap-0.5">
