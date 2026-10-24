@@ -5,6 +5,7 @@
  */
 
 import type { DynAction, DynOp, DynState } from './familyState';
+import type { MgState, MinigameId } from './minigame';
 
 export interface GameDate {
   y: number;
@@ -484,7 +485,9 @@ export type Effect =
   | ({ type: 'flip'; charId: string } & EffectBase)
   | ({ type: 'retire'; charId: string } & EffectBase)
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
-  | ({ type: 'checkBackground'; charId: string } & EffectBase);
+  | ({ type: 'checkBackground'; charId: string } & EffectBase)
+  /** A mini-game (minigame.ts): played full-screen, or auto-resolved with the same odds ("let it play out"). */
+  | ({ type: 'minigame'; game: MinigameId; iid: string; params: Record<string, string | number>; parts?: Record<string, Effect[]> } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -707,7 +710,7 @@ export interface WeeklyReport {
 
 export interface GameOver {
   week: number;
-  reason: 'no_heir';
+  reason: 'no_heir' | 'witness';
   text: string;
 }
 
@@ -786,6 +789,8 @@ export interface GameState {
   crewStats?: CrewStats;
   /** Event key -> week last shown (per-event cooldowns for crew decisions). */
   eventCooldowns?: Record<string, number>;
+  /** Mini-games: trials, witnesses, records (minigame.ts; optional for old saves). */
+  mg?: MgState;
 }
 
 export interface PlayerChoices {
@@ -795,6 +800,8 @@ export interface PlayerChoices {
   actions?: PlayerAction[];
   successionLaw?: SuccessionLaw;
   designatedHeirId?: string;
+  /** Mini-games the player played this week: event iid -> the moves he made (replayed by the engine). */
+  minigames?: Record<string, string[]>;
 }
 
 export type PlayerAction =

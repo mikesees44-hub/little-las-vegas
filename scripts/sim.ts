@@ -17,6 +17,7 @@ import { MAX_POPUPS } from '../src/engine/events';
 import { legalActions, previewAction } from '../src/engine/actions';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
+import { minigameOf, randomMoves } from '../src/engine/minigames';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
@@ -41,6 +42,8 @@ const GENERAL_RATE = Number(arg('general', '0.35'));
 const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 /** Chance per week of sending an envoy to another city. */
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
+/** Share of opened mini-games the random player plays move by move (the rest play out on their own). */
+const MG_PLAY_RATE = Number(arg('mgplay', '0.3'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
 
@@ -55,9 +58,14 @@ const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ?
 function aiChoices(s: GameState, salt: number): PlayerChoices {
   const h = { rng: (s.rng ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0 };
   const choices: Record<string, string> = {};
+  const minigames: Record<string, string[]> = {};
   for (const ev of s.pendingEvents) {
     const legal = ev.choices.filter((c) => !c.disabledReason);
-    choices[ev.iid] = legal[Math.floor(rand(h) * legal.length)].id;
+    const ch = legal[Math.floor(rand(h) * legal.length)];
+    choices[ev.iid] = ch.id;
+    // Mini-games: usually let it play out (the same odds); sometimes play them with random legal moves.
+    const mg = minigameOf(ch);
+    if (mg && mg.params.play !== 0 && rand(h) < MG_PLAY_RATE) minigames[ev.iid] = randomMoves(s, mg.game, mg.iid, mg.params, mg.parts, h);
   }
   const actions: PlayerAction[] = [];
   const add = (a: PlayerAction | undefined) => {
@@ -75,7 +83,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   if (boss && !boss.lifestyle) add(pickOne(h, LIFESTYLE_IDS.map((focus) => ({ kind: 'lifestyle', focus }) as PlayerAction)));
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
-  return { choices, actions };
+  return { choices, actions, minigames };
 }
 
 const pct = (n: number, d: number) => (d ? ((100 * n) / d).toFixed(1) + '%' : 'n/a');
@@ -118,6 +126,7 @@ interface GameResult {
   repeats: number;
   familyOver: number;
   titles: Record<string, number>;
+  mg: Record<string, number>;
 }
 
 function playOne(gi: number): GameResult {
@@ -125,7 +134,7 @@ function playOne(gi: number): GameResult {
     bankruptYear1: false, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
     deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
-    hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {},
+    hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, mg: {},
   };
   const lastSeen: Record<string, number> = {};
   let s: GameState;
@@ -222,6 +231,7 @@ function playOne(gi: number): GameResult {
       r.deathCauses[cause] = (r.deathCauses[cause] ?? 0) + 1;
     }
   }
+  for (const h of s!.mg?.history ?? []) r.mg[`${h.game}:${h.tone}`] = (r.mg[`${h.game}:${h.tone}`] ?? 0) + 1;
   r.finalRespect = s!.respect;
   if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
@@ -311,6 +321,12 @@ for (const r of results) for (const [k, v] of Object.entries(r.titles)) allTitle
 const totalPop = Object.values(allTitles).reduce((a, b) => a + b, 0);
 console.log(`  Distinct event kinds: ${Object.keys(allTitles).length}; top: ${Object.entries(allTitles).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => `${k} ${pct(v, totalPop)}`).join(', ')}`);
 const per10 = (k: keyof GameResult['crew']) => (results.reduce((a, r) => a + r.crew[k], 0) / Math.max(1, results.reduce((a, r) => a + r.weeksPlayed, 0))) * 520;
+{
+  const all: Record<string, number> = {};
+  for (const r of results) for (const [k, v] of Object.entries(r.mg)) all[k] = (all[k] ?? 0) + v;
+  console.log(`\nMINI-GAMES (last 40 per game, total)`);
+  console.log(`  ${Object.entries(all).sort().map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}`);
+}
 console.log(`\nCREW (per game, per 10 years)`);
 console.log(`  Defections ${per10('defections').toFixed(1)} · coups ${per10('coups').toFixed(1)} · flips ${per10('flips').toFixed(1)} · makings ${per10('makings').toFixed(1)} · rival moves on the crew ${per10('rivalCrewMoves').toFixed(1)}`);
 const keys: Record<string, number> = {};

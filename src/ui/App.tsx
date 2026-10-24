@@ -28,6 +28,8 @@ import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
+import { minigameOf, opensScene } from '../engine/minigames';
+import { MinigameScreen } from './minigames/MinigameScreen';
 
 export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle';
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
@@ -55,6 +57,8 @@ function freshSeed(): string {
 export function App() {
   const [s, setS] = useState<GameState>(() => loadGame() ?? newGame(freshSeed()));
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [mgMoves, setMgMoves] = useState<Record<string, string[]>>({});
+  const [scene, setScene] = useState<{ iid: string; choiceId: string; m: NonNullable<ReturnType<typeof minigameOf>> } | null>(null);
   const [eventIdx, setEventIdx] = useState<number | null>(null);
   const [mode, setMode] = useState<Mode>('week');
   const [advancing, setAdvancing] = useState(false);
@@ -84,8 +88,8 @@ export function App() {
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
-  function run(m: Mode, a: Record<string, string>, quiet = false) {
-    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders };
+  function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
+    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves };
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
@@ -105,6 +109,7 @@ export function App() {
       setReports(r.reports);
     }
     setAnswers({});
+    setMgMoves({});
     setOrders([]);
     setPendingLaw(undefined);
     setPendingHeir(undefined);
@@ -122,6 +127,21 @@ export function App() {
   function choose(choiceId: string) {
     if (eventIdx === null) return;
     const ev = s.pendingEvents[eventIdx];
+    const ch = ev.choices.find((c) => c.id === choiceId);
+    const m = ch ? minigameOf(ch) : undefined;
+    // A mini-game choice opens the scene; the answer is recorded when it ends.
+    if (ch && m && opensScene(ch)) {
+      setScene({ iid: ev.iid, choiceId, m });
+      return;
+    }
+    commit(choiceId);
+  }
+
+  function commit(choiceId: string, moves?: string[]) {
+    if (eventIdx === null) return;
+    const ev = s.pendingEvents[eventIdx];
+    const mv = moves ? { ...mgMoves, [ev.iid]: moves } : mgMoves;
+    if (moves) setMgMoves(mv);
     const next = { ...answers, [ev.iid]: choiceId };
     setAnswers(next);
     if (!advancing) {
@@ -130,13 +150,15 @@ export function App() {
     }
     const nextIdx = s.pendingEvents.findIndex((e) => !next[e.iid]);
     if (nextIdx >= 0) setEventIdx(nextIdx);
-    else run(mode, next);
+    else run(mode, next, false, mv);
   }
 
   function restart(seed?: string, start: StartId = 'classic') {
     clearSave();
     setS(newGameWith(seed || freshSeed(), start));
     setAnswers({});
+    setMgMoves({});
+    setScene(null);
     setOrders([]);
     setReports(null);
     setEventIdx(null);
@@ -151,7 +173,7 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!sheet || !!planner || !!reports || cues.length > 0;
+  const busy = !!current || !!scene || !!sheet || !!planner || !!reports || cues.length > 0;
   useClock({
     speed, s, busy, unanswered: unanswered.length,
     step: () => run('week', answers, true),
@@ -264,7 +286,19 @@ export function App() {
         <span className="ml-auto">Saved automatically in this browser.</span>
       </footer>
 
-      {current && (
+      {current && scene && (
+        <MinigameScreen
+          key={scene.iid}
+          s={s}
+          game={scene.m.game}
+          iid={scene.m.iid}
+          params={scene.m.params}
+          parts={scene.m.parts}
+          onCancel={() => setScene(null)}
+          onDone={(moves) => { const c = scene.choiceId; setScene(null); commit(c, moves); }}
+        />
+      )}
+      {current && !scene && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}

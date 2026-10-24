@@ -1,6 +1,8 @@
 import { officeWeek } from './office';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
+import { attachMinigames, minigameFirst } from './minigames';
+import { trialWeek } from './trial';
 import { newsWeek } from './newspaper';
 import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
@@ -82,8 +84,9 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     ctx.log.push(`Succession law is now: ${choices.successionLaw}.`);
   }
   if (choices.designatedHeirId !== undefined) s.designatedHeirId = choices.designatedHeirId || undefined;
-  const pending = s.pendingEvents;
+  const pending = minigameFirst(s.pendingEvents);
   s.pendingEvents = [];
+  ctx.mgMoves = choices.minigames;
   for (const ev of pending) {
     const wanted = choices.choices?.[ev.iid];
     let ch = ev.choices.find((c) => c.id === wanted && !c.disabledReason);
@@ -227,6 +230,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     crewWeek(ctx);
     lifestyleWeek(ctx);
     legalWeek(ctx);
+    trialWeek(ctx);
     underbellyWeek(ctx);
     officeWeek(s);
     regimesWeek(ctx);
@@ -266,6 +270,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     const errs = validatePlayer(s);
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
+    attachMinigames(s);
     ctx.popups = s.pendingEvents.length;
   } else {
     s.pendingEvents = [];
