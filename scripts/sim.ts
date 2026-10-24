@@ -79,6 +79,8 @@ interface GameResult {
   orders: Record<string, number>;
   finalBusinesses: number;
   peakUnwashed: number;
+  /** Dynasty-layer counters at the end of the game (familyState.ts). */
+  dyn?: Record<string, number>;
 }
 
 function playOne(gi: number): GameResult {
@@ -173,6 +175,7 @@ function playOne(gi: number): GameResult {
   }
   r.finalRespect = s!.respect;
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
+  if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   return r;
 }
 
@@ -227,6 +230,13 @@ const causes: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.deathCauses)) causes[k] = (causes[k] ?? 0) + v;
 console.log(`  Deaths in house & crew by cause:`);
 for (const [k, v] of Object.entries(causes).sort((a, b) => b[1] - a[1]).slice(0, 10)) console.log(`    ${String(v).padStart(5)}  ${k}`);
+
+const dynGames = results.filter((r) => r.dyn && r.weeksPlayed > 0);
+if (dynGames.length) {
+  const keys = Object.keys(dynGames[0].dyn!);
+  const per10 = (k: string) => dynGames.reduce((a, r) => a + (r.dyn![k] ?? 0) * (520 / r.weeksPlayed), 0) / dynGames.length;
+  console.log(`  House events per 10 years (mean): ${keys.map((k) => `${k} ${per10(k).toFixed(1)}`).join(', ')}`);
+}
 
 console.log(`\nHEAT (share of weeks in each band)`);
 for (const b of HEAT_BARS) {

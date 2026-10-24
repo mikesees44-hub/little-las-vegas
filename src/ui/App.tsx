@@ -11,7 +11,7 @@ import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
 import { EventModal } from './components/EventModal';
-import { FamilyTree } from './components/FamilyTree';
+import { FamilyTab } from './family/FamilyTab';
 import { Header } from './components/Header';
 import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
@@ -169,7 +169,7 @@ export function App() {
           {tab === 'schemes' && <SchemesPanel s={s} />}
           {tab === 'table' && <TablePanel s={s} />}
           {tab === 'family' && (
-            <FamilyTree s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
+            <FamilyTab s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
           )}
           {tab === 'chronicle' && <Chronicle s={s} />}
         </main>

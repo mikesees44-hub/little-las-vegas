@@ -7,6 +7,7 @@ import { seedSecrets } from './secrets';
 import { addOpinion, changeMeter } from './relations';
 import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
+import { initDynasty } from './family';
 import { DISTRICTS, RIVALS } from './world';
 import type { BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
 
@@ -322,5 +323,6 @@ export function newGame(seed: string | number = Date.now()): GameState {
   refreshHirePool(s);
   autoStaff(s);
   s.pendingEvents = generateWeekEvents(s);
+  initDynasty(s);
   return s;
 }

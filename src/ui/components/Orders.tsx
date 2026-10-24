@@ -68,7 +68,7 @@ export function AcceptanceLine({ a, prefix = 'Will accept' }: { a: Acceptance; p
       <span className={`font-semibold ${pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}`}>{prefix}: {pct}%</span>
       <span className="text-stone-500"> — </span>
       {a.reasons.map((r, i) => (
-        <span key={i} className={`mr-2 whitespace-nowrap ${r.label === 'Base' ? 'text-stone-500' : r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+        <span key={i} className={`mr-2 inline-block whitespace-nowrap ${r.label === 'Base' ? 'text-stone-500' : r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
           {r.value > 0 ? '+' : r.value < 0 ? '−' : ''}{Math.abs(r.value)} {r.label}
         </span>
       ))}

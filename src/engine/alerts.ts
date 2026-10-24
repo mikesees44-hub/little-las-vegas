@@ -1,6 +1,7 @@
 import { owned, staffFactor } from './business';
 import { capos, crew, displayName, isFree, player } from './characters';
 import { chooseHeir } from './dynasty';
+import { familyAlerts } from './familyAlerts';
 import { UNWASHED_SAFE } from './economy';
 import { opinion } from './relations';
 import { getRelation } from './relations';
@@ -57,5 +58,6 @@ export function alerts(s: GameState): Alert[] {
   for (const d of s.disputes.filter((x) => !x.ruling)) out.push({ kind: 'dispute', severity: d.defendant === 'player' ? 'warn' : 'info', title: `Dispute at the Table (week ${d.hearingWeek})`, text: d.claim, tab: 'table' });
   for (const w of s.wars) out.push({ kind: 'war', severity: w.score < -30 ? 'danger' : 'warn', title: `At war: ${s.rivals.find((r) => r.id === w.rival)?.shortName}`, text: `War score ${w.score}.`, tab: 'table' });
   if (!chooseHeir(s, boss).heir) out.push({ kind: 'heir', severity: 'danger', title: 'No heir', text: 'If you die now, the house dies with you.', tab: 'family' });
+  out.push(...familyAlerts(s));
   return out;
 }

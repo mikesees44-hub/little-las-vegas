@@ -1,5 +1,6 @@
 import { crew, displayName, hasTrait, livingDynasty, player } from './characters';
 import { killCharacter } from './dynasty';
+import { applyDynOp, describeDynOp } from './family';
 import { hireFrontMan } from './goals';
 import { bookLoan } from './loans';
 import { heat, money, respect, type Ctx } from './ledger';
@@ -173,6 +174,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
     }
     case 'unwashed':
       return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
+    case 'dyn':
+      return describeDynOp(s, e.op);
     case 'rivalResource': {
       const parts: string[] = [];
       if (e.muscle) parts.push(`muscle ${signed(e.muscle)}`);
@@ -562,6 +565,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     }
     case 'flag':
       s.flags[e.key] = (s.flags[e.key] ?? 0) + e.value;
+      break;
+    case 'dyn':
+      applyDynOp(ctx, e.op, label);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

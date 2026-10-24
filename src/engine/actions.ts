@@ -16,6 +16,7 @@ import { CITIES_BY_ID, hasPermission, needsPermission } from './cities';
 import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds, topRival } from './schemes';
 import { OFFICE_BRIBE } from './interactions';
 import { getRelation, opinion } from './relations';
+import { commitDynasty, dynastyActions, previewDynasty } from './family';
 import type { Character } from './types';
 
 /** A capo's willingness to accept a worse contract. */
@@ -108,6 +109,11 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
         category: 'event',
       };
     },
+  },
+  /** The dynasty layer (family.ts): marriages, education, hosting, decisions, legacies. */
+  dynasty: {
+    preview: (s, a) => previewDynasty(s, a.op),
+    commit: (ctx, a) => commitDynasty(ctx, a.op),
   },
   declareWar: {
     preview: (s, a) => {
@@ -673,6 +679,7 @@ export function availableActions(s: GameState): PlayerAction[] {
   }
   const official = Object.values(s.characters).find((c) => c.alive && c.office && OFFICE_BRIBE[c.office] && (s.week % 3 === 0));
   if (official) out.push({ kind: 'interact', id: 'bribe', target: official.id });
+  out.push(...dynastyActions(s));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {

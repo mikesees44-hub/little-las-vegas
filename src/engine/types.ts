@@ -4,6 +4,8 @@
  * localStorage and restored byte-for-byte.
  */
 
+import type { DynAction, DynOp, DynState } from './familyState';
+
 export interface GameDate {
   y: number;
   m: number; // 1-12
@@ -337,7 +339,9 @@ export type Effect =
   | ({ type: 'sanction'; targetId: string; weeks: number } & EffectBase)
   | ({ type: 'ruling'; disputeId: string; comply: boolean } & EffectBase)
   | ({ type: 'permit'; city: string; weeks: number } & EffectBase)
-  | ({ type: 'standing'; city: string; amount: number } & EffectBase);
+  | ({ type: 'standing'; city: string; amount: number } & EffectBase)
+  /** The dynasty layer (familyState.ts / family.ts). */
+  | ({ type: 'dyn'; op: DynOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -628,6 +632,8 @@ export interface GameState {
   cityStanding: Record<string, number>;
   /** Philadelphia's permission to operate in a city (city id -> until week). */
   permits: Record<string, number>;
+  /** The CK dynasty layer: houses, alliances, renown, legacies, activities (optional for old saves). */
+  dyn?: DynState;
 }
 
 export interface PlayerChoices {
@@ -661,7 +667,8 @@ export type PlayerAction =
   | { kind: 'policy'; charId: string; policy: CrewPolicy }
   | { kind: 'contract'; charId: string; keep: number }
   | { kind: 'edict'; edict: EdictId; on: boolean }
-  | { kind: 'hire'; specId: string };
+  | { kind: 'hire'; specId: string }
+  | { kind: 'dynasty'; op: DynAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
