@@ -54,6 +54,8 @@ export function alerts(s: GameState): Alert[] {
   const blown = s.schemes.filter((x) => x.owner === 'player' && x.discovered).length;
   if (blown) out.push({ kind: 'scheme', severity: 'warn', title: `${blown} of your schemes discovered`, text: 'They know what you are planning.', tab: 'schemes' });
   for (const r of s.rivals.filter((x) => x.feud)) out.push({ kind: 'war', severity: 'danger', title: `Blood feud: ${r.shortName}`, text: `${r.name} wants blood for an unsanctioned killing.`, charId: r.leaderId });
+  for (const d of s.disputes.filter((x) => !x.ruling)) out.push({ kind: 'dispute', severity: d.defendant === 'player' ? 'warn' : 'info', title: `Dispute at the Table (week ${d.hearingWeek})`, text: d.claim, tab: 'table' });
+  for (const w of s.wars) out.push({ kind: 'war', severity: w.score < -30 ? 'danger' : 'warn', title: `At war: ${s.rivals.find((r) => r.id === w.rival)?.shortName}`, text: `War score ${w.score}.`, tab: 'table' });
   if (!chooseHeir(s, boss).heir) out.push({ kind: 'heir', severity: 'danger', title: 'No heir', text: 'If you die now, the house dies with you.', tab: 'family' });
   return out;
 }

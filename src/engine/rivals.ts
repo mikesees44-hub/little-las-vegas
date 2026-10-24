@@ -5,6 +5,7 @@ import { killCharacter } from './dynasty';
 import { respect, rivalHeatHit, rivalMoneyHit, type Ctx } from './ledger';
 import { addOpinion, changeMeter, getRelation, opinion } from './relations';
 import { activeTask } from './council';
+import { changeScore } from './war';
 import { chance, pick, rand, randInt, weightedPick } from './rng';
 import { FACTION_NAMES, RIVALS } from './world';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalGoal, RivalId, RivalMove } from './types';
@@ -135,6 +136,7 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
       }
       // Rivals focus on the player but act on each other too.
       if (t !== 'player') sc *= 0.55;
+      if (t === 'player' && (r.war || r.feud) && move === 'strike') sc *= 2.5;
       if (sc > 0) out.push({ move, target: t, score: sc });
     }
   }
@@ -321,6 +323,8 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   ];
   const k = pick(s, kinds);
   const protect = activeTask(s, 'enf_protect');
+  const war = s.wars.find((w) => w.rival === r.id);
+  if (war) changeScore(s, war.id, -5);
   const want = Math.round(randInt(s, 1000, 4500) * (1 - Math.min(0.6, 0.4 * protect)));
   const lost = rivalMoneyHit(ctx, want, `${r.shortName} crew: ${k.label}`, caps.moneyFrac);
   rivalHeatHit(ctx, 'local', 2, `${r.shortName} crew: ${k.label} draws cops`, caps.heatPerBar);

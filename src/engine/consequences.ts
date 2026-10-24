@@ -101,6 +101,13 @@ const HANDLERS: Record<string, Handler> = {
   promise_abdicate: () => {
     return { text: 'the capos came back for the boss\'s promise to step aside — and he is still in the chair', effects: [{ type: 'crewOpinion', amount: -10, reason: 'Broke his promise to step aside' }, { type: 'respect', amount: -4 }] };
   },
+  table_enforce: (ctx) => {
+    const s = ctx.s;
+    const men = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank === 'capo');
+    const v = men[0];
+    if (!v) return { text: 'Philadelphia enforced the ruling: your places in Downtown were burned', effects: [{ type: 'respect', amount: -5 }, { type: 'heat', bar: 'local', amount: 6 }] };
+    return { text: `Philadelphia enforced the Table's ruling: ${v.firstName} ${v.lastName} was found in the Delaware`, effects: [{ type: 'kill', charId: v.id, cause: 'killed on the Table\'s orders for your defiance', killer: 'philly' }, { type: 'respect', amount: -4 }] };
+  },
   rat_burned: (ctx, sc) => {
     const c = ctx.s.characters[String(sc.params.charId)];
     if (!c?.alive || c.faction !== 'player') return undefined;

@@ -1,0 +1,329 @@
+import { crew, displayName, hasTrait, isFree, player } from './characters';
+import { applyEffects, fmtMoney } from './effects';
+import { playerHook } from './interactions';
+import type { Ctx } from './ledger';
+import { opinion } from './relations';
+import { chance, randInt } from './rng';
+import { endWar } from './war';
+import { FACTION_NAMES } from './world';
+import type { Character, Choice, Dispute, DisputeKind, Effect, EventInstance, FactionId, GameState, RivalId } from './types';
+
+/**
+ * The Table: Philadelphia's South Jersey sit-down, chaired by Sal Moretti.
+ * Members: Moretti, the Camden and Trenton capos, Carmine Manno for Atlantic
+ * City — and you. A dispute is stated with both sides, members can be
+ * lobbied beforehand (money, favors, hooks), you plead your case at the
+ * hearing, the members who are not party to it vote, and the ruling is
+ * enforced — comply, or defy Philadelphia.
+ */
+
+export const HEARING_DELAY = 2;
+
+export function tableMembers(s: GameState): Character[] {
+  const philly = s.rivals.find((r) => r.id === 'philly');
+  const manno = s.rivals.find((r) => r.id === 'manno');
+  const out: Character[] = [];
+  if (philly && s.characters[philly.leaderId]?.alive) out.push(s.characters[philly.leaderId]);
+  for (const c of Object.values(s.characters)) if (c.alive && c.faction === 'philly' && (c.office === 'Camden capo' || c.office === 'Trenton capo')) out.push(c);
+  if (manno && s.characters[manno.leaderId]?.alive) out.push(s.characters[manno.leaderId]);
+  return out;
+}
+
+export function chair(s: GameState): Character | undefined {
+  return tableMembers(s)[0];
+}
+
+function partyLeader(s: GameState, f: FactionId): Character | undefined {
+  if (f === 'player') return player(s);
+  const r = s.rivals.find((x) => x.id === f);
+  return r ? s.characters[r.leaderId] : undefined;
+}
+
+function opponent(d: Dispute): FactionId {
+  return d.plaintiff === 'player' ? d.defendant : d.plaintiff;
+}
+
+/** Members who vote (not a party to the dispute). */
+export function voters(s: GameState, d: Dispute): Character[] {
+  return tableMembers(s).filter((m) => m.faction !== d.plaintiff && m.faction !== d.defendant);
+}
+
+function noise(d: Dispute, m: Character): number {
+  let h = 2166136261;
+  for (const ch of d.id + m.id) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return (h % 21) - 10;
+}
+
+export interface Lean {
+  member: Character;
+  value: number;
+  reasons: { label: string; value: number }[];
+}
+
+/** How each voting member leans: positive means your side. */
+export function forecast(s: GameState, d: Dispute): Lean[] {
+  const boss = player(s);
+  const opp = partyLeader(s, opponent(d));
+  const oppR = s.rivals.find((r) => r.id === opponent(d));
+  return voters(s, d).map((m) => {
+    const reasons: { label: string; value: number }[] = [];
+    reasons.push({ label: 'Thinks of you', value: Math.round(opinion(s, m.id, boss.id) * 0.6) });
+    if (opp) reasons.push({ label: `Thinks of ${opp.firstName} ${opp.lastName}`, value: -Math.round(opinion(s, m.id, opp.id) * 0.6) });
+    if (d.lobby[m.id]) reasons.push({ label: 'Your lobbying', value: d.lobby[m.id] });
+    if (d.plea) reasons.push({ label: 'Your plea', value: d.plea });
+    if (d.kind === 'district' && d.district && s.claims.some((c) => c.district === d.district && c.against === opponent(d))) reasons.push({ label: 'You hold a claim', value: 15 });
+    if (oppR?.feud && d.plaintiff === 'player') reasons.push({ label: 'They have a blood feud with you', value: -5 });
+    if (s.flags.brunoKnows) reasons.push({ label: 'You touched narcotics', value: m.faction === 'philly' ? -30 : -10 });
+    if (m.faction === 'philly' && m.id === chair(s)?.id) reasons.push({ label: 'Family heat on you', value: -Math.round(s.heat.family / 4) });
+    if (d.kind === 'sanction' && d.plaintiff !== 'player') reasons.push({ label: 'You killed a made man without asking', value: -20 });
+    reasons.push({ label: 'His own reasons', value: noise(d, m) });
+    return { member: m, value: reasons.reduce((a, r) => a + r.value, 0), reasons };
+  });
+}
+
+/** Votes, with the chair breaking ties. */
+export function tally(s: GameState, d: Dispute): { forPlayer: boolean; votes: Record<string, boolean> } {
+  const leans = forecast(s, d);
+  const votes: Record<string, boolean> = {};
+  let yes = 0;
+  for (const l of leans) {
+    votes[l.member.id] = l.value > 0;
+    if (l.value > 0) yes++;
+  }
+  const no = leans.length - yes;
+  const c = chair(s);
+  const tie = yes === no;
+  return { forPlayer: tie ? (c ? (leans.find((l) => l.member.id === c.id)?.value ?? 0) > 0 : false) : yes > no, votes };
+}
+
+/* ---------------------------------------------------------------- */
+/* Raising disputes                                                  */
+/* ---------------------------------------------------------------- */
+
+export function disputeText(s: GameState, kind: DisputeKind, plaintiff: FactionId, defendant: FactionId, opts: { district?: string; targetId?: string; amount?: number }): { claim: string; defense: string } {
+  const P = plaintiff === 'player' ? `The house of ${s.houseName}` : FACTION_NAMES[plaintiff];
+  const D = defendant === 'player' ? `the house of ${s.houseName}` : FACTION_NAMES[defendant];
+  const dist = s.districts.find((x) => x.id === opts.district)?.name;
+  const t = opts.targetId ? s.characters[opts.targetId] : undefined;
+  switch (kind) {
+    case 'district':
+      return { claim: `${P} says ${dist} is theirs by right and ${D} has no business on those corners.`, defense: `${D[0].toUpperCase()}${D.slice(1)} says they earned every corner in ${dist} and owe nobody an apology.` };
+    case 'sanction':
+      return { claim: `${P} asks the Table's permission to kill ${t ? displayName(t) : 'a man'}.`, defense: `${D[0].toUpperCase()}${D.slice(1)} says ${t ? t.firstName : 'he'} is a made man under their protection.` };
+    case 'reparations':
+      return { claim: `${P} says ${D} hurt their people and wants ${fmtMoney(opts.amount ?? 0)} for it.`, defense: `${D[0].toUpperCase()}${D.slice(1)} says it was business, and business is not an insult.` };
+    case 'peace':
+      return { claim: `${P} asks the Table to end the war — on its terms.`, defense: `${D[0].toUpperCase()}${D.slice(1)} says the war is not finished.` };
+    case 'war':
+      return { claim: `${P} asks the Table's blessing to go to war with ${D}${dist ? ` over ${dist}` : ''}.`, defense: `${D[0].toUpperCase()}${D.slice(1)} says there is no cause, only greed.` };
+  }
+}
+
+export function newDispute(s: GameState, kind: DisputeKind, plaintiff: FactionId, defendant: FactionId, opts: { district?: string; targetId?: string; amount?: number; warId?: string }): Omit<Dispute, 'id' | 'raisedWeek' | 'hearingWeek' | 'lobby' | 'plea'> {
+  const txt = disputeText(s, kind, plaintiff, defendant, opts);
+  return { kind, plaintiff, defendant, claim: txt.claim, defense: txt.defense, district: opts.district, targetId: opts.targetId, amount: opts.amount, warId: opts.warId };
+}
+
+export function openDispute(s: GameState, d: Omit<Dispute, 'id' | 'raisedWeek' | 'hearingWeek' | 'lobby' | 'plea'>): Dispute {
+  const full: Dispute = { ...d, id: `dp${s.nextId++}`, raisedWeek: s.week, hearingWeek: s.week + HEARING_DELAY, lobby: {}, plea: 0 };
+  s.disputes.push(full);
+  return full;
+}
+
+/** Rivals bring disputes against you when they have a grievance. */
+export function rivalDisputes(ctx: Ctx): void {
+  const s = ctx.s;
+  if (!chair(s)) return;
+  const boss = player(s);
+  for (const r of s.rivals) {
+    if (r.kind !== 'mob' || !s.characters[r.leaderId]?.alive) continue;
+    if (s.disputes.some((d) => !d.ruling && (d.plaintiff === r.id || d.defendant === r.id))) continue;
+    const op = opinion(s, r.leaderId, boss.id);
+    if (op > -25 || !chance(s, r.feud ? 0.08 : 0.025)) continue;
+    let d: Dispute;
+    if (r.feud) {
+      const capo = crew(s).filter((c) => c.rank === 'capo' && isFree(s, c))[0] ?? crew(s).filter((c) => isFree(s, c))[0];
+      if (!capo) continue;
+      d = openDispute(s, newDispute(s, 'sanction', r.id, 'player', { targetId: capo.id }));
+    } else {
+      const contested = s.districts.filter((x) => (x.influence.player ?? 0) > 0 && (x.influence[r.id] ?? 0) > 0).sort((a, b) => (b.influence[r.id] ?? 0) - (a.influence[r.id] ?? 0))[0];
+      d = contested && chance(s, 0.6)
+        ? openDispute(s, newDispute(s, 'district', r.id, 'player', { district: contested.id }))
+        : openDispute(s, newDispute(s, 'reparations', r.id, 'player', { amount: randInt(s, 30, 80) * 100 }));
+    }
+    s.eventQueue.push(buildDisputeRaised(s, d));
+    ctx.log.push(`${r.name} has brought a dispute against you to the Table. The hearing is in ${HEARING_DELAY} weeks.`);
+  }
+}
+
+export function buildDisputeRaised(s: GameState, d: Dispute): EventInstance {
+  const opp = partyLeader(s, d.plaintiff)!;
+  const label = 'Dispute at the Table';
+  const settle: Effect[] = d.kind === 'reparations'
+    ? [{ type: 'money', amount: -(d.amount ?? 0), label: `${label}: settled privately` }]
+    : d.kind === 'district' && d.district
+      ? [{ type: 'influence', district: d.district, faction: 'player', amount: -6, label: `${label}: settled privately` }, { type: 'influence', district: d.district, faction: d.plaintiff, amount: 6, label: `${label}: settled privately` }]
+      : [{ type: 'respect', amount: -4, label: `${label}: settled privately` }, { type: 'money', amount: -3000, label: `${label}: settled privately` }];
+  return {
+    iid: `ev${s.nextId++}`, defId: 'dispute_raised', week: s.week, mandatory: false, priority: 60,
+    title: 'A dispute is brought to the Table',
+    text: `${d.claim} ${d.defense} Sal Moretti will hear it in ${HEARING_DELAY} weeks. Until then, the members can be talked to.`,
+    defaultChoiceId: 'answer', meta: { dispute: d.id }, actors: [opp.id, ...(chair(s) ? [chair(s)!.id] : [])],
+    choices: [
+      { id: 'answer', label: 'We will answer at the Table', detail: 'Lobby the members before the hearing (the Table tab).', because: `chose to answer ${FACTION_NAMES[d.plaintiff]} at the Table`, effects: [{ type: 'respect', amount: 1, label }] },
+      { id: 'settle', label: 'Settle it privately', because: `settled with ${FACTION_NAMES[d.plaintiff]} privately`, effects: [...settle, { type: 'ruling', disputeId: d.id, comply: true, label: `${label}: settled privately` }] },
+    ],
+  };
+}
+
+/* ---------------------------------------------------------------- */
+/* Hearings                                                          */
+/* ---------------------------------------------------------------- */
+
+export function tableWeek(ctx: Ctx): void {
+  const s = ctx.s;
+  s.disputes = s.disputes.filter((d) => !d.ruling || s.week - d.ruling.week < 26);
+  for (const d of s.disputes) {
+    if (d.ruling || d.hearingWeek > s.week + 1) continue;
+    if (s.eventQueue.some((e) => e.meta?.dispute === d.id && e.defId === 'hearing') || s.pendingEvents.some((e) => e.meta?.dispute === d.id && e.defId === 'hearing')) continue;
+    if (!chair(s) || !partyLeader(s, opponent(d))) {
+      d.ruling = { forPlayer: true, votes: {}, week: s.week };
+      continue;
+    }
+    s.eventQueue.push(buildHearing(s, d));
+  }
+  // A war that drags on is brought to the Table.
+  for (const w of s.wars) {
+    if (s.week - w.startWeek >= 10 && !s.disputes.some((d) => d.warId === w.id && !d.ruling)) {
+      openDispute(s, newDispute(s, 'peace', 'player', w.rival, { warId: w.id, district: w.district }));
+      ctx.log.push(`Philadelphia has had enough of the war with ${FACTION_NAMES[w.rival]}. The Table will rule on it in ${HEARING_DELAY} weeks.`);
+    }
+  }
+}
+
+export interface Plea {
+  id: string;
+  label: string;
+  detail: string;
+  bonus: number;
+  extra?: Effect[];
+}
+
+export function pleas(s: GameState, d: Dispute): Plea[] {
+  const boss = player(s);
+  const c = chair(s);
+  const opp = partyLeader(s, opponent(d));
+  const out: Plea[] = [];
+  out.push({ id: 'envelopes', label: 'Remind them every envelope came on time', detail: `Leans on what ${c?.firstName ?? 'the chair'} thinks of you.`, bonus: Math.max(-10, Math.round((c ? opinion(s, c.id, boss.id) : 0) / 2.5)) });
+  if (opp && playerHook(s, opp.id)?.strong) out.push({ id: 'proof', label: `Show them what ${opp.firstName} plotted`, detail: 'You hold proof. It will hurt him in that room.', bonus: 30 });
+  const oppR = s.rivals.find((r) => r.id === opponent(d));
+  out.push({ id: 'tradition', label: 'Appeal to tradition', detail: 'The old rules: respect, sanction, no junk.', bonus: 8 + (oppR?.feud ? 0 : 0) + (hasTrait(boss, 'Pious') ? 6 : 0) + (s.flags.brunoKnows ? -15 : 0) + (oppR && (s.flags[`grievance_${oppR.id}`] ?? 0) > 0 ? 12 : 0) });
+  out.push({ id: 'threaten', label: 'Let them see your strength', detail: 'Respect counts in that room — and so does arrogance.', bonus: Math.round((s.respect - 50) / 2), extra: [{ type: 'heat', bar: 'family', amount: 4, label: 'Threatened the Table' }] });
+  out.push({ id: 'concede', label: 'Offer a concession ($3,000 to the Table)', detail: 'Money on the table for the old man\'s charities.', bonus: 18, extra: [{ type: 'money', amount: -3000, label: 'Concession to the Table' }] });
+  return out;
+}
+
+export function buildHearing(s: GameState, d: Dispute): EventInstance {
+  const c = chair(s)!;
+  const opp = partyLeader(s, opponent(d))!;
+  const label = 'The Table';
+  const leans = forecast(s, d);
+  const likely = leans.filter((l) => l.value > 0).length;
+  const choices: Choice[] = pleas(s, d).map((p) => ({
+    id: p.id,
+    label: p.label,
+    detail: p.detail,
+    because: `pleaded before the Table: ${p.label.toLowerCase()}`,
+    effects: [...(p.extra ?? []), { type: 'plea', disputeId: d.id, amount: p.bonus, label: `${label}: ${p.bonus >= 0 ? '+' : '−'}${Math.abs(p.bonus)} to every vote` }],
+  }));
+  return {
+    iid: `ev${s.nextId++}`, defId: 'hearing', week: s.week, mandatory: true, priority: 86,
+    title: 'The Table sits',
+    text: `A private room above a Ninth Street restaurant. ${displayName(c)} at the head. ${d.claim} ${d.defense} Before your plea, ${likely} of ${leans.length} votes lean your way.`,
+    defaultChoiceId: 'envelopes', meta: { dispute: d.id }, actors: [c.id, opp.id],
+    choices,
+  };
+}
+
+/** Called when the plea is made: the vote happens and the ruling is enforced or put to you. */
+export function holdVote(ctx: Ctx, d: Dispute): void {
+  const s = ctx.s;
+  const t = tally(s, d);
+  d.ruling = { forPlayer: t.forPlayer, votes: t.votes, week: s.week };
+  const yes = Object.values(t.votes).filter(Boolean).length;
+  const n = Object.keys(t.votes).length;
+  const opp = opponent(d);
+  const oppName = FACTION_NAMES[opp];
+  ctx.log.push(`The Table voted ${yes}–${n - yes} ${t.forPlayer ? 'for you' : `for ${oppName}`}.`);
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `The Table ruled ${t.forPlayer ? 'for the house' : `for ${oppName}`} (${yes}–${n - yes}): ${d.claim}`, kind: 'rival' });
+  if (s.cutscenes.length < 2) s.cutscenes.push({ key: 'sitdown', title: 'The Table rules', text: `${yes} hands for you, ${n - yes} against. ${t.forPlayer ? 'Sal Moretti nods once.' : 'Sal Moretti does not look at you.'}`, week: s.week });
+  const win = winEffects(s, d, t.forPlayer);
+  if (win.length) applyEffects(ctx, win, { label: 'The Table rules', because: 'took a dispute to the Table' });
+  if (!t.forPlayer && d.plaintiff !== 'player') s.eventQueue.push(buildRulingAgainst(s, d));
+  if (d.kind === 'peace' && d.warId) {
+    const w = s.wars.find((x) => x.id === d.warId);
+    if (w) endWar(ctx, w, t.forPlayer ? 'won' : 'lost', 'district');
+  }
+}
+
+/** Effects that follow automatically from the vote (anything the player gains, or loses when he brought it). */
+function winEffects(s: GameState, d: Dispute, forPlayer: boolean): Effect[] {
+  const label = 'The Table rules';
+  const opp = opponent(d) as RivalId;
+  if (forPlayer) {
+    switch (d.kind) {
+      case 'district':
+        return d.district ? [{ type: 'influence', district: d.district, faction: opp, amount: -15, label }, { type: 'influence', district: d.district, faction: 'player', amount: 15, label }, { type: 'respect', amount: 3, label }] : [];
+      case 'sanction':
+        return d.plaintiff === 'player' && d.targetId ? [{ type: 'sanction', targetId: d.targetId, weeks: 26, label }, { type: 'respect', amount: 1, label }] : [{ type: 'respect', amount: 3, label }];
+      case 'war':
+        return [{ type: 'flag', key: `sanctionWar_${opp}`, value: s.week + 12 - (s.flags[`sanctionWar_${opp}`] ?? 0), label }, { type: 'respect', amount: 2, label }];
+      case 'reparations':
+        return d.plaintiff === 'player' ? [{ type: 'money', amount: Math.min(d.amount ?? 0, s.rivals.find((r) => r.id === opp)?.money ?? 0), label: `${label}: reparations paid to you` }] : [{ type: 'respect', amount: 3, label }];
+      default:
+        return [{ type: 'respect', amount: 2, label }];
+    }
+  }
+  if (d.plaintiff === 'player') return [{ type: 'respect', amount: -3, label }, { type: 'rivalOpinion', rival: opp, amount: -5, reason: 'Dragged us before the Table', label }];
+  return [];
+}
+
+/** You lost a dispute someone brought against you: comply or defy. */
+export function buildRulingAgainst(s: GameState, d: Dispute): EventInstance {
+  const label = 'The Table\'s ruling';
+  const opp = opponent(d);
+  const t = d.targetId ? s.characters[d.targetId] : undefined;
+  let comply: Effect[] = [];
+  let what = '';
+  switch (d.kind) {
+    case 'district':
+      comply = d.district ? [{ type: 'influence', district: d.district, faction: 'player', amount: -12, label }, { type: 'influence', district: d.district, faction: opp, amount: 12, label }] : [];
+      what = `give up your corners in ${s.districts.find((x) => x.id === d.district)?.name}`;
+      break;
+    case 'reparations':
+      comply = [{ type: 'money', amount: -(d.amount ?? 0), label: `${label}: reparations to ${FACTION_NAMES[opp]}` }];
+      what = `pay ${FACTION_NAMES[opp]} ${fmtMoney(d.amount ?? 0)}`;
+      break;
+    case 'sanction':
+      comply = t ? [{ type: 'kill', charId: t.id, cause: 'given up to the Table\'s sanctioned hit', killer: opp as FactionId, label }] : [];
+      what = t ? `give up ${displayName(t)} — the Table sanctions his death` : 'accept their sanction';
+      break;
+    default:
+      comply = [{ type: 'respect', amount: -3, label }];
+      what = 'accept the ruling';
+  }
+  return {
+    iid: `ev${s.nextId++}`, defId: 'ruling_against', week: s.week, mandatory: true, priority: 87,
+    title: 'The ruling went against you',
+    text: `The Table has spoken: you are to ${what}. Philadelphia expects it done.`,
+    defaultChoiceId: 'comply', meta: { dispute: d.id, ...(t ? { charId: t.id } : {}) }, actors: [chair(s)?.id, t?.id].filter((x): x is string => !!x),
+    choices: [
+      { id: 'comply', label: 'Do as the Table says', because: 'complied with the Table\'s ruling', effects: [...comply, { type: 'ruling', disputeId: d.id, comply: true, label }, { type: 'heat', bar: 'family', amount: -5, label }] },
+      { id: 'defy', label: 'Defy the Table', detail: 'Nobody defies Philadelphia twice.', because: 'defied the Table', effects: [{ type: 'ruling', disputeId: d.id, comply: false, label }, { type: 'heat', bar: 'family', amount: 25, label }, { type: 'rivalOpinion', rival: 'philly', amount: -30, reason: 'Defied the Table', label }, { type: 'respect', amount: 2, label }, { type: 'schedule', key: 'table_enforce', minWeeks: 2, maxWeeks: 6, chance: 0.6, hint: 'Philadelphia may enforce it themselves', label }] },
+    ],
+  };
+}
+
+export function disputeById(s: GameState, id: string): Dispute | undefined {
+  return s.disputes.find((d) => d.id === id);
+}

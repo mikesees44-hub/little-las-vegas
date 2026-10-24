@@ -327,7 +327,15 @@ export type Effect =
   | ({ type: 'startScheme'; scheme: Omit<Scheme, 'id' | 'progress' | 'startWeek' | 'discovered'> } & EffectBase)
   | ({ type: 'endScheme'; schemeId: string } & EffectBase)
   | ({ type: 'claim'; district: string; against: FactionId; reason: string } & EffectBase)
-  | ({ type: 'feud'; rival: RivalId } & EffectBase);
+  | ({ type: 'feud'; rival: RivalId } & EffectBase)
+  | ({ type: 'warStart'; rival: RivalId; district: string; cb: CasusBelli; sanctioned: boolean } & EffectBase)
+  | ({ type: 'warScore'; warId: string; amount: number } & EffectBase)
+  | ({ type: 'warEnd'; warId: string; outcome: 'won' | 'lost' | 'white'; terms?: 'district' | 'tribute' | 'white' } & EffectBase)
+  | ({ type: 'dispute'; dispute: Omit<Dispute, 'id' | 'raisedWeek' | 'hearingWeek' | 'lobby' | 'plea'> } & EffectBase)
+  | ({ type: 'lobby'; disputeId: string; memberId: string; amount: number } & EffectBase)
+  | ({ type: 'plea'; disputeId: string; amount: number } & EffectBase)
+  | ({ type: 'sanction'; targetId: string; weeks: number } & EffectBase)
+  | ({ type: 'ruling'; disputeId: string; comply: boolean } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -427,6 +435,45 @@ export interface Outpost {
   income: number;
   since: number;
   envoyId?: string;
+}
+
+export type CasusBelli = 'claim' | 'grievance' | 'feud' | 'sanction';
+
+export interface War {
+  id: string;
+  rival: RivalId;
+  /** The district being fought over. */
+  district: string;
+  cb: CasusBelli;
+  sanctioned: boolean;
+  /** −100 (they are winning) .. +100 (you are winning). */
+  score: number;
+  startWeek: number;
+}
+
+export type DisputeKind = 'district' | 'sanction' | 'reparations' | 'peace' | 'war';
+
+/** A matter before the Table (Philadelphia's South Jersey sit-down). */
+export interface Dispute {
+  id: string;
+  kind: DisputeKind;
+  plaintiff: FactionId;
+  defendant: FactionId;
+  /** One line each: what each side says. */
+  claim: string;
+  defense: string;
+  district?: string;
+  targetId?: string;
+  amount?: number;
+  warId?: string;
+  raisedWeek: number;
+  hearingWeek: number;
+  /** Extra weight bought for the player's side, per Table member id. */
+  lobby: Record<string, number>;
+  /** Bonus from the plea the player made at the hearing. */
+  plea: number;
+  /** Set once the vote has happened. */
+  ruling?: { forPlayer: boolean; votes: Record<string, boolean>; week: number };
 }
 
 /** A full-screen title card the UI shows after the week (video slot optional). */
@@ -570,6 +617,8 @@ export interface GameState {
   outposts: Outpost[];
   /** Table sanctions to kill someone (target id -> until week). */
   sanctions: Record<string, number>;
+  wars: War[];
+  disputes: Dispute[];
 }
 
 export interface PlayerChoices {
@@ -591,6 +640,11 @@ export type PlayerAction =
   | { kind: 'interact'; id: InteractionId; target: string; useHook?: boolean }
   | { kind: 'scheme'; scheme: SchemeKind; targetId?: string; agents: string[]; opts: SchemeOptions }
   | { kind: 'cancelScheme'; schemeId: string }
+  | { kind: 'declareWar'; rival: RivalId; district: string }
+  | { kind: 'raid'; warId: string }
+  | { kind: 'terms'; warId: string; terms: 'district' | 'tribute' | 'white' }
+  | { kind: 'raiseDispute'; dispute: DisputeKind; rival: RivalId; district?: string; targetId?: string; warId?: string }
+  | { kind: 'lobby'; disputeId: string; memberId: string; mode: 'money' | 'favor' | 'hook' }
   | { kind: 'pushDistrict'; district: string }
   | { kind: 'appoint'; seat: Seat; charId: string }
   | { kind: 'councilTask'; seat: Seat; task: CouncilTask; target?: string }

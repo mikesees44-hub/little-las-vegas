@@ -39,7 +39,7 @@ function rnd100(_s: GameState, n: number): number {
 /* ------------------------------------------------------------------ */
 
 export const BAGMAN_START_WEEK = 3;
-export const TRIBUTE_RATE = 0.12;
+export const TRIBUTE_RATE = 0.1;
 
 export function envelopeSize(s: GameState): number {
   const recent = s.incomeHistory.slice(-4);

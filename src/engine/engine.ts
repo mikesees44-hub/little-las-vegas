@@ -6,6 +6,8 @@ import { runCouncil } from './council';
 import { crewMonth, crewWeek, revealIntel } from './crewlife';
 import { rivalSchemes, runSchemes } from './schemes';
 import { secretsMonth } from './secrets';
+import { rivalDisputes, tableWeek } from './table';
+import { warWeek } from './war';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
@@ -30,9 +32,26 @@ import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './ty
  * edits an entry after pushing it), so they are copied shallowly; everything
  * else is deep-copied. This is most of the simulator's speed.
  */
+/** Recursive copy of plain JSON-like data (≈3.5× faster than a JSON round-trip). Drops undefined like JSON does. */
+function deepCopy(v: unknown): unknown {
+  if (v === null || typeof v !== 'object') return v;
+  if (Array.isArray(v)) {
+    const out = new Array(v.length);
+    for (let i = 0; i < v.length; i++) out[i] = deepCopy(v[i]);
+    return out;
+  }
+  const out: Record<string, unknown> = {};
+  const o = v as Record<string, unknown>;
+  for (const k in o) {
+    const x = o[k];
+    if (x !== undefined) out[k] = deepCopy(x);
+  }
+  return out;
+}
+
 export function cloneState(s: GameState): GameState {
   const { chronicle, dynastyHistory, lastReport, news, ...rest } = s;
-  const c = JSON.parse(JSON.stringify(rest)) as GameState;
+  const c = deepCopy(rest) as GameState;
   c.chronicle = chronicle.slice();
   c.dynastyHistory = dynastyHistory.slice();
   c.news = news ? news.slice() : [];
@@ -198,6 +217,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     rivalWeek(ctx);
     rivalSchemes(ctx);
     runSchemes(ctx);
+    warWeek(ctx);
+    rivalDisputes(ctx);
+    tableWeek(ctx);
   }
   if (!s.gameOver) {
     operationalHeat(ctx);

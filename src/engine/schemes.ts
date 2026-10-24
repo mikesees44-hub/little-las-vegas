@@ -259,6 +259,8 @@ export function needsSanction(s: GameState, t: Character): boolean {
 }
 
 export function sanctioned(s: GameState, targetId: string): boolean {
+  const t = s.characters[targetId];
+  if (t && s.wars.some((w) => w.rival === t.faction && w.sanctioned)) return true;
   return (s.sanctions[targetId] ?? 0) >= s.week;
 }
 
@@ -373,6 +375,8 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
           for (const a of agents) a.evidence = Math.min(100, (a.evidence ?? 0) + 25);
           cue(s, 'hit_witness', 'A witness', `Someone saw the car. A waitress, a shoeshine boy — somebody who will remember a face.`);
         } else cue(s, 'hit_success', pub ? 'A message' : 'Gone', pub ? `${name} was found at ${loc.name.toLowerCase()}. Everyone on the island knows what it means.` : `${name} went out for cigarettes and never came back.`);
+        const war = s.wars.find((w) => w.rival === t.faction);
+        if (war) eff.push({ type: 'warScore', warId: war.id, amount: s.rivals.some((r) => r.leaderId === t.id) ? 40 : 15 });
         apply(ctx, label, sc.because, eff);
         ctx.log.push(`The hit on ${name} went ${witness ? 'down — but there was a witness' : 'down clean'}.`);
         s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${name} was killed${pub ? ` at ${loc.name.toLowerCase()}` : ' and never found'}.`, because: sc.because, becauseWeek: sc.startWeek, kind: 'death' });

@@ -3,6 +3,7 @@ import { CATALOG } from '../../engine/catalog';
 import { ageOn } from '../../engine/calendar';
 import { displayName, player } from '../../engine/characters';
 import type { Alert } from '../../engine/alerts';
+import { casusBelli } from '../../engine/war';
 import { FACTION_NAMES } from '../../engine/world';
 import type { FactionId, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -65,6 +66,9 @@ export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: str
         {sl.used < sl.max && <button className="mt-1 text-xs underline text-gold-300" onClick={onOpenBusiness}>Open a business here →</button>}
       </div>
       {!s.gameOver && <ActionCard s={s} action={{ kind: 'pushDistrict', district: id }} />}
+      {!s.gameOver && s.rivals.filter((r) => r.kind === 'mob' && (d.influence[r.id] ?? 0) > 0 && casusBelli(s, r.id, id) && !s.wars.some((w) => w.rival === r.id)).map((r) => (
+        <ActionCard key={r.id} s={s} action={{ kind: 'declareWar', rival: r.id, district: id }} />
+      ))}
     </div>
   );
 }

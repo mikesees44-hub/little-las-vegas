@@ -69,6 +69,8 @@ function emptyState(seed: string): GameState {
     claims: [],
     outposts: [],
     sanctions: {},
+    wars: [],
+    disputes: [],
   };
 }
 

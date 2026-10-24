@@ -4,6 +4,7 @@ import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
 import type { GameState, PlayerAction, PlayerChoices, SchemeKind, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
+import { TablePanel } from './components/TablePanel';
 import { Businesses } from './components/Businesses';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
@@ -19,12 +20,13 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'family' | 'chronicle';
+export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'family' | 'chronicle';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'The Island' },
   { id: 'business', label: 'Rackets & Fronts' },
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
+  { id: 'table', label: 'The Table' },
   { id: 'family', label: 'Family' },
   { id: 'chronicle', label: 'Chronicle' },
 ];
@@ -183,6 +185,7 @@ export function App() {
           {tab === 'business' && <Businesses s={s} />}
           {tab === 'crew' && <CrewList s={s} />}
           {tab === 'schemes' && <SchemesPanel s={s} />}
+          {tab === 'table' && <TablePanel s={s} />}
           {tab === 'family' && (
             <FamilyTree s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
           )}

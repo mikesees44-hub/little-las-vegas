@@ -7,6 +7,8 @@ import { addOpinion, changeMeter, setModifier } from './relations';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, hireFromPool, POLICY_LABEL } from './crewlife';
 import { CAPO_CUT } from './economy';
+import { holdVote, openDispute } from './table';
+import { changeScore, endWar, startWar } from './war';
 import { chance, randInt } from './rng';
 import { FACTION_NAMES } from './world';
 import type { Effect, FactionId, GameState, HeatBar, LedgerCategory, ScheduledConsequence } from './types';
@@ -131,6 +133,28 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
     }
     case 'feud':
       return `Blood feud with ${FACTION_NAMES[e.rival]}`;
+    case 'warStart': {
+      const d = s.districts.find((x) => x.id === e.district);
+      return `War with ${FACTION_NAMES[e.rival]} over ${d?.name ?? e.district}${e.sanctioned ? '' : ' (unsanctioned)'}`;
+    }
+    case 'warScore':
+      return `${signed(e.amount)} war score`;
+    case 'warEnd':
+      return e.outcome === 'won' ? 'They give in' : e.outcome === 'lost' ? 'You give in' : 'White peace';
+    case 'dispute':
+      return `Dispute at the Table: ${e.dispute.kind}`;
+    case 'lobby': {
+      const c = s.characters[e.memberId];
+      return `+${e.amount} ${c?.firstName ?? '?'}'s vote`;
+    }
+    case 'plea':
+      return undefined;
+    case 'sanction': {
+      const c = s.characters[e.targetId];
+      return `Table sanctions a hit on ${c ? c.firstName + ' ' + c.lastName : '?'}`;
+    }
+    case 'ruling':
+      return e.comply ? undefined : 'Defy the Table';
     case 'faction':
       return 'The faction breaks up';
     case 'wealth': {
@@ -431,6 +455,49 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     case 'claim':
       if (!s.claims.some((c) => c.district === e.district && c.against === e.against)) s.claims.push({ district: e.district, against: e.against, week: s.week, reason: e.reason });
       break;
+    case 'warStart':
+      startWar(ctx, e.rival, e.district, e.cb, e.sanctioned);
+      break;
+    case 'warScore':
+      changeScore(s, e.warId, e.amount);
+      break;
+    case 'warEnd': {
+      const w = s.wars.find((x) => x.id === e.warId);
+      if (w) endWar(ctx, w, e.outcome, e.terms);
+      break;
+    }
+    case 'dispute': {
+      const d = openDispute(s, e.dispute);
+      ctx.log.push(`A dispute goes before the Table in ${d.hearingWeek - s.week} weeks: ${d.claim}`);
+      break;
+    }
+    case 'lobby': {
+      const d = s.disputes.find((x) => x.id === e.disputeId);
+      if (d) d.lobby[e.memberId] = (d.lobby[e.memberId] ?? 0) + e.amount;
+      break;
+    }
+    case 'plea': {
+      const d = s.disputes.find((x) => x.id === e.disputeId);
+      if (d && !d.ruling) {
+        d.plea = e.amount;
+        holdVote(ctx, d);
+      }
+      break;
+    }
+    case 'sanction':
+      s.sanctions[e.targetId] = s.week + e.weeks;
+      break;
+    case 'ruling': {
+      const d = s.disputes.find((x) => x.id === e.disputeId);
+      if (d) {
+        if (!d.ruling) d.ruling = { forPlayer: false, votes: {}, week: s.week };
+        if (!e.comply) {
+          const r = s.rivals.find((x) => x.id === d.plaintiff);
+          if (r && r.kind === 'mob' && !r.feud) applyEffect(ctx, { type: 'feud', rival: r.id }, src);
+        }
+      }
+      break;
+    }
     case 'feud': {
       const r = s.rivals.find((x) => x.id === e.rival);
       if (r && !r.feud) {

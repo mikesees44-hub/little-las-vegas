@@ -5,7 +5,9 @@ import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE
 import { reached } from './history';
 import type { Ctx } from './ledger';
 import { bookCapacity, LEND_AMOUNTS } from './loans';
-import { previewInteraction, type Acceptance, type Reason } from './interactions';
+import { playerHook, previewInteraction, type Acceptance, type Reason } from './interactions';
+import { newDispute, tableMembers as tableMembersFor } from './table';
+import { CB_LABEL, casusBelli, DISTRICT_PRIZE, RAID_COST, raidOdds, resolveRaid } from './war';
 import { isFree } from './characters';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
@@ -79,6 +81,129 @@ function need(cond: boolean, reason: string, prev?: string): string | undefined 
 export const MAX_PER_KIND = 4;
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  declareWar: {
+    preview: (s, a) => {
+      const r = s.rivals.find((x) => x.id === a.rival);
+      const d = s.districts.find((x) => x.id === a.district);
+      const cb = casusBelli(s, a.rival, a.district);
+      const sanctionedWar = cb === 'sanction';
+      const label = `War on ${r?.shortName ?? '?'} over ${d?.name ?? '?'}`;
+      let why: string | undefined;
+      why = need(!!r && r.kind === 'mob' && !!s.characters[r.leaderId]?.alive, 'Not a family you can fight', why);
+      why = need(!!cb, 'You need a casus belli: a claim on the district, a grievance the Table heard, a blood feud, or the Table\'s sanction', why);
+      why = need(!s.wars.some((w) => w.rival === a.rival), 'Already at war with them', why);
+      why = need(!!d && (d.influence[a.rival] ?? 0) > 0, 'They hold nothing there', why);
+      return {
+        title: label,
+        detail: `Casus belli: ${cb ? CB_LABEL[cb] : 'none'}. Win and they give up ${DISTRICT_PRIZE}% of ${d?.name ?? 'the district'}.`,
+        effects: [
+          { type: 'warStart', rival: a.rival, district: a.district, cb: cb ?? 'claim', sanctioned: sanctionedWar, label },
+          { type: 'respect', amount: 2, label },
+          ...(sanctionedWar ? [] : [{ type: 'heat', bar: 'family', amount: 10, label: `${label}: without the Table's blessing` } as Effect, { type: 'rivalOpinion', rival: 'philly', amount: -15, reason: 'Went to war without asking', label } as Effect]),
+        ],
+        warning: cb && !sanctionedWar ? 'Without the Table\'s sanction Philadelphia will be angry for as long as it lasts.' : undefined,
+        cost: 0,
+        because: `went to war with ${r?.shortName ?? 'a rival'} over ${d?.name ?? 'a district'}`,
+        disabledReason: why,
+        category: 'event',
+      };
+    },
+  },
+  raid: {
+    preview: (s, a) => {
+      const w = s.wars.find((x) => x.id === a.warId);
+      const r = w ? s.rivals.find((x) => x.id === w.rival) : undefined;
+      const label = `Raid on ${r?.shortName ?? '?'}`;
+      const p = w ? raidOdds(s, w) : 0;
+      return {
+        title: label,
+        detail: 'Burn one of their places. Success: +10 war score; failure: −6.',
+        effects: [{ type: 'money', amount: -RAID_COST, label }],
+        odds: { chance: p, reasons: [{ label: 'Your muscle vs theirs', value: Math.round(p * 100) }] },
+        cost: RAID_COST,
+        because: `raided ${r?.shortName ?? 'a rival'}`,
+        disabledReason: !w ? 'No such war' : s.money < RAID_COST ? `Needs ${fmtMoney(RAID_COST)}` : undefined,
+        category: 'event',
+      };
+    },
+    commit: (ctx, a) => {
+      const w = ctx.s.wars.find((x) => x.id === a.warId);
+      if (w) resolveRaid(ctx, w);
+    },
+  },
+  terms: {
+    preview: (s, a) => {
+      const w = s.wars.find((x) => x.id === a.warId);
+      const r = w ? s.rivals.find((x) => x.id === w.rival) : undefined;
+      const want = a.terms === 'district' ? -25 : a.terms === 'tribute' ? -10 : 30;
+      const label = `Terms to ${r?.shortName ?? '?'}: ${a.terms === 'district' ? 'give up the district' : a.terms === 'tribute' ? 'pay reparations' : 'white peace'}`;
+      const reasons = [{ label: 'Base', value: 20 }, { label: 'War score', value: w?.score ?? 0 }, { label: a.terms === 'white' ? 'Nobody loses face' : 'What you ask', value: want }];
+      const sum = reasons.reduce((x, y) => x + y.value, 0);
+      return {
+        title: label,
+        effects: w ? [{ type: 'warEnd', warId: w.id, outcome: a.terms === 'white' ? 'white' : 'won', terms: a.terms, label }] : [],
+        refuseEffects: [{ type: 'respect', amount: -1, label: `${label}: refused` }],
+        acceptance: { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons },
+        cost: 0,
+        because: `offered ${r?.shortName ?? 'a rival'} terms`,
+        disabledReason: w ? undefined : 'No such war',
+        category: 'event',
+      };
+    },
+  },
+  raiseDispute: {
+    preview: (s, a) => {
+      const r = s.rivals.find((x) => x.id === a.rival);
+      const t = a.targetId ? s.characters[a.targetId] : undefined;
+      const d = newDispute(s, a.dispute, 'player', a.rival, { district: a.district, targetId: a.targetId, amount: a.dispute === 'reparations' ? 5000 : undefined, warId: a.warId });
+      const label = `The Table: ${a.dispute === 'sanction' ? `sanction a hit on ${t?.firstName ?? '?'}` : a.dispute === 'war' ? `bless a war on ${r?.shortName ?? '?'}` : a.dispute === 'district' ? `${s.districts.find((x) => x.id === a.district)?.name ?? '?'} is ours` : a.dispute === 'peace' ? `end the war with ${r?.shortName ?? '?'}` : `reparations from ${r?.shortName ?? '?'}`}`;
+      let why: string | undefined;
+      why = need(!!r && !!s.characters[r.leaderId]?.alive && r.kind === 'mob', 'Not a family the Table rules on', why);
+      why = need(!s.disputes.some((x) => !x.ruling && (x.plaintiff === a.rival || x.defendant === a.rival)), 'A dispute with them is already pending', why);
+      if (a.dispute === 'sanction') why = need(!!t && t.alive && t.faction === a.rival && needsSanction(s, t), 'Pick one of their made men', why);
+      if (a.dispute === 'district' || a.dispute === 'war') why = need(!!a.district && (s.districts.find((x) => x.id === a.district)?.influence[a.rival] ?? 0) > 0, 'They hold nothing there', why);
+      if (a.dispute === 'reparations') why = need((s.flags[`grievance_${a.rival}`] ?? 0) > 0 || !!r?.feud, 'You need a grievance against them', why);
+      if (a.dispute === 'peace') why = need(s.wars.some((w) => w.rival === a.rival), 'You are not at war with them', why);
+      why = need(s.money >= 500, 'Needs $500', why);
+      return {
+        title: label,
+        detail: `${d.claim} The hearing is in two weeks; lobby the members first.`,
+        effects: [{ type: 'money', amount: -500, label: `${label} (envelope for the chair)` }, { type: 'dispute', dispute: d, label }],
+        cost: 500,
+        because: `brought a dispute to the Table`,
+        disabledReason: why,
+        category: 'event',
+      };
+    },
+  },
+  lobby: {
+    preview: (s, a) => {
+      const d = s.disputes.find((x) => x.id === a.disputeId);
+      const m = s.characters[a.memberId];
+      const label = `Lobby: ${m ? `${m.firstName} ${m.lastName}` : '?'}`;
+      const amount = a.mode === 'money' ? 20 : a.mode === 'favor' ? 25 : 40;
+      const cost = a.mode === 'money' ? 1500 : 0;
+      const h = m ? playerHook(s, m.id) : undefined;
+      let why: string | undefined;
+      why = need(!!d && !d.ruling, 'No open dispute', why);
+      if (a.mode === 'money') why = need(s.money >= cost, `Needs ${fmtMoney(cost)}`, why);
+      if (a.mode === 'favor') why = need(s.favors >= 1, 'No political favors to call in', why);
+      if (a.mode === 'hook') why = need(!!h, 'You hold no hook on him', why);
+      return {
+        title: `${label} (${a.mode === 'money' ? 'an envelope' : a.mode === 'favor' ? 'call in a favor' : 'use your hook'})`,
+        effects: [
+          ...(cost ? [{ type: 'money', amount: -cost, label } as Effect] : []),
+          ...(a.mode === 'favor' ? [{ type: 'favor', amount: -1, label } as Effect] : []),
+          ...(a.mode === 'hook' && m && h ? [{ type: 'hook', targetId: m.id, strong: h.strong, reason: h.reason, spend: true, label } as Effect] : []),
+          { type: 'lobby', disputeId: a.disputeId, memberId: a.memberId, amount, label },
+        ],
+        cost,
+        because: `lobbied ${m?.firstName ?? 'a Table member'}`,
+        disabledReason: why,
+        category: 'event',
+      };
+    },
+  },
   scheme: {
     preview: (s, a) => {
       const t = a.targetId ? s.characters[a.targetId] : undefined;
@@ -501,6 +626,18 @@ export function availableActions(s: GameState): PlayerAction[] {
     out.push({ kind: 'scheme', scheme: 'envoy', agents: agents.slice(0, 1), opts: { depth: 'planned', city: ['capemay', 'ac', 'baltimore', 'miami'][s.week % 4] } });
     const cd = s.districts.find((d) => topRival(s, d.id));
     if (cd) out.push({ kind: 'scheme', scheme: 'claim', agents: agents.slice(0, 1), opts: { depth: 'planned', district: cd.id } });
+  }
+  for (const w of s.wars) out.push({ kind: 'raid', warId: w.id }, { kind: 'terms', warId: w.id, terms: (['district', 'tribute', 'white'] as const)[s.week % 3] });
+  for (const r of s.rivals.filter((x) => x.kind === 'mob')) {
+    const d = s.districts.find((x) => (x.influence[r.id] ?? 0) > 0);
+    if (d) {
+      out.push({ kind: 'declareWar', rival: r.id, district: d.id });
+      out.push({ kind: 'raiseDispute', dispute: (['district', 'war', 'reparations'] as const)[s.week % 3], rival: r.id, district: d.id });
+    }
+  }
+  for (const d of s.disputes.filter((x) => !x.ruling)) {
+    const m = tableMembersFor(s)[s.week % Math.max(1, tableMembersFor(s).length)];
+    if (m) out.push({ kind: 'lobby', disputeId: d.id, memberId: m.id, mode: 'money' });
   }
   const official = Object.values(s.characters).find((c) => c.alive && c.office && OFFICE_BRIBE[c.office] && (s.week % 3 === 0));
   if (official) out.push({ kind: 'interact', id: 'bribe', target: official.id });
