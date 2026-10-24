@@ -83,7 +83,16 @@ export function App() {
   const [speed, setSpeed] = useState<Speed>(0);
   const [clockNote, setClockNote] = useState<string | undefined>();
   const [ticker, setTicker] = useState<string | undefined>();
-  const [cues, setCues] = useState<CutsceneCue[]>([]);
+  const [cues, setCues] = useState<CutsceneCue[]>(() => {
+    // Opening scene on a brand-new game: the old boss's funeral at St. Ann's.
+    try {
+      if (s.week <= 1 && !sessionStorage.getItem('llv-opening-' + s.seed)) {
+        sessionStorage.setItem('llv-opening-' + s.seed, '1');
+        return [{ key: 'opening', title: "St. Ann's, Wildwood · May 1960", text: 'The church smells of lilies and floor wax. The old man lies in a bronze casket that cost more than most of the mourners make in a year. In nine days the boardwalk opens. By then somebody has to be running things. You stand in the front pew, and behind you the capos are counting.', week: s.week }];
+      }
+    } catch { /* storage unavailable */ }
+    return [];
+  });
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
