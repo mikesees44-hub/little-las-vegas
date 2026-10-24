@@ -6,7 +6,8 @@ import { newBusiness } from './business';
 import { applyEffects, describeEffect } from './effects';
 import type { Ctx } from './ledger';
 import { rand, weightedPick } from './rng';
-import { CHAINS, EVENTS, EVENTS_BY_ID, gateLabel, type Fx, type Option, type PackEvent, type RoleSpec, type Spawn } from './storyData';
+import { gateLabel, type Fx, type Option, type PackEvent, type RoleSpec, type Spawn } from './storyData';
+import { ALL_BY_ID as EVENTS_BY_ID, ALL_CHAINS as CHAINS, ALL_EVENTS as EVENTS, PACK_DEFS, PACK_OF, STORY_PACKS } from './storyPacks';
 import { ensureStory, type StoryState } from './storyState';
 import { FACTION_NAMES, RIVALS } from './world';
 import type { Character, Choice, Effect, EventInstance, FactionId, GameState, RivalId, ScheduledConsequence } from './types';
@@ -255,6 +256,14 @@ export function castRoles(s: GameState, e: PackEvent, carried: Record<string, st
     const extra = key === 'actor' ? { rank: e.trigger.rank, trait: e.trigger.trait } : {};
     const not = new Set((spec.notRole ?? []).map((k) => roles[k]).filter(Boolean));
     const ok = (c: Character) => c.alive && !used.has(c.id) && !not.has(c.id) && fitsBasics(s, c, spec, extra);
+    if (spec.worldId || spec.pool === 'world') {
+      const w = spec.worldId ? castWorld(s, spec.worldId) : undefined;
+      if (w && w.alive && !used.has(w.id)) {
+        take(key, w);
+        continue;
+      }
+      if (spec.pool === 'world') return undefined;
+    }
     switch (spec.pool) {
       case 'chain': {
         const id = carried[`role_${key}`];
@@ -638,9 +647,10 @@ export function storyEventSource(s: GameState): EventInstance | undefined {
   // 3. The random pool, now and then.
   if (s.week < 6 || s.week - st.lastRandom < (s.week <= FIRST_YEAR ? RANDOM_GAP * 2 : RANDOM_GAP)) return undefined;
   if (rand(st) > (s.week <= FIRST_YEAR ? RANDOM_CHANCE / 2 : RANDOM_CHANCE)) return undefined;
-  const pool = EVENTS.filter((e) => !e.trigger.mandatory && poolEligible(s, e, st));
+  const spent = packSpend(s, st);
+  const pool = EVENTS.filter((e) => !e.trigger.mandatory && (spent[PACK_OF[e.id]] ?? 0) < (PACK_DEFS[PACK_OF[e.id]]?.budget ?? 99) && poolEligible(s, e, st));
   for (let tries = 0; tries < 3 && pool.length; tries++) {
-    const e = weightedPick(st, pool, (x) => x.trigger.weight ?? 10);
+    const e = weightedPick(st, pool, (x) => (x.trigger.weight ?? 10) * (PACK_DEFS[PACK_OF[x.id]]?.weight ?? 1));
     if (!e) break;
     const ev = buildPackEvent(s, e);
     if (ev) return ev;
@@ -652,6 +662,51 @@ export function storyEventSource(s: GameState): EventInstance | undefined {
 /** A chain part none of whose options lead anywhere. */
 export function isFinalPart(e: PackEvent): boolean {
   return !e.options.some((o) => o.effects.some((fx) => fx.k === 'followup'));
+}
+
+/** Random-pool events shown per pack in the last 52 weeks (each pack's budget). */
+export function packSpend(s: GameState, st: StoryState): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const [id, w] of Object.entries(st.fired)) {
+    const e = EVENTS_BY_ID[id];
+    if (!e || e.trigger.chainOnly || e.trigger.mandatory || s.week - w >= 52) continue;
+    out[PACK_OF[id]] = (out[PACK_OF[id]] ?? 0) + 1;
+  }
+  return out;
+}
+
+/* ---------------------------------------------------------------- */
+/* World-pack people (the population, when the politics layer runs)   */
+/* ---------------------------------------------------------------- */
+
+type WorldMaterializer = (s: GameState, worldId: string) => Character | undefined;
+let worldMaterializer: WorldMaterializer | undefined;
+
+/**
+ * The population layer (when present) registers how to turn a world-pack
+ * person into an engine Character. Without it, world roles fall back to
+ * their pool (or the event is skipped for pool 'world').
+ */
+export function registerWorldMaterializer(fn: WorldMaterializer): void {
+  worldMaterializer = fn;
+}
+
+/** A world-pack person as an engine character: already materialized, else via the population layer, else nobody. */
+export function castWorld(s: GameState, worldId: string): Character | undefined {
+  const pop = (s as GameState & { pol?: { people?: Record<string, { charId?: string; alive?: boolean }> } }).pol;
+  const rec = pop?.people?.[worldId];
+  if (rec?.charId) {
+    const c = s.characters[rec.charId];
+    return c?.alive ? c : undefined;
+  }
+  if (rec && rec.alive === false) return undefined;
+  const st = ensureStory(s);
+  const cached = st.spawned[`world:${worldId}`];
+  if (cached && s.characters[cached]?.alive) return s.characters[cached];
+  if (!pop || !worldMaterializer) return undefined;
+  const c = worldMaterializer(s, worldId);
+  if (c) st.spawned[`world:${worldId}`] = c.id;
+  return c;
 }
 
 function dropDue(st: StoryState, id: string): void {
@@ -717,4 +772,4 @@ export function storyResolve(ctx: Ctx, resolved: readonly EventInstance[]): void
 
 /** Every pack event id, for tests and the sim. */
 export const PACK_IDS = EVENTS.map((e) => e.id);
-export { CHAINS as PACK_CHAINS, EVENTS as PACK_EVENTS, EVENTS_BY_ID as PACK_BY_ID };
+export { CHAINS as PACK_CHAINS, EVENTS as PACK_EVENTS, EVENTS_BY_ID as PACK_BY_ID, STORY_PACKS };

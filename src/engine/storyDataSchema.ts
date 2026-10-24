@@ -106,7 +106,9 @@ export type RolePool =
   /** A townsperson; generated from `spawn` if no fitting NPC exists. */
   | 'town'
   /** Same character who held this role key earlier in the chain. */
-  | 'chain';
+  | 'chain'
+  /** (engine extension) A specific world-pack person, by `worldId`; skipped when the population is absent. */
+  | 'world';
 
 export type Relation = 'spouse' | 'heir' | 'child' | 'daughter' | 'son' | 'sibling' | 'sister' | 'parent' | 'mother' | 'father' | 'nephew';
 
@@ -142,6 +144,12 @@ export interface RoleSpec {
   notRole?: string[];
   /** Create this person if nobody fits (always used for pool 'town'). */
   spawn?: Spawn;
+  /**
+   * (engine extension) Cast this world-pack person (e.g. "ent_..." or "pol_...")
+   * when the population is in play; otherwise fall back to the pool's normal
+   * casting (pool 'world' has no fallback: the event is skipped).
+   */
+  worldId?: string;
 }
 
 /* ------------------------------------------------------------------ */

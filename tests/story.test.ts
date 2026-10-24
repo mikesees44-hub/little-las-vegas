@@ -5,7 +5,9 @@ import { dateOfWeek } from '../src/engine/calendar';
 import { generateWeekEvents, MAX_POPUPS, isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { newCtx } from '../src/engine/ledger';
 import { fireConsequences } from '../src/engine/consequences';
-import { buildPackEvent, castRoles, isFinalPart, mapFx, PACK_BY_ID, PACK_CHAINS, PACK_EVENTS, poolEligible, storyEventSource, storyResolve, triggerOk } from '../src/engine/storyPack';
+import * as storyPacks from '../src/engine/storyPacks';
+import { makeCharacter } from '../src/engine/characters';
+import { buildPackEvent, castRoles, isFinalPart, mapFx, packSpend, registerWorldMaterializer, PACK_BY_ID, PACK_CHAINS, PACK_EVENTS, poolEligible, storyEventSource, storyResolve, triggerOk } from '../src/engine/storyPack';
 import { ensureStory } from '../src/engine/storyState';
 import { applyEffects } from '../src/engine/effects';
 import type { EventInstance, GameState } from '../src/engine/types';
@@ -31,9 +33,11 @@ function refsOk(s: GameState, ev: EventInstance): string[] {
 }
 
 describe('content pack adapter', () => {
-  it('copies all 162 events and 21 chains into the engine', () => {
-    expect(PACK_EVENTS.length).toBe(162);
-    expect(PACK_CHAINS.length).toBe(21);
+  it('copies all 162 events and 21 chains of pack 1 into the engine', () => {
+    const p1 = storyPacks.STORY_PACKS.find((p) => p.id === 'pack1')!;
+    expect(p1.events.length).toBe(162);
+    expect(p1.chains.length).toBe(21);
+    expect(PACK_EVENTS.length).toBe(storyPacks.STORY_PACKS.reduce((a, p) => a + p.events.length, 0));
     for (const c of PACK_CHAINS) for (const id of c.events) expect(PACK_BY_ID[id], id).toBeTruthy();
   });
 
@@ -278,5 +282,52 @@ describe('the pack in the popup pipeline', () => {
     expect(st.queued).toContain(String(ev.meta!.pack));
     expect(poolEligible(s, PACK_BY_ID[String(ev.meta!.pack)], st)).toBe(false);
     void generateWeekEvents;
+  });
+});
+
+describe('several packs', () => {
+  it('merges packs and namespaces a second pack whose ids collide, followups included', () => {
+    const { mergePacks, STORY_PACKS } = storyPacks;
+    const p1 = STORY_PACKS[0];
+    const copy = { ...p1, id: 'pack2', title: 'copy', weight: 1, budget: 5 };
+    const m = mergePacks([p1, copy]);
+    expect(m.events.length).toBe(p1.events.length * 2);
+    const lg1 = m.events.find((e) => e.id === 'pack2:lg_1')!;
+    expect(lg1.chain!.id).toBe('pack2:long_goodbye');
+    const follow = lg1.options.flatMap((o) => o.effects).find((fx) => fx.k === 'followup') as { event: string };
+    expect(follow.event).toBe('pack2:lg_2');
+    expect(m.packOf['pack2:lg_1']).toBe('pack2');
+    expect(new Set(m.events.map((e) => e.id)).size).toBe(m.events.length);
+    expect(m.chains.find((c) => c.id === 'pack2:long_goodbye')!.events[0]).toBe('pack2:lg_1');
+  });
+
+  it('each pack has a random-pool budget per 52 weeks', () => {
+    const s = rich();
+    const st = ensureStory(s);
+    s.week = 200;
+    const pool = PACK_EVENTS.filter((e) => !e.trigger.chainOnly && !e.trigger.mandatory);
+    for (const e of pool.slice(0, 20)) st.fired[e.id] = 190;
+    expect(packSpend(s, st).pack1).toBe(20);
+    st.lastRandom = 0;
+    // Over budget: the random pool offers nothing from pack 1.
+    for (let i = 0; i < 30; i++) {
+      const ev = storyEventSource(s);
+      if (ev) expect(PACK_BY_ID[String(ev.meta!.pack)].trigger.chainOnly || PACK_BY_ID[String(ev.meta!.pack)].trigger.mandatory).toBeTruthy();
+    }
+  });
+
+  it('casts a world-pack person when the population is present, and skips gracefully when it is not', () => {
+    const e = { ...PACK_BY_ID.lg_1, trigger: {}, roles: { star: { desc: 'a singer', pool: 'world' as const, worldId: 'ent_test' } } };
+    const s = rich();
+    expect(castRoles(s, e)).toBeUndefined();
+    const fallback = { ...e, roles: { star: { desc: 'a singer', pool: 'town' as const, worldId: 'ent_test', spawn: { first: 'Vic', last: 'Lane' } } } };
+    expect(s.characters[castRoles(s, fallback)!.roles.star].firstName).toBe('Vic');
+    const s2 = rich();
+    (s2 as unknown as { pol: unknown }).pol = { people: { ent_test: { alive: true } } };
+    registerWorldMaterializer((st, id) => (id === 'ent_test' ? makeCharacter(st, { firstName: 'Lou', lastName: 'Marino', rank: 'civilian', faction: 'none' }) : undefined));
+    const b = castRoles(s2, e)!;
+    expect(s2.characters[b.roles.star].firstName).toBe('Lou');
+    expect(castRoles(s2, e)!.roles.star).toBe(b.roles.star);
+    registerWorldMaterializer(() => undefined);
   });
 });
