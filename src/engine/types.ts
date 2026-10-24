@@ -88,6 +88,8 @@ export interface Character {
   warnedWeek?: number;
   /** Hidden running total of money this capo has skimmed since last confronted. */
   skimmed?: number;
+  /** Kick-ups a slow-paying capo held back over the winter and still owes. */
+  arrears?: number;
   /** Away on a job until this absolute week. */
   busyUntil?: number;
   /** Hired specialist (safecracker, wheelman ...). Specialists don't hustle or staff rackets. */

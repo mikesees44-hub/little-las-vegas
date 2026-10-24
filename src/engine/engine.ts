@@ -7,6 +7,7 @@ import { resolveActions } from './actions';
 import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
 import { runGoals } from './goals';
+import { riseGoalsWeek } from './riseGoals';
 import { runCouncil } from './council';
 import { crewMonth, crewWeek, defect, factionsWeek, revealIntel } from './crewlife';
 import { tidyRegimes } from './hierarchy';
@@ -248,6 +249,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     heatDecay(ctx);
     weeklyHousekeeping(ctx);
     runGoals(ctx);
+    riseGoalsWeek(ctx);
     dynastyWeek(ctx);
     newsWeek(ctx);
   }

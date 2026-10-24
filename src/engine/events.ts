@@ -60,8 +60,17 @@ export function envelopeSize(s: GameState): number {
   return Math.max(600, rnd100(s, avg * 4.33 * TRIBUTE_RATE * (1 - perkMod(s, 'tribute') / 100)));
 }
 
+/**
+ * Rise to Power: Philadelphia doesn't send a bagman to a kid nobody has heard
+ * of. The envelope starts when they notice him (respect 40) or with his
+ * second summer, whichever comes first.
+ */
+export function unnoticed(s: GameState): boolean {
+  return !!s.flags.start_rise && s.respect < 40 && s.week < 53;
+}
+
 export function bagmanDue(s: GameState): boolean {
-  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly;
+  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !unnoticed(s);
 }
 
 export function buildBagman(s: GameState): EventInstance {

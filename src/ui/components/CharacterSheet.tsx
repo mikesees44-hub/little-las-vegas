@@ -250,6 +250,7 @@ function HisLife({ s, c }: { s: GameState; c: Character }) {
           {c.household?.wife && <div>Wife: {c.household.wife}{kids.length ? ` · ${kids.map((x) => `${x.name} (${Math.max(0, s.date.y - x.born)})`).join(', ')}` : ''}</div>}
           {!c.household?.wife && kids.length > 0 && <div>Kids: {kids.map((x) => x.name).join(', ')}</div>}
           {(c.vices ?? []).length > 0 && <div className="text-amber-200">{(c.vices ?? []).map((v) => VICE_INFO[v]).join('. ')}.</div>}
+          {(c.arrears ?? 0) > 0 && <div className="text-amber-200">Owes {fmt$(c.arrears ?? 0)} in kick-ups he held back over the winter. He says he'll make it up in the season.</div>}
           {c.debtTo && <div className="text-red-300">Owes {fmt$(c.debtTo.amount)} to a {FACTION_NAMES[c.debtTo.rival]} shylock.</div>}
           {c.courtedBy && <div className="text-red-300">{FACTION_NAMES[c.courtedBy.rival]} has been courting him since week {c.courtedBy.week}.</div>}
           {c.proposedWeek !== undefined && <div className="text-gold-300">Proposed for membership (week {c.proposedWeek}){c.vouchedBy ? <>, vouched for by <CharLink s={s} id={c.vouchedBy} /></> : ''}.</div>}

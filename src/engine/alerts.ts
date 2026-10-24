@@ -6,6 +6,7 @@ import { UNWASHED_SAFE } from './economy';
 import { opinion } from './relations';
 import { getRelation } from './relations';
 import { caseEvidence } from './longgame';
+import { currentRiseGoal } from './riseGoals';
 import type { GameState } from './types';
 import { factionAgendaText, factionPower, factionStageText } from './crewlife';
 
@@ -13,7 +14,7 @@ import { factionAgendaText, factionPower, factionStageText } from './crewlife';
  * The alert rail (CK's right-hand icons): things that need the boss's
  * attention. Pure, derived from the state each render.
  */
-export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family' | 'lifestyle' | 'law' | 'underbelly' | 'rival' | 'courted' | 'debt' | 'evidence' | 'faction' | 'books';
+export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family' | 'lifestyle' | 'law' | 'underbelly' | 'rival' | 'courted' | 'debt' | 'evidence' | 'faction' | 'books' | 'goal';
 
 export interface Alert {
   kind: AlertKind;
@@ -80,6 +81,8 @@ export function alerts(s: GameState): Alert[] {
   for (const d of s.disputes.filter((x) => !x.ruling)) out.push({ kind: 'dispute', severity: d.defendant === 'player' ? 'warn' : 'info', title: `Dispute at the Table (week ${d.hearingWeek})`, text: d.claim, tab: 'table' });
   for (const w of s.wars) out.push({ kind: 'war', severity: w.score < -30 ? 'danger' : 'warn', title: `At war: ${s.rivals.find((r) => r.id === w.rival)?.shortName}`, text: `War score ${w.score}.`, tab: 'table' });
   if (!chooseHeir(s, boss).heir) out.push({ kind: 'heir', severity: 'danger', title: 'No heir', text: 'If you die now, the house dies with you.', tab: 'family' });
+  const rg = currentRiseGoal(s);
+  if (rg) out.push({ kind: 'goal', severity: 'info', title: `Next: ${rg.title}`, text: rg.hint, tab: 'business' });
   out.push(...familyAlerts(s));
   const lg = s.legal && s.legal.personId === boss.id ? s.legal : undefined;
   if (lg && lg.stage !== 'quiet') out.push({ kind: 'law', severity: lg.stage === 'investigation' || lg.stage === 'parole' ? 'warn' : 'danger', title: lg.stage === 'investigation' ? 'The FBI has a file on you' : lg.stage === 'grandjury' ? 'A grand jury is sitting' : lg.stage === 'indicted' || lg.stage === 'trial' ? 'You are under indictment' : lg.stage === 'prison' ? 'The boss is in prison' : 'On parole', text: `Evidence ${Math.round(caseEvidence(s, lg))}, defense ${Math.round(lg.defense)}.`, tab: 'law' });
