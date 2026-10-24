@@ -62,13 +62,16 @@ export function WorldMap(props: WorldMapProps) {
       try {
         const [L] = await Promise.all([import('leaflet'), import('leaflet/dist/leaflet.css')]);
         const { loadBasemap } = await import('./geoData');
+        const base = await loadBasemap();
         if (cancelled || !host.current) return;
-        api.current = buildMap(L.default ?? (L as unknown as typeof Leaflet), host.current, loadBasemap(), latest);
+        api.current = buildMap(L.default ?? (L as unknown as typeof Leaflet), host.current, base, latest);
         api.current.update(latest.current);
         setStatus('ready');
         const { loadFine } = await import('./geoFine');
         if (cancelled) return;
-        api.current.addFine(loadFine());
+        const fine = await loadFine();
+        if (cancelled || !api.current) return;
+        api.current.addFine(fine);
         api.current.update(latest.current);
       } catch (e) {
         console.error(e);
@@ -152,7 +155,7 @@ function spots(ring: number[][], n: number): [number, number][] {
   return out;
 }
 
-function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: ReturnType<typeof import('./geoData').loadBasemap>, latest: { current: WorldMapProps }): MapApi {
+function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData').Basemap, latest: { current: WorldMapProps }): MapApi {
   const map = L.map(el, {
     center: VIEWS.usa.center, zoom: VIEWS.usa.zoom, minZoom: 3, maxZoom: 16, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
     worldCopyJump: false, maxBounds: L.latLngBounds([5, -175], [72, -40]), attributionControl: true, preferCanvas: false, zoomControl: false,

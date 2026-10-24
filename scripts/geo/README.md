@@ -1,6 +1,6 @@
 # Map data pipeline
 
-The bundled basemap in `src/ui/map/geo/` is built once, offline, and committed.
+The bundled basemap in `public/geo/` is built once, offline, and committed.
 
 1. Land (OpenStreetMap-derived, 100 m): `npm pack @geo-maps/earth-lands-100m`, then
    `python3 1_filter_land.py` keeps the polygons touching North America and the East Coast.

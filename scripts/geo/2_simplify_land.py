@@ -1,5 +1,5 @@
 import json, math, sys
-G='/home/claude/little-las-vegas/src/ui/map/geo/'
+G='/home/claude/little-las-vegas/public/geo/'
 def area_km2(r):
   lat=sum(p[1] for p in r)/len(r); k=111.32**2*math.cos(math.radians(lat))
   a=0
