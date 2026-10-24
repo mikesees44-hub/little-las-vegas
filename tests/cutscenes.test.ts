@@ -35,13 +35,14 @@ describe('cutscenes', () => {
     const men = Object.values(n.characters).filter((c) => c.alive && c.faction === 'player' && c.id !== n.playerId && (c.rank === 'soldier' || c.rank === 'associate'));
     men[0].faction = 'law';
     men[0].rank = 'civilian';
-    men[1].imprisonedUntil = n.week + 10;
-    const groom = men.slice(2).find((c) => !c.household?.wife) ?? men[2];
+    const made = men.find((c, i) => i > 0 && c.rank === 'soldier')!;
+    made.imprisonedUntil = n.week + 10;
+    const groom = men.slice(1).find((c) => !c.household?.wife && c.id !== made.id) ?? men[2];
     if (groom.household) groom.household.wife = undefined;
     const s0 = cloneState(n);
     s.characters[groom.id] = cloneState(s0).characters[groom.id];
     groom.household = { kids: groom.household?.kids ?? [], wife: 'Rose' };
-    groom.story = [...(groom.story ?? []), { week: n.week, text: 'Married Rose Ciccone of the Crest.' }];
+    groom.story = [...(groom.story ?? []), { week: n.week, text: 'Married Rose Ciccone of the Crest; the boss sat at the head table.' }];
     const n2 = cloneState(n);
     const keys = cutscenesBetween(s, n).map((c) => c.key);
     expect(keys).toContain('betrayal_confrontation');

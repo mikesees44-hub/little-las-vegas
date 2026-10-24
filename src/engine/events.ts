@@ -650,8 +650,9 @@ export const EVENT_DEFS: EventDef[] = [
   },
   {
     id: 'sunday',
-    cooldown: 4,
-    weight: () => 3,
+    // A family event: it shares the family's one seat a week, and the dynasty layer has its own Sunday dinners.
+    cooldown: 10,
+    weight: () => 1.5,
     condition: (s) => livingDynasty(s).length >= 2,
     build: (s) => {
       const boss = player(s);
@@ -693,6 +694,7 @@ export const EVENT_DEFS: EventDef[] = [
           : 'Sunday dinner at the house on Glenwood Avenue. The whole family is coming.',
         defaultChoiceId: 'gravy',
         choices,
+        meta: { family: 1 },
       };
     },
   },

@@ -52,6 +52,8 @@ body {
 
 /* ---------------- The real map (Leaflet) ---------------- */
 .llv-map, .llv-map.leaflet-container { background: #0b1720; font-family: 'Inter', system-ui, sans-serif; }
+/* Leaflet panes use z-index 400-700: keep them inside the map so modals, sheets and cutscenes sit on top. */
+.llv-map { isolation: isolate; z-index: 0; }
 .llv-map .leaflet-control-attribution { background: rgba(11, 10, 9, 0.75); color: #8a8378; font-size: 9px; }
 .llv-map .leaflet-control-attribution a { color: #c49a3a; }
 .llv-map .leaflet-bar a { background: #1d1a17; color: #ecd38f; border-color: #3a342e; }

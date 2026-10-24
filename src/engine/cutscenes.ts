@@ -47,12 +47,12 @@ export function cutscenesBetween(prev: GameState, next: GameState): CutsceneCue[
       if (b.faction === 'law') add('betrayal_confrontation', 'A rat', `${displayName(b)} is in a motel in Trenton with two FBI men and a tape recorder. Everything he knows, they know.`);
       else if (b.faction !== 'player' && b.faction !== 'none' && (a.rank === 'capo' || a.rank === 'underboss')) add('betrayal_confrontation', 'Gone over', `${displayName(b)} took his crew and walked over to ${next.rivals.find((r) => r.id === b.faction)?.name ?? 'the other side'}. Nobody saw it coming except everybody.`);
     }
-    // One of your men in cuffs.
-    if (a.alive && b.alive && b.faction === 'player' && id !== next.playerId && (b.imprisonedUntil ?? 0) > next.week && (a.imprisonedUntil ?? 0) <= prev.week) {
+    // One of your made men in cuffs.
+    if (a.alive && b.alive && b.faction === 'player' && id !== next.playerId && b.rank !== 'associate' && b.rank !== 'civilian' && (b.imprisonedUntil ?? 0) > next.week && (a.imprisonedUntil ?? 0) <= prev.week) {
       add('arrest_interrogation', 'Pinched', `A bare bulb at the Wildwood station house. They ask ${b.firstName} about you. ${b.firstName} asks for a lawyer.`);
     }
-    // A wedding in the crew (his household gets a wife).
-    if (a.alive && b.alive && b.faction === 'player' && !a.household?.wife && b.household?.wife && (b.story?.length ?? 0) > (a.story?.length ?? 0) && b.story?.[b.story.length - 1]?.text.startsWith('Married')) {
+    // A wedding in the crew that the boss sat at the head table for.
+    if (a.alive && b.alive && b.faction === 'player' && !a.household?.wife && b.household?.wife && (b.story?.length ?? 0) > (a.story?.length ?? 0) && b.story?.[b.story.length - 1]?.text.startsWith('Married') && b.story[b.story.length - 1].text.includes('head table')) {
       add('wedding', 'A wedding in the crew', `${b.firstName} married ${b.household.wife} at Notre Dame de la Mer. Envelopes on the head table, and the boss danced with the bride.`);
     }
     if (a.alive && b.alive && !a.spouseId && b.spouseId && b.dynasty) {

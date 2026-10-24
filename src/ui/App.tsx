@@ -38,7 +38,7 @@ const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = 
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
-  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'Dynasty' }, { id: 'lifestyle', label: 'Lifestyle' }] },
+  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }] },
   { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
   { id: 'chronicle', label: 'Chronicle' },
