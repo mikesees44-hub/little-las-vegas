@@ -80,6 +80,26 @@ generate next week's events (max 4 popups).
 **Bankruptcy** isn't a game-over; being in the red costs respect and crew loyalty. The simulator counts a game as
 "bankrupt" when the treasury stays below $0 for 8+ consecutive weeks. The only game over is a house with no eligible heir.
 
+## The dynasty layer (CK dynasty, family and activities)
+
+`familyState.ts` holds `GameState.dyn` (optional, so old saves load): houses, alliances, renown and legacies, per-person
+dynasty data, the hosted activity and decisions. It rolls on its own seeded stream (`dyn.rng`) so it does not reshuffle
+the main simulation's dice.
+
+| File | What it does |
+|---|---|
+| `family.ts` | Hub: setup (`initDynasty`), weekly/monthly ticks, dynasty orders (`{ kind: 'dynasty' }`), effect ops (`{ type: 'dyn' }`), stress from the boss's choices |
+| `familyHouses.ts` | Twelve houses (rival crews, Philadelphia families, political and legitimate Wildwood families) with real members; alliances: no strikes from an allied crew, allies add war score, Table votes lean your way |
+| `familyMarriage.ts` | Arranged marriages with acceptance odds and reasons, dowries, matrilineal matches |
+| `familyTraits.ts` | Congenital traits inherited from both parents, childhood temperament, education by a guardian (priest, capo, Penn, the Army), coming of age at 16, life paths and goals |
+| `familyLegacy.ts` | Renown from deeds and four Dynasty Legacy tracks (Blood, Name, Money, Church & City Hall), 4 perks each, kept through every succession |
+| `familyStress.ts` | Stress 0-100 from four sources (IRS, paranoia, honor, home), breaking points at 33/66/100 with coping habits |
+| `familyDrama.ts` | Family events driven by character state with cooldowns (affairs, the money in the cellar, a wife who could flip, a bastard's claim, sibling rivalry, the black sheep, a cousin in the Feds' sights, in-law feuds, an heir who wants out), match proposals, claims after a succession |
+| `activities.ts` | Hosted activities: wedding, christening, wake, Sunday dinner, clambake, the 500 Club, a fishing trip off Cape May; 1-3 outcome events each |
+| `decisions.ts` | CK Decisions with requirement progress (Boss of the Shore, City Hall, bank, Florida, legit, festival, monument, break from Philadelphia, casino) |
+
+Family events reach the week through `registerEventSource` in `events.ts` (one candidate a week, still capped at 4 popups).
+
 ## UI
 
 Single-page dashboard (`src/ui`): header with date, season countdown, treasury, respect and the three heat bars;

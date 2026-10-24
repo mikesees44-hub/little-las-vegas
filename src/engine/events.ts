@@ -18,6 +18,16 @@ import type { Character, Choice, Effect, EventInstance, GameState, RivalId } fro
 
 export const MAX_POPUPS = 4;
 
+/**
+ * Extra event sources (the dynasty layer's family drama, ...). Each may offer
+ * one candidate a week with its own cooldowns; candidates compete by
+ * priority and are still capped by MAX_POPUPS.
+ */
+export const EVENT_SOURCES: ((s: GameState) => EventInstance | undefined)[] = [];
+export function registerEventSource(fn: (s: GameState) => EventInstance | undefined): void {
+  if (!EVENT_SOURCES.includes(fn)) EVENT_SOURCES.push(fn);
+}
+
 export interface EventDef {
   id: string;
   weight: (s: GameState) => number;
@@ -48,7 +58,7 @@ export function envelopeSize(s: GameState): number {
 }
 
 export function bagmanDue(s: GameState): boolean {
-  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date);
+  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly;
 }
 
 export function buildBagman(s: GameState): EventInstance {
@@ -786,6 +796,10 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
         s.cooldowns[d.id] = s.week;
       }
     }
+  }
+  for (const src of EVENT_SOURCES) {
+    const ev = src(s);
+    if (ev) candidates.push(ev);
   }
   candidates.sort((a, b) => b.priority - a.priority);
   for (const ev of candidates) {

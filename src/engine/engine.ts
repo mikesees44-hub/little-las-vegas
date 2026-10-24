@@ -12,6 +12,7 @@ import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
+import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS } from './events';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
@@ -99,6 +100,7 @@ function monthlyTick(ctx: Ctx): void {
   rivalSuccession(ctx);
   crewMonth(ctx);
   secretsMonth(s);
+  if (!s.gameOver) dynastyMonth(ctx);
   // Disloyal men may walk out.
   const boss = player(s);
   for (const m of crew(s)) {
@@ -204,7 +206,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const dateOf = { ...s.date };
 
   s.cutscenes = [];
+  const resolving = s.pendingEvents;
   resolveChoices(ctx, choices);
+  if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) fireConsequences(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
@@ -227,6 +231,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     heatDecay(ctx);
     weeklyHousekeeping(ctx);
     runGoals(ctx);
+    dynastyWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

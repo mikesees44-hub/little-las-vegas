@@ -10,6 +10,7 @@ import { fmt$ } from '../format';
 import { districtHeat, districtIncome, FACTION_FILL } from './IslandMap';
 import { ActionCard } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
+import { StressBar } from '../family/bits';
 
 export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: string; onOpenBusiness: () => void }) {
   const d = s.districts.find((x) => x.id === id);
@@ -82,6 +83,7 @@ export function PlayerCard({ s }: { s: GameState }) {
         <div className="text-sm font-semibold text-gold-300 truncate max-w-[12rem]">{displayName(b)}</div>
         <div className="text-[11px] text-stone-400">Head of the house · {ageOn(b.birth, s.date)} yrs · health {b.health}</div>
         <div className="mt-1"><TraitIcons c={b} /></div>
+        <div className="mt-1"><StressBar s={s} c={b} /></div>
       </div>
     </div>
   );

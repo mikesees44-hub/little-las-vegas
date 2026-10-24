@@ -14,6 +14,7 @@ import { Portrait } from '../portrait/Portrait';
 import { Modal } from './Modal';
 import { ActionCard } from './Orders';
 import { CharLink, FACTION_TINT, TraitIcons } from './People';
+import { DynastyFacts } from '../family/bits';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
@@ -123,6 +124,8 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
             </section>
           )}
         </div>
+
+        <DynastyFacts s={s} c={c} />
 
         <section className="mt-3">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Family</div>

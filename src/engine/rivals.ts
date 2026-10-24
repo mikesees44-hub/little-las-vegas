@@ -1,3 +1,4 @@
+import { alliedWithFaction } from './familyHouses';
 import { gameYear } from './calendar';
 import { crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { fmtMoney, shiftInfluence } from './effects';
@@ -134,6 +135,8 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
           break;
         }
       }
+      // An alliance by marriage (or pact): they won't move against your house.
+      if (t === 'player' && (move === 'strike' || move === 'inform' || move === 'expand') && alliedWithFaction(s, r.id)) sc = 0;
       // Rivals focus on the player but act on each other too.
       if (t !== 'player') sc *= 0.55;
       if (t === 'player' && (r.war || r.feud) && move === 'strike') sc *= 2.5;
