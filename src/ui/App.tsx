@@ -180,7 +180,7 @@ export function App() {
     <SheetContext.Provider value={sheetApi}>
     <PlannerContext.Provider value={plannerApi}>
     <OrdersContext.Provider value={ordersApi}>
-    <div className="mx-auto max-w-6xl px-3 sm:px-4 py-3 sm:py-5 space-y-3">
+    <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
       <Header s={s}>
         {!s.gameOver && (
           <>

@@ -93,7 +93,7 @@ export function IslandMap({ s, selected, onSelect }: { s: GameState; selected?: 
           </button>
         ))}
       </div>
-      <svg viewBox="0 0 420 560" preserveAspectRatio="xMidYMid meet" className="w-full h-[calc(100vh-215px)] min-h-[440px] block" data-testid="island-map">
+      <svg viewBox="0 0 420 560" preserveAspectRatio="xMidYMid meet" className="w-full h-[calc(100vh-200px)] min-h-[520px] block" data-testid="island-map">
         <defs>
           <linearGradient id="ocean" x1="0" x2="1">
             <stop offset="0%" stopColor="#0d1c26" />
