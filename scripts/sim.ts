@@ -17,6 +17,9 @@ import { MAX_POPUPS } from '../src/engine/events';
 import { legalActions, previewAction } from '../src/engine/actions';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
+import { whatShouldIDo } from '../src/engine/opportunities';
+import { rankCandidates } from '../src/engine/candidates';
+import { explainAction } from '../src/engine/advice';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
@@ -45,6 +48,8 @@ const ENVOY_RATE = Number(arg('envoys', '0.03'));
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
+/** Chance per week the random player takes the advice: the top "What should I do?" item, or the recommended pick. */
+const ADVICE_RATE = Number(arg('advice', '0.05'));
 
 const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ? xs[Math.floor(rand(h) * xs.length)] : undefined);
 
@@ -78,6 +83,13 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
+  if (rand(h) < ADVICE_RATE) {
+    // Take the advice: the top item's order, or the recommended man for its pick.
+    for (const o of whatShouldIDo(s, 5)) {
+      const a = o.link.action ?? (o.link.role ? rankCandidates(s, o.link.role).candidates.find((c) => c.action && !c.disabledReason)?.action : undefined);
+      if (a && !explainAction(s, a).verdict.label.startsWith('Not yet')) { add(a); break; }
+    }
+  }
   return { choices, actions };
 }
 
