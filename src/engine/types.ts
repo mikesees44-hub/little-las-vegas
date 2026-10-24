@@ -6,6 +6,7 @@
 
 import type { DynAction, DynOp, DynState } from './familyState';
 import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
+import type { EconAction, EconOp, EconState } from './econState';
 
 export interface GameDate {
   y: number;
@@ -327,7 +328,10 @@ export type BusinessKind =
   | 'numbers' | 'bookmaking' | 'loansharking' | 'cardgame' | 'vice' | 'stag' | 'blackmail' | 'jewel' | 'bankcrew'
   | 'fencing' | 'narcotics'
   // property
-  | 'safehouse';
+  | 'safehouse'
+  // economy pillar (wave 2): transport, services, entertainment, nightlife
+  | 'cargo' | 'trucking' | 'towing' | 'waste' | 'cleaning' | 'bidrig' | 'labor' | 'taxi' | 'pawn' | 'label' | 'talent'
+  | 'burlesque' | 'gentsclub' | 'hoodclub' | 'supperclub' | 'adulttheater' | 'filmdist' | 'deli';
 
 export interface Business {
   id: string;
@@ -493,7 +497,9 @@ export type Effect =
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
   | ({ type: 'checkBackground'; charId: string } & EffectBase)
   /** The story pillar: pack secrets, romance, paternity (storyOps.ts). */
-  | ({ type: 'storyOp'; op: StoryOp } & EffectBase);
+  | ({ type: 'storyOp'; op: StoryOp } & EffectBase)
+  /** The economy & property layer (econState.ts / econ.ts). */
+  | ({ type: 'econ'; op: EconOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -799,6 +805,8 @@ export interface GameState {
   story?: StoryState;
   /** Courtships, lovers, affairs, pregnancies (romance.ts). */
   romance?: RomanceState;
+  /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
+  econ?: EconState;
 }
 
 export interface PlayerChoices {
@@ -842,7 +850,8 @@ export type PlayerAction =
   | { kind: 'reassign'; charId: string; capoId: string }
   | { kind: 'propose'; charId: string; voucherId?: string }
   | { kind: 'background'; charId: string }
-  | { kind: 'order'; key: string; via: OrderVia };
+  | { kind: 'order'; key: string; via: OrderVia }
+  | { kind: 'econ'; op: EconAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

@@ -44,6 +44,8 @@ const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
 /** Chance per week of a romance interaction (court, affair, propose, end it, separate). */
 const ROMANCE_RATE = Number(arg('romance', '0.04'));
+/** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
+const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
 
@@ -79,6 +81,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
   if (rand(h) < ROMANCE_RATE) add(pickOne(h, romanceActions(s).filter((a) => !previewAction(s, a).disabledReason)));
+  if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
   return { choices, actions };
 }
 
@@ -116,6 +119,8 @@ interface GameResult {
   peakUnwashed: number;
   /** Dynasty-layer counters at the end of the game (familyState.ts). */
   dyn?: Record<string, number>;
+  /** Economy-layer counters at the end of the game (econState.ts). */
+  econ?: Record<string, number>;
   hierarchyErrors: string[];
   crew: { defections: number; coups: number; flips: number; makings: number; rivalCrewMoves: number };
   popupKeys: Record<string, number>;
@@ -237,6 +242,7 @@ function playOne(gi: number): GameResult {
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
   if (s!.romance) r.romance = { ...s!.romance.stats };
+  if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
 
@@ -285,6 +291,12 @@ console.log(`  Businesses at the end (median): ${quantile(results.map((r) => r.f
 const orders: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.orders)) orders[k] = (orders[k] ?? 0) + v;
 console.log(`  Orders per game:            ${Object.entries(orders).map(([k, v]) => `${k} ${(v / GAMES).toFixed(1)}`).join(', ')}`);
+
+const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
+if (econGames.length) {
+  const keys = Object.keys(econGames[0].econ!);
+  console.log(`  Economy layer per game (mean): ${keys.map((k) => `${k} ${(econGames.reduce((a, r) => a + (r.econ![k] ?? 0), 0) / econGames.length).toFixed(1)}`).join(', ')}`);
+}
 
 console.log(`\nDYNASTY`);
 console.log(`  Games where the boss died:  ${pct(gamesWithBossDeath, GAMES)}  (${bossDeaths} boss deaths total)`);

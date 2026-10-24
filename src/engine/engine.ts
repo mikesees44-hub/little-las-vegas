@@ -1,3 +1,4 @@
+import { econEventSource, econWeek } from './econ';
 import { officeWeek } from './office';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
@@ -35,6 +36,7 @@ import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './ty
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
+registerEventSource(econEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -230,6 +232,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) fireConsequences(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
+    econWeek(ctx);
     runCouncil(ctx);
     crewWeek(ctx);
     lifestyleWeek(ctx);

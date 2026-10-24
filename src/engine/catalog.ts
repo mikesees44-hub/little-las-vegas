@@ -67,6 +67,26 @@ export const CATALOG: Record<BusinessKind, BusinessDef> = {
   fencing: { kind: 'fencing', name: 'Fence', category: 'racket', blurb: 'Moves what falls off trucks. Doubles what the jewel crew is worth.', cost: 2500, base: 120, season: [1.6, 1.0], upkeep: 10, heat: 0.3, fedHeat: 0, staff: 1, launder: 0 },
   narcotics: { kind: 'narcotics', name: 'Narcotics pipeline', category: 'racket', blurb: 'Heroin through the docks to Philadelphia buyers. Angelo Bruno forbids it. If Philadelphia finds out, there will be a reckoning.', cost: 10000, base: 850, season: [1.4, 1.0], upkeep: 75, heat: 0.3, fedHeat: 0.5, staff: 2, launder: 0, max: 1 },
 
+  /* ---------------- wave 2: transport, services, entertainment, nightlife ---------------- */
+  cargo: { kind: 'cargo', name: 'Cargo theft (the docks)', category: 'racket', blurb: 'Friends on the docks and a load that goes missing between the ship and the truck. Worth double with a fence.', cost: 4000, base: 150, season: [1.3, 0.9], upkeep: 15, heat: 0.25, fedHeat: 0.08, staff: 2, launder: 0 },
+  trucking: { kind: 'trucking', name: 'Trucking company', category: 'front', blurb: 'Six rigs and a yard in Rio Grande. Produce up, furniture down, and nobody weighs the trailer twice.', cost: 9000, base: 170, season: [1.4, 0.8], upkeep: 60, heat: 0.05, fedHeat: 0.01, staff: 0, launder: 900 },
+  towing: { kind: 'towing', name: 'Towing & garage', category: 'front', blurb: 'The city contract for tows off Ocean Avenue. Every tourist who parks wrong pays the family.', cost: 3500, base: 90, season: [1.9, 0.6], upkeep: 20, heat: 0.05, fedHeat: 0, staff: 0, launder: 300 },
+  waste: { kind: 'waste', name: 'Waste hauling', category: 'front', blurb: 'Every restaurant on the island needs its cans emptied. There is only one carter worth calling.', cost: 12000, base: 230, season: [1.6, 0.85], upkeep: 80, heat: 0.1, fedHeat: 0.02, staff: 0, launder: 1400 },
+  cleaning: { kind: 'cleaning', name: 'Commercial cleaning', category: 'front', blurb: 'Night crews for the motels and the banks. Cash payroll, and keys to every back office.', cost: 3000, base: 80, season: [1.6, 0.8], upkeep: 20, heat: 0, fedHeat: 0, staff: 0, launder: 600 },
+  bidrig: { kind: 'bidrig', name: 'Construction bid-rigging', category: 'racket', blurb: 'The contractors take turns being low bidder and the family takes a point on every job. Better with a construction company.', cost: 6000, base: 200, season: [1.2, 0.75], upkeep: 20, heat: 0.1, fedHeat: 0.1, staff: 1, launder: 0 },
+  labor: { kind: 'labor', name: 'Labor local', category: 'racket', blurb: 'A friendly business agent at the hotel workers\' local. Labor peace has a price, and the welfare fund is very patient.', cost: 5000, base: 180, season: [1.3, 0.9], upkeep: 15, heat: 0.15, fedHeat: 0.12, staff: 1, launder: 0 },
+  taxi: { kind: 'taxi', name: 'Taxi garage', category: 'front', blurb: 'Checker cabs from the bus depot to the boardwalk. The drivers hear everything.', cost: 5000, base: 120, season: [2.0, 0.6], upkeep: 40, heat: 0.05, fedHeat: 0, staff: 0, launder: 600 },
+  pawn: { kind: 'pawn', name: 'Pawn shop', category: 'front', blurb: 'Watches, wedding bands, a trumpet nobody came back for. Pairs nicely with a fence.', cost: 3000, base: 80, season: [1.3, 1.0], upkeep: 15, heat: 0.1, fedHeat: 0, staff: 0, launder: 400 },
+  label: { kind: 'label', name: 'Record label & studio', category: 'front', blurb: 'A two-track studio over a music store and a label with a doo-wop act on the radio. Payola is a business expense.', cost: 8000, base: 140, season: [1.2, 1.0], upkeep: 50, heat: 0, fedHeat: 0.02, staff: 0, launder: 700 },
+  talent: { kind: 'talent', name: 'Talent agency', category: 'front', blurb: 'Singers, comics and bands for every club from Wildwood to the Poconos. Ten percent of everybody.', cost: 4000, base: 100, season: [2.2, 0.6], upkeep: 25, heat: 0, fedHeat: 0, staff: 0, launder: 400 },
+  burlesque: { kind: 'burlesque', name: 'Burlesque house', category: 'front', blurb: 'Comics, a pit band and headline dancers on Pacific Avenue. The vice squad buys tickets too.', cost: 7000, base: 230, season: [2.6, 0.3], upkeep: 55, heat: 0.3, fedHeat: 0, staff: 1, launder: 600 },
+  gentsclub: { kind: 'gentsclub', name: 'Gentlemen\'s club (upscale)', category: 'front', blurb: 'Velvet, a doorman in a tuxedo and a membership list of judges. Expensive to run, very good for business.', cost: 15000, base: 380, season: [2.2, 0.6], upkeep: 110, heat: 0.25, fedHeat: 0.02, staff: 1, launder: 1100 },
+  hoodclub: { kind: 'hoodclub', name: 'Neighborhood club', category: 'front', blurb: 'A jukebox, a small stage and regulars who have been coming since Truman. Cheap, rough, and the vice squad\'s favorite stop.', cost: 5000, base: 170, season: [1.8, 0.8], upkeep: 35, heat: 0.4, fedHeat: 0, staff: 1, launder: 400 },
+  supperclub: { kind: 'supperclub', name: 'Supper club & cabaret', category: 'front', blurb: 'Steak, a twelve-piece band and a headliner from Philadelphia. The respectable end of nightlife.', cost: 12000, base: 300, season: [2.5, 0.4], upkeep: 90, heat: 0.15, fedHeat: 0, staff: 0, launder: 1000 },
+  adulttheater: { kind: 'adulttheater', name: 'Adult theater', category: 'front', blurb: 'A grindhouse marquee off the Pike. Zoning fights, picket lines and a steady cash box.', cost: 9000, base: 230, season: [1.3, 1.0], upkeep: 50, heat: 0.35, fedHeat: 0.05, staff: 1, launder: 800, minYear: 1970 },
+  filmdist: { kind: 'filmdist', name: 'Film distributor', category: 'front', blurb: 'Prints in cans to theaters from Baltimore to Providence. Interstate, lawyered, and watched.', cost: 14000, base: 320, season: [1.1, 1.0], upkeep: 60, heat: 0.15, fedHeat: 0.2, staff: 1, launder: 600, minYear: 1971 },
+  deli: { kind: 'deli', name: 'Sandwich shop & deli', category: 'front', blurb: 'Hoagies, provolone hanging from the ceiling and a phone in the back that rings for the book.', cost: 2000, base: 75, season: [1.8, 0.9], upkeep: 15, heat: 0, fedHeat: 0, staff: 0, launder: 300 },
+
   /* ---------------- property ---------------- */
   safehouse: { kind: 'safehouse', name: 'Safehouse', category: 'property', blurb: 'A quiet house with a cellar. Hides cash from raids and the boss from gunmen.', cost: 6000, base: 0, season: [1, 1], upkeep: 60, heat: 0, fedHeat: 0, staff: 0, launder: 150, max: 3 },
 };
@@ -75,6 +95,14 @@ export const CATEGORY_LABEL: Record<BusinessCategory, string> = { front: 'Legit 
 
 /** Shop order. */
 export const SHOP_KINDS: BusinessKind[] = (Object.keys(CATALOG) as BusinessKind[]).filter((k) => !CATALOG[k].hidden);
+
+/** Kinds that run a club roster (dancers, bartenders, a band ...). */
+export const CLUB_KINDS: BusinessKind[] = ['club', 'burlesque', 'gentsclub', 'hoodclub', 'supperclub'];
+
+/** On sale in this year (some kinds only exist from the 1970s). */
+export function availableIn(kind: BusinessKind, year: number): boolean {
+  return (CATALOG[kind].minYear ?? 0) <= year;
+}
 
 /** Names for new places, by kind. The first unused one is taken. */
 export const BIZ_NAMES: Record<BusinessKind, string[]> = {
@@ -103,6 +131,24 @@ export const BIZ_NAMES: Record<BusinessKind, string[]> = {
   bankcrew: ['Out-of-town bank crew', 'The Delaware Valley crew'],
   fencing: ['Bay-side fence', 'Pawn counter on Oak Ave', 'Warehouse fence in Rio Grande'],
   narcotics: ['The dock pipeline'],
+  cargo: ['Pier 3 loading gang', 'The night-shift checkers', 'Bayside freight crew'],
+  trucking: ['Cape Atlantic Freight', 'Shore Line Trucking', 'Rio Grande Haulers'],
+  towing: ['Ocean Ave Towing', 'Island Tow & Garage', 'Causeway Wrecker Service'],
+  waste: ['Island Carting Co.', 'Seashore Sanitation', 'Bay Refuse Removal'],
+  cleaning: ['Spotless Commercial Cleaning', 'Night Owl Janitorial', 'Shore Maintenance Co.'],
+  bidrig: ['The contractors\' club', 'The paving rotation', 'The county bid table'],
+  labor: ['Hotel workers\' Local 54 (a friend)', 'Boardwalk laborers\' local', 'Teamsters on the docks'],
+  taxi: ['Yellow Top Cab Co.', 'Island Checker Cabs', 'Boardwalk Taxi'],
+  pawn: ['Lucky Seven Pawn', 'Oak Ave Loan & Pawn', 'Pacific Pawnbrokers'],
+  label: ['Seashore Records', 'Starlight Sound Studio', 'Boardwalk Records'],
+  talent: ['Shore Talent Associates', 'The Riviera Agency', 'Starlight Bookings'],
+  burlesque: ['The Globe Burlesque', 'The Bijou Follies', 'Club Paree'],
+  gentsclub: ['The Gaslight Club', 'The Ambassador Room', 'The Pelican Club'],
+  hoodclub: ['The Dew Drop Inn', 'Sully\'s Go-Go', 'The Wagon Wheel'],
+  supperclub: ['The Rip Tide Supper Club', 'Club Riviera', 'The Bolero Supper Club'],
+  adulttheater: ['The Paris Cinema', 'The Pike Theater', 'The Rialto Art Cinema'],
+  filmdist: ['Atlantic Film Exchange', 'Delaware Valley Distributors', 'Coastal Pictures'],
+  deli: ['Sal\'s Hoagies', 'Ninth Street Deli', 'Lou\'s Italian Sandwiches', 'Shore Hoagie Shop'],
   safehouse: ['Safehouse on Hand Ave', 'Cellar house in the Crest', 'Bayside bungalow', 'Farmhouse in Rio Grande'],
 };
 

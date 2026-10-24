@@ -1,3 +1,4 @@
+import { drawLots, LOT_ZOOM } from './lotPins';
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import { owned } from '../../engine/business';
@@ -271,6 +272,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   const net = L.layerGroup().addTo(map);
   const districtLayer = L.layerGroup();
   const districtPins = L.layerGroup();
+  const lotLayer = L.layerGroup();
   let districtsGeo: GeoJSON.FeatureCollection | undefined;
 
   // Popup buttons (capture phase: Leaflet stops propagation inside popups).
@@ -374,6 +376,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   function drawDistricts(p: WorldMapProps) {
     if (!districtsGeo) return;
     const s = p.s;
+    drawLots(L, lotLayer, s, districtsGeo);
     districtLayer.clearLayers();
     districtPins.clearLayers();
     L.geoJSON(districtsGeo as never, {
@@ -424,6 +427,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     toggle(cityLayer, z < 12);
     toggle(districtLayer, z >= 11.5);
     toggle(districtPins, z >= 12.5);
+    toggle(lotLayer, z >= LOT_ZOOM);
     const vec = !tileOk;
     if (fineLand && mask1) {
       toggle(mask1, vec && z >= 6.5);

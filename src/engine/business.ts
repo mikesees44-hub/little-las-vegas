@@ -1,3 +1,4 @@
+import { econTakeMult, econWash } from './econ';
 import { perkMod } from './lifestyle';
 import { isInSeason } from './calendar';
 import { BIZ_NAMES, CATALOG, seasonalMult } from './catalog';
@@ -117,6 +118,7 @@ export function expectedTake(s: GameState, b: Business): number {
   if (b.kind === 'construction' && s.favors > 0) v *= 1.4;
   const runner = (b.staffIds ?? []).map((id) => s.characters[id]).find(Boolean);
   if (runner && hasTrait(runner, 'Gambler') && b.category === 'racket') v *= 0.9;
+  v *= econTakeMult(s, b);
   return Math.round(v);
 }
 
@@ -131,6 +133,7 @@ export function washCapacity(s: GameState): number {
     const seasonal = isInSeason(s.date) ? 1 : Math.max(0.35, Math.min(1, d.season[1] / Math.max(0.01, d.season[0]) * 1.5));
     cap += d.launder * seasonal * staffFactor(s, b);
   }
+  cap += econWash(s);
   // A bookkeeper (consigliere or specialist with business sense) squeezes more through.
   const books = crew(s).find((c) => c.specialty === 'accountant' && isFree(s, c));
   if (books) cap *= 1.25;
