@@ -4,6 +4,7 @@ import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
 import type { GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
+import { ClockControls, newWarnings, tickerLine, useClock, type Speed } from './clock';
 import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
 import { TablePanel } from './components/TablePanel';
 import { Businesses } from './components/Businesses';
@@ -57,16 +58,26 @@ export function App() {
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
 
   useEffect(() => saveGame(s), [s]);
+  const [speed, setSpeed] = useState<Speed>(0);
+  const [clockNote, setClockNote] = useState<string | undefined>();
+  const [ticker, setTicker] = useState<string | undefined>();
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
-  function run(m: Mode, a: Record<string, string>) {
+  function run(m: Mode, a: Record<string, string>, quiet = false) {
     const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders };
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
-      setReports([r.report]);
+      if (quiet) {
+        setTicker(tickerLine(r.report));
+        const warn = newWarnings(s, r.state);
+        if (warn.length || r.state.cutscenes?.length) {
+          setSpeed(0);
+          setClockNote(warn.length ? `Paused: ${warn[0]}` : 'Paused');
+        }
+      } else setReports([r.report]);
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
@@ -119,6 +130,26 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
+  const busy = !!current || !!sheet || !!planner || !!reports;
+  useClock({
+    speed, s, busy, unanswered: unanswered.length,
+    step: () => run('week', answers, true),
+    onPause: (why) => {
+      setSpeed(0);
+      setClockNote(`Paused: ${why.toLowerCase()}`);
+      if (why === 'A decision is waiting' && !busy) { setAdvancing(false); setEventIdx(s.pendingEvents.findIndex((e) => !answers[e.iid])); }
+    },
+  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || (e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'SELECT') return;
+      e.preventDefault();
+      setSpeed((v) => (v === 0 ? 2 : 0));
+      setClockNote(undefined);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   return (
     <SheetContext.Provider value={sheetApi}>
@@ -128,6 +159,7 @@ export function App() {
       <Header s={s}>
         {!s.gameOver && (
           <>
+            <ClockControls speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote} />
             <button className="btn-gold py-1.5" onClick={() => startAdvance('week')}>Advance Week</button>
             <button className="btn-ghost py-1.5" onClick={() => startAdvance('month')}>Advance Month</button>
             <div className="text-xs text-stone-400">
@@ -139,6 +171,7 @@ export function App() {
               ) : 'Nothing on the table this week.'}
               {orders.length > 0 && <> · {orders.length} order{orders.length > 1 ? 's' : ''} queued</>}
               {s.lastReport && <> · <button className="underline text-gold-300" onClick={() => setReports([s.lastReport!])}>last report</button></>}
+              {ticker && speed > 0 && <div className="text-[11px] text-stone-500 truncate max-w-[60vw]">{ticker}</div>}
             </div>
           </>
         )}
