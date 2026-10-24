@@ -33,6 +33,8 @@ const SKIN: Record<string, string[]> = {
   Italian: ['#c99a76', '#b98a66', '#d6aa84', '#a97c5a'],
   Irish: ['#f0cdb4', '#e8bfa2', '#f3d6c0'],
   Jewish: ['#dcb08c', '#cfa07c', '#e4bc98'],
+  /** Stocks the engine's three ethnicities don't cover (house trees). */
+  Black: ['#7a4e34', '#8d5b3d', '#6a412b'],
 };
 const HAIR = ['#17120f', '#2b1f17', '#3d2a1c', '#5a3d27', '#7a3a1c', '#a8854e'];
 const SUITS = ['#23252b', '#2e3440', '#3b3128', '#1f2a36', '#40362c', '#2a2a2a', '#4a4a50'];

@@ -5,6 +5,7 @@ import { autoStaff } from './business';
 import { generateWeekEvents } from './events';
 import { newGame } from './newGame';
 import { refreshDynastyAfterStart } from './family';
+import { setupHouses } from './housesLife';
 import { addOpinion } from './relations';
 import type { Character, GameState, Trait } from './types';
 
@@ -26,12 +27,14 @@ export const STARTS: Record<StartId, { name: string; text: string }> = {
 };
 
 export function newGameWith(seed: string, start: StartId = 'classic'): GameState {
-  const s = newGame(seed);
+  // The houses are built once the start has shaped the family.
+  const s = newGame(seed, { skipHouses: start !== 'classic' });
   if (start === 'classic') return s;
   if (start === 'rise') rise(s);
   else sees(s);
   s.flags[`start_${start}`] = 1;
   refreshDynastyAfterStart(s);
+  setupHouses(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};
   s.eventQueue = [];
@@ -47,6 +50,7 @@ function rename(s: GameState, from: string, to: string): void {
   for (const c of Object.values(s.characters)) {
     if (!c.dynasty) continue;
     if (c.lastName === from) c.lastName = to;
+    if (c.maidenName === from) c.maidenName = to;
   }
   s.houseName = to;
 }
@@ -68,7 +72,15 @@ function sees(s: GameState): void {
   rename(s, old, 'Sees');
   boss.firstName = 'Salvatore';
   boss.nickname = 'The Shark';
+  const shift = 60 - ageOn(boss.birth, s.date);
   setAge(s, boss, 60);
+  // His parents and brothers and sisters age with him (a generation older).
+  for (const c of Object.values(s.characters)) {
+    if (!c.dynasty || c.id === boss.id) continue;
+    const parent = c.id === boss.fatherId || c.id === boss.motherId;
+    const sibling = !!boss.fatherId && c.fatherId === boss.fatherId;
+    if (parent || sibling) c.birth = { ...c.birth, y: c.birth.y - shift };
+  }
   boss.traits = ['Patient', 'Vengeful', 'Pious'];
   boss.attributes = { leadership: 78, business: 62, diplomacy: 66, intrigue: 72, force: 48, discipline: 70 };
   boss.ambition = 'Choose the right heir before it is too late';

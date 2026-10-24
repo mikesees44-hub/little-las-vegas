@@ -5,6 +5,7 @@
  */
 
 import type { DynAction, DynOp, DynState } from './familyState';
+import type { LineageState } from './houses';
 
 export interface GameDate {
   y: number;
@@ -685,6 +686,8 @@ export interface GameState {
   permits: Record<string, number>;
   /** The CK dynasty layer: houses, alliances, renown, legacies, activities (optional for old saves). */
   dyn?: DynState;
+  /** Every house's tree and history (houses.ts; optional for old saves). Shared between weeks copy-on-write. */
+  lineage?: LineageState;
 }
 
 export interface PlayerChoices {

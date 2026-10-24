@@ -64,8 +64,10 @@ export function houseChild(s: GameState, h: House, age: number, gender?: 'M' | '
   if (!head) return undefined;
   const d = ensureDynState(s);
   const g = gender ?? (rand(d) < 0.5 ? 'M' : 'F');
-  const kid = makeDynCharacter(s, { gender: g, ethnicity: head.ethnicity, lastName: head.lastName, age, rank: 'civilian', faction: 'none', nickname: false });
   const mother = head.spouseId ? s.characters[head.spouseId] : undefined;
+  // Parents are at least 17 years older than their children.
+  age = Math.max(0, Math.min(age, ageOn(head.birth, s.date) - 18, mother?.alive ? ageOn(mother.birth, s.date) - 17 : 99));
+  const kid = makeDynCharacter(s, { gender: g, ethnicity: head.ethnicity, lastName: head.lastName, age, rank: 'civilian', faction: 'none', nickname: false });
   linkChild(head, mother?.alive ? mother : undefined, kid);
   famMut(s, kid.id).houseId = h.id;
   addOpinion(s, kid.id, head.id, 'My father', 25, 0);
@@ -143,7 +145,8 @@ export function refreshHouses(s: GameState): void {
       famMut(s, next.id).houseId = h.id;
       head = next;
     }
-    if (marriageable(s, h).length >= 2 || houseMembers(s, h).length >= 5) continue;
+    // With the houses' full trees (housesLife.ts) new members are born, not conjured.
+    if (s.lineage || marriageable(s, h).length >= 2 || houseMembers(s, h).length >= 5) continue;
     if (rand(d) < 0.06) houseChild(s, h, 18);
   }
 }

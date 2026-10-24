@@ -18,6 +18,7 @@ import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
+import { housesMonth } from './housesLife';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS } from './events';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
@@ -56,8 +57,9 @@ function deepCopy(v: unknown): unknown {
 }
 
 export function cloneState(s: GameState): GameState {
-  const { chronicle, dynastyHistory, lastReport, news, ...rest } = s;
+  const { chronicle, dynastyHistory, lastReport, news, lineage, ...rest } = s;
   const c = deepCopy(rest) as GameState;
+  if (lineage) c.lineage = lineage; // copy-on-write (houses.ts linMut)
   c.chronicle = chronicle.slice();
   c.dynastyHistory = dynastyHistory.slice();
   c.news = news ? news.slice() : [];
@@ -106,6 +108,7 @@ function monthlyTick(ctx: Ctx): void {
   crewMonth(ctx);
   secretsMonth(s);
   if (!s.gameOver) dynastyMonth(ctx);
+  if (!s.gameOver) housesMonth(ctx);
   lifestyleMonth(ctx);
   // Disloyal men may walk out.
   const boss = player(s);

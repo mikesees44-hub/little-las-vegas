@@ -22,13 +22,15 @@ import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
 import { EventModal } from './components/EventModal';
 import { FamilyTab } from './family/FamilyTab';
+import { HousesPanel } from './houses/HousesPanel';
+import { HousesNavContext } from './houses/nav';
 import { Header } from './components/Header';
 import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle';
+export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'houses' | 'law' | 'town' | 'papers' | 'chronicle';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'The Island' },
   { id: 'business', label: 'Rackets & Fronts' },
@@ -37,6 +39,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'table', label: 'The Table' },
   { id: 'lifestyle', label: 'Lifestyle' },
   { id: 'family', label: 'Family' },
+  { id: 'houses', label: 'Houses' },
   { id: 'law', label: 'The Law' },
   { id: 'town', label: 'The Town' },
   { id: 'papers', label: 'The Papers' },
@@ -68,6 +71,8 @@ export function App() {
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
   const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
+  const [houseSel, setHouseSel] = useState<string | undefined>();
+  const housesApi = useMemo(() => ({ openHouse: (id: string) => { setSheet(undefined); setTab('houses'); setHouseSel(id); } }), []);
   const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
 
@@ -137,6 +142,7 @@ export function App() {
     setReports(null);
     setEventIdx(null);
     setSheet(undefined);
+    setHouseSel(undefined);
     setTab('map');
   }
 
@@ -170,6 +176,7 @@ export function App() {
 
   return (
     <SheetContext.Provider value={sheetApi}>
+    <HousesNavContext.Provider value={housesApi}>
     <PlannerContext.Provider value={plannerApi}>
     <OrdersContext.Provider value={ordersApi}>
     <div className="mx-auto max-w-6xl px-3 sm:px-4 py-3 sm:py-5 space-y-3">
@@ -227,6 +234,7 @@ export function App() {
           {tab === 'family' && (
             <FamilyTab s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
           )}
+          {tab === 'houses' && <HousesPanel s={s} selected={houseSel} onSelect={setHouseSel} />}
           {tab === 'law' && <LawPanel s={s} />}
           {tab === 'town' && (
             <div className="space-y-6">
@@ -254,11 +262,12 @@ export function App() {
       )}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {reports && !current && !sheet && !planner && !cues.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
-      {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
+      {sheet && !current && <CharacterSheet key={sheet} s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>
     </OrdersContext.Provider>
     </PlannerContext.Provider>
+    </HousesNavContext.Provider>
     </SheetContext.Provider>
   );
 }

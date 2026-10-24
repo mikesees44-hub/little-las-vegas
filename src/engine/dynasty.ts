@@ -10,6 +10,7 @@ import {
   pickNickname,
   relationLabel,
 } from './characters';
+import { lineageDeath } from './housesDeath';
 import { respect, type Ctx } from './ledger';
 import { addOpinion, opinion, relKey } from './relations';
 import { chance, rand } from './rng';
@@ -154,9 +155,12 @@ function funeralEvent(s: GameState, dead: Character, cause: string): EventInstan
 export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: FactionId): Character | undefined {
   const s = ctx.s;
   const c = s.characters[charId];
+  // Off-screen members of the houses (lineage people) die here too; the tree keeps them.
+  if (!c && s.lineage?.people[charId]) return void lineageDeath(ctx, charId, cause, killer);
   if (!c || !c.alive) return undefined;
   c.alive = false;
   c.death = { week: s.week, date: { ...s.date }, cause, killer };
+  lineageDeath(ctx, c.id, cause, killer);
   const ageAt = age(s, c);
   const name = displayName(c);
   ctx.log.push(`${name} died, aged ${ageAt} (${cause}).`);

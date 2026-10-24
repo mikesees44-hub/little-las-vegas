@@ -8,6 +8,7 @@ import { addOpinion, changeMeter } from './relations';
 import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
 import { initDynasty } from './family';
+import { setupHouses } from './housesLife';
 import { DISTRICTS, RIVALS } from './world';
 import type { BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
 
@@ -93,7 +94,7 @@ function deadAncestor(s: GameState, c: Character, causes: string[]): void {
   c.death = { week: 0, date, cause: pick(s, causes) };
 }
 
-export function newGame(seed: string | number = Date.now()): GameState {
+export function newGame(seed: string | number = Date.now(), opts: { skipHouses?: boolean } = {}): GameState {
   const s = emptyState(String(seed));
 
   /* ---- The house ---- */
@@ -128,7 +129,7 @@ export function newGame(seed: string | number = Date.now()): GameState {
     const g = chance(s, 0.55) ? 'M' : 'F';
     const sib = makeCharacter(s, {
       gender: g, ethnicity: 'Italian', lastName: boss.lastName, faction: 'player', dynasty: true,
-      age: Math.max(20, bossAge + randInt(s, -10, 8)), rank: 'civilian', nickname: g === 'M' && chance(s, 0.6),
+      age: Math.min(Math.max(20, bossAge + randInt(s, -10, 8)), s.date.y - mother.birth.y - 17), rank: 'civilian', nickname: g === 'M' && chance(s, 0.6),
     });
     link(father, mother, sib);
     if (g === 'F' && chance(s, 0.7)) {
@@ -324,5 +325,6 @@ export function newGame(seed: string | number = Date.now()): GameState {
   autoStaff(s);
   s.pendingEvents = generateWeekEvents(s);
   initDynasty(s);
+  if (!opts.skipHouses) setupHouses(s);
   return s;
 }

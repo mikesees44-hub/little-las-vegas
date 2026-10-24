@@ -17,6 +17,15 @@ export const FACTION_TINT: Record<FactionId, string> = {
 export function CharLink({ s, id, children, className }: { s: GameState; id?: string; children?: ReactNode; className?: string }) {
   const { open } = useSheet();
   const c = id ? s.characters[id] : undefined;
+  const lp = !c && id ? s.lineage?.people[id] : undefined;
+  if (lp) {
+    // Someone from the house trees (the dead, off-screen kin): their own sheet.
+    return (
+      <button type="button" className={`underline decoration-dotted decoration-stone-600 underline-offset-2 hover:text-gold-300 text-left ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(lp.id); }}>
+        {children ?? `${lp.first} ${lp.last}`}
+      </button>
+    );
+  }
   if (!c) return <span className={className}>{children ?? '—'}</span>;
   return (
     <button type="button" className={`underline decoration-dotted decoration-stone-600 underline-offset-2 hover:text-gold-300 text-left ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }}>
