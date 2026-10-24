@@ -6,6 +6,7 @@
 
 import type { DynAction, DynOp, DynState } from './familyState';
 import type { EconAction, EconOp, EconState } from './econState';
+import type { TravelAction, TravelOp, TravelState } from './travelState';
 
 export interface GameDate {
   y: number;
@@ -490,7 +491,9 @@ export type Effect =
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
   | ({ type: 'checkBackground'; charId: string } & EffectBase)
   /** The economy & property layer (econState.ts / econ.ts). */
-  | ({ type: 'econ'; op: EconOp } & EffectBase);
+  | ({ type: 'econ'; op: EconOp } & EffectBase)
+  /** Travel, trips and flight (travelState.ts / travel.ts / fugitive.ts). */
+  | ({ type: 'travel'; op: TravelOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -794,6 +797,8 @@ export interface GameState {
   eventCooldowns?: Record<string, number>;
   /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
   econ?: EconState;
+  /** Travel, trips and fugitives (optional for old saves). */
+  travel?: TravelState;
 }
 
 export interface PlayerChoices {
@@ -838,7 +843,8 @@ export type PlayerAction =
   | { kind: 'propose'; charId: string; voucherId?: string }
   | { kind: 'background'; charId: string }
   | { kind: 'order'; key: string; via: OrderVia }
-  | { kind: 'econ'; op: EconAction };
+  | { kind: 'econ'; op: EconAction }
+  | { kind: 'travel'; op: TravelAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

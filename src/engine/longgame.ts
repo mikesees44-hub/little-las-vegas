@@ -3,6 +3,8 @@ import { reached } from './history';
 import { heat, money, respect, type Ctx } from './ledger';
 import { chance, randInt } from './rng';
 import type { Choice, Effect, EventInstance, GameState, LegalOp, LegalState } from './types';
+import { fleeChoices } from './fugitive';
+import { legalPaused } from './travelState';
 
 /**
  * The Long Game: the federal case against the boss himself.
@@ -120,6 +122,9 @@ export function buildIndictment(s: GameState): EventInstance {
     { id: 'bail', label: 'Post bail and fight it', detail: `$${BAIL.toLocaleString('en-US')} bond. He stays home until trial.`, because: 'posted bail and fought the charges', effects: [{ type: 'money', amount: -BAIL, label }, L('bail', 1, label), L('fight', 0, label)], disabledReason: s.money < BAIL ? `Needs $${BAIL.toLocaleString('en-US')}` : undefined },
     { id: 'jail', label: 'No bail: fight it from a cell', detail: 'He waits for trial in the county jail.', because: 'fought the charges from a cell', effects: [L('jail', 0, label), L('fight', 0, label)] },
     { id: 'plea', label: 'Plead guilty to a lesser count', detail: `No trial. A shorter stretch (${l.rico ? '18–30' : '12–24'} months), and the men see him take it.`, because: 'pleaded guilty to a lesser count', effects: [{ type: 'respect', amount: -6, label }, L('plea', 0, label)] },
+ 
+    // On the lam (travel branch): run instead of facing it.
+    ...fleeChoices(s),
   ], s.money >= BAIL ? 'bail' : 'jail');
 }
 
@@ -228,6 +233,8 @@ export function legalWeek(ctx: Ctx): void {
   const s = ctx.s;
   const l = legalOf(s);
   const b = player(s);
+  // The case waits while the man it is about is on the lam (fugitive.ts).
+  if (legalPaused(s, l.personId)) return;
   if (ricoActive(s) && !l.rico && l.stage !== 'prison' && l.stage !== 'parole') l.rico = true;
   switch (l.stage) {
     case 'quiet':

@@ -1,4 +1,5 @@
 import { econEventSource, econWeek } from './econ';
+import { travelWeek } from './travel';
 import { officeWeek } from './office';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
@@ -231,6 +232,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     crewWeek(ctx);
     lifestyleWeek(ctx);
     legalWeek(ctx);
+    travelWeek(ctx);
     underbellyWeek(ctx);
     officeWeek(s);
     regimesWeek(ctx);
