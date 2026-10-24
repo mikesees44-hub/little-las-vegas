@@ -6,6 +6,8 @@ import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { chance, randInt } from './rng';
 import { executeMove } from './rivals';
+import { activeTask } from './council';
+import { factionPower } from './crewlife';
 import { FACTION_NAMES } from './world';
 import type { Effect, RivalId, ScheduledConsequence } from './types';
 
@@ -63,6 +65,46 @@ const HANDLERS: Record<string, Handler> = {
       text: `Philadelphia sent a message: ${victim.firstName} ${victim.lastName}, who ran your pipeline, was found in a car trunk in Camden`,
       effects: [{ type: 'kill', charId: victim.id, cause: 'found in a car trunk in Camden (Philadelphia\'s message about narcotics)', killer: 'philly' }, { type: 'respect', amount: -4 }],
     };
+  },
+  coup: (ctx, sc) => {
+    const s = ctx.s;
+    const f = s.factions.find((x) => x.id === String(sc.params.faction));
+    if (!f) return undefined;
+    const power = factionPower(s, f);
+    const leader = s.characters[f.leaderId];
+    if (!leader?.alive || leader.faction !== 'player' || power < 0.2) {
+      s.factions = s.factions.filter((x) => x !== f);
+      return { text: 'the plotters lost their nerve and the faction broke up', effects: [{ type: 'respect', amount: 2 }] };
+    }
+    s.factions = s.factions.filter((x) => x !== f);
+    const boss = s.characters[s.playerId];
+    if (chance(s, Math.min(0.6, power)) && !activeTask(s, 'ub_guard')) {
+      s.cutscenes.push({ key: 'betrayal_confrontation', title: 'Betrayal', text: `${displayName(leader)} was waiting in the back seat of the Cadillac.`, week: s.week });
+      return { text: `${leader.firstName} ${leader.lastName}'s faction moved against the boss`, effects: [{ type: 'kill', charId: boss.id, cause: `murdered by his own capos (${displayName(leader)}'s faction)`, killer: 'none' }] };
+    }
+    // The coup fails or turns into a walk-out: the leader takes his district to a rival.
+    const d = s.districts.find((x) => x.capoId === leader.id);
+    const r = s.rivals.filter((x) => x.kind === 'mob' && s.characters[x.leaderId]?.alive)[0];
+    for (const id of f.memberIds) {
+      const m = s.characters[id];
+      if (m?.alive && m.faction === 'player' && r) {
+        m.faction = r.id;
+        for (const dd of s.districts) if (dd.capoId === m.id) dd.capoId = undefined;
+      }
+    }
+    if (d && r) {
+      const lost = -shiftInfluence(s, d.id, 'player', -12);
+      shiftInfluence(s, d.id, r.id, lost);
+    }
+    return { text: `${leader.firstName} ${leader.lastName}'s faction walked out to ${r?.shortName ?? 'nowhere'}${d ? `, taking a piece of ${d.name}` : ''}`, effects: [{ type: 'respect', amount: -6 }] };
+  },
+  promise_abdicate: () => {
+    return { text: 'the capos came back for the boss\'s promise to step aside — and he is still in the chair', effects: [{ type: 'crewOpinion', amount: -10, reason: 'Broke his promise to step aside' }, { type: 'respect', amount: -4 }] };
+  },
+  rat_burned: (ctx, sc) => {
+    const c = ctx.s.characters[String(sc.params.charId)];
+    if (!c?.alive || c.faction !== 'player') return undefined;
+    return { text: `the FBI realised ${c.firstName} ${c.lastName} was feeding them lies, and came back angry`, effects: [{ type: 'heat', bar: 'federal', amount: 12 }] };
   },
   exile_turns: (ctx, sc) => {
     const s = ctx.s;

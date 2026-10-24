@@ -4,6 +4,7 @@ import { fmtMoney, shiftInfluence } from './effects';
 import { killCharacter } from './dynasty';
 import { respect, rivalHeatHit, rivalMoneyHit, type Ctx } from './ledger';
 import { addOpinion, changeMeter, getRelation, opinion } from './relations';
+import { activeTask } from './council';
 import { chance, pick, rand, randInt, weightedPick } from './rng';
 import { FACTION_NAMES, RIVALS } from './world';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalGoal, RivalId, RivalMove } from './types';
@@ -319,7 +320,8 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
     { text: 'firebomb a dumpster behind your club', label: 'firebombing behind the club' },
   ];
   const k = pick(s, kinds);
-  const want = randInt(s, 1000, 4500);
+  const protect = activeTask(s, 'enf_protect');
+  const want = Math.round(randInt(s, 1000, 4500) * (1 - Math.min(0.6, 0.4 * protect)));
   const lost = rivalMoneyHit(ctx, want, `${r.shortName} crew: ${k.label}`, caps.moneyFrac);
   rivalHeatHit(ctx, 'local', 2, `${r.shortName} crew: ${k.label} draws cops`, caps.heatPerBar);
   respect(ctx, -1, `${r.shortName} crew: ${k.label}`, 'rival');
@@ -335,7 +337,7 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   const soldiers = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c));
   if (soldiers.length && chance(s, 0.25)) {
     const v = pick(s, soldiers);
-    const lethal = (hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed')) && chance(s, 0.15);
+    const lethal = (hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed')) && chance(s, 0.15 * (1 - Math.min(0.7, 0.5 * protect)));
     if (lethal) {
       killCharacter(ctx, v.id, `shot by the ${r.shortName} crew`, r.id);
       extra = ` ${displayName(v)} was killed.`;
@@ -350,7 +352,7 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   if (opinion(s, r.leaderId, boss.id) <= -75 && grievance >= 70 && chance(s, 0.04)) {
     const warned = (s.flags[`attempt_${r.id}`] ?? 0) > 0;
     s.flags[`attempt_${r.id}`] = (s.flags[`attempt_${r.id}`] ?? 0) + 1;
-    if (warned && chance(s, 0.25)) {
+    if (warned && chance(s, 0.25 * (1 - Math.min(0.8, 0.6 * activeTask(s, 'ub_guard'))))) {
       record(ctx, r, 'strike', 'player', `${nm}'s men ${k.text}.${extra}`);
       killCharacter(ctx, boss.id, `murdered on the orders of ${nm}`, r.id);
       return;

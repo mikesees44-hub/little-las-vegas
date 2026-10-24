@@ -2,6 +2,8 @@ import { resolveActions } from './actions';
 import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
 import { runGoals } from './goals';
+import { runCouncil } from './council';
+import { crewMonth, crewWeek, revealIntel } from './crewlife';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
@@ -74,6 +76,7 @@ function monthlyTick(ctx: Ctx): void {
   for (const c of warnings) if (c.alive && (c.id === s.playerId || c.dynasty)) s.eventQueue.push(buildHealthEvent(s, c));
   decayAllRelations(s);
   rivalSuccession(ctx);
+  crewMonth(ctx);
   // Disloyal men may walk out.
   const boss = player(s);
   for (const m of crew(s)) {
@@ -178,9 +181,16 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const weekOf = s.week;
   const dateOf = { ...s.date };
 
+  s.cutscenes = [];
   resolveChoices(ctx, choices);
   if (!s.gameOver) fireConsequences(ctx);
-  if (!s.gameOver) runEconomy(ctx);
+  if (!s.gameOver) {
+    runEconomy(ctx);
+    runCouncil(ctx);
+    crewWeek(ctx);
+    const intel = revealIntel(ctx);
+    if (intel) s.eventQueue.push(intel);
+  }
   if (!s.gameOver) rivalWeek(ctx);
   if (!s.gameOver) {
     operationalHeat(ctx);

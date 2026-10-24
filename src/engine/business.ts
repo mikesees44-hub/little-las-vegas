@@ -1,6 +1,7 @@
 import { isInSeason } from './calendar';
 import { BIZ_NAMES, CATALOG, seasonalMult } from './catalog';
 import { crew, displayName, hasTrait, isFree } from './characters';
+import { activeTask } from './council';
 import type { Business, BusinessKind, Character, GameState } from './types';
 
 /** First unused name for a new place of this kind (pure: no RNG, no ids). */
@@ -132,6 +133,7 @@ export function washCapacity(s: GameState): number {
   // A bookkeeper (consigliere or specialist with business sense) squeezes more through.
   const books = crew(s).find((c) => c.specialty === 'accountant' && isFree(s, c));
   if (books) cap *= 1.25;
+  cap *= 1 + 0.2 * Math.min(1.5, activeTask(s, 'bag_launder'));
   return Math.round(cap);
 }
 

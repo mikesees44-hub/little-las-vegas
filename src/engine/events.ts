@@ -402,7 +402,64 @@ function skimmer(s: GameState): Character | undefined {
   return capos(s).filter((c) => (c.skimmed ?? 0) >= 1200).sort((a, b) => (b.skimmed ?? 0) - (a.skimmed ?? 0))[0];
 }
 
+function tooBig(s: GameState): Character | undefined {
+  return crew(s).filter((c) => !c.dynasty && (c.rank === 'soldier' || c.rank === 'capo') && c.wealth >= 12000 && (hasTrait(c, 'Ambitious') || hasTrait(c, 'Greedy')) && (c.bigWeek === undefined || s.week - c.bigWeek > 26))
+    .sort((a, b) => b.wealth - a.wealth)[0];
+}
+
+function drifter(s: GameState): Character | undefined {
+  return crew(s).find((c) => (c.defectStage ?? 0) >= 2);
+}
+
 export const EVENT_DEFS: EventDef[] = [
+  {
+    id: 'too_big',
+    cooldown: 6,
+    weight: () => 5,
+    condition: (s) => !!tooBig(s),
+    build: (s) => {
+      const c = tooBig(s)!;
+      c.bigWeek = s.week;
+      const half = Math.round(c.wealth / 2 / 100) * 100;
+      const all = Math.round(c.wealth / 100) * 100;
+      const nm = displayName(c);
+      const label = `${c.firstName} is getting big`;
+      return {
+        iid: iid(s), defId: 'too_big', week: s.week, mandatory: false, priority: 42,
+        title: `${c.firstName} is getting too big`,
+        text: `${nm} drives a new Eldorado and is buying rounds at the Riptide. He has put away $${c.wealth.toLocaleString('en-US')} of his own, and people are starting to call him "boss".`,
+        defaultChoiceId: 'partner', meta: { charId: c.id }, actors: [c.id],
+        choices: [
+          { id: 'partner', label: 'Bring him in as a partner', detail: 'He puts half his money into the family.', because: `brought ${c.firstName}'s money into the family`, effects: [{ type: 'money', amount: half, label }, { type: 'wealth', charId: c.id, amount: -half, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: 'Made me a partner', decay: 1, label }, { type: 'attention', charId: c.id, label }] },
+          { id: 'take', label: 'Take everything he has', detail: 'Remind him whose money it really is.', because: `took everything ${c.firstName} had`, effects: [{ type: 'money', amount: all, label }, { type: 'wealth', charId: c.id, amount: -all, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: -40, reason: 'Took everything I had', decay: 0, label }, { type: 'meter', from: c.id, to: s.playerId, meter: 'grievance', amount: 40, label }, { type: 'meter', from: c.id, to: s.playerId, meter: 'fear', amount: 20, label }] },
+          { id: 'whack', label: 'Whack him and take it', detail: 'Nobody gets bigger than the family.', because: `had ${c.firstName} whacked for getting too big`, effects: [{ type: 'kill', charId: c.id, cause: 'whacked for getting too big', killer: 'player', label }, { type: 'money', amount: all, label: `${c.firstName}'s money, seized` }, { type: 'heat', bar: 'local', amount: 6, label }, { type: 'respect', amount: 2, label }, { type: 'crewOpinion', amount: -4, reason: 'Killed one of our own for earning', traitMods: { Cruel: 6, Greedy: -3 }, label }] },
+          { id: 'let', label: 'Let him enjoy it', because: `let ${c.firstName} enjoy his money`, effects: [{ type: 'opinion', from: c.id, to: s.playerId, amount: 6, reason: 'Lets me earn', decay: 1, label }, { type: 'respect', amount: -1, label }] },
+        ],
+      };
+    },
+  },
+  {
+    id: 'drifting',
+    cooldown: 3,
+    weight: () => 8,
+    condition: (s) => !!drifter(s),
+    build: (s) => {
+      const c = drifter(s)!;
+      const label = `${c.firstName} is drifting`;
+      return {
+        iid: iid(s), defId: 'drifting', week: s.week, mandatory: false, priority: 46,
+        title: `${c.firstName} is drifting`,
+        text: `${displayName(c)} hasn't come by the club in a month. Somebody saw him getting into a car with Atlantic City plates. Nobody from the family has talked to him since summer.`,
+        defaultChoiceId: 'talk', meta: { charId: c.id }, actors: [c.id],
+        choices: [
+          { id: 'talk', label: 'Sit down with him', detail: 'Coffee and a long walk on the boardwalk.', because: `sat down with ${c.firstName}`, effects: [{ type: 'money', amount: -150, label }, { type: 'attention', charId: c.id, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: 'The boss made time for me', decay: 1, label }] },
+          { id: 'envelope', label: 'Send him an envelope ($1,000)', because: `sent ${c.firstName} an envelope`, effects: [{ type: 'money', amount: -1000, label }, { type: 'attention', charId: c.id, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 20, reason: 'Took care of me', decay: 2, label }] },
+          { id: 'warn', label: 'Put him on notice', detail: 'Remind him what happens to people who leave.', because: `put ${c.firstName} on notice`, effects: [{ type: 'attention', charId: c.id, label }, { type: 'meter', from: c.id, to: s.playerId, meter: 'fear', amount: 25, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: -8, reason: 'Threatened me', decay: 1, label }] },
+          { id: 'ignore', label: 'Let him go if he wants', because: `let ${c.firstName} drift`, effects: [{ type: 'respect', amount: -1, label }] },
+        ],
+      };
+    },
+  },
   {
     id: 'borrower_default',
     cooldown: 2,

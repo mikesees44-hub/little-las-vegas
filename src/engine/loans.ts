@@ -1,5 +1,6 @@
 import { CATALOG } from './catalog';
 import { ownsKind } from './business';
+import { activeTask } from './council';
 import { money, type Ctx } from './ledger';
 import { MALE_FIRST, SURNAMES } from './names';
 import { chance, pick, randInt } from './rng';
@@ -56,7 +57,7 @@ export function runLoans(ctx: Ctx): number {
       vig += money(ctx, l.vig * 2, `Vig: ${l.borrower.split(',')[0]} caught up on a missed week`, 'business');
       continue;
     }
-    if (l.weeksLate > 0 || chance(s, l.risk)) {
+    if (l.weeksLate > 0 || chance(s, l.risk * (1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_book'))))) {
       l.weeksLate++;
       if (l.weeksLate === 1) ctx.log.push(`${l.borrower.split(',')[0]} missed his payment to the book.`);
       continue;

@@ -3,7 +3,10 @@ import { killCharacter } from './dynasty';
 import { hireFrontMan } from './goals';
 import { bookLoan } from './loans';
 import { heat, money, respect, type Ctx } from './ledger';
-import { addOpinion, changeMeter } from './relations';
+import { addOpinion, changeMeter, setModifier } from './relations';
+import { SEAT_INFO, TASKS } from './council';
+import { EDICTS, hireFromPool, POLICY_LABEL } from './crewlife';
+import { CAPO_CUT } from './economy';
 import { chance, randInt } from './rng';
 import { FACTION_NAMES } from './world';
 import type { Effect, FactionId, GameState, HeatBar, LedgerCategory, ScheduledConsequence } from './types';
@@ -92,6 +95,28 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       const c = s.characters[e.charId];
       return `${c ? c.firstName + ' ' + c.lastName : '?'} leaves Wildwood`;
     }
+    case 'seat': {
+      const c = e.charId ? s.characters[e.charId] : undefined;
+      return e.charId !== undefined ? `${c ? c.firstName + ' ' + c.lastName : 'Nobody'} → ${SEAT_INFO[e.seat].name}` : `${SEAT_INFO[e.seat].name}: ${e.task ? TASKS[e.task].name : ''}`;
+    }
+    case 'policy': {
+      const c = s.characters[e.charId];
+      return `${c?.firstName ?? '?'}: ${POLICY_LABEL[e.policy]}`;
+    }
+    case 'contract': {
+      const c = s.characters[e.charId];
+      return `${c?.firstName ?? '?'} keeps ${Math.round(e.keep * 100)}% of his district`;
+    }
+    case 'edict':
+      return `${e.on ? 'Proclaim' : 'Revoke'}: ${EDICTS[e.edict].name}`;
+    case 'hire': {
+      const h = s.hirePool.find((x) => x.id === e.specId);
+      return h ? `${h.firstName} ${h.lastName} joins${h.kind !== 'recruit' ? ` (${h.kind}, ${fmtMoney(h.fee)}/wk)` : ''}` : 'Hire';
+    }
+    case 'attention':
+      return undefined;
+    case 'faction':
+      return 'The faction breaks up';
     case 'wealth': {
       const c = s.characters[e.charId];
       return `${c ? c.firstName : '?'}'s own money ${e.amount >= 0 ? '+' : '−'}${fmtMoney(Math.abs(e.amount))}`;
@@ -305,6 +330,67 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
         s.goals.casinoStage = 2;
         s.goals.casinoSince = s.week;
       }
+      break;
+    case 'seat': {
+      const seat = s.council[e.seat];
+      if (e.task) {
+        seat.task = e.task;
+        seat.target = e.target;
+      }
+      if (e.charId !== undefined) {
+        const prev = seat.holderId ? s.characters[seat.holderId] : undefined;
+        const c = e.charId ? s.characters[e.charId] : undefined;
+        if (prev && prev.alive && prev.id !== e.charId) {
+          addOpinion(s, prev.id, boss.id, 'Took my seat away', -15, 1);
+          if (prev.rank === 'underboss' || prev.rank === 'consigliere') prev.rank = 'soldier';
+        }
+        // A man holds one seat at a time.
+        for (const st of Object.keys(s.council) as (keyof typeof s.council)[]) if (s.council[st].holderId === e.charId) s.council[st].holderId = undefined;
+        seat.holderId = c?.alive ? c.id : undefined;
+        if (c?.alive) {
+          if (e.seat === 'underboss' || e.seat === 'consigliere') {
+            for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
+            c.rank = e.seat;
+          }
+          addOpinion(s, c.id, boss.id, 'Gave me a seat at the table', 15, 1);
+          c.neglect = 0;
+          c.defectStage = 0;
+        }
+      }
+      break;
+    }
+    case 'policy': {
+      const c = s.characters[e.charId];
+      if (c) c.policy = e.policy;
+      break;
+    }
+    case 'contract': {
+      const c = s.characters[e.charId];
+      if (!c) break;
+      c.keep = e.keep;
+      setModifier(s, c.id, boss.id, 'My contract', Math.round((e.keep - CAPO_CUT) * 200));
+      break;
+    }
+    case 'edict':
+      s.edicts[e.edict] = e.on;
+      if (e.edict === 'nojunk') {
+        const r = s.rivals.find((x) => x.id === 'philly');
+        if (r) setModifier(s, r.leaderId, boss.id, 'Keeps junk out of Wildwood', e.on ? 10 : 0);
+      }
+      break;
+    case 'hire':
+      hireFromPool(ctx, e.specId);
+      break;
+    case 'attention': {
+      const c = s.characters[e.charId];
+      if (c) {
+        c.neglect = 0;
+        c.defectStage = 0;
+      }
+      break;
+    }
+    case 'faction':
+      s.factions = s.factions.filter((f) => f.id !== e.factionId);
       break;
     case 'exile': {
       const c = s.characters[e.charId];

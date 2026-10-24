@@ -1,6 +1,8 @@
 import { isInSeason, seasonMultiplier } from './calendar';
 import { CATALOG } from './catalog';
-import { expectedTake, idleMen, isOpen, owned, ownsKind, staffFactor, washCapacity } from './business';
+import { expectedTake, isOpen, owned, ownsKind, staffFactor, washCapacity } from './business';
+import { activeTask } from './council';
+import { crewHustle, specialistFees } from './crewlife';
 import { crew, displayName, hasTrait, isFree, player, shortName } from './characters';
 import { scheduleConsequence } from './effects';
 import { runLoans } from './loans';
@@ -45,6 +47,7 @@ export function skimRate(s: GameState, c: Character): number {
   if (hasTrait(c, 'Gambler')) r += 0.04;
   if (op < -20) r += 0.06;
   if (op > 40) r *= 0.5;
+  r *= 1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_tax'));
   const fear = s.relations[`${c.id}>${s.playerId}`]?.fear ?? 0;
   r *= 1 - Math.min(0.8, fear / 100);
   return Math.min(0.3, r);
@@ -67,16 +70,11 @@ export function runEconomy(ctx: Ctx): void {
     if (infl <= 0) continue;
     const capo = d.capoId ? s.characters[d.capoId] : undefined;
     if (capo && isFree(s, capo) && capo.faction === 'player') continue;
-    const amt = Math.round(d.streetBase * (infl / 100) * mult * NO_CAPO_EFFICIENCY);
+    const amt = Math.round(d.streetBase * (infl / 100) * mult * NO_CAPO_EFFICIENCY * (s.edicts?.blitz ? 1.2 : 1));
     if (amt > 0) gross += money(ctx, amt, `Street take: ${d.name} (no capo, ${infl}% of the action)`, 'street');
   }
   // Street hustle by free soldiers & associates.
-  const hustlers = idleMen(s);
-  if (hustlers.length) {
-    const per = hustlers.reduce((a, c) => a + (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200), 0);
-    const amt = Math.round(per * mult);
-    gross += money(ctx, amt, `Street hustle: ${hustlers.length} soldiers & associates`, 'street');
-  }
+  gross += crewHustle(ctx, mult);
 
   // 2. Business income (net of upkeep shown separately).
   const biz = runBusinesses(ctx);
@@ -92,8 +90,8 @@ export function runEconomy(ctx: Ctx): void {
     if (infl <= 0) continue;
     const skill = 0.85 + capo.attributes.business / 400; // 0.85 .. 1.10
     const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo));
-    const take = d.streetBase * (infl / 100) * mult * skill * variance;
-    const capoShare = take * CAPO_CUT;
+    const take = d.streetBase * (infl / 100) * mult * skill * variance * (s.edicts?.blitz ? 1.2 : 1);
+    const capoShare = take * (capo.keep ?? CAPO_CUT);
     const owed = take - capoShare;
     const skim = Math.round(owed * skimRate(s, capo));
     const kick = Math.round(owed - skim);
@@ -128,8 +126,9 @@ export function runEconomy(ctx: Ctx): void {
     money(ctx, -winter, 'Off-season: heating oil, idle payroll, shutters on the boardwalk', 'cost');
   }
   // Keeping up appearances: the boss's household grows with the treasury.
-  const lifestyle = Math.round(150 + Math.max(0, s.money - 60000) * 0.006);
-  money(ctx, -lifestyle, `Household & appearances (${boss.firstName}'s family)`, 'cost');
+  const lifestyle = Math.round((150 + Math.max(0, s.money - 60000) * 0.006) * (s.edicts?.lowprofile ? 0.5 : 1));
+  money(ctx, -lifestyle, `Household & appearances (${boss.firstName}'s family)${s.edicts?.lowprofile ? ' — low profile' : ''}`, 'cost');
+  specialistFees(ctx);
 
   // 5. Debts.
   for (const debt of s.debts) {

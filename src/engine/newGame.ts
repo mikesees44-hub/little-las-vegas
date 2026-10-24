@@ -1,6 +1,8 @@
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
+import { emptyCouncil, fillCouncil } from './council';
+import { refreshHirePool } from './crewlife';
 import { addOpinion, changeMeter } from './relations';
 import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
@@ -55,6 +57,11 @@ function emptyState(seed: string): GameState {
     favors: 0,
     goals: { casinoStage: 0 },
     news: [],
+    council: emptyCouncil(),
+    edicts: {},
+    hirePool: [],
+    factions: [],
+    cutscenes: [],
   };
 }
 
@@ -271,6 +278,8 @@ export function newGame(seed: string | number = Date.now()): GameState {
   s.chronicle.push({ week: 1, date: { ...s.date }, text: `Memorial Day, 1960. ${displayName(boss)} runs the island for Philadelphia. ${s.startingProblem}`, kind: 'misc' });
   s.dynastyHistory.push({ week: 1, date: { ...s.date }, text: `${displayName(boss)} is head of the house of ${s.houseName}.` });
 
+  fillCouncil(s);
+  refreshHirePool(s);
   autoStaff(s);
   s.pendingEvents = generateWeekEvents(s);
   return s;

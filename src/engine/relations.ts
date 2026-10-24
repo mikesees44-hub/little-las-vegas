@@ -80,6 +80,14 @@ export function addOpinion(
   return m;
 }
 
+/** Sets (replaces) a named modifier; 0 removes it. Used for standing arrangements like contracts. */
+export function setModifier(s: GameState, from: string, to: string, reason: string, value: number): void {
+  if (from === to) return;
+  const r = ensureRelation(s, from, to);
+  r.modifiers = r.modifiers.filter((m) => m.reason !== reason);
+  if (value !== 0) r.modifiers.push({ id: `m${s.nextId++}`, reason, value: Math.max(-100, Math.min(100, value)), decay: 0, week: s.week });
+}
+
 export function changeMeter(s: GameState, from: string, to: string, meter: 'fear' | 'trust' | 'grievance', amount: number): void {
   if (from === to) return;
   const r = ensureRelation(s, from, to);

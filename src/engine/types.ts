@@ -100,9 +100,64 @@ export interface Character {
   neglect?: number;
   /** 0 none · 1 seen with a rival · 2 about to walk. */
   defectStage?: number;
+  /** Soldiers/associates: how much of his hustle you take. */
+  policy?: CrewPolicy;
+  /** Capos: share of his district's take he keeps (the contract). */
+  keep?: number;
+  /** Specialists: weekly fee. */
+  fee?: number;
+  /** Week of the last "getting too big" event. */
+  bigWeek?: number;
 }
 
-export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'fixer';
+export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'doctor';
+
+/** How the boss treats a soldier's own hustle. */
+export type CrewPolicy = 'tax' | 'earn' | 'squeeze';
+
+export type Seat = 'underboss' | 'consigliere' | 'bagman' | 'enforcer' | 'fixer';
+export type CouncilTask =
+  | 'ub_discipline' | 'ub_streets' | 'ub_guard'
+  | 'cons_relations' | 'cons_secrets' | 'cons_table'
+  | 'bag_launder' | 'bag_tax' | 'bag_book'
+  | 'enf_collect' | 'enf_intimidate' | 'enf_protect'
+  | 'fix_cops' | 'fix_favors' | 'fix_feds';
+
+export interface CouncilSeat {
+  holderId?: string;
+  task: CouncilTask;
+  /** For tasks aimed at someone (improve relations with a rival). */
+  target?: string;
+}
+
+export type EdictId = 'omerta' | 'blitz' | 'nojunk' | 'lowprofile';
+
+/** Someone available to hire this month (created as a character when hired). */
+export interface HireSpec {
+  id: string;
+  kind: 'recruit' | Specialty;
+  firstName: string;
+  lastName: string;
+  ethnicity: Ethnicity;
+  age: number;
+  skill: number;
+  cost: number;
+  /** Weekly fee for specialists. */
+  fee: number;
+  traits: Trait[];
+}
+
+/** Discontented men who have banded together (CK factions). */
+export interface Faction {
+  id: string;
+  leaderId: string;
+  memberIds: string[];
+  demand: 'contracts' | 'abdicate' | 'head';
+  /** Target of a 'head' demand. */
+  targetId?: string;
+  since: number;
+  ultimatumWeek?: number;
+}
 
 export interface OpinionModifier {
   id: string;
@@ -251,7 +306,14 @@ export type Effect =
   | ({ type: 'unwashed'; amount: number } & EffectBase)
   | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase)
   | ({ type: 'exile'; charId: string } & EffectBase)
-  | ({ type: 'wealth'; charId: string; amount: number } & EffectBase);
+  | ({ type: 'wealth'; charId: string; amount: number } & EffectBase)
+  | ({ type: 'seat'; seat: Seat; charId?: string; task?: CouncilTask; target?: string } & EffectBase)
+  | ({ type: 'policy'; charId: string; policy: CrewPolicy } & EffectBase)
+  | ({ type: 'contract'; charId: string; keep: number } & EffectBase)
+  | ({ type: 'edict'; edict: EdictId; on: boolean } & EffectBase)
+  | ({ type: 'hire'; specId: string } & EffectBase)
+  | ({ type: 'attention'; charId: string } & EffectBase)
+  | ({ type: 'faction'; factionId: string; outcome: 'disband' } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -279,6 +341,14 @@ export interface EventInstance {
   meta?: Record<string, string | number>;
   /** Characters shown with portraits on the event card. */
   actors?: string[];
+}
+
+/** A full-screen title card the UI shows after the week (video slot optional). */
+export interface CutsceneCue {
+  key: string;
+  title: string;
+  text: string;
+  week: number;
 }
 
 export interface ScheduledConsequence {
@@ -401,6 +471,12 @@ export interface GameState {
   frontManId?: string;
   goals: Goals;
   news: NewsItem[];
+  council: Record<Seat, CouncilSeat>;
+  edicts: Partial<Record<EdictId, boolean>>;
+  hirePool: HireSpec[];
+  factions: Faction[];
+  /** Title cards raised this week (cleared at the start of each week). */
+  cutscenes: CutsceneCue[];
 }
 
 export interface PlayerChoices {
@@ -420,7 +496,13 @@ export type PlayerAction =
   | { kind: 'charterBank' }
   | { kind: 'casino'; sell?: boolean }
   | { kind: 'interact'; id: InteractionId; target: string }
-  | { kind: 'pushDistrict'; district: string };
+  | { kind: 'pushDistrict'; district: string }
+  | { kind: 'appoint'; seat: Seat; charId: string }
+  | { kind: 'councilTask'; seat: Seat; task: CouncilTask; target?: string }
+  | { kind: 'policy'; charId: string; policy: CrewPolicy }
+  | { kind: 'contract'; charId: string; keep: number }
+  | { kind: 'edict'; edict: EdictId; on: boolean }
+  | { kind: 'hire'; specId: string };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

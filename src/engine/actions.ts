@@ -5,7 +5,25 @@ import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE
 import { reached } from './history';
 import type { Ctx } from './ledger';
 import { bookCapacity, LEND_AMOUNTS } from './loans';
-import { previewInteraction, type Acceptance } from './interactions';
+import { previewInteraction, type Acceptance, type Reason } from './interactions';
+import { isFree } from './characters';
+import { SEAT_INFO, TASKS } from './council';
+import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
+import { CAPO_CUT } from './economy';
+import { getRelation, opinion } from './relations';
+import type { Character } from './types';
+
+/** A capo's willingness to accept a worse contract. */
+export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
+  const reasons: Reason[] = [
+    { label: opinion(s, c.id, s.playerId) >= 0 ? 'Opinion of you' : 'Dislikes you', value: Math.round(opinion(s, c.id, s.playerId) * 0.5) },
+    { label: 'Fears you', value: Math.round((getRelation(s, c.id, s.playerId)?.fear ?? 0) * 0.4) },
+    { label: `Gives up ${Math.round(cut * 100)}% of his district`, value: -Math.round(cut * 300) },
+    ...c.traits.filter((t) => t === 'Greedy' || t === 'Loyal-to-a-fault' || t === 'Ambitious').map((t) => ({ label: t, value: t === 'Loyal-to-a-fault' ? 25 : -15 })),
+  ];
+  const sum = reasons.reduce((a, r) => a + r.value, 50);
+  return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: 50 }, ...reasons.filter((r) => r.value !== 0)] };
+}
 import { chance } from './rng';
 import { FACTION_NAMES } from './world';
 import type { Effect, FactionId, GameState, LedgerCategory, PlayerAction, RivalId } from './types';
@@ -55,6 +73,107 @@ function need(cond: boolean, reason: string, prev?: string): string | undefined 
 export const MAX_PER_KIND = 4;
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  appoint: {
+    preview: (s, a) => {
+      const c = s.characters[a.charId];
+      const info = SEAT_INFO[a.seat];
+      const label = `Appoint ${c?.firstName ?? '?'} ${info.name.toLowerCase()}`;
+      let why: string | undefined;
+      why = need(!!c && c.alive && c.faction === 'player' && c.id !== s.playerId && c.rank !== 'civilian', 'Not one of your men', why);
+      why = need(!c || isFree(s, c), 'He is in jail', why);
+      why = need(s.council[a.seat].holderId !== a.charId, 'Already in that seat', why);
+      return {
+        title: label,
+        detail: `${info.blurb} Uses his ${info.skill} (${c?.attributes[info.skill] ?? 0}).`,
+        effects: c ? [{ type: 'seat', seat: a.seat, charId: c.id, label }] : [],
+        cost: 0,
+        because: `made ${c?.firstName ?? 'someone'} ${info.name.toLowerCase()}`,
+        disabledReason: why,
+        category: 'event',
+      };
+    },
+  },
+  councilTask: {
+    preview: (s, a) => {
+      const t = TASKS[a.task];
+      const label = `${SEAT_INFO[a.seat].name}: ${t.name}`;
+      const r = a.target ? s.rivals.find((x) => x.id === a.target) : undefined;
+      return {
+        title: label + (r ? ` (${r.shortName})` : ''),
+        detail: t.text,
+        effects: [{ type: 'seat', seat: a.seat, task: a.task, target: a.target, label }],
+        cost: 0,
+        because: `set the ${SEAT_INFO[a.seat].name.toLowerCase()} to ${t.name.toLowerCase()}`,
+        disabledReason: t.seat !== a.seat ? 'Wrong seat' : t.targeted && !r ? 'Pick a rival' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  policy: {
+    preview: (s, a) => {
+      const c = s.characters[a.charId];
+      const label = `${c?.firstName ?? '?'}'s hustle: ${POLICY_LABEL[a.policy]}`;
+      return {
+        title: label,
+        detail: a.policy === 'earn' ? 'He keeps everything. He likes you more and gets rich — maybe too rich.' : a.policy === 'squeeze' ? 'You take 85%. He fears you and resents it.' : 'You take 40%, the usual.',
+        effects: c ? [{ type: 'policy', charId: c.id, policy: a.policy, label }, { type: 'attention', charId: c.id, label }] : [],
+        cost: 0,
+        because: `set ${c?.firstName ?? 'a man'}'s hustle to ${a.policy}`,
+        disabledReason: !c || c.faction !== 'player' ? 'Not one of your men' : (c.policy ?? 'tax') === a.policy ? 'Already' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  contract: {
+    preview: (s, a) => {
+      const c = s.characters[a.charId];
+      const cur = c?.keep ?? CAPO_CUT;
+      const label = `${c?.firstName ?? '?'}'s contract: keeps ${Math.round(a.keep * 100)}%`;
+      const harsher = a.keep < cur;
+      const acceptance = c && harsher ? contractAcceptance(s, c, cur - a.keep) : undefined;
+      return {
+        title: label,
+        detail: harsher ? 'More for you, less for him. He has to agree — or be made to.' : 'A bigger end for him. He will remember it.',
+        effects: c ? [{ type: 'contract', charId: c.id, keep: a.keep, label }, { type: 'attention', charId: c.id, label }] : [],
+        refuseEffects: c && harsher ? [{ type: 'opinion', from: c.id, to: s.playerId, amount: -10, reason: 'Tried to cut my end', decay: 1, label: `${c.firstName} refused the new contract` }, { type: 'meter', from: c.id, to: s.playerId, meter: 'grievance', amount: 10, label: `${c.firstName} refused the new contract` }] : undefined,
+        acceptance,
+        cost: 0,
+        because: `changed ${c?.firstName ?? 'a capo'}'s contract to ${Math.round(a.keep * 100)}%`,
+        disabledReason: !c || c.rank !== 'capo' ? 'Only capos have contracts' : Math.abs(cur - a.keep) < 0.001 ? 'That is his contract now' : a.keep < 0.15 || a.keep > 0.5 ? 'Out of range' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  edict: {
+    preview: (s, a) => {
+      const e = EDICTS[a.edict];
+      const label = `Edict: ${e.name}`;
+      return {
+        title: `${a.on ? 'Proclaim' : 'Revoke'} ${e.name}`,
+        detail: e.text,
+        effects: [{ type: 'edict', edict: a.edict, on: a.on, label }, ...(a.on && a.edict === 'nojunk' ? [{ type: 'respect', amount: 2, label } as Effect] : [])],
+        cost: 0,
+        because: `${a.on ? 'proclaimed' : 'revoked'} the ${e.name} edict`,
+        disabledReason: !!s.edicts[a.edict] === a.on ? (a.on ? 'Already in force' : 'Not in force') : a.on && a.edict === 'nojunk' && owned(s).some((b) => b.kind === 'narcotics') ? 'Shut your own pipeline first' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  hire: {
+    preview: (s, a) => {
+      const h = s.hirePool.find((x) => x.id === a.specId);
+      const label = `Hire: ${h ? `${h.firstName} ${h.lastName}` : '?'}`;
+      return {
+        title: label,
+        detail: h ? (h.kind === 'recruit' ? `A young man, ${h.age}, ready to hustle. Skill ${h.skill}.` : `${SPECIALTY_INFO[h.kind].name}, ${h.age}, skill ${h.skill}. ${SPECIALTY_INFO[h.kind].text}`) : undefined,
+        effects: h ? [{ type: 'money', amount: -h.cost, label }, { type: 'hire', specId: h.id, label }] : [],
+        cost: h?.cost ?? 0,
+        because: `hired ${h ? `${h.firstName} ${h.lastName}` : 'a man'}`,
+        disabledReason: !h ? 'No longer available' : s.money < h.cost ? `Needs ${fmtMoney(h.cost)}` : undefined,
+        category: 'event',
+      };
+    },
+  },
   interact: {
     preview: (s, a) => {
       const p = previewInteraction(s, a.id, a.target);
@@ -115,7 +234,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       why = need(def.category === 'property' || slots.used < slots.max, `No storefronts left for you in ${d?.name ?? 'the district'} (${slots.used}/${slots.max}) — push in further`, why);
       why = need(countKind(s, a.biz) < (def.max ?? MAX_PER_KIND), `You already own ${def.max ?? MAX_PER_KIND}`, why);
       why = need(s.money >= def.cost, `Needs ${fmtMoney(def.cost)}`, why);
-      why = need(!(a.biz === 'narcotics' && s.flags.edict_nojunk), 'Your own edict bans narcotics', why);
+      why = need(!(a.biz === 'narcotics' && s.edicts?.nojunk), 'Your own edict bans narcotics', why);
       const effects: Effect[] = [
         { type: 'money', amount: -def.cost, label },
         { type: 'addBusiness', business: b, label },
@@ -290,6 +409,13 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[]): void
     }
     applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
     def.commit?.(ctx, a as never);
+    if (a.kind === 'interact') {
+      const t = s.characters[a.target];
+      if (t) {
+        t.neglect = 0;
+        t.defectStage = 0;
+      }
+    }
     if (p.acceptance) ctx.log.push(`${p.title} — accepted.`);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${p.because}.`, kind: 'decision' });
   }
@@ -310,6 +436,20 @@ export function availableActions(s: GameState): PlayerAction[] {
   for (const amount of LEND_AMOUNTS) out.push({ kind: 'lend', amount });
   out.push({ kind: 'findFrontMan' }, { kind: 'charterBank' }, { kind: 'casino' });
   for (const d of s.districts) if ((d.influence.player ?? 0) < 90) out.push({ kind: 'pushDistrict', district: d.id });
+  for (const h of s.hirePool) out.push({ kind: 'hire', specId: h.id });
+  const men = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.id !== s.playerId && c.rank !== 'civilian');
+  if (men.length) {
+    const m = men[(s.week * 7) % men.length];
+    out.push({ kind: 'policy', charId: m.id, policy: (['tax', 'earn', 'squeeze'] as const)[s.week % 3] });
+    if (m.rank === 'capo') out.push({ kind: 'contract', charId: m.id, keep: [0.2, 0.25, 0.35][s.week % 3] });
+    const seat = (['underboss', 'consigliere', 'bagman', 'enforcer', 'fixer'] as const)[s.week % 5];
+    out.push({ kind: 'appoint', seat, charId: m.id });
+    const tasks = (Object.keys(TASKS) as (keyof typeof TASKS)[]).filter((t) => TASKS[t].seat === seat);
+    const t = tasks[s.week % tasks.length];
+    out.push({ kind: 'councilTask', seat, task: t, target: TASKS[t].targeted ? 'feldstein' : undefined });
+  }
+  const ed = (['omerta', 'blitz', 'nojunk', 'lowprofile'] as const)[s.week % 4];
+  out.push({ kind: 'edict', edict: ed, on: !s.edicts[ed] });
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {
