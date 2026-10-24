@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
-import type { GameState, PlayerAction, PlayerChoices, SuccessionLaw, WeeklyReport } from '../engine/types';
+import type { GameState, PlayerAction, PlayerChoices, SchemeKind, SuccessionLaw, WeeklyReport } from '../engine/types';
+import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
 import { Businesses } from './components/Businesses';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
@@ -18,11 +19,12 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'business' | 'crew' | 'family' | 'chronicle';
+export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'family' | 'chronicle';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'The Island' },
   { id: 'business', label: 'Rackets & Fronts' },
-  { id: 'crew', label: 'Crew' },
+  { id: 'crew', label: 'Administration' },
+  { id: 'schemes', label: 'Schemes' },
   { id: 'family', label: 'Family' },
   { id: 'chronicle', label: 'Chronicle' },
 ];
@@ -52,6 +54,8 @@ export function App() {
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
   const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
+  const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string } | undefined>();
+  const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string) => { setSheet(undefined); setPlanner({ kind, targetId }); } }), []);
 
   useEffect(() => saveGame(s), [s]);
 
@@ -120,6 +124,7 @@ export function App() {
 
   return (
     <SheetContext.Provider value={sheetApi}>
+    <PlannerContext.Provider value={plannerApi}>
     <OrdersContext.Provider value={ordersApi}>
     <div className="mx-auto max-w-6xl px-3 sm:px-4 py-3 sm:py-5 space-y-3">
       <Header s={s}>
@@ -177,6 +182,7 @@ export function App() {
         <main className="panel p-3 sm:p-4">
           {tab === 'business' && <Businesses s={s} />}
           {tab === 'crew' && <CrewList s={s} />}
+          {tab === 'schemes' && <SchemesPanel s={s} />}
           {tab === 'family' && (
             <FamilyTree s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
           )}
@@ -194,10 +200,12 @@ export function App() {
       {current && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
-      {reports && !current && !sheet && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {reports && !current && !sheet && !planner && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
+      {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} onClose={() => setPlanner(undefined)} />}
     </div>
     </OrdersContext.Provider>
+    </PlannerContext.Provider>
     </SheetContext.Provider>
   );
 }

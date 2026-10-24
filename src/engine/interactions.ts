@@ -3,7 +3,7 @@ import { capos, displayName, hasTrait, isFree, player, relationLabel } from './c
 import { fmtMoney } from './effects';
 import { getRelation, opinion } from './relations';
 import { FACTION_NAMES } from './world';
-import type { Character, Effect, GameState, InteractionId } from './types';
+import type { Character, Effect, GameState, Hook, InteractionId } from './types';
 
 /**
  * Character interactions (the CK-style right-click menu). Each interaction
@@ -46,8 +46,18 @@ export function relationshipTo(s: GameState, c: Character): Relationship {
 }
 
 export const INTERACTION_ORDER: InteractionId[] = [
-  'dinner', 'gift_small', 'gift_large', 'favor', 'demand', 'threaten', 'recruit', 'bringIn', 'make', 'promote', 'demote', 'exile', 'whack',
+  'dinner', 'gift_small', 'gift_large', 'bribe', 'favor', 'demand', 'threaten', 'expose', 'recruit', 'bringIn', 'make', 'promote', 'demote', 'exile', 'whack',
 ];
+
+/** What a fictional official's envelope buys. */
+export const OFFICE_BRIBE: Record<string, { cost: number; effects: (label: string) => Effect[] }> = {
+  'Police sergeant': { cost: 2000, effects: (label) => [{ type: 'heat', bar: 'local', amount: -8, label }] },
+  'Chief of Police': { cost: 5000, effects: (label) => [{ type: 'heat', bar: 'local', amount: -15, label }] },
+  'County judge': { cost: 5000, effects: (label) => [{ type: 'favor', amount: 1, label }, { type: 'heat', bar: 'local', amount: -4, label }] },
+  'City councilman': { cost: 2500, effects: (label) => [{ type: 'favor', amount: 1, label }] },
+  'State assemblyman': { cost: 4000, effects: (label) => [{ type: 'favor', amount: 1, label }, { type: 'heat', bar: 'family', amount: -2, label }] },
+  'IRS agent': { cost: 4500, effects: (label) => [{ type: 'heat', bar: 'federal', amount: -8, label }, { type: 'unwashed', amount: -5000, label }] },
+};
 
 function clampChance(base: number, reasons: Reason[]): Acceptance {
   const sum = reasons.reduce((a, r) => a + r.value, base);
@@ -81,7 +91,32 @@ export function interactionsFor(s: GameState, targetId: string): InteractionPrev
 }
 
 /** Returns undefined when the interaction makes no sense for this person at all. */
-export function previewInteraction(s: GameState, id: InteractionId, targetId: string): InteractionPreview | undefined {
+export function playerHook(s: GameState, targetId: string): Hook | undefined {
+  return s.hooks.find((h) => h.holder === 'player' && h.targetId === targetId && h.strong && (h.usedWeek ?? -99) < s.week - 8)
+    ?? s.hooks.find((h) => h.holder === 'player' && h.targetId === targetId && !h.strong);
+}
+
+/** Adds a hook to an acceptance-based interaction (spends a weak one). */
+function withHook(s: GameState, p: InteractionPreview, targetId: string): InteractionPreview {
+  const h = playerHook(s, targetId);
+  if (!h || !p.acceptance) return { ...p, disabledReason: p.disabledReason ?? 'You hold no usable hook on him' };
+  const bonus = h.strong ? 80 : 40;
+  const reasons = [...p.acceptance.reasons, { label: h.strong ? `Strong hook: ${h.reason}` : `Weak hook: ${h.reason} (spent)`, value: bonus }];
+  const sum = reasons.reduce((a, r) => a + r.value, 0);
+  return {
+    ...p,
+    title: `${p.title} (using your hook)`,
+    acceptance: { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons },
+    effects: [...p.effects, { type: 'hook', targetId, strong: h.strong, reason: h.reason, spend: true, label: p.title }],
+  };
+}
+
+export function previewInteraction(s: GameState, id: InteractionId, targetId: string, useHook?: boolean): InteractionPreview | undefined {
+  const p = previewInteractionBase(s, id, targetId);
+  return p && useHook ? withHook(s, p, targetId) : p;
+}
+
+function previewInteractionBase(s: GameState, id: InteractionId, targetId: string): InteractionPreview | undefined {
   const c = s.characters[targetId];
   const boss = player(s);
   if (!c || !c.alive || c.id === boss.id) return undefined;
@@ -123,9 +158,46 @@ export function previewInteraction(s: GameState, id: InteractionId, targetId: st
         disabledReason: s.money < amt ? `Needs ${fmtMoney(amt)}` : undefined,
       };
     }
+    case 'bribe': {
+      if (!c.office || !OFFICE_BRIBE[c.office]) return undefined;
+      const ob = OFFICE_BRIBE[c.office];
+      const label = `Bribe: ${c.office === 'Police sergeant' ? 'Sgt. ' : ''}${c.office === 'Police sergeant' ? c.lastName : `${c.firstName} ${c.lastName}`}`;
+      const acceptance = clampChance(40, [
+        opinionReason(s, c, 0.5),
+        respectReason(s),
+        ...traitReasons(c, { Honest: -45, Greedy: 25, Gambler: 10, Paranoid: -10, Ambitious: 5 }),
+        ...(c.traits.includes('Honest') && s.heat.local > 50 ? [{ label: 'Wants a headline', value: -10 }] : []),
+      ]);
+      return {
+        id, title: `Bribe ${displayName(c)}`, detail: `${c.office}. An envelope, discreetly.`, cost: ob.cost,
+        effects: [{ type: 'money', amount: -ob.cost, label }, ...ob.effects(label), { type: 'hook', targetId: c.id, strong: false, reason: 'Took our money', label }],
+        refuseEffects: [{ type: 'money', amount: -Math.round(ob.cost / 4), label: `${label}: refused (the go-between's cut)` }, { type: 'heat', bar: c.office === 'IRS agent' ? 'federal' : 'local', amount: 6, label: `${label}: refused, and he reported it` }],
+        acceptance,
+        because: `bribed ${displayName(c)}`,
+        disabledReason: s.money < ob.cost ? `Needs ${fmtMoney(ob.cost)}` : undefined,
+      };
+    }
+    case 'expose': {
+      const sec = s.secrets.find((x) => x.ownerId === c.id && x.knownBy.includes('player') && x.kind !== 'plot');
+      if (!sec || c.faction === 'player') return undefined;
+      const r = s.rivals.find((x) => x.id === c.faction);
+      const label = `Exposed ${first}`;
+      const own = r && sec.kind === 'informant' && sec.text.includes('informs for') && !sec.text.includes('for you');
+      return {
+        id, title: `Expose ${first}'s secret`, detail: `${sec.text}. Tell the people who would care.`, cost: 0,
+        effects: [
+          ...(own && r ? [{ type: 'kill', charId: c.id, cause: `killed by his own people as an informant`, killer: r.id, label } as Effect] : []),
+          ...(r && !own ? [{ type: 'rivalResource', rival: r.id, exposure: 20, money: -3000, label } as Effect, { type: 'rivalOpinion', rival: r.id, amount: -15, reason: 'Spread our dirty laundry', label } as Effect] : []),
+          ...(c.office ? [{ type: 'heat', bar: 'local', amount: -6, label } as Effect] : []),
+          { type: 'opinion', from: c.id, to: boss.id, amount: -40, reason: 'Exposed my secret', decay: 0, label },
+          { type: 'respect', amount: 2, label },
+        ],
+        because: `exposed ${first}'s secret`,
+      };
+    }
     case 'favor': {
       if (rel !== 'rival' && rel !== 'civilian') return undefined;
-      if (rel === 'civilian' && !c.frontMan && c.rank !== 'civilian') return undefined;
+      if (rel === 'civilian' && !c.frontMan && !c.office) return undefined;
       const label = `Favor from ${first}`;
       const acceptance = clampChance(20, [
         opinionReason(s, c, 0.6),

@@ -46,6 +46,14 @@ export function alerts(s: GameState): Alert[] {
   if (late) out.push({ kind: 'loan', severity: 'info', title: `${late} borrower${late > 1 ? 's' : ''} behind`, text: 'The shylock book has late payers.', tab: 'business' });
   const thin = owned(s).filter((b) => staffFactor(s, b) < 1);
   if (thin.length) out.push({ kind: 'staff', severity: 'info', title: 'Rackets short-handed', text: `${thin.map((b) => b.name).join(', ')} need men. Recruit or make room.`, tab: 'business' });
+  for (const sc of s.schemes.filter((x) => x.owner !== 'player' && x.discovered)) {
+    const r = s.rivals.find((x) => x.id === sc.owner);
+    const t = sc.targetId ? s.characters[sc.targetId] : undefined;
+    out.push({ kind: 'scheme', severity: sc.kind === 'murder' ? 'danger' : 'warn', title: `${r?.shortName ?? 'A rival'} is plotting`, text: `${sc.kind === 'murder' ? 'A hit' : sc.kind}${t ? ` on ${t.id === boss.id ? 'you' : displayName(t)}` : ''}, ${sc.progress}% ready.`, tab: 'schemes' });
+  }
+  const blown = s.schemes.filter((x) => x.owner === 'player' && x.discovered).length;
+  if (blown) out.push({ kind: 'scheme', severity: 'warn', title: `${blown} of your schemes discovered`, text: 'They know what you are planning.', tab: 'schemes' });
+  for (const r of s.rivals.filter((x) => x.feud)) out.push({ kind: 'war', severity: 'danger', title: `Blood feud: ${r.shortName}`, text: `${r.name} wants blood for an unsanctioned killing.`, charId: r.leaderId });
   if (!chooseHeir(s, boss).heir) out.push({ kind: 'heir', severity: 'danger', title: 'No heir', text: 'If you die now, the house dies with you.', tab: 'family' });
   return out;
 }

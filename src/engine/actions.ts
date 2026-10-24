@@ -10,6 +10,8 @@ import { isFree } from './characters';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
 import { CAPO_CUT } from './economy';
+import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds, topRival } from './schemes';
+import { OFFICE_BRIBE } from './interactions';
 import { getRelation, opinion } from './relations';
 import type { Character } from './types';
 
@@ -52,6 +54,10 @@ export interface ActionPreview {
   acceptance?: Acceptance;
   /** What happens if they say no. */
   refuseEffects?: Effect[];
+  /** For schemes: the success odds of the final roll, shown up front (not rolled now). */
+  odds?: Acceptance;
+  /** Extra warnings shown in red under the card. */
+  warning?: string;
 }
 
 type ActionOf<K extends PlayerAction['kind']> = Extract<PlayerAction, { kind: K }>;
@@ -73,6 +79,42 @@ function need(cond: boolean, reason: string, prev?: string): string | undefined 
 export const MAX_PER_KIND = 4;
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  scheme: {
+    preview: (s, a) => {
+      const t = a.targetId ? s.characters[a.targetId] : undefined;
+      const info = SCHEME_INFO[a.scheme];
+      const o = schemeOdds(s, a.scheme, a.targetId, a.agents, a.opts);
+      const where = a.scheme === 'heist' ? HEISTS[a.opts.heist ?? 'jewelry'].name : a.scheme === 'envoy' ? CITIES[a.opts.city ?? 'capemay']?.name : a.scheme === 'claim' ? s.districts.find((d) => d.id === a.opts.district)?.name : undefined;
+      const label = `Scheme: ${info.name}${t ? ` — ${t.firstName} ${t.lastName}` : where ? ` — ${where}` : ''}`;
+      const busy = a.agents.find((id) => s.schemes.some((x) => x.owner === 'player' && x.agents.includes(id)));
+      let why = o.disabledReason;
+      why = need(!busy, `${s.characters[busy ?? '']?.firstName ?? 'An agent'} is already on another scheme`, why);
+      why = need(s.money >= o.cost, `Needs ${fmtMoney(o.cost)}`, why);
+      why = need(!(t && s.schemes.some((x) => x.owner === 'player' && x.targetId === t.id && x.kind === a.scheme)), 'Already scheming that', why);
+      const unsanctioned = a.scheme === 'murder' && t && needsSanction(s, t) && !sanctioned(s, t.id);
+      return {
+        title: label,
+        detail: `${info.text} About ${o.weeks} week${o.weeks > 1 ? 's' : ''}; secrecy ${o.secrecy}.`,
+        effects: [
+          ...(o.cost ? [{ type: 'money', amount: -o.cost, label } as Effect] : []),
+          { type: 'startScheme', scheme: { kind: a.scheme, owner: 'player', ownerId: s.playerId, targetId: a.targetId, agents: a.agents, opts: a.opts, because: `${info.verb === 'kill' ? 'ordered the hit on' : `schemed to ${info.verb}`} ${t ? `${t.firstName} ${t.lastName}` : where ?? ''}`.trim() }, label },
+        ],
+        odds: { chance: o.chance, reasons: o.reasons },
+        warning: unsanctioned ? `${t!.firstName} is a made man. Without the Table's sanction this means a blood feud with ${FACTION_NAMES[t!.faction]} and Philadelphia's anger.` : undefined,
+        cost: o.cost,
+        because: `started a scheme: ${info.name.toLowerCase()}${t ? ` against ${t.firstName} ${t.lastName}` : ''}`,
+        disabledReason: why,
+        category: 'event',
+      };
+    },
+  },
+  cancelScheme: {
+    preview: (s, a) => {
+      const sc = s.schemes.find((x) => x.id === a.schemeId && x.owner === 'player');
+      const label = `Call off: ${sc ? SCHEME_INFO[sc.kind].name : 'scheme'}`;
+      return { title: label, effects: sc ? [{ type: 'endScheme', schemeId: sc.id, label }] : [], cost: 0, because: 'called off a scheme', disabledReason: sc ? undefined : 'No such scheme', category: 'event' };
+    },
+  },
   appoint: {
     preview: (s, a) => {
       const c = s.characters[a.charId];
@@ -176,7 +218,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   },
   interact: {
     preview: (s, a) => {
-      const p = previewInteraction(s, a.id, a.target);
+      const p = previewInteraction(s, a.id, a.target, a.useHook);
       if (!p) return { title: 'Nothing to do', effects: [], cost: 0, because: '', disabledReason: 'Not possible', category: 'event' };
       return {
         title: p.title,
@@ -450,6 +492,18 @@ export function availableActions(s: GameState): PlayerAction[] {
   }
   const ed = (['omerta', 'blitz', 'nojunk', 'lowprofile'] as const)[s.week % 4];
   out.push({ kind: 'edict', edict: ed, on: !s.edicts[ed] });
+  const free = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank !== 'civilian' && c.id !== s.playerId && !s.schemes.some((x) => x.agents.includes(c.id)));
+  if (free.length >= 2) {
+    const agents = [free[s.week % free.length].id, free[(s.week + 1) % free.length].id].filter((v, i, a) => a.indexOf(v) === i);
+    const lts = Object.values(s.characters).filter((c) => c.alive && s.rivals.some((r) => r.id === c.faction && r.kind === 'mob' && r.leaderId !== c.id));
+    if (lts.length) out.push({ kind: 'scheme', scheme: 'murder', targetId: lts[s.week % lts.length].id, agents, opts: { depth: 'planned', location: 'car', disposal: 'disappear', equipment: 'street' } });
+    out.push({ kind: 'scheme', scheme: 'heist', agents, opts: { depth: 'planned', heist: (['jewelry', 'armored', 'bank'] as const)[s.week % 3] } });
+    out.push({ kind: 'scheme', scheme: 'envoy', agents: agents.slice(0, 1), opts: { depth: 'planned', city: ['capemay', 'ac', 'baltimore', 'miami'][s.week % 4] } });
+    const cd = s.districts.find((d) => topRival(s, d.id));
+    if (cd) out.push({ kind: 'scheme', scheme: 'claim', agents: agents.slice(0, 1), opts: { depth: 'planned', district: cd.id } });
+  }
+  const official = Object.values(s.characters).find((c) => c.alive && c.office && OFFICE_BRIBE[c.office] && (s.week % 3 === 0));
+  if (official) out.push({ kind: 'interact', id: 'bribe', target: official.id });
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {

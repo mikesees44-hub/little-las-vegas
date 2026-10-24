@@ -352,10 +352,10 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   if (opinion(s, r.leaderId, boss.id) <= -75 && grievance >= 70 && chance(s, 0.04)) {
     const warned = (s.flags[`attempt_${r.id}`] ?? 0) > 0;
     s.flags[`attempt_${r.id}`] = (s.flags[`attempt_${r.id}`] ?? 0) + 1;
-    if (warned && chance(s, 0.25 * (1 - Math.min(0.8, 0.6 * activeTask(s, 'ub_guard'))))) {
-      record(ctx, r, 'strike', 'player', `${nm}'s men ${k.text}.${extra}`);
-      killCharacter(ctx, boss.id, `murdered on the orders of ${nm}`, r.id);
-      return;
+    if (warned && !s.schemes.some((x) => x.owner === r.id && x.kind === 'murder' && x.targetId === boss.id)) {
+      // Not a lucky shot: they start planning it properly (a murder scheme you might uncover).
+      const lts = Object.values(s.characters).filter((c) => c.alive && c.faction === r.id && c.id !== r.leaderId).slice(0, 2).map((c) => c.id);
+      s.schemes.push({ id: `sc${s.nextId++}`, kind: 'murder', owner: r.id, ownerId: r.leaderId, targetId: boss.id, agents: lts.length ? lts : [r.leaderId], opts: { depth: 'planned' }, progress: 20, startWeek: s.week, discovered: false, because: `${r.shortName} swore to kill you` });
     }
     boss.health = Math.max(5, boss.health - 30);
     extra += ` A shotgun blast through ${boss.firstName}'s windshield — he survived.`;

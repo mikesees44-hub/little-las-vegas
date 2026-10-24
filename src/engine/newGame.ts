@@ -3,6 +3,7 @@ import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
 import { emptyCouncil, fillCouncil } from './council';
 import { refreshHirePool } from './crewlife';
+import { seedSecrets } from './secrets';
 import { addOpinion, changeMeter } from './relations';
 import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
@@ -62,6 +63,12 @@ function emptyState(seed: string): GameState {
     hirePool: [],
     factions: [],
     cutscenes: [],
+    schemes: [],
+    secrets: [],
+    hooks: [],
+    claims: [],
+    outposts: [],
+    sanctions: {},
   };
 }
 
@@ -237,6 +244,35 @@ export function newGame(seed: string | number = Date.now()): GameState {
   // Rivals' views of each other.
   const mob = s.rivals.filter((r) => r.kind === 'mob');
   for (const a of mob) for (const b of mob) if (a !== b) addOpinion(s, a.leaderId, b.leaderId, 'Competition', randInt(s, -15, 5), 0);
+
+  /* ---- Lieutenants, the Table's capos, and fictional officials ---- */
+  for (const r of s.rivals.filter((x) => x.kind === 'mob')) {
+    for (let i = 0; i < 2; i++) {
+      const lt = makeCharacter(s, { rank: 'capo', faction: r.id, age: randInt(s, 28, 52), ethnicity: s.characters[r.leaderId].ethnicity });
+      addOpinion(s, lt.id, r.leaderId, 'My boss', randInt(s, 0, 25), 0);
+    }
+  }
+  const philly = s.rivals.find((x) => x.id === 'philly')!;
+  for (const [first, last, office] of [['Leo', 'Carbone', 'Camden capo'], ['Tommy', 'Nardella', 'Trenton capo']] as const) {
+    const c = makeCharacter(s, { firstName: first, lastName: last, rank: 'capo', faction: 'philly', ethnicity: 'Italian', age: randInt(s, 45, 62) });
+    c.office = office;
+    addOpinion(s, c.id, boss.id, 'Another capo at the Table', randInt(s, -10, 15), 0);
+    addOpinion(s, c.id, philly.leaderId, 'Sits at the same Table', 20, 0);
+  }
+  const OFFICIALS: [string, string, string, 'Irish' | 'Italian' | 'Jewish'][] = [
+    ['Thomas', 'Healy', 'Police sergeant', 'Irish'],
+    ['Edward', 'Gorman', 'Chief of Police', 'Irish'],
+    ['Harold', 'Voss', 'County judge', 'Irish'],
+    ['Frank', 'Dougherty', 'City councilman', 'Irish'],
+    ['Roy', 'Pruitt', 'State assemblyman', 'Irish'],
+    ['Walter', 'Kerns', 'IRS agent', 'Irish'],
+  ];
+  for (const [first, last, office, eth] of OFFICIALS) {
+    const c = makeCharacter(s, { firstName: first, lastName: last, rank: 'civilian', faction: office === 'IRS agent' ? 'law' : 'none', ethnicity: eth, age: randInt(s, 38, 60), nickname: false });
+    c.office = office;
+    c.ambition = office === 'IRS agent' ? 'Make a case that gets him to Washington' : 'Keep his job and his pension';
+  }
+  seedSecrets(s);
 
   /* ---- Heat & a starting problem ---- */
   s.heat = { local: randInt(s, 12, 25), family: randInt(s, 5, 15), federal: randInt(s, 3, 10) };

@@ -115,6 +115,22 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
     }
     case 'attention':
       return undefined;
+    case 'hook': {
+      const c = s.characters[e.targetId];
+      return e.spend ? `Spend your hook on ${c?.firstName ?? '?'}` : `${e.strong ? 'Strong' : 'Weak'} hook on ${c ? c.firstName + ' ' + c.lastName : '?'}`;
+    }
+    case 'secretKnown':
+      return 'You learn a secret';
+    case 'startScheme':
+      return `Scheme begins: ${e.scheme.kind}`;
+    case 'endScheme':
+      return 'The scheme ends';
+    case 'claim': {
+      const d = s.districts.find((x) => x.id === e.district);
+      return `Claim on ${d?.name ?? e.district}`;
+    }
+    case 'feud':
+      return `Blood feud with ${FACTION_NAMES[e.rival]}`;
     case 'faction':
       return 'The faction breaks up';
     case 'wealth': {
@@ -392,6 +408,39 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     case 'faction':
       s.factions = s.factions.filter((f) => f.id !== e.factionId);
       break;
+    case 'hook':
+      if (e.spend) {
+        const h = s.hooks.find((x) => x.holder === 'player' && x.targetId === e.targetId && !x.strong) ?? s.hooks.find((x) => x.holder === 'player' && x.targetId === e.targetId);
+        if (h && !h.strong) s.hooks = s.hooks.filter((x) => x !== h);
+        else if (h) h.usedWeek = s.week;
+      } else if (!s.hooks.some((x) => x.holder === 'player' && x.targetId === e.targetId && x.strong === e.strong)) {
+        s.hooks.push({ id: `k${s.nextId++}`, holder: 'player', targetId: e.targetId, strong: e.strong, reason: e.reason, week: s.week });
+      }
+      break;
+    case 'secretKnown': {
+      const sec = s.secrets.find((x) => x.id === e.secretId);
+      if (sec && !sec.knownBy.includes('player')) sec.knownBy.push('player');
+      break;
+    }
+    case 'startScheme':
+      s.schemes.push({ ...e.scheme, id: `sc${s.nextId++}`, progress: 0, startWeek: s.week, discovered: false });
+      break;
+    case 'endScheme':
+      s.schemes = s.schemes.filter((x) => x.id !== e.schemeId);
+      break;
+    case 'claim':
+      if (!s.claims.some((c) => c.district === e.district && c.against === e.against)) s.claims.push({ district: e.district, against: e.against, week: s.week, reason: e.reason });
+      break;
+    case 'feud': {
+      const r = s.rivals.find((x) => x.id === e.rival);
+      if (r && !r.feud) {
+        r.feud = true;
+        addOpinion(s, r.leaderId, boss.id, 'Blood feud', -40, 0);
+        ctx.log.push(`${r.name} has sworn a blood feud against your house.`);
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${r.name} swore a blood feud against the house.`, kind: 'rival' });
+      }
+      break;
+    }
     case 'exile': {
       const c = s.characters[e.charId];
       if (!c?.alive || c.id === s.playerId) break;

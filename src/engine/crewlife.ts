@@ -2,6 +2,7 @@ import { idleMen } from './business';
 import { ageOn } from './calendar';
 import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player, rollTraits } from './characters';
 import { holder, seatOf, tidyCouncil } from './council';
+import { discoverSecret } from './secrets';
 import { heat, money, respect, type Ctx } from './ledger';
 import { MALE_FIRST, SURNAMES } from './names';
 import { addOpinion, changeMeter, opinion } from './relations';
@@ -225,7 +226,8 @@ export function updateFactions(ctx: Ctx): void {
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `A faction formed against the boss around ${displayName(leader)}.`, kind: 'misc' });
   }
   for (const f of s.factions) {
-    if (!f.ultimatumWeek && s.week - f.since >= 2 && factionPower(s, f) >= 0.25) {
+    const caps = f.memberIds.filter((id) => s.characters[id]?.rank === 'capo').length;
+    if (!f.ultimatumWeek && s.week - f.since >= 2 && (factionPower(s, f) >= 0.2 || caps >= 2)) {
       f.ultimatumWeek = s.week;
       s.eventQueue.push(buildUltimatum(s, f));
     }
@@ -294,6 +296,10 @@ export function revealIntel(ctx: Ctx): EventInstance | undefined {
     s.flags.intel -= 100;
     skim.skimmed = Math.max(skim.skimmed ?? 0, 1200);
     ctx.log.push(`${cons ? displayName(cons) : 'Your consigliere'} has numbers on ${displayName(skim)}: his envelopes are light.`);
+    return undefined;
+  }
+  if (discoverSecret(ctx)) {
+    s.flags.intel -= 100;
     return undefined;
   }
   s.flags.intel = 100; // nothing to find yet; keep the edge

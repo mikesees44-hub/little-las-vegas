@@ -89,7 +89,7 @@ export const RIVALS: RivalDef[] = [
     shortName: 'Prosecutor',
     kind: 'law',
     goals: ['headline'],
-    leader: { first: 'Walter', last: 'Brennan', ethnicity: 'Irish', age: [38, 50], rank: 'civilian' },
+    leader: { first: 'Walter', last: 'Keough', ethnicity: 'Irish', age: [38, 50], rank: 'civilian' },
     money: [20000, 20000],
     muscle: [40, 60],
     blurb: 'Wants a headline case before the next election.',

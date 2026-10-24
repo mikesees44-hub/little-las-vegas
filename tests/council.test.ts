@@ -25,7 +25,7 @@ describe('the administration', () => {
     s.council.fixer.task = 'fix_cops';
     const r = advanceWeek(s, {});
     const lines = r.report.lines.filter((l) => l.label.startsWith('Fixer'));
-    expect(lines.some((l) => l.stat === 'money' && l.amount === -150)).toBe(true);
+    expect(lines.some((l) => l.stat === 'money' && l.amount === -100)).toBe(true);
     expect(lines.some((l) => l.stat === 'heat.local' && l.amount < 0)).toBe(true);
   });
   it('a bagman laundering raises wash capacity, more with more skill', () => {

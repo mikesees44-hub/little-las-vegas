@@ -50,6 +50,8 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       </div>
       <Chips s={s} effects={p.effects} />
       {p.acceptance && <AcceptanceLine a={p.acceptance} />}
+      {p.odds && <AcceptanceLine a={p.odds} prefix="Success" />}
+      {p.warning && <div className="text-[11px] text-amber-400 mt-1">⚠ {p.warning}</div>}
       {p.refuseEffects && p.refuseEffects.length > 0 && (
         <div className="mt-1 text-[11px] text-stone-500">If he says no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
@@ -59,11 +61,11 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
 }
 
 /** "Will accept: 62%" with the reasons, CK style. */
-export function AcceptanceLine({ a }: { a: Acceptance }) {
+export function AcceptanceLine({ a, prefix = 'Will accept' }: { a: Acceptance; prefix?: string }) {
   const pct = Math.round(a.chance * 100);
   return (
     <div className="mt-1.5 text-[11px]">
-      <span className={`font-semibold ${pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}`}>Will accept: {pct}%</span>
+      <span className={`font-semibold ${pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}`}>{prefix}: {pct}%</span>
       <span className="text-stone-500"> — </span>
       {a.reasons.map((r, i) => (
         <span key={i} className={`mr-2 whitespace-nowrap ${r.label === 'Base' ? 'text-stone-500' : r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>

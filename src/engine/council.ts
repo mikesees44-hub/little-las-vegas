@@ -43,7 +43,7 @@ export const TASKS: Record<CouncilTask, TaskDef> = {
   enf_collect: { seat: 'enforcer', name: 'Collect', text: 'Shakes extra money out of the island. Draws a little heat.' },
   enf_intimidate: { seat: 'enforcer', name: 'Intimidate witnesses', text: 'The law\'s files on your men grow thinner.' },
   enf_protect: { seat: 'enforcer', name: 'Protect the rackets', text: 'Rival strikes cost you less and kill fewer men.' },
-  fix_cops: { seat: 'fixer', name: 'Grease the cops', text: 'Envelopes downtown ($150/wk): local heat cools faster.' },
+  fix_cops: { seat: 'fixer', name: 'Grease the cops', text: 'Envelopes downtown ($100/wk): local heat cools faster.' },
   fix_favors: { seat: 'fixer', name: 'Collect favors', text: 'Lunches in Trenton ($200/wk): a chance each week to bank a political favor.' },
   fix_feds: { seat: 'fixer', name: 'Cool the feds', text: 'Friends at the federal building ($250/wk): federal heat cools faster.' },
 };
@@ -157,7 +157,7 @@ export function runCouncil(ctx: Ctx): void {
         for (const m of crew(s, true)) if ((m.evidence ?? 0) > 0) m.evidence = Math.max(0, (m.evidence ?? 0) - Math.max(1, Math.round(k)));
         break;
       case 'fix_cops':
-        money(ctx, -150, `${who}: envelopes downtown`, 'cost');
+        money(ctx, -100, `${who}: envelopes downtown`, 'cost');
         if (s.heat.local > 0) heat(ctx, 'local', -Math.max(1, Math.round(1 + k)), `${who} greases the cops`, 'heat');
         break;
       case 'fix_favors':
@@ -179,5 +179,5 @@ export function runCouncil(ctx: Ctx): void {
   if (activeTask(s, 'bag_tax') && s.week % 4 === 0) for (const c of capos(s)) addOpinion(s, c.id, boss.id, 'The bagman counts every dollar', -2, 1);
   // Stipends for the three appointed seats (underboss/consigliere draw rank wages).
   const paid = (['bagman', 'enforcer', 'fixer'] as Seat[]).filter((st) => holder(s, st));
-  if (paid.length) money(ctx, -60 * paid.length, `Council stipends: ${paid.map((st) => SEAT_INFO[st].name.toLowerCase()).join(', ')}`, 'cost');
+  if (paid.length) money(ctx, -40 * paid.length, `Council stipends: ${paid.map((st) => SEAT_INFO[st].name.toLowerCase()).join(', ')}`, 'cost');
 }

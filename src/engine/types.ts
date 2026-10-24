@@ -108,6 +108,10 @@ export interface Character {
   fee?: number;
   /** Week of the last "getting too big" event. */
   bigWeek?: number;
+  /** Public office held by a fictional official (police sergeant, judge ...). */
+  office?: string;
+  /** This man secretly informs for another faction. */
+  informantFor?: FactionId;
 }
 
 export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'doctor';
@@ -269,6 +273,10 @@ export interface Rival {
   homeDistrict?: string;
   lastMove?: { week: number; move: RivalMove; target: string; text: string };
   moveCooldowns: Partial<Record<RivalMove, number>>;
+  /** Blood feud with the player (an unsanctioned killing). */
+  feud?: boolean;
+  /** At war with the player (see war.ts). */
+  war?: boolean;
 }
 
 export interface EffectBase {
@@ -313,7 +321,13 @@ export type Effect =
   | ({ type: 'edict'; edict: EdictId; on: boolean } & EffectBase)
   | ({ type: 'hire'; specId: string } & EffectBase)
   | ({ type: 'attention'; charId: string } & EffectBase)
-  | ({ type: 'faction'; factionId: string; outcome: 'disband' } & EffectBase);
+  | ({ type: 'faction'; factionId: string; outcome: 'disband' } & EffectBase)
+  | ({ type: 'hook'; targetId: string; strong: boolean; reason: string; spend?: boolean } & EffectBase)
+  | ({ type: 'secretKnown'; secretId: string } & EffectBase)
+  | ({ type: 'startScheme'; scheme: Omit<Scheme, 'id' | 'progress' | 'startWeek' | 'discovered'> } & EffectBase)
+  | ({ type: 'endScheme'; schemeId: string } & EffectBase)
+  | ({ type: 'claim'; district: string; against: FactionId; reason: string } & EffectBase)
+  | ({ type: 'feud'; rival: RivalId } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -341,6 +355,78 @@ export interface EventInstance {
   meta?: Record<string, string | number>;
   /** Characters shown with portraits on the event card. */
   actors?: string[];
+}
+
+export type SchemeKind = 'murder' | 'claim' | 'blackmail' | 'informant' | 'heist' | 'envoy' | 'befriend' | 'sway' | 'flip' | 'frame';
+export type HitLocation = 'barbershop' | 'boardwalk' | 'car' | 'restaurant';
+export type SchemeDepth = 'rushed' | 'planned' | 'meticulous';
+export type HeistKind = 'jewelry' | 'armored' | 'bank';
+
+export interface SchemeOptions {
+  depth: SchemeDepth;
+  location?: HitLocation;
+  disposal?: 'disappear' | 'public';
+  frame?: RivalId;
+  equipment?: 'street' | 'clean' | 'untraceable';
+  alibi?: boolean;
+  secretId?: string;
+  heist?: HeistKind;
+  city?: string;
+  district?: string;
+}
+
+/** A plan in motion (CK scheme): agents, weekly progress, secrecy, a final roll. */
+export interface Scheme {
+  id: string;
+  kind: SchemeKind;
+  owner: FactionId;
+  ownerId: string;
+  targetId?: string;
+  agents: string[];
+  opts: SchemeOptions;
+  progress: number;
+  startWeek: number;
+  /** Known to the other side. */
+  discovered: boolean;
+  because: string;
+}
+
+export type SecretKind = 'affair' | 'skimming' | 'informant' | 'drugs' | 'debt' | 'murder' | 'bastard' | 'plot';
+
+export interface Secret {
+  id: string;
+  ownerId: string;
+  kind: SecretKind;
+  text: string;
+  /** Factions that know it ('player' = your house). */
+  knownBy: FactionId[];
+  week: number;
+}
+
+/** Leverage over someone: weak hooks are spent when used; strong ones last. */
+export interface Hook {
+  id: string;
+  holder: FactionId;
+  targetId: string;
+  strong: boolean;
+  reason: string;
+  week: number;
+  usedWeek?: number;
+}
+
+/** A casus belli on a district held by someone else. */
+export interface Claim {
+  district: string;
+  against: FactionId;
+  week: number;
+  reason: string;
+}
+
+export interface Outpost {
+  city: string;
+  income: number;
+  since: number;
+  envoyId?: string;
 }
 
 /** A full-screen title card the UI shows after the week (video slot optional). */
@@ -477,6 +563,13 @@ export interface GameState {
   factions: Faction[];
   /** Title cards raised this week (cleared at the start of each week). */
   cutscenes: CutsceneCue[];
+  schemes: Scheme[];
+  secrets: Secret[];
+  hooks: Hook[];
+  claims: Claim[];
+  outposts: Outpost[];
+  /** Table sanctions to kill someone (target id -> until week). */
+  sanctions: Record<string, number>;
 }
 
 export interface PlayerChoices {
@@ -495,7 +588,9 @@ export type PlayerAction =
   | { kind: 'findFrontMan' }
   | { kind: 'charterBank' }
   | { kind: 'casino'; sell?: boolean }
-  | { kind: 'interact'; id: InteractionId; target: string }
+  | { kind: 'interact'; id: InteractionId; target: string; useHook?: boolean }
+  | { kind: 'scheme'; scheme: SchemeKind; targetId?: string; agents: string[]; opts: SchemeOptions }
+  | { kind: 'cancelScheme'; schemeId: string }
   | { kind: 'pushDistrict'; district: string }
   | { kind: 'appoint'; seat: Seat; charId: string }
   | { kind: 'councilTask'; seat: Seat; task: CouncilTask; target?: string }
@@ -506,7 +601,7 @@ export type PlayerAction =
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
-  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn';
+  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose';
 
 export interface AdvanceResult {
   state: GameState;

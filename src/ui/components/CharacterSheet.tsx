@@ -1,7 +1,11 @@
 import { ageOn, formatDate } from '../../engine/calendar';
 import { displayName, player, relationLabel, TRAIT_INFO } from '../../engine/characters';
 import { relationshipTo } from '../../engine/interactions';
-import { interactionsFor } from '../../engine/interactions';
+import { interactionsFor, playerHook } from '../../engine/interactions';
+import { SCHEME_INFO } from '../../engine/schemes';
+import { knownSecrets } from '../../engine/secrets';
+import type { SchemeKind } from '../../engine/types';
+import { usePlanner } from './Schemes';
 import { getRelation, opinionBreakdown } from '../../engine/relations';
 import { FACTION_NAMES } from '../../engine/world';
 import type { Character, GameState } from '../../engine/types';
@@ -27,6 +31,16 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
   const district = s.districts.find((d) => d.capoId === c.id);
   const relationship = relationshipTo(s, c);
   const inters = c.alive && !isBoss && !s.gameOver ? interactionsFor(s, c.id) : [];
+  const secrets = knownSecrets(s, c.id);
+  const hooks = s.hooks.filter((h) => h.holder === 'player' && h.targetId === c.id);
+  const hookUsable = !!playerHook(s, c.id);
+  const { plan } = usePlanner();
+  const schemeKinds: SchemeKind[] = !c.alive || isBoss || s.gameOver ? [] : [
+    ...(c.office || c.faction === 'law' ? [] : ['murder' as const]),
+    ...(secrets.length && c.faction !== 'player' ? ['blackmail' as const] : []),
+    ...(s.rivals.some((r) => r.id === c.faction && r.leaderId !== c.id) && c.rank !== 'civilian' ? ['informant' as const] : []),
+    'sway' as const, 'befriend' as const,
+  ];
 
   return (
     <Modal onClose={onClose} wide>
@@ -124,8 +138,25 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
 
         <section className="mt-3">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Secrets & hooks</div>
-          <div className="text-xs text-stone-500 mt-1">Nothing known. Your consigliere can dig.</div>
+          {secrets.length === 0 && hooks.length === 0 && <div className="text-xs text-stone-500 mt-1">Nothing known. Set your consigliere to dig for secrets.</div>}
+          <ul className="text-xs mt-1 space-y-0.5">
+            {secrets.map((x) => <li key={x.id} className="text-amber-200">Secret: {x.text}.</li>)}
+            {hooks.map((h) => <li key={h.id} className={h.strong ? 'text-gold-300' : 'text-stone-300'}>You hold a {h.strong ? 'strong' : 'weak'} hook: {h.reason}{h.strong ? '' : ' (spent when used)'}.</li>)}
+          </ul>
         </section>
+
+        {schemeKinds.length > 0 && (
+          <section className="mt-3">
+            <div className="panel-title text-base">Schemes</div>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {schemeKinds.map((k) => (
+                <button key={k} className={`btn text-xs ${k === 'murder' ? 'border border-blood-500 text-red-300 hover:bg-blood-500/20' : 'btn-ghost'}`} onClick={() => plan(k, c.id)}>
+                  {SCHEME_INFO[k].name}
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {inters.length > 0 && (
           <section className="mt-4">
@@ -133,6 +164,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
             <p className="text-[11px] text-stone-500">Ordered now, carried out when you advance the week.</p>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {inters.map((p) => <ActionCard key={p.id} s={s} action={{ kind: 'interact', id: p.id, target: c.id }} />)}
+              {hookUsable && inters.filter((p) => p.acceptance).map((p) => <ActionCard key={`h${p.id}`} s={s} action={{ kind: 'interact', id: p.id, target: c.id, useHook: true }} />)}
             </div>
           </section>
         )}

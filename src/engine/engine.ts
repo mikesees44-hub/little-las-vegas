@@ -4,6 +4,8 @@ import { dateOfWeek, monthKey, seasonInfo } from './calendar';
 import { runGoals } from './goals';
 import { runCouncil } from './council';
 import { crewMonth, crewWeek, revealIntel } from './crewlife';
+import { rivalSchemes, runSchemes } from './schemes';
+import { secretsMonth } from './secrets';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
@@ -77,6 +79,7 @@ function monthlyTick(ctx: Ctx): void {
   decayAllRelations(s);
   rivalSuccession(ctx);
   crewMonth(ctx);
+  secretsMonth(s);
   // Disloyal men may walk out.
   const boss = player(s);
   for (const m of crew(s)) {
@@ -191,7 +194,11 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
   }
-  if (!s.gameOver) rivalWeek(ctx);
+  if (!s.gameOver) {
+    rivalWeek(ctx);
+    rivalSchemes(ctx);
+    runSchemes(ctx);
+  }
   if (!s.gameOver) {
     operationalHeat(ctx);
     heatConsequences(ctx);

@@ -6,6 +6,7 @@ import { crewHustle, specialistFees } from './crewlife';
 import { crew, displayName, hasTrait, isFree, player, shortName } from './characters';
 import { scheduleConsequence } from './effects';
 import { runLoans } from './loans';
+import { outpostIncome } from './schemes';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { chance, gauss, randInt } from './rng';
@@ -22,7 +23,7 @@ export const CAPO_CUT = 0.3; // capo keeps 30% of his district's take
 export const NO_CAPO_EFFICIENCY = 0.55; // a district with no capo leaks money
 export const WAGES = { underboss: 160, consigliere: 130, capo: 0, soldier: 55, associate: 25 } as const;
 export const COP_PAYOFF = 110;
-export const WINTER_COST = 315;
+export const WINTER_COST = 320;
 /** Share of washed money the counting room keeps. */
 export const LAUNDER_FEE = 0.05;
 /** Unwashed cash above this draws the IRS. */
@@ -103,6 +104,10 @@ export function runEconomy(ctx: Ctx): void {
       dirty += k;
     }
   }
+  // Outposts in other cities.
+  const out = outpostIncome(ctx);
+  gross += out;
+  dirty += out;
   // Loan-shark vig is dirty money too.
   const vig = runLoans(ctx);
   gross += vig;
