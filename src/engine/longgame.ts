@@ -1,0 +1,300 @@
+import { displayName, player } from './characters';
+import { reached } from './history';
+import { heat, money, respect, type Ctx } from './ledger';
+import { chance, randInt } from './rng';
+import type { Choice, Effect, EventInstance, GameState, LegalOp, LegalState } from './types';
+
+/**
+ * The Long Game: the federal case against the boss himself.
+ *
+ *   quiet → investigation (a file opens) → grand jury (a few weeks of
+ *   testimony; it may or may not return a true bill) → indicted (bail or a
+ *   cell; plead or fight) → trial (a verdict) → prison (run things from
+ *   inside; parole hearings) → parole (one slip and he goes back).
+ *
+ * Evidence builds from federal heat and from informants; from October 1970
+ * the racketeering law makes it build faster and doubles what a conviction
+ * costs. The player defends with lawyers, favors and lying low — never by
+ * touching witnesses. Every money or heat change is a named ledger line.
+ */
+
+export const OPEN_FILE = 25;
+export const GRAND_JURY = 50;
+export const GJ_WEEKS = 6;
+export const TRIAL_WEEKS = 8;
+export const RETAINER = 2500;
+export const BAIL = 10000;
+export const INSIDE_COST = 150;
+export const LAWYER = 'Abe Lindner, Esq.';
+
+export function legalOf(s: GameState): LegalState {
+  if (!s.legal || s.legal.personId !== s.playerId) {
+    const prev = s.legal;
+    s.legal = { stage: 'quiet', personId: s.playerId, evidence: prev ? Math.round(prev.evidence / 3) : 0, defense: 0, since: s.week };
+  }
+  return s.legal;
+}
+
+export function ricoActive(s: GameState): boolean {
+  return reached(s, 'rico');
+}
+
+/** Weekly evidence: what the feds gained this week, with the reasons. */
+export function evidenceGain(s: GameState): { total: number; reasons: { label: string; value: number }[] } {
+  const reasons: { label: string; value: number }[] = [];
+  const fed = s.heat.federal;
+  if (fed > 35) reasons.push({ label: `Federal heat ${fed}`, value: (fed - 35) / 12 });
+  else if (fed < 25) reasons.push({ label: 'The feds have other cases', value: -0.6 });
+  if ((s.flags.informant ?? 0) > 0) reasons.push({ label: 'An informant in your crew', value: 1.2 });
+  if (s.unwashed > 15000) reasons.push({ label: 'Dirty cash nobody can explain', value: 0.5 });
+  if (s.edicts?.lowprofile) reasons.push({ label: 'Edict: low profile', value: -0.4 });
+  let total = reasons.reduce((a, r) => a + r.value, 0);
+  if (ricoActive(s) && total > 0) {
+    reasons.push({ label: 'Racketeering law (RICO): the enterprise is the crime', value: total * 0.5 });
+    total *= 1.5;
+  }
+  return { total, reasons };
+}
+
+/** Odds a trial ends in conviction. */
+export function convictionOdds(l: LegalState): number {
+  return Math.max(0.1, Math.min(0.9, 0.15 + (l.evidence - l.defense) / 100));
+}
+
+/** Odds the grand jury returns an indictment. */
+export function indictOdds(l: LegalState): number {
+  return Math.max(0.1, Math.min(0.9, (l.evidence - l.defense / 2) / 100));
+}
+
+const STAGE_LABEL: Record<LegalState['stage'], string> = {
+  quiet: 'No case',
+  investigation: 'Under investigation',
+  grandjury: 'Before a grand jury',
+  indicted: 'Indicted',
+  trial: 'On trial',
+  prison: 'In prison',
+  parole: 'On parole',
+};
+export function stageLabel(l: LegalState): string {
+  return STAGE_LABEL[l.stage];
+}
+
+function ev(s: GameState, defId: string, title: string, text: string, choices: Choice[], def: string): EventInstance {
+  return { iid: `ev${s.nextId++}`, defId, week: s.week, mandatory: true, priority: 92, title, text, choices, defaultChoiceId: def, actors: [s.playerId] };
+}
+
+function L(op: LegalOp, amount?: number, label = 'The case'): Effect {
+  return { type: 'legal', op, amount, label };
+}
+
+export function buildGrandJury(s: GameState): EventInstance {
+  const l = legalOf(s);
+  const label = 'Grand jury';
+  return ev(s, 'grand_jury', 'A grand jury is sitting', `Assistant U.S. Attorney Walter Keough has a grand jury in Camden hearing about you. Men you know are getting subpoenas. Evidence so far: ${Math.round(l.evidence)}. Odds of an indictment if nothing changes: ${Math.round(indictOdds(l) * 100)}%.`, [
+    { id: 'lawyer', label: `Retain ${LAWYER}`, detail: '$4,000. The best criminal lawyer in the Delaware Valley.', because: 'hired the best lawyer in the Delaware Valley', effects: [{ type: 'money', amount: -4000, label }, L('defense', 20, label)], disabledReason: s.money < 4000 ? 'Needs $4,000' : undefined },
+    { id: 'favor', label: 'Call in a favor at the courthouse', detail: 'A friendly clerk loses some paperwork.', because: 'called in a favor at the courthouse', effects: [{ type: 'favor', amount: -1, label }, L('evidence', -15, label)], disabledReason: s.favors < 1 ? 'No favors to call in' : undefined },
+    { id: 'lielow', label: 'Lie low', detail: 'No new rackets, no meetings, no photographs.', because: 'lay low while the grand jury sat', effects: [{ type: 'respect', amount: -3, label }, L('evidence', -8, label)] },
+    { id: 'nothing', label: 'Say nothing, do nothing', because: 'ignored the grand jury', effects: [L('evidence', 0, label)] },
+  ], 'lielow');
+}
+
+export function buildIndictment(s: GameState): EventInstance {
+  const l = legalOf(s);
+  const label = 'Indictment';
+  return ev(s, 'indictment', 'Indicted', `The grand jury returned a true bill${l.rico ? ' under the new racketeering law' : ''}. Federal marshals came for ${player(s).firstName} at breakfast. Trial is set for ${TRIAL_WEEKS} weeks out.`, [
+    { id: 'bail', label: 'Post bail and fight it', detail: `$${BAIL.toLocaleString('en-US')} bond. He stays home until trial.`, because: 'posted bail and fought the charges', effects: [{ type: 'money', amount: -BAIL, label }, L('bail', 1, label), L('fight', 0, label)], disabledReason: s.money < BAIL ? `Needs $${BAIL.toLocaleString('en-US')}` : undefined },
+    { id: 'jail', label: 'No bail: fight it from a cell', detail: 'He waits for trial in the county jail.', because: 'fought the charges from a cell', effects: [L('jail', 0, label), L('fight', 0, label)] },
+    { id: 'plea', label: 'Plead guilty to a lesser count', detail: `No trial. A shorter stretch (${l.rico ? '18–30' : '12–24'} months), and the men see him take it.`, because: 'pleaded guilty to a lesser count', effects: [{ type: 'respect', amount: -6, label }, L('plea', 0, label)] },
+  ], s.money >= BAIL ? 'bail' : 'jail');
+}
+
+export function buildTrial(s: GameState): EventInstance {
+  const l = legalOf(s);
+  const label = 'The trial';
+  return ev(s, 'trial', 'United States v. ' + player(s).lastName, `Federal court in Camden. Walter Keough lays out ${Math.round(l.evidence)} points of evidence; the defense has ${Math.round(l.defense)}. As it stands the jury convicts ${Math.round(convictionOdds(l) * 100)}% of the time.`, [
+    { id: 'best', label: 'The best defense money buys', detail: '$8,000: experts, investigators, a second lawyer.', because: 'spent a fortune on the defense', effects: [{ type: 'money', amount: -8000, label }, L('defense', 25, label), L('verdict', 0, label)], disabledReason: s.money < 8000 ? 'Needs $8,000' : undefined },
+    { id: 'judge', label: 'A friendly ruling from the bench', detail: 'Two favors: some evidence is thrown out.', because: 'had evidence thrown out', effects: [{ type: 'favor', amount: -2, label }, L('evidence', -20, label), L('verdict', 0, label)], disabledReason: s.favors < 2 ? 'Needs two favors' : undefined },
+    { id: 'stand', label: 'Take the stand', detail: 'Charm the jury — or hang himself.', because: 'took the stand', effects: [L('defense', player(s).attributes.diplomacy >= 60 ? 15 : -10, label), L('verdict', 0, label)] },
+    { id: 'quiet', label: 'Let the lawyer talk', because: 'let the lawyer do the talking', effects: [L('verdict', 0, label)] },
+  ], 'quiet');
+}
+
+export function buildParole(s: GameState): EventInstance {
+  const l = legalOf(s);
+  const label = 'Parole board';
+  return ev(s, 'parole', 'The parole board', `${player(s).firstName} has served ${l.served ?? 0} weeks of ${l.sentence ?? 0}. The board meets in Trenton.`, [
+    { id: 'model', label: 'A model prisoner', detail: 'Chapel on Sunday, the prison library.', because: 'went before the parole board a model prisoner', effects: [L('parole', 0, label)] },
+    { id: 'lawyer', label: 'A lawyer at the hearing', detail: '$3,000.', because: 'sent a lawyer to the parole hearing', effects: [{ type: 'money', amount: -3000, label }, L('parole', 20, label)], disabledReason: s.money < 3000 ? 'Needs $3,000' : undefined },
+    { id: 'favor', label: 'A word from the assemblyman', detail: 'One favor.', because: 'had a word put in with the parole board', effects: [{ type: 'favor', amount: -1, label }, L('parole', 30, label)], disabledReason: s.favors < 1 ? 'No favors' : undefined },
+  ], 'model');
+}
+
+function imprison(ctx: Ctx, weeks: number, why: string): void {
+  const s = ctx.s;
+  const l = legalOf(s);
+  const b = player(s);
+  l.stage = 'prison';
+  l.sentence = weeks;
+  l.served = 0;
+  l.next = s.week + Math.max(8, Math.round(weeks / 3));
+  l.since = s.week;
+  b.imprisonedUntil = s.week + weeks;
+  respect(ctx, -5, `${why}: the boss goes away`, 'heat');
+  heat(ctx, 'federal', -30, `${why}: the feds have their man`, 'heat');
+  const yrs = (weeks / 52).toFixed(1).replace('.0', '');
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was sentenced to ${yrs} years in federal prison.`, because: why, kind: 'heat' });
+  if (s.cutscenes.length < 3) s.cutscenes.push({ key: 'arrest_interrogation', title: 'Sentenced', text: `${yrs} years. ${b.firstName} doesn't look at the jury on the way out.`, week: s.week });
+}
+
+/** Applies a legal effect (from an event choice or an order). */
+export function applyLegal(ctx: Ctx, op: LegalOp, amount = 0): void {
+  const s = ctx.s;
+  const l = legalOf(s);
+  const b = player(s);
+  switch (op) {
+    case 'defense':
+      l.defense = Math.max(0, l.defense + amount);
+      break;
+    case 'evidence':
+      l.evidence = Math.max(0, l.evidence + amount);
+      break;
+    case 'bail':
+      l.bail = true;
+      break;
+    case 'jail':
+      l.bail = false;
+      b.imprisonedUntil = s.week + TRIAL_WEEKS;
+      break;
+    case 'fight':
+      l.stage = 'trial';
+      l.next = s.week + TRIAL_WEEKS;
+      break;
+    case 'plea': {
+      const w = randInt(s, 52, 104) * (l.rico ? 1.25 : 1);
+      imprison(ctx, Math.round(w), 'Guilty plea');
+      break;
+    }
+    case 'verdict': {
+      const p = convictionOdds(l);
+      if (chance(s, p)) {
+        const w = randInt(s, 156, 312) * (l.rico ? 1.6 : 1);
+        imprison(ctx, Math.round(w), l.rico ? 'Convicted under RICO' : 'Convicted');
+      } else {
+        respect(ctx, 10, 'Acquitted: the jury walks him', 'event');
+        heat(ctx, 'federal', -20, 'Acquitted: the feds are embarrassed', 'heat');
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was acquitted. He walked out the front door of the federal building.`, kind: 'heat' });
+        b.imprisonedUntil = undefined;
+        Object.assign(l, { stage: 'quiet', evidence: 0, defense: 0, since: s.week, next: undefined, bail: undefined });
+      }
+      break;
+    }
+    case 'parole': {
+      const p = Math.max(0.1, Math.min(0.9, 0.3 + amount / 100 + ((l.served ?? 0) / Math.max(1, l.sentence ?? 1)) * 0.4 - (s.heat.federal > 60 ? 0.15 : 0)));
+      if (chance(s, p)) {
+        const left = (b.imprisonedUntil ?? s.week) - s.week;
+        b.imprisonedUntil = undefined;
+        l.stage = 'parole';
+        l.next = s.week + Math.max(8, left);
+        l.since = s.week;
+        respect(ctx, 3, 'Paroled: the boss is home', 'event');
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was paroled after ${l.served} weeks.`, kind: 'heat' });
+      } else {
+        l.next = s.week + 26;
+        ctx.log.push('Parole denied. The next hearing is in six months.');
+      }
+      break;
+    }
+  }
+}
+
+/** The case moves forward each week. */
+export function legalWeek(ctx: Ctx): void {
+  const s = ctx.s;
+  const l = legalOf(s);
+  const b = player(s);
+  if (ricoActive(s) && !l.rico && l.stage !== 'prison' && l.stage !== 'parole') l.rico = true;
+  switch (l.stage) {
+    case 'quiet':
+    case 'investigation': {
+      l.evidence = Math.max(0, Math.min(100, l.evidence + evidenceGain(s).total));
+      if (l.stage === 'quiet' && l.evidence >= OPEN_FILE) {
+        l.stage = 'investigation';
+        l.since = s.week;
+        ctx.log.push('The FBI has opened a file on the boss himself.');
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `The FBI opened a file on ${displayName(b)}.`, kind: 'heat' });
+      } else if (l.stage === 'investigation' && l.evidence < OPEN_FILE - 10) {
+        l.stage = 'quiet';
+        ctx.log.push('The FBI file on the boss has gone cold.');
+      } else if (l.stage === 'investigation' && l.evidence >= GRAND_JURY) {
+        l.stage = 'grandjury';
+        l.since = s.week;
+        l.next = s.week + GJ_WEEKS;
+        s.eventQueue.push(buildGrandJury(s));
+      }
+      break;
+    }
+    case 'grandjury': {
+      l.evidence = Math.max(0, Math.min(100, l.evidence + evidenceGain(s).total / 2));
+      if (s.week >= (l.next ?? s.week)) {
+        if (chance(s, indictOdds(l))) {
+          l.stage = 'indicted';
+          l.since = s.week;
+          s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was indicted by a federal grand jury${l.rico ? ' under the racketeering law' : ''}.`, kind: 'heat' });
+          if (s.cutscenes.length < 3) s.cutscenes.push({ key: 'arrest_interrogation', title: 'Indicted', text: `Marshals at the door before the coffee is poured. ${b.firstName} asks for his hat.`, week: s.week });
+          s.eventQueue.push(buildIndictment(s));
+        } else {
+          l.stage = 'investigation';
+          l.evidence = Math.max(0, l.evidence - 20);
+          respect(ctx, 4, 'No true bill: the grand jury goes home', 'event');
+          s.chronicle.push({ week: s.week, date: { ...s.date }, text: 'The grand jury declined to indict.', kind: 'heat' });
+        }
+      }
+      break;
+    }
+    case 'indicted':
+      // Waiting for the choice (bail/jail/plea). If the card was lost, ask again.
+      if (s.week - l.since >= 3 && !s.pendingEvents.some((e) => e.defId === 'indictment') && !s.eventQueue.some((e) => e.defId === 'indictment')) {
+        l.since = s.week;
+        s.eventQueue.push(buildIndictment(s));
+      }
+      break;
+    case 'trial':
+      if (s.week >= (l.next ?? s.week) && !s.eventQueue.some((e) => e.defId === 'trial') && !s.pendingEvents.some((e) => e.defId === 'trial')) s.eventQueue.push(buildTrial(s));
+      break;
+    case 'prison': {
+      l.served = (l.served ?? 0) + 1;
+      if (!b.imprisonedUntil || b.imprisonedUntil <= s.week + 1) {
+        Object.assign(l, { stage: 'quiet', evidence: 0, defense: 0, since: s.week, next: undefined });
+        respect(ctx, 4, 'Out: the boss served his time', 'event');
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} walked out of prison, his time served.`, kind: 'heat' });
+        break;
+      }
+      money(ctx, -INSIDE_COST, 'Running things from inside: the lawyer carries messages', 'cost');
+      if (s.week % 4 === 0) respect(ctx, -1, 'Running things from inside: out of sight, out of mind', 'drift');
+      if (s.week >= (l.next ?? Infinity) && !s.pendingEvents.some((e) => e.defId === 'parole')) {
+        l.next = s.week + 26;
+        s.eventQueue.push(buildParole(s));
+      }
+      break;
+    }
+    case 'parole':
+      if (s.heat.federal >= 70 && chance(s, 0.12)) {
+        const left = Math.max(26, (l.next ?? s.week) - s.week);
+        b.imprisonedUntil = s.week + left;
+        l.stage = 'prison';
+        l.next = s.week + left + 1;
+        respect(ctx, -4, 'Parole violated: back inside', 'heat');
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} violated his parole and went back inside.`, kind: 'heat' });
+      } else if (s.week >= (l.next ?? s.week)) {
+        Object.assign(l, { stage: 'quiet', evidence: 0, defense: 0, since: s.week, next: undefined });
+        ctx.log.push('Parole is over. The boss is a free man.');
+      }
+      break;
+  }
+}
+
+/** Is the boss behind bars right now? */
+export function bossInside(s: GameState): boolean {
+  const b = s.characters[s.playerId];
+  return !!b && (b.imprisonedUntil ?? 0) > s.week;
+}

@@ -331,6 +331,7 @@ function onPlayerSchemeDiscovered(ctx: Ctx, sc: Scheme): void {
   if (sc.kind === 'murder' && t && chance(s, 0.5)) {
     s.schemes = s.schemes.filter((x) => x !== sc);
     ctx.log.push(`${t.firstName} went to ground. The hit is off.`);
+    cue(s, 'hit_botched', 'Gone to ground', `Somebody talked. ${displayName(t)} cleared out of his apartment overnight; the car sat empty on the street for a week.`);
   }
 }
 

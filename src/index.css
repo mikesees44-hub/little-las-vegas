@@ -89,3 +89,16 @@ body {
 .llv-card button[disabled] { opacity: 0.5; cursor: default; }
 .llv-envoy-line { animation: llv-dash 1.2s linear infinite; }
 @keyframes llv-dash { to { stroke-dashoffset: -12; } }
+
+/* Cutscenes: Ken Burns pans and the typewriter caret (skipped with reduced motion). */
+.llv-kb-a { animation: llv-kb-a 14s ease-out forwards; transform-origin: 30% 40%; }
+.llv-kb-b { animation: llv-kb-b 14s ease-out forwards; transform-origin: 70% 60%; }
+.llv-kb-c { animation: llv-kb-c 14s ease-out forwards; transform-origin: 50% 30%; }
+@keyframes llv-kb-a { from { transform: scale(1.02) translate(0, 0); } to { transform: scale(1.16) translate(-2%, 1%); } }
+@keyframes llv-kb-b { from { transform: scale(1.18) translate(2%, -1%); } to { transform: scale(1.04) translate(0, 0); } }
+@keyframes llv-kb-c { from { transform: scale(1.05) translate(0, 2%); } to { transform: scale(1.14) translate(0, -2%); } }
+.llv-caret { animation: llv-blink 0.9s steps(2) infinite; }
+@keyframes llv-blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .llv-kb-a, .llv-kb-b, .llv-kb-c, .llv-caret { animation: none; }
+}

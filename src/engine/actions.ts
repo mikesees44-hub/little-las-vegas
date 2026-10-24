@@ -1,3 +1,5 @@
+import { previewUnderbelly } from './underbelly';
+import { LAWYER, RETAINER } from './longgame';
 import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { CATALOG, SHOP_KINDS } from './catalog';
@@ -305,6 +307,51 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
         cost: 0,
         because: `set the ${SEAT_INFO[a.seat].name.toLowerCase()} to ${t.name.toLowerCase()}`,
         disabledReason: t.seat !== a.seat ? 'Wrong seat' : t.targeted && !r ? 'Pick a rival' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  officeHours: {
+    preview: (s) => {
+      const label = 'Office hours';
+      return {
+        title: 'Hold office hours on Sunday',
+        detail: 'The back room of the social club, coffee and anisette. Somebody from the town will come with a favor to ask.',
+        effects: [{ type: 'flag', key: 'office_hours', value: 1, label }, { type: 'money', amount: -50, label }],
+        cost: 50,
+        because: 'held office hours',
+        disabledReason: s.flags.office_hours ? 'Already planned' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  underbelly: {
+    preview: (s, a) => previewUnderbelly(s, a.op, a.rival),
+  },
+  legal: {
+    preview: (s, a) => {
+      const l = s.legal;
+      const open = !!l && l.personId === s.playerId && ['investigation', 'grandjury', 'indicted', 'trial'].includes(l.stage);
+      if (a.op === 'retainer') {
+        const label = `Retainer: ${LAWYER}`;
+        return {
+          title: `Put ${LAWYER} on retainer`,
+          detail: 'He starts building the defense now, before anybody is charged.',
+          effects: [{ type: 'money', amount: -RETAINER, label }, { type: 'legal', op: 'defense', amount: 10, label }],
+          cost: RETAINER,
+          because: 'put a criminal lawyer on retainer',
+          disabledReason: !open ? 'There is no case against you' : (l!.defense >= 50 ? 'He has done all he can' : s.money < RETAINER ? `Needs $${RETAINER.toLocaleString('en-US')}` : undefined),
+          category: 'event',
+        };
+      }
+      const label = 'Lying low';
+      return {
+        title: 'Lie low for a while',
+        detail: 'No meetings, no photographs, no new faces. The men notice.',
+        effects: [{ type: 'respect', amount: -2, label }, { type: 'legal', op: 'evidence', amount: -5, label }],
+        cost: 0,
+        because: 'lay low',
+        disabledReason: !open ? 'There is no case against you' : undefined,
         category: 'event',
       };
     },
@@ -682,6 +729,8 @@ export function availableActions(s: GameState): PlayerAction[] {
     out.push({ kind: 'councilTask', seat, task: t, target: TASKS[t].targeted ? 'feldstein' : undefined });
   }
   const boss = s.characters[s.playerId];
+  out.push({ kind: 'legal', op: 'retainer' }, { kind: 'legal', op: 'lielow' }, { kind: 'officeHours' });
+  out.push({ kind: 'underbelly', op: 'investigate' }, { kind: 'underbelly', op: 'expose' }, { kind: 'underbelly', op: 'runout' }, { kind: 'underbelly', op: 'ally', rival: (['manno', 'kessler', 'feldstein'] as const)[s.week % 3] });
   if (!boss?.lifestyle) out.push({ kind: 'lifestyle', focus: LIFESTYLE_IDS[(s.week + 2) % LIFESTYLE_IDS.length] });
   if (boss?.lifestyle?.points) {
     const L = LIFESTYLES[boss.lifestyle.focus];

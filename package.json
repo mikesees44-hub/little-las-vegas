@@ -15,7 +15,8 @@
   "dependencies": {
     "leaflet": "^1.9.4",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "tone": "^15.0.4"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

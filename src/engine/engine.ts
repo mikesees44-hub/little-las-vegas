@@ -1,3 +1,7 @@
+import { officeWeek } from './office';
+import { underbellyWeek } from './underbelly';
+import { legalWeek } from './longgame';
+import { newsWeek } from './newspaper';
 import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
 import { autoStaff } from './business';
@@ -213,6 +217,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     runCouncil(ctx);
     crewWeek(ctx);
     lifestyleWeek(ctx);
+    legalWeek(ctx);
+    underbellyWeek(ctx);
+    officeWeek(s);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
   }
@@ -230,6 +237,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     heatDecay(ctx);
     weeklyHousekeeping(ctx);
     runGoals(ctx);
+    newsWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

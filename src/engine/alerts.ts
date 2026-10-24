@@ -10,7 +10,7 @@ import type { GameState } from './types';
  * The alert rail (CK's right-hand icons): things that need the boss's
  * attention. Pure, derived from the state each render.
  */
-export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family' | 'lifestyle';
+export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family' | 'lifestyle' | 'law' | 'underbelly';
 
 export interface Alert {
   kind: AlertKind;
@@ -57,6 +57,10 @@ export function alerts(s: GameState): Alert[] {
   for (const d of s.disputes.filter((x) => !x.ruling)) out.push({ kind: 'dispute', severity: d.defendant === 'player' ? 'warn' : 'info', title: `Dispute at the Table (week ${d.hearingWeek})`, text: d.claim, tab: 'table' });
   for (const w of s.wars) out.push({ kind: 'war', severity: w.score < -30 ? 'danger' : 'warn', title: `At war: ${s.rivals.find((r) => r.id === w.rival)?.shortName}`, text: `War score ${w.score}.`, tab: 'table' });
   if (!chooseHeir(s, boss).heir) out.push({ kind: 'heir', severity: 'danger', title: 'No heir', text: 'If you die now, the house dies with you.', tab: 'family' });
+  const lg = s.legal && s.legal.personId === boss.id ? s.legal : undefined;
+  if (lg && lg.stage !== 'quiet') out.push({ kind: 'law', severity: lg.stage === 'investigation' || lg.stage === 'parole' ? 'warn' : 'danger', title: lg.stage === 'investigation' ? 'The FBI has a file on you' : lg.stage === 'grandjury' ? 'A grand jury is sitting' : lg.stage === 'indicted' || lg.stage === 'trial' ? 'You are under indictment' : lg.stage === 'prison' ? 'The boss is in prison' : 'On parole', text: `Evidence ${Math.round(lg.evidence)}, defense ${Math.round(lg.defense)}.`, tab: 'law' });
+  const ub = s.underbelly;
+  if (ub && (ub.stage === 'active' || ub.stage === 'entrenched')) out.push({ kind: 'underbelly', severity: ub.stage === 'entrenched' ? 'danger' : 'warn', title: 'The Harbor Crew is on the island', text: `Strength ${Math.round(ub.strength)}, what you can prove ${Math.round(ub.exposure)}.`, tab: 'town' });
   if (!boss.lifestyle) out.push({ kind: 'lifestyle', severity: 'info', title: 'Choose how to rule', text: `${boss.firstName} has no lifestyle yet: pick one to earn perks.`, tab: 'lifestyle' });
   else if (boss.lifestyle.points > 0) out.push({ kind: 'lifestyle', severity: 'info', title: `${boss.lifestyle.points} perk point${boss.lifestyle.points > 1 ? 's' : ''} to spend`, text: 'Learn a perk on the Lifestyle tab.', tab: 'lifestyle' });
   return out;
