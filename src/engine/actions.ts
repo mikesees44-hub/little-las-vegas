@@ -20,6 +20,7 @@ import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds, top
 import { OFFICE_BRIBE } from './interactions';
 import { getRelation, opinion } from './relations';
 import { commitDynasty, dynastyActions, previewDynasty } from './family';
+import { commitPower, powerActions, previewPower } from './power';
 import type { Character } from './types';
 
 /** A capo's willingness to accept a worse contract. */
@@ -215,6 +216,11 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   dynasty: {
     preview: (s, a) => previewDynasty(s, a.op),
     commit: (ctx, a) => commitDynasty(ctx, a.op),
+  },
+  /** The power pillar (power.ts): heirs, grooming, protégés, grievances, blitzes, fronts, the ladder. */
+  power: {
+    preview: (s, a) => previewPower(s, a.op),
+    commit: (ctx, a) => commitPower(ctx, a.op),
   },
   declareWar: {
     preview: (s, a) => {
@@ -879,6 +885,7 @@ export function availableActions(s: GameState): PlayerAction[] {
   const official = Object.values(s.characters).find((c) => c.alive && c.office && OFFICE_BRIBE[c.office] && (s.week % 3 === 0));
   if (official) out.push({ kind: 'interact', id: 'bribe', target: official.id });
   out.push(...dynastyActions(s));
+  out.push(...powerActions(s));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {

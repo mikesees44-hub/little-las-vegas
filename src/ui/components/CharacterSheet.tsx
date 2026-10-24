@@ -18,6 +18,7 @@ import { Modal } from './Modal';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
+import { PowerFacts } from '../power/PowerFacts';
 import { fam } from '../../engine/familyState';
 import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
 
@@ -132,6 +133,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
         </div>
 
         <DynastyFacts s={s} c={c} />
+        <PowerFacts s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} />}
 
         <section className="mt-3">
