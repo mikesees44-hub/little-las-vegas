@@ -135,7 +135,10 @@ describe('loyalty and defection', () => {
     expect(capoOf(s, s.characters[stay.id])).toBeTruthy();
   });
   it('a man courted by a rival either turns them down (if he loves you) or goes (if he does not)', () => {
-    const base = newGame('court');
+    // Walking out is a weekly roll once he has been courted six weeks, so judge it over a few games.
+    let went = 0;
+    for (const seed of ['court', 'court-b', 'court-c']) {
+    const base = newGame(seed);
     const run = (love: number) => {
       let s: GameState = JSON.parse(JSON.stringify(base));
       const m = men(s).find((c) => !c.traits.includes('Loyal-to-a-fault') && !c.dynasty)!;
@@ -152,8 +155,13 @@ describe('loyalty and defection', () => {
       }
       return s.characters[m.id];
     };
-    expect(run(70).faction).toBe('player');
-    expect(run(-35).faction).toBe('kessler');
+    expect(run(70).faction, seed).toBe('player');
+    const unloved = run(-35);
+    // He either went to the rival who courted him, or is still yours (the courtship lapsed): never anywhere else.
+    expect(['kessler', 'player'], seed).toContain(unloved.faction);
+    if (unloved.faction === 'kessler') went++;
+    }
+    expect(went).toBeGreaterThanOrEqual(1);
   });
   it('two loyalties: a capo who pays for a man\'s family wins the man, not you', () => {
     const s = newGame('twoloyal');
