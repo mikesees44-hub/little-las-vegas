@@ -28,7 +28,7 @@ describe('the long game', () => {
     expect(s.legal?.stage).toBe('quiet');
     s.heat.federal = 75;
     expect(evidenceGain(s).total).toBeGreaterThan(0);
-    s.legal!.evidence = OPEN_FILE - 0.5;
+    s.characters[s.playerId].evidence = OPEN_FILE - 0.5;
     s = advanceWeek(s, {}).state;
     expect(s.legal!.stage).toBe('investigation');
     expect(previewAction(s, { kind: 'legal', op: 'retainer' }).disabledReason).toBeUndefined();
@@ -48,7 +48,7 @@ describe('the long game', () => {
     let s = newGame('law3');
     s = advanceWeek(s, {}).state;
     s.legal!.stage = 'investigation';
-    s.legal!.evidence = GRAND_JURY + 40;
+    s.characters[s.playerId].evidence = GRAND_JURY + 40;
     s.money = 50000;
     s = until(s, (x) => x.pendingEvents.some((e) => e.defId === 'grand_jury'));
     s = advanceWeek(s, { choices: answer(s, 'grand_jury', 'nothing') }).state;
@@ -61,7 +61,7 @@ describe('the long game', () => {
     expect(s.legal!.stage).toBe('trial');
     expect(s.legal!.bail).toBe(true);
     s = until(s, (x) => x.pendingEvents.some((e) => e.defId === 'trial'));
-    const odds = convictionOdds(s.legal!);
+    const odds = convictionOdds(s, s.legal!);
     expect(odds).toBeGreaterThan(0.1);
     s = advanceWeek(s, { choices: answer(s, 'trial', 'quiet') }).state;
     expect(['prison', 'quiet']).toContain(s.legal!.stage);
@@ -76,7 +76,7 @@ describe('the long game', () => {
     let s = newGame('law4');
     s = advanceWeek(s, {}).state;
     s.legal!.stage = 'grandjury';
-    s.legal!.evidence = 100;
+    s.characters[s.playerId].evidence = 100;
     s.legal!.next = s.week;
     s = until(s, (x) => x.pendingEvents.some((e) => e.defId === 'indictment'), 10);
     if (!s.pendingEvents.some((e) => e.defId === 'indictment')) return;
@@ -96,7 +96,7 @@ describe('the long game', () => {
     let s = newGame('law5');
     s = advanceWeek(s, {}).state;
     s.legal!.stage = 'investigation';
-    s.legal!.evidence = GRAND_JURY + 1;
+    s.characters[s.playerId].evidence = GRAND_JURY + 1;
     s = until(s, (x) => x.pendingEvents.some((e) => e.defId === 'grand_jury'), 5);
     const text = JSON.stringify(s.pendingEvents);
     expect(text).not.toMatch(/witness(es)? (are|is) (killed|threatened|intimidated)|intimidat|threaten/i);

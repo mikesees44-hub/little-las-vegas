@@ -10,6 +10,10 @@ import { activeTask } from './council';
 import { factionPower } from './crewlife';
 import { FACTION_NAMES } from './world';
 import type { Effect, RivalId, ScheduledConsequence } from './types';
+import { CREW_HANDLERS } from './crewConsequences';
+import { addStory, bumpStat, giveBio, tidyRegimes } from './hierarchy';
+import { defectTo } from './regimes';
+import { maybePlant } from './rivalcrew';
 
 /**
  * Delayed consequences. A choice schedules a key + params; when the week
@@ -21,6 +25,7 @@ import type { Effect, RivalId, ScheduledConsequence } from './types';
 type Handler = (ctx: Ctx, sc: ScheduledConsequence) => { text: string; effects?: Effect[] } | undefined;
 
 const HANDLERS: Record<string, Handler> = {
+  ...CREW_HANDLERS,
   shakedown_complaint: () => ({ text: 'a bar owner complained to the Herald', effects: [{ type: 'heat', bar: 'local', amount: 5 }] }),
   cops_flip: () => ({ text: 'a patrolman talked to a reporter about the Chief\'s envelope', effects: [{ type: 'heat', bar: 'local', amount: 9 }, { type: 'respect', amount: -1 }] }),
   parish_blessing: () => ({ text: 'Father Callahan praised you at the Feast of the Assumption', effects: [{ type: 'respect', amount: 2 }, { type: 'heat', bar: 'local', amount: -3 }] }),
@@ -72,14 +77,16 @@ const HANDLERS: Record<string, Handler> = {
     if (!f) return undefined;
     const power = factionPower(s, f);
     const leader = s.characters[f.leaderId];
-    if (!leader?.alive || leader.faction !== 'player' || power < 0.2) {
+    if (!leader?.alive || leader.faction !== 'player' || power < 0.12) {
       s.factions = s.factions.filter((x) => x !== f);
       return { text: 'the plotters lost their nerve and the faction broke up', effects: [{ type: 'respect', amount: 2 }] };
     }
     s.factions = s.factions.filter((x) => x !== f);
     const boss = s.characters[s.playerId];
+    bumpStat(s, 'coups');
     if (chance(s, Math.min(0.6, power)) && !activeTask(s, 'ub_guard')) {
       s.cutscenes.push({ key: 'betrayal_confrontation', title: 'Betrayal', text: `${displayName(leader)} was waiting in the back seat of the Cadillac.`, week: s.week });
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `A coup: ${displayName(leader)}'s faction moved against the boss.`, kind: 'succession' });
       return { text: `${leader.firstName} ${leader.lastName}'s faction moved against the boss`, effects: [{ type: 'kill', charId: boss.id, cause: `murdered by his own capos (${displayName(leader)}'s faction)`, killer: 'none' }] };
     }
     // The coup fails or turns into a walk-out: the leader takes his district to a rival.
@@ -87,10 +94,7 @@ const HANDLERS: Record<string, Handler> = {
     const r = s.rivals.filter((x) => x.kind === 'mob' && s.characters[x.leaderId]?.alive)[0];
     for (const id of f.memberIds) {
       const m = s.characters[id];
-      if (m?.alive && m.faction === 'player' && r) {
-        m.faction = r.id;
-        for (const dd of s.districts) if (dd.capoId === m.id) dd.capoId = undefined;
-      }
+      if (m?.alive && m.faction === 'player' && r) defectTo(ctx, m, r.id, 'coup');
     }
     if (d && r) {
       const lost = -shiftInfluence(s, d.id, 'player', -12);
@@ -174,8 +178,12 @@ const HANDLERS: Record<string, Handler> = {
     for (let i = 0; i < n; i++) {
       const c = makeCharacter(s, { rank: 'associate', faction: 'player', age: randInt(s, 18, 28) });
       addOpinion(s, c.id, s.playerId, 'Gave me my chance', 15, 1);
+      giveBio(s, c);
+      maybePlant(s, c);
+      addStory(s, c, 'Brought in off the street as an associate.');
       names.push(displayName(c));
     }
+    tidyRegimes(s);
     return { text: `${names.join(' and ')} joined the crew as associates`, effects };
   },
   retaliation: (ctx, sc) => {

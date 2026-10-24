@@ -20,6 +20,7 @@ import { Businesses } from './components/Businesses';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
+import { CrewTree } from './components/CrewTree';
 import { EventModal } from './components/EventModal';
 import { FamilyTab } from './family/FamilyTab';
 import { Header } from './components/Header';
@@ -28,20 +29,23 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle';
-const TABS: { id: Tab; label: string }[] = [
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle';
+/** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
+const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
   { id: 'map', label: 'The Island' },
   { id: 'business', label: 'Rackets & Fronts' },
+  { id: 'tree', label: 'Crew' },
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
-  { id: 'lifestyle', label: 'Lifestyle' },
-  { id: 'family', label: 'Family' },
+  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'Dynasty' }, { id: 'lifestyle', label: 'Lifestyle' }] },
+  { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
-  { id: 'town', label: 'The Town' },
-  { id: 'papers', label: 'The Papers' },
   { id: 'chronicle', label: 'Chronicle' },
 ];
+function tabGroup(t: Tab): Tab {
+  return TABS.find((g) => g.id === t || g.subs?.some((x) => x.id === t))?.id ?? t;
+}
 type Mode = 'week' | 'month';
 
 function freshSeed(): string {
@@ -209,17 +213,28 @@ export function App() {
 
       {!s.gameOver && <OrdersTray s={s} />}
 
-      <nav className="flex overflow-x-auto border-b border-noir-700">
+      <nav className="tabbar flex overflow-x-auto border-b border-noir-700" data-testid="tabbar">
         {TABS.map((t) => (
-          <button key={t.id} className={`tab ${tab === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
+          <button key={t.id} data-tab={t.id} className={`tab ${tabGroup(tab) === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
         ))}
       </nav>
+      {(() => {
+        const g = TABS.find((x) => x.id === tabGroup(tab));
+        return g?.subs ? (
+          <div className="flex flex-wrap gap-1 -mt-2" data-testid="subtabs">
+            {g.subs.map((x) => (
+              <button key={x.id} data-tab={x.id} className={`text-xs px-2 py-1 rounded ${tab === x.id ? 'bg-noir-700 text-gold-400' : 'text-stone-400 hover:text-stone-200'}`} onClick={() => setTab(x.id)}>{x.label}</button>
+            ))}
+          </div>
+        ) : null;
+      })()}
 
       {tab === 'map' ? (
         <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => setTab('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
       ) : (
         <main className="panel p-3 sm:p-4">
           {tab === 'business' && <Businesses s={s} />}
+          {tab === 'tree' && <CrewTree s={s} />}
           {tab === 'crew' && <CrewList s={s} />}
           {tab === 'schemes' && <SchemesPanel s={s} />}
           {tab === 'table' && <TablePanel s={s} />}

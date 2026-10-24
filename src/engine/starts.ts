@@ -6,6 +6,8 @@ import { generateWeekEvents } from './events';
 import { newGame } from './newGame';
 import { refreshDynastyAfterStart } from './family';
 import { addOpinion } from './relations';
+import { addStory, assignTo, giveBio, smallestRegime, tidyRegimes, transferRegime, validateHierarchy } from './hierarchy';
+import { capos, crew } from './characters';
 import type { Character, GameState, Trait } from './types';
 
 /**
@@ -30,6 +32,7 @@ export function newGameWith(seed: string, start: StartId = 'classic'): GameState
   if (start === 'classic') return s;
   if (start === 'rise') rise(s);
   else sees(s);
+  rebuildRegimes(s);
   s.flags[`start_${start}`] = 1;
   refreshDynastyAfterStart(s);
   // Re-deal the first week's cards for the new situation.
@@ -109,15 +112,26 @@ function sees(s: GameState): void {
   const [vito, donato, francesca] = boss.childrenIds.map((id) => s.characters[id]);
   // Vito is underboss; the old underboss steps aside to soldier.
   const ub = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'underboss');
-  if (ub) ub.rank = 'soldier';
+  if (ub) {
+    ub.rank = 'soldier';
+    addStory(s, ub, `Stepped aside as underboss for ${vito.firstName} Sees, the old man's son.`);
+  }
   vito.rank = 'underboss';
   donato.rank = 'capo';
   const free = s.districts.find((d) => d.capoId && s.characters[d.capoId]?.rank === 'capo');
   if (free) {
     const was = s.characters[free.capoId!];
+    // Donato inherits the regime (men and outside guys); the old capo goes back to being a soldier elsewhere.
+    transferRegime(s, was.id, donato.id);
     was.rank = 'soldier';
     free.capoId = donato.id;
+    assignTo(s, was, smallestRegime(s, donato.id)?.id, `Gave up his crew to ${donato.firstName} Sees.`);
+    addOpinion(s, was.id, donato.id, 'Took my crew', -15, 1);
+    addStory(s, donato, `His father gave him ${was.firstName} ${was.lastName}'s crew in ${free.name}.`);
   }
+  // The old underboss, now a soldier, goes into Donato's crew to keep the hothead out of trouble.
+  if (ub && donato.rank === 'capo') assignTo(s, ub, donato.id, `Put in ${donato.firstName}'s crew to keep the hothead out of trouble.`);
+  for (const k of [vito, donato]) giveBio(s, k);
   addOpinion(s, donato.id, vito.id, 'Father\'s favorite', -20, 0);
   addOpinion(s, francesca.id, vito.id, 'Thinks a woman can\'t sit in the chair', -10, 0);
   addOpinion(s, vito.id, donato.id, 'A hothead who will get us killed', -10, 0);
@@ -190,4 +204,27 @@ function rise(s: GameState): void {
   s.dynastyHistory = [{ week: 1, date: { ...s.date }, text: `${displayName(boss)} founds the house of ${s.houseName}.` }];
   s.startingProblem = '';
   for (const k of Object.keys(s.flags)) if (k.startsWith('problem_') || k === 'informant') delete s.flags[k];
+}
+
+/**
+ * After a start reshapes the crew: everyone who left stops reporting to a
+ * capo, everyone who stayed is in a valid regime, every capo has at least one
+ * man under him (soldiers first), and outside guys have a living handler.
+ */
+function rebuildRegimes(s: GameState): void {
+  for (const c of Object.values(s.characters)) {
+    if (c.faction !== 'player' && !c.outside) c.capoId = undefined;
+    if (c.faction === 'player' && (c.rank === 'capo' || c.rank === 'underboss' || c.rank === 'consigliere' || c.rank === 'boss')) c.capoId = undefined;
+  }
+  tidyRegimes(s);
+  // No capo sits alone: take a soldier (or an associate) from the biggest regime.
+  for (const k of capos(s)) {
+    if (crew(s).some((m) => m.capoId === k.id)) continue;
+    const pool = crew(s).filter((m) => (m.rank === 'soldier' || m.rank === 'associate') && m.capoId !== k.id && !m.dynasty)
+      .sort((a, b) => (a.rank === b.rank ? 0 : a.rank === 'soldier' ? -1 : 1));
+    if (pool[0]) assignTo(s, pool[0], k.id, `Sent to ${k.firstName}'s crew.`);
+  }
+  for (const c of crew(s)) if (c.id !== s.playerId) giveBio(s, c);
+  const errs = validateHierarchy(s);
+  if (errs.length) throw new Error(`Start built an invalid crew: ${errs.join('; ')}`);
 }

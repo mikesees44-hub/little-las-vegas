@@ -29,10 +29,25 @@ export const LAWYER = 'Abe Lindner, Esq.';
 
 export function legalOf(s: GameState): LegalState {
   if (!s.legal || s.legal.personId !== s.playerId) {
-    const prev = s.legal;
-    s.legal = { stage: 'quiet', personId: s.playerId, evidence: prev ? Math.round(prev.evidence / 3) : 0, defense: 0, since: s.week };
+    // A new boss: the case starts over, but his own file (Character.evidence) is what it is.
+    s.legal = { stage: 'quiet', personId: s.playerId, defense: 0, since: s.week };
   }
   return s.legal;
+}
+
+/**
+ * The evidence against the man the case is about. There is ONE evidence value
+ * per character (`Character.evidence`, 0-100): the crew's crimes, the
+ * dynasty's lawyers and the federal case all read and write the same file.
+ */
+export function caseEvidence(s: GameState, l: LegalState | undefined = s.legal): number {
+  const c = s.characters[l?.personId ?? s.playerId];
+  return c?.evidence ?? 0;
+}
+
+function setCaseEvidence(s: GameState, l: LegalState, v: number): void {
+  const c = s.characters[l.personId];
+  if (c) c.evidence = Math.round(Math.max(0, Math.min(100, v)) * 10) / 10;
 }
 
 export function ricoActive(s: GameState): boolean {
@@ -57,13 +72,13 @@ export function evidenceGain(s: GameState): { total: number; reasons: { label: s
 }
 
 /** Odds a trial ends in conviction. */
-export function convictionOdds(l: LegalState): number {
-  return Math.max(0.1, Math.min(0.9, 0.15 + (l.evidence - l.defense) / 100));
+export function convictionOdds(s: GameState, l: LegalState): number {
+  return Math.max(0.1, Math.min(0.9, 0.15 + (caseEvidence(s, l) - l.defense) / 100));
 }
 
 /** Odds the grand jury returns an indictment. */
-export function indictOdds(l: LegalState): number {
-  return Math.max(0.1, Math.min(0.9, (l.evidence - l.defense / 2) / 100));
+export function indictOdds(s: GameState, l: LegalState): number {
+  return Math.max(0.1, Math.min(0.9, (caseEvidence(s, l) - l.defense / 2) / 100));
 }
 
 const STAGE_LABEL: Record<LegalState['stage'], string> = {
@@ -90,7 +105,7 @@ function L(op: LegalOp, amount?: number, label = 'The case'): Effect {
 export function buildGrandJury(s: GameState): EventInstance {
   const l = legalOf(s);
   const label = 'Grand jury';
-  return ev(s, 'grand_jury', 'A grand jury is sitting', `Assistant U.S. Attorney Walter Keough has a grand jury in Camden hearing about you. Men you know are getting subpoenas. Evidence so far: ${Math.round(l.evidence)}. Odds of an indictment if nothing changes: ${Math.round(indictOdds(l) * 100)}%.`, [
+  return ev(s, 'grand_jury', 'A grand jury is sitting', `Assistant U.S. Attorney Walter Keough has a grand jury in Camden hearing about you. Men you know are getting subpoenas. Evidence so far: ${Math.round(caseEvidence(s, l))}. Odds of an indictment if nothing changes: ${Math.round(indictOdds(s, l) * 100)}%.`, [
     { id: 'lawyer', label: `Retain ${LAWYER}`, detail: '$4,000. The best criminal lawyer in the Delaware Valley.', because: 'hired the best lawyer in the Delaware Valley', effects: [{ type: 'money', amount: -4000, label }, L('defense', 20, label)], disabledReason: s.money < 4000 ? 'Needs $4,000' : undefined },
     { id: 'favor', label: 'Call in a favor at the courthouse', detail: 'A friendly clerk loses some paperwork.', because: 'called in a favor at the courthouse', effects: [{ type: 'favor', amount: -1, label }, L('evidence', -15, label)], disabledReason: s.favors < 1 ? 'No favors to call in' : undefined },
     { id: 'lielow', label: 'Lie low', detail: 'No new rackets, no meetings, no photographs.', because: 'lay low while the grand jury sat', effects: [{ type: 'respect', amount: -3, label }, L('evidence', -8, label)] },
@@ -111,7 +126,7 @@ export function buildIndictment(s: GameState): EventInstance {
 export function buildTrial(s: GameState): EventInstance {
   const l = legalOf(s);
   const label = 'The trial';
-  return ev(s, 'trial', 'United States v. ' + player(s).lastName, `Federal court in Camden. Walter Keough lays out ${Math.round(l.evidence)} points of evidence; the defense has ${Math.round(l.defense)}. As it stands the jury convicts ${Math.round(convictionOdds(l) * 100)}% of the time.`, [
+  return ev(s, 'trial', 'United States v. ' + player(s).lastName, `Federal court in Camden. Walter Keough lays out ${Math.round(caseEvidence(s, l))} points of evidence; the defense has ${Math.round(l.defense)}. As it stands the jury convicts ${Math.round(convictionOdds(s, l) * 100)}% of the time.`, [
     { id: 'best', label: 'The best defense money buys', detail: '$8,000: experts, investigators, a second lawyer.', because: 'spent a fortune on the defense', effects: [{ type: 'money', amount: -8000, label }, L('defense', 25, label), L('verdict', 0, label)], disabledReason: s.money < 8000 ? 'Needs $8,000' : undefined },
     { id: 'judge', label: 'A friendly ruling from the bench', detail: 'Two favors: some evidence is thrown out.', because: 'had evidence thrown out', effects: [{ type: 'favor', amount: -2, label }, L('evidence', -20, label), L('verdict', 0, label)], disabledReason: s.favors < 2 ? 'Needs two favors' : undefined },
     { id: 'stand', label: 'Take the stand', detail: 'Charm the jury — or hang himself.', because: 'took the stand', effects: [L('defense', player(s).attributes.diplomacy >= 60 ? 15 : -10, label), L('verdict', 0, label)] },
@@ -156,7 +171,7 @@ export function applyLegal(ctx: Ctx, op: LegalOp, amount = 0): void {
       l.defense = Math.max(0, l.defense + amount);
       break;
     case 'evidence':
-      l.evidence = Math.max(0, l.evidence + amount);
+      setCaseEvidence(s, l, caseEvidence(s, l) + amount);
       break;
     case 'bail':
       l.bail = true;
@@ -175,7 +190,7 @@ export function applyLegal(ctx: Ctx, op: LegalOp, amount = 0): void {
       break;
     }
     case 'verdict': {
-      const p = convictionOdds(l);
+      const p = convictionOdds(s, l);
       if (chance(s, p)) {
         const w = randInt(s, 156, 312) * (l.rico ? 1.6 : 1);
         imprison(ctx, Math.round(w), l.rico ? 'Convicted under RICO' : 'Convicted');
@@ -184,7 +199,8 @@ export function applyLegal(ctx: Ctx, op: LegalOp, amount = 0): void {
         heat(ctx, 'federal', -20, 'Acquitted: the feds are embarrassed', 'heat');
         s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was acquitted. He walked out the front door of the federal building.`, kind: 'heat' });
         b.imprisonedUntil = undefined;
-        Object.assign(l, { stage: 'quiet', evidence: 0, defense: 0, since: s.week, next: undefined, bail: undefined });
+        setCaseEvidence(s, l, 0);
+        Object.assign(l, { stage: 'quiet', defense: 0, since: s.week, next: undefined, bail: undefined });
       }
       break;
     }
@@ -216,16 +232,16 @@ export function legalWeek(ctx: Ctx): void {
   switch (l.stage) {
     case 'quiet':
     case 'investigation': {
-      l.evidence = Math.max(0, Math.min(100, l.evidence + evidenceGain(s).total));
-      if (l.stage === 'quiet' && l.evidence >= OPEN_FILE) {
+      setCaseEvidence(s, l, caseEvidence(s, l) + evidenceGain(s).total);
+      if (l.stage === 'quiet' && caseEvidence(s, l) >= OPEN_FILE) {
         l.stage = 'investigation';
         l.since = s.week;
         ctx.log.push('The FBI has opened a file on the boss himself.');
         s.chronicle.push({ week: s.week, date: { ...s.date }, text: `The FBI opened a file on ${displayName(b)}.`, kind: 'heat' });
-      } else if (l.stage === 'investigation' && l.evidence < OPEN_FILE - 10) {
+      } else if (l.stage === 'investigation' && caseEvidence(s, l) < OPEN_FILE - 10) {
         l.stage = 'quiet';
         ctx.log.push('The FBI file on the boss has gone cold.');
-      } else if (l.stage === 'investigation' && l.evidence >= GRAND_JURY) {
+      } else if (l.stage === 'investigation' && caseEvidence(s, l) >= GRAND_JURY) {
         l.stage = 'grandjury';
         l.since = s.week;
         l.next = s.week + GJ_WEEKS;
@@ -234,9 +250,9 @@ export function legalWeek(ctx: Ctx): void {
       break;
     }
     case 'grandjury': {
-      l.evidence = Math.max(0, Math.min(100, l.evidence + evidenceGain(s).total / 2));
+      setCaseEvidence(s, l, caseEvidence(s, l) + evidenceGain(s).total / 2);
       if (s.week >= (l.next ?? s.week)) {
-        if (chance(s, indictOdds(l))) {
+        if (chance(s, indictOdds(s, l))) {
           l.stage = 'indicted';
           l.since = s.week;
           s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was indicted by a federal grand jury${l.rico ? ' under the racketeering law' : ''}.`, kind: 'heat' });
@@ -244,7 +260,7 @@ export function legalWeek(ctx: Ctx): void {
           s.eventQueue.push(buildIndictment(s));
         } else {
           l.stage = 'investigation';
-          l.evidence = Math.max(0, l.evidence - 20);
+          setCaseEvidence(s, l, caseEvidence(s, l) - 20);
           respect(ctx, 4, 'No true bill: the grand jury goes home', 'event');
           s.chronicle.push({ week: s.week, date: { ...s.date }, text: 'The grand jury declined to indict.', kind: 'heat' });
         }
@@ -264,7 +280,8 @@ export function legalWeek(ctx: Ctx): void {
     case 'prison': {
       l.served = (l.served ?? 0) + 1;
       if (!b.imprisonedUntil || b.imprisonedUntil <= s.week + 1) {
-        Object.assign(l, { stage: 'quiet', evidence: 0, defense: 0, since: s.week, next: undefined });
+        setCaseEvidence(s, l, 0);
+        Object.assign(l, { stage: 'quiet', defense: 0, since: s.week, next: undefined });
         respect(ctx, 4, 'Out: the boss served his time', 'event');
         s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} walked out of prison, his time served.`, kind: 'heat' });
         break;
@@ -286,7 +303,8 @@ export function legalWeek(ctx: Ctx): void {
         respect(ctx, -4, 'Parole violated: back inside', 'heat');
         s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} violated his parole and went back inside.`, kind: 'heat' });
       } else if (s.week >= (l.next ?? s.week)) {
-        Object.assign(l, { stage: 'quiet', evidence: 0, defense: 0, since: s.week, next: undefined });
+        setCaseEvidence(s, l, 0);
+        Object.assign(l, { stage: 'quiet', defense: 0, since: s.week, next: undefined });
         ctx.log.push('Parole is over. The boss is a free man.');
       }
       break;

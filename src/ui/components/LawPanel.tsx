@@ -1,5 +1,5 @@
 import { player } from '../../engine/characters';
-import { GRAND_JURY, OPEN_FILE, convictionOdds, evidenceGain, indictOdds, legalOf, ricoActive, stageLabel } from '../../engine/longgame';
+import { GRAND_JURY, OPEN_FILE, caseEvidence, convictionOdds, evidenceGain, indictOdds, legalOf, ricoActive, stageLabel } from '../../engine/longgame';
 import { cloneState } from '../../engine/engine';
 import type { GameState, LegalStage } from '../../engine/types';
 import { ActionCard } from './Orders';
@@ -39,13 +39,13 @@ export function LawPanel({ s }: { s: GameState }) {
       </ol>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <Meter label="Evidence" value={l.evidence} tone="bg-blood-400" />
+        <Meter label="Evidence" value={caseEvidence(s, l)} tone="bg-blood-400" />
         <Meter label="Defense" value={l.defense} tone="bg-emerald-500" />
         <div className="rounded border border-noir-700 bg-noir-800/70 p-2 text-sm">
           <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Status</div>
           <div className="text-stone-100 font-semibold">{stageLabel(l)}</div>
-          {l.stage === 'grandjury' && <div className="text-xs text-stone-400">Indictment odds now: {Math.round(indictOdds(l) * 100)}%{left !== undefined && ` · votes in ${Math.max(0, left)} wk`}</div>}
-          {l.stage === 'trial' && <div className="text-xs text-stone-400">Conviction odds now: {Math.round(convictionOdds(l) * 100)}%{left !== undefined && ` · trial in ${Math.max(0, left)} wk`}{l.bail ? ' · out on bail' : ''}</div>}
+          {l.stage === 'grandjury' && <div className="text-xs text-stone-400">Indictment odds now: {Math.round(indictOdds(s, l) * 100)}%{left !== undefined && ` · votes in ${Math.max(0, left)} wk`}</div>}
+          {l.stage === 'trial' && <div className="text-xs text-stone-400">Conviction odds now: {Math.round(convictionOdds(s, l) * 100)}%{left !== undefined && ` · trial in ${Math.max(0, left)} wk`}{l.bail ? ' · out on bail' : ''}</div>}
           {l.stage === 'prison' && <div className="text-xs text-stone-400">Served {l.served ?? 0} of {l.sentence ?? 0} weeks{left !== undefined && ` · parole hearing in ${Math.max(0, left)} wk`}. He runs things through his lawyer.</div>}
           {l.stage === 'parole' && <div className="text-xs text-stone-400">{left !== undefined && `${Math.max(0, left)} weeks left. `}If federal heat reaches 70 he may be sent back.</div>}
         </div>

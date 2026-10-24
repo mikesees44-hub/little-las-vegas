@@ -14,6 +14,7 @@ import { respect, type Ctx } from './ledger';
 import { addOpinion, opinion, relKey } from './relations';
 import { chance, rand } from './rng';
 import type { Character, EventInstance, FactionId, GameState, SuccessionLaw } from './types';
+import { addStory, heirFromRegime, tidyRegimes, transferRegime } from './hierarchy';
 
 export const ADULT_AGE = 16;
 
@@ -182,9 +183,12 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
 
   // Clean up district capo assignment.
   for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
+  addStory(s, c, `Died: ${cause}.`);
 
   if (c.id === s.playerId) succeed(ctx, c);
   else if (c.faction === 'player' && (c.rank === 'capo' || c.rank === 'underboss')) promoteReplacement(ctx, c);
+  // His regime goes to whoever replaced him (or is spread among the other capos).
+  tidyRegimes(s);
   return c;
 }
 
@@ -204,9 +208,14 @@ function promoteReplacement(ctx: Ctx, dead: Character): void {
     } else return;
   }
   if (dead.rank === 'capo' || dead.rank === 'underboss') {
-    const best = all.sort((a, b) => b.attributes.leadership + b.attributes.business - (a.attributes.leadership + a.attributes.business))[0];
+    // Promote from within his own regime first: his men follow one of their own.
+    const best = heirFromRegime(s, dead.id) ?? all.sort((a, b) => b.attributes.leadership + b.attributes.business - (a.attributes.leadership + a.attributes.business))[0];
     if (!best) return;
+    const deadId = dead.id;
     best.rank = 'capo';
+    best.capoId = undefined;
+    transferRegime(s, deadId, best.id);
+    addStory(s, best, `Took over the crew of ${displayName(dead)}.`);
     const free = s.districts.find((d) => !d.capoId && (d.influence.player ?? 0) >= 40);
     if (free) free.capoId = best.id;
     addOpinion(s, best.id, s.playerId, 'Made me a capo', 20, 1);

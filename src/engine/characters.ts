@@ -235,9 +235,13 @@ export function shortName(c: Character): string {
 
 /** Living members of the player's crew (made men + associates), excluding the boss. */
 export function crew(s: GameState, includeBoss = false): Character[] {
-  return Object.values(s.characters).filter(
-    (c) => c.alive && c.faction === 'player' && c.rank !== 'civilian' && (includeBoss || c.id !== s.playerId),
-  );
+  const out: Character[] = [];
+  const all = s.characters;
+  for (const id in all) {
+    const c = all[id];
+    if (c.alive && c.faction === 'player' && c.rank !== 'civilian' && (includeBoss || c.id !== s.playerId)) out.push(c);
+  }
+  return out;
 }
 
 export function capos(s: GameState): Character[] {

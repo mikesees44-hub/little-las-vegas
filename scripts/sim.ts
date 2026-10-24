@@ -6,13 +6,17 @@
  *   npm run sim -- --games 50 --years 5 --seed test --json sim-report.json
  */
 import { writeFileSync } from 'node:fs';
-import { newGame } from '../src/engine/newGame';
+import { newGameWith, type StartId } from '../src/engine/starts';
+import { LIFESTYLE_IDS } from '../src/engine/lifestyle';
+import { isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { advanceWeek, forceDeath } from '../src/engine/engine';
 import { reconcile } from '../src/engine/ledger';
 import { validatePlayer } from '../src/engine/dynasty';
 import { rand } from '../src/engine/rng';
 import { MAX_POPUPS } from '../src/engine/events';
-import { legalActions } from '../src/engine/actions';
+import { legalActions, previewAction } from '../src/engine/actions';
+import { ORDERS } from '../src/engine/events';
+import { validateHierarchy } from '../src/engine/hierarchy';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
@@ -31,7 +35,23 @@ const INSOLVENT_WEEKS = 8; // "bankrupt" = treasury below $0 for 8+ consecutive 
 
 /** Chance per week that the random player gives an order (buy, lend, launch a job ...). */
 const ORDER_RATE = Number(arg('orders', '0.15'));
+/** Chance per week that the random player gives one of the general orders (the old weekly sit-down). */
+const GENERAL_RATE = Number(arg('general', '0.35'));
+/** Chance per week of a dynasty order (marriage, guardian, hosting, decision, legacy). */
+const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
+/** Chance per week of sending an envoy to another city. */
+const ENVOY_RATE = Number(arg('envoys', '0.03'));
+/** Which start to play: classic, rise or sees. */
+const START = arg('start', 'classic') as StartId;
 
+const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ? xs[Math.floor(rand(h) * xs.length)] : undefined);
+
+/**
+ * The random player: answers every popup with a random legal choice and uses
+ * every family of orders — any legal order, a general order (direct or
+ * through the chain), a dynasty order, a lifestyle (picked on day one,
+ * perks spent as they come) and, now and then, an envoy.
+ */
 function aiChoices(s: GameState, salt: number): PlayerChoices {
   const h = { rng: (s.rng ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0 };
   const choices: Record<string, string> = {};
@@ -40,10 +60,21 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
     choices[ev.iid] = legal[Math.floor(rand(h) * legal.length)].id;
   }
   const actions: PlayerAction[] = [];
-  if (rand(h) < ORDER_RATE) {
-    const legal = legalActions(s);
-    if (legal.length) actions.push(legal[Math.floor(rand(h) * legal.length)]);
+  const add = (a: PlayerAction | undefined) => {
+    if (a && !actions.some((x) => JSON.stringify(x) === JSON.stringify(a))) actions.push(a);
+  };
+  const legal = legalActions(s);
+  if (rand(h) < ORDER_RATE) add(pickOne(h, legal));
+  if (rand(h) < GENERAL_RATE) {
+    const vias = ['direct', 'underboss', 'capo'] as const;
+    const general = ORDERS.map((o) => ({ kind: 'order', key: o.key, via: vias[Math.floor(rand(h) * 3)] }) as PlayerAction).filter((a) => !previewAction(s, a).disabledReason);
+    add(pickOne(h, general));
   }
+  if (rand(h) < DYNASTY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'dynasty')));
+  const boss = s.characters[s.playerId];
+  if (boss && !boss.lifestyle) add(pickOne(h, LIFESTYLE_IDS.map((focus) => ({ kind: 'lifestyle', focus }) as PlayerAction)));
+  else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
+  if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
   return { choices, actions };
 }
 
@@ -81,6 +112,12 @@ interface GameResult {
   peakUnwashed: number;
   /** Dynasty-layer counters at the end of the game (familyState.ts). */
   dyn?: Record<string, number>;
+  hierarchyErrors: string[];
+  crew: { defections: number; coups: number; flips: number; makings: number; rivalCrewMoves: number };
+  popupKeys: Record<string, number>;
+  repeats: number;
+  familyOver: number;
+  titles: Record<string, number>;
 }
 
 function playOne(gi: number): GameResult {
@@ -88,10 +125,12 @@ function playOne(gi: number): GameResult {
     bankruptYear1: false, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
     deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
+    hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {},
   };
+  const lastSeen: Record<string, number> = {};
   let s: GameState;
   try {
-    s = newGame(`${SEED}-${gi}`);
+    s = newGameWith(`${SEED}-${gi}`, START);
   } catch (e) {
     r.crashed = `newGame: ${(e as Error).message}`;
     return r;
@@ -155,6 +194,16 @@ function playOne(gi: number): GameResult {
       }
     } else consecutiveRed = 0;
     r.popupsPerWeek.push(s.pendingEvents.length);
+    if (s.pendingEvents.filter(isFamilyEvent).length > MAX_FAMILY_POPUPS) r.familyOver++;
+    for (const e of s.pendingEvents) r.titles[e.defId] = (r.titles[e.defId] ?? 0) + 1;
+    for (const e of s.pendingEvents) {
+      if (!e.meta?.crew) continue;
+      r.popupKeys[e.defId] = (r.popupKeys[e.defId] ?? 0) + 1;
+      const k = `${e.defId}:${e.meta.charId}`;
+      if (s.week - (lastSeen[k] ?? -999) < 12) r.repeats++;
+      lastSeen[k] = s.week;
+    }
+    if (r.hierarchyErrors.length < 5) r.hierarchyErrors.push(...validateHierarchy(s).map((x) => `week ${s.week}: ${x}`));
     r.peakUnwashed = Math.max(r.peakUnwashed, s.unwashed);
     for (const b of HEAT_BARS) r.heatSamples[b].push(s.heat[b]);
     if ((s.week - 1) % 52 === 0) r.treasuryByYear.push(s.money);
@@ -174,6 +223,7 @@ function playOne(gi: number): GameResult {
     }
   }
   r.finalRespect = s!.respect;
+  if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   return r;
@@ -196,7 +246,7 @@ const gamesWithBossDeath = results.filter((r) => r.bossDeaths > 0).length;
 const gameOvers = results.filter((r) => r.gameOver);
 
 console.log(`\nLITTLE LAS VEGAS — headless simulation`);
-console.log(`${GAMES} games × ${YEARS} years (seed "${SEED}"${STRESS ? `, boss force-killed every ${STRESS} weeks` : ''}) in ${secs.toFixed(1)}s\n`);
+console.log(`${GAMES} games × ${YEARS} years, start "${START}" (seed "${SEED}"${STRESS ? `, boss force-killed every ${STRESS} weeks` : ''}) in ${secs.toFixed(1)}s\n`);
 console.log(`INTEGRITY`);
 console.log(`  Crashes:                    ${crashes.length}`);
 for (const c of crashes.slice(0, 5)) console.log(`    - ${c.crashed}`);
@@ -204,6 +254,9 @@ console.log(`  Unexplained deltas:         ${unexplained.length}`);
 for (const u of unexplained.slice(0, 5)) console.log(`    - ${u}`);
 console.log(`  Invalid successions:        ${succFails.length}`);
 for (const u of succFails.slice(0, 5)) console.log(`    - ${u}`);
+const hier = results.flatMap((r) => r.hierarchyErrors);
+console.log(`  Hierarchy integrity errors: ${hier.length}`);
+for (const u of hier.slice(0, 5)) console.log(`    - ${u}`);
 
 console.log(`\nECONOMY`);
 console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (treasury < $0 for ${INSOLVENT_WEEKS}+ straight weeks)`);
@@ -251,6 +304,20 @@ const dist: Record<number, number> = {};
 for (const n of allPopups) dist[n] = (dist[n] ?? 0) + 1;
 console.log(`  Distribution: ${Object.entries(dist).map(([k, v]) => `${k}: ${pct(v, allPopups.length)}`).join(', ')}`);
 console.log(`  Weeks with >4 popups:       ${overFour} ${overFour ? '<-- FLAG' : ''}`);
+const famOver = results.reduce((a, r) => a + r.familyOver, 0);
+console.log(`  Weeks with >${MAX_FAMILY_POPUPS} family popup:  ${famOver} ${famOver ? '<-- FLAG' : ''}`);
+const allTitles: Record<string, number> = {};
+for (const r of results) for (const [k, v] of Object.entries(r.titles)) allTitles[k] = (allTitles[k] ?? 0) + v;
+const totalPop = Object.values(allTitles).reduce((a, b) => a + b, 0);
+console.log(`  Distinct event kinds: ${Object.keys(allTitles).length}; top: ${Object.entries(allTitles).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => `${k} ${pct(v, totalPop)}`).join(', ')}`);
+const per10 = (k: keyof GameResult['crew']) => (results.reduce((a, r) => a + r.crew[k], 0) / Math.max(1, results.reduce((a, r) => a + r.weeksPlayed, 0))) * 520;
+console.log(`\nCREW (per game, per 10 years)`);
+console.log(`  Defections ${per10('defections').toFixed(1)} · coups ${per10('coups').toFixed(1)} · flips ${per10('flips').toFixed(1)} · makings ${per10('makings').toFixed(1)} · rival moves on the crew ${per10('rivalCrewMoves').toFixed(1)}`);
+const keys: Record<string, number> = {};
+for (const r of results) for (const [k, v] of Object.entries(r.popupKeys)) keys[k] = (keys[k] ?? 0) + v;
+const crewPopups = Object.values(keys).reduce((a, b) => a + b, 0);
+console.log(`  Crew decisions: ${Object.keys(keys).length} kinds; ${(crewPopups / Math.max(1, results.reduce((a, r) => a + r.weeksPlayed, 0))).toFixed(2)} per week; same man + same kind within 12 weeks: ${pct(results.reduce((a, r) => a + r.repeats, 0), crewPopups)}`);
+console.log(`  Mix: ${Object.entries(keys).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k.replace('crew_', '')} ${pct(v, crewPopups)}`).join(', ')}`);
 const moves: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.rivalMoves)) moves[k] = (moves[k] ?? 0) + v;
 console.log(`  Rival actions per game:     ${Object.entries(moves).map(([k, v]) => `${k} ${(v / GAMES).toFixed(0)}`).join(', ')}`);
@@ -260,10 +327,12 @@ const y3 = medians[2];
 const checks = [
   ['no crashes', crashes.length === 0],
   ['no unexplained deltas', unexplained.length === 0],
-  ['year-1 bankruptcy < 15%', y1b < 0.15],
+  ['year-1 bankruptcy 4–10%', START !== 'classic' || (y1b >= 0.04 && y1b <= 0.1)],
   ['median year-3 treasury in $50K–$500K', YEARS < 3 || (y3 >= 50000 && y3 <= 500000)],
   ['successions always valid', succFails.length === 0],
   ['no week over popup cap', over === 0],
+  ['no week with more than one family popup', results.every((r) => r.familyOver === 0)],
+  ['no hierarchy integrity errors', hier.length === 0],
 ] as const;
 console.log(`\nTARGETS`);
 for (const [name, ok] of checks) console.log(`  [${ok ? 'PASS' : 'FAIL'}] ${name}`);

@@ -4,6 +4,8 @@ import { createElement } from 'react';
 import { CUTSCENE_KEYS, MAX_CUTSCENES, cutscenesBetween } from '../src/engine/cutscenes';
 import { cloneState } from '../src/engine/engine';
 import { newGame } from '../src/engine/newGame';
+import { applyEffects } from '../src/engine/effects';
+import { newCtx } from '../src/engine/ledger';
 import { NoirStill } from '../src/ui/cutscene/NoirStill';
 import { CutscenePlayer } from '../src/ui/cutscene/Cutscene';
 
@@ -25,6 +27,41 @@ describe('cutscenes', () => {
     const keys = cutscenesBetween(s, n).map((c) => c.key);
     expect(keys).toContain('funeral');
     if (assoc) expect(keys).toContain('made_man');
+  });
+
+  it('crew life plays too: a rat or a capo gone over is a betrayal, a man pinched is an interrogation, a crew wedding is a wedding', () => {
+    const s = newGame('cut5');
+    const n = cloneState(s);
+    const men = Object.values(n.characters).filter((c) => c.alive && c.faction === 'player' && c.id !== n.playerId && (c.rank === 'soldier' || c.rank === 'associate'));
+    men[0].faction = 'law';
+    men[0].rank = 'civilian';
+    men[1].imprisonedUntil = n.week + 10;
+    const groom = men.slice(2).find((c) => !c.household?.wife) ?? men[2];
+    if (groom.household) groom.household.wife = undefined;
+    const s0 = cloneState(n);
+    s.characters[groom.id] = cloneState(s0).characters[groom.id];
+    groom.household = { kids: groom.household?.kids ?? [], wife: 'Rose' };
+    groom.story = [...(groom.story ?? []), { week: n.week, text: 'Married Rose Ciccone of the Crest.' }];
+    const n2 = cloneState(n);
+    const keys = cutscenesBetween(s, n).map((c) => c.key);
+    expect(keys).toContain('betrayal_confrontation');
+    expect(keys).toContain('arrest_interrogation');
+    expect(keys).toContain('wedding');
+    // A capo who walks to a rival family is a betrayal as well.
+    const capo = Object.values(n2.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'capo')!;
+    const before = cloneState(n2);
+    capo.faction = 'manno';
+    expect(cutscenesBetween(before, n2).map((c) => c.key)).toContain('betrayal_confrontation');
+  });
+
+  it('the membership ceremony raises the made_man cue', () => {
+    const s = newGame('cut6');
+    const assoc = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'associate' && !c.specialty)!;
+    const n = cloneState(s);
+    n.cutscenes = [];
+    applyEffects(newCtx(n), [{ type: 'making', charId: assoc.id }], { label: 'The ceremony', because: 'made him' });
+    expect(n.cutscenes.map((c) => c.key)).toContain('made_man');
+    expect(cutscenesBetween(s, n).filter((c) => c.key === 'made_man').length).toBe(1);
   });
 
   it('the boss dying and his son taking over plays the death then the heir', () => {

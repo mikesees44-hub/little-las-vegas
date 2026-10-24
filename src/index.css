@@ -43,7 +43,7 @@ body {
     @apply chip bg-noir-700 text-stone-300 border border-noir-600;
   }
   .tab {
-    @apply px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-stone-400 hover:text-gold-300 whitespace-nowrap;
+    @apply px-3 py-2 text-sm font-semibold border-b-2 border-transparent text-stone-400 hover:text-gold-300 whitespace-nowrap shrink-0;
   }
   .tab-active {
     @apply border-gold-500 text-gold-300;
@@ -102,3 +102,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .llv-kb-a, .llv-kb-b, .llv-kb-c, .llv-caret { animation: none; }
 }
+
+/* The tab bar scrolls sideways on phones instead of wrapping or overflowing the page. */
+.tabbar { scrollbar-width: thin; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; max-width: 100%; }

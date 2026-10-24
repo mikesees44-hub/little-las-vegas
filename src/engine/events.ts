@@ -1,5 +1,5 @@
 import { perkMod } from './lifestyle';
-import { ageOn, gameYear, monthKey, seasonMultiplier } from './calendar';
+import { ageOn, monthKey, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
 import { MAX_PER_KIND } from './actions';
 import { countKind, newBusiness, playerSlots } from './business';
@@ -7,6 +7,8 @@ import { CATALOG, SHOP_KINDS } from './catalog';
 import { defaulter } from './loans';
 import { opinion } from './relations';
 import { chance, pick, randInt, shuffle, weightedPick } from './rng';
+import { markShown, pickCrewEvents, pruneCooldowns, subjectOk } from './crewEvents';
+import { familyEventSource } from './familyDrama';
 import { FACTION_NAMES } from './world';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
@@ -363,23 +365,6 @@ export const ORDERS: OrderDef[] = [
       ],
     }),
   },
-  {
-    key: 'narcotics',
-    available: (s) => gameYear(s.week) >= 1 && s.week >= 6,
-    build: (s) => ({
-      id: 'narcotics',
-      label: 'Take a cut of a heroin shipment',
-      detail: 'Bruno forbids it. The money is very good.',
-      because: 'took a cut of the heroin trade against Bruno\'s rule',
-      effects: [
-        { type: 'money', amount: rnd100(s, 4000 + 1500 * seasonMultiplier(s.date)) },
-        { type: 'heat', bar: 'federal', amount: 10 },
-        { type: 'heat', bar: 'family', amount: 6 },
-        { type: 'crewOpinion', amount: -4, reason: 'Dealing junk', traitMods: { Greedy: 10, Pious: -8, Honest: -6 } },
-        { type: 'schedule', key: 'narcotics_found_out', minWeeks: 2, maxWeeks: 8, chance: 0.55, hint: 'Philadelphia may find out' },
-      ],
-    }),
-  },
 ];
 
 export function buildSitDown(s: GameState): EventInstance {
@@ -584,11 +569,12 @@ export const EVENT_DEFS: EventDef[] = [
         { who: 'Councilman Dougherty', ask: 'wants his nephew hired on at the pier, no questions asked', cost: 400, key: 'favor_council' },
         { who: 'Mrs. Abate from the bakery', ask: 'needs the punks who broke her window found and taught some manners', cost: 200, key: 'favor_widow' },
         { who: 'Father Callahan', ask: 'needs the parish festival on the boardwalk to go off without trouble', cost: 600, key: 'favor_priest' },
-        { who: 'Lt. Ruane of the Wildwood PD', ask: 'wants his gambling marker at the Starlight torn up', cost: 900, key: 'favor_cop' },
+        { who: 'Sgt. Healy of the Wildwood PD', ask: 'wants his gambling marker at the Starlight torn up', cost: 900, key: 'favor_cop' },
       ];
       const v = pick(s, variants);
+      const official = Object.values(s.characters).find((c) => c.alive && c.office && v.who.includes(c.lastName));
       return {
-        iid: iid(s), defId: 'favor', week: s.week, mandatory: false, priority: 30,
+        iid: iid(s), defId: 'favor', week: s.week, mandatory: false, priority: 30, actors: official ? [official.id] : undefined,
         title: 'A favor is asked',
         text: `${v.who} ${v.ask}.`,
         defaultChoiceId: 'grant',
@@ -638,6 +624,14 @@ export const EVENT_DEFS: EventDef[] = [
             effects: [
               { type: 'money', amount: -300, label: `Testing ${r.firstName}: expenses` },
               { type: 'schedule', key: 'recruit_test', minWeeks: 1, maxWeeks: 3, chance: 1, hint: 'see how he does', params: { charId: r.id } },
+            ],
+          },
+          {
+            id: 'check', label: 'Have him looked into first ($600)', detail: 'Two weeks. If he is clean, he is in.', because: `had ${nm} looked into`,
+            effects: [
+              { type: 'money', amount: -600, label: `Background check: ${r.firstName}` },
+              { type: 'recruit', charId: r.id, label: `Background check: ${r.firstName}` },
+              { type: 'checkBackground', charId: r.id, label: `Background check: ${r.firstName}` },
             ],
           },
           { id: 'refuse', label: 'Send him home to his mother', because: `turned ${nm} away`, effects: [] },
@@ -690,26 +684,6 @@ export const EVENT_DEFS: EventDef[] = [
           : 'Sunday dinner at the house on Glenwood Avenue. The whole family is coming.',
         defaultChoiceId: 'gravy',
         choices,
-      };
-    },
-  },
-  {
-    id: 'capo_request',
-    cooldown: 8,
-    weight: () => 1.5,
-    condition: (s) => capos(s).some((c) => hasTrait(c, 'Ambitious') || hasTrait(c, 'Greedy')),
-    build: (s) => {
-      const c = capos(s).find((x) => hasTrait(x, 'Ambitious') || hasTrait(x, 'Greedy'))!;
-      return {
-        iid: iid(s), defId: 'capo_request', week: s.week, mandatory: false, priority: 30,
-        title: `${c.firstName} wants a bigger end`,
-        text: `${displayName(c)} says he is carrying his district and wants a bigger cut — or a second territory.`,
-        defaultChoiceId: 'no',
-        meta: { charId: c.id },
-        choices: [
-          { id: 'yes', label: 'Give him a bonus', because: `gave ${c.firstName} a bonus`, effects: [{ type: 'money', amount: -1500 }, { type: 'opinion', from: c.id, to: s.playerId, amount: 15, reason: 'Paid me what I\'m worth' }] },
-          { id: 'no', label: 'Tell him to be grateful', because: `refused ${c.firstName} a raise`, effects: [{ type: 'opinion', from: c.id, to: s.playerId, amount: -12, reason: 'Refused my request' }, { type: 'meter', from: c.id, to: s.playerId, meter: 'grievance', amount: 10 }] },
-        ],
       };
     },
   },
@@ -770,12 +744,34 @@ export function buildHealthEvent(s: GameState, c: Character): EventInstance {
   };
 }
 
+/** A family (dynasty-layer) event: drama, activities, breaking points, claims. */
+export function isFamilyEvent(e: EventInstance): boolean {
+  return !!e.meta?.family || e.defId.startsWith('dyn_') || e.defId.startsWith('act_');
+}
+
+/** At most this many family events a week (they compete with the crew for the boss's time). */
+export const MAX_FAMILY_POPUPS = 1;
+
 /**
- * Picks this week's popups. Returns at most MAX_POPUPS events, highest
- * priority first. Queued items that don't fit stay queued (deals expire after 2 weeks).
+ * Picks this week's popups: ONE pipeline for every system. Returns at most
+ * MAX_POPUPS events, highest priority first:
+ *  - the bagman when due;
+ *  - queued events (funerals, ultimatums, rivals' propositions, ceremonies,
+ *    crew reports, the dynasty's claims and breaking points);
+ *  - decisions brought by the crew themselves (crewEvents.ts);
+ *  - sometimes a situational event (EVENT_DEFS);
+ *  - the extra sources (the dynasty's family drama, ...).
+ * At most MAX_FAMILY_POPUPS family events a week. Per-event and per-character
+ * cooldowns (crewEvents.ts `markShown`) are stamped only for what is actually
+ * shown, so a decision crowded out this week can still come next week, and a
+ * queued crew report about a man who just brought the same thing is dropped.
+ * Mandatory events that don't fit stay queued; deals stay queued (they expire
+ * after 2 weeks). General orders are not a weekly popup: the boss gives them
+ * from the Administration.
  */
 export function generateWeekEvents(s: GameState): EventInstance[] {
   const out: EventInstance[] = [];
+  pruneCooldowns(s);
   // Expire stale non-mandatory queue items.
   s.eventQueue = s.eventQueue.filter((e) => e.mandatory || s.week - e.week <= 2);
   if (bagmanDue(s)) {
@@ -784,10 +780,34 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   }
   const queue = [...s.eventQueue].sort((a, b) => b.priority - a.priority);
   s.eventQueue = [];
-  const sitdown = buildSitDown(s);
-  const candidates = [...queue, sitdown];
-  // A random situational event, sometimes.
-  if (chance(s, 0.4)) {
+  // Never two of the same queued thing in one week; crew reports respect the per-man cooldown.
+  const seen = new Set<string>();
+  const candidates: EventInstance[] = [];
+  for (const e of queue) {
+    const k = `${e.defId}:${e.meta?.charId ?? e.meta?.rival ?? e.meta?.faction ?? e.iid}`;
+    if (seen.has(k)) continue;
+    if (!e.mandatory && e.meta?.crew && e.meta.charId && !subjectOk(s, e.defId, String(e.meta.charId))) continue;
+    seen.add(k);
+    candidates.push(e);
+  }
+  // The family's candidate for the week (its own cooldowns decide whether there is one).
+  const extra: EventInstance[] = [];
+  for (const src of [familyEventSource, ...EVENT_SOURCES]) {
+    const ev = src(s);
+    if (ev && !extra.some((x) => x.iid === ev.iid)) extra.push(ev);
+  }
+  const mandatoryCount = out.length + candidates.filter((e) => e.mandatory).length;
+  let room = MAX_POPUPS - mandatoryCount;
+  // Leave a seat for a non-mandatory queued deal, and one for the family, if there is one.
+  if (candidates.some((e) => !e.mandatory)) room -= 1;
+  if (extra.length && !candidates.some(isFamilyEvent)) room -= 1;
+  if (room > 0) {
+    const want = Math.min(room, s.week <= 1 ? 2 : chance(s, 0.45) ? 2 : 1);
+    for (const ev of pickCrewEvents(s, want)) candidates.push(ev);
+    room -= want;
+  }
+  // A situational event, sometimes.
+  if (room > 0 && chance(s, 0.3)) {
     const eligible = EVENT_DEFS.filter((d) => d.condition(s) && s.week - (s.cooldowns[d.id] ?? -999) >= d.cooldown);
     const d = weightedPick(s, eligible, (x) => x.weight(s));
     if (d) {
@@ -798,16 +818,21 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
       }
     }
   }
-  for (const src of EVENT_SOURCES) {
-    const ev = src(s);
-    if (ev) candidates.push(ev);
-  }
-  candidates.sort((a, b) => b.priority - a.priority);
+  candidates.push(...extra);
+  candidates.sort((a, b) => b.priority - a.priority || Number(b.mandatory) - Number(a.mandatory));
+  let family = out.filter(isFamilyEvent).length;
+  const actors = new Set<string>();
   for (const ev of candidates) {
-    if (out.length < MAX_POPUPS) out.push(ev);
-    else if (ev.defId !== 'sitdown' && ev.mandatory) s.eventQueue.push(ev);
+    const fam = isFamilyEvent(ev);
+    // The same man never brings two things in one week (mandatory events always fit).
+    const clash = !ev.mandatory && !!ev.meta?.crew && (ev.actors ?? []).some((a) => actors.has(a));
+    if (out.length < MAX_POPUPS && !(fam && family >= MAX_FAMILY_POPUPS) && !clash) {
+      out.push(ev);
+      if (fam) family++;
+      for (const a of ev.actors ?? []) actors.add(a);
+      markShown(s, ev);
+    } else if (ev.mandatory) s.eventQueue.push(ev);
     else if (ev.defId.startsWith('deal_')) s.eventQueue.push(ev);
   }
-  s.lastSitDownOrders = out.some((e) => e.defId === 'sitdown') ? String(sitdown.meta!.orders).split(',') : [];
   return out;
 }

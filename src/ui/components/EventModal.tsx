@@ -1,3 +1,4 @@
+import { displayName } from '../../engine/characters';
 import type { EventInstance, GameState } from '../../engine/types';
 import { Chips } from './Chips';
 import { Face } from './People';
@@ -29,7 +30,14 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
               {actors.map((c) => <Face key={c.id} s={s} c={c} size={actors.length > 1 ? 52 : 64} />)}
             </div>
           )}
-          <h2 className="font-display text-2xl text-gold-400">{ev.title}</h2>
+          <div className="min-w-0">
+            <h2 className="font-display text-2xl text-gold-400 leading-tight">{ev.title}</h2>
+            {actors.length > 0 && (
+              <div className="text-[11px] text-stone-400 mt-0.5">
+                {actors.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{displayName(c)}{c.rank !== 'civilian' ? `, ${c.rank}` : c.office ? `, ${c.office}` : ''}</span>)}
+              </div>
+            )}
+          </div>
         </div>
         <p className="mt-2 text-stone-300 leading-relaxed">{ev.text}</p>
         <div className="mt-4 space-y-2">
