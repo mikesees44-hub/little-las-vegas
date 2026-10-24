@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { isInSeason } from './calendar';
 import { capos, crew, displayName, isFree } from './characters';
 import { heat, money, type Ctx } from './ledger';
@@ -137,7 +138,7 @@ export function runCouncil(ctx: Ctx): void {
         break;
       }
       case 'cons_secrets':
-        s.flags.intel = (s.flags.intel ?? 0) + 10 * k;
+        s.flags.intel = (s.flags.intel ?? 0) + 10 * k * (1 + perkMod(s, 'intel') / 100);
         break;
       case 'cons_table':
         s.flags.tableFrac = (s.flags.tableFrac ?? 0) + 0.6 * k;
@@ -162,7 +163,7 @@ export function runCouncil(ctx: Ctx): void {
         break;
       case 'fix_favors':
         money(ctx, -200, `${who}: lunches in Trenton`, 'cost');
-        if (chance(s, 0.06 * k)) {
+        if (chance(s, 0.06 * k * (1 + perkMod(s, 'favor') / 100))) {
           s.favors += 1;
           ctx.log.push(`${displayName(c)} banked a favor with a state assemblyman.`);
         }

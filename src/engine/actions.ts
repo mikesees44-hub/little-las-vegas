@@ -1,3 +1,4 @@
+import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { CATALOG, SHOP_KINDS } from './catalog';
 import { applyEffects, fmtMoney } from './effects';
@@ -304,6 +305,39 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
         cost: 0,
         because: `set the ${SEAT_INFO[a.seat].name.toLowerCase()} to ${t.name.toLowerCase()}`,
         disabledReason: t.seat !== a.seat ? 'Wrong seat' : t.targeted && !r ? 'Pick a rival' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  lifestyle: {
+    preview: (s, a) => {
+      const b = s.characters[s.playerId];
+      const L = LIFESTYLES[a.focus];
+      const label = `Lifestyle: ${L.name}`;
+      const cur = b?.lifestyle;
+      return {
+        title: cur ? `Change to the ${L.name} life` : `Live the ${L.name} life`,
+        detail: `${L.text} Learns faster with ${L.skill} (yours: ${b?.attributes[L.skill] ?? 0}).${cur && cur.xp ? ` Switching loses ${cur.xp} XP of progress; perks you have are kept.` : ''}`,
+        effects: [{ type: 'lifestyle', focus: a.focus, label }],
+        cost: 0,
+        because: `took up the ${L.name.toLowerCase()} life`,
+        disabledReason: cur?.focus === a.focus ? 'Already your lifestyle' : undefined,
+        category: 'event',
+      };
+    },
+  },
+  perk: {
+    preview: (s, a) => {
+      const b = s.characters[s.playerId];
+      const p = findPerk(a.perk);
+      const label = `Perk: ${p?.name ?? '?'}`;
+      return {
+        title: `Take the perk ${p?.name ?? '?'}`,
+        detail: p?.text ?? '',
+        effects: [{ type: 'perk', perk: a.perk, label }],
+        cost: 0,
+        because: `learned ${p?.name ?? 'a perk'}`,
+        disabledReason: b ? perkBlocked(b, a.perk) : 'No boss',
         category: 'event',
       };
     },
@@ -646,6 +680,15 @@ export function availableActions(s: GameState): PlayerAction[] {
     const tasks = (Object.keys(TASKS) as (keyof typeof TASKS)[]).filter((t) => TASKS[t].seat === seat);
     const t = tasks[s.week % tasks.length];
     out.push({ kind: 'councilTask', seat, task: t, target: TASKS[t].targeted ? 'feldstein' : undefined });
+  }
+  const boss = s.characters[s.playerId];
+  if (!boss?.lifestyle) out.push({ kind: 'lifestyle', focus: LIFESTYLE_IDS[(s.week + 2) % LIFESTYLE_IDS.length] });
+  if (boss?.lifestyle?.points) {
+    const L = LIFESTYLES[boss.lifestyle.focus];
+    for (const tr of L.trees) {
+      const next = tr.perks.find((p) => !boss.lifestyle!.perks.includes(p.id));
+      if (next) out.push({ kind: 'perk', perk: next.id });
+    }
   }
   const ed = (['omerta', 'blitz', 'nojunk', 'lowprofile'] as const)[s.week % 4];
   out.push({ kind: 'edict', edict: ed, on: !s.edicts[ed] });

@@ -1,3 +1,4 @@
+import { LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { crew, displayName, hasTrait, livingDynasty, player } from './characters';
 import { killCharacter } from './dynasty';
 import { hireFrontMan } from './goals';
@@ -102,6 +103,10 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       const c = e.charId ? s.characters[e.charId] : undefined;
       return e.charId !== undefined ? `${c ? c.firstName + ' ' + c.lastName : 'Nobody'} → ${SEAT_INFO[e.seat].name}` : `${SEAT_INFO[e.seat].name}: ${e.task ? TASKS[e.task].name : ''}`;
     }
+    case 'lifestyle':
+      return `Lifestyle: ${LIFESTYLES[e.focus].name}`;
+    case 'perk':
+      return `Learn ${findPerk(e.perk)?.name ?? '?'} — ${findPerk(e.perk)?.text ?? ''}`;
     case 'policy': {
       const c = s.characters[e.charId];
       return `${c?.firstName ?? '?'}: ${POLICY_LABEL[e.policy]}`;
@@ -402,6 +407,20 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
           c.defectStage = 0;
         }
       }
+      break;
+    }
+    case 'lifestyle': {
+      const b = s.characters[s.playerId];
+      if (!b) break;
+      b.lifestyle = { focus: e.focus, xp: 0, points: b.lifestyle?.points ?? 0, perks: b.lifestyle?.perks ?? [] };
+      break;
+    }
+    case 'perk': {
+      const b = s.characters[s.playerId];
+      if (!b?.lifestyle || perkBlocked(b, e.perk)) break;
+      b.lifestyle.points -= 1;
+      b.lifestyle.perks.push(e.perk);
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${b.firstName} ${b.lastName} learned ${findPerk(e.perk)?.name}.`, kind: 'misc' });
       break;
     }
     case 'policy': {

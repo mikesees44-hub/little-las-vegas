@@ -112,6 +112,16 @@ export interface Character {
   office?: string;
   /** This man secretly informs for another faction. */
   informantFor?: FactionId;
+  /** The lifestyle this man lives (the boss chooses his). */
+  lifestyle?: LifestyleState;
+}
+
+export type LifestyleId = 'muscle' | 'money' | 'politics' | 'family' | 'shadows';
+export interface LifestyleState {
+  focus: LifestyleId;
+  xp: number;
+  points: number;
+  perks: string[];
 }
 
 export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'doctor';
@@ -317,6 +327,8 @@ export type Effect =
   | ({ type: 'wealth'; charId: string; amount: number } & EffectBase)
   | ({ type: 'seat'; seat: Seat; charId?: string; task?: CouncilTask; target?: string } & EffectBase)
   | ({ type: 'policy'; charId: string; policy: CrewPolicy } & EffectBase)
+  | ({ type: 'lifestyle'; focus: LifestyleId } & EffectBase)
+  | ({ type: 'perk'; perk: string } & EffectBase)
   | ({ type: 'contract'; charId: string; keep: number } & EffectBase)
   | ({ type: 'edict'; edict: EdictId; on: boolean } & EffectBase)
   | ({ type: 'hire'; specId: string } & EffectBase)
@@ -661,7 +673,9 @@ export type PlayerAction =
   | { kind: 'policy'; charId: string; policy: CrewPolicy }
   | { kind: 'contract'; charId: string; keep: number }
   | { kind: 'edict'; edict: EdictId; on: boolean }
-  | { kind: 'hire'; specId: string };
+  | { kind: 'hire'; specId: string }
+  | { kind: 'lifestyle'; focus: LifestyleId }
+  | { kind: 'perk'; perk: string };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

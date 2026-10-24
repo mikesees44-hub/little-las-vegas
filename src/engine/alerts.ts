@@ -10,7 +10,7 @@ import type { GameState } from './types';
  * The alert rail (CK's right-hand icons): things that need the boss's
  * attention. Pure, derived from the state each render.
  */
-export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family';
+export type AlertKind = 'unhappy' | 'defector' | 'heat' | 'money' | 'heir' | 'loan' | 'staff' | 'decision' | 'scheme' | 'dispute' | 'war' | 'family' | 'lifestyle';
 
 export interface Alert {
   kind: AlertKind;
@@ -57,5 +57,7 @@ export function alerts(s: GameState): Alert[] {
   for (const d of s.disputes.filter((x) => !x.ruling)) out.push({ kind: 'dispute', severity: d.defendant === 'player' ? 'warn' : 'info', title: `Dispute at the Table (week ${d.hearingWeek})`, text: d.claim, tab: 'table' });
   for (const w of s.wars) out.push({ kind: 'war', severity: w.score < -30 ? 'danger' : 'warn', title: `At war: ${s.rivals.find((r) => r.id === w.rival)?.shortName}`, text: `War score ${w.score}.`, tab: 'table' });
   if (!chooseHeir(s, boss).heir) out.push({ kind: 'heir', severity: 'danger', title: 'No heir', text: 'If you die now, the house dies with you.', tab: 'family' });
+  if (!boss.lifestyle) out.push({ kind: 'lifestyle', severity: 'info', title: 'Choose how to rule', text: `${boss.firstName} has no lifestyle yet: pick one to earn perks.`, tab: 'lifestyle' });
+  else if (boss.lifestyle.points > 0) out.push({ kind: 'lifestyle', severity: 'info', title: `${boss.lifestyle.points} perk point${boss.lifestyle.points > 1 ? 's' : ''} to spend`, text: 'Learn a perk on the Lifestyle tab.', tab: 'lifestyle' });
   return out;
 }

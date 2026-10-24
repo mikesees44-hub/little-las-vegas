@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { idleMen } from './business';
 import { ageOn } from './calendar';
 import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player, rollTraits } from './characters';
@@ -58,6 +59,9 @@ export function crewHustle(ctx: Ctx, mult: number): number {
     groups[pol].n++;
     groups[pol].take += boss;
   }
+  const st = 1 + perkMod(s, 'street') / 100;
+  groups.tax.take *= st;
+  groups.squeeze.take *= st;
   let total = 0;
   if (groups.tax.n) total += money(ctx, Math.round(groups.tax.take), `Street hustle: ${groups.tax.n} men hand over 40%`, 'street');
   if (groups.squeeze.n) total += money(ctx, Math.round(groups.squeeze.take), `Street hustle: squeezing ${groups.squeeze.n} men for 85%`, 'street');
@@ -85,6 +89,7 @@ export function crewWeek(ctx: Ctx): void {
   for (const c of crew(s)) {
     if (c.dynasty || c.specialty || !isFree(s, c) || (c.rank !== 'soldier' && c.rank !== 'associate') || seatOf(s, c.id)) continue;
     c.neglect = (c.neglect ?? 0) + (c.policy === 'earn' ? (s.week % 2) : c.policy === 'squeeze' ? 2 : 1);
+    if (perkMod(s, 'defection') && s.week % 3 === 0) c.neglect = Math.max(0, c.neglect - perkMod(s, 'defection'));
     const op = opinion(s, c.id, boss.id);
     const stage = c.defectStage ?? 0;
     if (hasTrait(c, 'Loyal-to-a-fault')) continue;

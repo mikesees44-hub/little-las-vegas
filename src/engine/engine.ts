@@ -1,3 +1,4 @@
+import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
 import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
@@ -99,6 +100,7 @@ function monthlyTick(ctx: Ctx): void {
   rivalSuccession(ctx);
   crewMonth(ctx);
   secretsMonth(s);
+  lifestyleMonth(ctx);
   // Disloyal men may walk out.
   const boss = player(s);
   for (const m of crew(s)) {
@@ -210,6 +212,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     runEconomy(ctx);
     runCouncil(ctx);
     crewWeek(ctx);
+    lifestyleWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
   }

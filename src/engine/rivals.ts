@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { gameYear } from './calendar';
 import { crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { fmtMoney, shiftInfluence } from './effects';
@@ -325,7 +326,7 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   const protect = activeTask(s, 'enf_protect');
   const war = s.wars.find((w) => w.rival === r.id);
   if (war) changeScore(s, war.id, -5);
-  const want = Math.round(randInt(s, 1000, 4500) * (1 - Math.min(0.6, 0.4 * protect)));
+  const want = Math.round(randInt(s, 1000, 4500) * (1 - Math.min(0.6, 0.4 * protect)) * (1 - perkMod(s, 'strikeDamage') / 100));
   const lost = rivalMoneyHit(ctx, want, `${r.shortName} crew: ${k.label}`, caps.moneyFrac);
   rivalHeatHit(ctx, 'local', 2, `${r.shortName} crew: ${k.label} draws cops`, caps.heatPerBar);
   respect(ctx, -1, `${r.shortName} crew: ${k.label}`, 'rival');

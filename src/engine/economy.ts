@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { isInSeason, seasonMultiplier } from './calendar';
 import { CATALOG } from './catalog';
 import { expectedTake, isOpen, owned, ownsKind, staffFactor, washCapacity } from './business';
@@ -124,6 +125,8 @@ export function runEconomy(ctx: Ctx): void {
   const jailed = crew(s).filter((c) => !isFree(s, c));
   if (jailed.length) money(ctx, -40 * jailed.length, `Lawyers & family support: ${jailed.length} man${jailed.length > 1 ? 'men' : ''} inside`.replace('man men', 'men'), 'cost');
   if (upkeep) money(ctx, -upkeep, `Upkeep: ${s.businesses.filter((b) => b.owner === 'player').length} businesses`, 'cost');
+  const thrift = Math.round(upkeep * perkMod(s, 'upkeep') / 100);
+  if (thrift > 0) money(ctx, thrift, `Perks: thin margins on upkeep (−${perkMod(s, 'upkeep')}%)`, 'cost');
   money(ctx, -COP_PAYOFF, 'Envelopes for the beat cops', 'cost');
   if (!isInSeason(s.date)) {
     // The off-season bites: heating oil, idle payroll, the boardwalk boarded up.
@@ -246,7 +249,7 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
     // Side-risks of particular rackets.
     if (b.kind === 'vice' && chance(s, 0.025)) scheduleConsequence(s, 'vice_scandal', 1, 3, `ran ${b.name}`, { biz: b.name });
     if (b.kind === 'stag' && chance(s, 0.02)) scheduleConsequence(s, 'postal_inspectors', 1, 4, `ran ${b.name}`, { biz: b.name });
-    if (b.kind === 'blackmail' && chance(s, 0.07 * staffFactor(s, b))) {
+    if (b.kind === 'blackmail' && chance(s, 0.07 * staffFactor(s, b) * (1 + perkMod(s, 'favor') / 100))) {
       s.favors += 1;
       ctx.log.push(`${b.name} turned a councilman's hotel register into a favor you can call in.`);
     }
@@ -258,6 +261,8 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
       }
     }
   }
+  const bonusPct = perkMod(s, 'income');
+  if (bonusPct && gross > 0) gross += money(ctx, Math.round(gross * bonusPct / 100), `Perks: an eye for a racket (+${bonusPct}% business income)`, 'business');
   return { gross, clean, upkeep };
 }
 

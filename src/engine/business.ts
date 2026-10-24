@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { isInSeason } from './calendar';
 import { BIZ_NAMES, CATALOG, seasonalMult } from './catalog';
 import { crew, displayName, hasTrait, isFree } from './characters';
@@ -134,6 +135,7 @@ export function washCapacity(s: GameState): number {
   const books = crew(s).find((c) => c.specialty === 'accountant' && isFree(s, c));
   if (books) cap *= 1.25;
   cap *= 1 + 0.2 * Math.min(1.5, activeTask(s, 'bag_launder'));
+  cap *= 1 + perkMod(s, 'launder') / 100;
   return Math.round(cap);
 }
 

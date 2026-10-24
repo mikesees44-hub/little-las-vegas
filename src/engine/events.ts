@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { ageOn, gameYear, monthKey, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
 import { MAX_PER_KIND } from './actions';
@@ -39,12 +40,12 @@ function rnd100(_s: GameState, n: number): number {
 /* ------------------------------------------------------------------ */
 
 export const BAGMAN_START_WEEK = 3;
-export const TRIBUTE_RATE = 0.1;
+export const TRIBUTE_RATE = 0.09;
 
 export function envelopeSize(s: GameState): number {
   const recent = s.incomeHistory.slice(-4);
   const avg = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 2000;
-  return Math.max(600, rnd100(s, avg * 4.33 * TRIBUTE_RATE));
+  return Math.max(600, rnd100(s, avg * 4.33 * TRIBUTE_RATE * (1 - perkMod(s, 'tribute') / 100)));
 }
 
 export function bagmanDue(s: GameState): boolean {
