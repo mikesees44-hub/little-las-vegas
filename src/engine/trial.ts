@@ -9,7 +9,7 @@ import {
   type MgOption, type MgOutcome, type MgSession, type MinigameDef,
 } from './minigame';
 import { BULLETIN, LEADER } from './newspaper';
-import { addOpinion } from './relations';
+import { addOpinion, getRelation } from './relations';
 import {
   BASE, buildCase, caseStrength, convictionP, credibilityOf, DEFENSE_STRIKES, fixerOf, hangChance, LAWYER_BY_ID, LAWYERS,
   makePool, npcFlipReasons, pickJudge, SEATS, sumP, type Angle, type CaseItem, type Judge, type Juror, type OddsInput,
@@ -1311,7 +1311,7 @@ export function trialWeek(ctx: Ctx): void {
   if (s.week % 4 === 0) {
     for (const c of Object.values(s.characters)) {
       if (!c.alive || c.faction !== 'law' || mg.known[c.id] || c.rank !== 'civilian') continue;
-      const r = s.relations[`${s.playerId}->${c.id}`] ?? s.relations[`${s.playerId}|${c.id}`];
+      const r = getRelation(s, s.playerId, c.id);
       if (r?.modifiers.some((m) => m.reason === 'Rat')) registerWitness(s, c, false);
       mg.known[c.id] = s.week;
     }

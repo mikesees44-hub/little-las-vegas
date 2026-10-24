@@ -3,4 +3,5 @@
  * the framework. The engine imports this file once.
  */
 import './trial';
+import './scenes';
 export * from './minigame';

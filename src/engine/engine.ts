@@ -4,6 +4,8 @@ import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
 import { attachMinigames, minigameFirst } from './minigames';
 import { trialWeek } from './trial';
+import { scenesWeek } from './scenes';
+import { reelsWeek } from './reels';
 import { newsWeek } from './newspaper';
 import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
@@ -235,6 +237,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     lifestyleWeek(ctx);
     legalWeek(ctx);
     trialWeek(ctx);
+    scenesWeek(s);
     underbellyWeek(ctx);
     officeWeek(s);
     regimesWeek(ctx);
@@ -260,6 +263,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     riseGoalsWeek(ctx);
     dynastyWeek(ctx);
     newsWeek(ctx);
+    reelsWeek(ctx, input);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

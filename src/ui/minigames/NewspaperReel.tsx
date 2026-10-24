@@ -11,18 +11,9 @@ import { prefersReducedMotion, useTypewriter } from '../cutscene/Cutscene';
  * fade. The photo panels are drawn in code and never graphic.
  */
 
-export type ReelPhoto = 'car' | 'boardwalk' | 'diner' | 'window' | 'dock' | 'arrest' | 'restaurant' | 'courthouse';
-
-export interface Reel {
-  paper: string;
-  headline: string;
-  subhead: string;
-  date: GameDate;
-  photo: ReelPhoto;
-  consequence: string;
-  /** Editorial page-14 placement, Little Chicago editorial ... */
-  note?: string;
-}
+import type { Reel as EngineReel, ReelPhoto } from '../../engine/reels';
+export type { ReelPhoto };
+export type Reel = Omit<EngineReel, 'week'>;
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 

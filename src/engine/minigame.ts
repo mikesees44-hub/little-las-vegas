@@ -24,7 +24,7 @@ import type { Ctx } from './ledger';
  *    simulator's random player and an unanswered popup both take this road.
  */
 
-export type MinigameId = 'arraignment' | 'trial' | 'cards' | 'sitdown' | 'collection' | 'heist' | 'sweep' | 'election';
+export type MinigameId = 'arraignment' | 'trial' | 'cards' | 'sitdown' | 'collection' | 'heist' | 'sweep' | 'election' | 'madeboss' | 'ceremony';
 
 export interface MgOption {
   id: string;
@@ -153,6 +153,8 @@ export interface MgState {
   known: Record<string, number>;
   /** Retrials and delayed cases (a hung jury, a mistrial): who, when, which kind. */
   docket: { defendantId: string; due: number; mode: 'crew' | 'rival'; weeks: number }[];
+  /** This week's front pages for the newspaper reel (reels.ts). */
+  reels?: import('./reels').Reel[];
 }
 
 export function mgOf(s: GameState): MgState {
@@ -280,7 +282,7 @@ export function eventHasMinigame(ev: EventInstance): boolean {
 
 /** Chip text for a mini-game choice. */
 export function describeMinigame(e: Extract<Effect, { type: 'minigame' }>): string {
-  const NAMES: Record<MinigameId, string> = { arraignment: 'The arraignment', trial: 'The trial', cards: 'The card game', sitdown: 'The sit-down', collection: 'The collection round', heist: 'The job', sweep: 'The sweep', election: 'Election night' };
+  const NAMES: Record<MinigameId, string> = { arraignment: 'The arraignment', trial: 'The trial', cards: 'The card game', sitdown: 'The sit-down', collection: 'The collection round', heist: 'The job', sweep: 'The sweep', election: 'Election night', madeboss: 'The scene', ceremony: 'The ceremony' };
   return e.params.play === 0 ? `${NAMES[e.game]} plays out on its own` : `▶ ${NAMES[e.game]}: you play it (or let it play out)`;
 }
 

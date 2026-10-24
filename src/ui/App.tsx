@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
-import { newGame } from '../engine/newGame';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
@@ -34,6 +33,7 @@ import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 import { minigameOf, opensScene } from '../engine/minigames';
 import { MinigameScreen } from './minigames/MinigameScreen';
+import { NewspaperReel, type Reel } from './minigames/NewspaperReel';
 
 export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'gifts';
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
@@ -59,7 +59,7 @@ function freshSeed(): string {
 }
 
 export function App() {
-  const [s, setS] = useState<GameState>(() => loadGame() ?? newGame(freshSeed()));
+  const [s, setS] = useState<GameState>(() => loadGame() ?? newGameWith(freshSeed()));
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [mgMoves, setMgMoves] = useState<Record<string, string[]>>({});
   const [scene, setScene] = useState<{ iid: string; choiceId: string; m: NonNullable<ReturnType<typeof minigameOf>> } | null>(null);
@@ -88,16 +88,37 @@ export function App() {
   const [clockNote, setClockNote] = useState<string | undefined>();
   const [ticker, setTicker] = useState<string | undefined>();
   const [cues, setCues] = useState<CutsceneCue[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
+
+  // The scripted scenes (Made the boss) open by themselves, once.
+  const [autoOpened, setAutoOpened] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (scene || cues.length || reports) return;
+    const i = s.pendingEvents.findIndex((e) => e.defId === 'made_boss' && !answers[e.iid] && !autoOpened[e.iid]);
+    if (i < 0) return;
+    const ev = s.pendingEvents[i];
+    const ch = ev.choices.find((c) => c.id === 'play');
+    const m = ch ? minigameOf(ch) : undefined;
+    setAutoOpened((x) => ({ ...x, [ev.iid]: true }));
+    if (!m) return;
+    setAdvancing(false);
+    setEventIdx(i);
+    setScene({ iid: ev.iid, choiceId: 'play', m });
+  }, [s, scene, cues.length, reports, answers, autoOpened]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
     const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves };
+    // A ceremony the player sat through replaces the old single card.
+    const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
+    const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
-      setCues(cutscenesBetween(s, r.state));
+      setCues(cutscenesBetween(s, r.state).filter(cueFilter));
+      setReels(r.state.mg?.reels ?? []);
       if (quiet) {
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
@@ -109,7 +130,8 @@ export function App() {
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
-      setCues(cutscenesBetween(s, r.state));
+      setCues(cutscenesBetween(s, r.state).filter(cueFilter));
+      setReels(r.state.mg?.reels ?? []);
       setReports(r.reports);
     }
     setAnswers({});
@@ -177,7 +199,7 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!scene || !!sheet || !!planner || !!reports || cues.length > 0;
+  const busy = !!current || !!scene || !!sheet || !!planner || !!reports || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: unanswered.length,
     step: () => run('week', answers, true),
@@ -310,7 +332,8 @@ export function App() {
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
-      {reports && !current && !sheet && !planner && !cues.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
+      {reports && !current && !sheet && !planner && !cues.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>

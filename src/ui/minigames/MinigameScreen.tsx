@@ -6,6 +6,9 @@ import { prefersReducedMotion, useTypewriter } from '../cutscene/Cutscene';
 import { MgStill } from './MgStill';
 import { NewspaperReel, type ReelPhoto } from './NewspaperReel';
 import { TrialPanel } from './TrialPanel';
+import { CinematicBeat } from './Cinematic';
+
+const CINEMATIC: Partial<Record<MinigameId, boolean>> = { madeboss: true, ceremony: true };
 
 /**
  * The mini-game screen: a cutscene-style intro card, then the scene itself
@@ -85,7 +88,11 @@ export function MinigameScreen({ s, game, iid, params, parts, onDone, onCancel }
         </div>
       )}
 
-      {stage !== 'intro' && (
+      {stage === 'play' && CINEMATIC[game] && !ses.done && (
+        <CinematicBeat s={s} ses={ses} opts={opts} onMove={move} onPlayOut={playOut} />
+      )}
+
+      {stage !== 'intro' && !(CINEMATIC[game] && !ses.done && stage === 'play') && (
         <>
           <header className="flex items-center gap-3 px-3 sm:px-6 py-2 border-b border-noir-700 bg-noir-950">
             <div className="min-w-0">
