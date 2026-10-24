@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { crew, displayName, isFree } from './characters';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
 import type { Ctx } from './ledger';
@@ -47,7 +48,7 @@ export function warWith(s: GameState, rival: string): War | undefined {
 export function raidOdds(s: GameState, w: War): number {
   const r = s.rivals.find((x) => x.id === w.rival);
   const mine = playerMuscle(s);
-  return Math.max(0.1, Math.min(0.9, 0.5 + (mine - (r?.muscle ?? 50)) / 120));
+  return Math.max(0.1, Math.min(0.9, 0.5 + (mine - (r?.muscle ?? 50)) / 120 + perkMod(s, 'raid') / 100));
 }
 
 export function startWar(ctx: Ctx, rival: RivalId, district: string, cb: CasusBelli, sanctioned: boolean): War {

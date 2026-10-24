@@ -55,6 +55,38 @@ export function initDynasty(s: GameState): void {
   d.cooldowns.deathScan = s.week;
 }
 
+/**
+ * A start (Rise to Power, House of Sees) reshapes the family after
+ * `initDynasty` ran: people are removed, re-aged or created. Bring the
+ * dynasty layer back in line: drop records of people who no longer exist,
+ * seed new members, re-derive ages-based flags and the heir's goal.
+ */
+export function refreshDynastyAfterStart(s: GameState): void {
+  const d = ensureDynState(s);
+  for (const id of Object.keys(d.people)) if (!s.characters[id]) delete d.people[id];
+  d.alliances = d.alliances.filter((a) => (!a.ourId || s.characters[a.ourId]) && (!a.theirId || s.characters[a.theirId]));
+  const boss = player(s);
+  const heir = chooseHeir(s, boss).heir;
+  for (const c of Object.values(s.characters)) {
+    if (!c.dynasty || !c.alive) continue;
+    const fresh = !d.people[c.id];
+    const p = famMut(s, c.id);
+    if (fresh) {
+      seedCongenital(s, c);
+      applyCongenital(c, p.congenital);
+      p.wed = true;
+      p.christened = true;
+      if (c.spouseId) p.marriedWeek = -100;
+    }
+    const age = ageOn(c.birth, s.date);
+    p.cameOfAge = age >= 16;
+    p.childhood = age >= 11 ? 2 : age >= 7 ? 1 : 0;
+    if (fresh || c.id === heir?.id || c.id === boss.id) p.goal = seedGoal(s, c, c.id === heir?.id);
+  }
+  d.lastHeadId = s.playerId;
+  d.madeCount = madeMen(s);
+}
+
 function madeMen(s: GameState): number {
   return crew(s).filter((c) => c.rank === 'soldier' || c.rank === 'capo' || c.rank === 'underboss' || c.rank === 'consigliere').length;
 }

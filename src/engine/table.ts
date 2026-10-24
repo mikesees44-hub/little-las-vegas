@@ -1,4 +1,5 @@
 import { dynastyTableLean } from './familyHouses';
+import { perkMod } from './lifestyle';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { applyEffects, fmtMoney } from './effects';
 import { playerHook } from './interactions';
@@ -78,6 +79,8 @@ export function forecast(s: GameState, d: Dispute): Lean[] {
     if (m.faction === 'philly' && m.id === chair(s)?.id) reasons.push({ label: 'Family heat on you', value: -Math.round(s.heat.family / 4) });
     if (d.kind === 'sanction' && d.plaintiff !== 'player') reasons.push({ label: 'You killed a made man without asking', value: -20 });
     reasons.push(...dynastyTableLean(s, m));
+    const pv = perkMod(s, 'vote');
+    if (pv) reasons.push({ label: 'Your standing at the Table (perks)', value: pv });
     reasons.push({ label: 'His own reasons', value: noise(d, m) });
     return { member: m, value: reasons.reduce((a, r) => a + r.value, 0), reasons };
   });

@@ -1,3 +1,8 @@
+import { officeWeek } from './office';
+import { underbellyWeek } from './underbelly';
+import { legalWeek } from './longgame';
+import { newsWeek } from './newspaper';
+import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
 import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
@@ -101,6 +106,7 @@ function monthlyTick(ctx: Ctx): void {
   crewMonth(ctx);
   secretsMonth(s);
   if (!s.gameOver) dynastyMonth(ctx);
+  lifestyleMonth(ctx);
   // Disloyal men may walk out.
   const boss = player(s);
   for (const m of crew(s)) {
@@ -214,6 +220,10 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     runEconomy(ctx);
     runCouncil(ctx);
     crewWeek(ctx);
+    lifestyleWeek(ctx);
+    legalWeek(ctx);
+    underbellyWeek(ctx);
+    officeWeek(s);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
   }
@@ -232,6 +242,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     weeklyHousekeeping(ctx);
     runGoals(ctx);
     dynastyWeek(ctx);
+    newsWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

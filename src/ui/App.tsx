@@ -2,11 +2,20 @@ import { useEffect, useMemo, useState } from 'react';
 import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
-import type { GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
+import { STARTS, newGameWith, type StartId } from '../engine/starts';
+import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
+import { cutscenesBetween } from '../engine/cutscenes';
+import { CutscenePlayer } from './cutscene/Cutscene';
+import { MusicToggle } from './audio';
 import { ClockControls, newWarnings, tickerLine, useClock, type Speed } from './clock';
 import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
 import { TablePanel } from './components/TablePanel';
+import { LifestylePanel } from './components/Lifestyle';
+import { Newspapers } from './components/Newspaper';
+import { LawPanel } from './components/LawPanel';
+import { UnderbellyPanel } from './components/UnderbellyPanel';
+import { OfficePanel } from './components/OfficePanel';
 import { Businesses } from './components/Businesses';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
@@ -19,14 +28,18 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'family' | 'chronicle';
+export type Tab = 'map' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'map', label: 'The Island' },
   { id: 'business', label: 'Rackets & Fronts' },
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
+  { id: 'lifestyle', label: 'Lifestyle' },
   { id: 'family', label: 'Family' },
+  { id: 'law', label: 'The Law' },
+  { id: 'town', label: 'The Town' },
+  { id: 'papers', label: 'The Papers' },
   { id: 'chronicle', label: 'Chronicle' },
 ];
 type Mode = 'week' | 'month';
@@ -47,6 +60,7 @@ export function App() {
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
   const [seedInput, setSeedInput] = useState('');
+  const [startPick, setStartPick] = useState<StartId>('classic');
   const [orders, setOrders] = useState<PlayerAction[]>([]);
   const ordersApi = useMemo(() => ({
     orders,
@@ -61,6 +75,7 @@ export function App() {
   const [speed, setSpeed] = useState<Speed>(0);
   const [clockNote, setClockNote] = useState<string | undefined>();
   const [ticker, setTicker] = useState<string | undefined>();
+  const [cues, setCues] = useState<CutsceneCue[]>([]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
@@ -70,6 +85,7 @@ export function App() {
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
+      setCues(cutscenesBetween(s, r.state));
       if (quiet) {
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
@@ -81,6 +97,7 @@ export function App() {
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
+      setCues(cutscenesBetween(s, r.state));
       setReports(r.reports);
     }
     setAnswers({});
@@ -112,9 +129,9 @@ export function App() {
     else run(mode, next);
   }
 
-  function restart(seed?: string) {
+  function restart(seed?: string, start: StartId = 'classic') {
     clearSave();
-    setS(newGame(seed || freshSeed()));
+    setS(newGameWith(seed || freshSeed(), start));
     setAnswers({});
     setOrders([]);
     setReports(null);
@@ -130,7 +147,7 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!sheet || !!planner || !!reports;
+  const busy = !!current || !!sheet || !!planner || !!reports || cues.length > 0;
   useClock({
     speed, s, busy, unanswered: unanswered.length,
     step: () => run('week', answers, true),
@@ -160,6 +177,7 @@ export function App() {
         {!s.gameOver && (
           <>
             <ClockControls speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote} />
+            <MusicToggle />
             <button className="btn-gold py-1.5" onClick={() => startAdvance('week')}>Advance Week</button>
             <button className="btn-ghost py-1.5" onClick={() => startAdvance('month')}>Advance Month</button>
             <div className="text-xs text-stone-400">
@@ -181,7 +199,11 @@ export function App() {
         <div className="panel p-6 text-center">
           <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
           <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
-          <button className="btn-gold mt-4" onClick={() => restart()}>Start a new dynasty</button>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {(Object.keys(STARTS) as StartId[]).map((k) => (
+              <button key={k} className={k === 'classic' ? 'btn-gold' : 'btn-ghost'} title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
+            ))}
+          </div>
         </div>
       )}
 
@@ -201,9 +223,18 @@ export function App() {
           {tab === 'crew' && <CrewList s={s} />}
           {tab === 'schemes' && <SchemesPanel s={s} />}
           {tab === 'table' && <TablePanel s={s} />}
+          {tab === 'lifestyle' && <LifestylePanel s={s} />}
           {tab === 'family' && (
             <FamilyTab s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
           )}
+          {tab === 'law' && <LawPanel s={s} />}
+          {tab === 'town' && (
+            <div className="space-y-6">
+              <OfficePanel s={s} />
+              <UnderbellyPanel s={s} />
+            </div>
+          )}
+          {tab === 'papers' && <Newspapers s={s} />}
           {tab === 'chronicle' && <Chronicle s={s} />}
         </main>
       )}
@@ -211,14 +242,18 @@ export function App() {
       <footer className="panel p-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
         <span>Seed: <span className="text-stone-300">{s.seed}</span></span>
         <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed (optional)" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-36" />
-        <button className="btn-ghost text-xs py-1" onClick={() => window.confirm('Abandon this game and start over?') && restart(seedInput.trim())}>New game</button>
+        <select value={startPick} onChange={(e) => setStartPick(e.target.value as StartId)} title={STARTS[startPick].text} data-testid="start-pick" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200">
+          {(Object.keys(STARTS) as StartId[]).map((k) => <option key={k} value={k}>{STARTS[k].name}</option>)}
+        </select>
+        <button className="btn-ghost text-xs py-1" onClick={() => window.confirm(`Abandon this game and start over? ${STARTS[startPick].text}`) && restart(seedInput.trim(), startPick)}>New game</button>
         <span className="ml-auto">Saved automatically in this browser.</span>
       </footer>
 
       {current && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
-      {reports && !current && !sheet && !planner && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
+      {reports && !current && !sheet && !planner && !cues.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>

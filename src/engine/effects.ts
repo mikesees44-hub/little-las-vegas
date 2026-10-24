@@ -1,3 +1,6 @@
+import { applyUnderbelly } from './underbelly';
+import { TRIAL_WEEKS, applyLegal } from './longgame';
+import { LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { crew, displayName, hasTrait, livingDynasty, player } from './characters';
 import { killCharacter } from './dynasty';
 import { applyDynOp, describeDynOp } from './family';
@@ -103,6 +106,14 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       const c = e.charId ? s.characters[e.charId] : undefined;
       return e.charId !== undefined ? `${c ? c.firstName + ' ' + c.lastName : 'Nobody'} → ${SEAT_INFO[e.seat].name}` : `${SEAT_INFO[e.seat].name}: ${e.task ? TASKS[e.task].name : ''}`;
     }
+    case 'underbelly':
+      return e.op === 'exposure' ? `+${e.amount ?? 0} proof against the Harbor Crew` : e.op === 'strength' ? `${(e.amount ?? 0) <= 0 ? '−' : '+'}${Math.abs(e.amount ?? 0)} Harbor Crew strength` : e.op === 'ally' ? 'Allies against the Harbor Crew' : e.op === 'expose' ? 'The Harbor Crew exposed (−60 strength)' : `Harbor Crew run off (−${e.amount ?? 0} strength)`;
+    case 'legal':
+      return e.op === 'defense' ? `${(e.amount ?? 0) >= 0 ? '+' : '−'}${Math.abs(e.amount ?? 0)} defense` : e.op === 'evidence' ? `${(e.amount ?? 0) <= 0 ? '−' : '+'}${Math.abs(e.amount ?? 0)} evidence against you` : e.op === 'bail' ? 'Out on bail' : e.op === 'jail' ? 'Waits for trial in a cell' : e.op === 'plea' ? 'Prison (a shorter stretch)' : e.op === 'fight' ? `Trial in ${TRIAL_WEEKS} weeks` : e.op === 'verdict' ? 'The jury decides' : `Parole odds ${(e.amount ?? 0) >= 0 ? '+' : '−'}${Math.abs(e.amount ?? 0)}`;
+    case 'lifestyle':
+      return `Lifestyle: ${LIFESTYLES[e.focus].name}`;
+    case 'perk':
+      return `Learn ${findPerk(e.perk)?.name ?? '?'} — ${findPerk(e.perk)?.text ?? ''}`;
     case 'policy': {
       const c = s.characters[e.charId];
       return `${c?.firstName ?? '?'}: ${POLICY_LABEL[e.policy]}`;
@@ -405,6 +416,26 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
           c.defectStage = 0;
         }
       }
+      break;
+    }
+    case 'legal':
+      applyLegal(ctx, e.op, e.amount);
+      break;
+    case 'underbelly':
+      applyUnderbelly(ctx, e.op, e.amount, e.rival);
+      break;
+    case 'lifestyle': {
+      const b = s.characters[s.playerId];
+      if (!b) break;
+      b.lifestyle = { focus: e.focus, xp: 0, points: b.lifestyle?.points ?? 0, perks: b.lifestyle?.perks ?? [] };
+      break;
+    }
+    case 'perk': {
+      const b = s.characters[s.playerId];
+      if (!b?.lifestyle || perkBlocked(b, e.perk)) break;
+      b.lifestyle.points -= 1;
+      b.lifestyle.perks.push(e.perk);
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${b.firstName} ${b.lastName} learned ${findPerk(e.perk)?.name}.`, kind: 'misc' });
       break;
     }
     case 'policy': {

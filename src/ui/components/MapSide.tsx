@@ -90,7 +90,7 @@ export function PlayerCard({ s }: { s: GameState }) {
 }
 
 const ALERT_GLYPH: Record<Alert['kind'], string> = {
-  unhappy: '☹', defector: '⇄', heat: '♨', money: '$', heir: '♔', loan: '%', staff: '⚒', decision: '✉', scheme: '☠', dispute: '⚖', war: '⚔', family: '♥',
+  unhappy: '☹', defector: '⇄', heat: '♨', money: '$', heir: '♔', loan: '%', staff: '⚒', decision: '✉', scheme: '☠', dispute: '⚖', war: '⚔', family: '♥', lifestyle: '✦', law: '§', underbelly: '⚓',
 };
 
 export function AlertRail({ s, items, onAlert }: { s: GameState; items: Alert[]; onAlert: (a: Alert) => void }) {

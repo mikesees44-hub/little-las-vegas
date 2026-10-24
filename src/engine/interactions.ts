@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { ageOn } from './calendar';
 import { capos, displayName, hasTrait, isFree, player, relationLabel } from './characters';
 import { fmtMoney } from './effects';
@@ -112,7 +113,13 @@ function withHook(s: GameState, p: InteractionPreview, targetId: string): Intera
 }
 
 export function previewInteraction(s: GameState, id: InteractionId, targetId: string, useHook?: boolean): InteractionPreview | undefined {
-  const p = previewInteractionBase(s, id, targetId);
+  let p = previewInteractionBase(s, id, targetId);
+  const pa = perkMod(s, 'accept');
+  if (p?.acceptance && pa) {
+    const reasons = [...p.acceptance.reasons, { label: 'Your perks: a man people listen to', value: pa }];
+    const sum = reasons.reduce((a, r) => a + r.value, 0);
+    p = { ...p, acceptance: { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons } };
+  }
   return p && useHook ? withHook(s, p, targetId) : p;
 }
 
@@ -160,7 +167,8 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
     }
     case 'bribe': {
       if (!c.office || !OFFICE_BRIBE[c.office]) return undefined;
-      const ob = OFFICE_BRIBE[c.office];
+      const base = OFFICE_BRIBE[c.office];
+      const ob = { ...base, cost: Math.round(base.cost * (1 - perkMod(s, 'bribe') / 100) / 50) * 50 };
       const label = `Bribe: ${c.office === 'Police sergeant' ? 'Sgt. ' : ''}${c.office === 'Police sergeant' ? c.lastName : `${c.firstName} ${c.lastName}`}`;
       const acceptance = clampChance(40, [
         opinionReason(s, c, 0.5),

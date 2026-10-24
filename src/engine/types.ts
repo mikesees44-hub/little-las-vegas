@@ -114,6 +114,50 @@ export interface Character {
   office?: string;
   /** This man secretly informs for another faction. */
   informantFor?: FactionId;
+  /** The lifestyle this man lives (the boss chooses his). */
+  lifestyle?: LifestyleState;
+}
+
+/** The Long Game: the federal case against the boss. */
+export type LegalStage = 'quiet' | 'investigation' | 'grandjury' | 'indicted' | 'trial' | 'prison' | 'parole';
+export interface LegalState {
+  stage: LegalStage;
+  /** The man the case is against (a new boss starts clean-ish). */
+  personId: string;
+  evidence: number;
+  defense: number;
+  since: number;
+  /** Week of the next step (grand jury vote, trial, parole hearing, end of parole). */
+  next?: number;
+  bail?: boolean;
+  sentence?: number;
+  rico?: boolean;
+  /** Weeks of prison already served (for parole). */
+  served?: number;
+}
+export type LegalOp = 'defense' | 'evidence' | 'bail' | 'jail' | 'plea' | 'fight' | 'verdict' | 'parole';
+
+/** The Underbelly: an antagonist outfit that preys on people. Villain only. */
+export type UnderbellyOp = 'investigate' | 'expose' | 'runout' | 'ally';
+export interface UnderbellyState {
+  stage: 'waiting' | 'active' | 'gone' | 'entrenched';
+  /** How dug-in it is (0 = gone). */
+  strength: number;
+  /** What you can prove (0–100). */
+  exposure: number;
+  districts: string[];
+  since: number;
+  arrives: number;
+  ally?: RivalId;
+  outcome?: string;
+}
+
+export type LifestyleId = 'muscle' | 'money' | 'politics' | 'family' | 'shadows';
+export interface LifestyleState {
+  focus: LifestyleId;
+  xp: number;
+  points: number;
+  perks: string[];
 }
 
 export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'doctor';
@@ -319,6 +363,10 @@ export type Effect =
   | ({ type: 'wealth'; charId: string; amount: number } & EffectBase)
   | ({ type: 'seat'; seat: Seat; charId?: string; task?: CouncilTask; target?: string } & EffectBase)
   | ({ type: 'policy'; charId: string; policy: CrewPolicy } & EffectBase)
+  | ({ type: 'lifestyle'; focus: LifestyleId } & EffectBase)
+  | ({ type: 'legal'; op: LegalOp; amount?: number } & EffectBase)
+  | ({ type: 'underbelly'; op: 'strength' | 'exposure' | 'ally' | 'expose' | 'runout'; amount?: number; rival?: RivalId } & EffectBase)
+  | ({ type: 'perk'; perk: string } & EffectBase)
   | ({ type: 'contract'; charId: string; keep: number } & EffectBase)
   | ({ type: 'edict'; edict: EdictId; on: boolean } & EffectBase)
   | ({ type: 'hire'; specId: string } & EffectBase)
@@ -619,6 +667,9 @@ export interface GameState {
   factions: Faction[];
   /** Title cards raised this week (cleared at the start of each week). */
   cutscenes: CutsceneCue[];
+  /** The Long Game (absent in old saves until the first week runs). */
+  legal?: LegalState;
+  underbelly?: UnderbellyState;
   schemes: Scheme[];
   secrets: Secret[];
   hooks: Hook[];
@@ -668,7 +719,12 @@ export type PlayerAction =
   | { kind: 'contract'; charId: string; keep: number }
   | { kind: 'edict'; edict: EdictId; on: boolean }
   | { kind: 'hire'; specId: string }
-  | { kind: 'dynasty'; op: DynAction };
+  | { kind: 'dynasty'; op: DynAction }
+  | { kind: 'lifestyle'; focus: LifestyleId }
+  | { kind: 'legal'; op: 'retainer' | 'lielow' }
+  | { kind: 'underbelly'; op: UnderbellyOp; rival?: RivalId }
+  | { kind: 'officeHours' }
+  | { kind: 'perk'; perk: string };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

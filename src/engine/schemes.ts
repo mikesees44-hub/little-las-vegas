@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { activeTask, seatPower } from './council';
@@ -94,6 +95,8 @@ function targetDefense(s: GameState, t: Character): { label: string; value: numb
     const g = activeTask(s, 'ub_guard');
     if (g) out.push({ label: 'Your underboss guards you', value: -Math.round(25 * g) });
     if (s.businesses.some((b) => b.owner === 'player' && b.kind === 'safehouse')) out.push({ label: 'Your safehouses', value: -10 });
+    const g2 = perkMod(s, 'guard');
+    if (g2) out.push({ label: 'Your perks: hard to reach', value: -g2 });
   }
   const r = s.rivals.find((x) => x.id === t.faction);
   if (r) out.push({ label: `${r.shortName}'s muscle`, value: -Math.round(r.muscle / 6) });
@@ -239,6 +242,9 @@ export function schemeOdds(s: GameState, kind: SchemeKind, targetId: string | un
     default:
       why ??= 'Not available';
   }
+  const pk = kind === 'murder' ? perkMod(s, 'hitPower') : kind === 'heist' ? perkMod(s, 'heistPower') : kind === 'envoy' ? perkMod(s, 'envoy') : 0;
+  if (pk) reasons.push({ label: 'Your perks', value: pk });
+  if (kind !== 'envoy' && kind !== 'befriend' && kind !== 'sway') secrecy += perkMod(s, 'secrecy');
   const sum = reasons.reduce((a, r) => a + r.value, 0);
   return {
     chance: Math.max(0.05, Math.min(0.95, sum / 100)),
@@ -325,6 +331,7 @@ function onPlayerSchemeDiscovered(ctx: Ctx, sc: Scheme): void {
   if (sc.kind === 'murder' && t && chance(s, 0.5)) {
     s.schemes = s.schemes.filter((x) => x !== sc);
     ctx.log.push(`${t.firstName} went to ground. The hit is off.`);
+    cue(s, 'hit_botched', 'Gone to ground', `Somebody talked. ${displayName(t)} cleared out of his apartment overnight; the car sat empty on the street for a week.`);
   }
 }
 

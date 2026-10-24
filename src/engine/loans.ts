@@ -1,3 +1,4 @@
+import { perkMod } from './lifestyle';
 import { CATALOG } from './catalog';
 import { ownsKind } from './business';
 import { activeTask } from './council';
@@ -36,7 +37,7 @@ export function bookLoan(s: GameState, amount: number): Loan {
     collateral: coll,
     collateralName: coll ? `${last}'s ${CATALOG[coll].name.toLowerCase()}` : undefined,
     principal: amount,
-    vig: Math.round(amount * VIG_RATE),
+    vig: Math.round(amount * VIG_RATE * (1 + perkMod(s, 'vig') / 100)),
     risk: Math.round((0.01 + (job.includes('horseplayer') || job.includes('gambling') ? 0.03 : 0) + randInt(s, 0, 2) / 100) * 1000) / 1000,
     weeksLate: 0,
     dueWeek: s.week + randInt(s, 10, 20),
