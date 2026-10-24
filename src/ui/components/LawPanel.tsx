@@ -3,6 +3,7 @@ import { GRAND_JURY, OPEN_FILE, caseEvidence, convictionOdds, evidenceGain, indi
 import { cloneState } from '../../engine/engine';
 import type { GameState, LegalStage } from '../../engine/types';
 import { ActionCard } from './Orders';
+import { HQLawLine } from '../econ/DistrictProperty';
 
 const STEPS: { id: LegalStage; t: string }[] = [
   { id: 'investigation', t: 'A file' },
@@ -30,6 +31,8 @@ export function LawPanel({ s }: { s: GameState }) {
           {ricoActive(s) ? ' The racketeering law (RICO) is on the books: evidence builds half again as fast and sentences run longer.' : ' In October 1970 Congress will pass a racketeering law that changes everything.'}
         </p>
       </div>
+
+      <HQLawLine s={s} />
 
       <ol className="flex flex-wrap gap-1 text-xs">
         <li className={`rounded px-2 py-1 border ${l.stage === 'quiet' ? 'border-emerald-500 text-emerald-300' : 'border-noir-700 text-stone-500'}`}>No case</li>

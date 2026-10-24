@@ -1,3 +1,4 @@
+import { econEventSource, econWeek } from './econ';
 import { officeWeek } from './office';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
@@ -23,7 +24,7 @@ import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
 import { housesMonth } from './housesLife';
-import { buildHealthEvent, generateWeekEvents, MAX_POPUPS } from './events';
+import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
 import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
@@ -31,6 +32,8 @@ import { addOpinion, decayAllRelations, opinion } from './relations';
 import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
 import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
+
+registerEventSource(econEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -226,6 +229,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) fireConsequences(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
+    econWeek(ctx);
     runCouncil(ctx);
     crewWeek(ctx);
     lifestyleWeek(ctx);

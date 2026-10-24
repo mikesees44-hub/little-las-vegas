@@ -33,8 +33,8 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="panel relative overflow-hidden h-[calc(100vh-200px)] min-h-[460px]">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_400px]">
+        <div className="panel relative overflow-hidden h-[calc(100vh-190px)] min-h-[520px]">
           <WorldMap
             s={s}
             mode={mode}
@@ -72,7 +72,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
             ))}
           </div>
         </div>
-        <aside className="panel p-3 sm:p-4 lg:max-h-[calc(100vh-200px)] lg:overflow-y-auto">
+        <aside className="panel p-3 sm:p-4 lg:max-h-[calc(100vh-190px)] lg:overflow-y-auto">
           {district ? (
             <>
               <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setDistrict(undefined)}>← the whole board</button>

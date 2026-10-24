@@ -105,6 +105,23 @@ the main simulation's dice.
 
 Family events reach the week through `registerEventSource` in `events.ts` (one candidate a week, still capped at 4 popups).
 
+## The economy & property layer (wave 2)
+
+`econState.ts` holds `GameState.econ` (optional, so old saves load): racket books, upgrade tiers, the lots of every district,
+managers and club staff, the headquarters, gifts, season tickets and community projects. It rolls on its own seeded stream
+(`econ.rng`). Orders are `{ kind: 'econ', op }`, effect ops `{ type: 'econ', op }`; one event candidate a week goes through the
+shared popup pipeline (`registerEventSource`).
+
+| File | What it does |
+|---|---|
+| `econ.ts` | Hub: hooks into the old economy (expected take, the week of a business, wash capacity), weekly/monthly ticks, orders, effect ops, the popup candidate, the random player's suggestions |
+| `rackets.ts` | Racket books (bookmaking handle/hold/markers/raids, numbers runners/bank/hit number, cargo dock contacts, vending placements/competition) and 3–4 step upgrade trees |
+| `property.ts` | ~80 property uses (item 12 catalog, 1960 dollars), 11 zones incl. Atlantic City and South Philly, seasonal demand by district, lots, construction stages (purchase → permits → site prep → foundation → framing → exterior → interior → open) |
+| `managers.ts` | Managers (family, crew, pros): skill, loyalty, hidden honesty, salary, share, oversight; skims and audits; adult kids as assistants; club rosters whose people move on |
+| `scores.ts` | Big scores with kick-up and credit disputes (uses the capo's contract), the monthly "short or skimming?" envelope |
+| `hq.ts` | Headquarters (social club, back of a restaurant, car, walk-and-talks), federal bugs (technician/warrant/informant) that add to each talker's evidence, sweeps |
+| `gifts.ts` | ~130 period gifts, tastes and the opinion math, season tickets (inheritable), community projects (appreciation vs trust), leverage gifts with acceptance odds |
+
 ## UI
 
 Single-page dashboard (`src/ui`): header with date, season countdown, treasury, respect and the three heat bars;

@@ -42,6 +42,8 @@ const GENERAL_RATE = Number(arg('general', '0.35'));
 const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 /** Chance per week of sending an envoy to another city. */
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
+/** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
+const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
 
@@ -76,6 +78,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   if (boss && !boss.lifestyle) add(pickOne(h, LIFESTYLE_IDS.map((focus) => ({ kind: 'lifestyle', focus }) as PlayerAction)));
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
+  if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
   return { choices, actions };
 }
 
@@ -113,6 +116,8 @@ interface GameResult {
   peakUnwashed: number;
   /** Dynasty-layer counters at the end of the game (familyState.ts). */
   dyn?: Record<string, number>;
+  /** Economy-layer counters at the end of the game (econState.ts). */
+  econ?: Record<string, number>;
   hierarchyErrors: string[];
   /** House trees (houses.ts): integrity problems, and the houses at the end. */
   houseErrors: string[];
@@ -241,6 +246,7 @@ function playOne(gi: number): GameResult {
       feuds: s!.lineage.grudges.filter((g) => g.y >= 1960).length,
     };
   }
+  if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
 
@@ -292,6 +298,12 @@ console.log(`  Businesses at the end (median): ${quantile(results.map((r) => r.f
 const orders: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.orders)) orders[k] = (orders[k] ?? 0) + v;
 console.log(`  Orders per game:            ${Object.entries(orders).map(([k, v]) => `${k} ${(v / GAMES).toFixed(1)}`).join(', ')}`);
+
+const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
+if (econGames.length) {
+  const keys = Object.keys(econGames[0].econ!);
+  console.log(`  Economy layer per game (mean): ${keys.map((k) => `${k} ${(econGames.reduce((a, r) => a + (r.econ![k] ?? 0), 0) / econGames.length).toFixed(1)}`).join(', ')}`);
+}
 
 console.log(`\nDYNASTY`);
 console.log(`  Games where the boss died:  ${pct(gamesWithBossDeath, GAMES)}  (${bossDeaths} boss deaths total)`);
