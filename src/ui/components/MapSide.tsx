@@ -11,6 +11,7 @@ import { districtHeat, districtIncome, FACTION_FILL } from './IslandMap';
 import { ActionCard } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
 import { StressBar } from '../family/bits';
+import { DistrictProperty } from '../econ/DistrictProperty';
 
 export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: string; onOpenBusiness: () => void }) {
   const d = s.districts.find((x) => x.id === id);
@@ -66,6 +67,7 @@ export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: str
         </ul>
         {sl.used < sl.max && <button className="mt-1 text-xs underline text-gold-300" onClick={onOpenBusiness}>Open a business here →</button>}
       </div>
+      <DistrictProperty s={s} district={id} />
       {!s.gameOver && <ActionCard s={s} action={{ kind: 'pushDistrict', district: id }} />}
       {!s.gameOver && s.rivals.filter((r) => r.kind === 'mob' && (d.influence[r.id] ?? 0) > 0 && casusBelli(s, r.id, id) && !s.wars.some((w) => w.rival === r.id)).map((r) => (
         <ActionCard key={r.id} s={s} action={{ kind: 'declareWar', rival: r.id, district: id }} />

@@ -221,7 +221,7 @@ function seeds(s: GameState, d: Character, ses: MgSession): EvidenceSeed[] {
   const isBoss = d.id === s.playerId || d.rank === 'boss';
   const year = s.date.y;
   // Bugged headquarters (the economy branch sets the flag; registered sources can add more).
-  if ((s.flags.hqBug ?? 0) > 0 || (s.flags.hqTapes ?? 0) > 0) {
+  if ((s.econ?.hq?.leaked ?? 0) > 0 || !!s.econ?.hq?.bug || (s.flags.hqTapes ?? 0) > 0) {
     out.push({ kind: 'tapes', title: 'Tapes from the social club', text: 'Reels from a microphone the FBI planted in the back room. Voices, names, numbers.', weight: 1.7, physical: true });
   }
   if (year >= 1968 || (year === 1968 && s.date.m >= 6)) {

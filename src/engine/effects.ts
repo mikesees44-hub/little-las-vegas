@@ -1,3 +1,4 @@
+import { applyEconOp, describeEconOp } from './econ';
 import { applyUnderbelly } from './underbelly';
 import { TRIAL_WEEKS, applyLegal } from './longgame';
 import { LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
@@ -192,6 +193,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
     case 'dyn':
       return describeDynOp(s, e.op);
+    case 'econ':
+      return describeEconOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -794,6 +797,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'minigame':
       applyMinigameEffect(ctx, e);
+      break;
+    case 'econ':
+      applyEconOp(ctx, e.op, label);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

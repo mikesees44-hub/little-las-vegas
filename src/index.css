@@ -107,3 +107,10 @@ body {
 
 /* The tab bar scrolls sideways on phones instead of wrapping or overflowing the page. */
 .tabbar { scrollbar-width: thin; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; max-width: 100%; }
+
+/* Property lots on the map (economy pillar): glyph = construction stage, colour = who holds it. */
+.llv-lot span { display: flex; align-items: center; justify-content: center; width: 14px; height: 14px; border-radius: 2px; border: 1px solid #0b0a09; font-size: 9px; font-weight: 700; color: #0b0a09; background: #6b6457; }
+.llv-lot-sale span { background: #5fae7f; }
+.llv-lot-lease span { background: #6aa7c9; }
+.llv-lot-owned span, .llv-lot-leased span { background: #e7c25a; border-color: #ecd38f; }
+.llv-lot-rival span { background: #b0302a; color: #f3e6c4; }
