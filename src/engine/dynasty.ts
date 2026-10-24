@@ -7,7 +7,6 @@ import {
   makeCharacter,
   monthlyDeathChance,
   monthlyHealth,
-  newId,
   pickNickname,
   relationLabel,
 } from './characters';
@@ -183,9 +182,6 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
 
   // Clean up district capo assignment.
   for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
-  if (c.spouseId && s.characters[c.spouseId]) {
-    // widowed — keep spouseId for the family tree but nothing else changes
-  }
 
   if (c.id === s.playerId) succeed(ctx, c);
   else if (c.faction === 'player' && (c.rank === 'capo' || c.rank === 'underboss')) promoteReplacement(ctx, c);
@@ -413,4 +409,3 @@ export function validatePlayer(s: GameState): string[] {
   return errs;
 }
 
-export { newId };

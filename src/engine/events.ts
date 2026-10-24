@@ -1,5 +1,5 @@
 import { ageOn, gameYear, monthKey, seasonMultiplier } from './calendar';
-import { capos, crew, displayName, hasTrait, isFree, livingDynasty, makeCharacter, player, relationLabel } from './characters';
+import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
 import { BUSINESS_NAMES } from './names';
 import { opinion } from './relations';
 import { chance, pick, randInt, shuffle, weightedPick } from './rng';
@@ -655,8 +655,4 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   }
   s.lastSitDownOrders = out.some((e) => e.defId === 'sitdown') ? String(sitdown.meta!.orders).split(',') : [];
   return out;
-}
-
-export function isFreeChar(s: GameState, c: Character): boolean {
-  return isFree(s, c);
 }

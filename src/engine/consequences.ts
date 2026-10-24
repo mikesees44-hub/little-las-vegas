@@ -1,9 +1,9 @@
-import { crew, displayName, makeCharacter } from './characters';
+import { displayName, makeCharacter } from './characters';
 import { applyEffects, shiftInfluence } from './effects';
 import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { chance, randInt } from './rng';
-import { executeMove, rivalCaps } from './rivals';
+import { executeMove } from './rivals';
 import { FACTION_NAMES } from './world';
 import type { Effect, RivalId, ScheduledConsequence } from './types';
 
@@ -98,7 +98,6 @@ const HANDLERS: Record<string, Handler> = {
     if (!r || !s.characters[r.leaderId]?.alive) return undefined;
     ctx.log.push(`Because you ${sc.because}: ${FACTION_NAMES[rid]} retaliates.`);
     executeMove(ctx, r, { move: 'strike', target: 'player', score: 1 });
-    void rivalCaps;
     return { text: `${FACTION_NAMES[rid]} retaliated` };
   },
 };
@@ -120,5 +119,4 @@ export function fireConsequences(ctx: Ctx): void {
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: res.text.charAt(0).toUpperCase() + res.text.slice(1) + '.', because: sc.because, becauseWeek: sc.sourceWeek, kind: 'consequence' });
     ctx.log.push(`${label}.`);
   }
-  void crew;
 }
