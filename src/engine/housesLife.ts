@@ -3,11 +3,11 @@ import { killCharacter } from './dynasty';
 import { famMut, makeDynCharacter } from './familyState';
 import {
   addKidRef, addSpouseRef, birthYear, fatherOf, houseOfBirth, isAlive, kidsOf, kinWord, linMut, motherOf, PLAYER_HOUSE, spousesOf, updHouse, updLink,
-  updPerson, type LineageState, type LPerson,
+  clean, ownsLineage, updPerson, tidyLineage, type LineageState, type LPerson,
 } from './houses';
 import { rememberGrudges } from './housesDeath';
 import { OUTSIDE_SURNAMES, STOCK_NAMES, type Stock } from './housesData';
-import { crewSeed, generateHouses, initLineage, wantsCrewHouse } from './housesHistory';
+import { crewSeed, generateHouses, initLineage, syncHousehold, wantsCrewHouse, type HouseSeed } from './housesHistory';
 import type { Ctx } from './ledger';
 import { FEMALE_FIRST, MALE_FIRST, SURNAMES } from './names';
 import { addOpinion } from './relations';
@@ -44,7 +44,10 @@ export function setupHouses(s: GameState): void {
   for (const c of Object.values(s.characters)) if (c.maidenName && !L.links[c.id]) updLink(L, c.id, {});
   // Grown, unmarried sons and daughters of the marriageable houses are people you can meet.
   promoteMarriageable(s, L, census(s, L), 2);
+  // Made men who share a crew house's name join it as kin.
+  newcomers(s);
   rememberGrudges(s);
+  tidyLineage(s.lineage!);
 }
 
 /* ---------------------------------------------------------------- */
@@ -88,7 +91,7 @@ function first(L: LineageState, g: 'M' | 'F', eth: Ethnicity, stock?: Stock): st
 
 function newPerson(L: LineageState, p: Omit<LPerson, 'id'>): LPerson {
   const id = `L${L.next++}`;
-  const rec = { id, ...p } as LPerson;
+  const rec = clean({ id, ...p } as LPerson);
   L.people[id] = rec;
   return rec;
 }
@@ -113,7 +116,7 @@ function recordMarriage(s: GameState, L: LineageState, husband: string, wife: st
   if (!home) return;
   const other = hh && wh && hh !== wh ? wh : undefined;
   const wn = s.characters[wife] ? `${s.characters[wife].firstName} ${s.characters[wife].maidenName ?? s.characters[wife].lastName}` : (() => { const p = L.people[wife]; return p ? `${p.first} ${p.maiden ?? p.last}` : '?'; })();
-  L.events.push({ y, m: s.date.m, h: home, o: other, k: 'marriage', t: `${nm(s, husband)} married ${wn}${other ? ` of ${L.houses[other].title}` : ''}.`, p: husband, q: wife });
+  L.events.push(clean({ y, m: s.date.m, h: home, o: other, k: 'marriage', t: `${nm(s, husband)} married ${wn}${other ? ` of ${L.houses[other].title}` : ''}.`, p: husband, q: wife }));
 }
 
 /* ---------------------------------------------------------------- */
@@ -170,7 +173,7 @@ export function promote(s: GameState, L: LineageState, id: string): Character | 
   }
   if (kids.length) link.kids = kids;
   delete L.people[id];
-  L.links[id] = link;
+  L.links[id] = clean(link);
   if (h?.dynId) famMut(s, id).houseId = h.dynId;
   const father = c.fatherId ? s.characters[c.fatherId] : undefined;
   if (father?.alive) addOpinion(s, id, father.id, 'My father', 25, 0);
@@ -305,7 +308,8 @@ function births(s: GameState, L: LineageState, cen: Census): void {
     const f = livingSpouse(s, m);
     if (!f || genderOf(s, f) !== 'M') continue;
     const fc = s.characters[f];
-    if (fc?.dynasty) continue;
+    // Your house and the crew men's households have their children through the engine.
+    if (fc?.dynasty || fc?.household) continue;
     const fh = fc ? cen.charHouse.get(f) ?? houseOfBirth(s, f) : L.people[f]?.house;
     if (!fh || L.houses[fh]?.player) continue;
     const n = kidsOf(s, m).length;
@@ -394,27 +398,33 @@ function marriages(s: GameState, L: LineageState, cen: Census): void {
 
 /** Made men get houses; rival heirs find their kin; brides of your house come from somewhere. */
 function newcomers(s: GameState): void {
-  const seeds = [];
+  const seeds: HouseSeed[] = [];
   const L0 = s.lineage!;
   let known: Set<string> | undefined;
   for (const c of Object.values(s.characters)) {
     if (!c.alive) continue;
     const link = L0.links[c.id];
-    if (wantsCrewHouse(c) && !link?.house && !houseOfBirth(s, c.id)) {
-      const sd = crewSeed(c);
-      if (!L0.houses[sd.id]) seeds.push(sd);
+    const unhoused = !c.dynasty && !c.fatherId && !link?.f && !link?.house;
+    // A newcomer with a house's name in the same outfit (a rival's new boss, a made man's cousin): one of theirs.
+    const kinHouse = unhoused && (c.rank !== 'civilian' || c.faction !== 'none')
+      ? L0.order.find((id) => {
+        const h = L0.houses[id];
+        return h.name === c.lastName && h.faction === c.faction && !h.player && h.extinct === undefined;
+      })
+      : undefined;
+    if (kinHouse) {
+      attachKin(s, linMut(s), c, kinHouse);
       continue;
     }
-    if (!c.dynasty && !c.fatherId && !link?.f && !link?.house && (c.rank !== 'civilian' || c.faction !== 'none')) {
-      const hid = L0.order.find((id) => {
-        const h = L0.houses[id];
-        return h.name === c.lastName && h.faction === c.faction && !h.player && !h.extinct && !h.crewOf;
-      });
-      if (hid) attachKin(s, linMut(s), c, hid);
+    if (wantsCrewHouse(c) && !link?.house && !houseOfBirth(s, c.id)) {
+      const sd = crewSeed(c);
+      if (!L0.houses[sd.id] && !seeds.some((x) => x.name === sd.name && x.faction === sd.faction)) seeds.push(sd);
+      continue;
     }
     if (c.dynasty && c.gender === 'F' && c.maidenName && c.maidenName !== s.houseName && !link && !c.fatherId && c.spouseId) {
       attachBride(s, linMut(s), c);
     }
+    if (c.household && !c.dynasty && householdChanged(s, c)) syncHousehold(s, linMut(s), c);
     if (c.gender === 'M' && c.spouseId && s.characters[c.spouseId]) {
       known ??= marriageKeys(s.lineage!);
       if (known.has(`${c.id}|${c.spouseId}`)) continue;
@@ -423,6 +433,16 @@ function newcomers(s: GameState): void {
     }
   }
   if (seeds.length) generateHouses(s, linMut(s), seeds);
+}
+
+/** Cheap check before a sync: a new wife or child the tree has not seen. */
+function householdChanged(s: GameState, c: Character): boolean {
+  const hh = c.household!;
+  const L = s.lineage!;
+  if (!L.links[c.id]?.house) return false;
+  const kids = L.links[c.id]?.kids?.length ?? 0;
+  const sp = L.links[c.id]?.sp?.length ?? 0;
+  return hh.kids.length > kids || (!!hh.wife && sp === 0);
 }
 
 function fathersIn(s: GameState, L: LineageState, hid: string, childBy: number): string[] {
@@ -534,7 +554,7 @@ function successions(s: GameState, getCensus: () => Census): void {
       if (h.name !== s.houseName) updHouse(L, id, { name: s.houseName, title: `House ${s.houseName}` });
       if (h.headId !== s.playerId) {
         updHouse(L, id, { headId: s.playerId, heads: [...h.heads, { id: s.playerId, from: s.date.y }], name: s.houseName });
-        L.events.push({ y: s.date.y, m: s.date.m, h: id, k: 'succession', t: `${nm(s, s.playerId)} became head of ${h.title}.`, p: s.playerId });
+        L.events.push(clean({ y: s.date.y, m: s.date.m, h: id, k: 'succession', t: `${nm(s, s.playerId)} became head of ${h.title}.`, p: s.playerId }));
       }
       continue;
     }
@@ -542,7 +562,7 @@ function successions(s: GameState, getCensus: () => Census): void {
     const mem = members.get(id);
     if (!mem?.size) {
       updHouse(L, id, { extinct: s.date.y, headId: undefined });
-      L.events.push({ y: s.date.y, m: s.date.m, h: id, k: 'extinct', t: `The line of ${h.title} ended.` });
+      L.events.push(clean({ y: s.date.y, m: s.date.m, h: id, k: 'extinct', t: `The line of ${h.title} ended.` }));
       s.chronicle.push({ week: s.week, date: { ...s.date }, text: `The line of ${h.title} has ended. No one of the blood is left.`, kind: 'family' });
       continue;
     }
@@ -550,7 +570,7 @@ function successions(s: GameState, getCensus: () => Census): void {
     if (!heir) continue;
     updHouse(L, id, { headId: heir, heads: [...h.heads, { id: heir, from: s.date.y }] });
     const rel = h.headId ? kinWord(s, heir, h.headId) : undefined;
-    L.events.push({ y: s.date.y, m: s.date.m, h: id, k: 'succession', t: `${nm(s, heir)} became head of ${h.title}${rel && h.headId ? ` after the death of ${genderOf(s, heir) === 'F' ? 'her' : 'his'} ${rel} ${nm(s, h.headId)}` : ''}.`, p: heir });
+    L.events.push(clean({ y: s.date.y, m: s.date.m, h: id, k: 'succession', t: `${nm(s, heir)} became head of ${h.title}${rel && h.headId ? ` after the death of ${genderOf(s, heir) === 'F' ? 'her' : 'his'} ${rel} ${nm(s, h.headId)}` : ''}.`, p: heir }));
   }
 }
 
@@ -575,7 +595,15 @@ export function housesMonth(ctx: Ctx): void {
     promoteMarriageable(s, L, cen, 2);
   }
   successions(s, () => (cen ??= census(s, s.lineage!)));
-  if (s.lineage.grudges.some((g) => g.vs === PLAYER_HOUSE)) rememberGrudges(s, cen?.charHouse);
+  // Feud memory: redone when there is a new grudge, a new boss, new people, or a new year.
+  if (s.lineage.grudges.some((g) => g.vs === PLAYER_HOUSE)) {
+    const key = `${s.lineage.grudges.length}|${s.playerId}|${Object.keys(s.characters).length}|${s.date.y}`;
+    if (s.lineage.gkey !== key) {
+      rememberGrudges(s, cen?.charHouse);
+      // A new top-level record only (the collections stay shared until someone writes to them).
+      s.lineage = ownsLineage(s) ? Object.assign(s.lineage, { gkey: key }) : { ...s.lineage, gkey: key };
+    }
+  }
 }
 
 /** Months of life the off-screen tick covers. */

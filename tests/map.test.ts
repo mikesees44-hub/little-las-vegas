@@ -5,7 +5,7 @@ import { CITY_LIST } from '../src/engine/cities';
 import { DISTRICTS } from '../src/engine/world';
 import { LANDMARKS, NJ_TOWNS, PHILLY_HOODS } from '../src/ui/map/places';
 
-const GEO = join(__dirname, '..', 'src', 'ui', 'map', 'geo');
+const GEO = join(__dirname, '..', 'public', 'geo');
 
 describe('bundled map data', () => {
   it('stays within the geo budget (8 MB) and every layer parses', () => {

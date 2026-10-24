@@ -25,10 +25,10 @@ import type { Ethnicity, FactionId, GameState } from './types';
  * editing them in place.
  */
 
-export type HouseType = 'crime' | 'political' | 'police' | 'legit' | 'showbiz';
+export type HouseType = 'crime' | 'political' | 'police' | 'fire' | 'legit' | 'showbiz';
 
 export const HOUSE_TYPE_LABEL: Record<HouseType, string> = {
-  crime: 'Crime family', political: 'Political dynasty', police: 'Police family', legit: 'Legitimate family', showbiz: 'Show business',
+  crime: 'Crime family', political: 'Political dynasty', police: 'Police family', fire: 'Fire department family', legit: 'Legitimate family', showbiz: 'Show business',
 };
 
 export interface HeadTerm {
@@ -147,6 +147,8 @@ export interface LineageState {
   grudges: Grudge[];
   /** Month key of the last monthly tick. */
   month?: string;
+  /** What the feud memory last saw (grudges, boss, people, year): unchanged means nothing to redo. */
+  gkey?: string;
 }
 
 export const PLAYER_HOUSE = 'h_player';
@@ -176,26 +178,49 @@ export function linMut(s: GameState): LineageState {
   return c;
 }
 
+/** Has this state already taken its own copy this week (i.e. changed it)? */
+export function ownsLineage(s: GameState): boolean {
+  return !!s.lineage && owned.get(s) === s.lineage;
+}
+
 /** Install a freshly built lineage as owned by this state. */
 export function adoptLineage(s: GameState, L: LineageState): void {
   s.lineage = L;
   owned.set(s, L);
 }
 
+/**
+ * Drop keys whose value is undefined, so a record has the same keys (and the
+ * same order) live and after a save/load through JSON.
+ */
+export function clean<T extends object>(o: T): T {
+  for (const k in o) if (o[k] === undefined) delete o[k];
+  return o;
+}
+
+/** Tidy every record (after a batch of changes): see `clean`. */
+export function tidyLineage(L: LineageState): void {
+  for (const id in L.people) clean(L.people[id]);
+  for (const id in L.links) clean(L.links[id]);
+  for (const id in L.houses) clean(L.houses[id]);
+  for (const e of L.events) clean(e);
+  for (const g of L.grudges) clean(g);
+}
+
 export function updPerson(L: LineageState, id: string, patch: Partial<LPerson>): LPerson {
-  const p = { ...L.people[id], ...patch };
+  const p = clean({ ...L.people[id], ...patch });
   L.people[id] = p;
   return p;
 }
 
 export function updLink(L: LineageState, id: string, patch: Partial<LLink>): LLink {
-  const l = { ...(L.links[id] ?? {}), ...patch };
+  const l = clean({ ...(L.links[id] ?? {}), ...patch });
   L.links[id] = l;
   return l;
 }
 
 export function updHouse(L: LineageState, id: string, patch: Partial<LHouse>): LHouse {
-  const h = { ...L.houses[id], ...patch };
+  const h = clean({ ...L.houses[id], ...patch });
   L.houses[id] = h;
   return h;
 }

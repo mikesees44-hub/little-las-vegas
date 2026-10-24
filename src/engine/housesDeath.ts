@@ -1,4 +1,4 @@
-import { deathPhrase, firstNameOf, houseOfBirth, kinWord, linMut, nameOf, plural, PLAYER_HOUSE, updPerson, type Grudge, type LineageState } from './houses';
+import { clean, deathPhrase, firstNameOf, houseOfBirth, kinWord, linMut, nameOf, plural, PLAYER_HOUSE, updPerson, type Grudge, type LineageState } from './houses';
 import type { Ctx } from './ledger';
 import { changeMeter, relKey, setModifier } from './relations';
 import type { FactionId, GameState } from './types';
@@ -47,7 +47,7 @@ export function lineageDeath(ctx: Ctx, id: string, cause: string, killer?: Facti
   const t = `${nameOf(s, id)} ${deathPhrase(cause)} (${y}); ${kh === PLAYER_HOUSE ? `your house, ${L.houses[kh].title},` : `the ${plural(L.houses[kh].name)}`} ${kh === PLAYER_HOUSE ? 'is' : 'were'} blamed.`;
   const g: Grudge = { h: house, vs: kh, victim: id, y, t };
   L.grudges.push(g);
-  L.events.push({ y, m: s.date.m, h: house, o: kh, k: 'feud', t, p: id });
+  L.events.push(clean({ y, m: s.date.m, h: house, o: kh, k: 'feud', t, p: id }));
   if (kh === PLAYER_HOUSE) rememberGrudges(s);
 }
 

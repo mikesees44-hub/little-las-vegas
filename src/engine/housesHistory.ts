@@ -1,14 +1,16 @@
 import { FEMALE_FIRST, MALE_FIRST, SURNAMES } from './names';
 import { chance, hashSeed, pick, rand, randInt } from './rng';
 import {
-  addKidRef, adoptLineage, birthYear, deathPhrase, kidsOf, PLAYER_HOUSE, plural, updLink, updPerson,
+  addKidRef, adoptLineage, birthYear, clean, tidyLineage, deathPhrase, kidsOf, PLAYER_HOUSE, plural, updLink, updPerson,
   type Grudge, type HouseType, type LEvent, type LHouse, type LineageState, type LPerson,
 } from './houses';
 import {
-  ACCIDENTS, ARRIVAL, CREST_COLORS, crimeCauses, EXTRA_HOUSES, FACTION_SEAT, HEAD_TITLES, infantCause, KNOWN_HOUSES, KOREA, LINE_OF_DUTY,
+  ACCIDENTS, ARRIVAL, CREST_COLORS, crimeCauses, EXTRA_HOUSES, FACTION_SEAT, FIRE_DUTY, HEAD_TITLES, infantCause, KNOWN_HOUSES, KOREA, LINE_OF_DUTY,
   MEMBER_TITLES, naturalCause, OFFICIAL_HOUSES, ORIGINS, OUTSIDE_SURNAMES, SEA_DEATHS, STOCK_ETH, STOCK_NAMES, stockFor, WW1, WW2,
   type ExtraHouseDef, type Stock,
 } from './housesData';
+import type { PackDynasty } from './housesPackData';
+import { packSeeds } from './housesPack';
 import type { Character, Ethnicity, FactionId, GameState } from './types';
 
 /**
@@ -40,6 +42,8 @@ export interface HouseSeed {
   crewOf?: string;
   /** The line is extinct by 1960 (old houses). */
   extinct?: { y: number; cause: string; killer?: string };
+  /** A world-pack dynasty: its people are the anchors (housesPack.ts). */
+  pack?: PackDynasty;
 }
 
 interface Slot {
@@ -61,6 +65,10 @@ interface G {
   size: Record<string, number>;
   /** Everyone created in this run. */
   created: string[];
+  /** Pack people who married in with a maiden name (matched to a house's daughters later). */
+  packBrides: string[];
+  /** Pack heads chosen during generation (house -> person). */
+  packHeads: Record<string, string>;
 }
 
 const SHORE = /Wildwood|Cape May|Atlantic|Crest|Five Mile/;
@@ -136,7 +144,7 @@ function rollDeath(g: G, by: number, sex: 'M' | 'F', house: LHouse | undefined, 
     const ww2 = sex === 'M' && y >= 1942 && y <= 1945 && a >= 18 && a <= 35 ? 0.01 : 0;
     const korea = sex === 'M' && y >= 1950 && y <= 1953 && a >= 18 && a <= 27 ? 0.004 : 0;
     const crime = type === 'crime' && sex === 'M' && a >= 17 && a <= 60 ? (y >= 1920 && y <= 1933 ? 0.009 : 0.004) : 0;
-    const duty = type === 'police' && sex === 'M' && a >= 21 && a <= 60 ? 0.0012 : 0;
+    const duty = (type === 'police' || type === 'fire') && sex === 'M' && a >= 21 && a <= 60 ? 0.0012 : 0;
     const sea = shore && sex === 'M' && a >= 14 ? 0.0006 : 0;
     const acc = sex === 'M' ? 0.0011 : 0.0004;
     const total = base + flu + ww1 + ww2 + korea + crime + duty + sea + acc;
@@ -161,7 +169,7 @@ function rollDeath(g: G, by: number, sex: 'M' | 'F', house: LHouse | undefined, 
       }
       return out(cause, killer);
     }
-    if ((r -= duty) < 0) return out(pick(g.L, LINE_OF_DUTY));
+    if ((r -= duty) < 0) return out(pick(g.L, type === 'fire' ? FIRE_DUTY : LINE_OF_DUTY));
     if ((r -= sea) < 0) return out(pick(g.L, SEA_DEATHS));
     return out(pick(g.L, ACCIDENTS));
   }
@@ -193,7 +201,10 @@ function infantP(by: number): number {
 function child(g: G, h: LHouse, f: string, m: string | undefined, by: number, sex: 'M' | 'F', stock: Stock, eth: Ethnicity, last: string): LPerson {
   const fp = P(g, f);
   // Italian naming: the first son often carries the paternal grandfather's name.
+  // Brothers and sisters don't share a first name (unless an infant died and the name was given again).
+  const sibNames = new Set(kidsOf(g.s, f).filter((k) => dyOf(g, k) === undefined || (dyOf(g, k)! - byOf(g, k)) > 2).map((k) => g.s.characters[k]?.firstName ?? P(g, k)?.first));
   let first = firstName(g, sex, stock, eth);
+  for (let i = 0; i < 6 && sibNames.has(first); i++) first = firstName(g, sex, stock, eth);
   const gf = fp?.f ?? g.s.characters[f]?.fatherId ?? g.L.links[f]?.f;
   if (sex === 'M' && gf && eth === 'Italian' && !kidsOf(g.s, f).some((k) => (g.s.characters[k]?.gender ?? P(g, k)?.g) === 'M') && chance(g.L, 0.55)) {
     first = g.s.characters[gf]?.firstName ?? P(g, gf)?.first ?? first;
@@ -338,6 +349,8 @@ function genHouse(g: G, seed: HouseSeed): void {
     anchor = topAncestorChar(s, seed.anchor);
     anchorChar = true;
     h.eth = s.characters[seed.anchor].ethnicity;
+  } else if (seed.pack) {
+    anchor = genPackPeople(g, h, seed.pack, stock);
   } else if (seed.head) {
     const sex = seed.head.g ?? 'M';
     const hp = mk(g, { first: seed.head.first, last: h.name, g: sex, eth, by: g.now - seed.head.age, bm: randInt(L, 1, 12), house: h.id });
@@ -372,7 +385,7 @@ function genHouse(g: G, seed: HouseSeed): void {
   let E = randInt(L, a0, a1);
   const chain = [anchor];
   let cur = anchor;
-  const minChain = anchorChar ? 2 : seed.head ? 3 : 2;
+  const minChain = seed.pack ? 1 : anchorChar ? 2 : seed.head ? 3 : 2;
   while ((byOf(g, cur) > E - 12 || chain.length < minChain) && chain.length < 5) {
     const cb = byOf(g, cur);
     const fby = cb - randInt(L, 25, 36);
@@ -393,20 +406,23 @@ function genHouse(g: G, seed: HouseSeed): void {
   if (E - fb > 38) E = fb + randInt(L, 18, 32);
   if (E < fb + 12) E = fb + randInt(L, 16, 26);
   E = Math.min(E, g.now - 1);
+  if (seed.pack) {
+    attachPackRoots(g, h, anchor, chain);
+    widenPack(g, h, chain);
+  }
   // Around the line: the line's brothers and sisters, and their families.
   for (let i = chain.length - 1; i >= 1; i--) {
     const father = chain[i];
     const mother = P(g, father)!.sp![0];
-    const line = chain[i - 1];
     const gen = chain.length - 1 - i;
-    const kids = genKids(g, h, father, mother, [line]);
+    const kids = genKids(g, h, father, mother, kidsOf(s, father));
     for (const k of kids) {
       const kp = P(g, k.id)!;
       const span = (kp.dy ?? g.now) - kp.by;
       if (kp.g === 'M' && span >= 21 && !g.extinct.has(h.id)) genBranch(g, h, k.id, gen + 1);
       else if (kp.g === 'F' && span >= 18) g.brides.push(k.id);
     }
-    const lastKid = [line, ...kids.map((k) => k.id)].reduce((a, k) => Math.max(a, byOf(g, k)), 0);
+    const lastKid = kidsOf(s, father).reduce((a, k) => Math.max(a, byOf(g, k)), 0);
     applyDeath(g, father, rollDeath(g, byOf(g, father), 'M', h, Math.max(lastKid, i === chain.length - 1 ? E + 1 : 0), eth));
     if (P(g, mother)?.dy === undefined) applyDeath(g, mother, rollDeath(g, byOf(g, mother), 'F', undefined, lastKid, eth));
   }
@@ -450,7 +466,7 @@ function genHouse(g: G, seed: HouseSeed): void {
   L.events.push({ y: E, h: h.id, k: 'founding', t, p: founder });
 
   // Heads of the house, founder down.
-  const line = chain.slice().reverse();
+  const line = seed.pack && g.packHeads[h.id] ? headLine(g, h, founder, g.packHeads[h.id]) : chain.slice().reverse();
   if (seed.anchor && seed.anchor !== anchor && s.characters[seed.anchor]) line.push(seed.anchor);
   const heads = [];
   let from = E;
@@ -476,6 +492,202 @@ function genHouse(g: G, seed: HouseSeed): void {
   }
 }
 
+/* ---------------------------------------------------------------- */
+/* World-pack dynasties                                               */
+/* ---------------------------------------------------------------- */
+
+/**
+ * The pack's people of a dynasty become lineage people with their real
+ * births, deaths, offices and ties. Women with no parents in the dynasty
+ * who married one of its men married in; everyone else is of the blood.
+ * Returns the anchor: the eldest of the blood with no parents recorded.
+ */
+function genPackPeople(g: G, h: LHouse, d: PackDynasty, stock: Stock): string {
+  const { L } = g;
+  const people = d.people.filter((p) => p.by <= g.now);
+  const ids = new Set(people.map((p) => p.id));
+  const rel = (id: string, kind: string) => people.find((p) => p.id === id)!.rel.filter(([k, o]) => k === kind && ids.has(o)).map(([, o]) => o);
+  const hasParents = (id: string) => rel(id, 'parent').length > 0;
+  const blood = new Set<string>();
+  for (const p of people) {
+    if (hasParents(p.id) || p.g === 'M') blood.add(p.id);
+    else if (p.maiden ? p.maiden === h.name : !rel(p.id, 'spouse').length) blood.add(p.id);
+  }
+  for (const p of people) {
+    const titles = [p.office.replace(/\.$/, '')];
+    const married = !blood.has(p.id);
+    mk(g, {
+      first: p.first, last: p.last, maiden: married ? p.maiden ?? outsideSurname(g, stock, p.eth, h.name) : p.maiden, nick: p.nick, g: p.g, eth: p.eth,
+      by: p.by, bm: 1 + (hashSeed(p.id) % 12), house: married ? undefined : h.id, titles,
+    });
+    // The new record took the next id: re-key it under the pack's own id.
+    const tmp = `L${L.next - 1}`;
+    L.people[p.id] = { ...L.people[tmp], id: p.id };
+    delete L.people[tmp];
+    g.created[g.created.length - 1] = p.id;
+    if (married && p.maiden) g.packBrides.push(p.id);
+  }
+  // Family ties.
+  for (const p of people) {
+    for (const par of rel(p.id, 'parent')) {
+      const pp = P(g, par)!;
+      updPerson(L, p.id, pp.g === 'M' ? { f: par } : { m: par });
+      addKidRef(g.s, L, par, p.id);
+    }
+    for (const sp of [...rel(p.id, 'spouse'), ...rel(p.id, 'ex-spouse')]) {
+      const me = P(g, p.id)!;
+      if (!me.sp?.includes(sp)) updPerson(L, p.id, { sp: [...(me.sp ?? []), sp] });
+    }
+  }
+  // A child with one parent recorded: the other is the parent's spouse.
+  for (const p of people) {
+    const me = P(g, p.id)!;
+    const one = me.f ?? me.m;
+    if (!one || (me.f && me.m)) continue;
+    const other = P(g, one)?.sp?.find((x) => ids.has(x));
+    if (other) {
+      updPerson(L, p.id, me.f ? { m: other } : { f: other });
+      addKidRef(g.s, L, other, p.id);
+    }
+  }
+  // Brothers and sisters share parents.
+  for (const p of people) {
+    for (const sib of rel(p.id, 'sibling')) {
+      const a = P(g, p.id)!;
+      const b = P(g, sib)!;
+      if ((a.f || a.m) && !b.f && !b.m) {
+        updPerson(L, sib, { f: a.f, m: a.m });
+        if (a.f) addKidRef(g.s, L, a.f, sib);
+        if (a.m) addKidRef(g.s, L, a.m, sib);
+      }
+    }
+  }
+  // A grandchild with no parent in the pack: the parent between them died before 1960.
+  for (const p of people) {
+    const me = P(g, p.id)!;
+    if (me.f || me.m) continue;
+    const gp = rel(p.id, 'grandparent')[0];
+    if (!gp) continue;
+    const gpp = P(g, gp)!;
+    const by = Math.round((gpp.by + me.by) / 2);
+    const mid = mk(g, { first: firstName(g, 'M', stock, me.eth), last: h.name, g: 'M', eth: me.eth, by, bm: randInt(L, 1, 12), house: h.id, f: gpp.g === 'M' ? gp : undefined, m: gpp.g === 'F' ? gp : undefined });
+    addKidRef(g.s, L, gp, mid.id);
+    const gsp = gpp.sp?.[0];
+    if (gsp) {
+      updPerson(L, mid.id, gpp.g === 'M' ? { m: gsp } : { f: gsp });
+      addKidRef(g.s, L, gsp, mid.id);
+    }
+    const w = wifeFor(g, h, mid.id, stock, me.eth);
+    updPerson(L, p.id, { f: mid.id, m: w.id });
+    addKidRef(g.s, L, mid.id, p.id);
+    addKidRef(g.s, L, w.id, p.id);
+    let dd = rollDeath(g, by, 'M', h, me.by, me.eth);
+    if (!dd) dd = { dy: randInt(L, Math.min(g.now - 1, me.by + 1), g.now - 1), dm: randInt(L, 1, 12), cause: pick(L, naturalCause(g.now - 5, g.now - 5 - by, 'M')) };
+    applyDeath(g, mid.id, dd);
+    applyDeath(g, w.id, rollDeath(g, w.by, 'F', undefined, me.by, me.eth));
+    blood.add(mid.id);
+  }
+  // Pack deaths before 1960 keep their causes; the rest of the dead get one.
+  for (const p of people) {
+    if (p.dy === undefined) continue;
+    updPerson(L, p.id, { dy: p.dy, dm: 1 + (hashSeed(`${p.id}:d`) % 12), cause: p.cause ? p.cause.charAt(0).toLowerCase() + p.cause.slice(1) : pick(L, naturalCause(p.dy, p.dy - p.by, p.g)) });
+  }
+  // Men of the blood with children and no wife recorded: she is in the tree too.
+  for (const p of people) {
+    const me = P(g, p.id)!;
+    if (me.g !== 'M' || me.sp?.length || !blood.has(p.id)) continue;
+    const kids = (me.kids ?? []).map((k) => P(g, k)!).filter((k) => !k.m);
+    if (!kids.length) continue;
+    const minK = Math.min(...kids.map((k) => k.by));
+    const maxK = Math.max(...kids.map((k) => k.by));
+    const w = mk(g, {
+      first: firstName(g, 'F', stock, me.eth), last: me.last, maiden: outsideSurname(g, stock, me.eth, h.name), g: 'F', eth: me.eth,
+      by: Math.max(maxK - 40, Math.min(minK - 19, me.by + randInt(L, 0, 5))), bm: randInt(L, 1, 12), sp: [p.id],
+    });
+    updPerson(L, p.id, { sp: [w.id] });
+    for (const k of kids) {
+      updPerson(L, k.id, { m: w.id });
+      addKidRef(g.s, L, w.id, k.id);
+    }
+    applyDeath(g, w.id, rollDeath(g, w.by, 'F', undefined, maxK, me.eth));
+    g.slots.push({ wife: w.id, husband: p.id });
+  }
+  // The head in 1960: the eldest of the blood of age; a widow who married in if none.
+  const living = (id: string) => P(g, id)?.dy === undefined;
+  const age = (id: string) => g.now - P(g, id)!.by;
+  const byAge = (xs: string[]) => xs.sort((a, b) => P(g, a)!.by - P(g, b)!.by);
+  const bl = byAge(people.filter((p) => blood.has(p.id) && living(p.id) && age(p.id) <= 85).map((p) => p.id));
+  const head = bl.find((id) => age(id) >= 25) ?? byAge(people.filter((p) => !blood.has(p.id) && living(p.id) && age(p.id) >= 25).map((p) => p.id))[0] ?? bl[0];
+  if (head) g.packHeads[h.id] = head;
+  // The anchor: the eldest of the blood with no parents.
+  const roots = byAge([...blood].filter((id) => !P(g, id)?.f && !P(g, id)?.m));
+  return roots[0] ?? people[0].id;
+}
+
+/** Other pack roots of the blood (cousins with no recorded parents) hang off the generated tree. */
+function attachPackRoots(g: G, h: LHouse, anchor: string, chain: string[]): void {
+  const { L } = g;
+  const roots = Object.values(L.people).filter((p) => p.house === h.id && !p.f && !p.m && p.id !== anchor && !chain.includes(p.id) && g.created.includes(p.id));
+  for (const r of roots.sort((a, b) => a.by - b.by)) {
+    const men = Object.values(L.people).filter((p) => p.house === h.id && p.g === 'M' && p.id !== r.id && (p.sp?.length ?? 0) > 0);
+    const fits = men.filter((x) => r.by - x.by >= 20 && r.by - x.by <= 45 && (x.dy === undefined || x.dy >= r.by - 1))
+      .sort((a, b) => Math.abs(r.by - a.by - 30) - Math.abs(r.by - b.by - 30));
+    let f = fits[0];
+    if (!f) {
+      // A generated son of an older man of the house, who fathered this one.
+      const gfs = men.filter((x) => r.by - x.by >= 42 && r.by - x.by <= 75).sort((a, b) => b.by - a.by);
+      const gf = gfs[0] ?? P(g, chain[chain.length - 1]);
+      if (!gf) continue;
+      const by = Math.max(gf.by + 22, r.by - 30);
+      f = mk(g, { first: firstName(g, 'M', h.stock as Stock, r.eth), last: h.name, g: 'M', eth: r.eth, by, bm: randInt(L, 1, 12), house: h.id, f: gf.id, m: gf.sp?.[0] });
+      addKidRef(g.s, L, gf.id, f.id);
+      if (gf.sp?.[0]) addKidRef(g.s, L, gf.sp[0], f.id);
+      wifeFor(g, h, f.id, h.stock as Stock, r.eth);
+      applyDeath(g, f.id, rollDeath(g, by, 'M', h, r.by, r.eth));
+      f = P(g, f.id)!;
+    }
+    const m = P(g, f.id)!.sp?.find((w) => { const wp = P(g, w); return !!wp && r.by - wp.by >= 17 && r.by - wp.by <= 43; });
+    updPerson(L, r.id, { f: f.id, m });
+    addKidRef(g.s, L, f.id, r.id);
+    if (m) addKidRef(g.s, L, m, r.id);
+  }
+}
+
+/** The older pack couples had more children than the pack names: their brothers and sisters, and their families. */
+function widenPack(g: G, h: LHouse, chain: string[]): void {
+  const men = Object.values(g.L.people).filter((p) => p.house === h.id && p.g === 'M' && p.by < 1915 && !chain.includes(p.id) && (p.sp?.length ?? 0) > 0);
+  for (const man of men) {
+    const wife = man.sp![0];
+    const kids = genKids(g, h, man.id, wife, kidsOf(g.s, man.id), { max: 3 });
+    for (const k of kids) {
+      const kp = P(g, k.id)!;
+      const span = (kp.dy ?? g.now) - kp.by;
+      if (kp.g === 'M' && span >= 21) genBranch(g, h, k.id, 3);
+      else if (kp.g === 'F' && span >= 18) g.brides.push(k.id);
+    }
+  }
+}
+
+/** Heads of a house from its founder down to `head` along the blood (a widow follows her husband). */
+function headLine(g: G, h: LHouse, founder: string, head: string): string[] {
+  const out: string[] = [];
+  let cur: string | undefined = head;
+  const hp = P(g, head);
+  if (hp && hp.house !== h.id) {
+    out.push(head);
+    cur = hp.sp?.find((x) => P(g, x)?.house === h.id);
+  }
+  for (let i = 0; cur && i < 12; i++) {
+    out.push(cur);
+    if (cur === founder) break;
+    const p: LPerson | undefined = P(g, cur);
+    const f: string | undefined = p?.f ?? g.L.links[cur]?.f;
+    const m: string | undefined = p?.m ?? g.L.links[cur]?.m;
+    cur = f && (P(g, f)?.house === h.id || g.s.characters[f]) ? f : m && P(g, m)?.house === h.id ? m : f;
+  }
+  return out.reverse();
+}
+
 function nm(g: G, id: string): string {
   const c = g.s.characters[id];
   if (c) return `${c.firstName} ${c.lastName}`;
@@ -486,6 +698,59 @@ function nm(g: G, id: string): string {
 function addTitle(g: G, id: string, t: string): void {
   if (g.s.characters[id]) updLink(g.L, id, { titles: [...(g.L.links[id]?.titles ?? []), t] });
   else updPerson(g.L, id, { titles: [...(P(g, id)?.titles ?? []), t] });
+}
+
+/* ---------------------------------------------------------------- */
+/* Households: a crew man's wife and children                         */
+/* ---------------------------------------------------------------- */
+
+/**
+ * A crew man's household (the engine keeps only a wife's first name and the
+ * children's names and years) mirrored as lineage people in his house's
+ * tree. Idempotent: matches by name and year, so it also runs monthly
+ * (housesLife.ts). During generation (`g`) the wife can turn out to be a
+ * daughter of another house (matchBrides).
+ */
+export function syncHousehold(s: GameState, L: LineageState, c: Character, g?: G): void {
+  const hh = c.household;
+  if (!hh || c.dynasty || (!hh.wife && !hh.kids.length)) return;
+  const house = L.links[c.id]?.house;
+  if (!house || L.houses[house]?.player) return;
+  const stock = (L.houses[house]?.stock ?? 'Irish') as Stock;
+  const add = (p: Omit<LPerson, 'id'>): LPerson => {
+    if (g) return mk(g, p);
+    const rec = clean({ id: `L${L.next++}`, ...p } as LPerson);
+    L.people[rec.id] = rec;
+    return rec;
+  };
+  let wife = spousesOfAny(s, L, c.id).find((w) => (s.characters[w]?.firstName ?? L.people[w]?.first) === hh.wife);
+  if (hh.wife && !wife) {
+    const born = hh.kids.length ? Math.min(...hh.kids.map((k) => k.born)) : s.date.y;
+    const by = Math.min(born - 19, c.birth.y + randInt(L, 0, 5));
+    const w = add({ first: hh.wife, last: c.lastName, maiden: outsideSurnameL(L, stock, c.ethnicity, c.lastName), g: 'F', eth: c.ethnicity, by, bm: randInt(L, 1, 12), sp: [c.id] });
+    updLink(L, c.id, { sp: [...(L.links[c.id]?.sp ?? []), w.id] });
+    wife = w.id;
+    if (g) g.slots.push({ wife: w.id, husband: c.id });
+  }
+  const have = kidsOf(s, c.id);
+  for (const k of hh.kids) {
+    if (have.some((x) => (L.people[x]?.first ?? s.characters[x]?.firstName) === k.name && birthYear(s, x) === k.born)) continue;
+    const kid = add({ first: k.name, last: c.lastName, g: k.male ? 'M' : 'F', eth: c.ethnicity, by: k.born, bm: k.born === s.date.y ? s.date.m : randInt(L, 1, 12), house, f: c.id, m: wife });
+    addKidRef(s, L, c.id, kid.id);
+    if (wife) addKidRef(s, L, wife, kid.id);
+  }
+}
+
+function spousesOfAny(s: GameState, L: LineageState, id: string): string[] {
+  const c = s.characters[id];
+  const extra = c ? L.links[id]?.sp ?? [] : L.people[id]?.sp ?? [];
+  return c?.spouseId ? [...extra, c.spouseId] : extra.slice();
+}
+
+function outsideSurnameL(L: LineageState, stock: Stock, eth: Ethnicity, avoid: string): string {
+  const list = OUTSIDE_SURNAMES[stock] ?? SURNAMES[eth];
+  const n = pick(L, list);
+  return n === avoid ? pick(L, list) : n;
 }
 
 /* ---------------------------------------------------------------- */
@@ -529,6 +794,9 @@ function matchBrides(g: G): void {
       else updPerson(L, k, { m: b.id });
     }
     const hp = P(g, slot.husband);
+    // A crew man's household knows his wife by her first name.
+    const hc = s.characters[slot.husband];
+    if (hc?.household?.wife === w.first) hc.household.wife = b.first;
     if (hp) updPerson(L, slot.husband, { sp: (hp.sp ?? []).map((x) => (x === w.id ? b.id : x)) });
     else updLink(L, slot.husband, { sp: (L.links[slot.husband]?.sp ?? []).map((x) => (x === w.id ? b.id : x)) });
     delete L.people[w.id];
@@ -549,6 +817,61 @@ function matchBrides(g: G): void {
     } else if ((b.eth === 'Irish' || b.eth === 'Italian') && h?.type !== 'crime' && chance(L, 0.25)) {
       updPerson(L, id, { note: 'Took the veil' });
     }
+  }
+}
+
+/**
+ * The pack's own crossings: a wife who married in from a house's name is
+ * that house's daughter (Miriam Rosenfeld, born a Weiss), and a daughter who
+ * took another house's name married one of its sons (Eileen Callahan, now a
+ * Kilbride).
+ */
+function packCrossings(g: G): void {
+  const { s, L } = g;
+  const byName = new Map<string, string>();
+  for (const id of L.order) if (!byName.has(L.houses[id].name)) byName.set(L.houses[id].name, id);
+  const people = Object.values(L.people);
+  const menOf = (hid: string) => people.filter((p) => p.house === hid && p.g === 'M');
+  for (const id of g.packBrides) {
+    const w = P(g, id);
+    const hid = w?.maiden ? byName.get(w.maiden) : undefined;
+    if (!w || !hid || w.f || w.m) continue;
+    const fathers = menOf(hid).filter((f) => {
+      const m = f.sp?.[0] ? P(g, f.sp[0]) : undefined;
+      return !!m && w.by - f.by >= 20 && w.by - f.by <= 45 && w.by - m.by >= 18 && w.by - m.by <= 42 && (f.dy ?? 9999) >= w.by - 1 && (m.dy ?? 9999) >= w.by;
+    });
+    // A Character head of that house (Herman Weiss) can be her brother: she is his parents' daughter.
+    const head = L.houses[hid].headId ? s.characters[L.houses[hid].headId!] : undefined;
+    const hf = head ? (head.fatherId ?? L.links[head.id]?.f) : undefined;
+    const hm = head ? (head.motherId ?? L.links[head.id]?.m) : undefined;
+    let f: string | undefined;
+    let m: string | undefined;
+    if (hf && hm && Math.abs(head!.birth.y - w.by) <= 14 && w.by - (birthYear(s, hm) ?? 0) <= 42 && w.by - (birthYear(s, hm) ?? 9999) >= 17) {
+      f = hf;
+      m = hm;
+    } else if (fathers.length) {
+      const x = pick(L, fathers);
+      f = x.id;
+      m = x.sp![0];
+    }
+    if (!f || !m) continue;
+    updPerson(L, id, { f, m, house: hid });
+    addKidRef(s, L, f, id);
+    addKidRef(s, L, m, id);
+    const husband = w.sp?.[0];
+    const hh = husband ? P(g, husband)?.house : undefined;
+    if (husband && hh) L.events.push({ y: w.by + 21, h: hh, o: hid, k: 'marriage', t: `${nm(g, husband)} married ${w.first} ${w.maiden} of ${L.houses[hid].title}.`, p: husband, q: id });
+  }
+  for (const w of people) {
+    if (w.g !== 'F' || !w.maiden || w.sp?.length || !w.house || !g.created.includes(w.id)) continue;
+    const hid = byName.get(w.last);
+    if (!hid || hid === w.house || w.last === w.maiden) continue;
+    const cands = menOf(hid).filter((x) => !x.sp?.length && x.by >= w.by - 8 && x.by <= w.by + 3 && x.dy === undefined && !x.note);
+    const x = cands.sort((a, b) => Math.abs(a.by - w.by + 3) - Math.abs(b.by - w.by + 3))[0];
+    if (!x) continue;
+    updPerson(L, w.id, { sp: [x.id] });
+    updPerson(L, x.id, { sp: [w.id] });
+    L.events.push({ y: Math.max(w.by, x.by) + 22, h: hid, o: w.house, k: 'marriage', t: `${x.first} ${x.last} married ${w.first} ${w.maiden} of ${L.houses[w.house].title}.`, p: x.id, q: w.id });
   }
 }
 
@@ -652,17 +975,20 @@ export function buildSeeds(s: GameState): HouseSeed[] {
     out.push({ id: `h_off_${c.id}`, name: c.lastName, type: o.type, seat: o.seat, stock: o.stock, anchor: c.id, blurb: o.blurb, faction: c.faction === 'law' ? 'law' : undefined });
     used.add(c.id);
   }
-  const political = politicalSource?.();
-  const extra = EXTRA_HOUSES.filter((d) => !(political && d.pack));
+  // The world pack's dynasties by default; the built-in list stands in if the pack is unplugged (setPoliticalSource(() => [])).
+  const political = politicalSource ? politicalSource() : packSeeds();
+  const extra = EXTRA_HOUSES.filter((d) => !(political.length && d.pack));
   for (const d of extra) {
     out.push({
       id: d.id, name: d.name, type: d.type, seat: d.seat, stock: d.stock, head: d.head, blurb: d.blurb, faction: d.faction,
       extinct: d.head ? undefined : d.id === 'h_benedetto' ? { y: 1931, cause: 'killed in the Castellammarese troubles', killer: 'h_moretti' } : { y: 1949, cause: 'died in prison (Trenton State Prison)' },
     });
   }
-  if (political) out.push(...political);
+  out.push(...political);
   for (const c of Object.values(s.characters)) {
     if (used.has(c.id) || !wantsCrewHouse(c)) continue;
+    // Two made men of one name in one outfit are one house (the second joins as kin, housesLife.ts).
+    if (out.some((x) => x.crewOf && x.name === c.lastName && x.faction === c.faction)) continue;
     out.push(crewSeed(c));
     used.add(c.id);
   }
@@ -678,7 +1004,7 @@ function blank(s: GameState): LineageState {
 }
 
 function newG(s: GameState, L: LineageState): G {
-  return { s, L, now: s.date.y, nowM: s.date.m, brides: [], slots: [], seeds: {}, extinct: new Set(), size: {}, created: [] };
+  return { s, L, now: s.date.y, nowM: s.date.m, brides: [], slots: [], seeds: {}, extinct: new Set(), size: {}, created: [], packBrides: [], packHeads: {} };
 }
 
 /** Grudges the engine's starting problems imply (Manno and your father, 1951). */
@@ -765,12 +1091,15 @@ export function generateHouses(s: GameState, L: LineageState, seeds: HouseSeed[]
   }
   for (const sd of seeds) genHouse(g, sd);
   tagAnchors(g, seeds);
+  for (const sd of seeds) if (sd.crewOf && s.characters[sd.crewOf]) syncHousehold(s, L, s.characters[sd.crewOf], g);
   matchBrides(g);
   attachMaidens(g);
+  packCrossings(g);
   startingGrudges(g);
   memberTitles(g, seeds);
   markExtinct(g);
   L.events.sort((a, b) => a.y - b.y || (a.m ?? 0) - (b.m ?? 0));
+  tidyLineage(L);
 }
 
 /** Build every house and its history (once per game; again after a start reshapes the family). */

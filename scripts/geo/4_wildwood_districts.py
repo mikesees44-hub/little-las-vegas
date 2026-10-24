@@ -58,5 +58,5 @@ def corridor(a,b,w=0.18):
   return [back(x) for x in q]+[back(q[0])]
 c=coast(4.6); bay=pt(4.6,c[0]+1.2)
 add('causeway', corridor((-74.876,39.016), (bay[0]/KX-74.8, bay[1]/KY+LAT0)))
-json.dump({'type':'FeatureCollection','features':feats},open('/home/claude/little-las-vegas/src/ui/map/geo/wildwood.json','w'),separators=(',',':'))
+json.dump({'type':'FeatureCollection','features':feats},open('/home/claude/little-las-vegas/public/geo/wildwood.json','w'),separators=(',',':'))
 print('ok',[ (f['properties']['id'], len(f['geometry']['coordinates'][0]) ) for f in feats])

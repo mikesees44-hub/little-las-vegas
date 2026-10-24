@@ -20,7 +20,7 @@ import { PersonFace } from './PersonFace';
 
 type Filter = 'all' | HouseType | 'extinct';
 const FILTERS: { id: Filter; label: string }[] = [
-  { id: 'all', label: 'All' }, { id: 'crime', label: 'Crime' }, { id: 'political', label: 'Political' }, { id: 'police', label: 'Police' },
+  { id: 'all', label: 'All' }, { id: 'crime', label: 'Crime' }, { id: 'political', label: 'Political' }, { id: 'police', label: 'Police' }, { id: 'fire', label: 'Fire' },
   { id: 'legit', label: 'Legitimate' }, { id: 'showbiz', label: 'Show business' }, { id: 'extinct', label: 'Extinct' },
 ];
 

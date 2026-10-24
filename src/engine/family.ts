@@ -10,8 +10,7 @@ import { marriageAcceptance, marriageBlock, marriageEffects, matchCandidates, ou
 import { ensureDynState, fam, famMut, houseById, houseOf, type DynAction, type DynOp } from './familyState';
 import { actionStress, addStress, buildBreakingPoint, choiceStress, COPING_INFO, stressLevel } from './familyStress';
 import { autoChildhoodTrait, CONGENITALS, EDUCATION, finishEducation, goalFor, GOAL_INFO, PATH_INFO, processNewborn, seedCongenital, seedGoal, applyCongenital } from './familyTraits';
-import { buildChildhood, buildClaim, buildComingOfAge, familyEventSource } from './familyDrama';
-import { registerEventSource } from './events';
+import { buildChildhood, buildClaim, buildComingOfAge } from './familyDrama';
 import type { ActionPreview } from './actions';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, changeMeter, ensureRelation, opinion } from './relations';
@@ -32,7 +31,6 @@ import type { Character, Effect, EventInstance, GameState, PlayerAction, PlayerC
 
 /** Called once by newGame (and lazily for old saves). Uses the dynasty's own dice. */
 export function initDynasty(s: GameState): void {
-  registerEventSource(familyEventSource);
   const d = ensureDynState(s);
   if (d.houses.length) return;
   const boss = player(s);
@@ -593,7 +591,6 @@ function onSuccession(ctx: Ctx, prevId: string): void {
 
 /** Engine hook: after the week's systems have run (before the calendar moves). */
 export function dynastyWeek(ctx: Ctx): void {
-  registerEventSource(familyEventSource);
   const s = ctx.s;
   const d = ensureDynState(s);
   if (!d.houses.length) initDynasty(s);

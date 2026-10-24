@@ -202,11 +202,11 @@ export function HouseTree({ s, houseId }: { s: GameState; houseId: string }) {
       >
         {root ? (
           <div className="relative mx-auto flex w-max" style={{ zoom }}>
-            <div className="sticky left-0 z-20 -ml-3 w-[60px] shrink-0 self-stretch bg-gradient-to-r from-noir-950 via-noir-950/90 to-transparent">
+            <div className="sticky left-0 z-20 w-0 shrink-0 self-stretch">
               {Array.from({ length: rows }, (_, d) => (
-                <div key={d} className="absolute left-1 w-[52px]" style={{ top: d * ROW + CARD_H / 2 - 16 }} data-testid="gen-label">
-                  <div className="font-display text-sm text-gold-400">Gen {ROMAN[d] ?? d + 1}</div>
-                  <div className="text-[10px] text-stone-400">{tree.gens[d] ?? ''}</div>
+                <div key={d} className="absolute left-0 whitespace-nowrap rounded-sm border border-noir-700 bg-noir-950/95 px-1.5 py-px" style={{ top: d === 0 ? -10 : d * ROW - GAP / 2 - 9 }} data-testid="gen-label">
+                  <span className="font-display text-[12px] text-gold-400">Gen {ROMAN[d] ?? d + 1}</span>
+                  <span className="ml-1 text-[10px] text-stone-400">{tree.gens[d] ?? ''}</span>
                 </div>
               ))}
             </div>

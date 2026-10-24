@@ -8,7 +8,7 @@ import type { HouseType } from './houses';
  * Philadelphia crime families, show-business families).
  */
 
-export type Stock = 'Sicilian' | 'Calabrian' | 'Neapolitan' | 'Abruzzese' | 'Irish' | 'Galician' | 'Litvak' | 'OldStock' | 'Migration' | 'German';
+export type Stock = 'Sicilian' | 'Calabrian' | 'Neapolitan' | 'Abruzzese' | 'Irish' | 'Galician' | 'Litvak' | 'OldStock' | 'Migration' | 'German' | 'Polish';
 
 export const ORIGINS: Record<Stock, string[]> = {
   Sicilian: ['Castellammare del Golfo, Sicily', 'Sciacca, Sicily', 'Partinico, Sicily', 'Licata, Sicily', 'Termini Imerese, Sicily', 'Agrigento, Sicily', 'Bagheria, Sicily'],
@@ -21,17 +21,18 @@ export const ORIGINS: Record<Stock, string[]> = {
   OldStock: ['old Salem County Quaker stock', 'Cape May whaling families of the 1690s', 'Philadelphia Main Line stock', 'old Princeton stock', 'Cumberland County farm people since the Revolution'],
   Migration: ['the Great Migration from Virginia', 'the Great Migration from South Carolina', 'the Great Migration from Georgia'],
   German: ['Hamburg, Germany', 'Bremen, Germany', 'Baden, Germany'],
+  Polish: ['a village near Kraków', 'Tarnów, Galicia', 'a farm outside Białystok', 'Poznań'],
 };
 
 /** Years the founder arrived (or the house was founded, for old stock). */
 export const ARRIVAL: Record<Stock, [number, number]> = {
   Sicilian: [1886, 1910], Calabrian: [1886, 1910], Neapolitan: [1882, 1908], Abruzzese: [1885, 1910],
-  Irish: [1866, 1895], Galician: [1882, 1906], Litvak: [1882, 1906], OldStock: [1866, 1888], Migration: [1895, 1918], German: [1868, 1892],
+  Irish: [1866, 1895], Galician: [1882, 1906], Litvak: [1882, 1906], OldStock: [1866, 1888], Migration: [1895, 1918], German: [1868, 1892], Polish: [1885, 1910],
 };
 
 export const STOCK_ETH: Record<Stock, Ethnicity> = {
   Sicilian: 'Italian', Calabrian: 'Italian', Neapolitan: 'Italian', Abruzzese: 'Italian', Irish: 'Irish', Galician: 'Jewish', Litvak: 'Jewish',
-  OldStock: 'Irish', Migration: 'Irish', German: 'Irish',
+  OldStock: 'Irish', Migration: 'Irish', German: 'Irish', Polish: 'Irish',
 };
 
 /** First names for stocks the engine's lists don't cover. */
@@ -48,6 +49,10 @@ export const STOCK_NAMES: Partial<Record<Stock, { M: string[]; F: string[] }>> =
     M: ['Heinrich', 'Wilhelm', 'Friedrich', 'Karl', 'Otto', 'Henry', 'William', 'Frederick', 'Daniel', 'Gustav', 'Edward', 'John'],
     F: ['Anna', 'Katharina', 'Margarethe', 'Elisabeth', 'Wilhelmina', 'Bertha', 'Frieda', 'Clara', 'Mary', 'Helen', 'Louise'],
   },
+  Polish: {
+    M: ['Stanisław', 'Józef', 'Jan', 'Kazimierz', 'Walter', 'Stanley', 'Joseph', 'Edward', 'Frank', 'Chester', 'Henry', 'Thaddeus'],
+    F: ['Maria', 'Helena', 'Stefania', 'Jadwiga', 'Sophie', 'Helen', 'Stella', 'Josephine', 'Wanda', 'Irene', 'Genevieve'],
+  },
 };
 
 /** Surnames for women who married in from outside any house, by stock. */
@@ -55,6 +60,7 @@ export const OUTSIDE_SURNAMES: Partial<Record<Stock, string[]>> = {
   OldStock: ['Ashby', 'Hale', 'Winslow', 'Thornton', 'Bradford', 'Coleman', 'Ellis', 'Fairchild', 'Gardner', 'Hollister', 'Lockwood', 'Prentice', 'Ware', 'Stockton'],
   Migration: ['Jackson', 'Johnson', 'Freeman', 'Washington', 'Carter', 'Brooks', 'Hill', 'Gaines', 'Reed', 'Mitchell', 'Coleman', 'Harris'],
   German: ['Schmidt', 'Becker', 'Hoffmann', 'Wagner', 'Krause', 'Vogel', 'Richter', 'Lang', 'Keller', 'Baumann'],
+  Polish: ['Kowalski', 'Nowak', 'Wiśniewski', 'Lewandowski', 'Zieliński', 'Kamiński', 'Wójcik', 'Dąbrowski', 'Mazur', 'Krawczyk'],
 };
 
 /* ---------------------------------------------------------------- */
@@ -98,6 +104,7 @@ export const KOREA: [string, number[]][] = [
 
 export const SEA_DEATHS = ['lost at sea off Cape May', 'drowned when his trawler went down off Hereford Inlet', 'drowned off the Wildwood beach', 'lost in a nor\'easter off Five Mile Beach'];
 export const ACCIDENTS = ['struck by a trolley on Market Street', 'killed in an automobile accident on the Black Horse Pike', 'fell from scaffolding', 'killed in a boarding-house fire', 'killed at the shipyard in Camden'];
+export const FIRE_DUTY = ['killed fighting the Ocean Pier fire', 'killed when a roof fell in on Pacific Avenue', 'died of smoke in a boarding-house fire on Atlantic Avenue'];
 export const LINE_OF_DUTY = ['killed in the line of duty, shot by a holdup man on Pacific Avenue', 'killed in the line of duty during a bank robbery', 'killed in a motorcycle crash on patrol', 'killed in the line of duty breaking up a speakeasy'];
 
 /** Violent deaths for crime houses: [cause, from, to]. */
@@ -150,6 +157,12 @@ export const HEAD_TITLES: Record<HouseType, string[][]> = {
     ['President of the {seat} Chamber of Commerce', 'Ran the family business'],
     ['Ran the family business'],
   ],
+  fire: [
+    ['Volunteer fireman, {seat}', 'Hose company foreman, {seat}'],
+    ['Captain, {seat} Fire Department', 'Fire inspector, {seat}'],
+    ['Chief of the {seat} Fire Department', 'Fire Marshal, {seat}'],
+    ['Chief of the {seat} Fire Department'],
+  ],
   showbiz: [
     ['Vaudeville headliner on the Keith circuit', 'Ragtime pianist in Atlantic City saloons', 'Minstrel-show hoofer'],
     ['Bandleader at the Hof Brau, Wildwood', 'Comic on the Borscht Belt', 'Song-and-dance man in the Ziegfeld chorus'],
@@ -163,6 +176,7 @@ export const MEMBER_TITLES: Record<HouseType, string[]> = {
   crime: ['Ran a numbers bank in {seat}', 'Bookmaker on the boardwalk', 'Ran a card game behind a {seat} bar', 'Union delegate on the docks'],
   political: ['Precinct captain in {seat}', '{seat} city clerk', 'Deputy county clerk', 'Member of the Board of Education'],
   police: ['Patrolman, {seat}', 'Fire captain, {seat}', 'Lifeguard captain, {seat} beach patrol', 'Sergeant, {seat} police'],
+  fire: ['Fireman, {seat}', 'Fire captain, {seat}', 'Ladder company lieutenant, {seat}'],
   legit: ['Kept the books for the family business', 'Ran a concession stand on the piers', 'Opened a motel in the Crest'],
   showbiz: ['Drummer in the house band', 'Chorus girl at the Riptide', 'Booking agent on Pacific Avenue'],
 };
@@ -210,7 +224,7 @@ export const EXTRA_HOUSES: ExtraHouseDef[] = [
   { id: 'h_hensley', pack: 'hensley', name: 'Hensley', type: 'political', seat: 'Vineland', stock: 'OldStock', head: { first: 'Calvin', age: 66, office: 'Cumberland County Freeholder Director' }, blurb: 'Agricultural patronage and Protestant respectability.' },
   { id: 'h_doyle', pack: 'doyle', name: 'Doyle', type: 'police', seat: 'Atlantic City', stock: 'Irish', head: { first: 'Francis', age: 55, office: 'Captain, Atlantic City Police' }, blurb: 'A police family that went into politics.' },
   // Old Philadelphia and shore crime houses.
-  { id: 'h_benedetto', name: 'Benedetto', type: 'crime', seat: 'South Philadelphia', stock: 'Sicilian', blurb: 'The old Christian Street family that ran Philadelphia before the Table. The last of them died in the troubles of 1931.' },
+  { id: 'h_benedetto', name: 'Benedetto', type: 'crime', seat: 'South Philadelphia', stock: 'Sicilian', blurb: 'The old Christian Street family that ran Philadelphia before the Table. Their last boss died in the troubles of 1931 and left no son to carry the name.' },
   { id: 'h_lucarelli', name: 'Lucarelli', type: 'crime', seat: 'South Philadelphia', stock: 'Calabrian', faction: 'philly', head: { first: 'Nicholas', age: 61, office: 'Old capo of the Ninth Street market' }, blurb: 'Calabrian butchers and shylocks of the Ninth Street market. They sit at the back of the Table and remember everything.' },
   { id: 'h_rourke', name: 'Rourke', type: 'crime', seat: 'Atlantic City', stock: 'Irish', blurb: 'Irish rum-runners who owned the inlet in the twenties. The line ended in prison.' },
   // Show business.

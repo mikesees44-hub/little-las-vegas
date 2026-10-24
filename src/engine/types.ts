@@ -89,6 +89,8 @@ export interface Character {
   warnedWeek?: number;
   /** Hidden running total of money this capo has skimmed since last confronted. */
   skimmed?: number;
+  /** Kick-ups a slow-paying capo held back over the winter and still owes. */
+  arrears?: number;
   /** Away on a job until this absolute week. */
   busyUntil?: number;
   /** Hired specialist (safecracker, wheelman ...). Specialists don't hustle or staff rackets. */
@@ -117,6 +119,74 @@ export interface Character {
   informantFor?: FactionId;
   /** The lifestyle this man lives (the boss chooses his). */
   lifestyle?: LifestyleState;
+
+  /* ---- Crew & hierarchy (crew-life pillar) ---- */
+  /** Soldiers, associates and outside guys: the capo whose regime he belongs to (undefined = unassigned). */
+  capoId?: string;
+  /** What he is good at on the street. */
+  craft?: Craft;
+  /** Outside guys (not members): bookie, fence, numbers runner, a cop or politician on the pad. */
+  outside?: OutsideRole;
+  /** What he wants out of life. */
+  goal?: PersonalGoal;
+  /** Weaknesses (kept non-explicit). */
+  vices?: Vice[];
+  /** Wife and kids, by name (lightweight: not full characters). */
+  household?: Household;
+  /** What he brought in last week (gross, before your cut). */
+  lastEarn?: number;
+  /** His personal chronicle (most recent last, capped). */
+  story?: StoryEntry[];
+  /** The made man who vouched for him (responsible if he goes bad). */
+  vouchedBy?: string;
+  /** Proposed to Philadelphia for membership on this week (waiting for the books). */
+  proposedWeek?: number;
+  /** A background check has been run on him (week). */
+  checkedWeek?: number;
+  /** He owes a rival's shylock. */
+  debtTo?: { rival: RivalId; amount: number; week: number };
+  /** A rival has been courting him (since week). */
+  courtedBy?: { rival: RivalId; week: number };
+  /** Week he was last the subject of a popup (per-character cooldown). */
+  lastAskWeek?: number;
+  /** Took the oath (week). */
+  madeWeek?: number;
+}
+
+export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
+export type OutsideRole = 'bookie' | 'fence' | 'runner' | 'cop' | 'politician';
+export type PersonalGoal = 'get_made' | 'own_bar' | 'become_capo' | 'get_out' | 'get_rich' | 'take_chair';
+export type Vice = 'horses' | 'women' | 'booze' | 'cards' | 'debt';
+
+export interface Household {
+  wife?: string;
+  kids: { name: string; male: boolean; born: number }[];
+}
+
+export interface StoryEntry {
+  week: number;
+  text: string;
+}
+
+/** Philadelphia's membership books. */
+export interface Books {
+  open: boolean;
+  /** Makings left while open. */
+  slots: number;
+  /** Week the books next open or close. */
+  nextChange: number;
+}
+
+/** How an order reaches the street. */
+export type OrderVia = 'direct' | 'underboss' | 'capo';
+
+/** Counters for the simulator and the chronicle. */
+export interface CrewStats {
+  defections: number;
+  coups: number;
+  flips: number;
+  makings: number;
+  rivalCrewMoves: number;
 }
 
 /** The Long Game: the federal case against the boss. */
@@ -125,7 +195,7 @@ export interface LegalState {
   stage: LegalStage;
   /** The man the case is against (a new boss starts clean-ish). */
   personId: string;
-  evidence: number;
+  /** The evidence lives on the person (Character.evidence): one file per man. */
   defense: number;
   since: number;
   /** Week of the next step (grand jury vote, trial, parole hearing, end of parole). */
@@ -208,7 +278,19 @@ export interface Faction {
   targetId?: string;
   since: number;
   ultimatumWeek?: number;
+  /** What they say they want (CK faction agenda). Defaults from `demand`. */
+  agenda?: FactionAgenda;
+  /** For 'underboss': the man they want in the seat. */
+  candidateId?: string;
+  /** 0 demand · 1 ultimatum · 2 gone to Philadelphia behind your back · 3 coup. */
+  stage?: number;
+  /** Week of the last escalation. */
+  stageWeek?: number;
+  /** Display name: "the Boardwalk guys". */
+  name?: string;
 }
+
+export type FactionAgenda = 'kickup' | 'underboss' | 'narcotics' | 'contracts' | 'abdicate' | 'head';
 
 export interface OpinionModifier {
   id: string;
@@ -390,7 +472,20 @@ export type Effect =
   | ({ type: 'permit'; city: string; weeks: number } & EffectBase)
   | ({ type: 'standing'; city: string; amount: number } & EffectBase)
   /** The dynasty layer (familyState.ts / family.ts). */
-  | ({ type: 'dyn'; op: DynOp } & EffectBase);
+  | ({ type: 'dyn'; op: DynOp } & EffectBase)
+  | ({ type: 'evidence'; charId: string; amount: number } & EffectBase)
+  | ({ type: 'assign'; charId: string; capoId?: string } & EffectBase)
+  | ({ type: 'story'; charId: string; text: string } & EffectBase)
+  | ({ type: 'propose'; charId: string; voucherId: string } & EffectBase)
+  | ({ type: 'making'; charId: string } & EffectBase)
+  | ({ type: 'courted'; charId: string; rival?: RivalId } & EffectBase)
+  | ({ type: 'debtTo'; charId: string; clear: true } & EffectBase)
+  | ({ type: 'household'; charId: string; wife?: string; kid?: { name: string; male: boolean } } & EffectBase)
+  | ({ type: 'goalSet'; charId: string; goal?: PersonalGoal } & EffectBase)
+  | ({ type: 'flip'; charId: string } & EffectBase)
+  | ({ type: 'retire'; charId: string } & EffectBase)
+  | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
+  | ({ type: 'checkBackground'; charId: string } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -688,6 +783,12 @@ export interface GameState {
   dyn?: DynState;
   /** Every house's tree and history (houses.ts; optional for old saves). Shared between weeks copy-on-write. */
   lineage?: LineageState;
+  /** Philadelphia's membership books (optional for old saves). */
+  books?: Books;
+  /** Crew counters (defections, coups, flips, makings). */
+  crewStats?: CrewStats;
+  /** Event key -> week last shown (per-event cooldowns for crew decisions). */
+  eventCooldowns?: Record<string, number>;
 }
 
 export interface PlayerChoices {
@@ -727,7 +828,11 @@ export type PlayerAction =
   | { kind: 'legal'; op: 'retainer' | 'lielow' }
   | { kind: 'underbelly'; op: UnderbellyOp; rival?: RivalId }
   | { kind: 'officeHours' }
-  | { kind: 'perk'; perk: string };
+  | { kind: 'perk'; perk: string }
+  | { kind: 'reassign'; charId: string; capoId: string }
+  | { kind: 'propose'; charId: string; voucherId?: string }
+  | { kind: 'background'; charId: string }
+  | { kind: 'order'; key: string; via: OrderVia };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

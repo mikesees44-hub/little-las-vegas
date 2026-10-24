@@ -25,6 +25,34 @@ export const NO_CAPO_EFFICIENCY = 0.55; // a district with no capo leaks money
 export const WAGES = { underboss: 160, consigliere: 130, capo: 0, soldier: 55, associate: 25 } as const;
 export const COP_PAYOFF = 110;
 export const WINTER_COST = 320;
+/** Winter upkeep: a base plus so much per business you own (5 businesses ≈ WINTER_COST; each one past five adds a little). */
+export const WINTER_BASE = 95;
+export const WINTER_PER_BUSINESS = 45;
+/** Share of his kick-up a slow-paying capo holds back in the off-season. */
+export const SLOW_PAY_HOLDBACK = 0.4;
+/** The first winter (1960–61) the slow payers hold back more: nobody knows yet what the new boss will put up with. */
+export const FIRST_WINTER_HOLDBACK = 0.65;
+/** The first winter's extra bite: the house hasn't learned to live through a Wildwood winter yet. */
+export const FIRST_WINTER_EXTRA = 90;
+
+/** Sept 1960 – May 1961. */
+export function firstWinter(s: GameState): boolean {
+  // Rise to Power: a two-business outfit has no club boiler to fix; its winter is hard enough.
+  return !s.flags.start_rise && !isInSeason(s.date) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 6));
+}
+/** Share of his arrears a slow payer makes good each week in the season. */
+export const ARREARS_REPAY = 0.2;
+
+/**
+ * The slow payers: at most two capos who drag their feet with the winter
+ * envelope — gamblers, greedy men, and men who don't think much of you.
+ * Deterministic (no dice), so the player can see who they are.
+ */
+export function slowPayers(s: GameState): Character[] {
+  const score = (c: Character) => opinion(s, c.id, s.playerId) - (hasTrait(c, 'Greedy') ? 25 : 0) - (hasTrait(c, 'Gambler') ? 20 : 0) + (hasTrait(c, 'Honest') || hasTrait(c, 'Loyal-to-a-fault') ? 100 : 0);
+  return crew(s).filter((c) => c.rank === 'capo' && isFree(s, c) && score(c) < 25)
+    .sort((a, b) => score(a) - score(b) || (a.id < b.id ? -1 : 1)).slice(0, 2);
+}
 /** Share of washed money the counting room keeps. */
 export const LAUNDER_FEE = 0.05;
 /** Unwashed cash above this draws the IRS. */
@@ -85,6 +113,7 @@ export function runEconomy(ctx: Ctx): void {
   let dirty = gross - biz.clean; // street + hustle + rackets (kick-ups added below)
 
   // 3. Capo kick-ups with trait-driven variance and skimming.
+  const slow = new Set(isInSeason(s.date) ? [] : slowPayers(s).map((c) => c.id));
   for (const d of s.districts) {
     const capo = d.capoId ? s.characters[d.capoId] : undefined;
     if (!capo || !isFree(s, capo) || capo.faction !== 'player') continue;
@@ -96,8 +125,16 @@ export function runEconomy(ctx: Ctx): void {
     const capoShare = take * (capo.keep ?? CAPO_CUT);
     const owed = take - capoShare;
     const skim = Math.round(owed * skimRate(s, capo));
-    const kick = Math.round(owed - skim);
+    let kick = Math.round(owed - skim);
+    // A slow payer holds part of the winter envelope back ("the winter's slow, I'll make it up in the spring").
+    if (!isInSeason(s.date) && kick > 0 && slow.has(capo.id)) {
+      const held = Math.round(kick * (firstWinter(s) ? FIRST_WINTER_HOLDBACK : SLOW_PAY_HOLDBACK));
+      kick -= held;
+      capo.arrears = (capo.arrears ?? 0) + held;
+      capo.wealth += held;
+    }
     capo.wealth += Math.round(capoShare) + skim;
+    capo.lastEarn = Math.round(take);
     if (skim > 0) capo.skimmed = (capo.skimmed ?? 0) + skim;
     if (kick > 0) {
       const k = money(ctx, kick, `Kick-up: ${shortName(capo)} (${d.name})`, 'kickup');
@@ -105,6 +142,23 @@ export function runEconomy(ctx: Ctx): void {
       dirty += k;
     }
   }
+  // In the season the slow payers make good what they held back.
+  if (isInSeason(s.date)) {
+    for (const capo of crew(s)) {
+      if (!capo.arrears || !isFree(s, capo)) continue;
+      const pay = Math.min(capo.arrears, Math.max(100, Math.round(capo.arrears * ARREARS_REPAY)), Math.max(0, capo.wealth));
+      if (pay <= 0) continue;
+      capo.arrears -= pay;
+      capo.wealth -= pay;
+      const k = money(ctx, pay, `Late kick-up: ${shortName(capo)} makes good on the winter`, 'kickup');
+      gross += k;
+      dirty += k;
+    }
+  }
+  // Crew work (Rise to Power): small, steady jobs by the men in each capo's regime.
+  const work = crewWork(ctx, mult);
+  gross += work;
+  dirty += work;
   // Outposts in other cities.
   const out = outpostIncome(ctx);
   gross += out;
@@ -130,8 +184,10 @@ export function runEconomy(ctx: Ctx): void {
   money(ctx, -COP_PAYOFF, 'Envelopes for the beat cops', 'cost');
   if (!isInSeason(s.date)) {
     // The off-season bites: heating oil, idle payroll, the boardwalk boarded up.
-    const winter = WINTER_COST + 25 * owned(s).filter((b) => CATALOG[b.kind].season[1] < 0.5).length;
+    const n = owned(s).length;
+    const winter = WINTER_BASE + WINTER_PER_BUSINESS * Math.min(n, 5) + 8 * Math.max(0, n - 5) + 25 * owned(s).filter((b) => CATALOG[b.kind].season[1] < 0.5).length;
     money(ctx, -winter, 'Off-season: heating oil, idle payroll, shutters on the boardwalk', 'cost');
+    if (firstWinter(s)) money(ctx, -FIRST_WINTER_EXTRA, 'The first winter: storm shutters, a boiler at the club, payroll you never budgeted', 'cost');
   }
   // Keeping up appearances: the boss's household grows with the treasury.
   const lifestyle = Math.round((150 + Math.max(0, s.money - 60000) * 0.006) * (s.edicts?.lowprofile ? 0.5 : 1));
@@ -276,4 +332,30 @@ export function launder(ctx: Ctx, dirty: number): void {
   const fee = Math.round(washed * LAUNDER_FEE);
   if (fee > 0) money(ctx, -fee, `Laundering: the fronts washed $${Math.round(washed).toLocaleString('en-US')} (5% to the counting room)`, 'cost');
   s.unwashed = Math.min(s.unwashed, Math.max(0, s.money));
+}
+
+/** Your end of a regime man's small jobs, per week (Rise to Power). */
+export const CREW_WORK = { soldier: 120, associate: 75 } as const;
+
+/**
+ * Rise to Power: until the house is a real power (respect 60), the men in
+ * each capo's regime do steady small work — a card game, a load off a truck,
+ * collections for the numbers bank — and the capo kicks your end up every
+ * week. It barely notices the season. One labelled line per capo.
+ */
+export function crewWork(ctx: Ctx, mult: number): number {
+  const s = ctx.s;
+  if (!s.flags.start_rise || s.respect >= 60) return 0;
+  const caps = crew(s).filter((c) => c.rank === 'capo');
+  const season = mult > 1 ? 1.0 : 1.15; // winter is when a small crew hustles hardest
+  let total = 0;
+  for (const k of caps) {
+    if (!isFree(s, k)) continue;
+    const men = crew(s).filter((m) => m.capoId === k.id && isFree(s, m) && (m.rank === 'soldier' || m.rank === 'associate'));
+    if (!men.length) continue;
+    const base = men.reduce((a, m) => a + CREW_WORK[m.rank as 'soldier' | 'associate'], 0);
+    const amt = Math.round(base * season * (0.9 + k.attributes.business / 500));
+    if (amt > 0) total += money(ctx, amt, `Crew work: ${shortName(k)}'s crew (${men.length} m${men.length > 1 ? 'en' : 'an'})`, 'kickup');
+  }
+  return total;
 }

@@ -55,7 +55,7 @@ tests/        Vitest suites
 **Week order** (`engine.ts`): resolve the player's choices → fire due consequences → economy ledger → rival AI →
 operational heat, 80+ heat consequences, heat decay → housekeeping (releases, reputation drift) → calendar →
 monthly tick (aging/health/death, births, marriages, opinion decay, desertions, rival successions) →
-generate next week's events (max 4 popups).
+generate next week's events (max 4 popups: the bagman, queued scenes, 1–2 decisions brought by the crew, sometimes a situational event). General orders (the old sit-down) are given from the Crew/Administration tabs, directly (fast, adds to the boss's evidence file) or through the underboss or a capo (a week later, insulated, may be changed or ignored).
 
 **Modules**
 
@@ -72,6 +72,11 @@ generate next week's events (max 4 popups).
 | `events.ts` | Event defs (condition, weight, cooldown), bagman, sit-down (3 orders, no repeats), skimming, favor, recruit, Sunday dinner |
 | `effects.ts` | Data-driven choice effects (displayed as chips before you choose) and how they apply |
 | `consequences.ts` | Delayed consequences 1–8 weeks later, labelled "Because you … (wk N)" in the report and chronicle |
+| `hierarchy.ts` | The family tree: regimes (capo → soldiers → associates → outside guys), two loyalties (to the capo, to the boss), bios (craft, goal, vices, wife and kids, personal chronicle), integrity check, chain-of-command odds |
+| `regimes.ts` | Capos acting on their own each week (expand, skim, take the heat, start beefs, recruit, extra envelopes), plants leaking, courtships and shylock debts, Philadelphia's membership books, defections that take a capo's loyal men |
+| `crewEvents.ts` | Crew-driven decisions (proposals, requests, disputes, problems, weddings, christenings, sons, retirements, the making ceremony) with per-event and per-man cooldowns — they replace the weekly sit-down |
+| `crewConsequences.ts` | Their delayed outcomes: crew jobs, stand-up vs flip, delegated orders carried out, distorted or ignored, factions going to Philadelphia |
+| `rivalcrew.ts` | Rivals moving on your people every 2–4 weeks: poaching, corners, buying your cops, offers to your capos, plants |
 | `newGame.ts` | Seeded start: the house (spouse w/ maiden name, kids, parents, siblings), ~11 crew, districts, rivals, a starting problem |
 
 **Rival caps.** Money a rival takes from you in a week is capped at 25% of that week's gross earnings in year 1

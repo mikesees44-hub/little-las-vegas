@@ -316,4 +316,59 @@ export function relationsWithYou(s: GameState, houseId: string) {
   return { alliances, marriages, feuds, head, headOpinion };
 }
 
+/* ---------------------------------------------------------------- */
+/* Integrity (tests and the sim)                                      */
+/* ---------------------------------------------------------------- */
+
+/**
+ * Every rule the trees keep, as a list of problems: nobody is their own
+ * ancestor, parents are 15+ years older than their children and list them,
+ * marriages are symmetric (across houses too), the dead have a year and a
+ * cause, and every standing house has a living head.
+ */
+export function validateHouses(s: GameState): string[] {
+  const idx = houseIndex(s);
+  const out: string[] = [];
+  const nm = (n: PNode) => `${n.first} ${n.last} (${n.id})`;
+  for (const n of idx.nodes.values()) {
+    for (const p of [n.f, n.m]) {
+      const pn = p ? idx.nodes.get(p) : undefined;
+      if (!pn) continue;
+      if (n.by - pn.by < 15) out.push(`${nm(n)} b. ${n.by} is only ${n.by - pn.by} years younger than parent ${nm(pn)}`);
+      if (!pn.kids.includes(n.id)) out.push(`${nm(pn)} does not list child ${nm(n)}`);
+    }
+    for (const sp of n.sp) {
+      const o = idx.nodes.get(sp);
+      if (o && !o.sp.includes(n.id)) out.push(`marriage not symmetric: ${nm(n)} -> ${nm(o)}`);
+    }
+    if (!n.alive) {
+      if (n.dy === undefined) out.push(`${nm(n)} is dead with no year`);
+      if (!n.cause) out.push(`${nm(n)} is dead with no cause`);
+      if (n.dy !== undefined && n.dy < n.by) out.push(`${nm(n)} died before being born`);
+    }
+  }
+  const state = new Map<string, 1 | 2>();
+  const visit = (id: string): boolean => {
+    const st = state.get(id);
+    if (st === 2) return false;
+    if (st === 1) return true;
+    state.set(id, 1);
+    const n = idx.nodes.get(id);
+    let cyc = false;
+    for (const p of [n?.f, n?.m]) if (p && idx.nodes.has(p) && visit(p)) cyc = true;
+    state.set(id, 2);
+    return cyc;
+  };
+  for (const id of idx.nodes.keys()) if (!state.has(id) && visit(id)) out.push(`cycle through ${id}`);
+  const L = s.lineage;
+  if (L) {
+    for (const id of L.order) {
+      const h = L.houses[id];
+      if (h.extinct !== undefined || h.player) continue;
+      if (!idx.nodes.get(h.headId ?? '')?.alive) out.push(`${h.title} has no living head`);
+    }
+  }
+  return out;
+}
+
 export { PLAYER_HOUSE };
