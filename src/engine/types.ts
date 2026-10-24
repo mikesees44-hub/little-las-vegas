@@ -5,6 +5,7 @@
  */
 
 import type { DynAction, DynOp, DynState } from './familyState';
+import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
 
 export interface GameDate {
   y: number;
@@ -150,6 +151,12 @@ export interface Character {
   lastAskWeek?: number;
   /** Took the oath (week). */
   madeWeek?: number;
+
+  /* ---- Story & romance pillar ---- */
+  /** Fixed at birth (see storyState.orientationFor). */
+  orientation?: Orientation;
+  /** The real biological father, when it is not the father of record (hidden paternity). */
+  bioFatherId?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
@@ -484,7 +491,9 @@ export type Effect =
   | ({ type: 'flip'; charId: string } & EffectBase)
   | ({ type: 'retire'; charId: string } & EffectBase)
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
-  | ({ type: 'checkBackground'; charId: string } & EffectBase);
+  | ({ type: 'checkBackground'; charId: string } & EffectBase)
+  /** The story pillar: pack secrets, romance, paternity (storyOps.ts). */
+  | ({ type: 'storyOp'; op: StoryOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -786,6 +795,10 @@ export interface GameState {
   crewStats?: CrewStats;
   /** Event key -> week last shown (per-event cooldowns for crew decisions). */
   eventCooldowns?: Record<string, number>;
+  /** The content pack's bookkeeping (storyPack.ts). */
+  story?: StoryState;
+  /** Courtships, lovers, affairs, pregnancies (romance.ts). */
+  romance?: RomanceState;
 }
 
 export interface PlayerChoices {
@@ -833,7 +846,9 @@ export type PlayerAction =
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
-  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose';
+  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose'
+  /* romance (romance.ts) */
+  | 'court' | 'affair' | 'endRomance' | 'proposeMarriage' | 'separate';
 
 export interface AdvanceResult {
   state: GameState;

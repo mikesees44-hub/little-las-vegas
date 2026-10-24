@@ -2,6 +2,7 @@ import { owned, staffFactor } from './business';
 import { capos, crew, displayName, isFree, player } from './characters';
 import { chooseHeir } from './dynasty';
 import { familyAlerts } from './familyAlerts';
+import { romanceAlerts } from './romance';
 import { UNWASHED_SAFE } from './economy';
 import { opinion } from './relations';
 import { getRelation } from './relations';
@@ -84,6 +85,7 @@ export function alerts(s: GameState): Alert[] {
   const rg = currentRiseGoal(s);
   if (rg) out.push({ kind: 'goal', severity: 'info', title: `Next: ${rg.title}`, text: rg.hint, tab: 'business' });
   out.push(...familyAlerts(s));
+  out.push(...romanceAlerts(s));
   const lg = s.legal && s.legal.personId === boss.id ? s.legal : undefined;
   if (lg && lg.stage !== 'quiet') out.push({ kind: 'law', severity: lg.stage === 'investigation' || lg.stage === 'parole' ? 'warn' : 'danger', title: lg.stage === 'investigation' ? 'The FBI has a file on you' : lg.stage === 'grandjury' ? 'A grand jury is sitting' : lg.stage === 'indicted' || lg.stage === 'trial' ? 'You are under indictment' : lg.stage === 'prison' ? 'The boss is in prison' : 'On parole', text: `Evidence ${Math.round(caseEvidence(s, lg))}, defense ${Math.round(lg.defense)}.`, tab: 'law' });
   const ub = s.underbelly;

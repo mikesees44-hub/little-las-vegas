@@ -1,5 +1,6 @@
 import { addDays, ageOn } from './calendar';
 import { FEMALE_FIRST, MALE_FIRST, NICKNAMES, SURNAMES } from './names';
+import { orientationFor } from './storyState';
 import { chance, gauss, pick, rand, randInt, shuffle, type RngHolder } from './rng';
 import type { Attributes, Character, Ethnicity, FactionId, GameDate, GameState, Rank, Trait } from './types';
 
@@ -155,6 +156,8 @@ export function makeCharacter(s: GameState, opts: MakeCharOpts = {}): Character 
   if (opts.nickname ?? (gender === 'M' && rank !== 'civilian' && chance(s, 0.75))) {
     c.nickname = pickNickname(s, faction);
   }
+  // Orientation is fixed at birth from the seed and the id (no dice drawn, independent of traits).
+  c.orientation = orientationFor(s.seed, c.id);
   rollInitialHealth(s, c);
   s.characters[c.id] = c;
   return c;

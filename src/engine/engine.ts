@@ -22,7 +22,9 @@ import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
-import { buildHealthEvent, generateWeekEvents, MAX_POPUPS } from './events';
+import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
+import { storyEventSource, storyResolve } from './storyPack';
+import { romanceMonth } from './romance';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
 import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
@@ -30,6 +32,9 @@ import { addOpinion, decayAllRelations, opinion } from './relations';
 import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
 import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
+
+// The story pillar feeds the one popup pipeline (one candidate a week each).
+registerEventSource(storyEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -112,6 +117,7 @@ function monthlyTick(ctx: Ctx): void {
   crewMonth(ctx);
   secretsMonth(s);
   if (!s.gameOver) dynastyMonth(ctx);
+  if (!s.gameOver) romanceMonth(ctx);
   lifestyleMonth(ctx);
   regimesMonth(ctx);
   // Disloyal men may walk out (a capo takes the men loyal to him).
@@ -220,6 +226,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const resolving = s.pendingEvents;
   resolveChoices(ctx, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
+  if (!s.gameOver) storyResolve(ctx, resolving);
   if (!s.gameOver) fireConsequences(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);

@@ -14,6 +14,7 @@ import { CREW_HANDLERS } from './crewConsequences';
 import { addStory, bumpStat, giveBio, tidyRegimes } from './hierarchy';
 import { defectTo } from './regimes';
 import { maybePlant } from './rivalcrew';
+import { packConsequence } from './storyPack';
 
 /**
  * Delayed consequences. A choice schedules a key + params; when the week
@@ -202,7 +203,7 @@ export function fireConsequences(ctx: Ctx): void {
   const due = s.scheduled.filter((x) => x.dueWeek <= s.week);
   s.scheduled = s.scheduled.filter((x) => x.dueWeek > s.week);
   for (const sc of due) {
-    const h = HANDLERS[sc.key];
+    const h = HANDLERS[sc.key] ?? (sc.key.startsWith('pack:') ? packConsequence : undefined);
     if (!h) continue;
     const before = ctx.lines.length;
     const res = h(ctx, sc);

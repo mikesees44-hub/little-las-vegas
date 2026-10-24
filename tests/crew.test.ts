@@ -7,7 +7,7 @@ import { capoOf, inRegimeRank, obeyOdds, regime, validateHierarchy } from '../sr
 import { newCtx, reconcile } from '../src/engine/ledger';
 import { newGame } from '../src/engine/newGame';
 import { defectTo } from '../src/engine/regimes';
-import { addOpinion, opinion, setModifier } from '../src/engine/relations';
+import { addOpinion, getRelation, opinion, setModifier } from '../src/engine/relations';
 import { applyEffects } from '../src/engine/effects';
 import type { GameState } from '../src/engine/types';
 import { randomChoices } from './helpers';
@@ -143,6 +143,9 @@ describe('loyalty and defection', () => {
       addOpinion(s, m.id, s.rivals.find((r) => r.id === 'kessler')!.leaderId, 'Test: they buy rounds', 40, 0);
       m.courtedBy = { rival: 'kessler', week: s.week };
       for (let w = 0; w < 40; w++) {
+        // Hold his feelings for you where the test put them (promotions, christenings and the like move them).
+        const test = getRelation(s, m.id, s.playerId)?.modifiers.find((x) => x.reason === 'Test');
+        if (test) setModifier(s, m.id, s.playerId, 'Test', Math.max(-100, Math.min(100, test.value + love - opinion(s, m.id, s.playerId))));
         const ev = s.pendingEvents.find((e) => e.defId === 'crew_courted' && e.meta?.charId === m.id);
         s = advanceWeek(s, ev ? { choices: { [ev.iid]: 'let' } } : {}).state;
         if (s.characters[m.id].faction !== 'player' || !s.characters[m.id].courtedBy) break;

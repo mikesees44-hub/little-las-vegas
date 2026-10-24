@@ -20,6 +20,7 @@ import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
 import { fam } from '../../engine/familyState';
 import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
+import { Relationships } from './Relationships';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
@@ -145,6 +146,8 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
             ))}
           </div>
         </section>
+
+        <Relationships s={s} c={c} />
 
         <section className="mt-3">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Secrets & hooks</div>

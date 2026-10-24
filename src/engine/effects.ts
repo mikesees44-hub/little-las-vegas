@@ -20,6 +20,7 @@ import type { Effect, FactionId, GameState, HeatBar, LedgerCategory, ScheduledCo
 import { addEvidence, addStory, assignTo, bumpStat, capoOf, giveBio, GOAL_INFO, tidyRegimes, validCapo } from './hierarchy';
 import { voucherBlame } from './regimes';
 import { maybePlant } from './rivalcrew';
+import { applyStoryOp, describeStoryOp } from './storyOps';
 
 const HEAT_NAMES: Record<HeatBar, string> = { local: 'Local heat', family: 'Family heat', federal: 'Federal heat' };
 
@@ -190,6 +191,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
     case 'dyn':
       return describeDynOp(s, e.op);
+    case 'storyOp':
+      return describeStoryOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -786,6 +789,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'dyn':
       applyDynOp(ctx, e.op, label);
+      break;
+    case 'storyOp':
+      applyStoryOp(ctx, e.op);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);
