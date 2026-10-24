@@ -4,6 +4,7 @@ import { capos, displayName, hasTrait, isFree, player, relationLabel } from './c
 import { fmtMoney } from './effects';
 import { getRelation, opinion } from './relations';
 import { FACTION_NAMES } from './world';
+import { bribeReasons } from './polIntegrity';
 import type { Character, Effect, GameState, Hook, InteractionId } from './types';
 
 /**
@@ -175,6 +176,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
         respectReason(s),
         ...traitReasons(c, { Honest: -45, Greedy: 25, Gambler: 10, Paranoid: -10, Ambitious: 5 }),
         ...(c.traits.includes('Honest') && s.heat.local > 50 ? [{ label: 'Wants a headline', value: -10 }] : []),
+        ...bribeReasons(s, c.id),
       ]);
       return {
         id, title: `Bribe ${displayName(c)}`, detail: `${c.office}. An envelope, discreetly.`, cost: ob.cost,

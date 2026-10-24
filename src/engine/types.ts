@@ -5,6 +5,7 @@
  */
 
 import type { DynAction, DynOp, DynState } from './familyState';
+import type { PolAction, PolOp, PolState } from './polState';
 
 export interface GameDate {
   y: number;
@@ -472,6 +473,8 @@ export type Effect =
   | ({ type: 'standing'; city: string; amount: number } & EffectBase)
   /** The dynasty layer (familyState.ts / family.ts). */
   | ({ type: 'dyn'; op: DynOp } & EffectBase)
+  /** Politics, law-makers and the living world (politics.ts). */
+  | ({ type: 'pol'; op: PolOp } & EffectBase)
   | ({ type: 'evidence'; charId: string; amount: number } & EffectBase)
   | ({ type: 'assign'; charId: string; capoId?: string } & EffectBase)
   | ({ type: 'story'; charId: string; text: string } & EffectBase)
@@ -786,6 +789,8 @@ export interface GameState {
   crewStats?: CrewStats;
   /** Event key -> week last shown (per-event cooldowns for crew decisions). */
   eventCooldowns?: Record<string, number>;
+  /** Politics, law-makers and the living world (optional for old saves). */
+  pol?: PolState;
 }
 
 export interface PlayerChoices {
@@ -829,7 +834,8 @@ export type PlayerAction =
   | { kind: 'reassign'; charId: string; capoId: string }
   | { kind: 'propose'; charId: string; voucherId?: string }
   | { kind: 'background'; charId: string }
-  | { kind: 'order'; key: string; via: OrderVia };
+  | { kind: 'order'; key: string; via: OrderVia }
+  | { kind: 'pol'; op: PolAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

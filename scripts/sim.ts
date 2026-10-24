@@ -17,6 +17,8 @@ import { MAX_POPUPS } from '../src/engine/events';
 import { legalActions, previewAction } from '../src/engine/actions';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
+import { polActions } from '../src/engine/politics';
+import { population } from '../src/engine/polPeople';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
@@ -41,6 +43,8 @@ const GENERAL_RATE = Number(arg('general', '0.35'));
 const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 /** Chance per week of sending an envoy to another city. */
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
+/** Chance per week of a political order (cultivate, payroll, favors, campaigns, lobbying, kids, recruits). */
+const POL_RATE = Number(arg('politics', '0.12'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
 
@@ -75,6 +79,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   if (boss && !boss.lifestyle) add(pickOne(h, LIFESTYLE_IDS.map((focus) => ({ kind: 'lifestyle', focus }) as PlayerAction)));
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
+  if (rand(h) < POL_RATE) add(pickOne(h, polActions(s).filter((a) => !previewAction(s, a).disabledReason)));
   return { choices, actions };
 }
 
@@ -118,6 +123,8 @@ interface GameResult {
   repeats: number;
   familyOver: number;
   titles: Record<string, number>;
+  /** Politics counters at the end (polState.ts). */
+  pol?: Record<string, number>;
 }
 
 function playOne(gi: number): GameResult {
@@ -226,6 +233,7 @@ function playOne(gi: number): GameResult {
   if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
+  if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
   return r;
 }
 
@@ -289,6 +297,16 @@ if (dynGames.length) {
   const keys = Object.keys(dynGames[0].dyn!);
   const per10 = (k: string) => dynGames.reduce((a, r) => a + (r.dyn![k] ?? 0) * (520 / r.weeksPlayed), 0) / dynGames.length;
   console.log(`  House events per 10 years (mean): ${keys.map((k) => `${k} ${per10(k).toFixed(1)}`).join(', ')}`);
+}
+
+const polGames = results.filter((r) => r.pol && r.weeksPlayed > 0);
+if (polGames.length) {
+  const keys = Object.keys(polGames[0].pol!);
+  const mean = (k: string) => polGames.reduce((a, r) => a + (r.pol![k] ?? 0), 0) / polGames.length;
+  console.log(`\nPOLITICS (mean per game at the end)`);
+  console.log(`  ${keys.map((k) => `${k} ${mean(k).toFixed(1)}`).join(', ')}`);
+  const inc = mean('contested') ? mean('incumbentWins') / mean('contested') : 0;
+  console.log(`  Incumbents win ${(inc * 100).toFixed(0)}% of contested races; offices owned (control 70+) at the end: ${mean('owned').toFixed(1)}`);
 }
 
 console.log(`\nHEAT (share of weeks in each band)`);

@@ -28,8 +28,11 @@ import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
+import { CityHall } from './cityhall/CityHall';
+import { ElectionNight } from './cityhall/ElectionNight';
+import type { ElectionResult } from '../engine/polState';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle';
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle';
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
 const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
   { id: 'map', label: 'The Island' },
@@ -39,7 +42,7 @@ const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = 
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
   { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }] },
-  { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'papers', label: 'The Papers' }] },
+  { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'cityhall', label: 'City Hall' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
   { id: 'chronicle', label: 'Chronicle' },
 ];
@@ -80,6 +83,7 @@ export function App() {
   const [clockNote, setClockNote] = useState<string | undefined>();
   const [ticker, setTicker] = useState<string | undefined>();
   const [cues, setCues] = useState<CutsceneCue[]>([]);
+  const [night, setNight] = useState<ElectionResult[]>([]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
@@ -89,6 +93,7 @@ export function App() {
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
+      setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state));
       if (quiet) {
         setTicker(tickerLine(r.report));
@@ -101,6 +106,7 @@ export function App() {
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
+      setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state));
       setReports(r.reports);
     }
@@ -249,6 +255,7 @@ export function App() {
               <UnderbellyPanel s={s} />
             </div>
           )}
+          {tab === 'cityhall' && <CityHall s={s} />}
           {tab === 'papers' && <Newspapers s={s} />}
           {tab === 'chronicle' && <Chronicle s={s} />}
         </main>
@@ -268,7 +275,8 @@ export function App() {
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
-      {reports && !current && !sheet && !planner && !cues.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
+      {reports && !current && !sheet && !planner && !cues.length && !night.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>
