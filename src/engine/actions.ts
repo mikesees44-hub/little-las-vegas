@@ -12,6 +12,7 @@ import { isFree } from './characters';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
 import { CAPO_CUT } from './economy';
+import { CITIES_BY_ID, hasPermission, needsPermission } from './cities';
 import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds, topRival } from './schemes';
 import { OFFICE_BRIBE } from './interactions';
 import { getRelation, opinion } from './relations';
@@ -81,6 +82,33 @@ function need(cond: boolean, reason: string, prev?: string): string | undefined 
 export const MAX_PER_KIND = 4;
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  askPermission: {
+    preview: (s, a) => {
+      const c = CITIES_BY_ID[a.city];
+      const philly = s.rivals.find((r) => r.id === 'philly');
+      const mor = philly ? s.characters[philly.leaderId] : undefined;
+      const label = `Permission from Philadelphia: ${c?.name ?? '?'}`;
+      const reasons: Reason[] = [
+        { label: 'Base', value: 45 },
+        { label: 'Moretti\'s opinion of you', value: mor ? Math.round(opinion(s, mor.id, s.playerId) / 2) : 0 },
+        { label: 'Family heat on you', value: -Math.round(s.heat.family / 3) },
+        ...(c?.group === 'philly' ? [{ label: 'Philadelphia\'s own turf', value: -40 }] : []),
+        ...(s.flags.brunoKnows ? [{ label: 'You touched narcotics', value: -30 }] : []),
+      ];
+      const sum = reasons.reduce((x, r) => x + r.value, 0);
+      return {
+        title: label,
+        detail: 'An envelope for the old man\'s charities and a request, hat in hand.',
+        effects: [{ type: 'money', amount: -1000, label }, { type: 'permit', city: a.city, weeks: 52, label }],
+        refuseEffects: [{ type: 'money', amount: -1000, label: `${label}: refused (he kept the envelope)` }],
+        acceptance: { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons },
+        cost: 1000,
+        because: `asked Philadelphia's permission to go into ${c?.name ?? 'another city'}`,
+        disabledReason: !c || !needsPermission(c) ? 'No permission needed there' : hasPermission(s, a.city) ? 'You already have it' : s.money < 1000 ? 'Needs $1,000' : undefined,
+        category: 'event',
+      };
+    },
+  },
   declareWar: {
     preview: (s, a) => {
       const r = s.rivals.find((x) => x.id === a.rival);
@@ -217,15 +245,19 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       why = need(s.money >= o.cost, `Needs ${fmtMoney(o.cost)}`, why);
       why = need(!(t && s.schemes.some((x) => x.owner === 'player' && x.targetId === t.id && x.kind === a.scheme)), 'Already scheming that', why);
       const unsanctioned = a.scheme === 'murder' && t && needsSanction(s, t) && !sanctioned(s, t.id);
+      const city = a.scheme === 'envoy' ? CITIES_BY_ID[a.opts.city ?? ''] : undefined;
+      const unpermitted = city && needsPermission(city) && !hasPermission(s, city.id);
+      const permitFx: Effect[] = unpermitted ? [{ type: 'heat', bar: 'family', amount: city.group === 'philly' ? 12 : 6, label: `${label}: without Philadelphia's blessing` }, { type: 'rivalOpinion', rival: 'philly', amount: -10, reason: `Went into ${city.name} without asking`, label }] : [];
       return {
         title: label,
         detail: `${info.text} About ${o.weeks} week${o.weeks > 1 ? 's' : ''}; secrecy ${o.secrecy}.`,
         effects: [
           ...(o.cost ? [{ type: 'money', amount: -o.cost, label } as Effect] : []),
+          ...permitFx,
           { type: 'startScheme', scheme: { kind: a.scheme, owner: 'player', ownerId: s.playerId, targetId: a.targetId, agents: a.agents, opts: a.opts, because: `${info.verb === 'kill' ? 'ordered the hit on' : `schemed to ${info.verb}`} ${t ? `${t.firstName} ${t.lastName}` : where ?? ''}`.trim() }, label },
         ],
         odds: { chance: o.chance, reasons: o.reasons },
-        warning: unsanctioned ? `${t!.firstName} is a made man. Without the Table's sanction this means a blood feud with ${FACTION_NAMES[t!.faction]} and Philadelphia's anger.` : undefined,
+        warning: unsanctioned ? `${t!.firstName} is a made man. Without the Table's sanction this means a blood feud with ${FACTION_NAMES[t!.faction]} and Philadelphia's anger.` : unpermitted ? `${city!.name} is outside South Jersey. Without Philadelphia's permission, they will be angry.` : undefined,
         cost: o.cost,
         because: `started a scheme: ${info.name.toLowerCase()}${t ? ` against ${t.firstName} ${t.lastName}` : ''}`,
         disabledReason: why,

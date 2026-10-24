@@ -8,6 +8,7 @@ import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, hireFromPool, POLICY_LABEL } from './crewlife';
 import { CAPO_CUT } from './economy';
 import { holdVote, openDispute } from './table';
+import { CITIES_BY_ID } from './cities';
 import { changeScore, endWar, startWar } from './war';
 import { chance, randInt } from './rng';
 import { FACTION_NAMES } from './world';
@@ -133,6 +134,10 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
     }
     case 'feud':
       return `Blood feud with ${FACTION_NAMES[e.rival]}`;
+    case 'permit':
+      return `Philadelphia's blessing for ${CITIES_BY_ID[e.city]?.name ?? e.city}`;
+    case 'standing':
+      return `${signed(e.amount)} standing in ${CITIES_BY_ID[e.city]?.name ?? e.city}`;
     case 'warStart': {
       const d = s.districts.find((x) => x.id === e.district);
       return `War with ${FACTION_NAMES[e.rival]} over ${d?.name ?? e.district}${e.sanctioned ? '' : ' (unsanctioned)'}`;
@@ -454,6 +459,12 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'claim':
       if (!s.claims.some((c) => c.district === e.district && c.against === e.against)) s.claims.push({ district: e.district, against: e.against, week: s.week, reason: e.reason });
+      break;
+    case 'permit':
+      s.permits[e.city] = s.week + e.weeks;
+      break;
+    case 'standing':
+      s.cityStanding[e.city] = Math.max(-100, Math.min(100, (s.cityStanding[e.city] ?? 0) + e.amount));
       break;
     case 'warStart':
       startWar(ctx, e.rival, e.district, e.cb, e.sanctioned);

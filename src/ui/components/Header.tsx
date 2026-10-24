@@ -12,7 +12,7 @@ export function Header({ s, children }: { s: GameState; children?: ReactNode }) 
   const info = seasonInfo(s.date);
   const boss = player(s);
   return (
-    <header className="panel px-3 py-2 sticky top-0 z-30">
+    <header className="panel px-3 py-2 sm:sticky top-0 z-30">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="min-w-0 mr-auto">
           <h1 className="font-display text-xl text-gold-400 leading-none">Little Las Vegas</h1>

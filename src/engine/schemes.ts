@@ -3,10 +3,13 @@ import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { activeTask, seatPower } from './council';
 import { hasSpecialist } from './crewlife';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
-import { money, type Ctx } from './ledger';
+import type { Ctx } from './ledger';
 import { addOpinion, changeMeter, opinion } from './relations';
 import { chance, pick, randInt } from './rng';
 import { FACTION_NAMES } from './world';
+import { CITIES_BY_ID, CITY_LIST, hasPermission, needsPermission, standing } from './cities';
+import { resolveEnvoy } from './envoys';
+export { outpostIncome } from './envoys';
 import type { Character, Effect, EventInstance, FactionId, GameState, HeistKind, HitLocation, RivalId, Scheme, SchemeDepth, SchemeKind, SchemeOptions } from './types';
 
 /**
@@ -57,14 +60,10 @@ export const HEISTS: Record<HeistKind, { name: string; resistance: number; payou
   bank: { name: 'A bank in Delaware', resistance: 60, payout: [25000, 50000], heat: 'federal', heatAmt: 15, text: 'Out of state. The FBI will come.' },
 };
 
-export const CITIES: Record<string, { name: string; resistance: number; income: number; text: string }> = {
-  ac: { name: 'Atlantic City', resistance: 45, income: 450, text: 'Manno\'s home turf. A foothold in the Inlet clubs.' },
-  capemay: { name: 'Cape May', resistance: 15, income: 180, text: 'Victorian hotels, quiet money, summer gamblers.' },
-  camden: { name: 'Camden', resistance: 40, income: 350, text: 'Philadelphia\'s backyard. Tread carefully.' },
-  baltimore: { name: 'Baltimore', resistance: 35, income: 380, text: 'The docks and the race track at Pimlico.' },
-  miami: { name: 'Miami', resistance: 30, income: 400, text: 'Hotels on the beach and Cuban money looking for a home.' },
-  vegas: { name: 'Las Vegas', resistance: 55, income: 600, text: 'A points share in a Strip casino — if the Chicago people allow it.' },
-};
+/** Envoy destinations: the cities of cities.ts (kept under this name for older callers). */
+export const CITIES: Record<string, { name: string; resistance: number; income: number; text: string }> = Object.fromEntries(
+  CITY_LIST.filter((c) => c.id !== 'wildwood').map((c) => [c.id, { name: c.name, resistance: c.difficulty, income: c.income, text: c.flavor }]),
+);
 
 export const PROTECTED_OFFICES = 'Philadelphia\'s rule: no cops, no prosecutors, no politicians, no reporters.';
 
@@ -174,14 +173,21 @@ export function schemeOdds(s: GameState, kind: SchemeKind, targetId: string | un
       break;
     }
     case 'envoy': {
-      const c = CITIES[opts.city ?? 'capemay'];
-      if (!c) why ??= 'Pick a city';
+      const c = CITIES_BY_ID[opts.city ?? 'capemay'];
+      if (!c || c.id === 'wildwood') why ??= 'Pick a city';
       else {
-        reasons.push({ label: c.name, value: -c.resistance });
-        if (s.outposts.some((o) => o.city === c.name)) why ??= 'You already have an outpost there';
+        reasons.push({ label: `${c.name} (${c.owner})`, value: -c.difficulty });
+        const st = standing(s, c.id);
+        if (st) reasons.push({ label: 'Your standing there', value: Math.round(st / 4) });
+        const fam = agents.find((a) => a.dynasty);
+        if (fam) reasons.push({ label: `${fam.id === s.playerId ? 'You go yourself' : 'Family goes'}: it shows respect`, value: fam.id === s.playerId ? 15 : 8 });
+        const o = s.outposts.find((x) => x.city === c.id);
+        if (o?.kind === 'franchise') why ??= 'You already run a franchise there';
+        if (needsPermission(c) && !hasPermission(s, c.id)) reasons.push({ label: 'No blessing from Philadelphia', value: -5 });
       }
-      cost = 3000;
-      weeks = 8;
+      cost = c && c.difficulty >= 50 ? 4000 : 2000;
+      weeks = 6 + Math.round((c?.difficulty ?? 30) / 15);
+      secrecy = 100;
       break;
     }
     case 'claim': {
@@ -422,17 +428,7 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
       break;
     }
     case 'envoy': {
-      const c = CITIES[sc.opts.city ?? 'capemay'];
-      if (success) {
-        s.outposts.push({ city: c.name, income: c.income, since: s.week, envoyId: agents[0]?.id });
-        apply(ctx, `Envoy: ${c.name}`, sc.because, [{ type: 'respect', amount: 3 }]);
-        ctx.log.push(`Your envoy opened an outpost in ${c.name}.`);
-      } else {
-        const a = agents[0];
-        if (a) a.health = Math.max(10, a.health - 20);
-        apply(ctx, `Envoy: ${c.name}`, sc.because, [{ type: 'respect', amount: -2 }]);
-        ctx.log.push(`The people in ${c.name} sent your envoy home with a broken nose.`);
-      }
+      resolveEnvoy(ctx, sc, odds.chance, agents);
       break;
     }
     case 'claim': {
@@ -596,13 +592,6 @@ export function buildPlotUncovered(s: GameState, sc: Scheme): EventInstance {
       { id: 'table', label: 'Take it to the Table', detail: 'Make him answer to Philadelphia.', because: `took ${r.shortName}'s plot to the Table`, effects: [{ type: 'endScheme', schemeId: sc.id, label }, { type: 'rivalResource', rival: r.id, exposure: 15, label }, { type: 'rivalOpinion', rival: 'philly', amount: 5, reason: 'Brought a grievance properly', label }, { type: 'flag', key: `grievance_${r.id}`, value: 1, label }] },
     ],
   };
-}
-
-/** Weekly outpost income. */
-export function outpostIncome(ctx: Ctx): number {
-  let total = 0;
-  for (const o of ctx.s.outposts) total += money(ctx, o.income, `Outpost: ${o.city}`, 'business');
-  return total;
 }
 
 export function ageOk(s: GameState, c: Character): boolean {

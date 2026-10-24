@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
-import type { GameState, PlayerAction, PlayerChoices, SchemeKind, SuccessionLaw, WeeklyReport } from '../engine/types';
+import type { GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
+import { MapView } from './map/MapView';
 import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
 import { TablePanel } from './components/TablePanel';
 import { Businesses } from './components/Businesses';
@@ -12,10 +13,7 @@ import { CrewList } from './components/CrewList';
 import { EventModal } from './components/EventModal';
 import { FamilyTree } from './components/FamilyTree';
 import { Header } from './components/Header';
-import { IslandMap } from './components/IslandMap';
-import { AlertRail, DistrictPanel, PlayerCard } from './components/MapSide';
 import { OrdersContext, OrdersTray } from './components/Orders';
-import { Overview } from './components/Overview';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
@@ -44,7 +42,6 @@ export function App() {
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
   const [tab, setTab] = useState<Tab>('map');
-  const [district, setDistrict] = useState<string | undefined>();
   const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
@@ -56,8 +53,8 @@ export function App() {
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
   const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
-  const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string } | undefined>();
-  const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string) => { setSheet(undefined); setPlanner({ kind, targetId }); } }), []);
+  const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
+  const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
 
   useEffect(() => saveGame(s), [s]);
 
@@ -112,7 +109,6 @@ export function App() {
     setReports(null);
     setEventIdx(null);
     setSheet(undefined);
-    setDistrict(undefined);
     setTab('map');
   }
 
@@ -165,21 +161,7 @@ export function App() {
       </nav>
 
       {tab === 'map' ? (
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div className="panel relative overflow-hidden">
-            <IslandMap s={s} selected={district} onSelect={setDistrict} />
-            <div className="absolute left-2 bottom-2 z-10"><PlayerCard s={s} /></div>
-            <div className="absolute right-2 top-12 z-20"><AlertRail s={s} items={alertList} onAlert={onAlert} /></div>
-          </div>
-          <aside className="panel p-3 sm:p-4 lg:max-h-[82vh] lg:overflow-y-auto">
-            {district ? (
-              <>
-                <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setDistrict(undefined)}>← the whole island</button>
-                <DistrictPanel s={s} id={district} onOpenBusiness={() => setTab('business')} />
-              </>
-            ) : <Overview s={s} />}
-          </aside>
-        </div>
+        <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => setTab('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
       ) : (
         <main className="panel p-3 sm:p-4">
           {tab === 'business' && <Businesses s={s} />}
@@ -205,7 +187,7 @@ export function App() {
       )}
       {reports && !current && !sheet && !planner && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
-      {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} onClose={() => setPlanner(undefined)} />}
+      {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>
     </OrdersContext.Provider>
     </PlannerContext.Provider>

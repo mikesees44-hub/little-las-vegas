@@ -335,7 +335,9 @@ export type Effect =
   | ({ type: 'lobby'; disputeId: string; memberId: string; amount: number } & EffectBase)
   | ({ type: 'plea'; disputeId: string; amount: number } & EffectBase)
   | ({ type: 'sanction'; targetId: string; weeks: number } & EffectBase)
-  | ({ type: 'ruling'; disputeId: string; comply: boolean } & EffectBase);
+  | ({ type: 'ruling'; disputeId: string; comply: boolean } & EffectBase)
+  | ({ type: 'permit'; city: string; weeks: number } & EffectBase)
+  | ({ type: 'standing'; city: string; amount: number } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -430,8 +432,11 @@ export interface Claim {
   reason: string;
 }
 
+/** Your foothold in another city (envoys open them). */
 export interface Outpost {
+  /** City id (see cities.ts). */
   city: string;
+  kind: 'contact' | 'partner' | 'franchise';
   income: number;
   since: number;
   envoyId?: string;
@@ -619,6 +624,10 @@ export interface GameState {
   sanctions: Record<string, number>;
   wars: War[];
   disputes: Dispute[];
+  /** Your standing in other cities (city id -> 0..100). */
+  cityStanding: Record<string, number>;
+  /** Philadelphia's permission to operate in a city (city id -> until week). */
+  permits: Record<string, number>;
 }
 
 export interface PlayerChoices {
@@ -645,6 +654,7 @@ export type PlayerAction =
   | { kind: 'terms'; warId: string; terms: 'district' | 'tribute' | 'white' }
   | { kind: 'raiseDispute'; dispute: DisputeKind; rival: RivalId; district?: string; targetId?: string; warId?: string }
   | { kind: 'lobby'; disputeId: string; memberId: string; mode: 'money' | 'favor' | 'hook' }
+  | { kind: 'askPermission'; city: string }
   | { kind: 'pushDistrict'; district: string }
   | { kind: 'appoint'; seat: Seat; charId: string }
   | { kind: 'councilTask'; seat: Seat; task: CouncilTask; target?: string }

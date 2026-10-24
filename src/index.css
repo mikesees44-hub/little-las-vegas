@@ -49,3 +49,43 @@ body {
     @apply border-gold-500 text-gold-300;
   }
 }
+
+/* ---------------- The real map (Leaflet) ---------------- */
+.llv-map, .llv-map.leaflet-container { background: #0b1720; font-family: 'Inter', system-ui, sans-serif; }
+.llv-map .leaflet-control-attribution { background: rgba(11, 10, 9, 0.75); color: #8a8378; font-size: 9px; }
+.llv-map .leaflet-control-attribution a { color: #c49a3a; }
+.llv-map .leaflet-bar a { background: #1d1a17; color: #ecd38f; border-color: #3a342e; }
+.llv-map .leaflet-bar a:hover { background: #2a2622; }
+.llv-map.llv-has-tiles .llv-tiles { filter: sepia(0.25) brightness(0.9); }
+.llv-label { pointer-events: none; white-space: nowrap; }
+.llv-label span { position: relative; left: -50%; top: -0.6em; display: inline-block; text-shadow: 0 0 3px #0b0a09, 0 0 3px #0b0a09, 0 0 2px #0b0a09; }
+.llv-state span { color: #6f6656; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; font-weight: 600; }
+.llv-place span { color: #a39a8a; font-size: 10px; }
+.llv-town span { color: #c9bfa9; font-size: 10.5px; }
+.llv-hood span { color: #9a8f7d; font-size: 10px; font-style: italic; }
+.llv-district span { color: #f3ead6; font-size: 11px; font-weight: 600; }
+.llv-city { background: transparent !important; border: 0 !important; box-shadow: none !important; color: #e8dfcb !important; font-size: 11px; font-weight: 600; text-shadow: 0 0 3px #0b0a09, 0 0 3px #0b0a09; padding: 0 2px !important; }
+.llv-city::before { display: none; }
+.llv-city.home { color: #ecd38f !important; font-size: 12.5px; }
+.llv-tip { background: #141210 !important; color: #d6ccb6 !important; border: 1px solid #3a342e !important; font-size: 11px; }
+.llv-tip b { color: #ecd38f; }
+.llv-road-tip { background: #141210 !important; color: #c49a3a !important; border: 1px solid #3a342e !important; font-size: 10px; }
+.llv-landmark { white-space: nowrap; }
+.llv-landmark .dot { display: inline-block; width: 7px; height: 7px; border-radius: 9px; background: #c49a3a; border: 1px solid #0b0a09; margin-right: 3px; vertical-align: middle; }
+.llv-landmark .t { color: #ecd38f; font-size: 10px; font-style: italic; text-shadow: 0 0 3px #0b0a09, 0 0 3px #0b0a09; vertical-align: middle; }
+.llv-hq span { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 3px; border: 1px solid #ecd38f; color: #0b0a09; font-size: 10px; font-weight: 700; }
+.llv-popup .leaflet-popup-content-wrapper, .llv-popup .leaflet-popup-tip { background: #141210; color: #d6ccb6; border: 1px solid #9c7a2c; }
+.llv-popup .leaflet-popup-content { margin: 10px 12px; }
+.llv-popup a.leaflet-popup-close-button { color: #8a8378; }
+.llv-card .r { font-size: 9px; letter-spacing: 0.3em; color: #8a8378; }
+.llv-card .n { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; color: #d9b75f; margin-bottom: 4px; }
+.llv-card .l { font-size: 12px; margin: 1px 0; }
+.llv-card .k { color: #8a8378; }
+.llv-card .f { font-size: 11px; font-style: italic; color: #a39a8a; margin: 6px 0; }
+.llv-card .b { display: flex; gap: 6px; margin-top: 6px; }
+.llv-card button { flex: 1; font-size: 11px; font-weight: 600; padding: 5px 6px; border-radius: 4px; border: 1px solid #9c7a2c; color: #ecd38f; background: #1d1a17; cursor: pointer; }
+.llv-card button:hover { background: #2a2622; }
+.llv-card button[data-act='envoy'], .llv-card button[data-act='enter'] { background: #c49a3a; color: #0b0a09; }
+.llv-card button[disabled] { opacity: 0.5; cursor: default; }
+.llv-envoy-line { animation: llv-dash 1.2s linear infinite; }
+@keyframes llv-dash { to { stroke-dashoffset: -12; } }

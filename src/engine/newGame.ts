@@ -71,6 +71,8 @@ function emptyState(seed: string): GameState {
     sanctions: {},
     wars: [],
     disputes: [],
+    cityStanding: {},
+    permits: {},
   };
 }
 

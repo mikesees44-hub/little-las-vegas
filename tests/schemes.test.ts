@@ -178,16 +178,16 @@ describe('rival schemes', () => {
 describe('other schemes', () => {
   it('a successful envoy opens an outpost that pays weekly', () => {
     let done = false;
-    for (let i = 0; i < 8 && !done; i++) {
+    for (let i = 0; i < 20 && !done; i++) {
       let s = newGame(`envoy${i}`);
       s.money = 50000;
       const team = agents(s, 1);
       s.characters[team[0]].attributes.diplomacy = 100;
       s = advanceWeek(s, { actions: [{ kind: 'scheme', scheme: 'envoy', agents: team, opts: { depth: 'meticulous', city: 'capemay' } }] }).state;
       s = runToEnd(s);
-      if (s.outposts.length) {
+      if (s.outposts.some((o) => o.income > 0)) {
         const r = advanceWeek(s, {});
-        expect(r.report.lines.some((l) => l.label === 'Outpost: Cape May')).toBe(true);
+        expect(r.report.lines.some((l) => l.label.startsWith('Outpost: Cape May'))).toBe(true);
         done = true;
       }
     }

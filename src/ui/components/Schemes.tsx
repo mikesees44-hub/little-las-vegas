@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react';
+import { ageOn } from '../../engine/calendar';
 import { crew, displayName, isFree } from '../../engine/characters';
 import { CITIES, DEPTH, EQUIPMENT, HEISTS, LOCATIONS, SCHEME_INFO, schemeOdds, topRival } from '../../engine/schemes';
 import { knownSecrets } from '../../engine/secrets';
@@ -10,21 +11,24 @@ import { ActionCard } from './Orders';
 import { CharLink, Face } from './People';
 
 /** Opening the scheme planner from anywhere. */
-export const PlannerContext = createContext<{ plan: (kind: SchemeKind, targetId?: string) => void }>({ plan: () => {} });
+export const PlannerContext = createContext<{ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => void }>({ plan: () => {} });
 export function usePlanner() {
   return useContext(PlannerContext);
 }
 
-export function SchemePlanner({ s, kind, targetId, onClose }: { s: GameState; kind: SchemeKind; targetId?: string; onClose: () => void }) {
+export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: GameState; kind: SchemeKind; targetId?: string; initial?: Partial<SchemeOptions>; onClose: () => void }) {
   const t = targetId ? s.characters[targetId] : undefined;
   const busy = new Set(s.schemes.filter((x) => x.owner === 'player').flatMap((x) => x.agents));
-  const pool = crew(s).filter((c) => isFree(s, c) && !busy.has(c.id)).sort((a, b) => (b.attributes.force + b.attributes.intrigue) - (a.attributes.force + a.attributes.intrigue));
-  const [agents, setAgents] = useState<string[]>(pool.slice(0, kind === 'murder' ? 2 : 1).map((c) => c.id));
+  const family = kind === 'envoy' ? Object.values(s.characters).filter((c) => c.alive && c.dynasty && c.faction === 'player' && c.rank === 'civilian' && ageOn(c.birth, s.date) >= 18 && !busy.has(c.id)) : [];
+  const boss = kind === 'envoy' && !busy.has(s.playerId) ? [s.characters[s.playerId]] : [];
+  const pool = [...boss, ...family, ...crew(s).filter((c) => isFree(s, c) && !busy.has(c.id)).sort((a, b) => (b.attributes.force + b.attributes.intrigue) - (a.attributes.force + a.attributes.intrigue))];
+  const [agents, setAgents] = useState<string[]>(pool.filter((c) => kind !== 'envoy' || c.id !== s.playerId).slice(0, kind === 'murder' ? 2 : 1).map((c) => c.id));
   const [opts, setOpts] = useState<SchemeOptions>({
     depth: 'planned', location: 'barbershop', disposal: 'public', equipment: 'street', alibi: false,
     heist: 'jewelry', city: 'capemay',
     district: s.districts.find((d) => topRival(s, d.id))?.id,
     secretId: t ? knownSecrets(s, t.id)[0]?.id : undefined,
+    ...initial,
   });
   const set = (o: Partial<SchemeOptions>) => setOpts((x) => ({ ...x, ...o }));
   const toggle = (id: string) => setAgents((a) => (a.includes(id) ? a.filter((x) => x !== id) : a.length >= 4 ? a : [...a, id]));
@@ -49,7 +53,7 @@ export function SchemePlanner({ s, kind, targetId, onClose }: { s: GameState; ki
           <div className="flex flex-wrap gap-1.5">
             {pool.map((c) => (
               <button key={c.id} onClick={() => toggle(c.id)} className={`flex items-center gap-1.5 rounded border px-1.5 py-1 text-xs ${agents.includes(c.id) ? 'border-gold-400 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
-                <span>{c.firstName} {c.lastName}</span>
+                <span>{c.id === s.playerId ? 'You' : `${c.firstName} ${c.lastName}`}{c.dynasty && c.id !== s.playerId ? ' ♦' : ''}</span>
                 <span className="text-stone-500">F{c.attributes.force} I{c.attributes.intrigue} D{c.attributes.diplomacy}{c.specialty ? ` · ${c.specialty}` : ''}</span>
               </button>
             ))}
