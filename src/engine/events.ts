@@ -1,10 +1,13 @@
 import { ageOn, gameYear, monthKey, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
-import { BUSINESS_NAMES } from './names';
+import { MAX_PER_KIND } from './actions';
+import { countKind, newBusiness, playerSlots } from './business';
+import { CATALOG, SHOP_KINDS } from './catalog';
+import { defaulter } from './loans';
 import { opinion } from './relations';
 import { chance, pick, randInt, shuffle, weightedPick } from './rng';
-import { BUSINESS_KINDS, FACTION_NAMES } from './world';
-import type { BusinessKind, Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
+import { FACTION_NAMES } from './world';
+import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
  * Event system. Event definitions have a condition, a weight, a cooldown and
@@ -123,10 +126,6 @@ function expandTarget(s: GameState): string | undefined {
   return ds[0]?.id;
 }
 
-const BIZ_COST: Record<BusinessKind, number> = {
-  club: 7500, numbers: 3500, bookmaking: 4500, arcade: 4000, loansharking: 3000, fencing: 2500, boarding: 4000, restaurant: 3500,
-};
-
 export const ORDERS: OrderDef[] = [
   {
     key: 'shakedown',
@@ -217,30 +216,24 @@ export const ORDERS: OrderDef[] = [
   },
   {
     key: 'business',
-    available: (s) => s.money >= 6000 && s.businesses.filter((b) => b.owner === 'player').length < 14,
+    available: (s) => s.money >= 4000 && s.districts.some((d) => (d.influence.player ?? 0) >= 40 && playerSlots(s, d.id).used < playerSlots(s, d.id).max),
     build: (s) => {
-      const kinds = Object.keys(BIZ_COST) as BusinessKind[];
-      const affordable = kinds.filter((k) => BIZ_COST[k] <= s.money * 0.6);
-      const kind = affordable.length ? pick(s, affordable) : 'fencing';
-      const ours = s.districts.filter((d) => (d.influence.player ?? 0) >= 40);
+      const kinds = SHOP_KINDS.filter((k) => CATALOG[k].cost <= s.money * 0.6 && k !== 'narcotics' && countKind(s, k) < MAX_PER_KIND);
+      const kind = kinds.length ? pick(s, kinds) : 'pizza';
+      const ours = s.districts.filter((d) => (d.influence.player ?? 0) >= 40 && playerSlots(s, d.id).used < playerSlots(s, d.id).max);
       const d = ours.length ? pick(s, ours) : s.districts[0];
-      const def = BUSINESS_KINDS[kind];
-      const taken = new Set(s.businesses.map((b) => b.name));
-      const names = BUSINESS_NAMES[kind].filter((n) => !taken.has(n));
-      const nm = names.length ? pick(s, names) : `${BUSINESS_NAMES[kind][0]} (${d.name})`;
-      const cost = BIZ_COST[kind];
+      const def = CATALOG[kind];
+      const b = newBusiness(s, kind, d.id);
+      const label = `Buy: ${b.name}`;
       return {
         id: 'business',
-        label: `Open ${nm}`,
-        detail: `${kind} in ${d.name}: about $${Math.round(def.base * 2.5).toLocaleString('en-US')}/wk in season.`,
-        because: `opened ${nm}`,
+        label: `Open ${b.name}`,
+        detail: `${def.name} in ${d.name}: about $${Math.round(def.base * def.season[0]).toLocaleString('en-US')}/wk in season.`,
+        because: `opened ${b.name}`,
         effects: [
-          { type: 'money', amount: -cost },
-          {
-            type: 'addBusiness',
-            business: { id: `b${s.nextId++}`, name: nm, kind, districtId: d.id, owner: 'player', weeklyBase: def.base, upkeep: def.upkeep, heat: def.heat },
-          },
-          { type: 'schedule', key: 'business_trouble', minWeeks: 2, maxWeeks: 8, chance: 0.25, hint: 'new places attract attention' },
+          { type: 'money', amount: -def.cost, label },
+          { type: 'addBusiness', business: b, label },
+          { type: 'schedule', key: 'business_trouble', minWeeks: 2, maxWeeks: 8, chance: 0.25, hint: 'new places attract attention', label },
         ],
       };
     },
@@ -409,6 +402,57 @@ function skimmer(s: GameState): Character | undefined {
 }
 
 export const EVENT_DEFS: EventDef[] = [
+  {
+    id: 'borrower_default',
+    cooldown: 2,
+    weight: () => 6,
+    condition: (s) => !!defaulter(s),
+    build: (s) => {
+      const l = defaulter(s)!;
+      const who = l.borrower.split(',')[0];
+      const owed = l.principal;
+      const choices: Choice[] = [
+        {
+          id: 'lean', label: 'Send a collector', detail: 'Explain the terms. Firmly.', because: `sent a collector after ${who}`,
+          effects: [
+            { type: 'loanResolve', loanId: l.id, mode: 'collect', label: `Collector visits ${who}` },
+            { type: 'heat', bar: 'local', amount: 3, label: `Collector visits ${who}` },
+            { type: 'respect', amount: 1, label: `Collector visits ${who}` },
+          ],
+        },
+        {
+          id: 'time', label: 'Give him a few weeks', because: `gave ${who} more time`,
+          effects: [{ type: 'loanResolve', loanId: l.id, mode: 'grace', label: `More time for ${who}` }, { type: 'respect', amount: -1, label: `Soft on ${who}` }],
+        },
+        {
+          id: 'writeoff', label: 'Write it off', because: `wrote off ${who}'s loan`,
+          effects: [{ type: 'loanResolve', loanId: l.id, mode: 'writeoff', label: `Wrote off ${who}` }, { type: 'respect', amount: -1, label: `Wrote off ${who}` }],
+        },
+      ];
+      if (l.collateral) {
+        const ours = s.districts.filter((d) => (d.influence.player ?? 0) >= 20);
+        const d = ours.length ? ours[0] : s.districts[0];
+        const b = newBusiness(s, l.collateral, d.id, l.collateralName ? l.collateralName.charAt(0).toUpperCase() + l.collateralName.slice(1) : undefined);
+        b.cost = Math.round(owed * 1.2);
+        choices.unshift({
+          id: 'take', label: `Take ${l.collateralName}`, detail: 'He signed it over when he took the money.', because: `took ${l.collateralName} for a bad debt`,
+          effects: [
+            { type: 'loanResolve', loanId: l.id, mode: 'writeoff', label: `Debt settled with ${l.collateralName}` },
+            { type: 'addBusiness', business: b, label: `Took ${l.collateralName} for the debt` },
+            { type: 'heat', bar: 'local', amount: 2, label: `Took ${l.collateralName}` },
+          ],
+        });
+      }
+      return {
+        iid: iid(s), defId: 'borrower_default', week: s.week, mandatory: false, priority: 45,
+        title: `${who} can't pay`,
+        text: `${l.borrower} is ${l.weeksLate} weeks behind on $${owed.toLocaleString('en-US')} from the book. The other borrowers are watching how you handle it.`,
+        defaultChoiceId: l.collateral ? 'take' : 'lean',
+        meta: { loan: l.id },
+        choices,
+      };
+    },
+  },
   {
     id: 'skimming',
     cooldown: 6,
@@ -601,6 +645,44 @@ export const EVENT_DEFS: EventDef[] = [
     },
   },
 ];
+
+/** Philadelphia knows about the pipeline. */
+export function buildNarcoticsReckoning(s: GameState, bizId: string): EventInstance {
+  const pay = Math.max(5000, Math.round(s.money * 0.15 / 100) * 100);
+  return {
+    iid: iid(s), defId: 'narcotics_reckoning', week: s.week, mandatory: true, priority: 85,
+    title: 'Philadelphia knows',
+    text: 'Sal Moretti does not sit down. He says one sentence: the old man in Philadelphia has heard about the docks, and the old man does not repeat himself.',
+    defaultChoiceId: 'close',
+    meta: { biz: bizId },
+    choices: [
+      {
+        id: 'close', label: 'Shut the pipeline down tonight', detail: 'Eat the investment. Keep your head.', because: 'shut down the narcotics pipeline when Philadelphia found out',
+        effects: [
+          { type: 'removeBusiness', businessId: bizId, label: 'Pipeline shut down' },
+          { type: 'heat', bar: 'family', amount: -10, label: 'Philadelphia: the pipeline is closed' },
+          { type: 'rivalOpinion', rival: 'philly', amount: 10, reason: 'Listened when told' },
+        ],
+      },
+      {
+        id: 'pay', label: `Pay Philadelphia ${'$' + pay.toLocaleString('en-US')} to forget`, detail: 'Money talks. Sometimes.', because: 'paid Philadelphia to forget the pipeline',
+        effects: [
+          { type: 'money', amount: -pay, label: 'Envelope to Philadelphia: forget the docks' },
+          { type: 'heat', bar: 'family', amount: -4, label: 'Philadelphia takes the envelope' },
+          { type: 'schedule', key: 'philly_message', minWeeks: 4, maxWeeks: 10, chance: 0.35, hint: 'the old man may not forget', label: 'Envelope to Philadelphia' },
+        ],
+      },
+      {
+        id: 'defy', label: 'Keep it running', detail: 'The money is too good.', because: 'defied Philadelphia over narcotics',
+        effects: [
+          { type: 'rivalOpinion', rival: 'philly', amount: -30, reason: 'Defied the old man on narcotics' },
+          { type: 'heat', bar: 'family', amount: 12, label: 'Defied Philadelphia' },
+          { type: 'schedule', key: 'philly_message', minWeeks: 2, maxWeeks: 5, chance: 0.85, hint: 'Philadelphia will send a message', label: 'Defied Philadelphia' },
+        ],
+      },
+    ],
+  };
+}
 
 export function buildHealthEvent(s: GameState, c: Character): EventInstance {
   const isBoss = c.id === s.playerId;

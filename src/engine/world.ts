@@ -1,4 +1,4 @@
-import type { BusinessKind, FactionId, RivalGoal, RivalId } from './types';
+import type { FactionId, RivalGoal, RivalId } from './types';
 
 export interface DistrictDef {
   id: string;
@@ -21,17 +21,6 @@ export const DISTRICTS: DistrictDef[] = [
 ];
 
 export const DISTRICT_IDS = DISTRICTS.map((d) => d.id);
-
-export const BUSINESS_KINDS: Record<BusinessKind, { base: number; upkeep: number; heat: number }> = {
-  club: { base: 260, upkeep: 60, heat: 0.35 },
-  numbers: { base: 170, upkeep: 15, heat: 0.3 },
-  bookmaking: { base: 190, upkeep: 20, heat: 0.35 },
-  arcade: { base: 140, upkeep: 30, heat: 0.1 },
-  loansharking: { base: 150, upkeep: 10, heat: 0.3 },
-  fencing: { base: 120, upkeep: 10, heat: 0.3 },
-  boarding: { base: 110, upkeep: 30, heat: 0.05 },
-  restaurant: { base: 120, upkeep: 40, heat: 0.0 },
-};
 
 export interface RivalDef {
   id: RivalId;

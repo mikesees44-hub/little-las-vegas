@@ -1,13 +1,13 @@
 import type { GameState } from '../engine/types';
 
-const KEY = 'little-las-vegas:save:v1';
+const KEY = 'little-las-vegas:save:v2';
 
 export function loadGame(): GameState | undefined {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return undefined;
     const s = JSON.parse(raw) as GameState;
-    return s && s.version === 1 ? s : undefined;
+    return s && s.version === 2 ? s : undefined;
   } catch {
     return undefined;
   }

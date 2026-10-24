@@ -1,4 +1,7 @@
+import { resolveActions } from './actions';
+import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
+import { runGoals } from './goals';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
@@ -17,8 +20,20 @@ import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './ty
  * the state is deep-cloned first and only the clone is touched.
  */
 
+/**
+ * Deep copy for the pure week step. The chronicle, newspaper, dynasty history
+ * and last report are append-only lists of immutable entries (nothing ever
+ * edits an entry after pushing it), so they are copied shallowly; everything
+ * else is deep-copied. This is most of the simulator's speed.
+ */
 export function cloneState(s: GameState): GameState {
-  return JSON.parse(JSON.stringify(s)) as GameState;
+  const { chronicle, dynastyHistory, lastReport, news, ...rest } = s;
+  const c = JSON.parse(JSON.stringify(rest)) as GameState;
+  c.chronicle = chronicle.slice();
+  c.dynastyHistory = dynastyHistory.slice();
+  c.news = news ? news.slice() : [];
+  if (lastReport) c.lastReport = lastReport;
+  return c;
 }
 
 function snapshot(s: GameState) {
@@ -48,6 +63,8 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
   }
+  if (!s.gameOver && choices.actions?.length) resolveActions(ctx, choices.actions);
+  if (!s.gameOver) ctx.log.push(...autoStaff(s));
 }
 
 /** Monthly bookkeeping: aging/health/death, opinion decay, crew loyalty, rival successions. */
@@ -170,7 +187,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     heatConsequences(ctx);
     heatDecay(ctx);
     weeklyHousekeeping(ctx);
+    runGoals(ctx);
   }
+  s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 
   // Calendar.
   const prevMonth = monthKey(s.date);

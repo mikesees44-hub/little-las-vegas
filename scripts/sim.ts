@@ -12,7 +12,8 @@ import { reconcile } from '../src/engine/ledger';
 import { validatePlayer } from '../src/engine/dynasty';
 import { rand } from '../src/engine/rng';
 import { MAX_POPUPS } from '../src/engine/events';
-import { HEAT_BARS, type GameState, type PlayerChoices } from '../src/engine/types';
+import { legalActions } from '../src/engine/actions';
+import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -28,6 +29,9 @@ const STRESS = Number(arg('stress', '0'));
 const WEEKS = YEARS * 52;
 const INSOLVENT_WEEKS = 8; // "bankrupt" = treasury below $0 for 8+ consecutive weeks
 
+/** Chance per week that the random player gives an order (buy, lend, launch a job ...). */
+const ORDER_RATE = Number(arg('orders', '0.15'));
+
 function aiChoices(s: GameState, salt: number): PlayerChoices {
   const h = { rng: (s.rng ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0 };
   const choices: Record<string, string> = {};
@@ -35,7 +39,12 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
     const legal = ev.choices.filter((c) => !c.disabledReason);
     choices[ev.iid] = legal[Math.floor(rand(h) * legal.length)].id;
   }
-  return { choices };
+  const actions: PlayerAction[] = [];
+  if (rand(h) < ORDER_RATE) {
+    const legal = legalActions(s);
+    if (legal.length) actions.push(legal[Math.floor(rand(h) * legal.length)]);
+  }
+  return { choices, actions };
 }
 
 const pct = (n: number, d: number) => (d ? ((100 * n) / d).toFixed(1) + '%' : 'n/a');
@@ -67,13 +76,16 @@ interface GameResult {
   rivalMoves: Record<string, number>;
   weeksPlayed: number;
   finalRespect: number;
+  orders: Record<string, number>;
+  finalBusinesses: number;
+  peakUnwashed: number;
 }
 
 function playOne(gi: number): GameResult {
   const r: GameResult = {
     bankruptYear1: false, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
-    deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0,
+    deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
   };
   let s: GameState;
   try {
@@ -104,8 +116,10 @@ function playOne(gi: number): GameResult {
     }
     const prevPlayer = s.playerId;
     let res;
+    const ch = aiChoices(s, w);
+    for (const a of ch.actions ?? []) r.orders[a.kind] = (r.orders[a.kind] ?? 0) + 1;
     try {
-      res = advanceWeek(s, aiChoices(s, w));
+      res = advanceWeek(s, ch);
     } catch (e) {
       const msg = (e as Error).message;
       if (/reconcile/.test(msg)) r.unexplained.push(msg);
@@ -139,6 +153,7 @@ function playOne(gi: number): GameResult {
       }
     } else consecutiveRed = 0;
     r.popupsPerWeek.push(s.pendingEvents.length);
+    r.peakUnwashed = Math.max(r.peakUnwashed, s.unwashed);
     for (const b of HEAT_BARS) r.heatSamples[b].push(s.heat[b]);
     if ((s.week - 1) % 52 === 0) r.treasuryByYear.push(s.money);
     for (const line of res.log) {
@@ -157,6 +172,7 @@ function playOne(gi: number): GameResult {
     }
   }
   r.finalRespect = s!.respect;
+  r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   return r;
 }
 
@@ -198,6 +214,10 @@ for (let y = 0; y < YEARS; y++) {
   console.log(`    after year ${String(y + 1).padStart(2)}: ${money(quantile(xs, 0.1)).padStart(10)} / ${money(quantile(xs, 0.5)).padStart(10)} / ${money(quantile(xs, 0.9)).padStart(10)}   (n=${xs.length})`);
 }
 console.log(`  Final respect (median):     ${quantile(results.map((r) => r.finalRespect), 0.5)}`);
+console.log(`  Businesses at the end (median): ${quantile(results.map((r) => r.finalBusinesses), 0.5)}   peak unwashed cash (median): ${money(quantile(results.map((r) => r.peakUnwashed), 0.5))}`);
+const orders: Record<string, number> = {};
+for (const r of results) for (const [k, v] of Object.entries(r.orders)) orders[k] = (orders[k] ?? 0) + v;
+console.log(`  Orders per game:            ${Object.entries(orders).map(([k, v]) => `${k} ${(v / GAMES).toFixed(1)}`).join(', ')}`);
 
 console.log(`\nDYNASTY`);
 console.log(`  Games where the boss died:  ${pct(gamesWithBossDeath, GAMES)}  (${bossDeaths} boss deaths total)`);

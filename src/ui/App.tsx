@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { newGame } from '../engine/newGame';
-import type { GameState, PlayerChoices, SuccessionLaw, WeeklyReport } from '../engine/types';
+import type { GameState, PlayerAction, PlayerChoices, SuccessionLaw, WeeklyReport } from '../engine/types';
+import { Businesses } from './components/Businesses';
+import { OrdersContext, OrdersTray } from './components/Orders';
 import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
 import { EventModal } from './components/EventModal';
@@ -11,7 +13,14 @@ import { Overview } from './components/Overview';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-type Tab = 'island' | 'crew' | 'family' | 'chronicle';
+type Tab = 'island' | 'business' | 'crew' | 'family' | 'chronicle';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'island', label: 'The Island' },
+  { id: 'business', label: 'Rackets & Fronts' },
+  { id: 'crew', label: 'Crew' },
+  { id: 'family', label: 'Family' },
+  { id: 'chronicle', label: 'Chronicle' },
+];
 type Mode = 'week' | 'month';
 
 function freshSeed(): string {
@@ -29,13 +38,19 @@ export function App() {
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
   const [seedInput, setSeedInput] = useState('');
+  const [orders, setOrders] = useState<PlayerAction[]>([]);
+  const ordersApi = useMemo(() => ({
+    orders,
+    queue: (a: PlayerAction) => setOrders((o) => [...o, a]),
+    remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
+  }), [orders]);
 
   useEffect(() => saveGame(s), [s]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
 
   function run(m: Mode, a: Record<string, string>) {
-    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir };
+    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders };
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
@@ -46,6 +61,7 @@ export function App() {
       setReports(r.reports);
     }
     setAnswers({});
+    setOrders([]);
     setPendingLaw(undefined);
     setPendingHeir(undefined);
     setEventIdx(null);
@@ -78,6 +94,7 @@ export function App() {
     clearSave();
     setS(newGame(seed || freshSeed()));
     setAnswers({});
+    setOrders([]);
     setReports(null);
     setEventIdx(null);
     setTab('island');
@@ -86,6 +103,7 @@ export function App() {
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
 
   return (
+    <OrdersContext.Provider value={ordersApi}>
     <div className="mx-auto max-w-5xl px-4 py-4 sm:py-6 space-y-4">
       <Header s={s} />
 
@@ -122,16 +140,19 @@ export function App() {
         </div>
       )}
 
+      {!s.gameOver && <OrdersTray s={s} />}
+
       <nav className="flex overflow-x-auto border-b border-noir-700">
-        {(['island', 'crew', 'family', 'chronicle'] as Tab[]).map((t) => (
-          <button key={t} className={`tab ${tab === t ? 'tab-active' : ''}`} onClick={() => setTab(t)}>
-            {t === 'island' ? 'The Island' : t === 'crew' ? 'Crew' : t === 'family' ? 'Family' : 'Chronicle'}
+        {TABS.map((t) => (
+          <button key={t.id} className={`tab ${tab === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>
+            {t.label}
           </button>
         ))}
       </nav>
 
       <main className="panel p-3 sm:p-4">
         {tab === 'island' && <Overview s={s} />}
+        {tab === 'business' && <Businesses s={s} />}
         {tab === 'crew' && <CrewList s={s} />}
         {tab === 'family' && (
           <FamilyTree s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
@@ -166,5 +187,6 @@ export function App() {
       )}
       {reports && !current && <ReportModal reports={reports} onClose={() => setReports(null)} />}
     </div>
+    </OrdersContext.Provider>
   );
 }

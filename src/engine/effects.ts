@@ -1,5 +1,7 @@
 import { crew, displayName, hasTrait, livingDynasty, player } from './characters';
 import { killCharacter } from './dynasty';
+import { hireFrontMan } from './goals';
+import { bookLoan } from './loans';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, changeMeter } from './relations';
 import { chance, randInt } from './rng';
@@ -74,6 +76,25 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return `Business closed ${e.weeks} wks`;
     case 'flag':
       return undefined;
+    case 'removeBusiness': {
+      const b = s.businesses.find((x) => x.id === e.businessId);
+      return `Close ${b?.name ?? 'business'}`;
+    }
+    case 'loan':
+      return `New borrower: ~${fmtMoney(Math.round(e.amount * 0.05))}/wk vig`;
+    case 'frontMan':
+      return 'A clean front man joins';
+    case 'favor':
+      return `${signed(e.amount)} Political favor${Math.abs(e.amount) === 1 ? '' : 's'}`;
+    case 'goal':
+      return e.key === 'bank' ? 'Bank chartered' : e.key === 'land' ? 'Land optioned in Atlantic City' : e.key === 'sellLand' ? 'Land sold' : 'License application filed';
+    case 'loanResolve': {
+      const l = s.loans.find((x) => x.id === e.loanId);
+      const amt = l ? fmtMoney(l.principal) : '';
+      return e.mode === 'collect' ? `60%: recover ${amt}` : e.mode === 'grace' ? 'Payments resume later' : `Lose ${amt}`;
+    }
+    case 'unwashed':
+      return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
     case 'rivalResource': {
       const parts: string[] = [];
       if (e.muscle) parts.push(`muscle ${signed(e.muscle)}`);
@@ -246,8 +267,55 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       }
       break;
     }
-    case 'addBusiness':
-      s.businesses.push({ ...e.business });
+    case 'addBusiness': {
+      const b = { ...e.business, staffIds: [...(e.business.staffIds ?? [])] };
+      if (!b.id) b.id = `b${s.nextId++}`;
+      if (b.boughtWeek === undefined) b.boughtWeek = s.week;
+      s.businesses.push(b);
+      ctx.log.push(`${b.name} is ours now.`);
+      break;
+    }
+    case 'removeBusiness':
+      s.businesses = s.businesses.filter((b) => b.id !== e.businessId);
+      break;
+    case 'loan':
+      bookLoan(s, e.amount);
+      break;
+    case 'frontMan':
+      hireFrontMan(ctx);
+      break;
+    case 'favor':
+      s.favors = Math.max(0, s.favors + e.amount);
+      break;
+    case 'goal':
+      if (e.key === 'bank') s.goals.bankWeek = s.week;
+      else if (e.key === 'land') s.goals.casinoStage = 1;
+      else if (e.key === 'sellLand') {
+        s.goals.casinoStage = 0;
+        s.goals.landSold = true;
+      } else {
+        s.goals.casinoStage = 2;
+        s.goals.casinoSince = s.week;
+      }
+      break;
+    case 'loanResolve': {
+      const l = s.loans.find((x) => x.id === e.loanId);
+      if (!l) break;
+      const who = l.borrower.split(',')[0];
+      if (e.mode === 'grace') {
+        l.weeksLate = 0;
+        l.dueWeek += 4;
+        break;
+      }
+      s.loans = s.loans.filter((x) => x !== l);
+      if (e.mode === 'collect') {
+        if (chance(s, 0.6)) money(ctx, l.principal, `Collector: ${who} found the money after all`, 'event');
+        else ctx.log.push(`The collector came back empty-handed from ${who}. The debt is written off.`);
+      }
+      break;
+    }
+    case 'unwashed':
+      s.unwashed = Math.max(0, Math.min(Math.max(0, s.money), s.unwashed + e.amount));
       break;
     case 'closeBusiness': {
       const b = s.businesses.find((x) => x.id === e.businessId);

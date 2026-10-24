@@ -1,4 +1,6 @@
 import { displayName, makeCharacter } from './characters';
+import { buildNarcoticsReckoning } from './events';
+import { frontManClean } from './goals';
 import { applyEffects, shiftInfluence } from './effects';
 import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
@@ -36,14 +38,39 @@ const HANDLERS: Record<string, Handler> = {
   }),
   philly_over: () => ({ text: 'Sal Moretti put in a word for you with Bruno', effects: [{ type: 'respect', amount: 2 }, { type: 'heat', bar: 'family', amount: -3 }] }),
   philly_favor_returned: () => ({ text: 'Philadelphia returned the favor', effects: [{ type: 'heat', bar: 'family', amount: -6 }, { type: 'respect', amount: 2 }] }),
-  narcotics_found_out: () => ({
-    text: 'word reached Angelo Bruno that you touched junk',
-    effects: [
-      { type: 'heat', bar: 'family', amount: 18 },
-      { type: 'respect', amount: -4 },
-      { type: 'rivalOpinion', rival: 'philly', amount: -25, reason: 'Broke Bruno\'s rule on narcotics' },
-    ],
-  }),
+  narcotics_found_out: (ctx) => {
+    const pipe = ctx.s.businesses.find((b) => b.owner === 'player' && b.kind === 'narcotics');
+    if (pipe) ctx.s.eventQueue.push(buildNarcoticsReckoning(ctx.s, pipe.id));
+    return {
+      text: 'word reached Angelo Bruno that you touched junk',
+      effects: [
+        { type: 'heat', bar: 'family', amount: 18 },
+        { type: 'respect', amount: -4 },
+        { type: 'rivalOpinion', rival: 'philly', amount: -25, reason: 'Broke Bruno\'s rule on narcotics' },
+      ],
+    };
+  },
+  narcotics_rumor: (ctx) => (ctx.s.businesses.some((b) => b.owner === 'player' && b.kind === 'narcotics')
+    ? { text: 'a dock foreman bragged in a Camden bar about your pipeline', effects: [{ type: 'heat', bar: 'family', amount: 5 }, { type: 'heat', bar: 'federal', amount: 3 }] }
+    : undefined),
+  philly_message: (ctx) => {
+    const s = ctx.s;
+    if (!s.businesses.some((b) => b.owner === 'player' && b.kind === 'narcotics')) return undefined;
+    const pool = s.businesses.filter((b) => b.owner === 'player' && b.kind === 'narcotics').flatMap((b) => b.staffIds ?? []).map((id) => s.characters[id]).filter((c) => c?.alive && c.id !== s.playerId);
+    const victim = pool[0];
+    if (!victim) return { text: 'Philadelphia burned your pipeline\'s warehouse to the waterline', effects: [{ type: 'respect', amount: -5 }, { type: 'heat', bar: 'local', amount: 6 }] };
+    return {
+      text: `Philadelphia sent a message: ${victim.firstName} ${victim.lastName}, who ran your pipeline, was found in a car trunk in Camden`,
+      effects: [{ type: 'kill', charId: victim.id, cause: 'found in a car trunk in Camden (Philadelphia\'s message about narcotics)', killer: 'philly' }, { type: 'respect', amount: -4 }],
+    };
+  },
+  vice_scandal: (ctx, sc) => (ctx.s.businesses.some((b) => b.owner === 'player' && b.kind === 'blackmail')
+    ? { text: `a councilman's name turned up in the books at ${sc.params.biz} — and your camera man was ready`, effects: [{ type: 'heat', bar: 'local', amount: 4 }, { type: 'favor', amount: 1 }] }
+    : { text: `the vice squad raided ${sc.params.biz} and the Leader printed the story`, effects: [{ type: 'heat', bar: 'local', amount: 8 }, { type: 'respect', amount: -2 }] }),
+  postal_inspectors: (_ctx, sc) => ({ text: `postal inspectors traced a reel shipment back to ${sc.params.biz}`, effects: [{ type: 'heat', bar: 'federal', amount: 7 }] }),
+  bank_examiners: (ctx) => (frontManClean(ctx.s)
+    ? { text: 'state bank examiners went through the Savings & Loan and found the books in order', effects: [{ type: 'heat', bar: 'federal', amount: -4 }] }
+    : { text: 'state bank examiners asked hard questions about your front man', effects: [{ type: 'heat', bar: 'federal', amount: 10 }, { type: 'respect', amount: -2 }] }),
   business_trouble: (ctx) => {
     const biz = ctx.s.businesses.filter((b) => b.owner === 'player');
     const b = biz[biz.length - 1];

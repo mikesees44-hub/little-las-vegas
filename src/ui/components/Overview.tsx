@@ -76,17 +76,11 @@ export function Overview({ s }: { s: GameState }) {
       </section>
 
       <section>
-        <div className="panel-title">Rackets & fronts</div>
-        <ul className="mt-2 divide-y divide-noir-800 text-sm">
-          {s.businesses.filter((b) => b.owner === 'player').map((b) => (
-            <li key={b.id} className="flex justify-between py-1 gap-2">
-              <span className="text-stone-300">{b.name} <span className="text-stone-500 text-xs">· {b.kind} · {s.districts.find((d) => d.id === b.districtId)?.name}</span></span>
-              <span className={`text-xs ${b.closedUntil && b.closedUntil > s.week ? 'text-red-400' : 'text-stone-500'}`}>
-                {b.closedUntil && b.closedUntil > s.week ? `padlocked to wk ${b.closedUntil}` : `${fmt$(b.weeklyBase)} base`}
-              </span>
-            </li>
-          ))}
-        </ul>
+        <div className="panel-title">Money</div>
+        <p className="text-sm text-stone-400 mt-1">
+          {s.businesses.filter((b) => b.owner === 'player').length} businesses · unwashed cash {fmt$(s.unwashed)} · {s.favors} political favor{s.favors === 1 ? '' : 's'}
+          {s.loans.length ? ` · ${s.loans.length} loans on the street` : ''}
+        </p>
         {s.debts.length > 0 && (
           <div className="mt-2 text-xs text-amber-300">
             Debts: {s.debts.map((d) => `${d.lender} ${fmt$(d.weeklyPayment)}/wk × ${d.weeksLeft}`).join('; ')}

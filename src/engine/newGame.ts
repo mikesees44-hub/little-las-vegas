@@ -1,11 +1,11 @@
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
-import { BUSINESS_NAMES } from './names';
+import { autoStaff, newBusiness } from './business';
 import { addOpinion, changeMeter } from './relations';
 import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
-import { BUSINESS_KINDS, DISTRICTS, RIVALS } from './world';
-import type { Business, BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
+import { DISTRICTS, RIVALS } from './world';
+import type { BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
 
 export const STARTING_MONEY = 25000;
 
@@ -21,7 +21,7 @@ export type StartingProblem = keyof typeof STARTING_PROBLEMS;
 
 function emptyState(seed: string): GameState {
   return {
-    version: 1,
+    version: 2,
     seed,
     rng: hashSeed(seed),
     nextId: 1,
@@ -50,6 +50,11 @@ function emptyState(seed: string): GameState {
     chronicle: [],
     dynastyHistory: [],
     startingProblem: '',
+    unwashed: 0,
+    loans: [],
+    favors: 0,
+    goals: { casinoStage: 0 },
+    news: [],
   };
 }
 
@@ -191,9 +196,9 @@ export function newGame(seed: string | number = Date.now()): GameState {
   ];
   if (chance(s, 0.5)) startBiz.push(['boarding', 'crest']);
   for (const [kind, did] of startBiz) {
-    const def = BUSINESS_KINDS[kind];
-    const nm = pick(s, BUSINESS_NAMES[kind].filter((n) => !s.businesses.some((b) => b.name === n)));
-    const b: Business = { id: `b${s.nextId++}`, name: nm, kind, districtId: did, owner: 'player', weeklyBase: def.base, upkeep: def.upkeep, heat: def.heat };
+    const b = newBusiness(s, kind, did);
+    b.id = `b${s.nextId++}`;
+    b.boughtWeek = 0;
     s.businesses.push(b);
   }
 
@@ -266,6 +271,7 @@ export function newGame(seed: string | number = Date.now()): GameState {
   s.chronicle.push({ week: 1, date: { ...s.date }, text: `Memorial Day, 1960. ${displayName(boss)} runs the island for Philadelphia. ${s.startingProblem}`, kind: 'misc' });
   s.dynastyHistory.push({ week: 1, date: { ...s.date }, text: `${displayName(boss)} is head of the house of ${s.houseName}.` });
 
+  autoStaff(s);
   s.pendingEvents = generateWeekEvents(s);
   return s;
 }

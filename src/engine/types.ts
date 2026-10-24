@@ -86,7 +86,19 @@ export interface Character {
   warnedWeek?: number;
   /** Hidden running total of money this capo has skimmed since last confronted. */
   skimmed?: number;
+  /** Away on a job until this absolute week. */
+  busyUntil?: number;
+  /** Hired specialist (safecracker, wheelman ...). Specialists don't hustle or staff rackets. */
+  specialty?: Specialty;
+  /** Arrests/convictions on his sheet. A front man must have none. */
+  record?: number;
+  /** A clean civilian who fronts licenses and charters for the family. */
+  frontMan?: boolean;
+  /** What the law has on him, 0-100 (grand jury at 60, indictment at 80). */
+  evidence?: number;
 }
+
+export type Specialty = 'safecracker' | 'wheelman' | 'torpedo' | 'accountant' | 'lawyer' | 'forger' | 'fixer';
 
 export interface OpinionModifier {
   id: string;
@@ -106,7 +118,18 @@ export interface Relation {
   grievance: number; // 0-100
 }
 
-export type BusinessKind = 'club' | 'numbers' | 'bookmaking' | 'arcade' | 'loansharking' | 'fencing' | 'boarding' | 'restaurant';
+/** Legit fronts wash money; rackets earn dirty money; properties do neither. */
+export type BusinessCategory = 'front' | 'racket' | 'property';
+
+export type BusinessKind =
+  // fronts
+  | 'restaurant' | 'pizza' | 'stand' | 'motel' | 'bar' | 'construction' | 'vending' | 'laundromat' | 'carlot'
+  | 'arcade' | 'boarding' | 'club' | 'bank' | 'casino'
+  // rackets
+  | 'numbers' | 'bookmaking' | 'loansharking' | 'cardgame' | 'vice' | 'stag' | 'blackmail' | 'jewel' | 'bankcrew'
+  | 'fencing' | 'narcotics'
+  // property
+  | 'safehouse';
 
 export interface Business {
   id: string;
@@ -118,6 +141,47 @@ export interface Business {
   upkeep: number; // weekly flat cost
   heat: number; // local heat generated per week
   closedUntil?: number; // absolute week; raided businesses close for a while
+  category?: BusinessCategory;
+  /** Crew assigned to run it (rackets need made men; most fronts run on civilians). */
+  staffIds?: string[];
+  boughtWeek?: number;
+  /** What it cost, for resale. */
+  cost?: number;
+}
+
+/** A shylock loan on the street. */
+export interface Loan {
+  id: string;
+  borrower: string;
+  /** What he put up, if anything (a bar, a car lot ...) — can be taken over on default. */
+  collateral?: BusinessKind;
+  collateralName?: string;
+  principal: number;
+  /** Weekly vig in dollars. */
+  vig: number;
+  /** Chance per week he misses a payment. */
+  risk: number;
+  weeksLate: number;
+  dueWeek: number;
+  week: number;
+}
+
+export interface NewsItem {
+  week: number;
+  date: GameDate;
+  paper: string;
+  headline: string;
+  body: string;
+  kind: string;
+}
+
+/** Long-term ambitions: a bank charter, and the casino dream. */
+export interface Goals {
+  bankWeek?: number;
+  /** 0 none · 1 land optioned · 2 license applied · 3 licensed (waiting to open) · 4 open */
+  casinoStage: number;
+  casinoSince?: number;
+  landSold?: boolean;
 }
 
 export interface District {
@@ -174,7 +238,14 @@ export type Effect =
   | ({ type: 'skimReset'; charId: string } & EffectBase)
   | ({ type: 'addBusiness'; business: Business } & EffectBase)
   | ({ type: 'flag'; key: string; value: number } & EffectBase)
-  | ({ type: 'rivalResource'; rival: RivalId; money?: number; muscle?: number; exposure?: number } & EffectBase);
+  | ({ type: 'rivalResource'; rival: RivalId; money?: number; muscle?: number; exposure?: number } & EffectBase)
+  | ({ type: 'removeBusiness'; businessId: string } & EffectBase)
+  | ({ type: 'loan'; amount: number } & EffectBase)
+  | ({ type: 'frontMan' } & EffectBase)
+  | ({ type: 'favor'; amount: number } & EffectBase)
+  | ({ type: 'goal'; key: 'bank' | 'land' | 'sellLand' | 'license' } & EffectBase)
+  | ({ type: 'unwashed'; amount: number } & EffectBase)
+  | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -278,7 +349,7 @@ export interface GameOver {
 }
 
 export interface GameState {
-  version: 1;
+  version: 2;
   seed: string;
   rng: number;
   nextId: number;
@@ -313,14 +384,33 @@ export interface GameState {
   lastReport?: WeeklyReport;
   startingProblem: string;
   gameOver?: GameOver;
+  /** How much of the treasury is unwashed (dirty) cash. Never more than the treasury. */
+  unwashed: number;
+  loans: Loan[];
+  /** Political favors owed to you (from bribes, blackmail, favors done). */
+  favors: number;
+  /** A clean front man with no record (needed for a bank charter and a casino license). */
+  frontManId?: string;
+  goals: Goals;
+  news: NewsItem[];
 }
 
 export interface PlayerChoices {
   /** eventInstance iid -> choice id. Unanswered events take their default choice. */
   choices?: Record<string, string>;
+  /** Orders the player queued this week (buy a business, launch a job ...). Resolved in order. */
+  actions?: PlayerAction[];
   successionLaw?: SuccessionLaw;
   designatedHeirId?: string;
 }
+
+export type PlayerAction =
+  | { kind: 'buyBusiness'; biz: BusinessKind; district: string }
+  | { kind: 'sellBusiness'; businessId: string }
+  | { kind: 'lend'; amount: number }
+  | { kind: 'findFrontMan' }
+  | { kind: 'charterBank' }
+  | { kind: 'casino'; sell?: boolean };
 
 export interface AdvanceResult {
   state: GameState;

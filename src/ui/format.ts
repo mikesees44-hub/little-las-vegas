@@ -36,7 +36,15 @@ export function effectTone(_s: GameState, e: Effect): 'good' | 'bad' | 'neutral'
       return 'bad';
     case 'recruit':
     case 'addBusiness':
+    case 'frontMan':
+    case 'goal':
       return 'good';
+    case 'favor':
+      return e.amount > 0 ? 'good' : 'bad';
+    case 'unwashed':
+      return e.amount < 0 ? 'good' : 'bad';
+    case 'removeBusiness':
+      return 'bad';
     default:
       return 'neutral';
   }

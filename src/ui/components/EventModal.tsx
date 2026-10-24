@@ -1,6 +1,5 @@
-import { describeEffect } from '../../engine/effects';
 import type { EventInstance, GameState } from '../../engine/types';
-import { effectTone } from '../format';
+import { Chips } from './Chips';
 import { Modal } from './Modal';
 
 export function EventModal({ s, ev, index, total, selected, onChoose, onClose }: {
@@ -25,9 +24,6 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         <p className="mt-2 text-stone-300 leading-relaxed">{ev.text}</p>
         <div className="mt-4 space-y-2">
           {ev.choices.map((c) => {
-            const chips = c.effects
-              .map((e) => ({ text: describeEffect(s, e), tone: effectTone(s, e) }))
-              .filter((x): x is { text: string; tone: 'good' | 'bad' | 'neutral' } => !!x.text);
             return (
               <button
                 key={c.id}
@@ -39,15 +35,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
               >
                 <div className="font-semibold text-stone-100">{c.label}</div>
                 {c.detail && <div className="text-xs text-stone-400 mt-0.5">{c.detail}</div>}
-                {chips.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap gap-1">
-                    {chips.map((ch, i) => (
-                      <span key={i} className={ch.tone === 'good' ? 'chip-good' : ch.tone === 'bad' ? 'chip-bad' : 'chip-neutral'}>
-                        {ch.text}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <Chips s={s} effects={c.effects} />
                 {c.disabledReason && <div className="text-xs text-red-400 mt-1">{c.disabledReason}</div>}
               </button>
             );
