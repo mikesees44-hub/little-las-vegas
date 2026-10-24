@@ -1,12 +1,12 @@
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
-import { monthlyLife, validatePlayer } from './dynasty';
+import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS } from './events';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
-import { heat, newCtx, reconcile, type Ctx } from './ledger';
+import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
 import { addOpinion, decayAllRelations, opinion } from './relations';
 import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
@@ -101,6 +101,13 @@ function weeklyHousekeeping(ctx: Ctx): void {
     const idle = crew(s).find((c) => c.rank === 'capo' && isFree(s, c) && !s.districts.some((x) => x.capoId === c.id));
     if (idle) d.capoId = idle.id;
   }
+  // Reputation drifts toward what the crew's real standing on the island justifies.
+  if (s.week % 2 === 0) {
+    const target = respectTarget(s);
+    const share = Math.round(islandShare(s));
+    if (s.respect < target - 2) respect(ctx, 1, `Word on the street: you run ${share}% of the island`, 'drift');
+    else if (s.respect > target + 2) respect(ctx, -1, `Reputation settles: you run only ${share}% of the island`, 'drift');
+  }
   // The informant (starting problem) leaks to the FBI.
   if (s.flags.informant) {
     const rat = s.characters[`c${s.flags.informant}`];
@@ -108,6 +115,17 @@ function weeklyHousekeeping(ctx: Ctx): void {
       if (s.week % 3 === 0) heat(ctx, 'federal', 1, 'The FBI seems to know a lot lately (a leak in the crew?)', 'heat');
     } else s.flags.informant = 0;
   }
+}
+
+/** Weighted share of the island's street action the player controls (0-100). */
+export function islandShare(s: GameState): number {
+  const total = s.districts.reduce((a, d) => a + d.streetBase, 0);
+  return s.districts.reduce((a, d) => a + d.streetBase * (d.influence.player ?? 0), 0) / total;
+}
+
+export function respectTarget(s: GameState): number {
+  const men = crew(s).filter((c) => isFree(s, c)).length;
+  return Math.round(Math.max(5, Math.min(90, 15 + islandShare(s) * 0.55 + Math.min(10, men - 6) + (s.money > 50000 ? 5 : 0))));
 }
 
 export function emptyReport(s: GameState): WeeklyReport {
@@ -183,6 +201,22 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   s.lastReport = report;
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
   return { state: s, report, log: ctx.log };
+}
+
+/**
+ * Debug/stress tool: kill a character immediately through the one death
+ * function (funeral, history, succession all apply). Pure: returns a new state
+ * plus the ledger lines it produced (e.g. the succession respect hit).
+ */
+export function forceDeath(input: GameState, charId: string, cause: string): { state: GameState; lines: WeeklyReport['lines']; log: string[] } {
+  const s = cloneState(input);
+  const ctx = newCtx(s);
+  killCharacter(ctx, charId, cause);
+  if (!s.gameOver) {
+    // Surface the funeral right away.
+    s.pendingEvents = [...s.pendingEvents, ...s.eventQueue.splice(0)].slice(0, MAX_POPUPS);
+  }
+  return { state: s, lines: ctx.lines, log: ctx.log };
 }
 
 /**

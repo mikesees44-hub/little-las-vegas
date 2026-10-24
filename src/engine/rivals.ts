@@ -333,9 +333,9 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   let extra = '';
   // A soldier may get hurt — or killed, if the rival is cruel or hot-headed.
   const soldiers = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c));
-  if (soldiers.length && chance(s, 0.35)) {
+  if (soldiers.length && chance(s, 0.25)) {
     const v = pick(s, soldiers);
-    const lethal = (hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed')) && chance(s, 0.25);
+    const lethal = (hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed')) && chance(s, 0.15);
     if (lethal) {
       killCharacter(ctx, v.id, `shot by the ${r.shortName} crew`, r.id);
       extra = ` ${displayName(v)} was killed.`;
@@ -346,8 +346,11 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   }
   // Very rarely, a hit on the boss himself.
   const grievance = getRelation(s, r.leaderId, boss.id)?.grievance ?? 0;
-  if (opinion(s, r.leaderId, boss.id) < -60 && grievance > 60 && chance(s, 0.06)) {
-    if (chance(s, 0.3)) {
+  // Requires an earlier warning (an attempt that failed) before a killing can succeed.
+  if (opinion(s, r.leaderId, boss.id) <= -75 && grievance >= 70 && chance(s, 0.04)) {
+    const warned = (s.flags[`attempt_${r.id}`] ?? 0) > 0;
+    s.flags[`attempt_${r.id}`] = (s.flags[`attempt_${r.id}`] ?? 0) + 1;
+    if (warned && chance(s, 0.25)) {
       record(ctx, r, 'strike', 'player', `${nm}'s men ${k.text}.${extra}`);
       killCharacter(ctx, boss.id, `murdered on the orders of ${nm}`, r.id);
       return;

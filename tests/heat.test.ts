@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/engine/newGame';
 import { heat, newCtx } from '../src/engine/ledger';
-import { heatConsequences, heatDecay, QUIET_DECAY } from '../src/engine/heat';
+import { decayAmount, heatConsequences, heatDecay } from '../src/engine/heat';
 import { advanceWeek } from '../src/engine/engine';
 import { HEAT_BARS } from '../src/engine/types';
 
@@ -19,7 +19,12 @@ describe('heat', () => {
     s.heat = { local: 40, family: 40, federal: 40 };
     const ctx = newCtx(s);
     heatDecay(ctx);
-    for (const b of HEAT_BARS) expect(s.heat[b]).toBe(40 - QUIET_DECAY[b]);
+    for (const b of HEAT_BARS) expect(s.heat[b]).toBe(40 - decayAmount(b, 40, true));
+    // quiet decay is faster than busy decay, and higher heat decays faster
+    for (const b of HEAT_BARS) {
+      expect(decayAmount(b, 40, true)).toBeGreaterThan(decayAmount(b, 40, false));
+      expect(decayAmount(b, 80, true)).toBeGreaterThan(decayAmount(b, 20, true));
+    }
   });
   it('decays slower on a busy week', () => {
     const s = newGame('h3');
@@ -27,8 +32,8 @@ describe('heat', () => {
     const ctx = newCtx(s);
     heat(ctx, 'local', 5, 'shakedown', 'event');
     heatDecay(ctx);
-    expect(s.heat.local).toBe(44); // +5, -1 busy decay
-    expect(s.heat.family).toBe(40 - QUIET_DECAY.family);
+    expect(s.heat.local).toBe(45 - decayAmount('local', 45, false));
+    expect(s.heat.family).toBe(40 - decayAmount('family', 40, true));
   });
   it('never decays below zero', () => {
     const s = newGame('h4');

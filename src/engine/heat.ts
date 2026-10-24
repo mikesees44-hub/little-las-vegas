@@ -12,10 +12,19 @@ import { HEAT_BARS, type HeatBar } from './types';
  */
 
 export const HEAT_THRESHOLD = 80;
-/** Decay per week when no heat was gained on that bar this week. */
+/** Flat decay per week when no heat was gained on that bar this week. */
 export const QUIET_DECAY: Record<HeatBar, number> = { local: 3, family: 2, federal: 1 };
-/** Decay per week when the bar did gain heat this week. */
+/** Flat decay per week when the bar did gain heat this week. */
 export const BUSY_DECAY: Record<HeatBar, number> = { local: 1, family: 1, federal: 0 };
+/** Additional decay proportional to the current level (pressure fades faster when it is high). */
+export const QUIET_RATE: Record<HeatBar, number> = { local: 0.06, family: 0.05, federal: 0.04 };
+export const BUSY_RATE: Record<HeatBar, number> = { local: 0.05, family: 0.04, federal: 0.035 };
+
+export function decayAmount(bar: HeatBar, level: number, quiet: boolean): number {
+  const flat = quiet ? QUIET_DECAY[bar] : BUSY_DECAY[bar];
+  const rate = quiet ? QUIET_RATE[bar] : BUSY_RATE[bar];
+  return Math.min(level, Math.round(flat + level * rate));
+}
 
 export const HEAT_LABELS: Record<HeatBar, string> = { local: 'Local', family: 'Family', federal: 'Federal' };
 
@@ -72,7 +81,7 @@ export function heatDecay(ctx: Ctx): void {
   for (const bar of HEAT_BARS) {
     if (s.heat[bar] <= 0) continue;
     const quiet = ctx.heatGained[bar] === 0;
-    const amt = quiet ? QUIET_DECAY[bar] : BUSY_DECAY[bar];
+    const amt = decayAmount(bar, s.heat[bar], quiet);
     if (amt > 0) heat(ctx, bar, -amt, quiet ? `${HEAT_LABELS[bar]} heat cools (a quiet week)` : `${HEAT_LABELS[bar]} heat cools slightly`, 'heat');
   }
 }
