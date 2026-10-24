@@ -176,7 +176,7 @@ function CandidateCard({ s, c, heir }: { s: GameState; c: Character; heir: boole
         <div className="min-w-0 flex-1">
           <div className="text-sm font-semibold text-stone-100 truncate"><CharLink s={s} id={c.id} />{heir && <span className="ml-1 text-[10px] text-gold-300 uppercase tracking-wider">heir</span>}</div>
           <div className="text-[11px] text-stone-400">{c.dynasty ? 'Of the house' : c.rank} · {ageOn(c.birth, s.date)} yrs · followers {c.attrs?.followers ?? 0}</div>
-          <div className="text-[11px] mt-0.5">{a.revealed ? <span className="text-amber-300">He {WANT_TEXT[a.want]} (drive {a.intensity}){a.promise ? ` · promised by week ${a.promise.by}` : ''}{a.broken ? ` · ${a.broken} broken promise${a.broken > 1 ? 's' : ''}` : ''}</span> : <span className="text-stone-500">What he really wants: hidden</span>}</div>
+          <div className="text-[11px] mt-0.5">{a.revealed ? <span className="text-amber-300">{c.gender === 'F' ? 'She' : 'He'} {WANT_TEXT[a.want]} (drive {a.intensity}){a.promise ? ` · promised by week ${a.promise.by}` : ''}{a.broken ? ` · ${a.broken} broken promise${a.broken > 1 ? 's' : ''}` : ''}</span> : <span className="text-stone-500">Hidden ambition: unknown</span>}</div>
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-3">

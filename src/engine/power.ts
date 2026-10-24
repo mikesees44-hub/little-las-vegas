@@ -618,7 +618,7 @@ export function previewPower(s: GameState, a: PowerAction): ActionPreview {
       const cost = path.weekly * 6;
       return {
         ...base, title: `Groom ${c?.firstName ?? '?'}: ${path.name.toLowerCase()}`, detail: path.text, cost,
-        effects: [{ type: 'money', amount: -cost }, note(`Builds ${path.keys.map((k) => ATTR_LABEL[k]).join(', ')}`), note(`Exposure +${path.exposure}/month if he is the secret heir`)],
+        effects: [...(cost ? [{ type: 'money', amount: -cost } as Effect] : []), note(`Builds ${path.keys.map((k) => ATTR_LABEL[k]).join(', ')}`), note(`Exposure +${path.exposure}/month while this is the secret heir`)],
         because: `put ${c?.firstName ?? 'the heir'} on the path: ${path.name.toLowerCase()}`,
         disabledReason: !c?.alive || !c.dynasty ? 'Only a son or daughter of the house' : ageOn(c.birth, s.date) < 17 ? 'Too young' : p?.designation.grooming?.charId === c.id && p.designation.grooming.path === a.path ? 'Already on this path' : s.money < cost ? `Needs $${cost.toLocaleString('en-US')}` : undefined,
       };
@@ -718,7 +718,7 @@ export function previewPower(s: GameState, a: PowerAction): ActionPreview {
       return {
         ...base, title: `Move on ${over ? displayName(over) : 'the boss'}`, detail: 'Take the family by force. Fail and you are in Florida — if you are lucky.',
         effects: [note('Success: you are the boss'), note('Failure: exile'), { type: 'heat', bar: 'local', amount: 6 }], odds: takeoverOdds(s), because: `moved on ${over?.firstName ?? 'the boss'}`,
-        disabledReason: !p || p.station === 'boss' ? 'You are the boss' : !over?.alive ? 'Nobody above you' : p.station === 'exile' ? 'Come home first' : crew(s).filter((c) => isFree(s, c)).length < 3 ? 'You need at least three men' : undefined,
+        disabledReason: !p || p.station === 'boss' ? 'You are the boss' : !over?.alive ? 'Nobody above you' : p.station === 'exile' ? 'Come home first' : p.station === 'associate' || p.station === 'soldier' ? 'Only a capo or an independent crew can move on the boss' : crew(s).filter((c) => isFree(s, c)).length < 3 ? 'You need at least three men' : undefined,
       };
     }
     case 'audience':

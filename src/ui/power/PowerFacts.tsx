@@ -45,7 +45,7 @@ export function PowerFacts({ s, c }: { s: GameState; c: Character }) {
         <div className="mt-2 grid gap-3 sm:grid-cols-2 rounded border border-noir-700 bg-noir-800/50 p-2">
           <ScoreBox title="Leadership capability" sc={capability(v, cc)} tone="bg-emerald-600" />
           <ScoreBox title="Challenge pressure" sc={challengePressure(v, cc)} tone="bg-blood-400" />
-          <div className="sm:col-span-2 text-[11px] text-stone-400">{amb?.revealed ? <>Hidden ambition: he {WANT_TEXT[amb.want]} (drive {amb.intensity}). {amb.log.slice(-2).map((l) => l.text).join(' ')}</> : 'Hidden ambition: unknown. The consigliere, or a little money, could find out.'}</div>
+          <div className="sm:col-span-2 text-[11px] text-stone-400">{amb?.revealed ? <>Hidden ambition: {c.gender === 'F' ? 'she' : 'he'} {WANT_TEXT[amb.want]} (drive {amb.intensity}). {amb.log.slice(-2).map((l) => l.text).join(' ')}</> : 'Hidden ambition: unknown. The consigliere, or a little money, could find out.'}</div>
         </div>
       )}
       {gs.length > 0 && (

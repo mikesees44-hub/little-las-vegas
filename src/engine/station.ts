@@ -100,10 +100,10 @@ export function takeoverOdds(s: GameState): Acceptance {
   add('Your men', mine.reduce((a, c) => a + c.attributes.force, 0) / 12);
   add('Your command', (attr(s, boss, 'command') - 50) / 2);
   if (over) {
-    add(`${over.firstName}'s loyalists`, -Math.min(40, (over.attrs?.followers ?? 0) * 2 + 15));
+    add(`${over.firstName}'s loyalists`, -Math.min(50, (over.attrs?.followers ?? 0) * 2 + 30));
     add(`${over.firstName}'s age`, Math.max(0, ageOn(over.birth, s.date) - 60));
   }
-  add('Surprise', 10);
+  add('Your reputation', (s.respect - 40) / 2);
   return { chance: Math.max(0.05, Math.min(0.8, reasons.reduce((a, r) => a + r.value, 0) / 100)), reasons };
 }
 
