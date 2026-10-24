@@ -146,7 +146,8 @@ function rollDeath(g: G, by: number, sex: 'M' | 'F', house: LHouse | undefined, 
     const crime = type === 'crime' && sex === 'M' && a >= 17 && a <= 60 ? (y >= 1920 && y <= 1933 ? 0.009 : 0.004) : 0;
     const duty = (type === 'police' || type === 'fire') && sex === 'M' && a >= 21 && a <= 60 ? 0.0012 : 0;
     const sea = shore && sex === 'M' && a >= 14 ? 0.0006 : 0;
-    const acc = sex === 'M' ? 0.0011 : 0.0004;
+    // Accidents of work and the road are for grown people; children die of the period's illnesses.
+    const acc = a < 14 ? 0 : sex === 'M' ? 0.0011 : 0.0004;
     const total = base + flu + ww1 + ww2 + korea + crime + duty + sea + acc;
     let r = rand(g.L);
     if (r >= total) continue;
