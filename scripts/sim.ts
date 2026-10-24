@@ -43,7 +43,7 @@ const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 /** Chance per week of sending an envoy to another city. */
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
 /** Chance per week of a romance interaction (court, affair, propose, end it, separate). */
-const ROMANCE_RATE = Number(arg('romance', '0.04'));
+const ROMANCE_RATE = Number(arg('romance', '0.015'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise or sees. */

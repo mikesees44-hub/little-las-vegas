@@ -45,6 +45,8 @@ export const RANDOM_GAP = 3;
 export const RANDOM_CHANCE = 0.4;
 /** A chain part that cannot be cast for this long is dropped (the chain ends). */
 const DUE_MAX_WAIT = 16;
+/** The first year: random pack events come less often and their costs are halved. */
+const FIRST_YEAR = 52;
 
 export type Cast = Record<string, string>;
 
@@ -430,7 +432,9 @@ export function mapFx(s: GameState, e: PackEvent, b: Bound, fx: Fx, carried: Rec
   const id = (role: string): string | undefined => (role === 'player' ? P : b.roles[role]);
   const reason = e.title;
   switch (fx.k) {
-    case 'money': return [{ type: 'money', amount: fx.amount }];
+    case 'money':
+      // The first season the house is still finding its feet: the pack's bills come in at half.
+      return [{ type: 'money', amount: fx.amount < 0 && s.week <= FIRST_YEAR ? Math.round(fx.amount / 2 / 50) * 50 : fx.amount }];
     case 'respect': return [{ type: 'respect', amount: fx.amount }];
     case 'heat': return [{ type: 'heat', bar: fx.bar, amount: fx.amount }];
     case 'opinion': {
@@ -632,8 +636,8 @@ export function storyEventSource(s: GameState): EventInstance | undefined {
     if (ev) return ev;
   }
   // 3. The random pool, now and then.
-  if (s.week < 3 || s.week - st.lastRandom < RANDOM_GAP) return undefined;
-  if (rand(st) > RANDOM_CHANCE) return undefined;
+  if (s.week < 6 || s.week - st.lastRandom < (s.week <= FIRST_YEAR ? RANDOM_GAP * 2 : RANDOM_GAP)) return undefined;
+  if (rand(st) > (s.week <= FIRST_YEAR ? RANDOM_CHANCE / 2 : RANDOM_CHANCE)) return undefined;
   const pool = EVENTS.filter((e) => !e.trigger.mandatory && poolEligible(s, e, st));
   for (let tries = 0; tries < 3 && pool.length; tries++) {
     const e = weightedPick(st, pool, (x) => x.trigger.weight ?? 10);

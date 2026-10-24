@@ -802,7 +802,7 @@ function affairDiscovered(ctx: Ctx, R: RomanceState, r: Romance, a: Character, b
     // The boss was the lover: a made man's wife, or a rival boss's.
     if (lv.id === boss.id) {
       if (bt.faction === 'player') {
-        effects.push({ type: 'crewOpinion', amount: -3, reason: 'The boss and a made man\'s wife', traitMods: { 'Loyal-to-a-fault': -3, Womanizer: 3 } });
+        effects.push({ type: 'crewOpinion', amount: -2, reason: 'The boss and a made man\'s wife', traitMods: { 'Loyal-to-a-fault': -3, Womanizer: 2 } });
         effects.push({ type: 'respect', amount: -2 });
         changeMeter(s, bt.id, boss.id, 'grievance', 30);
       }
