@@ -15,6 +15,7 @@ import type { Character, GameState } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { Portrait } from '../portrait/Portrait';
 import { Modal } from './Modal';
+import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
@@ -77,6 +78,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
                 </div>
               )}
               <div className="mt-1.5"><TraitIcons c={c} labels /></div>
+              {c.alive && !s.gameOver && <div className="mt-1.5"><TravelButton s={s} charId={c.id} /></div>}
             </div>
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>

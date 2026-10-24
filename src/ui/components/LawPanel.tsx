@@ -3,6 +3,7 @@ import { GRAND_JURY, OPEN_FILE, caseEvidence, convictionOdds, evidenceGain, indi
 import { cloneState } from '../../engine/engine';
 import type { GameState, LegalStage } from '../../engine/types';
 import { ActionCard } from './Orders';
+import { FugitivePanel } from '../travel/Panels';
 import { HQLawLine } from '../econ/DistrictProperty';
 
 const STEPS: { id: LegalStage; t: string }[] = [
@@ -61,6 +62,8 @@ export function LawPanel({ s }: { s: GameState }) {
           {g.reasons.map((r, i) => <span key={i} className={r.value > 0 ? 'chip-bad' : 'chip-good'}>{r.value > 0 ? '+' : '−'}{Math.abs(r.value).toFixed(1)} {r.label}</span>)}
         </div>
       </div>
+
+      <FugitivePanel s={s} />
 
       <div className="grid gap-2 sm:grid-cols-2">
         <ActionCard s={s} action={{ kind: 'legal', op: 'retainer' }} />

@@ -11,6 +11,7 @@ import { districtHeat, districtIncome, FACTION_FILL } from './IslandMap';
 import { ActionCard } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
 import { StressBar } from '../family/bits';
+import { TravelButton } from '../travel/context';
 import { DistrictProperty } from '../econ/DistrictProperty';
 
 export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: string; onOpenBusiness: () => void }) {
@@ -86,6 +87,7 @@ export function PlayerCard({ s }: { s: GameState }) {
         <div className="text-[11px] text-stone-400">Head of the house · {ageOn(b.birth, s.date)} yrs · health {b.health}</div>
         <div className="mt-1"><TraitIcons c={b} /></div>
         <div className="mt-1"><StressBar s={s} c={b} /></div>
+        <div className="mt-1"><TravelButton s={s} charId={b.id} className="text-[11px] rounded border border-gold-600/60 px-2 py-0.5 text-gold-300 hover:bg-gold-500/10 disabled:opacity-40" /></div>
       </div>
     </div>
   );
