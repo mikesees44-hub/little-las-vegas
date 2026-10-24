@@ -1,3 +1,4 @@
+import { bookBonus } from './rackets';
 import { perkMod } from './lifestyle';
 import { CATALOG } from './catalog';
 import { ownsKind } from './business';
@@ -21,7 +22,7 @@ const COLLATERAL: BusinessKind[] = ['bar', 'pizza', 'carlot', 'stand', 'restaura
 const JOBS = ['a clam-boat captain', 'a boardwalk stand owner', 'a horseplayer from Rio Grande', 'a bar owner on New Jersey Ave', 'a contractor in Cape May', 'a motel man in the Crest', 'a trucker with a gambling problem', 'a car dealer on the Causeway'];
 
 export function bookCapacity(s: GameState): number {
-  return ownsKind(s, 'loansharking', true) ? LOANS_PER_BOOK * s.businesses.filter((b) => b.owner === 'player' && b.kind === 'loansharking').length : 0;
+  return ownsKind(s, 'loansharking', true) ? LOANS_PER_BOOK * s.businesses.filter((b) => b.owner === 'player' && b.kind === 'loansharking').length + bookBonus(s) : 0;
 }
 
 /** Creates a borrower and books the loan. Money leaves the treasury via the action's effects. */

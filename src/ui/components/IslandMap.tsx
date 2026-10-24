@@ -5,6 +5,7 @@ import { districtTake } from '../../engine/economy';
 import { FACTION_NAMES } from '../../engine/world';
 import type { FactionId, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
+import { IslandLots } from '../econ/IslandLots';
 
 /**
  * Stylized map of the island, north at the top: North Wildwood, then
@@ -138,6 +139,7 @@ export function IslandMap({ s, selected, onSelect }: { s: GameState; selected?: 
             );
           });
         })}
+        <IslandLots s={s} shapes={SHAPES} />
         {/* HQs */}
         {hq.map((h) => {
           const sh = SHAPES.find((x) => x.id === h.d);
@@ -172,6 +174,7 @@ export function IslandMap({ s, selected, onSelect }: { s: GameState; selected?: 
         )) : <span>{mode === 'heat' ? 'Cool → hot' : mode === 'income' ? 'Your weekly take, low → high' : 'Rival share, low → high'}</span>}
         <span><span className="inline-block w-2 h-2 mr-1 rounded-full bg-[#e7c25a]" />front</span>
         <span><span className="inline-block w-2 h-2 mr-1 rounded-full bg-[#b0302a]" />racket</span>
+        <span><span className="inline-block w-2 h-2 mr-1 rounded-sm bg-[#e7c25a]" />building (★ open, § permits … ◩ interior)</span>
       </div>
     </div>
   );

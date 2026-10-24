@@ -1,3 +1,4 @@
+import { econBusiness } from './econ';
 import { perkMod } from './lifestyle';
 import { isInSeason, seasonMultiplier } from './calendar';
 import { CATALOG } from './catalog';
@@ -297,8 +298,10 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
         }
       } else amt = 0;
     }
-    if (amt > 0) {
-      const got = money(ctx, Math.round(amt), label, 'business');
+    ({ amt, label } = econBusiness(ctx, b, amt, label));
+    if (amt !== 0) {
+      // A losing week (the book paid out) is a loss, not negative gross.
+      const got = Math.max(0, money(ctx, Math.round(amt), label, 'business'));
       gross += got;
       if (def.category === 'front') clean += got;
     }
