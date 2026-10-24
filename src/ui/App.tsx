@@ -20,6 +20,10 @@ import { PowerTab, type PowerSub } from './power/PowerTab';
 import { AudiencePanel } from './power/AudiencePanel';
 import { CrisisBanner } from './power/CrisisBanner';
 import { Businesses } from './components/Businesses';
+import { Holdings } from './econ/Holdings';
+import { RealEstate } from './econ/RealEstate';
+import { HQPanel } from './econ/HQPanel';
+import { GiftsPanel } from './econ/Gifts';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
 import { CrewList } from './components/CrewList';
@@ -32,16 +36,16 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | PowerSub;
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'gifts' | PowerSub;
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
 const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
   { id: 'map', label: 'The Island' },
-  { id: 'business', label: 'Rackets & Fronts' },
+  { id: 'business', label: 'Rackets & Fronts', subs: [{ id: 'business', label: 'Buy & sell' }, { id: 'holdings', label: 'Holdings' }, { id: 'realestate', label: 'Real Estate' }, { id: 'hq', label: 'Headquarters' }] },
   { id: 'tree', label: 'Crew' },
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
-  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }] },
+  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }, { id: 'gifts', label: 'Gifts & Giving' }] },
   { id: 'power', label: 'Power', subs: [{ id: 'power', label: 'Heirs & Ambition' }, { id: 'grievances', label: 'Passed Over' }, { id: 'blitz', label: 'Balance & Blitz' }, { id: 'front', label: 'The Front' }] },
   { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
@@ -180,7 +184,7 @@ export function App() {
     <SheetContext.Provider value={sheetApi}>
     <PlannerContext.Provider value={plannerApi}>
     <OrdersContext.Provider value={ordersApi}>
-    <div className="mx-auto max-w-6xl px-3 sm:px-4 py-3 sm:py-5 space-y-3">
+    <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
       <Header s={s}>
         {!s.gameOver && (
           <>
@@ -239,6 +243,10 @@ export function App() {
       ) : (
         <main className="panel p-3 sm:p-4">
           {tab === 'business' && <Businesses s={s} />}
+          {tab === 'holdings' && <Holdings s={s} />}
+          {tab === 'realestate' && <RealEstate s={s} />}
+          {tab === 'hq' && <HQPanel s={s} />}
+          {tab === 'gifts' && <GiftsPanel s={s} />}
           {tab === 'tree' && <CrewTree s={s} />}
           {tab === 'crew' && <CrewList s={s} />}
           {tab === 'schemes' && <SchemesPanel s={s} />}
