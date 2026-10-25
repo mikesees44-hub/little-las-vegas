@@ -243,8 +243,13 @@ function castHouse(k: K, hid: string, headId: string, full: boolean): void {
     if (job === 'priest') {
       addTrait(k, c, 'Pious');
       c.ambition = 'Save his cousin\'s soul, if it can be saved';
-      updLink(L, c.id, { note: 'Became a priest' });
-      story(k, c, 'Ordained at St. Charles Borromeo; curate at St. Ann\'s in Wildwood.');
+      if (c.ethnicity === 'Jewish') {
+        updLink(L, c.id, { note: 'Became a rabbi' });
+        story(k, c, 'Ordained at the Jewish Theological Seminary; assistant rabbi at the synagogue on Pacific Avenue.');
+      } else {
+        updLink(L, c.id, { note: 'Became a priest' });
+        story(k, c, 'Ordained at St. Charles Borromeo; curate at St. Ann\'s in Wildwood.');
+      }
     } else if (job === 'cop') {
       addTrait(k, c, 'Honest');
       c.ambition = 'Make sergeant without choosing between the badge and the family';

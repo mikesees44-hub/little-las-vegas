@@ -147,7 +147,7 @@ const HOOKS: Hook[] = [
       const fx: Effect[] = [op(c.id, b.id, 6, 'Listens to me', label)];
       if (rv) fx.push({ type: 'rivalResource', rival: rv.id, exposure: 4, label });
       return ev(s, 'church', c, 'What the Rosary Society knows',
-        `${cap(who(s, c))} sits on the Rosary Society, which means she knows whose husband has not been home, whose son is suddenly flush${rv ? `, and which of ${rv.name}'s men has been confessing more than his sins` : ''}. She tells you over coffee, as if it were nothing.`,
+        `${cap(who(s, c))} sits on ${c.ethnicity === 'Jewish' ? 'the temple sisterhood' : 'the Rosary Society'}, which means she knows whose husband has not been home, whose son is suddenly flush${rv ? `, and which of ${rv.name}'s men has been confessing more than his sins` : ''}. She tells you over coffee, as if it were nothing.`,
         [
           { id: 'use', label: 'Pass it to the right ears', detail: rv ? `${rv.shortName} has a little more to hide.` : 'Useful, someday.', because: `used ${c.firstName}'s parish gossip`, effects: fx },
           { id: 'thank', label: 'Thank her, and leave it at the church door', detail: 'She is pleased you keep her out of it.', because: `kept ${c.firstName} out of the business`, effects: [op(c.id, b.id, 10, 'Kept me out of it', label)] },
@@ -158,13 +158,17 @@ const HOOKS: Hook[] = [
     key: 'priest', role: 'priest', cooldown: 16, weight: 2,
     build: (s, c) => {
       const b = player(s);
-      const label = `Father ${c.firstName}`;
-      return ev(s, 'priest', c, `Father ${c.firstName} comes to the house`,
-        `${cap(who(s, c))}, in the collar, at your kitchen door. The parish school roof leaks, he says. He also says he hears things in the confessional he cannot repeat, and that he prays for you. He means both.`,
+      const rabbi = c.ethnicity === 'Jewish';
+      const title = rabbi ? `Rabbi ${c.firstName}` : `Father ${c.firstName}`;
+      const label = title;
+      return ev(s, 'priest', c, `${title} comes to the house`,
+        rabbi
+          ? `${cap(who(s, c))}, the rabbi of the family, at your kitchen door. The Hebrew school roof leaks, he says. He also says people tell him things he cannot repeat, and that he prays for you. He means both.`
+          : `${cap(who(s, c))}, in the collar, at your kitchen door. The parish school roof leaks, he says. He also says he hears things in the confessional he cannot repeat, and that he prays for you. He means both.`,
         [
-          { id: 'roof', label: 'Pay for the roof ($500)', detail: 'The parish knows who paid. So does the Monsignor.', because: 'paid for the parish school roof', effects: [{ type: 'money', amount: -500, label }, op(c.id, b.id, 15, 'Fixed the school roof', label), { type: 'respect', amount: 1, label }, { type: 'heat', bar: 'local', amount: -1, label }] },
-          { id: 'confess', label: 'Go to confession', detail: 'You tell him what a man can tell a priest.', because: `went to confession with Father ${c.firstName}`, effects: [op(c.id, b.id, 10, 'Came to confession', label), { type: 'familyOpinion', amount: 1, reason: 'The boss went to confession', label }] },
-          { id: 'no', label: 'Not today, Father', because: `sent Father ${c.firstName} away`, effects: [op(c.id, b.id, -6, 'Sent me away', label)] },
+          { id: 'roof', label: 'Pay for the roof ($500)', detail: rabbi ? 'The congregation knows who paid.' : 'The parish knows who paid. So does the Monsignor.', because: rabbi ? 'paid for the Hebrew school roof' : 'paid for the parish school roof', effects: [{ type: 'money', amount: -500, label }, op(c.id, b.id, 15, 'Fixed the school roof', label), { type: 'respect', amount: 1, label }, { type: 'heat', bar: 'local', amount: -1, label }] },
+          { id: 'confess', label: rabbi ? 'Go to services' : 'Go to confession', detail: rabbi ? 'You sit in the back row. He sees you.' : 'You tell him what a man can tell a priest.', because: rabbi ? `went to services with ${title}` : `went to confession with ${title}`, effects: [op(c.id, b.id, 10, rabbi ? 'Came to services' : 'Came to confession', label), { type: 'familyOpinion', amount: 1, reason: rabbi ? 'The boss went to services' : 'The boss went to confession', label }] },
+          { id: 'no', label: rabbi ? 'Not today, Rabbi' : 'Not today, Father', because: `sent ${title} away`, effects: [op(c.id, b.id, -6, 'Sent me away', label)] },
         ], 'roof');
     },
   },
@@ -174,7 +178,7 @@ const HOOKS: Hook[] = [
       const b = player(s);
       const label = `${c.firstName} on the force`;
       return ev(s, 'cop', c, 'A word from the cousin with the badge',
-        `${cap(who(s, c))} catches you outside St. Ann's after Mass. Off the record: the state boys are asking about the island, and somebody downtown is putting a list together. He has not said anything. He wants you to know he has not said anything.`,
+        `${cap(who(s, c))} catches you ${c.ethnicity === 'Jewish' ? 'outside the synagogue after services' : 'outside St. Ann\'s after Mass'}. Off the record: the state boys are asking about the island, and somebody downtown is putting a list together. He has not said anything. He wants you to know he has not said anything.`,
         [
           { id: 'thank', label: 'Thank him, and change nothing he could be blamed for', detail: 'You tighten up. He stays clean.', because: `thanked ${c.firstName} for the warning`, effects: [{ type: 'heat', bar: 'local', amount: -3, label }, op(c.id, b.id, 8, 'Kept me out of it', label)] },
           { id: 'more', label: 'Ask him for the duty roster', detail: 'Very useful. It puts him in a spot he did not ask for.', because: `asked ${c.firstName} for the duty roster`, effects: [{ type: 'heat', bar: 'local', amount: -6, label }, op(c.id, b.id, -15, 'Asked me to choose', label)] },
@@ -220,12 +224,16 @@ const HOOKS: Hook[] = [
       const b = player(s);
       const father = c.fatherId ? s.characters[c.fatherId] : undefined;
       const label = `${c.firstName}'s big day`;
-      const day = s.date.y - c.birth.y <= 9 ? 'First Communion' : s.date.y - c.birth.y <= 14 ? 'Confirmation' : 'graduation';
+      const age = s.date.y - c.birth.y;
+      const jewish = c.ethnicity === 'Jewish';
+      const day = jewish ? (age >= 12 && age <= 14 ? (c.gender === 'M' ? 'Bar Mitzvah' : 'Bat Mitzvah') : 'graduation')
+        : age <= 9 ? 'First Communion' : age <= 14 ? 'Confirmation' : 'graduation';
+      const where = jewish ? 'at the synagogue on Pacific Avenue' : 'at St. Ann\'s';
       const fx = (n: number, reason: string): Effect[] => (father?.alive ? [op(father.id, b.id, n, reason, label)] : []);
       return ev(s, 'godchild', c, `Your godchild's ${day}`,
-        `${displayName(c)}${father ? `, ${father.firstName}'s ${c.gender === 'M' ? 'boy' : 'girl'},` : ''} has ${day === 'graduation' ? 'a graduation' : `a ${day}`} at St. Ann's on Sunday. The whole crew will be watching to see if the godfather comes.`,
+        `${displayName(c)}${father ? `, ${father.firstName}'s ${c.gender === 'M' ? 'boy' : 'girl'},` : ''} has ${day === 'graduation' ? 'a graduation' : `a ${day}`} ${day === 'graduation' ? 'this week' : `${where} this ${jewish ? 'Saturday' : 'Sunday'}`}. The whole crew will be watching to see if the godfather comes.`,
         [
-          { id: 'go', label: 'Go, with an envelope ($150)', detail: 'You stand in the back. Everybody sees you anyway.', because: `went to ${c.firstName}'s ${day}`, effects: [{ type: 'money', amount: -150, label }, op(c.id, b.id, 15, 'My godfather came', label), ...fx(10, 'Came for my kid'), { type: 'crewOpinion', amount: 1, reason: 'The boss came to the church', label }] },
+          { id: 'go', label: 'Go, with an envelope ($150)', detail: 'You stand in the back. Everybody sees you anyway.', because: `went to ${c.firstName}'s ${day}`, effects: [{ type: 'money', amount: -150, label }, op(c.id, b.id, 15, 'My godfather came', label), ...fx(10, 'Came for my kid'), { type: 'crewOpinion', amount: 1, reason: 'The boss came', label }] },
           { id: 'send', label: 'Send the envelope ($150)', because: `sent an envelope for ${c.firstName}'s ${day}`, effects: [{ type: 'money', amount: -150, label }, op(c.id, b.id, 5, 'Sent a card', label)] },
           { id: 'forget', label: 'Forget', because: `forgot ${c.firstName}'s ${day}`, effects: [op(c.id, b.id, -10, 'My godfather forgot', label), ...fx(-8, 'Forgot my kid')] },
         ], 'go');

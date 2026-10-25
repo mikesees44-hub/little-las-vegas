@@ -59,7 +59,7 @@ function CardImpl({ s, n, houseId, head, founder, spouse }: CardProps) {
       <div className="mt-0.5 flex flex-wrap justify-center gap-0.5">
         {head && <Badge tone="gold">♔ Head</Badge>}
         {founder && <Badge tone="gold">Founder</Badge>}
-        {n.note && <Badge>{n.note === 'Took the veil' ? 'Nun' : n.note === 'Became a priest' ? 'Priest' : n.note}</Badge>}
+        {n.note && <Badge>{n.note === 'Took the veil' ? 'Nun' : n.note === 'Became a priest' ? 'Priest' : n.note === 'Became a rabbi' ? 'Rabbi' : n.note}</Badge>}
         {n.alive && n.rank && n.rank !== 'civilian' && !head && <Badge>{n.rank}</Badge>}
         {n.alive && n.roles?.length ? <Badge tone="gold" title={n.roles.map((r) => KIN_ROLE_INFO[r].text).join(' ')}>{KIN_ROLE_INFO[n.roles.find((r) => r !== 'cousin' && r !== 'uncle' && r !== 'aunt' && r !== 'advisor') ?? n.roles[0]].label}</Badge> : null}
         {!n.alive && n.titles.length > 0 && !founder && <Badge title={n.titles.join('; ')}>{n.titles[0].split(/ \d| since/)[0].slice(0, 18)}</Badge>}
