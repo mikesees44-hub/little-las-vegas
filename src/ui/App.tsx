@@ -34,7 +34,10 @@ import { Header } from './components/Header';
 import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
-import { clearSave, loadGame, saveGame } from './save';
+import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
+import { StartMenu, type MenuScreen } from './menu/StartMenu';
+import { registerAppearances } from './portrait/genes';
+import { applySettings, getSettings } from './settings';
 import { TravelContext } from './travel/context';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
@@ -67,12 +70,24 @@ function tabGroup(t: Tab): Tab {
 }
 type Mode = 'week' | 'month';
 
+/** The opening scene: the old boss's funeral at St. Ann's (plays for every new game). */
+function openingCue(week: number): CutsceneCue {
+  return { key: 'opening', title: "St. Ann's, Wildwood · May 1960", text: 'The church smells of lilies and floor wax. The old man lies in a bronze casket that cost more than most of the mourners make in a year. In nine days the boardwalk opens. By then somebody has to be running things. You stand in the front pew, and behind you the capos are counting.', week };
+}
+
 function freshSeed(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
-export function App() {
-  const [s, setS] = useState<GameState>(() => loadGame() ?? newGameWith(freshSeed()));
+/** `startOn: 'game'` skips the title screen (tests, embedding). */
+export interface AppProps { startOn?: 'title' | 'game' }
+export function App({ startOn = 'title' }: AppProps) {
+  const [slot, setSlot] = useState(() => currentSlot());
+  const [s, setS] = useState<GameState>(() => loadSlot(currentSlot()) ?? newGameWith(freshSeed()));
+  /** The title screen / new-game flow (shown on first load). */
+  const [menu, setMenu] = useState<MenuScreen | undefined>(startOn === 'title' ? 'title' : undefined);
+  useEffect(() => applySettings(), []);
+  registerAppearances(s.seed, s.characters);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [mgMoves, setMgMoves] = useState<Record<string, string[]>>({});
   const [scene, setScene] = useState<{ iid: string; choiceId: string; m: NonNullable<ReturnType<typeof minigameOf>> } | null>(null);
@@ -85,7 +100,6 @@ export function App() {
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
   const [seedInput, setSeedInput] = useState('');
-  const [startPick, setStartPick] = useState<StartId>('classic');
   const [orders, setOrders] = useState<PlayerAction[]>([]);
   const ordersApi = useMemo(() => ({
     orders,
@@ -102,27 +116,20 @@ export function App() {
     plan: (leaderId: string, destId?: string) => { setSheet(undefined); setTripPlan({ leaderId, destId }); },
     flee: (personId: string) => { setSheet(undefined); setFleeFor(personId); },
   }), []);
-  useEffect(() => saveGame(s), [s]);
+  useEffect(() => {
+    if (!menu) saveSlot(slot, s);
+  }, [s, menu, slot]);
   const [speed, setSpeed] = useState<Speed>(0);
   const [clockNote, setClockNote] = useState<string | undefined>();
   const [ticker, setTicker] = useState<string | undefined>();
-  const [cues, setCues] = useState<CutsceneCue[]>(() => {
-    // Opening scene on a brand-new game: the old boss's funeral at St. Ann's.
-    try {
-      if (s.week <= 1 && !sessionStorage.getItem('llv-opening-' + s.seed)) {
-        sessionStorage.setItem('llv-opening-' + s.seed, '1');
-        return [{ key: 'opening', title: "St. Ann's, Wildwood · May 1960", text: 'The church smells of lilies and floor wax. The old man lies in a bronze casket that cost more than most of the mourners make in a year. In nine days the boardwalk opens. By then somebody has to be running things. You stand in the front pew, and behind you the capos are counting.', week: s.week }];
-      }
-    } catch { /* storage unavailable */ }
-    return [];
-  });
+  const [cues, setCues] = useState<CutsceneCue[]>([]);
   const [night, setNight] = useState<ElectionResult[]>([]);
   const [reels, setReels] = useState<Reel[]>([]);
 
   // The scripted scenes (Made the boss) open by themselves, once.
   const [autoOpened, setAutoOpened] = useState<Record<string, boolean>>({});
   useEffect(() => {
-    if (scene || cues.length || reports) return;
+    if (menu || scene || cues.length || reports) return;
     const i = s.pendingEvents.findIndex((e) => e.defId === 'made_boss' && !answers[e.iid] && !autoOpened[e.iid]);
     if (i < 0) return;
     const ev = s.pendingEvents[i];
@@ -133,7 +140,7 @@ export function App() {
     setAdvancing(false);
     setEventIdx(i);
     setScene({ iid: ev.iid, choiceId: 'play', m });
-  }, [s, scene, cues.length, reports, answers, autoOpened]);
+  }, [s, menu, scene, cues.length, reports, answers, autoOpened]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
@@ -147,13 +154,12 @@ export function App() {
       const r = advanceWeek(s, choices);
       setS(r.state);
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
-      setCues(cutscenesBetween(s, r.state));
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
       if (quiet) {
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
-        if (warn.length || r.state.cutscenes?.length) {
+        if ((warn.length || r.state.cutscenes?.length) && getSettings().pauseOnWarning) {
           setSpeed(0);
           setClockNote(warn.length ? `Paused: ${warn[0]}` : 'Paused');
         }
@@ -162,7 +168,6 @@ export function App() {
       const r = advanceMonth(s, choices);
       setS(r.state);
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
-      setCues(cutscenesBetween(s, r.state));
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
       setReports(r.reports);
@@ -212,9 +217,7 @@ export function App() {
     else run(mode, next, false, mv);
   }
 
-  function restart(seed?: string, start: StartId = 'classic') {
-    clearSave();
-    setS(newGameWith(seed || freshSeed(), start));
+  function resetUi() {
     setAnswers({});
     setMgMoves({});
     setScene(null);
@@ -222,7 +225,46 @@ export function App() {
     setReports(null);
     setEventIdx(null);
     setSheet(undefined);
+    setPlanner(undefined);
+    setTripPlan(undefined);
+    setFleeFor(undefined);
+    setNight([]);
+    setReels([]);
+    setAutoOpened({});
+    setSpeed(0);
     setTab('map');
+    try { window.scrollTo(0, 0); } catch { /* no window */ }
+  }
+
+  /** A new game from the creator (or a quick restart): always opens on the funeral. */
+  function beginGame(next: GameState, n: number) {
+    setCurrentSlot(n);
+    setSlot(n);
+    setS(next);
+    resetUi();
+    setMenu(undefined);
+    setCues([openingCue(next.week)]);
+    try { sessionStorage.setItem('llv-opening-' + next.seed, '1'); } catch { /* storage unavailable */ }
+  }
+
+  function restart(seed?: string, start: StartId = 'classic') {
+    beginGame(newGameWith(seed || freshSeed(), start), slot);
+  }
+
+  function continueSlot(n: number) {
+    const loaded = loadSlot(n);
+    if (!loaded) return;
+    setCurrentSlot(n);
+    setSlot(n);
+    setS(loaded);
+    resetUi();
+    setMenu(undefined);
+    try {
+      if (loaded.week <= 1 && !sessionStorage.getItem('llv-opening-' + loaded.seed)) {
+        sessionStorage.setItem('llv-opening-' + loaded.seed, '1');
+        setCues([openingCue(loaded.week)]);
+      }
+    } catch { /* storage unavailable */ }
   }
 
   function onAlert(a: Alert) {
@@ -232,9 +274,9 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || cues.length > 0 || reels.length > 0;
+  const busy = !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || cues.length > 0 || reels.length > 0;
   useClock({
-    speed, s, busy, unanswered: unanswered.length,
+    speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
     step: () => run('week', answers, true),
     onPause: (why) => {
       setSpeed(0);
@@ -252,6 +294,13 @@ export function App() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  if (menu) {
+    return (
+      <StartMenu key={menu} initial={menu} inGame={!s.gameOver && !!loadSlot(slot)} seedHint={seedInput.trim() || undefined}
+        onBack={() => setMenu(undefined)} onContinue={continueSlot} onStart={beginGame} />
+    );
+  }
 
   return (
     <SheetContext.Provider value={sheetApi}>
@@ -286,8 +335,9 @@ export function App() {
           <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
           <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <button className="btn-gold" onClick={() => setMenu('start')}>New Game…</button>
             {(Object.keys(STARTS) as StartId[]).map((k) => (
-              <button key={k} className={k === 'classic' ? 'btn-gold' : 'btn-ghost'} title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
+              <button key={k} className="btn-ghost" title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
             ))}
           </div>
         </div>
@@ -349,11 +399,9 @@ export function App() {
       <footer className="panel p-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
         <span>Seed: <span className="text-stone-300">{s.seed}</span></span>
         <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed (optional)" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-36" />
-        <select value={startPick} onChange={(e) => setStartPick(e.target.value as StartId)} title={STARTS[startPick].text} data-testid="start-pick" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200">
-          {(Object.keys(STARTS) as StartId[]).map((k) => <option key={k} value={k}>{STARTS[k].name}</option>)}
-        </select>
-        <button className="btn-ghost text-xs py-1" onClick={() => window.confirm(`Abandon this game and start over? ${STARTS[startPick].text}`) && restart(seedInput.trim(), startPick)}>New game</button>
-        <span className="ml-auto">Saved automatically in this browser.</span>
+        <button className="btn-ghost text-xs py-1" data-testid="footer-new" onClick={() => { setSpeed(0); setMenu('start'); }}>New Game</button>
+        <button className="btn-ghost text-xs py-1" data-testid="footer-menu" onClick={() => { setSpeed(0); setMenu('title'); }}>Main Menu</button>
+        <span className="ml-auto">Saved automatically in slot {slot}{s.flags.ironman ? ' · ironman' : ''}.</span>
       </footer>
 
       {current && scene && (

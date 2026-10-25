@@ -62,6 +62,9 @@ function lookOf(c: Character, seed: string, date: GameDate, tint: string | undef
     jailed,
     tint,
     genes: genesOf(seed, c),
+    hairStyle: c.appearance?.hair,
+    stache: c.appearance?.stache,
+    hat: c.appearance?.hat,
     mood: moodFor(c, age, opinion),
     r: rng(hash(`${seed}:look:${c.id}`)),
     serial: hash(`${seed}:serial:${c.id}`) % 90000 + 10000,
@@ -71,7 +74,7 @@ function lookOf(c: Character, seed: string, date: GameDate, tint: string | undef
 function PortraitImpl({ c, seed, date, size = 64, tint, className, opinion }: PortraitProps) {
   const age = Math.max(0, ageOn(c.birth, c.death ? c.death.date : date));
   const jailed = c.alive && c.imprisonedUntil !== undefined && compareDates(dateOfWeek(c.imprisonedUntil), date) > 0;
-  const key = [seed, c.id, c.fatherId ?? '', c.bioFatherId ?? '', c.motherId ?? '', c.gender, c.ethnicity, age, c.rank, c.office ?? '', c.specialty ?? '', c.alive ? 1 : 0, jailed ? 1 : 0, tint ?? '', (c.traits ?? []).join(','), c.firstName, c.lastName, moodFor(c, age, opinion)].join('|');
+  const key = [seed, c.id, c.fatherId ?? '', c.bioFatherId ?? '', c.motherId ?? '', c.gender, c.ethnicity, age, c.rank, c.office ?? '', c.specialty ?? '', c.alive ? 1 : 0, jailed ? 1 : 0, tint ?? '', (c.traits ?? []).join(','), c.firstName, c.lastName, moodFor(c, age, opinion), c.appearance ? JSON.stringify(c.appearance) : ''].join('|');
   let art = cache.get(key);
   if (!art) {
     art = paintPortrait(lookOf(c, seed, date, tint, opinion));
