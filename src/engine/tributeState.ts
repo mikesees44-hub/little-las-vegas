@@ -206,6 +206,45 @@ export interface TributeReport {
 
 export type UbType = 'loyal' | 'ambitious' | 'overwhelmed' | 'acting' | 'none';
 
+/**
+ * A fact told three ways: what really happened, what was said about it, and
+ * what each person believes (by character id), plus who knows the truth.
+ * The weekly take uses it for favors; shortfalls keep the same split on
+ * MemberLine (truth / said / believed-by-the-underboss / revealed-to-the-Don).
+ * Reusable for meetings and promises (a shadow court).
+ */
+export interface Telling<T> {
+  truth: T;
+  said?: T;
+  believed?: Record<string, T>;
+  /** Character ids who know the truth (the Don's id when he has learned it). */
+  knownBy: string[];
+}
+
+/** How far the underboss may decide money matters on his own (a shadow court can raise it). */
+export type UbAuthority = 'routine' | 'operational' | 'executive' | 'acting' | 'shadow';
+
+export type FavorKind = 'extension' | 'forgive' | 'cover' | 'carry' | 'assistance' | 'advance' | 'protect' | 'refund' | 'allowance' | 'contract';
+
+/**
+ * A favor: who helped whom, with what, on whose authority, and who knows.
+ * Persistent relationship records (patronage), not just numbers: the
+ * underboss's base among the earners is built out of these.
+ */
+export interface Favor {
+  id: string;
+  week: number;
+  /** Who did it (the Don, the underboss, a capo). */
+  byId: string;
+  toId: string;
+  kind: FavorKind;
+  amount: number;
+  /** On whose authority: the Don's order, the underboss's delegated routine authority, or nobody's. */
+  authority: 'don' | 'delegated' | 'unauthorized';
+  /** What it really was, and who knows (the Don may not). */
+  tell: Telling<string>;
+}
+
 export interface UbState {
   id?: string;
   /** His standing among the earners (0-100): grows as he delivers the take. */
@@ -223,6 +262,8 @@ export interface UbState {
   rateBp: number;
   /** Week the Don ignored the crisis (his people organise a few weeks later). */
   refused?: number;
+  /** What he may decide on his own. */
+  authority?: UbAuthority;
 }
 
 export interface TributeDispute {
@@ -332,6 +373,10 @@ export interface TributeState {
   agHist: { week: number; id: string; text: string }[];
   /** Arrears forgiven, in total. */
   forgiven: number;
+  /** Patronage: every favor done with the family's money or authority (last 120). */
+  favors: Favor[];
+  /** Petitions received, by who received them (the Don, the underboss, a capo). */
+  petitionsTo: Record<string, number>;
   /** Each capo's contract as last seen (to record changes in the agreement history). */
   lastKeep: Record<string, number>;
   terms: Record<string, Terms>;
@@ -362,7 +407,7 @@ export function ensureTribute(s: GameState): TributeState {
       acct: { personal: 0, reserve: 0, envelope: 0, clearing: 0, crew: {} },
       journal: [], books: [], reports: [], policy: { ...DEFAULT_POLICY },
       ub: { base: 0, callsFirst: [], since: s.week, absent: 0, stage: 0, disagreements: 0, rateBp: 1000 },
-      arrears: {}, why: {}, carry: {}, costAvg: 2000, allowances: {}, cool: {}, putIn: [], agHist: [], forgiven: 0, lastKeep: {}, terms: {}, disputes: [], investments: [], beats: [], said: [], greed: [], held: [],
+      arrears: {}, why: {}, carry: {}, costAvg: 2000, allowances: {}, cool: {}, putIn: [], agHist: [], forgiven: 0, favors: [], petitionsTo: {}, lastKeep: {}, terms: {}, disputes: [], investments: [], beats: [], said: [], greed: [], held: [],
       lastCollect: 0, lastAlloc: 0, rivals: {}, shortHist: {},
       stats: { audiences: 0, quiet: 0, shortfalls: 0, disputes: 0, grievances: 0, petitions: 0, granted: 0, audits: 0, caught: 0, covers: 0, crises: 0, insolvencies: 0, disagreements: 0 },
     };
@@ -400,3 +445,20 @@ export function normSplit(x: Partial<Split>): Split {
 
 export const pctOf = (bp: number) => Math.round(bp / 100);
 export const splitText = (x: Split) => `${pctOf(x.personal)}% you · ${pctOf(x.treasury)}% family · ${pctOf(x.reserve)}% reserve`;
+
+/** Record a favor (patronage). Returns it. */
+export function noteFavor(s: GameState, f: Omit<Favor, 'id' | 'week' | 'tell'> & { truth?: string; knownBy?: string[] }): Favor {
+  const t = ensureTribute(s);
+  const fav: Favor = {
+    id: `fv${s.week}_${t.favors.length}_${f.toId}`, week: s.week, byId: f.byId, toId: f.toId, kind: f.kind, amount: Math.round(f.amount), authority: f.authority,
+    tell: { truth: f.truth ?? f.kind, knownBy: Array.from(new Set([f.byId, f.toId, ...(f.knownBy ?? [])])) },
+  };
+  t.favors.push(fav);
+  if (t.favors.length > 120) t.favors = t.favors.slice(-120);
+  return fav;
+}
+
+/** Favors a man has received, by giver (who he owes). */
+export function favorsTo(s: GameState, toId: string): Favor[] {
+  return (s.tribute?.favors ?? []).filter((f) => f.toId === toId);
+}

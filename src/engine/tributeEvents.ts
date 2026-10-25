@@ -315,7 +315,9 @@ function buildBeat(s: GameState, b: Beat): EventInstance | undefined {
       if (!who) return undefined;
       const label = `${who.firstName}'s grievance`;
       return ev(s, 'tr_grievance', `${who.firstName} ${who.lastName} has not forgotten his number`,
-        `You told ${who.firstName} his assessment stood. He was right, and he knows you know. He has started telling the story at the club: the boss shorted him ${$(b.amount ?? 0)} and would not look at the figures. ${opinion(s, who.id, boss.id) < 0 ? 'He is listening when other capos complain.' : ''}`,
+        b.ref
+          ? `You told ${who.firstName} his assessment stood. He was right, and he knows you know. He has started telling the story at the club: the boss shorted him ${$(b.amount ?? 0)} and would not look at the figures. ${opinion(s, who.id, boss.id) < 0 ? 'He is listening when other capos complain.' : ''}`
+          : `${displayName(who)} has held money back from his envelope twice now, and he does not pretend it was a bad week. He thinks his end is too small, ${$(b.amount ?? 0)} too small, and he says so at the club. ${opinion(s, who.id, boss.id) < 0 ? 'Other men are listening.' : ''}`,
         [who.id], [
           { id: 'amends', label: `Make it right (${$(b.amount ?? 0)} and an apology)`, because: `made amends to ${who.firstName}`, effects: [op({ op: 'refund', charId: who.id, amount: b.amount ?? 0, from: 'treasury' }, label), { type: 'opinion', from: who.id, to: boss.id, amount: 12, reason: 'The boss made it right', decay: 1, label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: -20, label }] },
           { id: 'contract', label: 'A better contract instead (+5%)', because: `gave ${who.firstName} a better contract`, effects: [{ type: 'contract', charId: who.id, keep: Math.min(0.5, Math.round(((who.keep ?? 0.3) + 0.05) * 100) / 100), label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: -15, label }] },

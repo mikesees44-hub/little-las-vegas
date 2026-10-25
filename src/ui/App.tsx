@@ -50,6 +50,9 @@ import { SheetFrame } from './shell/SheetFrame';
 import { PolSheet } from './cityhall/CityHall';
 import { ContextMenu } from './sheet/InteractionMenu';
 import type { MenuCategoryId } from './sheet/menuCatalog';
+import { AudienceScene } from './tribute/AudienceScene';
+import { TributeUiContext, type TributeUiApi } from './tribute/context';
+import type { EnvelopeChoice } from '../engine/tributeOps';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -88,6 +91,11 @@ export function App({ startOn = 'title' }: AppProps) {
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
   const [seedInput, setSeedInput] = useState('');
   const [orders, setOrders] = useState<PlayerAction[]>([]);
+  // The weekly take: the split chosen in the office (a ref so an answer in the same click reaches the week), and the office opened for review.
+  const envelopeRef = useRef<EnvelopeChoice | undefined>(undefined);
+  const [envelope, setEnvelopeState] = useState<EnvelopeChoice | undefined>();
+  const setEnvelope = (e: EnvelopeChoice | undefined) => { envelopeRef.current = e; setEnvelopeState(e); };
+  const [office, setOffice] = useState<string | undefined>();
   const ordersApi = useMemo(() => ({
     orders,
     queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
@@ -150,7 +158,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
-    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves };
+    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}) };
     // A ceremony the player sat through replaces the old single card.
     const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
     const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
@@ -181,6 +189,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setAnswers({});
     setMgMoves({});
     setOrders([]);
+    setEnvelope(undefined);
     setPendingLaw(undefined);
     setPendingHeir(undefined);
     setEventIdx(null);
@@ -312,11 +321,19 @@ export function App({ startOn = 'title' }: AppProps) {
   const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports, houseSel, onHouseSel: setHouseSel };
   const housesApi = { openHouse: (id: string) => { setSheet(undefined); setHouseSel(id); openRoute({ panel: 'house', section: 'houses' }); } };
   const shellApi: ShellApi = { go, focus: focusMap };
+  const tributeApi: TributeUiApi = {
+    envelope, setEnvelope,
+    openAudience: (id) => {
+      const pend = s.pendingEvents.findIndex((e) => e.defId === 'tribute_audience' && (!id || e.meta?.report === id));
+      if (pend >= 0) { setAdvancing(false); setEventIdx(pend); return; }
+      setOffice(id ?? s.tribute?.reports[s.tribute.reports.length - 1]?.id);
+    },
+  };
   goRef.current = go;
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const overlayOpen = !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  const overlayOpen = !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
     step: () => run('week', answers, true),
@@ -373,6 +390,7 @@ export function App({ startOn = 'title' }: AppProps) {
 
   return (
     <HousesNavContext.Provider value={housesApi}>
+    <TributeUiContext.Provider value={tributeApi}>
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
       <Shell
         top={(
@@ -434,7 +452,15 @@ export function App({ startOn = 'title' }: AppProps) {
           onDone={(moves) => { const c = scene.choiceId; setScene(null); commit(c, moves); }}
         />
       )}
-      {current && !scene && (
+      {current && !scene && current.defId === 'tribute_audience' && s.tribute?.reports.find((r) => r.id === current.meta?.report) && (
+        <AudienceScene s={s} rep={s.tribute.reports.find((r) => r.id === current.meta?.report)!} ev={current}
+          onDecide={(cid, env) => { setEnvelope(env); choose(cid); }} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
+      )}
+      {office && !current && s.tribute?.reports.find((r) => r.id === office) && (
+        <AudienceScene s={s} rep={s.tribute.reports.find((r) => r.id === office)!} onClose={() => setOffice(undefined)}
+          onPolicy={(split, auto) => { ordersApi.queue({ kind: 'tribute', op: { op: 'policy', split, ...(auto !== undefined ? { auto } : {}) } }); setOffice(undefined); }} />
+      )}
+      {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
@@ -463,6 +489,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
     </Providers>
+    </TributeUiContext.Provider>
     </HousesNavContext.Provider>
   );
 }

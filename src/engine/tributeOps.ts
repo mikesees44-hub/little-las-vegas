@@ -6,7 +6,7 @@ import type { Ctx } from './ledger';
 import { addOpinion, changeMeter } from './relations';
 import { rand } from './rng';
 import { xfer } from './tribute';
-import { ensureTribute, normSplit, REASON_LABEL, splitText, type ShortReason, type Split } from './tributeState';
+import { ensureTribute, normSplit, noteFavor, REASON_LABEL, splitText, type ShortReason, type Split } from './tributeState';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -229,6 +229,7 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
       break;
     }
     case 'terms':
+      if (o.kind !== 'standard') noteFavor(s, { byId: s.playerId, toId: o.charId, kind: o.kind === 'extension' ? 'extension' : 'contract', amount: o.amount ?? 0, authority: 'don', truth: describeTributeOp(s, o) ?? o.kind });
       if (o.kind === 'standard') delete t.terms[o.charId];
       else t.terms[o.charId] = { kind: o.kind, amount: o.amount, until: s.week + o.weeks, why: label };
       t.agHist = [...t.agHist, { week: s.week, id: `agr:member:${o.charId}`, text: describeTributeOp(s, o) ?? '' }].slice(-40);
@@ -236,6 +237,7 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
     case 'forgive': {
       const owed = t.arrears[o.charId] ?? 0;
       if (owed > 0) {
+        noteFavor(s, { byId: s.playerId, toId: o.charId, kind: 'forgive', amount: owed, authority: 'don', truth: 'forgave what he owed' });
         delete t.arrears[o.charId];
         delete t.why[o.charId];
         t.forgiven += owed;
@@ -261,6 +263,7 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
       const c = s.characters[o.charId];
       if (!c) break;
       const from = (o.from ?? 'treasury') as Pocket;
+      noteFavor(s, { byId: s.playerId, toId: c.id, kind: o.op === 'refund' ? 'refund' : 'assistance', amount: o.amount, authority: 'don', truth: o.op === 'pay' ? o.why : 'money back' });
       xfer(ctx, from, `wealth:${c.id}`, Math.min(o.amount, Math.max(0, pocketBalance(s, from))), 'assistance', k, { label: `${label}: ${$(o.amount)} to ${c.firstName}`, category: 'event', who: c.id, note: o.op === 'pay' ? o.why : 'refund' });
       break;
     }

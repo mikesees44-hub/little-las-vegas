@@ -297,10 +297,10 @@ const REC: Line[] = [
 ];
 
 const DISAGREE: Line[] = [
-  { id: 'd_l1', when: (c) => c.type === 'loyal', say: (c) => `I know you like ${pct(c.s.tribute!.policy.personal)} for yourself. This week I'd take less.` },
-  { id: 'd_l2', when: (c) => c.type === 'loyal', say: () => 'I\'m going to say it once: your usual split doesn\'t fit this week.' },
-  { id: 'd_a1', when: (c) => c.type === 'ambitious', say: (c) => `You're too hard on yourself, taking ${pct(c.s.tribute!.policy.personal)}.` },
-  { id: 'd_a2', when: (c) => c.type === 'ambitious', say: () => 'You keep giving it all back to the family. People think you\'re saving up to leave.' },
+  { id: 'd_l1', when: (c) => c.type === 'loyal' && c.rep.rec.personal < c.s.tribute!.policy.personal, say: (c) => `I know you like ${pct(c.s.tribute!.policy.personal)} for yourself. This week I'd take less.` },
+  { id: 'd_l2', when: (c) => c.type === 'loyal' && c.rep.rec.personal < c.s.tribute!.policy.personal, say: () => 'I\'m going to say it once: your usual split doesn\'t fit this week.' },
+  { id: 'd_a1', when: (c) => c.type === 'ambitious' && c.rep.rec.personal > c.s.tribute!.policy.personal, say: (c) => `You're too hard on yourself, taking ${pct(c.s.tribute!.policy.personal)}.` },
+  { id: 'd_a2', when: (c) => c.type === 'ambitious' && c.rep.rec.personal > c.s.tribute!.policy.personal, say: () => 'You keep giving it all back to the family. People think you\'re saving up to leave.' },
 ];
 
 const CLOSE: Line[] = [

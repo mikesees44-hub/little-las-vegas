@@ -3,11 +3,11 @@ import { capos, crew, hasTrait, isFree, player } from './characters';
 import { holder } from './council';
 import { director } from './storyDirector';
 import { heat, type Ctx } from './ledger';
-import { addOpinion, opinion } from './relations';
+import { addOpinion, changeMeter, opinion } from './relations';
 import { rand } from './rng';
 import { allocate, latestReport, pendingReport, prepareReport, ubType, xfer } from './tribute';
 import { AUDIENCE_ID } from './tributeEvents';
-import { ensureTribute, normSplit, splitText, type TributeReport } from './tributeState';
+import { ensureTribute, noteFavor, normSplit, splitText, type TributeReport } from './tributeState';
 import type { EventInstance, Faction, PlayerChoices } from './types';
 
 /**
@@ -101,6 +101,13 @@ export function tributeWeek(ctx: Ctx): void {
     // A man short 3 times in 8 weeks becomes his capo's problem, and the Don's.
     for (const cl of rep.crews) for (const m of cl.members) {
       if (!m.truth || m.id === cl.capoId) continue;
+      // Holding back over his end, twice: a grievance with a life of its own.
+      if (m.truth === 'grievance' && (t.shortHist[m.id] ?? []).filter((w) => s.week - w < 12).length >= 2) {
+        const c = s.characters[m.id];
+        changeMeter(s, m.id, s.playerId, 'grievance', 8);
+        t.stats.grievances++;
+        t.beats.push({ kind: 'grievance', week: s.week, who: c.id, amount: t.arrears[m.id] ?? m.due - m.paid, pri: 57 });
+      }
       if ((t.shortHist[m.id] ?? []).filter((w) => s.week - w < 8).length >= 3) t.beats.push({ kind: 'short', week: s.week, who: cl.capoId, forId: m.id, amount: t.arrears[m.id] ?? 0, pri: 54 });
     }
     prepareReport(ctx);
@@ -141,6 +148,24 @@ export function tributeWeek(ctx: Ctx): void {
       break;
     }
   }
+  // The underboss's routine authority: he gives a man with arrears a few weeks on his own say-so.
+  // A loyal man tells the Don; an ambitious one keeps it to himself (a favor the earners remember).
+  const ubh = holder(s, 'underboss');
+  if (ubh && rep && rep.week === s.week) {
+    t.ub.authority ??= 'routine';
+    const type = rep.ubType;
+    const owing = Object.keys(t.arrears).filter((id) => s.characters[id]?.alive && s.characters[id].capoId && !t.terms[id]);
+    if (owing.length && (type === 'loyal' || type === 'ambitious') && rand(t) < (type === 'ambitious' ? 0.2 : 0.08)) {
+      const id = owing[Math.floor(rand(t) * owing.length)];
+      const m = s.characters[id];
+      t.terms[id] = { kind: 'extension', until: s.week + 4, why: `${ubh.firstName} gave him four weeks` };
+      noteFavor(s, { byId: ubh.id, toId: m.capoId!, kind: 'extension', amount: t.arrears[id], authority: 'delegated', truth: `gave ${m.firstName} four more weeks on ${t.arrears[id]} owed`, knownBy: type === 'loyal' ? [s.playerId, id] : [id] });
+      addOpinion(s, m.capoId!, ubh.id, 'Gave my man time', 3, 1);
+      addOpinion(s, id, ubh.id, 'Gave me time', 5, 1);
+      t.petitionsTo[ubh.id] = (t.petitionsTo[ubh.id] ?? 0) + 1;
+      if (type === 'loyal') rep.issues.push({ kind: 'short', who: m.capoId, amount: t.arrears[id], severity: 1, text: `${ubh.firstName} gave ${m.firstName} ${m.lastName} four more weeks on what he owes. He's telling you so you know.` });
+    }
+  }
   // An underboss who cannot work.
   const ub = holder(s, 'underboss');
   if (ub && ub.health < 30) t.beats.push({ kind: 'ub_ill', week: s.week, who: ub.id, pri: 60 });
@@ -162,6 +187,8 @@ function underbossStanding(ctx: Ctx): void {
   const heldNow = t.held[t.held.length - 1] === s.week;
   if (!heldNow) t.ub.absent++;
   let gain = 0.2 + (type === 'ambitious' ? 0.45 : 0) + (t.ub.absent >= 8 ? 0.25 : 0) + t.ub.callsFirst.length * 0.04 - (heldNow ? 0.35 : 0) - (type === 'loyal' ? 0.15 : 0);
+  // Patronage: every favor he did the earners lately (his own say-so) adds to his standing.
+  gain += t.favors.filter((f) => f.byId === ub.id && s.week - f.week < 8).length * 0.08;
   if (hasTrait(ub, 'Loyal-to-a-fault')) gain = Math.min(gain, 0.05);
   t.ub.base = Math.max(0, Math.min(100, t.ub.base + gain));
   const ks = capos(s).filter((k) => isFree(s, k));

@@ -8,11 +8,11 @@ import { honesty, noteKick } from './ledgerbook';
 import { perkMod } from './lifestyle';
 import { attr } from './attrs';
 import { money, type Ctx } from './ledger';
-import { opinion } from './relations';
+import { addOpinion, opinion } from './relations';
 import { gauss, rand, type RngHolder } from './rng';
 import { tributeTalk } from './tributeTalk';
 import {
-  balances, ensureTribute, normSplit, sumSplit,
+  balances, ensureTribute, normSplit, noteFavor, sumSplit,
   type AcctId, type MemberLine, type Petition, type ShortReason, type SourceLine, type Split,
   type Transfer, type TransferCat, type TributeReport, type TributeState, type UbType,
 } from './tributeState';
@@ -325,6 +325,11 @@ function contribute(ctx: Ctx, t: TributeState, rep: TributeReport, m: Character,
       line.truth = truth;
       line.said = sayReason(s, m, truth, h);
       line.believed = believeReason(s, ub, rep.ubType, m, truth, line.said, h);
+      // An ambitious underboss covers for the earners who call him first: a favor the Don never hears of.
+      if (ub && rep.ubType === 'ambitious' && m.capoId && t.ub.callsFirst.includes(m.capoId) && line.believed !== truth) {
+        noteFavor(s, { byId: ub.id, toId: m.capoId, kind: 'protect', amount: short, authority: 'unauthorized', truth: `covered ${m.firstName}'s shortfall (${truth}) in his report` });
+        addOpinion(s, m.capoId, ub.id, 'Covered for my crew', 2, 1);
+      }
       (t.shortHist[m.id] ??= []).push(s.week);
       if (t.shortHist[m.id].length > 8) t.shortHist[m.id].shift();
       // A real bad week or a stiffed customer: the money was never there. Otherwise he has it, or had it.
@@ -482,6 +487,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
         paidIn += got;
         const carry = t.carry;
         carry[`${capo.id}>${m.id}`] = (carry[`${capo.id}>${m.id}`] ?? 0) + got;
+        noteFavor(s, { byId: capo.id, toId: m.id, kind: 'carry', amount: got, authority: 'delegated', truth: `covered ${m.firstName}'s dues out of his own pocket`, knownBy: rep.ubId && rep.ubType !== 'overwhelmed' ? [rep.ubId] : [] });
         if (carry[`${capo.id}>${m.id}`] >= 300) t.beats.push({ kind: 'carry', week: s.week, who: capo.id, forId: m.id, amount: carry[`${capo.id}>${m.id}`], pri: 50 });
       }
     }
@@ -693,6 +699,11 @@ export function recommendSplit(s: GameState, rep: TributeReport): { split: Split
     why.push('The family\'s operating money is comfortable.');
   }
   let personal = 10000 - reserve - treasury;
+  // A loyal man never tells the boss to take more than a fifth; the rest stays working for the family.
+  if (rep.ubType === 'loyal' && personal > 2000) {
+    treasury += personal - 2000;
+    personal = 2000;
+  }
   if (rep.ubType === 'ambitious') {
     const more = Math.min(1000, treasury - 4000);
     personal += more;
@@ -775,6 +786,7 @@ function grantPetition(ctx: Ctx, t: TributeState, rep: TributeReport, p: Petitio
   const k = `grant:${rep.id}:${p.id}`;
   const src = p.from === 'reserve' ? 'reserve' : 'envelope';
   t.stats.granted++;
+  noteFavor(s, { byId: s.playerId, toId: (target ?? by).id, kind: p.kind === 'extension' ? 'extension' : p.kind === 'advance' ? 'advance' : 'assistance', amount: p.amount, authority: 'don', truth: p.text, knownBy: [by.id, ...(rep.ubId ? [rep.ubId] : [])] });
   switch (p.kind) {
     case 'families': {
       const got = xfer(ctx, src, 'ext:families', p.amount, 'assistance', k, { note: `For the families of the men inside (${by.firstName} asked)` });
@@ -869,6 +881,7 @@ export function prepareReport(ctx: Ctx): void {
     if (p) {
       rep.petitions.push(p);
       t.stats.petitions++;
+      t.petitionsTo[s.playerId] = (t.petitionsTo[s.playerId] ?? 0) + 1;
     }
   }
   const r = recommendSplit(s, rep);

@@ -92,6 +92,13 @@ export function inMotion(s: GameState, ui: { orders: number } = { orders: 0 }): 
       out.push({ key: 'elections', glyph: '🗳', text: `${soon.length > 1 ? `${soon.length} elections, first: ` : ''}${nm} · ${mo === 0 ? 'this month' : `in ${mo} mo`}`, eta: mo * 4, noEta: true, tone: 'neutral', route: { panel: 'town', section: 'cityhall' } });
     }
   });
+  // The weekly take: the envelope on the desk, or how the last one was split.
+  const tr = s.tribute?.reports[s.tribute.reports.length - 1];
+  if (tr) {
+    const ub = tr.ubId ? s.characters[tr.ubId] : undefined;
+    if (tr.status === 'presented') out.push({ key: 'take', glyph: '$', text: `The envelope: $${tr.presented.toLocaleString('en-US')} on your desk`, eta: 0, tone: 'warn', route: { panel: 'borgata', section: 'take' } });
+    else if (tr.alloc) out.push({ key: 'take', glyph: '$', text: `${ub?.firstName ?? 'The count'}'s envelope $${tr.presented.toLocaleString('en-US')}: you $${tr.alloc.personal.toLocaleString('en-US')} · family $${tr.alloc.treasury.toLocaleString('en-US')} · reserve $${tr.alloc.reserve.toLocaleString('en-US')}`, eta: 0, noEta: true, tone: 'good', route: { panel: 'borgata', section: 'take' } });
+  }
   const act = s.dyn?.activity;
   if (act) out.push({ key: 'act', glyph: '🎉', text: `Hosting: ${act.kind.replace(/_/g, ' ')}`, eta: act.endWeek - s.week, tone: 'good', route: { panel: 'house', section: 'activities' } });
   if (ui.orders) out.push({ key: 'orders', glyph: '☰', text: `${ui.orders} order${ui.orders > 1 ? 's' : ''} for this week`, eta: 0, tone: 'neutral', orders: true });
