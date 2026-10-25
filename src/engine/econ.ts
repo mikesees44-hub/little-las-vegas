@@ -28,6 +28,7 @@ import {
 import {
   bidOdds, businessForLot, canSlow, constructionWeek, contractsWeek, ensureInspector, fixCost, inspectorBribe, permitAuthority, scheduleWeeks, startBuild, stopWorkEvent, townMonth,
 } from './construction';
+import { applyRacketOp, commitRacket, describeRacketOp, previewRacket, racketLifeWeek } from './racketLife';
 import { applyTreeHeat, collectCost, collectPreview, commitCollect, nextStep, racketMult, racketMut, racketOf, racketWeek } from './rackets';
 import { addOpinion, changeMeter, setModifier } from './relations';
 import { chance, pick, randInt } from './rng';
@@ -135,6 +136,7 @@ export function econWeek(ctx: Ctx): void {
   capoBooksWeek(s);
   goodLifeWeek(ctx);
   empireWeek(ctx);
+  racketLifeWeek(ctx);
   for (const b of s.businesses) if (b.owner === 'player' && isClub(b)) ensureStaff(s, b);
 }
 
@@ -516,6 +518,7 @@ export function placeName(s: GameState, key: string): string {
 export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
   const s = ctx.s;
   const e = ensureEcon(s);
+  if (op.op === 'racket') { applyRacketOp(ctx, op, label); return; }
   switch (op.op) {
     case 'note':
       break;
@@ -698,6 +701,7 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
 export function describeEconOp(s: GameState, op: EconOp): string | undefined {
   switch (op.op) {
     case 'note': return op.text;
+    case 'racket': return describeRacketOp(s, op);
     case 'skimFound': return 'He stays, on a short leash';
     case 'fireManager': return `Fire ${s.econ?.managers[op.key]?.name ?? 'the manager'}`;
     case 'trustManager': return 'He keeps his job; the skim is forgiven';
@@ -761,6 +765,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'racket': return previewRacket(s, a.cmd);
     case 'empire': return previewEmpire(s, a.cmd);
     case 'luxBuy': case 'luxSell': return previewLux(s, a);
     case 'rename': {
@@ -1073,6 +1078,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       break;
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
+    case 'racket': commitRacket(ctx, a.cmd); break;
     case 'empire': commitEmpire(ctx, a.cmd); break;
     case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
     case 'rename': {

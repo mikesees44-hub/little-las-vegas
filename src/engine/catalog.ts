@@ -59,7 +59,8 @@ export const CATALOG: Record<BusinessKind, BusinessDef> = {
   bookmaking: { kind: 'bookmaking', name: 'Bookmaking wire room', category: 'racket', blurb: 'Phones, a race wire and a chalkboard. Football in the fall.', cost: 4500, base: 190, season: [1.8, 0.7], upkeep: 15, heat: 0.35, fedHeat: 0.05, staff: 1, launder: 0 },
   loansharking: { kind: 'loansharking', name: 'Shylock book', category: 'racket', blurb: 'Five points a week. Lets you put money on the street.', cost: 3000, base: 40, season: [1, 1], upkeep: 10, heat: 0.2, fedHeat: 0, staff: 1, launder: 0 },
   cardgame: { kind: 'cardgame', name: 'Card game', category: 'racket', blurb: 'A floating high-stakes game. The house always takes a cut.', cost: 2500, base: 140, season: [2.2, 0.55], upkeep: 15, heat: 0.25, fedHeat: 0, staff: 1, launder: 0 },
-  vice: { kind: 'vice', name: 'Call service', category: 'racket', blurb: 'A telephone, a discreet address, and men who would rather not be named. The vice squad is always curious.', cost: 6000, base: 250, season: [2.4, 0.6], upkeep: 45, heat: 0.6, fedHeat: 0.05, staff: 1, launder: 0 },
+  /** Retired: the family never runs women. Old saves' call services become the Madam's arrangement (racketLife.ts migrateVice); the entry stays so old saves load. */
+  vice: { kind: 'vice', name: 'The Madam\'s arrangement', category: 'racket', blurb: 'Protection for the Madam\'s independent network, for a cut. She runs it; the family runs nobody.', cost: 6000, base: 250, season: [2.4, 0.6], upkeep: 45, heat: 0.6, fedHeat: 0.05, staff: 1, launder: 0, hidden: true, max: 0 },
   stag: { kind: 'stag', name: 'Stag-film distribution', category: 'racket', blurb: 'Reels in plain cans for private clubs up and down the coast. Interstate — the feds care.', cost: 5000, base: 170, season: [1.2, 1.0], upkeep: 20, heat: 0.15, fedHeat: 0.25, staff: 1, launder: 0 },
   blackmail: { kind: 'blackmail', name: 'Blackmail ring', category: 'racket', blurb: 'Photographs, hotel registers, a patient man with a camera. Turns officials into favors.', cost: 7000, base: 110, season: [1.6, 1.0], upkeep: 30, heat: 0.1, fedHeat: 0.1, staff: 1, launder: 0 },
   jewel: { kind: 'jewel', name: 'Jewel-thief crew', category: 'racket', blurb: 'Second-story men who work the summer cottages. Big, irregular scores — better with a fence.', cost: 5000, base: 0, season: [1.6, 0.6], upkeep: 30, heat: 0.2, fedHeat: 0.1, staff: 2, launder: 0 },
@@ -127,7 +128,7 @@ export const BIZ_NAMES: Record<BusinessKind, string[]> = {
   bookmaking: ['Wire room over the barbershop', 'Racing book at the newsstand', 'Telephone book on Rio Grande', 'Football book at the tap room'],
   loansharking: ['Shylock book', 'Payday street loans', 'The Friday book'],
   cardgame: ['Floating card game', 'High-stakes game above the Starlight', 'Tuesday game at the social club'],
-  vice: ['Call service on Spencer Ave', 'The after-hours house', 'The telephone exchange'],
+  vice: ['The Madam\'s arrangement'],
   stag: ['Plain-can film route', 'Smoker-reel distribution', 'Private-club film route'],
   blackmail: ['The camera man\'s ring', 'Hotel-register ring', 'The photograph business'],
   jewel: ['Second-story crew', 'Cottage-season jewel crew', 'The cat burglars'],

@@ -52,6 +52,7 @@ import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
 import { earsWeek } from './ears';
+import { racketEventSource } from './racketLife';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -60,6 +61,7 @@ registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
 registerEventSource(bonesEventSource);
 registerEventSource(kinEventSource);
+registerEventSource(racketEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:

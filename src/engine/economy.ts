@@ -9,6 +9,7 @@ import { crewHustle, specialistFees } from './crewlife';
 import { crew, displayName, hasTrait, isFree, player, shortName } from './characters';
 import { scheduleConsequence } from './effects';
 import { runLoans } from './loans';
+import { favorShare, paceOf } from './racketLife';
 import { outpostIncome } from './schemes';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
@@ -312,14 +313,14 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
     let label = `Business: ${b.name}`;
     // Crews that work by the score.
     if (b.kind === 'jewel') {
-      const p = (isInSeason(s.date) ? 0.3 : 0.12) * staffFactor(s, b);
+      const p = (isInSeason(s.date) ? 0.3 : 0.12) * staffFactor(s, b) * paceOf(s, b);
       if (chance(s, p)) {
         amt = randInt(s, 20, 60) * 100 * (hasFence ? 1 : 0.55);
         label = `Score: ${b.name} lifted a jewel case from a summer cottage${hasFence ? '' : ' (no fence — sold cheap)'}`;
         heat(ctx, 'local', 2, `Burglary reports: ${b.name}`, 'heat');
       } else amt = 0;
     } else if (b.kind === 'bankcrew') {
-      if (chance(s, 0.07 * staffFactor(s, b))) {
+      if (chance(s, 0.07 * staffFactor(s, b) * paceOf(s, b))) {
         amt = randInt(s, 60, 150) * 100;
         label = `Score: ${b.name} hit an out-of-town bank`;
         heat(ctx, 'federal', 6, `FBI bank-robbery task force: ${b.name}`, 'heat');
@@ -346,7 +347,7 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
     // Side-risks of particular rackets.
     if (b.kind === 'vice' && chance(s, 0.025)) scheduleConsequence(s, 'vice_scandal', 1, 3, `ran ${b.name}`, { biz: b.name });
     if (b.kind === 'stag' && chance(s, 0.02)) scheduleConsequence(s, 'postal_inspectors', 1, 4, `ran ${b.name}`, { biz: b.name });
-    if (b.kind === 'blackmail' && chance(s, 0.07 * staffFactor(s, b) * (1 + perkMod(s, 'favor') / 100))) {
+    if (b.kind === 'blackmail' && chance(s, 0.07 * staffFactor(s, b) * favorShare(s, b) * (1 + perkMod(s, 'favor') / 100))) {
       s.favors += 1;
       ctx.log.push(`${b.name} turned a councilman's hotel register into a favor you can call in.`);
     }

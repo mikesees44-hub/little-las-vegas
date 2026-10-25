@@ -14,6 +14,7 @@ import { hashSeed } from '../src/engine/rng';
 import { LIFESTYLE_IDS } from '../src/engine/lifestyle';
 import { isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { advanceWeek, forceDeath } from '../src/engine/engine';
+import { racketActions } from '../src/engine/racketLife';
 import { reconcile } from '../src/engine/ledger';
 import { opinion } from '../src/engine/relations';
 import { affordable, affordableChoices, choiceCost, isCareless, isCutback, newBudget, orderCost, spare, spend, trackBudget, type Budget } from './simBudget';
@@ -71,6 +72,8 @@ const ECON_RATE = Number(arg('econ', '0.12'));
 const BONES_RATE = Number(arg('bones', '0.1'));
 /** Chance per week of an Ears order (ask an Ear about a man, take care of one, the Madam's diplomacy, go after an operator). */
 const EARS_RATE = Number(arg('ears', '0.06'));
+/** Chance per week of a racket order (set how a racket runs, take the advice on one, start the next racket). */
+const RACKET_RATE = Number(arg('rackets', '0.08'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
 /** Chance per week of a trip (a vacation, a business trip, or a move while on the lam). */
 const TRAVEL_RATE = Number(arg('travel', '0.04'));
@@ -176,6 +179,7 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
   }
   if (rand(h) < BONES_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'bones' || a.kind === 'ledger')));
   if (rand(h) < EARS_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'ears')));
+  if (rand(h) < RACKET_RATE) add(pickOne(h, racketActions(s).filter((a) => !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
   if (rand(h) < TRAVEL_RATE) {
     const t = randomTravelAction(s, h);
     if (t && (!budget || affordable(s, budget, t))) add(t);

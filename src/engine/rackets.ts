@@ -3,6 +3,7 @@ import { ensureEcon, type RacketState } from './econState';
 import { heat, type Ctx } from './ledger';
 import { chance, gauss, randInt } from './rng';
 import type { Business, BusinessKind, GameState } from './types';
+import { dialHeat, dialIncome, dialK, dialRaid } from './racketLife';
 
 /**
  * Deeper rackets. Each racket keeps its own book on the business's econ
@@ -217,7 +218,7 @@ export function tierMult(s: GameState, b: Business): number {
 /** Racket-specific multiplier on the expected take: runners, placements, competition, contacts. Pure. */
 export function racketMult(s: GameState, b: Business): number {
   const r = racketOf(s, b);
-  let m = tierMult(s, b);
+  let m = tierMult(s, b) * dialIncome(s, b);
   if (b.kind === 'numbers') {
     const runners = r.runners ?? 6;
     m *= Math.min(1.4, Math.max(0.5, Math.sqrt(runners / 6)));
@@ -245,7 +246,7 @@ export function treeHeatMult(steps: TreeStep[]): number {
 
 /** Rebuilds a business's heat after an upgrade. */
 export function applyTreeHeat(s: GameState, b: Business): void {
-  b.heat = Math.round(CATALOG[b.kind].heat * treeHeatMult(stepsOf(s, b)) * 1000) / 1000;
+  b.heat = Math.round(CATALOG[b.kind].heat * treeHeatMult(stepsOf(s, b)) * dialHeat(s, b) * 1000) / 1000;
 }
 
 const HOT_NUMBERS = ['7-1-1', '3-6-9', '1-2-3', '4-0-4', '7-7-7', '2-1-6', '9-1-1', '5-0-5'];
@@ -262,13 +263,13 @@ export function racketWeek(ctx: Ctx, b: Business, amt: number, label: string): {
   if (!kinds.includes(b.kind)) return { amt, label };
   const r = racketMut(s, b);
   const steps = stepsOf(s, b);
-  const raidMult = steps.reduce((a, st) => a * (st.raid ?? 1), 1);
+  const raidMult = steps.reduce((a, st) => a * (st.raid ?? 1), 1) * dialRaid(s, b);
   if (b.kind === 'bookmaking') {
     // The expected take is a 10% hold on the handle. Some weeks the favorites win.
     const handle = Math.round(amt / 0.1);
-    const sd = steps.some((st) => st.steady) ? 0.035 : 0.07;
+    const sd = steps.some((st) => st.steady) || dialK(s, b, 'steady', 0) ? 0.035 : 0.07;
     const hold = Math.max(-0.06, 0.1 + gauss(e) * sd);
-    const onCredit = Math.round(handle * 0.015);
+    const onCredit = Math.round(handle * 0.015 * dialK(s, b, 'markers'));
     const paidIn = Math.round((r.markers ?? 0) * 0.15);
     r.handle = handle;
     r.lastHold = Math.round(hold * 1000) / 10;
@@ -288,7 +289,7 @@ export function racketWeek(ctx: Ctx, b: Business, amt: number, label: string): {
   }
   if (b.kind === 'numbers') {
     // A tenth of the take tops up the bank's reserve until it holds $1,500 (more with a counting room).
-    const target = 1500 * (1 + 0.5 * steps.length);
+    const target = 1500 * (1 + 0.5 * steps.length) * dialK(s, b, 'reserve');
     const reserve = Math.min(Math.max(0, target - (r.bank ?? 0)), Math.round(amt * 0.1));
     r.bank = (r.bank ?? 0) + reserve;
     let net = Math.round(amt * 1.12) - reserve;
