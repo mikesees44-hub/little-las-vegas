@@ -366,7 +366,7 @@ function playOne(gi: number): GameResult {
     r.houses = {
       houses: hs.length, extinct: hs.filter((x) => x.h.extinct !== undefined).length, living: hs.reduce((a, x) => a + x.living, 0), dead: hs.reduce((a, x) => a + x.dead, 0),
       feuds: s!.lineage.grudges.filter((g) => g.y >= 1960).length,
-      hooks: Object.entries(r.popupKeys).filter(([k]) => k.startsWith('kin_')).reduce((a, [, v]) => a + v, 0),
+      hooks: Object.entries(r.titles).filter(([k]) => k.startsWith('kin_')).reduce((a, [, v]) => a + v, 0),
       births: Object.values(s!.lineage.people).filter((p) => p.by > 1960).length,
       titles: s!.lineage.events.filter((e) => e.k === 'title' && e.y >= 1960).length,
     };

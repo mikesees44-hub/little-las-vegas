@@ -764,7 +764,7 @@ export function buildNarcoticsReckoning(s: GameState, bizId: string): EventInsta
         effects: [
           { type: 'rivalOpinion', rival: 'philly', amount: -30, reason: 'Defied the old man on narcotics' },
           { type: 'heat', bar: 'family', amount: 12, label: 'Defied Philadelphia' },
-          { type: 'schedule', key: 'philly_message', minWeeks: 2, maxWeeks: 5, chance: 0.85, hint: 'Philadelphia will send a message', label: 'Defied Philadelphia' },
+          { type: 'schedule', key: 'philly_message', minWeeks: 2, maxWeeks: 5, chance: 1, hint: 'Philadelphia will send a message', label: 'Defied Philadelphia' },
         ],
       },
     ],

@@ -5,8 +5,9 @@ import {
   addKidRef, addSpouseRef, birthYear, fatherOf, houseOfBirth, isAlive, kidsOf, kinWord, linMut, motherOf, PLAYER_HOUSE, spousesOf, updHouse, updLink,
   clean, ownsLineage, updPerson, tidyLineage, type LineageState, type LPerson,
 } from './houses';
-import { rememberGrudges } from './housesDeath';
+import { rememberGrudges, setHeadDeathHook } from './housesDeath';
 import { castKin } from './housesKin';
+import { orientationFor } from './storyState';
 import { housesTitles } from './housesTitles';
 import { OUTSIDE_SURNAMES, STOCK_NAMES, type Stock } from './housesData';
 import { crewSeed, generateHouses, initLineage, syncHousehold, wantsCrewHouse, type HouseSeed } from './housesHistory';
@@ -135,7 +136,8 @@ export function promote(s: GameState, L: LineageState, id: string): Character | 
   const age = Math.max(0, ageNow(s, p));
   const made = makeDynCharacter(s, { firstName: p.first, lastName: p.last, gender: p.g, ethnicity: p.eth, age, rank: 'civilian', faction: 'none', nickname: false, wealth: 0 });
   delete s.characters[made.id];
-  const c: Character = { ...made, id, birth: { y: p.by, m: p.bm, d: 1 + (hashSeed(id) % 28) } };
+  // Orientation is fixed at birth from the seed and the person's own id.
+  const c: Character = { ...made, id, birth: { y: p.by, m: p.bm, d: 1 + (hashSeed(id) % 28) }, orientation: orientationFor(s.seed, id) };
   if (p.maiden) c.maidenName = p.maiden;
   if (p.nick) c.nickname = p.nick;
   s.characters[id] = c;
@@ -576,6 +578,8 @@ function successions(s: GameState, getCensus: () => Census): void {
     L.events.push(clean({ y: s.date.y, m: s.date.m, h: id, k: 'succession', t: `${nm(s, heir)} became head of ${h.title}${rel && h.headId ? ` after the death of ${genderOf(s, heir) === 'F' ? 'her' : 'his'} ${rel} ${nm(s, h.headId)}` : ''}.`, p: heir }));
   }
 }
+
+setHeadDeathHook((s) => successions(s, () => census(s, s.lineage!)));
 
 /** Engine hook: the monthly tick for every house. */
 export function housesMonth(ctx: Ctx): void {

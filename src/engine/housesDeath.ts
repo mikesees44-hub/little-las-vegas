@@ -22,8 +22,22 @@ export function houseOfFaction(L: LineageState, f: FactionId | undefined): strin
   return undefined;
 }
 
+/** Set by housesLife: a house whose head died names the next head at once, not at the month's end. */
+let onHeadDeath: ((s: GameState) => void) | undefined;
+export function setHeadDeathHook(fn: (s: GameState) => void): void {
+  onHeadDeath = fn;
+}
+
 /** Record a death in the lineage (both kinds of people). */
 export function lineageDeath(ctx: Ctx, id: string, cause: string, killer?: FactionId): void {
+  const s = ctx.s;
+  if (!s.lineage) return;
+  recordDeath(ctx, id, cause, killer);
+  const L = s.lineage;
+  if (onHeadDeath && L.order.some((h) => L.houses[h].headId === id && !L.houses[h].player && L.houses[h].extinct === undefined)) onHeadDeath(s);
+}
+
+function recordDeath(ctx: Ctx, id: string, cause: string, killer?: FactionId): void {
   const s = ctx.s;
   if (!s.lineage) return;
   const c = s.characters[id];
