@@ -68,6 +68,9 @@ const MG_PLAY_RATE = Number(arg('mgplay', '0.3'));
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Chance per week of a neighborhood order (restyle a place you own). */
 const HOOD_RATE = Number(arg('hood', '0.03'));
+/** Chance per week of a talk (meeting, job, partnership, truce ...) and of a Mission Board decision. */
+const TALK_RATE = Number(arg('talks', '0.06'));
+const MISSION_RATE = Number(arg('missions', '0.25'));
 /** Chance per week of a bones or books order (put a prospect on a job, a favor, check a report, confront a skim, change the books). */
 const BONES_RATE = Number(arg('bones', '0.1'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
@@ -164,6 +167,8 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
     })));
   }
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
+  if (rand(h) < TALK_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'talk' && !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
+  if (rand(h) < MISSION_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'mission' && !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
   if (rand(h) < HOOD_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'hood' && !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
   if (rand(h) < ADVICE_RATE) {
     // Take the advice: the top item's order, or the recommended man for its pick.
@@ -384,7 +389,7 @@ function playOne(gi: number): GameResult {
   if (s!.romance) r.romance = { ...s!.romance.stats };
   if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
   if (s!.bones || s!.ledgerBook) r.bones = { ...(s!.bones?.stats ?? {}), ...Object.fromEntries(Object.entries(s!.ledgerBook?.stats ?? {}).map(([k, v]) => [`books_${k}`, v])) };
-  if (s!.hood) r.hood = { ...s!.hood.counts, log: s!.hood.log.length };
+  if (s!.hood) r.hood = { ...s!.hood.counts, log: s!.hood.log.length, ...Object.fromEntries(Object.entries(s!.talks?.stats ?? {}).map(([k, v]) => [`talk_${k}`, v])), missionsEnded: s!.missions?.stats.ended ?? 0, missionDecisions: s!.missions?.stats.decisions ?? 0 };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }

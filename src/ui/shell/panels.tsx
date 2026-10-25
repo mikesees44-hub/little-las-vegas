@@ -35,6 +35,7 @@ import { Feed } from './Feed';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
 import { HoodDashboard } from '../hood/HoodDashboard';
+import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
 import type { PanelId, Route } from './routes';
 
 /**
@@ -136,6 +137,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'Everything your people are doing out there: schemes, hits, heists, envoys, trips.',
     sections: [
       { id: 'progress', label: 'In progress', render: (s) => <SchemesPanel s={s} /> },
+      { id: 'missions', label: 'Mission Board', blurb: 'The big cases, stage by stage: who is involved, what is disputed, who knows what, and your move. Talks waiting on an answer are here too.', render: (s) => <MissionBoard s={s} /> },
       { id: 'plan', label: 'Plan new…', render: (s) => <PlanNew s={s} /> },
       { id: 'travel', label: 'Travel & Envoys', render: (s) => stack(<EnvoysAbroad key="e" s={s} />, <TravellersPanel key="t" s={s} />) },
     ],
@@ -145,6 +147,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'The other families: the board, disputes at the Table, wars, the balance of power.',
     sections: [
       { id: 'board', label: 'The Board', render: (s) => <RivalBoard s={s} /> },
+      { id: 'pacts', label: 'Pacts & Families', blurb: 'Truces and partnerships with the families, and how they deal with each other when you are not in the room.', render: (s) => <PactsPanel s={s} /> },
       { id: 'table', label: 'The Table & Wars', render: (s) => <TablePanel s={s} /> },
       { id: 'balance', label: 'Balance of Power', render: (s) => <PowerPart s={s} part="blitz" /> },
       { id: 'front', label: 'The Front', render: (s) => <PowerPart s={s} part="front" /> },

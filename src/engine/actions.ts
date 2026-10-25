@@ -6,6 +6,8 @@ import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
 import { commitEcon, econActions, previewEcon } from './econ';
 import { commitHood, hoodActions, previewHood } from './hood';
+import { commitTalk, previewTalk, talkActions } from './talks';
+import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
@@ -240,6 +242,16 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   hood: {
     preview: (s, a) => previewHood(s, a.op),
     commit: (ctx, a) => commitHood(ctx, a.op),
+  },
+  /** Talks (talks.ts): meetings, jobs, business, partnerships, advice, grievances, evenings out, negotiations, the succession. */
+  talk: {
+    preview: (s, a) => previewTalk(s, a.op),
+    commit: (ctx, a) => commitTalk(ctx, a.op),
+  },
+  /** The Mission Board (missions.ts). */
+  mission: {
+    preview: (s, a) => previewMission(s, a.op),
+    commit: (ctx, a) => commitMission(ctx, a.op),
   },
   /** Making your bones (bones.ts). */
   bones: {
@@ -922,6 +934,7 @@ export function availableActions(s: GameState): PlayerAction[] {
   out.push(...powerActions(s));
   out.push(...econActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 3; }));
   out.push(...hoodActions(s).filter((a) => s.money >= previewAction(s, a).cost * 4));
+  out.push(...talkActions(s), ...missionActions(s).filter((a) => s.money >= previewAction(s, a).cost * 3));
   out.push(...bonesActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 4; }), ...ledgerActions(s));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));

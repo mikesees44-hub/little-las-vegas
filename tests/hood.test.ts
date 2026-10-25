@@ -126,5 +126,10 @@ describe('neighborhoods: ten years on', () => {
     // The era moved the economy.
     expect(eraEcon(1966)).toBeGreaterThan(eraEcon(1975));
     expect(h.snaps.length).toBeGreaterThanOrEqual(10);
+    // The families dealt with each other on their own, and the Tropicana case ran its course without you.
+    const ts = s.talks!.stats;
+    expect(ts.disputes + ts.alliances + ts.settlements + ts.splits).toBeGreaterThan(0);
+    const trop = s.missions!.runs.find((r) => r.def === 'tropicana');
+    expect(trop?.ended).toBeDefined();
   }, 180000);
 });

@@ -172,6 +172,9 @@ export function actionVerb(a: PlayerAction): Verb {
       if (t === 'breakAlliance') return v('Break it off', 'Breaking');
       return v('Do it', 'Set');
     }
+    case 'hood': return v('Restyle it', 'Restyling');
+    case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v('Ask him', 'Asked');
+    case 'mission': return v('Do it', 'Decided');
     case 'power': {
       const t = op(a);
       if (t === 'designate') return v('Name the heir', 'Heir named');
