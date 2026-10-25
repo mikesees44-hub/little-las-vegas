@@ -1,27 +1,32 @@
-import { useMemo, useState } from 'react';
-import { HOODS_BY_ID, hoodOfZone } from '../../engine/hoodData';
+import { useEffect, useMemo, useState } from 'react';
+import { FLAGSHIP, HOODS_BY_ID, hoodOfZone, type HoodId } from '../../engine/hoodData';
+import { rivalName } from '../../engine/construction';
 import type { HoodOverlay } from '../../engine/hood';
 import type { GameState } from '../../engine/types';
 import { OWNER_COLOR } from '../map/lotIcons';
 import type { Item } from './Buildings';
 import type { Mood } from './iso';
-import { NEIGHBORHOOD_ART as blockArt, STREET_ART as streetArt } from './art/paintedArt';
 
 /**
- * Where you land: two painted views of a Wildwood block at dusk (the user's
- * own art), with every building on them a live hotspot bound to a real
- * record on the Boardwalk — its current name and owner on the label, the
+ * Where you land: painted street-level views of Wildwood (the user's own
+ * art), with every building on them a live hotspot bound to a real record — its current name and owner on the label, the
  * owner's color glowing round it on hover, badges for a sale, a closing or
  * a crew at work, and the island's overlays tinting it. Click one and its
  * street-view card opens, exactly as on the map.
  *
- *   block   the bird's-eye view of the block, the pier and the wheel behind
+ *   block   the bird's-eye view of the Boardwalk block, the pier and the wheel behind
  *   street  standing on Pacific Avenue, looking down to the pier
+ *   sees    Pacific at Oak: the old Seven Seas, which becomes The 7 Sees once it is yours
+ *   taylor  Taylor Avenue: Sheila's weekly rooms and, next door, whatever is on the corner lot
+ *           now (Crab Legs, or the Off Shore seafood bar, or someone else's sign)
+ *   docks / lane  Otten's Harbor from above, then down on the lane
+ *
+ * The art is a separate chunk, fetched the first time you come down to street level.
  */
 
-export type Scene = 'block' | 'street';
+export type Scene = 'block' | 'street' | 'sees' | 'taylor' | 'taylorRev' | 'docks' | 'lane';
 
-type Want = 'motel' | 'hotel' | 'food' | 'club' | 'arcade' | 'shop' | 'pier' | 'house';
+type Want = 'motel' | 'hotel' | 'food' | 'club' | 'arcade' | 'shop' | 'pier' | 'house' | 'warehouse';
 
 interface Spot {
   id: string;
@@ -30,6 +35,8 @@ interface Spot {
   poly: [number, number][];
   /** Where its live label sits. */
   label: [number, number];
+  /** Bound to this exact record (a landmark), not by kind. */
+  lot?: string;
 }
 
 const W = 1024;
@@ -65,32 +72,116 @@ const STREET: Spot[] = [
   { id: 'starRight', want: ['club', 'shop', 'food'], poly: [[808, 220], [880, 200], [880, 360], [812, 370]], label: [842, 196] },
 ];
 
-const SCENES: Record<Scene, { art: string; spots: Spot[]; title: string; blurb: string }> = {
-  block: { art: blockArt, spots: BLOCK, title: 'The Boardwalk block', blurb: 'Dusk on the strip: the motels, the clubs and the pier.' },
-  street: { art: streetArt, spots: STREET, title: 'Pacific Avenue', blurb: 'On the sidewalk, looking down to the pier.' },
+const DOCKS: Spot[] = [
+  { id: 'seafood', want: ['food', 'club'], poly: [[700, 282], [790, 160], [900, 10], [1024, 60], [1024, 559], [870, 559], [705, 420]], label: [840, 246] },
+  { id: 'cafe', want: ['food', 'shop'], poly: [[0, 262], [60, 250], [110, 300], [178, 372], [182, 470], [50, 500], [0, 500]], label: [70, 258] },
+  { id: 'bait', want: ['shop', 'warehouse'], poly: [[530, 262], [586, 262], [590, 372], [532, 372]], label: [558, 254] },
+  { id: 'charters', want: ['warehouse', 'shop'], poly: [[590, 282], [660, 270], [702, 300], [702, 416], [596, 402]], label: [646, 266] },
+  { id: 'boats', want: ['warehouse', 'shop'], poly: [[360, 172], [440, 120], [522, 240], [512, 296], [400, 272], [370, 232]], label: [446, 150] },
+  { id: 'boats2', want: ['warehouse', 'food', 'shop'], poly: [[630, 232], [700, 135], [782, 182], [762, 272], [642, 266]], label: [708, 140] },
+  { id: 'row', want: ['house', 'motel', 'shop'], poly: [[95, 140], [200, 140], [216, 240], [200, 322], [112, 302]], label: [150, 128] },
+];
+
+const LANE: Spot[] = [
+  { id: 'seafood', want: ['food', 'club'], poly: [[710, 240], [790, 130], [880, 0], [1024, 0], [1024, 500], [930, 500], [720, 400]], label: [846, 196] },
+  { id: 'cafe', want: ['food', 'shop'], poly: [[0, 80], [150, 80], [175, 250], [275, 340], [275, 450], [40, 520], [0, 520]], label: [86, 140] },
+  { id: 'bait', want: ['shop', 'warehouse'], poly: [[550, 256], [602, 256], [606, 346], [556, 346]], label: [576, 248] },
+  { id: 'charters', want: ['warehouse', 'shop'], poly: [[606, 270], [700, 250], [722, 300], [716, 380], [610, 370]], label: [652, 260] },
+  { id: 'boats', want: ['warehouse', 'shop'], poly: [[400, 172], [500, 160], [526, 300], [420, 292], [405, 250]], label: [462, 162] },
+  { id: 'row', want: ['house', 'motel', 'shop'], poly: [[150, 140], [245, 170], [252, 300], [176, 322], [160, 250]], label: [202, 144] },
+];
+
+const SEES: Spot[] = [
+  { id: 'palace', lot: FLAGSHIP.lotId, want: ['club'], poly: [[598, 170], [640, 140], [700, 60], [770, 14], [880, 40], [1024, 80], [1024, 450], [860, 450], [640, 430], [598, 380]], label: [800, 300] },
+  { id: 'pizza', want: ['food', 'shop'], poly: [[0, 200], [80, 160], [170, 185], [170, 450], [0, 455]], label: [90, 196] },
+  { id: 'neon', want: ['arcade', 'club', 'shop'], poly: [[170, 185], [240, 190], [252, 440], [170, 450]], label: [212, 214] },
+  { id: 'star', want: ['club', 'food', 'shop'], poly: [[240, 190], [312, 260], [312, 420], [252, 440]], label: [278, 236] },
+  { id: 'wheel', want: ['pier'], poly: [[322, 208], [426, 208], [426, 300], [322, 300]], label: [374, 204] },
+];
+
+const TAYLOR: Spot[] = [
+  { id: 'corner', lot: 'pa06', want: ['club'], poly: [[628, 160], [730, 40], [970, 30], [1024, 90], [1024, 500], [940, 500], [650, 450], [628, 380]], label: [850, 330] },
+  { id: 'sheilas', lot: 'pa07', want: ['house', 'motel'], poly: [[440, 140], [520, 120], [640, 70], [680, 100], [660, 440], [470, 450], [440, 330]], label: [560, 108] },
+  { id: 'guest', want: ['house', 'motel', 'shop'], poly: [[276, 160], [350, 145], [440, 140], [442, 420], [282, 410]], label: [350, 150] },
+  { id: 'strip', want: ['food', 'club', 'shop'], poly: [[0, 300], [60, 300], [64, 410], [0, 412]], label: [30, 296] },
+  { id: 'wheel', want: ['pier'], poly: [[16, 214], [124, 214], [124, 290], [16, 290]], label: [70, 210] },
+];
+
+const TAYLOR_REV: Spot[] = [
+  { id: 'corner', lot: 'pa06', want: ['club'], poly: [[130, 150], [200, 115], [262, 190], [270, 400], [150, 420], [135, 330]], label: [200, 128] },
+  { id: 'sheilas', lot: 'pa07', want: ['house'], poly: [[0, 40], [110, 60], [130, 150], [135, 500], [0, 500]], label: [56, 168] },
+  { id: 'kings', lot: 'pa08', want: ['club'], poly: [[560, 160], [640, 120], [760, 118], [860, 160], [860, 360], [600, 380], [560, 330]], label: [706, 132] },
+  { id: 'musickey', lot: 'pa09', want: ['motel'], poly: [[850, 150], [1024, 130], [1024, 430], [930, 500], [700, 470], [700, 390], [860, 372]], label: [940, 150] },
+  { id: 'monaco', want: ['shop', 'food', 'club'], poly: [[272, 180], [352, 180], [356, 330], [276, 336]], label: [312, 176] },
+  { id: 'wheel', want: ['pier'], poly: [[372, 134], [450, 134], [450, 200], [372, 200]], label: [410, 130] },
+];
+
+export const SPOTS: Record<Scene, Spot[]> = { block: BLOCK, street: STREET, sees: SEES, taylor: TAYLOR, taylorRev: TAYLOR_REV, docks: DOCKS, lane: LANE };
+
+type ArtKey = 'NEIGHBORHOOD_ART' | 'STREET_ART' | 'SEES_ART' | 'CRAB_ART' | 'OFFSHORE_ART' | 'ROCK_ART' | 'DOCKS_ART' | 'DOCKS_LANE_ART';
+interface SceneDef { art: ArtKey; spots: Spot[]; title: string; blurb: string; hoods: HoodId[]; daylight?: boolean; links: { to: Scene; label: string }[] }
+
+const SCENES: Record<Scene, SceneDef> = {
+  block: { art: 'NEIGHBORHOOD_ART', spots: BLOCK, title: 'The Boardwalk block', blurb: 'Dusk on the strip: the motels, the clubs and the pier.', hoods: ['boardwalk', 'crest'], links: [{ to: 'street', label: 'Walk down Pacific Avenue →' }] },
+  street: { art: 'STREET_ART', spots: STREET, title: 'Pacific Avenue', blurb: 'On the sidewalk, looking down to the pier.', hoods: ['boardwalk', 'crest'], links: [{ to: 'block', label: '↑ Back up over the block' }, { to: 'sees', label: 'Up Pacific to Oak Avenue →' }] },
+  sees: { art: 'SEES_ART', spots: SEES, title: 'Pacific at Oak', blurb: 'The big corner: the old Seven Seas and the strip across the way.', hoods: ['pacific', 'boardwalk'], links: [{ to: 'street', label: '← Back down Pacific' }, { to: 'taylor', label: 'Around to Taylor Avenue →' }] },
+  taylor: { art: 'CRAB_ART', spots: TAYLOR, title: 'Taylor Avenue', blurb: 'Weekly rooms, fire escapes and the club on the corner.', hoods: ['pacific', 'downtown'], links: [{ to: 'sees', label: '← Back to Pacific & Oak' }, { to: 'taylorRev', label: 'Turn around ↺' }] },
+  taylorRev: { art: 'ROCK_ART', spots: TAYLOR_REV, title: 'Taylor Avenue, looking back', blurb: 'The King\'s ballroom, the Music Key\'s pool, and the corner across the way.', hoods: ['pacific', 'downtown'], links: [{ to: 'taylor', label: 'Turn around ↺' }, { to: 'sees', label: '← Back to Pacific & Oak' }] },
+  docks: { art: 'DOCKS_ART', spots: DOCKS, title: 'The docks', blurb: 'Otten\'s Harbor in the morning: the boats are in.', hoods: ['docks', 'causeway', 'westww'], daylight: true, links: [{ to: 'lane', label: 'Walk down the lane →' }] },
+  lane: { art: 'DOCKS_LANE_ART', spots: LANE, title: 'The harbor lane', blurb: 'Down on the lane between the cafe and the seafood house.', hoods: ['docks', 'causeway', 'westww'], daylight: true, links: [{ to: 'docks', label: '↑ Back up over the docks' }] },
 };
+export const SCENE_HOODS: Record<Scene, HoodId[]> = Object.fromEntries(Object.entries(SCENES).map(([k, v]) => [k, v.hoods])) as Record<Scene, HoodId[]>;
+
+/** Which painted view a neighborhood lands on. */
+export function sceneForHood(id: HoodId | undefined): Scene {
+  return id === 'docks' || id === 'causeway' || id === 'westww' ? 'docks' : id === 'pacific' || id === 'downtown' ? 'sees' : 'block';
+}
+
+/** What stands on Taylor and Oak's corner lot decides which picture you see. */
+const SEAFOOD = new Set(['trattoria', 'diner', 'seafood', 'deli', 'pizza', 'bar', 'tavern']);
+function taylorArt(items: Item[]): { art: ArtKey; patch?: string } {
+  const it = items.find((x) => x.lot?.id === 'pa06');
+  const use = it?.lot?.use;
+  if (!it || use === 'gents') return { art: 'CRAB_ART' };
+  if (use && SEAFOOD.has(use)) return { art: 'OFFSHORE_ART', patch: it.name !== 'Off Shore' ? it.name : undefined };
+  return { art: 'OFFSHORE_ART', patch: it.vacant ? 'FOR SALE' : it.name };
+}
+
+/** Looking back down Taylor, the corner lot's sign is Off Shore's; anything else gets its own board. */
+function taylorRevPatch(items: Item[]): { art: ArtKey; patch?: string; rev: true } {
+  const it = items.find((x) => x.lot?.id === 'pa06');
+  const use = it?.lot?.use;
+  return { art: 'ROCK_ART', rev: true, patch: !it ? undefined : use && SEAFOOD.has(use) && it.name === 'Off Shore' ? undefined : it.vacant ? 'FOR SALE' : it.name };
+}
 
 function iconWant(it: Item): Want {
   const ic = it.icon;
   if (ic === 'motel' || ic === 'hotel' || ic === 'house' || ic === 'club' || ic === 'pier') return ic;
   if (ic === 'pizza') return 'food';
   if (ic === 'apartment') return 'house';
+  if (ic === 'warehouse') return 'warehouse';
   return 'shop';
 }
 
 /**
- * Bind every hotspot to a record: the Boardwalk's buildings (then the next
- * neighborhood's), by kind, in a stable order — the same building always
- * stands in the same place.
+ * Bind every hotspot to a record: a landmark to its own lot; the rest to the
+ * scene's neighborhoods' buildings by kind, in a stable order — the same
+ * building always stands in the same place.
  */
-export function bindSpots(items: Item[], spots: Spot[]): Map<string, Item> {
+export function bindSpots(items: Item[], spots: Spot[], hoods: HoodId[] = ['boardwalk', 'crest']): Map<string, Item> {
   const hoodOf = (it: Item) => hoodOfZone((it.lot?.zone ?? 'downtown') as never);
-  const pool = items
-    .filter((it) => it.lot && !it.vacant)
-    .sort((a, b) => (hoodOf(a) === 'boardwalk' ? 0 : 1) - (hoodOf(b) === 'boardwalk' ? 0 : 1) || a.key.localeCompare(b.key));
   const used = new Set<string>();
   const out = new Map<string, Item>();
   for (const sp of spots) {
+    if (!sp.lot) continue;
+    const it = items.find((x) => x.lot?.id === sp.lot);
+    if (it) { used.add(it.key); out.set(sp.id, it); }
+  }
+  const pool = items
+    .filter((it) => it.lot && !it.vacant && !used.has(it.key) && hoods.includes(hoodOf(it) as HoodId))
+    .sort((a, b) => hoods.indexOf(hoodOf(a) as HoodId) - hoods.indexOf(hoodOf(b) as HoodId) || a.key.localeCompare(b.key));
+  for (const sp of spots) {
+    if (out.has(sp.id)) continue;
     let pick: Item | undefined;
     for (const w of sp.want) {
       pick = pool.find((it) => !used.has(it.key) && (iconWant(it) === w || (w === 'arcade' && it.useId === 'arcade')));
@@ -103,6 +194,13 @@ export function bindSpots(items: Item[], spots: Spot[]): Map<string, Item> {
 }
 
 const pts = (p: [number, number][]) => p.map(([x, y]) => `${x},${y}`).join(' ');
+
+let artCache: Promise<Record<ArtKey, string>> | undefined;
+function loadArt(): Promise<Record<ArtKey, string>> {
+  artCache ??= import('./art/paintedArt') as unknown as Promise<Record<ArtKey, string>>;
+  artCache.catch(() => { artCache = undefined; });
+  return artCache;
+}
 
 export function PaintedView({ s, items, scene, mood, overlay, tint, sel, onPick, onScene, onMap }: {
   s: GameState;
@@ -118,17 +216,47 @@ export function PaintedView({ s, items, scene, mood, overlay, tint, sel, onPick,
 }) {
   const [hover, setHover] = useState<string | undefined>();
   const [names, setNames] = useState(false);
+  const [art, setArt] = useState<Record<ArtKey, string> | undefined>();
+  useEffect(() => { let live = true; loadArt().then((a) => live && setArt(a)).catch(() => {}); return () => { live = false; }; }, []);
   const def = SCENES[scene];
-  const bound = useMemo(() => bindSpots(items, def.spots), [items, def]);
-  const filter = mood === 'day' ? 'brightness(1.16) saturate(1.06) contrast(0.98)' : mood === 'night' ? 'brightness(0.78) saturate(1.12)' : undefined;
+  const bound = useMemo(() => bindSpots(items, def.spots, def.hoods), [items, def]);
+  const taylor = scene === 'taylor' ? taylorArt(items) : scene === 'taylorRev' ? taylorRevPatch(items) : undefined;
+  const artKey = taylor?.art ?? def.art;
+  // The flagship's sign: lit and yours, or dark and somebody else's.
+  const flagship = scene === 'sees' ? items.find((x) => x.lot?.id === FLAGSHIP.lotId) : undefined;
+  // The painted light: the strip is a dusk picture, the docks a morning one.
+  const filter = def.daylight
+    ? (mood === 'night' ? 'brightness(0.5) saturate(0.7) hue-rotate(-10deg)' : mood === 'dusk' ? 'brightness(0.85) saturate(1.15) sepia(0.25)' : undefined)
+    : (mood === 'day' ? 'brightness(1.16) saturate(1.06) contrast(0.98)' : mood === 'night' ? 'brightness(0.78) saturate(1.12)' : undefined);
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#0b1430]" data-testid="painted-view" data-scene={scene}>
-      <div key={scene} className={`absolute inset-0 ${scene === 'street' ? 'pv-walk' : 'pv-land'}`}>
-        <img src={def.art} alt={`${def.title}: ${def.blurb}`} className="absolute inset-0 h-full w-full object-cover select-none" style={{ filter }} draggable={false} />
+    <div className="absolute inset-0 overflow-hidden bg-[#0b1430]" data-testid="painted-view" data-scene={scene} data-art={artKey}>
+      <div key={scene} className={`absolute inset-0 ${scene === 'block' || scene === 'docks' ? 'pv-land' : 'pv-walk'}`}>
+        {def.daylight && mood === 'night' && <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: 'rgba(12,22,60,0.35)' }} />}
+        {art ? <img src={art[artKey]} alt={`${def.title}: ${def.blurb}`} className="absolute inset-0 h-full w-full object-cover select-none" style={{ filter }} draggable={false} />
+          : <div className="absolute inset-0 grid place-items-center text-sm text-[#ffd1e6]">Walking down to the street…</div>}
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
           <defs>
             <filter id="pv-glow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           </defs>
+          {flagship && !flagship.mine && (
+            // Not yours yet: the big sign is dark, boarded, with the old name or the new owner's.
+            <g pointerEvents="none" data-testid="pv-flagship-dark">
+              <path d="M600 30H1024V295H600Z" fill="#0b1430" opacity={flagship.owner === 'private' ? 0.72 : 0.82} />
+              <g transform="translate(812 150)">
+                <rect x="-150" y="-34" width="300" height="68" rx="8" fill="#f3ead2" stroke="#8a6a4a" strokeWidth="3" />
+                <text y="-8" textAnchor="middle" fontSize="22" fontWeight="800" fill="#3a2c3e" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>{flagship.name}</text>
+                <text y="20" textAnchor="middle" fontSize="13" fontWeight="700" fill={flagship.forSale ? '#c0392b' : '#5b4a3a'}>{flagship.forSale ? 'FOR SALE · INQUIRE WITHIN' : flagship.owner === 'private' ? 'UNDER NEW MANAGEMENT' : `A ${rivalName(flagship.owner as never)} place`}</text>
+              </g>
+            </g>
+          )}
+          {taylor?.patch && (
+            // Something else on the corner now: its own board over the old one.
+            <g pointerEvents="none" data-testid="pv-corner-sign">
+              {'rev' in taylor
+                ? <><path d="M150 150H262V262H150Z" fill="#1d2a36" opacity="0.9" /><text x="206" y="212" textAnchor="middle" fontSize={Math.min(20, 190 / Math.max(6, taylor.patch.length))} fontWeight="800" fill="#ff9ec7" stroke="#ff5fa2" strokeWidth="0.6" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>{taylor.patch}</text></>
+                : <><path d="M628 40H990V240H628Z" fill="#1d2a36" opacity="0.88" /><text x="809" y="130" textAnchor="middle" fontSize={Math.min(46, 620 / Math.max(6, taylor.patch.length))} fontWeight="800" fill="#ffd27a" stroke="#ff8a3c" strokeWidth="1" style={{ fontFamily: "'Playfair Display', Georgia, serif" }}>{taylor.patch}</text></>}
+            </g>
+          )}
           {def.spots.map((sp) => {
             const it = bound.get(sp.id);
             if (!it) return null;
@@ -155,7 +283,7 @@ export function PaintedView({ s, items, scene, mood, overlay, tint, sel, onPick,
               const it = bound.get(sp.id);
               if (!it) return null;
               const own = it.mine ? OWNER_COLOR.player : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private;
-              const on = hover === sp.id || sel === it.key;
+              const on = hover === sp.id || sel === it.key || !!sp.lot;
               const [x, y] = sp.label;
               if (!on && !names) {
                 return (
@@ -184,14 +312,12 @@ export function PaintedView({ s, items, scene, mood, overlay, tint, sel, onPick,
       {/* Where you are, and where you can go. */}
       <div className="absolute left-2 top-11 z-10 flex flex-wrap gap-1.5 max-w-[60%]" data-hv-ui data-pz-ui>
         <button type="button" className="hv-btn" onClick={onMap} data-testid="pv-map">← Island map</button>
-        {scene === 'block'
-          ? <button type="button" className="hv-btn hv-on" onClick={() => onScene('street')} data-testid="pv-to-street">Walk down Pacific Avenue →</button>
-          : <button type="button" className="hv-btn hv-on" onClick={() => onScene('block')} data-testid="pv-to-block">↑ Back up over the block</button>}
+        {def.links.map((l) => <button key={l.to} type="button" className="hv-btn hv-on" onClick={() => onScene(l.to)} data-testid={`pv-to-${l.to}`}>{l.label}</button>)}
         <button type="button" className={`hv-btn ${names ? 'hv-on' : ''}`} onClick={() => setNames((x) => !x)} data-testid="pv-names">Names</button>
       </div>
       <div className="absolute left-1/2 -translate-x-1/2 top-3 z-10 pointer-events-none rounded-full hidden sm:block border border-[#ff5fa2] bg-[#1b1030]/85 px-3 py-1 text-center">
         <div className="font-display text-sm leading-tight text-[#ffd1e6]" data-testid="pv-title">{def.title}</div>
-        <div className="text-[10px] text-[#9fe7e0] hidden sm:block">{def.blurb} · {HOODS_BY_ID.boardwalk.name}, {s.date.y}</div>
+        <div className="text-[10px] text-[#9fe7e0] hidden sm:block">{def.blurb} · {HOODS_BY_ID[def.hoods[0]].name}, {s.date.y}</div>
       </div>
     </div>
   );

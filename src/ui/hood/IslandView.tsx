@@ -11,7 +11,7 @@ import { Ground, GroundDefs, PierArches, VIEW_BOUNDS } from './Ground';
 import { HoodDashboard } from './HoodDashboard';
 import { ISO, P, PLAN, palette, poly, type Mood } from './iso';
 import { StreetCard } from './StreetCard';
-import { PaintedView, type Scene } from './PaintedView';
+import { PaintedView, sceneForHood, type Scene } from './PaintedView';
 import { useShell } from '../shell/context';
 
 /**
@@ -403,7 +403,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
       {/* Controls. */}
       <div data-hv-ui className="absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%]">
         {!scene && <div className="flex flex-wrap justify-end gap-1">
-          <button type="button" className="hv-btn hv-on" onClick={() => { setScene('block'); setHood(undefined); onHood?.(undefined); }} title="Down onto the Boardwalk block" data-testid="hv-street">Street level</button>
+          <button type="button" className="hv-btn hv-on" onClick={() => { setScene(sceneForHood(hood)); setHood(undefined); onHood?.(undefined); }} title="Down to street level (the neighborhood you have picked, or the Boardwalk)" data-testid="hv-street">Street level</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
           <button type="button" className="hv-btn" onClick={whole} title="The whole island">⤢</button>
@@ -440,7 +440,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
       {panelOpen && (
         <div data-hv-ui className="absolute z-[1002] panel overflow-y-auto p-3 inset-x-0 bottom-0 max-h-[62%] rounded-b-none md:inset-x-auto md:right-2 md:top-36 md:bottom-12 md:max-h-none md:w-[380px] md:rounded-b-lg llv-slide-right" data-testid="hv-panel">
           {selItem ? <StreetCard s={s} it={selItem} mood={mood} onClose={() => setSel(undefined)} />
-            : hood ? <HoodDashboard key={hood} s={s} initial={hood} compact onClose={() => { setHood(undefined); onHood?.(undefined); }} onFull={() => shell.go('town.hoods')} /> : null}
+            : hood ? <HoodDashboard key={hood} s={s} initial={hood} compact onClose={() => { setHood(undefined); onHood?.(undefined); }} onFull={() => shell.go('town.hoods')} onStreet={(id) => { setScene(sceneForHood(id)); setHood(undefined); onHood?.(undefined); }} /> : null}
         </div>
       )}
     </div>

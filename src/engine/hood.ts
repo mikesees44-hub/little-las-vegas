@@ -5,7 +5,7 @@ import { marketValue } from './econ';
 import { venueForLot } from './empire';
 import { venueBuilding } from './empireBuild';
 import type { Lot, ZoneId } from './econState';
-import { HOOD_IDS, HOODS, HOODS_BY_ID, hoodOfZone, type HoodId } from './hoodData';
+import { FLAGSHIP, HOOD_IDS, NEXT_ON_LOT, HOODS, HOODS_BY_ID, hoodOfZone, type HoodId } from './hoodData';
 import { ensureHood, lotSig as sig, POLICIES, type HoodEvent, type HoodEventKind, type HoodSnapRow, type HoodState, type PolicyId } from './hoodState';
 import { inflation, lotName, USES, USES_BY_ID, useIcon, ZONES_BY_ID, type UseCat } from './property';
 import { chance, hashSeed, pick, rand } from './rng';
@@ -259,10 +259,11 @@ export function hoodMonth(ctx: Ctx): void {
       const same = useIcon(u!);
       const z = ZONES_BY_ID[l.zone];
       const pool = USES.filter((x) => !x.npcOnly && !x.biz && (x.minYear ?? 0) <= year && useIcon(x) === same && (x.zones ? x.zones.includes(l.zone) : z.cats.includes(x.cat)));
-      const nu = pool.length ? pick(h, pool) : u!;
+      const next = NEXT_ON_LOT[l.id];
+      const nu = next && USES_BY_ID[next.use] ? USES_BY_ID[next.use] : pool.length ? pick(h, pool) : u!;
       const who = pick(h, OWNERS);
       l.use = nu.id;
-      l.name = placeName(h, year, nu.id);
+      l.name = next?.name ?? placeName(h, year, nu.id);
       l.tenant = who;
       l.status = 'private';
       l.owner = 'private';
@@ -299,12 +300,29 @@ export function hoodWeek(ctx: Ctx): void {
   const mk = monthKey(s);
   // The town as it stood when the layer first looked (the "then" of then-and-now).
   if (!h.snaps.length) h.snaps.push({ y: s.date.y, by: snapshot(s) });
+  flagshipSign(s, h);
   // Ownership changes made by any system this week go into the deeds and the log.
   noticeChanges(s, h);
   if (h.lastMonth !== mk) {
     h.lastMonth = mk;
     hoodMonth(ctx);
   }
+}
+
+/** The 7 Sees: the sign goes up the week the old Seven Seas is yours, and comes down if it is not. */
+function flagshipSign(s: GameState, h: HoodState): void {
+  const l = s.econ?.lots.find((x) => x.id === FLAGSHIP.lotId);
+  if (!l) return;
+  const ours = isMine(l);
+  const want = ours ? FLAGSHIP.name : l.name === FLAGSHIP.name ? FLAGSHIP.oldName : l.name;
+  if (!want || l.name === want) return;
+  l.name = want;
+  const b = l.bizId ? s.businesses.find((x) => x.id === l.bizId) : undefined;
+  if (b) b.name = want;
+  const v = venueForLot(s, l.id);
+  if (v) v.name = want;
+  const hood = drawnHood(l);
+  if (hood) logEvent(s, h, hood, 'style', ours ? `A new sign went up on Pacific Avenue: the old Seven Seas is ${FLAGSHIP.name} now.` : `${FLAGSHIP.name} sign came down on Pacific Avenue.`, l.id);
 }
 
 /* ---------------- views (pure) ---------------- */

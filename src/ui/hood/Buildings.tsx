@@ -396,6 +396,24 @@ export const Building = memo(function Building({ it, c, sel, tint, badge, onPick
         // Doors and the upstairs walkway rail.
         const rail = `M${P(pr, body.u0, body.v0 - 1.4, 4.4).map((x) => x.toFixed(1)).join(',')}L${P(pr, body.u1, body.v0 - 1.4, 4.4).map((x) => x.toFixed(1)).join(',')}`;
         parts.push(<path key="rail" d={rail} stroke={lit('#ffffff', m)} strokeWidth="0.7" />);
+        if (style === 'doowop' && tier >= 2) {
+          // Colored doors on both floors, and a zig-zag neon band along the walkway.
+          const n = Math.max(3, Math.floor((body.u1 - body.u0 - 4) / 4.5));
+          const cols = ['#e86fa0', '#4f9fd8', '#f2c84a', '#e0574a'];
+          for (const z of [0.2, 4.6]) {
+            for (let i = 0; i < n; i++) {
+              if (i % 3 === 0) continue;
+              const u = body.u0 + 2 + ((body.u1 - body.u0 - 4) * (i + 0.5)) / n;
+              const d = poly([P(pr, u - 0.7, body.v0 - 0.05, z), P(pr, u + 0.7, body.v0 - 0.05, z), P(pr, u + 0.7, body.v0 - 0.05, z + 2.6), P(pr, u - 0.7, body.v0 - 0.05, z + 2.6)]);
+              parts.push(<path key={`dr${z}${i}`} d={d} fill={lit(cols[(i + hh) % 4], m)} />);
+            }
+          }
+          const zn = Math.max(4, Math.round((body.u1 - body.u0) / 3));
+          const zz = Array.from({ length: zn + 1 }, (_, i) => P(pr, body.u0 + ((body.u1 - body.u0) * i) / zn, body.v0 - 1.5, 3.6 + (i % 2) * 0.9));
+          const neon = m === 'day' ? '#2fb5a8' : '#4ff0e6';
+          parts.push(<path key="zz" d={line(zz)} stroke={neon} strokeWidth={m === 'day' ? 0.45 : 0.6} fill="none" />);
+          if (glowOn) parts.push(<path key="zzg" d={line(zz)} stroke={neon} strokeOpacity="0.35" strokeWidth="2" fill="none" />);
+        }
       }
       if (isShop || isClub) {
         const sf = poly([P(pr, body.u0 + 1.5, body.v0 - 0.05, 0.3), P(pr, body.u1 - 1.5, body.v0 - 0.05, 0.3), P(pr, body.u1 - 1.5, body.v0 - 0.05, 2.6), P(pr, body.u0 + 1.5, body.v0 - 0.05, 2.6)]);

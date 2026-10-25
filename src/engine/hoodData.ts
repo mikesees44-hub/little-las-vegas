@@ -211,12 +211,30 @@ export const SEED: SeedRow[] = [
   ['pa02', 'pacific', 'pa+', 'Wildwood Ave', 'a', 'burlesque', 'The Velvet Rope', 'rival', 'manno', 'Manno crew', 'deco', 'red', 1950, 65],
   ['pa03', 'pacific', 'pa-', 'Pine Ave', 'b', 'supper', 'Club Riviera', 'private', 'private', 'Lou Castellano', 'midcentury', 'gold', 1953, 80],
   ['pa04', 'pacific', 'pa-', 'Schellenger Ave', 'a', 'records', 'Platter Party Records', 'private', 'private', 'Sid Weintraub', 'doowop', 'pink', 1956, 83],
+  // The old Seven Seas: a tired supper club on Pacific at Oak, for sale. Whoever buys it can make it the flagship.
+  // Taylor Avenue: Crab Legs (a gentlemen's club: business-level, everyone there an adult who chose it) and Sheila's weekly rooms.
+  ['pa06', 'pacific', 'pa+', 'Taylor Ave', 'a', 'gents', 'Crab Legs', 'rival', 'kessler', 'Kessler\'s Clubs', 'deco', 'pink', 1958, 81],
+  ['pa07', 'pacific', 'pa+', 'Taylor Ave', 'b', 'rooming', 'Sheila\'s Place', 'private', 'private', 'Sheila Dougherty', 'victorian', 'turquoise', 1912, 57],
+  // Across Taylor: the King's ballroom (a supper club where the booking manager's acts play) and the Music Key motel.
+  ['pa08', 'pacific', 'pa-', 'Taylor Ave', 'a', 'supper', 'The King\'s Club', 'private', 'private', 'Rocco Albano', 'deco', 'pink', 1937, 66],
+  ['pa09', 'pacific', 'pa-', 'Taylor Ave', 'b', 'motel', 'Music Key Pool & Suites', 'private', 'private', 'the Novak family', 'doowop', 'turquoise', 1959, 93],
+  ['pa05', 'pacific', 'pa-', 'Oak Ave', 'w', 'supper', 'The Seven Seas Supper Club', 'sale', 'private', 'the Albrecht estate', 'deco', 'turquoise', 1938, 52],
   // Anglesea.
   ['nw01', 'north', 'at+', '22nd Ave', 'a', 'hoodclub', 'The Anglesea Inn', 'rival', 'kessler', 'Kessler\'s Clubs', 'victorian', 'green', 1902, 58],
   ['nw02', 'north', 'oc+', '10th Ave', 'a', 'cottage', 'Seabreeze Cottages', 'private', 'private', 'the Sorensen family', 'victorian', 'white', 1922, 63],
 ];
 
 export const SEED_IDS = new Set(SEED.map((r) => r[0]));
+
+/**
+ * The family's signature venue: the old Seven Seas on Pacific Avenue becomes
+ * "The 7 Sees" the week it is yours (a supper club first; the Empire Designer
+ * can take it toward a hotel later). Lose it and the new owner takes the sign down.
+ */
+/** Lots with a story of their own: what opens there next when the place closes (Taylor's corner turns into a seafood bar). */
+export const NEXT_ON_LOT: Record<string, { use: string; name: string }> = { pa06: { use: 'trattoria', name: 'Off Shore' } };
+
+export const FLAGSHIP = { lotId: 'pa05', name: 'The 7 Sees', oldName: 'The Seven Seas Supper Club' };
 
 /* ---------------- the rest of the street ---------------- */
 

@@ -5,6 +5,8 @@ import { STAGE_LABEL, USE_CAT_LABEL } from '../../engine/property';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { OWNER_COLOR } from '../map/lotIcons';
+import { HOOD_ART } from './art/districtArt';
+import { DISTRICT_CARD } from './districts';
 
 function Meter({ label, value, max = 100, color, hint }: { label: string; value: number; max?: number; color: string; hint?: string }) {
   return (
@@ -32,7 +34,7 @@ const ORG_COLOR = (id: string) => OWNER_COLOR[id] ?? '#9a8f7a';
  * lots in the neighborhood's zones, the district's influence, the layer's
  * conditions and its log — and the town then and now.
  */
-export function HoodDashboard({ s, initial, compact, onClose, onFull }: { s: GameState; initial?: HoodId; compact?: boolean; onClose?: () => void; onFull?: () => void }) {
+export function HoodDashboard({ s, initial, compact, onClose, onFull, onStreet }: { s: GameState; initial?: HoodId; compact?: boolean; onClose?: () => void; onFull?: () => void; onStreet?: (id: HoodId) => void }) {
   const [id, setId] = useState<HoodId>(initial ?? 'boardwalk');
   const v = hoodView(s, id);
   const ch = islandChange(s);
@@ -51,6 +53,16 @@ export function HoodDashboard({ s, initial, compact, onClose, onFull }: { s: Gam
           {onFull && <button type="button" className="text-[11px] text-gold-300 underline" onClick={onFull} data-testid="hood-full">full dashboard</button>}
         </div>
       </div>
+      {HOOD_ART[id] && (
+        <figure className="relative overflow-hidden rounded-lg border border-[#ff5fa2]/40" data-testid="hood-art">
+          <img src={HOOD_ART[id]} alt={DISTRICT_CARD[id]?.title ?? v.name} className="block w-full h-auto max-h-48 object-cover" />
+          <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-2 pb-1.5 pt-6">
+            <div className="font-display text-sm text-[#ffd1e6]">{DISTRICT_CARD[id]?.title}</div>
+            <div className="text-[11px] text-stone-200 leading-snug">{DISTRICT_CARD[id]?.line}</div>
+          </figcaption>
+        </figure>
+      )}
+      {onStreet && id !== 'north' && <button type="button" className="btn-gold w-full" onClick={() => onStreet(id)} data-testid="hood-street">{id === 'docks' || id === 'causeway' || id === 'westww' ? 'Down to the docks (street level)' : id === 'pacific' || id === 'downtown' ? 'Down to Pacific Avenue (street level)' : 'Down to the block (street level)'}</button>}
       {!compact && (
         <div className="flex flex-wrap gap-1" role="tablist">
           {HOODS.map((h) => <button key={h.id} type="button" role="tab" aria-selected={id === h.id} onClick={() => setId(h.id)} className={`rounded px-2 py-0.5 text-[11px] border ${id === h.id ? 'border-gold-400 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>{h.name}</button>)}
