@@ -8,6 +8,7 @@ import { ensureEcon } from '../src/engine/econState';
 import { GIFTS, GIFTS_BY_ID, giftAvailable, giftOpinion, tastes, type GiftCat } from '../src/engine/gifts';
 import { BUG_WEEKS, HQ_INFO, hqWeek } from '../src/engine/hq';
 import { registerPermitAuthority } from '../src/engine/construction';
+import { rankManagers } from '../src/engine/managers';
 import { newCtx, reconcile } from '../src/engine/ledger';
 import { newGame } from '../src/engine/newGame';
 import { BUILD_STAGES, buildCost, buildWeeks, districtTilt, propertyNet, stageWeeks, USES, USES_BY_ID, ZONES, zoneSeason } from '../src/engine/property';
@@ -414,5 +415,15 @@ describe('economy pillar: permits, inspections, the supply chain, the town', () 
     expect(p.acceptance).toBeDefined();
     expect(p.acceptance!.reasons.some((r) => r.label.includes('deep pockets'))).toBe(true);
     expect(p.refuseEffects?.some((x) => x.type === 'econ')).toBe(true);
+  });
+});
+
+describe('economy pillar: the crew suggests a manager', () => {
+  it('ranks candidates best first, by expected weekly gain', () => {
+    const s = rich('rank');
+    const picks = rankManagers(s, 'test-key', 400);
+    expect(picks.length).toBeGreaterThanOrEqual(3);
+    for (let i = 1; i < picks.length; i++) expect(picks[i - 1].value).toBeGreaterThanOrEqual(picks[i].value);
+    expect(picks.some((p) => p.source === 'pro')).toBe(true);
   });
 });

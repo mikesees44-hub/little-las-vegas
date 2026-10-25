@@ -319,7 +319,7 @@ export function townMonth(ctx: Ctx): void {
   for (const l of e.lots) {
     if (l.stage !== 'open' || !l.use) continue;
     const mine = l.status === 'owned' || l.status === 'leased';
-    const p = (mine ? 0.0012 : 0.003) * (l.condition < 50 ? 2 : 1);
+    const p = (mine ? 0.0012 : 0.0015) * (l.condition < 50 ? 2 : 1);
     if (!chance(e, p)) continue;
     const u = USES_BY_ID[l.use];
     e.stats.fires++;

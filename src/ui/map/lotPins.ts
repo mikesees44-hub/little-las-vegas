@@ -86,7 +86,7 @@ export interface LotView {
 }
 
 /** Redraws every lot into the layer as a building icon. */
-export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameState, geo?: GeoJSON.FeatureCollection, view: LotView = {}): void {
+export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameState, geo?: GeoJSON.FeatureCollection, view: LotView = {}, onClick?: (lotId: string) => void): void {
   layer.clearLayers();
   for (const raw of s.econ?.lots ?? []) {
     const l = view.year !== undefined ? lotAsOf(raw, view.year, s.date.y) : raw;
@@ -97,6 +97,7 @@ export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameSt
     const dim = !!view.since1960 && !isNew;
     L.marker(at, { pane: 'pins', icon: L.divIcon({ className: 'llv-lotico', html: lotSvg(l, { size: 22, glow: isNew, dim }), iconSize: [22, 22], iconAnchor: [11, 11] }) })
       .bindTooltip(lotTooltip(l), { className: 'llv-tip' })
+      .on('click', () => onClick?.(raw.id))
       .addTo(layer);
   }
 }

@@ -50,6 +50,8 @@ export interface WorldMapProps {
   flyTo?: { level: Level; nonce: number };
   /** The property layer's timeline (year shown, new-since-1960 highlight). */
   lots?: LotView;
+  /** A property was clicked. */
+  onLot?: (lotId: string) => void;
 }
 
 export function WorldMap(props: WorldMapProps) {
@@ -378,7 +380,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   function drawDistricts(p: WorldMapProps) {
     if (!districtsGeo) return;
     const s = p.s;
-    drawLots(L, lotLayer, s, districtsGeo, p.lots);
+    drawLots(L, lotLayer, s, districtsGeo, p.lots, (id) => latest.current.onLot?.(id));
     districtLayer.clearLayers();
     districtPins.clearLayers();
     L.geoJSON(districtsGeo as never, {

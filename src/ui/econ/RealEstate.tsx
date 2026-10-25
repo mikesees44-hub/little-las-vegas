@@ -7,7 +7,7 @@ import type { FactionId, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
 import { StageBar } from './Holdings';
-import { lotSvg } from '../map/lotIcons';
+import { lotProgress, lotSvg } from '../map/lotIcons';
 
 /** One glyph per construction stage (the same marks the map uses). */
 export const STAGE_GLYPH: Record<StageId, string> = {
@@ -101,7 +101,11 @@ function LotCard({ s, l }: { s: GameState; l: Lot }) {
         {l.status === 'sale' && l.tenant && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id, going: true } }} compact />}
         {l.status === 'lease' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: l.id } }} compact />}
         {(l.status === 'owned' || l.status === 'leased') && <p className="text-stone-400">Yours — managed under Holdings.</p>}
-        {l.status === 'private' && <p className="text-stone-500">Not on the market. Owners change their minds; check back.</p>}
+        {l.status !== 'owned' && l.status !== 'leased' && l.stage && l.stage !== 'open' && l.stage !== 'purchase' && (
+          <p className="text-amber-300/80">Under construction by {l.developer ?? 'someone'}: {STAGE_LABEL[l.stage]} ({Math.round(lotProgress(l) * 100)}%){l.contractor ? ' — your crews hold the contract' : ''}{l.stopWork ? ` — stopped: ${l.stopWork.reason}` : ''}</p>
+        )}
+        {l.status === 'rival' && l.stage && l.stage !== 'open' && l.stage !== 'purchase' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'slowRival', lotId: l.id } }} compact />}
+        {l.status === 'private' && l.stage === 'open' && <p className="text-stone-500">Not on the market. Owners change their minds; check back.</p>}
       </div>
     </li>
   );

@@ -10,6 +10,7 @@ import { ActionCard } from '../components/Orders';
 import { Overview } from '../components/Overview';
 import { CharLink } from '../components/People';
 import { GROUP_COLOR, WorldMap, type Level } from './WorldMap';
+import { LotPanel } from '../econ/LotPanel';
 
 /**
  * The map screen: the real map with its overlays (modes, breadcrumbs, legend,
@@ -30,6 +31,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
   const [fly, setFly] = useState<{ level: Level; nonce: number } | undefined>();
   const [asOf, setAsOf] = useState<number | undefined>();
   const [since, setSince] = useState(false);
+  const [lot, setLot] = useState<string | undefined>();
   const go = (l: Level) => setFly({ level: l, nonce: (fly?.nonce ?? 0) + 1 });
   const crumbs: { l: Level; t: string }[] = [{ l: 'usa', t: 'USA' }, { l: 'region', t: 'South Jersey' }, { l: 'wildwood', t: 'Wildwood' }];
 
@@ -41,12 +43,13 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
             s={s}
             mode={mode}
             selectedDistrict={district}
-            onDistrict={(id) => { setDistrict(id); setCity(undefined); }}
+            onDistrict={(id) => { setDistrict(id); setCity(undefined); setLot(undefined); }}
             onCity={(id) => { setCity(id); setDistrict(undefined); }}
             onEnvoy={onEnvoy}
             onLevel={setLevel}
             flyTo={fly}
             lots={{ year: asOf, since1960: since }}
+            onLot={(id) => { setLot(id); setDistrict(undefined); setCity(undefined); }}
           />
           <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1.5">
             <nav className="flex items-center gap-1 rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-xs" aria-label="Map level">
@@ -84,7 +87,12 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
           </div>
         </div>
         <aside className="panel p-3 sm:p-4 lg:max-h-[calc(100vh-190px)] lg:overflow-y-auto">
-          {district ? (
+          {lot ? (
+            <>
+              <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setLot(undefined)}>← the whole board</button>
+              <LotPanel s={s} id={lot} />
+            </>
+          ) : district ? (
             <>
               <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setDistrict(undefined)}>← the whole board</button>
               <DistrictPanel s={s} id={district} onOpenBusiness={onOpenBusiness} />
