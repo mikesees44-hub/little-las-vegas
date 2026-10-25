@@ -107,3 +107,32 @@ describe('balance', () => {
     expect(fresh).toBeLessThanOrEqual(-FIRST_WINTER_PER_NEW * weeks);
   });
 });
+
+describe('the rank starts', () => {
+  it('a soldier kicks up to his don and does not also pay Philadelphia, and has no club boiler to fix', async () => {
+    const { newGameWith } = await import('../src/engine/starts');
+    const { bagmanDue, underADon } = await import('../src/engine/events');
+    const { firstWinter } = await import('../src/engine/economy');
+    let s = newGameWith('bal-soldier', 'soldier');
+    expect(underADon(s)).toBe(true);
+    let philly = 0;
+    let kick = 0;
+    let boiler = 0;
+    for (let i = 0; i < 40 && !s.gameOver; i++) {
+      expect(bagmanDue(s)).toBe(false);
+      expect(firstWinter(s)).toBe(false);
+      const choices: Record<string, string> = {};
+      for (const e of s.pendingEvents) choices[e.iid] = e.defaultChoiceId;
+      const r = advanceWeek(s, { choices });
+      for (const l of r.report.lines) {
+        if (l.label.startsWith('Tribute to Philadelphia')) philly++;
+        if (l.label.startsWith('Kick-up to')) kick++;
+        if (l.label.startsWith('The first winter')) boiler++;
+      }
+      s = r.state;
+    }
+    if (underADon(s)) expect(philly).toBe(0);
+    expect(kick).toBeGreaterThan(10);
+    expect(boiler).toBe(0);
+  });
+});

@@ -48,15 +48,24 @@ export function boughtThisYear(s: GameState): ReturnType<typeof owned> {
   return owned(s).filter((b) => (b.boughtWeek ?? 0) > 1);
 }
 
+/**
+ * The small starts: Rise to Power, and the rank starts built on it (associate,
+ * soldier, capo). A two-business outfit has no club boiler to fix, the men do
+ * steady small work, and Philadelphia hasn't heard of you yet.
+ */
+export function smallStart(s: GameState): boolean {
+  return !!(s.flags.start_rise || s.flags.start_associate || s.flags.start_soldier || s.flags.start_capo);
+}
+
 /** Is the first winter still to come or under way (so a purchase now pays the winterizing)? */
 export function firstWinterAhead(s: GameState): boolean {
-  return !s.flags.start_rise && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 5));
+  return !smallStart(s) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 5));
 }
 
 /** Sept 1960 – May 1961. */
 export function firstWinter(s: GameState): boolean {
   // Rise to Power: a two-business outfit has no club boiler to fix; its winter is hard enough.
-  return !s.flags.start_rise && !isInSeason(s.date) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 6));
+  return !smallStart(s) && !isInSeason(s.date) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 6));
 }
 /** Share of his arrears a slow payer makes good each week in the season. */
 export const ARREARS_REPAY = 0.2;
@@ -370,14 +379,14 @@ export function launder(ctx: Ctx, dirty: number): void {
 export const CREW_WORK = { soldier: 120, associate: 75 } as const;
 
 /**
- * Rise to Power: until the house is a real power (respect 60), the men in
+ * Rise to Power (and the rank starts): until the house is a real power (respect 60), the men in
  * each capo's regime do steady small work — a card game, a load off a truck,
  * collections for the numbers bank — and the capo kicks your end up every
  * week. It barely notices the season. One labelled line per capo.
  */
 export function crewWork(ctx: Ctx, mult: number): number {
   const s = ctx.s;
-  if (!s.flags.start_rise || s.respect >= 60) return 0;
+  if (!smallStart(s) || s.respect >= 60) return 0;
   const caps = crew(s).filter((c) => c.rank === 'capo');
   const season = mult > 1 ? 1.0 : 1.15; // winter is when a small crew hustles hardest
   let total = 0;
