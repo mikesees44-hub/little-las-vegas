@@ -9,6 +9,8 @@ import { pwView } from './powerState';
 import { opinion } from './relations';
 import { skimRate } from './economy';
 import { activeRomances } from './romance';
+import { quoteTrip } from './travel';
+import type { Risk } from './advice';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -276,4 +278,33 @@ export function pillarValue(s: GameState, a: PlayerAction, chanceOk: number): nu
     }
     default: return 0;
   }
+}
+
+/**
+ * Risks with their real odds, for orders whose preview only carries them in
+ * its warning text. Returns undefined when advice.ts should use the warning.
+ */
+export function pillarRisks(s: GameState, a: PlayerAction): Risk[] | undefined {
+  if (a.kind === 'travel' && a.op.type === 'trip') {
+    const q = quoteTrip(s, a.op.plan);
+    const sev = (x: number): Risk['severity'] => (x >= 0.25 ? 'high' : x >= 0.08 ? 'mid' : 'low');
+    const out: Risk[] = [];
+    const add = (chance: number, text: string, source: string) => { if (chance >= 0.01) out.push({ text, chance, source, severity: sev(chance) }); };
+    add(q.risks.sighting, 'the Feds see who he meets', `${a.op.plan.mode} and ${a.op.plan.guests.length} guest${a.op.plan.guests.length === 1 ? '' : 's'}`);
+    add(q.risks.tail, 'he is tailed', 'How conspicuous the trip is');
+    add(q.risks.accident, 'an accident on the way', 'How they travel');
+    add(q.risks.discovery, 'the wife finds out', 'The companion on the trip');
+    if (a.op.plan.leaderId === s.playerId) out.push({ text: 'the capos get ideas while you are gone; orders go through the chain', chance: 1, source: 'The boss away', severity: 'mid' });
+    return out;
+  }
+  if (a.kind === 'bones' && a.op.op === 'assign') {
+    const c = s.characters[a.op.charId];
+    if (!c) return undefined;
+    const o = bonesOdds(s, c, a.op.kind);
+    const out: Risk[] = [{ text: 'he freezes or fails: no bones', chance: 1 - o.chance, source: 'His odds on the job', severity: o.chance < 0.5 ? 'high' : o.chance < 0.7 ? 'mid' : 'low' }];
+    if (o.hot >= 0.1) out.push({ text: 'he goes too far: heat and a body nobody wanted', chance: o.hot, source: 'Impulsiveness', severity: o.hot >= 0.35 ? 'high' : 'mid' });
+    if (o.talk >= 0.1) out.push({ text: 'he talks about it after: evidence', chance: o.talk, source: 'Discretion', severity: o.talk >= 0.35 ? 'high' : 'mid' });
+    return out;
+  }
+  return undefined;
 }

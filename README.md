@@ -143,8 +143,46 @@ deterministic and reads the same previews the order cards show, so a tooltip can
 | `opportunities.ts` | "What should I do?": the 3–5 best opportunities and threats, each linked to its action or picker; the "This week" checklist tied to the early-goals ladder |
 | `glossary.ts` | Plain-words help for heat, respect, opinion, the Table, schemes, kick-up, laundering, succession; tooltips quote the engine's constants |
 
+| `advicePillars.ts` | The same for the newer pillars (power, politics, travel, bones, the books, the law, the underbelly, romance): purposes, what it sets up, best-when, value |
+
 UI: `src/ui/clarity/*` (`WhyPanel`, `ChoiceWhy`, `CandidatePicker`, `PickerModal`, `AdvisorQuotes`, `Tip`, `WhatToDoPanel`,
-`GlossaryOverlay`, `TaskAdvice`; open a picker from anywhere with `useClarity().openPicker(role)`).
+`GlossaryOverlay`, `TaskAdvice`, and the ready-made `HeirCompare`, `OfficialPicker`, `KeeperPicker`, `BonesPicker`, `TripWhy`).
+Import everything from `src/ui/clarity` (the index).
+
+### Using the clarity layer (for new screens)
+
+Engine (pure; never mutates; safe in render):
+
+```ts
+explainAction(s, action)        // → { title, purpose, gains, costs, changes, risks, unlocks, bestWhen, verdict, chance, value, summary }
+explainChoice(s, choice)        // the same for one option of a weekly decision
+compareChoices(s, ev.choices)   // → [{ id, ex, tags: ['Best value' | 'Cheapest' | 'Safest'] }]
+rankCandidates(s, role, pool?)  // → { question, candidates (best first), recommendedId, alternativeId, alternativeWhy }
+advisorAdvice(s, ranking)       // the consigliere's and underboss's (possibly partial) pick, in character
+whatShouldIDo(s, n) / weekChecklist(s, { answered, ordersQueued })
+glossaryEntry(id) / statHelp(stat) / effectHelp(effect)
+```
+
+`Role` is one of `seat`, `capo`, `make`, `voucher`, `manager`, `agent`, `envoy`, `heir` (`wide: true` adds senior men),
+`marriage`, `lobby`, `official`, `keeper`, `bones` (`job: 'heist' | 'collection' | 'hit'`).
+
+UI:
+
+| Need | Use |
+|---|---|
+| An order card that explains itself | `<ActionCard s action />` already includes `<WhyPanel>`; for a custom card add `<WhyPanel s action compact? />` |
+| A decision option | `<ChoiceWhy a={compareChoices(s, ev.choices)[i]} />` |
+| "Who should it be?" inline | `<CandidatePicker s role pool? limit? onPick? selected? onToggle? hideAdvisors? />` (default: picking queues the candidate's order; `onPick` to do something else; `selected` + `onToggle` for a team) |
+| The same as a modal, from anywhere | `useClarity().openPicker(role, { pool?, onPick? })` |
+| Hover help | `<Tip term="heat.local">…</Tip>` or `<Tip text="…">…</Tip>` |
+| Open the glossary / the advice panel / a tab | `useClarity().openHelp(term?)`, `.openAdvice()`, `.goTab(tab)` |
+| The "What should I do?" list in a rail | `<WhatToDoPanel s compact? />` (buttons queue the order, open the picker, the trip planner or the tab) |
+
+Rules: every number a why-panel shows comes from `previewAction` (the same preview the card shows and the resolver
+applies); "per week" and "if it works" lines are labelled as such. `tests/clarity.test.ts` and
+`tests/clarityPillars.test.ts` check the immediate lines against the ledger, and that a picker never offers an order
+its card would refuse. To support a new action kind, add its purpose (and optionally unlocks, best-when, value) to
+`advicePillars.ts`; to support a new pick, add a `Role` and a `xxxRole(s, pool): Raw[]` in `candidates.ts`.
 ## The story layer (content packs and romance)
 
 | File | What it does |

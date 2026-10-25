@@ -16,7 +16,7 @@ import { whatShouldIDo } from '../src/engine/opportunities';
 import { polActions } from '../src/engine/politics';
 import { powerActions } from '../src/engine/power';
 import { romanceActions } from '../src/engine/romance';
-import { suggestPlan } from '../src/engine/travel';
+import { quoteTrip, suggestPlan } from '../src/engine/travel';
 import type { GameState, PlayerAction } from '../src/engine/types';
 import { HeirCompare, KeeperPicker, OfficialPicker, TripWhy } from '../src/ui/clarity';
 
@@ -101,10 +101,15 @@ describe('clarity on the newer pillars: explainAction', () => {
 
   it('a trip is explained with its cost, and what is risky about it', () => {
     const s = midGame('clar-pil-trip');
-    const a: PlayerAction = { kind: 'travel', op: { type: 'trip', plan: suggestPlan(s, s.playerId) } };
-    const ex = explainAction(s, a);
+    const plan = suggestPlan(s, s.playerId);
+    const ex = explainAction(s, { kind: 'travel', op: { type: 'trip', plan } });
     expect(ex.purpose).toMatch(/stress/);
     expect(ex.bestWhen.some((c) => c.text.includes('No war'))).toBe(true);
+    // The trip's own odds, not a blanket warning.
+    const q = quoteTrip(s, plan);
+    expect(ex.risks.some((r) => r.source === 'Warning')).toBe(false);
+    const seen = ex.risks.find((r) => r.text.includes('Feds'));
+    if (q.risks.sighting >= 0.01) expect(seen?.chance).toBe(q.risks.sighting);
   });
 });
 

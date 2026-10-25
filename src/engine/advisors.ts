@@ -64,8 +64,12 @@ function firstName(s: GameState, c: Candidate): string {
   return ch ? (ch.id === s.playerId ? 'yourself' : ch.nickname ?? ch.firstName) : c.name.replace(/ \(.*\)$/, '');
 }
 
-function line(s: GameState, a: Character, pick: Candidate, biased: boolean, self: boolean): string {
+const MONEY_ROLES = new Set(['manager', 'keeper', 'capo', 'make', 'official']);
+
+function line(s: GameState, a: Character, pick: Candidate, biased: boolean, self: boolean, roleKind: string, seat?: string): string {
   const who = self ? 'me' : firstName(s, pick);
+  const she = pick.charId && s.characters[pick.charId]?.gender === 'F';
+  const money = MONEY_ROLES.has(roleKind) || seat === 'bagman';
   const pro = pick.pros[0]?.text ?? '';
   // "Honest: won't skim" → "honest"; but keep "Can do: a pardon" whole (the head alone says nothing).
   const head = pro.replace(/:.*$/, '');
@@ -73,12 +77,12 @@ function line(s: GameState, a: Character, pick: Candidate, biased: boolean, self
   const r = reason ? ` ${reason.charAt(0).toUpperCase()}${reason.slice(1)}.` : '';
   if (self) return hasTrait(a, 'Ambitious') ? `"You want it done right? Give it to ${who}."` : `"If it's all the same to you, I'll take it on myself."`;
   if (hasTrait(a, 'Honest')) return `"${who[0].toUpperCase()}${who.slice(1)}.${r} I'd stake my name on it."`;
-  if (hasTrait(a, 'Greedy')) return `"Put ${who} on it. He knows where the money is.${biased ? ' Trust me.' : ''}"`;
+  if (hasTrait(a, 'Greedy')) return money ? `"Put ${who} on it. ${she ? 'She' : 'He'} knows where the money is.${biased ? ' Trust me.' : ''}"` : `"${who[0].toUpperCase()}${who.slice(1)}. The rest is talk.${biased ? ' Trust me.' : ''}"`;
   if (hasTrait(a, 'Hot-headed')) return `"${who[0].toUpperCase()}${who.slice(1)}, and let's stop talking about it."`;
   if (hasTrait(a, 'Paranoid')) return `"${who[0].toUpperCase()}${who.slice(1)}. The others — I don't know who they talk to."`;
   if (hasTrait(a, 'Charming')) return `"Everybody likes ${who}. That counts for something.${r}"`;
   if (hasTrait(a, 'Patient')) return `"Take your time. But when you decide, it's ${who}.${r}"`;
-  if (hasTrait(a, 'Cruel')) return `"${who[0].toUpperCase()}${who.slice(1)}. Nobody crosses him twice."`;
+  if (hasTrait(a, 'Cruel')) return `"${who[0].toUpperCase()}${who.slice(1)}. Nobody crosses ${she ? 'her' : 'him'} twice."`;
   if (hasTrait(a, 'Pious')) return `"${who[0].toUpperCase()}${who.slice(1)}, God willing.${r}"`;
   return `"If you're asking me — ${who}.${r}"`;
 }
@@ -111,7 +115,7 @@ export function advisorPick(s: GameState, seat: AdvisorSeat, ranking: Ranking): 
     seat,
     pickId: pick.id,
     pickName: pick.name,
-    quote: line(s, a, pick, biased, self),
+    quote: line(s, a, pick, biased, self, ranking.role.kind, ranking.role.kind === 'seat' ? ranking.role.seat : undefined),
     biased,
     opinionOfPick: pickChar && !self ? opinion(s, a.id, pickChar.id) : 0,
     tie: best!.tie,

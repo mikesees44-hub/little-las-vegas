@@ -82,7 +82,7 @@ export function CandidateCard({ s, c, ranking, picked, onPick, pickLabel }: {
       <ChipRow items={c.pros} />
       <ChipRow items={c.cons} />
       <ChipRow items={c.flags} tone="flag" />
-      {c.opportunityCost && <div className="text-[11px] text-stone-500"><span className="text-stone-400">Cost of moving him: </span>{c.opportunityCost.replace(/^Pulled from: /, '')}</div>}
+      {c.opportunityCost && <div className="text-[11px] text-stone-500"><span className="text-stone-400">{/^Pulled from: |hustle/.test(c.opportunityCost) ? 'Cost of moving him: ' : 'Cost: '}</span>{c.opportunityCost.replace(/^Pulled from: /, '')}</div>}
       <div className="mt-auto pt-1">
         {c.disabledReason ? (
           <div className="text-[11px] text-red-400">{c.disabledReason}</div>

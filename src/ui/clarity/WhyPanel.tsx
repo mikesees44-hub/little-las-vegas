@@ -43,7 +43,7 @@ function RiskLine({ r }: { r: Risk }) {
   const tone = r.severity === 'high' ? 'text-red-300' : r.severity === 'mid' ? 'text-amber-300' : 'text-stone-400';
   return (
     <li className={`${tone} leading-snug`}>
-      <span className="tabular-nums font-semibold">{Math.round(r.chance * 100)}%</span> {r.text.replace(/^\d+% /, '')}
+      {r.source === 'Warning' ? <span className="font-semibold">⚠</span> : <span className="tabular-nums font-semibold">{Math.round(r.chance * 100)}%</span>} {r.text.replace(/^\d+% /, '')}
       <span className="text-stone-600"> — {r.source}</span>
     </li>
   );

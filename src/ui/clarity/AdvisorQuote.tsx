@@ -24,7 +24,7 @@ export function AdvisorQuotes({ s, ranking }: { s: GameState; ranking: Ranking }
               <div className="font-display italic text-stone-100">{a.quote}</div>
               <div className="text-[11px] text-stone-500">
                 — {a.advisorName}, {a.seat}
-                {a.pickId !== s.playerId && a.tie !== 'himself' && (
+                {a.pickId !== s.playerId && a.tie !== 'himself' && !!s.characters[a.pickId] && (
                   <> · <Tip term="opinion"><span>thinks <span className={a.opinionOfPick >= 25 ? 'text-emerald-300' : a.opinionOfPick <= -25 ? 'text-red-300' : 'text-stone-300'}>{signed(a.opinionOfPick)}</span> of {a.pickName.split(' (')[0]}</span></Tip></>
                 )}
                 {a.tie && <span className="text-amber-300"> · {a.tie === 'himself' ? 'he backs himself' : a.tie}</span>}

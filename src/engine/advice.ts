@@ -1,5 +1,5 @@
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
-import { pillarBestWhen, pillarPurpose, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
+import { pillarBestWhen, pillarPurpose, pillarRisks, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
 import { idleMen } from './business';
 import { isInSeason, memorialDay, toDays } from './calendar';
 import { CATALOG } from './catalog';
@@ -576,7 +576,9 @@ function risksOf(s: GameState, a: PlayerAction, p: ActionPreview): Risk[] {
     }
   }
   if (p.cost > 0 && s.money - p.cost < 1000 && !p.disabledReason) out.push({ text: `Leaves only ${fmtMoney(s.money - p.cost)} in the treasury`, chance: 1, source: 'Treasury', severity: s.money - p.cost < 0 ? 'high' : 'mid' });
-  if (p.warning && a.kind !== 'order') out.push({ text: p.warning, chance: 1, source: 'Warning', severity: 'high' });
+  const own = pillarRisks(s, a);
+  if (own) out.push(...own);
+  else if (p.warning && a.kind !== 'order') out.push({ text: p.warning, chance: 1, source: 'Warning', severity: 'high' });
   return out;
 }
 
