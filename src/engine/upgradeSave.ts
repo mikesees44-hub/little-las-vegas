@@ -26,10 +26,14 @@ export function upgradeSave(s: GameState): GameState {
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
     ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute],
-    ['hood' as keyof GameState, ensureHood], ['talks' as keyof GameState, ensureTalks], ['missions' as keyof GameState, ensureMissions],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;
+    try { step(s); } catch { /* the weekly update will try again */ }
+  }
+  // The neighborhood records, the talks and the missions are made at load too,
+  // so an old save can walk the streets before its first week is played.
+  if (s.hood === undefined) for (const step of [ensureHood, ensureTalks, ensureMissions]) {
     try { step(s); } catch { /* the weekly update will try again */ }
   }
   // The old player-run call service goes back to the Madam's network.
