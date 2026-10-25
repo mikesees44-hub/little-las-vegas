@@ -11,6 +11,7 @@ import { LIFESTYLE_IDS } from '../src/engine/lifestyle';
 import { isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { advanceWeek, forceDeath } from '../src/engine/engine';
 import { reconcile } from '../src/engine/ledger';
+import { randomTravelAction } from '../src/engine/travel';
 import { validatePlayer } from '../src/engine/dynasty';
 import { rand } from '../src/engine/rng';
 import { MAX_POPUPS } from '../src/engine/events';
@@ -49,6 +50,9 @@ const ROMANCE_RATE = Number(arg('romance', '0.015'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
+/** Chance per week of a trip (a vacation, a business trip, or a move while on the lam). */
+const TRAVEL_RATE = Number(arg('travel', '0.04'));
+/** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
 
 const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ? xs[Math.floor(rand(h) * xs.length)] : undefined);
@@ -85,6 +89,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
   if (rand(h) < ROMANCE_RATE) add(pickOne(h, romanceActions(s).filter((a) => !previewAction(s, a).disabledReason)));
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
+  if (rand(h) < TRAVEL_RATE) add(randomTravelAction(s, h));
   return { choices, actions };
 }
 
@@ -124,6 +129,8 @@ interface GameResult {
   dyn?: Record<string, number>;
   /** Economy-layer counters at the end of the game (econState.ts). */
   econ?: Record<string, number>;
+  /** Travel counters at the end of the game (travelState.ts). */
+  travel?: Record<string, number>;
   hierarchyErrors: string[];
   crew: { defections: number; coups: number; flips: number; makings: number; rivalCrewMoves: number };
   popupKeys: Record<string, number>;
@@ -244,6 +251,7 @@ function playOne(gi: number): GameResult {
   r.finalRespect = s!.respect;
   if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
+  if (s!.travel) r.travel = { ...s!.travel.stats };
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   if (s!.power) r.power = { ...s!.power.stats };
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
@@ -298,6 +306,11 @@ const orders: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.orders)) orders[k] = (orders[k] ?? 0) + v;
 console.log(`  Orders per game:            ${Object.entries(orders).map(([k, v]) => `${k} ${(v / GAMES).toFixed(1)}`).join(', ')}`);
 
+const travelGames = results.filter((r) => r.weeksPlayed > 0);
+{
+  const keys = ['trips', 'vacations', 'business', 'flights', 'captures', 'surrenders', 'exiles', 'returns', 'discoveries', 'tails', 'accidents', 'meetings', 'sightings'];
+  console.log(`  Travel per game (mean): ${keys.map((k) => `${k} ${(travelGames.reduce((a, r) => a + (r.travel?.[k] ?? 0), 0) / Math.max(1, travelGames.length)).toFixed(2)}`).join(', ')}`);
+}
 const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
 if (econGames.length) {
   const keys = Object.keys(econGames[0].econ!);

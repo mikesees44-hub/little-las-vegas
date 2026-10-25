@@ -4,6 +4,7 @@ import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
 import { commitEcon, econActions, previewEcon } from './econ';
+import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
@@ -147,6 +148,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       let why: string | undefined;
       why = need(def.available(s), 'Not possible right now', why);
       why = need(a.via === 'direct' || !!agent, a.via === 'underboss' ? 'You have no underboss to pass it through' : 'No capo free to carry it', why);
+      if (a.via === 'direct') why = why ?? directOrderBlock(s);
       why = need(s.money >= cost, `Needs ${fmtMoney(cost)}`, why);
       if (a.via === 'direct') {
         return {
@@ -158,7 +160,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       return {
         title: `${ch.label} (through ${agent ? agent.firstName : 'nobody'})`,
         detail: `${ch.detail ? ch.detail + ' ' : ''}${VIA_INFO[a.via].text}`,
-        effects: [{ type: 'schedule', key: 'delegated_order', minWeeks: 1, maxWeeks: 1, chance: 1, hint: `${agent?.firstName ?? 'He'} carries it out next week`, params: { key: a.key, via: a.via, agent: agent?.id ?? '' }, label }],
+        effects: [{ type: 'schedule', key: 'delegated_order', minWeeks: 1 + messengerDelay(s), maxWeeks: 1 + messengerDelay(s), chance: 1, hint: messengerDelay(s) ? `A messenger carries it; ${agent?.firstName ?? 'he'} acts in ${1 + messengerDelay(s)} weeks` : `${agent?.firstName ?? 'He'} carries it out next week`, params: { key: a.key, via: a.via, agent: agent?.id ?? '' }, label }],
         odds: { chance: odds.obey, reasons: [{ label: `Done as told`, value: Math.round(odds.obey * 100) }, { label: 'Done his way', value: Math.round(odds.distort * 100) }, { label: 'Ignored', value: -Math.round((1 - odds.obey - odds.distort) * 100) }] },
         warning: `What it would do: ${ch.effects.map((e) => e.type === 'money' ? `${e.amount > 0 ? '+' : ''}${fmtMoney(e.amount)}` : e.type).filter((x) => x !== 'schedule').slice(0, 4).join(', ')}`,
         cost: 0, because: `${ch.because} (through ${agent?.firstName ?? 'the chain'})`, disabledReason: why, category: 'event',
@@ -226,6 +228,11 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   econ: {
     preview: (s, a) => previewEcon(s, a.op),
     commit: (ctx, a) => commitEcon(ctx, a.op),
+  },
+  /** Travel, trips and flight (travel.ts, fugitive.ts). */
+  travel: {
+    preview: (s, a) => previewTravel(s, a.op),
+    commit: (ctx, a) => commitTravel(ctx, a.op),
   },
   declareWar: {
     preview: (s, a) => {

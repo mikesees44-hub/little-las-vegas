@@ -35,6 +35,10 @@ import { OrdersContext, OrdersTray } from './components/Orders';
 import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
+import { TravelContext } from './travel/context';
+import { TripPlanner } from './travel/TripPlanner';
+import { FleePlanner } from './travel/FleePlanner';
+import { FugitiveBanner } from './travel/Panels';
 
 export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'gifts' | PowerSub;
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
@@ -83,6 +87,12 @@ export function App() {
   const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
 
+  const [tripPlan, setTripPlan] = useState<{ leaderId: string; destId?: string } | undefined>();
+  const [fleeFor, setFleeFor] = useState<string | undefined>();
+  const travelApi = useMemo(() => ({
+    plan: (leaderId: string, destId?: string) => { setSheet(undefined); setTripPlan({ leaderId, destId }); },
+    flee: (personId: string) => { setSheet(undefined); setFleeFor(personId); },
+  }), []);
   useEffect(() => saveGame(s), [s]);
   const [speed, setSpeed] = useState<Speed>(0);
   const [clockNote, setClockNote] = useState<string | undefined>();
@@ -168,7 +178,7 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!sheet || !!planner || !!reports || cues.length > 0;
+  const busy = !!current || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || cues.length > 0;
   useClock({
     speed, s, busy, unanswered: unanswered.length,
     step: () => run('week', answers, true),
@@ -193,6 +203,7 @@ export function App() {
     <SheetContext.Provider value={sheetApi}>
     <PlannerContext.Provider value={plannerApi}>
     <OrdersContext.Provider value={ordersApi}>
+    <TravelContext.Provider value={travelApi}>
     <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
       <Header s={s}>
         {!s.gameOver && (
@@ -247,6 +258,7 @@ export function App() {
         ) : null;
       })()}
 
+      {!s.gameOver && <FugitiveBanner s={s} onOpen={() => setTab('law')} />}
       {tab === 'map' ? (
         <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => setTab('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
       ) : (
@@ -294,8 +306,11 @@ export function App() {
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {reports && !current && !sheet && !planner && !cues.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
+      {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
+      {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>
+    </TravelContext.Provider>
     </OrdersContext.Provider>
     </PlannerContext.Provider>
     </SheetContext.Provider>
