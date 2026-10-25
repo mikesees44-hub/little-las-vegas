@@ -754,6 +754,14 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'rename': {
+      const nm = a.name.trim().slice(0, 40);
+      const lot = a.key.startsWith('lot:') ? e?.lots.find((l) => `lot:${l.id}` === a.key) : undefined;
+      const b = s.businesses.find((x) => x.id === a.key && x.owner === 'player');
+      const title = `Rename ${placeName(s, a.key)} "${nm}"`;
+      const why = !nm ? 'No name' : !b && !(lot && (lot.status === 'owned' || lot.status === 'leased')) ? 'Not yours' : undefined;
+      return { title, detail: 'A new sign goes up over the door.', effects: [note(`The sign reads "${nm}"`)], cost: 0, because: `renamed ${placeName(s, a.key)} "${nm}"`, disabledReason: why, category: 'event' };
+    }
     case 'buyLot': {
       const l = e?.lots.find((x) => x.id === a.lotId);
       if (!l) return noop('Buy property', 'No such lot');
@@ -1056,6 +1064,15 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       break;
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
+    case 'rename': {
+      const nm = a.name.trim().slice(0, 40);
+      const lot = a.key.startsWith('lot:') ? e.lots.find((l) => `lot:${l.id}` === a.key) : undefined;
+      if (lot) lot.name = nm;
+      const b = s.businesses.find((x) => x.id === (lot?.bizId ?? a.key));
+      if (b) b.name = nm;
+      if (b && !lot) { const l2 = e.lots.find((l) => l.bizId === b.id); if (l2) l2.name = nm; }
+      break;
+    }
     case 'buyLot': {
       const l = e.lots.find((x) => x.id === a.lotId);
       if (!l) break;

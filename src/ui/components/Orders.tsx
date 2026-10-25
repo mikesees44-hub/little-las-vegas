@@ -1,4 +1,6 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useState } from 'react';
+import { sameTarget, targetOf } from '../../engine/deals';
+import { DealWindow } from '../econ/DealWindow';
 import { previewAction, queuedCost } from '../../engine/actions';
 import type { Acceptance } from '../../engine/interactions';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -31,9 +33,13 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
   const { orders, queue } = useOrders();
   const p = previewAction(s, action);
   const budget = s.money - queuedCost(s, orders);
-  const queued = orders.some((o) => same(o, action));
+  // A purchase opens the Deal window instead of queueing at the asking price.
+  const deal = action.kind === 'econ' && action.op.type === 'deal' ? undefined : targetOf(action);
+  const [dealing, setDealing] = useState(false);
+  const queued = orders.some((o) => same(o, action) || (!!deal && o.kind === 'econ' && o.op.type === 'deal' && sameTarget(o.op.target, deal)));
   const broke = !p.disabledReason && p.cost > 0 && p.cost > budget ? `Only ${fmt$(budget)} left after this week's orders` : undefined;
-  const why = p.disabledReason ?? broke;
+  // At the table the price can come down: only a hard block stops the offer.
+  const why = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
   return (
     <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`}>
       <div className="flex items-start justify-between gap-2">
@@ -44,9 +50,10 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         <button
           className={queued ? 'btn-ghost text-xs py-1 shrink-0' : 'btn-gold text-xs py-1 shrink-0'}
           disabled={!!why || queued}
-          onClick={() => queue(action)}
+          onClick={() => (deal ? setDealing(true) : queue(action))}
+          data-testid={deal ? 'make-offer' : undefined}
         >
-          {queued ? 'Ordered' : 'Order'}
+          {queued ? (deal ? 'Signed' : 'Ordered') : deal ? 'Make an offer' : 'Order'}
         </button>
       </div>
       <Chips s={s} effects={p.effects} />
@@ -58,6 +65,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       )}
       {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
       <WhyPanel s={s} action={action} compact={compact} />
+      {dealing && deal && <DealWindow s={s} target={deal} onClose={() => setDealing(false)} />}
     </div>
   );
 }

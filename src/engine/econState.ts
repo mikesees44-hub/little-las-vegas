@@ -293,6 +293,8 @@ export type EconAction =
   | { type: 'buyLot'; lotId: string; going?: boolean }
   /** The Deal (deals.ts): a purchase signed across a desk — haggling, cash, who runs it. */
   | { type: 'deal'; target: DealTarget; terms: DealTerms }
+  /** Rename a place you own (a business id or `lot:<id>`). */
+  | { type: 'rename'; key: string; name: string }
   | { type: 'leaseLot'; lotId: string }
   | { type: 'build'; lotId: string; use: string }
   | { type: 'renovate'; lotId: string }

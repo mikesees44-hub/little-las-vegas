@@ -11,6 +11,7 @@ import { Overview } from '../components/Overview';
 import { CharLink } from '../components/People';
 import { GROUP_COLOR, WorldMap, type Level } from './WorldMap';
 import { LotPanel } from '../econ/LotPanel';
+import { BizPanel } from '../econ/BizPanel';
 import { useTravel } from '../travel/context';
 import { TravellersPanel } from '../travel/Panels';
 
@@ -54,6 +55,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
             flyTo={fly}
             lots={{ year: asOf, since1960: since }}
             onLot={(id) => { setLot(id); setDistrict(undefined); setCity(undefined); }}
+            onBiz={(id) => { setLot(`biz:${id}`); setDistrict(undefined); setCity(undefined); }}
           />
           <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1.5">
             <nav className="flex items-center gap-1 rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-xs" aria-label="Map level">
@@ -94,7 +96,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
           {lot ? (
             <>
               <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setLot(undefined)}>← the whole board</button>
-              <LotPanel s={s} id={lot} />
+              {lot.startsWith('biz:') ? <BizPanel s={s} id={lot.slice(4)} /> : <LotPanel s={s} id={lot} />}
             </>
           ) : district ? (
             <>
