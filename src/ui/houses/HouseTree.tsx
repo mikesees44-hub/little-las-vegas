@@ -2,6 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState, type PointerEv
 import type { GameState } from '../../engine/types';
 import { deathLine, fullName, houseTree, lifespan, livingOnly, node, type PNode, type TreeUnit } from '../../engine/housesView';
 import { useSheet } from '../components/People';
+import { KIN_ROLE_INFO } from '../../engine/housesKin';
 import { Badge } from '../family/bits';
 import { useHousesNav } from './nav';
 import { PersonFace } from './PersonFace';
@@ -60,6 +61,7 @@ function CardImpl({ s, n, houseId, head, founder, spouse }: CardProps) {
         {founder && <Badge tone="gold">Founder</Badge>}
         {n.note && <Badge>{n.note === 'Took the veil' ? 'Nun' : n.note === 'Became a priest' ? 'Priest' : n.note}</Badge>}
         {n.alive && n.rank && n.rank !== 'civilian' && !head && <Badge>{n.rank}</Badge>}
+        {n.alive && n.roles?.length ? <Badge tone="gold" title={n.roles.map((r) => KIN_ROLE_INFO[r].text).join(' ')}>{KIN_ROLE_INFO[n.roles.find((r) => r !== 'cousin' && r !== 'uncle' && r !== 'aunt' && r !== 'advisor') ?? n.roles[0]].label}</Badge> : null}
         {!n.alive && n.titles.length > 0 && !founder && <Badge title={n.titles.join('; ')}>{n.titles[0].split(/ \d| since/)[0].slice(0, 18)}</Badge>}
         {from && (
           <button type="button" data-testid="spouse-house" className="rounded border border-gold-600/50 bg-noir-700 px-1 text-[10px] font-semibold text-gold-300 hover:bg-gold-500/20" onClick={(e) => { e.stopPropagation(); openHouse(from.id); }} title={`Go to ${from.title}`}>

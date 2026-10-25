@@ -219,3 +219,33 @@ describe('feuds carry through families', () => {
     expect(s.lineage!.grudges.some((x) => x.victim === victim.id)).toBe(true);
   });
 });
+
+describe('the living extended family', () => {
+  it('your house has a matriarch, uncles and aunts, cousins (a priest, a cop, one who wants in), an in-law, godchildren, as real characters', async () => {
+    const { kinByRole } = await import('../src/engine/housesKin');
+    const { interactionsFor } = await import('../src/engine/interactions');
+    for (const seed of ['kin-1', 'kin-2', 'kin-3']) {
+      const s = newGame(seed);
+      const mine = (r: Parameters<typeof kinByRole>[1]) => kinByRole(s, r, 'player');
+      expect(mine('matriarch').length, `${seed} matriarch`).toBe(1);
+      expect(mine('matriarch')[0].gender).toBe('F');
+      expect(mine('uncle').length + mine('aunt').length, `${seed} uncles/aunts`).toBeGreaterThanOrEqual(1);
+      for (const r of ['priest', 'cop'] as const) expect(kinByRole(s, r).length, `${seed} ${r}`).toBeGreaterThanOrEqual(1);
+      expect(kinByRole(s, 'wantsIn').length, `${seed} wants in`).toBeGreaterThanOrEqual(1);
+      expect(kinByRole(s, 'inlaw').length, `${seed} in-law`).toBe(1);
+      expect(kinByRole(s, 'godchild').length, `${seed} godchild`).toBeGreaterThanOrEqual(1);
+      // The women have roles of their own.
+      const women = Object.values(s.characters).filter((c) => c.alive && c.gender === 'F' && c.kinRoles?.some((r) => ['front', 'church', 'numbers', 'advisor', 'match', 'power'].includes(r)));
+      expect(women.length, `${seed} women with roles`).toBeGreaterThanOrEqual(3);
+      // Everyone cast is a Character you can deal with, in the tree, and the trees still hold.
+      for (const c of Object.values(s.characters).filter((x) => x.kinRoles?.length)) {
+        expect(c.alive).toBe(true);
+        expect(houseIndex(s).nodes.get(c.id)?.char).toBe(true);
+        expect(interactionsFor(s, c.id).length, `${c.firstName} ${c.lastName}`).toBeGreaterThan(0);
+      }
+      expect(validateHouses(s)).toEqual([]);
+      // The rival bosses have a matriarch too.
+      expect(kinByRole(s, 'matriarch').length).toBeGreaterThanOrEqual(3);
+    }
+  });
+});

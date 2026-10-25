@@ -4,7 +4,7 @@ import {
 } from './houses';
 import { houseOfFaction } from './housesDeath';
 import { opinion } from './relations';
-import type { Character, FactionId, GameState, Rank } from './types';
+import type { Character, FactionId, GameState, KinRole, Rank } from './types';
 
 /**
  * Read-only views of the houses for the UI: one index of everybody (Characters
@@ -41,6 +41,8 @@ export interface PNode {
   rank?: Rank;
   office?: string;
   faction?: FactionId;
+  /** Family roles (housesKin.ts). */
+  roles?: KinRole[];
 }
 
 export interface HouseIndex {
@@ -79,7 +81,7 @@ export function houseIndex(s: GameState): HouseIndex {
       id: c.id, char: true, first: c.firstName, last: c.lastName, maiden: c.maidenName, nick: c.nickname, g: c.gender, eth: c.ethnicity,
       stock: house && L ? L.houses[house]?.stock : undefined, by: c.birth.y, bm: c.birth.m, dy: c.death?.date.y, dm: c.death?.date.m, cause: c.death?.cause,
       killer: L && c.death?.killer ? houseOfFaction(L, c.death.killer) : undefined, alive: c.alive, house, f: c.fatherId ?? link?.f, m: c.motherId ?? link?.m,
-      sp, kids, titles, born: link?.born, note: link?.note, rank: c.rank, office: c.office, faction: c.faction,
+      sp, kids, titles, born: link?.born, note: link?.note, rank: c.rank, office: c.office, faction: c.faction, roles: c.kinRoles,
     });
   }
   for (const n of nodes.values()) {

@@ -6,6 +6,7 @@ import {
   clean, ownsLineage, updPerson, tidyLineage, type LineageState, type LPerson,
 } from './houses';
 import { rememberGrudges } from './housesDeath';
+import { castKin } from './housesKin';
 import { OUTSIDE_SURNAMES, STOCK_NAMES, type Stock } from './housesData';
 import { crewSeed, generateHouses, initLineage, syncHousehold, wantsCrewHouse, type HouseSeed } from './housesHistory';
 import type { Ctx } from './ledger';
@@ -44,6 +45,8 @@ export function setupHouses(s: GameState): void {
   for (const c of Object.values(s.characters)) if (c.maidenName && !L.links[c.id]) updLink(L, c.id, {});
   // Grown, unmarried sons and daughters of the marriageable houses are people you can meet.
   promoteMarriageable(s, L, census(s, L), 2);
+  // The living extended families become Characters with roles (housesKin.ts).
+  castKin(s);
   // Made men who share a crew house's name join it as kin.
   newcomers(s);
   rememberGrudges(s);
@@ -440,9 +443,8 @@ function householdChanged(s: GameState, c: Character): boolean {
   const hh = c.household!;
   const L = s.lineage!;
   if (!L.links[c.id]?.house) return false;
-  const kids = L.links[c.id]?.kids?.length ?? 0;
-  const sp = L.links[c.id]?.sp?.length ?? 0;
-  return hh.kids.length > kids || (!!hh.wife && sp === 0);
+  // Children and wives the tree knows, whether they stayed off-screen or became Characters.
+  return hh.kids.length > kidsOf(s, c.id).length || (!!hh.wife && spousesOf(s, c.id).length === 0);
 }
 
 function fathersIn(s: GameState, L: LineageState, hid: string, childBy: number): string[] {

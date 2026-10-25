@@ -38,6 +38,11 @@ export type Trait =
   | 'Vengeful'
   | 'Drinker';
 
+/** Family roles cast on the living extended family of the houses (housesKin.ts). */
+export type KinRole =
+  | 'matriarch' | 'uncle' | 'aunt' | 'cousin' | 'priest' | 'cop' | 'wantsIn' | 'inlaw' | 'godchild'
+  | 'front' | 'church' | 'numbers' | 'advisor' | 'match' | 'power';
+
 export interface Attributes {
   leadership: number;
   business: number;
@@ -138,6 +143,8 @@ export interface Character {
   lastEarn?: number;
   /** His personal chronicle (most recent last, capped). */
   story?: StoryEntry[];
+  /** Who this person is to their house (housesKin.ts): 'matriarch', 'uncle', 'cousin', 'inlaw', 'godchild' ... */
+  kinRoles?: KinRole[];
   /** The made man who vouched for him (responsible if he goes bad). */
   vouchedBy?: string;
   /** Proposed to Philadelphia for membership on this week (waiting for the books). */
