@@ -67,7 +67,7 @@ export function TheBooks({ s }: { s: GameState }) {
     v.total += p.line.a;
     padBy.set(k, v);
   }
-  const open = b.discrepancies.filter((d) => !d.settled);
+  const open = b.discrepancies.filter((d) => !d.settled && s.characters[d.whoId]?.alive && s.characters[d.whoId]?.faction === 'player');
   const settled = b.discrepancies.filter((d) => d.settled).slice(-5).reverse();
   const receipts = b.receipts.slice(-10).reverse();
   const lastWeek = weeks[weeks.length - 1];
@@ -192,7 +192,7 @@ export function TheBooks({ s }: { s: GameState }) {
 
       <Panel title="Receipts" note="After a job, whoever did it hands in his report. It is as true as he is honest. Check a bad one with the consigliere (quiet) or the enforcer (loud)." id="books-receipts">
         <ul className="space-y-2">
-          {receipts.map((r) => {
+          {receipts.map((r, ri) => {
             const c = s.characters[r.byId];
             return (
               <li key={r.id} className="rounded border border-noir-700 bg-noir-900/50 p-2 text-xs">
@@ -200,7 +200,7 @@ export function TheBooks({ s }: { s: GameState }) {
                 <div className="italic text-stone-300 mt-0.5">"{r.said}"</div>
                 {r.checked ? (
                   <div className={`mt-1 ${r.checked.caught ? 'text-red-300' : 'text-stone-400'}`}>{r.checked.caught ? `Checked by the ${r.checked.via}: a lie. ${r.truth}` : r.lie ? `The ${r.checked.via} found nothing.` : `The ${r.checked.via} says it checks out.`}</div>
-                ) : c?.alive ? (
+                ) : c?.alive && ri < 3 ? (
                   <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
                     <ActionCard s={s} action={{ kind: 'ledger', op: { op: 'check', receiptId: r.id, via: 'consigliere' } }} compact label="Ask the consigliere" />
                     <ActionCard s={s} action={{ kind: 'ledger', op: { op: 'check', receiptId: r.id, via: 'enforcer' } }} compact label="Send the enforcer" />

@@ -56,6 +56,8 @@ const POL_RATE = Number(arg('politics', '0.12'));
 const MG_PLAY_RATE = Number(arg('mgplay', '0.3'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
+/** Chance per week of a bones or books order (put a prospect on a job, a favor, check a report, confront a skim, change the books). */
+const BONES_RATE = Number(arg('bones', '0.1'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
 /** Chance per week of a trip (a vacation, a business trip, or a move while on the lam). */
 const TRAVEL_RATE = Number(arg('travel', '0.04'));
@@ -109,6 +111,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
     })));
   }
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
+  if (rand(h) < BONES_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'bones' || a.kind === 'ledger')));
   if (rand(h) < TRAVEL_RATE) add(randomTravelAction(s, h));
   return { choices, actions };
   return { choices, actions, minigames };
@@ -150,6 +153,8 @@ interface GameResult {
   dyn?: Record<string, number>;
   /** Economy-layer counters at the end of the game (econState.ts). */
   econ?: Record<string, number>;
+  /** Bones and books counters at the end of the game (bonesState.ts, ledgerbookState.ts). */
+  bones?: Record<string, number>;
   /** Travel counters at the end of the game (travelState.ts). */
   travel?: Record<string, number>;
   hierarchyErrors: string[];
@@ -282,6 +287,7 @@ function playOne(gi: number): GameResult {
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
   if (s!.romance) r.romance = { ...s!.romance.stats };
   if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
+  if (s!.bones || s!.ledgerBook) r.bones = { ...(s!.bones?.stats ?? {}), ...Object.fromEntries(Object.entries(s!.ledgerBook?.stats ?? {}).map(([k, v]) => [`books_${k}`, v])) };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
@@ -336,6 +342,11 @@ const travelGames = results.filter((r) => r.weeksPlayed > 0);
 {
   const keys = ['trips', 'vacations', 'business', 'flights', 'captures', 'surrenders', 'exiles', 'returns', 'discoveries', 'tails', 'accidents', 'meetings', 'sightings'];
   console.log(`  Travel per game (mean): ${keys.map((k) => `${k} ${(travelGames.reduce((a, r) => a + (r.travel?.[k] ?? 0), 0) / Math.max(1, travelGames.length)).toFixed(2)}`).join(', ')}`);
+}
+const boneGames = results.filter((r) => r.bones && r.weeksPlayed > 0);
+if (boneGames.length) {
+  const keys = Object.keys(boneGames[0].bones!);
+  console.log(`  Bones & books per game (mean): ${keys.map((k) => `${k} ${(boneGames.reduce((a, r) => a + (r.bones![k] ?? 0), 0) / boneGames.length).toFixed(1)}`).join(', ')}`);
 }
 const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
 if (econGames.length) {
