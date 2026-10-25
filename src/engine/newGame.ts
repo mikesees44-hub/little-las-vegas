@@ -12,6 +12,7 @@ import { generateWeekEvents } from './events';
 import { initDynasty } from './family';
 import { setupHouses } from './housesLife';
 import { initPolitics } from './politics';
+import { initEars } from './ears';
 import { DISTRICTS, RIVALS } from './world';
 import type { BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
 
@@ -334,5 +335,6 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   initPolitics(s);
   initEcon(s);
   if (!opts.skipHouses) setupHouses(s);
+  initEars(s);
   return s;
 }

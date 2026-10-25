@@ -14,6 +14,7 @@ import type { EconAction, EconOp, EconState } from './econState';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
 import type { BonesAction, BonesEntry, BonesOp, BonesState } from './bonesState';
 import type { LedgerAction, LedgerBookState, LedgerOp } from './ledgerbookState';
+import type { EarsAction, EarsOp, EarsState } from './earsState';
 
 export interface GameDate {
   y: number;
@@ -542,7 +543,9 @@ export type Effect =
   /** Making your bones (bones.ts). */
   | ({ type: 'bones'; op: BonesOp } & EffectBase)
   /** The boss's books and the receipts (ledgerbook.ts). */
-  | ({ type: 'ledger'; op: LedgerOp } & EffectBase);
+  | ({ type: 'ledger'; op: LedgerOp } & EffectBase)
+  /** The Ears: the Madam, the nightlife workers, the connection web (ears.ts). */
+  | ({ type: 'ears'; op: EarsOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -876,6 +879,8 @@ export interface GameState {
   ledgerBook?: LedgerBookState;
   /** The Empire Designer: properties, buildings, venues, staff, supplies (empireState.ts; optional for old saves). */
   empire?: import('./empireState').EmpireState;
+  /** The Ears: the Madam, the nightlife workers, operators, the connection web (optional for old saves). */
+  ears?: EarsState;
 }
 
 export interface PlayerChoices {
@@ -927,7 +932,8 @@ export type PlayerAction =
   | { kind: 'travel'; op: TravelAction }
   | { kind: 'pol'; op: PolAction }
   | { kind: 'bones'; op: BonesAction }
-  | { kind: 'ledger'; op: LedgerAction };
+  | { kind: 'ledger'; op: LedgerAction }
+  | { kind: 'ears'; op: EarsAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

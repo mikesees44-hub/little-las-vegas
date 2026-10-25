@@ -252,3 +252,21 @@ its card would refuse. To support a new action kind, add its purpose (and option
 
 To add a content pack: copy its files into flat `src/engine/storyData<Name>*.ts` and add one entry to `STORY_PACKS`.
 To cast world-pack people, the population layer calls `registerWorldMaterializer((s, worldId) => Character | undefined)`.
+
+## The Ears: the Madam, the nightlife workers, the connection web
+
+Nightlife workers are the best spies, and the Madam is the boss's friend, not his employee. Everything here is
+off-screen and non-explicit (a set-up, then a report), every woman is an adult who decides for herself, and the player
+never coerces, holds debts over, recruits by force or trades in people: the operators who do are enemies to fight.
+
+| File | What it does |
+|---|---|
+| `earsState.ts` | `GameState.ears` (optional, its own seeded stream): the Madam (her house, public face, lieutenants, successor, money, network, the protection cut, intel pact, venture, ally, squeeze, favors), the Ears (work, venue, network, trust, nerve, discretion, charm, price, goal, her own lines), operators, links, jobs, held hints, story hooks |
+| `ears.ts` | Setup per game (fictional names from the world pack's pools); the weekly/monthly tick; orders `{ kind: 'ears', op }` (ask her: "Can you get close to him?" / "Give him a dance", take care of her, protect her, the Madam's diplomacy, going after an operator) with odds and every reason; effect ops `{ type: 'ears', op }`; reports and intel that feed secrets, hooks (affairs and graft only), dirt on officials, plant-found events, rival plots uncovered, the boss's case; the popup source (the Madam, a woman asking for protection, web stories, hints) through the story director |
+| `earsWeb.ts` | Who is attached to whom: likes, a regular, girlfriend, mistress, in love, an ex, owes; strength, hidden until an Ear reveals it; grows from visits, dates, romances, reports and on its own; jealousy, a man protecting her, pillow-talk leaks to a rival, breakups, a pregnancy, a wife finding out. Only between a man and a woman drawn to each other; same-sex romances stay private and are never leverage |
+| `earsData.ts` | The words: hint settings, one-liners by subject, reports, her opinion of him by his nature, refusals, counter-offers, protection pleas, the Madam's scenes. Every pool is drawn without repeats per game |
+
+UI: `src/ui/ears` — `NightPanel` (Town → The Night: the Madam, the Ears, operators, what came in), `AttachmentBoard`
+(Town → Who's attached to whom; a club hub can drop it in as is), `EarsPicker` (the person menu's "The Ears" category),
+`ConnectionsList` / `ConnectionsSection` (person menu and character sheet). Jobs and the Madam's squeeze show on the
+In Motion strip. The sim's random player uses the Ears' orders (`--ears 0.06`).

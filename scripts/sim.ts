@@ -15,6 +15,7 @@ import { LIFESTYLE_IDS } from '../src/engine/lifestyle';
 import { isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { advanceWeek, forceDeath } from '../src/engine/engine';
 import { reconcile } from '../src/engine/ledger';
+import { opinion } from '../src/engine/relations';
 import { affordable, affordableChoices, choiceCost, isCareless, isCutback, newBudget, orderCost, spare, spend, trackBudget, type Budget } from './simBudget';
 import { dumpLedger, ledgerGameDone, ledgerTap, orderTap, printLedger } from './simLedger';
 import { randomTravelAction } from '../src/engine/travel';
@@ -68,6 +69,8 @@ const MG_PLAY_RATE = Number(arg('mgplay', '0.3'));
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Chance per week of a bones or books order (put a prospect on a job, a favor, check a report, confront a skim, change the books). */
 const BONES_RATE = Number(arg('bones', '0.1'));
+/** Chance per week of an Ears order (ask an Ear about a man, take care of one, the Madam's diplomacy, go after an operator). */
+const EARS_RATE = Number(arg('ears', '0.06'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
 /** Chance per week of a trip (a vacation, a business trip, or a move while on the lam). */
 const TRAVEL_RATE = Number(arg('travel', '0.04'));
@@ -172,6 +175,7 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
     }
   }
   if (rand(h) < BONES_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'bones' || a.kind === 'ledger')));
+  if (rand(h) < EARS_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'ears')));
   if (rand(h) < TRAVEL_RATE) {
     const t = randomTravelAction(s, h);
     if (t && (!budget || affordable(s, budget, t))) add(t);
@@ -221,6 +225,8 @@ interface GameResult {
   econ?: Record<string, number>;
   /** Bones and books counters at the end of the game (bonesState.ts, ledgerbookState.ts). */
   bones?: Record<string, number>;
+  /** The Ears' counters at the end of the game (earsState.ts). */
+  ears?: Record<string, number>;
   /** Travel counters at the end of the game (travelState.ts). */
   travel?: Record<string, number>;
   hierarchyErrors: string[];
@@ -378,6 +384,10 @@ function playOne(gi: number): GameResult {
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
   if (s!.romance) r.romance = { ...s!.romance.stats };
   if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
+  if (s!.ears) {
+    const { intel, ...rest } = s!.ears.stats;
+    r.ears = { ...rest, ...Object.fromEntries(Object.entries(intel).map(([k, v]) => [`intel_${k}`, v])), madamOpinion: opinion(s!, s!.ears.madam.id, s!.playerId), knownEars: Object.values(s!.ears.ears).filter((e) => e.known).length, linksKnown: s!.ears.links.filter((l) => !l.hidden).length };
+  }
   if (s!.bones || s!.ledgerBook) r.bones = { ...(s!.bones?.stats ?? {}), ...Object.fromEntries(Object.entries(s!.ledgerBook?.stats ?? {}).map(([k, v]) => [`books_${k}`, v])) };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
@@ -451,6 +461,11 @@ const boneGames = results.filter((r) => r.bones && r.weeksPlayed > 0);
 if (boneGames.length) {
   const keys = Object.keys(boneGames[0].bones!);
   console.log(`  Bones & books per game (mean): ${keys.map((k) => `${k} ${(boneGames.reduce((a, r) => a + (r.bones![k] ?? 0), 0) / boneGames.length).toFixed(1)}`).join(', ')}`);
+}
+const earGames = results.filter((r) => r.ears && r.weeksPlayed > 0);
+if (earGames.length) {
+  const keys = [...new Set(earGames.flatMap((r) => Object.keys(r.ears!)))].sort();
+  console.log(`  The Ears per game (mean): ${keys.map((k) => `${k} ${(earGames.reduce((a, r) => a + (r.ears![k] ?? 0), 0) / earGames.length).toFixed(1)}`).join(', ')}`);
 }
 const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
 if (econGames.length) {

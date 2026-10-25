@@ -1,4 +1,5 @@
 import { ensureBones } from './bonesState';
+import { ensureEars } from './ears';
 import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
 import { ensureDynState } from './familyState';
@@ -15,7 +16,7 @@ import type { GameState } from './types';
  * Each layer fills in only what it lacks; a step that fails is skipped.
  */
 export function upgradeSave(s: GameState): GameState {
-  for (const step of [ensureEcon, ensureEmpire, ensureBones, ensureDynState, ensureLedgerBook, ensureArcs, ensureStory, ensureRomance, ensureTravel, ensurePol] as ((s: GameState) => unknown)[]) {
+  for (const step of [ensureEcon, ensureEmpire, ensureBones, ensureDynState, ensureLedgerBook, ensureArcs, ensureStory, ensureRomance, ensureTravel, ensurePol, ensureEars] as ((s: GameState) => unknown)[]) {
     try { step(s); } catch { /* the weekly update will try again */ }
   }
   return s;

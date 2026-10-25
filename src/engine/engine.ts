@@ -51,6 +51,7 @@ import { kinEventSource } from './housesEvents';
 import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
+import { earsWeek } from './ears';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -294,6 +295,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     regimesWeek(ctx);
     bonesWeek(ctx);
     ledgerWeek(ctx);
+    earsWeek(ctx);
     factionsWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);

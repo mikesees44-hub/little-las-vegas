@@ -341,7 +341,10 @@ function ensureRomanceRO(s: GameState): Pick<RomanceState, 'separations' | 'trut
 export function romanceActions(s: GameState): { kind: 'interact'; id: InteractionId; target: string }[] {
   const boss = player(s);
   const out: { kind: 'interact'; id: InteractionId; target: string }[] = [];
-  const people = Object.values(s.characters).filter((c) => c.alive && c.id !== boss.id && age(s, c) >= ADULT && age(s, c) <= 60);
+  const adults = Object.values(s.characters).filter((c) => c.alive && c.id !== boss.id && age(s, c) >= ADULT && age(s, c) <= 60);
+  // People who could feel the same way first (asking the rest is a wasted evening).
+  const mutual = adults.filter((c) => drawnTo(s, c, boss) && drawnTo(s, boss, c));
+  const people = mutual.length >= 3 ? mutual : adults;
   if (!people.length) return out;
   for (let i = 0; i < 3; i++) {
     const c = people[(s.week * 13 + i * 37) % people.length];

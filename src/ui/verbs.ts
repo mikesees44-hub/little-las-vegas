@@ -160,6 +160,17 @@ export function actionVerb(a: PlayerAction): Verb {
     case 'econ': return ECON[op(a)] ?? v('Do it', 'Set');
     case 'pol': return POL[op(a)] ?? v('Make the move', 'Moving');
     case 'travel': return TRAVEL[op(a)] ?? v('Go', 'Going');
+    case 'ears': {
+      const o = a.op.op;
+      if (o === 'ask') return v('Ask her', 'Asked');
+      if (o === 'retain') return v('Take care of her', 'Envelope sent');
+      if (o === 'protect') return v('Protect her', 'Protected');
+      if (o === 'madamCall') return v('Pay a call', 'Calling');
+      if (o === 'madamFavor') return v('Call in the favor', 'Asked');
+      if (o === 'opRunoff') return v('Run him off', 'Moving');
+      if (o === 'opExpose') return v('Expose him', 'Exposing');
+      return v('Propose it', 'Proposed');
+    }
     case 'bones': {
       const o = a.op as { op: string; kind?: string };
       if (o.op === 'assign') return o.kind === 'hit' ? v('Give him the hit', 'Hit assigned') : o.kind === 'heist' ? v('Send him on the score', 'Sent') : v('Send him to collect', 'Sent');
