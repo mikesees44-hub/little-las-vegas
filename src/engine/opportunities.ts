@@ -13,6 +13,11 @@ import { OPEN_FILE } from './longgame';
 import { opinion } from './relations';
 import { currentRiseGoal, RISE_GOALS, riseGoalsDone } from './riseGoals';
 import { preSeason } from './advice';
+import { needsBones } from './bones';
+import { fam } from './familyState';
+import { challengePressure, successionCandidates } from './heir';
+import { pwView } from './powerState';
+import { myOfficials } from './polPuppets';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -32,7 +37,8 @@ export interface Opportunity {
   /** Button text: "Appoint one →". */
   cta: string;
   /** Where the button goes. */
-  link: { tab?: string; charId?: string; action?: PlayerAction; role?: Role };
+  /** Where the button goes; `trip` opens the trip planner for that leader. */
+  link: { tab?: string; charId?: string; action?: PlayerAction; role?: Role; trip?: string };
 }
 
 function usable(s: GameState, a: PlayerAction): PlayerAction | undefined {
@@ -131,6 +137,29 @@ export function opportunities(s: GameState): Opportunity[] {
     const swing = r.candidates.find((c) => c.id === r.recommendedId && c.upside >= 60);
     out.push({ id: `dispute:${d.id}`, kind: d.defendant === 'player' ? 'threat' : 'opportunity', score: 800 + (swing ? 400 : 0), title: `The Table hears it in week ${d.hearingWeek}`, text: `${d.claim}${swing ? ` ${swing.name}'s vote can be won.` : ''}`, cta: 'Lobby →', link: { role: { kind: 'lobby', disputeId: d.id }, tab: 'table' } });
   }
+
+  // Prospects with no bones: nobody can put their names up.
+  const unbloodied = crew(s).filter((c) => c.rank === 'associate' && !c.specialty && isFree(s, c) && needsBones(s, c) && !s.bones?.jobs.some((j) => j.prospectId === c.id));
+  if (unbloodied.length && (s.books?.open || unbloodied.length >= 3)) {
+    const r = rankCandidates(s, { kind: 'bones', job: 'collection' });
+    const best = r.candidates.find((c) => c.id === r.recommendedId);
+    if (best) out.push({ id: 'bones', kind: 'opportunity', score: s.books?.open ? 850 : 380, title: `${unbloodied.length} associate${unbloodied.length > 1 ? 's' : ''} without bones`, text: `Nobody is made until he has done something for this thing of ours.${s.books?.open ? ' The books are open now.' : ''} Best man for a collection: ${best.name} (${best.outcome}).`, cta: 'Give him a job →', link: { role: { kind: 'bones', job: 'collection' }, tab: 'tree' } });
+  }
+
+  // Someone pushing for the chair.
+  const pushing = successionCandidates(s).map((c) => ({ c, p: challengePressure(s, c).score })).filter((x) => x.p >= 60).sort((a, b) => b.p - a.p)[0];
+  if (pushing) out.push({ id: `pressure:${pushing.c.id}`, kind: 'threat', score: 600 + pushing.p * 12, title: `${pushing.c.firstName} is pushing for the chair`, text: `${displayName(pushing.c)}: challenge pressure ${pushing.p}/100.${pwView(s).ambitions[pushing.c.id]?.revealed ? '' : ' Find out what he wants;'} a promise, amends or a post can buy time.`, cta: 'Heirs & ambition →', link: { tab: 'power' } });
+
+  // City Hall: nobody of yours.
+  if (s.pol && s.money >= 15000 && !myOfficials(s).some((x) => x.idx >= 40)) {
+    const r = rankCandidates(s, { kind: 'official' });
+    const best = r.candidates.find((c) => c.id === r.recommendedId);
+    if (best) out.push({ id: 'official', kind: 'opportunity', score: 320, title: 'Nobody at City Hall is yours', text: `An official you own does favors: permits, licenses, a quiet word. Best place to start: ${best.name} (${best.outcome}).`, cta: 'Compare officials →', link: { role: { kind: 'official' }, tab: 'cityhall' } });
+  }
+
+  // The boss is worn out.
+  const stress = fam(s, boss.id).stress;
+  if (stress >= 50) out.push({ id: 'stress', kind: 'threat', score: 300 + stress * 8, title: `You are worn out (stress ${stress})`, text: 'Past a point stress breaks a man: a temper, a bottle, a mistake. A vacation, a day fishing or the family helps.', cta: 'Plan a trip →', link: { trip: boss.id, tab: 'map' } });
 
   // Lifestyle.
   if (!boss.lifestyle) out.push({ id: 'lifestyle', kind: 'opportunity', score: 350, title: 'Choose how to rule', text: 'A lifestyle earns perks as you go: muscle, money, politics, family or the shadows.', cta: 'Lifestyle →', link: { tab: 'lifestyle' } });

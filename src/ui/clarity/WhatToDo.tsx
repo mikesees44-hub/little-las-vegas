@@ -6,6 +6,7 @@ import { Modal } from '../components/Modal';
 import { useOrders } from '../components/Orders';
 import { useSheet } from '../components/People';
 import { useClarity } from './context';
+import { useTravel } from '../travel/context';
 
 /**
  * "WHAT SHOULD I DO?": the best opportunities and the worst threats right
@@ -25,6 +26,7 @@ export function WhatToDoPanel({ s, onTab, answered = 0, compact }: { s: GameStat
   const { orders, queue } = useOrders();
   const { open } = useSheet();
   const { openPicker, goTab } = useClarity();
+  const travel = useTravel();
   const items = whatShouldIDo(s, 5);
   const [hideList, setHideList] = useState(() => safeGet('llv.checklist.hidden') === '1');
   const check = weekChecklist(s, { answered, ordersQueued: orders.length });
@@ -33,6 +35,7 @@ export function WhatToDoPanel({ s, onTab, answered = 0, compact }: { s: GameStat
     const l = o.link;
     if (l.action && !previewAction(s, l.action).disabledReason) queue(l.action);
     else if (l.role) openPicker(l.role);
+    else if (l.trip) travel.plan(l.trip);
     else if (l.charId) open(l.charId);
     else if (l.tab) (onTab ?? goTab)(l.tab);
   };

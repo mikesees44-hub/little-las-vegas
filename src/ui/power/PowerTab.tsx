@@ -14,6 +14,7 @@ import type { Character, GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { signed } from '../format';
+import { HeirCompare } from '../clarity/Pickers';
 
 export type PowerSub = 'power' | 'grievances' | 'blitz' | 'front';
 
@@ -144,6 +145,7 @@ function HeirsPanel({ s }: { s: GameState }) {
             {house.map((c) => <option key={c.id} value={c.id}>{c.firstName} {c.lastName} ({ageOn(c.birth, s.date)})</option>)}
           </select>
         </div>
+        <HeirCompare s={s} pool={house.map((c) => c.id)} pickId={pick} onPick={setPick} />
         <div className="grid gap-2 sm:grid-cols-2">
           {DESIGNATION_MODES.map((m) => (
             <ActionCard key={m} s={s} action={{ kind: 'power', op: { op: 'designate', mode: m, charId: DESIGNATION_INFO[m].needsHeir ? pick || undefined : undefined } }} />

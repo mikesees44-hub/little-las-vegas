@@ -395,7 +395,7 @@ export function App() {
       {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
-      {advice && !current && !sheet && !picker && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => setTab(t as Tab)} onClose={() => setAdvice(false)} />}
+      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => setTab(t as Tab)} onClose={() => setAdvice(false)} />}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}

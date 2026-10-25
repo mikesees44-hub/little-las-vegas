@@ -10,6 +10,7 @@
  *   <WhatToDoPanel s />                    ranked opportunities and threats + the "This week" list
  *   <GlossaryOverlay /> <HelpButton />     the "?" help
  *   <TaskAdvice s seat />                  which council task is most pressing now
+ *   <HeirCompare/> <OfficialPicker/> <KeeperPicker/> <BonesPicker/> <TripWhy/>   ready-made pickers (Pickers.tsx)
  *
  * Engine side: explainAction, explainChoice, compareChoices, taskAdvice (advice.ts),
  * rankCandidates (candidates.ts), advisorAdvice (advisors.ts), whatShouldIDo,
@@ -22,4 +23,5 @@ export { AdvisorQuotes } from './AdvisorQuote';
 export { WhatToDoModal, WhatToDoPanel } from './WhatToDo';
 export { GlossaryOverlay, HelpButton } from './Glossary';
 export { TaskAdvice } from './TaskAdvice';
+export { BonesPicker, HeirCompare, KeeperPicker, OfficialPicker, TripWhy } from './Pickers';
 export { ClarityContext, useClarity, type ClarityApi } from './context';

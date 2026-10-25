@@ -15,8 +15,18 @@ import type { Manager } from './econState';
 import { propertyNet } from './property';
 import { getRelation, opinion } from './relations';
 import { CITIES, SCHEME_INFO, schemeOdds } from './schemes';
+import { bonesBlock, bonesOdds, hasBones, JOB_INFO } from './bones';
+import { capability, challengePressure, successionCandidates, WANT_TEXT } from './heir';
+import { pwView } from './powerState';
+import { keeper } from './ledgerbook';
+import { controlIndex } from './polIntegrity';
+import { nameOf, peekCtl } from './polGov';
+import { envelope, favorsFor, payrollAcceptance, topOffice } from './polPuppets';
+import { isOfficial } from './polPeople';
+import { FAVORS, OFFICE_DEFS } from './polData';
 import { forecast } from './table';
 import { FACTION_NAMES } from './world';
+import { previewAction } from './actions';
 import type { Attributes, Character, GameState, PlayerAction, RivalId, SchemeKind, SchemeOptions, Seat } from './types';
 
 /**
@@ -40,9 +50,15 @@ export type Role =
   | { kind: 'manager'; key: string }
   | { kind: 'agent'; scheme: SchemeKind; targetId?: string; opts: SchemeOptions; with?: string[] }
   | { kind: 'envoy'; city: string; depth?: SchemeOptions['depth'] }
-  | { kind: 'heir' }
+  | { kind: 'heir'; /** Include senior men outside the blood (the Power tab's succession candidates). */ wide?: boolean }
   | { kind: 'marriage'; memberId: string; matrilineal?: boolean }
-  | { kind: 'lobby'; disputeId: string };
+  | { kind: 'lobby'; disputeId: string }
+  /** Which official to work on (City Hall). */
+  | { kind: 'official' }
+  /** Who keeps the books (The Books). */
+  | { kind: 'keeper' }
+  /** Who should make his bones on this kind of job. */
+  | { kind: 'bones'; job: 'heist' | 'collection' | 'hit' };
 
 export interface Chip {
   text: string;
@@ -345,16 +361,19 @@ function makeRole(s: GameState, pool: Character[]): Raw[] {
     if (c.checkedWeek === undefined && !c.dynasty) cons.push(con('Nobody has checked him out', 10));
     if ((c.record ?? 0) >= 2) cons.push(con(`${c.record} arrests on his sheet`, 8));
     if (c.goal === 'get_made') pros.push(pro('It is all he wants', 10));
+    if (hasBones(c)) pros.push(pro(`Made his bones (${c.bones?.[0]?.job ?? 'a job'})`, 12));
     const k = capoOf(s, c);
     const v = k ?? player(s);
+    const action: PlayerAction = { kind: 'propose', charId: c.id };
     return {
       id: c.id, name: displayName(c), charId: c.id,
       upside: 30 + (earn / maxEarn) * 35 + c.attributes.discipline * 0.2 + c.attributes.force * 0.1,
       outcome: `${v.id === s.playerId ? 'You vouch' : `${v.firstName} vouches`}; ${s.books?.open ? 'the books are open' : 'waits for the books'}`,
       pros, cons, risk: ch.risk + (c.checkedWeek === undefined && !c.dynasty ? 8 : 0),
       opportunityCost: undefined,
-      action: { kind: 'propose', charId: c.id },
-      disabledReason: c.proposedWeek !== undefined ? 'Already proposed' : s.money < 500 ? 'Needs $500' : undefined,
+      action,
+      // The same check the order card makes (bones, money, the books), so the picker never offers what the card refuses.
+      disabledReason: c.proposedWeek !== undefined ? 'Already proposed' : previewAction(s, action).disabledReason,
     };
   });
 }
@@ -506,16 +525,26 @@ function heirRole(s: GameState, pool: Character[]): Raw[] {
     else if (age > 60) cons.push(con(`${age}: he won't sit long`, 10));
     if (c.health < 50) cons.push(con(`Health ${c.health}`, 12));
     if (blood?.id === c.id) pros.push(pro('The blood heir anyway: no claimants', 10));
-    else if (blood) cons.push(con(`${blood.firstName} has the stronger claim by blood`, 8));
+    else if (blood && c.dynasty) cons.push(con(`${blood.firstName} has the stronger claim by blood`, 8));
     const goal = fam(s, c.id).goal;
     if (goal === 'get_out') cons.push(con('Wants out of the life', 16));
     if (goal === 'the_chair') pros.push(pro('Wants the chair', 8));
     if (c.rank !== 'civilian') pros.push(pro(`Knows the business (${c.rank})`, 10));
+    // The heir paradox: how good a boss he would be, and how hard he is pushing for it now.
+    const cap = capability(s, c).score;
+    const press = challengePressure(s, c).score;
+    if (cap >= 60) pros.push(pro(`Would make a strong boss (capability ${cap})`, 16));
+    else if (cap < 40) cons.push(con(`Would make a weak boss (capability ${cap})`, 14));
+    if (press >= 60) cons.push(con(`Pushing for the chair now (pressure ${press}): naming him may hurry him`, 14));
+    else if (press < 30 && cap >= 50) pros.push(pro(`Patient: no push for the chair (pressure ${press})`, 8));
+    const amb = pwView(s).ambitions[c.id];
+    if (amb?.revealed) (amb.want === 'out' ? cons : pros).push(amb.want === 'out' ? con(`He ${WANT_TEXT[amb.want]}`, 16) : pro(`He ${WANT_TEXT[amb.want]}`, amb.want === 'chair' ? 6 : 2));
+    if (!c.dynasty) cons.push(con(`Not of the blood: ${blood ? `${blood.firstName} keeps a claim` : 'the house may not accept him'}`, 14));
     return {
       id: c.id, name: displayName(c), charId: c.id,
-      upside: 20 + lead * 0.35 + c.attributes.diplomacy * 0.15 + c.attributes.intrigue * 0.1 + capoView * 0.3 + (age >= 21 ? 10 : 0),
-      outcome: `${relationLabel(s, boss, c)}, ${age}`,
-      pros, cons, risk: (age < 21 ? 15 : 0) + (c.health < 50 ? 15 : 0) + (op < -15 ? 10 : 0) + (goal === 'get_out' ? 15 : 0),
+      upside: (c.dynasty ? 12 : 4) + lead * 0.25 + c.attributes.diplomacy * 0.1 + c.attributes.intrigue * 0.05 + cap * 0.25 + capoView * 0.3 + (age >= 21 ? 10 : 0),
+      outcome: `${c.dynasty ? relationLabel(s, boss, c) : c.rank}, ${age} · capability ${cap} · pressure ${press}`,
+      pros, cons, risk: (age < 21 ? 15 : 0) + (c.health < 50 ? 15 : 0) + (op < -15 ? 10 : 0) + (goal === 'get_out' ? 15 : 0) + Math.max(0, press - 50) * 0.4,
     };
   });
 }
@@ -577,6 +606,109 @@ function lobbyRole(s: GameState, disputeId: string): Raw[] {
   });
 }
 
+/** City Hall: whom to work on. Payroll odds, what his offices can do for you, and the scrutiny on him. */
+function officialRole(s: GameState): Raw[] {
+  const pol = s.pol;
+  if (!pol) return [];
+  const seen = new Set<string>();
+  const out: Raw[] = [];
+  for (const d of OFFICE_DEFS) {
+    if (!d.reach) continue;
+    for (const id of pol.offices[d.id]?.holders ?? []) {
+      const p = id ? pol.people[id] : undefined;
+      if (!p || !p.alive || seen.has(p.id) || !isOfficial(p)) continue;
+      seen.add(p.id);
+      const ctl = peekCtl(s, p.id);
+      const idx = ctl ? controlIndex(ctl) : 0;
+      const favs = favorsFor(s, p);
+      const top = topOffice(s, p);
+      const pay = ctl?.payroll ? undefined : payrollAcceptance(s, p);
+      const pros: W[] = [];
+      const cons: W[] = [];
+      if (favs.length) pros.push(pro(`Can do: ${favs.slice(0, 3).map((f) => FAVORS[f.kind].name.toLowerCase()).join(', ')}`, 6 + favs.length * 4));
+      else cons.push(con('His office does no favors you need', 14));
+      if (idx >= 70) pros.push(pro(`Already yours (control ${idx})`, 6));
+      else if (idx >= 40) pros.push(pro(`Half yours (control ${idx}): a push makes him reliable`, 14));
+      if (p.integrity < 45) pros.push(pro(`Takes envelopes (integrity ${p.integrity})`, 14));
+      else if (p.integrity >= 70) cons.push(con(`Clean (integrity ${p.integrity}): money may offend him`, 14));
+      if (p.traits.includes('Greedy')) pros.push(pro('Greedy', 8));
+      if (p.traits.includes('Honest')) cons.push(con('Honest', 12));
+      const scr = Math.round(ctl?.exposure ?? 0);
+      if (scr >= 30) cons.push(con(`Under scrutiny (${scr}): the papers are watching him`, 14));
+      if (ctl?.owner) cons.push(con(`Also owned by ${ctl.owner === 'philly' ? 'Philadelphia' : FACTION_NAMES[ctl.owner] ?? ctl.owner}`, 10));
+      if (ctl?.flipped) cons.push(con('Talking to investigators', 30));
+      if ((ctl?.resentment ?? 0) >= 30) cons.push(con(`Resents you (${Math.round(ctl!.resentment)})`, 10));
+      const value = (top?.rung ?? 1) * 6 + favs.length * 8;
+      const ease = pay ? pay.chance * 100 : idx;
+      const done = idx >= 70;
+      const action: PlayerAction = !ctl?.payroll && pay && pay.chance >= 0.45
+        ? { kind: 'pol', op: { op: 'payroll', id: p.id, on: true } }
+        : { kind: 'pol', op: { op: 'cultivate', id: p.id, how: 'dinner' } };
+      out.push({
+        id: p.id, name: `${nameOf(s, p)} (${top?.short ?? p.title})`,
+        upside: done ? 20 + value * 0.3 : Math.min(100, value * 0.9 + ease * 0.35),
+        outcome: ctl?.payroll ? `On your payroll ($${ctl.payroll}/wk) · control ${idx}` : `${Math.round((pay?.chance ?? 0) * 100)}% takes the payroll ($${envelope(p)}/wk) · control ${idx}`,
+        pros, cons, risk: scr * 0.6 + (ctl?.flipped ? 40 : 0) + (ctl?.owner ? 10 : 0) + (p.integrity >= 70 ? 10 : 0),
+        flags: ctl?.dirt ? [{ text: 'You have something on him', tone: 'neutral' }] : [],
+        action,
+        opportunityCost: action.kind === 'pol' && action.op.op === 'payroll' ? `$${envelope(p)} a week for as long as he is on it` : undefined,
+      });
+    }
+  }
+  return out;
+}
+
+/** The Books: who keeps them. Skill with money, what you can see of his honesty, and the file he would carry. */
+function keeperRole(s: GameState, pool: Character[]): Raw[] {
+  const cur = keeper(s);
+  return pool.map((c) => {
+    const pros: W[] = [];
+    const cons: W[] = [];
+    pros.push(skillChip(pool, c, 'business'));
+    if (c.specialty === 'accountant') pros.push(pro('A real accountant', 20));
+    if (hasTrait(c, 'Honest')) pros.push(pro('Honest: covers for nobody', 14));
+    if (hasTrait(c, 'Greedy')) cons.push(con('Greedy: will cook the books', 18));
+    if (hasTrait(c, 'Gambler')) cons.push(con('Gambles: money goes missing', 12));
+    if (hasTrait(c, 'Cowardly')) cons.push(con('Cowardly: may walk the books to the feds if pinched', 14));
+    if (c.debtTo) cons.push(con('In debt to a rival shylock', 14));
+    const ev = Math.round(c.evidence ?? 0);
+    if (ev < 20) pros.push(pro('A thin file: the feds don\'t know him', 8));
+    const ch = character(s, c, 'money');
+    const busy = s.council.bagman?.holderId === c.id;
+    return {
+      id: c.id, name: displayName(c), charId: c.id,
+      upside: c.attributes.business * 0.7 + (c.specialty === 'accountant' ? 25 : 0) + (hasTrait(c, 'Honest') ? 10 : 0) - (hasTrait(c, 'Greedy') ? 20 : 0),
+      outcome: cur?.id === c.id ? 'Keeps the books now' : `Business ${c.attributes.business}${c.specialty === 'accountant' ? ' · accountant' : ''}`,
+      pros: [...pros, ...ch.pros], cons: [...cons, ...ch.cons], risk: ch.risk + (ev >= 40 ? 10 : 0) + (hasTrait(c, 'Cowardly') ? 10 : 0),
+      action: cur?.id === c.id ? undefined : { kind: 'ledger', op: { op: 'keeper', charId: c.id } },
+      opportunityCost: opportunityCost(s, c),
+      keepJob: busy ? 'Bagman' : undefined,
+    };
+  });
+}
+
+/** Making his bones: who should go on this job, from his odds of holding up and the risk he talks or loses his head. */
+function bonesRole(s: GameState, job: 'heist' | 'collection' | 'hit', pool: Character[]): Raw[] {
+  return pool.map((c) => {
+    const o = bonesOdds(s, c, job);
+    const pros: W[] = [];
+    const cons: W[] = [];
+    for (const r of o.reasons.filter((x) => x.label !== 'Base' && x.label !== JOB_INFO[job].name)) (r.value > 0 ? pros : cons).push(r.value > 0 ? pro(`${r.label} (+${r.value})`, r.value) : con(`${r.label} (${r.value})`, -r.value));
+    if (o.hot >= 0.3) cons.push(con(`${Math.round(o.hot * 100)}% he goes too far`, o.hot * 30));
+    if (o.talk >= 0.3) cons.push(con(`${Math.round(o.talk * 100)}% he talks about it after`, o.talk * 30));
+    const action: PlayerAction = { kind: 'bones', op: { op: 'assign', charId: c.id, kind: job } };
+    const ch = character(s, c, 'muscle');
+    return {
+      id: c.id, name: displayName(c), charId: c.id,
+      upside: o.chance * 100,
+      outcome: `${Math.round(o.chance * 100)}% he holds up on ${JOB_INFO[job].name.toLowerCase()}`,
+      pros: [...pros, ...ch.pros], cons: [...cons, ...ch.cons], risk: ch.risk + o.hot * 25 + o.talk * 25,
+      action, disabledReason: previewAction(s, action).disabledReason,
+      opportunityCost: opportunityCost(s, c),
+    };
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* Pools and the public function                                       */
 /* ------------------------------------------------------------------ */
@@ -604,15 +736,28 @@ export function defaultPool(s: GameState, role: Role): Character[] {
       const keep = role.kind === 'agent' ? new Set(role.with ?? []) : new Set<string>();
       return [...boss, ...family, ...crew(s).filter((c) => isFree(s, c) && (!busy.has(c.id) || keep.has(c.id)))];
     }
-    case 'heir': return bloodLine(s, player(s)).filter((c) => ageOn(c.birth, s.date) >= 16);
+    case 'heir': {
+      const blood = bloodLine(s, player(s)).filter((c) => ageOn(c.birth, s.date) >= 16);
+      if (!role.wide) return blood;
+      const ids = new Set(blood.map((c) => c.id));
+      return [...blood, ...successionCandidates(s).filter((c) => !ids.has(c.id))];
+    }
+    case 'keeper': {
+      const out = men(s).filter((c) => isFree(s, c) && c.rank !== 'civilian');
+      const accts = crew(s).filter((c) => c.specialty === 'accountant' && isFree(s, c));
+      return [...new Set([...accts, ...out.filter((c) => c.attributes.business >= 50 || s.council.bagman?.holderId === c.id)])];
+    }
+    case 'bones': return men(s).filter((c) => c.rank === 'associate' && isFree(s, c) && !hasBones(c) && !!bonesBlock(s, c));
     case 'marriage':
-    case 'lobby': return [];
+    case 'lobby':
+    case 'official': return [];
   }
 }
 
 const TITLES: Record<Role['kind'], string> = {
   seat: 'Council seat', capo: 'A new capo', make: 'Propose for membership', voucher: 'Who vouches for him', manager: 'A manager',
   agent: 'The team', envoy: 'The envoy', heir: 'The heir', marriage: 'A match', lobby: 'Whom to lobby',
+  official: 'An official', keeper: 'The bookkeeper', bones: 'Making his bones',
 };
 
 function question(s: GameState, role: Role): string {
@@ -627,6 +772,9 @@ function question(s: GameState, role: Role): string {
     case 'heir': return 'Who should inherit the chair?';
     case 'marriage': return `Whom should ${s.characters[role.memberId]?.firstName ?? 'they'} marry?`;
     case 'lobby': return 'Whose vote can you still win?';
+    case 'official': return 'Which official is worth owning?';
+    case 'keeper': return 'Who should keep the books?';
+    case 'bones': return `Who should make his bones on ${JOB_INFO[role.job].name.toLowerCase()}?`;
   }
 }
 
@@ -648,6 +796,9 @@ export function rankCandidates(s: GameState, role: Role, pool?: readonly string[
     case 'heir': raws = heirRole(s, people); break;
     case 'marriage': raws = marriageRole(s, role.memberId, !!role.matrilineal); break;
     case 'lobby': raws = lobbyRole(s, role.disputeId); break;
+    case 'official': raws = officialRole(s).filter((r) => !pool || pool.includes(r.id)); break;
+    case 'keeper': raws = keeperRole(s, people); break;
+    case 'bones': raws = bonesRole(s, role.job, people); break;
   }
   const candidates = raws.map((r) => finish(s, r)).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
   const ok = candidates.filter((c) => !c.disabledReason);

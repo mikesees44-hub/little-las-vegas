@@ -8,6 +8,7 @@ import { FACTION_NAMES } from '../../engine/world';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
+import { KeeperPicker } from '../clarity/Pickers';
 import { CharLink } from '../components/People';
 import { Stat } from '../econ/Holdings';
 
@@ -285,8 +286,8 @@ export function TheBooks({ s }: { s: GameState }) {
       <Panel title="Bookkeeper" note="He sees every envelope. A crooked one covers for his friends; a scared one walks the books into the federal building." id="books-keeper">
         <div className="grid gap-2 sm:grid-cols-2">
           <ActionCard s={s} action={{ kind: 'ledger', op: { op: 'keeper' } }} compact />
-          {Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.id !== s.playerId && c.rank !== 'civilian' && (c.specialty === 'accountant' || c.attributes.business >= 55)).slice(0, 5).map((c) => <ActionCard key={c.id} s={s} action={{ kind: 'ledger', op: { op: 'keeper', charId: c.id } }} compact />)}
         </div>
+        <div className="mt-2"><KeeperPicker s={s} /></div>
       </Panel>
 
       <p className="text-[11px] text-stone-500" data-testid="books-reconcile">

@@ -61,12 +61,15 @@ export function tieTo(s: GameState, a: Character, c: Character, wantsIt = false)
 
 function firstName(s: GameState, c: Candidate): string {
   const ch = c.charId ? s.characters[c.charId] : undefined;
-  return ch ? (ch.id === s.playerId ? 'yourself' : ch.nickname ?? ch.firstName) : c.name;
+  return ch ? (ch.id === s.playerId ? 'yourself' : ch.nickname ?? ch.firstName) : c.name.replace(/ \(.*\)$/, '');
 }
 
 function line(s: GameState, a: Character, pick: Candidate, biased: boolean, self: boolean): string {
   const who = self ? 'me' : firstName(s, pick);
-  const reason = (pick.pros[0]?.text ?? '').replace(/:.*$/, '').toLowerCase();
+  const pro = pick.pros[0]?.text ?? '';
+  // "Honest: won't skim" → "honest"; but keep "Can do: a pardon" whole (the head alone says nothing).
+  const head = pro.replace(/:.*$/, '');
+  const reason = (head.split(' ').length <= 2 && pro.includes(':') && /^(can|is|has|he)\b/i.test(head) ? pro : head).toLowerCase();
   const r = reason ? ` ${reason.charAt(0).toUpperCase()}${reason.slice(1)}.` : '';
   if (self) return hasTrait(a, 'Ambitious') ? `"You want it done right? Give it to ${who}."` : `"If it's all the same to you, I'll take it on myself."`;
   if (hasTrait(a, 'Honest')) return `"${who[0].toUpperCase()}${who.slice(1)}.${r} I'd stake my name on it."`;
@@ -89,7 +92,7 @@ export function advisorPick(s: GameState, seat: AdvisorSeat, ranking: Ranking): 
   const w = selfInterest(s, a);
   // He backs himself for a step up, or to keep the seat he already has.
   const keeps = ranking.role.kind === 'seat' && s.council[ranking.role.seat]?.holderId === a.id;
-  const stepUp = keeps || (ranking.role.kind === 'seat' && ranking.role.seat === 'underboss' && seat === 'consigliere') || ranking.role.kind === 'capo';
+  const stepUp = keeps || (ranking.role.kind === 'seat' && ranking.role.seat === 'underboss' && seat === 'consigliere') || ranking.role.kind === 'capo' || ranking.role.kind === 'heir';
   let best: { c: Candidate; v: number; tie?: string } | undefined;
   for (const c of ok) {
     const ch = c.charId ? s.characters[c.charId] : undefined;

@@ -1,4 +1,5 @@
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
+import { pillarBestWhen, pillarPurpose, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
 import { idleMen } from './business';
 import { isInSeason, memorialDay, toDays } from './calendar';
 import { CATALOG } from './catalog';
@@ -188,6 +189,7 @@ const INTERACT_PURPOSE: Record<string, string> = {
   demote: 'Take a man down a peg. He will hate you; the others will notice.',
   exile: 'Get a problem out of Wildwood without blood — he may land with a rival.',
   whack: 'Remove a traitor or a threat for good. The crew will remember either way.',
+  ...ROMANCE_PURPOSE,
 };
 
 const ORDER_PURPOSE: Record<string, string> = {
@@ -268,7 +270,7 @@ function purposeOf(a: PlayerAction, p: ActionPreview): string {
     case 'policy': return a.policy === 'earn' ? 'Let him keep his hustle: loyalty now, a rich man later.' : a.policy === 'squeeze' ? 'Take most of his hustle: money now, resentment later.' : 'The usual 40%: fair to both sides.';
     case 'contract': return 'Change how much of his district a capo keeps.';
     case 'edict': return p.detail ?? 'A standing order to the whole family.';
-    default: return p.detail ?? p.title;
+    default: return pillarPurpose(a) ?? p.detail ?? p.title;
   }
 }
 
@@ -312,7 +314,7 @@ function unlocksOf(s: GameState, a: PlayerAction): string[] {
     case 'dynasty': if (a.op.type === 'marry') out.push('An alliance: no strikes from them, their Table votes lean your way'); break;
     default: break;
   }
-  return out;
+  return [...out, ...pillarUnlocks(s, a)];
 }
 
 function bestWhenOf(s: GameState, a: PlayerAction, p: ActionPreview): Condition[] {
@@ -364,7 +366,7 @@ function bestWhenOf(s: GameState, a: PlayerAction, p: ActionPreview): Condition[
       if (a.id === 'threaten') return [{ text: 'He is not hot-headed or vengeful', met: !t.traits.includes('Hot-headed') && !t.traits.includes('Vengeful') }];
       if (a.id === 'make') return [{ text: 'Philadelphia has the books open', met: !!s.books?.open }, { text: 'Someone has checked him out', met: t.checkedWeek !== undefined || t.dynasty }];
       if (a.id === 'recruit') return [{ text: 'He is likely to say yes (50%+)', met: (p.acceptance?.chance ?? 0) >= 0.5 }];
-      return [];
+      return pillarBestWhen(s, a);
     }
     case 'lend': return [{ text: 'Cash you will not need for 10+ weeks', met: s.money - a.amount >= 5000 }];
     case 'appoint': {
@@ -403,7 +405,7 @@ function bestWhenOf(s: GameState, a: PlayerAction, p: ActionPreview): Condition[
     case 'dynasty':
       if (a.op.type === 'marry') return [{ text: 'They are likely to accept (60%+)', met: (p.acceptance?.chance ?? 0) >= 0.6 }];
       return [];
-    default: return [];
+    default: return pillarBestWhen(s, a);
   }
 }
 
@@ -523,7 +525,7 @@ function derivedValue(s: GameState, a: PlayerAction, chanceOk: number): number {
     case 'background': return 700;
     case 'dynasty': return a.op.type === 'marry' ? 4000 : 800;
     case 'econ': return a.op.type === 'upgrade' || a.op.type === 'build' ? 3000 : a.op.type === 'audit' ? 500 : 0;
-    default: return 0;
+    default: return pillarValue(s, a, chanceOk);
   }
 }
 

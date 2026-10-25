@@ -13,6 +13,7 @@ import { Modal } from '../components/Modal';
 import { AcceptanceLine, useOrders } from '../components/Orders';
 import { Face } from '../components/People';
 import { ModeIcon } from './icons';
+import { TripWhy } from '../clarity/Pickers';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -230,6 +231,7 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
             {plan.leaderId === s.playerId && <span className="chip-bad">The boss away: capos get ideas, orders go through the chain</span>}
           </div>
           {q.block && <div className="text-xs text-red-400">{q.block}</div>}
+          <TripWhy s={s} action={{ kind: 'travel', op: { type: 'trip', plan } }} />
           <div className="flex justify-end gap-2">
             <button className="btn-ghost text-sm" onClick={onClose}>Cancel</button>
             <button className="btn-gold text-sm" data-testid="trip-order" disabled={!!q.block} onClick={() => { queue({ kind: 'travel', op: { type: 'trip', plan } }); onClose(); }}>Order the trip</button>

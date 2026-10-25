@@ -14,6 +14,7 @@ import { Portrait } from '../portrait/Portrait';
 import { ActionCard, useOrders } from './Orders';
 import { FACTION_TINT, useSheet } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
+import { BonesPicker } from '../clarity/Pickers';
 
 /* ------------------------------------------------------------------ */
 /* Warnings and badges                                                 */
@@ -211,6 +212,7 @@ export function BooksPanel({ s }: { s: GameState }) {
           <CandidatePicker s={s} role={{ kind: 'make' }} pool={ready.map((c) => c.id)} limit={4} />
         </div>
       )}
+      <BonesPicker s={s} />
     </section>
   );
 }

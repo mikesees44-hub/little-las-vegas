@@ -12,6 +12,7 @@ import type { Character, GameState, PlayerAction } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { Portrait } from '../portrait/Portrait';
 import { FACTION_TINT } from '../components/People';
+import { OfficialPicker } from '../clarity/Pickers';
 
 /** A world person as a portrait sitter (engine characters use their own record). */
 export function sitter(s: GameState, p: PolPerson): Character {
@@ -295,6 +296,7 @@ function Officials({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
     <div className="space-y-2" data-testid="officials">
       <p className="text-xs text-stone-500">Control index = influence·0.55 + (100 − independence)·0.30 + (100 − resentment)·0.15 − scrutiny·0.25. 70+: strong, but betrayal is still possible. 40–69: unstable, resists big requests. Under 40: his own man, or hostile.</p>
       {!mine.length && <p className="text-xs text-stone-500">You own nobody yet. Open an official from the Offices list: dinners, gifts, the payroll, or something you dug up.</p>}
+      <OfficialPicker s={s} defaultOpen={!mine.length} />
       {mine.map(({ p, c, idx }) => (
         <div key={p.id} className="flex flex-wrap items-center gap-2 rounded-md border border-noir-700 bg-noir-800/50 p-2">
           <Face s={s} p={p} size={40} onOpen={onOpen} />
