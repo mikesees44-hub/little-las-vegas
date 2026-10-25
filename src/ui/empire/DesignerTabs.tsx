@@ -82,7 +82,7 @@ export function StyleTab({ s, v }: { s: GameState; v: Venue }) {
   const changed = style !== b.style || sign !== b.sign;
   const param = `${style}:${sign}`;
   const restyle = projectOptions(s, e, v, param).find((o) => o.def.id === 'restyle')!;
-  const refurnish = projectOptions(s, e, v).find((o) => o.def.id === 'refurnish')!;
+  const refurnish = projectOptions(s, e, v).find((o) => o.def.id === 'refurnish');
   const durables = CAT_IDS.filter((c) => CATS[c].kind === 'durable' && catApplies(e, v, c));
   const sections = [...new Set(durables.map((c) => CATS[c].section))];
   const micro = v.policy.mode === 'micro';
@@ -111,10 +111,10 @@ export function StyleTab({ s, v }: { s: GameState; v: Venue }) {
             {durables.filter((c) => CATS[c].section === sec).map((c) => <ItemRow key={c} s={s} v={v} cat={c} />)}
           </div>
         ))}
-        <div className="rounded border border-noir-700 bg-noir-800/60 p-2 text-xs">
+        {refurnish && <div className="rounded border border-noir-700 bg-noir-800/60 p-2 text-xs">
           <span className="text-stone-200">Refurnish every room now at these choices: {fmt$(refurnish.cost)}, {refurnish.weeks} weeks.</span>{' '}
           {refurnish.why ? <span className="text-red-300">{refurnish.why}</span> : <button type="button" className="btn-ghost text-xs py-0.5" onClick={() => apply({ cmd: 'project', venueId: v.id, defId: 'refurnish' })}>Refurnish</button>}
-        </div>
+        </div>}
       </Section>
     </div>
   );

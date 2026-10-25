@@ -127,6 +127,40 @@ shared popup pipeline (`registerEventSource`).
 | `design.ts` | A place's name, style (Doo Wop, Deco, Tiki, Colonial, Mid-century, Victorian: tourist draw) and neon color, keyed like managers (`econ.designs`); hooks for key staff and, later, Building → Floor → Space |
 | `goodlife.ts` | **The Good Life**: homes, cars, trucks, a boat, toys at period prices; respect, family opinion, stress relief, upkeep, resale; unexplained-wealth federal heat, rivals notice, RICO forfeiture from Oct 1970; the house owns it, so the heir inherits |
 
+## The Empire Designer (wave 2)
+
+Every motel, rooming house, hotel, restaurant, bar and nightclub the family (or a rival) runs is one reusable system.
+A Deal that signs for one opens the Designer (Holdings → Empire Designer, the building on the map, or the Deal's
+"Set it up" button). A new owner is done in under a minute: name, look (Doo Wop is Wildwood's own), Owner mode,
+"Open for business". Every tab goes deeper, down to the toilet paper. `GameState.empire` (optional; old saves migrate
+the first week: the scan builds records for the places you already own). Own seeded stream (`empire.rng`).
+
+| File | What it does |
+|---|---|
+| `empireState.ts` | Module 16's records, linked by id: Property (lot, zoning, permitted uses, value, debts, history) → Building (style, neon, condition, stories, sprinklers/elevator/ramps, every look it has had) → Floor → Space (room blocks, dining room, lounge, club, pool…); Venue (the business unit: concept, policy, inventory, durables, departments, staff, reputation, monthly/yearly statements, proposals); Department; Employment; SupplierContract; Project; OperatingPolicy; OperatingPreset |
+| `empireData.ts` | Concepts (budget motel, hourly-stay motel, rooming house, boutique hotel, luxury resort, restaurant, bar, nightclub), departments (the club's head is the **booking manager**), space types, guest segments (families, the young crowd, couples, business, high rollers, short stays, summer workers), suppliers |
+| `empireCatalog.ts` | The data-driven purchasing catalog (~100 rows: mattresses to toilet paper to stage lighting): price, quality, life (weeks or washes), workload, power, years on the market (Module 13), expectations that rise with the years |
+| `empireBuild.ts` | Layouts (rooms over floors, services on the ground floor), area and zoning checks, period codes (sprinklers and elevators above 3 stories, ramps from 1973), fit-out |
+| `empireStaff.ts` | Workload by department, staffing targets, persistent workers (wage, skill, satisfaction, ambition), family/crew heads, promotion |
+| `empireOps.ts` | The operating engine: the season curve, a logit market where every simulated venue (yours and rivals') and the rest of the island compete by price, quality, reputation, style, amenities and neighborhood; covers, drinks, club guests; inventory use, deliveries, reorders and shortages; linen wear by washing; durable wear and replacement; deterioration and breakdowns; the operating statement |
+| `empireProjects.ts` | 28 projects: cosmetic, furniture, equipment, remodels, wings and floors, amenities, structural, energy, access, technology, fire safety, conversions (budget ↔ hourly, boutique, resort). Prerequisites, cost paid weekly, weeks, rooms out of service, real effects on the records |
+| `empireAI.ts` | Delegation: Owner (default), Manager, Micromanage; presets (built-in and saved); the manager's week (prices toward the occupancy target, seasonal hiring and layoffs, purchasing at the tier, proposals, small jobs on his own), gripes and resignation |
+| `empireActs.ts` | HOOK for the act-booking phase: the booking manager's skill sets the tier of act he can land; the month's act (world-pack entertainers: fee, draw) and his 10% cut |
+| `empire.ts` | The hub: venue creation and migration, rivals (the town's motels and rooming houses; new ones as they open; spin-offs by your ambitious ex-heads), ledger posting, projects, staff months, rival bankruptcies, the map sync, commands (`EmpireCmd`), the random player's orders |
+
+**Money.** Configuration commands never move money: `applyEmpireCmd(s, cmd)` (UI, immediate, a copy) and the order
+`{ kind: 'econ', op: { type: 'empire', cmd } }` (sim) only change records. Each week a player venue posts by name:
+its takings (the business line), payroll, supplies & linen, operating costs (utilities, upkeep, taxes, insurance,
+licenses, office & commissions, ads, the act), replacements and projects as capital, the manager's share. A venue's
+business has `upkeep` 0 (its statement covers it) and `expectedTake` returns its last operating income.
+**Hooks:** `econBusiness` (economy) → `venueBusiness`; `expectedTake` → `venueTake`; `econWeek` → `empireWeek`;
+`venue.policy.network` is the later Madam/Ears phase's abstract ledger line + vice heat; `venue.policy.act` the
+booking phase's act record.
+
+`npx tsx scripts/empireAcceptance.ts` runs Module 17 (adapted): a lot on Ocean Avenue bought in 1965 and developed as
+a 20-room economy motel, a 40-room boutique hotel with a restaurant, and a 100-room resort, each five years on the
+real engine (`tests/empire.test.ts` asserts it).
+
 ## Variety: the story director and living storylines
 
 | File | What it does |

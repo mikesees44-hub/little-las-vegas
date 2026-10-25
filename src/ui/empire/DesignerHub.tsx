@@ -3,7 +3,7 @@ import { relationTo, kinCandidates } from '../../engine/applicants';
 import { STYLES, SIGN_HEX, type BuildStyle, type SignColor } from '../../engine/design';
 import { venueProblems, venueSummary, type EmpireCmd } from '../../engine/empire';
 import { presetsOf } from '../../engine/empireAI';
-import { roomCount, venueBuilding } from '../../engine/empireBuild';
+import { roomCount, seatsOf, venueBuilding } from '../../engine/empireBuild';
 import { CONCEPTS, DEPTS, HOUSEKEEPING, MAINTENANCE, STAFFING, WINTER } from '../../engine/empireData';
 import { revenueOf, opexOf, seasonCurve } from '../../engine/empireOps';
 import { PROJECTS_BY_ID, projectOptions } from '../../engine/empireProjects';
@@ -328,6 +328,15 @@ export function headCandidates(s: GameState): { id: string; name: string; rel: s
   return [...fam, ...crew].filter((x) => !taken.has(x.id));
 }
 
+/** "20 rooms", or the seats of a restaurant, bar or club. */
+export function sizeLabel(s: GameState, v: Venue): string {
+  const e = s.empire!;
+  const r = roomCount(e, v);
+  if (r) return `${r} rooms`;
+  const seats = seatsOf(e, v, 'dining') + seatsOf(e, v, 'lounge') + seatsOf(e, v, 'club');
+  return `${seats} seats`;
+}
+
 export function DesignerHub({ s, target, onClose }: { s: GameState; target: DesignerRef; onClose: () => void }) {
   const [tab, setTab] = useState<TabId>('overview');
   if ('pending' in target) {
@@ -344,7 +353,7 @@ export function DesignerHub({ s, target, onClose }: { s: GameState; target: Desi
       <div className="panel flex w-full max-w-5xl flex-col overflow-hidden rounded-none sm:rounded-lg border-gold-600/40" onClick={(x) => x.stopPropagation()} data-testid="designer-hub">
         <header className="flex items-center gap-2 border-b border-noir-700 px-3 py-2" style={{ background: `linear-gradient(90deg, ${STYLE_PALETTE[b.style ?? 'doowop'].sky}aa, transparent)` }}>
           <div className="min-w-0">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-stone-400">Empire Designer · {CONCEPTS[v.concept].name} · {roomCount(s.empire!, v)} rooms</div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-stone-400">Empire Designer · {CONCEPTS[v.concept].name} · {sizeLabel(s, v)}</div>
             <h2 className="truncate font-display text-2xl" style={{ color: neon, textShadow: `0 0 10px ${neon}88` }}>{v.name}</h2>
           </div>
           <button type="button" className="ml-auto h-8 w-8 shrink-0 rounded border border-noir-600 text-stone-300 hover:border-gold-500" onClick={onClose} aria-label="Close" data-testid="designer-close">×</button>

@@ -6,9 +6,9 @@ import {
 } from './empireBuild';
 import { CONCEPTS, DEPTS, LODGING, SUPPLIERS } from './empireData';
 import { BUILTIN_PRESETS, applyPreset, chooseSupplies, forecastWeek, gripes, managerWeek, presetById, presetFrom, presetsOf } from './empireAI';
-import { clearMarket, isOpenWeek, makeBid, managerSkill, revenueOf, rollup, runVenueWeek, type Bid, type WeekResult } from './empireOps';
+import { clearMarket, contractsChanged, isOpenWeek, makeBid, managerSkill, revenueOf, rollup, runVenueWeek, type Bid, type WeekResult } from './empireOps';
 import { PROJECTS_BY_ID, projectOptions } from './empireProjects';
-import { charHead, deptStaff, dismissHead, newWorker, promote, removeWorker, staffTarget } from './empireStaff';
+import { charHead, deptStaff, dismissHead, newWorker, promote, removeWorker, staffChanged, staffTarget } from './empireStaff';
 import {
   ensureEmpire, xid, type ConceptId, type DeptKind, type EmpireState, type Mode, type OperatingPolicy, type Plan, type Project, type RoomType, type SupplyGroup, type Venue,
 } from './empireState';
@@ -258,7 +258,7 @@ export function seedRivals(s: GameState, e: EmpireState): void {
     const h = { rng: hashSeed(`rv:${l.id}`) };
     const concept = RIVAL_USES[l.use];
     const v = createVenue(s, {
-      concept, rooms: roomsFor(l.use, l.id), name: l.name ?? rivalName(l.id, concept), owner, ownerName, zone: l.zone, address: l.address, lotId: l.id,
+      concept, rooms: roomsFor(l.use, l.id), name: l.name ?? rivalName(s, l.id, concept), owner, ownerName, zone: l.zone, address: l.address, lotId: l.id,
       builtYear: l.builtYear ?? s.date.y - 10, condition: l.condition, found: randInt(h, 0, 2), ...look,
     });
     v.cash = Math.round(4000 * inflation(s));
@@ -271,10 +271,16 @@ export function seedRivals(s: GameState, e: EmpireState): void {
 
 const RIVAL_NAMES = ['The Sea Gull', 'The Ebb Tide', 'The Bel Air', 'The Sand Castle', 'The Royal Hawaiian', 'The Star Lux', 'The Pan American', 'The Caribbean', 'The Lollipop', 'The Satellite', 'The Astronaut', 'The Imperial 500', 'The Shalimar', 'The Waikiki', 'The Ocean Holiday', 'The Bel-Aire Court'];
 
-function rivalName(id: string, concept: ConceptId): string {
+function rivalName(s: GameState, id: string, concept: ConceptId): string {
   const h = { rng: hashSeed(`rn:${id}`) };
-  const n = pick(h, RIVAL_NAMES);
-  return concept === 'rooming' ? `${n.replace('The ', '')} Rooms` : concept === 'boutique' ? `${n} Hotel` : `${n} Motel`;
+  const taken = new Set(Object.values(s.empire?.venues ?? {}).map((v) => v.name));
+  const start = Math.floor(rand(h) * RIVAL_NAMES.length);
+  for (let i = 0; i < RIVAL_NAMES.length * 2; i++) {
+    const n = RIVAL_NAMES[(start + i) % RIVAL_NAMES.length];
+    const name = concept === 'rooming' || i >= RIVAL_NAMES.length ? `${n.replace('The ', '')} ${concept === 'rooming' ? 'Rooms' : 'Court'}` : concept === 'boutique' ? `${n} Hotel` : `${n} Motel`;
+    if (!taken.has(name)) return name;
+  }
+  return `${pick(h, RIVAL_NAMES)} Motel`;
 }
 
 /* ---------------- the week ---------------- */
@@ -305,7 +311,7 @@ export function ensureMarket(ctx: Ctx): void {
     if (v.owner !== 'player') {
       v.cash = (v.cash ?? 0) + r.stat.noi - r.stat.capex;
       v.capexTotal += r.stat.capex;
-      rollup(s, v, r.stat);
+      rollup(s, v, r.stat, true);
     }
   }
 }
@@ -481,7 +487,7 @@ function staffMonth(ctx: Ctx): void {
   const e = s.empire!;
   for (const w of Object.values(e.staff)) {
     const v = e.venues[w.venueId];
-    if (!v || v.closed) { delete e.staff[w.id]; continue; }
+    if (!v || v.closed) { delete e.staff[w.id]; staffChanged(e); continue; }
     const d = e.depts[w.deptId];
     if (!d) { removeWorker(e, v, w, 'Department closed', s.week); continue; }
     const market = Math.round(DEPTS[d.kind].wage * (w.role === 'head' ? 1.45 : 1) * inflation(s));
@@ -665,6 +671,7 @@ export function runCmd(s: GameState, c: EmpireCmd): string {
     case 'supply': v.policy.supplies[c.cat] = c.item; if (v.stock[c.cat]) v.stock[c.cat].item = c.item; return `${CATS[c.cat].name}: ${ITEMS_BY_ID[c.item].name}`;
     case 'supplier': {
       const cur = Object.values(e.contracts).find((x) => x.venueId === v.id && x.group === c.group);
+      contractsChanged(e);
       if (cur) { cur.supplierId = c.supplierId; cur.since = s.week; } else { const id = xid(e, 'sc'); e.contracts[id] = { id, venueId: v.id, group: c.group, supplierId: c.supplierId, since: s.week }; }
       return 'Supplier changed';
     }
@@ -733,7 +740,7 @@ export function commitEmpire(ctx: Ctx, c: EmpireCmd): void {
 export function empireActions(s: GameState): PlayerAction[] {
   const out: PlayerAction[] = [];
   const e = s.empire;
-  if (!e) return out;
+  if (!e || s.week % 4) return out;
   for (const v of playerVenues(s)) {
     for (const id of v.proposals.slice(0, 2)) {
       const o = projectOptions(s, e, v).find((x) => x.def.id === id);

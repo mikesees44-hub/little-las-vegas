@@ -56,8 +56,22 @@ export function staffTarget(e: EmpireState, v: Venue, kind: DeptKind, w: Paramet
   return need <= 0 ? 0 : Math.max(1, Math.round(need));
 }
 
+/** Staff by department, indexed once per state copy (hiring and leaving drop the index). */
+const STAFF_INDEX = new WeakMap<EmpireState, Map<string, Employment[]>>();
+
 export function deptStaff(e: EmpireState, d: Department): Employment[] {
-  return Object.values(e.staff).filter((x) => x.deptId === d.id);
+  let ix = STAFF_INDEX.get(e);
+  if (!ix) {
+    ix = new Map();
+    for (const w of Object.values(e.staff)) { const l = ix.get(w.deptId); if (l) l.push(w); else ix.set(w.deptId, [w]); }
+    STAFF_INDEX.set(e, ix);
+  }
+  return ix.get(d.id) ?? [];
+}
+
+/** Call after adding or removing staff (or moving one between departments). */
+export function staffChanged(e: EmpireState): void {
+  STAFF_INDEX.delete(e);
 }
 
 export function marketWage(s: GameState, kind: DeptKind, head = false): number {
@@ -79,6 +93,7 @@ export function newWorker(s: GameState, e: EmpireState, v: Venue, d: Department,
     ambition: randInt(e, 5, 95), seasonal: opts.seasonal, trained: 0,
   };
   e.staff[w.id] = w;
+  staffChanged(e);
   v.staffIds.push(w.id);
   if (opts.head) d.headId = w.id;
   e.stats.hires++;
@@ -95,6 +110,7 @@ export function charHead(s: GameState, e: EmpireState, v: Venue, d: Department, 
     ambition: 40, trained: 0,
   };
   e.staff[w.id] = w;
+  staffChanged(e);
   v.staffIds.push(w.id);
   d.headId = w.id;
   return w;
@@ -124,6 +140,7 @@ export function dismissHead(e: EmpireState, v: Venue, d: Department, why: string
 
 export function removeWorker(e: EmpireState, v: Venue, w: Employment, why: string, week?: number): void {
   delete e.staff[w.id];
+  staffChanged(e);
   v.staffIds = v.staffIds.filter((x) => x !== w.id);
   const d = e.depts[w.deptId];
   if (d?.headId === w.id) d.headId = undefined;

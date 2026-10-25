@@ -293,8 +293,21 @@ export interface WeekCtx {
   canOpen: boolean;
 }
 
+const CONTRACTS = new WeakMap<EmpireState, Map<string, string>>();
+
+/** Call after changing a supplier contract in place. */
+export function contractsChanged(e: EmpireState): void {
+  CONTRACTS.delete(e);
+}
+
 function supplierOf(e: EmpireState, v: Venue, group: SupplyGroup) {
-  const c = Object.values(e.contracts).find((x) => x.venueId === v.id && x.group === group);
+  let ix = CONTRACTS.get(e);
+  if (!ix || ix.size !== Object.keys(e.contracts).length) {
+    ix = new Map();
+    for (const x of Object.values(e.contracts)) ix.set(`${x.venueId}:${x.group}`, x.supplierId);
+    CONTRACTS.set(e, ix);
+  }
+  const c = { supplierId: ix.get(`${v.id}:${group}`) };
   return SUPPLIERS.find((x) => x.id === c?.supplierId) ?? SUPPLIERS.find((x) => x.group === group)!;
 }
 
@@ -591,7 +604,7 @@ export function revenueOf(st: WeekStat): number {
 }
 
 /** Rolls a week into the month and the year. */
-export function rollup(s: GameState, v: Venue, st: WeekStat): void {
+export function rollup(s: GameState, v: Venue, st: WeekStat, yearsOnly = false): void {
   const add = (list: PeriodStat[], key: string, max: number) => {
     let p = list.find((x) => x.key === key);
     if (!p) { p = { key, rev: 0, cogs: 0, opex: 0, noi: 0, capex: 0, roomNights: 0, capacity: 0, covers: 0, sat: 0, weeks: 0 }; list.push(p); if (list.length > max) list.splice(0, list.length - max); }
@@ -606,7 +619,7 @@ export function rollup(s: GameState, v: Venue, st: WeekStat): void {
     p.sat = (p.sat * p.weeks + st.sat) / (p.weeks + 1);
     p.weeks++;
   };
-  add(v.months, monthKey(s.date), 36);
+  if (!yearsOnly) add(v.months, monthKey(s.date), 36);
   add(v.years, String(s.date.y), 30);
 }
 

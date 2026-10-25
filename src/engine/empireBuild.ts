@@ -233,7 +233,18 @@ export function venueBuilding(e: EmpireState, v: Venue): Building | undefined {
   return p ? e.buildings[p.buildingIds[0]] : undefined;
 }
 
+/** Spaces by venue, cached per state copy and layout version (every new space takes an id, so `nextId` moves). */
+const SPACE_CACHE = new WeakMap<EmpireState, { ver: number; by: Map<string, Space[]> }>();
+
 export function venueSpaces(e: EmpireState, v: Venue): Space[] {
+  let c = SPACE_CACHE.get(e);
+  if (!c || c.ver !== e.nextId) { c = { ver: e.nextId, by: new Map() }; SPACE_CACHE.set(e, c); }
+  let list = c.by.get(v.id);
+  if (!list) { list = spacesOf(e, v); c.by.set(v.id, list); }
+  return list;
+}
+
+function spacesOf(e: EmpireState, v: Venue): Space[] {
   const p = e.properties[v.propertyId];
   if (!p) return [];
   const out: Space[] = [];

@@ -5,7 +5,7 @@ import { CONCEPTS } from '../../engine/empireData';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { useEmpire } from './context';
-import { MODE_INFO } from './DesignerHub';
+import { MODE_INFO, sizeLabel } from './DesignerHub';
 import { Facade } from './Facade';
 
 /** Holdings → Empire Designer: your places, and the competition on the island. */
@@ -26,7 +26,7 @@ export function EmpireSection({ s }: { s: GameState }) {
             <button key={v.id} type="button" onClick={() => open({ venueId: v.id })} className="rounded-md border border-noir-700 bg-noir-800/60 p-2 text-left hover:border-gold-500" data-testid="venue-card">
               <Facade style={b.style} sign={b.sign} stories={b.stories} rooms={sum.rooms} name={v.name} w={300} h={120} />
               <div className="mt-1 font-display text-lg" style={{ color: neon, textShadow: `0 0 8px ${neon}66` }}>{v.name}</div>
-              <div className="text-[11px] text-stone-400">{CONCEPTS[v.concept].name} · {sum.rooms} rooms · {'★'.repeat(sum.stars)} · {MODE_INFO[v.policy.mode].name} mode{!v.setup ? ' · ' : ''}{!v.setup && <span className="text-[#ffb3d1]">needs setting up</span>}</div>
+              <div className="text-[11px] text-stone-400">{CONCEPTS[v.concept].name} · {sizeLabel(s, v)} · {'★'.repeat(sum.stars)} · {MODE_INFO[v.policy.mode].name} mode{!v.setup ? ' · ' : ''}{!v.setup && <span className="text-[#ffb3d1]">needs setting up</span>}</div>
               <div className="text-[11px] text-stone-300">Last week {fmt$(v.last?.noi ?? 0)}{v.last?.capacity ? ` · ${Math.round(v.last.occ * 100)}% full` : v.last && !v.last.open ? ' · closed for the winter' : ''}{v.proposals.length ? ` · ${v.proposals.length} proposal${v.proposals.length > 1 ? 's' : ''}` : ''}</div>
             </button>
           );
