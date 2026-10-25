@@ -84,7 +84,7 @@ export function lotTooltip(l: Lot): string {
  * rivals' from the normal Wildwood zoom, everyone else's only up close. The
  * tier is a CSS class the map shows or hides by zoom (declutter).
  */
-export function lotLabel(s: GameState, l: Lot): { text: string; color: string; tier: 'own-player' | 'own-rival' | 'own-other' } | undefined {
+export function lotLabel(s: GameState, l: Lot): { text: string; color: string; sign?: boolean; tier: 'own-player' | 'own-rival' | 'own-other' } | undefined {
   if (!l.use || !l.stage || l.stage === 'purchase') return undefined;
   const mine = l.status === 'owned' || l.status === 'leased';
   const u = USES_BY_ID[l.use];
@@ -92,7 +92,7 @@ export function lotLabel(s: GameState, l: Lot): { text: string; color: string; t
   const sign = mine ? s.econ?.designs?.[biz ? biz.id : `lot:${l.id}`]?.sign : undefined;
   const text = (l.name ?? biz?.name ?? u.name) + (l.stage !== 'open' ? ' (building)' : '');
   const tier = mine ? 'own-player' : l.status === 'rival' ? 'own-rival' : 'own-other';
-  return { text, color: sign ? SIGN_HEX[sign] : lotColor(l), tier };
+  return { text, color: sign ? SIGN_HEX[sign] : lotColor(l), sign: !!sign, tier };
 }
 
 export interface LotView {
@@ -113,7 +113,8 @@ export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameSt
     const isNew = !!view.since1960 && l.stage === 'open' && (l.builtYear ?? 0) >= 1960;
     const dim = !!view.since1960 && !isNew;
     const lab = lotLabel(s, l);
-    const html = lotSvg(l, { size: 22, glow: isNew, dim }) + (lab && !dim ? `<span class="llv-blabel ${lab.tier}" style="color:${lab.color}">${esc(lab.text)}</span>` : '');
+    const svg = lotSvg(l, { size: 22, glow: isNew, dim });
+    const html = (lab?.sign && !dim ? `<span style="display:block;filter:drop-shadow(0 0 3px ${lab.color}) drop-shadow(0 0 1px ${lab.color})">${svg}</span>` : svg) + (lab && !dim ? `<span class="llv-blabel ${lab.tier}" style="color:${lab.color}">${esc(lab.text)}</span>` : '');
     L.marker(at, { pane: 'pins', icon: L.divIcon({ className: 'llv-lotico', html, iconSize: [22, 22], iconAnchor: [11, 11] }) })
       .bindTooltip(lotTooltip(l), { className: 'llv-tip' })
       .on('click', () => onClick?.(raw.id))

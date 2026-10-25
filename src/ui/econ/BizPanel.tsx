@@ -5,7 +5,7 @@ import { CATALOG } from '../../engine/catalog';
 import { designOf, SIGN_HEX, STYLES } from '../../engine/design';
 import { managerOf, SOURCE_LABEL } from '../../engine/managers';
 import type { GameState } from '../../engine/types';
-import { CandidatePicker } from '../clarity/CandidatePicker';
+import { rankCandidates } from '../../engine/candidates';
 import { ActionCard } from '../components/Orders';
 import { CharLink } from '../components/People';
 import { fmt$ } from '../format';
@@ -40,7 +40,17 @@ export function BizPanel({ s, id }: { s: GameState; id: string }) {
           </div>
         ) : <div className="text-stone-400">Nobody in charge — the crew and the counter staff.</div>}
       </div>
-      <CandidatePicker s={s} role={{ kind: 'manager', key: b.id }} limit={2} hideAdvisors />
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-stone-500">The crew suggests</div>
+        <div className="mt-1 space-y-1.5">
+          {rankCandidates(s, { kind: 'manager', key: b.id }).candidates.filter((c) => c.action && !c.disabledReason && c.charId !== m?.charId).slice(0, 2).map((c) => (
+            <div key={c.id}>
+              <ActionCard s={s} action={c.action!} compact />
+              <div className="px-1 text-[11px] text-stone-500">{c.outcome}{c.pros[0] ? ` · ${c.pros[0].text}` : ''}{c.cons[0] ? ` · ${c.cons[0].text}` : ''}</div>
+            </div>
+          ))}
+        </div>
+      </div>
       <div>
         <div className="text-[10px] uppercase tracking-widest text-stone-500">A new sign</div>
         <input className="mt-1 w-full rounded border border-noir-600 bg-noir-900 p-1.5 text-sm" maxLength={40} placeholder={b.name} value={name} onChange={(e) => setName(e.target.value)} aria-label="New name" />
