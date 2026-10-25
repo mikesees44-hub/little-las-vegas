@@ -15,6 +15,9 @@ import { BizPanel } from '../econ/BizPanel';
 import { useTravel } from '../travel/context';
 import { TravellersPanel } from '../travel/Panels';
 import type { MapFocus } from '../shell/context';
+import { IslandView } from '../hood/IslandView';
+import { RegionView } from '../region/RegionView';
+import { HOODS_BY_ID, type HoodId } from '../../engine/hoodData';
 
 /**
  * The map screen: the real map with its overlays (modes, breadcrumbs, legend,
@@ -41,12 +44,21 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
   const [asOf, setAsOf] = useState<number | undefined>();
   const [since, setSince] = useState(false);
   const [lot, setLot] = useState<string | undefined>();
-  const go = (l: Level) => setFly({ level: l, nonce: (fly?.nonce ?? 0) + 1 });
+  // Wildwood up close: the illustrated island (the shell opens on it); 'map' is the Leaflet survey map.
+  // South Jersey illustrated: the road-map postcard (the shell's region level); 'map' is Leaflet at every level.
+  const [view, setView] = useState<'island' | 'region' | 'map'>(shell ? 'island' : 'map');
+  const [hood, setHood] = useState<HoodId | undefined>();
+  const [land, setLand] = useState<{ scene: 'block' | 'street'; nonce: number } | undefined>();
+  const island = view === 'island';
+  const region = view === 'region';
+  const drawn = island || region;
+  const go = (l: Level) => { setView(shell && l === 'wildwood' ? 'island' : shell && l === 'region' ? 'region' : 'map'); setFly({ level: l, nonce: (fly?.nonce ?? 0) + 1 }); };
   const crumbs: { l: Level; t: string }[] = [{ l: 'usa', t: 'USA' }, { l: 'region', t: 'South Jersey' }, { l: 'wildwood', t: 'Wildwood' }];
   // The shell opens on the island, not the nation.
   useEffect(() => { if (shell) setFly({ level: 'wildwood', nonce: 1 }); }, [shell]);
   useEffect(() => {
     if (!focus) return;
+    setView('map');
     if (focus.mode) setMode(focus.mode);
     if (focus.district) { setDistrict(focus.district); setCity(undefined); }
     if (focus.city) { setCity(focus.city); setDistrict(undefined); }
@@ -72,23 +84,28 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
             onLot={(id) => { setLot(id); setDistrict(undefined); setCity(undefined); }}
             onBiz={(id) => { setLot(`biz:${id}`); setDistrict(undefined); setCity(undefined); }}
           />
+          {region && <div className="absolute inset-0 z-[900]"><RegionView s={s} onEnvoy={onEnvoy} onStreet={() => { setLand((x) => ({ scene: 'block', nonce: (x?.nonce ?? 0) + 1 })); setView('island'); setFly({ level: 'wildwood', nonce: (fly?.nonce ?? 0) + 1 }); }} onSurvey={() => { setView('map'); setFly({ level: 'region', nonce: (fly?.nonce ?? 0) + 1 }); }} /></div>}
+          {island && <div className="absolute inset-0 z-[900]"><IslandView s={s} onSurvey={() => { setView('map'); setFly({ level: 'wildwood', nonce: (fly?.nonce ?? 0) + 1 }); }} onHood={setHood} land={land} /></div>}
           <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1.5">
             <nav className="flex items-center gap-1 rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-xs" aria-label="Map level">
               {crumbs.map((c, i) => (
                 <span key={c.l} className="flex items-center gap-1">
                   {i > 0 && <span className="text-stone-600">›</span>}
-                  <button onClick={() => go(c.l)} className={level === c.l ? 'text-gold-300 font-semibold' : 'text-stone-400 hover:text-gold-300'}>{c.t}</button>
+                  <button onClick={() => go(c.l)} className={(island ? c.l === 'wildwood' && !hood : region ? c.l === 'region' : level === c.l) ? 'text-gold-300 font-semibold' : 'text-stone-400 hover:text-gold-300'}>{c.t}</button>
                 </span>
               ))}
+              {island && hood && <span className="flex items-center gap-1"><span className="text-stone-600">›</span><span className="text-gold-300 font-semibold" data-testid="crumb-hood">{HOODS_BY_ID[hood].name}</span></span>}
             </nav>
-            <div className="flex gap-1 flex-wrap" role="group" aria-label="Map mode">
+            {!drawn && <div className="flex gap-1 flex-wrap" role="group" aria-label="Map mode">
               {(['control', 'heat', 'income', 'rival'] as MapMode[]).map((m) => (
                 <button key={m} onClick={() => setMode(m)} className={`rounded px-2 py-0.5 text-[11px] font-semibold border ${mode === m ? 'bg-gold-500 text-noir-950 border-gold-400' : 'bg-noir-900/85 text-stone-300 border-noir-600 hover:border-gold-500'}`}>
                   {m === 'rival' ? 'Rival influence' : m[0].toUpperCase() + m.slice(1)}
                 </button>
               ))}
-            </div>
-            {level === 'wildwood' && s.date.y > 1960 && (
+            </div>}
+            {!drawn && shell && level === 'region' && <button onClick={() => setView('region')} className="self-start rounded bg-gold-500 text-noir-950 border border-gold-400 px-2 py-0.5 text-[11px] font-semibold" data-testid="to-region">South Jersey illustrated</button>}
+            {!drawn && shell && level === 'wildwood' && <button onClick={() => setView('island')} className="self-start rounded bg-gold-500 text-noir-950 border border-gold-400 px-2 py-0.5 text-[11px] font-semibold" data-testid="to-island">Wildwood up close</button>}
+            {!drawn && level === 'wildwood' && s.date.y > 1960 && (
               <div className="flex items-center gap-1.5 rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-[11px] text-stone-300" data-testid="map-timeline">
                 <span className="text-stone-500">The island in</span>
                 <input type="range" min={1960} max={s.date.y} value={asOf ?? s.date.y} onChange={(e) => { const y = Number(e.target.value); setAsOf(y >= s.date.y ? undefined : y); }} aria-label="Show the island as it stood in" className="w-24 accent-[#c49a3a]" />
@@ -96,16 +113,17 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
                 <label className="flex items-center gap-1 ml-1"><input type="checkbox" checked={since} onChange={(e) => setSince(e.target.checked)} />since 1960</label>
               </div>
             )}
-            {level !== 'usa' && <button onClick={() => go('usa')} className="self-start rounded bg-noir-900/90 border border-noir-600 px-2 py-0.5 text-[11px] text-stone-300 hover:text-gold-300">← Back to US</button>}
+            {!drawn && <button onClick={() => go(level)} data-testid="map-recenter" className="self-start rounded bg-noir-900/90 border border-noir-600 px-2 py-0.5 text-[11px] text-stone-300 hover:text-gold-300" title="Drag to move around; this brings the view back">⌂ Recenter</button>}
+            {!drawn && level !== 'usa' && <button onClick={() => go('usa')} className="self-start rounded bg-noir-900/90 border border-noir-600 px-2 py-0.5 text-[11px] text-stone-300 hover:text-gold-300">← Back to US</button>}
           </div>
           {!shell && <div className="absolute right-12 top-2 z-[1000]"><AlertRail s={s} items={alerts} onAlert={onAlert} /></div>}
           <div className="absolute left-2 bottom-6 z-[1000] hidden sm:block"><PlayerCard s={s} /></div>
-          <div className="absolute right-2 bottom-6 z-[1000] rounded bg-noir-900/90 border border-noir-700 px-2 py-1.5 text-[10px] text-stone-400 max-w-[50%]" data-testid="map-legend">
+          {!drawn && <div className="absolute right-2 bottom-6 z-[1000] rounded bg-noir-900/90 border border-noir-700 px-2 py-1.5 text-[10px] text-stone-400 max-w-[50%]" data-testid="map-legend">
             <div className="uppercase tracking-[0.25em] text-stone-500 mb-0.5">Who holds what</div>
             {(['player', 'philly', 'manno', 'newyork', 'other', 'unclaimed', 'exiles'] as OwnerGroup[]).map((g) => (
               <div key={g} className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-full border border-noir-950" style={{ background: GROUP_COLOR[g] }} />{GROUP_LABEL[g]}</div>
             ))}
-          </div>
+          </div>}
         </div>
         <aside className="panel p-3 sm:p-4 lg:max-h-[calc(100vh-190px)] lg:overflow-y-auto">
           {lot ? (

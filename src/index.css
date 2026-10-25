@@ -185,3 +185,37 @@ body {
   .llv-clock-compact button { width: 1.6rem; height: 2rem; font-size: 0.7rem; }
   [data-shell] [data-testid="map-legend"] { display: none; }
 }
+
+/* Wildwood up close (src/ui/hood). Few always-on animations: each one repaints the map under it. */
+.hv-street-card .hv-chase { animation: hv-chase 0.9s steps(2) infinite; }
+.hv-btn { border-radius: 6px; border: 1px solid #3a342e; background: rgba(20, 18, 16, 0.9); color: #e8dfcb; font-size: 11px; font-weight: 600; padding: 3px 8px; line-height: 1.3; }
+.hv-btn:hover { border-color: #c49a3a; color: #ecd38f; }
+.hv-on { border-color: #ff5fa2; color: #ffd1e6; box-shadow: 0 0 6px rgba(255, 95, 162, 0.45); }
+.hv-chip { white-space: nowrap; border-radius: 999px; border: 1px solid #ff9ec7; background: rgba(255, 250, 240, 0.92); color: #c2185b; font-size: 11px; font-weight: 700; padding: 2px 9px; }
+.hv-chip.hv-on { background: #c2185b; color: #fffaf0; }
+[data-mood='night'] .hv-chip, [data-mood='dusk'] .hv-chip { background: rgba(27, 16, 48, 0.9); color: #ffd1e6; border-color: #ff5fa2; }
+.hv-spin { transform-box: fill-box; transform-origin: center; animation: hv-spin 24s linear infinite; }
+.hv-crane { transform-box: fill-box; transform-origin: 85% 0%; animation: hv-crane 7s ease-in-out infinite alternate; }
+.hv-sel { animation: hv-pulse 1.2s ease-in-out infinite; }
+.hv-bounce { animation: hv-bounce 0.9s ease-in-out infinite alternate; }
+.hv-tram > g { animation: hv-tram 140s linear infinite alternate; }
+@keyframes hv-spin { to { transform: rotate(360deg); } }
+@keyframes hv-crane { from { transform: rotate(-10deg); } to { transform: rotate(12deg); } }
+@keyframes hv-wave { to { stroke-dashoffset: -160; } }
+@keyframes hv-bob { to { transform: translateY(1.5px); } }
+@keyframes hv-chase { 50% { opacity: 0.35; } }
+@keyframes hv-flicker { to { transform: scaleY(0.8); opacity: 0.8; } }
+@keyframes hv-pulse { 50% { stroke-opacity: 0.35; } }
+@keyframes hv-bounce { to { transform: translateY(-3px); } }
+@keyframes hv-tram { from { translate: 0 0; } to { translate: var(--tx) var(--ty); } }
+@media (prefers-reduced-motion: reduce) { .hv-spin, .hv-crane, .hv-wave, .hv-bob, .hv-chase, .hv-flicker, .hv-sel, .hv-bounce, .hv-tram > g { animation: none; } }
+/* South Jersey illustrated: headlights on the Parkway after dark. */
+.rv-cars { animation: rv-cars 2.4s linear infinite; }
+@keyframes rv-cars { to { stroke-dashoffset: -28; } }
+@media (prefers-reduced-motion: reduce) { .rv-cars { animation: none; } }
+/* Landing on the painted block (from above), and walking onto Pacific Avenue. */
+.pv-land { animation: pv-land 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; transform-origin: 60% 40%; }
+.pv-walk { animation: pv-walk 1.1s cubic-bezier(0.25, 0.6, 0.2, 1) both; transform-origin: 66% 52%; }
+@keyframes pv-land { from { transform: scale(1.35); opacity: 0; filter: blur(6px); } 60% { opacity: 1; } to { transform: scale(1); opacity: 1; filter: blur(0); } }
+@keyframes pv-walk { from { transform: scale(0.82) translateY(4%); opacity: 0; filter: blur(4px); } 50% { opacity: 1; } to { transform: scale(1); opacity: 1; filter: blur(0); } }
+@media (prefers-reduced-motion: reduce) { .pv-land, .pv-walk { animation: none; } }

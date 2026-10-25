@@ -1,4 +1,7 @@
 import { econEventSource, econWeek } from './econ';
+import { hoodWeek } from './hood';
+import { talksWeek } from './talks';
+import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
 import { travelWeek } from './travel';
 import { officeWeek } from './office';
@@ -290,6 +293,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) {
     runEconomy(ctx);
     econWeek(ctx);
+    hoodWeek(ctx);
+    talksWeek(ctx);
+    missionsWeek(ctx);
     runCouncil(ctx);
     crewWeek(ctx);
     lifestyleWeek(ctx);

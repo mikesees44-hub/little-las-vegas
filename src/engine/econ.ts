@@ -1108,6 +1108,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
           const b = newBusiness(s, u.biz, z.district ?? `zone:${l.zone}`);
           b.id = `b${s.nextId++}`;
           b.cost = u.cost;
+          if (l.name) b.name = l.name; // a going concern keeps its sign
           s.businesses.push(b);
           l.bizId = b.id;
           e.managers[b.id] = oldOwner(s, prior);

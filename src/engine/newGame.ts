@@ -1,4 +1,5 @@
 import { initEcon } from './econ';
+import { ensureHood } from './hoodState';
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
@@ -334,7 +335,8 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   initDynasty(s);
   initPolitics(s);
   initEcon(s);
-  // The Ears come first so their ids match with or without the houses' history.
+  // The neighborhoods and the Ears come first so ids match with or without the houses' history.
+  ensureHood(s);
   initEars(s);
   if (!opts.skipHouses) setupHouses(s);
   return s;

@@ -2,6 +2,9 @@ import { ensureBones } from './bonesState';
 import { ensureEars } from './ears';
 import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
+import { ensureHood } from './hoodState';
+import { ensureMissions } from './missions';
+import { ensureTalks } from './talks';
 import { ensureDynState } from './familyState';
 import { ensureLedgerBook } from './ledgerbookState';
 import { ensureArcs } from './livingStories';
@@ -23,6 +26,7 @@ export function upgradeSave(s: GameState): GameState {
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
     ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute],
+    ['hood' as keyof GameState, ensureHood], ['talks' as keyof GameState, ensureTalks], ['missions' as keyof GameState, ensureMissions],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;

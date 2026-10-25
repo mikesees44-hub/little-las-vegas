@@ -46,7 +46,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-semibold text-stone-100 text-sm">{label ?? p.title}</div>
-          {!compact && p.detail && <div className="text-xs text-stone-400 mt-0.5">{p.detail}</div>}
+          {(!compact || action.kind === 'talk') && p.detail && <div className="text-xs text-stone-400 mt-0.5">{p.detail}</div>}
         </div>
         <button
           className={queued ? 'btn-ghost text-xs py-1 shrink-0' : 'btn-gold text-xs py-1 shrink-0'}

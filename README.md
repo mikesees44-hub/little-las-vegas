@@ -318,3 +318,42 @@ UI: `src/ui/ears` — `NightPanel` (Town → The Night: the Madam, the Ears, ope
 (Town → Who's attached to whom; a club hub can drop it in as is), `EarsPicker` (the person menu's "The Ears" category),
 `ConnectionsList` / `ConnectionsSection` (person menu and character sheet). Jobs and the Madam's squeeze show on the
 In Motion strip. The sim's random player uses the Ears' orders (`--ears 0.06`).
+
+## Wildwood up close: the neighborhoods, talks and the Mission Board (wave 2)
+
+The third map level. Country and South Jersey stay the Leaflet maps; **Wildwood** now opens on an illustrated 1960
+island (Five Mile Beach: the Crest, Wildwood, North Wildwood, the bay and the causeway), drawn in SVG as 2.5D
+(isometric) or a flat plan. Avenues, cross streets, the Boardwalk and its piers (Hunt's, Marine, Sportland and Casino),
+the tram car, beach umbrellas, the Giant Wheel. Every building on it is a record in `econ.lots` (or one of your
+places with no lot), drawn in its style (Doo Wop / Googie with starbursts and boomerang roofs, Deco, Tiki, Colonial,
+Mid-century, Victorian) with its neon sign; day, dusk and night (Auto follows the heat). Eight neighborhoods with
+boundaries from the records; the chips zoom to one, and its dashboard opens in Town → Neighborhoods.
+
+**Moving around.** Drag to pan on every level (Leaflet levels natively; the island with its own pointer code: inertia,
+bounds that keep the island on screen, ⌂ Recenter), wheel and pinch zoom, a 6px click-vs-drag threshold so a drag
+never selects a building. Gestures are a GPU-composited CSS transform over a drawing with a margin past the edges
+(kept within ~16 megapixels at the screen's density); the SVG is redrawn once, when the gesture settles. Detail
+comes in tiers by zoom (labels, windows, pennants, signs).
+
+**A building** opens its street-view card: an original illustrated postcard of the storefront (by style, use, sign,
+condition, era, time of day), who holds it, who runs it, the deed (ownership history), renovate and restyle, and
+the property paperwork (LotPanel / BizPanel: buy through the Deal window, lease, managers). A place of yours that
+the Empire Designer runs (motel, rooming house, hotel, restaurant, bar, club) has **Open the Empire Designer**; an
+empty lot of yours, **Develop it in the Designer** (both through `useEmpire().open`).
+
+**Overlays:** ownership, business type (the `propertyGroups.ts` groups and icons, as in Holdings), rival influence,
+available buildings, construction, economy, reputation, police.
+
+| File | What it does |
+|---|---|
+| `hoodData.ts` | The island's frame (u along the island, v inland), avenues and cross streets, the Boardwalk and piers, the eight neighborhoods (zones → hood), and the authored 1960 records (37 rows, 22 on the Boardwalk: motels, stands, rides and clubs with owners, tenants, build years, styles and signs) |
+| `hoodGeo.ts` | Where every record stands: pure and deterministic from zone and index (nothing about geometry is saved); footprints; neighborhood bounds from the records |
+| `hoodState.ts` | `GameState.hood` (optional; `ensureHood` adds the 1960 records to the market once, by id): per-neighborhood economy, reputation, police, infrastructure, population, municipal policy; NPC looks; the island's log; a snapshot a year |
+| `hood.ts` | The monthly neighborhood sim: owners sell to owners, rivals buy out independents where they are strong and let go where weak, closures and openings, renovations in the decade's style, the era's economy (the early-sixties boom, the seventies slide, the casinos); the dashboard view (`hoodView`), ten-year change (`islandChange`), overlays, the restyle order `{ kind: 'hood', op: { type: 'restyle' } }` (on a Designer venue it restyles its building record) |
+| `talks.ts` | Talks from the person menu (Talk): request a meeting, offer a job, discuss business, form a partnership, ask advice, hear a grievance, an evening out, negotiate, discuss the succession. Odds as a full breakdown; five answers: agree, refuse, delay (the answer comes weeks later), counteroffer (taken from the Mission Board), or a family boss acts on his own. Pacts (alliance, truce, partnership) the rivals' AI respects; the families' own diplomacy (alliances, disputes, settlements, splits) |
+| `missions.ts` | The Mission Board: multi-stage cases with participants, objectives, disputed facts and who knows them, decisions you make or delegate, NPC counter-moves, and endings that stay in the records. One storyline: **the Tropicana** (old man Kovacs wants out of his Boardwalk motel; Feldstein and Manno want in) |
+
+UI: `src/ui/hood/` (IslandView, Ground, Buildings, Facade, StreetCard, HoodDashboard, MissionBoard). Saves: `upgradeSave`
+runs `ensureHood`, `ensureTalks`, `ensureMissions`. Tests: `tests/hood.test.ts` (the Phase A acceptance: 20+
+selectable Boardwalk buildings, 5+ independents, 2+ organizations, a purchase, renovation and restyle, save/load and
+old saves, ten years of visible and economic change) and `tests/talks.test.ts`.

@@ -37,6 +37,8 @@ import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
 import { WeeklyTake } from '../tribute/WeeklyTake';
 import { EarningsBoard } from '../tribute/EarningsBoard';
+import { HoodDashboard } from '../hood/HoodDashboard';
+import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
 import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
 import { AttachmentBoard } from '../ears/Connections';
@@ -146,6 +148,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'Everything your people are doing out there: schemes, hits, heists, envoys, trips.',
     sections: [
       { id: 'progress', label: 'In progress', render: (s) => <SchemesPanel s={s} /> },
+      { id: 'missions', label: 'Mission Board', blurb: 'The big cases, stage by stage: who is involved, what is disputed, who knows what, and your move. Talks waiting on an answer are here too.', render: (s) => <MissionBoard s={s} /> },
       { id: 'plan', label: 'Plan new…', render: (s) => <PlanNew s={s} /> },
       { id: 'travel', label: 'Travel & Envoys', render: (s) => stack(<EnvoysAbroad key="e" s={s} />, <TravellersPanel key="t" s={s} />) },
     ],
@@ -155,6 +158,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'The other families: the board, disputes at the Table, wars, the balance of power.',
     sections: [
       { id: 'board', label: 'The Board', render: (s) => <RivalBoard s={s} /> },
+      { id: 'pacts', label: 'Pacts & Families', blurb: 'Truces and partnerships with the families, and how they deal with each other when you are not in the room.', render: (s) => <PactsPanel s={s} /> },
       { id: 'table', label: 'The Table & Wars', render: (s) => <TablePanel s={s} /> },
       { id: 'balance', label: 'Balance of Power', render: (s) => <PowerPart s={s} part="blitz" /> },
       { id: 'front', label: 'The Front', render: (s) => <PowerPart s={s} part="front" /> },
@@ -166,6 +170,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'case', label: 'Your Case', blurb: 'The government\'s case against the boss, from a file to a trial, and the fugitive road.', render: (s) => <LawPanel s={s} /> },
       { id: 'cityhall', label: 'City Hall & People', wide: true, render: (s) => <CityHall s={s} /> },
+      { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => <HoodDashboard s={s} /> },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'night', label: 'The Night', blurb: 'The Madam, the Ears who hear everything, and the men who exploit women. Set-ups and reports only; she always decides.', render: (s) => <NightPanel s={s} /> },
       { id: 'attached', label: 'Who\'s attached to whom', blurb: 'The connection web: who is sweet on whom, who is a regular, who keeps someone on the side. The Ears reveal the rest.', render: (s) => <AttachmentBoard s={s} /> },

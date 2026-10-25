@@ -1,5 +1,6 @@
 import { rivalTake } from './rivalBooks';
 import { alliedWithFaction } from './familyHouses';
+import { pactWith } from './talks';
 import { lawZeal } from './polIntegrity';
 import { perkMod } from './lifestyle';
 import { gameYear } from './calendar';
@@ -140,7 +141,7 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
         }
       }
       // An alliance by marriage (or pact): they won't move against your house.
-      if (t === 'player' && (move === 'strike' || move === 'inform' || move === 'expand') && alliedWithFaction(s, r.id)) sc = 0;
+      if (t === 'player' && (move === 'strike' || move === 'inform' || move === 'expand') && (alliedWithFaction(s, r.id) || !!pactWith(s, r.id))) sc = 0;
       // Rivals focus on the player but act on each other too.
       if (t !== 'player') sc *= 0.55;
       if (t === 'player' && (r.war || r.feud) && move === 'strike') sc *= 2.5;

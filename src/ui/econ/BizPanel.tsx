@@ -13,7 +13,7 @@ import { useEmpire } from '../empire/context';
 import { venueByKey } from '../../engine/empire';
 
 /** One of your businesses clicked on the map: who runs it, how it's doing, its name and look. */
-export function BizPanel({ s, id }: { s: GameState; id: string }) {
+export function BizPanel({ s, id, noDesigner }: { s: GameState; id: string; noDesigner?: boolean }) {
   const b = s.businesses.find((x) => x.id === id && x.owner === 'player');
   const [name, setName] = useState('');
   const empire = useEmpire();
@@ -27,7 +27,7 @@ export function BizPanel({ s, id }: { s: GameState; id: string }) {
   const district = s.districts.find((x) => x.id === b.districtId)?.name;
   return (
     <div className="space-y-3" data-testid="biz-panel">
-      {ven && <button type="button" className="btn-gold w-full" data-testid="biz-open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
+      {ven && !noDesigner && <button type="button" className="btn-gold w-full" data-testid="biz-open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
       <div>
         <div className="font-display text-xl text-gold-400" style={d?.sign ? { color: SIGN_HEX[d.sign], textShadow: `0 0 8px ${SIGN_HEX[d.sign]}66` } : undefined}>{b.name}</div>
         <div className="text-xs text-stone-400">{def.name} · {district}{d?.style ? ` · ${STYLES[d.style].name}` : ''}</div>

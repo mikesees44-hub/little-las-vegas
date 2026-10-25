@@ -8,6 +8,7 @@ import { OFFICE_BY_ID } from '../../engine/polData';
 import { GROOM_PATHS } from '../../engine/heir';
 import { stageLabel } from '../../engine/longgame';
 import type { GameState } from '../../engine/types';
+import { MISSION_DEFS } from '../../engine/missions';
 import type { Route } from './routes';
 import type { MapFocus } from './context';
 
@@ -52,6 +53,11 @@ export function inMotion(s: GameState, ui: { orders: number } = { orders: 0 }): 
     const r = s.rivals.find((x) => x.id === sc.owner);
     out.push({ key: `rs:${sc.id}`, glyph: '⚠', text: `${r?.shortName ?? 'A rival'} plot vs ${sc.targetId === s.playerId ? 'you' : name(sc.targetId) || 'you'} ${sc.progress}%`, progress: sc.progress, eta: Math.max(1, Math.ceil((100 - sc.progress) / 12)), tone: 'bad', route: { panel: 'ops', section: 'progress' } });
   }
+  safe(() => {
+    // The Mission Board's open cases, and answers you are waiting on.
+    for (const m of (s.missions?.runs ?? []).filter((x) => !x.ended)) out.push({ key: `ms:${m.id}`, glyph: '◈', text: `${MISSION_DEFS[m.def].title}: ${m.waiting ? 'waiting on an answer' : MISSION_DEFS[m.def].stages[m.stage]?.title ?? ''}`, tone: m.waiting ? 'neutral' : 'warn', eta: m.waiting ? Math.max(1, m.waiting.until - s.week) : undefined, route: { panel: 'ops', section: 'missions' } });
+    for (const p of (s.talks?.pending ?? []).filter((x) => x.kind === 'counter')) out.push({ key: `tk:${p.id}`, glyph: '☏', text: `${name(p.target)} countered`, eta: Math.max(1, p.due - s.week), tone: 'warn', route: { panel: 'ops', section: 'missions' } });
+  });
   safe(() => {
     for (const l of (s.econ?.lots ?? []).filter((x) => x.owner === 'player' && underConstruction(x))) {
       const i = BUILD_STAGES.indexOf(l.stage as (typeof BUILD_STAGES)[number]);

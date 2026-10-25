@@ -72,6 +72,11 @@ const POL_RATE = Number(arg('politics', '0.12'));
 const MG_PLAY_RATE = Number(arg('mgplay', '0.3'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
+/** Chance per week of a neighborhood order (restyle a place you own). */
+const HOOD_RATE = Number(arg('hood', '0.03'));
+/** Chance per week of a talk (meeting, job, partnership, truce ...) and of a Mission Board decision. */
+const TALK_RATE = Number(arg('talks', '0.06'));
+const MISSION_RATE = Number(arg('missions', '0.25'));
 /** Chance per week of a bones or books order (put a prospect on a job, a favor, check a report, confront a skim, change the books). */
 const BONES_RATE = Number(arg('bones', '0.1'));
 /** Chance per week of an Ears order (ask an Ear about a man, take care of one, the Madam's diplomacy, go after an operator). */
@@ -174,6 +179,9 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
     })));
   }
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
+  if (rand(h) < TALK_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'talk' && !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
+  if (rand(h) < MISSION_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'mission' && !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
+  if (rand(h) < HOOD_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'hood' && !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
   if (rand(h) < ADVICE_RATE) {
     // Take the advice: the top item's order, or the recommended man for its pick.
     for (const o of whatShouldIDo(s, 5)) {
@@ -247,6 +255,8 @@ interface GameResult {
   dyn?: Record<string, number>;
   /** Economy-layer counters at the end of the game (econState.ts). */
   econ?: Record<string, number>;
+  /** Neighborhood counters (hoodState.ts). */
+  hood?: Record<string, number>;
   /** Bones and books counters at the end of the game (bonesState.ts, ledgerbookState.ts). */
   bones?: Record<string, number>;
   /** The Ears' counters at the end of the game (earsState.ts). */
@@ -435,6 +445,7 @@ function playOne(gi: number): GameResult {
     r.ears = { ...rest, ...Object.fromEntries(Object.entries(intel).map(([k, v]) => [`intel_${k}`, v])), madamOpinion: opinion(s!, s!.ears.madam.id, s!.playerId), knownEars: Object.values(s!.ears.ears).filter((e) => e.known).length, linksKnown: s!.ears.links.filter((l) => !l.hidden).length };
   }
   if (s!.bones || s!.ledgerBook) r.bones = { ...(s!.bones?.stats ?? {}), ...Object.fromEntries(Object.entries(s!.ledgerBook?.stats ?? {}).map(([k, v]) => [`books_${k}`, v])) };
+  if (s!.hood) r.hood = { ...s!.hood.counts, log: s!.hood.log.length, ...Object.fromEntries(Object.entries(s!.talks?.stats ?? {}).map(([k, v]) => [`talk_${k}`, v])), missionsEnded: s!.missions?.stats.ended ?? 0, missionDecisions: s!.missions?.stats.decisions ?? 0 };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
@@ -527,6 +538,11 @@ const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
 if (econGames.length) {
   const keys = Object.keys(econGames[0].econ!);
   console.log(`  Economy layer per game (mean): ${keys.map((k) => `${k} ${(econGames.reduce((a, r) => a + (r.econ![k] ?? 0), 0) / econGames.length).toFixed(1)}`).join(', ')}`);
+}
+const hoodGames = results.filter((r) => r.hood && r.weeksPlayed > 0);
+if (hoodGames.length) {
+  const keys = Object.keys(hoodGames[0].hood!);
+  console.log(`  Neighborhoods per game (mean): ${keys.map((k) => `${k} ${(hoodGames.reduce((a, r) => a + (r.hood![k] ?? 0), 0) / hoodGames.length).toFixed(1)}`).join(', ')}`);
 }
 
 console.log(`\nDYNASTY`);

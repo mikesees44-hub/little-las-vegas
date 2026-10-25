@@ -14,6 +14,7 @@ import { SCHEME_INFO } from '../../engine/schemes';
 import { knownSecrets } from '../../engine/secrets';
 import { tableMembers } from '../../engine/table';
 import { casusBelli } from '../../engine/war';
+import { TALK_IDS, talkApplies } from '../../engine/talks';
 import { pwView } from '../../engine/powerState';
 import { wantedFor } from '../../engine/fugitive';
 import { addEarsItems } from '../ears/earsMenu';
@@ -24,7 +25,7 @@ import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, Riv
  * categories. Pure: it lists PlayerActions (shown as order cards) and a few
  * "openers" (the scheme planner, the trip planner, the gift catalog).
  */
-export type MenuCategoryId = 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife';
+export type MenuCategoryId = 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife';
 
 export type Opener =
   | { type: 'plan'; kind: SchemeKind }
@@ -54,7 +55,7 @@ export interface MenuCategory {
 }
 
 export const CATEGORY_LABEL: Record<MenuCategoryId, string> = {
-  diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
+  talk: 'Talk', diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
   travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The Ears',
 };
 
@@ -184,6 +185,9 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
     }
   }
 
+  // Talks: he may agree, refuse, ask for time, counter, or go his own way (talks.ts).
+  for (const id of TALK_IDS) if (!talkApplies(s, id, c)) add('talk', { key: `t:${id}`, action: { kind: 'talk', op: { t: 'ask', talk: id, target: c.id } } });
+
   // City Hall: officials who are also people of the world.
   const p = Object.values(s.pol?.people ?? {}).find((x) => x.charId === c.id);
   if (p && p.alive) addPol(s, p.id, add);
@@ -204,7 +208,7 @@ export function addPol(s: GameState, polId: string, add: (id: MenuCategoryId, it
   if (p.street) add('cityhall', { key: 'recruit', action: pa({ op: 'recruit', id: p.id }) });
 }
 
-const ORDER: MenuCategoryId[] = ['self', 'diplomacy', 'business', 'heirs', 'romance', 'intrigue', 'nightlife', 'hostile', 'table', 'cityhall', 'travel'];
+const ORDER: MenuCategoryId[] = ['self', 'talk', 'diplomacy', 'business', 'heirs', 'romance', 'intrigue', 'nightlife', 'hostile', 'table', 'cityhall', 'travel'];
 function order(m: Map<MenuCategoryId, MenuItem[]>): MenuCategory[] {
   return ORDER.filter((id) => m.get(id)?.length).map((id) => ({ id, label: CATEGORY_LABEL[id], items: m.get(id)! }));
 }
