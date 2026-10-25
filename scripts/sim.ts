@@ -7,6 +7,9 @@
  */
 import { writeFileSync } from 'node:fs';
 import { newGameWith, type StartId } from '../src/engine/starts';
+import { AGE_RANGE, BACKGROUNDS, BIRTHPLACES, VICES, creatorBase, validateCharOptions, type CharOptions } from '../src/engine/charCreate';
+import { ALL_TRAITS } from '../src/engine/characters';
+import { hashSeed } from '../src/engine/rng';
 import { LIFESTYLE_IDS } from '../src/engine/lifestyle';
 import { isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { advanceWeek, forceDeath } from '../src/engine/engine';
@@ -68,6 +71,27 @@ const TRAVEL_RATE = Number(arg('travel', '0.04'));
 const START = arg('start', 'classic') as StartId;
 /** Chance per week the random player takes the advice: the top "What should I do?" item, or the recommended pick. */
 const ADVICE_RATE = Number(arg('advice', '0.05'));
+/** Share of games started through the character creator with random (valid, normal-difficulty) picks (--custom 0.2). Off by default so the balance targets match master. */
+const CUSTOM_RATE = Number(arg('custom', '0'));
+
+/** Random creator picks, retried until valid (falls back to none). */
+function randomCharOptions(seed: string, start: StartId): CharOptions | undefined {
+  const base = creatorBase(newGameWith(seed, start), start);
+  for (let k = 0; k < 8; k++) {
+    let h = hashSeed(`${seed}:cc:${k}`);
+    const r = () => ((h = Math.imul(h ^ (h >>> 13), 0x5bd1e995) >>> 0) % 10000) / 10000;
+    const pick = <T,>(xs: readonly T[]) => xs[Math.floor(r() * xs.length)];
+    const [lo, hi] = AGE_RANGE[start];
+    const o: CharOptions = {
+      age: lo + Math.floor(r() * (hi - lo + 1)), birthplace: pick(BIRTHPLACES).id, background: pick(BACKGROUNDS).id, vice: pick(VICES).id,
+      traits: Array.from(new Set([pick(ALL_TRAITS), pick(ALL_TRAITS)])), lifestyle: pick(['muscle', 'money', 'politics', 'family', 'shadows'] as const),
+      skills: { force: Math.floor(r() * 7) - 3, business: Math.floor(r() * 7) - 3 }, married: r() < 0.8, sex: r() < 0.15 ? 'F' : 'M',
+      kids: Math.max(base.kidsRange[0], Math.floor(r() * 4)), motherAlive: r() < 0.4,
+    };
+    if (!validateCharOptions(base, o).length) return o;
+  }
+  return undefined;
+}
 
 const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ? xs[Math.floor(rand(h) * xs.length)] : undefined);
 
@@ -197,7 +221,8 @@ function playOne(gi: number): GameResult {
   const lastSeen: Record<string, number> = {};
   let s: GameState;
   try {
-    s = newGameWith(`${SEED}-${gi}`, START);
+    const custom = (hashSeed(`${SEED}-${gi}:custom`) % 1000) / 1000 < CUSTOM_RATE ? randomCharOptions(`${SEED}-${gi}`, START) : undefined;
+    s = newGameWith(`${SEED}-${gi}`, START, custom);
   } catch (e) {
     r.crashed = `newGame: ${(e as Error).message}`;
     return r;

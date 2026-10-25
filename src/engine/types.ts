@@ -170,6 +170,17 @@ export interface Character {
   bioFatherId?: string;
   /** Made his bones: the jobs on his record (bones.ts). */
   bones?: BonesEntry[];
+  /** Chosen look (character creator): overrides the portrait genes and styles. */
+  appearance?: Appearance;
+}
+
+/** Portrait overrides: gene values 0..1 by locus, plus a hair style and moustache. */
+export interface Appearance {
+  genes?: Record<string, number>;
+  hair?: string;
+  stache?: string;
+  /** 'fedora' or 'none' (otherwise as his station dresses him). */
+  hat?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';

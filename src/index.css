@@ -30,6 +30,9 @@ body {
   .btn-ghost {
     @apply btn border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300;
   }
+  .inp {
+    @apply w-full rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200;
+  }
   .chip {
     @apply inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium leading-tight;
   }
@@ -109,6 +112,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .llv-kb-a, .llv-kb-b, .llv-kb-c, .llv-caret { animation: none; }
 }
+
+/* Settings: reduced motion switched on in the game, whatever the OS says. */
+.llv-reduce *, .llv-reduce *::before, .llv-reduce *::after { animation: none !important; transition: none !important; }
 
 /* The tab bar scrolls sideways on phones instead of wrapping or overflowing the page. */
 .tabbar { scrollbar-width: thin; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; max-width: 100%; }
