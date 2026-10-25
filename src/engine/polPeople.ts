@@ -122,7 +122,7 @@ export function fromCharacter(c: Character, inst: string, ladder: string, rung: 
     ambition: c.traits.includes('Ambitious') ? 75 : 50,
     competence: clamp100((at.business + at.diplomacy + at.intrigue) / 3 * 5),
     charisma: clamp100(at.diplomacy * 5 + (c.traits.includes('Charming') ? 20 : 0)),
-    strength: clamp100(at.diplomacy * 3 + at.leadership * 2 + (c.traits.includes('Charming') ? 15 : 0) + 10),
+    strength: clamp100(at.diplomacy * 2 + at.leadership * 1.5 + (c.traits.includes('Charming') ? 12 : 0) + 15),
     traits: c.traits.slice(),
     alive: c.alive,
     scandal: 0,

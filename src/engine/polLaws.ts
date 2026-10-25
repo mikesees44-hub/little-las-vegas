@@ -140,8 +140,9 @@ export function billsMonth(s: GameState, econ: number): void {
       pol.bills.push({ id: `b${aw}_${l.id}`, law: l.id, stage: 'debate', since: s.week, next: Math.max(s.week + 1, aw), support: l.anchorFails ? 35 : 70, push: 0, note: l.problem });
     }
   }
+  // A new administration settles in first: no new local bills before 1962.
   const open = pol.bills.filter((b) => !isDone(b)).length;
-  if (open >= 4 || rand(pol) >= 0.1) return;
+  if (s.date.y < 1962 || open >= 4 || rand(pol) >= 0.08) return;
   const recent = (id: string) => pol.bills.some((b) => b.law === id && s.week - b.since < 52 * 4);
   const cands = LAW_DEFS.filter((l) => !l.anchor && pol.laws[l.id] === undefined && !recent(l.id) && (!l.from || s.date.y >= l.from) && !(l.needs?.some((n) => pol.laws[n] === undefined)) && l.trigger !== 'lobby');
   const weight = (l: LawDef) => {
