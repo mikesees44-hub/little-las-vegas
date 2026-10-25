@@ -271,8 +271,13 @@ export function houseTimeline(s: GameState, houseId: string): TimelineItem[] {
   if (!L) return [];
   const idx = houseIndex(s);
   const out: TimelineItem[] = [];
+  // A killing between two houses is written in both histories: show it once.
+  const once = new Set<string>();
   for (const e of L.events) {
     if (e.h !== houseId && e.o !== houseId) continue;
+    const k = `${e.y}|${e.k}|${e.t}`;
+    if (once.has(k)) continue;
+    once.add(k);
     out.push({ y: e.y, m: e.m, kind: e.k, text: e.t, who: e.p, other: e.h === houseId ? e.o : e.h });
   }
   const feudVictims = new Set(out.filter((e) => e.kind === 'feud').map((e) => e.who));

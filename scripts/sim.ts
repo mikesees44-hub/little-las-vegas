@@ -223,7 +223,7 @@ interface GameResult {
   hierarchyErrors: string[];
   /** House trees (houses.ts): integrity problems, and the houses at the end. */
   houseErrors: string[];
-  houses?: { houses: number; extinct: number; living: number; dead: number; feuds: number };
+  houses?: { houses: number; extinct: number; living: number; dead: number; feuds: number; hooks: number; births: number; titles: number };
   crew: { defections: number; coups: number; flips: number; makings: number; rivalCrewMoves: number };
   popupKeys: Record<string, number>;
   repeats: number;
@@ -366,6 +366,9 @@ function playOne(gi: number): GameResult {
     r.houses = {
       houses: hs.length, extinct: hs.filter((x) => x.h.extinct !== undefined).length, living: hs.reduce((a, x) => a + x.living, 0), dead: hs.reduce((a, x) => a + x.dead, 0),
       feuds: s!.lineage.grudges.filter((g) => g.y >= 1960).length,
+      hooks: Object.entries(r.popupKeys).filter(([k]) => k.startsWith('kin_')).reduce((a, [, v]) => a + v, 0),
+      births: Object.values(s!.lineage.people).filter((p) => p.by > 1960).length,
+      titles: s!.lineage.events.filter((e) => e.k === 'title' && e.y >= 1960).length,
     };
   }
   if (s!.power) r.power = { ...s!.power.stats };
@@ -470,7 +473,7 @@ if (dynGames.length) {
 const hg = results.filter((r) => r.houses);
 if (hg.length) {
   const med = (f: (x: NonNullable<GameResult['houses']>) => number) => quantile(hg.map((r) => f(r.houses!)), 0.5);
-  console.log(`  Houses at the end (median): ${med((x) => x.houses)} houses, ${med((x) => x.extinct)} extinct, ${med((x) => x.living)} living / ${med((x) => x.dead)} dead of the blood, ${med((x) => x.feuds)} blood feuds since 1960`);
+  console.log(`  Houses at the end (median): ${med((x) => x.houses)} houses, ${med((x) => x.extinct)} extinct, ${med((x) => x.living)} living / ${med((x) => x.dead)} dead of the blood, ${med((x) => x.feuds)} blood feuds since 1960, ${med((x) => x.births)} off-screen births, ${med((x) => x.titles)} titles taken, ${med((x) => x.hooks)} family story hooks shown`);
 }
 
 const per10g = (rs: GameResult[], pick: (r: GameResult) => Record<string, number> | undefined) => {

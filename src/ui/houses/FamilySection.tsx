@@ -2,6 +2,7 @@ import type { GameState } from '../../engine/types';
 import { useState } from 'react';
 import { deathLine, extendedFamily, familyView, fullName, node, type PNode } from '../../engine/housesView';
 import { kinWord } from '../../engine/houses';
+import { KIN_ROLE_INFO } from '../../engine/housesKin';
 import { useSheet } from '../components/People';
 import { useHousesNav } from './nav';
 
@@ -18,6 +19,9 @@ function Kin({ s, n, home, of }: { s: GameState; n: PNode; home?: string; of?: s
       {n.alive ? <span className="text-stone-500">{age}</span> : <span className="text-stone-500">{deathLine(s, n)}</span>}
       {n.maiden && <span className="text-stone-600">née {n.maiden}</span>}
       {of && <KinWord s={s} of={of} to={n.id} />}
+      {n.alive && n.roles?.filter((r) => r !== 'cousin' && r !== 'uncle' && r !== 'aunt').slice(0, 2).map((r) => (
+        <span key={r} title={KIN_ROLE_INFO[r].text} className="rounded border border-gold-600/40 px-1 text-[10px] text-gold-300">{KIN_ROLE_INFO[r].label}</span>
+      ))}
       {h && (
         <button type="button" className="rounded border border-noir-600 px-1 text-[10px] text-stone-400 hover:text-gold-300" onClick={(e) => { e.stopPropagation(); openHouse(h.id); }}>
           {h.title}
