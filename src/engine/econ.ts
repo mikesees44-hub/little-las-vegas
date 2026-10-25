@@ -1,4 +1,5 @@
 import type { ActionPreview } from './actions';
+import { noteScore } from './ledgerbook';
 import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
@@ -153,6 +154,13 @@ function tidy(s: GameState): void {
   }
 }
 
+/**
+ * Who signs the building permits, per lot (the politics layer: officials you
+ * own speed permits through, honest ones block them). Lives in construction.ts.
+ */
+export { registerPermitVerdict as registerPermitAuthority, BUILD_CUSHION, type PermitVerdict, type PermitVerdictFn } from './construction';
+import { BUILD_CUSHION } from './construction';
+
 /** The ribbon is cut: a catalog use becomes a Business; any other use starts earning. */
 export function openLot(ctx: Ctx, l: Lot): void {
   const s = ctx.s;
@@ -242,7 +250,7 @@ function projectsWeek(ctx: Ctx): void {
     if (p.done) continue;
     const def = PROJECTS_BY_KIND[p.kind];
     const pay = Math.round(p.cost / p.weeks);
-    if (s.money < pay) continue; // waits for money
+    if (s.money - pay < BUILD_CUSHION) continue; // waits for money (and never takes the payroll)
     money(ctx, -pay, `Community: ${def.name.toLowerCase()} in ${ZONES_BY_ID[p.zone].name} (week ${p.progress + 1}/${p.weeks})`, 'cost');
     p.progress++;
     if (p.progress >= p.weeks) {
@@ -567,6 +575,7 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
     case 'credit': {
       const k = s.characters[op.charId];
       if (k) addStory(s, k, `Took down a ${fmtMoney(op.amount)} score.`);
+      if (k) noteScore(ctx, k.id, op.amount, 'a big score');
       break;
     }
     case 'zone': {

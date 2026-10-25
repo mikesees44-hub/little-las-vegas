@@ -1,10 +1,13 @@
+import { applyPowerOp, describePowerOp } from './power';
 import { applyEconOp, describeEconOp } from './econ';
+import { applyTravelOp, describeTravelOp } from './travel';
 import { applyUnderbelly } from './underbelly';
 import { TRIAL_WEEKS, applyLegal } from './longgame';
 import { LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { crew, displayName, hasTrait, livingDynasty, pickNickname, player } from './characters';
 import { killCharacter } from './dynasty';
 import { applyDynOp, describeDynOp } from './family';
+import { applyPolOp, describePolOp } from './politics';
 import { hireFrontMan } from './goals';
 import { bookLoan } from './loans';
 import { heat, money, respect, type Ctx } from './ledger';
@@ -21,6 +24,11 @@ import type { Effect, FactionId, GameState, HeatBar, LedgerCategory, ScheduledCo
 import { addEvidence, addStory, assignTo, bumpStat, capoOf, giveBio, GOAL_INFO, tidyRegimes, validCapo } from './hierarchy';
 import { voucherBlame } from './regimes';
 import { maybePlant } from './rivalcrew';
+import { applyStoryOp, describeStoryOp } from './storyOps';
+import { applyBonesOp, bonesBlock, describeBonesOp, mayPropose } from './bones';
+import { applyLedgerOp, describeLedgerOp } from './ledgerbook';
+import { applyMinigameEffect, describeMinigame } from './minigame';
+import { onArrest } from './trial';
 
 const HEAT_NAMES: Record<HeatBar, string> = { local: 'Local heat', family: 'Family heat', federal: 'Federal heat' };
 
@@ -191,8 +199,20 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
     case 'dyn':
       return describeDynOp(s, e.op);
+    case 'power':
+      return describePowerOp(s, e.op);
+    case 'storyOp':
+      return describeStoryOp(s, e.op);
+    case 'pol':
+      return describePolOp(s, e.op);
     case 'econ':
       return describeEconOp(s, e.op);
+    case 'travel':
+      return describeTravelOp(s, e.op);
+    case 'bones':
+      return describeBonesOp(s, e.op);
+    case 'ledger':
+      return describeLedgerOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -233,6 +253,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return e.op === 'remove' ? 'One fewer in the faction' : undefined;
     case 'checkBackground':
       return 'Results in 2 weeks';
+    case 'minigame':
+      return describeMinigame(e);
     case 'rivalResource': {
       const parts: string[] = [];
       if (e.muscle) parts.push(`muscle ${signed(e.muscle)}`);
@@ -364,6 +386,7 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
         c.imprisonedUntil = s.week + e.weeks;
         for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
         ctx.log.push(`${displayName(c)} is in county lockup for ${e.weeks} weeks.`);
+        onArrest(s, c, e.weeks);
       }
       break;
     }
@@ -410,7 +433,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     case 'propose': {
       const c = s.characters[e.charId];
       const v = s.characters[e.voucherId];
-      if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined) {
+      if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined && !mayPropose(s, c)) {
+        ctx.log.push(`Philadelphia wants to know what he ever did for this thing of ours: ${bonesBlock(s, c)}.`);
+      } else if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined) {
         c.proposedWeek = s.week;
         c.vouchedBy = v?.alive ? v.id : undefined;
         addStory(s, c, `${v ? displayName(v) : 'The boss'} put his name up for membership.`);
@@ -790,8 +815,29 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     case 'dyn':
       applyDynOp(ctx, e.op, label);
       break;
+    case 'power':
+      applyPowerOp(ctx, e.op, label);
+      break;
+    case 'storyOp':
+      applyStoryOp(ctx, e.op);
+      break;
+    case 'pol':
+      applyPolOp(ctx, e.op, label);
+      break;
+    case 'minigame':
+      applyMinigameEffect(ctx, e);
+      break;
     case 'econ':
       applyEconOp(ctx, e.op, label);
+      break;
+    case 'travel':
+      applyTravelOp(ctx, e.op, label);
+      break;
+    case 'bones':
+      applyBonesOp(ctx, e.op, label);
+      break;
+    case 'ledger':
+      applyLedgerOp(ctx, e.op, label);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

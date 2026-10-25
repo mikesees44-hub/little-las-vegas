@@ -48,6 +48,31 @@ export interface PermitAuthority {
   puppet?: (s: GameState) => Character | undefined;
 }
 
+/**
+ * A per-lot verdict layered on top (the politics layer's officials): 'fast'
+ * pushes the permits through this week, 'blocked' holds them.
+ */
+export type PermitVerdict = { verdict: 'fast' | 'blocked'; why: string };
+export type PermitVerdictFn = (s: GameState, lot: Lot) => PermitVerdict | undefined;
+const VERDICTS: PermitVerdictFn[] = [];
+export function registerPermitVerdict(fn: PermitVerdictFn): void {
+  if (!VERDICTS.includes(fn)) VERDICTS.push(fn);
+}
+export function permitVerdict(s: GameState, lot: Lot): PermitVerdict | undefined {
+  for (const fn of VERDICTS) {
+    const v = fn(s, lot);
+    if (v) return v;
+  }
+  return undefined;
+}
+
+/**
+ * Installments that come due on their own (a building stage, a community
+ * project) wait rather than take the last of the treasury: they never leave
+ * less than this for the payroll.
+ */
+export const BUILD_CUSHION = 3000;
+
 type AuthorityFn = (s: GameState) => PermitAuthority;
 let authority: AuthorityFn = defaultAuthority;
 
@@ -178,8 +203,8 @@ export function constructionWeek(ctx: Ctx, onOpen: (l: Lot) => void): void {
     }
     if (mine && (l.stageWeek ?? 0) === 0) {
       const cost = Math.round(buildCost(l, u, s) * STAGE_COST[st]);
-      if (s.money < cost) {
-        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)})`;
+      if (s.money - cost < BUILD_CUSHION) {
+        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)}): the contractor waits until it leaves you ${fmtMoney(BUILD_CUSHION)} for the payroll`;
         continue;
       }
       if (st === 'permits' && s.heat.local >= 70 && chance(e, 0.3)) {
@@ -194,6 +219,16 @@ export function constructionWeek(ctx: Ctx, onOpen: (l: Lot) => void): void {
     if (st === 'permits') {
       // Waiting on the inspector and the commission.
       const p = (l.permit ??= { zoning: 0, inspector: weeks.permits });
+      const v = mine ? permitVerdict(s, l) : undefined;
+      if (v?.verdict === 'blocked') {
+        l.stalled = v.why;
+        continue;
+      }
+      if (v?.verdict === 'fast' && (p.zoning > 0 || p.inspector > 0)) {
+        p.zoning = 0;
+        p.inspector = 0;
+        ctx.log.push(`${lotName(l)}: ${v.why}.`);
+      }
       p.zoning = Math.max(0, p.zoning - 1);
       p.inspector = Math.max(0, p.inspector - 1);
       l.stageWeek = (l.stageWeek ?? 0) + 1;

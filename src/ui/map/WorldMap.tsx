@@ -1,4 +1,5 @@
 import { drawLots, LOT_ZOOM, type LotView } from './lotPins';
+import { clearTravel, drawTravel } from './travelLayer';
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
 import { owned } from '../../engine/business';
@@ -45,6 +46,8 @@ export interface WorldMapProps {
   onDistrict: (id: string) => void;
   onCity: (id: string) => void;
   onEnvoy: (cityId: string) => void;
+  /** Plan a trip to a destination (travel layer). */
+  onTrip?: (destId: string) => void;
   onLevel?: (l: Level) => void;
   /** Imperative fly-to requests from breadcrumbs (bump the nonce to repeat). */
   flyTo?: { level: Level; nonce: number };
@@ -274,6 +277,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   const cityLayer = L.layerGroup().addTo(map);
   const townLayer = L.layerGroup();
   const net = L.layerGroup().addTo(map);
+  const travelLayer = L.layerGroup().addTo(map);
   const districtLayer = L.layerGroup();
   const districtPins = L.layerGroup();
   const lotLayer = L.layerGroup();
@@ -289,6 +293,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     if (b.dataset.act === 'view') latest.current.onCity(id);
     else if (b.dataset.act === 'envoy') latest.current.onEnvoy(id);
     else if (b.dataset.act === 'enter') fly('wildwood');
+    else if (b.dataset.act === 'trip') latest.current.onTrip?.(id);
   };
   el.addEventListener('click', onPopupClick, true);
 
@@ -303,7 +308,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       <div class="l"><span class="k">Rackets:</span> ${esc(c.rackets.join(', '))}</div>
       <div class="f">${esc(c.flavor)}</div>
       <div class="b">
-        ${id === 'wildwood' ? `<button data-act="enter" data-city="${id}">Enter Wildwood</button>` : `<button data-act="view" data-city="${id}">View city</button><button data-act="envoy" data-city="${id}" ${run ? 'disabled' : ''}>${run ? 'Envoy on the way' : 'Send an envoy'}</button>`}
+        ${id === 'wildwood' ? `<button data-act="enter" data-city="${id}">Enter Wildwood</button>` : `<button data-act="view" data-city="${id}">View city</button><button data-act="envoy" data-city="${id}" ${run ? 'disabled' : ''}>${run ? 'Envoy on the way' : 'Send an envoy'}</button><button data-act="trip" data-city="${id}">Travel here</button>`}
       </div></div>`;
   }
 
@@ -429,6 +434,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     toggle(shade, z >= 7 && z < 12.5);
     toggle(townLayer, z >= 7.5 && z < 12.5);
     toggle(cityLayer, z < 12);
+    toggle(travelLayer, z < 12);
     toggle(districtLayer, z >= 11.5);
     toggle(districtPins, z >= 12.5);
     toggle(lotLayer, z >= LOT_ZOOM);
@@ -478,6 +484,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       drawRoads(p.s.date.y);
       drawCities(p.s);
       drawNetwork(p.s);
+      drawTravel(L, travelLayer, p.s, (id) => latest.current.onTrip?.(id));
       drawDistricts(p);
       onZoom();
     },
@@ -491,6 +498,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     },
     fly,
     destroy() {
+      clearTravel();
       el.removeEventListener('click', onPopupClick, true);
       map.remove();
     },

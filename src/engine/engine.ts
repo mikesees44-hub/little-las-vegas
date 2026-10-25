@@ -1,8 +1,16 @@
 import { econEventSource, econWeek } from './econ';
+import { markCostlyChoices } from './costHints';
+import { travelWeek } from './travel';
 import { officeWeek } from './office';
+import { powerWeek } from './power';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
+import { attachMinigames, minigameFirst, minigamesWeek } from './minigames';
+import { trialWeek } from './trial';
+import { reelsWeek } from './reels';
 import { newsWeek } from './newspaper';
+import { politicsWeek } from './politics';
+import { clonePol } from './polState';
 import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
 import { autoStaff } from './business';
@@ -24,6 +32,10 @@ import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
+import { storyEventSource, storyPoolSource, storyResolve } from './storyPack';
+import { arcEventSource, arcsResolve, arcsWeek } from './livingStories';
+import './livingStoryData';
+import { romanceMonth } from './romance';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
 import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
@@ -31,8 +43,16 @@ import { addOpinion, decayAllRelations, opinion } from './relations';
 import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
 import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
+import { bonesEventSource, bonesWeek } from './bones';
+import { archiveWeek, ledgerWeek } from './ledgerbook';
+import { cloneLedgerBook } from './ledgerbookState';
 
+// The story pillar feeds the one popup pipeline (one candidate a week each).
+registerEventSource(storyEventSource);
+registerEventSource(storyPoolSource);
+registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
+registerEventSource(bonesEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -65,13 +85,26 @@ function deepCopy(v: unknown): unknown {
 }
 
 export function cloneState(s: GameState): GameState {
-  const { chronicle, dynastyHistory, lastReport, news, ...rest } = s;
+  const { chronicle, dynastyHistory, lastReport, news, pol, ledgerBook, ...rest } = s;
   const c = deepCopy(rest) as GameState;
+  // The books' archived weeks are immutable once written (see ledgerbookState.ts).
+  if (ledgerBook) c.ledgerBook = cloneLedgerBook(ledgerBook);
+  // Politics shares its immutable people records and reserve rows (copy-on-write, see polState.ts).
+  if (pol) c.pol = clonePol(pol);
   c.chronicle = chronicle.slice();
   c.dynastyHistory = dynastyHistory.slice();
   c.news = news ? news.slice() : [];
   if (lastReport) c.lastReport = lastReport;
   return c;
+}
+
+/** The months the bagman does not come in person, Philadelphia's envelope goes through the drop (storyDirector.ts). */
+function payTheDrop(ctx: Ctx): void {
+  const d = ctx.s.director;
+  if (!d?.drop) return;
+  const env = d.drop;
+  d.drop = undefined;
+  applyEffects(ctx, [{ type: 'money', amount: -env, category: 'tribute', label: 'Tribute to Philadelphia (through the drop)' }], { label: 'The envelope', because: 'sent Philadelphia its envelope through the drop', category: 'tribute' });
 }
 
 function snapshot(s: GameState) {
@@ -85,8 +118,9 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     ctx.log.push(`Succession law is now: ${choices.successionLaw}.`);
   }
   if (choices.designatedHeirId !== undefined) s.designatedHeirId = choices.designatedHeirId || undefined;
-  const pending = s.pendingEvents;
+  const pending = minigameFirst(s.pendingEvents);
   s.pendingEvents = [];
+  ctx.mgMoves = choices.minigames;
   for (const ev of pending) {
     const wanted = choices.choices?.[ev.iid];
     let ch = ev.choices.find((c) => c.id === wanted && !c.disabledReason);
@@ -115,6 +149,7 @@ function monthlyTick(ctx: Ctx): void {
   crewMonth(ctx);
   secretsMonth(s);
   if (!s.gameOver) dynastyMonth(ctx);
+  if (!s.gameOver) romanceMonth(ctx);
   lifestyleMonth(ctx);
   regimesMonth(ctx);
   // Disloyal men may walk out (a capo takes the men loyal to him).
@@ -223,7 +258,10 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const resolving = s.pendingEvents;
   resolveChoices(ctx, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
+  if (!s.gameOver) storyResolve(ctx, resolving);
+  if (!s.gameOver) arcsResolve(ctx, resolving, choices);
   if (!s.gameOver) fireConsequences(ctx);
+  if (!s.gameOver) arcsWeek(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
     econWeek(ctx);
@@ -231,9 +269,14 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     crewWeek(ctx);
     lifestyleWeek(ctx);
     legalWeek(ctx);
+    travelWeek(ctx);
+    trialWeek(ctx);
+    minigamesWeek(ctx);
     underbellyWeek(ctx);
     officeWeek(s);
     regimesWeek(ctx);
+    bonesWeek(ctx);
+    ledgerWeek(ctx);
     factionsWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
@@ -255,7 +298,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     runGoals(ctx);
     riseGoalsWeek(ctx);
     dynastyWeek(ctx);
+    politicsWeek(ctx);
     newsWeek(ctx);
+    reelsWeek(ctx, input);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 
@@ -265,11 +310,15 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   s.date = dateOfWeek(s.week);
   if (!s.gameOver && monthKey(s.date) !== prevMonth) monthlyTick(ctx);
 
+  if (!s.gameOver) powerWeek(ctx);
   if (!s.gameOver) {
     tidyRegimes(s);
     const errs = validatePlayer(s);
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
+    payTheDrop(ctx);
+    attachMinigames(s);
+    markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
   } else {
     s.pendingEvents = [];
@@ -288,6 +337,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   };
   const errs = reconcile(report);
   if (errs.length) throw new Error(`Ledger does not reconcile in week ${weekOf}: ${errs.join('; ')}`);
+  if (!s.gameOver) archiveWeek(s, report);
   s.lastReport = report;
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
   return { state: s, report, log: ctx.log };

@@ -228,6 +228,48 @@ const SCENES: Record<string, (c: Ctx) => ReactNode> = {
     );
   },
 
+  /* The title: the Wildwood boardwalk at night, 1960. Neon, the wheel, the sea, one man at the rail. */
+  title: (c) => (
+    <>
+      <rect width={800} height={460} fill={c.u('night')} />
+      {Array.from({ length: 40 }, (_, i) => <circle key={i} className="ns-twinkle" cx={f(c.r() * 800)} cy={f(c.r() * 150)} r={f(0.5 + c.r() * 0.9)} fill={LIGHT} opacity={0.25 + c.r() * 0.4} />)}
+      <circle cx={140} cy={78} r={26} fill="#d9dde6" opacity={0.85} />
+      <Glow c={c} x={140} y={78} rx={120} op={0.35} grad="cold" />
+      {/* the sea, and the moon on it */}
+      <rect x={0} y={210} width={800} height={60} fill="#0a0c11" />
+      <g className="ns-shimmer">
+        {Array.from({ length: 10 }, (_, i) => <rect key={i} x={f(120 - i * 3 + (c.r() - 0.5) * 10)} y={214 + i * 5} width={f(30 + i * 5)} height={1.6} fill="#c8d0e0" opacity={0.5 - i * 0.04} />)}
+      </g>
+      {/* the pier: the wheel, a coaster, the arcades */}
+      <FerrisWheel x={600} y={120} r={88} op={0.85} />
+      <Glow c={c} x={600} y={120} rx={150} op={0.25} grad="bulb" />
+      <path d="M330,210 L360,150 L390,190 L420,130 L455,200 L480,170 L500,210" stroke={INK} strokeWidth={3} fill="none" />
+      <path d={Array.from({ length: 9 }, (_, i) => `M${340 + i * 18},210 V${170 + (i % 3) * 12}`).join('')} stroke={INK} strokeWidth={1.4} />
+      <path d="M0,150 H300 V262 H0Z" fill="#0f1015" />
+      <path d="M520,190 H800 V262 H520Z" fill="#0f1015" />
+      <Neon c={c} x={150} y={196} text="Casino Arcade" color="#ff4fa0" size={34} />
+      <Glow c={c} x={150} y={186} rx={170} ry={50} op={0.35} grad="neonPink" />
+      <Neon c={c} x={665} y={240} text="FROZEN CUSTARD" color="#59c7ff" size={18} flicker={false} font="'Futura','Century Gothic','Trebuchet MS',sans-serif" />
+      <Glow c={c} x={665} y={234} rx={120} ry={30} op={0.3} grad="neonBlue" />
+      <Neon c={c} x={745} y={212} text="Motel" color="#ff5040" size={20} font="'Futura','Century Gothic','Trebuchet MS',sans-serif" />
+      {/* string lights along the boards */}
+      <path d="M0,268 Q200,282 400,268 T800,268" stroke={INK} strokeWidth={1} fill="none" />
+      {Array.from({ length: 24 }, (_, i) => <circle key={i} className={i % 3 ? undefined : 'ns-flicker-slow'} cx={i * 34 + 10} cy={f(270 + Math.sin(i / 3.8) * 6)} r={2.3} fill="#ffe7b0" />)}
+      {/* the boardwalk in perspective, wet */}
+      <WetGround y={262} color="#0d0d11" />
+      <path d={Array.from({ length: 24 }, (_, i) => `M${i * 44 - 120},460 L${400 + (i * 44 - 520) * 0.25},262`).join('')} stroke="#1b1b20" strokeWidth={2} />
+      <Reflection c={c} x={150} y={268} w={240} h={110} color="neonPink" op={0.35} />
+      <Reflection c={c} x={665} y={268} w={160} h={80} color="neonBlue" op={0.3} />
+      <Lamp c={c} x={300} top={120} ground={430} />
+      {/* the railing on the sea side, and him at it */}
+      <path d="M0,300 H800" stroke={INK} strokeWidth={5} />
+      <path d={Array.from({ length: 17 }, (_, i) => `M${i * 50},300 V330`).join('')} stroke={INK} strokeWidth={4} />
+      <Man x={660} y={445} s={1.35} pose="coat" rim="#ff9ad0" />
+      <Rain c={c} n={70} op={0.14} />
+      <Splashes c={c} y0={300} y1={455} n={20} />
+    </>
+  ),
+
   /* The boardwalk arcade: the neon half-dead, the glass in pieces, tail-lights smearing away. */
   hit_botched: (c) => (
     <>

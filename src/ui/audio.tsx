@@ -20,7 +20,7 @@ export function musicPref(): boolean {
   }
 }
 
-function savePref(on: boolean) {
+export function savePref(on: boolean) {
   try {
     localStorage.setItem(PREF, on ? 'on' : 'off');
   } catch {

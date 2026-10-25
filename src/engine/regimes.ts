@@ -11,6 +11,7 @@ import { addOpinion, opinion } from './relations';
 import { chance, pick, randInt, weightedPick } from './rng';
 import { rivalCaps } from './rivals';
 import type { Character, GameState, RivalId } from './types';
+import { awayActMult, awayCapoBias } from './travel';
 
 
 /**
@@ -55,6 +56,7 @@ function rivalTurf(s: GameState, k: Character): { d: string; r: RivalId } | unde
 export function capoActs(ctx: Ctx, k: Character): string | undefined {
   const s = ctx.s;
   const w = capoMoveWeights(s, k);
+  awayCapoBias(s, k, w);
   const moves = (Object.keys(w) as CapoMove[]).filter((m) => w[m] > 0);
   const m = weightedPick(s, moves, (x) => w[x]);
   const nm = displayName(k);
@@ -200,7 +202,7 @@ export function regimesWeek(ctx: Ctx): void {
   // Capos act on their own. One line per week makes the chronicle.
   let told = false;
   for (const k of capos(s)) {
-    if (!isFree(s, k) || !chance(s, 0.25)) continue;
+    if (!isFree(s, k) || !chance(s, 0.25 * awayActMult(s))) continue;
     const line = capoActs(ctx, k);
     if (line) {
       ctx.log.push(line);
@@ -237,7 +239,8 @@ export function regimesWeek(ctx: Ctx): void {
         if (c.story?.[c.story.length - 1]?.text !== line) addStory(s, c, line);
         c.courtedBy = undefined;
         if (c.debtTo) c.debtTo.week = s.week + 8;
-      } else if (weeks >= 6 && op < (c.rank === 'capo' ? 0 : 10) && opinion(s, c.id, s.rivals.find((r) => r.id === c.courtedBy!.rival)?.leaderId ?? '') > op && chance(s, c.rank === 'capo' ? 0.05 : 0.08)) {
+      } else if (weeks >= 6 && op < (c.rank === 'capo' ? 0 : 10) && opinion(s, c.id, s.rivals.find((r) => r.id === c.courtedBy!.rival)?.leaderId ?? '') > op && chance(s, (c.rank === 'capo' ? 0.05 : 0.08) + (weeks - 6) * (c.rank === 'capo' ? 0.005 : 0.01))) {
+        // The longer a rival courts an unhappy man, the likelier he goes.
         const rid = c.courtedBy.rival;
         defectTo(ctx, c, rid, 'courted');
         continue;

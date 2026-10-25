@@ -4,6 +4,7 @@ import type { Acceptance } from '../../engine/interactions';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Chips } from './Chips';
+import { WhyPanel } from '../clarity/WhyPanel';
 
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
@@ -56,6 +57,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         <div className="mt-1 text-[11px] text-stone-500">If he says no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
       {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
+      <WhyPanel s={s} action={action} compact={compact} />
     </div>
   );
 }

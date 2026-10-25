@@ -12,6 +12,7 @@ import { ActionCard } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { fmt$ } from '../format';
 import { Badge, BloodChips } from './bits';
+import { CandidatePicker } from '../clarity/CandidatePicker';
 
 /** Arranged marriages, the children's education, and the houses of the shore. */
 export function MarriagePanel({ s }: { s: GameState }) {
@@ -45,6 +46,7 @@ function MatchCard({ s, m }: { s: GameState; m: Character }) {
   const cands = matchCandidates(s, m).map((x) => ({ ...x, a: marriageAcceptance(s, m, x.c).chance })).sort((a, b) => b.a - a.a);
   const [pick, setPick] = useState(cands[0]?.c.id);
   const [matri, setMatri] = useState(false);
+  const [compare, setCompare] = useState(false);
   const chosen = cands.find((x) => x.c.id === pick);
   return (
     <div className="min-w-0 rounded-md border border-noir-700 bg-noir-800/60 p-2.5" data-testid="match-card">
@@ -61,6 +63,12 @@ function MatchCard({ s, m }: { s: GameState; m: Character }) {
           <select className="mt-2 block w-full min-w-0 max-w-full truncate rounded bg-noir-900 border border-noir-600 p-1.5 text-sm" value={pick} onChange={(e) => setPick(e.target.value)} aria-label={`Match for ${m.firstName}`}>
             {cands.map((x) => <option key={x.c.id} value={x.c.id}>{x.c.firstName} {x.c.lastName}, {ageOn(x.c.birth, s.date)} — {x.house.name} ({Math.round(x.a * 100)}%)</option>)}
           </select>
+          <button type="button" className="mt-1 text-[11px] text-gold-300 underline" onClick={() => setCompare(!compare)} data-testid="compare-matches">{compare ? 'Hide the comparison' : `Compare the ${cands.length} matches side by side…`}</button>
+          {compare && (
+            <div className="mt-1.5">
+              <CandidatePicker s={s} role={{ kind: 'marriage', memberId: m.id, matrilineal: m.gender === 'F' && matri }} selected={pick ? [pick] : []} onPick={(c) => setPick(c.id)} limit={3} hideAdvisors />
+            </div>
+          )}
           {m.gender === 'F' && (
             <label className="mt-1 flex items-center gap-1.5 text-[11px] text-stone-400">
               <input type="checkbox" className="accent-amber-500" checked={matri} onChange={(e) => setMatri(e.target.checked)} />

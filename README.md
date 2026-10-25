@@ -122,9 +122,89 @@ shared popup pipeline (`registerEventSource`).
 | `hq.ts` | Headquarters (social club, back of a restaurant, car, walk-and-talks), federal bugs (technician/warrant/informant) that add to each talker's evidence, sweeps |
 | `gifts.ts` | ~130 period gifts, tastes and the opinion math, season tickets (inheritable), community projects (appreciation vs trust), leverage gifts with acceptance odds |
 
+## Variety: the story director and living storylines
+
+| File | What it does |
+|---|---|
+| `storyDirector.ts` | One novelty layer over every source in the popup pipeline: a 60-week memory of templates and themes, a per-template global cooldown (10 weeks) and yearly cap (5), freshness-weighted picks for every source (unseen first), a weekly theme mix (crew / family / romance / rivals / law / town / business / chain / world), at most 2 seats per theme a week. Warnings about one man (courted, drifting, a grievance) come back sooner. The bagman comes in person every other month (or when Philadelphia is unhappy), with varied scenes; the other months the envelope goes through the drop (a tribute line in the ledger) |
+| `crewVariants.ts` | 31 more crew decisions (pitches: a card game, a hijack tip, a crooked inspector, a jukebox war, a contractor in trouble, a horse that can't lose, a bookie skimming his own sheet, a rival soldier switching sides, a widow; scores, brawls, sponsors, disputes, life, kids, the law, wives, offers from out of town), resolved later through `cv_outcome`. `crew_score` comes in six shapes |
+| `storyData2*.ts` | Content pack 2 (137 events, 34 chains: the women, kin, show business, the world), `costScale` 0.4 |
+| `storyData3*.ts` | Content pack 3 (57 events, 12 short chains: a $14 sandwich, the waiter, the Coupe de Ville, Famous, the anniversary, the toast, forty years, the wrong wife, the marker, the world pack's show people, world beats 1960-74) |
+| `livingStories.ts` / `livingStoryData.ts` | Eleven slow-burn storylines (months to years) bound to existing people; stages advance with the clock or the boss's answer; one beat a week through the pipeline; `GameState.arcs`; the Storylines tab under Chronicle shows active arcs, cast and history (never hidden truths) |
+
+`npx tsx scripts/variety.ts --games 30 --weeks 52` reports distinct templates, the 8- and 26-week repeat rates, the most repeated templates, the theme mix and the money flows.
+
 ## UI
 
 Single-page dashboard (`src/ui`): header with date, season countdown, treasury, respect and the three heat bars;
 Advance Week / Advance Month; an event modal with choice buttons and effect chips; a weekly report modal showing
 every line of "why it changed"; tabs for the island (districts, rivals, rackets), crew (traits, opinion breakdown),
 family tree (with succession law and heir preview) and the chronicle. Saves automatically to `localStorage`.
+
+## The clarity layer (wave 2): why do this, why him
+
+Every order, interaction, decision option and "pick a person" choice explains itself. Engine side is pure and
+deterministic and reads the same previews the order cards show, so a tooltip cannot disagree with what gets applied
+(tests check it against the ledger).
+
+| File | What it does |
+|---|---|
+| `advice.ts` | `explainAction(s, action)`: purpose, gains/costs as named effects with ranges ("now", "if accepted", "per week", "if it works"), risks with odds and their source, what it sets up, "best when" conditions, a verdict ("Good idea now", "Risky", "Not yet: needs …"). `explainChoice` / `compareChoices` for decision options ("Best value", "Cheapest", "Safest"). `taskAdvice` for council tasks |
+| `candidates.ts` | `rankCandidates(s, role, pool?)` for every pick (seat, capo, membership, voucher, manager, scheme agent / hit team, envoy, heir, marriage, Table lobbying): predicted outcome, top 3 pros and cons, opinion and capo loyalty, risk flags, opportunity cost, Recommended + Alternative ("Safest choice" / "Highest upside") |
+| `advisors.ts` | The consigliere's and underboss's in-character pick, biased by their own interests (friends, kin, own men, themselves) and shown with their opinion of the man they back |
+| `opportunities.ts` | "What should I do?": the 3–5 best opportunities and threats, each linked to its action or picker; the "This week" checklist tied to the early-goals ladder |
+| `glossary.ts` | Plain-words help for heat, respect, opinion, the Table, schemes, kick-up, laundering, succession; tooltips quote the engine's constants |
+
+| `advicePillars.ts` | The same for the newer pillars (power, politics, travel, bones, the books, the law, the underbelly, romance): purposes, what it sets up, best-when, value |
+
+UI: `src/ui/clarity/*` (`WhyPanel`, `ChoiceWhy`, `CandidatePicker`, `PickerModal`, `AdvisorQuotes`, `Tip`, `WhatToDoPanel`,
+`GlossaryOverlay`, `TaskAdvice`, and the ready-made `HeirCompare`, `OfficialPicker`, `KeeperPicker`, `BonesPicker`, `TripWhy`).
+Import everything from `src/ui/clarity` (the index).
+
+### Using the clarity layer (for new screens)
+
+Engine (pure; never mutates; safe in render):
+
+```ts
+explainAction(s, action)        // → { title, purpose, gains, costs, changes, risks, unlocks, bestWhen, verdict, chance, value, summary }
+explainChoice(s, choice)        // the same for one option of a weekly decision
+compareChoices(s, ev.choices)   // → [{ id, ex, tags: ['Best value' | 'Cheapest' | 'Safest'] }]
+rankCandidates(s, role, pool?)  // → { question, candidates (best first), recommendedId, alternativeId, alternativeWhy }
+advisorAdvice(s, ranking)       // the consigliere's and underboss's (possibly partial) pick, in character
+whatShouldIDo(s, n) / weekChecklist(s, { answered, ordersQueued })
+glossaryEntry(id) / statHelp(stat) / effectHelp(effect)
+```
+
+`Role` is one of `seat`, `capo`, `make`, `voucher`, `manager`, `agent`, `envoy`, `heir` (`wide: true` adds senior men),
+`marriage`, `lobby`, `official`, `keeper`, `bones` (`job: 'heist' | 'collection' | 'hit'`).
+
+UI:
+
+| Need | Use |
+|---|---|
+| An order card that explains itself | `<ActionCard s action />` already includes `<WhyPanel>`; for a custom card add `<WhyPanel s action compact? />` |
+| A decision option | `<ChoiceWhy a={compareChoices(s, ev.choices)[i]} />` |
+| "Who should it be?" inline | `<CandidatePicker s role pool? limit? onPick? selected? onToggle? hideAdvisors? />` (default: picking queues the candidate's order; `onPick` to do something else; `selected` + `onToggle` for a team) |
+| The same as a modal, from anywhere | `useClarity().openPicker(role, { pool?, onPick? })` |
+| Hover help | `<Tip term="heat.local">…</Tip>` or `<Tip text="…">…</Tip>` |
+| Open the glossary / the advice panel / a tab | `useClarity().openHelp(term?)`, `.openAdvice()`, `.goTab(tab)` |
+| The "What should I do?" list in a rail | `<WhatToDoPanel s compact? />` (buttons queue the order, open the picker, the trip planner or the tab) |
+
+Rules: every number a why-panel shows comes from `previewAction` (the same preview the card shows and the resolver
+applies); "per week" and "if it works" lines are labelled as such. `tests/clarity.test.ts` and
+`tests/clarityPillars.test.ts` check the immediate lines against the ledger, and that a picker never offers an order
+its card would refuse. To support a new action kind, add its purpose (and optionally unlocks, best-when, value) to
+`advicePillars.ts`; to support a new pick, add a `Role` and a `xxxRole(s, pool): Raw[]` in `candidates.ts`.
+## The story layer (content packs and romance)
+
+| File | What it does |
+|---|---|
+| `storyData*.ts` | Content pack 1 copied verbatim (162 events, 21 chains) in its neutral schema (`storyDataSchema.ts`; the `then` helper is renamed `thenFx` because a module exporting `then` is a thenable) |
+| `storyPacks.ts` | The registry: one entry per pack, merged into one table (colliding ids are namespaced `<pack>:<id>`, followups rewritten); each pack has a random-pool weight and a 52-week budget |
+| `storyPack.ts` | The adapter: triggers, casting (crew, family, rival boss/men, officials, townies created and reused, world-pack people by `worldId` when the population is present), placeholders, rival-boss names swapped for successors, Fx to engine Effects, chain followups as `pack:<event>` consequences. One candidate a week through `registerEventSource`: a due chain part, else a dated history beat, else (sometimes) a random event; chain parts and mandatory beats outrank crew decisions, random ones rank below them |
+| `romance.ts` | Orientation (fixed at birth), attraction, consent rolls with reasons, NPC courtships/lovers/affairs/marriages/endings, advances toward the boss, exposure and discovery, pregnancies with hidden paternity (`Character.bioFatherId`; portraits follow the real father), the boss's choice about his children, the truth coming out, separation and rare divorce |
+| `storyOps.ts` | The `storyOp` effect (secrets, romance changes, paternity decisions) |
+| `storyState.ts` | `GameState.story` and `GameState.romance` (optional; each on its own seeded stream) |
+
+To add a content pack: copy its files into flat `src/engine/storyData<Name>*.ts` and add one entry to `STORY_PACKS`.
+To cast world-pack people, the population layer calls `registerWorldMaterializer((s, worldId) => Character | undefined)`.

@@ -11,6 +11,8 @@ import { Overview } from '../components/Overview';
 import { CharLink } from '../components/People';
 import { GROUP_COLOR, WorldMap, type Level } from './WorldMap';
 import { LotPanel } from '../econ/LotPanel';
+import { useTravel } from '../travel/context';
+import { TravellersPanel } from '../travel/Panels';
 
 /**
  * The map screen: the real map with its overlays (modes, breadcrumbs, legend,
@@ -24,6 +26,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
   onOpenBusiness: () => void;
   onEnvoy: (cityId: string) => void;
 }) {
+  const travel = useTravel();
   const [mode, setMode] = useState<MapMode>('control');
   const [district, setDistrict] = useState<string | undefined>();
   const [city, setCity] = useState<string | undefined>();
@@ -38,7 +41,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
   return (
     <div className="space-y-3">
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="panel relative overflow-hidden h-[calc(100vh-190px)] min-h-[520px]">
+        <div className="panel relative isolate overflow-hidden h-[calc(100vh-190px)] min-h-[520px]">
           <WorldMap
             s={s}
             mode={mode}
@@ -46,6 +49,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
             onDistrict={(id) => { setDistrict(id); setCity(undefined); setLot(undefined); }}
             onCity={(id) => { setCity(id); setDistrict(undefined); }}
             onEnvoy={onEnvoy}
+            onTrip={(id) => travel.plan(s.playerId, id)}
             onLevel={setLevel}
             flyTo={fly}
             lots={{ year: asOf, since1960: since }}
@@ -106,6 +110,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
         </aside>
       </div>
       <EnvoysAbroad s={s} />
+      <TravellersPanel s={s} />
     </div>
   );
 }
@@ -113,6 +118,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
 export function CityPanel({ s, id, onEnvoy }: { s: GameState; id: string; onEnvoy: (cityId: string) => void }) {
   const c = CITIES_BY_ID[id];
   if (!c) return null;
+  const travelApi = useTravel();
   const running = s.schemes.find((x) => x.owner === 'player' && x.kind === 'envoy' && x.opts.city === id);
   return (
     <div className="space-y-2" data-testid="city-panel">
@@ -131,6 +137,7 @@ export function CityPanel({ s, id, onEnvoy }: { s: GameState; id: string; onEnvo
           )}
           {needsPermission(c) && !hasPermission(s, id) && <ActionCard s={s} action={{ kind: 'askPermission', city: id }} compact />}
           {running ? <div className="text-xs text-gold-300">An envoy is on the way ({running.progress}%).</div> : <button className="btn-gold w-full" onClick={() => onEnvoy(id)}>Send an envoy…</button>}
+          {!s.gameOver && <button className="btn-ghost w-full" onClick={() => travelApi.plan(s.playerId, id)}>Travel here…</button>}
         </>
       )}
     </div>

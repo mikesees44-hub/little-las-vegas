@@ -1,10 +1,13 @@
+import { bonesBlock } from './bones';
 import { perkMod } from './lifestyle';
 import { ageOn } from './calendar';
 import { capos, displayName, hasTrait, isFree, player, relationLabel } from './characters';
 import { fmtMoney } from './effects';
 import { getRelation, opinion } from './relations';
 import { FACTION_NAMES } from './world';
+import { bribeReasons } from './polIntegrity';
 import type { Character, Effect, GameState, Hook, InteractionId } from './types';
+import { previewRomance } from './romance';
 
 /**
  * Character interactions (the CK-style right-click menu). Each interaction
@@ -48,6 +51,7 @@ export function relationshipTo(s: GameState, c: Character): Relationship {
 
 export const INTERACTION_ORDER: InteractionId[] = [
   'dinner', 'gift_small', 'gift_large', 'bribe', 'favor', 'demand', 'threaten', 'expose', 'recruit', 'bringIn', 'make', 'promote', 'demote', 'exile', 'whack',
+  'court', 'affair', 'proposeMarriage', 'endRomance', 'separate',
 ];
 
 /** What a fictional official's envelope buys. */
@@ -132,6 +136,12 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
   const first = c.firstName;
   const adult = ageOn(c.birth, s.date) >= 16;
   switch (id) {
+    case 'court':
+    case 'affair':
+    case 'proposeMarriage':
+    case 'endRomance':
+    case 'separate':
+      return previewRomance(s, id, c);
     case 'dinner': {
       if (rel !== 'family' && rel !== 'crew') return undefined;
       if (!adult) return undefined;
@@ -175,6 +185,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
         respectReason(s),
         ...traitReasons(c, { Honest: -45, Greedy: 25, Gambler: 10, Paranoid: -10, Ambitious: 5 }),
         ...(c.traits.includes('Honest') && s.heat.local > 50 ? [{ label: 'Wants a headline', value: -10 }] : []),
+        ...bribeReasons(s, c.id),
       ]);
       return {
         id, title: `Bribe ${displayName(c)}`, detail: `${c.office}. An envelope, discreetly.`, cost: ob.cost,
@@ -320,7 +331,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
           { type: 'opinion', from: c.id, to: boss.id, amount: 10, reason: 'Put my name up', decay: 1, label },
         ],
         because: `proposed ${nm} for membership`,
-        disabledReason: waiting ? `Waiting for the books (proposed week ${c.proposedWeek})` : s.money < 500 ? 'Needs $500' : free(s, c),
+        disabledReason: waiting ? `Waiting for the books (proposed week ${c.proposedWeek})` : bonesBlock(s, c) ?? (s.money < 500 ? 'Needs $500' : free(s, c)),
       };
     }
     case 'promote': {

@@ -13,6 +13,8 @@ import { fmt$ } from '../format';
 import { Portrait } from '../portrait/Portrait';
 import { ActionCard, useOrders } from './Orders';
 import { FACTION_TINT, useSheet } from './People';
+import { CandidatePicker } from '../clarity/CandidatePicker';
+import { BonesPicker } from '../clarity/Pickers';
 
 /* ------------------------------------------------------------------ */
 /* Warnings and badges                                                 */
@@ -206,10 +208,11 @@ export function BooksPanel({ s }: { s: GameState }) {
         <button className="mt-2 text-xs underline text-gold-300" onClick={() => setShow(!show)}>{show ? 'Hide' : `Propose an associate (${ready.length} eligible)`}</button>
       )}
       {show && (
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          {ready.map((c) => <ActionCard key={c.id} s={s} action={{ kind: 'propose', charId: c.id }} compact />)}
+        <div className="mt-2">
+          <CandidatePicker s={s} role={{ kind: 'make' }} pool={ready.map((c) => c.id)} limit={4} />
         </div>
       )}
+      <BonesPicker s={s} />
     </section>
   );
 }

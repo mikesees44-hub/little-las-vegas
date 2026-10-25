@@ -91,19 +91,29 @@ describe('events', () => {
     expect(r2.state.characters[r2.state.playerId].evidence ?? 0).toBeGreaterThan(ev0 - 1);
   });
   it('the bagman comes monthly from week 3 and the envelope scales with earnings', () => {
+    // Philadelphia collects every month: in person (a popup) or, in the other months, through the drop
+    // (a tribute line in that week's ledger). The story director decides which.
     let s = newGame('bag');
     const weeks: number[] = [];
     const envelopes: number[] = [];
+    let visits = 0;
     for (let w = 0; w < 60; w++) {
+      const r = advanceWeek(s, {});
+      s = r.state;
       const bag = s.pendingEvents.find((e) => e.defId === 'bagman');
-      if (bag) {
+      const drop = r.report.lines.find((l) => l.category === 'tribute' && l.label.includes('through the drop'));
+      if (bag) visits++;
+      if (bag || drop) {
         weeks.push(s.week);
-        envelopes.push(Number(bag.meta!.envelope));
+        envelopes.push(bag ? Number(bag.meta!.envelope) : -drop!.amount);
       }
-      s = advanceWeek(s, {}).state;
     }
     expect(weeks[0]).toBeGreaterThanOrEqual(3);
     expect(weeks.length).toBeGreaterThanOrEqual(12);
+    // Every month is collected exactly once; he comes in person in a good share of them, not all.
+    expect(new Set(s.director!.tribute.map((t) => t[0])).size).toBe(s.director!.tribute.length);
+    expect(visits).toBeGreaterThanOrEqual(5);
+    expect(visits).toBeLessThan(weeks.length);
     // in-season envelopes are bigger than winter ones
     expect(Math.max(...envelopes.slice(0, 3))).toBeGreaterThan(Math.min(...envelopes.slice(5, 10)));
   });

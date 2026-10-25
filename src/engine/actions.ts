@@ -1,9 +1,11 @@
 import { previewUnderbelly } from './underbelly';
+import { costHint, moneyCost, withCostHint } from './costHints';
 import { LAWYER, RETAINER } from './longgame';
 import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
 import { commitEcon, econActions, previewEcon } from './econ';
+import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
@@ -15,13 +17,17 @@ import { CB_LABEL, casusBelli, DISTRICT_PRIZE, RAID_COST, raidOdds, resolveRaid 
 import { isFree } from './characters';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
-import { CAPO_CUT } from './economy';
+import { CAPO_CUT, FIRST_WINTER_PER_NEW, firstWinterAhead } from './economy';
 import { CITIES_BY_ID, hasPermission, needsPermission } from './cities';
 import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds, topRival } from './schemes';
 import { OFFICE_BRIBE } from './interactions';
 import { getRelation, opinion } from './relations';
 import { commitDynasty, dynastyActions, previewDynasty } from './family';
+import { commitPower, powerActions, previewPower } from './power';
+import { previewPol } from './politics';
 import type { Character } from './types';
+import { bonesActions, bonesBlock, previewBones } from './bones';
+import { ledgerActions, previewLedger } from './ledgerbook';
 
 /** A capo's willingness to accept a worse contract. */
 export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
@@ -106,6 +112,7 @@ export const ORDER_TITLES: Record<string, string> = {
 export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, hitback: 6, kessler: 4, cops: 3, shylock: 3, launder: 2 };
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  pol: { preview: (s, a) => previewPol(s, a.op) },
   askPermission: {
     preview: (s, a) => {
       const c = CITIES_BY_ID[a.city];
@@ -146,6 +153,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       let why: string | undefined;
       why = need(def.available(s), 'Not possible right now', why);
       why = need(a.via === 'direct' || !!agent, a.via === 'underboss' ? 'You have no underboss to pass it through' : 'No capo free to carry it', why);
+      if (a.via === 'direct') why = why ?? directOrderBlock(s);
       why = need(s.money >= cost, `Needs ${fmtMoney(cost)}`, why);
       if (a.via === 'direct') {
         return {
@@ -157,7 +165,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       return {
         title: `${ch.label} (through ${agent ? agent.firstName : 'nobody'})`,
         detail: `${ch.detail ? ch.detail + ' ' : ''}${VIA_INFO[a.via].text}`,
-        effects: [{ type: 'schedule', key: 'delegated_order', minWeeks: 1, maxWeeks: 1, chance: 1, hint: `${agent?.firstName ?? 'He'} carries it out next week`, params: { key: a.key, via: a.via, agent: agent?.id ?? '' }, label }],
+        effects: [{ type: 'schedule', key: 'delegated_order', minWeeks: 1 + messengerDelay(s), maxWeeks: 1 + messengerDelay(s), chance: 1, hint: messengerDelay(s) ? `A messenger carries it; ${agent?.firstName ?? 'he'} acts in ${1 + messengerDelay(s)} weeks` : `${agent?.firstName ?? 'He'} carries it out next week`, params: { key: a.key, via: a.via, agent: agent?.id ?? '' }, label }],
         odds: { chance: odds.obey, reasons: [{ label: `Done as told`, value: Math.round(odds.obey * 100) }, { label: 'Done his way', value: Math.round(odds.distort * 100) }, { label: 'Ignored', value: -Math.round((1 - odds.obey - odds.distort) * 100) }] },
         warning: `What it would do: ${ch.effects.map((e) => e.type === 'money' ? `${e.amount > 0 ? '+' : ''}${fmtMoney(e.amount)}` : e.type).filter((x) => x !== 'schedule').slice(0, 4).join(', ')}`,
         cost: 0, because: `${ch.because} (through ${agent?.firstName ?? 'the chain'})`, disabledReason: why, category: 'event',
@@ -190,6 +198,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       let why: string | undefined;
       why = need(!!c && c.alive && c.faction === 'player' && c.rank === 'associate' && !c.specialty, 'Only associates of the family can be proposed', why);
       why = need(c?.proposedWeek === undefined, 'His name is already with Philadelphia', why);
+      why = why ?? bonesBlock(s, c);
       why = need(s.money >= 500, 'Needs $500', why);
       return {
         title: `Propose ${c?.firstName ?? '?'} for membership`,
@@ -217,9 +226,27 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
     preview: (s, a) => previewDynasty(s, a.op),
     commit: (ctx, a) => commitDynasty(ctx, a.op),
   },
+  /** The power pillar (power.ts): heirs, grooming, protégés, grievances, blitzes, fronts, the ladder. */
+  power: {
+    preview: (s, a) => previewPower(s, a.op),
+    commit: (ctx, a) => commitPower(ctx, a.op),
+  },
   econ: {
     preview: (s, a) => previewEcon(s, a.op),
     commit: (ctx, a) => commitEcon(ctx, a.op),
+  },
+  /** Making your bones (bones.ts). */
+  bones: {
+    preview: (s, a) => previewBones(s, a.op),
+  },
+  /** The boss's books (ledgerbook.ts). */
+  ledger: {
+    preview: (s, a) => previewLedger(s, a.op),
+  },
+  /** Travel, trips and flight (travel.ts, fugitive.ts). */
+  travel: {
+    preview: (s, a) => previewTravel(s, a.op),
+    commit: (ctx, a) => commitTravel(ctx, a.op),
   },
   declareWar: {
     preview: (s, a) => {
@@ -633,7 +660,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       if (def.category === 'racket' && def.heat >= 0.3) effects.push({ type: 'schedule', key: 'business_trouble', minWeeks: 2, maxWeeks: 8, chance: 0.25, hint: 'new places attract attention', label });
       return {
         title: label,
-        detail: `${def.name} in ${d?.name ?? '?'}: ~${fmtMoney(def.base * def.season[0])}/wk in season, ${fmtMoney(def.base * def.season[1])} off-season · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}`,
+        detail: `${def.name} in ${d?.name ?? '?'}: ~${fmtMoney(def.base * def.season[0])}/wk in season, ${fmtMoney(def.base * def.season[1])} off-season · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}${firstWinterAhead(s) ? ` · the first winter: +${fmtMoney(FIRST_WINTER_PER_NEW)}/wk to winterize it` : ''}`,
         effects,
         cost: def.cost,
         because: `bought ${b.name}`,
@@ -771,7 +798,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
 export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
   const def = DEFS[a.kind] as Def<typeof a.kind>;
   const p = def.preview(s, a as never);
-  return { ...p, effects: named(p.title, p.effects), refuseEffects: p.refuseEffects ? named(`${p.title}: refused`, p.refuseEffects) : undefined };
+  const detail = p.disabledReason ? p.detail : withCostHint(p.detail, costHint(s, Math.max(p.cost, moneyCost(p.effects))));
+  return { ...p, detail, effects: named(p.title, p.effects), refuseEffects: p.refuseEffects ? named(`${p.title}: refused`, p.refuseEffects) : undefined };
 }
 
 /** Projected treasury after the queued orders (for UI affordability). */
@@ -885,7 +913,9 @@ export function availableActions(s: GameState): PlayerAction[] {
   const official = Object.values(s.characters).find((c) => c.alive && c.office && OFFICE_BRIBE[c.office] && (s.week % 3 === 0));
   if (official) out.push({ kind: 'interact', id: 'bribe', target: official.id });
   out.push(...dynastyActions(s));
+  out.push(...powerActions(s));
   out.push(...econActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 3; }));
+  out.push(...bonesActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 4; }), ...ledgerActions(s));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {
