@@ -3,7 +3,9 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { newGame } from '../src/engine/newGame';
 import { advanceWeek } from '../src/engine/engine';
-import { previewAction, legalActions } from '../src/engine/actions';
+import { previewAction, legalActions, resolveActions } from '../src/engine/actions';
+import { explainAction, immediateTotal } from '../src/engine/advice';
+import { sumLines } from '../src/engine/ledger';
 import { ageOn } from '../src/engine/calendar';
 import { askOdds, earsActions, earsEventSource, intelEffects, knownEars, madamOpinion } from '../src/engine/ears';
 import * as DATA from '../src/engine/earsData';
@@ -125,6 +127,30 @@ describe('the Ears: asking her', () => {
     expect(acts.length).toBeGreaterThan(4);
     for (const a of acts) expect(previewAction(s, a).title.length).toBeGreaterThan(3);
     expect(legalActions(s).some((a) => a.kind === 'ears')).toBe(true);
+  });
+});
+
+describe('the Ears: no lying tooltips', () => {
+  it('what the why-panel says an Ears order costs is what the ledger posts', () => {
+    let s0 = newGame('ears-clar');
+    for (let i = 0; i < 8; i++) s0 = advanceWeek(s0, {}).state;
+    s0.money = 80000;
+    for (const e of Object.values(s0.ears!.ears)) e.known = true;
+    let n = 0;
+    for (const a of earsActions(s0)) {
+      if (previewAction(s0, a).disabledReason) continue;
+      const s = JSON.parse(JSON.stringify(s0)) as GameState;
+      const p = previewAction(s, a);
+      const ex = explainAction(s, a);
+      expect(ex.purpose.length, p.title).toBeGreaterThan(5);
+      const ctx = newCtx(s);
+      resolveActions(ctx, [a]);
+      const got = sumLines(ctx.lines);
+      if (ctx.log.some((l) => l.endsWith('— refused.'))) continue;
+      for (const st of ['money', 'respect', 'heat.local'] as const) expect(got[st] ?? 0, `${p.title}: ${st}`).toBe(immediateTotal(ex, st));
+      n++;
+    }
+    expect(n).toBeGreaterThan(2);
   });
 });
 
