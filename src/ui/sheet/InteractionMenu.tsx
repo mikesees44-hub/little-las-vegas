@@ -1,3 +1,4 @@
+import { previewAction } from '../../engine/actions';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { displayName } from '../../engine/characters';
 import { GIFT_CAT_LABEL } from '../../engine/gifts';
@@ -10,6 +11,12 @@ import { useClarity } from '../clarity/context';
 import { useTravel } from '../travel/context';
 import { useShell } from '../shell/context';
 import { menuFor, rankedGifts, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
+
+/** What you can do now first; what is blocked (with its reason) after. */
+function sortItems(s: GameState, items: MenuItem[]): MenuItem[] {
+  const blocked = (it: MenuItem) => (it.action ? !!previewAction(s, it.action).disabledReason : false);
+  return [...items.filter((x) => !blocked(x)), ...items.filter(blocked)];
+}
 
 function GiftPicker({ s, c }: { s: GameState; c: Character }) {
   const [more, setMore] = useState(false);
@@ -79,7 +86,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
         ))}
       </nav>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
-        {cat.items.map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}
+        {sortItems(s, cat.items).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}
       </div>
     </section>
   );

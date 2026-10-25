@@ -101,7 +101,7 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
         </div>
         <div className="order-3 sm:order-2 flex w-full sm:w-auto items-center gap-1 overflow-x-auto sm:overflow-visible pb-0.5 sm:pb-0" data-testid="resources">
           <Num v={dm ?? 0} reasons={reasonsFor(s, 'money')} title="Treasury · last week" format={(x) => `${x > 0 ? '+' : ''}${fmt$(x)}`} align="left">
-            <span title={`${statHelp('money')} Unwashed: ${fmt$(s.unwashed)}`}><Chip label="Treasury" value={fmt$(s.money)} d={dm} good={(dm ?? 0) >= 0} tone={s.money < 0 ? 'text-red-400' : 'text-gold-300'} /></span>
+            <span data-tour="treasury" title={`${statHelp('money')} Unwashed: ${fmt$(s.unwashed)}`}><Chip label="Treasury" value={fmt$(s.money)} d={dm} good={(dm ?? 0) >= 0} tone={s.money < 0 ? 'text-red-400' : 'text-gold-300'} /></span>
           </Num>
           <Num v={dr ?? 0} reasons={reasonsFor(s, 'respect')} term="respect"><Chip label="Respect" value={`${s.respect}`} d={dr} good={(dr ?? 0) >= 0} bar={s.respect} barColor="bg-gold-500" /></Num>
           {HEAT_BARS.map((b) => {
@@ -119,7 +119,7 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
           <div className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden sm:inline"> · {info.countdownLabel}</span></div>
         </div>
         {!s.gameOver && (
-          <div className="order-4 flex w-full lg:w-auto items-center gap-1.5 flex-wrap">
+          <div className="order-4 flex w-full lg:w-auto items-center gap-1 sm:gap-1.5 flex-wrap">
             <div className="llv-clock-compact"><ClockControls speed={speed} setSpeed={setSpeed} /></div>
             <div className="flex">
               <button className={`btn-gold h-8 py-0 px-2 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week">Advance Week ▸</button>
@@ -128,7 +128,7 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
               </Popover>
             </div>
             <button type="button" onClick={onReview} disabled={!pending} data-testid="decisions-button" title={pending ? 'Review this week\'s decisions' : 'Nothing on the table this week'}
-              className={`h-8 rounded border px-2 text-xs font-semibold whitespace-nowrap ${pending > answered ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
+              className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${pending > answered ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
               ✉ {answered}/{pending}<span className="hidden sm:inline"> decisions</span>
             </button>
             <OrdersButton s={s} />

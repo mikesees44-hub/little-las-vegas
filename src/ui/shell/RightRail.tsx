@@ -105,7 +105,7 @@ export function ThisWeekCard({ s, onReport }: { s: GameState; onReport: () => vo
         {s.lastReport && <button type="button" className="text-[10px] text-gold-300 hover:underline" onClick={onReport} data-testid="full-report">full report ▸</button>}
       </div>
       {!w.money ? (
-        <p className="mt-1 text-stone-400">Your first week. {info.inSeason ? 'The Season is on: every week a place is open counts.' : info.countdownLabel}. Give an order or two, then advance.</p>
+        <p className="mt-1 text-stone-400">Your first week. {info.inSeason ? 'The Season is on: every week a place is open counts' : info.countdownLabel}. Give an order or two, then advance.</p>
       ) : (
         <div className="mt-1 space-y-0.5">
           <RichTip align="left" tip={<>

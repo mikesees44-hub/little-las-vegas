@@ -148,6 +148,6 @@ body {
 .llv-tour { position: relative; z-index: 5; animation: llv-tour 1s ease-in-out 4; outline: 2px solid #ecd38f; outline-offset: 3px; border-radius: 6px; }
 @keyframes llv-tour { 50% { outline-color: rgba(236, 211, 143, 0.15); } }
 @media (max-width: 639px) {
-  .llv-clock-compact button { width: 1.75rem; height: 2rem; font-size: 0.75rem; }
+  .llv-clock-compact button { width: 1.6rem; height: 2rem; font-size: 0.7rem; }
   [data-shell] [data-testid="map-legend"] { display: none; }
 }

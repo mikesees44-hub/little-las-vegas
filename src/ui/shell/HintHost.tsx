@@ -7,10 +7,10 @@ const done = (id: string) => { try { return localStorage.getItem(`llv-hint-${id}
 const markDone = (id: string) => { try { localStorage.setItem(`llv-hint-${id}`, '1'); } catch { /* not remembered */ } };
 
 const POS = {
-  drawer: 'left-4 md:left-24 top-40',
-  right: 'right-4 xl:right-[320px] top-28',
+  drawer: 'left-4 md:left-24 top-[250px] md:top-40',
+  right: 'right-4 xl:right-[320px] top-[190px] md:top-28',
   bottom: 'left-1/2 -translate-x-1/2 bottom-[150px] md:bottom-16',
-  top: 'right-4 top-28',
+  top: 'right-4 top-[190px] md:top-28',
   center: 'left-1/2 -translate-x-1/2 top-1/3',
 };
 
@@ -39,7 +39,7 @@ export function Toast({ text, onDone }: { text: string; onDone: () => void }) {
     return () => clearTimeout(t);
   }, [text]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className="fixed left-1/2 top-28 z-[1140] -translate-x-1/2 rounded-md border border-gold-500 bg-noir-900/95 px-3 py-1.5 text-sm text-gold-300 shadow-xl shadow-black/70" data-testid="toast" role="status">
+    <div className="fixed left-1/2 top-[190px] md:top-28 z-[1160] max-w-[90vw] -translate-x-1/2 rounded-md border border-gold-500 bg-noir-900/95 px-3 py-1.5 text-sm text-gold-300 shadow-xl shadow-black/70" data-testid="toast" role="status">
       {text}
     </div>
   );

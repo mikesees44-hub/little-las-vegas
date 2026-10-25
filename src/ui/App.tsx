@@ -375,11 +375,17 @@ export function App({ startOn = 'title' }: AppProps) {
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0} />
         )}
-        rail={<LeftRail visible={shellUi.visiblePanels} active={panel} badges={badges} dots={shellUi.dots} onOpen={(p) => (panel === p ? setRoute({}) : openRoute(p === lastRoute.panel ? lastRoute : { panel: p }))} onHelp={() => setHelpMenu(true)} />}
+        rail={<LeftRail visible={shellUi.visiblePanels} active={panel} badges={badges} dots={shellUi.dots} onOpen={(p) => { shellUi.seenPanel(p); if (panel === p) setRoute({}); else openRoute(p === lastRoute.panel ? lastRoute : { panel: p }); }} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
         overlay={(
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
+            {!s.gameOver && goalIdx >= 0 && !panel && (
+              <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
+                className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
+                ➚ {goals[goalIdx].title}
+              </button>
+            )}
             {s.gameOver && (
               <div className="absolute inset-0 z-[1090] flex items-center justify-center bg-black/60 p-4">
                 <div className="panel p-6 text-center max-w-xl" data-testid="game-over">
