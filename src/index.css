@@ -213,3 +213,9 @@ body {
 .rv-cars { animation: rv-cars 2.4s linear infinite; }
 @keyframes rv-cars { to { stroke-dashoffset: -28; } }
 @media (prefers-reduced-motion: reduce) { .rv-cars { animation: none; } }
+/* Landing on the painted block (from above), and walking onto Pacific Avenue. */
+.pv-land { animation: pv-land 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both; transform-origin: 60% 40%; }
+.pv-walk { animation: pv-walk 1.1s cubic-bezier(0.25, 0.6, 0.2, 1) both; transform-origin: 66% 52%; }
+@keyframes pv-land { from { transform: scale(1.35); opacity: 0; filter: blur(6px); } 60% { opacity: 1; } to { transform: scale(1); opacity: 1; filter: blur(0); } }
+@keyframes pv-walk { from { transform: scale(0.82) translateY(4%); opacity: 0; filter: blur(4px); } 50% { opacity: 1; } to { transform: scale(1); opacity: 1; filter: blur(0); } }
+@media (prefers-reduced-motion: reduce) { .pv-land, .pv-walk { animation: none; } }

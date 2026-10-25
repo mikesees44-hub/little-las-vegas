@@ -11,6 +11,7 @@ import { Ground, GroundDefs, PierArches, VIEW_BOUNDS } from './Ground';
 import { HoodDashboard } from './HoodDashboard';
 import { ISO, P, PLAN, palette, poly, type Mood } from './iso';
 import { StreetCard } from './StreetCard';
+import { PaintedView, type Scene } from './PaintedView';
 import { useShell } from '../shell/context';
 
 /**
@@ -47,7 +48,7 @@ function ramp(t: number, a: [number, number, number], b: [number, number, number
   return `rgb(${c[0]},${c[1]},${c[2]})`;
 }
 
-function tintOf(s: GameState, it: Item, o: HoodOverlay): string | undefined {
+export function tintOf(s: GameState, it: Item, o: HoodOverlay): string | undefined {
   if (o === 'none' || o === 'reputation' || o === 'police') return undefined;
   if (o === 'owner') return it.vacant && !it.forSale ? undefined : it.forSale && !it.mine ? OWNER_COLOR.sale : it.forLease ? OWNER_COLOR.lease : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private;
   if (o === 'category') { const g = groupOfItem(s, it); return g ? GROUP_COLOR[g] : undefined; }
@@ -78,7 +79,7 @@ const TIER_AT = [0.33, 1.9, 4.5];
 const TIER_SC = [0.22, 0.9, 2.6, 6];
 const tierOf = (sc: number) => (sc < TIER_AT[0] ? 0 : sc < TIER_AT[1] ? 1 : sc < TIER_AT[2] ? 2 : 3);
 
-export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; onSurvey?: () => void; onHood?: (id?: HoodId) => void; focusHood?: { id: HoodId; nonce: number } }) {
+export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameState; onSurvey?: () => void; onHood?: (id?: HoodId) => void; focusHood?: { id: HoodId; nonce: number }; land?: { scene: Scene; nonce: number } }) {
   const shell = useShell();
   const host = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
@@ -97,6 +98,9 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
   const [sel, setSel] = useState<string | undefined>();
   const [hood, setHood] = useState<HoodId | undefined>();
   const [menu, setMenu] = useState(false);
+  // Street level: the painted block and Pacific Avenue (live hotspots over the user's art).
+  const [scene, setScene] = useState<Scene | undefined>(land?.scene);
+  useEffect(() => { if (land) setScene(land.scene); }, [land?.nonce]);
   const pr = projMode === 'iso' ? ISO : PLAN;
   const mood: Mood = moodSet === 'auto' ? moodFor(s) : moodSet;
   const pal = palette(mood);
@@ -395,24 +399,26 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
           </svg>
         </div>
       </div>
+      {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setMenu(false); }} onScene={setScene} onMap={() => setScene(undefined)} /></div>}
       {/* Controls. */}
       <div data-hv-ui className="absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%]">
-        <div className="flex gap-1">
+        {!scene && <div className="flex flex-wrap justify-end gap-1">
+          <button type="button" className="hv-btn hv-on" onClick={() => { setScene('block'); setHood(undefined); onHood?.(undefined); }} title="Down onto the Boardwalk block" data-testid="hv-street">Street level</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
           <button type="button" className="hv-btn" onClick={whole} title="The whole island">⤢</button>
           <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Recenter on the Boardwalk" data-testid="hv-recenter">⌂ Recenter</button>
-        </div>
+        </div>}
         <div className="flex gap-1" role="group" aria-label="Light">
           {(['auto', 'day', 'dusk', 'night'] as const).map((m) => (
             <button key={m} type="button" className={`hv-btn ${moodSet === m ? 'hv-on' : ''}`} onClick={() => { setMoodSet(m); savePref({ mood: m }); }} title={m === 'auto' ? 'Follows the heat' : m}>{m === 'auto' ? 'Auto' : m === 'day' ? '☀' : m === 'dusk' ? '◐' : '☾'}</button>
           ))}
         </div>
-        <div className="flex gap-1">
+        {!scene && <div className="flex gap-1">
           <button type="button" className={`hv-btn ${projMode === 'iso' ? 'hv-on' : ''}`} onClick={() => { setProjMode('iso'); savePref({ proj: 'iso' }); }}>2.5D</button>
           <button type="button" className={`hv-btn ${projMode === 'plan' ? 'hv-on' : ''}`} onClick={() => { setProjMode('plan'); savePref({ proj: 'plan' }); }}>Plan</button>
           {onSurvey && <button type="button" className="hv-btn" onClick={onSurvey} title="The survey map (districts)">Survey map</button>}
-        </div>
+        </div>}
         <div className="relative">
           <button type="button" className="hv-btn hv-on" onClick={() => setMenu((x) => !x)} aria-expanded={menu} data-testid="hv-overlay-btn">Overlay: {OVERLAYS.find((o) => o.id === overlay)?.label} ▾</button>
           {menu && (
@@ -428,9 +434,9 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
         )}
         {moodSet === 'auto' && mood !== 'day' && <div className="rounded bg-noir-900/90 border border-blood-500/60 px-2 py-1 text-[10px] text-rose-200 max-w-[220px]">The heat is on. The island looks different after dark.</div>}
       </div>
-      <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
+      {!scene && <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
         {HOODS.map((h) => <button key={h.id} type="button" onClick={() => goHood(h.id)} className={`hv-chip ${hood === h.id ? 'hv-on' : ''}`}>{h.name}</button>)}
-      </div>
+      </div>}
       {panelOpen && (
         <div data-hv-ui className="absolute z-[1002] panel overflow-y-auto p-3 inset-x-0 bottom-0 max-h-[62%] rounded-b-none md:inset-x-auto md:right-2 md:top-36 md:bottom-12 md:max-h-none md:w-[380px] md:rounded-b-lg llv-slide-right" data-testid="hv-panel">
           {selItem ? <StreetCard s={s} it={selItem} mood={mood} onClose={() => setSel(undefined)} />

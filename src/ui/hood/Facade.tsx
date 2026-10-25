@@ -110,9 +110,163 @@ export function Facade({ f }: { f: FacadeSpec }) {
     </g>
   );
 
+  /**
+   * Wildwood's own: a two-story Doo Wop strip (after the user's reference
+   * art) — a flat cantilevered roof, pastel walls, colored motel doors
+   * upstairs, boomerang arrows and 8-point starbursts in neon, a zig-zag neon
+   * fascia, and a ground floor by trade: the motel office under a starburst
+   * sign, a pizza counter with a striped awning, an arcade's arched doorway
+   * with lit cabinets, a club's canopy, a gift shop's windows.
+   */
+  const dooWopStrip = (): JSX.Element[] => {
+    const out: JSX.Element[] = [];
+    const glowOn = (night || dusk) && neonOn;
+    const G = glowOn ? `url(#${glowId})` : undefined;
+    const neonC = (c: string) => (neonOn ? (glowOn ? c : mix(c, '#2a1f2e', 0.15)) : lit('#7a7068'));
+    const tube = (key: string, d: string, c: string, w = 2.2) => <path key={key} d={d} fill="none" stroke={neonC(c)} strokeWidth={w} strokeLinecap="round" strokeLinejoin="round" filter={G} />;
+    const AQUA = '#4ff0e6';
+    const CORAL = '#ff6b5a';
+    const AMBER = '#ffc94a';
+    const PINK = '#ff5fa2';
+    const walls = ['#f3ead2', '#bfe6d8', '#f6d7c3', '#e9f0dc'];
+    const upper = lit(mix(walls[f.seed % walls.length], '#8d7f6c', wear * 0.5 + (f.closed ? 0.25 : 0)));
+    const lower = lit(mix(['#f4a38f', '#9fd8cb', '#f6c9b5', '#c8e6f0'][(f.seed >> 2) % 4], '#8d7f6c', wear * 0.5 + (f.closed ? 0.25 : 0)));
+    const slab = lit(['#4fb3a9', '#e98a7a', '#5fa8c8'][f.seed % 3]);
+    const x0 = 30;
+    const x1 = 290;
+    const tower = k === 'motel';
+    const tx0 = 258;
+    const wallR = tower ? tx0 : x1;
+    const winLit = (i: number) => !f.closed && (night || dusk ? hashStr(f.seed, i + 40) > 0.25 : false);
+    const warm = (i: number) => (winLit(i) ? (night ? '#ffcf7a' : '#ffbe78') : lit('#8fc4d8'));
+    // Upper floor and the roof slab.
+    out.push(<rect key="up" x={x0} y="40" width={wallR - x0} height="56" fill={upper} />);
+    out.push(<rect key="dn" x={x0} y="108" width={wallR - x0} height={ground - 108} fill={lower} />);
+    out.push(<rect key="slab" x={x0 - 12} y="32" width={wallR - x0 + 22} height="7" fill={slab} />);
+    out.push(<rect key="slabU" x={x0 - 12} y="39" width={wallR - x0 + 22} height="2" fill={lit('#2a1f2e')} opacity="0.25" />);
+    out.push(<rect key="vent" x={x0 + 40} y="25" width="26" height="7" fill={lit('#cfc6b6')} />);
+    // Upstairs: doors in their colors, warm windows, air conditioners.
+    const doorCols = ['#e86fa0', '#4f9fd8', '#f2c84a', '#e0574a', '#e98ab8'];
+    const units = Math.floor((wallR - x0 - 16) / 24);
+    for (let i = 0; i < units; i++) {
+      const ux = x0 + 10 + i * 24;
+      if (i % 3 === 0) {
+        out.push(<rect key={`uw${i}`} x={ux} y="62" width="18" height="15" fill={warm(i)} stroke={lit('#5b4a3a')} strokeWidth="1" />);
+        out.push(<path key={`uc${i}`} d={`M${ux + 1} 63h16`} stroke={lit('#ffffff')} strokeOpacity="0.6" strokeWidth="2" />);
+        out.push(<rect key={`ac${i}`} x={ux + 3} y="80" width="12" height="7" fill={lit('#d8d2c4')} stroke={lit('#8a8070')} strokeWidth="0.6" />);
+      } else {
+        out.push(<rect key={`ud${i}`} x={ux + 2} y="60" width="14" height="34" fill={lit(doorCols[(i + f.seed) % doorCols.length])} stroke={lit('#5b4a3a')} strokeWidth="0.8" />);
+        out.push(<circle key={`uk${i}`} cx={ux + 13} cy="78" r="0.9" fill={lit('#e8d9a8')} />);
+      }
+    }
+    out.push(<rect key="rail" x={x0} y="94" width={wallR - x0} height="2" fill={lit('#5b4a3a')} opacity="0.5" />);
+    // Boomerang arrows and an atomic starburst up top.
+    if (!f.closed || wear < 0.6) {
+      out.push(tube('ar1', `M${x0 + 60} 46l26 4l-26 5l7 -4.5z`, AQUA, 2));
+      out.push(tube('ar2', `M${x0 + 150} 50l-28 -4l28 -5l-7 4.5z`, CORAL, 2));
+    }
+    const atom = (key: string, cx: number, cy: number, r: number, c: string) => tube(key, Array.from({ length: 8 }, (_, i) => { const a = (i / 8) * Math.PI * 2; const rr = i % 2 ? r * 0.55 : r; return `M${cx} ${cy}L${(cx + Math.cos(a) * rr).toFixed(1)} ${(cy + Math.sin(a) * rr).toFixed(1)}`; }).join(''), c, 1.4);
+    out.push(atom('at1', x0 + 22, 48, 9, CORAL));
+    // The tower at the end, with its own starburst and neon bars.
+    if (tower) {
+      out.push(<rect key="tw" x={tx0} y="22" width={x1 - tx0} height={ground - 22} fill={lit('#e9e1d0')} />);
+      out.push(<rect key="twc" x={tx0 - 2} y="18" width={x1 - tx0 + 4} height="5" fill={lit('#c97a6a')} />);
+      out.push(<path key="tws" d={`M${tx0} 22V${ground}`} stroke={lit('#b8ad98')} strokeWidth="1" />);
+      out.push(atom('at2', (tx0 + x1) / 2, 52, 12, AQUA));
+      out.push(tube('bars', `M${tx0 + 6} 80h${x1 - tx0 - 12}M${tx0 + 6} 85h${x1 - tx0 - 12}M${tx0 + 6} 90h${x1 - tx0 - 12}`, CORAL, 1.6));
+    }
+    // The zig-zag fascia: parallelograms in two colors, wider than the building.
+    let zz = '';
+    let zi = '';
+    const segs = 5;
+    const sw = (x1 + 14 - (x0 - 18)) / segs;
+    for (let i = 0; i < segs; i++) {
+      const a = x0 - 18 + i * sw;
+      const up = i % 2 === 0;
+      zz += `M${a + 2} ${up ? 98 : 102}L${a + sw - 2} ${up ? 102 : 96}L${a + sw - 8} ${up ? 110 : 108}L${a + 8} ${up ? 108 : 110}Z`;
+      zi += `M${a + 9} ${up ? 101 : 103}L${a + sw - 9} ${up ? 103.5 : 99}L${a + sw - 13} ${up ? 107 : 106}L${a + 13} ${up ? 106 : 107}Z`;
+    }
+    out.push(tube('zz', zz, AQUA, 2));
+    out.push(tube('zi', zi, k === 'club' ? PINK : AMBER, 1.6));
+    out.push(<rect key="corn" x={x0 - 4} y="110" width={wallR - x0 + 8} height="3" fill={lit('#e07a5f')} />);
+    // The ground floor, by trade.
+    const gy = 114;
+    if (k === 'food') {
+      // The pizza counter under a striped awning.
+      const cx0 = x0 + 6;
+      const cw = 84;
+      out.push(<rect key="ctr" x={cx0} y={gy + 10} width={cw} height={ground - gy - 10} fill={lit('#3a8f8a')} />);
+      out.push(<rect key="ctrw" x={cx0 + 4} y={gy + 12} width={cw - 8} height="16" fill={f.closed ? lit('#5b5148') : night || dusk ? '#ffd58a' : '#f6e7c8'} />);
+      out.push(<rect key="oven" x={cx0 + 10} y={gy + 14} width="22" height="12" fill={lit('#9a9a9a')} stroke={lit('#5b5148')} strokeWidth="0.6" />);
+      out.push(<circle key="pie" cx={cx0 + 56} cy={gy + 22} r="5" fill={lit('#f2b632')} stroke={lit('#c0392b')} strokeWidth="1.2" />);
+      out.push(<rect key="ledge" x={cx0 - 2} y={gy + 28} width={cw + 4} height="3" fill={lit('#e9e1d0')} />);
+      out.push(<Awning key="aw" x={cx0 - 4} y={gy + 2} w={cw + 8} />);
+    }
+    if (k === 'arcade' || k === 'food' || k === 'shop') {
+      // Big windows; an arcade's lit cabinets inside.
+      const wx = k === 'food' ? x0 + 98 : x0 + 8;
+      const ww = 120;
+      out.push(<rect key="gw" x={wx} y={gy + 4} width={ww} height={ground - gy - 4} fill={f.closed ? lit('#4a4250') : k === 'arcade' ? (night || dusk ? '#4b2d7a' : lit('#6a4a9a')) : warm(9)} stroke={lit('#d8d2c4')} strokeWidth="2" />);
+      if (k === 'arcade' && !f.closed) {
+        for (let i = 0; i < 5; i++) {
+          const cx = wx + 8 + i * 23;
+          out.push(<rect key={`cab${i}`} x={cx} y={gy + 14} width="12" height={ground - gy - 14} fill={lit('#1d1830')} />);
+          out.push(<rect key={`scr${i}`} x={cx + 2} y={gy + 17} width="8" height="7" fill={['#4ff0e6', '#ffc94a', '#ff5fa2', '#7cf06a', '#6aa8ff'][(i + f.seed) % 5]} filter={G} />);
+        }
+        // The arched doorway, its rim in neon.
+        const ax = wx + ww + 10;
+        out.push(<path key="arch" d={`M${ax} ${ground}V${gy + 18}Q${ax + 22} ${gy - 6} ${ax + 44} ${gy + 18}V${ground}Z`} fill={night || dusk ? '#5a3a8a' : lit('#3a2c4e')} />);
+        out.push(tube('archN', `M${ax - 2} ${ground}V${gy + 18}Q${ax + 22} ${gy - 8} ${ax + 46} ${gy + 18}V${ground}`, '#ff9ec7', 1.8));
+        out.push(<text key="archT" x={ax + 22} y={gy + 16} textAnchor="middle" fontSize="7" fontWeight="800" fill={neonOn ? (glowOn ? '#fff' : '#c2185b') : '#7a7068'} stroke={glowOn ? '#ff5fa2' : 'none'} strokeWidth="0.5" filter={G}>{f.closed ? '' : 'PLAY'}</text>);
+      } else if (k !== 'arcade' && !f.closed) {
+        // Goods in the window: shirts, beach balls, souvenirs.
+        for (let i = 0; i < 4; i++) {
+          const gx = wx + 12 + i * 28;
+          out.push(i % 2 ? <circle key={`gd${i}`} cx={gx + 8} cy={gy + 22} r="6" fill={lit(['#ff6f91', '#ffd34d', '#3cc6c0'][(i + f.seed) % 3])} /> : <path key={`gd${i}`} d={`M${gx} ${gy + 16}l5 -3h6l5 3l-3 4h-2v12h-6v-12h-2z`} fill={lit(['#4f9fd8', '#ff8a73', '#f2c84a'][(i + f.seed) % 3])} />);
+        }
+      }
+      const dx = k === 'arcade' ? x1 - 50 : wx + ww + 6;
+      if (k !== 'arcade') out.push(<rect key="gd" x={dx} y={gy + 8} width="22" height={ground - gy - 8} fill={lit('#e9e1d0')} stroke={lit('#8a8070')} strokeWidth="0.8" />);
+    }
+    if (k === 'motel' || k === 'club') {
+      // The lobby (or the club's lounge) behind glass.
+      const lx = x0 + 8;
+      out.push(<rect key="lob" x={lx} y={gy + 4} width="120" height={ground - gy - 4} fill={f.closed ? lit('#4a4250') : k === 'club' ? (night || dusk ? '#7a2a5a' : lit('#5a2a4a')) : warm(11)} stroke={lit('#d8d2c4')} strokeWidth="2" />);
+      out.push(<path key="mul" d={`M${lx + 30} ${gy + 4}V${ground}M${lx + 60} ${gy + 4}V${ground}M${lx + 90} ${gy + 4}V${ground}`} stroke={lit('#d8d2c4')} strokeWidth="1.5" />);
+      if (k === 'motel') out.push(<rect key="desk" x={lx + 36} y={ground - 12} width="40" height="10" fill={lit('#c97a6a')} />);
+      if (k === 'club' && !f.closed) out.push(tube('note', `M${lx + 14} ${gy + 26}v-10l8 -2v10M${lx + 14} ${gy + 26}m-3 0a3 2 0 1 0 6 0a3 2 0 1 0 -6 0`, AQUA, 1.2));
+    }
+    // The canopy entrance on its slanted legs, under the starburst sign.
+    if (k === 'motel' || k === 'club' || k === 'shop') {
+      const c0 = k === 'motel' ? 170 : k === 'club' ? 172 : 200;
+      out.push(<rect key="door" x={c0 + 10} y={gy + 10} width="34" height={ground - gy - 10} fill={glass} stroke={lit('#d8d2c4')} strokeWidth="1.5" />);
+      out.push(<path key="legs" d={`M${c0 + 2} ${ground}L${c0 + 10} ${gy + 6}M${c0 + 52} ${ground}L${c0 + 44} ${gy + 6}`} stroke={lit('#d8d2c4')} strokeWidth="1.6" />);
+      out.push(<rect key="can" x={c0 - 6} y={gy + 2} width="66" height="5" rx="2" fill={lit('#f4a38f')} />);
+      out.push(tube('canN', `M${c0 - 4} ${gy + 2}h62`, PINK, 1.4));
+    }
+    // The starburst sign with the place's name (over the canopy, or the counter).
+    const sx = k === 'food' ? 86 : k === 'arcade' ? 100 : 206;
+    const sy = 90;
+    const sr = 66;
+    let sp = '';
+    for (let i = 0; i < 20; i++) { const a = (i / 20) * Math.PI * 2; const rx = i % 2 ? sr * 0.78 : sr; const ry = i % 2 ? 15 : 22; sp += `${i ? 'L' : 'M'}${(sx + Math.cos(a) * rx).toFixed(1)},${(sy + Math.sin(a) * ry).toFixed(1)}`; }
+    out.push(<path key="sb" d={`${sp}Z`} fill={night || dusk ? '#1b1030' : lit('#fff3dc')} stroke={neonC(k === 'club' ? PINK : CORAL)} strokeWidth="2.4" strokeLinejoin="round" filter={G} />);
+    out.push(<path key="sbi" d={`${sp}Z`} transform={`translate(${sx} ${sy}) scale(0.86) translate(${-sx} ${-sy})`} fill="none" stroke={neonC(AQUA)} strokeWidth="1" filter={G} />);
+    out.push(<SignText key="sbt" x={sx} y={sy + 4.5} size={14} maxW={104} color={k === 'club' ? '#c2185b' : '#e05a3a'} />);
+    if (k === 'motel') {
+      out.push(<g key="vac"><rect x={x1 - 26} y={gy + 6} width="30" height="10" rx="2" fill={night || dusk ? '#1b1030' : '#fff7ea'} stroke={neonC(CORAL)} strokeWidth="1.2" filter={G} /><text x={x1 - 11} y={gy + 13.4} textAnchor="middle" fontSize="6" fontWeight="800" fill={neonOn ? (glowOn ? '#ff9a8a' : '#c0392b') : '#7a7068'}>{f.closed ? 'NO VAC.' : 'VACANCY'}</text></g>);
+    }
+    // A palm and a starburst on the corner pole, like any good Wildwood block.
+    out.push(<Palm key="palm" x={18} s={0.7} />);
+    return out;
+  };
+
   const body: JSX.Element[] = [];
+
   const k = f.kind;
-  if (k === 'vacant') {
+  const strip = f.style === 'doowop' && (k === 'motel' || k === 'shop' || k === 'food' || k === 'arcade' || k === 'club');
+  if (strip) body.push(...dooWopStrip());
+  else if (k === 'vacant') {
     body.push(<rect key="lot" x="20" y={ground - 6} width="280" height="10" fill={lit('#e9d3a1')} />);
     body.push(<path key="fence" d={Array.from({ length: 15 }, (_, i) => `M${30 + i * 18} ${ground}v-26`).join('') + `M30 ${ground - 22}h252M30 ${ground - 8}h252`} stroke={lit('#9a8f7a')} strokeWidth="1.5" />);
     body.push(<g key="sale"><path d={`M210 ${ground}v-46`} stroke={lit('#6b4a2a')} strokeWidth="3" /><rect x="170" y={ground - 78} width="80" height="36" fill={lit('#fffaf0')} stroke="#c0392b" strokeWidth="2" /><text x="210" y={ground - 62} textAnchor="middle" fontSize="13" fontWeight="800" fill="#c0392b" fontFamily="Georgia, serif">FOR SALE</text><text x="210" y={ground - 49} textAnchor="middle" fontSize="7" fill="#2a1f2e">Inquire at City Hall</text></g>);
