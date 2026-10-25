@@ -70,7 +70,8 @@ function line(s: GameState, a: Character, pick: Candidate, biased: boolean, self
   const who = self ? 'me' : firstName(s, pick);
   const she = pick.charId && s.characters[pick.charId]?.gender === 'F';
   const money = MONEY_ROLES.has(roleKind) || seat === 'bagman';
-  const pro = pick.pros[0]?.text ?? '';
+  // The first pro that reads as a reason ("37: the right age" does not, on its own).
+  const pro = pick.pros.find((p) => /^[A-Za-z]/.test(p.text))?.text ?? '';
   // "Honest: won't skim" → "honest"; but keep "Can do: a pardon" whole (the head alone says nothing).
   const head = pro.replace(/:.*$/, '');
   const reason = (head.split(' ').length <= 2 && pro.includes(':') && /^(can|is|has|he)\b/i.test(head) ? pro : head).toLowerCase();
