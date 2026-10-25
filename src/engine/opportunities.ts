@@ -1,4 +1,6 @@
 import { previewAction } from './actions';
+import { whichRacket } from './racketHub';
+import { CATALOG } from './catalog';
 import { idleMen, owned, playerSlots, staffFactor } from './business';
 import { isInSeason } from './calendar';
 import { capos, crew, displayName, isFree, player } from './characters';
@@ -124,6 +126,9 @@ export function opportunities(s: GameState): Opportunity[] {
   else {
     const room = s.districts.some((d) => { const sl = playerSlots(s, d.id); return (d.influence.player ?? 0) >= 20 && sl.used < sl.max; });
     if (s.money >= 12000 && room) out.push({ id: 'idle', kind: 'opportunity', score: 300 + s.money / 40 + (preSeason(s) ? 400 : 0), title: `${fmtMoney(s.money)} sitting idle`, text: `${preSeason(s) ? 'The Season is coming: buy now and the place earns ×2.5 all summer. ' : isInSeason(s.date) ? 'It is the Season: every week a new place is open counts. ' : ''}You have storefronts free.`, cta: 'Buy a place →', link: { tab: 'business' } });
+    // The next racket, as the Rackets hub would rank it.
+    const rk = s.money >= 9000 && owned(s).filter((b) => b.category === 'racket').length < 6 ? whichRacket(s)[0] : undefined;
+    if (rk) out.push({ id: 'racket', kind: 'opportunity', score: 260 + s.money / 80, title: `Start a racket: ${CATALOG[rk.kind].name.toLowerCase()}`, text: `${rk.reasons.filter((r) => r.value > 0).slice(0, 2).map((r) => r.label).join('; ')}. The Rackets page ranks every one for you.`, cta: 'The Rackets →', link: { action: usable(s, { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind: rk.kind } } }), tab: 'rackethub' } });
     if (s.money >= 8000 && bookCapacity(s) > s.loans.length) out.push({ id: 'lend', kind: 'opportunity', score: 250, title: 'The shylock book has room', text: 'Five points a week on idle cash.', cta: 'Lend →', link: { action: usable(s, { kind: 'lend', amount: 2500 }), tab: 'business' } });
   }
 

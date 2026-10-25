@@ -1,4 +1,5 @@
 import { bookBonus } from './rackets';
+import { shylockTerms } from './racketLife';
 import { perkMod } from './lifestyle';
 import { CATALOG } from './catalog';
 import { ownsKind } from './business';
@@ -31,6 +32,7 @@ export function bookLoan(s: GameState, amount: number): Loan {
   const last = pick(s, SURNAMES.Italian.concat(SURNAMES.Irish, SURNAMES.Jewish));
   const job = pick(s, JOBS);
   const withCollateral = chance(s, 0.4);
+  const terms = shylockTerms(s);
   const coll = withCollateral ? pick(s, COLLATERAL) : undefined;
   const loan: Loan = {
     id: `l${s.nextId++}`,
@@ -38,8 +40,8 @@ export function bookLoan(s: GameState, amount: number): Loan {
     collateral: coll,
     collateralName: coll ? `${last}'s ${CATALOG[coll].name.toLowerCase()}` : undefined,
     principal: amount,
-    vig: Math.round(amount * VIG_RATE * (1 + perkMod(s, 'vig') / 100)),
-    risk: Math.round((0.01 + (job.includes('horseplayer') || job.includes('gambling') ? 0.03 : 0) + randInt(s, 0, 2) / 100) * 1000) / 1000,
+    vig: Math.round(amount * VIG_RATE * terms.vig * (1 + perkMod(s, 'vig') / 100)),
+    risk: Math.round((0.01 + (job.includes('horseplayer') || job.includes('gambling') ? 0.03 : 0) + randInt(s, 0, 2) / 100) * terms.risk * 1000) / 1000,
     weeksLate: 0,
     dueWeek: s.week + randInt(s, 10, 20),
     week: s.week,
@@ -52,6 +54,7 @@ export function bookLoan(s: GameState, amount: number): Loan {
 export function runLoans(ctx: Ctx): number {
   const s = ctx.s;
   let vig = 0;
+  const collect = shylockTerms(s).collect;
   for (const l of s.loans) {
     if (l.weeksLate > 0 && l.weeksLate < 2 && chance(s, 0.4)) {
       // Caught up: pays the missed week too.
@@ -59,7 +62,7 @@ export function runLoans(ctx: Ctx): number {
       vig += money(ctx, l.vig * 2, `Vig: ${l.borrower.split(',')[0]} caught up on a missed week`, 'business');
       continue;
     }
-    if (l.weeksLate > 0 || chance(s, l.risk * (1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_book'))))) {
+    if (l.weeksLate > 0 || chance(s, l.risk * collect * (1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_book'))))) {
       l.weeksLate++;
       if (l.weeksLate === 1) ctx.log.push(`${l.borrower.split(',')[0]} missed his payment to the book.`);
       continue;
@@ -69,7 +72,7 @@ export function runLoans(ctx: Ctx): number {
       l.principal = 0;
       continue;
     }
-    vig += money(ctx, l.vig, `Vig: ${l.borrower.split(',')[0]} (5 points on ${fmt(l.principal)})`, 'business');
+    vig += money(ctx, l.vig, `Vig: ${l.borrower.split(',')[0]} (${Math.round(l.vig / Math.max(1, l.principal) * 100)} points on ${fmt(l.principal)})`, 'business');
   }
   s.loans = s.loans.filter((l) => l.principal > 0);
   // Written off after ten weeks with nobody chasing it.

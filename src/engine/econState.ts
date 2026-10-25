@@ -1,4 +1,5 @@
 import type { DealTarget, DealTerms } from './deals';
+import type { RacketCmd, RacketLife, RacketOp } from './racketState';
 import type { Design } from './design';
 import type { LuxAction, Owned as LuxOwned } from './goodlife';
 import { hashSeed } from './rng';
@@ -16,7 +17,7 @@ import type { Character, FactionId, GameState } from './types';
 
 /* ---------------- rackets ---------------- */
 
-export interface RacketState {
+export interface RacketState extends RacketLife {
   /** Upgrade-tree steps bought (0 = as bought). */
   tier: number;
   /** Bookmaking: this week's wagers, outstanding markers (bets taken on credit), last week's hold %. */
@@ -230,6 +231,12 @@ export interface EconStats {
   inspectorPaid?: number;
   deals?: number;
   haggled?: number;
+  /** The living rackets: situations offered, gambles rolled and won, rackets started, dials changed. */
+  rkSits?: number;
+  rkRolls?: number;
+  rkWins?: number;
+  rkStarts?: number;
+  rkDials?: number;
 }
 
 export interface EconState {
@@ -289,7 +296,9 @@ export type EconOp =
   | { op: 'tenant'; lotId: string; name?: string }
   | { op: 'clearStop'; lotId: string }
   | { op: 'bribeStop'; lotId: string }
-  | { op: 'outbid'; lotId: string };
+  | { op: 'outbid'; lotId: string }
+  /** The living rackets (racketLife.ts). */
+  | RacketOp;
 
 /** Player orders (inside `{ kind: 'econ', op }`), previewed and committed by econ.ts. */
 export type EconAction =
@@ -323,7 +332,9 @@ export type EconAction =
   | { type: 'gift'; giftId: string; to: string }
   | { type: 'project'; kind: string; zone: ZoneId }
   | { type: 'leverage'; mode: LeverageMode; to: string; withId?: string }
-  | { type: 'invite'; team: TeamId; to: string };
+  | { type: 'invite'; team: TeamId; to: string }
+  /** The living rackets (racketLife.ts): start one, set how it runs, take the advice. */
+  | { type: 'racket'; cmd: RacketCmd };
 
 export type LeverageMode = 'cash' | 'car' | 'property' | 'job' | 'invite' | 'introduce';
 

@@ -6,6 +6,7 @@ import { ensureDynState } from './familyState';
 import { ensureLedgerBook } from './ledgerbookState';
 import { ensureArcs } from './livingStories';
 import { ensurePol } from './politics';
+import { migrateVice } from './racketLife';
 import { ensureRomance, ensureStory } from './storyState';
 import { ensureTravel } from './travelState';
 import type { GameState } from './types';
@@ -26,5 +27,7 @@ export function upgradeSave(s: GameState): GameState {
     if (s[key] === undefined) continue;
     try { step(s); } catch { /* the weekly update will try again */ }
   }
+  // The old player-run call service goes back to the Madam's network.
+  try { migrateVice(s); } catch { /* nothing to move */ }
   return s;
 }

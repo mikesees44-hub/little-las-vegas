@@ -1,4 +1,6 @@
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
+import { bestDistrict } from './racketLife';
+import { crewTake } from './racketHub';
 import { pillarBestWhen, pillarPurpose, pillarRisks, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
 import { idleMen } from './business';
 import { isInSeason, memorialDay, toDays } from './calendar';
@@ -130,7 +132,9 @@ export function effectValue(s: GameState, e: Effect): number {
     case 'addBusiness': {
       // Thirty weeks of an average week (a business is kept for years), less the heat it draws.
       const d = CATALOG[e.business.kind];
-      return Math.round((d.base * (d.season[0] + d.season[1]) / 2 - d.upkeep) * 30 - (d.heat * HEAT_W.local + d.fedHeat * HEAT_W.federal) * 30);
+      // Crews that work by the score have no base: use their average week.
+      const ct = crewTake(e.business.kind, d.base * d.season[0], d.base * d.season[1]);
+      return Math.round(((ct.inSeason + ct.offSeason) / 2 - d.upkeep) * 30 - (d.heat * HEAT_W.local + d.fedHeat * HEAT_W.federal) * 30);
     }
     case 'loan': return Math.round(e.amount * 0.05 * 12 - e.amount * 0.15);
     case 'schedule': {
@@ -638,8 +642,12 @@ function build(s: GameState, title: string, purpose: string, p: ActionPreview, e
 }
 
 /** Why you would give this order, what it gets you and what it costs. */
-export function explainAction(s: GameState, a: PlayerAction): ActionExplanation {
-  const p = previewAction(s, a);
+export function explainAction(s: GameState, a0: PlayerAction): ActionExplanation {
+  const p = previewAction(s, a0);
+  // Starting a racket from the Rackets hub is explained like buying it (the take, the heat, the payback).
+  const a: PlayerAction = a0.kind === 'econ' && a0.op.type === 'racket' && a0.op.cmd.c === 'start'
+    ? { kind: 'buyBusiness', biz: a0.op.cmd.kind, district: a0.op.cmd.district ?? bestDistrict(s, a0.op.cmd.kind) ?? s.districts[0].id }
+    : a0;
   const risks = risksOf(s, a, p);
   return build(s, p.title, purposeOf(a, p), p, derived(s, a, p), (ok) => derivedValue(s, a, ok), risks, unlocksOf(s, a), bestWhenOf(s, a, p));
 }
