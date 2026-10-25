@@ -6,6 +6,7 @@ import type { Ctx } from './ledger';
 import { addOpinion, changeMeter } from './relations';
 import { rand } from './rng';
 import { xfer } from './tribute';
+import { moneyGrievance, settleMoneyGrievance } from './tributeGrievance';
 import { ensureTribute, normSplit, noteFavor, REASON_LABEL, splitText, type ShortReason, type Split } from './tributeState';
 import type { GameState, PlayerAction } from './types';
 
@@ -48,7 +49,9 @@ export type TributeOp =
   | { op: 'stage'; stage: number }
   | { op: 'reveal'; charId: string; chance: number }
   | { op: 'invest'; id: string; ruling: 'writeoff' | 'payback' }
-  | { op: 'ubPayback' };
+  | { op: 'ubPayback' }
+  | { op: 'grievance'; charId: string; why: string; severity: number }
+  | { op: 'settle'; charId: string; how: string };
 
 const $ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
@@ -139,6 +142,8 @@ export function describeTributeOp(s: GameState, o: TributeOp): string | undefine
     case 'reveal': return `You find out the truth (${Math.round(o.chance * 100)}%)`;
     case 'invest': return o.ruling === 'payback' ? 'He pays back half' : 'Written off';
     case 'ubPayback': return 'He pays back what he took';
+    case 'grievance': return `${s.characters[o.charId]?.firstName ?? '?'} will remember this (a grievance)`;
+    case 'settle': return `${s.characters[o.charId]?.firstName ?? '?'}'s grievance over his end is settled`;
   }
 }
 
@@ -283,6 +288,7 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
           changeMeter(s, c.id, s.playerId, 'grievance', 15);
           t.beats.push({ kind: 'grievance', week: s.week, who: c.id, amount: d.amount, ref: d.id, pri: 55 });
           t.stats.grievances++;
+          moneyGrievance(s, c.id, 'the boss denied an honest dispute', 35);
         }
       }
       if (o.ruling === 'council') {
@@ -325,6 +331,13 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
       }
       break;
     }
+    case 'settle':
+      settleMoneyGrievance(s, o.charId, o.how);
+      break;
+    case 'grievance':
+      moneyGrievance(s, o.charId, o.why, o.severity);
+      t.stats.grievances++;
+      break;
     case 'ubPayback': {
       const ub = holder(s, 'underboss');
       if (!ub) break;

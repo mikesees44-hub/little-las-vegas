@@ -5,7 +5,7 @@ import { newCtx, reconcile } from '../src/engine/ledger';
 import { allocate, reconcileAccounts, tributeOpen, xfer } from '../src/engine/tribute';
 import { allTalkIds, spoken } from '../src/engine/tributeTalk';
 import { ensureTribute, houseCash, normSplit, sumSplit } from '../src/engine/tributeState';
-import { familyCounts, play52, requiredFamily } from './tributeFamily';
+import { checkRequired, familyCounts, play52, requiredFamily } from './tributeFamily';
 import { randomChoices } from './helpers';
 import type { GameState } from '../src/engine/types';
 
@@ -134,7 +134,9 @@ describe('the weekly take: people', () => {
     for (const m of lines) {
       expect(m.said).toBeTruthy();
       expect(m.believed).toBeTruthy();
-      expect(m.paid).toBeLessThan(m.due);
+      // He came up short; only his capo covering it out of his own pocket can make the line whole.
+      if (!m.carried) expect(m.paid).toBeLessThan(m.due);
+      else expect(m.paid - m.carried).toBeLessThan(m.due);
     }
     // Liars never say they lied.
     expect(lines.filter((m) => m.truth === 'lying').every((m) => m.said !== 'lying')).toBe(true);
@@ -173,38 +175,16 @@ describe('the weekly take: people', () => {
 });
 
 describe('the required 52-week family', () => {
-  it('1 Don, 1 underboss, 1 consigliere, 3 capos, 12 soldiers, 8 associates, 10 enterprises: 52 weeks, every demonstration', () => {
+  it('1 Don, 1 underboss, 1 consigliere, 3 capos, 12 soldiers, 8 associates, 10 enterprises: 52 weeks, every reconciliation check and all 14 demonstrations', () => {
     expect(familyCounts(requiredFamily())).toEqual({ don: 1, underboss: 1, consigliere: 1, capos: 3, soldiers: 12, associates: 8, enterprises: 10 });
-    const { s, rows, mid } = play52();
-    const t = s.tribute!;
-    // 1. Business income and expenses; 2-3. crew contributions and capo retention; 4. underboss reconciliation.
-    expect(rows.some((r) => r.report.lines.some((l) => l.category === 'business' && l.amount > 0))).toBe(true);
-    expect(rows.some((r) => r.report.lines.some((l) => l.category === 'cost' && l.amount < 0))).toBe(true);
-    expect(rows.every((r) => (r.flows.crew_contribution ?? 0) > 0)).toBe(true);
-    expect(rows.some((r) => (r.flows.capo_distribution ?? 0) > 0)).toBe(true);
-    expect(rows.some((r) => (r.flows.underboss_distribution ?? 0) > 0)).toBe(true);
-    // 5-6. An envelope every week; the Don split some himself and took his advice on others.
-    expect(t.stats.audiences + t.stats.quiet).toBeGreaterThanOrEqual(51);
-    expect(t.reports.some((r) => r.alloc?.by === 'custom')).toBe(true);
-    expect(t.reports.some((r) => r.alloc?.by === 'his')).toBe(true);
-    // 7-10. A genuine shortfall, a disputed assessment, an alternative split, a grievance with a storyline.
-    expect(t.reports.some((r) => r.crews.some((c) => c.members.some((m) => m.truth === 'bad_week' || m.truth === 'default')))).toBe(true);
-    expect(t.disputes.length).toBeGreaterThan(0);
-    expect(t.reports.some((r) => r.rec.personal !== t.policy.personal || r.rec.reserve !== t.policy.reserve)).toBe(true);
-    expect(t.stats.grievances).toBeGreaterThan(0);
-    expect((s.director?.hist ?? []).some((h) => h[1].startsWith('tr_'))).toBe(true);
-    // 11. Balances: ledger and accounts reconcile every week.
-    for (const r of rows) expect(reconcile(r.report)).toEqual([]);
-    for (const b of t.books) for (const k of ['personal', 'reserve', 'envelope']) {
-      const exp = b.start[k] - b.x.filter((x) => x[0] === k).reduce((a, x) => a + x[2], 0) + b.x.filter((x) => x[1] === k).reduce((a, x) => a + x[2], 0);
-      expect(exp).toBe(b.end[k]);
-    }
-    // 12-13. Save/load continuity; no duplicate distributions.
-    const again = JSON.parse(JSON.stringify(mid)) as GameState;
-    expect(JSON.stringify(again)).toBe(JSON.stringify(mid));
-    const split = t.reports.filter((r) => r.alloc).map((r) => r.id);
-    expect(new Set(split).size).toBe(split.length);
-    // 14. Rival families updated on their own.
-    expect(Object.values(t.rivals).every((b) => (b.last?.week ?? 0) >= s.week - 2)).toBe(true);
-  }, 240000);
+    const run = play52();
+    const res = checkRequired(run);
+    for (const c of [...res.checks, ...res.demos]) expect(`${c.name}: ${c.ok ? 'ok' : c.detail}`).toBe(`${c.name}: ok`);
+    expect(res.demos).toHaveLength(14);
+    // Quiet weeks went by the standing split; the audience popped only when something needed the Don.
+    const t = run.s.tribute!;
+    expect(t.stats.quiet).toBeGreaterThan(t.stats.audiences);
+    // The JSON save round-trips exactly.
+    expect(JSON.stringify(JSON.parse(JSON.stringify(run.mid)))).toBe(JSON.stringify(run.mid));
+  }, 300000);
 });

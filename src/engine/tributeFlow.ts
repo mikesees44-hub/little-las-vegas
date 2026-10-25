@@ -8,6 +8,10 @@ import { rand } from './rng';
 import { allocate, latestReport, pendingReport, prepareReport, ubType, xfer } from './tribute';
 import { AUDIENCE_ID } from './tributeEvents';
 import { ensureTribute, noteFavor, normSplit, splitText, type TributeReport } from './tributeState';
+import { purseWeek } from './crewPurse';
+import { closeUbRecord, ubGoal } from './underboss';
+import { moneyGrievance } from './tributeGrievance';
+import { attr } from './attrs';
 import type { EventInstance, Faction, PlayerChoices } from './types';
 
 /**
@@ -107,8 +111,17 @@ export function tributeWeek(ctx: Ctx): void {
         changeMeter(s, m.id, s.playerId, 'grievance', 8);
         t.stats.grievances++;
         t.beats.push({ kind: 'grievance', week: s.week, who: c.id, amount: t.arrears[m.id] ?? m.due - m.paid, pri: 57 });
+        moneyGrievance(s, c.id, `held back $${(m.due - m.paid).toLocaleString('en-US')} over his end, again`, 30);
       }
       if ((t.shortHist[m.id] ?? []).filter((w) => s.week - w < 8).length >= 3) t.beats.push({ kind: 'short', week: s.week, who: cl.capoId, forId: m.id, amount: t.arrears[m.id] ?? 0, pri: 54 });
+    }
+    // The men's own money: what each one earned, kicked up and kept, and how he lives on it.
+    purseWeek(ctx, rep);
+    // A capo who has got rich wants a bigger end (an ambitious or greedy one, on a tight contract).
+    for (const k of capos(s)) {
+      if (!isFree(s, k) || k.wealth < 20000 || (k.keep ?? 0.3) >= 0.45) continue;
+      if (!(hasTrait(k, 'Ambitious') || hasTrait(k, 'Greedy') || attr(s, k, 'ambition') >= 60)) continue;
+      if (rand(t) < 0.08) t.beats.push({ kind: 'richcapo', week: s.week, who: k.id, amount: Math.round(k.wealth), pri: 53 });
     }
     prepareReport(ctx);
   }
@@ -177,11 +190,19 @@ function underbossStanding(ctx: Ctx): void {
   const t = ensureTribute(s);
   const ub = holder(s, 'underboss');
   if (!ub) {
+    if (t.ub.id) {
+      const old = s.characters[t.ub.id];
+      closeUbRecord(s, !old?.alive ? 'died' : !isFree(s, old) ? 'taken away' : 'left the seat');
+      t.ub.id = undefined;
+      t.ub.helped = {};
+    }
     t.ub.base = Math.max(0, t.ub.base - 2);
     t.ub.callsFirst = [];
     if (t.ub.stage < 4) t.ub.stage = 0;
     return;
   }
+  if (t.ub.id !== ub.id && t.ub.id) closeUbRecord(s, !s.characters[t.ub.id]?.alive ? 'died' : 'replaced');
+  if (t.ub.id !== ub.id) ubGoal(s, ub);
   if (t.ub.id !== ub.id) t.ub = { base: 0, callsFirst: [], since: s.week, absent: 0, stage: 0, disagreements: 0, rateBp: t.ub.rateBp, id: ub.id };
   const type = ubType(s, ub, false);
   const heldNow = t.held[t.held.length - 1] === s.week;
@@ -189,6 +210,8 @@ function underbossStanding(ctx: Ctx): void {
   let gain = 0.2 + (type === 'ambitious' ? 0.45 : 0) + (t.ub.absent >= 8 ? 0.25 : 0) + t.ub.callsFirst.length * 0.04 - (heldNow ? 0.35 : 0) - (type === 'loyal' ? 0.15 : 0);
   // Patronage: every favor he did the earners lately (his own say-so) adds to his standing.
   gain += t.favors.filter((f) => f.byId === ub.id && s.week - f.week < 8).length * 0.08;
+  // A rich underboss can afford his own friends.
+  if (ub.wealth >= 30000) gain += ub.wealth >= 80000 ? 0.15 : 0.08;
   if (hasTrait(ub, 'Loyal-to-a-fault')) gain = Math.min(gain, 0.05);
   t.ub.base = Math.max(0, Math.min(100, t.ub.base + gain));
   const ks = capos(s).filter((k) => isFree(s, k));

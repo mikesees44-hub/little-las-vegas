@@ -85,8 +85,14 @@ function audienceSource(s: GameState): EventInstance | undefined {
 /* ------------------------------------------------------------------ */
 
 const COOLDOWN: Record<string, number> = {
-  short: 6, dispute: 6, carry: 12, wife: 30, heir: 40, base: 20, crisis: 52, disagree: 16, resign: 30, challenge: 14, inv_failed: 4, greed: 26, aging: 40, retire: 26, widow: 20, ub_caught: 4, grievance: 10, ub_ill: 20,
+  short: 6, dispute: 6, carry: 12, wife: 30, heir: 40, base: 20, crisis: 52, disagree: 16, resign: 30, challenge: 14, inv_failed: 4, greed: 26, aging: 40, retire: 26, widow: 20, ub_caught: 4, grievance: 10, ub_ill: 20, richcapo: 26,
 };
+
+function lifeNote(s: GameState, id: string): string {
+  const l = s.tribute?.life?.[id];
+  if (!l) return '';
+  return l.house ? ', a house he put money down on' : l.car ? ', a new car outside' : '';
+}
 
 function live(s: GameState, id?: string): Character | undefined {
   const c = id ? s.characters[id] : undefined;
@@ -319,10 +325,23 @@ function buildBeat(s: GameState, b: Beat): EventInstance | undefined {
           ? `You told ${who.firstName} his assessment stood. He was right, and he knows you know. He has started telling the story at the club: the boss shorted him ${$(b.amount ?? 0)} and would not look at the figures. ${opinion(s, who.id, boss.id) < 0 ? 'He is listening when other capos complain.' : ''}`
           : `${displayName(who)} has held money back from his envelope twice now, and he does not pretend it was a bad week. He thinks his end is too small, ${$(b.amount ?? 0)} too small, and he says so at the club. ${opinion(s, who.id, boss.id) < 0 ? 'Other men are listening.' : ''}`,
         [who.id], [
-          { id: 'amends', label: `Make it right (${$(b.amount ?? 0)} and an apology)`, because: `made amends to ${who.firstName}`, effects: [op({ op: 'refund', charId: who.id, amount: b.amount ?? 0, from: 'treasury' }, label), { type: 'opinion', from: who.id, to: boss.id, amount: 12, reason: 'The boss made it right', decay: 1, label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: -20, label }] },
-          { id: 'contract', label: 'A better contract instead (+5%)', because: `gave ${who.firstName} a better contract`, effects: [{ type: 'contract', charId: who.id, keep: Math.min(0.5, Math.round(((who.keep ?? 0.3) + 0.05) * 100) / 100), label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: -15, label }] },
+          { id: 'amends', label: `Make it right (${$(b.amount ?? 0)} and an apology)`, because: `made amends to ${who.firstName}`, effects: [op({ op: 'refund', charId: who.id, amount: b.amount ?? 0, from: 'treasury' }, label), { type: 'opinion', from: who.id, to: boss.id, amount: 12, reason: 'The boss made it right', decay: 1, label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: -20, label }, op({ op: 'settle', charId: who.id, how: 'the boss paid it back and apologized' }, label)] },
+          { id: 'contract', label: 'A better contract instead (+5%)', because: `gave ${who.firstName} a better contract`, effects: [{ type: 'contract', charId: who.id, keep: Math.min(0.5, Math.round(((who.keep ?? 0.3) + 0.05) * 100) / 100), label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: -15, label }, op({ op: 'settle', charId: who.id, how: 'a better contract' }, label)] },
           { id: 'warn', label: 'Tell him to stop talking', because: `warned ${who.firstName} to stop talking`, effects: [{ type: 'meter', from: who.id, to: boss.id, meter: 'fear', amount: 10, label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: 10, label }, { type: 'opinion', from: who.id, to: boss.id, amount: -6, reason: 'Threatened me for being right', decay: 1, label }] },
         ], { pri: 57, theme: 'crew', charId: who.id });
+    }
+    case 'richcapo': {
+      if (!who || who.rank !== 'capo') return undefined;
+      const label = `${who.firstName}'s end`;
+      const keep = who.keep ?? 0.3;
+      const more = Math.min(0.5, Math.round((keep + 0.05) * 100) / 100);
+      return ev(s, 'tr_richcapo', pickText(s, 'rich', [`${who.firstName} ${who.lastName} wants a bigger end`, `A rich capo at the door`, `${who.firstName} has done well. He wants it to show.`]),
+        `${displayName(who)} has ${$(who.wealth)} of his own now${lifeNote(s, who.id)}. He keeps ${Math.round(keep * 100)}% of his corners and kicks up the rest. "I built that district. Make it ${Math.round(more * 100)}." A man with his own money does not need the family the way he used to.`,
+        [who.id], [
+          { id: 'give', label: `Give him ${Math.round(more * 100)}%`, because: `gave ${who.firstName} a bigger end`, effects: [{ type: 'contract', charId: who.id, keep: more, label }, { type: 'opinion', from: who.id, to: boss.id, amount: 8, reason: 'The boss knows what I built', decay: 1, label }] },
+          { id: 'refuse', label: 'Refuse him', detail: 'He keeps his money and his grudge.', because: `refused ${who.firstName} a bigger end`, effects: [op({ op: 'grievance', charId: who.id, why: 'refused a bigger end of the district he built', severity: 30 }, label), { type: 'opinion', from: who.id, to: boss.id, amount: -6, reason: 'Kept me on a short end', decay: 1, label }] },
+          { id: 'remind', label: '"Those are the family\'s corners."', detail: 'Fear now; resentment later.', because: `reminded ${who.firstName} whose corners they are`, effects: [{ type: 'meter', from: who.id, to: boss.id, meter: 'fear', amount: 8, label }, { type: 'meter', from: who.id, to: boss.id, meter: 'grievance', amount: 6, label }] },
+        ], { pri: 53, theme: 'crew', charId: who.id });
     }
     case 'ub_ill': {
       const ub = live(s, b.who);

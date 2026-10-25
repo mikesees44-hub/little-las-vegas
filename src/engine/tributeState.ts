@@ -37,7 +37,9 @@ export type TransferCat =
   | 'cover'
   | 'expense'
   | 'arrears'
-  | 'assistance';
+  | 'assistance'
+  /** A man keeps his own end of his hustle (his pocket). */
+  | 'member_keep';
 
 export interface Transfer {
   /** From / to account ids. */
@@ -86,6 +88,8 @@ export interface MemberLine {
   earned: number;
   due: number;
   paid: number;
+  /** His capo covered this much of it out of his own pocket (included in `paid`). */
+  carried?: number;
   /** Arrears paid back this week (on top of `paid`). */
   back?: number;
   /** Shortfall: the truth, what he said, what the underboss believes. */
@@ -193,6 +197,9 @@ export interface TributeReport {
   /** In the envelope: what is actually there. */
   presented: number;
   lastPresented?: number;
+  /** Last week's count carried into this one, and investment returns: the parts of `collected` no man kicked up. */
+  carry?: number;
+  inv?: number;
   issues: Issue[];
   petitions: Petition[];
   rec: Split;
@@ -264,6 +271,8 @@ export interface UbState {
   refused?: number;
   /** What he may decide on his own. */
   authority?: UbAuthority;
+  /** His patronage book: whom he helped, how often, how much, and what the Don never heard (underboss.ts). */
+  helped?: Record<string, import('./underboss').HelpedRecord>;
 }
 
 export interface TributeDispute {
@@ -317,6 +326,8 @@ export interface WeekBook {
   end: Record<string, number>;
   /** Compact transfers: [from, to, amount, category, note]. */
   x: [string, string, number, TransferCat, string?][];
+  /** Hidden transfers (skims, pocketed dues): the truth, kept for the reconciliation; never shown to the Don. */
+  hx?: [string, string, number, TransferCat][];
 }
 
 export interface RivalCapo {
@@ -393,6 +404,15 @@ export interface TributeState {
   lastAlloc: number;
   /** Rival families' books. */
   rivals: Record<string, RivalBooks>;
+  /** The men's own money: the last weeks of each man's purse, and his lifetime (crewPurse.ts). */
+  purse?: Record<string, import('./crewPurse').PurseWeek[]>;
+  life?: Record<string, import('./crewPurse').PurseLife>;
+  /** Each underboss's career goal, chosen once (underboss.ts). */
+  ubGoals?: Record<string, import('./underboss').UbGoal>;
+  /** Every man who carried the envelope, and how it ended. */
+  ubHist?: import('./underboss').UbRecord[];
+  /** Money grievances opened by the take (ids in the power layer's grievance list). */
+  moneyGrievances?: string[];
   /** Short history of who was short, by man (week list). */
   shortHist: Record<string, number[]>;
   stats: { audiences: number; quiet: number; shortfalls: number; disputes: number; grievances: number; petitions: number; granted: number; audits: number; caught: number; covers: number; crises: number; insolvencies: number; disagreements: number };
@@ -407,7 +427,7 @@ export function ensureTribute(s: GameState): TributeState {
       journal: [], books: [], reports: [], policy: { ...DEFAULT_POLICY },
       ub: { base: 0, callsFirst: [], since: s.week, absent: 0, stage: 0, disagreements: 0, rateBp: 1000 },
       arrears: {}, why: {}, carry: {}, costAvg: 2000, allowances: {}, cool: {}, putIn: [], agHist: [], forgiven: 0, favors: [], petitionsTo: {}, lastKeep: {}, terms: {}, disputes: [], investments: [], beats: [], said: [], greed: [], held: [],
-      lastCollect: 0, lastAlloc: 0, rivals: {}, shortHist: {},
+      lastCollect: 0, lastAlloc: 0, rivals: {}, shortHist: {}, purse: {}, life: {}, moneyGrievances: [],
       stats: { audiences: 0, quiet: 0, shortfalls: 0, disputes: 0, grievances: 0, petitions: 0, granted: 0, audits: 0, caught: 0, covers: 0, crises: 0, insolvencies: 0, disagreements: 0 },
     });
   if (!s.tribute) { s.tribute = fresh(); return s.tribute; }
@@ -463,6 +483,15 @@ export function noteFavor(s: GameState, f: Omit<Favor, 'id' | 'week' | 'tell'> &
     tell: { truth: f.truth ?? f.kind, knownBy: Array.from(new Set([f.byId, f.toId, ...(f.knownBy ?? [])])) },
   };
   t.favors.push(fav);
+  // The sitting underboss's patronage book (persistent, uncapped by the favor list).
+  if (t.ub.id && fav.byId === t.ub.id) {
+    t.ub.helped ??= {};
+    const h = (t.ub.helped[fav.toId] ??= { n: 0, amount: 0, last: fav.week, unknownToDon: 0 });
+    h.n++;
+    h.amount += fav.amount;
+    h.last = fav.week;
+    if (!fav.tell.knownBy.includes(s.playerId)) h.unknownToDon++;
+  }
   if (t.favors.length > 120) t.favors = t.favors.slice(-120);
   return fav;
 }

@@ -156,7 +156,7 @@ export function archiveAccounts(s: GameState): void {
   const t = s.tribute;
   if (!t?.start) return;
   const end = balances(s);
-  t.books.push({ week: t.startWeek ?? s.week - 1, start: { ...t.start }, end, x: t.journal.filter((x) => !x.h).map((x) => (x.n ? [x.f, x.t, x.a, x.c, x.n] : [x.f, x.t, x.a, x.c])) });
+  t.books.push({ week: t.startWeek ?? s.week - 1, start: { ...t.start }, end, x: t.journal.filter((x) => !x.h).map((x) => (x.n ? [x.f, x.t, x.a, x.c, x.n] : [x.f, x.t, x.a, x.c])), hx: t.journal.filter((x) => x.h).map((x) => [x.f, x.t, x.a, x.c]) });
   if (t.books.length > 26) t.books = t.books.slice(-26);
   // Crew accounts of men who are gone, and empty ones, are closed.
   for (const [k, v] of Object.entries(t.acct.crew)) if (v === 0) delete t.acct.crew[k];
@@ -243,13 +243,17 @@ export function shortOdds(s: GameState, c: Character): { p: number; w: Partial<R
   if (h < 40) p += 0.03;
   if (Math.min(opCapo, opBoss) < -10) p += 0.03;
   if (c.debtTo) p += 0.04;
+  // His own money: a man in debt outside the family is tempted; a broke one has nothing to cover a bad week with.
+  const debt = s.tribute?.life?.[c.id]?.debt ?? 0;
+  if (debt > 0) p += debt >= 500 ? 0.04 : 0.02;
+  else if (c.wealth < 100) p += 0.01;
   if (ev >= 50) p += 0.03;
   if (hasTrait(c, 'Honest')) p *= 0.5;
   const w: Partial<Record<ShortReason, number>> = {
     bad_week: 3 + (off ? 2 : 0), default: 1.5, mistake: 1,
-    overspent: hasTrait(c, 'Gambler') || hasTrait(c, 'Drinker') ? 3 : 0.4,
+    overspent: hasTrait(c, 'Gambler') || hasTrait(c, 'Drinker') || debt > 0 ? 3 : 0.4,
     grievance: Math.min(opCapo, opBoss) < 0 ? 3 : 0.2,
-    promised: c.debtTo ? 4 : 0.3,
+    promised: c.debtTo || debt >= 500 ? 4 : 0.3,
     investigation: ev >= 50 ? 4 : 0,
     lying: h < 45 ? 3 : h < 60 ? 0.6 : 0,
   };
@@ -310,6 +314,17 @@ function newReport(s: GameState, t: TributeState): TributeReport {
   };
 }
 
+/**
+ * The share of a capo's end he passes down to the men who worked his corners:
+ * a generous or honest capo more, a greedy one less.
+ */
+export function menCut(capo: Character): number {
+  let f = 0.4;
+  if (hasTrait(capo, 'Greedy')) f -= 0.15;
+  if (hasTrait(capo, 'Honest') || hasTrait(capo, 'Patient')) f += 0.05;
+  return Math.max(0.15, Math.min(0.5, f));
+}
+
 /** One man's contribution this week: due, paid (or short, and why), arrears made good. */
 function contribute(ctx: Ctx, t: TributeState, rep: TributeReport, m: Character, kind: MemberLine['kind'], earned: number, due: number, terms: string, to: AcctId, srcKey: string, h: RngHolder, ub: Character | undefined): MemberLine {
   const s = ctx.s;
@@ -333,7 +348,7 @@ function contribute(ctx: Ctx, t: TributeState, rep: TributeReport, m: Character,
       (t.shortHist[m.id] ??= []).push(s.week);
       if (t.shortHist[m.id].length > 8) t.shortHist[m.id].shift();
       // A real bad week or a stiffed customer: the money was never there. Otherwise he has it, or had it.
-      if (truth === 'lying' || truth === 'grievance' || truth === 'investigation' || truth === 'mistake') m.wealth += short;
+      if (truth === 'lying' || truth === 'grievance' || truth === 'investigation' || truth === 'mistake') xfer(ctx, `ext:${srcKey}`, `wealth:${m.id}`, short, 'member_keep', `w${s.week}:pocket:${kind}:${m.id}`, { note: `${m.firstName} ${m.lastName} keeps what he did not pay`, hidden: true });
     }
   }
   line.paid = line.due - short;
@@ -400,6 +415,8 @@ export function collectTake(ctx: Ctx, mult: number): number {
     x.amount += amount;
   };
   if (carried > 0) addSrc('carry', 'Kick-ups: the rest of last week\'s count', carried);
+  rep.carry = carried;
+  rep.inv = 0;
 
   // 1. Every idle man's own hustle (his agreement: his policy, or standing terms).
   const st = 1 + perkMod(s, 'street') / 100;
@@ -411,7 +428,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
     const terms = memberTerms(s, c);
     const pol = c.policy ?? 'tax';
     const bossCut = terms.fixed !== undefined ? Math.min(earned, terms.fixed) : earned * terms.rate;
-    c.wealth += Math.round(earned - bossCut);
+    xfer(ctx, `ext:hustle:${c.id}`, `wealth:${c.id}`, Math.round(earned - bossCut), 'member_keep', `w${s.week}:mine:${c.id}`, { note: `${c.firstName} ${c.lastName} keeps his end of his hustle` });
     const due = Math.round(bossCut * (terms.fixed !== undefined ? 1 : st));
     const capo = capoOk(c.capoId);
     const to: AcctId = capo ? `crew:${capo.id}` : 'clearing';
@@ -470,6 +487,17 @@ export function collectTake(ctx: Ctx, mult: number): number {
         paidIn += ml.paid;
       }
     });
+    // The capo pays his men their end of the corners out of his own end (capo distribution).
+    const keptEnd = Math.round(take * keep);
+    const menW = wts.filter((x) => x.c.id !== capo.id);
+    const menSum = menW.reduce((a, x) => a + x.w, 0);
+    if (menSum > 0 && keptEnd > 0) {
+      const pool = Math.round(keptEnd * menCut(capo));
+      const parts = apportion(pool, menW.map((x) => x.w));
+      menW.forEach((x, i) => {
+        if (parts[i] > 0) xfer(ctx, `wealth:${capo.id}`, `wealth:${x.c.id}`, parts[i], 'capo_distribution', `w${s.week}:end:${capo.id}:${x.c.id}:${d.id}`, { note: `${x.c.firstName} ${x.c.lastName}'s end of the corners from ${capo.firstName}` });
+      });
+    }
     // A capo whose generous streak covers a struggling man's dues.
     for (const ml of cl.members) {
       if (!ml.truth || (ml.truth !== 'bad_week' && ml.truth !== 'default')) continue;
@@ -481,6 +509,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
       const got = xfer(ctx, `wealth:${capo.id}`, `crew:${capo.id}`, cover, 'crew_contribution', `w${s.week}:carry:${m.id}`, { note: `${capo.firstName} covers ${m.firstName}'s dues out of his own pocket` });
       if (got > 0) {
         ml.paid += got;
+        ml.carried = got;
         ml.believed = 'carried';
         t.arrears[m.id] = Math.max(0, (t.arrears[m.id] ?? 0) - got);
         if (!t.arrears[m.id]) delete t.arrears[m.id];
@@ -589,6 +618,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
     }
     const got = xfer(ctx, `ext:inv:${inv.id}`, 'clearing', inv.weekly, 'business_income', `w${s.week}:inv:${inv.id}`, { note: `${inv.what} pays its week` });
     addSrc(`inv:${inv.id}`, `Investment: ${inv.what}`, got, inv.byId);
+    rep.inv = (rep.inv ?? 0) + got;
   }
   // The rest of the hustle passed up by capos goes in its stream; direct payers too.
   const listed = Object.values(sources).reduce((a, x) => a + x.amount, 0);
@@ -896,7 +926,7 @@ function makePetition(s: GameState, t: TributeState, rep: TributeReport, h: RngH
   if (jailed.length) kinds.push('families');
   const owing = Object.keys(t.arrears).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive && c.faction === 'player' && !!c.capoId);
   if (owing.length) kinds.push('extension');
-  const broke = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c) && c.wealth < 150 && (c.household?.kids?.length ?? 0) > 0);
+  const broke = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c) && ((c.wealth < 150 && (c.household?.kids?.length ?? 0) > 0) || (t.life?.[c.id]?.debt ?? 0) >= 300));
   if (broke.length) kinds.push('advance', 'help');
   const pitchers = capos(s).filter((c) => isFree(s, c) && c.attributes.business >= 55);
   if (pitchers.length && t.acct.reserve >= 2000) kinds.push('investment');
