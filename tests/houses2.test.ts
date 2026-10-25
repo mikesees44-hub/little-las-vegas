@@ -139,7 +139,7 @@ describe('family story hooks', () => {
   it('the kin come to the boss with their own business, one family popup a week at most', () => {
     const hooks = new Set<string>();
     for (const seed of ['hooks-1', 'hooks-2', 'hooks-3']) {
-      play(newGame(seed), 80, 0, (st) => {
+      play(newGame(seed), 130, 0, (st) => {
         expect(st.pendingEvents.filter(isFamilyEvent).length).toBeLessThanOrEqual(1);
         expect(st.pendingEvents.length).toBeLessThanOrEqual(4);
         for (const e of st.pendingEvents) {
