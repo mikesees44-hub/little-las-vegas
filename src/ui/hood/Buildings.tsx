@@ -102,7 +102,7 @@ const STYLE_ROOF: Record<BuildStyle, string> = { doowop: '#f6f1e6', deco: '#efe2
 
 type Pt = [number, number];
 
-interface Ctx { pr: Proj; m: Mood; pal: Palette; tier: number; /** Label size in world units (constant on screen). */ ls: number }
+interface Ctx { pr: Proj; m: Mood; pal: Palette; tier: number }
 
 function Box({ c, fp, z0 = 0, h, wall, roof, side }: { c: Ctx; fp: Footprint; z0?: number; h: number; wall: string; roof: string; side?: string }) {
   const { pr } = c;
@@ -256,7 +256,7 @@ function Carousel({ c, fp, color }: { c: Ctx; fp: Footprint; color: string }) {
 
 /* ---------------- one building ---------------- */
 
-export const Building = memo(function Building({ it, c, sel, tint, label, onPick }: { it: Item; c: Ctx; sel: boolean; tint?: string; label: boolean; onPick: (key: string) => void }) {
+export const Building = memo(function Building({ it, c, sel, tint, onPick }: { it: Item; c: Ctx; sel: boolean; tint?: string; onPick: (key: string) => void }) {
   const { pr, m, tier } = c;
   const fp = it.fp;
   const hh = h32(it.key);
@@ -473,10 +473,6 @@ export const Building = memo(function Building({ it, c, sel, tint, label, onPick
     parts.push(<path key="sel" d={plate} fill="none" stroke="#ffe066" strokeWidth="2.4" className="hv-sel" />);
     const top = center[1] - (fp.h + 14) * pr.hz - 6;
     parts.push(<path key="pin" d={`M${center[0]} ${top + 8}l-4 -6h8z`} fill="#ffe066" stroke="#2a1f2e" strokeWidth="0.6" className="hv-bounce" />);
-  }
-  if (label && it.icon) {
-    const top = center[1] - (fp.h + (it.icon === 'pier' ? 36 : 6)) * pr.hz - 4;
-    parts.push(<text key="lab" x={center[0]} y={top} fontSize={c.ls} textAnchor="middle" fill={it.mine ? '#b8860b' : m === 'day' ? '#2a1f2e' : '#fff3df'} stroke={m === 'day' ? '#fffaf0' : '#1b1030'} strokeWidth={c.ls * 0.25} paintOrder="stroke" fontWeight="700" style={{ pointerEvents: 'none' }}>{it.name}</text>);
   }
   return (
     <g data-testid="hv-bldg" data-key={it.key} onClick={(e) => { e.stopPropagation(); onPick(it.key); }} style={{ cursor: 'pointer' }}>

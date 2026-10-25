@@ -186,7 +186,8 @@ body {
   [data-shell] [data-testid="map-legend"] { display: none; }
 }
 
-/* Wildwood up close (src/ui/hood). */
+/* Wildwood up close (src/ui/hood). Few always-on animations: each one repaints the map under it. */
+.hv-street-card .hv-chase { animation: hv-chase 0.9s steps(2) infinite; }
 .hv-btn { border-radius: 6px; border: 1px solid #3a342e; background: rgba(20, 18, 16, 0.9); color: #e8dfcb; font-size: 11px; font-weight: 600; padding: 3px 8px; line-height: 1.3; }
 .hv-btn:hover { border-color: #c49a3a; color: #ecd38f; }
 .hv-on { border-color: #ff5fa2; color: #ffd1e6; box-shadow: 0 0 6px rgba(255, 95, 162, 0.45); }
@@ -195,11 +196,6 @@ body {
 [data-mood='night'] .hv-chip, [data-mood='dusk'] .hv-chip { background: rgba(27, 16, 48, 0.9); color: #ffd1e6; border-color: #ff5fa2; }
 .hv-spin { transform-box: fill-box; transform-origin: center; animation: hv-spin 24s linear infinite; }
 .hv-crane { transform-box: fill-box; transform-origin: 85% 0%; animation: hv-crane 7s ease-in-out infinite alternate; }
-.hv-wave { animation: hv-wave 6s linear infinite; }
-.hv-wave2 { animation-duration: 9s; animation-direction: reverse; }
-.hv-bob { animation: hv-bob 4s ease-in-out infinite alternate; }
-.hv-chase { animation: hv-chase 0.9s steps(2) infinite; }
-.hv-flicker { animation: hv-flicker 0.5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: bottom; }
 .hv-sel { animation: hv-pulse 1.2s ease-in-out infinite; }
 .hv-bounce { animation: hv-bounce 0.9s ease-in-out infinite alternate; }
 .hv-tram > g { animation: hv-tram 140s linear infinite alternate; }

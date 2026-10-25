@@ -1,3 +1,4 @@
+import { SIGN_HEX } from '../../engine/design';
 import { AVENUES, BOARDWALK, CAUSEWAY, CROSS, LANDMARKS, PIERS, U_NORTH, U_SOUTH, WEST_WILDWOOD, bayEdge, beachWidth, townAt, type Town } from '../../engine/hoodData';
 import { axisAngle, crossAngle, line, P, poly, type Mood, type Palette, type Proj } from './iso';
 
@@ -241,6 +242,21 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
             <path d={poly([P(pr, p.u - p.w / 2, -BOARDWALK.w - L), P(pr, p.u + p.w / 2, -BOARDWALK.w - L), P(pr, p.u + p.w / 2, -BOARDWALK.w - L, -5), P(pr, p.u - p.w / 2, -BOARDWALK.w - L, -5)])} fill={pal.plank2} />
             {tier >= 1 && piles.map((q, i) => <path key={i} d={line([q, [q[0], q[1] + 5]])} stroke={pal.plank2} strokeWidth="1.4" />)}
             <path d={deck} fill="url(#hv-planks)" stroke={pal.plank2} strokeWidth="1.5" />
+            {tier >= 1 && (() => {
+              // The arch over the pier's entrance, with its name in neon.
+              const [ax, ay] = P(pr, p.u, -BOARDWALK.w - 4);
+              const hw = Math.min(26, p.w * 0.38);
+              const neon = SIGN_HEX[p.sign];
+              const fsz = Math.max(4.2, Math.min(9, 9 / sc));
+              return (
+                <g style={{ pointerEvents: 'none' }}>
+                  <path d={`M${ax - hw} ${ay}V${ay - 16}M${ax + hw} ${ay}V${ay - 16}`} stroke={mood === 'day' ? '#fff7ea' : neon} strokeWidth="1.6" />
+                  <rect x={ax - hw - 2} y={ay - 23} width={hw * 2 + 4} height="8" rx="3" fill={mood === 'day' ? '#fff7ea' : '#1b1030'} stroke={neon} strokeWidth={mood === 'day' ? 0.8 : 1.2} />
+                  {mood !== 'day' && <rect x={ax - hw - 2} y={ay - 23} width={hw * 2 + 4} height="8" rx="3" fill="none" stroke={neon} strokeOpacity="0.35" strokeWidth="3" />}
+                  <text x={ax} y={ay - 17} fontSize={Math.min(fsz, 6)} textAnchor="middle" fontWeight="800" fill={mood === 'day' ? neon : '#fff'} stroke={mood === 'day' ? '#2a1f2e' : neon} strokeWidth="0.3" paintOrder="stroke" letterSpacing="0.3">{p.name.toUpperCase()}</text>
+                </g>
+              );
+            })()}
           </g>
         );
       })}

@@ -61,12 +61,24 @@ function savePref(p: { proj?: 'iso' | 'plan'; mood?: 'auto' | Mood }): void {
   try { localStorage.setItem(LS, JSON.stringify({ ...pref(), ...p })); } catch { /* private window */ }
 }
 
+/** Detail tiers by zoom (px per meter), and the scale each tier's labels are sized for. */
+const TIER_AT = [0.33, 1.9, 4.5];
+const TIER_SC = [0.22, 0.9, 2.6, 6];
+const tierOf = (sc: number) => (sc < TIER_AT[0] ? 0 : sc < TIER_AT[1] ? 1 : sc < TIER_AT[2] ? 2 : 3);
+
 export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; onSurvey?: () => void; onHood?: (id?: HoodId) => void; focusHood?: { id: HoodId; nonce: number } }) {
   const shell = useShell();
   const host = useRef<HTMLDivElement>(null);
+  const layer = useRef<HTMLDivElement>(null);
   const g = useRef<SVGGElement>(null);
+  // The committed view (world → host), and a live CSS transform on top of it while a gesture runs
+  // (composited by the GPU; the SVG is redrawn once, when the gesture settles).
   const tf = useRef({ sc: 0.5, tx: 0, ty: 0 });
-  const [zb, setZb] = useState(-2);
+  const live = useRef({ k: 1, dx: 0, dy: 0 });
+  const [margin, setMargin] = useState(400);
+  const marginRef = useRef(400);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [tier, setTier] = useState(1);
   const [projMode, setProjMode] = useState<'iso' | 'plan'>(() => (typeof localStorage !== 'undefined' ? pref().proj : undefined) ?? 'iso');
   const [moodSet, setMoodSet] = useState<'auto' | Mood>(() => (typeof localStorage !== 'undefined' ? pref().mood : undefined) ?? 'auto');
   const [overlay, setOverlay] = useState<HoodOverlay>('none');
@@ -76,19 +88,62 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
   const pr = projMode === 'iso' ? ISO : PLAN;
   const mood: Mood = moodSet === 'auto' ? moodFor(s) : moodSet;
   const pal = palette(mood);
-  const scB = 1.4 ** zb;
-  const tier = scB < 0.33 ? 0 : scB < 1.9 ? 1 : 2;
+  const scB = TIER_SC[tier];
 
   const parcels = useMemo(() => placeAll(s), [s]);
   const items = useMemo(() => itemsOf(s, parcels, pr), [s, parcels, pr]);
   const selItem = sel ? items.find((x) => x.key === sel) : undefined;
 
-  const apply = useCallback(() => {
+  const applyG = useCallback(() => {
     const t = tf.current;
-    g.current?.setAttribute('transform', `translate(${t.tx.toFixed(1)} ${t.ty.toFixed(1)}) scale(${t.sc.toFixed(4)})`);
-    const b = Math.round(Math.log(t.sc) / Math.log(1.4));
-    setZb((old) => (old === b ? old : b));
+    const m = marginRef.current;
+    g.current?.setAttribute('transform', `translate(${(t.tx + m).toFixed(1)} ${(t.ty + m).toFixed(1)}) scale(${t.sc.toFixed(4)})`);
+    const nt = tierOf(t.sc);
+    setTier((old) => (old === nt ? old : nt));
   }, []);
+  const applyLive = useCallback(() => {
+    const l = live.current;
+    if (layer.current) layer.current.style.transform = l.k === 1 && !l.dx && !l.dy ? '' : `translate(${l.dx.toFixed(1)}px, ${l.dy.toFixed(1)}px) scale(${l.k.toFixed(4)})`;
+  }, []);
+  /** Keep the middle of the screen over the island and its waters, so it can never be lost. */
+  const clampView = useCallback((v: { sc: number; tx: number; ty: number }) => {
+    const el = host.current;
+    if (!el) return v;
+    const W = el.clientWidth || 800;
+    const H = el.clientHeight || 600;
+    const b = VIEW_BOUNDS(projMode === 'iso' ? ISO : PLAN);
+    const cx = Math.min(b.x1 - 400, Math.max(b.x0 + 400, (W / 2 - v.tx) / v.sc));
+    const cy = Math.min(b.y1 - 300, Math.max(b.y0 + 300, (H / 2 - v.ty) / v.sc));
+    return { sc: v.sc, tx: W / 2 - cx * v.sc, ty: H / 2 - cy * v.sc };
+  }, [projMode]);
+  const commit = useCallback(() => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = undefined; }
+    const l = live.current;
+    if (l.k === 1 && !l.dx && !l.dy) return;
+    const t = tf.current;
+    tf.current = clampView({ sc: t.sc * l.k, tx: l.k * t.tx + l.dx, ty: l.k * t.ty + l.dy });
+    live.current = { k: 1, dx: 0, dy: 0 };
+    applyLive();
+    applyG();
+  }, [applyG, applyLive, clampView]);
+  const later = useCallback((ms: number) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(commit, ms);
+  }, [commit]);
+
+  // The drawing extends past the edges by a margin, so a pan shows real map until it settles.
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    const size = () => {
+      const m = Math.round(Math.max(el.clientWidth, el.clientHeight) * 0.6) || 400;
+      if (m !== marginRef.current) { marginRef.current = m; setMargin(m); applyG(); }
+    };
+    size();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : undefined;
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, [applyG]);
 
   const fit = useCallback((x0: number, y0: number, x1: number, y1: number, pad = 0.9) => {
     const el = host.current;
@@ -96,9 +151,11 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
     const W = el.clientWidth || 800;
     const H = el.clientHeight || 600;
     const sc = Math.min(6, Math.max(0.08, Math.min(W / (x1 - x0), H / (y1 - y0)) * pad));
+    live.current = { k: 1, dx: 0, dy: 0 };
+    applyLive();
     tf.current = { sc, tx: W / 2 - ((x0 + x1) / 2) * sc, ty: H / 2 - ((y0 + y1) / 2) * sc };
-    apply();
-  }, [apply]);
+    applyG();
+  }, [applyG, applyLive]);
 
   const fitUV = useCallback((u0: number, u1: number, v0: number, v1: number, pad = 0.9) => {
     const pts = [P(pr, u0, v0), P(pr, u1, v0), P(pr, u1, v1), P(pr, u0, v1), P(pr, u0, v0, 30), P(pr, u1, v0, 30)];
@@ -120,21 +177,26 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
   }, [s, fitUV, onHood]);
   useEffect(() => { if (focusHood) goHood(focusHood.id); }, [focusHood?.nonce]);
 
+  const zoomAt = useCallback((x: number, y: number, f: number, settle = 180) => {
+    const l = live.current;
+    const total = Math.min(8, Math.max(0.08, tf.current.sc * l.k * f));
+    const k = total / tf.current.sc;
+    l.dx = x - ((x - l.dx) * k) / l.k;
+    l.dy = y - ((y - l.dy) * k) / l.k;
+    l.k = k;
+    applyLive();
+    later(settle);
+  }, [applyLive, later]);
+
   // Pan, wheel zoom and pinch.
   useEffect(() => {
     const el = host.current;
     if (!el) return;
     const pts = new Map<number, { x: number; y: number }>();
     let moved = 0;
-    let pinch: { d: number; sc: number; cx: number; cy: number } | undefined;
-    const zoomAt = (x: number, y: number, k: number) => {
-      const t = tf.current;
-      const sc = Math.min(8, Math.max(0.08, t.sc * k));
-      t.tx = x - ((x - t.tx) * sc) / t.sc;
-      t.ty = y - ((y - t.ty) * sc) / t.sc;
-      t.sc = sc;
-      apply();
-    };
+    let pinch: { d: number; cx: number; cy: number } | undefined;
+    let vel = { x: 0, y: 0, t: 0 };
+    let glide = 0;
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
       const r = el.getBoundingClientRect();
@@ -144,10 +206,12 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
       if ((e.target as Element).closest('[data-hv-ui]')) return;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       moved = 0;
+      if (glide) { cancelAnimationFrame(glide); glide = 0; }
+      vel = { x: 0, y: 0, t: performance.now() };
       if (pts.size === 2) {
         const [a, b] = [...pts.values()];
         const r = el.getBoundingClientRect();
-        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), sc: tf.current.sc, cx: (a.x + b.x) / 2 - r.left, cy: (a.y + b.y) / 2 - r.top };
+        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), cx: (a.x + b.x) / 2 - r.left, cy: (a.y + b.y) / 2 - r.top };
       }
     };
     const move = (e: PointerEvent) => {
@@ -160,21 +224,50 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
       if (pts.size === 2 && pinch) {
         const [a, b] = [...pts.values()];
         const d = Math.hypot(a.x - b.x, a.y - b.y);
-        zoomAt(pinch.cx, pinch.cy, (pinch.sc * (d / pinch.d)) / tf.current.sc);
+        zoomAt(pinch.cx, pinch.cy, d / pinch.d, 400);
+        pinch.d = d;
         moved += 10;
         return;
       }
       moved += Math.abs(dx) + Math.abs(dy);
       if (moved > 4) {
-        tf.current.tx += dx;
-        tf.current.ty += dy;
-        apply();
+        const l = live.current;
+        l.dx += dx;
+        l.dy += dy;
+        const now = performance.now();
+        const dt = Math.max(1, now - vel.t);
+        vel = { x: 0.7 * (dx / dt) + 0.3 * vel.x, y: 0.7 * (dy / dt) + 0.3 * vel.y, t: now };
+        applyLive();
+        // Past the drawn margin: settle now so the edge never shows for long.
+        const m = marginRef.current * 0.85;
+        if (Math.abs(l.dx) > m || Math.abs(l.dy) > m) commit();
       }
     };
     const up = (e: PointerEvent) => {
+      if (!pts.has(e.pointerId)) return;
       pts.delete(e.pointerId);
       if (pts.size < 2) pinch = undefined;
       (el as unknown as { _moved: number })._moved = moved;
+      if (pts.size) return;
+      // A flick keeps going and slows down (inertia), then settles.
+      const fresh = performance.now() - vel.t < 80;
+      let vx = fresh ? vel.x * 16 : 0;
+      let vy = fresh ? vel.y * 16 : 0;
+      if (moved > 6 && Math.hypot(vx, vy) > 2) {
+        const step = () => {
+          const l = live.current;
+          l.dx += vx;
+          l.dy += vy;
+          vx *= 0.86;
+          vy *= 0.86;
+          applyLive();
+          const m = marginRef.current * 0.85;
+          if (Math.abs(l.dx) > m || Math.abs(l.dy) > m) commit();
+          if (Math.hypot(vx, vy) > 0.5) glide = requestAnimationFrame(step);
+          else { glide = 0; later(40); }
+        };
+        glide = requestAnimationFrame(step);
+      } else later(60);
     };
     el.addEventListener('wheel', wheel, { passive: false });
     el.addEventListener('pointerdown', down);
@@ -188,25 +281,29 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
     };
-  }, [apply]);
+  }, [zoomAt, applyLive, commit, later]);
 
   const wasDrag = () => ((host.current as unknown as { _moved?: number })?._moved ?? 0) > 6;
   const pick = useCallback((key: string) => { if (!wasDrag()) { setSel(key); setMenu(false); } }, []);
   const zoomBtn = (k: number) => {
     const el = host.current;
     if (!el) return;
-    const t = tf.current;
-    const x = el.clientWidth / 2;
-    const y = el.clientHeight / 2;
-    const sc = Math.min(8, Math.max(0.08, t.sc * k));
-    t.tx = x - ((x - t.tx) * sc) / t.sc;
-    t.ty = y - ((y - t.ty) * sc) / t.sc;
-    t.sc = sc;
-    apply();
+    zoomAt(el.clientWidth / 2, el.clientHeight / 2, k, 60);
   };
 
-  const ctx = useMemo(() => ({ pr, m: mood, pal, tier, ls: 10.5 / scB }), [pr, mood, tier, zb]);
-  const ground = useMemo(() => <Ground pr={pr} pal={pal} mood={mood} tier={tier} sc={scB} />, [pr, mood, tier, zb]);
+  const ctx = useMemo(() => ({ pr, m: mood, pal, tier }), [pr, mood, tier]);
+  const ground = useMemo(() => <Ground pr={pr} pal={pal} mood={mood} tier={tier} sc={scB} />, [pr, mood, tier]);
+  const buildings = useMemo(() => items.map((it) => <Building key={it.key} it={it} c={ctx} sel={it.key === sel} tint={tintOf(s, it, overlay)} onPick={pick} />), [items, ctx, sel, overlay, s, pick]);
+  const labels = useMemo(() => (tier < 2 ? null : (
+    <g style={{ pointerEvents: 'none' }} fontWeight="700" textAnchor="middle">
+      {items.filter((it) => it.icon).map((it) => {
+        const c = P(pr, (it.fp.u0 + it.fp.u1) / 2, it.fp.v0);
+        const y = c[1] - (it.fp.h + (it.icon === 'pier' ? 36 : 6)) * pr.hz - 4;
+        const ls = 10.5 / scB;
+        return <text key={it.key} x={c[0]} y={y} fontSize={ls} fill={it.mine ? '#b8860b' : mood === 'day' ? '#2a1f2e' : '#fff3df'} stroke={mood === 'day' ? '#fffaf0' : '#1b1030'} strokeWidth={ls * 0.25} paintOrder="stroke">{it.name}</text>;
+      })}
+    </g>
+  )), [items, tier, pr, mood]);
   const areas = useMemo(() => {
     if (overlay !== 'reputation' && overlay !== 'police' && overlay !== 'rival') return null;
     return HOODS.map((h) => {
@@ -219,7 +316,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
       const [x, y] = P(pr, (b.u0 + b.u1) / 2, (b.v0 + b.v1) / 2);
       return <g key={h.id}><path d={d} fill={col} opacity={0.18 + t * 0.4} stroke={col} strokeWidth={2 / scB} /><text x={x} y={y} fontSize={13 / scB} textAnchor="middle" fill="#fff" stroke="#1b1030" strokeWidth={3 / scB} paintOrder="stroke" fontWeight="700">{Math.round(t * 100)}</text></g>;
     });
-  }, [overlay, s, pr, zb]);
+  }, [overlay, s, pr, tier]);
   const hoodPills = useMemo(() => tier >= 1 ? null : HOODS.map((h) => {
     const b = hoodBounds(s, h.id);
     if (!b) return null;
@@ -232,7 +329,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
         <text x={x} y={y} fontSize={fsz} textAnchor="middle" fill={mood === 'day' ? '#c2185b' : '#ffd1e6'} fontWeight="700">{h.name}</text>
       </g>
     );
-  }), [s, pr, tier, zb, mood, goHood]);
+  }), [s, pr, tier, mood, goHood]);
 
   const tram = useMemo(() => {
     const a = P(pr, crossU('Cresse Ave') + 30, -8);
@@ -251,28 +348,31 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
 
   const panelOpen = !!selItem || !!hood;
   return (
-    <div className="absolute inset-0 overflow-hidden select-none" data-testid="island-view" data-mood={mood} data-overlay={overlay} style={{ background: pal.bay, touchAction: 'none' }}>
+    <div className="absolute inset-0 overflow-hidden select-none" data-testid="island-view" data-mood={mood} data-overlay={overlay} data-tier={tier} style={{ background: pal.bay, touchAction: 'none' }}>
       <div ref={host} className="absolute inset-0" onClick={() => { if (!wasDrag()) { setSel(undefined); } }}>
-        <svg width="100%" height="100%" className="block" style={{ fontFamily: "'Trebuchet MS', system-ui, sans-serif" }}>
-          <GroundDefs pal={pal} mood={mood} />
-          <g ref={g}>
-            {ground}
-            {areas}
-            {items.map((it) => <Building key={it.key} it={it} c={ctx} sel={it.key === sel} tint={tintOf(s, it, overlay)} label={tier >= 2 && !!it.icon} onPick={pick} />)}
-            {tier >= 1 && (
-              <g className="hv-tram" style={{ ['--tx' as string]: `${tram.b[0] - tram.a[0]}px`, ['--ty' as string]: `${tram.b[1] - tram.a[1]}px` }} pointerEvents="none">
-                <g transform={`translate(${tram.a[0]} ${tram.a[1]})`}>
-                  <rect x="-9" y="-6" width="7" height="4.5" rx="1" fill="#ffd34d" stroke="#1d4f91" strokeWidth="0.5" />
-                  <rect x="-1.5" y="-6" width="7" height="4.5" rx="1" fill="#ffd34d" stroke="#1d4f91" strokeWidth="0.5" />
-                  <rect x="6" y="-6" width="7" height="4.5" rx="1" fill="#ffd34d" stroke="#1d4f91" strokeWidth="0.5" />
-                  <path d="M-9 -6h22" stroke="#1d4f91" strokeWidth="1.2" />
-                  {mood !== 'day' && <circle cx="14" cy="-3.5" r="2.5" fill="#fff3b0" opacity="0.8" />}
+        <div ref={layer} className="absolute" style={{ left: -margin, top: -margin, width: `calc(100% + ${margin * 2}px)`, height: `calc(100% + ${margin * 2}px)`, transformOrigin: `${margin}px ${margin}px`, willChange: 'transform' }}>
+          <svg width="100%" height="100%" className="block" style={{ fontFamily: "'Trebuchet MS', system-ui, sans-serif" }}>
+            <GroundDefs pal={pal} mood={mood} />
+            <g ref={g}>
+              {ground}
+              {areas}
+              {buildings}
+              {tier >= 1 && (
+                <g className="hv-tram" style={{ ['--tx' as string]: `${tram.b[0] - tram.a[0]}px`, ['--ty' as string]: `${tram.b[1] - tram.a[1]}px` }} pointerEvents="none">
+                  <g transform={`translate(${tram.a[0]} ${tram.a[1]})`}>
+                    <rect x="-9" y="-6" width="7" height="4.5" rx="1" fill="#ffd34d" stroke="#1d4f91" strokeWidth="0.5" />
+                    <rect x="-1.5" y="-6" width="7" height="4.5" rx="1" fill="#ffd34d" stroke="#1d4f91" strokeWidth="0.5" />
+                    <rect x="6" y="-6" width="7" height="4.5" rx="1" fill="#ffd34d" stroke="#1d4f91" strokeWidth="0.5" />
+                    <path d="M-9 -6h22" stroke="#1d4f91" strokeWidth="1.2" />
+                    {mood !== 'day' && <circle cx="14" cy="-3.5" r="2.5" fill="#fff3b0" opacity="0.8" />}
+                  </g>
                 </g>
-              </g>
-            )}
-            {hoodPills}
-          </g>
-        </svg>
+              )}
+              {labels}
+              {hoodPills}
+            </g>
+          </svg>
+        </div>
       </div>
       {/* Controls. */}
       <div data-hv-ui className="absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%]">
@@ -280,7 +380,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
           <button type="button" className="hv-btn" onClick={whole} title="The whole island">⤢</button>
-          <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Back to the Boardwalk">⌂</button>
+          <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Recenter on the Boardwalk" data-testid="hv-recenter">⌂ Recenter</button>
         </div>
         <div className="flex gap-1" role="group" aria-label="Light">
           {(['auto', 'day', 'dusk', 'night'] as const).map((m) => (

@@ -209,7 +209,7 @@ export const TROPICANA: MissionDef = {
         {
           id: 'ask', label: 'Send a man to ask around', delegate: 'intrigue',
           detail: () => 'The night clerk, the accountant, the boys on the pier. A quiet man learns more than a loud one.',
-          odds: (s, _m, a) => odds(35, [{ label: a ? `${a.firstName}'s intrigue` : 'Nobody sent', value: a ? Math.round(a.attributes.intrigue * 3) : -30 }, { label: 'Your respect', value: Math.round((s.respect - 50) * 0.2) }]),
+          odds: (s, _m, a) => odds(35, [{ label: a ? `${a.firstName}'s intrigue` : 'Nobody sent', value: a ? Math.round(a.attributes.intrigue * 0.5) : -30 }, { label: 'Your respect', value: Math.round((s.respect - 50) * 0.2) }]),
           resolve: (ctx, m, ok, a) => {
             const s = ctx.s;
             if (ok) {
@@ -226,7 +226,7 @@ export const TROPICANA: MissionDef = {
         {
           id: 'visit', label: 'Call on Kovacs yourself',
           detail: (s) => `Coffee in ${owner(s)}'s kitchen. If he trusts you, he will tell you what the bank told him.`,
-          odds: (s) => { const b = s.characters[s.playerId]; return odds(40, [{ label: 'Your diplomacy', value: Math.round((b?.attributes.diplomacy ?? 5) * 3) }, { label: 'Your respect', value: Math.round((s.respect - 50) * 0.3) }]); },
+          odds: (s) => { const b = s.characters[s.playerId]; return odds(40, [{ label: 'Your diplomacy', value: Math.round((b?.attributes.diplomacy ?? 30) * 0.4) }, { label: 'Your respect', value: Math.round((s.respect - 50) * 0.3) }]); },
           resolve: (ctx, m, ok) => {
             const s = ctx.s;
             m.flags.metOwner = 1;
@@ -259,7 +259,7 @@ export const TROPICANA: MissionDef = {
             ...(m.flags.raised ? [{ label: 'Feldstein raised his offer', value: -10 }] : []),
             ...(m.flags.clear ? [{ label: 'Feldstein walked away', value: 25 }] : []),
             ...(m.flags.sitdownFailed ? [{ label: 'The sit-down went badly', value: -8 }] : []),
-            ...(a ? [{ label: `${a.firstName}'s business sense`, value: Math.round(a.attributes.business * 2) }] : []),
+            ...(a ? [{ label: `${a.firstName}'s business sense`, value: Math.round(a.attributes.business * 0.3) }] : []),
             { label: 'Your respect', value: Math.round((s.respect - 50) * 0.2) },
           ]),
           blocked: (s, m) => (s.money < buyPrice(s, m) ? `Needs ${fmtMoney(buyPrice(s, m))}` : undefined),

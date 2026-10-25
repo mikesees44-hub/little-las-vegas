@@ -170,7 +170,7 @@ function spots(ring: number[][], n: number): [number, number][] {
 function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData').Basemap, latest: { current: WorldMapProps }): MapApi {
   const map = L.map(el, {
     center: VIEWS.usa.center, zoom: VIEWS.usa.zoom, minZoom: 3, maxZoom: 16, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90,
-    worldCopyJump: false, maxBounds: L.latLngBounds([5, -175], [72, -40]), attributionControl: true, preferCanvas: false, zoomControl: false,
+    worldCopyJump: false, maxBounds: L.latLngBounds([5, -175], [72, -40]), maxBoundsViscosity: 0.85, dragging: true, inertia: true, inertiaDeceleration: 2600, touchZoom: true, attributionControl: true, preferCanvas: false, zoomControl: false,
   });
   L.control.zoom({ position: 'topright' }).addTo(map);
   map.attributionControl.setPrefix('');
