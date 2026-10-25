@@ -101,7 +101,7 @@ describe('the living rackets', () => {
     const ev = buildSitEvent(s, b, sit)!;
     expect(ev.text.length).toBeGreaterThan(40);
     const carry = ev.choices.find((c) => c.id === 'carry')!;
-    expect(carry.effects.map((e) => describeEffect(s, e)).join(' ')).toMatch(/85%: \+\$[\d,]+ · else \(15%\): −\$/);
+    expect(carry.effects.map((e) => describeEffect(s, e)).join(' ')).toMatch(/\d+%: \+\$[\d,]+ · else \(\d+%\): −\$/);
     s.pendingEvents = [ev];
     const before = { money: s.money, respect: s.respect, heat: { ...s.heat } };
     const r = advanceWeek(s, { choices: { [ev.iid]: 'carry' }, actions: [] });

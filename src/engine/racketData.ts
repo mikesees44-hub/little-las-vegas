@@ -76,6 +76,9 @@ const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1);
 
 /** A gamble with its odds, both sides shown as chips before the choice. */
 export function roll(x: SitCtx, p: number, what: string, win: RacketOutcome, lose: RacketOutcome): Effect {
+  // The man running it matters: ±10% from his attribute for this racket; nobody running it, −5%.
+  const fit = RACKETS[x.b.kind]?.fit ?? 'business';
+  p += x.runner ? (x.runner.attributes[fit] - 50) / 500 : -0.05;
   return { type: 'econ', op: { op: 'racket', cmd: 'roll', bizId: x.b.id, p: Math.round(Math.max(0.05, Math.min(0.95, p)) * 100) / 100, what, win, lose }, label: `${x.b.name}: ${what}` };
 }
 const boost = (x: SitCtx, pct: number, weeks: number): Effect => ({ type: 'econ', op: { op: 'racket', cmd: 'boost', bizId: x.b.id, pct, weeks }, label: x.b.name });

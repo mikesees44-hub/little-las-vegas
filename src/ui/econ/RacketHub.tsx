@@ -103,7 +103,7 @@ function RacketCard({ s, c }: { s: GameState; c: HubCard }) {
       </header>
       <div className="mt-2 flex flex-wrap gap-1 text-[11px]">
         <span className="chip-neutral">{fmt$(c.cost)} to start</span>
-        <span className="chip-good">~{fmt$(c.inSeason)}/wk in season · {fmt$(c.offSeason)} off</span>
+        <span className="chip-good">~{fmt$(c.inSeason)}/wk in season · {fmt$(c.offSeason)} off{c.byScore ? ' (average: big, rare scores)' : ''}</span>
         <span className="chip-neutral">upkeep {fmt$(c.upkeep)}/wk</span>
         <span className={c.heat >= 0.25 ? 'chip-bad' : 'chip-neutral'}>heat: {heatWord(c.heat)}</span>
         {c.fed > 0 && <span className={c.fed >= 0.1 ? 'chip-bad' : 'chip-neutral'}>federal: {c.fed >= 0.2 ? 'high' : c.fed >= 0.1 ? 'some' : 'low'}</span>}

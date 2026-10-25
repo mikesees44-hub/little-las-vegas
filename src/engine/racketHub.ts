@@ -28,6 +28,8 @@ export interface HubCard {
   /** ~ weekly take in season / off-season, as bought. */
   inSeason: number;
   offSeason: number;
+  /** Earns by the score: the take is an average of big, rare scores. */
+  byScore?: boolean;
   upkeep: number;
   /** Local heat a week, rounded for display (0.3 = "some"). */
   heat: number;
@@ -69,12 +71,19 @@ export function hubCards(s: GameState): HubCard[] {
     const locks = startLocks(s, kind);
     return {
       kind, name: def.name, line: info?.line ?? def.blurb, pays: info?.pays ?? '', cost: def.cost,
-      inSeason: Math.round(def.base * def.season[0]), offSeason: Math.round(def.base * def.season[1]), upkeep: def.upkeep,
+      ...crewTake(kind, def.base * def.season[0], def.base * def.season[1]), upkeep: def.upkeep,
       heat: def.heat, fed: def.fedHeat, men: def.staff, ladder: tree(kind).map((t) => t.name),
       owned: owned(s).filter((b) => b.kind === kind), locks, warns, laws: lawsFor(s, kind),
       start: kind === 'narcotics' ? undefined : START(kind),
     };
   });
+}
+
+/** Crews that work by the score show their average week (jewel: 30% a week in season, 12% off, ~$4,000 a case; bank: 7%, ~$10,500). */
+function crewTake(kind: BusinessKind, inS: number, off: number): { inSeason: number; offSeason: number; byScore?: boolean } {
+  if (kind === 'jewel') return { inSeason: 1200, offSeason: 480, byScore: true };
+  if (kind === 'bankcrew') return { inSeason: 735, offSeason: 735, byScore: true };
+  return { inSeason: Math.round(inS), offSeason: Math.round(off) };
 }
 
 /** The Madam's arrangement: protection for her network, for a cut (ears.ts runs it). */
@@ -114,7 +123,8 @@ export function whichRacket(s: GameState): RacketPick[] {
     const def = CATALOG[kind];
     const info = RACKETS[kind] as RacketInfo;
     const reasons: { label: string; value: number }[] = [];
-    const avg = def.base * (def.season[0] + def.season[1]) / 2 || (info.scale ?? 0) * 0.5;
+    const ct = crewTake(kind, def.base * def.season[0], def.base * def.season[1]);
+    const avg = (ct.inSeason + ct.offSeason) / 2;
     const payback = def.cost / Math.max(1, avg - def.upkeep);
     reasons.push({ label: `Pays back in ~${Math.round(payback)} wks`, value: Math.round(Math.max(-20, 30 - payback)) });
     if (def.season[1] >= 0.8) reasons.push({ label: 'Earns through the winter', value: summer ? 4 : 10 });
