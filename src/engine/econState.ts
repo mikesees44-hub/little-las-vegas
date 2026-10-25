@@ -1,3 +1,4 @@
+import type { DealTarget, DealTerms } from './deals';
 import { hashSeed } from './rng';
 import type { Character, FactionId, GameState } from './types';
 
@@ -219,6 +220,8 @@ export interface EconStats {
   contractsWon: number;
   outbid: number;
   inspectorPaid?: number;
+  deals?: number;
+  haggled?: number;
 }
 
 export interface EconState {
@@ -241,6 +244,8 @@ export interface EconState {
   cooldowns: Record<string, number>;
   /** The town's building inspector. He lives here rather than among the game's characters, so that adding him does not reshuffle the rest of the world. */
   inspector?: Character;
+  /** Deals signed (the last 40), for the papers and the map. */
+  dealLog?: { week: number; seller: string; sellerId: string; place: string; asking: number; price: number; cash: number; soured: boolean }[];
   /** Public and private contracts your companies are working (weekly payments). */
   contracts: { id: string; name: string; weekly: number; weeksLeft: number; kind: 'city' | 'rival' | 'private' }[];
   /** City jobs open for bids this month. */
@@ -279,6 +284,8 @@ export type EconAction =
   | { type: 'upgrade'; bizId: string }
   | { type: 'collect'; bizId: string }
   | { type: 'buyLot'; lotId: string; going?: boolean }
+  /** The Deal (deals.ts): a purchase signed across a desk — haggling, cash, who runs it. */
+  | { type: 'deal'; target: DealTarget; terms: DealTerms }
   | { type: 'leaseLot'; lotId: string }
   | { type: 'build'; lotId: string; use: string }
   | { type: 'renovate'; lotId: string }

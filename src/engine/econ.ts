@@ -1,5 +1,6 @@
 import type { ActionPreview } from './actions';
 import { noteScore } from './ledgerbook';
+import { commitDeal, previewDeal } from './deals';
 import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
@@ -750,6 +751,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       effects.push(note(c.text));
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
+    case 'deal': return previewDeal(s, a.target, a.terms);
     case 'buyLot': {
       const l = e?.lots.find((x) => x.id === a.lotId);
       if (!l) return noop('Buy property', 'No such lot');
@@ -1051,6 +1053,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       if (b) commitCollect(ctx, b);
       break;
     }
+    case 'deal': commitDeal(ctx, a.target, a.terms); break;
     case 'buyLot': {
       const l = e.lots.find((x) => x.id === a.lotId);
       if (!l) break;
