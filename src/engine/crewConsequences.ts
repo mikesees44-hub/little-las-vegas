@@ -156,6 +156,7 @@ export const CREW_HANDLERS: Record<string, Handler> = {
         { type: 'opinion', from: c.id, to: s.playerId, amount: 6, reason: 'I stood up and the family knows it', decay: 1 },
         { type: 'crewOpinion', amount: 2, reason: `${c.firstName} stood up` },
         { type: 'story', charId: c.id, text: 'Stood up to the county detectives and said nothing.' },
+        { type: 'bones', op: { op: 'pinch', charId: c.id } },
         ...(k ? [{ type: 'opinion', from: k.id, to: c.id, amount: 10, reason: 'Stood up like a man', decay: 1 } as Effect] : []),
       ],
     };

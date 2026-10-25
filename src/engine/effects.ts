@@ -25,6 +25,8 @@ import { addEvidence, addStory, assignTo, bumpStat, capoOf, giveBio, GOAL_INFO, 
 import { voucherBlame } from './regimes';
 import { maybePlant } from './rivalcrew';
 import { applyStoryOp, describeStoryOp } from './storyOps';
+import { applyBonesOp, bonesBlock, describeBonesOp, mayPropose } from './bones';
+import { applyLedgerOp, describeLedgerOp } from './ledgerbook';
 
 const HEAT_NAMES: Record<HeatBar, string> = { local: 'Local heat', family: 'Family heat', federal: 'Federal heat' };
 
@@ -205,6 +207,10 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeEconOp(s, e.op);
     case 'travel':
       return describeTravelOp(s, e.op);
+    case 'bones':
+      return describeBonesOp(s, e.op);
+    case 'ledger':
+      return describeLedgerOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -422,7 +428,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
     case 'propose': {
       const c = s.characters[e.charId];
       const v = s.characters[e.voucherId];
-      if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined) {
+      if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined && !mayPropose(s, c)) {
+        ctx.log.push(`Philadelphia wants to know what he ever did for this thing of ours: ${bonesBlock(s, c)}.`);
+      } else if (c?.alive && c.rank === 'associate' && c.faction === 'player' && c.proposedWeek === undefined) {
         c.proposedWeek = s.week;
         c.vouchedBy = v?.alive ? v.id : undefined;
         addStory(s, c, `${v ? displayName(v) : 'The boss'} put his name up for membership.`);
@@ -816,6 +824,12 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'travel':
       applyTravelOp(ctx, e.op, label);
+      break;
+    case 'bones':
+      applyBonesOp(ctx, e.op, label);
+      break;
+    case 'ledger':
+      applyLedgerOp(ctx, e.op, label);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

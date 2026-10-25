@@ -1,4 +1,7 @@
 import { perkMod } from './lifestyle';
+import { bonesFromScheme } from './bones';
+import { roll01 } from './bonesState';
+import { fileReceipt, noteScore, receiptLie } from './ledgerbook';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { activeTask, seatPower } from './council';
@@ -391,6 +394,8 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
         const war = s.wars.find((w) => w.rival === t.faction);
         if (war) eff.push({ type: 'warScore', warId: war.id, amount: s.rivals.some((r) => r.leaderId === t.id) ? 40 : 15 });
         apply(ctx, label, sc.because, eff);
+        hitReceipt(s, sc, agents, name, witness);
+        bonesFromScheme(ctx, sc, agents, true);
         ctx.log.push(`The hit on ${name} went ${witness ? 'down — but there was a witness' : 'down clean'}.`);
         s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${name} was killed${pub ? ` at ${loc.name.toLowerCase()}` : ' and never found'}.`, because: sc.because, becauseWeek: sc.startWeek, kind: 'death' });
       } else if (chance(s, 0.35) && agents.length) {
@@ -399,6 +404,7 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
         a.record = (a.record ?? 0) + 1;
         a.evidence = Math.min(100, (a.evidence ?? 0) + 20);
         cue(s, 'arrest_interrogation', 'Picked up', `${displayName(a)} was arrested two blocks from ${name}'s house with a pistol in his coat.`);
+        bonesFromScheme(ctx, sc, agents, false);
         ctx.log.push(`The hit on ${name} fell apart; ${displayName(a)} was arrested.`);
       } else {
         t.health = Math.max(5, t.health - 30);
@@ -411,6 +417,7 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
         addOpinion(s, t.id, s.playerId, 'Tried to have me killed', -60, 0);
         apply(ctx, label, sc.because, eff);
         cue(s, 'hit_botched', 'Botched', `The gun jammed. ${name} ran, bleeding, into the dark — and he saw who sent them.`);
+        bonesFromScheme(ctx, sc, agents, false);
         ctx.log.push(`The hit on ${name} was botched. He survived and he knows.`);
       }
       break;
@@ -419,8 +426,16 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
       const h = HEISTS[sc.opts.heist ?? 'jewelry'];
       if (success) {
         const take = randInt(s, h.payout[0] / 100, h.payout[1] / 100) * 100;
-        apply(ctx, `Heist: ${h.name}`, sc.because, [{ type: 'money', amount: take }, { type: 'unwashed', amount: take }, { type: 'heat', bar: h.heat, amount: h.heatAmt }, { type: 'respect', amount: 2 }]);
-        ctx.log.push(`The ${h.name.toLowerCase()} job came off: ${fmtMoney(take)}.`);
+        // The man who carries the bag hands in the count. It is as honest as he is.
+        const lead = agents[0];
+        const skim = lead && receiptLie(s, lead, sc.id) ? Math.round(take * (0.1 + roll01(s.seed, sc.id, 'heistskim') * 0.2) / 100) * 100 : 0;
+        apply(ctx, `Heist: ${h.name}`, sc.because, [{ type: 'money', amount: take - skim }, { type: 'unwashed', amount: take - skim }, { type: 'heat', bar: h.heat, amount: h.heatAmt }, { type: 'respect', amount: 2 }, ...(skim && lead ? [{ type: 'wealth', charId: lead.id, amount: skim } as Effect] : [])]);
+        if (lead) {
+          fileReceipt(s, { byId: lead.id, job: `the ${h.name.toLowerCase()}`, kind: 'heist', actual: take, reported: take - skim, outcome: 'clean', jobId: sc.id });
+          noteScore(ctx, lead.id, take, h.name, take - skim);
+        }
+        bonesFromScheme(ctx, sc, agents, true);
+        ctx.log.push(`The ${h.name.toLowerCase()} job came off: ${fmtMoney(take - skim)}${skim ? ' (by his count)' : ''}.`);
       } else {
         const eff: Effect[] = [{ type: 'heat', bar: h.heat, amount: h.heatAmt + 4 }];
         if (agents.length && chance(s, 0.5)) {
@@ -430,6 +445,7 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
           cue(s, 'arrest_interrogation', 'Pinched', `${displayName(a)} was caught with the bag.`);
         }
         apply(ctx, `Heist: ${h.name}`, sc.because, eff);
+        bonesFromScheme(ctx, sc, agents, false);
         ctx.log.push(`The ${h.name.toLowerCase()} job went wrong.`);
       }
       break;
@@ -599,6 +615,15 @@ export function buildPlotUncovered(s: GameState, sc: Scheme): EventInstance {
       { id: 'table', label: 'Take it to the Table', detail: 'Make him answer to Philadelphia.', because: `took ${r.shortName}'s plot to the Table`, effects: [{ type: 'endScheme', schemeId: sc.id, label }, { type: 'rivalResource', rival: r.id, exposure: 15, label }, { type: 'rivalOpinion', rival: 'philly', amount: 5, reason: 'Brought a grievance properly', label }, { type: 'flag', key: `grievance_${r.id}`, value: 1, label }] },
     ],
   };
+}
+
+/** The man who led a hit hands in his report: was it clean? A witness is the thing a liar leaves out. */
+function hitReceipt(s: GameState, sc: Scheme, agents: Character[], name: string, witness: boolean): void {
+  const lead = agents[0];
+  if (!lead) return;
+  const lie = witness && receiptLie(s, lead, sc.id);
+  const truth = witness ? 'It got done, but a waitress got a look at the car.' : 'It got done. Nobody saw nothing.';
+  fileReceipt(s, { byId: lead.id, job: `the ${name} piece of work`, kind: 'hit', actual: 0, reported: 0, said: lie ? 'It got done. Nobody saw nothing.' : truth, truth, jobId: sc.id });
 }
 
 export function ageOk(s: GameState, c: Character): boolean {

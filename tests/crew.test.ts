@@ -1,3 +1,4 @@
+import { recordBones } from '../src/engine/bones';
 import { describe, expect, it } from 'vitest';
 import { capos, crew } from '../src/engine/characters';
 import { flipChance } from '../src/engine/crewConsequences';
@@ -137,7 +138,7 @@ describe('loyalty and defection', () => {
   it('a man courted by a rival either turns them down (if he loves you) or goes (if he does not)', () => {
     // Walking out is a weekly roll once he has been courted six weeks, so judge it over a few games.
     let went = 0;
-    for (const seed of ['court', 'court-b', 'court-c']) {
+    for (const seed of ['court', 'court-b', 'court-c', 'court-d', 'court-e']) {
     const base = newGame(seed);
     const run = (love: number) => {
       let s: GameState = JSON.parse(JSON.stringify(base));
@@ -183,6 +184,8 @@ describe('the membership pipeline', () => {
     const assoc = men(s).filter((c) => c.rank === 'associate' && !c.dynasty).slice(0, 2);
     expect(assoc.length).toBe(2);
     s.books = { open: false, slots: 0, nextChange: s.week + 6 };
+    // Both made their bones first (bones.ts: nobody is proposed without them).
+    for (const a of assoc) recordBones(s, s.characters[a.id], 'Garden Pier job', 'heist', 'on the crew', 'Did the job.');
     s = advanceWeek(s, { actions: assoc.map((a) => ({ kind: 'propose', charId: a.id }) as const) }).state;
     for (const a of assoc) {
       expect(s.characters[a.id].proposedWeek).toBeDefined();

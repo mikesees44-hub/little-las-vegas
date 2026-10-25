@@ -1,3 +1,4 @@
+import { bonesBlock } from './bones';
 import { perkMod } from './lifestyle';
 import { ageOn } from './calendar';
 import { capos, displayName, hasTrait, isFree, player, relationLabel } from './characters';
@@ -330,7 +331,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
           { type: 'opinion', from: c.id, to: boss.id, amount: 10, reason: 'Put my name up', decay: 1, label },
         ],
         because: `proposed ${nm} for membership`,
-        disabledReason: waiting ? `Waiting for the books (proposed week ${c.proposedWeek})` : s.money < 500 ? 'Needs $500' : free(s, c),
+        disabledReason: waiting ? `Waiting for the books (proposed week ${c.proposedWeek})` : bonesBlock(s, c) ?? (s.money < 500 ? 'Needs $500' : free(s, c)),
       };
     }
     case 'promote': {

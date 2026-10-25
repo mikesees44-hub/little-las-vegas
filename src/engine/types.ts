@@ -10,6 +10,8 @@ import type { Orientation, RomanceState, StoryOp, StoryState } from './storyStat
 import type { PolAction, PolOp, PolState } from './polState';
 import type { EconAction, EconOp, EconState } from './econState';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
+import type { BonesAction, BonesEntry, BonesOp, BonesState } from './bonesState';
+import type { LedgerAction, LedgerBookState, LedgerOp } from './ledgerbookState';
 
 export interface GameDate {
   y: number;
@@ -165,6 +167,8 @@ export interface Character {
   orientation?: Orientation;
   /** The real biological father, when it is not the father of record (hidden paternity). */
   bioFatherId?: string;
+  /** Made his bones: the jobs on his record (bones.ts). */
+  bones?: BonesEntry[];
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
@@ -512,7 +516,11 @@ export type Effect =
   /** The economy & property layer (econState.ts / econ.ts). */
   | ({ type: 'econ'; op: EconOp } & EffectBase)
   /** Travel, trips and flight (travelState.ts / travel.ts / fugitive.ts). */
-  | ({ type: 'travel'; op: TravelOp } & EffectBase);
+  | ({ type: 'travel'; op: TravelOp } & EffectBase)
+  /** Making your bones (bones.ts). */
+  | ({ type: 'bones'; op: BonesOp } & EffectBase)
+  /** The boss's books and the receipts (ledgerbook.ts). */
+  | ({ type: 'ledger'; op: LedgerOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -719,6 +727,10 @@ export interface ReportLine {
   requested?: number;
   label: string;
   category: LedgerCategory;
+  /** Who paid it / was paid (character id), for the boss's books. */
+  who?: string;
+  /** Which racket, business or district (id), for the boss's books. */
+  src?: string;
 }
 
 export interface WeeklyReport {
@@ -826,6 +838,10 @@ export interface GameState {
   econ?: EconState;
   /** Travel, trips and fugitives (optional for old saves). */
   travel?: TravelState;
+  /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
+  bones?: BonesState;
+  /** The boss's private ledger (optional for old saves). */
+  ledgerBook?: LedgerBookState;
 }
 
 export interface PlayerChoices {
@@ -873,7 +889,9 @@ export type PlayerAction =
   | { kind: 'order'; key: string; via: OrderVia }
   | { kind: 'econ'; op: EconAction }
   | { kind: 'travel'; op: TravelAction }
-  | { kind: 'pol'; op: PolAction };
+  | { kind: 'pol'; op: PolAction }
+  | { kind: 'bones'; op: BonesAction }
+  | { kind: 'ledger'; op: LedgerAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

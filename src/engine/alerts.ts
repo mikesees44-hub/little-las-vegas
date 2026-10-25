@@ -1,4 +1,5 @@
 import { owned, staffFactor } from './business';
+import { mayPropose } from './bones';
 import { capos, crew, displayName, isFree, player } from './characters';
 import { chooseHeir } from './dynasty';
 import { familyAlerts } from './familyAlerts';
@@ -61,7 +62,7 @@ export function alerts(s: GameState): Alert[] {
   }
   // The boss's own file is the federal case's evidence: one alert, the Law's once a case is open.
   if ((boss.evidence ?? 0) >= 20 && (!s.legal || s.legal.personId !== boss.id || s.legal.stage === 'quiet')) out.push({ kind: 'evidence', severity: (boss.evidence ?? 0) >= 40 ? 'danger' : 'warn', title: 'Your own file is getting thick', text: `The evidence against you is at ${Math.round(boss.evidence ?? 0)}/100 (the FBI opens a case at 25). Give orders through the chain.`, tab: 'law' });
-  if (s.books?.open && crew(s).some((c) => c.rank === 'associate' && c.proposedWeek === undefined && !c.specialty)) out.push({ kind: 'books', severity: 'info', title: 'The books are open', text: `Philadelphia will make ${s.books.slots} more of your men. Propose an associate.`, tab: 'tree' });
+  if (s.books?.open && crew(s).some((c) => c.rank === 'associate' && c.proposedWeek === undefined && !c.specialty && mayPropose(s, c))) out.push({ kind: 'books', severity: 'info', title: 'The books are open', text: `Philadelphia will make ${s.books.slots} more of your men. Propose an associate who made his bones.`, tab: 'tree' });
   if (s.heat.federal >= 70) out.push({ kind: 'heat', severity: 'danger', title: 'The feds are close', text: `Federal heat ${s.heat.federal}. At 80 they start making arrests.` });
   if (s.heat.local >= 70) out.push({ kind: 'heat', severity: 'warn', title: 'The cops are restless', text: `Local heat ${s.heat.local}. At 80 they raid.` });
   if (s.heat.family >= 70) out.push({ kind: 'heat', severity: 'danger', title: 'Philadelphia is angry', text: `Family heat ${s.heat.family}. At 80 they summon you.` });

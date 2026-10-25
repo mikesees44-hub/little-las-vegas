@@ -1,4 +1,5 @@
 import type { ActionPreview } from './actions';
+import { noteScore } from './ledgerbook';
 import { isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
@@ -608,6 +609,7 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
     case 'credit': {
       const k = s.characters[op.charId];
       if (k) addStory(s, k, `Took down a ${fmtMoney(op.amount)} score.`);
+      if (k) noteScore(ctx, k.id, op.amount, 'a big score');
       break;
     }
     case 'zone': {

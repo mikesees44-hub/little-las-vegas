@@ -37,10 +37,14 @@ import { addOpinion, decayAllRelations, opinion } from './relations';
 import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
 import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
+import { bonesEventSource, bonesWeek } from './bones';
+import { archiveWeek, ledgerWeek } from './ledgerbook';
+import { cloneLedgerBook } from './ledgerbookState';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
 registerEventSource(econEventSource);
+registerEventSource(bonesEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -73,8 +77,10 @@ function deepCopy(v: unknown): unknown {
 }
 
 export function cloneState(s: GameState): GameState {
-  const { chronicle, dynastyHistory, lastReport, news, pol, ...rest } = s;
+  const { chronicle, dynastyHistory, lastReport, news, pol, ledgerBook, ...rest } = s;
   const c = deepCopy(rest) as GameState;
+  // The books' archived weeks are immutable once written (see ledgerbookState.ts).
+  if (ledgerBook) c.ledgerBook = cloneLedgerBook(ledgerBook);
   // Politics shares its immutable people records and reserve rows (copy-on-write, see polState.ts).
   if (pol) c.pol = clonePol(pol);
   c.chronicle = chronicle.slice();
@@ -247,6 +253,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     underbellyWeek(ctx);
     officeWeek(s);
     regimesWeek(ctx);
+    bonesWeek(ctx);
+    ledgerWeek(ctx);
     factionsWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
@@ -303,6 +311,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   };
   const errs = reconcile(report);
   if (errs.length) throw new Error(`Ledger does not reconcile in week ${weekOf}: ${errs.join('; ')}`);
+  if (!s.gameOver) archiveWeek(s, report);
   s.lastReport = report;
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
   return { state: s, report, log: ctx.log };

@@ -1,4 +1,5 @@
 import { displayName, player } from './characters';
+import { booksEvidenceReasons } from './ledgerbook';
 import { politicalEvidence } from './polIntegrity';
 import { reached } from './history';
 import { heat, money, respect, type Ctx } from './ledger';
@@ -67,6 +68,7 @@ export function evidenceGain(s: GameState): { total: number; reasons: { label: s
   if (s.unwashed > 15000) reasons.push({ label: 'Dirty cash nobody can explain', value: 0.5 });
   if (s.edicts?.lowprofile) reasons.push({ label: 'Edict: low profile', value: -0.4 });
   reasons.push(...politicalEvidence(s));
+  reasons.push(...booksEvidenceReasons(s));
   let total = reasons.reduce((a, r) => a + r.value, 0);
   if (ricoActive(s) && total > 0) {
     reasons.push({ label: 'Racketeering law (RICO): the enterprise is the crime', value: total * 0.5 });

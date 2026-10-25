@@ -1,3 +1,4 @@
+import { bonesLine, mayPropose } from './bones';
 import { ageOn, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, makeCharacter } from './characters';
 import { CAPO_CUT } from './economy';
@@ -609,13 +610,13 @@ const vouch: CrewEventDef = {
   key: 'crew_vouch',
   cooldown: 5,
   weight: () => 3,
-  subjects: (s) => crew(s).filter((c) => c.rank === 'associate' && !c.specialty && !c.dynasty && available(s, c, 8) && c.proposedWeek === undefined && op(s, c, s.playerId) >= -10 && !!capoOf(s, c)),
+  subjects: (s) => crew(s).filter((c) => c.rank === 'associate' && !c.specialty && !c.dynasty && available(s, c, 8) && c.proposedWeek === undefined && mayPropose(s, c) && op(s, c, s.playerId) >= -10 && !!capoOf(s, c)),
   build: (s, c) => {
     const k = capoOf(s, c)!;
     const books = s.books;
     const label = `${k.firstName} vouches for ${c.firstName}`;
     return make(s, 'crew_vouch', c, `${callName(k)} vouches for ${c.firstName}`,
-      `${displayName(k)} wants to put up his associate ${displayName(c)} for membership. "I'll stand for him." If you agree, his name goes to Philadelphia — ${books?.open ? `the books are open (${books.slots} left)` : 'the books are closed right now, so he waits'}. If he ever goes bad, it is on ${k.firstName}.`,
+      `${displayName(k)} wants to put up his associate ${displayName(c)} for membership. "I'll stand for him."${c.bones?.length ? ` ${bonesLine(c.bones[0])}.` : ' Philadelphia did him a favor: he never made his bones.'} If you agree, his name goes to Philadelphia — ${books?.open ? `the books are open (${books.slots} left)` : 'the books are closed right now, so he waits'}. If he ever goes bad, it is on ${k.firstName}.`,
       [
         { id: 'propose', label: 'Send his name to Philadelphia', because: `proposed ${c.firstName} for membership`, effects: [{ type: 'propose', charId: c.id, voucherId: k.id, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 10, reason: 'Put my name up', decay: 1, label }, { type: 'opinion', from: k.id, to: s.playerId, amount: 4, reason: 'Listened to me about my guy', decay: 1, label }] },
         { id: 'check', label: 'Have him looked into first ($400, two weeks)', detail: 'Phone records, a cop who owes you. Plants and informants show up.', because: `ran a background check on ${c.firstName}`, effects: [{ type: 'money', amount: -400, label }, { type: 'checkBackground', charId: c.id, label }, { type: 'opinion', from: k.id, to: s.playerId, amount: -2, reason: 'Did not take my word', decay: 1, label }] },
