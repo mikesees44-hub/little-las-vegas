@@ -54,10 +54,16 @@ export function founderGenes(seed: string, id: string): Genes {
   return g;
 }
 
-export function genesOf(seed: string, c: Pick<Character, 'id' | 'fatherId' | 'motherId'>): Genes {
+/**
+ * A child's genes come from the REAL biological parents: when paternity is
+ * hidden (`bioFatherId`), the child looks like the man who fathered him, not
+ * the man whose name he carries.
+ */
+export function genesOf(seed: string, c: Pick<Character, 'id' | 'fatherId' | 'motherId' | 'bioFatherId'>): Genes {
   const own = founderGenes(seed, c.id);
-  if (!c.fatherId && !c.motherId) return own;
-  const f = c.fatherId ? founderGenes(seed, c.fatherId) : own;
+  const dad = c.bioFatherId ?? c.fatherId;
+  if (!dad && !c.motherId) return own;
+  const f = dad ? founderGenes(seed, dad) : own;
   const m = c.motherId ? founderGenes(seed, c.motherId) : own;
   const r = rng(hash(`${seed}:inherit:${c.id}`));
   const g = {} as Genes;

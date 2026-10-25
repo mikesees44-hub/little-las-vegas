@@ -11,6 +11,7 @@ import { addOpinion, opinion } from './relations';
 import { chance, pick, randInt, weightedPick } from './rng';
 import { rivalCaps } from './rivals';
 import type { Character, GameState, RivalId } from './types';
+import { awayActMult, awayCapoBias } from './travel';
 
 
 /**
@@ -55,6 +56,7 @@ function rivalTurf(s: GameState, k: Character): { d: string; r: RivalId } | unde
 export function capoActs(ctx: Ctx, k: Character): string | undefined {
   const s = ctx.s;
   const w = capoMoveWeights(s, k);
+  awayCapoBias(s, k, w);
   const moves = (Object.keys(w) as CapoMove[]).filter((m) => w[m] > 0);
   const m = weightedPick(s, moves, (x) => w[x]);
   const nm = displayName(k);
@@ -200,7 +202,7 @@ export function regimesWeek(ctx: Ctx): void {
   // Capos act on their own. One line per week makes the chronicle.
   let told = false;
   for (const k of capos(s)) {
-    if (!isFree(s, k) || !chance(s, 0.25)) continue;
+    if (!isFree(s, k) || !chance(s, 0.25 * awayActMult(s))) continue;
     const line = capoActs(ctx, k);
     if (line) {
       ctx.log.push(line);

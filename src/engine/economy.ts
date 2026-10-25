@@ -1,4 +1,5 @@
 import { econBusiness } from './econ';
+import { noteKick, tagLast } from './ledgerbook';
 import { perkMod } from './lifestyle';
 import { isInSeason, seasonMultiplier } from './calendar';
 import { CATALOG } from './catalog';
@@ -102,7 +103,10 @@ export function runEconomy(ctx: Ctx): void {
     const capo = d.capoId ? s.characters[d.capoId] : undefined;
     if (capo && isFree(s, capo) && capo.faction === 'player') continue;
     const amt = Math.round(d.streetBase * (infl / 100) * mult * NO_CAPO_EFFICIENCY * (s.edicts?.blitz ? 1.2 : 1));
-    if (amt > 0) gross += money(ctx, amt, `Street take: ${d.name} (no capo, ${infl}% of the action)`, 'street');
+    if (amt > 0) {
+      gross += money(ctx, amt, `Street take: ${d.name} (no capo, ${infl}% of the action)`, 'street');
+      tagLast(ctx, undefined, d.id);
+    }
   }
   // Street hustle by free soldiers & associates.
   gross += crewHustle(ctx, mult);
@@ -127,9 +131,10 @@ export function runEconomy(ctx: Ctx): void {
     const owed = take - capoShare;
     const skim = Math.round(owed * skimRate(s, capo));
     let kick = Math.round(owed - skim);
+    let held = 0;
     // A slow payer holds part of the winter envelope back ("the winter's slow, I'll make it up in the spring").
     if (!isInSeason(s.date) && kick > 0 && slow.has(capo.id)) {
-      const held = Math.round(kick * (firstWinter(s) ? FIRST_WINTER_HOLDBACK : SLOW_PAY_HOLDBACK));
+      held = Math.round(kick * (firstWinter(s) ? FIRST_WINTER_HOLDBACK : SLOW_PAY_HOLDBACK));
       kick -= held;
       capo.arrears = (capo.arrears ?? 0) + held;
       capo.wealth += held;
@@ -139,9 +144,11 @@ export function runEconomy(ctx: Ctx): void {
     if (skim > 0) capo.skimmed = (capo.skimmed ?? 0) + skim;
     if (kick > 0) {
       const k = money(ctx, kick, `Kick-up: ${shortName(capo)} (${d.name})`, 'kickup');
+      tagLast(ctx, capo.id, d.id);
       gross += k;
       dirty += k;
     }
+    noteKick(s, capo.id, d.id, owed, Math.max(0, kick), held, skim);
   }
   // In the season the slow payers make good what they held back.
   if (isInSeason(s.date)) {
@@ -152,6 +159,7 @@ export function runEconomy(ctx: Ctx): void {
       capo.arrears -= pay;
       capo.wealth -= pay;
       const k = money(ctx, pay, `Late kick-up: ${shortName(capo)} makes good on the winter`, 'kickup');
+      tagLast(ctx, capo.id, s.districts.find((x) => x.capoId === capo.id)?.id);
       gross += k;
       dirty += k;
     }
@@ -302,6 +310,7 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
     if (amt !== 0) {
       // A losing week (the book paid out) is a loss, not negative gross.
       const got = Math.max(0, money(ctx, Math.round(amt), label, 'business'));
+      tagLast(ctx, b.staffIds?.[0], b.id);
       gross += got;
       if (def.category === 'front') clean += got;
     }
@@ -358,7 +367,10 @@ export function crewWork(ctx: Ctx, mult: number): number {
     if (!men.length) continue;
     const base = men.reduce((a, m) => a + CREW_WORK[m.rank as 'soldier' | 'associate'], 0);
     const amt = Math.round(base * season * (0.9 + k.attributes.business / 500));
-    if (amt > 0) total += money(ctx, amt, `Crew work: ${shortName(k)}'s crew (${men.length} m${men.length > 1 ? 'en' : 'an'})`, 'kickup');
+    if (amt > 0) {
+      total += money(ctx, amt, `Crew work: ${shortName(k)}'s crew (${men.length} m${men.length > 1 ? 'en' : 'an'})`, 'kickup');
+      tagLast(ctx, k.id);
+    }
   }
   return total;
 }

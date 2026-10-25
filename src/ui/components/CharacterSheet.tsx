@@ -15,12 +15,16 @@ import type { Character, GameState } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { Portrait } from '../portrait/Portrait';
 import { Modal } from './Modal';
+import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
 import { Tip } from '../clarity/Tip';
+import { PowerFacts } from '../power/PowerFacts';
 import { fam } from '../../engine/familyState';
 import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
+import { Relationships } from './Relationships';
+import { BonesFacts } from '../books/BonesFacts';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -86,6 +90,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
                 </div>
               )}
               <div className="mt-1.5"><TraitIcons c={c} labels /></div>
+              {c.alive && !s.gameOver && <div className="mt-1.5"><TravelButton s={s} charId={c.id} /></div>}
             </div>
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
@@ -141,6 +146,8 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
         </div>
 
         <DynastyFacts s={s} c={c} />
+        <PowerFacts s={s} c={c} />
+        <BonesFacts s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} />}
 
         <section className="mt-3">
@@ -154,6 +161,8 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
             ))}
           </div>
         </section>
+
+        <Relationships s={s} c={c} />
 
         <section className="mt-3">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Secrets & hooks</div>

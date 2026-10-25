@@ -145,3 +145,16 @@ deterministic and reads the same previews the order cards show, so a tooltip can
 
 UI: `src/ui/clarity/*` (`WhyPanel`, `ChoiceWhy`, `CandidatePicker`, `PickerModal`, `AdvisorQuotes`, `Tip`, `WhatToDoPanel`,
 `GlossaryOverlay`, `TaskAdvice`; open a picker from anywhere with `useClarity().openPicker(role)`).
+## The story layer (content packs and romance)
+
+| File | What it does |
+|---|---|
+| `storyData*.ts` | Content pack 1 copied verbatim (162 events, 21 chains) in its neutral schema (`storyDataSchema.ts`; the `then` helper is renamed `thenFx` because a module exporting `then` is a thenable) |
+| `storyPacks.ts` | The registry: one entry per pack, merged into one table (colliding ids are namespaced `<pack>:<id>`, followups rewritten); each pack has a random-pool weight and a 52-week budget |
+| `storyPack.ts` | The adapter: triggers, casting (crew, family, rival boss/men, officials, townies created and reused, world-pack people by `worldId` when the population is present), placeholders, rival-boss names swapped for successors, Fx to engine Effects, chain followups as `pack:<event>` consequences. One candidate a week through `registerEventSource`: a due chain part, else a dated history beat, else (sometimes) a random event; chain parts and mandatory beats outrank crew decisions, random ones rank below them |
+| `romance.ts` | Orientation (fixed at birth), attraction, consent rolls with reasons, NPC courtships/lovers/affairs/marriages/endings, advances toward the boss, exposure and discovery, pregnancies with hidden paternity (`Character.bioFatherId`; portraits follow the real father), the boss's choice about his children, the truth coming out, separation and rare divorce |
+| `storyOps.ts` | The `storyOp` effect (secrets, romance changes, paternity decisions) |
+| `storyState.ts` | `GameState.story` and `GameState.romance` (optional; each on its own seeded stream) |
+
+To add a content pack: copy its files into flat `src/engine/storyData<Name>*.ts` and add one entry to `STORY_PACKS`.
+To cast world-pack people, the population layer calls `registerWorldMaterializer((s, worldId) => Character | undefined)`.

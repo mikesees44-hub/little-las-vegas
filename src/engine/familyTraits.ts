@@ -70,7 +70,8 @@ export function seedCongenital(s: GameState, c: Character): void {
  */
 export function processNewborn(s: GameState, child: Character, goodMult: number, badMult: number): FamPerson {
   const d = ensureDynState(s);
-  const father = child.fatherId ? s.characters[child.fatherId] : undefined;
+  const fid = child.bioFatherId ?? child.fatherId;
+  const father = fid ? s.characters[fid] : undefined;
   const mother = child.motherId ? s.characters[child.motherId] : undefined;
   const p = famMut(s, child.id);
   p.congenital = inheritCongenital(d, father ? fam(s, father.id).congenital : [], mother ? fam(s, mother.id).congenital : [], goodMult, badMult);

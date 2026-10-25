@@ -152,10 +152,25 @@ function funeralEvent(s: GameState, dead: Character, cause: string): EventInstan
  * event, writes dynasty history, and if the player died applies the
  * succession law and switches control to the heir (or ends the game).
  */
+/**
+ * Other layers that need to hear about every death (politics: vacant seats).
+ * They are also how the one death function reaches people who are not engine
+ * characters (the world population): `character` is then undefined.
+ */
+export type DeathHandler = (ctx: Ctx, id: string, cause: string, character?: Character) => void;
+const DEATH_HANDLERS: DeathHandler[] = [];
+export function registerDeathHandler(fn: DeathHandler): void {
+  if (!DEATH_HANDLERS.includes(fn)) DEATH_HANDLERS.push(fn);
+}
+
 export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: FactionId): Character | undefined {
   const s = ctx.s;
   const c = s.characters[charId];
-  if (!c || !c.alive) return undefined;
+  if (!c) {
+    for (const h of DEATH_HANDLERS) h(ctx, charId, cause);
+    return undefined;
+  }
+  if (!c.alive) return undefined;
   c.alive = false;
   c.death = { week: s.week, date: { ...s.date }, cause, killer };
   const ageAt = age(s, c);
@@ -189,6 +204,7 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
   else if (c.faction === 'player' && (c.rank === 'capo' || c.rank === 'underboss')) promoteReplacement(ctx, c);
   // His regime goes to whoever replaced him (or is spread among the other capos).
   tidyRegimes(s);
+  for (const h of DEATH_HANDLERS) h(ctx, charId, cause, c);
   return c;
 }
 
