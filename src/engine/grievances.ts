@@ -289,7 +289,7 @@ export function buildOpenDisagreement(s: GameState, g: Grievance, c: Character):
     iid: `ev${s.nextId++}`, defId: 'power_grievance', week: s.week, mandatory: false, priority: 64,
     title: `${c.firstName} says it to your face`,
     text: `${displayName(c)}, in front of ${g.public ? 'half the club' : 'the consigliere'}: "${winner ? `${winner.firstName} got ${g.postLabel}` : `Somebody else got ${g.postLabel}`}. I have been here longer and I have done more. I want to know why." (${STAGE_NAMES[g.stage]}.)`,
-    defaultChoiceId: 'explain', meta: { who: c.id, grievance: g.id, crew: 1 }, actors: [c.id],
+    defaultChoiceId: 'explain', meta: { who: c.id, charId: c.id, grievance: g.id, crew: 1 }, actors: [c.id],
     choices: [
       { id: 'amends', label: `Make it right (${'$' + cost.toLocaleString('en-US')})`, detail: 'An envelope and an apology. The grievance is settled.', because: `made amends to ${c.firstName}`, effects: [{ type: 'money', amount: -cost, label }, op('amends')] },
       { id: 'share', label: 'Give him a piece of something', detail: 'A bigger end of his district: he keeps 5% more.', because: `gave ${c.firstName} a bigger end`, effects: [op('share')] },

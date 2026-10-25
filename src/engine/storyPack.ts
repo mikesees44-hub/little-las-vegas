@@ -10,6 +10,7 @@ import { gateLabel, type Fx, type Option, type PackEvent, type RoleSpec, type Sp
 import { ALL_BY_ID as EVENTS_BY_ID, ALL_CHAINS as CHAINS, ALL_EVENTS as EVENTS, PACK_DEFS, PACK_OF, STORY_PACKS } from './storyPacks';
 import { ensureStory, type StoryState } from './storyState';
 import { FACTION_NAMES, RIVALS } from './world';
+import { packTheme, themeFactor, themeShares } from './storyDirector';
 import type { Character, Choice, Effect, EventInstance, FactionId, GameState, RivalId, ScheduledConsequence } from './types';
 
 /**
@@ -42,8 +43,8 @@ const PRIORITY_MANDATORY = 60;
 const PRIORITY_CHAIN = 52;
 const PRIORITY_RANDOM = 40;
 /** Weeks between two random-pool pack events, and the weekly chance after that. */
-export const RANDOM_GAP = 3;
-export const RANDOM_CHANCE = 0.4;
+export const RANDOM_GAP = 2;
+export const RANDOM_CHANCE = 0.55;
 /** A chain part that cannot be cast for this long is dropped (the chain ends). */
 const DUE_MAX_WAIT = 16;
 /** The first year: random pack events come less often and their costs are halved. */
@@ -443,7 +444,9 @@ export function mapFx(s: GameState, e: PackEvent, b: Bound, fx: Fx, carried: Rec
   switch (fx.k) {
     case 'money':
       // The first season the house is still finding its feet: the pack's bills come in at half.
-      return [{ type: 'money', amount: fx.amount < 0 && s.week <= FIRST_YEAR ? Math.round(fx.amount / 2 / 50) * 50 : fx.amount }];
+      // Each pack can also scale its bills to the engine's economy (`costScale`, storyPacks.ts).
+      if (fx.amount >= 0) return [{ type: 'money', amount: fx.amount }];
+      return [{ type: 'money', amount: Math.round((fx.amount * (PACK_DEFS[PACK_OF[e.id]]?.costScale ?? 1) * (s.week <= FIRST_YEAR ? 0.5 : 1)) / 50) * 50 }];
     case 'respect': return [{ type: 'respect', amount: fx.amount }];
     case 'heat': return [{ type: 'heat', bar: fx.bar, amount: fx.amount }];
     case 'opinion': {
@@ -644,13 +647,24 @@ export function storyEventSource(s: GameState): EventInstance | undefined {
     const ev = buildPackEvent(s, e);
     if (ev) return ev;
   }
-  // 3. The random pool, now and then.
-  if (s.week < 6 || s.week - st.lastRandom < (s.week <= FIRST_YEAR ? RANDOM_GAP * 2 : RANDOM_GAP)) return undefined;
-  if (rand(st) > (s.week <= FIRST_YEAR ? RANDOM_CHANCE / 2 : RANDOM_CHANCE)) return undefined;
+  return undefined;
+}
+
+/**
+ * The random pool, now and then: its own candidate, so a running chain does
+ * not crowd new stories out. Weighted by the pack's weight and by the story
+ * director's theme mix (a starved theme's events come forward).
+ */
+export function storyPoolSource(s: GameState): EventInstance | undefined {
+  if (s.gameOver) return undefined;
+  const st = ensureStory(s);
+  if (s.week < 5 || s.week - st.lastRandom < (s.week <= FIRST_YEAR ? RANDOM_GAP + 1 : RANDOM_GAP)) return undefined;
+  if (rand(st) > (s.week <= FIRST_YEAR ? RANDOM_CHANCE * 0.8 : RANDOM_CHANCE)) return undefined;
   const spent = packSpend(s, st);
+  const shares = themeShares(s);
   const pool = EVENTS.filter((e) => !e.trigger.mandatory && (spent[PACK_OF[e.id]] ?? 0) < (PACK_DEFS[PACK_OF[e.id]]?.budget ?? 99) && poolEligible(s, e, st));
   for (let tries = 0; tries < 3 && pool.length; tries++) {
-    const e = weightedPick(st, pool, (x) => (x.trigger.weight ?? 10) * (PACK_DEFS[PACK_OF[x.id]]?.weight ?? 1));
+    const e = weightedPick(st, pool, (x) => (x.trigger.weight ?? 10) * (PACK_DEFS[PACK_OF[x.id]]?.weight ?? 1) * themeFactor(s, packTheme(x), shares));
     if (!e) break;
     const ev = buildPackEvent(s, e);
     if (ev) return ev;

@@ -11,6 +11,7 @@ import { factionPower } from './crewlife';
 import { FACTION_NAMES } from './world';
 import type { Effect, RivalId, ScheduledConsequence } from './types';
 import { CREW_HANDLERS } from './crewConsequences';
+import { VARIANT_HANDLERS } from './crewVariants';
 import { addStory, bumpStat, giveBio, tidyRegimes } from './hierarchy';
 import { defectTo } from './regimes';
 import { maybePlant } from './rivalcrew';
@@ -28,6 +29,7 @@ type Handler = (ctx: Ctx, sc: ScheduledConsequence) => { text: string; effects?:
 
 const HANDLERS: Record<string, Handler> = {
   ...CREW_HANDLERS,
+  ...VARIANT_HANDLERS,
   shakedown_complaint: () => ({ text: 'a bar owner complained to the Herald', effects: [{ type: 'heat', bar: 'local', amount: 5 }] }),
   cops_flip: () => ({ text: 'a patrolman talked to a reporter about the Chief\'s envelope', effects: [{ type: 'heat', bar: 'local', amount: 9 }, { type: 'respect', amount: -1 }] }),
   parish_blessing: () => ({ text: 'Father Callahan praised you at the Feast of the Assumption', effects: [{ type: 'respect', amount: 2 }, { type: 'heat', bar: 'local', amount: -3 }] }),

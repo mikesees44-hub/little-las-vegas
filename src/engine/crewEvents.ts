@@ -9,6 +9,7 @@ import { getRelation, opinion } from './relations';
 import { chance, pick, randInt, shuffle, weightedPick } from './rng';
 import { needsSanction, sanctioned } from './schemes';
 import { FACTION_NAMES } from './world';
+import { freshness } from './storyDirector';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -29,8 +30,8 @@ export interface CrewEventDef {
   build: (s: GameState, c: Character) => EventInstance | undefined;
 }
 
-const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
-const r100 = (n: number) => Math.max(100, Math.round(n / 100) * 100);
+export const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+export const r100 = (n: number) => Math.max(100, Math.round(n / 100) * 100);
 
 /** "Leo 'Two Times'" — first name and nickname, for running text. */
 export function callName(c: Character): string {
@@ -41,23 +42,23 @@ function iid(s: GameState): string {
   return `ev${s.nextId++}`;
 }
 
-function make(s: GameState, defId: string, c: Character, title: string, text: string, choices: Choice[], def: string, actors: string[] = [], priority = 48): EventInstance {
+export function make(s: GameState, defId: string, c: Character, title: string, text: string, choices: Choice[], def: string, actors: string[] = [], priority = 48): EventInstance {
   return {
     iid: iid(s), defId, week: s.week, mandatory: false, priority, title, text, choices, defaultChoiceId: def,
     meta: { charId: c.id, crew: 1 }, actors: [c.id, ...actors.filter((a) => a !== c.id)].slice(0, 3),
   };
 }
 
-function op(s: GameState, a: Character, b: Character | string): number {
+export function op(s: GameState, a: Character, b: Character | string): number {
   return opinion(s, a.id, typeof b === 'string' ? b : b.id);
 }
 
-function mobRivals(s: GameState) {
+export function mobRivals(s: GameState) {
   return s.rivals.filter((r) => r.kind === 'mob' && s.characters[r.leaderId]?.alive);
 }
 
 /** A rival with a foothold in a district, and that district. */
-function rivalFoothold(s: GameState, prefer?: string): { rival: RivalId; district: string } | undefined {
+export function rivalFoothold(s: GameState, prefer?: string): { rival: RivalId; district: string } | undefined {
   const opts: { rival: RivalId; district: string; w: number }[] = [];
   for (const d of s.districts) {
     for (const r of mobRivals(s)) {
@@ -70,7 +71,7 @@ function rivalFoothold(s: GameState, prefer?: string): { rival: RivalId; distric
 
 let menMemo: { s: GameState; list: Character[] } | undefined;
 
-function men(s: GameState): Character[] {
+export function men(s: GameState): Character[] {
   if (menMemo && menMemo.s === s) return menMemo.list;
   return crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate' || c.rank === 'capo') && !c.specialty);
 }
@@ -338,7 +339,7 @@ const DISPUTES = [
   'a corner on the boardwalk both say they were promised', 'a debt one says the other never paid back', 'who gets the Crest motels for the summer',
 ];
 
-function disputePair(s: GameState): [Character, Character] | undefined {
+export function disputePair(s: GameState): [Character, Character] | undefined {
   const pool = men(s).filter((c) => available(s, c, 4) && c.rank !== 'associate' && subjectOk(s, 'crew_dispute', c.id));
   let best: [Character, Character] | undefined;
   let worst = 8;
@@ -658,36 +659,52 @@ const SCORES = [
   'bought a load of nylons off a Navy man and sold them on the boardwalk',
 ];
 
-const score: CrewEventDef = {
-  key: 'crew_score',
-  cooldown: 2,
-  weight: (s) => 4 + seasonMultiplier(s.date),
-  subjects: (s) => men(s).filter((c) => available(s, c) && c.rank !== 'capo' && (c.craft === 'earner' || c.craft === 'burglar' || c.craft === 'driver' || c.craft === 'bookmaker' || c.attributes.business >= 50 || hasTrait(c, 'Gambler'))),
-  build: (s, c) => {
-    const what = pick(s, SCORES);
-    const total = r100((2500 + randInt(s, 0, 3500)) * Math.max(0.7, seasonMultiplier(s.date) / 1.6));
-    const end = r100(total * 0.5);
-    const k = capoOf(s, c);
-    const label = `${c.firstName}'s score`;
-    return make(s, 'crew_score', c, `${callName(c)} made a score`,
-      `${displayName(c)} ${what}: ${fmt(total)}. He comes by the Shamrock with your end in an envelope${k ? ` — ${k.firstName} already took his` : ''}. Some bosses take it all.`,
-      [
-        { id: 'end', label: `Take your end (${fmt(end)})`, because: `took your end of ${c.firstName}'s score`, effects: [{ type: 'money', amount: end, label }, { type: 'wealth', charId: c.id, amount: total - end, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 3, reason: 'Fair about my score', decay: 1, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
-        { id: 'keep', label: 'Let him keep it this time', because: `let ${c.firstName} keep his score`, effects: [{ type: 'wealth', charId: c.id, amount: total, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: 'Let me keep my score', decay: 1, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
-        { id: 'all', label: `Take all of it (${fmt(total)})`, because: `took all of ${c.firstName}'s score`, effects: [{ type: 'money', amount: total, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: -14, reason: 'Took my whole score', decay: 1, label }, { type: 'meter', from: c.id, to: s.playerId, meter: 'grievance', amount: 12, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
-      ], 'end', k ? [k.id] : [], 46);
-  },
-};
+/**
+ * The score, in several shapes: each its own template (the story director
+ * caps each one), with the same three answers. The take scales with the season.
+ */
+function scoreDef(key: string, whats: string[], title: (nm: string) => string, weight: (s: GameState) => number): CrewEventDef {
+  return {
+    key,
+    cooldown: 2,
+    weight,
+    subjects: (s) => men(s).filter((c) => available(s, c) && c.rank !== 'capo' && (c.craft === 'earner' || c.craft === 'burglar' || c.craft === 'driver' || c.craft === 'bookmaker' || c.attributes.business >= 50 || hasTrait(c, 'Gambler'))),
+    build: (s, c) => {
+      const what = pick(s, whats);
+      const total = r100((2500 + randInt(s, 0, 3500)) * Math.max(0.7, seasonMultiplier(s.date) / 1.6));
+      const end = r100(total * 0.5);
+      const k = capoOf(s, c);
+      const label = `${c.firstName}'s score`;
+      return make(s, key, c, title(callName(c)),
+        `${displayName(c)} ${what}: ${fmt(total)}. He comes by the Shamrock with your end in an envelope${k ? ` — ${k.firstName} already took his` : ''}. Some bosses take it all.`,
+        [
+          { id: 'end', label: `Take your end (${fmt(end)})`, because: `took your end of ${c.firstName}'s score`, effects: [{ type: 'money', amount: end, label }, { type: 'wealth', charId: c.id, amount: total - end, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 3, reason: 'Fair about my score', decay: 1, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
+          { id: 'keep', label: 'Let him keep it this time', because: `let ${c.firstName} keep his score`, effects: [{ type: 'wealth', charId: c.id, amount: total, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: 'Let me keep my score', decay: 1, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
+          { id: 'all', label: `Take all of it (${fmt(total)})`, because: `took all of ${c.firstName}'s score`, effects: [{ type: 'money', amount: total, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: -14, reason: 'Took my whole score', decay: 1, label }, { type: 'meter', from: c.id, to: s.playerId, meter: 'grievance', amount: 12, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
+        ], 'end', k ? [k.id] : [], 46);
+    },
+  };
+}
 
-/* ------------------------------------------------------------------ */
-/* Registry and the weekly pick                                        */
-/* ------------------------------------------------------------------ */
+const score = scoreDef('crew_score', SCORES, (nm) => `${nm} made a score`, (s) => 4 + seasonMultiplier(s.date) / 2);
+const SCORE_SHAPES: CrewEventDef[] = [
+  scoreDef('score_number', ['hit the number at three hundred to one with a dime on a number his grandmother dreamed', 'cashed a numbers slip a dead uncle left in his good suit'], (nm) => `${nm} hit the number`, () => 3.4),
+  scoreDef('score_salvage', ['found a sunk rumrunner\'s cargo off Hereford Inlet: forty cases of 1928 Canadian whiskey', 'bought a wrecked freighter\'s cargo at a salvage auction and sold it back to the shipping line'], (nm) => `${nm} found something in the water`, (s) => 2.6 + seasonMultiplier(s.date) / 3),
+  scoreDef('score_fight', ['had a piece of a fighter at the Arena in Philadelphia who was supposed to lose and did not', 'booked the Friday fights at Convention Hall and the gate came in big'], (nm) => `${nm} had a piece of the fight`, () => 3.2),
+  scoreDef('score_lot', ['flipped a bayside lot to a motel developer for three times what he paid', 'sold a marsh lot in West Wildwood to a man from Pittsburgh who never saw it'], (nm) => `${nm} sold a piece of land`, () => 3),
+  scoreDef('score_tourist', ['sold four hundred souvenir Miss America programs printed in his cousin\'s basement', 'ran a guess-your-weight stand on the boardwalk with a scale that guessed for the house'], (nm) => `${nm} worked the tourists`, (s) => (seasonMultiplier(s.date) > 1 ? 4 : 0.6)),
+];
 
 export const CREW_EVENTS: CrewEventDef[] = [
   takeRacket, ownBar, biggerCut, promotion, hitPermission, loanRequest, kidHelp, regimeRequest,
   crewDispute, pinched, wifeTalking, rivalDebt, barBeef, mistress, heartAttack, retirement,
-  wedding, christening, sonWantsIn, vouch, courted, score,
+  wedding, christening, sonWantsIn, vouch, courted, score, ...SCORE_SHAPES,
 ];
+
+/** More crew decisions from other files (crewVariants.ts): appended to the registry. */
+export function registerCrewEvents(defs: CrewEventDef[]): void {
+  for (const d of defs) if (!CREW_EVENTS.some((x) => x.key === d.key)) CREW_EVENTS.push(d);
+}
 
 export function eventCooldownOk(s: GameState, key: string, cooldown: number): boolean {
   return s.week - (s.eventCooldowns?.[key] ?? -999) >= cooldown;
@@ -705,7 +722,7 @@ export function markShown(s: GameState, ev: EventInstance): void {
   s.eventCooldowns[ev.defId] = s.week;
   if (ev.meta?.charId) s.eventCooldowns[`${ev.defId}:${ev.meta.charId}`] = s.week;
   // A dispute is about a pair: neither man brings the same kind of fight back soon.
-  if (ev.defId === 'crew_dispute') for (const id of ev.actors ?? []) s.eventCooldowns[`${ev.defId}:${id}`] = s.week;
+  if (ev.defId === 'crew_dispute' || ev.meta?.pair) for (const id of ev.actors ?? []) s.eventCooldowns[`${ev.defId}:${id}`] = s.week;
   for (const id of ev.actors ?? []) {
     const c = s.characters[id];
     if (c && c.faction === 'player') {
@@ -731,13 +748,13 @@ export function pruneCooldowns(s: GameState): void {
 export function pickCrewEvents(s: GameState, n: number): EventInstance[] {
   const out: EventInstance[] = [];
   const used = new Set<string>();
-  let pool = CREW_EVENTS.filter((d) => eventCooldownOk(s, d.key, d.cooldown));
+  let pool = CREW_EVENTS.filter((d) => eventCooldownOk(s, d.key, d.cooldown) && freshness(s, d.key) > 0);
   menMemo = { s, list: men(s) };
   const subjectsOf = new Map(pool.map((d) => [d, d.subjects(s).filter((c) => subjectOk(s, d.key, c.id))]));
   menMemo = undefined;
   for (let tries = 0; out.length < n && pool.length && tries < 12; tries++) {
     const cands = pool.map((d) => ({ d, subs: (subjectsOf.get(d) ?? []).filter((c) => !used.has(c.id)) })).filter((x) => x.subs.length);
-    const pickd = weightedPick(s, cands, (x) => x.d.weight(s));
+    const pickd = weightedPick(s, cands, (x) => x.d.weight(s) * freshness(s, x.d.key));
     if (!pickd) break;
     pool = pool.filter((d) => d !== pickd.d);
     const subj = pickd.subs.length > 1 && chance(s, 0.35) ? pickd.subs[1] : pickd.subs[0];

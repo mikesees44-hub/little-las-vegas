@@ -239,7 +239,8 @@ export function regimesWeek(ctx: Ctx): void {
         if (c.story?.[c.story.length - 1]?.text !== line) addStory(s, c, line);
         c.courtedBy = undefined;
         if (c.debtTo) c.debtTo.week = s.week + 8;
-      } else if (weeks >= 6 && op < (c.rank === 'capo' ? 0 : 10) && opinion(s, c.id, s.rivals.find((r) => r.id === c.courtedBy!.rival)?.leaderId ?? '') > op && chance(s, c.rank === 'capo' ? 0.05 : 0.08)) {
+      } else if (weeks >= 6 && op < (c.rank === 'capo' ? 0 : 10) && opinion(s, c.id, s.rivals.find((r) => r.id === c.courtedBy!.rival)?.leaderId ?? '') > op && chance(s, (c.rank === 'capo' ? 0.05 : 0.08) + (weeks - 6) * (c.rank === 'capo' ? 0.005 : 0.01))) {
+        // The longer a rival courts an unhappy man, the likelier he goes.
         const rid = c.courtedBy.rival;
         defectTo(ctx, c, rid, 'courted');
         continue;
