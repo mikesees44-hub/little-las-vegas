@@ -82,10 +82,10 @@ export function tributeWeek(ctx: Ctx): void {
   if (rep && rep.week === s.week && !rep.talk.length) {
     for (const cl of rep.crews) {
       const k = s.characters[cl.capoId];
-      if (!k || cl.due <= 200 || t.disputes.some((d) => d.capoId === k.id && d.status === 'open')) continue;
-      const genuine = (cl.v ?? 1) < 0.8;
+      if (!k || cl.due <= 120 || t.disputes.some((d) => d.capoId === k.id && d.status === 'open')) continue;
+      const genuine = (cl.v ?? 1) < 0.85;
       const greedy = hasTrait(k, 'Greedy') && (k.keep ?? 0.3) < 0.3;
-      if ((genuine || greedy) && rand(t) < (genuine ? 0.18 : 0.08)) {
+      if ((genuine || greedy) && rand(t) < (genuine ? 0.3 : 0.12)) {
         const amount = Math.round((cl.due * (0.1 + rand(t) * 0.15)) / 10) * 10;
         const claims = genuine
           ? ['The boardwalk was rained out three days; you assessed me on a normal week.', 'Half my corner was boarded up for the fire inspector. The number is a summer number.', 'Two of my guys were in the hospital. You counted them like they were working.']

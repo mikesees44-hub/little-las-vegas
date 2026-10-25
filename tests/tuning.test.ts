@@ -52,7 +52,8 @@ describe('Rise to Power', () => {
   it('the men earn steadily through their capos, in and out of season', () => {
     let s = newGameWith('risework', 'rise');
     const weeks: number[] = [];
-    s = play(s, 40, (r) => { weeks.push(r.report.lines.filter((l) => l.label.startsWith('Crew work')).reduce((a, l) => a + l.amount, 0)); });
+    // Crew work now comes up through the capos in the underboss's envelope (tribute.ts): read it from the week's report.
+    s = play(s, 40, (r) => { const rep = r.state.tribute!.reports.find((x) => x.week === r.report.week); weeks.push((rep?.sources ?? []).filter((x) => x.label.startsWith('Crew work')).reduce((a, x) => a + x.amount, 0)); });
     expect(weeks.slice(0, 10).every((x) => x > 0)).toBe(true);
     expect(weeks.slice(20, 40).filter((x) => x > 0).length).toBeGreaterThan(15); // the winter too
     // The classic house has no crew-work line.

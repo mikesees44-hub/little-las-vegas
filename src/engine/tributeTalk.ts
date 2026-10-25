@@ -29,6 +29,7 @@ export function spoken(v: number): string {
   if (n < 100) return `${numWord(n)} dollars`;
   if (n < 1000) {
     const r = Math.round(n / 50) * 50;
+    if (r === 100) return 'a hundred';
     return r % 100 ? `${numWord(Math.floor(r / 100))}-fifty` : `${numWord(r / 100)} hundred`;
   }
   if (n < 10000) {
