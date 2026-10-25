@@ -148,8 +148,11 @@ describe('economy pillar: managers and the ledger', () => {
       if (!m) break; // fired by an event: fine
       const skim = m.skimmed - skimBefore;
       const line = r.report.lines.find((x) => x.label === `Business: ${b.name}`);
+      // A popup answered this week can move the district's control before the ledger runs (a choice with an
+      // influence chip): the take is then the one for the state the economy actually ran on.
+      const takeAfter = expectedTake(s, s.businesses.find((x) => x.id === b.id) ?? b);
       if (take > 0 && line) {
-        expect(line.amount + skim).toBe(take);
+        expect([take, takeAfter]).toContain(line.amount + skim);
         expect(skim).toBeGreaterThan(0);
       }
       total += skim;

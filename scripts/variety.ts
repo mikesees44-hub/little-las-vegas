@@ -203,7 +203,7 @@ const games: GameStat[] = [];
 for (let g = 0; g < GAMES; g++) {
   const r = playOne(g);
   games.push(r);
-  console.log(`game ${String(g).padStart(2)}: popups ${String(r.popups).padStart(3)}  ids ${String(r.distinctIds).padStart(3)} (${pct(r.distinctIds / Math.max(1, r.popups))})  titles ${String(r.distinctTitles).padStart(3)}  rep8 ${pct(r.rep8)}  rep26 ${pct(r.rep26)}  max ${r.maxTemplate}x ${r.maxTemplateId}  | texts ${r.texts} skel ${r.skels}  txt-rep26 ${pct(r.rep26Text)} skel-rep26 ${pct(r.rep26Skel)}  max-skel ${r.maxSkel}x`);
+  console.log(`game ${String(g).padStart(2)}: popups ${String(r.popups).padStart(3)}  ids ${String(r.distinctIds).padStart(3)} (${pct(r.distinctIds / Math.max(1, r.popups))})  titles ${String(r.distinctTitles).padStart(3)}  rep8 ${pct(r.rep8)}  rep26 ${pct(r.rep26)}  max ${r.maxTemplate}x ${r.maxTemplateId}  | texts ${r.texts} skel ${r.skels}  txt-rep26 ${pct(r.rep26Text)} skel-rep26 ${pct(r.rep26Skel)}  max-skel ${r.maxSkel}x${r.maxSkel > 2 ? ` (${r.maxSkelText.replace(/\n/g, " | ").slice(0, 70)})` : ""}`);
 }
 const avg = (f: (g: GameStat) => number) => games.reduce((a, g) => a + f(g), 0) / games.length;
 const total: Record<string, number> = {};

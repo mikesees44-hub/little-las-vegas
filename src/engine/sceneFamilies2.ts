@@ -274,6 +274,60 @@ registerFamily({
 });
 
 /* ------------------------------------------------------------------ */
+/* The Table sits: a ruling panel, never in the same room twice        */
+/* ------------------------------------------------------------------ */
+
+const TABLE_ROOMS = [
+  'A private room above a Ninth Street restaurant.',
+  'The back room of a social club on Passyunk Avenue, the shades down, a television on with the sound off.',
+  'A farmhouse in Chester County with the cows looking in, because the old men no longer trust the city.',
+  'The banquet room of a closed catering hall in South Philadelphia, chairs stacked against the wall.',
+  'A hunting cabin in the Poconos, a fire going, three cars parked facing the road.',
+  'The upstairs of a bakery in the Italian Market, the smell of bread and the ovens going below.',
+  'A suite at a motor lodge on Route 1, the television turned up for the ball game.',
+  'A boat anchored in the Delaware off Essington, the men in windbreakers, nobody seasick yet.',
+  'The rectory dining room of a parish whose pastor is somebody\'s cousin, the crucifix watching.',
+  'A restaurant in Atlantic City closed for a "private party," every table but one empty.',
+  'The back office of a vending company in Camden, the jukeboxes waiting for repair along the wall.',
+  'A summer house on Longport\'s bay side, the boat lifts creaking, the screens full of moths.',
+];
+
+registerFamily({
+  id: 'hearing',
+  match: (ev) => ev.defId === 'hearing' && ev.text.startsWith('A private room above a Ninth Street restaurant.'),
+  scenes: TABLE_ROOMS.map((room): Scene => ({
+    title: () => 'The Table sits',
+    text: (c) => c.ev.text.replace('A private room above a Ninth Street restaurant.', `${room}${c.war ? ` With the ${c.war} business on, every man was searched at the door.` : ''}`),
+  })),
+});
+
+/* ------------------------------------------------------------------ */
+/* A dispute is brought to the Table: how the word arrives             */
+/* ------------------------------------------------------------------ */
+
+const DISPUTE_WORD: [string, string][] = [
+  ['', 'Sal Moretti will hear it in two weeks. Until then, the members can be talked to.'],
+  ['A lawyer from Philadelphia who represents nobody in particular calls the Shamrock to read it to you, slowly.', 'The hearing is in two weeks. Every member of the Table can be visited between now and then, he adds, and hangs up.'],
+  ['Sal Moretti\'s driver brings it on a folded sheet of hotel stationery.', 'Two weeks, the note ends. "Talk to whoever you need to talk to."'],
+  ['You hear it first at a wake in South Philadelphia, from a man who should not have told you.', 'By the time the official word comes, you have two weeks and a list of the men who vote.'],
+  ['The word comes the old way: an old man at the Elks leans over the pinochle table and says it without looking up.', 'The Table sits in two weeks. In two weeks a lot of dinners can be eaten.'],
+  ['A priest who hears confessions for half of Philadelphia carries the message, which is how you know it is serious.', 'Two weeks to the hearing. The members have been told to keep their doors open.'],
+  ['The bagman delivers it with the envelope receipt, as if it were part of the bill.', 'Two weeks, he says. "Bring your friends. Bring your arguments. Bring cash, it never hurts."'],
+  ['It is in the back of a racing form left on your car seat at the track, circled in red.', 'The Table will hear it in two weeks. Until then, everybody who votes can be reached.'],
+  ['Your consigliere comes back from Philadelphia gray in the face with the news.', 'The hearing is in two weeks, he says. "We have that long to change some minds."'],
+  ['A telegram, of all things, to the Shamrock: NEED TO SEE YOU STOP TABLE STOP. Then a phone call that explains it.', 'Two weeks. The members are expecting visits.'],
+];
+
+registerFamily({
+  id: 'dispute_raised',
+  match: (ev) => ev.defId === 'dispute_raised' && ev.text.includes(' Sal Moretti will hear it'),
+  scenes: DISPUTE_WORD.map(([open, tail]): Scene => ({
+    title: () => 'A dispute is brought to the Table',
+    text: (c) => `${open ? `${open} ` : ''}${c.ev.text.slice(0, c.ev.text.indexOf(' Sal Moretti will hear it'))} ${tail}`,
+  })),
+});
+
+/* ------------------------------------------------------------------ */
 /* The opening of a reign                                              */
 /* ------------------------------------------------------------------ */
 

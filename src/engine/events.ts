@@ -900,13 +900,13 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
     }
     // The same man never brings two things in one week (mandatory events always fit).
     const clash = !ev.mandatory && !!ev.meta?.crew && (ev.actors ?? []).some((a) => actors.has(a));
-    if (out.length < MAX_POPUPS && (ev.mandatory || optShown < optional) && !(fam && family >= MAX_FAMILY_POPUPS) && !clash && !themeFull(ev, out)) {
+    if (out.length < MAX_POPUPS && (ev.mandatory || !!ev.meta?.asked || optShown < optional) && !(fam && family >= MAX_FAMILY_POPUPS) && !clash && !themeFull(ev, out)) {
       out.push(ev);
       if (!ev.mandatory) optShown++;
       if (fam) family++;
       for (const a of ev.actors ?? []) actors.add(a);
       markShown(s, ev);
-    } else if (ev.mandatory) s.eventQueue.push(ev);
+    } else if (ev.mandatory || ev.meta?.asked) s.eventQueue.push(ev);
     else if (ev.defId.startsWith('deal_')) s.eventQueue.push(ev);
   }
   // Each recurring popup is told as a scene not shown yet this game (sceneVariants.ts).
