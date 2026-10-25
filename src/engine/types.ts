@@ -862,6 +862,8 @@ export interface GameState {
   bones?: BonesState;
   /** The boss's private ledger (optional for old saves). */
   ledgerBook?: LedgerBookState;
+  /** The Empire Designer: properties, buildings, venues, staff, supplies (empireState.ts; optional for old saves). */
+  empire?: import('./empireState').EmpireState;
 }
 
 export interface PlayerChoices {
