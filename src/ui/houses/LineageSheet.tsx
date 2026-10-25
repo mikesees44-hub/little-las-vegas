@@ -1,6 +1,7 @@
 import { HOUSE_TYPE_LABEL } from '../../engine/houses';
 import { deathLine, fullName, lifespan, node } from '../../engine/housesView';
 import type { GameState } from '../../engine/types';
+import { getPerson } from '../../engine/polPeople';
 import { Modal } from '../components/Modal';
 import { HouseCrest } from './Crest';
 import { FamilySection } from './FamilySection';
@@ -14,6 +15,8 @@ export function LineageSheet({ s, id, onClose }: { s: GameState; id: string; onC
   if (!n) return null;
   const h = n.house ? s.lineage?.houses[n.house] : undefined;
   const dl = deathLine(s, n);
+  // People of the world pack (politicians, judges, entertainers) are also in the island's population.
+  const w = !/^L\d/.test(id) ? getPerson(s, id) : undefined;
   return (
     <Modal onClose={onClose} wide>
       <div className="p-4 sm:p-5" data-testid="character-sheet">
@@ -31,7 +34,12 @@ export function LineageSheet({ s, id, onClose }: { s: GameState; id: string; onC
               <div className="mt-0.5 text-xs text-stone-400">{lifespan(s, n)}{n.born ? ` · born in ${n.born}` : ''}</div>
               {dl && <div className="text-xs text-stone-300">{dl}</div>}
               {n.note && <div className="text-xs text-stone-400">{n.note}.</div>}
-              {n.alive && <div className="mt-1 text-[11px] text-stone-500">Lives off the island's stage: you will hear of {n.g === 'M' ? 'him' : 'her'} through the family.</div>}
+              {w?.alive && n.alive && (
+                <div className="mt-1 text-xs text-stone-200" data-testid="world-line">
+                  {w.title}{w.fame !== undefined ? <span className="text-stone-400"> · fame {w.fame}</span> : null}
+                </div>
+              )}
+              {n.alive && !w && <div className="mt-1 text-[11px] text-stone-500">Lives off the island's stage: you will hear of {n.g === 'M' ? 'him' : 'her'} through the family.</div>}
             </div>
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>

@@ -7,6 +7,7 @@ import {
 } from './houses';
 import { rememberGrudges } from './housesDeath';
 import { castKin } from './housesKin';
+import { housesTitles } from './housesTitles';
 import { OUTSIDE_SURNAMES, STOCK_NAMES, type Stock } from './housesData';
 import { crewSeed, generateHouses, initLineage, syncHousehold, wantsCrewHouse, type HouseSeed } from './housesHistory';
 import type { Ctx } from './ledger';
@@ -597,6 +598,7 @@ export function housesMonth(ctx: Ctx): void {
     promoteMarriageable(s, L, cen, 2);
   }
   successions(s, () => (cen ??= census(s, s.lineage!)));
+  housesTitles(s);
   // Feud memory: redone when there is a new grudge, a new boss, new people, or a new year.
   if (s.lineage.grudges.some((g) => g.vs === PLAYER_HOUSE)) {
     const key = `${s.lineage.grudges.length}|${s.playerId}|${Object.keys(s.characters).length}|${s.date.y}`;

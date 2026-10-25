@@ -261,6 +261,9 @@ export interface TimelineItem {
   other?: string;
 }
 
+/** Births before this year are history; after it, they happened in play. */
+const START_YEAR = 1960;
+
 const TITLE_YEARS = /(\d{4})(?:–(\d{4}))?$|since (\d{4})$/;
 
 export function houseTimeline(s: GameState, houseId: string): TimelineItem[] {
@@ -277,6 +280,13 @@ export function houseTimeline(s: GameState, houseId: string): TimelineItem[] {
     if (!n.alive && n.dy !== undefined && !feudVictims.has(n.id)) {
       const age = n.dy - n.by;
       out.push({ y: n.dy, m: n.dm, kind: 'death', text: `${fullName(n)} died${age >= 1 ? `, aged ${age}` : ' in infancy'}: ${n.cause ?? 'unknown causes'}.`, who: n.id });
+    }
+    // Births since the game began (the older ones are in the tree).
+    if (n.by >= START_YEAR) {
+      const f = n.f ? idx.nodes.get(n.f) : undefined;
+      const m = n.m ? idx.nodes.get(n.m) : undefined;
+      const to = [f, m].filter((x): x is PNode => !!x).map((x) => x.first).join(' and ');
+      out.push({ y: n.by, m: n.bm, kind: 'birth', text: `${n.first} ${n.last} was born${to ? ` to ${to}` : ''}.`, who: n.id });
     }
     for (const t of n.titles) {
       const m = TITLE_YEARS.exec(t);
@@ -296,6 +306,54 @@ export interface FamilyView {
   siblings: PNode[];
   spouses: PNode[];
   children: PNode[];
+}
+
+export interface ExtendedFamily {
+  grandparents: PNode[];
+  /** Parents' brothers and sisters (and their husbands and wives). */
+  unclesAunts: PNode[];
+  cousins: PNode[];
+  nephewsNieces: PNode[];
+  grandchildren: PNode[];
+  /** A spouse's parents and brothers and sisters; brothers- and sisters-in-law by marriage. */
+  inLaws: PNode[];
+}
+
+/** The wider family CK3 shows: grandparents, uncles and aunts, cousins, nephews and nieces, grandchildren, in-laws. */
+export function extendedFamily(s: GameState, id: string): ExtendedFamily {
+  const idx = houseIndex(s);
+  const n = idx.nodes.get(id);
+  const empty: ExtendedFamily = { grandparents: [], unclesAunts: [], cousins: [], nephewsNieces: [], grandchildren: [], inLaws: [] };
+  if (!n) return empty;
+  const get = (x: string | undefined) => (x ? idx.nodes.get(x) : undefined);
+  const parentsOf = (x: PNode) => [get(x.f), get(x.m)].filter((y): y is PNode => !!y);
+  const kidsOf = (x: PNode) => x.kids.map(get).filter((y): y is PNode => !!y);
+  const sibsOf = (x: PNode) => {
+    const out = new Map<string, PNode>();
+    for (const p of parentsOf(x)) for (const k of kidsOf(p)) if (k.id !== x.id) out.set(k.id, k);
+    return [...out.values()];
+  };
+  const uniq = (xs: PNode[], not: Set<string>) => {
+    const m = new Map<string, PNode>();
+    for (const x of xs) if (!not.has(x.id)) m.set(x.id, x);
+    return [...m.values()].sort(byBirth);
+  };
+  const parents = parentsOf(n);
+  const siblings = sibsOf(n);
+  const close = new Set([id, ...parents.map((x) => x.id), ...siblings.map((x) => x.id), ...n.sp, ...n.kids]);
+  const grandparents = uniq(parents.flatMap(parentsOf), close);
+  const blood = parents.flatMap(sibsOf);
+  const unclesAunts = uniq([...blood, ...blood.flatMap((x) => x.sp.map(get).filter((y): y is PNode => !!y))], close);
+  const cousins = uniq(blood.flatMap(kidsOf), close);
+  const nephewsNieces = uniq(siblings.flatMap(kidsOf), close);
+  const grandchildren = uniq(n.kids.map(get).filter((y): y is PNode => !!y).flatMap(kidsOf), close);
+  const spouses = n.sp.map(get).filter((y): y is PNode => !!y);
+  const inLaws = uniq([
+    ...spouses.flatMap(parentsOf), ...spouses.flatMap(sibsOf),
+    ...siblings.flatMap((x) => x.sp.map(get).filter((y): y is PNode => !!y)),
+    ...n.kids.map(get).filter((y): y is PNode => !!y).flatMap((k) => k.sp.map(get).filter((y): y is PNode => !!y)),
+  ], new Set([...close, ...grandparents.map((x) => x.id)]));
+  return { grandparents, unclesAunts, cousins, nephewsNieces, grandchildren, inLaws };
 }
 
 export function familyView(s: GameState, id: string): FamilyView {

@@ -45,6 +45,7 @@ import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
 import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
 import { bonesEventSource, bonesWeek } from './bones';
+import { kinEventSource } from './housesEvents';
 import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { cloneLedgerBook } from './ledgerbookState';
 
@@ -54,6 +55,7 @@ registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
 registerEventSource(bonesEventSource);
+registerEventSource(kinEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:

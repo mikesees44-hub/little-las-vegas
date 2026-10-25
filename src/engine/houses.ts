@@ -95,6 +95,8 @@ export interface LPerson {
 
 export interface LLink {
   house?: string;
+  /** Rank|office|outfit last seen (housesTitles.ts). */
+  rk?: string;
   f?: string;
   m?: string;
   sp?: string[];
@@ -147,6 +149,8 @@ export interface LineageState {
   grudges: Grudge[];
   /** Month key of the last monthly tick. */
   month?: string;
+  /** Year the world's people's titles were last brought up to date (housesTitles.ts). */
+  wy?: number;
   /** What the feud memory last saw (grudges, boss, people, year): unchanged means nothing to redo. */
   gkey?: string;
 }
