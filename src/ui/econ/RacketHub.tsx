@@ -44,6 +44,7 @@ export function RacketHub({ s }: { s: GameState }) {
         ))}
       </div>
 
+      {!shown.length && <p className="text-xs text-stone-500">{filter === 'locked' ? 'Nothing is locked: every racket on the island is open to you.' : filter === 'running' ? 'You run no rackets yet. "Which racket should I start?" above picks one.' : 'Nothing to start right now.'}</p>}
       <div className="grid gap-3 lg:grid-cols-2">
         {shown.map((c) => (c.madam ? <MadamCard key={c.kind} s={s} c={c} /> : <RacketCard key={c.kind} s={s} c={c} />))}
       </div>

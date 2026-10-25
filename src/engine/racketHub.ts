@@ -80,7 +80,7 @@ export function hubCards(s: GameState): HubCard[] {
 }
 
 /** Crews that work by the score show their average week (jewel: 30% a week in season, 12% off, ~$4,000 a case; bank: 7%, ~$10,500). */
-function crewTake(kind: BusinessKind, inS: number, off: number): { inSeason: number; offSeason: number; byScore?: boolean } {
+export function crewTake(kind: BusinessKind, inS: number, off: number): { inSeason: number; offSeason: number; byScore?: boolean } {
   if (kind === 'jewel') return { inSeason: 1200, offSeason: 480, byScore: true };
   if (kind === 'bankcrew') return { inSeason: 735, offSeason: 735, byScore: true };
   return { inSeason: Math.round(inS), offSeason: Math.round(off) };

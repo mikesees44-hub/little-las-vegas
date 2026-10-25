@@ -1,5 +1,6 @@
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
 import { bestDistrict } from './racketLife';
+import { crewTake } from './racketHub';
 import { pillarBestWhen, pillarPurpose, pillarRisks, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
 import { idleMen } from './business';
 import { isInSeason, memorialDay, toDays } from './calendar';
@@ -131,7 +132,9 @@ export function effectValue(s: GameState, e: Effect): number {
     case 'addBusiness': {
       // Thirty weeks of an average week (a business is kept for years), less the heat it draws.
       const d = CATALOG[e.business.kind];
-      return Math.round((d.base * (d.season[0] + d.season[1]) / 2 - d.upkeep) * 30 - (d.heat * HEAT_W.local + d.fedHeat * HEAT_W.federal) * 30);
+      // Crews that work by the score have no base: use their average week.
+      const ct = crewTake(e.business.kind, d.base * d.season[0], d.base * d.season[1]);
+      return Math.round(((ct.inSeason + ct.offSeason) / 2 - d.upkeep) * 30 - (d.heat * HEAT_W.local + d.fedHeat * HEAT_W.federal) * 30);
     }
     case 'loan': return Math.round(e.amount * 0.05 * 12 - e.amount * 0.15);
     case 'schedule': {
