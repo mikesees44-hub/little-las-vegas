@@ -11,6 +11,12 @@ import type { DealTarget } from './deals';
  * like managers: a business id, or `lot:<id>` for a building), and the name
  * also on the business or the lot itself.
  *
+ * Growth path (Empire Designer): the lot is the Property (stable `lot.id`,
+ * address, zone, owner + `history`, condition, built year, price); a Design
+ * keyed `lot:<id>` (or a business id for a storefront racket with no lot) is
+ * where Building → Floor → Space records will hang by id later
+ * (`buildingIds`), with staff growing into Employment records.
+ *
  * Styles have small effects: tourist draw (take), build cost, upkeep and
  * prestige (respect when it opens). The map draws the marker in the style's
  * shape and the sign's color.

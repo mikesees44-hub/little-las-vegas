@@ -167,7 +167,7 @@ export function DealWindow({ s, target, onClose }: { s: GameState; target: DealT
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-sm text-stone-200">Haggle</div>
                 <button type="button" className="btn-gold text-xs" disabled={!v.next} onClick={() => set({ haggles: Math.min(MAX_HAGGLES, terms.haggles + 1) })} data-testid="haggle">
-                  {v.next ? `Push on the price (${Math.round(v.next.chance * 100)}%)` : v.soured ? 'He won\'t move again' : 'You\'ve pushed enough'}
+                  {v.next ? `Push on the price (${Math.round(v.next.chance * 100)}%)` : v.soured ? `${v.seller.female ? 'She' : 'He'} won't move again` : 'You\'ve pushed enough'}
                 </button>
               </div>
               {v.next && <AcceptanceLine a={v.next} prefix="Odds he gives" />}

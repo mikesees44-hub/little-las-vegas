@@ -24,6 +24,7 @@ import { RealEstate } from './econ/RealEstate';
 import { HQPanel } from './econ/HQPanel';
 import { TheBooks } from './books/TheBooks';
 import { GiftsPanel } from './econ/Gifts';
+import { GoodLifePanel } from './econ/GoodLife';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
 import { Storylines } from './components/Storylines';
@@ -56,7 +57,7 @@ import { CityHall } from './cityhall/CityHall';
 import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle' | 'storylines' | 'holdings' | 'realestate' | 'hq' | 'books' | 'gifts' | PowerSub;
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle' | 'storylines' | 'holdings' | 'realestate' | 'hq' | 'books' | 'gifts' | 'goodlife' | PowerSub;
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
 const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
   { id: 'map', label: 'The Island' },
@@ -65,7 +66,7 @@ const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = 
   { id: 'crew', label: 'Administration' },
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
-  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }, { id: 'gifts', label: 'Gifts & Giving' }] },
+  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }, { id: 'gifts', label: 'Gifts & Giving' }, { id: 'goodlife', label: 'The Good Life' }] },
   { id: 'power', label: 'Power', subs: [{ id: 'power', label: 'Heirs & Ambition' }, { id: 'grievances', label: 'Passed Over' }, { id: 'blitz', label: 'Balance & Blitz' }, { id: 'front', label: 'The Front' }] },
   { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'cityhall', label: 'City Hall' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
@@ -392,6 +393,7 @@ export function App({ startOn = 'title' }: AppProps) {
           {tab === 'hq' && <HQPanel s={s} />}
           {tab === 'books' && <TheBooks s={s} />}
           {tab === 'gifts' && <GiftsPanel s={s} />}
+          {tab === 'goodlife' && <GoodLifePanel s={s} />}
           {tab === 'tree' && <CrewTree s={s} />}
           {tab === 'crew' && <CrewList s={s} />}
           {tab === 'schemes' && <SchemesPanel s={s} />}

@@ -1,4 +1,5 @@
 import { previewAction, type ActionPreview } from './actions';
+import { newBusiness } from './business';
 import { CATALOG } from './catalog';
 import { player } from './characters';
 import { addStory } from './hierarchy';
@@ -63,6 +64,7 @@ export interface Seller {
   role: string;
   /** What kind of seller: a realtor (or bank) for honest property, a street seller for a racket. */
   shady: boolean;
+  female: boolean;
   traits: string[];
   /** One line on how he deals. */
   line: string;
@@ -227,6 +229,7 @@ export function sellerFor(s: GameState, t: DealTarget): Seller {
     name: `${w.name.first} ${w.name.last}`,
     role,
     shady,
+    female,
     traits,
     line: `${reputation}. ${lineTrait ? pronouns(TRAIT_LINES[lineTrait], female) : ''}`.trim(),
     lastLine: lastLines(w, shady),
@@ -264,12 +267,12 @@ export function haggleOdds(s: GameState, t: DealTarget, i: number, seller = sell
   }
   if (seller.shady) {
     const r = Math.round((s.respect - 40) / 3);
-    if (r) reasons.push({ label: r > 0 ? `Your respect ${s.respect}: he knows who you are` : `Respect ${s.respect}: nobody's afraid of you yet`, value: r });
+    if (r) reasons.push({ label: r > 0 ? `Your respect ${s.respect}: the street knows your name` : `Respect ${s.respect}: nobody's afraid of you yet`, value: r });
   } else {
     const z = zoneOf(s, t);
     const rep = z ? s.econ?.zones[z]?.rep ?? 0 : 0;
     if (rep >= 10) reasons.push({ label: 'The neighborhood speaks well of you', value: Math.min(10, Math.round(rep / 5)) });
-    if (s.heat.local >= 50) reasons.push({ label: 'Your name is in the papers: she wants this over with', value: -8 });
+    if (s.heat.local >= 50) reasons.push({ label: 'Your name is in the papers: the seller wants this over with', value: -8 });
   }
   const tr = seller.traits;
   if (tr.includes('Greedy')) reasons.push({ label: 'Greedy: hates to give an inch', value: -10 });
@@ -321,7 +324,7 @@ export function dealView(s: GameState, t: DealTarget, terms: DealTerms): DealVie
     const def = CATALOG[t.biz];
     take = Math.round(def.base * (def.season[0] + def.season[1]) / 2);
     runs = true;
-    place = `${def.name}`;
+    place = newBusiness(s, t.biz, t.district).name;
     where = s.districts.find((d) => d.id === t.district)?.name ?? '';
   } else {
     place = l ? lotName(l) : 'a property';
@@ -375,7 +378,7 @@ const MONEY_NEEDS = /^Needs \$/;
 export function previewDeal(s: GameState, t: DealTarget, terms: DealTerms): ActionPreview {
   const v = dealView(s, t, terms);
   const base = previewAction(s, baseAction(t));
-  const title = `Deal: ${t.kind === 'biz' ? base.title.replace(/^Buy: /, '') : v.place} from ${v.seller.name}`;
+  const title = `Deal: ${terms.name?.trim() || v.place} from ${v.seller.name}`;
   const effects: Effect[] = [];
   if (v.booksPart > 0) effects.push({ type: 'money', amount: -v.booksPart, label: `${title} (on the books)` });
   if (v.cashPart > 0) {
@@ -397,7 +400,7 @@ export function previewDeal(s: GameState, t: DealTarget, terms: DealTerms): Acti
     const chosen = !('keep' in terms.mgr) ? terms.mgr.charId : undefined;
     for (const ap of applicants(s, v.mgrKey)) {
       if (ap.charId === chosen) continue;
-      effects.push({ type: 'opinion', from: ap.charId, to: s.playerId, amount: ap.family ? -4 : -3, reason: `Asked to run ${terms.name || v.place} and was passed over`, decay: 1, label: `${title}: passed over` });
+      effects.push({ type: 'opinion', from: ap.charId, to: s.playerId, amount: ap.family ? -4 : -3, reason: `Asked to run ${terms.name || v.place} and was passed over`, decay: 1, label: `Passed over for ${terms.name?.trim() || v.place}` });
     }
   }
   if (terms.name) effects.push({ type: 'econ', op: { op: 'note', text: `Named "${terms.name}"` }, label: title });
@@ -426,6 +429,7 @@ export function commitDeal(ctx: Ctx, t: DealTarget, terms: DealTerms): void {
     const l = e.lots.find((x) => x.id === t.lotId);
     if (l) {
       l.invested = v.price;
+      (l.history ??= []).push({ year: s.date.y, week: s.week, owner: 'player', by: v.seller.name, price: v.price, how: 'bought' });
       key = l.bizId ?? (t.going ? `lot:${l.id}` : undefined);
     }
   } else {

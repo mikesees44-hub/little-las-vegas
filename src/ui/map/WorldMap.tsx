@@ -1,4 +1,5 @@
 import { drawLots, LOT_ZOOM, type LotView } from './lotPins';
+import { LUX_BY_ID, owned as luxOwned } from '../../engine/goodlife';
 import { clearTravel, drawTravel } from './travelLayer';
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
@@ -283,6 +284,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   const districtLayer = L.layerGroup();
   const districtPins = L.layerGroup();
   const lotLayer = L.layerGroup();
+  const homeLayer = L.layerGroup().addTo(map);
   let districtsGeo: GeoJSON.FeatureCollection | undefined;
 
   // Popup buttons (capture phase: Leaflet stops propagation inside popups).
@@ -388,6 +390,15 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     if (!districtsGeo) return;
     const s = p.s;
     drawLots(L, lotLayer, s, districtsGeo, p.lots, (id) => latest.current.onLot?.(id));
+    // The Good Life: the boss's homes and the boat.
+    homeLayer.clearLayers();
+    for (const o of luxOwned(s)) {
+      const it = LUX_BY_ID[o.id];
+      if (!it?.pin) continue;
+      L.marker([it.pin.lat, it.pin.lon], { pane: 'pins', icon: L.divIcon({ className: 'llv-biz llv-home', html: `<span class="dot" style="background:#e7c25a">${it.cat === 'boat' ? '⚓' : '⌂'}</span><span class="llv-blabel own-player" style="color:#e7c25a">${esc(it.name.replace(/^An? /, ''))}</span>`, iconSize: [14, 14], iconAnchor: [7, 7] }) })
+        .bindTooltip(`<b>${esc(it.name)}</b><br>${esc(it.pin.place)} · yours since ${o.year}`, { className: 'llv-tip' })
+        .addTo(homeLayer);
+    }
     districtLayer.clearLayers();
     districtPins.clearLayers();
     L.geoJSON(districtsGeo as never, {
@@ -470,7 +481,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     }
     el.dataset.level = levelFor(z);
     // Building labels declutter by zoom: yours first, rivals' at the normal view, the rest up close.
-    el.dataset.labels = z >= 14.75 ? 'all' : z >= 13.75 ? 'rivals' : 'mine';
+    el.dataset.labels = z >= 15 ? 'all' : z >= 14.5 ? 'rivals' : 'mine';
     latest.current.onLevel?.(levelFor(z));
   }
   map.on('zoomend', onZoom);

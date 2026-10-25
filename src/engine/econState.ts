@@ -1,5 +1,6 @@
 import type { DealTarget, DealTerms } from './deals';
 import type { Design } from './design';
+import type { LuxAction, Owned as LuxOwned } from './goodlife';
 import { hashSeed } from './rng';
 import type { Character, FactionId, GameState } from './types';
 
@@ -51,6 +52,8 @@ export interface Lot {
   idx: number;
   /** Street address. */
   address: string;
+  /** Who has held it (deals, sales, seizures): the Property record's ownership history. */
+  history?: { year: number; week: number; owner: FactionId | 'private' | 'city'; by?: string; price?: number; how: 'bought' | 'sold' | 'built' | 'seized' | 'inherited' }[];
   /** The name the owner gave it ("The Starlite"); shown on the map. */
   name?: string;
   status: LotStatus;
@@ -249,6 +252,8 @@ export interface EconState {
   cooldowns: Record<string, number>;
   /** The town's building inspector. He lives here rather than among the game's characters, so that adding him does not reshuffle the rest of the world. */
   inspector?: Character;
+  /** The Good Life: homes, cars, the boat, the toys (goodlife.ts). The house owns them; the heir inherits. */
+  goodLife?: LuxOwned[];
   /** Style, neon and key staff of each place you own (design.ts), keyed like managers. */
   designs?: Record<string, Design>;
   /** Deals signed (the last 40), for the papers and the map. */
@@ -293,6 +298,8 @@ export type EconAction =
   | { type: 'buyLot'; lotId: string; going?: boolean }
   /** The Deal (deals.ts): a purchase signed across a desk — haggling, cash, who runs it. */
   | { type: 'deal'; target: DealTarget; terms: DealTerms }
+  /** The Good Life (goodlife.ts): buy or sell something for yourself. */
+  | LuxAction
   /** Rename a place you own (a business id or `lot:<id>`). */
   | { type: 'rename'; key: string; name: string }
   | { type: 'leaseLot'; lotId: string }

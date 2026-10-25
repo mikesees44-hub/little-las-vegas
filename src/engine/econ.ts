@@ -3,6 +3,7 @@ import { noteScore } from './ledgerbook';
 import { commitDeal, previewDeal } from './deals';
 import { workload } from './applicants';
 import { styleDraw } from './design';
+import { commitLux, goodLifeWeek, luxActions, previewLux, truckBonus } from './goodlife';
 import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
@@ -56,7 +57,7 @@ export function initEcon(s: GameState): void {
 export function econTakeMult(s: GameState, b: Business): number {
   if (!s.econ) return 1;
   const def = CATALOG[b.kind];
-  let m = racketMult(s, b) * managerMult(managerOf(s, b.id)) * styleDraw(s, b.id);
+  let m = racketMult(s, b) * managerMult(managerOf(s, b.id)) * styleDraw(s, b.id) * (b.kind === 'trucking' ? truckBonus(s) : 1);
   m *= districtTilt(b.districtId, isInSeason(s.date), def.season[0] >= 1.8 && def.season[1] <= 0.6);
   const r = racketOf(s, b);
   if (isClub(b) && r.competition) m *= 1 - r.competition / 200;
@@ -128,6 +129,7 @@ export function econWeek(ctx: Ctx): void {
   hqWeek(ctx, (amt, label) => money(ctx, amt, label, 'cost'));
   bigScoresWeek(ctx);
   capoBooksWeek(s);
+  goodLifeWeek(ctx);
   for (const b of s.businesses) if (b.owner === 'player' && isClub(b)) ensureStaff(s, b);
 }
 
@@ -754,6 +756,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'luxBuy': case 'luxSell': return previewLux(s, a);
     case 'rename': {
       const nm = a.name.trim().slice(0, 40);
       const lot = a.key.startsWith('lot:') ? e?.lots.find((l) => `lot:${l.id}` === a.key) : undefined;
@@ -1064,6 +1067,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       break;
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
+    case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
     case 'rename': {
       const nm = a.name.trim().slice(0, 40);
       const lot = a.key.startsWith('lot:') ? e.lots.find((l) => `lot:${l.id}` === a.key) : undefined;
@@ -1282,6 +1286,8 @@ export function econActions(s: GameState): PlayerAction[] {
     const l = sale[w % Math.min(6, sale.length)];
     out.push(op({ type: 'buyLot', lotId: l.id, going: !!l.tenant && w % 2 === 0 }));
   }
+  const lux = luxActions(s);
+  if (lux.length && w % 9 === 0) out.push(op(lux[w % lux.length]));
   const lease = e.lots.find((l) => l.status === 'lease');
   if (lease && w % 3 === 0) out.push(op({ type: 'leaseLot', lotId: lease.id }));
   for (const l of e.lots.filter((x) => (x.status === 'owned' || x.status === 'leased') && x.stage === 'purchase').slice(0, 1)) {

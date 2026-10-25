@@ -159,3 +159,4 @@ body {
 [data-labels='mine'] .llv-blabel.own-other,
 [data-labels='rivals'] .llv-blabel.own-other { display: none; }
 [data-labels='mine'] .llv-blabel.own-player { max-width: 7em; font-size: 9px; }
+.llv-home .dot { display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; color: #0b0a09; }
