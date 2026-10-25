@@ -82,8 +82,13 @@ function monthKey(s: GameState): string {
 }
 
 
+/** The person behind a tenant line ("Gus Papadakis's souvenir shop" → "Gus Papadakis"). */
+function who(t?: string): string | undefined {
+  return t?.replace(/'s [a-z][^']*$/, '');
+}
+
 function ownerLabel(o: FactionId | 'private' | 'city', by?: string): string {
-  if (o === 'private') return by ?? 'a private owner';
+  if (o === 'private') return who(by) ?? 'a private owner';
   if (o === 'city') return 'the city';
   if (o === 'player') return 'you';
   return FACTION_NAMES[o];
@@ -198,7 +203,7 @@ export function hoodMonth(ctx: Ctx): void {
       // Closing in bad times, or a tired building nobody wants.
       const pClose = 0.0045 * Math.max(0.3, (1.12 - st.econ) * 5) * (l.condition < 45 ? 2 : 1);
       if (chance(h, pClose)) {
-        logEvent(s, h, hood, 'close', `${name} closed its doors (${l.tenant}).`, l.id);
+        logEvent(s, h, hood, 'close', `${name} closed its doors (${who(l.tenant)}).`, l.id);
         (l.past ??= []).push({ use: l.use!, from: l.builtYear ?? 1950, to: year, why: 'closed' });
         l.past = l.past.slice(-6);
         l.tenant = undefined;
@@ -212,8 +217,8 @@ export function hoodMonth(ctx: Ctx): void {
       }
       // An owner sells to another owner.
       if (chance(h, 0.003)) {
-        const buyer = pick(h, OWNERS.filter((o) => o !== l.tenant));
-        logEvent(s, h, hood, 'owner', `${l.tenant} sold ${name} to ${buyer}.`, l.id);
+        const buyer = pick(h, OWNERS.filter((o) => o !== who(l.tenant)));
+        logEvent(s, h, hood, 'owner', `${who(l.tenant)} sold ${name} to ${buyer}.`, l.id);
         l.tenant = buyer;
         pushHistory(s, l, 'sold', buyer, marketValue(s, l));
         h.counts.sales++;
@@ -224,7 +229,7 @@ export function hoodMonth(ctx: Ctx): void {
       const strong = rivals.filter((r) => (infl[r.id] ?? 0) >= 15 && r.money > 3000);
       const r = strong.length ? pick(h, strong) : undefined;
       if (r && chance(h, 0.003 * ((infl[r.id] ?? 0) / 30))) {
-        logEvent(s, h, hood, 'rival', `${FACTION_NAMES[r.id]} bought out ${l.tenant}: ${name} is theirs now.`, l.id);
+        logEvent(s, h, hood, 'rival', `${FACTION_NAMES[r.id]} bought out ${who(l.tenant)}: ${name} is theirs now.`, l.id);
         l.status = 'rival';
         l.owner = r.id as RivalId;
         l.tenant = `${FACTION_NAMES[r.id]}'s people`;

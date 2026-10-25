@@ -32,7 +32,7 @@ const ORG_COLOR = (id: string) => OWNER_COLOR[id] ?? '#9a8f7a';
  * lots in the neighborhood's zones, the district's influence, the layer's
  * conditions and its log — and the town then and now.
  */
-export function HoodDashboard({ s, initial, compact, onClose }: { s: GameState; initial?: HoodId; compact?: boolean; onClose?: () => void }) {
+export function HoodDashboard({ s, initial, compact, onClose, onFull }: { s: GameState; initial?: HoodId; compact?: boolean; onClose?: () => void; onFull?: () => void }) {
   const [id, setId] = useState<HoodId>(initial ?? 'boardwalk');
   const v = hoodView(s, id);
   const ch = islandChange(s);
@@ -46,7 +46,10 @@ export function HoodDashboard({ s, initial, compact, onClose }: { s: GameState; 
           <div className="font-display text-2xl text-gold-400 leading-tight">{v.name}</div>
           <div className="text-xs text-stone-400 italic">{v.blurb}</div>
         </div>
-        {onClose && <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={onClose}>close ×</button>}
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          {onClose && <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={onClose}>close ×</button>}
+          {onFull && <button type="button" className="text-[11px] text-gold-300 underline" onClick={onFull} data-testid="hood-full">full dashboard</button>}
+        </div>
       </div>
       {!compact && (
         <div className="flex flex-wrap gap-1" role="tablist">
@@ -80,9 +83,9 @@ export function HoodDashboard({ s, initial, compact, onClose }: { s: GameState; 
           {v.organizations.map((o) => (
             <li key={o.id} className="flex items-center gap-2">
               <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: ORG_COLOR(o.id) }} />
-              <span className="text-stone-200 w-40 truncate">{o.name}</span>
+              <span className="text-stone-200 w-32 truncate">{o.name}</span>
               <div className="h-1.5 flex-1 rounded bg-noir-700 overflow-hidden"><div className="h-full" style={{ width: `${o.influence}%`, background: ORG_COLOR(o.id) }} /></div>
-              <span className="text-stone-400 tabular-nums w-24 text-right">{o.influence}% · {o.lots} {o.lots === 1 ? 'property' : 'properties'}</span>
+              <span className="text-stone-400 tabular-nums w-20 text-right whitespace-nowrap">{o.influence}% · {o.lots} held</span>
             </li>
           ))}
         </ul>

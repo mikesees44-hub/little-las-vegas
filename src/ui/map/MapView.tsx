@@ -106,7 +106,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
                 <label className="flex items-center gap-1 ml-1"><input type="checkbox" checked={since} onChange={(e) => setSince(e.target.checked)} />since 1960</label>
               </div>
             )}
-            {(island || level !== 'usa') && <button onClick={() => go('usa')} className="self-start rounded bg-noir-900/90 border border-noir-600 px-2 py-0.5 text-[11px] text-stone-300 hover:text-gold-300">← Back to US</button>}
+            {!island && level !== 'usa' && <button onClick={() => go('usa')} className="self-start rounded bg-noir-900/90 border border-noir-600 px-2 py-0.5 text-[11px] text-stone-300 hover:text-gold-300">← Back to US</button>}
           </div>
           {!shell && <div className="absolute right-12 top-2 z-[1000]"><AlertRail s={s} items={alerts} onAlert={onAlert} /></div>}
           <div className="absolute left-2 bottom-6 z-[1000] hidden sm:block"><PlayerCard s={s} /></div>

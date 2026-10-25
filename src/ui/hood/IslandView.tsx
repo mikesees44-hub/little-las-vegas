@@ -10,6 +10,7 @@ import { Ground, GroundDefs, VIEW_BOUNDS } from './Ground';
 import { HoodDashboard } from './HoodDashboard';
 import { ISO, P, PLAN, palette, poly, type Mood } from './iso';
 import { StreetCard } from './StreetCard';
+import { useShell } from '../shell/context';
 
 /**
  * Wildwood up close: the illustrated 1960 island (the third map level).
@@ -61,6 +62,7 @@ function savePref(p: { proj?: 'iso' | 'plan'; mood?: 'auto' | Mood }): void {
 }
 
 export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; onSurvey?: () => void; onHood?: (id?: HoodId) => void; focusHood?: { id: HoodId; nonce: number } }) {
+  const shell = useShell();
   const host = useRef<HTMLDivElement>(null);
   const g = useRef<SVGGElement>(null);
   const tf = useRef({ sc: 0.5, tx: 0, ty: 0 });
@@ -305,13 +307,13 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
         )}
         {moodSet === 'auto' && mood !== 'day' && <div className="rounded bg-noir-900/90 border border-blood-500/60 px-2 py-1 text-[10px] text-rose-200 max-w-[220px]">The heat is on. The island looks different after dark.</div>}
       </div>
-      <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-wrap gap-1 max-w-[55%] md:max-w-[50%]" data-testid="hv-hoods">
+      <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
         {HOODS.map((h) => <button key={h.id} type="button" onClick={() => goHood(h.id)} className={`hv-chip ${hood === h.id ? 'hv-on' : ''}`}>{h.name}</button>)}
       </div>
       {panelOpen && (
         <div data-hv-ui className="absolute z-[1002] panel overflow-y-auto p-3 inset-x-0 bottom-0 max-h-[62%] rounded-b-none md:inset-x-auto md:right-2 md:top-36 md:bottom-12 md:max-h-none md:w-[380px] md:rounded-b-lg llv-slide-right" data-testid="hv-panel">
           {selItem ? <StreetCard s={s} it={selItem} mood={mood} onClose={() => setSel(undefined)} />
-            : hood ? <HoodDashboard key={hood} s={s} initial={hood} compact onClose={() => { setHood(undefined); onHood?.(undefined); }} /> : null}
+            : hood ? <HoodDashboard key={hood} s={s} initial={hood} compact onClose={() => { setHood(undefined); onHood?.(undefined); }} onFull={() => shell.go('town.hoods')} /> : null}
         </div>
       )}
     </div>

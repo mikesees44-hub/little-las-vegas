@@ -124,13 +124,13 @@ export function Facade({ f }: { f: FacadeSpec }) {
     body.push(<g key="crane" className="hv-crane"><path d={`M285 ${ground}V18M240 18H300M250 18v40`} stroke={lit('#f2b632')} strokeWidth="3.5" fill="none" /><rect x="244" y="58" width="12" height="8" fill={lit('#5b4a3a')} /></g>);
     body.push(<g key="soon"><rect x="40" y={ground - 44} width="110" height="30" fill={lit('#fffaf0')} stroke={f.sign} strokeWidth="2" /><text x="95" y={ground - 32} textAnchor="middle" fontSize="8" fontWeight="800" fill="#2a1f2e">COMING SOON</text><text x="95" y={ground - 20} textAnchor="middle" fontSize="8" fill="#c0392b" fontFamily={font}>{name.slice(0, 22)}</text></g>);
   } else if (k === 'motel') {
-    const x0 = 34;
-    const w = 252;
+    const x0 = 104;
+    const w = 200;
     body.push(<rect key="b" x={x0} y="62" width={w} height={ground - 62} fill={wall} />);
     body.push(<rect key="rail" x={x0} y="100" width={w} height="4" fill={trim} />);
-    body.push(<path key="posts" d={Array.from({ length: 10 }, (_, i) => `M${x0 + 4 + i * 27.5} 104V${ground}`).join('')} stroke={trim} strokeWidth="2" />);
-    for (let row = 0; row < 2; row++) for (let i = 0; i < 8; i++) {
-      const dx = x0 + 12 + i * 30;
+    body.push(<path key="posts" d={Array.from({ length: 8 }, (_, i) => `M${x0 + 4 + i * 27.5} 104V${ground}`).join('')} stroke={trim} strokeWidth="2" />);
+    for (let row = 0; row < 2; row++) for (let i = 0; i < 6; i++) {
+      const dx = x0 + 10 + i * 31;
       const dy = row ? 112 : 70;
       body.push(<rect key={`d${row}${i}`} x={dx} y={dy} width="11" height="24" fill={lit(['#ff6f91', '#3cc6c0', '#ffd34d'][(i + row) % 3])} stroke={trim} />);
       body.push(<rect key={`w${row}${i}`} x={dx + 14} y={dy + 4} width="11" height="10" fill={f.closed ? lit('#5b5148') : (night || dusk) && hashStr(f.seed, i + row * 8) > 0.4 ? '#ffd27a' : lit('#9fd4e6')} stroke={trim} />);
@@ -138,15 +138,15 @@ export function Facade({ f }: { f: FacadeSpec }) {
     if (f.style === 'tiki' || f.style === 'colonial' || f.style === 'victorian') body.push(<path key="roof" d={`M${x0 - 10} 64L${W / 2} ${f.style === 'tiki' ? 18 : 36}L${x0 + w + 10} 64Z`} fill={lit(f.style === 'tiki' ? '#d8b06a' : f.style === 'colonial' ? '#8a4a3a' : '#4f5d75')} />);
     else body.push(<path key="roof" d={`M${x0 - 8} 62L${x0 + w + 14} 50L${x0 + w + 14} 58L${x0 - 8} 66Z`} fill={lit(f.style === 'doowop' ? (f.seed % 2 ? '#ff6f91' : '#2fb5a8') : '#3d4650')} />);
     // The pylon sign.
-    body.push(<g key="pylon"><rect x="10" y="20" width="6" height={ground - 20} fill={lit('#d8d2c4')} />
-      <rect x="-4" y="14" width="96" height="40" rx="8" fill={night || dusk ? '#1b1030' : lit('#fff7ea')} stroke={f.sign} strokeWidth="3" filter={(night || dusk) && neonOn ? `url(#${glowId})` : undefined} />
-      <SignText x={44} y={40} size={16} maxW={88} />
-      {f.style === 'doowop' && <Star x={94} y={12} r={13} c={night || dusk ? f.sign : '#ffd34d'} />}
-      <rect x="2" y="58" width="58" height="14" rx="3" fill={night || dusk ? '#1b1030' : '#fff7ea'} stroke="#ff4b3e" strokeWidth="1.5" />
-      <text x="31" y="68.5" textAnchor="middle" fontSize="9" fontWeight="800" fill={f.closed ? '#6b6256' : '#ff4b3e'} filter={(night || dusk) && neonOn ? `url(#${glowId})` : undefined}>{f.closed ? 'NO VACANCY' : 'VACANCY'}</text>
-      <text x="31" y="82" textAnchor="middle" fontSize="6.5" fontWeight="700" fill={night ? '#9fe8ff' : '#1d6f8a'}>POOL · TV · AIR COND.</text>
+    body.push(<g key="pylon"><rect x="52" y="20" width="6" height={ground - 20} fill={lit('#d8d2c4')} />
+      <rect x="14" y="14" width="80" height="40" rx="8" fill={night || dusk ? '#1b1030' : lit('#fff7ea')} stroke={f.sign} strokeWidth="3" filter={(night || dusk) && neonOn ? `url(#${glowId})` : undefined} />
+      <SignText x={54} y={40} size={16} maxW={72} />
+      {f.style === 'doowop' && <Star x={92} y={14} r={13} c={night || dusk ? f.sign : '#ffd34d'} />}
+      <rect x="26" y="58" width="58" height="14" rx="3" fill={night || dusk ? '#1b1030' : '#fff7ea'} stroke="#ff4b3e" strokeWidth="1.5" />
+      <text x="55" y="68.5" textAnchor="middle" fontSize="9" fontWeight="800" fill={f.closed ? '#6b6256' : '#ff4b3e'} filter={(night || dusk) && neonOn ? `url(#${glowId})` : undefined}>{f.closed ? 'NO VACANCY' : 'VACANCY'}</text>
+      <text x="55" y="82" textAnchor="middle" fontSize="6.5" fontWeight="700" fill={night ? '#9fe8ff' : '#1d6f8a'}>POOL · TV · AIR COND.</text>
     </g>);
-    body.push(<Palm key="p1" x={300} s={0.9} />);
+    body.push(<Palm key="p1" x={24} s={0.75} />);
   } else if (k === 'hotel') {
     const x0 = 80;
     const w = 160;
