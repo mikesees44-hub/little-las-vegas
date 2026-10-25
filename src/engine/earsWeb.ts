@@ -86,6 +86,8 @@ export interface Connection {
   type: LinkType;
   /** "He is a regular of her" / "She is his girlfriend". */
   text: string;
+  /** Relative to the person whose list it is: "His girlfriend", "One of her regulars". */
+  short: string;
   strength: number;
   since: number;
   ended?: number;
@@ -100,6 +102,13 @@ function rLink(s: GameState, r: ReturnType<typeof activeRomances>[number]): { a:
   const woman = man === x ? y : x;
   const type: LinkType = r.kind === 'affair' ? 'mistress' : r.kind === 'lovers' ? 'girlfriend' : 'likes';
   return { a: man.id, b: woman.id, type, hidden: r.secret && r.discovered === undefined };
+}
+
+const SHORT_MAN: Record<LinkType, string> = { likes: 'he is sweet on her', regular: 'he is one of her regulars', girlfriend: 'his girlfriend', mistress: 'his mistress', in_love: 'he is in love with her', ex: 'an old flame', owes: 'he owes her' };
+const SHORT_WOMAN: Record<LinkType, string> = { likes: 'sweet on her', regular: 'one of her regulars', girlfriend: 'she is his girlfriend', mistress: 'she is his mistress', in_love: 'in love with her', ex: 'an old flame', owes: 'owes her' };
+
+function shortOf(type: LinkType, view: 'man' | 'woman', ended?: number): string {
+  return ended !== undefined ? 'an old flame' : (view === 'man' ? SHORT_MAN : SHORT_WOMAN)[type];
 }
 
 function phrase(_s: GameState, man: Character, woman: Character, type: LinkType, view: 'man' | 'woman', ended?: number): string {
@@ -132,7 +141,7 @@ export function connectionsOf(s: GameState, id: string, includeEnded = true): Co
     const man = l.a === id ? me : other;
     const woman = l.a === id ? other : me;
     seen.add(otherId);
-    out.push({ otherId, type: l.type, text: phrase(s, man, woman, l.type, l.a === id ? 'man' : 'woman', l.ended), strength: l.strength, since: l.since, ended: l.ended, source: 'web' });
+    out.push({ otherId, type: l.type, text: phrase(s, man, woman, l.type, l.a === id ? 'man' : 'woman', l.ended), short: shortOf(l.type, l.a === id ? 'man' : 'woman', l.ended), strength: l.strength, since: l.since, ended: l.ended, source: 'web' });
   }
   for (const r of activeRomances(s, id)) {
     const k = rLink(s, r);
@@ -141,7 +150,7 @@ export function connectionsOf(s: GameState, id: string, includeEnded = true): Co
     if (seen.has(otherId) || !s.characters[otherId]) continue;
     const man = s.characters[k.a];
     const woman = s.characters[k.b];
-    out.push({ otherId, type: k.type, text: phrase(s, man, woman, k.type, k.a === id ? 'man' : 'woman'), strength: 60, since: r.since, source: 'romance' });
+    out.push({ otherId, type: k.type, text: phrase(s, man, woman, k.type, k.a === id ? 'man' : 'woman'), short: shortOf(k.type, k.a === id ? 'man' : 'woman'), strength: 60, since: r.since, source: 'romance' });
   }
   return out.sort((x, y) => Number(x.ended !== undefined) - Number(y.ended !== undefined) || RANK[y.type] - RANK[x.type] || y.strength - x.strength);
 }
@@ -201,8 +210,11 @@ export function attachmentBoard(s: GameState): BoardRow[] {
 
 /** The men of the night: the crew, the rivals' men, officials and the law. */
 export function nightMen(s: GameState): Character[] {
+  // Show people of the world who are on the island's stage (the stars fall for waitresses too).
+  const stars = new Set<string>();
+  for (const p of Object.values(s.pol?.people ?? {})) if (p.inst === 'showbiz' && p.charId) stars.add(p.charId);
   return Object.values(s.characters).filter((c) => c.alive && c.gender === 'M' && c.id !== s.playerId && !c.imprisonedUntil
-    && ((c.faction !== 'none' && c.rank !== 'civilian') || !!c.office));
+    && ((c.faction !== 'none' && c.rank !== 'civilian') || !!c.office || stars.has(c.id)));
 }
 
 function womenOf(s: GameState, E: EarsState): Character[] {
@@ -261,7 +273,14 @@ export function webMonth(s: GameState, E: EarsState, h: RngHolder, onLeak: (man:
     // Breakups.
     if (ROMANTIC.includes(l.type) && chance(h, 0.025)) {
       endLink(s, l);
-      if (man.faction === 'player' && ear) hooks.push({ kind: 'breakup', a: man.id, her: her.id, rival: ear.sellsTo });
+      if (man.faction === 'player' && ear) {
+        // What she knows about him may go to somebody else now.
+        if (!ear.sellsTo && chance(h, 0.4)) {
+          const mobs = s.rivals.filter((r) => r.kind === 'mob' && r.id !== 'philly');
+          if (mobs.length) ear.sellsTo = mobs[Math.floor(rand(h) * mobs.length)].id;
+        }
+        hooks.push({ kind: 'breakup', a: man.id, her: her.id, rival: ear.sellsTo });
+      }
       continue;
     }
     if (ROMANTIC.includes(l.type)) {

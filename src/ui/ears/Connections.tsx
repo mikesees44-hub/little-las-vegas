@@ -16,15 +16,15 @@ export function ConnectionsList({ s, id, compact }: { s: GameState; id: string; 
   return (
     <ul className="space-y-1" data-testid="connections">
       {list.slice(0, compact ? 6 : 12).map((x) => (
-        <li key={`${x.otherId}:${x.type}`} className="flex items-center gap-2 text-sm">
+        <li key={`${x.otherId}:${x.type}`} className="flex items-center gap-2 text-sm min-w-0">
           {!compact && s.characters[x.otherId] && <Face s={s} c={s.characters[x.otherId]} size={28} />}
-          <span className={`${TYPE_TONE[x.type] ?? 'text-stone-300'} ${x.ended !== undefined ? 'line-through decoration-stone-600' : ''}`}>{x.text}</span>
-          <span className="text-stone-500 text-[11px]">· <CharLink s={s} id={x.otherId} /></span>
-          {x.type !== 'ex' && x.ended === undefined && (
-            <Tip text={`Strength ${Math.round(x.strength)} of 100 · since week ${x.since}${x.source === 'romance' ? ' · a romance' : ''}`}>
-              <span className="ml-auto h-1 w-10 rounded bg-noir-700 overflow-hidden inline-block align-middle"><span className="block h-full bg-rose-400/70" style={{ width: `${x.strength}%` }} /></span>
-            </Tip>
-          )}
+          <Tip text={`${x.text}${x.type !== 'ex' && x.ended === undefined ? ` · strength ${Math.round(x.strength)} of 100` : ''} · since week ${x.since}${x.source === 'romance' ? ' · a romance' : ''}`}>
+            <span className={`min-w-0 truncate ${compact ? 'text-xs' : ''}`}>
+              <CharLink s={s} id={x.otherId} className="text-stone-200" />
+              <span className={`ml-1.5 ${TYPE_TONE[x.type] ?? 'text-stone-300'} ${x.ended !== undefined ? 'line-through decoration-stone-600' : ''}`}>{x.short}</span>
+            </span>
+          </Tip>
+          {x.type !== 'ex' && x.ended === undefined && <span className="ml-auto shrink-0 h-1 w-10 rounded bg-noir-700 overflow-hidden inline-block"><span className="block h-full bg-rose-400/70" style={{ width: `${x.strength}%` }} /></span>}
         </li>
       ))}
     </ul>

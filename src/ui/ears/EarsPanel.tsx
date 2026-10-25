@@ -10,11 +10,11 @@ import { Tip } from '../clarity';
 import { fmt$ } from '../format';
 import { ConnectionsList } from './Connections';
 
-function Meter({ label, value, tone, tip }: { label: string; value: number; tone: string; tip?: string }) {
+function Meter({ label, value, tone, tip, shown }: { label: string; value: number; tone: string; tip?: string; shown?: string }) {
   const body = (
     <div className="rounded border border-noir-700 bg-noir-800/70 p-2">
       <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{label}</div>
-      <div className="text-lg font-semibold text-stone-100 tabular-nums">{Math.round(value)}</div>
+      <div className="text-lg font-semibold text-stone-100 tabular-nums">{shown ?? Math.round(value)}</div>
       <div className="h-1.5 rounded bg-noir-700 overflow-hidden"><div className={`h-full ${tone}`} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} /></div>
     </div>
   );
@@ -44,7 +44,7 @@ export function MadamCard({ s }: { s: GameState }) {
         </div>
       </div>
       <div className="grid gap-2 grid-cols-2 sm:grid-cols-4">
-        <Meter label="Her opinion of you" value={50 + total / 2} tone={total >= 0 ? 'bg-emerald-500' : 'bg-blood-400'} tip={`${total >= 0 ? '+' : ''}${total}: ${mods.slice(0, 5).map((x) => `${x.value > 0 ? '+' : ''}${x.value} ${x.reason}`).join(' · ') || 'nothing yet'}`} />
+        <Meter label="Her opinion of you" value={50 + total / 2} shown={`${total > 0 ? '+' : ''}${total}`} tone={total >= 0 ? 'bg-emerald-500' : 'bg-blood-400'} tip={`${total >= 0 ? '+' : ''}${total}: ${mods.slice(0, 5).map((x) => `${x.value > 0 ? '+' : ''}${x.value} ${x.reason}`).join(' · ') || 'nothing yet'}`} />
         <Meter label="Her network" value={M.network} tone="bg-rose-400" tip="How many women work through her house. It grows when the girls feel safe." />
         <div className="rounded border border-noir-700 bg-noir-800/70 p-2 text-xs">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Protection cut</div>

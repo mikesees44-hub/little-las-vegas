@@ -29,7 +29,7 @@ export function EarsPicker({ s, target, mode }: { s: GameState; target: Characte
       </div>
       {list.slice(0, 6).map(({ e, c }) => (
         <div key={e.id} className="flex gap-2 items-start">
-          <Face s={s} c={c} size={36} />
+          <span className="hidden sm:block"><Face s={s} c={c} size={36} /></span>
           <div className="flex-1 min-w-0">
             <div className="text-[11px] text-stone-400 truncate">
               {earLine(s, e)} · <Tip text={`Trust ${e.loyalty}, nerve ${e.nerve}, discretion ${e.discretion}, charm ${e.charm}; her prices run ×${e.greed.toFixed(2)}`}><span className="underline decoration-dotted">{trustWord(e.loyalty)}</span></Tip>
