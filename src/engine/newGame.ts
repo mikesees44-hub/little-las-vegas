@@ -334,7 +334,8 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   initDynasty(s);
   initPolitics(s);
   initEcon(s);
-  if (!opts.skipHouses) setupHouses(s);
+  // The Ears come first so their ids match with or without the houses' history.
   initEars(s);
+  if (!opts.skipHouses) setupHouses(s);
   return s;
 }

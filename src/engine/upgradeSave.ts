@@ -16,7 +16,14 @@ import type { GameState } from './types';
  * Each layer fills in only what it lacks; a step that fails is skipped.
  */
 export function upgradeSave(s: GameState): GameState {
-  for (const step of [ensureEcon, ensureEmpire, ensureBones, ensureDynState, ensureLedgerBook, ensureArcs, ensureStory, ensureRomance, ensureTravel, ensurePol, ensureEars] as ((s: GameState) => unknown)[]) {
+  // Only layers the save already has are topped up: a missing layer is
+  // created by the weekly update itself, so loading never changes the dice.
+  const steps: [keyof GameState, (s: GameState) => unknown][] = [
+    ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars],
+  ];
+  for (const [key, step] of steps) {
+    if (s[key] === undefined) continue;
     try { step(s); } catch { /* the weekly update will try again */ }
   }
   return s;

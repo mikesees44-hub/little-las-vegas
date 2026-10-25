@@ -22,6 +22,7 @@ import { orientationFor } from './storyState';
 import type { ActionPreview } from './actions';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId, Trait } from './types';
 import { FIRST_NAMES, ORIGIN_TO_GAME, SURNAMES, type Origin } from '../worldpack';
+import { AMBITIONS, FEMALE_AMBITIONS } from './characters';
 import { eraOf } from '../worldpack/generators';
 
 /**
@@ -77,7 +78,7 @@ function mkPerson(s: GameState, E: EarsState, gender: 'M' | 'F', age: number, tr
     id, firstName: pickH(E, firsts), lastName: pickH(E, lasts), gender, ethnicity: ORIGIN_TO_GAME[origin],
     birth: { y: born, m: randInt(E, 1, 12), d: randInt(E, 1, 28) }, health: randInt(E, 80, 100), conditions: [],
     attributes: { leadership: at(), business: at(), diplomacy: at() + 2, intrigue: at() + 3, force: at() - 2, discipline: at() },
-    traits, ambition: '', rank: 'civilian', faction: 'none', wealth: randInt(E, 300, 2500), dynasty: false, childrenIds: [], alive: true,
+    traits, ambition: pickH(E, gender === 'M' ? AMBITIONS : FEMALE_AMBITIONS), rank: 'civilian', faction: 'none', wealth: randInt(E, 300, 2500), dynasty: false, childrenIds: [], alive: true,
   };
   // Never younger than asked (the birthday may not have come yet this year).
   if (ageOn(c.birth, s.date) < age) c.birth.y -= 1;
