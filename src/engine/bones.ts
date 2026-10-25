@@ -104,7 +104,7 @@ export interface BonesOdds extends Acceptance {
 }
 
 export function bonesOdds(s: GameState, c: Character, kind: BonesJobKind, role?: string): BonesOdds {
-  const reasons: Reason[] = [{ label: 'Base', value: 50 }];
+  const reasons: Reason[] = [{ label: 'Base', value: 60 }];
   const add = (label: string, v: number) => { if (Math.round(v)) reasons.push({ label, value: Math.round(v) }); };
   add('Courage', (attr(s, c, 'courage') - 50) * 0.6);
   add('Muscle', (c.attributes.force - 50) * 0.3);

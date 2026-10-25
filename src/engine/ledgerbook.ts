@@ -32,7 +32,7 @@ export const MODE_INFO: Record<BooksMode, { name: string; text: string; retain: 
 };
 export const MODES: BooksMode[] = ['head', 'coded', 'full'];
 export const ENFORCER_CHECK_COST = 300;
-export const RAID_ODDS = { police: 0.25, fbi: 0.4 } as const;
+export const RAID_ODDS = { police: 0.15, fbi: 0.3 } as const;
 
 /* ---------------------------------------------------------------- */
 /* Feeding the books from the ledger                                 */
