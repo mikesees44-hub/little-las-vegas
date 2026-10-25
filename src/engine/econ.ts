@@ -148,6 +148,25 @@ function tidy(s: GameState): void {
   }
 }
 
+/**
+ * Who signs the building permits (the inspector, the zoning board). Other
+ * layers plug in here (politics: officials you own speed permits through,
+ * honest ones block them). Returns a verdict for this week, or undefined.
+ */
+export type PermitVerdict = { verdict: 'fast' | 'blocked'; why: string };
+export type PermitAuthority = (s: GameState, lot: Lot) => PermitVerdict | undefined;
+const PERMIT_AUTHORITIES: PermitAuthority[] = [];
+export function registerPermitAuthority(fn: PermitAuthority): void {
+  if (!PERMIT_AUTHORITIES.includes(fn)) PERMIT_AUTHORITIES.push(fn);
+}
+function permitVerdict(s: GameState, lot: Lot): PermitVerdict | undefined {
+  for (const fn of PERMIT_AUTHORITIES) {
+    const v = fn(s, lot);
+    if (v) return v;
+  }
+  return undefined;
+}
+
 function constructionWeek(ctx: Ctx): void {
   const s = ctx.s;
   const e = s.econ!;
@@ -166,6 +185,17 @@ function constructionWeek(ctx: Ctx): void {
       if (st === 'permits' && s.heat.local >= 70 && chance(e, 0.3)) {
         l.stalled = 'The building inspector wants to talk first';
         continue;
+      }
+      if (st === 'permits') {
+        const v = permitVerdict(s, l);
+        if (v?.verdict === 'blocked') {
+          l.stalled = v.why;
+          continue;
+        }
+        if (v?.verdict === 'fast') {
+          l.stageWeek = Math.max(0, weeks[st] - 1);
+          ctx.log.push(`${lotName(l)}: ${v.why}.`);
+        }
       }
       money(ctx, -cost, `Construction: ${lotName(l)} — ${STAGE_LABEL[st].toLowerCase()}`, 'cost');
       l.invested = (l.invested ?? 0) + cost;

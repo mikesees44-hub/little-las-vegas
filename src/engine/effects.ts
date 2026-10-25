@@ -7,6 +7,7 @@ import { LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { crew, displayName, hasTrait, livingDynasty, pickNickname, player } from './characters';
 import { killCharacter } from './dynasty';
 import { applyDynOp, describeDynOp } from './family';
+import { applyPolOp, describePolOp } from './politics';
 import { hireFrontMan } from './goals';
 import { bookLoan } from './loans';
 import { heat, money, respect, type Ctx } from './ledger';
@@ -198,6 +199,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describePowerOp(s, e.op);
     case 'storyOp':
       return describeStoryOp(s, e.op);
+    case 'pol':
+      return describePolOp(s, e.op);
     case 'econ':
       return describeEconOp(s, e.op);
     case 'travel':
@@ -804,6 +807,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'storyOp':
       applyStoryOp(ctx, e.op);
+      break;
+    case 'pol':
+      applyPolOp(ctx, e.op, label);
       break;
     case 'econ':
       applyEconOp(ctx, e.op, label);

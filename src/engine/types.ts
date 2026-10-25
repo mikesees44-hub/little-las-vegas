@@ -7,6 +7,7 @@
 import type { DynAction, DynOp, DynState } from './familyState';
 import type { ExtAttrs, PowerAction, PowerOp, PowerState } from './powerState';
 import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
+import type { PolAction, PolOp, PolState } from './polState';
 import type { EconAction, EconOp, EconState } from './econState';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
 
@@ -491,6 +492,8 @@ export type Effect =
   | ({ type: 'dyn'; op: DynOp } & EffectBase)
   /** The power pillar (power.ts): succession, heirs, grievances, crises, blitzes, fronts, petitions. */
   | ({ type: 'power'; op: PowerOp } & EffectBase)
+  /** Politics, law-makers and the living world (politics.ts). */
+  | ({ type: 'pol'; op: PolOp } & EffectBase)
   | ({ type: 'evidence'; charId: string; amount: number } & EffectBase)
   | ({ type: 'assign'; charId: string; capoId?: string } & EffectBase)
   | ({ type: 'story'; charId: string; text: string } & EffectBase)
@@ -817,6 +820,8 @@ export interface GameState {
   story?: StoryState;
   /** Courtships, lovers, affairs, pregnancies (romance.ts). */
   romance?: RomanceState;
+  /** Politics, law-makers and the living world (optional for old saves). */
+  pol?: PolState;
   /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
   econ?: EconState;
   /** Travel, trips and fugitives (optional for old saves). */
@@ -867,7 +872,8 @@ export type PlayerAction =
   | { kind: 'background'; charId: string }
   | { kind: 'order'; key: string; via: OrderVia }
   | { kind: 'econ'; op: EconAction }
-  | { kind: 'travel'; op: TravelAction };
+  | { kind: 'travel'; op: TravelAction }
+  | { kind: 'pol'; op: PolAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

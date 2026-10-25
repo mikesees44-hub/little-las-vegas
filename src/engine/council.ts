@@ -4,6 +4,7 @@ import { capos, crew, displayName, isFree } from './characters';
 import { heat, money, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { chance } from './rng';
+import { fedEase, policeEase } from './polIntegrity';
 import type { Attributes, Character, CouncilTask, GameState, Seat } from './types';
 
 /**
@@ -159,7 +160,7 @@ export function runCouncil(ctx: Ctx): void {
         break;
       case 'fix_cops':
         money(ctx, -100, `${who}: envelopes downtown`, 'cost');
-        if (s.heat.local > 0) heat(ctx, 'local', -Math.max(1, Math.round(1 + k)), `${who} greases the cops`, 'heat');
+        if (s.heat.local > 0) heat(ctx, 'local', -Math.max(1, Math.round((1 + k) * policeEase(s))), `${who} greases the cops`, 'heat');
         break;
       case 'fix_favors':
         money(ctx, -200, `${who}: lunches in Trenton`, 'cost');
@@ -170,7 +171,7 @@ export function runCouncil(ctx: Ctx): void {
         break;
       case 'fix_feds':
         money(ctx, -250, `${who}: friends at the federal building`, 'cost');
-        if (s.heat.federal > 0) heat(ctx, 'federal', -Math.max(1, Math.round(k)), `${who} cools the feds`, 'heat');
+        if (s.heat.federal > 0) heat(ctx, 'federal', -Math.max(1, Math.round(k * fedEase(s))), `${who} cools the feds`, 'heat');
         break;
       default:
         break; // passive tasks (guard, launder, tax, book, protect) are read where they apply

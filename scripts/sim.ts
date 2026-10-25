@@ -19,6 +19,8 @@ import { legalActions, previewAction } from '../src/engine/actions';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
 import { romanceActions } from '../src/engine/romance';
+import { polActions } from '../src/engine/politics';
+import { population } from '../src/engine/polPeople';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
@@ -47,6 +49,8 @@ const ENVOY_RATE = Number(arg('envoys', '0.03'));
 const POWER_RATE = Number(arg('power', '0.04'));
 /** Chance per week of a romance interaction (court, affair, propose, end it, separate). */
 const ROMANCE_RATE = Number(arg('romance', '0.015'));
+/** Chance per week of a political order (cultivate, payroll, favors, campaigns, lobbying, kids, recruits). */
+const POL_RATE = Number(arg('politics', '0.12'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
@@ -88,6 +92,14 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   if (rand(h) < POWER_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'power')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
   if (rand(h) < ROMANCE_RATE) add(pickOne(h, romanceActions(s).filter((a) => !previewAction(s, a).disabledReason)));
+  // Political orders, when there is money to spare (a payroll is a weekly bill).
+  if (rand(h) < POL_RATE) {
+    const spare = s.money - 20000;
+    add(pickOne(h, polActions(s).filter((a) => {
+      const p = previewAction(s, a);
+      return !p.disabledReason && p.cost <= spare && !(a.op.op === 'payroll' && a.op.on && spare < 15000);
+    })));
+  }
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
   if (rand(h) < TRAVEL_RATE) add(randomTravelAction(s, h));
   return { choices, actions };
@@ -143,6 +155,8 @@ interface GameResult {
   story?: Record<string, number>;
   romance?: Record<string, number>;
   packPopups: number;
+  /** Politics counters at the end (polState.ts). */
+  pol?: Record<string, number>;
 }
 
 function playOne(gi: number): GameResult {
@@ -256,6 +270,7 @@ function playOne(gi: number): GameResult {
   if (s!.power) r.power = { ...s!.power.stats };
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
   if (s!.romance) r.romance = { ...s!.romance.stats };
+  if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
@@ -344,6 +359,15 @@ console.log(`  Content pack: ${per10g(results, (r) => r.story)}`);
 const packShare = results.reduce((a, r) => a + r.packPopups, 0) / Math.max(1, allPopups.reduce((a, b) => a + b, 0));
 console.log(`  Pack share of all popups: ${(packShare * 100).toFixed(1)}%`);
 console.log(`  Romance: ${per10g(results, (r) => r.romance)}`);
+const polGames = results.filter((r) => r.pol && r.weeksPlayed > 0);
+if (polGames.length) {
+  const keys = Object.keys(polGames[0].pol!);
+  const mean = (k: string) => polGames.reduce((a, r) => a + (r.pol![k] ?? 0), 0) / polGames.length;
+  console.log(`\nPOLITICS (mean per game at the end)`);
+  console.log(`  ${keys.map((k) => `${k} ${mean(k).toFixed(1)}`).join(', ')}`);
+  const inc = mean('contested') ? mean('incumbentWins') / mean('contested') : 0;
+  console.log(`  Incumbents win ${(inc * 100).toFixed(0)}% of contested races; offices owned (control 70+) at the end: ${mean('owned').toFixed(1)}`);
+}
 
 console.log(`\nHEAT (share of weeks in each band)`);
 for (const b of HEAT_BARS) {

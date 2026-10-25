@@ -23,6 +23,7 @@ import { OFFICE_BRIBE } from './interactions';
 import { getRelation, opinion } from './relations';
 import { commitDynasty, dynastyActions, previewDynasty } from './family';
 import { commitPower, powerActions, previewPower } from './power';
+import { previewPol } from './politics';
 import type { Character } from './types';
 
 /** A capo's willingness to accept a worse contract. */
@@ -108,6 +109,7 @@ export const ORDER_TITLES: Record<string, string> = {
 export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, hitback: 6, kessler: 4, cops: 3, shylock: 3, launder: 2 };
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  pol: { preview: (s, a) => previewPol(s, a.op) },
   askPermission: {
     preview: (s, a) => {
       const c = CITIES_BY_ID[a.city];

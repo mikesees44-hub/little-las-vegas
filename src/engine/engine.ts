@@ -5,6 +5,8 @@ import { powerWeek } from './power';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
 import { newsWeek } from './newspaper';
+import { politicsWeek } from './politics';
+import { clonePol } from './polState';
 import { lifestyleMonth, lifestyleWeek } from './lifestyle';
 import { resolveActions } from './actions';
 import { autoStaff } from './business';
@@ -71,8 +73,10 @@ function deepCopy(v: unknown): unknown {
 }
 
 export function cloneState(s: GameState): GameState {
-  const { chronicle, dynastyHistory, lastReport, news, ...rest } = s;
+  const { chronicle, dynastyHistory, lastReport, news, pol, ...rest } = s;
   const c = deepCopy(rest) as GameState;
+  // Politics shares its immutable people records and reserve rows (copy-on-write, see polState.ts).
+  if (pol) c.pol = clonePol(pol);
   c.chronicle = chronicle.slice();
   c.dynastyHistory = dynastyHistory.slice();
   c.news = news ? news.slice() : [];
@@ -264,6 +268,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     runGoals(ctx);
     riseGoalsWeek(ctx);
     dynastyWeek(ctx);
+    politicsWeek(ctx);
     newsWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
