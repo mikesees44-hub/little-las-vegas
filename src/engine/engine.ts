@@ -32,6 +32,8 @@ import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
 import { storyEventSource, storyPoolSource, storyResolve } from './storyPack';
+import { arcEventSource, arcsResolve, arcsWeek } from './livingStories';
+import './livingStoryData';
 import { romanceMonth } from './romance';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
@@ -44,6 +46,7 @@ import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './ty
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
 registerEventSource(storyPoolSource);
+registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
 
 /**
@@ -249,7 +252,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   resolveChoices(ctx, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
+  if (!s.gameOver) arcsResolve(ctx, resolving, choices);
   if (!s.gameOver) fireConsequences(ctx);
+  if (!s.gameOver) arcsWeek(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
     econWeek(ctx);
