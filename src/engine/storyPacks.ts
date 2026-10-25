@@ -1,4 +1,6 @@
 import { CHAINS as PACK1_CHAINS, EVENTS as PACK1_EVENTS, type ChainInfo, type Fx, type PackEvent } from './storyData';
+import { CHAINS_2 as PACK2_CHAINS, EVENTS_2 as PACK2_EVENTS } from './storyData2';
+import { CHAINS_3 as PACK3_CHAINS, EVENTS_3 as PACK3_EVENTS } from './storyData3';
 
 /**
  * The registry of content packs. Every pack uses the same neutral schema
@@ -23,10 +25,14 @@ export interface StoryPackDef {
   weight: number;
   /** Max random-pool events shown from this pack per 52 weeks. */
   budget: number;
+  /** Multiplier on the pack's costs (negative money), to fit its prices to the engine's economy. Default 1. */
+  costScale?: number;
 }
 
 export const STORY_PACKS: StoryPackDef[] = [
-  { id: 'pack1', title: 'Little Las Vegas: Event Content Pack', events: PACK1_EVENTS, chains: PACK1_CHAINS, weight: 1, budget: 14 },
+  { id: 'pack1', title: 'Little Las Vegas: Event Content Pack', events: PACK1_EVENTS, chains: PACK1_CHAINS, weight: 1, budget: 18, costScale: 0.6 },
+  { id: 'pack2', title: 'Little Las Vegas: Content Pack 2 (women, kin, show business, the world)', events: PACK2_EVENTS, chains: PACK2_CHAINS, weight: 1.2, budget: 14, costScale: 0.25 },
+  { id: 'pack3', title: 'Little Las Vegas: Content Pack 3 (small things that get big)', events: PACK3_EVENTS, chains: PACK3_CHAINS, weight: 1.3, budget: 12, costScale: 0.4 },
 ];
 
 function rewriteFx(fx: Fx, rename: Map<string, string>): Fx {

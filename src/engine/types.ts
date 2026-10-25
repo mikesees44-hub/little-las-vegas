@@ -842,6 +842,10 @@ export interface GameState {
   crewStats?: CrewStats;
   /** Event key -> week last shown (per-event cooldowns for crew decisions). */
   eventCooldowns?: Record<string, number>;
+  /** The story director's memory (storyDirector.ts): what was shown, the bagman's visits. */
+  director?: import('./storyDirector').DirectorState;
+  /** Living storylines (livingStories.ts): slow-burn arcs and their stages. */
+  arcs?: import('./livingStories').ArcsState;
   /** The content pack's bookkeeping (storyPack.ts). */
   story?: StoryState;
   /** Courtships, lovers, affairs, pregnancies (romance.ts). */

@@ -31,7 +31,9 @@ import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
-import { storyEventSource, storyResolve } from './storyPack';
+import { storyEventSource, storyPoolSource, storyResolve } from './storyPack';
+import { arcEventSource, arcsResolve, arcsWeek } from './livingStories';
+import './livingStoryData';
 import { romanceMonth } from './romance';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
@@ -46,6 +48,8 @@ import { cloneLedgerBook } from './ledgerbookState';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
+registerEventSource(storyPoolSource);
+registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
 registerEventSource(bonesEventSource);
 
@@ -91,6 +95,15 @@ export function cloneState(s: GameState): GameState {
   c.news = news ? news.slice() : [];
   if (lastReport) c.lastReport = lastReport;
   return c;
+}
+
+/** The months the bagman does not come in person, Philadelphia's envelope goes through the drop (storyDirector.ts). */
+function payTheDrop(ctx: Ctx): void {
+  const d = ctx.s.director;
+  if (!d?.drop) return;
+  const env = d.drop;
+  d.drop = undefined;
+  applyEffects(ctx, [{ type: 'money', amount: -env, category: 'tribute', label: 'Tribute to Philadelphia (through the drop)' }], { label: 'The envelope', because: 'sent Philadelphia its envelope through the drop', category: 'tribute' });
 }
 
 function snapshot(s: GameState) {
@@ -245,7 +258,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   resolveChoices(ctx, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
+  if (!s.gameOver) arcsResolve(ctx, resolving, choices);
   if (!s.gameOver) fireConsequences(ctx);
+  if (!s.gameOver) arcsWeek(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
     econWeek(ctx);
@@ -300,6 +315,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     const errs = validatePlayer(s);
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
+    payTheDrop(ctx);
     attachMinigames(s);
     ctx.popups = s.pendingEvents.length;
   } else {

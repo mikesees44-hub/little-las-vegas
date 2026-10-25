@@ -122,6 +122,18 @@ shared popup pipeline (`registerEventSource`).
 | `hq.ts` | Headquarters (social club, back of a restaurant, car, walk-and-talks), federal bugs (technician/warrant/informant) that add to each talker's evidence, sweeps |
 | `gifts.ts` | ~130 period gifts, tastes and the opinion math, season tickets (inheritable), community projects (appreciation vs trust), leverage gifts with acceptance odds |
 
+## Variety: the story director and living storylines
+
+| File | What it does |
+|---|---|
+| `storyDirector.ts` | One novelty layer over every source in the popup pipeline: a 60-week memory of templates and themes, a per-template global cooldown (10 weeks) and yearly cap (5), freshness-weighted picks for every source (unseen first), a weekly theme mix (crew / family / romance / rivals / law / town / business / chain / world), at most 2 seats per theme a week. Warnings about one man (courted, drifting, a grievance) come back sooner. The bagman comes in person every other month (or when Philadelphia is unhappy), with varied scenes; the other months the envelope goes through the drop (a tribute line in the ledger) |
+| `crewVariants.ts` | 31 more crew decisions (pitches: a card game, a hijack tip, a crooked inspector, a jukebox war, a contractor in trouble, a horse that can't lose, a bookie skimming his own sheet, a rival soldier switching sides, a widow; scores, brawls, sponsors, disputes, life, kids, the law, wives, offers from out of town), resolved later through `cv_outcome`. `crew_score` comes in six shapes |
+| `storyData2*.ts` | Content pack 2 (137 events, 34 chains: the women, kin, show business, the world), `costScale` 0.4 |
+| `storyData3*.ts` | Content pack 3 (57 events, 12 short chains: a $14 sandwich, the waiter, the Coupe de Ville, Famous, the anniversary, the toast, forty years, the wrong wife, the marker, the world pack's show people, world beats 1960-74) |
+| `livingStories.ts` / `livingStoryData.ts` | Eleven slow-burn storylines (months to years) bound to existing people; stages advance with the clock or the boss's answer; one beat a week through the pipeline; `GameState.arcs`; the Storylines tab under Chronicle shows active arcs, cast and history (never hidden truths) |
+
+`npx tsx scripts/variety.ts --games 30 --weeks 52` reports distinct templates, the 8- and 26-week repeat rates, the most repeated templates, the theme mix and the money flows.
+
 ## UI
 
 Single-page dashboard (`src/ui`): header with date, season countdown, treasury, respect and the three heat bars;

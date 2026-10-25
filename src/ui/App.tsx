@@ -26,6 +26,7 @@ import { TheBooks } from './books/TheBooks';
 import { GiftsPanel } from './econ/Gifts';
 import { CharacterSheet } from './components/CharacterSheet';
 import { Chronicle } from './components/Chronicle';
+import { Storylines } from './components/Storylines';
 import { CrewList } from './components/CrewList';
 import { CrewTree } from './components/CrewTree';
 import { EventModal } from './components/EventModal';
@@ -55,7 +56,7 @@ import { CityHall } from './cityhall/CityHall';
 import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'books' | 'gifts' | PowerSub;
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle' | 'storylines' | 'holdings' | 'realestate' | 'hq' | 'books' | 'gifts' | PowerSub;
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
 const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
   { id: 'map', label: 'The Island' },
@@ -68,7 +69,7 @@ const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = 
   { id: 'power', label: 'Power', subs: [{ id: 'power', label: 'Heirs & Ambition' }, { id: 'grievances', label: 'Passed Over' }, { id: 'blitz', label: 'Balance & Blitz' }, { id: 'front', label: 'The Front' }] },
   { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'cityhall', label: 'City Hall' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
-  { id: 'chronicle', label: 'Chronicle' },
+  { id: 'chronicle', label: 'Chronicle', subs: [{ id: 'chronicle', label: 'Chronicle' }, { id: 'storylines', label: 'Storylines' }] },
 ];
 function tabGroup(t: Tab): Tab {
   return TABS.find((g) => g.id === t || g.subs?.some((x) => x.id === t))?.id ?? t;
@@ -411,6 +412,7 @@ export function App({ startOn = 'title' }: AppProps) {
           {tab === 'papers' && <Newspapers s={s} />}
           {(tab === 'power' || tab === 'grievances' || tab === 'blitz' || tab === 'front') && <PowerTab s={s} sub={tab} />}
           {tab === 'chronicle' && <Chronicle s={s} />}
+          {tab === 'storylines' && <Storylines s={s} />}
         </main>
       )}
 

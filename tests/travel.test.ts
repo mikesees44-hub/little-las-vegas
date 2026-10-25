@@ -249,7 +249,11 @@ describe('on the lam', () => {
     let s = rich('indict');
     s.legal = { stage: 'grandjury', personId: s.playerId, defense: 0, since: s.week, next: s.week };
     player(s).evidence = 95;
-    for (let i = 0; i < 6 && !s.pendingEvents.some((e) => e.defId === 'indictment'); i++) s = advanceWeek(s).state;
+    // The grand jury is a roll (at most 90%): hold the file at 95 and give it a second sitting if the first says no.
+    for (let i = 0; i < 24 && !s.pendingEvents.some((e) => e.defId === 'indictment'); i++) {
+      player(s).evidence = 95;
+      s = advanceWeek(s).state;
+    }
     const ev = s.pendingEvents.find((e) => e.defId === 'indictment') ?? s.eventQueue.find((e) => e.defId === 'indictment');
     if (!ev) throw new Error("no indictment");
     expect(ev.choices.some((c) => c.id.startsWith('flee_'))).toBe(true);
