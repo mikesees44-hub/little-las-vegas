@@ -35,6 +35,8 @@ import { PatronagePanel } from '../town/Patronage';
 import { Feed } from './Feed';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
+import { WeeklyTake } from '../tribute/WeeklyTake';
+import { EarningsBoard } from '../tribute/EarningsBoard';
 import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
 import { AttachmentBoard } from '../ears/Connections';
@@ -117,6 +119,8 @@ export const PANELS: PanelDef[] = [
     blurb: 'Your men: the org chart, the council, the capos, who gets made.',
     sections: [
       { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
+      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and you take your cut: the audience, the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },
+      { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
       { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
@@ -134,6 +138,7 @@ export const PANELS: PanelDef[] = [
       { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
+      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'The envelope, the accounts (treasury, your own, the reserve), obligations, investments and the historical ledger.', render: (s) => <WeeklyTake s={s} /> },
     ],
   },
   {

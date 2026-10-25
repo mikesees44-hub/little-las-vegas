@@ -36,6 +36,9 @@ import { polActions } from '../src/engine/politics';
 import { population } from '../src/engine/polPeople';
 import { minigameOf, randomMoves } from '../src/engine/minigames';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
+import { houseCash } from '../src/engine/tributeState';
+import { tributeActions } from '../src/engine/tributeOps';
+import { envelopeChoice } from './simBudget';
 
 function arg(name: string, def: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -92,6 +95,8 @@ const LEDGER = arg('ledger', '0') !== '0';
  * --careless 0 = all careful; --reckless 1 (= --careless 1) = all careless, the stress check.
  */
 const CARELESS = arg('reckless', '0') !== '0' ? 1 : Number(arg('careless', '0.5'));
+/** Chance per week of a weekly-take order (forgive, an extension, an audit, a flat figure, moving money). */
+const TRIBUTE_RATE = Number(arg('tribute', '0.06'));
 
 /** Random creator picks, retried until valid (falls back to none). */
 function randomCharOptions(seed: string, start: StartId): CharOptions | undefined {
@@ -193,7 +198,13 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
     const t = randomTravelAction(s, h);
     if (t && (!budget || affordable(s, budget, t))) add(t);
   }
-  return { choices, actions, minigames };
+  // The weekly take: the envelope split (careful: sensible; careless: greedy), sometimes an order.
+  const envelope = envelopeChoice(s, budget, h);
+  if (rand(h) < TRIBUTE_RATE) add(pickOne(h, tributeActions(s).filter((a) => !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
+  // The careless boss treats every pocket as one (he empties his own into the family when it runs low).
+  if (!budget && (s.tribute?.acct.personal ?? 0) > 500) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: s.tribute!.acct.personal } });
+  if (budget && s.money < 0 && (s.tribute?.acct.personal ?? 0) > 1500 && rand(h) < 0.5) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: Math.round((s.tribute!.acct.personal * 0.6) / 100) * 100 } });
+  return { choices, actions, minigames, envelope };
 }
 
 const pct = (n: number, d: number) => (d ? ((100 * n) / d).toFixed(1) + '%' : 'n/a');
@@ -243,6 +254,12 @@ interface GameResult {
   /** Travel counters at the end of the game (travelState.ts). */
   travel?: Record<string, number>;
   hierarchyErrors: string[];
+  /** The family treasury alone (s.money), and the Don's own money, at each Memorial Day. */
+  treasuryOnly?: number[];
+  personalByYear?: number[];
+  /** Weeks the treasury itself was in the red (the reserve and the Don's own money not counted). */
+  treasuryRed?: number;
+  tribute?: Record<string, number>;
   /** House trees (houses.ts): integrity problems, and the houses at the end. */
   houseErrors: string[];
   houses?: { houses: number; extinct: number; living: number; dead: number; feuds: number; hooks: number; births: number; titles: number };
@@ -316,6 +333,17 @@ function playOne(gi: number): GameResult {
     // Independent reconciliation check (the engine also throws on failure).
     const errs = reconcile(res.report);
     if (errs.length) r.unexplained.push(...errs.map((x) => `week ${res.report.week}: ${x}`));
+    // The weekly take's accounts reconcile on their own too (the engine also throws): the archived
+    // journal moves the Don's, the reserve's and the envelope's balances exactly; no report is split twice.
+    if (res.state.tribute) {
+      const b = res.state.tribute.books[res.state.tribute.books.length - 1];
+      if (b) for (const k of ['personal', 'reserve', 'envelope']) {
+        const exp = (b.start[k] ?? 0) - b.x.filter((x) => x[0] === k).reduce((a, x) => a + x[2], 0) + b.x.filter((x) => x[1] === k).reduce((a, x) => a + x[2], 0);
+        if (exp !== b.end[k]) r.unexplained.push(`week ${res.report.week}: account ${k} does not reconcile (${exp} vs ${b.end[k]})`);
+      }
+      const split = res.state.tribute.reports.filter((x) => x.alloc && x.alloc.week === res.report.week).length;
+      if (split > 1) r.unexplained.push(`week ${res.report.week}: ${split} envelopes split in one week`);
+    }
     const before = { money: s.money, respect: s.respect, heat: s.heat };
     const after = res.state;
     if (res.report.start.money !== before.money || res.report.end.money !== after.money) r.unexplained.push(`week ${res.report.week}: report snapshot mismatch`);
@@ -333,7 +361,9 @@ function playOne(gi: number): GameResult {
         if (v.length) r.successionFailures.push(`week ${s.week}: ${v.join(', ')}`);
       }
     }
-    if (s.money < 0) {
+    const cash = houseCash(s);
+    if (s.money < 0) r.treasuryRed = (r.treasuryRed ?? 0) + 1;
+    if (cash < 0) {
       r.everNegative = true;
       consecutiveRed++;
       if (s.week <= 53) r.redStreakY1 = Math.max(r.redStreakY1, consecutiveRed);
@@ -357,7 +387,9 @@ function playOne(gi: number): GameResult {
     r.peakUnwashed = Math.max(r.peakUnwashed, s.unwashed);
     for (const b of HEAT_BARS) r.heatSamples[b].push(s.heat[b]);
     if ((s.week - 1) % 52 === 0) {
-      r.treasuryByYear.push(s.money);
+      r.treasuryByYear.push(cash);
+      (r.treasuryOnly ??= []).push(s.money);
+      (r.personalByYear ??= []).push(s.tribute?.acct.personal ?? 0);
       if (r.houseErrors.length < 5) r.houseErrors.push(...validateHouses(s).slice(0, 5).map((x) => `week ${s.week}: ${x}`));
     }
     for (const line of res.log) {
@@ -394,6 +426,7 @@ function playOne(gi: number): GameResult {
     };
   }
   if (s!.power) r.power = { ...s!.power.stats };
+  if (s!.tribute) r.tribute = { ...s!.tribute.stats, personal: s!.tribute.acct.personal, reserve: s!.tribute.acct.reserve, ubBase: Math.round(s!.tribute.ub.base), rivalFragments: Object.values(s!.tribute.rivals).reduce((a, b) => a + b.fragments, 0) };
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
   if (s!.romance) r.romance = { ...s!.romance.stats };
   if (s!.pol) r.pol = { ...s!.pol.stats, laws: Object.keys(s!.pol.laws).length, population: population(s!).total, owned: Object.values(s!.pol.ctl).filter((c) => (c.personal + c.financial) / 2 * 0.55 + (100 - c.independence) * 0.3 + (100 - c.resentment) * 0.15 - c.exposure * 0.25 >= 70).length };
@@ -446,7 +479,7 @@ console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankrup
 console.log(`  Bankrupt at any point:      ${pct(results.filter((r) => r.bankruptEver).length, GAMES)}`);
 console.log(`  Ever in the red:            ${pct(results.filter((r) => r.everNegative).length, GAMES)}`);
 console.log(`  Longest red run in year 1:  1-3 weeks ${pct(results.filter((r) => r.redStreakY1 >= 1 && r.redStreakY1 < 4).length, GAMES)}, 4-7 weeks ${pct(results.filter((r) => r.redStreakY1 >= 4 && r.redStreakY1 < 8).length, GAMES)}, 8+ ${pct(results.filter((r) => r.redStreakY1 >= 8).length, GAMES)}`);
-console.log(`  Treasury at Memorial Day (p10 / median / p90):`);
+console.log(`  House cash at Memorial Day = family treasury + the Don's own + reserve (p10 / median / p90):`);
 const medians: number[] = [];
 for (let y = 0; y < YEARS; y++) {
   const xs = results.map((r) => r.treasuryByYear[y]).filter((x): x is number => x !== undefined);
@@ -457,6 +490,16 @@ if (CARELESS > 0 && CARELESS < 1) {
   for (const [name, rs] of [['careful', results.filter((r) => !r.careless)], ['careless', results.filter((r) => r.careless)]] as const) {
     const y = (k: number) => money(quantile(rs.map((r) => r.treasuryByYear[k]).filter((x): x is number => x !== undefined), 0.5));
     console.log(`  ${name.padEnd(9)} bosses (${rs.length}): bankrupt in year 1 ${pct(rs.filter((r) => r.bankruptYear1).length, rs.length)}, median treasury after years 1/3/10: ${y(0)} / ${y(2)} / ${y(9)}`);
+  }
+}
+{
+  const tq = (k: number) => money(quantile(results.map((r) => r.treasuryOnly?.[k]).filter((x): x is number => x !== undefined), 0.5));
+  const pq = (k: number) => money(quantile(results.map((r) => r.personalByYear?.[k]).filter((x): x is number => x !== undefined), 0.5));
+  console.log(`  Of which (median): family treasury after years 1/3: ${tq(0)} / ${tq(2)}; the Don's own money: ${pq(0)} / ${pq(2)}; weeks the treasury itself was red (mean): ${(results.reduce((a, r) => a + (r.treasuryRed ?? 0), 0) / GAMES).toFixed(1)}`);
+  const tg = results.filter((r) => r.tribute);
+  if (tg.length) {
+    const keys = Object.keys(tg[0].tribute!);
+    console.log(`  Weekly take per game (mean): ${keys.map((k) => `${k} ${(tg.reduce((a, r) => a + (r.tribute![k] ?? 0), 0) / tg.length).toFixed(1)}`).join(', ')}`);
   }
 }
 console.log(`  Final respect (median):     ${quantile(results.map((r) => r.finalRespect), 0.5)}`);

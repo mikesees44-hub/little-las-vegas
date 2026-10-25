@@ -92,6 +92,13 @@ export function inMotion(s: GameState, ui: { orders: number } = { orders: 0 }): 
       out.push({ key: 'elections', glyph: '🗳', text: `${soon.length > 1 ? `${soon.length} elections, first: ` : ''}${nm} · ${mo === 0 ? 'this month' : `in ${mo} mo`}`, eta: mo * 4, noEta: true, tone: 'neutral', route: { panel: 'town', section: 'cityhall' } });
     }
   });
+  // The weekly take: the envelope on the desk, or how the last one was split.
+  const tr = s.tribute?.reports[s.tribute.reports.length - 1];
+  if (tr) {
+    const ub = tr.ubId ? s.characters[tr.ubId] : undefined;
+    if (tr.status === 'presented') out.push({ key: 'take', glyph: '$', text: `The envelope: $${tr.presented.toLocaleString('en-US')} on your desk`, eta: 0, tone: 'warn', route: { panel: 'borgata', section: 'take' } });
+    else if (tr.alloc) out.push({ key: 'take', glyph: '$', text: `${ub?.firstName ?? 'The count'}'s envelope $${tr.presented.toLocaleString('en-US')}: you $${tr.alloc.personal.toLocaleString('en-US')} · family $${tr.alloc.treasury.toLocaleString('en-US')} · reserve $${tr.alloc.reserve.toLocaleString('en-US')}`, eta: 0, noEta: true, tone: 'good', route: { panel: 'borgata', section: 'take' } });
+  }
   // The Ears: quiet jobs, and the Madam in a squeeze.
   for (const j of s.ears?.jobs ?? []) out.push({ key: `ear:${j.id}`, glyph: '👂', text: `${s.characters[j.earId]?.firstName ?? '?'} · ${j.mode === 'close' ? 'close to' : 'a dance for'} ${name(j.targetId)}`, eta: Math.max(0, j.due - s.week), tone: 'neutral', route: { panel: 'town', section: 'night' }, charId: j.targetId });
   const sq = s.ears?.madam.squeeze;

@@ -111,7 +111,7 @@ export function resentment(s: GameState, c: Character, winner: Character | undef
 }
 
 /** Weeks between escalation checks: patient men simmer for years, hotheads boil in weeks. */
-function interval(s: GameState, c: Character): number {
+export function interval(s: GameState, c: Character): number {
   const x = viewAttrs(s, c).v;
   const base = 6 + (x.patience - 50) / 2 + (100 - x.impulsiveness) / 10;
   return Math.max(3, Math.round(hasTrait(c, 'Hot-headed') ? base / 2 : hasTrait(c, 'Patient') ? base * 2 : base));

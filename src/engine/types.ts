@@ -544,6 +544,8 @@ export type Effect =
   | ({ type: 'bones'; op: BonesOp } & EffectBase)
   /** The boss's books and the receipts (ledgerbook.ts). */
   | ({ type: 'ledger'; op: LedgerOp } & EffectBase)
+  /** The weekly take (tributeOps.ts). */
+  | ({ type: 'tribute'; op: import('./tributeOps').TributeOp } & EffectBase)
   /** The Ears: the Madam, the nightlife workers, the connection web (ears.ts). */
   | ({ type: 'ears'; op: EarsOp } & EffectBase);
 
@@ -742,7 +744,9 @@ export type LedgerCategory =
   | 'rival'
   | 'heat'
   | 'consequence'
-  | 'drift';
+  | 'drift'
+  /** Money moved between the family's own accounts (tribute.ts): never revenue. */
+  | 'transfer';
 
 export interface ReportLine {
   stat: Stat;
@@ -877,6 +881,8 @@ export interface GameState {
   bones?: BonesState;
   /** The boss's private ledger (optional for old saves). */
   ledgerBook?: LedgerBookState;
+  /** The weekly take: accounts, agreements, the underboss's envelope (tribute.ts; optional for old saves). */
+  tribute?: import('./tributeState').TributeState;
   /** The Empire Designer: properties, buildings, venues, staff, supplies (empireState.ts; optional for old saves). */
   empire?: import('./empireState').EmpireState;
   /** The Ears: the Madam, the nightlife workers, operators, the connection web (optional for old saves). */
@@ -892,6 +898,8 @@ export interface PlayerChoices {
   designatedHeirId?: string;
   /** Mini-games the player played this week: event iid -> the moves he made (replayed by the engine). */
   minigames?: Record<string, string[]>;
+  /** The Monday envelope split the Don chose in the audience (tribute.ts), and the petitions he granted. */
+  envelope?: import('./tributeOps').EnvelopeChoice;
 }
 
 export type PlayerAction =
@@ -933,6 +941,7 @@ export type PlayerAction =
   | { kind: 'pol'; op: PolAction }
   | { kind: 'bones'; op: BonesAction }
   | { kind: 'ledger'; op: LedgerAction }
+  | { kind: 'tribute'; op: import('./tributeOps').TributeAction }
   | { kind: 'ears'; op: EarsAction };
 
 export type InteractionId =

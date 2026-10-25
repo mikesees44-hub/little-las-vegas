@@ -28,6 +28,7 @@ import { previewPol } from './politics';
 import type { Character } from './types';
 import { bonesActions, bonesBlock, previewBones } from './bones';
 import { ledgerActions, previewLedger } from './ledgerbook';
+import { previewTribute } from './tributeOps';
 import { earsActions, previewEars } from './ears';
 
 /** A capo's willingness to accept a worse contract. */
@@ -243,6 +244,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** The boss's books (ledgerbook.ts). */
   ledger: {
     preview: (s, a) => previewLedger(s, a.op),
+  },
+  /** The weekly take (tributeOps.ts). */
+  tribute: {
+    preview: (s, a) => previewTribute(s, a.op),
   },
   /** The Ears: the Madam, the nightlife workers (ears.ts). */
   ears: {

@@ -35,7 +35,7 @@ export const TEMPLATE_COOLDOWN = 10;
 /** Most times one template may be shown in any 52 weeks (the monthly bagman excepted). */
 export const YEAR_CAP = 5;
 /** Templates that recur on a fixed cadence and are exempt from the cap. */
-export const INSTITUTIONAL = new Set(['bagman']);
+export const INSTITUTIONAL = new Set(['bagman', 'tribute_audience']);
 /** Most seats one theme may take in a week (mandatory events excepted). */
 export const MAX_PER_THEME = 2;
 /** The bagman comes in person at most once in this many weeks, about once a season (unless Philadelphia is unhappy). */

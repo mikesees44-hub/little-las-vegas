@@ -253,6 +253,54 @@ its card would refuse. To support a new action kind, add its purpose (and option
 To add a content pack: copy its files into flat `src/engine/storyData<Name>*.ts` and add one entry to `STORY_PACKS`.
 To cast world-pack people, the population layer calls `registerWorldMaterializer((s, worldId) => Character | undefined)`.
 
+## The Weekly Take: tribute, the underboss and the Don's envelope
+
+Every week the crews' money comes UP: each man owes his contribution under his agreement (his hustle policy, standing
+terms: a flat figure, an exemption, an extension), each capo reconciles his crew, keeps his end under his contract and
+remits the rest (a slow payer holds some back in the winter, a greedy one skims), the underboss reconciles, takes his
+authorized share and puts what is actually there in the Don's envelope. On Monday the Don splits it: his own money /
+the family treasury / the reserve. Quiet weeks go by his standing split (an "In motion" note and the This Week card);
+the underboss asks to see him (a popup through the one pipeline, within the attention budget) the first time, when a
+crew is short, a capo disputes his number, a petition comes in, a crisis, or every week if the Don asked for that.
+
+| File | What it does |
+|---|---|
+| `tributeState.ts` | `GameState.tribute` (optional; old saves pick it up on the next week). Accounts (`personal`, `reserve`, `envelope`, `clearing`, `crew:<capo>`; the treasury stays `s.money`), the week's transfer journal and 26 archived weeks, reports, the standing split, the underboss's standing, arrears and why, terms, disputes, investments, favors (patronage), rival books. Its own seeded stream |
+| `tribute.ts` | `xfer` (one transfer: idempotent by key, never overdraws, posts the treasury side through the ledger), `reconcileAccounts` (start + in − out == end, no repeated keys; the engine throws like `reconcile`), `collectTake` (called by the economy in place of the old direct kick-ups; same main dice), shortfalls with the TRUTH, what he SAID and what the underboss BELIEVES, the underboss's cut, `allocate` (petitions off the top, then personal / treasury / reserve in one set of transfers; the family's end posts as the week's kick-up lines per crew), `recommendSplit`, obligations, the reserve covering a dry treasury, the household and the Good Life paid from the Don's own money first |
+| `tributeTalk.ts` | The underboss's words: 150+ lines by temperament (loyal, ambitious, overwhelmed, acting), season and what happened, every figure from the records ("forty-three hundred", "thirty-seven grand"), no line again until the others that fit were used |
+| `tributeFlow.ts` | The week: `tributeBegin` (the Don's split from the audience, his advice, his standing split), `tributeWeek` (disputes, repeat shortfalls, grievances, the underboss's standing and the succession storyline, the Don's greed or thrift read by the capos, the wife, the heir, allowances, widows), `tributeEnd` (a quiet envelope goes by the standing split) |
+| `tributeEvents.ts` | The audience popup and the story beats: shortfall, dispute, a capo carrying a man, the wife, the heir, the underboss's base and the succession crisis (ignored, his earners form a faction that wants the Don to step aside), disagreement and resignation, a capo challenging another's books, a failed investment, greed / an aging Don, retirement talk, a widow's dispute, the underboss caught skimming, a grievance, an underboss too sick to count |
+| `tributeOps.ts` | Orders (`{ kind: 'tribute' }`: standing split, move money, audits, terms, forgive, the underboss's share, allowances) and effect ops (`{ type: 'tribute' }`) |
+| `crewPurse.ts` | The men's own money: every capo, soldier and associate keeps his end (his hustle via `member_keep` transfers; a capo pays the men who work his corners their end out of his, `capo_distribution`), lives on it (a modest household that scales with what he keeps, debts when he cannot cover it, a car, a down payment, the track for a gambler, a wedding envelope), all as journal transfers. A `PurseWeek` per man per week (earned, owed, kicked up, short, kept, spent, his money; 8 weeks) and lifetime totals; `earningsBoard`, flags (short, rising star, in debt, rich, lives above his envelope), `upToCollected` (kicked up − not passed up + late + investments + carry = what reached the underboss). Debt makes a man come up short more; a broke man petitions; a rich ambitious capo wants a bigger end; a rich underboss gathers standing faster |
+| `tributeGrievance.ts` | Money grievances (held back over his end, an honest dispute denied, a bigger end refused) go onto the power layer's grievance ladder (grievances.ts) as persistent storylines; amends or a better contract settle them |
+| `underboss.ts` | The underboss as a person: `ubProfile` (financial skill, judgment, loyalty, ambition, honesty, standing, wealth, career goal chosen once and kept, his patronage book `tribute.ub.helped` with what the Don never heard, whom he owes, who calls him first, authority, tenure) and `tribute.ubHist` (every man who carried the envelope and how it ended): the seam for the shadow court |
+| `rivalBooks.ts` | Rival families on the same architecture: revenue less expenses, capos keep their end and may come up short (more with a grievance), the boss's cut, a reserve, `Rival.money` as the treasury; dry → insolvent (muscle bleeds), a sore capo walks with his corner (the family fragments) |
+
+UI: `src/ui/tribute/` — `AudienceScene` (Monday morning, the Don's office: portrait, his words, the crew table with
+drill-down into every man's account, his share, the envelope, last week, issues, petitions, obligations, his
+recommended split), `EnvelopeSplit` (sliders or dollars; the treasury takes the remainder, so it always totals 100%
+and every dollar), `WeeklyTake` (Borgata and Holdings drawers: Audience, Envelope, Crew Contributions, Obligations,
+Accounts, Agreements, Investments, Disputes, Historical Ledger, Other Families), `TakeLine` (This Week, with each crew's
+kick-up). The crew table's "Every man" opens every crew: per man earned / owed / kicked up / short / kept / vs last week.
+`EarningsBoard` (Borgata → The Family's Earnings, also a Weekly Take tab): everyone in the family in one sortable table
+(portrait, kicked up, earned, kept, his money, an 8-week sparkline, rank, crew, flags), top earners and kick-up-by-crew
+bar charts in inline SVG, totals that reconcile with the envelope. `PurseSection` puts his money (and, for the
+underboss, his profile) on the character sheet. The audience header shows the Don's office (`officeArt.ts`, embedded).
+
+The simulator splits envelopes too (careful: sensible, often the underboss's advice; careless: greedy, half or more)
+and measures money as HOUSE CASH = family treasury + the Don's own + the reserve (it prints the treasury alone too).
+`npx tsx scripts/tributeReport.ts` plays the spec's 52-week family and prints the automated reconciliation report
+(week by week; 7 reconciliation checks and the 14 demonstrations, from `checkRequired` in tests/tributeFamily.ts, the
+same function the vitest test asserts). Saves: `upgradeSave` runs `ensureTribute`, which fills any field an older save
+lacks. Books keep 26 weeks; past 8 weeks only the family's own accounts (the men's pockets are kept 8 weeks).
+
+Hooks for a shadow court / succession war: the underboss is a full NPC (skill from finance/organization/judgment,
+honesty, ambition, loyalty via opinion, wealth); `tribute.ub` holds his standing, who calls him first, his authority
+level (`routine` … `shadow`) and the crisis stage; `tribute.favors` records every favor (who did it for whom, how much,
+on whose authority, and a `Telling` of truth / said / believed-by / known-by) — the underboss already grants extensions
+on his own routine authority and covers for his earners without telling the Don; `petitionsTo` counts who people bring
+petitions to.
+
 ## The Ears: the Madam, the nightlife workers, the connection web
 
 Nightlife workers are the best spies, and the Madam is the boss's friend, not his employee. Everything here is

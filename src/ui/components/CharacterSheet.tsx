@@ -27,6 +27,7 @@ import { fam } from '../../engine/familyState';
 import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
 import { Relationships } from './Relationships';
 import { BonesFacts } from '../books/BonesFacts';
+import { PurseSection } from '../tribute/PurseSection';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -142,6 +143,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
         <DynastyFacts s={s} c={c} />
         <PowerFacts s={s} c={c} />
         <BonesFacts s={s} c={c} />
+        <PurseSection s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} />}
 
         <FamilySection s={s} id={c.id} />

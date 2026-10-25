@@ -24,6 +24,10 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   empire: { panel: 'holdings', section: 'designer' },
   hq: { panel: 'holdings', section: 'hq' },
   books: { panel: 'holdings', section: 'books' },
+  take: { panel: 'borgata', section: 'take' },
+  tribute: { panel: 'borgata', section: 'take' },
+  envelope: { panel: 'borgata', section: 'take' },
+  earnings: { panel: 'borgata', section: 'earnings' },
   longgame: { panel: 'holdings', section: 'ventures' },
   rackethub: { panel: 'holdings', section: 'hub' },
   // The crew

@@ -1,3 +1,4 @@
+import { rivalTake } from './rivalBooks';
 import { alliedWithFaction } from './familyHouses';
 import { lawZeal } from './polIntegrity';
 import { perkMod } from './lifestyle';
@@ -156,8 +157,8 @@ export function rivalWeek(ctx: Ctx): void {
     if (!leader?.alive) continue;
     // Income & regeneration.
     const owned = s.districts.reduce((a, d) => a + (d.influence[r.id] ?? 0) * d.streetBase, 0) / 100;
-    if (r.kind === 'mob') r.money += Math.round(owned * 0.5 + 300);
-    if (r.kind === 'philly') r.money += 500;
+    // Income runs through the family's own books (rivalBooks.ts): capos, the boss's cut, the reserve.
+    if (r.kind === 'mob' || r.kind === 'philly') r.money += rivalTake(ctx, r, owned);
     r.muscle = Math.max(5, Math.min(100, r.muscle + (r.muscle < 50 ? 1 : 0)));
     r.exposure = Math.max(0, r.exposure - 1);
 

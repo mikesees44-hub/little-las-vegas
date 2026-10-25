@@ -19,6 +19,8 @@
 import { previewAction } from '../src/engine/actions';
 import { hashSeed } from '../src/engine/rng';
 import type { Choice, Effect, GameState, PlayerAction, ReportLine } from '../src/engine/types';
+import { rand } from '../src/engine/rng';
+import type { EnvelopeChoice } from '../src/engine/tributeOps';
 
 export interface Budget {
   /** Running average of the week's outgoings (costs, tribute, debt), in dollars. */
@@ -137,3 +139,27 @@ export function affordableChoices(s: GameState, b: Budget, legal: Choice[]): Cho
 }
 
 export const choiceCost = (c: Choice) => moneyOut(c.effects);
+
+/**
+ * The weekly take: how the random player splits the underboss's envelope.
+ * Careful: a sensible split (more to the family when the treasury is under
+ * his reserve; often his underboss's advice). Careless: greedy (half or more
+ * for himself, a token reserve), set as his standing policy on day one.
+ */
+export function envelopeChoice(s: GameState, b: Budget | undefined, h: { rng: number }): EnvelopeChoice | undefined {
+  const t = s.tribute;
+  if (!b) {
+    if (s.week <= 1 || !t) return { split: { personal: 5500, treasury: 4500, reserve: 0 }, standing: true };
+    const pend = t.reports.find((r) => r.status === 'presented');
+    if (!pend) return undefined;
+    const p = 5000 + Math.floor(rand(h) * 2000);
+    return { report: pend.id, split: { personal: p, reserve: 0, treasury: 10000 - p }, grant: pend.petitions.filter(() => rand(h) < 0.3).map((x) => x.id) };
+  }
+  if (s.week <= 1 || !t) return { split: { personal: 1500, treasury: 7500, reserve: 1000 }, standing: true };
+  const pend = t.reports.find((r) => r.status === 'presented');
+  const low = spare(s, b) < 0;
+  const split = low ? { personal: 500, treasury: 8500, reserve: 1000 } : { personal: 1500, treasury: 7000, reserve: 1500 };
+  if (!pend) return low !== t.policy.personal <= 500 ? { split, standing: true } : undefined;
+  if (rand(h) < 0.4) return { report: pend.id, split: pend.rec, grant: pend.petitions.filter((x) => x.amount <= room(s, b)).map((x) => x.id) };
+  return { report: pend.id, split, standing: rand(h) < 0.3, grant: pend.petitions.filter((x) => x.amount <= room(s, b) && rand(h) < 0.5).map((x) => x.id) };
+}

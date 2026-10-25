@@ -23,7 +23,8 @@ export function thisWeek(s: GameState): ThisWeek {
     changed: s.chronicle.filter((e) => e.week >= s.week - 1 && ['succession', 'death', 'family', 'rival', 'consequence'].includes(e.kind)).slice(-3).reverse(),
   };
   if (r) {
-    const m = r.lines.filter((l) => l.stat === 'money');
+    // Moves between the family's own accounts are not money in or out.
+    const m = r.lines.filter((l) => l.stat === 'money' && l.category !== 'transfer');
     const inflow = m.filter((l) => l.amount > 0).reduce((a, l) => a + l.amount, 0);
     const outflow = -m.filter((l) => l.amount < 0).reduce((a, l) => a + l.amount, 0);
     out.from = r.week;

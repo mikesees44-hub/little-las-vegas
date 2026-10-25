@@ -14,6 +14,7 @@ import { streetFeed } from './street';
 import { useShell } from './context';
 import type { GuidedGoal } from './goals';
 import { seasonInfo } from '../../engine/calendar';
+import { TakeLine } from '../tribute/TakeLine';
 
 export const ALERT_GLYPH: Record<string, string> = {
   unhappy: '☹', defector: '⇄', heat: '♨', money: '$', heir: '♔', loan: '%', staff: '⚒', decision: '✉', scheme: '☠', dispute: '⚖', war: '⚔', family: '♥', lifestyle: '✦', law: '§', underbelly: '⚓',
@@ -119,6 +120,7 @@ export function ThisWeekCard({ s, onReport }: { s: GameState; onReport: () => vo
             <span className="text-stone-500">Heat</span><span>L {sign(w.heat!.local)} F {sign(w.heat!.family)} D {sign(w.heat!.federal)}</span></div>
         </div>
       )}
+      <TakeLine s={s} />
       {w.threats.length > 0 && <><div className="mt-1.5 text-[10px] uppercase tracking-widest text-red-300/80">Threats</div><ul className="space-y-0.5">{w.threats.map((o) => <OppLine key={o.id} s={s} o={o} />)}</ul></>}
       {w.opportunities.length > 0 && <><div className="mt-1.5 text-[10px] uppercase tracking-widest text-gold-400/80">Opportunities</div><ul className="space-y-0.5">{w.opportunities.map((o) => <OppLine key={o.id} s={s} o={o} />)}</ul></>}
       {w.changed.length > 0 && <><div className="mt-1.5 text-[10px] uppercase tracking-widest text-stone-500">Changed</div><ul className="space-y-0.5 text-stone-400">{w.changed.map((e, i) => <li key={i} className="leading-snug line-clamp-2">{e.text}</li>)}</ul></>}
