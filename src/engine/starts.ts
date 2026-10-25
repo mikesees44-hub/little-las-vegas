@@ -10,6 +10,7 @@ import { addOpinion } from './relations';
 import { addStory, assignTo, giveBio, smallestRegime, tidyRegimes, transferRegime, validateHierarchy } from './hierarchy';
 import { capos, crew } from './characters';
 import type { Character, GameState, Trait } from './types';
+import { applyCharOptions, type CharOptions } from './charCreate';
 
 /**
  * How a game begins.
@@ -31,14 +32,21 @@ export const STARTS: Record<StartId, { name: string; text: string }> = {
   capo: { name: 'Start as a capo', text: 'Your own crew in the Valente family. Fifteen percent up the ladder, and the chair one step further.' },
 };
 
-export function newGameWith(seed: string, start: StartId = 'classic'): GameState {
+/** `charOptions` (the character creator) is applied on top of any start. */
+export function newGameWith(seed: string, start: StartId = 'classic', charOptions?: CharOptions): GameState {
   const s = newGame(seed);
-  if (start === 'classic') return s;
+  if (start === 'classic' && !charOptions) return s;
+  if (start === 'classic') return finish(s, start, charOptions);
   if (start === 'rise' || start === 'associate' || start === 'soldier' || start === 'capo') rise(s);
   else sees(s);
   if (start === 'associate' || start === 'soldier' || start === 'capo') rankStart(s, start);
   rebuildRegimes(s);
   s.flags[`start_${start}`] = 1;
+  return finish(s, start, charOptions);
+}
+
+function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameState {
+  if (charOptions) applyCharOptions(s, start, charOptions);
   refreshDynastyAfterStart(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};

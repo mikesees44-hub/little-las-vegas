@@ -165,6 +165,15 @@ export interface Character {
   orientation?: Orientation;
   /** The real biological father, when it is not the father of record (hidden paternity). */
   bioFatherId?: string;
+  /** Chosen look (character creator): overrides the portrait genes and styles. */
+  appearance?: Appearance;
+}
+
+/** Portrait overrides: gene values 0..1 by locus, plus a hair style and moustache. */
+export interface Appearance {
+  genes?: Record<string, number>;
+  hair?: string;
+  stache?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';

@@ -10,7 +10,7 @@ export const ALL_TRAITS: Trait[] = [
 ];
 
 /** Pairs of traits that cannot appear on the same character. */
-const OPPOSED: [Trait, Trait][] = [
+export const OPPOSED: [Trait, Trait][] = [
   ['Greedy', 'Honest'],
   ['Hot-headed', 'Patient'],
   ['Cruel', 'Pious'],
