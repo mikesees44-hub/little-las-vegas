@@ -3,6 +3,7 @@ import { displayName, hasTrait, isFree, makeCharacter, player } from './characte
 import { callName } from './crewEvents';
 import { chooseHeir } from './dynasty';
 import { newBusiness } from './business';
+import { smallStart } from './economy';
 import { applyEffects, describeEffect } from './effects';
 import type { Ctx } from './ledger';
 import { rand, weightedPick } from './rng';
@@ -447,7 +448,11 @@ export function mapFx(s: GameState, e: PackEvent, b: Bound, fx: Fx, carried: Rec
       // Each pack can also scale its bills to the engine's economy (`costScale`, storyPacks.ts).
       if (fx.amount >= 0) return [{ type: 'money', amount: fx.amount }];
       return [{ type: 'money', amount: Math.round((fx.amount * (PACK_DEFS[PACK_OF[e.id]]?.costScale ?? 1) * (s.week <= FIRST_YEAR ? 0.5 : 1)) / 50) * 50 }];
-    case 'respect': return [{ type: 'respect', amount: fx.amount }];
+    case 'respect':
+      // A small house (Rise to Power, the rank starts) is not yet a name on the street: until it is
+      // a real power, the story's good word is worth half (the climb is the crews' and the goals').
+      if (fx.amount > 0 && smallStart(s) && s.respect < 60) return [{ type: 'respect', amount: Math.max(1, Math.round(fx.amount / 2)) }];
+      return [{ type: 'respect', amount: fx.amount }];
     case 'heat': return [{ type: 'heat', bar: fx.bar, amount: fx.amount }];
     case 'opinion': {
       const from = id(fx.role);
