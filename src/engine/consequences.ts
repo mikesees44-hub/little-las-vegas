@@ -81,7 +81,8 @@ const HANDLERS: Record<string, Handler> = {
     if (!f) return undefined;
     const power = factionPower(s, f);
     const leader = s.characters[f.leaderId];
-    if (!leader?.alive || leader.faction !== 'player' || power < 0.12) {
+    // A plot against the old boss is moot if its leader has since become the boss.
+    if (!leader?.alive || leader.faction !== 'player' || leader.id === s.playerId || power < 0.12) {
       s.factions = s.factions.filter((x) => x !== f);
       return { text: 'the plotters lost their nerve and the faction broke up', effects: [{ type: 'respect', amount: 2 }] };
     }
@@ -100,7 +101,7 @@ const HANDLERS: Record<string, Handler> = {
     const r = s.rivals.filter((x) => x.kind === 'mob' && s.characters[x.leaderId]?.alive)[0];
     for (const id of f.memberIds) {
       const m = s.characters[id];
-      if (m?.alive && m.faction === 'player' && r) defectTo(ctx, m, r.id, 'coup');
+      if (m?.alive && m.faction === 'player' && m.id !== s.playerId && r) defectTo(ctx, m, r.id, 'coup');
     }
     if (d && r) {
       const lost = -shiftInfluence(s, d.id, 'player', -12);

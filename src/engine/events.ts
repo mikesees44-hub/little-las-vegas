@@ -2,6 +2,7 @@ import { perkMod } from './lifestyle';
 import { ageOn, monthKey, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
 import { MAX_PER_KIND } from './actions';
+import { smallStart } from './economy';
 import { countKind, newBusiness, playerSlots } from './business';
 import { CATALOG, SHOP_KINDS } from './catalog';
 import { defaulter } from './loans';
@@ -67,11 +68,17 @@ export function envelopeSize(s: GameState): number {
  * second summer, whichever comes first.
  */
 export function unnoticed(s: GameState): boolean {
-  return !!s.flags.start_rise && s.respect < 40 && s.week < 53;
+  return smallStart(s) && s.respect < 40 && s.week < 53;
+}
+
+/** A man with a boss above him in the family (a rank start, or a boss who fell) kicks up to that boss; his don pays Philadelphia. */
+export function underADon(s: GameState): boolean {
+  const p = s.power;
+  return !!p && p.station !== 'boss' && p.station !== 'independent' && p.station !== 'exile' && !!p.overId && !!s.characters[p.overId]?.alive;
 }
 
 export function bagmanDue(s: GameState): boolean {
-  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !unnoticed(s);
+  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !unnoticed(s) && !underADon(s);
 }
 
 /**

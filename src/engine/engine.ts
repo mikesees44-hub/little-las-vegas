@@ -1,4 +1,5 @@
 import { econEventSource, econWeek } from './econ';
+import { markCostlyChoices } from './costHints';
 import { travelWeek } from './travel';
 import { officeWeek } from './office';
 import { powerWeek } from './power';
@@ -317,6 +318,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     s.pendingEvents = generateWeekEvents(s);
     payTheDrop(ctx);
     attachMinigames(s);
+    markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
   } else {
     s.pendingEvents = [];

@@ -168,6 +168,13 @@ function permitVerdict(s: GameState, lot: Lot): PermitVerdict | undefined {
   return undefined;
 }
 
+/**
+ * Installments that come due on their own (a building stage, a community
+ * project) wait rather than take the last of the treasury: they never leave
+ * less than this for the payroll.
+ */
+export const BUILD_CUSHION = 3000;
+
 function constructionWeek(ctx: Ctx): void {
   const s = ctx.s;
   const e = s.econ!;
@@ -179,8 +186,8 @@ function constructionWeek(ctx: Ctx): void {
     l.stalled = undefined;
     if ((l.stageWeek ?? 0) === 0) {
       const cost = Math.round(buildCost(l, u) * STAGE_COST[st]);
-      if (s.money < cost) {
-        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)})`;
+      if (s.money - cost < BUILD_CUSHION) {
+        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)}): the contractor waits until it leaves you ${fmtMoney(BUILD_CUSHION)} for the payroll`;
         continue;
       }
       if (st === 'permits' && s.heat.local >= 70 && chance(e, 0.3)) {
@@ -293,7 +300,7 @@ function projectsWeek(ctx: Ctx): void {
     if (p.done) continue;
     const def = PROJECTS_BY_KIND[p.kind];
     const pay = Math.round(p.cost / p.weeks);
-    if (s.money < pay) continue; // waits for money
+    if (s.money - pay < BUILD_CUSHION) continue; // waits for money (and never takes the payroll)
     money(ctx, -pay, `Community: ${def.name.toLowerCase()} in ${ZONES_BY_ID[p.zone].name} (week ${p.progress + 1}/${p.weeks})`, 'cost');
     p.progress++;
     if (p.progress >= p.weeks) {

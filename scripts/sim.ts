@@ -14,6 +14,8 @@ import { LIFESTYLE_IDS } from '../src/engine/lifestyle';
 import { isFamilyEvent, MAX_FAMILY_POPUPS } from '../src/engine/events';
 import { advanceWeek, forceDeath } from '../src/engine/engine';
 import { reconcile } from '../src/engine/ledger';
+import { affordable, affordableChoices, choiceCost, isCareless, isCutback, newBudget, orderCost, spare, spend, trackBudget, type Budget } from './simBudget';
+import { dumpLedger, ledgerGameDone, ledgerTap, orderTap, printLedger } from './simLedger';
 import { randomTravelAction } from '../src/engine/travel';
 import { validatePlayer } from '../src/engine/dynasty';
 import { rand } from '../src/engine/rng';
@@ -73,6 +75,14 @@ const START = arg('start', 'classic') as StartId;
 const ADVICE_RATE = Number(arg('advice', '0.05'));
 /** Share of games started through the character creator with random (valid, normal-difficulty) picks (--custom 0.2). Off by default so the balance targets match master. */
 const CUSTOM_RATE = Number(arg('custom', '0'));
+/** Print the per-line money ledger for years 1 and 3 (--ledger 1). */
+const LEDGER = arg('ledger', '0') !== '0';
+/**
+ * Share of games played by a careless boss: the old random player, who spends at its fixed weekly
+ * rates whatever the treasury says. The rest are careful (budget-aware, simBudget.ts).
+ * --careless 0 = all careful; --reckless 1 (= --careless 1) = all careless, the stress check.
+ */
+const CARELESS = arg('reckless', '0') !== '0' ? 1 : Number(arg('careless', '0.5'));
 
 /** Random creator picks, retried until valid (falls back to none). */
 function randomCharOptions(seed: string, start: StartId): CharOptions | undefined {
@@ -101,27 +111,35 @@ const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ?
  * through the chain), a dynasty order, a lifestyle (picked on day one,
  * perks spent as they come) and, now and then, an envoy.
  */
-function aiChoices(s: GameState, salt: number): PlayerChoices {
+function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
   const h = { rng: (s.rng ^ Math.imul(salt + 1, 0x9e3779b1)) >>> 0 };
   const choices: Record<string, string> = {};
   const minigames: Record<string, string[]> = {};
   for (const ev of s.pendingEvents) {
-    const legal = ev.choices.filter((c) => !c.disabledReason);
+    let legal = ev.choices.filter((c) => !c.disabledReason);
+    if (budget) legal = affordableChoices(s, budget, legal);
     const ch = legal[Math.floor(rand(h) * legal.length)];
     choices[ev.iid] = ch.id;
+    if (budget) spend(budget, choiceCost(ch));
     // Mini-games: usually let it play out (the same odds); sometimes play them with random legal moves.
     const mg = minigameOf(ch);
     if (mg && mg.params.play !== 0 && rand(h) < MG_PLAY_RATE) minigames[ev.iid] = randomMoves(s, mg.game, mg.iid, mg.params, mg.parts, h);
   }
   const actions: PlayerAction[] = [];
   const add = (a: PlayerAction | undefined) => {
-    if (a && !actions.some((x) => JSON.stringify(x) === JSON.stringify(a))) actions.push(a);
+    if (a && !actions.some((x) => JSON.stringify(x) === JSON.stringify(a))) {
+      if (budget && a.kind !== 'perk' && a.kind !== 'lifestyle' && !affordable(s, budget, a)) return; // the allowance may be spent by an earlier pick
+      actions.push(a);
+      if (budget) spend(budget, orderCost(s, a));
+    }
   };
-  const legal = legalActions(s);
+  // Budget-aware: optional orders only from the money above the reserve (simBudget.ts).
+  const legal = budget ? legalActions(s).filter((a) => a.kind === 'perk' || affordable(s, budget, a)) : legalActions(s);
+  if (budget && spare(s, budget) < 0 && rand(h) < 0.25) add(pickOne(h, [...legal, ...polActions(s)].filter((a) => isCutback(a) && !previewAction(s, a).disabledReason)));
   if (rand(h) < ORDER_RATE) add(pickOne(h, legal));
   if (rand(h) < GENERAL_RATE) {
     const vias = ['direct', 'underboss', 'capo'] as const;
-    const general = ORDERS.map((o) => ({ kind: 'order', key: o.key, via: vias[Math.floor(rand(h) * 3)] }) as PlayerAction).filter((a) => !previewAction(s, a).disabledReason);
+    const general = ORDERS.map((o) => ({ kind: 'order', key: o.key, via: vias[Math.floor(rand(h) * 3)] }) as PlayerAction).filter((a) => !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)));
     add(pickOne(h, general));
   }
   if (rand(h) < DYNASTY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'dynasty')));
@@ -130,13 +148,13 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < POWER_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'power')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
-  if (rand(h) < ROMANCE_RATE) add(pickOne(h, romanceActions(s).filter((a) => !previewAction(s, a).disabledReason)));
+  if (rand(h) < ROMANCE_RATE) add(pickOne(h, romanceActions(s).filter((a) => !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
   // Political orders, when there is money to spare (a payroll is a weekly bill).
   if (rand(h) < POL_RATE) {
     const spare = s.money - 20000;
     add(pickOne(h, polActions(s).filter((a) => {
       const p = previewAction(s, a);
-      return !p.disabledReason && p.cost <= spare && !(a.op.op === 'payroll' && a.op.on && spare < 15000);
+      return !p.disabledReason && p.cost <= spare && !(a.op.op === 'payroll' && a.op.on && spare < 15000) && (!budget || affordable(s, budget, a));
     })));
   }
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
@@ -150,7 +168,10 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
     }
   }
   if (rand(h) < BONES_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'bones' || a.kind === 'ledger')));
-  if (rand(h) < TRAVEL_RATE) add(randomTravelAction(s, h));
+  if (rand(h) < TRAVEL_RATE) {
+    const t = randomTravelAction(s, h);
+    if (t && (!budget || affordable(s, budget, t))) add(t);
+  }
   return { choices, actions, minigames };
 }
 
@@ -167,6 +188,10 @@ const money = (n: number) => (Number.isNaN(n) ? 'n/a' : `$${Math.round(n).toLoca
 
 interface GameResult {
   crashed?: string;
+  /** Played by a careless boss (no budget). */
+  careless?: boolean;
+  /** Longest run of weeks in the red during year 1. */
+  redStreakY1: number;
   bankruptYear1: boolean;
   bankruptEver: boolean;
   everNegative: boolean;
@@ -213,7 +238,7 @@ interface GameResult {
 
 function playOne(gi: number): GameResult {
   const r: GameResult = {
-    bankruptYear1: false, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
+    bankruptYear1: false, redStreakY1: 0, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
     deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
     hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, packPopups: 0, mg: {},
@@ -229,6 +254,8 @@ function playOne(gi: number): GameResult {
   }
   r.popupsPerWeek.push(s.pendingEvents.length);
   let consecutiveRed = 0;
+  r.careless = isCareless(gi, CARELESS);
+  const budget = r.careless ? undefined : newBudget(`${SEED}-${gi}`, s.money);
   for (let w = 0; w < WEEKS; w++) {
     if (s.gameOver) break;
     if (STRESS && w > 0 && w % STRESS === 0) {
@@ -249,14 +276,15 @@ function playOne(gi: number): GameResult {
     }
     const prevPlayer = s.playerId;
     let res;
-    const ch = aiChoices(s, w);
+    const ch = aiChoices(s, w, budget);
     for (const a of ch.actions ?? []) r.orders[a.kind] = (r.orders[a.kind] ?? 0) + 1;
+    if (LEDGER) for (const a of ch.actions ?? []) orderTap(s.week, a.kind === 'order' ? `order:${a.key}` : 'op' in a && a.op && typeof a.op === 'object' ? `${a.kind}:${String(Object.values(a.op)[0])}` : a.kind, previewAction(s, a).cost);
     try {
       res = advanceWeek(s, ch);
     } catch (e) {
       const msg = (e as Error).message;
       if (/reconcile/.test(msg)) r.unexplained.push(msg);
-      r.crashed = `week ${s.week}: ${msg}`;
+      r.crashed = `game ${SEED}-${gi} (${r.careless ? "careless" : "careful"}) week ${s.week}: ${msg}`;
       break;
     }
     // Independent reconciliation check (the engine also throws on failure).
@@ -267,6 +295,8 @@ function playOne(gi: number): GameResult {
     if (res.report.start.money !== before.money || res.report.end.money !== after.money) r.unexplained.push(`week ${res.report.week}: report snapshot mismatch`);
     for (const b of HEAT_BARS) if (res.report.end.heat[b] !== after.heat[b]) r.unexplained.push(`week ${res.report.week}: heat snapshot mismatch`);
 
+    if (LEDGER) ledgerTap(s.week, res.report.lines);
+    if (budget) trackBudget(budget, res.report.lines);
     s = after;
     r.weeksPlayed++;
     if (s.playerId !== prevPlayer || (s.gameOver && s.gameOver.reason === 'no_heir')) {
@@ -280,6 +310,7 @@ function playOne(gi: number): GameResult {
     if (s.money < 0) {
       r.everNegative = true;
       consecutiveRed++;
+      if (s.week <= 53) r.redStreakY1 = Math.max(r.redStreakY1, consecutiveRed);
       if (consecutiveRed >= INSOLVENT_WEEKS) {
         r.bankruptEver = true;
         if (s.week <= 53) r.bankruptYear1 = true;
@@ -305,6 +336,7 @@ function playOne(gi: number): GameResult {
       if (m) r.rivalMoves[m[1]] = (r.rivalMoves[m[1]] ?? 0) + 1;
     }
   }
+  if (LEDGER) ledgerGameDone(r.bankruptYear1);
   if (s!.gameOver) {
     r.gameOver = s!.gameOver.reason;
     r.gameOverWeek = s!.gameOver.week;
@@ -332,7 +364,10 @@ function playOne(gi: number): GameResult {
 
 const t0 = Date.now();
 const results: GameResult[] = [];
-for (let i = 0; i < GAMES; i++) results.push(playOne(i));
+/** Replay one game by its index (--only 75), for debugging a crash. */
+const ONLY = arg('only', '');
+if (ONLY) results.push(playOne(Number(ONLY)));
+else for (let i = 0; i < GAMES; i++) results.push(playOne(i));
 const secs = (Date.now() - t0) / 1000;
 
 const crashes = results.filter((r) => r.crashed);
@@ -347,7 +382,7 @@ const gamesWithBossDeath = results.filter((r) => r.bossDeaths > 0).length;
 const gameOvers = results.filter((r) => r.gameOver);
 
 console.log(`\nLITTLE LAS VEGAS — headless simulation`);
-console.log(`${GAMES} games × ${YEARS} years, start "${START}" (seed "${SEED}"${STRESS ? `, boss force-killed every ${STRESS} weeks` : ''}) in ${secs.toFixed(1)}s\n`);
+console.log(`${GAMES} games × ${YEARS} years, start "${START}" (seed "${SEED}", ${CARELESS >= 1 ? 'all careless (reckless)' : CARELESS <= 0 ? 'all careful (budget-aware)' : `${Math.round(CARELESS * 100)}% careless bosses`}${STRESS ? `, boss force-killed every ${STRESS} weeks` : ''}) in ${secs.toFixed(1)}s\n`);
 console.log(`INTEGRITY`);
 console.log(`  Crashes:                    ${crashes.length}`);
 for (const c of crashes.slice(0, 5)) console.log(`    - ${c.crashed}`);
@@ -363,12 +398,19 @@ console.log(`\nECONOMY`);
 console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (treasury < $0 for ${INSOLVENT_WEEKS}+ straight weeks)`);
 console.log(`  Bankrupt at any point:      ${pct(results.filter((r) => r.bankruptEver).length, GAMES)}`);
 console.log(`  Ever in the red:            ${pct(results.filter((r) => r.everNegative).length, GAMES)}`);
+console.log(`  Longest red run in year 1:  1-3 weeks ${pct(results.filter((r) => r.redStreakY1 >= 1 && r.redStreakY1 < 4).length, GAMES)}, 4-7 weeks ${pct(results.filter((r) => r.redStreakY1 >= 4 && r.redStreakY1 < 8).length, GAMES)}, 8+ ${pct(results.filter((r) => r.redStreakY1 >= 8).length, GAMES)}`);
 console.log(`  Treasury at Memorial Day (p10 / median / p90):`);
 const medians: number[] = [];
 for (let y = 0; y < YEARS; y++) {
   const xs = results.map((r) => r.treasuryByYear[y]).filter((x): x is number => x !== undefined);
   medians.push(quantile(xs, 0.5));
   console.log(`    after year ${String(y + 1).padStart(2)}: ${money(quantile(xs, 0.1)).padStart(10)} / ${money(quantile(xs, 0.5)).padStart(10)} / ${money(quantile(xs, 0.9)).padStart(10)}   (n=${xs.length})`);
+}
+if (CARELESS > 0 && CARELESS < 1) {
+  for (const [name, rs] of [['careful', results.filter((r) => !r.careless)], ['careless', results.filter((r) => r.careless)]] as const) {
+    const y = (k: number) => money(quantile(rs.map((r) => r.treasuryByYear[k]).filter((x): x is number => x !== undefined), 0.5));
+    console.log(`  ${name.padEnd(9)} bosses (${rs.length}): bankrupt in year 1 ${pct(rs.filter((r) => r.bankruptYear1).length, rs.length)}, median treasury after years 1/3/10: ${y(0)} / ${y(2)} / ${y(9)}`);
+  }
 }
 console.log(`  Final respect (median):     ${quantile(results.map((r) => r.finalRespect), 0.5)}`);
 console.log(`  Businesses at the end (median): ${quantile(results.map((r) => r.finalBusinesses), 0.5)}   peak unwashed cash (median): ${money(quantile(results.map((r) => r.peakUnwashed), 0.5))}`);
@@ -473,6 +515,9 @@ console.log(`  Mix: ${Object.entries(keys).sort((a, b) => b[1] - a[1]).map(([k, 
 const moves: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.rivalMoves)) moves[k] = (moves[k] ?? 0) + v;
 console.log(`  Rival actions per game:     ${Object.entries(moves).map(([k, v]) => `${k} ${(v / GAMES).toFixed(0)}`).join(', ')}`);
+
+if (LEDGER) printLedger();
+if (LEDGER && arg('ledger', '0') !== '1') dumpLedger(arg('ledger', '0'));
 
 const y1b = results.filter((r) => r.bankruptYear1).length / GAMES;
 const y3 = medians[2];

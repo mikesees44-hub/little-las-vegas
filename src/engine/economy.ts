@@ -37,10 +37,35 @@ export const FIRST_WINTER_HOLDBACK = 0.65;
 /** The first winter's extra bite: the house hasn't learned to live through a Wildwood winter yet. */
 export const FIRST_WINTER_EXTRA = 90;
 
+/**
+ * The first winter, every place you took on that summer needs winterizing too
+ * (shutters, a boiler, a man to watch it): the off-season bill scales with what
+ * you bought. A boss who buys up the boardwalk in August pays for it in January.
+ */
+export const FIRST_WINTER_PER_NEW = 40;
+/** Businesses bought or built since the start (the start's own are week 0 or 1). */
+export function boughtThisYear(s: GameState): ReturnType<typeof owned> {
+  return owned(s).filter((b) => (b.boughtWeek ?? 0) > 1);
+}
+
+/**
+ * The small starts: Rise to Power, and the rank starts built on it (associate,
+ * soldier, capo). A two-business outfit has no club boiler to fix, the men do
+ * steady small work, and Philadelphia hasn't heard of you yet.
+ */
+export function smallStart(s: GameState): boolean {
+  return !!(s.flags.start_rise || s.flags.start_associate || s.flags.start_soldier || s.flags.start_capo);
+}
+
+/** Is the first winter still to come or under way (so a purchase now pays the winterizing)? */
+export function firstWinterAhead(s: GameState): boolean {
+  return !smallStart(s) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 5));
+}
+
 /** Sept 1960 – May 1961. */
 export function firstWinter(s: GameState): boolean {
   // Rise to Power: a two-business outfit has no club boiler to fix; its winter is hard enough.
-  return !s.flags.start_rise && !isInSeason(s.date) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 6));
+  return !smallStart(s) && !isInSeason(s.date) && (s.date.y === 1960 || (s.date.y === 1961 && s.date.m <= 6));
 }
 /** Share of his arrears a slow payer makes good each week in the season. */
 export const ARREARS_REPAY = 0.2;
@@ -196,7 +221,11 @@ export function runEconomy(ctx: Ctx): void {
     const n = owned(s).length;
     const winter = WINTER_BASE + WINTER_PER_BUSINESS * Math.min(n, 5) + 8 * Math.max(0, n - 5) + 25 * owned(s).filter((b) => CATALOG[b.kind].season[1] < 0.5).length;
     money(ctx, -winter, 'Off-season: heating oil, idle payroll, shutters on the boardwalk', 'cost');
-    if (firstWinter(s)) money(ctx, -FIRST_WINTER_EXTRA, 'The first winter: storm shutters, a boiler at the club, payroll you never budgeted', 'cost');
+    if (firstWinter(s)) {
+      money(ctx, -FIRST_WINTER_EXTRA, 'The first winter: storm shutters, a boiler at the club, payroll you never budgeted', 'cost');
+      const fresh = boughtThisYear(s).length;
+      if (fresh) money(ctx, -FIRST_WINTER_PER_NEW * fresh, `The first winter: winterizing the ${fresh} place${fresh > 1 ? 's' : ''} you took on this summer`, 'cost');
+    }
   }
   // Keeping up appearances: the boss's household grows with the treasury.
   const lifestyle = Math.round((150 + Math.max(0, s.money - 60000) * 0.006) * (s.edicts?.lowprofile ? 0.5 : 1));
@@ -350,14 +379,14 @@ export function launder(ctx: Ctx, dirty: number): void {
 export const CREW_WORK = { soldier: 120, associate: 75 } as const;
 
 /**
- * Rise to Power: until the house is a real power (respect 60), the men in
+ * Rise to Power (and the rank starts): until the house is a real power (respect 60), the men in
  * each capo's regime do steady small work — a card game, a load off a truck,
  * collections for the numbers bank — and the capo kicks your end up every
  * week. It barely notices the season. One labelled line per capo.
  */
 export function crewWork(ctx: Ctx, mult: number): number {
   const s = ctx.s;
-  if (!s.flags.start_rise || s.respect >= 60) return 0;
+  if (!smallStart(s) || s.respect >= 60) return 0;
   const caps = crew(s).filter((c) => c.rank === 'capo');
   const season = mult > 1 ? 1.0 : 1.15; // winter is when a small crew hustles hardest
   let total = 0;
