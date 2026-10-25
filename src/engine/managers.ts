@@ -34,7 +34,7 @@ export function managerOf(s: GameState, key: string): Manager | undefined {
 /** Income multiplier from the manager's skill (0.90 .. 1.30); 1 when nobody's in charge. */
 export function managerMult(m: Manager | undefined): number {
   if (!m) return 1;
-  return 0.9 + Math.max(0, Math.min(100, m.skill)) * 0.004;
+  return 0.9 + Math.max(0, Math.min(100, m.skill * (m.effort ?? 1))) * 0.004;
 }
 
 /** Share of the take a manager skims each week (hidden). */

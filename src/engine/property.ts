@@ -398,6 +398,7 @@ export function goodwill(s: GameState, lot: Lot): number {
 
 export function lotName(lot: Lot): string {
   const u = lot.use ? USES_BY_ID[lot.use] : undefined;
+  if (lot.name) return `${lot.name}, ${lot.address}`;
   return u ? `${u.name}, ${lot.address}` : `Lot at ${lot.address}`;
 }
 

@@ -12,6 +12,8 @@ import { goodwill, inflation, lotName, USES_BY_ID, ZONES_BY_ID } from './propert
 import { hashSeed, rand } from './rng';
 import type { BusinessKind, Effect, GameState, PlayerAction } from './types';
 import { ALL_PEOPLE, type WorldPerson } from '../worldpack';
+import { applicants, workload } from './applicants';
+import { designMut, STYLES, type BuildStyle, type SignColor } from './design';
 
 /**
  * The Deal: buying a business or a property is a contract across a desk, not
@@ -40,6 +42,11 @@ export interface DealTerms {
   /** Share of the agreed price paid in cash under the table. */
   cash: 0 | 0.25 | 0.5;
   mgr?: DealManager;
+  /** The name you give it (blank keeps the usual one). */
+  name?: string;
+  /** The look (design.ts): style and neon. */
+  style?: BuildStyle;
+  sign?: SignColor;
 }
 
 export const MAX_HAGGLES = 2;
@@ -346,7 +353,10 @@ function buildManager(s: GameState, v: DealView, m: DealManager | undefined): Ma
     return p ? managerFromPro(s, p) : undefined;
   }
   const c = m.charId ? s.characters[m.charId] : undefined;
-  return c?.alive ? managerFromChar(s, c, m.source) : undefined;
+  if (!c?.alive) return undefined;
+  const out = managerFromChar(s, c, m.source);
+  out.effort = workload(s, c, v.mgrKey).effort;
+  return out;
 }
 
 /** The crew's pick for a deal (the sim's players take it). */
@@ -382,6 +392,16 @@ export function previewDeal(s: GameState, t: DealTarget, terms: DealTerms): Acti
   const m = buildManager(s, v, terms.mgr);
   if (m) effects.push({ type: 'econ', op: { op: 'note', text: `${m.name} runs it` }, label: title });
   else if (terms.mgr && 'keep' in terms.mgr && v.oldOwner) effects.push({ type: 'econ', op: { op: 'note', text: `${v.oldOwner} stays on to run it` }, label: title });
+  // The people who asked and were passed over.
+  if (v.runs && terms.mgr) {
+    const chosen = !('keep' in terms.mgr) ? terms.mgr.charId : undefined;
+    for (const ap of applicants(s, v.mgrKey)) {
+      if (ap.charId === chosen) continue;
+      effects.push({ type: 'opinion', from: ap.charId, to: s.playerId, amount: ap.family ? -4 : -3, reason: `Asked to run ${terms.name || v.place} and was passed over`, decay: 1, label: `${title}: passed over` });
+    }
+  }
+  if (terms.name) effects.push({ type: 'econ', op: { op: 'note', text: `Named "${terms.name}"` }, label: title });
+  if (terms.style) effects.push({ type: 'econ', op: { op: 'note', text: `${STYLES[terms.style].name}: draw +${Math.round(STYLES[terms.style].draw * 100)}%` }, label: title });
   let why = base.disabledReason;
   if (why && MONEY_NEEDS.test(why)) why = undefined;
   if (!why && s.money < v.price) why = `Needs ${fmtMoney(v.price)}`;
@@ -414,6 +434,17 @@ export function commitDeal(ctx: Ctx, t: DealTarget, terms: DealTerms): void {
       b.cost = v.price;
       key = b.id;
     }
+  }
+  const nm = terms.name?.trim().slice(0, 40);
+  if (nm) {
+    if (t.kind === 'biz' && key) { const b = s.businesses.find((x) => x.id === key); if (b) b.name = nm; }
+    if (t.kind === 'lot') { const l = e.lots.find((x) => x.id === t.lotId); if (l) l.name = nm; const b = l?.bizId ? s.businesses.find((x) => x.id === l.bizId) : undefined; if (b) b.name = nm; }
+  }
+  const dkey = key ?? (t.kind === 'lot' ? `lot:${t.lotId}` : undefined);
+  if (dkey && (terms.style || terms.sign)) {
+    const d = designMut(s, dkey);
+    if (terms.style) d.style = terms.style;
+    if (terms.sign) d.sign = terms.sign;
   }
   const m = buildManager(s, v, terms.mgr);
   if (key && m) {

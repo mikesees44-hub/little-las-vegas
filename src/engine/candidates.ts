@@ -10,7 +10,8 @@ import { dowryFor, marriageAcceptance, matchCandidates, marriageBlock } from './
 import { fam } from './familyState';
 import { capoLoyalty, capoOf, regime } from './hierarchy';
 import { placeName } from './econ';
-import { crewCandidates, familyCandidates, honestyOf, managerFromChar, managerFromPro, managerMult, managerOf, managing, proCandidates } from './managers';
+import { kinCandidates, relationTo, workload } from './applicants';
+import { crewCandidates, honestyOf, managerFromChar, managerFromPro, managerMult, managerOf, managing, proCandidates } from './managers';
 import type { Manager } from './econState';
 import { propertyNet } from './property';
 import { getRelation, opinion } from './relations';
@@ -47,7 +48,8 @@ export type Role =
   | { kind: 'capo'; district?: string }
   | { kind: 'make' }
   | { kind: 'voucher'; charId: string }
-  | { kind: 'manager'; key: string }
+  /** `base`/`place`: a place not bought yet (the Deal window). */
+  | { kind: 'manager'; key: string; base?: number; place?: string }
   | { kind: 'agent'; scheme: SchemeKind; targetId?: string; opts: SchemeOptions; with?: string[] }
   | { kind: 'envoy'; city: string; depth?: SchemeOptions['depth'] }
   | { kind: 'heir'; /** Include senior men outside the blood (the Power tab's succession candidates). */ wide?: boolean }
@@ -426,18 +428,24 @@ function managerNet(base: number, m: Manager, honesty: number): number {
   return Math.round(base * (managerMult(m) - 1) - m.salary - base * m.share - base * Math.min(0.3, skimEst));
 }
 
-function managerRole(s: GameState, key: string, pool: Character[]): Raw[] {
-  const base = placeBase(s, key);
+function managerRole(s: GameState, key: string, pool: Character[], given?: number): Raw[] {
+  const base = given ?? placeBase(s, key);
   const cur = managerOf(s, key);
   const curNet = cur ? managerNet(base, cur, cur.source === 'pro' ? 55 : cur.honesty) : 0;
   const out: Raw[] = [];
   for (const c of pool) {
     const source = c.dynasty ? 'family' : 'crew';
     const m = managerFromChar(s, c, source);
+    const work = workload(s, c, key);
+    m.effort = work.effort;
     const net = managerNet(base, m, m.honesty);
     const ch = character(s, c, 'money');
     const pros: W[] = [skillChip(pool, c, 'business'), ...ch.pros];
     const cons: W[] = [...ch.cons];
+    if (c.dynasty || source === 'family') pros.push(pro(`Family: ${relationTo(s, c).replace(/^your /, 'your ')}`, 6));
+    if (work.time < 60) cons.push(con(`Busy: ${work.jobs[0] ?? 'other work'} (time ${work.time})`, 10));
+    else if (work.time >= 90) pros.push(pro(`Has the time (${work.time})`, 6));
+    if (work.energy < 60) cons.push(con(`Worn down: ${work.tired.join(', ')} (energy ${work.energy})`, 10));
     if (m.honesty >= 75 && !hasTrait(c, 'Honest')) pros.push(pro(`Honest enough (${m.honesty})`, 8));
     if (m.honesty < 45 && !hasTrait(c, 'Greedy')) cons.push(con(`Honesty ${m.honesty}: may skim`, 12));
     if (m.share) cons.push(con(`Takes ${Math.round(m.share * 100)}% of the take`, 4));
@@ -726,7 +734,7 @@ export function defaultPool(s: GameState, role: Role): Character[] {
       const made = men(s).filter((c) => ['soldier', 'capo', 'underboss', 'consigliere'].includes(c.rank) && isFree(s, c));
       return [player(s), ...made];
     }
-    case 'manager': return [...familyCandidates(s), ...crewCandidates(s).filter((c) => !c.dynasty)];
+    case 'manager': return [...kinCandidates(s), ...crewCandidates(s).filter((c) => !c.dynasty)];
     case 'agent':
     case 'envoy': {
       const busy = new Set(s.schemes.filter((x) => x.owner === 'player').flatMap((x) => x.agents));
@@ -766,7 +774,7 @@ function question(s: GameState, role: Role): string {
     case 'capo': { const d = capoDistrict(s, role.district); return d ? `Who should run ${d.name}?` : 'Who should be the next capo?'; }
     case 'make': return 'Whose name goes to Philadelphia?';
     case 'voucher': return `Who stands for ${s.characters[role.charId]?.firstName ?? 'him'}?`;
-    case 'manager': return `Who should run ${placeName(s, role.key)}?`;
+    case 'manager': return `Who should run ${role.place ?? placeName(s, role.key)}?`;
     case 'agent': return `Who goes on the ${SCHEME_INFO[role.scheme].name.toLowerCase()}?`;
     case 'envoy': return `Who goes to ${CITIES[role.city]?.name ?? 'the city'}?`;
     case 'heir': return 'Who should inherit the chair?';
@@ -790,7 +798,7 @@ export function rankCandidates(s: GameState, role: Role, pool?: readonly string[
     case 'capo': raws = capoRole(s, people, role.district); break;
     case 'make': raws = makeRole(s, people); break;
     case 'voucher': raws = voucherRole(s, role.charId, people); break;
-    case 'manager': raws = managerRole(s, role.key, people); break;
+    case 'manager': raws = managerRole(s, role.key, people, role.base); break;
     case 'agent': raws = agentRole(s, role.scheme, role.targetId, role.opts, role.with ?? [], people); break;
     case 'envoy': raws = agentRole(s, 'envoy', undefined, { depth: role.depth ?? 'planned', city: role.city }, [], people); break;
     case 'heir': raws = heirRole(s, people); break;

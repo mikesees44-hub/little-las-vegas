@@ -1,4 +1,5 @@
 import type { DealTarget, DealTerms } from './deals';
+import type { Design } from './design';
 import { hashSeed } from './rng';
 import type { Character, FactionId, GameState } from './types';
 
@@ -50,6 +51,8 @@ export interface Lot {
   idx: number;
   /** Street address. */
   address: string;
+  /** The name the owner gave it ("The Starlite"); shown on the map. */
+  name?: string;
   status: LotStatus;
   owner: FactionId | 'private' | 'city';
   /** Asking price (sale) — land, or land and building. */
@@ -119,6 +122,8 @@ export interface Manager {
   found?: number;
   /** An adult child learning the trade. */
   assistantId?: string;
+  /** 0.55..1: how much of his skill he brings (time and energy; applicants.ts). */
+  effort?: number;
 }
 
 export type StaffRole = 'dancer' | 'bartender' | 'dj' | 'bandleader' | 'host' | 'server' | 'security' | 'chef' | 'performer';
@@ -244,6 +249,8 @@ export interface EconState {
   cooldowns: Record<string, number>;
   /** The town's building inspector. He lives here rather than among the game's characters, so that adding him does not reshuffle the rest of the world. */
   inspector?: Character;
+  /** Style, neon and key staff of each place you own (design.ts), keyed like managers. */
+  designs?: Record<string, Design>;
   /** Deals signed (the last 40), for the papers and the map. */
   dealLog?: { week: number; seller: string; sellerId: string; place: string; asking: number; price: number; cash: number; soured: boolean }[];
   /** Public and private contracts your companies are working (weekly payments). */

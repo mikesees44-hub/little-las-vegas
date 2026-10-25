@@ -1,6 +1,8 @@
 import type { ActionPreview } from './actions';
 import { noteScore } from './ledgerbook';
 import { commitDeal, previewDeal } from './deals';
+import { workload } from './applicants';
+import { styleDraw } from './design';
 import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
@@ -54,7 +56,7 @@ export function initEcon(s: GameState): void {
 export function econTakeMult(s: GameState, b: Business): number {
   if (!s.econ) return 1;
   const def = CATALOG[b.kind];
-  let m = racketMult(s, b) * managerMult(managerOf(s, b.id));
+  let m = racketMult(s, b) * managerMult(managerOf(s, b.id)) * styleDraw(s, b.id);
   m *= districtTilt(b.districtId, isInSeason(s.date), def.season[0] >= 1.8 && def.season[1] <= 0.6);
   const r = racketOf(s, b);
   if (isClub(b) && r.competition) m *= 1 - r.competition / 200;
@@ -214,7 +216,7 @@ function propertyWeek(ctx: Ctx): void {
     }
     const key = `lot:${l.id}`;
     const m = e.managers[key];
-    const { rev, exp } = propertyNet(s, l, managerMult(m));
+    const { rev, exp } = propertyNet(s, l, managerMult(m) * styleDraw(s, key));
     let net = rev - exp;
     if (m && net > 0) {
       const skim = Math.round(net * managerSkimRate(s, m));
@@ -908,7 +910,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
         if (p) m = managerFromPro(s, p);
       } else {
         const c = a.charId ? s.characters[a.charId] : undefined;
-        if (c) m = managerFromChar(s, c, a.source);
+        if (c) { m = managerFromChar(s, c, a.source); m.effort = workload(s, c, a.key).effort; }
       }
       if (!m) return noop(`Manager for ${place}`, 'Nobody to put in');
       const title = `${m.name} runs ${place}`;
@@ -1148,7 +1150,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
         if (p) m = managerFromPro(s, p);
       } else {
         const c = a.charId ? s.characters[a.charId] : undefined;
-        if (c) m = managerFromChar(s, c, a.source);
+        if (c) { m = managerFromChar(s, c, a.source); m.effort = workload(s, c, a.key).effort; }
       }
       if (m) {
         const old = e.managers[a.key];

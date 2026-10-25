@@ -137,3 +137,45 @@ describe('the Deal: buying is a contract across a desk', () => {
     if (a.kind === 'econ' && a.op.type === 'deal') expect(a.op.terms.mgr).toEqual(suggestedManager(s, t));
   });
 });
+
+describe('who runs it: family, applicants, time and energy', () => {
+  it('minors never run a place; the wife and grown kids can', async () => {
+    const { kinCandidates, summerHelpers } = await import('../src/engine/applicants');
+    const { age } = await import('../src/engine/characters');
+    const s = rich('deal-kin');
+    for (const c of kinCandidates(s)) expect(age(s, c)).toBeGreaterThanOrEqual(18);
+    for (const c of summerHelpers(s)) expect(kinCandidates(s).some((k) => k.id === c.id)).toBe(false);
+    const boss = s.characters[s.playerId];
+    if (boss.spouseId && s.characters[boss.spouseId]?.alive) expect(kinCandidates(s).some((k) => k.id === boss.spouseId)).toBe(true);
+  });
+
+  it('a busy man brings less of his skill; applicants carry a pitch, time and energy', async () => {
+    const { applicants, workload } = await import('../src/engine/applicants');
+    const s = rich('deal-apply');
+    const t: DealTarget = { kind: 'biz', biz: 'bookmaking', district: ourDistrict(s) };
+    const v = dealView(s, t, { haggles: 0, cash: 0 });
+    const aps = applicants(s, v.mgrKey);
+    for (const a of aps) {
+      expect(a.pitch.length).toBeGreaterThan(5);
+      expect(a.work.time).toBeGreaterThanOrEqual(0);
+      expect(a.work.energy).toBeGreaterThanOrEqual(0);
+    }
+    const capo = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'capo' && s.districts.some((d) => d.capoId === c.id));
+    if (capo) expect(workload(s, capo).effort).toBeLessThan(1);
+  });
+
+  it('naming the place sticks, and passed-over applicants take it a little personally', async () => {
+    const { applicants } = await import('../src/engine/applicants');
+    const s = rich('deal-name');
+    const t: DealTarget = { kind: 'biz', biz: 'bookmaking', district: ourDistrict(s) };
+    const v = dealView(s, t, { haggles: 0, cash: 0 });
+    const aps = applicants(s, v.mgrKey);
+    const p = previewAction(s, { kind: 'econ', op: { type: 'deal', target: t, terms: { haggles: 0, cash: 0, mgr: { source: 'pro', pro: 0 }, name: 'The Lucky Seven', style: 'doowop', sign: 'pink' } } });
+    expect(p.effects.filter((e) => e.type === 'opinion').length).toBe(aps.length);
+    const r = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'deal', target: t, terms: { haggles: 0, cash: 0, mgr: { source: 'pro', pro: 0 }, name: 'The Lucky Seven', style: 'doowop', sign: 'pink' } } }] });
+    expect(reconcile(r.report)).toEqual([]);
+    const b = r.state.businesses.find((x) => x.name === 'The Lucky Seven')!;
+    expect(b).toBeDefined();
+    expect(r.state.econ!.designs?.[b.id]?.style).toBe('doowop');
+  });
+});
