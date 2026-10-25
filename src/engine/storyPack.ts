@@ -343,7 +343,9 @@ export function castRoles(s: GameState, e: PackEvent, carried: Record<string, st
     if (!sp.age && spec.age) sp.age = spec.age;
     const c = spawnChar(s, st, sp, spec.office);
     if (spec.pool === 'family' && spec.relation === 'nephew') {
-      const sister = relatives(s, 'sister')[0] ?? relatives(s, 'sibling')[0];
+      // A sister old enough to be his mother (the house trees check every parent is 15+ years older).
+      const old = (x: Character) => c.birth.y - x.birth.y >= 16;
+      const sister = relatives(s, 'sister').find(old) ?? relatives(s, 'sibling').find(old);
       if (sister) {
         if (sister.gender === 'F') c.motherId = sister.id;
         else c.fatherId = sister.id;
