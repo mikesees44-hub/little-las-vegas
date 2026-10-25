@@ -485,7 +485,7 @@ function resolveRivalJob(ctx: Ctx, j: BonesJob): void {
     c.madeWeek = s.week;
     b.rivalProspects[r.id] = undefined;
   } else addStory(s, c, `Froze on the ${j.name}.`);
-  b.history.push({ week: s.week, owner: r.id, prospectId: c.id, kind: j.kind, name: j.name, outcome: out, onYou: cost });
+  b.history.push({ week: s.week, owner: r.id, prospectId: c.id, kind: j.kind, name: j.name, outcome: out, ...(cost !== undefined ? { onYou: cost } : {}) });
 }
 
 /* ---------------------------------------------------------------- */
