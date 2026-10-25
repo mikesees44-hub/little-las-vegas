@@ -4,6 +4,9 @@ import { officeWeek } from './office';
 import { powerWeek } from './power';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
+import { attachMinigames, minigameFirst, minigamesWeek } from './minigames';
+import { trialWeek } from './trial';
+import { reelsWeek } from './reels';
 import { newsWeek } from './newspaper';
 import { politicsWeek } from './politics';
 import { clonePol } from './polState';
@@ -95,8 +98,9 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     ctx.log.push(`Succession law is now: ${choices.successionLaw}.`);
   }
   if (choices.designatedHeirId !== undefined) s.designatedHeirId = choices.designatedHeirId || undefined;
-  const pending = s.pendingEvents;
+  const pending = minigameFirst(s.pendingEvents);
   s.pendingEvents = [];
+  ctx.mgMoves = choices.minigames;
   for (const ev of pending) {
     const wanted = choices.choices?.[ev.iid];
     let ch = ev.choices.find((c) => c.id === wanted && !c.disabledReason);
@@ -244,6 +248,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     lifestyleWeek(ctx);
     legalWeek(ctx);
     travelWeek(ctx);
+    trialWeek(ctx);
+    minigamesWeek(ctx);
     underbellyWeek(ctx);
     officeWeek(s);
     regimesWeek(ctx);
@@ -270,6 +276,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     dynastyWeek(ctx);
     politicsWeek(ctx);
     newsWeek(ctx);
+    reelsWeek(ctx, input);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 
@@ -285,6 +292,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     const errs = validatePlayer(s);
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
+    attachMinigames(s);
     ctx.popups = s.pendingEvents.length;
   } else {
     s.pendingEvents = [];

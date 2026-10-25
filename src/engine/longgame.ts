@@ -3,6 +3,7 @@ import { politicalEvidence } from './polIntegrity';
 import { reached } from './history';
 import { heat, money, respect, type Ctx } from './ledger';
 import { chance, randInt } from './rng';
+import { mgEffect } from './minigame';
 import type { Choice, Effect, EventInstance, GameState, LegalOp, LegalState } from './types';
 import { fleeChoices } from './fugitive';
 import { legalPaused } from './travelState';
@@ -98,8 +99,8 @@ export function stageLabel(l: LegalState): string {
   return STAGE_LABEL[l.stage];
 }
 
-function ev(s: GameState, defId: string, title: string, text: string, choices: Choice[], def: string): EventInstance {
-  return { iid: `ev${s.nextId++}`, defId, week: s.week, mandatory: true, priority: 92, title, text, choices, defaultChoiceId: def, actors: [s.playerId] };
+function ev(s: GameState, defId: string, title: string, text: string, choices: Choice[], def: string, iid = `ev${s.nextId++}`): EventInstance {
+  return { iid, defId, week: s.week, mandatory: true, priority: 92, title, text, choices, defaultChoiceId: def, actors: [s.playerId] };
 }
 
 function L(op: LegalOp, amount?: number, label = 'The case'): Effect {
@@ -120,25 +121,28 @@ export function buildGrandJury(s: GameState): EventInstance {
 export function buildIndictment(s: GameState): EventInstance {
   const l = legalOf(s);
   const label = 'Indictment';
+  const iid = `ev${s.nextId++}`;
   return ev(s, 'indictment', 'Indicted', `The grand jury returned a true bill${l.rico ? ' under the new racketeering law' : ''}. Federal marshals came for ${player(s).firstName} at breakfast. Trial is set for ${TRIAL_WEEKS} weeks out.`, [
+    { id: 'arraign', label: 'Stand up at the arraignment', detail: 'Play it: the plea, bail, the government\'s offer, the lawyer.', because: 'stood up at his arraignment', effects: [mgEffect('arraignment', iid, { defendant: s.playerId, mode: 'boss', play: 1 }, undefined, label)] },
     { id: 'bail', label: 'Post bail and fight it', detail: `$${BAIL.toLocaleString('en-US')} bond. He stays home until trial.`, because: 'posted bail and fought the charges', effects: [{ type: 'money', amount: -BAIL, label }, L('bail', 1, label), L('fight', 0, label)], disabledReason: s.money < BAIL ? `Needs $${BAIL.toLocaleString('en-US')}` : undefined },
     { id: 'jail', label: 'No bail: fight it from a cell', detail: 'He waits for trial in the county jail.', because: 'fought the charges from a cell', effects: [L('jail', 0, label), L('fight', 0, label)] },
     { id: 'plea', label: 'Plead guilty to a lesser count', detail: `No trial. A shorter stretch (${l.rico ? '18–30' : '12–24'} months), and the men see him take it.`, because: 'pleaded guilty to a lesser count', effects: [{ type: 'respect', amount: -6, label }, L('plea', 0, label)] },
  
     // On the lam (travel branch): run instead of facing it.
     ...fleeChoices(s),
-  ], s.money >= BAIL ? 'bail' : 'jail');
+  ], s.money >= BAIL ? 'bail' : 'jail', iid);
 }
 
 export function buildTrial(s: GameState): EventInstance {
   const l = legalOf(s);
   const label = 'The trial';
+  const iid = `ev${s.nextId++}`;
+  const fx = (play: number) => mgEffect('trial', iid, { defendant: s.playerId, mode: 'boss', play }, undefined, label);
   return ev(s, 'trial', 'United States v. ' + player(s).lastName, `Federal court in Camden. Walter Keough lays out ${Math.round(caseEvidence(s, l))} points of evidence; the defense has ${Math.round(l.defense)}. As it stands the jury convicts ${Math.round(convictionOdds(s, l) * 100)}% of the time.`, [
-    { id: 'best', label: 'The best defense money buys', detail: '$8,000: experts, investigators, a second lawyer.', because: 'spent a fortune on the defense', effects: [{ type: 'money', amount: -8000, label }, L('defense', 25, label), L('verdict', 0, label)], disabledReason: s.money < 8000 ? 'Needs $8,000' : undefined },
-    { id: 'judge', label: 'A friendly ruling from the bench', detail: 'Two favors: some evidence is thrown out.', because: 'had evidence thrown out', effects: [{ type: 'favor', amount: -2, label }, L('evidence', -20, label), L('verdict', 0, label)], disabledReason: s.favors < 2 ? 'Needs two favors' : undefined },
-    { id: 'stand', label: 'Take the stand', detail: 'Charm the jury — or hang himself.', because: 'took the stand', effects: [L('defense', player(s).attributes.diplomacy >= 60 ? 15 : -10, label), L('verdict', 0, label)] },
-    { id: 'quiet', label: 'Let the lawyer talk', because: 'let the lawyer do the talking', effects: [L('verdict', 0, label)] },
-  ], 'quiet');
+    { id: 'court', label: 'Go to trial', detail: 'Play it: the jury, the government\'s witnesses, your defense, the verdict.', because: 'went to trial', effects: [fx(1)] },
+    { id: 'quiet', label: 'Let it play out', detail: 'The lawyer does the talking. Same odds, no say.', because: 'let the lawyer do the talking', effects: [fx(0)] },
+    { id: 'plea', label: 'Plead guilty on the courthouse steps', detail: `A shorter stretch (${l.rico ? '18–30' : '12–24'} months), and the men see him take it.`, because: 'pleaded guilty on the courthouse steps', effects: [{ type: 'respect', amount: -6, label }, L('plea', 0, label)] },
+  ], 'quiet', iid);
 }
 
 export function buildParole(s: GameState): EventInstance {
@@ -151,7 +155,7 @@ export function buildParole(s: GameState): EventInstance {
   ], 'model');
 }
 
-function imprison(ctx: Ctx, weeks: number, why: string): void {
+export function sendToPrison(ctx: Ctx, weeks: number, why: string): void {
   const s = ctx.s;
   const l = legalOf(s);
   const b = player(s);
@@ -166,6 +170,19 @@ function imprison(ctx: Ctx, weeks: number, why: string): void {
   const yrs = (weeks / 52).toFixed(1).replace('.0', '');
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was sentenced to ${yrs} years in federal prison.`, because: why, kind: 'heat' });
   if (s.cutscenes.length < 3) s.cutscenes.push({ key: 'arrest_interrogation', title: 'Sentenced', text: `${yrs} years. ${b.firstName} doesn't look at the jury on the way out.`, week: s.week });
+}
+
+/** The jury walks him: the case closes. */
+export function acquitBoss(ctx: Ctx): void {
+  const s = ctx.s;
+  const l = legalOf(s);
+  const b = player(s);
+  respect(ctx, 10, 'Acquitted: the jury walks him', 'event');
+  heat(ctx, 'federal', -20, 'Acquitted: the feds are embarrassed', 'heat');
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was acquitted. He walked out the front door of the federal building.`, kind: 'heat' });
+  b.imprisonedUntil = undefined;
+  setCaseEvidence(s, l, 0);
+  Object.assign(l, { stage: 'quiet', defense: 0, since: s.week, next: undefined, bail: undefined });
 }
 
 /** Applies a legal effect (from an event choice or an order). */
@@ -193,21 +210,16 @@ export function applyLegal(ctx: Ctx, op: LegalOp, amount = 0): void {
       break;
     case 'plea': {
       const w = randInt(s, 52, 104) * (l.rico ? 1.25 : 1);
-      imprison(ctx, Math.round(w), 'Guilty plea');
+      sendToPrison(ctx, Math.round(w), 'Guilty plea');
       break;
     }
     case 'verdict': {
       const p = convictionOdds(s, l);
       if (chance(s, p)) {
         const w = randInt(s, 156, 312) * (l.rico ? 1.6 : 1);
-        imprison(ctx, Math.round(w), l.rico ? 'Convicted under RICO' : 'Convicted');
+        sendToPrison(ctx, Math.round(w), l.rico ? 'Convicted under RICO' : 'Convicted');
       } else {
-        respect(ctx, 10, 'Acquitted: the jury walks him', 'event');
-        heat(ctx, 'federal', -20, 'Acquitted: the feds are embarrassed', 'heat');
-        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was acquitted. He walked out the front door of the federal building.`, kind: 'heat' });
-        b.imprisonedUntil = undefined;
-        setCaseEvidence(s, l, 0);
-        Object.assign(l, { stage: 'quiet', defense: 0, since: s.week, next: undefined, bail: undefined });
+        acquitBoss(ctx);
       }
       break;
     }

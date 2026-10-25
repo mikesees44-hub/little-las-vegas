@@ -8,6 +8,7 @@ import type { DynAction, DynOp, DynState } from './familyState';
 import type { ExtAttrs, PowerAction, PowerOp, PowerState } from './powerState';
 import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
 import type { PolAction, PolOp, PolState } from './polState';
+import type { MgState, MinigameId } from './minigame';
 import type { EconAction, EconOp, EconState } from './econState';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
 
@@ -509,6 +510,8 @@ export type Effect =
   | ({ type: 'checkBackground'; charId: string } & EffectBase)
   /** The story pillar: pack secrets, romance, paternity (storyOps.ts). */
   | ({ type: 'storyOp'; op: StoryOp } & EffectBase)
+  /** A mini-game (minigame.ts): played full-screen, or auto-resolved with the same odds ("let it play out"). */
+  | ({ type: 'minigame'; game: MinigameId; iid: string; params: Record<string, string | number>; parts?: Record<string, Effect[]> } & EffectBase)
   /** The economy & property layer (econState.ts / econ.ts). */
   | ({ type: 'econ'; op: EconOp } & EffectBase)
   /** Travel, trips and flight (travelState.ts / travel.ts / fugitive.ts). */
@@ -735,7 +738,7 @@ export interface WeeklyReport {
 
 export interface GameOver {
   week: number;
-  reason: 'no_heir';
+  reason: 'no_heir' | 'witness';
   text: string;
 }
 
@@ -822,6 +825,8 @@ export interface GameState {
   romance?: RomanceState;
   /** Politics, law-makers and the living world (optional for old saves). */
   pol?: PolState;
+  /** Mini-games: trials, witnesses, records (minigame.ts; optional for old saves). */
+  mg?: MgState;
   /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
   econ?: EconState;
   /** Travel, trips and fugitives (optional for old saves). */
@@ -835,6 +840,8 @@ export interface PlayerChoices {
   actions?: PlayerAction[];
   successionLaw?: SuccessionLaw;
   designatedHeirId?: string;
+  /** Mini-games the player played this week: event iid -> the moves he made (replayed by the engine). */
+  minigames?: Record<string, string[]>;
 }
 
 export type PlayerAction =
