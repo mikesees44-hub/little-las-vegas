@@ -185,7 +185,7 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
   const envelope = envelopeChoice(s, budget, h);
   if (rand(h) < TRIBUTE_RATE) add(pickOne(h, tributeActions(s).filter((a) => !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
   // The careless boss treats every pocket as one (he empties his own into the family when it runs low).
-  if (!budget && s.money < 5000 && (s.tribute?.acct.personal ?? 0) > 500) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: s.tribute!.acct.personal } });
+  if (!budget && (s.tribute?.acct.personal ?? 0) > 500) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: s.tribute!.acct.personal } });
   if (budget && s.money < 0 && (s.tribute?.acct.personal ?? 0) > 1500 && rand(h) < 0.5) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: Math.round((s.tribute!.acct.personal * 0.6) / 100) * 100 } });
   return { choices, actions, minigames, envelope };
 }

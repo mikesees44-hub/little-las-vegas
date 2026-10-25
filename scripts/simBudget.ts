@@ -149,11 +149,11 @@ export const choiceCost = (c: Choice) => moneyOut(c.effects);
 export function envelopeChoice(s: GameState, b: Budget | undefined, h: { rng: number }): EnvelopeChoice | undefined {
   const t = s.tribute;
   if (!b) {
-    if (s.week <= 1 || !t) return { split: { personal: 5500, treasury: 4000, reserve: 500 }, standing: true };
+    if (s.week <= 1 || !t) return { split: { personal: 5500, treasury: 4500, reserve: 0 }, standing: true };
     const pend = t.reports.find((r) => r.status === 'presented');
     if (!pend) return undefined;
     const p = 5000 + Math.floor(rand(h) * 2000);
-    return { report: pend.id, split: { personal: p, reserve: 500, treasury: 10000 - p - 500 }, grant: pend.petitions.filter(() => rand(h) < 0.3).map((x) => x.id) };
+    return { report: pend.id, split: { personal: p, reserve: 0, treasury: 10000 - p }, grant: pend.petitions.filter(() => rand(h) < 0.3).map((x) => x.id) };
   }
   if (s.week <= 1 || !t) return { split: { personal: 1500, treasury: 7500, reserve: 1000 }, standing: true };
   const pend = t.reports.find((r) => r.status === 'presented');
