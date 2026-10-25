@@ -174,6 +174,8 @@ export interface Appearance {
   genes?: Record<string, number>;
   hair?: string;
   stache?: string;
+  /** 'fedora' or 'none' (otherwise as his station dresses him). */
+  hat?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';

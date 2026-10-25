@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { getSettings, TEXT_CPS } from '../settings';
 import type { CutsceneCue } from '../../engine/types';
 import { NoirStill } from './NoirStill';
 import { stinger } from '../audio';
@@ -19,6 +20,7 @@ export const CUTSCENE_VIDEOS: Partial<Record<string, string>> = {
 };
 
 export function prefersReducedMotion(): boolean {
+  if (getSettings().reducedMotion) return true;
   try {
     return typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   } catch {
@@ -45,7 +47,7 @@ export function CutscenePlayer({ cues, onDone }: { cues: CutsceneCue[]; onDone: 
   const [i, setI] = useState(0);
   const reduced = prefersReducedMotion();
   const cue = cues[i];
-  const [shown, done, finish] = useTypewriter(cue?.text ?? '', 38, reduced);
+  const [shown, done, finish] = useTypewriter(cue?.text ?? '', TEXT_CPS[getSettings().textSpeed], reduced || getSettings().textSpeed === 'instant');
   const next = () => {
     if (!done) return finish();
     if (i + 1 < cues.length) setI(i + 1);
