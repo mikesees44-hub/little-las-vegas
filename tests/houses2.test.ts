@@ -104,7 +104,9 @@ describe('the trees during play', () => {
 
   it('titles are kept over time: a man made capo carries it, with the year, after he is gone', () => {
     const t = cloneState(s);
-    const m = Object.values(t.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'soldier');
+    // A soldier if there is one (the game's own trajectory decides who is left after three years), else an associate.
+    const men = Object.values(t.characters).filter((c) => c.alive && c.faction === 'player');
+    const m = men.find((c) => c.rank === 'soldier') ?? men.find((c) => c.rank === 'associate');
     expect(m).toBeTruthy();
     housesTitles(t);
     m!.rank = 'capo';
