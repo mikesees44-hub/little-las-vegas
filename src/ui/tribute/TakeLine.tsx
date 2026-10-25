@@ -21,6 +21,14 @@ export function TakeLine({ s }: { s: GameState }) {
         {rep.lastPresented !== undefined && <span className={`tabular-nums ${rep.presented >= rep.lastPresented ? 'text-emerald-400' : 'text-red-400'}`}> ({rep.presented >= rep.lastPresented ? '+' : '−'}{fmt$(Math.abs(rep.presented - rep.lastPresented))})</span>}
         {rep.alloc ? <span className="text-stone-400 tabular-nums"> · you {fmt$(rep.alloc.personal)} · family {fmt$(rep.alloc.treasury)} · reserve {fmt$(rep.alloc.reserve)}</span> : <span className="text-amber-300"> · waiting for your split</span>}
       </div>
+      {rep.crews.some((c) => c.paid > 0) && (
+        <div className="text-[10px] text-stone-400 tabular-nums leading-snug" data-testid="take-crews-line">
+          {rep.crews.filter((c) => c.paid > 0 || c.short > 0).map((c, i) => {
+            const k = s.characters[c.capoId];
+            return <span key={c.capoId}>{i ? ' · ' : ''}{k?.lastName ?? '?'} {fmt$(c.paid)}{c.short ? <span className="text-red-300"> (−{fmt$(c.short)})</span> : null}</span>;
+          })}
+        </div>
+      )}
       <div className="text-[10px] text-stone-500 tabular-nums">Your own {fmt$(t.acct.personal)} · reserve {fmt$(t.acct.reserve)}</div>
     </div>
   );

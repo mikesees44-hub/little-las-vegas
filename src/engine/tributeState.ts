@@ -328,6 +328,8 @@ export interface WeekBook {
   x: [string, string, number, TransferCat, string?][];
   /** Hidden transfers (skims, pocketed dues): the truth, kept for the reconciliation; never shown to the Don. */
   hx?: [string, string, number, TransferCat][];
+  /** Older than 8 weeks: only transfers touching the family's own accounts are kept. */
+  slim?: 1;
 }
 
 export interface RivalCapo {

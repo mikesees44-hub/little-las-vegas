@@ -10,12 +10,14 @@ import { useOrders } from '../components/Orders';
 import { CharLink } from '../components/People';
 import { CrewTable } from './AudienceScene';
 import { useTributeUi } from './context';
+import { EarningsBoard } from './EarningsBoard';
 
 const TABS = [
-  ['audience', 'Underboss Audience'], ['envelope', 'Envelope'], ['crews', 'Crew Contributions'], ['obligations', 'Obligations'],
+  ['audience', 'Underboss Audience'], ['envelope', 'Envelope'], ['earnings', 'The Family\'s Earnings'], ['crews', 'Crew Contributions'], ['obligations', 'Obligations'],
   ['accounts', 'Accounts'], ['agreements', 'Agreements'], ['investments', 'Investments'], ['disputes', 'Disputes'], ['ledger', 'Historical Ledger'], ['rivals', 'Other Families'],
 ] as const;
-type Tab = (typeof TABS)[number][0];
+export type TakeTab = (typeof TABS)[number][0];
+type Tab = TakeTab;
 
 function Box({ title, note, children, id }: { title: string; note?: string; children: ReactNode; id?: string }) {
   return (
@@ -40,8 +42,8 @@ const acctName = (s: GameState, id: string) => {
 };
 
 /** THE WEEKLY TAKE: every section of the money that comes up through the underboss. */
-export function WeeklyTake({ s }: { s: GameState }) {
-  const [tab, setTab] = useState<Tab>('audience');
+export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) {
+  const [tab, setTab] = useState<Tab>(initial ?? 'audience');
   const t = s.tribute;
   const ui = useTributeUi();
   const { queue } = useOrders();
@@ -75,6 +77,11 @@ export function WeeklyTake({ s }: { s: GameState }) {
           </table></div>
           <div className="mt-2 text-[11px] text-stone-400">Standing split: <b className="text-gold-300">{splitText(t.policy)}</b> · {t.policy.auto ? 'quiet weeks are split without a meeting' : 'you hold the audience every week'}
             <button type="button" className="ml-2 btn-ghost text-[11px]" onClick={() => queue({ kind: 'tribute', op: { op: 'policy', auto: !t.policy.auto } })}>{t.policy.auto ? 'Hold it every week' : 'Only when it matters'}</button></div>
+        </Box>
+      )}
+      {tab === 'earnings' && (
+        <Box title="The Family's Earnings" note="Everyone in the family: what each man earned this week, kicked up and kept, his trend, and his own money. Click a name for his sheet." id="take-earnings">
+          <EarningsBoard s={s} />
         </Box>
       )}
       {tab === 'crews' && rep && (

@@ -158,6 +158,14 @@ export function archiveAccounts(s: GameState): void {
   const end = balances(s);
   t.books.push({ week: t.startWeek ?? s.week - 1, start: { ...t.start }, end, x: t.journal.filter((x) => !x.h).map((x) => (x.n ? [x.f, x.t, x.a, x.c, x.n] : [x.f, x.t, x.a, x.c])), hx: t.journal.filter((x) => x.h).map((x) => [x.f, x.t, x.a, x.c]) });
   if (t.books.length > 26) t.books = t.books.slice(-26);
+  // Older weeks keep only the family's own accounts: the men's pockets (their keep, their end, their spending) are kept 8 weeks.
+  const old = t.books[t.books.length - 9];
+  if (old && !old.slim) {
+    const fam = (id: string) => id === 'treasury' || isInternal(id);
+    old.x = old.x.filter((x) => fam(x[0]) || fam(x[1]));
+    if (old.hx) old.hx = old.hx.filter((x) => fam(x[0]) || fam(x[1]));
+    old.slim = 1;
+  }
   // Crew accounts of men who are gone, and empty ones, are closed.
   for (const [k, v] of Object.entries(t.acct.crew)) if (v === 0) delete t.acct.crew[k];
   t.start = undefined;

@@ -12,16 +12,21 @@ import type { EnvelopeChoice } from '../../engine/tributeOps';
 
 const pct = (bp: number) => `${Math.round(bp / 100)}%`;
 
-function MemberRow({ s, m }: { s: GameState; m: MemberLine }) {
+function MemberRow({ s, m, kept, prevUp }: { s: GameState; m: MemberLine; kept?: number; prevUp?: number }) {
   const c = s.characters[m.id];
   const short = Math.max(0, m.due - m.paid);
+  const up = m.paid + (m.back ?? 0);
+  const d = prevUp === undefined ? undefined : up - prevUp;
   return (
     <tr className="border-t border-noir-800 text-[11px]" data-testid="member-row">
       <td className="py-0.5 pr-2"><CharLink s={s} id={m.id}>{c ? `${c.firstName} ${c.lastName}` : m.id}</CharLink> <span className="text-stone-500">{c?.rank}</span></td>
       <td className="pr-2 text-stone-400">{m.terms}</td>
+      <td className="pr-2 text-right tabular-nums text-stone-300">{fmt$(m.earned)}</td>
       <td className="pr-2 text-right tabular-nums">{fmt$(m.due)}</td>
-      <td className="pr-2 text-right tabular-nums">{fmt$(m.paid)}{m.back ? <span className="text-emerald-400"> +{fmt$(m.back)}</span> : null}</td>
+      <td className="pr-2 text-right tabular-nums text-gold-300">{fmt$(m.paid)}{m.back ? <span className="text-emerald-400"> +{fmt$(m.back)}</span> : null}</td>
       <td className={`pr-2 text-right tabular-nums ${short ? 'text-red-300' : 'text-stone-600'}`}>{short ? fmt$(short) : '—'}</td>
+      <td className="pr-2 text-right tabular-nums text-stone-300">{kept !== undefined ? fmt$(kept) : '—'}</td>
+      <td className={`pr-2 text-right tabular-nums ${d === undefined || d === 0 ? 'text-stone-600' : d > 0 ? 'text-emerald-400' : 'text-red-300'}`}>{d === undefined ? 'new' : d === 0 ? '=' : `${d > 0 ? '+' : '−'}${fmt$(Math.abs(d))}`}</td>
       <td className="text-stone-400">
         {short > 0 && (
           <span>
@@ -37,10 +42,21 @@ function MemberRow({ s, m }: { s: GameState; m: MemberLine }) {
 
 export function CrewTable({ s, rep, open, onToggle }: { s: GameState; rep: TributeReport; open?: string; onToggle?: (id: string) => void }) {
   const crews = rep.crews.filter((x) => x.due > 0 || x.remitted > 0);
+  const [all, setAll] = useState(false);
+  const prev = s.tribute?.reports.filter((r) => r.week < rep.week).slice(-1)[0];
+  const prevLines = prev ? [...prev.crews.flatMap((c) => c.members), ...prev.direct] : undefined;
+  const prevUp = (id: string, kind: MemberLine['kind']) => {
+    if (!prevLines) return undefined;
+    const ls = prevLines.filter((x) => x.id === id && x.kind === kind);
+    return ls.length ? ls.reduce((a, x) => a + x.paid + (x.back ?? 0), 0) : undefined;
+  };
+  // What reached his pocket that week (once per man, on his first line).
+  const keptOf = (id: string) => s.tribute?.purse?.[id]?.find((r) => r.w === rep.week)?.kept;
   const row = (cl: CrewLine) => {
     const k = s.characters[cl.capoId];
     const d = cl.districtId ? s.districts.find((x) => x.id === cl.districtId) : undefined;
-    const isOpen = open === cl.capoId;
+    const isOpen = all || open === cl.capoId;
+    const seen = new Set<string>();
     return [
       <tr key={cl.capoId} className={`border-t border-noir-700 ${cl.short || cl.held ? 'bg-blood-500/5' : ''}`} data-testid="crew-row">
         <td className="py-1 pr-2">
@@ -60,9 +76,9 @@ export function CrewTable({ s, rep, open, onToggle }: { s: GameState; rep: Tribu
           <td colSpan={6} className="bg-noir-950/60 px-2 py-1">
             <div className="text-[10px] uppercase tracking-widest text-stone-500">{k?.firstName}'s crew account · arrears on the books {fmt$(cl.arrears)}</div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px]" data-testid="crew-accounts">
-                <thead><tr className="text-[10px] text-stone-500 text-left"><th>Man</th><th>Agreement</th><th className="text-right">Due</th><th className="text-right">Paid</th><th className="text-right">Short</th><th>Why (said · believed · truth)</th></tr></thead>
-                <tbody>{cl.members.map((m) => <MemberRow key={m.id + m.kind} s={s} m={m} />)}</tbody>
+              <table className="w-full min-w-[680px]" data-testid="crew-accounts">
+                <thead><tr className="text-[10px] text-stone-500 text-left"><th>Man</th><th>Agreement</th><th className="text-right">Earned</th><th className="text-right">Owed</th><th className="text-right">Kicked up</th><th className="text-right">Short</th><th className="text-right">Kept</th><th className="text-right">vs last wk</th><th>Why (said · believed · truth)</th></tr></thead>
+                <tbody>{cl.members.map((m) => { const first = !seen.has(m.id); seen.add(m.id); return <MemberRow key={m.id + m.kind} s={s} m={m} kept={first ? keptOf(m.id) : undefined} prevUp={prevUp(m.id, m.kind)} />; })}</tbody>
               </table>
             </div>
           </td>
@@ -72,6 +88,7 @@ export function CrewTable({ s, rep, open, onToggle }: { s: GameState; rep: Tribu
   };
   return (
     <div className="overflow-x-auto">
+      <div className="mb-1 flex justify-end"><button type="button" className="btn-ghost text-[10px]" onClick={() => setAll(!all)} data-testid="crew-all">{all ? 'Fold the crews' : 'Every man'}</button></div>
       <table className="w-full text-[12px] min-w-[460px]" data-testid="crew-table">
         <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Crew</th><th className="text-right">Due</th><th className="text-right">Paid</th><th className="text-right">Short</th><th className="text-right">Capo kept</th><th className="text-right">Up</th></tr></thead>
         <tbody>{crews.flatMap(row)}</tbody>
