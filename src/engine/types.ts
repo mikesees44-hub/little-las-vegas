@@ -6,7 +6,14 @@
 
 import type { DynAction, DynOp, DynState } from './familyState';
 import type { LineageState } from './houses';
+import type { ExtAttrs, PowerAction, PowerOp, PowerState } from './powerState';
+import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
+import type { PolAction, PolOp, PolState } from './polState';
+import type { MgState, MinigameId } from './minigame';
 import type { EconAction, EconOp, EconState } from './econState';
+import type { TravelAction, TravelOp, TravelState } from './travelState';
+import type { BonesAction, BonesEntry, BonesOp, BonesState } from './bonesState';
+import type { LedgerAction, LedgerBookState, LedgerOp } from './ledgerbookState';
 
 export interface GameDate {
   y: number;
@@ -159,6 +166,29 @@ export interface Character {
   lastAskWeek?: number;
   /** Took the oath (week). */
   madeWeek?: number;
+  /** Expanded attributes (power pillar): six groups, ~38 values 0-100. */
+  attrs?: ExtAttrs;
+  /** His record of achievements (separate from the attributes). */
+  success?: StoryEntry[];
+
+  /* ---- Story & romance pillar ---- */
+  /** Fixed at birth (see storyState.orientationFor). */
+  orientation?: Orientation;
+  /** The real biological father, when it is not the father of record (hidden paternity). */
+  bioFatherId?: string;
+  /** Made his bones: the jobs on his record (bones.ts). */
+  bones?: BonesEntry[];
+  /** Chosen look (character creator): overrides the portrait genes and styles. */
+  appearance?: Appearance;
+}
+
+/** Portrait overrides: gene values 0..1 by locus, plus a hair style and moustache. */
+export interface Appearance {
+  genes?: Record<string, number>;
+  hair?: string;
+  stache?: string;
+  /** 'fedora' or 'none' (otherwise as his station dresses him). */
+  hat?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
@@ -484,6 +514,10 @@ export type Effect =
   | ({ type: 'standing'; city: string; amount: number } & EffectBase)
   /** The dynasty layer (familyState.ts / family.ts). */
   | ({ type: 'dyn'; op: DynOp } & EffectBase)
+  /** The power pillar (power.ts): succession, heirs, grievances, crises, blitzes, fronts, petitions. */
+  | ({ type: 'power'; op: PowerOp } & EffectBase)
+  /** Politics, law-makers and the living world (politics.ts). */
+  | ({ type: 'pol'; op: PolOp } & EffectBase)
   | ({ type: 'evidence'; charId: string; amount: number } & EffectBase)
   | ({ type: 'assign'; charId: string; capoId?: string } & EffectBase)
   | ({ type: 'story'; charId: string; text: string } & EffectBase)
@@ -497,8 +531,18 @@ export type Effect =
   | ({ type: 'retire'; charId: string } & EffectBase)
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
   | ({ type: 'checkBackground'; charId: string } & EffectBase)
+  /** The story pillar: pack secrets, romance, paternity (storyOps.ts). */
+  | ({ type: 'storyOp'; op: StoryOp } & EffectBase)
+  /** A mini-game (minigame.ts): played full-screen, or auto-resolved with the same odds ("let it play out"). */
+  | ({ type: 'minigame'; game: MinigameId; iid: string; params: Record<string, string | number>; parts?: Record<string, Effect[]> } & EffectBase)
   /** The economy & property layer (econState.ts / econ.ts). */
-  | ({ type: 'econ'; op: EconOp } & EffectBase);
+  | ({ type: 'econ'; op: EconOp } & EffectBase)
+  /** Travel, trips and flight (travelState.ts / travel.ts / fugitive.ts). */
+  | ({ type: 'travel'; op: TravelOp } & EffectBase)
+  /** Making your bones (bones.ts). */
+  | ({ type: 'bones'; op: BonesOp } & EffectBase)
+  /** The boss's books and the receipts (ledgerbook.ts). */
+  | ({ type: 'ledger'; op: LedgerOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -705,6 +749,10 @@ export interface ReportLine {
   requested?: number;
   label: string;
   category: LedgerCategory;
+  /** Who paid it / was paid (character id), for the boss's books. */
+  who?: string;
+  /** Which racket, business or district (id), for the boss's books. */
+  src?: string;
 }
 
 export interface WeeklyReport {
@@ -721,7 +769,7 @@ export interface WeeklyReport {
 
 export interface GameOver {
   week: number;
-  reason: 'no_heir';
+  reason: 'no_heir' | 'witness';
   text: string;
 }
 
@@ -796,14 +844,34 @@ export interface GameState {
   dyn?: DynState;
   /** Every house's tree and history (houses.ts; optional for old saves). Shared between weeks copy-on-write. */
   lineage?: LineageState;
+  /** Power, succession & ambition (optional for old saves). */
+  power?: PowerState;
   /** Philadelphia's membership books (optional for old saves). */
   books?: Books;
   /** Crew counters (defections, coups, flips, makings). */
   crewStats?: CrewStats;
   /** Event key -> week last shown (per-event cooldowns for crew decisions). */
   eventCooldowns?: Record<string, number>;
+  /** The story director's memory (storyDirector.ts): what was shown, the bagman's visits. */
+  director?: import('./storyDirector').DirectorState;
+  /** Living storylines (livingStories.ts): slow-burn arcs and their stages. */
+  arcs?: import('./livingStories').ArcsState;
+  /** The content pack's bookkeeping (storyPack.ts). */
+  story?: StoryState;
+  /** Courtships, lovers, affairs, pregnancies (romance.ts). */
+  romance?: RomanceState;
+  /** Politics, law-makers and the living world (optional for old saves). */
+  pol?: PolState;
+  /** Mini-games: trials, witnesses, records (minigame.ts; optional for old saves). */
+  mg?: MgState;
   /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
   econ?: EconState;
+  /** Travel, trips and fugitives (optional for old saves). */
+  travel?: TravelState;
+  /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
+  bones?: BonesState;
+  /** The boss's private ledger (optional for old saves). */
+  ledgerBook?: LedgerBookState;
 }
 
 export interface PlayerChoices {
@@ -813,6 +881,8 @@ export interface PlayerChoices {
   actions?: PlayerAction[];
   successionLaw?: SuccessionLaw;
   designatedHeirId?: string;
+  /** Mini-games the player played this week: event iid -> the moves he made (replayed by the engine). */
+  minigames?: Record<string, string[]>;
 }
 
 export type PlayerAction =
@@ -839,6 +909,7 @@ export type PlayerAction =
   | { kind: 'edict'; edict: EdictId; on: boolean }
   | { kind: 'hire'; specId: string }
   | { kind: 'dynasty'; op: DynAction }
+  | { kind: 'power'; op: PowerAction }
   | { kind: 'lifestyle'; focus: LifestyleId }
   | { kind: 'legal'; op: 'retainer' | 'lielow' }
   | { kind: 'underbelly'; op: UnderbellyOp; rival?: RivalId }
@@ -848,11 +919,17 @@ export type PlayerAction =
   | { kind: 'propose'; charId: string; voucherId?: string }
   | { kind: 'background'; charId: string }
   | { kind: 'order'; key: string; via: OrderVia }
-  | { kind: 'econ'; op: EconAction };
+  | { kind: 'econ'; op: EconAction }
+  | { kind: 'travel'; op: TravelAction }
+  | { kind: 'pol'; op: PolAction }
+  | { kind: 'bones'; op: BonesAction }
+  | { kind: 'ledger'; op: LedgerAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
-  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose';
+  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose'
+  /* romance (romance.ts) */
+  | 'court' | 'affair' | 'endRomance' | 'proposeMarriage' | 'separate';
 
 export interface AdvanceResult {
   state: GameState;

@@ -11,6 +11,7 @@ import { chance, hashSeed, pick, randInt, shuffle } from './rng';
 import { generateWeekEvents } from './events';
 import { initDynasty } from './family';
 import { setupHouses } from './housesLife';
+import { initPolitics } from './politics';
 import { DISTRICTS, RIVALS } from './world';
 import type { BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
 
@@ -330,6 +331,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   autoStaff(s);
   s.pendingEvents = generateWeekEvents(s);
   initDynasty(s);
+  initPolitics(s);
   initEcon(s);
   if (!opts.skipHouses) setupHouses(s);
   return s;

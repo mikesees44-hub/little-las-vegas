@@ -23,6 +23,10 @@ export interface Look {
   jailed: boolean;
   tint?: string;
   genes: Genes;
+  /** Chosen hair style / moustache (character creator); ignored where it can't apply. */
+  hairStyle?: string;
+  stache?: string;
+  hat?: string;
   mood: Expression;
   r: () => number;
   serial: number;
@@ -173,6 +177,11 @@ function dressFor(L: Look, x: () => number): { outfit: Outfit; hat: Hat; glasses
 
 /* ---------------- painter ---------------- */
 
+/** Hair styles a sitter can choose (character creator). */
+export const MALE_STYLES: string[] = ['slick', 'side', 'pomp', 'crew', 'wavy', 'thin', 'bald'];
+export const FEMALE_STYLES: string[] = ['bouffant', 'flip', 'curls', 'chignon'];
+export const STACHES: string[] = ['none', 'pencil', 'chevron'];
+
 export function paintPortrait(L: Look): ReactElement {
   const { id, male, age, genes: G, mood, r } = L;
   const t = Math.pow(clamp((age - 3) / 15, 0, 1), 1.4); // 0 = small child, 1 = grown
@@ -205,11 +214,13 @@ export function paintPortrait(L: Look): ReactElement {
   const look = r(); // consumed in fixed order below for determinism
   const dressRoll = r();
   const { outfit, hat: hat0, glasses: glassesP } = dressFor(L, r);
-  const hat: Hat = L.jailed || L.dead ? (hat0 === 'police' && L.dead ? 'police' : 'none') : hat0;
+  const hatPick: Hat = L.hat === 'none' ? 'none' : L.hat === 'fedora' && male && hat0 !== 'police' ? 'fedora' : hat0;
+  const hat: Hat = L.jailed || L.dead ? (hat0 === 'police' && L.dead ? 'police' : 'none') : hatPick;
   const wearsGlasses = r() < glassesP;
   const browline = r() < 0.55;
   const stacheRoll = r();
-  const stache = male && age >= 21 && outfit !== 'priest' && outfit !== 'cop' ? (stacheRoll < 0.14 ? 'pencil' : stacheRoll < 0.3 + clamp((age - 40) / 120, 0, 0.15) ? 'chevron' : 'none') : 'none';
+  const stacheOk = male && age >= 21 && outfit !== 'priest' && outfit !== 'cop';
+  const stache = stacheOk && (L.stache === 'none' || L.stache === 'pencil' || L.stache === 'chevron') ? L.stache : stacheOk ? (stacheRoll < 0.14 ? 'pencil' : stacheRoll < 0.3 + clamp((age - 40) / 120, 0, 0.15) ? 'chevron' : 'none') : 'none';
   const suit = pickFrom(SUITS, r());
   const tie = pickFrom(TIES, r());
   const dress = pickFrom(DRESS, r());
@@ -317,6 +328,10 @@ export function paintPortrait(L: Look): ReactElement {
   else if (age > 55) style = G.wave > 0.4 ? 'curls' : 'chignon';
   else if (age < 21) style = pickFrom(['flip', 'bouffant', 'flip'] as const, (G.wave * 0.6 + look * 0.4) % 1);
   else style = pickFrom(['bouffant', 'flip', 'curls', 'chignon', 'bouffant'] as const, (G.wave * 0.6 + look * 0.4) % 1);
+  if (L.hairStyle && age >= 13) {
+    const want = L.hairStyle as HairStyle;
+    if (male ? MALE_STYLES.includes(want) : FEMALE_STYLES.includes(want)) style = want;
+  }
 
   const backHair = (d: string) => {
     shape(d, u('hr'));

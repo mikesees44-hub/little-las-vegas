@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
-import { App } from '../src/ui/App';
+import { App, type AppProps } from '../src/ui/App';
 
 const ENGINE = join(__dirname, '..', 'src', 'engine');
 
@@ -17,7 +17,10 @@ describe('architecture', () => {
     }
   });
   it('the UI renders without throwing', () => {
-    const html = renderToString(createElement(App));
+    const title = renderToString(createElement(App));
+    expect(title).toContain('data-testid="title"');
+    expect(title).toContain('New Game');
+    const html = renderToString(createElement(App, { startOn: 'game' } as AppProps));
     expect(html).toContain('Little Las Vegas');
     expect(html).toContain('Advance Week');
     expect(html).toContain('data-testid="island-map"');

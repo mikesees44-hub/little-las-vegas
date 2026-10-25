@@ -4,12 +4,15 @@ import { emptyCouncil, fillCouncil } from './council';
 import { autoStaff } from './business';
 import { generateWeekEvents } from './events';
 import { newGame } from './newGame';
+import { rankStart } from './station';
+import { addOpeningScene } from './scenes';
 import { refreshDynastyAfterStart } from './family';
 import { setupHouses } from './housesLife';
 import { addOpinion } from './relations';
 import { addStory, assignTo, giveBio, smallestRegime, tidyRegimes, transferRegime, validateHierarchy } from './hierarchy';
 import { capos, crew } from './characters';
 import type { Character, GameState, Trait } from './types';
+import { applyCharOptions, type CharOptions } from './charCreate';
 
 /**
  * How a game begins.
@@ -20,28 +23,43 @@ import type { Character, GameState, Trait } from './types';
  *    near the end of his reign, with three grown heirs: Vito, Donato and
  *    Francesca. (A fictional family.)
  */
-export type StartId = 'classic' | 'rise' | 'sees';
+export type StartId = 'classic' | 'rise' | 'sees' | 'associate' | 'soldier' | 'capo';
 
 export const STARTS: Record<StartId, { name: string; text: string }> = {
   classic: { name: 'The House', text: 'You already run Wildwood for Philadelphia. A full crew, five rackets, and one problem from the past.' },
   rise: { name: 'Rise to Power', text: 'A young man with a numbers bank, a few guys and $6,000. Nobody in Philadelphia knows your name yet.' },
   sees: { name: 'The House of Sees', text: 'Don Salvatore "The Shark" Sees, sixty years old, and three heirs who all want the chair: Vito, Donato and Francesca.' },
+  associate: { name: 'Start as an associate', text: 'Not even made. Two guys, a corner, and Don Cosimo Valente above you taking 30%.' },
+  soldier: { name: 'Start as a soldier', text: 'A made man with a few guys of his own, kicking up a quarter to Don Cosimo Valente.' },
+  capo: { name: 'Start as a capo', text: 'Your own crew in the Valente family. Fifteen percent up the ladder, and the chair one step further.' },
 };
 
-export function newGameWith(seed: string, start: StartId = 'classic'): GameState {
-  // The houses are built once the start has shaped the family.
-  const s = newGame(seed, { skipHouses: start !== 'classic' });
-  if (start === 'classic') return s;
-  if (start === 'rise') rise(s);
+/** `charOptions` (the character creator) is applied on top of any start. */
+export function newGameWith(seed: string, start: StartId = 'classic', charOptions?: CharOptions): GameState {
+  // The houses are built once the start (and the creator) has shaped the family.
+  const s = newGame(seed, { skipHouses: start !== 'classic' || !!charOptions });
+  if (start === 'classic' && !charOptions) {
+    addOpeningScene(s, start);
+    return s;
+  }
+  if (start === 'classic') return finish(s, start, charOptions);
+  if (start === 'rise' || start === 'associate' || start === 'soldier' || start === 'capo') rise(s);
   else sees(s);
+  if (start === 'associate' || start === 'soldier' || start === 'capo') rankStart(s, start);
   rebuildRegimes(s);
   s.flags[`start_${start}`] = 1;
+  return finish(s, start, charOptions);
+}
+
+function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameState {
+  if (charOptions) applyCharOptions(s, start, charOptions);
   refreshDynastyAfterStart(s);
   setupHouses(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};
   s.eventQueue = [];
   s.pendingEvents = generateWeekEvents(s);
+  addOpeningScene(s, start);
   return s;
 }
 

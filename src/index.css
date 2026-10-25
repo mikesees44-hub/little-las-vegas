@@ -30,6 +30,9 @@ body {
   .btn-ghost {
     @apply btn border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300;
   }
+  .inp {
+    @apply w-full rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200;
+  }
   .chip {
     @apply inline-flex items-center rounded px-1.5 py-0.5 text-[11px] font-medium leading-tight;
   }
@@ -75,6 +78,11 @@ body {
 .llv-landmark { white-space: nowrap; }
 .llv-landmark .dot { display: inline-block; width: 7px; height: 7px; border-radius: 9px; background: #c49a3a; border: 1px solid #0b0a09; margin-right: 3px; vertical-align: middle; }
 .llv-landmark .t { color: #ecd38f; font-size: 10px; font-style: italic; text-shadow: 0 0 3px #0b0a09, 0 0 3px #0b0a09; vertical-align: middle; }
+.llv-resort { white-space: nowrap; cursor: pointer; }
+.llv-resort .dia { display: inline-block; width: 8px; height: 8px; transform: rotate(45deg); background: #8fc3d8; border: 1px solid #0b0a09; margin-right: 4px; vertical-align: middle; }
+.llv-resort .t { color: #bfe0ec; font-size: 10px; text-shadow: 0 0 3px #0b0a09, 0 0 3px #0b0a09; vertical-align: middle; }
+.llv-traveller { display: flex; align-items: center; justify-content: center; border-radius: 999px; background: #0f1a20; border: 1.5px solid #8fc3d8; color: #d9eef6; box-shadow: 0 0 6px #000; }
+.llv-traveller.lam { border-color: #d0453a; color: #ffb4a8; }
 .llv-hq span { display: flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 3px; border: 1px solid #ecd38f; color: #0b0a09; font-size: 10px; font-weight: 700; }
 .llv-popup .leaflet-popup-content-wrapper, .llv-popup .leaflet-popup-tip { background: #141210; color: #d6ccb6; border: 1px solid #9c7a2c; }
 .llv-popup .leaflet-popup-content { margin: 10px 12px; }
@@ -104,6 +112,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .llv-kb-a, .llv-kb-b, .llv-kb-c, .llv-caret { animation: none; }
 }
+
+/* Settings: reduced motion switched on in the game, whatever the OS says. */
+.llv-reduce *, .llv-reduce *::before, .llv-reduce *::after { animation: none !important; transition: none !important; }
 
 /* The tab bar scrolls sideways on phones instead of wrapping or overflowing the page. */
 .tabbar { scrollbar-width: thin; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; max-width: 100%; }

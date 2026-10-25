@@ -2,8 +2,10 @@ import type { ReactNode } from 'react';
 import { formatDate, seasonInfo } from '../../engine/calendar';
 import { displayName, player } from '../../engine/characters';
 import { heatBand } from '../../engine/heat';
+import { statHelp } from '../../engine/glossary';
 import { HEAT_BARS, type GameState } from '../../engine/types';
 import { fmt$ } from '../format';
+import { Tip } from '../clarity/Tip';
 
 const BAND_COLOR = { cold: 'bg-sky-700', warm: 'bg-amber-600', hot: 'bg-orange-600', boiling: 'bg-blood-400' } as const;
 
@@ -19,12 +21,12 @@ export function Header({ s, children }: { s: GameState; children?: ReactNode }) 
           <p className="text-[11px] text-stone-400 truncate">House of {s.houseName} · {displayName(boss)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <Res label="Treasury" value={fmt$(s.money)} tone={s.money < 0 ? 'text-red-400' : 'text-gold-300'} title={`Unwashed: ${fmt$(s.unwashed)}`} />
-          <Res label="Respect" value={`${s.respect}`} bar={s.respect} barColor="bg-gold-500" />
+          <Tip text={`${statHelp('money')} Unwashed: ${fmt$(s.unwashed)} — ${statHelp('unwashed')}`}><Res label="Treasury" value={fmt$(s.money)} tone={s.money < 0 ? 'text-red-400' : 'text-gold-300'} /></Tip>
+          <Tip term="respect"><Res label="Respect" value={`${s.respect}`} bar={s.respect} barColor="bg-gold-500" /></Tip>
           {HEAT_BARS.map((b) => (
-            <Res key={b} label={`${b[0].toUpperCase()}${b.slice(1)} heat`} value={`${s.heat[b]}`} tone={s.heat[b] >= 80 ? 'text-red-400' : 'text-stone-100'} bar={s.heat[b]} barColor={BAND_COLOR[heatBand(s.heat[b])]} />
+            <Tip key={b} term={`heat.${b}`}><Res label={`${b[0].toUpperCase()}${b.slice(1)} heat`} value={`${s.heat[b]}`} tone={s.heat[b] >= 80 ? 'text-red-400' : 'text-stone-100'} bar={s.heat[b]} barColor={BAND_COLOR[heatBand(s.heat[b])]} /></Tip>
           ))}
-          <Res label="Favors" value={`${s.favors}`} title="Political favors you can call in" />
+          <Tip term="favors"><Res label="Favors" value={`${s.favors}`} /></Tip>
         </div>
         <div className="text-right">
           <div className="text-xs text-stone-300 whitespace-nowrap">{formatDate(s.date)} · Wk {s.week}</div>

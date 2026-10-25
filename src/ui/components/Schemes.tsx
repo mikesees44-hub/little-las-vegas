@@ -9,6 +9,7 @@ import { fmt$ } from '../format';
 import { Modal } from './Modal';
 import { ActionCard } from './Orders';
 import { CharLink, Face } from './People';
+import { CandidatePicker } from '../clarity/CandidatePicker';
 
 /** Opening the scheme planner from anywhere. */
 export const PlannerContext = createContext<{ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => void }>({ plan: () => {} });
@@ -49,16 +50,19 @@ export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: Game
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
 
-        <Section title={`Agents (${agents.length}/4)`}>
-          <div className="flex flex-wrap gap-1.5">
-            {pool.map((c) => (
-              <button key={c.id} onClick={() => toggle(c.id)} className={`flex items-center gap-1.5 rounded border px-1.5 py-1 text-xs ${agents.includes(c.id) ? 'border-gold-400 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
-                <span>{c.id === s.playerId ? 'You' : `${c.firstName} ${c.lastName}`}{c.dynasty && c.id !== s.playerId ? ' ♦' : ''}</span>
-                <span className="text-stone-500">F{c.attributes.force} I{c.attributes.intrigue} D{c.attributes.diplomacy}{c.specialty ? ` · ${c.specialty}` : ''}</span>
-              </button>
-            ))}
-            {pool.length === 0 && <span className="text-xs text-stone-500">Everyone is busy.</span>}
-          </div>
+        <Section title={`${kind === 'envoy' ? 'The envoy' : kind === 'murder' ? 'The hit team' : 'Agents'} (${agents.length}/4)`}>
+          {agents.length > 0 && (
+            <div className="mb-1.5 flex flex-wrap gap-1.5">
+              {agents.map((id) => s.characters[id]).filter(Boolean).map((c) => (
+                <button key={c.id} onClick={() => toggle(c.id)} className="flex items-center gap-1 rounded border border-gold-400 bg-gold-500/15 px-1.5 py-0.5 text-xs text-gold-200" title="Remove from the team">
+                  {c.id === s.playerId ? 'You' : `${c.firstName} ${c.lastName}`} ✕
+                </button>
+              ))}
+            </div>
+          )}
+          {pool.length === 0 ? <span className="text-xs text-stone-500">Everyone is busy.</span> : (
+            <CandidatePicker s={s} role={{ kind: 'agent', scheme: kind, targetId, opts, with: agents }} pool={pool.map((c) => c.id)} selected={agents} onToggle={toggle} limit={6} />
+          )}
         </Section>
 
         <Section title="Planning">

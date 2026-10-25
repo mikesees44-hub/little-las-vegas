@@ -1,3 +1,4 @@
+import { recordBones } from '../src/engine/bones';
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -60,6 +61,7 @@ describe('character interactions', () => {
     const assoc = crew(s).find((x) => x.rank === 'associate')!;
     const soldier = crew(s).find((x) => x.rank === 'soldier')!;
     s.money = 50000;
+    recordBones(s, assoc, 'Garden Pier job', 'heist', 'on the crew', 'Did the job.');
     s = advanceWeek(s, { actions: [{ kind: 'interact', id: 'make', target: assoc.id }, { kind: 'interact', id: 'exile', target: soldier.id }] }).state;
     // Making goes through the membership pipeline: proposed, then made when Philadelphia's books open.
     expect(s.characters[assoc.id].rank).toBe('associate');

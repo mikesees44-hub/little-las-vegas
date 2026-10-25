@@ -4,11 +4,13 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { OpinionBadge } from './CrewList';
 import { CharLink, Face } from './People';
+import { WhatToDoPanel } from '../clarity/WhatToDo';
 
 /** The map's side panel when no district is selected: your situation and the people across the board. */
 export function Overview({ s }: { s: GameState }) {
   return (
     <div className="space-y-4">
+      {!s.gameOver && <WhatToDoPanel s={s} />}
       {s.startingProblem && (
         <div className="rounded-md border border-amber-700/50 bg-amber-900/10 px-3 py-2 text-sm text-amber-200">
           <span className="font-semibold">Your situation: </span>{s.startingProblem}

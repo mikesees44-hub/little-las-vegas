@@ -9,6 +9,7 @@ import type { DisputeKind, GameState, RivalId } from '../../engine/types';
 import { OpinionBadge } from './CrewList';
 import { ActionCard } from './Orders';
 import { CharLink, Face } from './People';
+import { CandidatePicker } from '../clarity/CandidatePicker';
 
 export function TablePanel({ s }: { s: GameState }) {
   const members = tableMembers(s);
@@ -52,6 +53,7 @@ export function TablePanel({ s }: { s: GameState }) {
               <div className="text-xs text-stone-500">Hearing in week {d.hearingWeek} · {FACTION_NAMES[d.plaintiff]} v. {d.defendant === 'player' ? 'your house' : FACTION_NAMES[d.defendant]}</div>
               <p className="text-sm text-stone-200 mt-1"><span className="text-gold-300">The claim: </span>{d.claim}</p>
               <p className="text-sm text-stone-300"><span className="text-gold-300">The answer: </span>{d.defense}</p>
+              {!s.gameOver && <div className="mt-2"><CandidatePicker s={s} role={{ kind: 'lobby', disputeId: d.id }} limit={3} hideAdvisors /></div>}
               <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {leans.map((l) => (
                   <div key={l.member.id} className="rounded border border-noir-700 p-2">

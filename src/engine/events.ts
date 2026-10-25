@@ -2,6 +2,7 @@ import { perkMod } from './lifestyle';
 import { ageOn, monthKey, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
 import { MAX_PER_KIND } from './actions';
+import { smallStart } from './economy';
 import { countKind, newBusiness, playerSlots } from './business';
 import { CATALOG, SHOP_KINDS } from './catalog';
 import { defaulter } from './loans';
@@ -9,6 +10,7 @@ import { opinion } from './relations';
 import { chance, pick, randInt, shuffle, weightedPick } from './rng';
 import { markShown, pickCrewEvents, pruneCooldowns, subjectOk } from './crewEvents';
 import { familyEventSource } from './familyDrama';
+import { bagmanInPerson, directCandidates, director, freshness, recordShown, recordTribute, themeFull, themeShares } from './storyDirector';
 import { FACTION_NAMES } from './world';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
@@ -66,11 +68,40 @@ export function envelopeSize(s: GameState): number {
  * second summer, whichever comes first.
  */
 export function unnoticed(s: GameState): boolean {
-  return !!s.flags.start_rise && s.respect < 40 && s.week < 53;
+  return smallStart(s) && s.respect < 40 && s.week < 53;
+}
+
+/** A man with a boss above him in the family (a rank start, or a boss who fell) kicks up to that boss; his don pays Philadelphia. */
+export function underADon(s: GameState): boolean {
+  const p = s.power;
+  return !!p && p.station !== 'boss' && p.station !== 'independent' && p.station !== 'exile' && !!p.overId && !!s.characters[p.overId]?.alive;
 }
 
 export function bagmanDue(s: GameState): boolean {
-  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !unnoticed(s);
+  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !unnoticed(s) && !underADon(s);
+}
+
+/**
+ * The bagman's visits: where and how he turns up, by season and by what
+ * Philadelphia thinks of the boss. Chosen without the dice (the month and
+ * the visit count decide), so the variety costs the simulation nothing.
+ */
+const BAGMAN_VISITS: { title: string; when: 'summer' | 'winter' | 'any'; text: (sal: string) => string }[] = [
+  { title: 'The bagman from Philadelphia', when: 'any', text: (sal) => `${sal} Moretti's bagman is waiting in a Buick outside the Ivanhoe, motor running.` },
+  { title: 'A Buick on Pacific Avenue', when: 'summer', text: (sal) => `The bagman parks in the shade by the Starlight and eats a hot dog with the window down while the boardwalk crowd goes by. He says ${sal} sends his best, and that the Shore must be having quite a season.` },
+  { title: 'Second pew at St. Ann\'s', when: 'any', text: (sal) => `Sunday, the ten o'clock Mass. ${sal} Moretti's man slides into the pew behind you and hums along with the hymn. During the sign of peace he shakes your hand and keeps his palm open.` },
+  { title: 'Coffee at the Doo Wop diner', when: 'winter', text: (sal) => `The island is shut for the winter and the bagman hates the drive. He sits at the counter in his overcoat, stirring a coffee he never drinks. "${sal} says the off-season is no excuse."` },
+  { title: 'The man with the racing form', when: 'summer', text: (sal) => `A different bagman this month: a nephew of somebody, with a racing form under his arm and a Philadelphia accent you could cut. He calls ${sal} "Uncle Sal" and asks twice where the good clams are.` },
+  { title: 'A funeral home on New Jersey Avenue', when: 'any', text: (sal) => `The bagman likes funeral homes: nobody looks twice at a man in a dark suit. He signs the book for a stranger, then finds you by the coat rack. ${sal} wants to know how business is.` },
+  { title: 'The ferry lot at Cape May', when: 'winter', text: (sal) => `This month it is the ferry lot in Cape May, the wind off the bay hard enough to rock the car. ${sal}'s bagman keeps the heater on and the radio louder than it needs to be.` },
+  { title: 'Otten\'s Harbor, after dark', when: 'any', text: (sal) => `The bagman waits on the dock at Otten's Harbor among the charter boats, smoking. "${sal} likes the sea air," he says, "but he likes his envelope better."` },
+];
+
+function bagmanVisit(s: GameState): (typeof BAGMAN_VISITS)[number] {
+  const summer = seasonMultiplier(s.date) > 1;
+  const fits = BAGMAN_VISITS.filter((v) => v.when === 'any' || (v.when === 'summer') === summer);
+  const n = s.director?.tribute.filter((t) => t[2] === 1).length ?? 0;
+  return fits[(n * 5 + s.date.m) % fits.length];
 }
 
 export function buildBagman(s: GameState): EventInstance {
@@ -79,11 +110,12 @@ export function buildBagman(s: GameState): EventInstance {
   const over = rnd100(s, env * 1.35);
   const moretti = s.characters[s.rivals.find((r) => r.id === 'philly')!.leaderId];
   const mid = moretti.id;
+  const v = bagmanVisit(s);
   return {
     iid: iid(s),
     defId: 'bagman',
-    title: 'The bagman from Philadelphia',
-    text: `${moretti.firstName} Moretti's bagman is waiting in a Buick outside the Ivanhoe. Philadelphia's end this month comes to $${env.toLocaleString('en-US')}.`,
+    title: v.title,
+    text: `${v.text(moretti.firstName)} Philadelphia's end comes to $${env.toLocaleString('en-US')}.`,
     week: s.week,
     mandatory: true,
     priority: 80,
@@ -108,6 +140,7 @@ export function buildBagman(s: GameState): EventInstance {
         because: 'paid Philadelphia short',
         effects: [
           { type: 'money', amount: -short, category: 'tribute', label: 'Tribute to Philadelphia (short envelope)' },
+          { type: 'flag', key: 'bag_short', value: 1, label: 'Philadelphia will want to see you next month' },
           { type: 'heat', bar: 'family', amount: 9, label: 'Short envelope' },
           { type: 'opinion', from: mid, to: s.playerId, amount: -10, reason: 'Short envelope', decay: 1 },
           { type: 'schedule', key: 'philly_short', minWeeks: 2, maxWeeks: 6, chance: 0.5, hint: 'Philadelphia may count it twice' },
@@ -786,7 +819,14 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   // Expire stale non-mandatory queue items.
   s.eventQueue = s.eventQueue.filter((e) => e.mandatory || s.week - e.week <= 2);
   if (bagmanDue(s)) {
-    out.push(buildBagman(s));
+    // The story director: the bagman comes in person every other month; otherwise the envelope goes through the drop.
+    const inPerson = bagmanInPerson(s);
+    const bag = buildBagman(s);
+    if (inPerson) {
+      out.push(bag);
+      s.flags.bag_short = 0;
+    } else director(s).drop = Number(bag.meta!.envelope);
+    recordTribute(s, Number(bag.meta!.envelope), inPerson);
     s.lastBagmanMonth = monthKey(s.date);
   }
   const queue = [...s.eventQueue].sort((a, b) => b.priority - a.priority);
@@ -813,14 +853,16 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   if (candidates.some((e) => !e.mandatory)) room -= 1;
   if (extra.length && !candidates.some(isFamilyEvent)) room -= 1;
   if (room > 0) {
-    const want = Math.min(room, s.week <= 1 ? 2 : chance(s, 0.45) ? 2 : 1);
+    // The story director's theme mix: when the crew has had more than its share lately, it brings one thing, not two.
+    const crewHeavy = themeShares(s).crew > 0.4;
+    const want = Math.min(room, s.week <= 1 ? 2 : chance(s, crewHeavy ? 0.15 : 0.32) ? 2 : 1);
     for (const ev of pickCrewEvents(s, want)) candidates.push(ev);
     room -= want;
   }
   // A situational event, sometimes.
   if (room > 0 && chance(s, 0.3)) {
-    const eligible = EVENT_DEFS.filter((d) => d.condition(s) && s.week - (s.cooldowns[d.id] ?? -999) >= d.cooldown);
-    const d = weightedPick(s, eligible, (x) => x.weight(s));
+    const eligible = EVENT_DEFS.filter((d) => d.condition(s) && s.week - (s.cooldowns[d.id] ?? -999) >= d.cooldown && freshness(s, d.id) > 0);
+    const d = weightedPick(s, eligible, (x) => x.weight(s) * freshness(s, x.id));
     if (d) {
       const ev = d.build(s);
       if (ev) {
@@ -830,14 +872,16 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
     }
   }
   candidates.push(...extra);
-  candidates.sort((a, b) => b.priority - a.priority || Number(b.mandatory) - Number(a.mandatory));
+  // The story director orders everything (novelty, the theme mix) and holds back templates seen too recently.
+  const directed = directCandidates(s, candidates);
+  for (const ev of candidates) if (!directed.includes(ev) && ev.mandatory) s.eventQueue.push(ev);
   let family = out.filter(isFamilyEvent).length;
   const actors = new Set<string>();
-  for (const ev of candidates) {
+  for (const ev of directed) {
     const fam = isFamilyEvent(ev);
     // The same man never brings two things in one week (mandatory events always fit).
     const clash = !ev.mandatory && !!ev.meta?.crew && (ev.actors ?? []).some((a) => actors.has(a));
-    if (out.length < MAX_POPUPS && !(fam && family >= MAX_FAMILY_POPUPS) && !clash) {
+    if (out.length < MAX_POPUPS && !(fam && family >= MAX_FAMILY_POPUPS) && !clash && !themeFull(ev, out)) {
       out.push(ev);
       if (fam) family++;
       for (const a of ev.actors ?? []) actors.add(a);
@@ -845,5 +889,6 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
     } else if (ev.mandatory) s.eventQueue.push(ev);
     else if (ev.defId.startsWith('deal_')) s.eventQueue.push(ev);
   }
+  recordShown(s, out);
   return out;
 }

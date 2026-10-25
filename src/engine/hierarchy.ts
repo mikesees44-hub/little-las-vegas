@@ -4,6 +4,7 @@ import { holder } from './council';
 import { FEMALE_FIRST, MALE_FIRST } from './names';
 import { addOpinion, opinion, setModifier } from './relations';
 import { chance, pick, randInt, shuffle } from './rng';
+import { messengerPenalty } from './travelState';
 import type { Character, Craft, CrewStats, GameState, Household, OutsideRole, PersonalGoal, Vice } from './types';
 
 /**
@@ -440,6 +441,7 @@ export function obeyOdds(s: GameState, agent: Character): { obey: number; distor
   if (hasTrait(agent, 'Loyal-to-a-fault')) obey += 0.15;
   if (hasTrait(agent, 'Hot-headed') || hasTrait(agent, 'Greedy')) obey -= 0.1;
   if (hasTrait(agent, 'Ambitious') && op < 20) obey -= 0.08;
+  obey -= messengerPenalty(s);
   obey = Math.max(0.15, Math.min(0.95, obey));
   const disobey = Math.max(0.02, Math.min(0.4, (1 - obey) * (op < 0 ? 0.6 : 0.3)));
   return { obey, distort: Math.max(0, 1 - obey - disobey) };

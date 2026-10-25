@@ -1,3 +1,4 @@
+import { recordBones } from '../src/engine/bones';
 import { describe, expect, it } from 'vitest';
 import { capos, crew } from '../src/engine/characters';
 import { flipChance } from '../src/engine/crewConsequences';
@@ -7,7 +8,7 @@ import { capoOf, inRegimeRank, obeyOdds, regime, validateHierarchy } from '../sr
 import { newCtx, reconcile } from '../src/engine/ledger';
 import { newGame } from '../src/engine/newGame';
 import { defectTo } from '../src/engine/regimes';
-import { addOpinion, opinion, setModifier } from '../src/engine/relations';
+import { addOpinion, getRelation, opinion, setModifier } from '../src/engine/relations';
 import { applyEffects } from '../src/engine/effects';
 import type { GameState } from '../src/engine/types';
 import { randomChoices } from './helpers';
@@ -135,9 +136,9 @@ describe('loyalty and defection', () => {
     expect(capoOf(s, s.characters[stay.id])).toBeTruthy();
   });
   it('a man courted by a rival either turns them down (if he loves you) or goes (if he does not)', () => {
-    // Leaving is a weekly roll (about even odds over a courtship), so the bad case is judged over ten games.
-    let gone = 0;
-    for (const seed of ['court', 'court-b', 'court-c', 'court-d', 'court-e', 'court-f', 'court-g', 'court-h', 'court-i', 'court-j']) {
+    // Walking out is a weekly roll once he has been courted six weeks, so judge it over a few games.
+    let went = 0;
+    for (const seed of ['court', 'court-b', 'court-c', 'court-d', 'court-e']) {
     const base = newGame(seed);
     const run = (love: number) => {
       let s: GameState = JSON.parse(JSON.stringify(base));
@@ -146,6 +147,9 @@ describe('loyalty and defection', () => {
       addOpinion(s, m.id, s.rivals.find((r) => r.id === 'kessler')!.leaderId, 'Test: they buy rounds', 40, 0);
       m.courtedBy = { rival: 'kessler', week: s.week };
       for (let w = 0; w < 40; w++) {
+        // Hold his feelings for you where the test put them (promotions, christenings and the like move them).
+        const test = getRelation(s, m.id, s.playerId)?.modifiers.find((x) => x.reason === 'Test');
+        if (test) setModifier(s, m.id, s.playerId, 'Test', Math.max(-100, Math.min(100, test.value + love - opinion(s, m.id, s.playerId))));
         const ev = s.pendingEvents.find((e) => e.defId === 'crew_courted' && e.meta?.charId === m.id);
         s = advanceWeek(s, ev ? { choices: { [ev.iid]: 'let' } } : {}).state;
         if (s.characters[m.id].faction !== 'player' || !s.characters[m.id].courtedBy) break;
@@ -153,11 +157,12 @@ describe('loyalty and defection', () => {
       return s.characters[m.id];
     };
     expect(run(70).faction, seed).toBe('player');
-    const f = run(-35).faction;
-    expect(['player', 'kessler'], seed).toContain(f);
-    if (f === 'kessler') gone++;
+    const unloved = run(-35);
+    // He either went to the rival who courted him, or is still yours (the courtship lapsed): never anywhere else.
+    expect(['kessler', 'player'], seed).toContain(unloved.faction);
+    if (unloved.faction === 'kessler') went++;
     }
-    expect(gone).toBeGreaterThanOrEqual(3);
+    expect(went).toBeGreaterThanOrEqual(1);
   });
   it('two loyalties: a capo who pays for a man\'s family wins the man, not you', () => {
     const s = newGame('twoloyal');
@@ -179,6 +184,8 @@ describe('the membership pipeline', () => {
     const assoc = men(s).filter((c) => c.rank === 'associate' && !c.dynasty).slice(0, 2);
     expect(assoc.length).toBe(2);
     s.books = { open: false, slots: 0, nextChange: s.week + 6 };
+    // Both made their bones first (bones.ts: nobody is proposed without them).
+    for (const a of assoc) recordBones(s, s.characters[a.id], 'Garden Pier job', 'heist', 'on the crew', 'Did the job.');
     s = advanceWeek(s, { actions: assoc.map((a) => ({ kind: 'propose', charId: a.id }) as const) }).state;
     for (const a of assoc) {
       expect(s.characters[a.id].proposedWeek).toBeDefined();

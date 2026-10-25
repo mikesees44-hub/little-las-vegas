@@ -1,4 +1,5 @@
 import { alliedWithFaction } from './familyHouses';
+import { lawZeal } from './polIntegrity';
 import { perkMod } from './lifestyle';
 import { gameYear } from './calendar';
 import { crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
@@ -162,7 +163,7 @@ export function rivalWeek(ctx: Ctx): void {
 
     const cands = scoreMoves(s, r);
     // Rivals act most weeks, but not every week.
-    if (!chance(s, r.kind === 'philly' ? 0.35 : r.kind === 'law' ? 0.45 : 0.6)) continue;
+    if (!chance(s, r.kind === 'philly' ? 0.35 : r.kind === 'law' ? 0.45 * lawZeal(s) : 0.6)) continue;
     const gamble = hasTrait(leader, 'Gambler') ? 1 : 2; // gamblers pick more randomly
     const choice = weightedPick(s, cands, (c) => Math.pow(c.score, gamble));
     if (!choice) continue;

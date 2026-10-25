@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { expectedTake, isOpen, owned } from '../../engine/business';
 import { CATALOG } from '../../engine/catalog';
-import { displayName } from '../../engine/characters';
 import { placeName } from '../../engine/econ';
 import type { Lot, Manager, Oversight } from '../../engine/econState';
 import {
@@ -14,6 +13,7 @@ import { nextStep, racketSummary, stepsOf, tree } from '../../engine/rackets';
 import type { Business, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
+import { CandidatePicker } from '../clarity/CandidatePicker';
 import { CharLink } from '../components/People';
 
 /**
@@ -217,24 +217,11 @@ function ManagerPicker({ s, k, m }: { s: GameState; k: string; m?: Manager }) {
         </div>
       )}
       <div>
-        <div className="text-[10px] uppercase tracking-widest text-stone-500">Family</div>
-        {fam.length === 0 && <div className="text-stone-500">Nobody of age and free.</div>}
-        <div className="grid gap-1.5 sm:grid-cols-2 mt-1">{fam.map((c) => <ActionCard key={c.id} s={s} action={{ kind: 'econ', op: { type: 'manager', key: k, source: 'family', charId: c.id } }} label={`${displayName(c)} (family)`} />)}</div>
-      </div>
-      <div>
-        <div className="text-[10px] uppercase tracking-widest text-stone-500">Crew</div>
-        <div className="grid gap-1.5 sm:grid-cols-2 mt-1">{crewC.map((c) => <ActionCard key={c.id} s={s} action={{ kind: 'econ', op: { type: 'manager', key: k, source: 'crew', charId: c.id } }} label={`${displayName(c)} (${c.rank})`} />)}</div>
-      </div>
-      <div>
-        <div className="text-[10px] uppercase tracking-widest text-stone-500">Answering the ad at {placeName(s, k)}</div>
-        <div className="grid gap-1.5 sm:grid-cols-3 mt-1">
-          {pros.map((p, i) => (
-            <div key={i}>
-              <ActionCard s={s} action={{ kind: 'econ', op: { type: 'manager', key: k, source: 'pro', pro: i } }} label={p.name} />
-              <p className="text-[10px] text-stone-500 italic px-1">{p.hint}</p>
-            </div>
-          ))}
+        <div className="text-[10px] uppercase tracking-widest text-stone-500">Family ({fam.length}), crew ({crewC.length}) and {pros.length} answering the ad at {placeName(s, k)}</div>
+        <div className="mt-1">
+          <CandidatePicker s={s} role={{ kind: 'manager', key: k }} pool={[...fam, ...crewC.filter((c) => !c.dynasty)].map((c) => c.id)} limit={6} />
         </div>
+        {pros.length > 0 && <p className="mt-1 text-[10px] text-stone-500 italic">What the references say: {pros.map((p) => `${p.name} — ${p.hint.toLowerCase()}`).join('; ')}.</p>}
       </div>
     </div>
   );

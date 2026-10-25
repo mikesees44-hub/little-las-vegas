@@ -1,4 +1,5 @@
 import type { ActionPreview } from './actions';
+import { noteScore } from './ledgerbook';
 import { isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
@@ -148,6 +149,32 @@ function tidy(s: GameState): void {
   }
 }
 
+/**
+ * Who signs the building permits (the inspector, the zoning board). Other
+ * layers plug in here (politics: officials you own speed permits through,
+ * honest ones block them). Returns a verdict for this week, or undefined.
+ */
+export type PermitVerdict = { verdict: 'fast' | 'blocked'; why: string };
+export type PermitAuthority = (s: GameState, lot: Lot) => PermitVerdict | undefined;
+const PERMIT_AUTHORITIES: PermitAuthority[] = [];
+export function registerPermitAuthority(fn: PermitAuthority): void {
+  if (!PERMIT_AUTHORITIES.includes(fn)) PERMIT_AUTHORITIES.push(fn);
+}
+function permitVerdict(s: GameState, lot: Lot): PermitVerdict | undefined {
+  for (const fn of PERMIT_AUTHORITIES) {
+    const v = fn(s, lot);
+    if (v) return v;
+  }
+  return undefined;
+}
+
+/**
+ * Installments that come due on their own (a building stage, a community
+ * project) wait rather than take the last of the treasury: they never leave
+ * less than this for the payroll.
+ */
+export const BUILD_CUSHION = 3000;
+
 function constructionWeek(ctx: Ctx): void {
   const s = ctx.s;
   const e = s.econ!;
@@ -159,13 +186,24 @@ function constructionWeek(ctx: Ctx): void {
     l.stalled = undefined;
     if ((l.stageWeek ?? 0) === 0) {
       const cost = Math.round(buildCost(l, u) * STAGE_COST[st]);
-      if (s.money < cost) {
-        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)})`;
+      if (s.money - cost < BUILD_CUSHION) {
+        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)}): the contractor waits until it leaves you ${fmtMoney(BUILD_CUSHION)} for the payroll`;
         continue;
       }
       if (st === 'permits' && s.heat.local >= 70 && chance(e, 0.3)) {
         l.stalled = 'The building inspector wants to talk first';
         continue;
+      }
+      if (st === 'permits') {
+        const v = permitVerdict(s, l);
+        if (v?.verdict === 'blocked') {
+          l.stalled = v.why;
+          continue;
+        }
+        if (v?.verdict === 'fast') {
+          l.stageWeek = Math.max(0, weeks[st] - 1);
+          ctx.log.push(`${lotName(l)}: ${v.why}.`);
+        }
       }
       money(ctx, -cost, `Construction: ${lotName(l)} — ${STAGE_LABEL[st].toLowerCase()}`, 'cost');
       l.invested = (l.invested ?? 0) + cost;
@@ -262,7 +300,7 @@ function projectsWeek(ctx: Ctx): void {
     if (p.done) continue;
     const def = PROJECTS_BY_KIND[p.kind];
     const pay = Math.round(p.cost / p.weeks);
-    if (s.money < pay) continue; // waits for money
+    if (s.money - pay < BUILD_CUSHION) continue; // waits for money (and never takes the payroll)
     money(ctx, -pay, `Community: ${def.name.toLowerCase()} in ${ZONES_BY_ID[p.zone].name} (week ${p.progress + 1}/${p.weeks})`, 'cost');
     p.progress++;
     if (p.progress >= p.weeks) {
@@ -578,6 +616,7 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
     case 'credit': {
       const k = s.characters[op.charId];
       if (k) addStory(s, k, `Took down a ${fmtMoney(op.amount)} score.`);
+      if (k) noteScore(ctx, k.id, op.amount, 'a big score');
       break;
     }
     case 'zone': {

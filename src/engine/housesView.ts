@@ -89,6 +89,14 @@ export function houseIndex(s: GameState): HouseIndex {
     n.sp = n.sp.filter((k) => nodes.has(k));
     if (n.house) (members.get(n.house) ?? members.set(n.house, []).get(n.house)!).push(n);
   }
+  // A widow who remarried no longer points at her late husband, but he still points at her:
+  // that first marriage stays in the tree (listed before the current one).
+  for (const n of nodes.values()) {
+    for (const sp of n.sp) {
+      const o = nodes.get(sp);
+      if (o && !o.sp.includes(n.id)) o.sp.unshift(n.id);
+    }
+  }
   const idx = { nodes, members };
   memo.set(s, idx);
   return idx;
