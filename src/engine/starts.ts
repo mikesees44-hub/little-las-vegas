@@ -5,6 +5,7 @@ import { autoStaff } from './business';
 import { generateWeekEvents } from './events';
 import { newGame } from './newGame';
 import { rankStart } from './station';
+import { addOpeningScene } from './scenes';
 import { refreshDynastyAfterStart } from './family';
 import { addOpinion } from './relations';
 import { addStory, assignTo, giveBio, smallestRegime, tidyRegimes, transferRegime, validateHierarchy } from './hierarchy';
@@ -35,7 +36,10 @@ export const STARTS: Record<StartId, { name: string; text: string }> = {
 /** `charOptions` (the character creator) is applied on top of any start. */
 export function newGameWith(seed: string, start: StartId = 'classic', charOptions?: CharOptions): GameState {
   const s = newGame(seed);
-  if (start === 'classic' && !charOptions) return s;
+  if (start === 'classic' && !charOptions) {
+    addOpeningScene(s, start);
+    return s;
+  }
   if (start === 'classic') return finish(s, start, charOptions);
   if (start === 'rise' || start === 'associate' || start === 'soldier' || start === 'capo') rise(s);
   else sees(s);
@@ -52,6 +56,7 @@ function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameSt
   s.cooldowns = {};
   s.eventQueue = [];
   s.pendingEvents = generateWeekEvents(s);
+  addOpeningScene(s, start);
   return s;
 }
 

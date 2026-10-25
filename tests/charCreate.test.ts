@@ -121,6 +121,18 @@ describe('character creator', () => {
     play(s, 6);
   });
 
+  it('a created character flows into the Made-the-Boss opening scene on every start', () => {
+    for (const st of STARTS) {
+      const s = newGameWith(`cc7-${st}`, st, custom(st));
+      const ev = s.pendingEvents[0];
+      expect(ev.defId, st).toBe('made_boss');
+      expect(s.pendingEvents.filter((e) => e.defId === 'made_boss'), st).toHaveLength(1);
+      expect(ev.actors?.[0], st).toBe(s.playerId);
+      expect(s.characters[ev.actors![0]].firstName, st).toBe('Michele');
+      expect(s.pendingEvents.length, st).toBeLessThanOrEqual(4);
+    }
+  });
+
   it('nicknames come with an origin story', () => {
     for (const n of NICKNAMES) expect(nicknameOrigin(n), n).toBeTruthy();
     const a = suggestNickname('x', false);
