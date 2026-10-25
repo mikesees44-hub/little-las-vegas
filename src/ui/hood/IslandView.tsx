@@ -6,7 +6,7 @@ import { USES_BY_ID, type UseCat } from '../../engine/property';
 import type { GameState } from '../../engine/types';
 import { OWNER_COLOR } from '../map/lotIcons';
 import { Building, itemsOf, type Item } from './Buildings';
-import { Ground, GroundDefs, VIEW_BOUNDS } from './Ground';
+import { Ground, GroundDefs, PierArches, VIEW_BOUNDS } from './Ground';
 import { HoodDashboard } from './HoodDashboard';
 import { ISO, P, PLAN, palette, poly, type Mood } from './iso';
 import { StreetCard } from './StreetCard';
@@ -357,6 +357,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
               {ground}
               {areas}
               {buildings}
+              <PierArches pr={pr} mood={mood} tier={tier} sc={scB} />
               {tier >= 1 && (
                 <g className="hv-tram" style={{ ['--tx' as string]: `${tram.b[0] - tram.a[0]}px`, ['--ty' as string]: `${tram.b[1] - tram.a[1]}px` }} pointerEvents="none">
                   <g transform={`translate(${tram.a[0]} ${tram.a[1]})`}>
