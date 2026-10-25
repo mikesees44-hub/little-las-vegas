@@ -39,7 +39,7 @@ import { FACTION_NAMES } from './world';
 /* ---------------- which places run on the designer ---------------- */
 
 /** Catalog businesses that become venues, and their concept. */
-export const BIZ_CONCEPT: Partial<Record<BusinessKind, ConceptId>> = { motel: 'budget_motel', boarding: 'rooming' };
+export const BIZ_CONCEPT: Partial<Record<BusinessKind, ConceptId>> = { motel: 'budget_motel', boarding: 'rooming', restaurant: 'restaurant', bar: 'bar', club: 'nightclub', supperclub: 'nightclub' };
 /** Lot uses (not catalog businesses) that become venues. */
 export const USE_CONCEPT: Record<string, ConceptId> = { rooming: 'rooming', boardinghouse: 'rooming', flophouse: 'rooming', hotel: 'luxury_resort' };
 /** Lot uses that compete for guests when a rival or a private owner runs them. */
@@ -171,12 +171,16 @@ export function scanVenues(s: GameState): Venue[] {
     const look = d?.style ? { style: d.style, sign: d.sign ?? 'pink' } : { style: 'doowop' as BuildStyle, sign: (d?.sign ?? 'pink') as SignColor };
     const zone = lot?.zone ?? (ZONES_BY_ID[b.districtId as keyof typeof ZONES_BY_ID] ? b.districtId : (Object.values(ZONES_BY_ID).find((z) => z.district === b.districtId)?.id ?? 'downtown'));
     const use = lot?.use ?? (b.kind === 'motel' ? 'motel' : 'boarding');
+    const lodging = LODGING.includes(concept);
     const v = createVenue(s, {
-      concept: plan?.concept && LODGING.includes(plan.concept) ? plan.concept : concept, rooms: roomsFor(use, b.id), name: b.name, owner: 'player', ownerName: house, zone: zone as never,
+      concept: lodging && plan?.concept && LODGING.includes(plan.concept) ? plan.concept : concept, rooms: lodging ? roomsFor(use, b.id) : 0,
+      seats: b.kind === 'supperclub' ? { club: 150, dining: 75, bar: 30 } : undefined, extraDepts: b.kind === 'supperclub' ? ['dining', 'kitchen'] : undefined, name: b.name, owner: 'player', ownerName: house, zone: zone as never,
       address: lot?.address ?? `${b.name}, ${s.districts.find((x) => x.id === b.districtId)?.name ?? 'Wildwood'}`, lotId: lot?.id, opKey: b.id,
       builtYear: lot?.builtYear ?? s.date.y - 6, condition: lot?.condition ?? 80, found: (lot?.condition ?? 80) >= 80 ? 1 : 0, ...look,
     }, plan);
     delete e.plans[planKey];
+    const prop = e.properties[v.propertyId];
+    prop.value = Math.max(prop.value, Math.round((b.cost ?? 0) * 1.2));
     b.upkeep = 0;
     if (lot) { lot.name ??= b.name; }
     made.push(v);

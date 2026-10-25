@@ -39,7 +39,7 @@ function base(e: EmpireState, v: Venue, kind: DeptKind, w: Parameters<typeof wor
     case 'dining': return w.covers ? Math.max(2, w.covers / 7 / 32) : 0;
     case 'kitchen': return w.covers ? Math.max(1.5, w.covers / 7 / 65) * work(['kitchen']) : 0;
     case 'bar': return w.drinks ? Math.max(1, w.drinks / 7 / 160) * work(['bar_equipment']) : 0;
-    case 'club': return w.clubGuests ? Math.max(2, w.clubGuests / 7 / 55) : 0;
+    case 'club': return w.clubGuests ? Math.max(1, w.clubGuests / 7 / 55) : 0;
     case 'pool': return w.inSeason ? 1 : 0;
     case 'spa': return w.spaVisits ? Math.max(1, w.spaVisits / 7 / 8) : 0;
     case 'security': return (v.concept === 'hourly_motel' ? 1.5 : 0) + (rooms >= 40 ? 1 + rooms / 100 : 0) + (seatsOf(e, v, 'club') ? 1.5 : 0) + (c.kind === 'bar' ? 0.5 : 0);

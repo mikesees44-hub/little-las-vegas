@@ -3,6 +3,7 @@ import { CATS, CAT_IDS, itemAtTier } from './empireCatalog';
 import { areaReport, deptOf, roomCount, roomsByType, venueBuilding } from './empireBuild';
 import { CONCEPTS, DEPTS } from './empireData';
 import { seasonCurve, managerSkill, winterClosed } from './empireOps';
+import { bookAct } from './empireActs';
 import { projectOptions } from './empireProjects';
 import { deptStaff, newWorker, promote, removeWorker, staffTarget } from './empireStaff';
 import type { EmpireState, OperatingPreset, Venue } from './empireState';
@@ -39,6 +40,8 @@ export function presetById(e: EmpireState, id?: string): OperatingPreset | undef
 export function applyPreset(s: GameState, e: EmpireState, v: Venue, p: OperatingPreset): void {
   const c = CONCEPTS[v.concept];
   Object.assign(v.policy, p.policy);
+  // Restaurants, bars and clubs keep their doors open: the winter policy is a lodging matter.
+  if (c.kind !== 'lodging') v.policy.winter = 'open';
   v.policy.presetId = p.id;
   v.policy.supplyTier = Math.max(0, Math.min(3, c.tier + (p.tierDelta ?? 0)));
   if (v.policy.mode !== 'micro') chooseSupplies(s, e, v);
@@ -128,7 +131,7 @@ function steerPrices(s: GameState, v: Venue, skill: number): void {
     const cur = v.policy.rates[rt as keyof typeof c.rates] ?? base! * infl;
     const lo = base! * infl * 0.7;
     const hi = base! * infl * 1.35;
-    v.policy.rates[rt as keyof typeof c.rates] = Math.round(Math.max(lo, Math.min(hi, cur * k)) * 4) / 4;
+    v.policy.rates[rt as keyof typeof c.rates] = Math.round(Math.max(lo, Math.min(hi, cur * k)) * 20) / 20;
   }
 }
 
@@ -175,6 +178,8 @@ export function managerWeek(s: GameState, e: EmpireState, v: Venue, log: string[
       if (it && mode === 'owner' && ((CATS[cat].kind === 'consumable') || !['tv', 'aircon', 'phone'].includes(cat))) v.policy.supplies[cat] = it.id;
     }
   }
+  // Monthly: the booking manager books the month's acts.
+  if (s.date.d <= 7 && deptOf(e, v, 'club')) bookAct(s, e, v);
   // Monthly: the manager's proposals.
   if (mode === 'owner' && s.date.d <= 7) {
     const list = proposals(s, e, v);

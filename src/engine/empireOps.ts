@@ -246,6 +246,8 @@ export function segmentDemand(s: GameState): Record<SegmentId, number> {
   for (const id of SEGMENT_IDS) {
     const g = SEGMENTS[id];
     if (id === 'hourly') { out[id] = 1100 * (0.65 + 0.35 * c); continue; }
+    // Busboys, ride jockeys and lifeguards arrive in May and stay until September.
+    if (id === 'workers') { const m = s.date.m; out[id] = 3200 * (m >= 5 && m <= 9 ? 1 : m === 4 || m === 10 ? 0.35 : 0.08); continue; }
     out[id] = base * g.share * Math.max(g.winter * 0.25, c) * (c < 0.7 ? 1 + g.winter * 2 : 1);
   }
   return out;
@@ -263,10 +265,11 @@ export function clearMarket(s: GameState, bids: Bid[]): void {
   for (const seg of SEGMENT_IDS) {
     let want = dem[seg];
     const hourly = seg === 'hourly';
-    const outside = (hourly ? 260 * 7 * 2.4 : otherCap) * Math.exp(hourly ? 0 : outsideUtility(seg, s.date.y));
+    const workers = seg === 'workers';
+    const outside = (hourly ? 260 * 7 * 2.4 : workers ? 280 * 7 : otherCap) * Math.exp(hourly || workers ? 0 : outsideUtility(seg, s.date.y));
     for (let pass = 0; pass < 2 && want > 1; pass++) {
       const room = (b: Bid) => (hourly ? b.hourlyCap - b.got.hourly : b.cap - SEGMENT_IDS.filter((x) => x !== 'hourly').reduce((a, x) => a + b.got[x], 0));
-      const open = bids.filter((b) => room(b) > 0 && (hourly ? b.hourlyCap > 0 : b.cap > 0));
+      const open = bids.filter((b) => room(b) > 0 && (hourly ? b.hourlyCap > 0 : b.cap > 0) && (!workers || b.v.concept === 'rooming'));
       const att = open.map((b) => (hourly ? b.hourlyCap : b.cap) * Math.exp(b.u[seg]));
       const sum = att.reduce((a, x) => a + x, 0) + outside;
       let spill = 0;
@@ -380,7 +383,7 @@ export function runVenueWeek(s: GameState, e: EmpireState, v: Venue, bid: Bid, o
   let covers = 0;
   if (dineSeats) {
     const inhouse = SEGMENT_IDS.reduce((a, seg) => a + (bid.got[seg] * SEGMENTS[seg].perRoom * SEGMENTS[seg].dine), 0) * Math.min(1.3, Math.exp(foodU * 0.6));
-    const walk = dineSeats * 7 * (c.kind === 'food' ? 1.5 : 0.8) * walkCurve * 0.55 * Math.exp(foodU);
+    const walk = dineSeats * 7 * (c.kind === 'food' ? 1.95 : 0.8) * walkCurve * 0.55 * Math.exp(foodU);
     covers = Math.min(dineSeats * 7 * 2.2, inhouse + walk);
   }
   const drinkU = -1.4 * Math.log((v.policy.drinkPrice ?? 0.6 * infl) / (0.6 * infl)) + 0.6 * (qOf(v, 'liquor', y) - 55) / 25 + 0.3 * (v.reputation - 50) / 25;
@@ -391,13 +394,13 @@ export function runVenueWeek(s: GameState, e: EmpireState, v: Venue, bid: Bid, o
     const entU = 0.45 * Math.log(Math.max(0.3, (ent + (v.policy.act?.draw ?? 0) * 100 * infl) / (300 * infl))) + 0.15 * actTier(e, v);
     const clubU = -1.4 * Math.log((v.policy.coverCharge ?? 1.5 * infl) / (1.5 * infl)) + entU + 0.7 * (cq - 55) / 25 + 0.3 * (v.reputation - 50) / 25;
     const inhouse = SEGMENT_IDS.reduce((a, seg) => a + bid.got[seg] * SEGMENTS[seg].perRoom * SEGMENTS[seg].club, 0);
-    const walk = clubSeats * 4 * 1.3 * (0.3 + 0.7 * curve) * 0.6 * Math.exp(clubU);
+    const walk = clubSeats * 4 * 1.3 * (0.3 + 0.7 * curve) * 0.85 * Math.exp(clubU);
     clubGuests = Math.min(clubSeats * 4 * 1.6, inhouse + walk);
   }
   let drinks = 0;
   if (barSeats || clubSeats) {
     const inhouse = SEGMENT_IDS.reduce((a, seg) => a + bid.got[seg] * SEGMENTS[seg].perRoom * SEGMENTS[seg].drink, 0) * Math.min(1.3, Math.exp(drinkU * 0.5)) * (barSeats ? 1 : 0.3);
-    const walk = barSeats * 7 * 2.6 * walkCurve * Math.exp(drinkU) * (c.kind === 'bar' ? 1.4 : 0.7);
+    const walk = barSeats * 7 * 2.6 * walkCurve * Math.exp(drinkU) * (c.kind === 'bar' ? 1.0 : 0.7);
     drinks = Math.min((barSeats * 7 * 9) + clubGuests * 2.2, inhouse + walk + clubGuests * 2);
   }
   const spa = open && venueSpaces(e, v).some((x) => x.type === 'spa');

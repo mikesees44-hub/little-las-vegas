@@ -28,6 +28,11 @@ export interface Outcome {
   roomMix: Record<string, number>;
   depts: string[];
   staff: number;
+  peakStaff: number;
+  maxOcc: number;
+  minCondition: number;
+  /** Condition lost to wear over the five years (before repairs put it back). */
+  decay: number;
   years: { year: string; rev: number; opex: number; noi: number; capex: number; occ: number; sat: number; covers: number }[];
   projects: string[];
   managerProjects: number;
@@ -122,11 +127,18 @@ export function develop(arch: Archetype, seed = 'acceptance'): Outcome {
   const startMoney = s.money;
   let ok = true;
   let step = 0;
+  let peakStaff = 0;
+  let minCondition = 100;
+  let decay = 0;
   const end = weekOf(1970, 5, 1);
   while (s.week < end) {
+    const c0 = venueBuilding(s.empire!, v)!.condition;
     const r = weekOfVenue(s);
+    decay += Math.max(0, c0 - venueBuilding(s.empire!, v)!.condition);
     ok &&= r.ok;
     step++;
+    peakStaff = Math.max(peakStaff, v.staffIds.length);
+    minCondition = Math.min(minCondition, venueBuilding(s.empire!, v)!.condition);
     if (arch === 'B' && step > 20) {
       const busy = Object.values(s.empire!.projects).some((p) => p.venueId === v.id && p.status !== 'done');
       if (!busy) {
@@ -141,7 +153,7 @@ export function develop(arch: Archetype, seed = 'acceptance'): Outcome {
   const em = s.empire!;
   const tp = v.stock.toilet_paper;
   return {
-    archetype: arch, name: v.name, concept: v.concept, rooms: roomCount(em, v), roomMix: roomsByType(em, v), depts: v.deptIds.map((id) => em.depts[id].kind), staff: v.staffIds.length,
+    archetype: arch, name: v.name, concept: v.concept, rooms: roomCount(em, v), roomMix: roomsByType(em, v), depts: v.deptIds.map((id) => em.depts[id].kind), staff: v.staffIds.length, peakStaff, minCondition: Math.round(minCondition), decay: Math.round(decay), maxOcc: Math.max(...v.months.map((m) => (m.capacity ? m.roomNights / m.capacity : 0))),
     years: v.years.map((y) => ({ year: y.key, rev: Math.round(y.rev), opex: Math.round(y.opex + y.cogs), noi: Math.round(y.noi), capex: Math.round(y.capex), occ: y.capacity ? Math.round((y.roomNights / y.capacity) * 100) : 0, sat: Math.round(y.sat), covers: y.covers })),
     projects: Object.values(em.projects).filter((p) => p.venueId === v.id).map((p) => `${p.defId}${p.status === 'done' ? '' : ` (${p.status})`}${p.by === 'manager' ? ' [manager]' : ''}`),
     managerProjects: em.properties[v.propertyId].history.filter((h) => h.text.startsWith('The manager started')).length,
@@ -158,7 +170,7 @@ const isMain = typeof process !== 'undefined' && process.argv[1]?.endsWith('empi
 if (isMain) {
   for (const a of ['A', 'B', 'C'] as Archetype[]) {
     const o = develop(a);
-    console.log(`\n${a}. ${o.name} — ${CONCEPTS[o.concept].name}, ${o.rooms} rooms ${JSON.stringify(o.roomMix)}, ${o.staff} staff, depts ${o.depts.join('/')}`);
+    console.log(`\n${a}. ${o.name} — ${CONCEPTS[o.concept].name}, ${o.rooms} rooms ${JSON.stringify(o.roomMix)}, ${o.staff} staff (peak ${o.peakStaff}), depts ${o.depts.join('/')}`);
     for (const y of o.years) console.log(`  ${y.year}: revenue $${y.rev.toLocaleString()}  costs $${y.opex.toLocaleString()}  operating income $${y.noi.toLocaleString()}  capital $${y.capex.toLocaleString()}  occupancy ${y.occ}%  satisfaction ${y.sat}  covers ${y.covers}`);
     console.log(`  projects: ${o.projects.join(', ')} (manager-started ${o.managerProjects})`);
     console.log(`  toilet paper: ${o.tp.item} used ${o.tp.used} rolls, on hand ${o.tp.onHand}, short weeks ${o.tp.short}; sheets ${o.sheets.item} ×${o.sheets.units} wear ${o.sheets.wear}%; towels ${o.towels.item} ×${o.towels.units} wear ${o.towels.wear}%`);

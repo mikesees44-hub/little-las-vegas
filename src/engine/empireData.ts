@@ -57,7 +57,7 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
     id: 'rooming', name: 'Rooming house', kind: 'lodging',
     blurb: 'Summer workers by the week: busboys, ride jockeys, lifeguards. Rent in cash on Friday.',
     ops: 'Cheapest to run. Long stays mean little laundry, but the guests are rough on the rooms.',
-    rates: { room_std: 4 }, depts: ['front', 'housekeeping', 'maintenance'], optional: ['laundry', 'security'],
+    rates: { room_std: 4 }, depts: ['housekeeping', 'maintenance'], optional: ['front', 'laundry', 'security'],
     tier: 0, housekeeping: 'basic', license: 1, heat: 0.02, turns: 0.5, fit: { young: 0.5, family: -0.8, couples: -1.5, business: -0.8, luxury: -3 },
   },
   boutique: {
@@ -78,21 +78,21 @@ export const CONCEPTS: Record<ConceptId, ConceptDef> = {
     id: 'restaurant', name: 'Restaurant', kind: 'food',
     blurb: 'Red sauce, red booths, a back table that is always reserved.',
     ops: 'Covers, the check average and the food cost: the kitchen is the business.',
-    rates: {}, depts: ['dining', 'kitchen', 'maintenance'], optional: ['bar', 'marketing'],
+    rates: {}, depts: ['dining', 'kitchen'], optional: ['bar', 'marketing', 'maintenance'],
     tier: 1, housekeeping: 'standard', license: 2, heat: 0, turns: 0, fit: {},
   },
   bar: {
     id: 'bar', name: 'Bar & lounge', kind: 'bar',
     blurb: 'Year-round regulars and summer crowds. A good place to hear things.',
     ops: 'Drinks, the pour cost and a bartender people trust.',
-    rates: {}, depts: ['bar', 'maintenance'], optional: ['dining', 'kitchen', 'security', 'club', 'marketing'],
+    rates: {}, depts: ['bar'], optional: ['dining', 'kitchen', 'security', 'club', 'marketing', 'maintenance'],
     tier: 1, housekeeping: 'standard', license: 4, heat: 0.03, turns: 0, fit: {},
   },
   nightclub: {
     id: 'nightclub', name: 'Nightclub', kind: 'club',
     blurb: 'Neon, a house band, a headliner from Philadelphia on Saturday.',
     ops: 'The cover, the bar and the act: entertainment contracts make or break it. Business-level; the vice squad buys tickets too.',
-    rates: {}, depts: ['club', 'bar', 'security', 'maintenance'], optional: ['dining', 'kitchen', 'marketing'],
+    rates: {}, depts: ['club', 'bar', 'security'], optional: ['dining', 'kitchen', 'marketing', 'maintenance'],
     tier: 1, housekeeping: 'standard', license: 6, heat: 0.08, turns: 0, fit: {},
   },
 };
@@ -171,7 +171,7 @@ export const ROOM_LABEL: Record<RoomType, string> = { room_std: 'Standard', room
 
 /* ---------------- guest segments ---------------- */
 
-export type SegmentId = 'family' | 'young' | 'couples' | 'business' | 'luxury' | 'hourly';
+export type SegmentId = 'family' | 'young' | 'couples' | 'business' | 'luxury' | 'hourly' | 'workers';
 
 export interface SegmentDef {
   id: SegmentId;
@@ -208,10 +208,11 @@ export const SEGMENTS: Record<SegmentId, SegmentDef> = {
   couples: { id: 'couples', name: 'Couples & honeymooners', share: 0.15, price: 1.2, quality: 1.1, rep: 0.6, ref: 10, perRoom: 2, upscale: 0.5, likes: { dining: 0.3, lounge: 0.2, spa: 0.3, ac: 0.25, pool: 0.15 }, styles: { deco: 0.25, victorian: 0.3, midcentury: 0.15, tiki: 0.1 }, zones: BEACH, winter: 0.12, dine: 0.5, drink: 1.2, club: 0.2 },
   business: { id: 'business', name: 'Business & conventions', share: 0.07, price: 1, quality: 0.9, rep: 0.5, ref: 9, perRoom: 1.2, upscale: 0.2, likes: { phone: 0.35, ac: 0.3, dining: 0.25, lounge: 0.1, parking: 0.15 }, styles: { midcentury: 0.2, colonial: 0.15 }, zones: { downtown: 0.3, causeway: 0.1, ac: 0.3, sphilly: 0.2, boardwalk: 0, crest: 0 }, winter: 0.5, dine: 0.5, drink: 1.2, club: 0.1 },
   luxury: { id: 'luxury', name: 'High rollers & society', share: 0.03, price: 0.4, quality: 1.6, rep: 0.8, ref: 22, perRoom: 2, upscale: 1, likes: { dining: 0.4, spa: 0.5, club: 0.3, lounge: 0.2, pool: 0.3, ac: 0.3, parking: 0.2 }, styles: { deco: 0.3, midcentury: 0.2, victorian: 0.15 }, zones: { ...BEACH, ac: 0.4 }, winter: 0.15, dine: 0.75, drink: 2, club: 0.35 },
+  workers: { id: 'workers', name: 'Summer workers', share: 0, price: 2.4, quality: 0.2, rep: 0.2, ref: 4.5, perRoom: 1.6, upscale: 0, likes: {}, styles: {}, zones: { pacific: 0.3, downtown: 0.3, boardwalk: 0.2, piers: 0.2, docks: 0.1 }, winter: 0, dine: 0.05, drink: 0.8, club: 0.1 },
   hourly: { id: 'hourly', name: 'Short stays', share: 0, price: 1.6, quality: 0.3, rep: 0.2, ref: 3.5, perRoom: 2, upscale: 0, likes: { parking: 0.3 }, styles: {}, zones: { causeway: 0.3, docks: 0.2, pacific: 0.2, downtown: 0.1 }, winter: 0.65, dine: 0, drink: 0.2, club: 0 },
 };
 
-export const SEGMENT_IDS: SegmentId[] = ['family', 'young', 'couples', 'business', 'luxury', 'hourly'];
+export const SEGMENT_IDS: SegmentId[] = ['family', 'young', 'couples', 'business', 'luxury', 'hourly', 'workers'];
 
 /* ---------------- suppliers ---------------- */
 
