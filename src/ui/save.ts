@@ -1,4 +1,5 @@
 import { displayName } from '../engine/characters';
+import { upgradeSave } from '../engine/upgradeSave';
 import type { GameState } from '../engine/types';
 
 /**
@@ -125,7 +126,7 @@ export function loadSlot(n: number, kv: KV | undefined = store()): GameState | u
     const raw = get(kv, SLOT(n));
     if (!raw) return undefined;
     const s = JSON.parse(raw) as GameState;
-    return s && s.version === 2 ? s : undefined;
+    return s && s.version === 2 ? upgradeSave(s) : undefined;
   } catch {
     return undefined;
   }

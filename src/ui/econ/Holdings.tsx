@@ -81,12 +81,12 @@ function SupplyChain({ s }: { s: GameState }) {
         ))}
       </div>
       <p className="text-[11px] text-stone-500 mt-1">Your own builds: −{Math.round(sc.cost * 100)}% cost, −{Math.round(sc.time * 100)}% time, fewer failed inspections. Others' builds pay your companies when you hold the contract or supply them. {e?.stats.contractsWon ? `${e.stats.contractsWon} contracts won so far.` : ''}</p>
-      {(e?.contracts.length ?? 0) > 0 && (
+      {(e?.contracts?.length ?? 0) > 0 && (
         <ul className="text-xs mt-1">
           {e!.contracts.map((c) => <li key={c.id} className="text-stone-300">{c.name} — {fmt$(c.weekly)}/wk, {c.weeksLeft} wk left</li>)}
         </ul>
       )}
-      {(e?.tenders.length ?? 0) > 0 && (
+      {(e?.tenders?.length ?? 0) > 0 && (
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {e!.tenders.map((t) => <ActionCard key={t.id} s={s} action={{ kind: 'econ', op: { type: 'bid', contractId: t.id } }} />)}
         </div>
