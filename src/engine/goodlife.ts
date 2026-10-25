@@ -1,7 +1,8 @@
+import { payFromPersonal } from './tribute';
 import type { ActionPreview } from './actions';
 import { ensureEcon } from './econState';
 import { fmtMoney } from './effects';
-import { heat, money, type Ctx } from './ledger';
+import { heat, type Ctx } from './ledger';
 import { inflation } from './property';
 import { chance } from './rng';
 import type { Effect, GameState, RivalId } from './types';
@@ -132,7 +133,9 @@ export function previewLux(s: GameState, a: LuxAction): ActionPreview {
     const price = luxPrice(s, it);
     const title = `The Good Life: ${it.name}`;
     const c = conspicuous(s, price);
-    const effects: Effect[] = [{ type: 'money', amount: -price, label: title }];
+    // The Don's own money pays first (the weekly take's personal account); the family covers the rest.
+    const own = Math.min(price, Math.max(0, s.tribute?.acct.personal ?? 0));
+    const effects: Effect[] = [...(own > 0 ? [{ type: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: own }, label: `${title}: from your own money` } as Effect] : []), { type: 'money', amount: -price, label: title }];
     if (it.respect) effects.push({ type: 'respect', amount: it.respect, label: title });
     if (it.family) effects.push({ type: 'familyOpinion', amount: it.family, reason: `Bought ${it.name.replace(/^An? /, 'a ').toLowerCase()}`, label: title });
     if (it.relief) effects.push({ type: 'dyn', op: { op: 'stress', charId: s.playerId, amount: -it.relief, source: 'paranoia' }, label: title });
@@ -172,7 +175,7 @@ export function goodLifeWeek(ctx: Ctx): void {
   const e = s.econ;
   if (!e?.goodLife?.length) return;
   const up = weeklyUpkeep(s);
-  if (up > 0) money(ctx, -up, `The Good Life: upkeep (${e.goodLife.length} thing${e.goodLife.length > 1 ? 's' : ''})`, 'cost');
+  if (up > 0) payFromPersonal(ctx, up, `The Good Life: upkeep (${e.goodLife.length} thing${e.goodLife.length > 1 ? 's' : ''})`, 'goodlife');
   if (forfeitureLaw(s) && s.heat.federal >= 70 && chance(e, 0.04)) {
     const big = [...e.goodLife].sort((x, y) => y.paid - x.paid)[0];
     const it = LUX_BY_ID[big.id];
