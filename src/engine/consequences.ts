@@ -14,6 +14,7 @@ import { CREW_HANDLERS } from './crewConsequences';
 import { addStory, bumpStat, giveBio, tidyRegimes } from './hierarchy';
 import { defectTo } from './regimes';
 import { maybePlant } from './rivalcrew';
+import { deposeInsteadOfKill } from './power';
 
 /**
  * Delayed consequences. A choice schedules a key + params; when the week
@@ -87,6 +88,8 @@ const HANDLERS: Record<string, Handler> = {
     if (chance(s, Math.min(0.6, power)) && !activeTask(s, 'ub_guard')) {
       s.cutscenes.push({ key: 'betrayal_confrontation', title: 'Betrayal', text: `${displayName(leader)} was waiting in the back seat of the Cadillac.`, week: s.week });
       s.chronicle.push({ week: s.week, date: { ...s.date }, text: `A coup: ${displayName(leader)}'s faction moved against the boss.`, kind: 'succession' });
+      // Losing the chair does not always mean dying in it: he may be deposed (power pillar).
+      if (deposeInsteadOfKill(ctx, leader.id)) return { text: `${leader.firstName} ${leader.lastName}'s faction took the family from the boss` };
       return { text: `${leader.firstName} ${leader.lastName}'s faction moved against the boss`, effects: [{ type: 'kill', charId: boss.id, cause: `murdered by his own capos (${displayName(leader)}'s faction)`, killer: 'none' }] };
     }
     // The coup fails or turns into a walk-out: the leader takes his district to a rival.

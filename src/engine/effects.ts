@@ -1,3 +1,4 @@
+import { applyPowerOp, describePowerOp } from './power';
 import { applyEconOp, describeEconOp } from './econ';
 import { applyUnderbelly } from './underbelly';
 import { TRIAL_WEEKS, applyLegal } from './longgame';
@@ -191,6 +192,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return `${e.amount < 0 ? 'Washes' : 'Adds'} ${fmtMoney(Math.abs(e.amount))} ${e.amount < 0 ? 'of' : ''} dirty cash`.replace('  ', ' ');
     case 'dyn':
       return describeDynOp(s, e.op);
+    case 'power':
+      return describePowerOp(s, e.op);
     case 'econ':
       return describeEconOp(s, e.op);
     case 'evidence': {
@@ -789,6 +792,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'dyn':
       applyDynOp(ctx, e.op, label);
+      break;
+    case 'power':
+      applyPowerOp(ctx, e.op, label);
       break;
     case 'econ':
       applyEconOp(ctx, e.op, label);

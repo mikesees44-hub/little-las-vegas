@@ -5,6 +5,7 @@
  */
 
 import type { DynAction, DynOp, DynState } from './familyState';
+import type { ExtAttrs, PowerAction, PowerOp, PowerState } from './powerState';
 import type { EconAction, EconOp, EconState } from './econState';
 
 export interface GameDate {
@@ -151,6 +152,10 @@ export interface Character {
   lastAskWeek?: number;
   /** Took the oath (week). */
   madeWeek?: number;
+  /** Expanded attributes (power pillar): six groups, ~38 values 0-100. */
+  attrs?: ExtAttrs;
+  /** His record of achievements (separate from the attributes). */
+  success?: StoryEntry[];
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
@@ -476,6 +481,8 @@ export type Effect =
   | ({ type: 'standing'; city: string; amount: number } & EffectBase)
   /** The dynasty layer (familyState.ts / family.ts). */
   | ({ type: 'dyn'; op: DynOp } & EffectBase)
+  /** The power pillar (power.ts): succession, heirs, grievances, crises, blitzes, fronts, petitions. */
+  | ({ type: 'power'; op: PowerOp } & EffectBase)
   | ({ type: 'evidence'; charId: string; amount: number } & EffectBase)
   | ({ type: 'assign'; charId: string; capoId?: string } & EffectBase)
   | ({ type: 'story'; charId: string; text: string } & EffectBase)
@@ -786,6 +793,8 @@ export interface GameState {
   permits: Record<string, number>;
   /** The CK dynasty layer: houses, alliances, renown, legacies, activities (optional for old saves). */
   dyn?: DynState;
+  /** Power, succession & ambition (optional for old saves). */
+  power?: PowerState;
   /** Philadelphia's membership books (optional for old saves). */
   books?: Books;
   /** Crew counters (defections, coups, flips, makings). */
@@ -829,6 +838,7 @@ export type PlayerAction =
   | { kind: 'edict'; edict: EdictId; on: boolean }
   | { kind: 'hire'; specId: string }
   | { kind: 'dynasty'; op: DynAction }
+  | { kind: 'power'; op: PowerAction }
   | { kind: 'lifestyle'; focus: LifestyleId }
   | { kind: 'legal'; op: 'retainer' | 'lielow' }
   | { kind: 'underbelly'; op: UnderbellyOp; rival?: RivalId }

@@ -41,9 +41,11 @@ const GENERAL_RATE = Number(arg('general', '0.35'));
 const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 /** Chance per week of sending an envoy to another city. */
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
+/** Chance per week of a power order (heir, grooming, protégé, amends, blitz prep/launch, front, the ladder). */
+const POWER_RATE = Number(arg('power', '0.04'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
-/** Which start to play: classic, rise or sees. */
+/** Which start to play: classic, rise, sees, associate, soldier or capo. */
 const START = arg('start', 'classic') as StartId;
 
 const pickOne = <T,>(h: { rng: number }, xs: T[]): T | undefined => (xs.length ? xs[Math.floor(rand(h) * xs.length)] : undefined);
@@ -76,6 +78,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   const boss = s.characters[s.playerId];
   if (boss && !boss.lifestyle) add(pickOne(h, LIFESTYLE_IDS.map((focus) => ({ kind: 'lifestyle', focus }) as PlayerAction)));
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
+  if (rand(h) < POWER_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'power')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
   return { choices, actions };
@@ -123,6 +126,8 @@ interface GameResult {
   repeats: number;
   familyOver: number;
   titles: Record<string, number>;
+  /** Power-pillar counters (powerState.ts). */
+  power?: Record<string, number>;
 }
 
 function playOne(gi: number): GameResult {
@@ -231,6 +236,7 @@ function playOne(gi: number): GameResult {
   if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
+  if (s!.power) r.power = { ...s!.power.stats };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
@@ -325,6 +331,14 @@ console.log(`  Distinct event kinds: ${Object.keys(allTitles).length}; top: ${Ob
 const per10 = (k: keyof GameResult['crew']) => (results.reduce((a, r) => a + r.crew[k], 0) / Math.max(1, results.reduce((a, r) => a + r.weeksPlayed, 0))) * 520;
 console.log(`\nCREW (per game, per 10 years)`);
 console.log(`  Defections ${per10('defections').toFixed(1)} · coups ${per10('coups').toFixed(1)} · flips ${per10('flips').toFixed(1)} · makings ${per10('makings').toFixed(1)} · rival moves on the crew ${per10('rivalCrewMoves').toFixed(1)}`);
+const pg = results.filter((r) => r.power && r.weeksPlayed > 0);
+if (pg.length) {
+  const tot = (k: string) => pg.reduce((a, r) => a + (r.power![k] ?? 0), 0);
+  const per = (k: string) => (tot(k) / Math.max(1, results.reduce((a, r) => a + r.weeksPlayed, 0))) * 520;
+  console.log(`\nPOWER (per game, per 10 years)`);
+  console.log(`  Blitzes ${per('blitzes').toFixed(2)} (on you ${per('blitzesOnYou').toFixed(2)}) · crises ${per('crises').toFixed(2)} · coups ${per10('coups').toFixed(2)} · falls ${per('falls').toFixed(2)} · comebacks ${per('comebacks').toFixed(2)} (games with a comeback: ${pg.filter((r) => (r.power!.comebacks ?? 0) > 0).length})`);
+  console.log(`  Grievances ${per('grievances').toFixed(1)} · broken promises ${per('brokenPromises').toFixed(2)} · petitions ${per('petitions').toFixed(1)} (liars caught ${per('liarsCaught').toFixed(2)}) · fronts ${per('fronts').toFixed(2)} · discoveries ${per('discoveries').toFixed(2)} · promotions ${per('promotions').toFixed(2)}`);
+}
 const keys: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.popupKeys)) keys[k] = (keys[k] ?? 0) + v;
 const crewPopups = Object.values(keys).reduce((a, b) => a + b, 0);

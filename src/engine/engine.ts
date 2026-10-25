@@ -1,5 +1,6 @@
 import { econEventSource, econWeek } from './econ';
 import { officeWeek } from './office';
+import { powerWeek } from './power';
 import { underbellyWeek } from './underbelly';
 import { legalWeek } from './longgame';
 import { newsWeek } from './newspaper';
@@ -265,6 +266,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   s.date = dateOfWeek(s.week);
   if (!s.gameOver && monthKey(s.date) !== prevMonth) monthlyTick(ctx);
 
+  if (!s.gameOver) powerWeek(ctx);
   if (!s.gameOver) {
     tidyRegimes(s);
     const errs = validatePlayer(s);

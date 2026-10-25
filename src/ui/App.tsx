@@ -16,6 +16,9 @@ import { Newspapers } from './components/Newspaper';
 import { LawPanel } from './components/LawPanel';
 import { UnderbellyPanel } from './components/UnderbellyPanel';
 import { OfficePanel } from './components/OfficePanel';
+import { PowerTab, type PowerSub } from './power/PowerTab';
+import { AudiencePanel } from './power/AudiencePanel';
+import { CrisisBanner } from './power/CrisisBanner';
 import { Businesses } from './components/Businesses';
 import { Holdings } from './econ/Holdings';
 import { RealEstate } from './econ/RealEstate';
@@ -33,7 +36,7 @@ import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
 import { clearSave, loadGame, saveGame } from './save';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'gifts';
+export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'papers' | 'chronicle' | 'holdings' | 'realestate' | 'hq' | 'gifts' | PowerSub;
 /** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
 const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
   { id: 'map', label: 'The Island' },
@@ -43,6 +46,7 @@ const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = 
   { id: 'schemes', label: 'Schemes' },
   { id: 'table', label: 'The Table' },
   { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }, { id: 'gifts', label: 'Gifts & Giving' }] },
+  { id: 'power', label: 'Power', subs: [{ id: 'power', label: 'Heirs & Ambition' }, { id: 'grievances', label: 'Passed Over' }, { id: 'blitz', label: 'Balance & Blitz' }, { id: 'front', label: 'The Front' }] },
   { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'papers', label: 'The Papers' }] },
   { id: 'law', label: 'The Law' },
   { id: 'chronicle', label: 'Chronicle' },
@@ -225,6 +229,7 @@ export function App() {
       )}
 
       {!s.gameOver && <OrdersTray s={s} />}
+      {!s.gameOver && <CrisisBanner s={s} onOpen={() => setTab('power')} />}
 
       <nav className="tabbar flex overflow-x-auto border-b border-noir-700" data-testid="tabbar">
         {TABS.map((t) => (
@@ -263,10 +268,12 @@ export function App() {
           {tab === 'town' && (
             <div className="space-y-6">
               <OfficePanel s={s} />
+              <AudiencePanel s={s} />
               <UnderbellyPanel s={s} />
             </div>
           )}
           {tab === 'papers' && <Newspapers s={s} />}
+          {(tab === 'power' || tab === 'grievances' || tab === 'blitz' || tab === 'front') && <PowerTab s={s} sub={tab} />}
           {tab === 'chronicle' && <Chronicle s={s} />}
         </main>
       )}
