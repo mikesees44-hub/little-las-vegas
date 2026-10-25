@@ -12,6 +12,8 @@ import { markShown, pickCrewEvents, pruneCooldowns, subjectOk } from './crewEven
 import { familyEventSource } from './familyDrama';
 import { bagmanInPerson, directCandidates, director, freshness, recordShown, recordTribute, themeFull, themeShares } from './storyDirector';
 import { FACTION_NAMES } from './world';
+import { quietRule, settleQuietly, weekBudget } from './storyPace';
+import { dressScenes } from './sceneVariants';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -874,21 +876,41 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   candidates.push(...extra);
   // The story director orders everything (novelty, the theme mix) and holds back templates seen too recently.
   const directed = directCandidates(s, candidates);
-  for (const ev of candidates) if (!directed.includes(ev) && ev.mandatory) s.eventQueue.push(ev);
+  for (const ev of candidates) {
+    if (directed.includes(ev)) continue;
+    if (ev.mandatory) s.eventQueue.push(ev);
+    else {
+      // Held back by the director, but routine business still gets done (storyPace.ts).
+      const q = quietRule(s, ev);
+      if (q) settleQuietly(s, ev, q);
+    }
+  }
   let family = out.filter(isFamilyEvent).length;
   const actors = new Set<string>();
+  // Pacing (storyPace.ts): about two things a week reach the boss's desk; routine business is settled quietly.
+  const optional = weekBudget(s) - out.length - directed.filter((e) => e.mandatory).length;
+  let optShown = 0;
   for (const ev of directed) {
     const fam = isFamilyEvent(ev);
+    const q = quietRule(s, ev);
+    if (q) {
+      settleQuietly(s, ev, q);
+      markShown(s, ev);
+      continue;
+    }
     // The same man never brings two things in one week (mandatory events always fit).
     const clash = !ev.mandatory && !!ev.meta?.crew && (ev.actors ?? []).some((a) => actors.has(a));
-    if (out.length < MAX_POPUPS && !(fam && family >= MAX_FAMILY_POPUPS) && !clash && !themeFull(ev, out)) {
+    if (out.length < MAX_POPUPS && (ev.mandatory || optShown < optional) && !(fam && family >= MAX_FAMILY_POPUPS) && !clash && !themeFull(ev, out)) {
       out.push(ev);
+      if (!ev.mandatory) optShown++;
       if (fam) family++;
       for (const a of ev.actors ?? []) actors.add(a);
       markShown(s, ev);
     } else if (ev.mandatory) s.eventQueue.push(ev);
     else if (ev.defId.startsWith('deal_')) s.eventQueue.push(ev);
   }
+  // Each recurring popup is told as a scene not shown yet this game (sceneVariants.ts).
+  dressScenes(s, out);
   recordShown(s, out);
   return out;
 }
