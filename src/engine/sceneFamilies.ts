@@ -211,6 +211,11 @@ registerFamily({
       text: (c) => { const k = bonesCast(c); return `${k.pn} is ${k.a}, old for a man still waiting on his bones, with a wife and a mortgage in Rio Grande. "He's earned for us for ten years," ${k.self ? 'your consigliere says' : `${k.sf} says`} in the car outside the Hotel Dorset. "Give the man his chance before he's too old to want it."`; },
     },
     {
+      when: (c) => c.year < 1976,
+      title: (c) => `${c.who!.firstName} and the closed books`,
+      text: (c) => { const k = bonesCast(c); return `The books in Philadelphia have been closed, more or less, since the raid upstate in 1957 scared every old man in the country. ${k.self ? 'You know' : `${k.sn} knows`} it, and so does ${k.pn}. "When they open, he has to be ready," ${k.self ? 'your consigliere says' : `${k.sf} says`}. "Ready means he did something. Let him do it now."`; },
+    },
+    {
       title: (c) => `A job for ${c.who!.firstName}`,
       text: (c) => { const k = bonesCast(c); return `Your kitchen table on Glenwood Avenue, late, the house asleep. ${k.self ? 'You lay it out for yourself on a legal pad' : `${k.sn} lays it out on a legal pad`}: three jobs, and the name ${k.pf} at the top. Whatever he does, the story will go up to Philadelphia with him, and stay with him the rest of his life.`; },
     },
@@ -290,6 +295,12 @@ registerFamily({
       text: (c) => { const k = manno(c); return `The heat is on the Pike and the Parkway, so ${nm(k.L)}'s trucks want a quieter road, and the quietest one runs through you. ${nm(k.m)} says the troopers never stop a truck on the Causeway. "That's why we pay you." It is also why the troopers might start.`; },
     },
     {
+      when: (c) => c.year >= 1977,
+      title: () => 'Casino trucks',
+      text: (c) => { const k = manno(c); return `With the casinos coming, everything in Atlantic City is being built at once, and ${nm(k.L)} has the concrete, the linen and the vending. His trucks need the Causeway to reach the Cape May yards. "This is the gold rush," he says. "Charge me a toll and get rich with me."`; },
+      choices: mult(1.3),
+    },
+    {
       title: () => 'An envelope on the dashboard',
       text: (c) => { const k = manno(c); return `You come out of the Ivanhoe to find an envelope on your dashboard and the door still locked. Inside: cash, and a card in ${fn(k.L)}'s handwriting. "For the use of the road. More where this came from." ${nm(k.L)} wants his trucks on the Causeway, and he wants you to know he can open your car.`; },
       choices: (_c, ch) => relabel(ch, { accept: { label: 'Keep the envelope, open the road' }, refuse: { label: 'Send the envelope back, with the card' } }),
@@ -344,6 +355,17 @@ registerFamily({
       when: (c) => !!c.dead,
       title: () => 'Flowers from New York',
       text: (c) => { const k = feld(c); return `A wreath arrives for ${c.dead!.first}'s funeral, the biggest one there, with a card from ${nm(k.L)}. A week later, so does ${fn(k.L)}'s man, with condolences and an offer: cash for a silent share of the Boardwalk, "to help a family in a difficult time."`; },
+    },
+    {
+      when: (c) => c.year >= 1965,
+      title: () => 'Pension fund money',
+      text: (c) => { const k = feld(c); return `${nm(k.L)} has a friend at a union pension fund in the Midwest with more money than the union has members. He wants to put some of it into the Boardwalk through you: a silent share, cash now, or a loan on terms "the union would never tolerate for its own members." Everyone in the room laughs except the accountant.`; },
+    },
+    {
+      when: (c) => c.year >= 1977,
+      title: () => 'After the referendum',
+      text: (c) => { const k = feld(c); return `Since the casino vote, ${nm(k.L)} has been buying everything on the Atlantic City Boardwalk that does not move, and now he wants a piece of yours, as a hedge. "Wildwood will be what Atlantic City used to be. Somebody should own that." Cash now for a silent share.`; },
+      choices: mult(1.3),
     },
     {
       title: () => 'The accountant',

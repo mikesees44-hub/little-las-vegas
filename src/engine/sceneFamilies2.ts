@@ -356,7 +356,7 @@ registerFamily({
   scenes: SETTINGS.map((st) => ({
     when: st.when,
     title: (c: SceneCtx) => c.ev.title,
-    text: (c: SceneCtx) => `${st.t}${c.dead && c.dead.weeks <= 2 && st.t.length < 70 ? ` Nobody has said ${c.dead.first}'s name all day.` : ''} ${c.ev.text}`,
+    text: (c: SceneCtx) => `${st.t} ${c.ev.text}`,
   })),
 });
 

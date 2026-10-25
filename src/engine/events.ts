@@ -821,7 +821,7 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   // Expire stale non-mandatory queue items.
   s.eventQueue = s.eventQueue.filter((e) => e.mandatory || s.week - e.week <= 2);
   if (bagmanDue(s)) {
-    // The story director: the bagman comes in person every other month; otherwise the envelope goes through the drop.
+    // The story director: the bagman comes in person about once a season; otherwise the envelope goes through the drop.
     const inPerson = bagmanInPerson(s);
     const bag = buildBagman(s);
     if (inPerson) {
