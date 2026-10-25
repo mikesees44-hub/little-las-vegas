@@ -68,6 +68,10 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   cityhall: { panel: 'town', section: 'cityhall' },
   people: { panel: 'town', section: 'cityhall' },
   patronage: { panel: 'town', section: 'patronage' },
+  night: { panel: 'town', section: 'night' },
+  ears: { panel: 'town', section: 'night' },
+  madam: { panel: 'town', section: 'night' },
+  attached: { panel: 'town', section: 'attached' },
   // The feed
   chronicle: { panel: 'chronicle', section: 'all' },
   papers: { panel: 'chronicle', section: 'papers' },

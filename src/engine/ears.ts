@@ -79,6 +79,8 @@ function mkPerson(s: GameState, E: EarsState, gender: 'M' | 'F', age: number, tr
     attributes: { leadership: at(), business: at(), diplomacy: at() + 2, intrigue: at() + 3, force: at() - 2, discipline: at() },
     traits, ambition: '', rank: 'civilian', faction: 'none', wealth: randInt(E, 300, 2500), dynasty: false, childrenIds: [], alive: true,
   };
+  // Never younger than asked (the birthday may not have come yet this year).
+  if (ageOn(c.birth, s.date) < age) c.birth.y -= 1;
   c.orientation = orientationFor(s.seed, c.id);
   s.characters[c.id] = c;
   return c;
@@ -696,7 +698,7 @@ export function describeEarsOp(s: GameState, o: EarsOp): string | undefined {
       return `What ${nm(o.earId)} heard about ${t?.firstName ?? '?'}: ${w[o.kind]}${o.strong ? ' (the whole of it)' : ''}`;
     }
     case 'job': return `${nm(o.earId)} goes to work on ${nm(o.targetId)} (${o.mode === 'close' ? 'a few weeks' : 'one night'})`;
-    case 'refused': return undefined;
+    case 'refused': return 'She may name a higher price instead';
     case 'stiff': return `${nm(o.earId)} feels cheated`;
     case 'link': return `${nm(o.a)} and ${nm(o.b)}: ${o.type.replace('_', ' ')}`;
     case 'endLink': return `${nm(o.a)} and ${nm(o.b)}: over`;
