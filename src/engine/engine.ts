@@ -47,6 +47,7 @@ import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './ty
 import { bonesEventSource, bonesWeek } from './bones';
 import { kinEventSource } from './housesEvents';
 import { archiveWeek, ledgerWeek } from './ledgerbook';
+import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
@@ -345,6 +346,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) archiveWeek(s, report);
   s.lastReport = report;
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
+  tidyState(s);
   return { state: s, report, log: ctx.log };
 }
 

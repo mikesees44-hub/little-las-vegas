@@ -98,8 +98,8 @@ export function hqWeek(ctx: Ctx, pay: (amount: number, label: string) => void): 
   if (info.upkeep) pay(-info.upkeep, `HQ: ${info.name.toLowerCase()} (rent, coffee, a man on the door)`);
   if (hq.kind === 'restaurant' && !s.businesses.some((b) => b.id === hq.bizId && b.owner === 'player')) {
     hq.kind = 'social';
-    hq.bizId = undefined;
-    hq.bug = undefined;
+    delete hq.bizId;
+    delete hq.bug;
     ctx.log.push('The restaurant is gone; business moves back to a social club.');
   }
   if (!hq.bug) {
@@ -112,7 +112,7 @@ export function hqWeek(ctx: Ctx, pay: (amount: number, label: string) => void): 
     return;
   }
   if (s.week - hq.bug.week >= BUG_WEEKS) {
-    hq.bug = undefined;
+    delete hq.bug;
     return;
   }
   // The tape is rolling.

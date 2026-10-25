@@ -135,10 +135,10 @@ export function startBuild(s: GameState, lot: Lot, useId: string, developer?: st
   lot.use = useId;
   lot.stage = 'permits';
   lot.stageWeek = 0;
-  lot.tenant = undefined;
+  delete lot.tenant;
   lot.started = s.date.y;
   lot.inspected = [];
-  lot.stopWork = undefined;
+  delete lot.stopWork;
   lot.developer = developer;
   const w = permitAuthority(s).waits(s, lot, u);
   lot.permit = { zoning: w.zoning, inspector: w.inspector };
@@ -177,13 +177,13 @@ export function constructionWeek(ctx: Ctx, onOpen: (l: Lot) => void): void {
     const u = USES_BY_ID[l.use];
     const weeks = stageWeeks(buildWeeks(l, u, mine ? s : undefined));
     const st = l.stage;
-    l.stalled = undefined;
+    delete l.stalled;
     if (l.stopWork) {
       l.stopWork.weeks--;
       l.stalled = `Stop-work order: ${l.stopWork.reason}`;
       if (l.stopWork.weeks > 0) continue;
-      l.stopWork = undefined;
-      l.stalled = undefined;
+      delete l.stopWork;
+      delete l.stalled;
     }
     if ((l.stageWeek ?? 0) === 0 && mine) {
       // A new stage starts: the inspector comes at framing and interior; the money goes out.
@@ -366,25 +366,25 @@ export function townMonth(ctx: Ctx): void {
       const check = Math.round(u.cost * ZONES_BY_ID[l.zone].land * 0.5 * inflation(s) / 50) * 50;
       money(ctx, check, `Insurance: ${lotName(l)} burned (half its value)`, 'event');
       if (l.bizId) s.businesses = s.businesses.filter((b) => b.id !== l.bizId);
-      l.bizId = undefined;
+      delete l.bizId;
       l.stage = 'purchase';
     } else {
-      l.stage = undefined;
+      delete l.stage;
       if (l.status !== 'public') {
         l.status = 'sale';
         l.owner = 'private';
         l.price = Math.round(1500 * ZONES_BY_ID[l.zone].land * inflation(s) / 50) * 50;
       }
     }
-    l.use = undefined;
-    l.tenant = undefined;
-    l.operating = undefined;
+    delete l.use;
+    delete l.tenant;
+    delete l.operating;
     l.condition = 100;
   }
   // Rivals line up to bid on lots in their part of town.
   for (const l of e.lots) {
-    if (l.status !== 'sale') { l.bidder = undefined; continue; }
-    if (l.bidder && chance(e, 0.3)) l.bidder = undefined;
+    if (l.status !== 'sale') { delete l.bidder; continue; }
+    if (l.bidder && chance(e, 0.3)) delete l.bidder;
     const z = ZONES_BY_ID[l.zone];
     const near = z.rival ?? (z.district ? (Object.entries(s.districts.find((d) => d.id === z.district)?.influence ?? {}).filter(([f, v]) => f !== 'player' && (v ?? 0) >= 20).map(([f]) => f)[0] as RivalId | undefined) : undefined);
     if (!l.bidder && near && s.rivals.some((r) => r.id === near) && chance(e, 0.15)) l.bidder = near;
