@@ -1,3 +1,4 @@
+import { MODE_INFO, raidExposure } from '../../engine/ledgerbook';
 import { player } from '../../engine/characters';
 import { GRAND_JURY, OPEN_FILE, caseEvidence, convictionOdds, evidenceGain, indictOdds, legalOf, ricoActive, stageLabel } from '../../engine/longgame';
 import { cloneState } from '../../engine/engine';
@@ -61,6 +62,7 @@ export function LawPanel({ s }: { s: GameState }) {
           {g.reasons.length === 0 && <span className="text-stone-500">Nothing new.</span>}
           {g.reasons.map((r, i) => <span key={i} className={r.value > 0 ? 'chip-bad' : 'chip-good'}>{r.value > 0 ? '+' : '−'}{Math.abs(r.value).toFixed(1)} {r.label}</span>)}
         </div>
+        {s.ledgerBook && <div className="mt-1 text-[11px] text-stone-500" data-testid="law-books">Your books: {MODE_INFO[s.ledgerBook.mode].name.toLowerCase()}. If a raid seized them today: +{raidExposure(s)} on your file{s.ledgerBook.seizures.length ? `; seized ${s.ledgerBook.seizures.length} time${s.ledgerBook.seizures.length > 1 ? 's' : ''} already` : ''}.</div>}
       </div>
 
       <FugitivePanel s={s} />
