@@ -122,7 +122,7 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
           <div className="order-4 flex w-full lg:w-auto items-center gap-1.5 flex-wrap">
             <div className="llv-clock-compact"><ClockControls speed={speed} setSpeed={setSpeed} /></div>
             <div className="flex">
-              <button className={`btn-gold h-8 py-0 px-3 rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week"><span className="hidden min-[420px]:inline">Advance </span><span className="min-[420px]:hidden">Next </span>Week ▸</button>
+              <button className={`btn-gold h-8 py-0 px-2 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week">Advance Week ▸</button>
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-gold h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>

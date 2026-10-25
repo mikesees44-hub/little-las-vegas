@@ -44,6 +44,10 @@ import { guidedGoals, type GuidedGoal } from './shell/goals';
 import { useShellState } from './shell/useShellState';
 import { HintHost, Toast } from './shell/HintHost';
 import { Modal } from './components/Modal';
+import { SheetFrame } from './shell/SheetFrame';
+import { PolSheet } from './cityhall/CityHall';
+import { ContextMenu } from './sheet/InteractionMenu';
+import type { MenuCategoryId } from './sheet/menuCatalog';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -74,6 +78,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const [mode, setMode] = useState<Mode>('week');
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
+  const [reportLog, setReportLog] = useState<WeeklyReport[]>([]);
   const [route, setRoute] = useState<Route>({});
   const goRef = useRef<(r: Route | string) => void>(() => {});
   const [sheet, setSheet] = useState<string | undefined>();
@@ -86,7 +91,11 @@ export function App({ startOn = 'title' }: AppProps) {
     queue: (a: PlayerAction) => setOrders((o) => [...o, a]),
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
-  const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
+  const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number; category?: string } | undefined>();
+  const sheetApi = useMemo(() => ({
+    open: (id: string) => { setCtxMenu(undefined); setSheet(id); },
+    menu: (id: string, category?: string, at?: { x: number; y: number }) => setCtxMenu({ id, category, x: at?.x ?? 80, y: at?.y ?? 120 }),
+  }), []);
   const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
 
@@ -143,6 +152,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
+      setReportLog((l) => [...l, r.report].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
@@ -157,6 +167,7 @@ export function App({ startOn = 'title' }: AppProps) {
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
+      setReportLog((l) => [...l, ...r.reports].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
@@ -223,6 +234,8 @@ export function App({ startOn = 'title' }: AppProps) {
     setAutoOpened({});
     setSpeed(0);
     setRoute({});
+    setReportLog([]);
+    setCtxMenu(undefined);
     try { window.scrollTo(0, 0); } catch { /* no window */ }
   }
 
@@ -291,12 +304,12 @@ export function App({ startOn = 'title' }: AppProps) {
     if (g.show?.tour) tour(g.show.tour);
   }
 
-  const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go };
+  const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports };
   const shellApi: ShellApi = { go, focus: focusMap };
   goRef.current = go;
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const overlayOpen = !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const overlayOpen = !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   const busy = !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
@@ -415,7 +428,10 @@ export function App({ startOn = 'title' }: AppProps) {
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
       {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
-      {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
+      {sheet && !current && (s.characters[sheet] || !s.pol?.people[sheet]
+        ? <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />
+        : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}
+      {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category as MenuCategoryId | undefined} onClose={() => setCtxMenu(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
       {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
       {helpMenu && (
@@ -440,7 +456,9 @@ export function App({ startOn = 'title' }: AppProps) {
 function tour(id: string) {
   let n = 0;
   const tick = () => {
-    const el = document.querySelector(`[data-tour="${id}"]`) ?? document.querySelector(`[data-testid="${id}"]`);
+    const el = id.startsWith('text:')
+      ? [...document.querySelectorAll('.panel-title, h2, h3')].find((x) => x.textContent?.trim() === id.slice(5))
+      : document.querySelector(`[data-tour="${id}"]`) ?? document.querySelector(`[data-testid="${id}"]`);
     if (!el) { if (n++ < 10) setTimeout(tick, 120); return; }
     el.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
     el.classList.add('llv-tour');

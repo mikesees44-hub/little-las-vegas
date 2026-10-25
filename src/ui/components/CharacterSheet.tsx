@@ -4,17 +4,15 @@ import { warningsFor } from './CrewTree';
 import { opinion } from '../../engine/relations';
 import { capos, displayName, player, relationLabel, TRAIT_INFO } from '../../engine/characters';
 import { relationshipTo } from '../../engine/interactions';
-import { interactionsFor, playerHook } from '../../engine/interactions';
-import { SCHEME_INFO } from '../../engine/schemes';
 import { knownSecrets } from '../../engine/secrets';
-import type { SchemeKind } from '../../engine/types';
-import { usePlanner } from './Schemes';
 import { getRelation, opinionBreakdown } from '../../engine/relations';
 import { FACTION_NAMES } from '../../engine/world';
 import type { Character, GameState } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { Portrait } from '../portrait/Portrait';
 import { SheetFrame } from '../shell/SheetFrame';
+import { InteractionMenu } from '../sheet/InteractionMenu';
+import { PoliticsSection } from '../sheet/PoliticsSection';
 import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
@@ -49,18 +47,9 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
   const family = familyOf(s, c);
   const district = s.districts.find((d) => d.capoId === c.id);
   const relationship = relationshipTo(s, c);
-  const inters = c.alive && !isBoss && !s.gameOver ? interactionsFor(s, c.id) : [];
   const secrets = knownSecrets(s, c.id);
   const hooks = s.hooks.filter((h) => h.holder === 'player' && h.targetId === c.id);
-  const hookUsable = !!playerHook(s, c.id);
-  const { plan } = usePlanner();
   const showsLife = (c.faction === 'player' || !!c.outside) && !isBoss;
-  const schemeKinds: SchemeKind[] = !c.alive || isBoss || s.gameOver ? [] : [
-    ...(c.office || c.faction === 'law' ? [] : ['murder' as const]),
-    ...(secrets.length && c.faction !== 'player' ? ['blackmail' as const] : []),
-    ...(s.rivals.some((r) => r.id === c.faction && r.leaderId !== c.id) && c.rank !== 'civilian' ? ['informant' as const] : []),
-    'sway' as const, 'befriend' as const,
-  ];
 
   return (
     <SheetFrame onClose={onClose} embedded={embedded}>
@@ -173,29 +162,9 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
           </ul>
         </section>
 
-        {schemeKinds.length > 0 && (
-          <section className="mt-3">
-            <div className="panel-title text-base">Schemes</div>
-            <div className="mt-1 flex flex-wrap gap-2">
-              {schemeKinds.map((k) => (
-                <button key={k} className={`btn text-xs ${k === 'murder' ? 'border border-blood-500 text-red-300 hover:bg-blood-500/20' : 'btn-ghost'}`} onClick={() => plan(k, c.id)}>
-                  {SCHEME_INFO[k].name}
-                </button>
-              ))}
-            </div>
-          </section>
-        )}
+        <PoliticsSection s={s} c={c} />
 
-        {inters.length > 0 && (
-          <section className="mt-4">
-            <div className="panel-title text-base">Interactions</div>
-            <p className="text-[11px] text-stone-500">Ordered now, carried out when you advance the week.</p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {inters.map((p) => <ActionCard key={p.id} s={s} action={{ kind: 'interact', id: p.id, target: c.id }} />)}
-              {hookUsable && inters.filter((p) => p.acceptance).map((p) => <ActionCard key={`h${p.id}`} s={s} action={{ kind: 'interact', id: p.id, target: c.id, useHook: true }} />)}
-            </div>
-          </section>
-        )}
+        <InteractionMenu s={s} c={c} />
       </div>
     </SheetFrame>
   );

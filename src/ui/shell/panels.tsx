@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { GameState, SuccessionLaw } from '../../engine/types';
+import type { GameState, SuccessionLaw, WeeklyReport } from '../../engine/types';
 import { Businesses } from '../components/Businesses';
 import { CharacterSheet } from '../components/CharacterSheet';
 import { CrewListPart } from '../components/CrewList';
@@ -28,7 +28,7 @@ import { TravellersPanel } from '../travel/Panels';
 import { RivalBoard } from './sections/RivalBoard';
 import { Succession } from '../house/Succession';
 import { CouncilSeats } from '../borgata/CouncilSeats';
-import { CaposSection } from '../borgata/Capos';
+import { CaposSection, MenRoster } from '../borgata/Capos';
 import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Feed } from './Feed';
@@ -49,6 +49,9 @@ export interface SectionCtx {
   onHeir: (id: string) => void;
   /** Go to another drawer and section ('holdings.property', or an old tab id). */
   go: (r: Route | string) => void;
+  /** Weekly reports from this sitting, and opening one. */
+  reports: WeeklyReport[];
+  openReports: (r: WeeklyReport[]) => void;
 }
 
 export interface SectionDef {
@@ -104,7 +107,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
-      { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <CrewListPart key="m" s={s} part="men" />) },
+      { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
       { id: 'grievances', label: 'Grievances & Factions', render: (s) => stack(<PowerPart key="g" s={s} part="grievances" />, <FactionsPanel key="f" s={s} />) },
       { id: 'orders', label: 'Orders & Edicts', render: (s) => stack(<GeneralOrders key="g" s={s} />, <CrewListPart key="e" s={s} part="edicts" />) },
@@ -159,7 +162,7 @@ export const PANELS: PanelDef[] = [
       { id: 'family', label: 'Family', render: (s) => <Feed s={s} filter="family" /> },
       { id: 'papers', label: 'Papers', render: (s) => <Feed s={s} filter="papers" /> },
       { id: 'stories', label: 'Storylines', render: (s) => <Feed s={s} filter="stories" /> },
-      { id: 'reports', label: 'Reports', render: (s) => <Feed s={s} filter="reports" /> },
+      { id: 'reports', label: 'Reports', render: (s, c) => <Feed s={s} filter="reports" reports={c.reports} onReport={c.openReports} /> },
     ],
   },
 ];
