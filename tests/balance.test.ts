@@ -136,3 +136,21 @@ describe('the rank starts', () => {
     expect(boiler).toBe(0);
   });
 });
+
+describe('a coup planned against the old boss', () => {
+  it('never carries the new boss out of the family with it', async () => {
+    const { fireConsequences } = await import('../src/engine/consequences');
+    const { validatePlayer } = await import('../src/engine/dynasty');
+    const { capos } = await import('../src/engine/characters');
+    for (let i = 0; i < 30; i++) {
+      const s = game(`bal-coup-${i}`);
+      const [lead, other] = capos(s);
+      // The plot was hatched with a man who is now the boss (a successor who was in on it).
+      s.factions.push({ id: 'f1', leaderId: (i % 2 ? lead : other).id, memberIds: [lead.id, other.id, s.playerId], demand: 'head', since: 1 });
+      s.scheduled.push({ id: 'c1', key: 'coup', dueWeek: s.week, because: 'test', sourceWeek: 1, params: { faction: 'f1' } });
+      const ctx = newCtx(s);
+      fireConsequences(ctx);
+      if (!s.gameOver) expect(validatePlayer(s).filter((e) => /faction/.test(e))).toEqual([]);
+    }
+  });
+});

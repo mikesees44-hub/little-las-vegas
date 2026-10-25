@@ -271,7 +271,7 @@ function playOne(gi: number): GameResult {
     } catch (e) {
       const msg = (e as Error).message;
       if (/reconcile/.test(msg)) r.unexplained.push(msg);
-      r.crashed = `week ${s.week}: ${msg}`;
+      r.crashed = `game ${SEED}-${gi} (${r.careless ? "careless" : "careful"}) week ${s.week}: ${msg}`;
       break;
     }
     // Independent reconciliation check (the engine also throws on failure).
@@ -351,7 +351,10 @@ function playOne(gi: number): GameResult {
 
 const t0 = Date.now();
 const results: GameResult[] = [];
-for (let i = 0; i < GAMES; i++) results.push(playOne(i));
+/** Replay one game by its index (--only 75), for debugging a crash. */
+const ONLY = arg('only', '');
+if (ONLY) results.push(playOne(Number(ONLY)));
+else for (let i = 0; i < GAMES; i++) results.push(playOne(i));
 const secs = (Date.now() - t0) / 1000;
 
 const crashes = results.filter((r) => r.crashed);
