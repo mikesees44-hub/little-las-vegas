@@ -50,6 +50,7 @@ import { SheetFrame } from './shell/SheetFrame';
 import { PolSheet } from './cityhall/CityHall';
 import { ContextMenu } from './sheet/InteractionMenu';
 import type { MenuCategoryId } from './sheet/menuCatalog';
+import { EmpireHost } from './empire/context';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -374,6 +375,7 @@ export function App({ startOn = 'title' }: AppProps) {
   return (
     <HousesNavContext.Provider value={housesApi}>
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
+      <EmpireHost s={s} setS={setS}>
       <Shell
         top={(
           <TopBar s={s} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
@@ -462,6 +464,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
+      </EmpireHost>
     </Providers>
     </HousesNavContext.Provider>
   );

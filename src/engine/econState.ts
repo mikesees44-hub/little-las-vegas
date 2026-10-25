@@ -300,6 +300,8 @@ export type EconAction =
   | { type: 'deal'; target: DealTarget; terms: DealTerms }
   /** The Good Life (goodlife.ts): buy or sell something for yourself. */
   | LuxAction
+  /** The Empire Designer (empire.ts): a configuration change or a project for a venue. */
+  | { type: 'empire'; cmd: import('./empire').EmpireCmd }
   /** Rename a place you own (a business id or `lot:<id>`). */
   | { type: 'rename'; key: string; name: string }
   | { type: 'leaseLot'; lotId: string }

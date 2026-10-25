@@ -1,4 +1,5 @@
 import { econTakeMult, econWash } from './econ';
+import { venueTake } from './empire';
 import { perkMod } from './lifestyle';
 import { isInSeason } from './calendar';
 import { BIZ_NAMES, CATALOG, seasonalMult } from './catalog';
@@ -113,6 +114,8 @@ export function controlFactor(s: GameState, b: Business): number {
 /** Expected weekly take this week (before random scores), for the UI and the economy. */
 export function expectedTake(s: GameState, b: Business): number {
   if (!isOpen(s, b)) return 0;
+  const ven = venueTake(s, b);
+  if (ven !== undefined) return ven;
   const mult = seasonalMult(b.kind, isInSeason(s.date));
   let v = b.weeklyBase * mult * controlFactor(s, b) * staffFactor(s, b);
   if (b.kind === 'construction' && s.favors > 0) v *= 1.4;
