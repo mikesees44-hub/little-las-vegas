@@ -24,6 +24,7 @@ import { MAX_POPUPS } from '../src/engine/events';
 import { legalActions, previewAction } from '../src/engine/actions';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
+import { houseSummaries, validateHouses } from '../src/engine/housesView';
 import { whatShouldIDo } from '../src/engine/opportunities';
 import { rankCandidates } from '../src/engine/candidates';
 import { explainAction } from '../src/engine/advice';
@@ -223,6 +224,9 @@ interface GameResult {
   /** Travel counters at the end of the game (travelState.ts). */
   travel?: Record<string, number>;
   hierarchyErrors: string[];
+  /** House trees (houses.ts): integrity problems, and the houses at the end. */
+  houseErrors: string[];
+  houses?: { houses: number; extinct: number; living: number; dead: number; feuds: number; hooks: number; births: number; titles: number };
   crew: { defections: number; coups: number; flips: number; makings: number; rivalCrewMoves: number };
   popupKeys: Record<string, number>;
   repeats: number;
@@ -244,7 +248,7 @@ function playOne(gi: number): GameResult {
     bankruptYear1: false, redStreakY1: 0, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
     deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
-    hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, packPopups: 0, mg: {},
+    hierarchyErrors: [], houseErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, packPopups: 0, mg: {},
   };
   const lastSeen: Record<string, number> = {};
   let s: GameState;
@@ -333,7 +337,10 @@ function playOne(gi: number): GameResult {
     if (r.hierarchyErrors.length < 5) r.hierarchyErrors.push(...validateHierarchy(s).map((x) => `week ${s.week}: ${x}`));
     r.peakUnwashed = Math.max(r.peakUnwashed, s.unwashed);
     for (const b of HEAT_BARS) r.heatSamples[b].push(s.heat[b]);
-    if ((s.week - 1) % 52 === 0) r.treasuryByYear.push(s.money);
+    if ((s.week - 1) % 52 === 0) {
+      r.treasuryByYear.push(s.money);
+      if (r.houseErrors.length < 5) r.houseErrors.push(...validateHouses(s).slice(0, 5).map((x) => `week ${s.week}: ${x}`));
+    }
     for (const line of res.log) {
       const m = /^\[(\w+)\]/.exec(line);
       if (m) r.rivalMoves[m[1]] = (r.rivalMoves[m[1]] ?? 0) + 1;
@@ -356,6 +363,17 @@ function playOne(gi: number): GameResult {
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   if (s!.travel) r.travel = { ...s!.travel.stats };
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
+  if (s!.lineage) {
+    if (r.houseErrors.length < 5) r.houseErrors.push(...validateHouses(s!).slice(0, 5).map((x) => `end: ${x}`));
+    const hs = houseSummaries(s!);
+    r.houses = {
+      houses: hs.length, extinct: hs.filter((x) => x.h.extinct !== undefined).length, living: hs.reduce((a, x) => a + x.living, 0), dead: hs.reduce((a, x) => a + x.dead, 0),
+      feuds: s!.lineage.grudges.filter((g) => g.y >= 1960).length,
+      hooks: Object.entries(r.titles).filter(([k]) => k.startsWith('kin_')).reduce((a, [, v]) => a + v, 0),
+      births: Object.values(s!.lineage.people).filter((p) => p.by > 1960).length,
+      titles: s!.lineage.events.filter((e) => e.k === 'title' && e.y >= 1960).length,
+    };
+  }
   if (s!.power) r.power = { ...s!.power.stats };
   if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
   if (s!.romance) r.romance = { ...s!.romance.stats };
@@ -396,6 +414,9 @@ for (const u of succFails.slice(0, 5)) console.log(`    - ${u}`);
 const hier = results.flatMap((r) => r.hierarchyErrors);
 console.log(`  Hierarchy integrity errors: ${hier.length}`);
 for (const u of hier.slice(0, 5)) console.log(`    - ${u}`);
+const houseErr = results.flatMap((r) => r.houseErrors);
+console.log(`  House tree errors:          ${houseErr.length}`);
+for (const u of houseErr.slice(0, 5)) console.log(`    - ${u}`);
 
 console.log(`\nECONOMY`);
 console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (treasury < $0 for ${INSOLVENT_WEEKS}+ straight weeks)`);
@@ -451,6 +472,11 @@ if (dynGames.length) {
   const keys = Object.keys(dynGames[0].dyn!);
   const per10 = (k: string) => dynGames.reduce((a, r) => a + (r.dyn![k] ?? 0) * (520 / r.weeksPlayed), 0) / dynGames.length;
   console.log(`  House events per 10 years (mean): ${keys.map((k) => `${k} ${per10(k).toFixed(1)}`).join(', ')}`);
+}
+const hg = results.filter((r) => r.houses);
+if (hg.length) {
+  const med = (f: (x: NonNullable<GameResult['houses']>) => number) => quantile(hg.map((r) => f(r.houses!)), 0.5);
+  console.log(`  Houses at the end (median): ${med((x) => x.houses)} houses, ${med((x) => x.extinct)} extinct, ${med((x) => x.living)} living / ${med((x) => x.dead)} dead of the blood, ${med((x) => x.feuds)} blood feuds since 1960, ${med((x) => x.births)} off-screen births, ${med((x) => x.titles)} titles taken, ${med((x) => x.hooks)} family story hooks shown`);
 }
 
 const per10g = (rs: GameResult[], pick: (r: GameResult) => Record<string, number> | undefined) => {

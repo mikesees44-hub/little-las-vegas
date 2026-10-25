@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OrderToast, type ToastItem } from './components/OrderToast';
+import { HousesNavContext } from './houses/nav';
 import { alerts as computeAlerts } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
@@ -92,6 +93,7 @@ export function App({ startOn = 'title' }: AppProps) {
     queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
+  const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
   const closeToast = useCallback(() => setToast(undefined), []);
   const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number; category?: string } | undefined>();
@@ -307,7 +309,8 @@ export function App({ startOn = 'title' }: AppProps) {
     if (g.show?.tour) tour(g.show.tour);
   }
 
-  const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports };
+  const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports, houseSel, onHouseSel: setHouseSel };
+  const housesApi = { openHouse: (id: string) => { setSheet(undefined); setHouseSel(id); openRoute({ panel: 'house', section: 'houses' }); } };
   const shellApi: ShellApi = { go, focus: focusMap };
   goRef.current = go;
 
@@ -369,6 +372,7 @@ export function App({ startOn = 'title' }: AppProps) {
   );
 
   return (
+    <HousesNavContext.Provider value={housesApi}>
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
       <Shell
         top={(
@@ -438,7 +442,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
       {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && (s.characters[sheet] || !s.pol?.people[sheet]
-        ? <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />
+        ? <CharacterSheet key={sheet} s={s} id={sheet} onClose={() => setSheet(undefined)} />
         : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}
       {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category as MenuCategoryId | undefined} onClose={() => setCtxMenu(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
@@ -459,6 +463,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
     </Providers>
+    </HousesNavContext.Provider>
   );
 }
 

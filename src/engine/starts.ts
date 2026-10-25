@@ -7,6 +7,7 @@ import { newGame } from './newGame';
 import { rankStart } from './station';
 import { addOpeningScene } from './scenes';
 import { refreshDynastyAfterStart } from './family';
+import { setupHouses } from './housesLife';
 import { addOpinion } from './relations';
 import { addStory, assignTo, giveBio, smallestRegime, tidyRegimes, transferRegime, validateHierarchy } from './hierarchy';
 import { capos, crew } from './characters';
@@ -35,7 +36,8 @@ export const STARTS: Record<StartId, { name: string; text: string }> = {
 
 /** `charOptions` (the character creator) is applied on top of any start. */
 export function newGameWith(seed: string, start: StartId = 'classic', charOptions?: CharOptions): GameState {
-  const s = newGame(seed);
+  // The houses are built once the start (and the creator) has shaped the family.
+  const s = newGame(seed, { skipHouses: start !== 'classic' || !!charOptions });
   if (start === 'classic' && !charOptions) {
     addOpeningScene(s, start);
     return s;
@@ -52,6 +54,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
 function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameState {
   if (charOptions) applyCharOptions(s, start, charOptions);
   refreshDynastyAfterStart(s);
+  setupHouses(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};
   s.eventQueue = [];
@@ -68,6 +71,7 @@ function rename(s: GameState, from: string, to: string): void {
   for (const c of Object.values(s.characters)) {
     if (!c.dynasty) continue;
     if (c.lastName === from) c.lastName = to;
+    if (c.maidenName === from) c.maidenName = to;
   }
   s.houseName = to;
 }
@@ -89,7 +93,15 @@ function sees(s: GameState): void {
   rename(s, old, 'Sees');
   boss.firstName = 'Salvatore';
   boss.nickname = 'The Shark';
+  const shift = 60 - ageOn(boss.birth, s.date);
   setAge(s, boss, 60);
+  // His parents and brothers and sisters age with him (a generation older).
+  for (const c of Object.values(s.characters)) {
+    if (!c.dynasty || c.id === boss.id) continue;
+    const parent = c.id === boss.fatherId || c.id === boss.motherId;
+    const sibling = !!boss.fatherId && c.fatherId === boss.fatherId;
+    if (parent || sibling) c.birth = { ...c.birth, y: c.birth.y - shift };
+  }
   boss.traits = ['Patient', 'Vengeful', 'Pious'];
   boss.attributes = { leadership: 78, business: 62, diplomacy: 66, intrigue: 72, force: 48, discipline: 70 };
   boss.ambition = 'Choose the right heir before it is too late';

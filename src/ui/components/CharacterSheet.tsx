@@ -17,6 +17,9 @@ import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
+import { FamilySection } from '../houses/FamilySection';
+import { HouseLine } from '../houses/HouseLine';
+import { LineageSheet } from '../houses/LineageSheet';
 import { Tip } from '../clarity/Tip';
 import { PowerFacts } from '../power/PowerFacts';
 import { fam } from '../../engine/familyState';
@@ -37,14 +40,14 @@ const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business
 
 export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id: string; onClose: () => void; embedded?: boolean }) {
   const c = s.characters[id];
-  if (!c) return null;
+  // Off-screen people of the house trees have their own sheet.
+  if (!c) return <LineageSheet s={s} id={id} onClose={onClose} />;
   const boss = player(s);
   const isBoss = c.id === boss.id;
   const age = ageOn(c.birth, c.death ? c.death.date : s.date);
   const rel = getRelation(s, c.id, boss.id);
   const { total, mods } = opinionBreakdown(s, c.id, boss.id);
   const yourView = opinionBreakdown(s, boss.id, c.id);
-  const family = familyOf(s, c);
   const district = s.districts.find((d) => d.capoId === c.id);
   const relationship = relationshipTo(s, c);
   const secrets = knownSecrets(s, c.id);
@@ -60,6 +63,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
             <div className="min-w-0">
               <h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2>
               {c.maidenName && <div className="text-xs text-stone-500">née {c.maidenName}</div>}
+              <HouseLine s={s} id={c.id} />
               <div className="text-sm text-stone-300">
                 {isBoss ? `Head of the house of ${s.houseName}` : c.rank !== 'civilian' ? c.rank[0].toUpperCase() + c.rank.slice(1) : c.frontMan ? 'Front man' : 'Civilian'}
                 {' · '}{FACTION_NAMES[c.faction] === 'Your crew' ? (c.dynasty ? `House of ${s.houseName}` : 'Your crew') : FACTION_NAMES[c.faction]}
@@ -139,17 +143,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
         <BonesFacts s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} />}
 
-        <section className="mt-3">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Family</div>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-            {family.length === 0 && <span className="text-stone-500">No family to speak of.</span>}
-            {family.map(([label, f]) => (
-              <span key={f.id} className={f.alive ? 'text-stone-300' : 'text-stone-600'}>
-                <span className="text-stone-500">{label}:</span> <CharLink s={s} id={f.id} />{!f.alive && ' †'}
-              </span>
-            ))}
-          </div>
-        </section>
+        <FamilySection s={s} id={c.id} />
 
         <Relationships s={s} c={c} />
 
@@ -269,18 +263,4 @@ function HisLife({ s, c }: { s: GameState; c: Character }) {
       )}
     </section>
   );
-}
-
-function familyOf(s: GameState, c: Character): [string, Character][] {
-  const out: [string, Character][] = [];
-  const add = (label: string, id?: string) => {
-    const x = id ? s.characters[id] : undefined;
-    if (x && !out.some(([, y]) => y.id === x.id)) out.push([label, x]);
-  };
-  add('Father', c.fatherId);
-  add('Mother', c.motherId);
-  add(c.gender === 'M' ? 'Wife' : 'Husband', c.spouseId);
-  for (const k of c.childrenIds) add(s.characters[k]?.gender === 'M' ? 'Son' : 'Daughter', k);
-  if (c.fatherId) for (const o of Object.values(s.characters)) if (o.id !== c.id && o.fatherId === c.fatherId) add(o.gender === 'M' ? 'Brother' : 'Sister', o.id);
-  return out;
 }

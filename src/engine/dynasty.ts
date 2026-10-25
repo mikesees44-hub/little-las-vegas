@@ -10,6 +10,7 @@ import {
   pickNickname,
   relationLabel,
 } from './characters';
+import { lineageDeath } from './housesDeath';
 import { respect, type Ctx } from './ledger';
 import { addOpinion, opinion, relKey } from './relations';
 import { chance, rand } from './rng';
@@ -167,12 +168,15 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
   const s = ctx.s;
   const c = s.characters[charId];
   if (!c) {
+    // Off-screen members of the houses (lineage people) die here too; the tree keeps them.
+    if (s.lineage?.people[charId]) lineageDeath(ctx, charId, cause, killer);
     for (const h of DEATH_HANDLERS) h(ctx, charId, cause);
     return undefined;
   }
   if (!c.alive) return undefined;
   c.alive = false;
   c.death = { week: s.week, date: { ...s.date }, cause, killer };
+  lineageDeath(ctx, c.id, cause, killer);
   const ageAt = age(s, c);
   const name = displayName(c);
   ctx.log.push(`${name} died, aged ${ageAt} (${cause}).`);

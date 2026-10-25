@@ -5,6 +5,7 @@
  */
 
 import type { DynAction, DynOp, DynState } from './familyState';
+import type { LineageState } from './houses';
 import type { ExtAttrs, PowerAction, PowerOp, PowerState } from './powerState';
 import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
 import type { PolAction, PolOp, PolState } from './polState';
@@ -43,6 +44,11 @@ export type Trait =
   | 'Charming'
   | 'Vengeful'
   | 'Drinker';
+
+/** Family roles cast on the living extended family of the houses (housesKin.ts). */
+export type KinRole =
+  | 'matriarch' | 'uncle' | 'aunt' | 'cousin' | 'priest' | 'cop' | 'wantsIn' | 'inlaw' | 'godchild'
+  | 'front' | 'church' | 'numbers' | 'advisor' | 'match' | 'power';
 
 export interface Attributes {
   leadership: number;
@@ -144,6 +150,8 @@ export interface Character {
   lastEarn?: number;
   /** His personal chronicle (most recent last, capped). */
   story?: StoryEntry[];
+  /** Who this person is to their house (housesKin.ts): 'matriarch', 'uncle', 'cousin', 'inlaw', 'godchild' ... */
+  kinRoles?: KinRole[];
   /** The made man who vouched for him (responsible if he goes bad). */
   vouchedBy?: string;
   /** Proposed to Philadelphia for membership on this week (waiting for the books). */
@@ -834,6 +842,8 @@ export interface GameState {
   permits: Record<string, number>;
   /** The CK dynasty layer: houses, alliances, renown, legacies, activities (optional for old saves). */
   dyn?: DynState;
+  /** Every house's tree and history (houses.ts; optional for old saves). Shared between weeks copy-on-write. */
+  lineage?: LineageState;
   /** Power, succession & ambition (optional for old saves). */
   power?: PowerState;
   /** Philadelphia's membership books (optional for old saves). */

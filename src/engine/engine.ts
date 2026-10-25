@@ -31,6 +31,7 @@ import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
 import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
+import { housesMonth } from './housesLife';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
 import { storyEventSource, storyPoolSource, storyResolve } from './storyPack';
 import { arcEventSource, arcsResolve, arcsWeek } from './livingStories';
@@ -44,6 +45,7 @@ import { chance } from './rng';
 import { rivalSuccession, rivalWeek } from './rivals';
 import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './types';
 import { bonesEventSource, bonesWeek } from './bones';
+import { kinEventSource } from './housesEvents';
 import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { cloneLedgerBook } from './ledgerbookState';
 
@@ -53,6 +55,7 @@ registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
 registerEventSource(bonesEventSource);
+registerEventSource(kinEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -85,8 +88,9 @@ function deepCopy(v: unknown): unknown {
 }
 
 export function cloneState(s: GameState): GameState {
-  const { chronicle, dynastyHistory, lastReport, news, pol, ledgerBook, ...rest } = s;
+  const { chronicle, dynastyHistory, lastReport, news, pol, ledgerBook, lineage, ...rest } = s;
   const c = deepCopy(rest) as GameState;
+  if (lineage) c.lineage = lineage; // copy-on-write (houses.ts linMut)
   // The books' archived weeks are immutable once written (see ledgerbookState.ts).
   if (ledgerBook) c.ledgerBook = cloneLedgerBook(ledgerBook);
   // Politics shares its immutable people records and reserve rows (copy-on-write, see polState.ts).
@@ -149,6 +153,7 @@ function monthlyTick(ctx: Ctx): void {
   crewMonth(ctx);
   secretsMonth(s);
   if (!s.gameOver) dynastyMonth(ctx);
+  if (!s.gameOver) housesMonth(ctx);
   if (!s.gameOver) romanceMonth(ctx);
   lifestyleMonth(ctx);
   regimesMonth(ctx);

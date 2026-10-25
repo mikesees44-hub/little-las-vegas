@@ -33,6 +33,7 @@ import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Feed } from './Feed';
 import { GoodLifePanel } from '../econ/GoodLife';
+import { HousesPanel } from '../houses/HousesPanel';
 import type { PanelId, Route } from './routes';
 
 /**
@@ -53,6 +54,9 @@ export interface SectionCtx {
   /** Weekly reports from this sitting, and opening one. */
   reports: WeeklyReport[];
   openReports: (r: WeeklyReport[]) => void;
+  /** The house page open in Houses (undefined = the list). */
+  houseSel?: string;
+  onHouseSel: (id?: string) => void;
 }
 
 export interface SectionDef {
@@ -96,6 +100,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'Your blood: the tree, marriages, the heir, the house\'s name.',
     sections: [
       { id: 'tree', label: 'Family Tree', wide: true, render: (s) => <div className="space-y-3" data-testid="family-tab"><HouseHeader s={s} /><DynastyTree s={s} /></div> },
+      { id: 'houses', label: 'All the Houses', wide: true, blurb: 'Every family on the island and beyond: trees back to the old country, the living and the dead.', render: (s, c) => <HousesPanel s={s} selected={c.houseSel} onSelect={c.onHouseSel} /> },
       { id: 'marriages', label: 'Marriages & Children', render: (s) => <MarriagePanel s={s} /> },
       { id: 'succession', label: 'Succession', blurb: 'One place for the heir: the law, how he is named, who is pushing.', render: (s, c) => <Succession s={s} pendingLaw={c.pendingLaw} pendingHeir={c.pendingHeir} onLaw={c.onLaw} onHeir={c.onHeir} /> },
       { id: 'activities', label: 'Activities', render: (s) => <ActivitiesPanel s={s} /> },

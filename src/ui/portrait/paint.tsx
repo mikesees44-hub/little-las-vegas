@@ -54,20 +54,24 @@ function pickFrom<T>(arr: readonly T[], x: number): T {
   return arr[Math.min(arr.length - 1, Math.floor(x * arr.length))];
 }
 
-const SKIN: Record<Ethnicity, [string, string, string]> = {
+/** 'Black': Great Migration families of the house trees (not an engine ethnicity). */
+const SKIN: Record<Ethnicity | 'Black', [string, string, string]> = {
   Italian: ['#ecc6a0', '#cf9f76', '#a57552'],
   Irish: ['#f7e0cf', '#efc9ae', '#dfb093'],
   Jewish: ['#f2d0b2', '#dcb18c', '#bb8c68'],
+  Black: ['#a9785a', '#7f5139', '#5a3524'],
 };
-const HAIR: Record<Ethnicity, string[]> = {
+const HAIR: Record<Ethnicity | 'Black', string[]> = {
   Italian: ['#110d0b', '#1a1310', '#251a13', '#33241a', '#46301f'],
   Irish: ['#231912', '#3f2a1c', '#5e3a23', '#7e4123', '#9c4f26', '#a8865a'],
   Jewish: ['#120e0c', '#231912', '#35251a', '#4d3424', '#6e4128'],
+  Black: ['#0e0b0a', '#16110e', '#1f1712'],
 };
-const IRIS: Record<Ethnicity, string[]> = {
+const IRIS: Record<Ethnicity | 'Black', string[]> = {
   Italian: ['#2f1d11', '#3d2716', '#4a3119', '#5c4a25'],
   Irish: ['#4b6d8c', '#5f86a0', '#5b6d48', '#6d777c', '#3d2716'],
   Jewish: ['#2f1d11', '#3d2716', '#5c4a25', '#4b6d8c'],
+  Black: ['#24170e', '#2f1d11', '#3d2716'],
 };
 const SUITS = ['#24262c', '#2c3340', '#3a3128', '#1f2935', '#3f362c', '#2b2b2e', '#47474d', '#30352f'];
 const TIES = ['#7a1f22', '#2f4a6a', '#6b5428', '#2f4f36', '#5a2f4f', '#8a6326', '#3a3a40'];
@@ -188,7 +192,7 @@ export function paintPortrait(L: Look): ReactElement {
 
   /* ---- palette ---- */
   const skinBase = (() => {
-    const [a, b, c] = SKIN[L.ethnicity];
+    const [a, b, c] = SKIN[L.ethnicity] ?? SKIN.Italian;
     const s = G.skin;
     let k = s < 0.5 ? mix(a, b, s * 2) : mix(b, c, (s - 0.5) * 2);
     if (age > 62) k = mix(k, '#d8c2b0', clamp((age - 62) / 40, 0, 0.25));
@@ -198,7 +202,7 @@ export function paintPortrait(L: Look): ReactElement {
   const skinHi = lite(skinBase, 0.3);
   const skinSh = mix(skinBase, '#5a2418', 0.38);
   const skinDeep = mix(skinBase, '#2a0e08', 0.55);
-  const rawHair = pickFrom(HAIR[L.ethnicity], G.hair);
+  const rawHair = pickFrom(HAIR[L.ethnicity] ?? HAIR.Italian, G.hair);
   const youthHair = kid > 0.4 ? mix(rawHair, '#9a7448', (kid - 0.4) * 0.5) : rawHair;
   const greyT = male ? clamp((age - 34 - G.grey * 16) / 32, 0, 0.94) : clamp((age - 40 - G.grey * 16) / 34, 0, 0.9);
   const hair = mix(youthHair, age > 75 ? '#e2ddd4' : '#b9b4ac', greyT);
@@ -206,7 +210,7 @@ export function paintPortrait(L: Look): ReactElement {
   const hairDk = dark(hair, 0.45);
   const brow = mix(youthHair, '#a7a199', greyT * 0.75);
   const stacheCol = mix(youthHair, '#c4bfb6', clamp(greyT * 1.15, 0, 1));
-  const iris = pickFrom(IRIS[L.ethnicity], G.eyeColor);
+  const iris = pickFrom(IRIS[L.ethnicity] ?? IRIS.Italian, G.eyeColor);
   const look = r(); // consumed in fixed order below for determinism
   const dressRoll = r();
   const { outfit, hat: hat0, glasses: glassesP } = dressFor(L, r);
