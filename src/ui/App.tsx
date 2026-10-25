@@ -8,34 +8,14 @@ import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
 import { MusicToggle } from './audio';
 import { ClockControls, newWarnings, tickerLine, useClock, type Speed } from './clock';
-import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
-import { TablePanel } from './components/TablePanel';
-import { LifestylePanel } from './components/Lifestyle';
-import { Newspapers } from './components/Newspaper';
-import { LawPanel } from './components/LawPanel';
-import { UnderbellyPanel } from './components/UnderbellyPanel';
-import { OfficePanel } from './components/OfficePanel';
-import { PowerTab, type PowerSub } from './power/PowerTab';
-import { AudiencePanel } from './power/AudiencePanel';
+import { SchemePlanner } from './components/Schemes';
 import { CrisisBanner } from './power/CrisisBanner';
-import { Businesses } from './components/Businesses';
-import { Holdings } from './econ/Holdings';
-import { RealEstate } from './econ/RealEstate';
-import { HQPanel } from './econ/HQPanel';
-import { TheBooks } from './books/TheBooks';
-import { GiftsPanel } from './econ/Gifts';
 import { CharacterSheet } from './components/CharacterSheet';
-import { Chronicle } from './components/Chronicle';
-import { Storylines } from './components/Storylines';
-import { CrewList } from './components/CrewList';
-import { CrewTree } from './components/CrewTree';
 import { EventModal } from './components/EventModal';
-import { FamilyTab } from './family/FamilyTab';
 import { Header } from './components/Header';
-import { OrdersContext, OrdersTray } from './components/Orders';
-import { SheetContext } from './components/People';
+import { OrdersTray } from './components/Orders';
 import { ReportModal } from './components/ReportModal';
-import { ClarityContext, type ClarityApi } from './clarity/context';
+import type { ClarityApi } from './clarity/context';
 import { PickerModal } from './clarity/CandidatePicker';
 import { GlossaryOverlay, HelpButton } from './clarity/Glossary';
 import { WhatToDoModal } from './clarity/WhatToDo';
@@ -44,7 +24,6 @@ import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
 import { applySettings, getSettings } from './settings';
-import { TravelContext } from './travel/context';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { FugitiveBanner } from './travel/Panels';
@@ -52,28 +31,15 @@ import { minigameOf, opensScene } from '../engine/minigames';
 import { MinigameScreen } from './minigames/MinigameScreen';
 import { NewspaperReel, type Reel } from './minigames/NewspaperReel';
 
-import { CityHall } from './cityhall/CityHall';
 import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
+import { PANELS, PANELS_BY_ID, sectionOf, type SectionCtx } from './shell/panels';
+import { routeFor, type Route } from './shell/routes';
+import { Providers } from './shell/Providers';
+import type { ShellApi } from './shell/context';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle' | 'storylines' | 'holdings' | 'realestate' | 'hq' | 'books' | 'gifts' | PowerSub;
-/** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
-const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
-  { id: 'map', label: 'The Island' },
-  { id: 'business', label: 'Rackets & Fronts', subs: [{ id: 'business', label: 'Buy & sell' }, { id: 'holdings', label: 'Holdings' }, { id: 'realestate', label: 'Real Estate' }, { id: 'hq', label: 'Headquarters' }, { id: 'books', label: 'The Books' }] },
-  { id: 'tree', label: 'Crew' },
-  { id: 'crew', label: 'Administration' },
-  { id: 'schemes', label: 'Schemes' },
-  { id: 'table', label: 'The Table' },
-  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }, { id: 'gifts', label: 'Gifts & Giving' }] },
-  { id: 'power', label: 'Power', subs: [{ id: 'power', label: 'Heirs & Ambition' }, { id: 'grievances', label: 'Passed Over' }, { id: 'blitz', label: 'Balance & Blitz' }, { id: 'front', label: 'The Front' }] },
-  { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'cityhall', label: 'City Hall' }, { id: 'papers', label: 'The Papers' }] },
-  { id: 'law', label: 'The Law' },
-  { id: 'chronicle', label: 'Chronicle', subs: [{ id: 'chronicle', label: 'Chronicle' }, { id: 'storylines', label: 'Storylines' }] },
-];
-function tabGroup(t: Tab): Tab {
-  return TABS.find((g) => g.id === t || g.subs?.some((x) => x.id === t))?.id ?? t;
-}
+/** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
+export type Tab = string;
 type Mode = 'week' | 'month';
 
 /** The opening scene: the old boss's funeral at St. Ann's (plays for every new game). */
@@ -101,7 +67,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const [mode, setMode] = useState<Mode>('week');
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
-  const [tab, setTab] = useState<Tab>('map');
+  const [route, setRoute] = useState<Route>({});
+  const go = (r: Route | string) => setRoute(typeof r === 'string' ? routeFor(r) : r);
   const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
@@ -123,7 +90,7 @@ export function App({ startOn = 'title' }: AppProps) {
     openPicker: (role, opts) => { setSheet(undefined); setPicker({ role, pool: opts?.pool, onPick: opts?.onPick }); },
     openHelp: (focus) => setHelp({ focus }),
     openAdvice: () => setAdvice(true),
-    goTab: (t) => setTab(t as Tab),
+    goTab: (t) => setRoute(routeFor(t)),
   }), []);
 
   const [tripPlan, setTripPlan] = useState<{ leaderId: string; destId?: string } | undefined>();
@@ -248,7 +215,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setReels([]);
     setAutoOpened({});
     setSpeed(0);
-    setTab('map');
+    setRoute({});
     try { window.scrollTo(0, 0); } catch { /* no window */ }
   }
 
@@ -285,9 +252,12 @@ export function App({ startOn = 'title' }: AppProps) {
 
   function onAlert(a: Alert) {
     if (a.charId) setSheet(a.charId);
-    else if (a.tab) setTab(a.tab as Tab);
+    else if (a.tab) go(a.tab);
     else if (a.kind === 'decision') { setAdvancing(false); setEventIdx(0); }
   }
+
+  const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go };
+  const shellApi: ShellApi = { go, focus: () => {} };
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
   const busy = !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
@@ -319,11 +289,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }
 
   return (
-    <SheetContext.Provider value={sheetApi}>
-    <ClarityContext.Provider value={clarityApi}>
-    <PlannerContext.Provider value={plannerApi}>
-    <OrdersContext.Provider value={ordersApi}>
-    <TravelContext.Provider value={travelApi}>
+    <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
     <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
       <Header s={s}>
         {!s.gameOver && (
@@ -363,56 +329,28 @@ export function App({ startOn = 'title' }: AppProps) {
       )}
 
       {!s.gameOver && <OrdersTray s={s} />}
-      {!s.gameOver && <CrisisBanner s={s} onOpen={() => setTab('power')} />}
+      {!s.gameOver && <CrisisBanner s={s} onOpen={() => go('power')} />}
 
       <nav className="tabbar flex overflow-x-auto border-b border-noir-700" data-testid="tabbar">
-        {TABS.map((t) => (
-          <button key={t.id} data-tab={t.id} className={`tab ${tabGroup(tab) === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
+        <button data-tab="map" className={`tab ${!route.panel ? 'tab-active' : ''}`} onClick={() => setRoute({})}>The Island</button>
+        {PANELS.map((p) => (
+          <button key={p.id} data-tab={p.id} className={`tab ${route.panel === p.id ? 'tab-active' : ''}`} onClick={() => setRoute({ panel: p.id })}>{p.label}</button>
         ))}
       </nav>
-      {(() => {
-        const g = TABS.find((x) => x.id === tabGroup(tab));
-        return g?.subs ? (
-          <div className="flex flex-wrap gap-1 -mt-2" data-testid="subtabs">
-            {g.subs.map((x) => (
-              <button key={x.id} data-tab={x.id} className={`text-xs px-2 py-1 rounded ${tab === x.id ? 'bg-noir-700 text-gold-400' : 'text-stone-400 hover:text-stone-200'}`} onClick={() => setTab(x.id)}>{x.label}</button>
-            ))}
-          </div>
-        ) : null;
-      })()}
+      {route.panel && (
+        <div className="flex flex-wrap gap-1 -mt-2" data-testid="subtabs">
+          {PANELS_BY_ID[route.panel].sections.map((x) => (
+            <button key={x.id} data-tab={`${route.panel}.${x.id}`} className={`text-xs px-2 py-1 rounded ${sectionOf(route.panel!, route.section)?.id === x.id ? 'bg-noir-700 text-gold-400' : 'text-stone-400 hover:text-stone-200'}`} onClick={() => setRoute({ panel: route.panel, section: x.id })}>{x.label}</button>
+          ))}
+        </div>
+      )}
 
-      {!s.gameOver && <FugitiveBanner s={s} onOpen={() => setTab('law')} />}
-      {tab === 'map' ? (
-        <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => setTab('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
+      {!s.gameOver && <FugitiveBanner s={s} onOpen={() => go('law')} />}
+      {!route.panel ? (
+        <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
       ) : (
         <main className="panel p-3 sm:p-4">
-          {tab === 'business' && <Businesses s={s} />}
-          {tab === 'holdings' && <Holdings s={s} />}
-          {tab === 'realestate' && <RealEstate s={s} />}
-          {tab === 'hq' && <HQPanel s={s} />}
-          {tab === 'books' && <TheBooks s={s} />}
-          {tab === 'gifts' && <GiftsPanel s={s} />}
-          {tab === 'tree' && <CrewTree s={s} />}
-          {tab === 'crew' && <CrewList s={s} />}
-          {tab === 'schemes' && <SchemesPanel s={s} />}
-          {tab === 'table' && <TablePanel s={s} />}
-          {tab === 'lifestyle' && <LifestylePanel s={s} />}
-          {tab === 'family' && (
-            <FamilyTab s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
-          )}
-          {tab === 'law' && <LawPanel s={s} />}
-          {tab === 'town' && (
-            <div className="space-y-6">
-              <OfficePanel s={s} />
-              <AudiencePanel s={s} />
-              <UnderbellyPanel s={s} />
-            </div>
-          )}
-          {tab === 'cityhall' && <CityHall s={s} />}
-          {tab === 'papers' && <Newspapers s={s} />}
-          {(tab === 'power' || tab === 'grievances' || tab === 'blitz' || tab === 'front') && <PowerTab s={s} sub={tab} />}
-          {tab === 'chronicle' && <Chronicle s={s} />}
-          {tab === 'storylines' && <Storylines s={s} />}
+          {sectionOf(route.panel, route.section)?.render(s, sectionCtx)}
         </main>
       )}
 
@@ -445,16 +383,12 @@ export function App({ startOn = 'title' }: AppProps) {
       {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
-      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => setTab(t as Tab)} onClose={() => setAdvice(false)} />}
+      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
     </div>
-    </TravelContext.Provider>
-    </OrdersContext.Provider>
-    </PlannerContext.Provider>
-    </ClarityContext.Provider>
-    </SheetContext.Provider>
+    </Providers>
   );
 }

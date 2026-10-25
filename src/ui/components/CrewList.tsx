@@ -219,3 +219,19 @@ function Edicts({ s }: { s: GameState }) {
     </section>
   );
 }
+
+/** One part of the old Administration screen on its own (the shell's Borgata drawer). */
+export function CrewListPart({ s, part }: { s: GameState; part: 'council' | 'capos' | 'men' | 'hire' | 'edicts' }) {
+  const men = crew(s).filter((c) => c.rank === 'soldier' || c.rank === 'associate').sort((a, b) => RANK_ORDER.indexOf(a.rank) - RANK_ORDER.indexOf(b.rank));
+  if (part === 'council') return <Council s={s} />;
+  if (part === 'capos') return <Vassals s={s} />;
+  if (part === 'hire') return <HirePool s={s} />;
+  if (part === 'edicts') return <Edicts s={s} />;
+  return (
+    <section>
+      <div className="panel-title">The men</div>
+      <p className="text-xs text-stone-500">Soldiers and associates hustle for themselves. You decide how much of it comes to you. Men nobody talks to start drifting toward rivals.</p>
+      <div className="mt-2 space-y-1.5">{men.map((c) => <ManRow key={c.id} s={s} c={c} />)}</div>
+    </section>
+  );
+}

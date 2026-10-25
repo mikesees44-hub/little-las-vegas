@@ -14,7 +14,7 @@ import { FACTION_NAMES } from '../../engine/world';
 import type { Character, GameState } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { Portrait } from '../portrait/Portrait';
-import { Modal } from './Modal';
+import { SheetFrame } from '../shell/SheetFrame';
 import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
@@ -37,7 +37,7 @@ const SKILL_HELP: Record<string, string> = {
 };
 const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
 
-export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; onClose: () => void }) {
+export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id: string; onClose: () => void; embedded?: boolean }) {
   const c = s.characters[id];
   if (!c) return null;
   const boss = player(s);
@@ -63,7 +63,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
   ];
 
   return (
-    <Modal onClose={onClose} wide>
+    <SheetFrame onClose={onClose} embedded={embedded}>
       <div className="p-4 sm:p-5" data-testid="character-sheet">
         <div className="flex justify-between items-start gap-3">
           <div className="flex gap-3 min-w-0">
@@ -93,7 +93,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
               {c.alive && !s.gameOver && <div className="mt-1.5"><TravelButton s={s} charId={c.id} /></div>}
             </div>
           </div>
-          <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
+          {!embedded && <button className="btn-ghost text-xs" onClick={onClose}>Close</button>}
         </div>
 
         <div className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs">
@@ -197,7 +197,7 @@ export function CharacterSheet({ s, id, onClose }: { s: GameState; id: string; o
           </section>
         )}
       </div>
-    </Modal>
+    </SheetFrame>
   );
 }
 

@@ -378,3 +378,20 @@ function FrontPanel({ s }: { s: GameState }) {
     </div>
   );
 }
+
+/** One part of the Power screens on its own (the map-first shell puts each in a different drawer). */
+export type PowerPartId = 'station' | 'crisis' | 'heirs' | 'proteges' | 'grievances' | 'blitz' | 'front';
+export function PowerPart({ s, part }: { s: GameState; part: PowerPartId }) {
+  const v = useView(s);
+  return (
+    <div data-testid={`power-${part}`}>
+      {part === 'station' && <StationStrip s={v} />}
+      {part === 'crisis' && <CrisisPanel s={v} />}
+      {part === 'heirs' && <HeirsPanel s={v} />}
+      {part === 'proteges' && <ProtegePanel s={v} />}
+      {part === 'grievances' && <GrievancesPanel s={v} />}
+      {part === 'blitz' && <BlitzPanel s={v} />}
+      {part === 'front' && <FrontPanel s={v} />}
+    </div>
+  );
+}
