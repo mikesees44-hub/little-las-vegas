@@ -3,6 +3,7 @@ import { noteScore } from './ledgerbook';
 import { commitDeal, previewDeal } from './deals';
 import { workload } from './applicants';
 import { styleDraw } from './design';
+import { commitEmpire, empireActions, empireWeek, previewEmpire, venueBusiness } from './empire';
 import { commitLux, goodLifeWeek, luxActions, previewLux, truckBonus } from './goodlife';
 import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
@@ -69,6 +70,9 @@ export function econTakeMult(s: GameState, b: Business): number {
 /** The week of a business: racket variance, then the manager's hidden skim and his share. */
 export function econBusiness(ctx: Ctx, b: Business, amt: number, label: string): { amt: number; label: string } {
   const s = ctx.s;
+  // A venue of the Empire Designer posts its own operating statement.
+  const ven = venueBusiness(ctx, b);
+  if (ven) return ven;
   if (!s.econ) return { amt, label };
   const e = s.econ;
   const r = racketWeek(ctx, b, amt, label);
@@ -130,6 +134,7 @@ export function econWeek(ctx: Ctx): void {
   bigScoresWeek(ctx);
   capoBooksWeek(s);
   goodLifeWeek(ctx);
+  empireWeek(ctx);
   for (const b of s.businesses) if (b.owner === 'player' && isClub(b)) ensureStaff(s, b);
 }
 
@@ -144,17 +149,17 @@ function tidy(s: GameState): void {
     const gone = k.startsWith('lot:') ? !e.lots.some((l) => `lot:${l.id}` === k && (l.status === 'owned' || l.status === 'leased')) : !ids.has(k);
     if (gone) delete e.managers[k];
     else if (m.charId && !(s.characters[m.charId]?.alive && isFree(s, s.characters[m.charId]))) delete e.managers[k];
-    else if (m.assistantId && !s.characters[m.assistantId]?.alive) m.assistantId = undefined;
+    else if (m.assistantId && !s.characters[m.assistantId]?.alive) delete m.assistantId;
   }
   for (const l of e.lots) {
     if (l.bizId && (l.status === 'owned' || l.status === 'leased') && !ids.has(l.bizId)) {
       // The business was sold or seized: the building went with it.
-      l.bizId = undefined;
+      delete l.bizId;
       l.status = 'sale';
       l.owner = 'private';
       l.price = Math.round(((USES_BY_ID[l.use ?? '']?.cost ?? 3000) * ZONES_BY_ID[l.zone].land + 1500) * inflation(s) / 50) * 50;
-      l.tenant = undefined;
-      l.operating = undefined;
+      delete l.tenant;
+      delete l.operating;
     }
   }
 }
@@ -176,8 +181,8 @@ export function openLot(ctx: Ctx, l: Lot): void {
   l.stageWeek = 0;
   l.builtYear = s.date.y;
   l.condition = 100;
-  l.permit = undefined;
-  l.contractor = undefined;
+  delete l.permit;
+  delete l.contractor;
   if (!mine) {
     // Someone else's building opens: it joins the town.
     e.stats.npcBuilt++;
@@ -186,7 +191,7 @@ export function openLot(ctx: Ctx, l: Lot): void {
     return;
   }
   l.operating = true;
-  l.tenant = undefined;
+  delete l.tenant;
   e.stats.built++;
   if (u.biz) {
     const b = businessForLot(s, l);
@@ -644,10 +649,10 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
       const l = e.lots.find((x) => x.id === op.lotId);
       if (!l) break;
       if (l.bizId) s.businesses = s.businesses.filter((b) => b.id !== l.bizId);
-      l.bizId = undefined;
+      delete l.bizId;
       l.status = op.to === 'private' ? 'private' : 'rival';
       l.owner = op.to;
-      l.operating = undefined;
+      delete l.operating;
       delete e.managers[`lot:${l.id}`];
       if (op.to !== 'private' && op.to !== 'player') e.stats.rivalBuys++;
       break;
@@ -659,7 +664,7 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
     }
     case 'clearStop': {
       const l = e.lots.find((x) => x.id === op.lotId);
-      if (l) { l.stopWork = undefined; l.stalled = undefined; }
+      if (l) { delete l.stopWork; delete l.stalled; }
       break;
     }
     case 'bribeStop': {
@@ -671,8 +676,8 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
         heat(ctx, 'local', 2, `${label}: the inspector reported the envelope`, 'event');
         ctx.log.push(`${insp.firstName} ${insp.lastName} is honest. He reported the envelope.`);
       } else {
-        l.stopWork = undefined;
-        l.stalled = undefined;
+        delete l.stopWork;
+        delete l.stalled;
         if (l.permit) l.permit.bribed = true;
       }
       break;
@@ -682,7 +687,7 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
       if (!l || !l.bidder) break;
       l.status = 'rival';
       l.owner = l.bidder;
-      l.bidder = undefined;
+      delete l.bidder;
       e.stats.outbid++;
       ctx.log.push(`${FACTION_NAMES[l.owner as RivalId]} outbid you for ${lotName(l)}.`);
       break;
@@ -756,6 +761,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'empire': return previewEmpire(s, a.cmd);
     case 'luxBuy': case 'luxSell': return previewLux(s, a);
     case 'rename': {
       const nm = a.name.trim().slice(0, 40);
@@ -1067,6 +1073,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       break;
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
+    case 'empire': commitEmpire(ctx, a.cmd); break;
     case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
     case 'rename': {
       const nm = a.name.trim().slice(0, 40);
@@ -1099,7 +1106,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
           l.bizId = b.id;
           e.managers[b.id] = oldOwner(s, prior);
         } else e.managers[`lot:${l.id}`] = oldOwner(s, prior);
-        l.tenant = undefined;
+        delete l.tenant;
       }
       break;
     }
@@ -1135,8 +1142,8 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       if (!l) break;
       if (l.permit) { l.permit.inspector = 0; l.permit.bribed = true; }
       e.stats.inspectorPaid = (e.stats.inspectorPaid ?? 0) + 1;
-      l.stopWork = undefined;
-      l.stalled = undefined;
+      delete l.stopWork;
+      delete l.stalled;
       break;
     }
     case 'puppetPermit': {
@@ -1146,7 +1153,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
     }
     case 'fixCode': {
       const l = e.lots.find((x) => x.id === a.lotId);
-      if (l) { l.stopWork = undefined; l.stalled = undefined; }
+      if (l) { delete l.stopWork; delete l.stalled; }
       break;
     }
     case 'slowRival': {
@@ -1217,16 +1224,16 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       e.hq.lastSweep = s.week;
       if (e.hq.bug && chance(e, SWEEP_FIND)) {
         const b = e.hq.bug;
-        e.hq.bug = undefined;
+        delete e.hq.bug;
         e.hq.found++;
-        e.hq.rumor = undefined;
+        delete e.hq.rumor;
         e.stats.bugsFound++;
         const text = `The sweep found a bug in the headquarters: planted ${s.week - b.week} weeks ago by ${bugText(b.source)}. It heard everything.`;
         ctx.log.push(text);
         s.chronicle.push({ week: s.week, date: { ...s.date }, text, kind: 'heat' });
       } else {
         ctx.log.push('The sweep found nothing.');
-        e.hq.rumor = undefined;
+        delete e.hq.rumor;
       }
       break;
     }
@@ -1288,6 +1295,7 @@ export function econActions(s: GameState): PlayerAction[] {
   }
   const lux = luxActions(s);
   if (lux.length && w % 9 === 0) out.push(op(lux[w % lux.length]));
+  out.push(...empireActions(s));
   const lease = e.lots.find((l) => l.status === 'lease');
   if (lease && w % 3 === 0) out.push(op({ type: 'leaseLot', lotId: lease.id }));
   for (const l of e.lots.filter((x) => (x.status === 'owned' || x.status === 'leased') && x.stage === 'purchase').slice(0, 1)) {

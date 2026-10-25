@@ -22,12 +22,12 @@ export function HintHost({ s, route, overlayOpen, motion, alerts, speed }: { s: 
   useEffect(() => { if (h && h.id !== shownAt) setShownAt(h.id); }, [h?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!h) return null;
   return (
-    <div className={`fixed z-[1130] max-w-[300px] rounded-md border border-gold-500 bg-noir-950/95 px-3 py-2 text-xs text-stone-200 shadow-xl shadow-black/70 llv-slide-left ${POS[h.anchor]}`} data-testid="hint" role="status">
+    <div className={`fixed z-[1130] max-w-[300px] rounded-md border border-gold-500 bg-noir-950/95 px-3 py-2 text-xs text-stone-200 shadow-xl shadow-black/70 llv-slide-left pointer-events-none ${POS[h.anchor]}`} data-testid="hint" role="status">
       <div className="flex gap-2">
         <span className="text-gold-400">✦</span>
         <span className="flex-1">{h.text}</span>
       </div>
-      <div className="mt-1 text-right"><button type="button" className="text-[11px] font-semibold text-gold-300 hover:underline" onClick={() => { markDone(h.id); bump((n) => n + 1); }} data-testid="hint-ok">Got it</button></div>
+      <div className="mt-1 text-right"><button type="button" className="pointer-events-auto text-[11px] font-semibold text-gold-300 hover:underline" onClick={() => { markDone(h.id); bump((n) => n + 1); }} data-testid="hint-ok">Got it</button></div>
     </div>
   );
 }

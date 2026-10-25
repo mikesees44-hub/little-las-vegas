@@ -658,6 +658,14 @@ const SCORES = [
   'sold a warehouse of "damaged" Schmidt\'s beer to every bar on Pacific Avenue',
   'collected an old debt nobody thought would ever be paid',
   'bought a load of nylons off a Navy man and sold them on the boardwalk',
+  'sold a trailer of "irregular" Botany 500 suits out of a garage in Rio Grande',
+  'won a Cadillac in a raffle at the Elks and sold it back to the dealer the same afternoon',
+  'got a jeweler in Atlantic City to buy back a ring that, it turns out, was his to begin with',
+  'moved a truck of Ballantine ale that the brewery wrote off as "spoiled in the heat"',
+  'ran a Friday-night bingo in a church basement with a little extra on the side',
+  'bought a closeout of transistor radios in Newark and sold every one on the boardwalk by the Fourth',
+  'collected the insurance on a bait shop that burned down by itself, honestly, for once',
+  'cornered the Labor Day fireworks for every town from Avalon to Cape May',
 ];
 
 /**
@@ -677,24 +685,30 @@ function scoreDef(key: string, whats: string[], title: (nm: string) => string, w
       const end = r100(total * 0.5);
       const k = capoOf(s, c);
       const label = `${c.firstName}'s score`;
-      return make(s, key, c, title(callName(c)),
+      return withMeta({ what, total, end }, make(s, key, c, title(callName(c)),
         `${displayName(c)} ${what}: ${fmt(total)}. He comes by the Shamrock with your end in an envelope${k ? ` — ${k.firstName} already took his` : ''}. Some bosses take it all.`,
         [
           { id: 'end', label: `Take your end (${fmt(end)})`, because: `took your end of ${c.firstName}'s score`, effects: [{ type: 'money', amount: end, label }, { type: 'wealth', charId: c.id, amount: total - end, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 3, reason: 'Fair about my score', decay: 1, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
           { id: 'keep', label: 'Let him keep it this time', because: `let ${c.firstName} keep his score`, effects: [{ type: 'wealth', charId: c.id, amount: total, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: 'Let me keep my score', decay: 1, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
           { id: 'all', label: `Take all of it (${fmt(total)})`, because: `took all of ${c.firstName}'s score`, effects: [{ type: 'money', amount: total, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: -14, reason: 'Took my whole score', decay: 1, label }, { type: 'meter', from: c.id, to: s.playerId, meter: 'grievance', amount: 12, label }, { type: 'evidence', charId: c.id, amount: 3, label }] },
-        ], 'end', k ? [k.id] : [], 46);
+        ], 'end', k ? [k.id] : [], 46));
     },
   };
 }
 
+/** The score's facts, for its scenes (sceneFamilies2.ts tells the delivery a different way each time). */
+function withMeta(m: Record<string, string | number>, ev: EventInstance): EventInstance {
+  ev.meta = { ...(ev.meta ?? {}), ...m };
+  return ev;
+}
+
 const score = scoreDef('crew_score', SCORES, (nm) => `${nm} made a score`, (s) => 4 + seasonMultiplier(s.date) / 2);
 const SCORE_SHAPES: CrewEventDef[] = [
-  scoreDef('score_number', ['hit the number at three hundred to one with a dime on a number his grandmother dreamed', 'cashed a numbers slip a dead uncle left in his good suit'], (nm) => `${nm} hit the number`, () => 3.4),
-  scoreDef('score_salvage', ['found a sunk rumrunner\'s cargo off Hereford Inlet: forty cases of 1928 Canadian whiskey', 'bought a wrecked freighter\'s cargo at a salvage auction and sold it back to the shipping line'], (nm) => `${nm} found something in the water`, (s) => 2.6 + seasonMultiplier(s.date) / 3),
-  scoreDef('score_fight', ['had a piece of a fighter at the Arena in Philadelphia who was supposed to lose and did not', 'booked the Friday fights at Convention Hall and the gate came in big'], (nm) => `${nm} had a piece of the fight`, () => 3.2),
-  scoreDef('score_lot', ['flipped a bayside lot to a motel developer for three times what he paid', 'sold a marsh lot in West Wildwood to a man from Pittsburgh who never saw it'], (nm) => `${nm} sold a piece of land`, () => 3),
-  scoreDef('score_tourist', ['sold four hundred souvenir Miss America programs printed in his cousin\'s basement', 'ran a guess-your-weight stand on the boardwalk with a scale that guessed for the house'], (nm) => `${nm} worked the tourists`, (s) => (seasonMultiplier(s.date) > 1 ? 4 : 0.6)),
+  scoreDef('score_number', ['hit the number at three hundred to one with a dime on a number his grandmother dreamed', 'cashed a numbers slip a dead uncle left in his good suit', 'played his mother\'s address and his kid\'s birthday as a combination and it came in', 'played the last three digits of the Phillies\' attendance and somebody upstairs has a sense of humor', 'bet the number off a license plate he saw in a dream, and it hit', 'had a quarter on the hospital room number where his son was born'], (nm) => `${nm} hit the number`, () => 3.4),
+  scoreDef('score_salvage', ['found a sunk rumrunner\'s cargo off Hereford Inlet: forty cases of 1928 Canadian whiskey', 'bought a wrecked freighter\'s cargo at a salvage auction and sold it back to the shipping line', 'pulled a crate of brass ship\'s fittings out of the mud at Two Mile Landing and sold them to an antique dealer from Haddonfield', 'dragged a lost fishing net full of somebody\'s lobster pots back to Otten\'s Harbor and sold the owner his own pots', 'bought a beached cabin cruiser for a hundred dollars and sold it to a dentist from Cherry Hill as "a project"'], (nm) => `${nm} found something in the water`, (s) => 2.6 + seasonMultiplier(s.date) / 3),
+  scoreDef('score_fight', ['had a piece of a fighter at the Arena in Philadelphia who was supposed to lose and did not', 'booked the Friday fights at Convention Hall and the gate came in big', 'bet the undercard at the Atlantic City Auditorium on a kid from Camden nobody had heard of', 'sold the radio rights to a club fight in Vineland to a station that did not exist yet', 'held the purse for a welterweight bout and the loser\'s manager never came to collect'], (nm) => `${nm} had a piece of the fight`, () => 3.2),
+  scoreDef('score_lot', ['flipped a bayside lot to a motel developer for three times what he paid', 'sold a marsh lot in West Wildwood to a man from Pittsburgh who never saw it', 'bought a corner on Atlantic Avenue the week before the new motel was announced', 'sold the same beach-block lot twice, legally, which his lawyer is still explaining', 'traded an empty lot in Erma for a liquor license in Wildwood Crest'], (nm) => `${nm} sold a piece of land`, () => 3),
+  scoreDef('score_tourist', ['sold four hundred souvenir Miss America programs printed in his cousin\'s basement', 'ran a guess-your-weight stand on the boardwalk with a scale that guessed for the house', 'rented every beach umbrella on the Crest during a heat wave at double the price', 'sold "genuine Atlantic City saltwater taffy" made in Wildwood by the box', 'parked cars on a vacant lot he does not own for the whole Fourth of July weekend'], (nm) => `${nm} worked the tourists`, (s) => (seasonMultiplier(s.date) > 1 ? 4 : 0.6)),
 ];
 
 export const CREW_EVENTS: CrewEventDef[] = [

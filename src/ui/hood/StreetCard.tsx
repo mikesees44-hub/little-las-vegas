@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { STYLES, SIGN_HEX, type BuildStyle, type SignColor } from '../../engine/design';
 import { lookOf, restyleCost } from '../../engine/hood';
 import { HOODS_BY_ID, hoodOfZone } from '../../engine/hoodData';
@@ -11,7 +11,9 @@ import { STATUS_LABEL } from '../econ/RealEstate';
 import { fmt$ } from '../format';
 import { OWNER_COLOR } from '../map/lotIcons';
 import type { Item } from './Buildings';
-import { hasDesigner, onDesignerChange, openDesigner } from './designerHook';
+import { useEmpire } from '../empire/context';
+import { venueByKey, venueForLot } from '../../engine/empire';
+import { lotName } from '../../engine/property';
 import { Facade, type FacadeKind, type FacadeSpec } from './Facade';
 import type { Mood } from './iso';
 
@@ -83,9 +85,12 @@ function Restyle({ s, lotId }: { s: GameState; lotId: string }) {
  * place of yours without a lot). The Empire Designer opens from here.
  */
 export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; mood: Mood; onClose: () => void }) {
-  const [, force] = useState(0);
-  useEffect(() => onDesignerChange(() => force((n) => n + 1)), []);
+  const empire = useEmpire();
   const l = it.lot;
+  // The Empire Designer: your hotel, motel, restaurant, bar or club opens in it;
+  // an empty lot of yours is developed through it.
+  const ven = it.mine ? (l ? venueForLot(s, l.id) : it.biz ? venueByKey(s, it.biz.id) : undefined) : undefined;
+  const develop = it.mine && l && !l.use && l.stage !== 'permits';
   const f = facadeOf(s, it, mood);
   const hood = hoodOfZone((l?.zone ?? it.biz?.districtId ?? 'downtown') as never);
   const hist = (l?.history ?? []).slice(-6).reverse();
@@ -118,7 +123,8 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
           </ul>
         </div>
       )}
-      {hasDesigner() && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => openDesigner(it.lot?.id ?? it.key)}>Open the Empire Designer</button>}
+      {ven && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
+      {!ven && develop && l && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ pending: { key: `lot:${l.id}`, name: lotName(l), develop: { lotId: l.id } } })}>Develop it in the Designer</button>}
       {it.mine && l && l.stage === 'open' && l.use && (
         <div className="space-y-2 border-t border-noir-700 pt-2">
           <ActionCard s={s} action={{ kind: 'econ', op: { type: 'renovate', lotId: l.id } }} compact />
@@ -126,7 +132,7 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
         </div>
       )}
       <div className="border-t border-noir-700 pt-2">
-        {l ? <LotPanel s={s} id={l.id} /> : it.biz ? <BizPanel s={s} id={it.biz.id} /> : null}
+        {l ? <LotPanel s={s} id={l.id} noDesigner /> : it.biz ? <BizPanel s={s} id={it.biz.id} noDesigner /> : null}
       </div>
     </div>
   );

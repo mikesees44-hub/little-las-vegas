@@ -2,6 +2,8 @@ import type { ActionPreview } from './actions';
 import { isInSeason } from './calendar';
 import { designMut, designOf, STYLES, SIGN_HEX, type BuildStyle, type SignColor } from './design';
 import { marketValue } from './econ';
+import { venueForLot } from './empire';
+import { venueBuilding } from './empireBuild';
 import type { Lot, ZoneId } from './econState';
 import { HOOD_IDS, HOODS, HOODS_BY_ID, hoodOfZone, type HoodId } from './hoodData';
 import { ensureHood, lotSig as sig, POLICIES, type HoodEvent, type HoodEventKind, type HoodSnapRow, type HoodState, type PolicyId } from './hoodState';
@@ -496,6 +498,10 @@ export function commitHood(ctx: Ctx, a: HoodAction): void {
   const d = designMut(s, l.bizId ?? `lot:${l.id}`);
   d.style = a.style;
   d.sign = a.sign;
+  // A place run through the Empire Designer: its building is the record of its look.
+  const v = venueForLot(s, l.id);
+  const b = v && s.empire ? venueBuilding(s.empire, v) : undefined;
+  if (b) { b.style = a.style; b.sign = a.sign; }
   const h = ensureHood(s);
   const hood = drawnHood(l);
   if (h && hood) {

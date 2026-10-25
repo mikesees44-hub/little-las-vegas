@@ -98,6 +98,10 @@ export function inMotion(s: GameState, ui: { orders: number } = { orders: 0 }): 
       out.push({ key: 'elections', glyph: '🗳', text: `${soon.length > 1 ? `${soon.length} elections, first: ` : ''}${nm} · ${mo === 0 ? 'this month' : `in ${mo} mo`}`, eta: mo * 4, noEta: true, tone: 'neutral', route: { panel: 'town', section: 'cityhall' } });
     }
   });
+  // The Ears: quiet jobs, and the Madam in a squeeze.
+  for (const j of s.ears?.jobs ?? []) out.push({ key: `ear:${j.id}`, glyph: '👂', text: `${s.characters[j.earId]?.firstName ?? '?'} · ${j.mode === 'close' ? 'close to' : 'a dance for'} ${name(j.targetId)}`, eta: Math.max(0, j.due - s.week), tone: 'neutral', route: { panel: 'town', section: 'night' }, charId: j.targetId });
+  const sq = s.ears?.madam.squeeze;
+  if (sq) out.push({ key: 'madam-sq', glyph: '♛', text: `${s.characters[s.ears!.madam.id]?.firstName ?? 'The Madam'} is squeezed · needs a friend`, eta: sq.left, tone: 'warn', route: { panel: 'town', section: 'night' } });
   const act = s.dyn?.activity;
   if (act) out.push({ key: 'act', glyph: '🎉', text: `Hosting: ${act.kind.replace(/_/g, ' ')}`, eta: act.endWeek - s.week, tone: 'good', route: { panel: 'house', section: 'activities' } });
   if (ui.orders) out.push({ key: 'orders', glyph: '☰', text: `${ui.orders} order${ui.orders > 1 ? 's' : ''} for this week`, eta: 0, tone: 'neutral', orders: true });

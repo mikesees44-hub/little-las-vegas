@@ -36,6 +36,9 @@ import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
 import { HoodDashboard } from '../hood/HoodDashboard';
 import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
+import { EmpireSection } from '../empire/EmpireSection';
+import { NightPanel } from '../ears/EarsPanel';
+import { AttachmentBoard } from '../ears/Connections';
 import type { PanelId, Route } from './routes';
 
 /**
@@ -128,6 +131,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'rackets', label: 'Rackets & Fronts', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
+      { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
     ],
@@ -161,6 +165,8 @@ export const PANELS: PanelDef[] = [
       { id: 'cityhall', label: 'City Hall & People', wide: true, render: (s) => <CityHall s={s} /> },
       { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => <HoodDashboard s={s} /> },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
+      { id: 'night', label: 'The Night', blurb: 'The Madam, the Ears who hear everything, and the men who exploit women. Set-ups and reports only; she always decides.', render: (s) => <NightPanel s={s} /> },
+      { id: 'attached', label: 'Who\'s attached to whom', blurb: 'The connection web: who is sweet on whom, who is a regular, who keeps someone on the side. The Ears reveal the rest.', render: (s) => <AttachmentBoard s={s} /> },
       { id: 'patronage', label: 'Patronage', render: (s) => <PatronagePanel s={s} /> },
     ],
   },

@@ -1,4 +1,5 @@
 import { ageOn } from './calendar';
+import { dressScene } from './sceneVariants';
 import { hasBones } from './bones';
 import { capos, crew, displayName, isFree, player } from './characters';
 import { regimeSizes } from './hierarchy';
@@ -379,7 +380,10 @@ export function addOpeningScene(s: GameState, start: string): void {
     s.pendingEvents = s.pendingEvents.filter((e) => e !== drop);
     if (drop.mandatory) s.eventQueue.push(drop);
   }
-  s.pendingEvents.unshift(buildMadeBoss(s, start));
+  const ev = buildMadeBoss(s, start);
+  // The opening scene is told a different way each game (sceneFamilies2.ts).
+  dressScene(s, ev);
+  s.pendingEvents.unshift(ev);
   mgOf(s).known[`boss:${s.playerId}`] = s.week;
 }
 

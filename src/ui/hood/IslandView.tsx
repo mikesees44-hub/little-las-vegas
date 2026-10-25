@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { lotOverlay, type HoodOverlay } from '../../engine/hood';
 import { HOODS, crossU, type HoodId } from '../../engine/hoodData';
 import { hoodBounds, placeAll } from '../../engine/hoodGeo';
-import { USES_BY_ID, type UseCat } from '../../engine/property';
+import { groupOfBiz, groupOfLot, PROP_GROUP_BY_ID, PROP_GROUPS, type PropGroup } from '../../engine/propertyGroups';
+import { USES_BY_ID } from '../../engine/property';
 import type { GameState } from '../../engine/types';
 import { OWNER_COLOR } from '../map/lotIcons';
 import { Building, itemsOf, type Item } from './Buildings';
@@ -28,7 +29,18 @@ const OVERLAYS: { id: HoodOverlay; label: string }[] = [
   { id: 'available', label: 'Available' }, { id: 'construction', label: 'Construction' }, { id: 'economy', label: 'Economy' }, { id: 'reputation', label: 'Reputation' }, { id: 'police', label: 'Police' },
 ];
 
-const CAT_COLOR: Record<UseCat, string> = { boardwalk: '#ff6f91', services: '#4ea8ff', music: '#9b5de5', realestate: '#f2c14e', industrial: '#8a8378', food: '#ff8a3c', public: '#2fb5a8' };
+/** The business-type overlay uses the same groups (and icons) as Holdings and the buy catalog. */
+const GROUP_COLOR: Record<PropGroup, string> = {
+  hotels: '#4ea8ff', food: '#ff8a3c', nightlife: '#9b5de5', boardwalk: '#ff6f91', shops: '#2fb5a8', gambling: '#e0b84a',
+  money: '#5fae7f', building: '#8a8378', transport: '#a0785a', quiet: '#c0392b', homes: '#f2d39a',
+};
+
+function groupOfItem(s: GameState, it: Item): PropGroup | undefined {
+  if (it.vacant) return undefined;
+  if (it.lot) return it.lot.use || it.lot.bizId ? groupOfLot(s, it.lot) : undefined;
+  if (it.biz) return groupOfBiz(it.biz.kind);
+  return it.useId && USES_BY_ID[it.useId]?.biz ? groupOfBiz(USES_BY_ID[it.useId].biz!) : undefined;
+}
 
 function ramp(t: number, a: [number, number, number], b: [number, number, number]): string {
   const c = a.map((x, i) => Math.round(x + (b[i] - x) * Math.max(0, Math.min(1, t))));
@@ -38,7 +50,7 @@ function ramp(t: number, a: [number, number, number], b: [number, number, number
 function tintOf(s: GameState, it: Item, o: HoodOverlay): string | undefined {
   if (o === 'none' || o === 'reputation' || o === 'police') return undefined;
   if (o === 'owner') return it.vacant && !it.forSale ? undefined : it.forSale && !it.mine ? OWNER_COLOR.sale : it.forLease ? OWNER_COLOR.lease : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private;
-  if (o === 'category') { const c = it.useId ? USES_BY_ID[it.useId]?.cat : undefined; return c ? CAT_COLOR[c] : undefined; }
+  if (o === 'category') { const g = groupOfItem(s, it); return g ? GROUP_COLOR[g] : undefined; }
   if (!it.lot) return o === 'available' || o === 'construction' ? undefined : OWNER_COLOR.player;
   const v = lotOverlay(s, it.lot, o);
   if (o === 'available') return v ? (it.forLease ? '#4ea8ff' : '#2ecc71') : undefined;
@@ -293,7 +305,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
 
   const ctx = useMemo(() => ({ pr, m: mood, pal, tier }), [pr, mood, tier]);
   const ground = useMemo(() => <Ground pr={pr} pal={pal} mood={mood} tier={tier} sc={scB} />, [pr, mood, tier]);
-  const buildings = useMemo(() => items.map((it) => <Building key={it.key} it={it} c={ctx} sel={it.key === sel} tint={tintOf(s, it, overlay)} onPick={pick} />), [items, ctx, sel, overlay, s, pick]);
+  const buildings = useMemo(() => items.map((it) => { const g = overlay === 'category' ? groupOfItem(s, it) : undefined; return <Building key={it.key} it={it} c={ctx} sel={it.key === sel} tint={tintOf(s, it, overlay)} badge={g && tier >= 1 ? PROP_GROUP_BY_ID[g].icon : undefined} onPick={pick} />; }), [items, ctx, sel, overlay, s, pick, tier]);
   const labels = useMemo(() => (tier < 2 ? null : (
     <g style={{ pointerEvents: 'none' }} fontWeight="700" textAnchor="middle">
       {items.filter((it) => it.icon).map((it) => {
@@ -338,7 +350,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
   }, [pr]);
 
   const legend = overlay === 'owner' ? [['You', OWNER_COLOR.player], ['Manno', OWNER_COLOR.manno], ['Feldstein', OWNER_COLOR.feldstein], ['Kessler', OWNER_COLOR.kessler], ['Philadelphia', OWNER_COLOR.philly], ['The city', OWNER_COLOR.city], ['Independent', OWNER_COLOR.private], ['For sale', OWNER_COLOR.sale], ['For lease', OWNER_COLOR.lease]]
-    : overlay === 'category' ? (Object.keys(CAT_COLOR) as UseCat[]).map((c) => [c[0].toUpperCase() + c.slice(1), CAT_COLOR[c]])
+    : overlay === 'category' ? PROP_GROUPS.filter((g) => items.some((it) => groupOfItem(s, it) === g.id)).map((g) => [`${g.icon} ${g.label}`, GROUP_COLOR[g.id]])
     : overlay === 'available' ? [['For sale', '#2ecc71'], ['For lease', '#4ea8ff']]
     : overlay === 'construction' ? [['Going up', '#ff9f1c']]
     : overlay === 'economy' ? [['Losing', 'rgb(226,86,61)'], ['Earning', 'rgb(46,204,113)']]

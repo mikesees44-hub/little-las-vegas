@@ -39,6 +39,8 @@ import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource }
 import { storyEventSource, storyPoolSource, storyResolve } from './storyPack';
 import { arcEventSource, arcsResolve, arcsWeek } from './livingStories';
 import './livingStoryData';
+import './storylets';
+import { noteAnswers, takeQuiet } from './storyPace';
 import { romanceMonth } from './romance';
 import { operationalHeat, runEconomy } from './economy';
 import { heatConsequences, heatDecay } from './heat';
@@ -50,7 +52,9 @@ import type { AdvanceResult, GameState, PlayerChoices, WeeklyReport } from './ty
 import { bonesEventSource, bonesWeek } from './bones';
 import { kinEventSource } from './housesEvents';
 import { archiveWeek, ledgerWeek } from './ledgerbook';
+import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
+import { earsWeek } from './ears';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -112,6 +116,13 @@ function payTheDrop(ctx: Ctx): void {
   const env = d.drop;
   d.drop = undefined;
   applyEffects(ctx, [{ type: 'money', amount: -env, category: 'tribute', label: 'Tribute to Philadelphia (through the drop)' }], { label: 'The envelope', because: 'sent Philadelphia its envelope through the drop', category: 'tribute' });
+}
+
+/** Routine business settled quietly this week (storyPace.ts): on the books, and an "In motion" note in the report. */
+function payQuiet(ctx: Ctx): string[] {
+  const items = takeQuiet(ctx.s);
+  for (const q of items) if (!ctx.s.gameOver) applyEffects(ctx, q.effects.map((e) => ({ ...e, label: `In motion: ${e.label ?? q.title}` })), { label: `In motion: ${q.title}`, because: q.because, category: q.category ?? 'event' });
+  return items.map((q) => q.note);
 }
 
 function snapshot(s: GameState) {
@@ -261,9 +272,11 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const info = seasonInfo(s.date);
   const weekOf = s.week;
   const dateOf = { ...s.date };
+  let motion: string[] = [];
 
   s.cutscenes = [];
   const resolving = s.pendingEvents;
+  noteAnswers(s, resolving, choices);
   resolveChoices(ctx, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
@@ -288,6 +301,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     regimesWeek(ctx);
     bonesWeek(ctx);
     ledgerWeek(ctx);
+    earsWeek(ctx);
     factionsWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);
@@ -328,6 +342,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
     payTheDrop(ctx);
+    motion = payQuiet(ctx);
     attachMinigames(s);
     markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
@@ -336,6 +351,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   }
 
   const report: WeeklyReport = {
+    ...(motion.length ? { motion } : {}),
     week: weekOf,
     date: dateOf,
     seasonLabel: info.label,
@@ -351,6 +367,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) archiveWeek(s, report);
   s.lastReport = report;
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
+  tidyState(s);
   return { state: s, report, log: ctx.log };
 }
 

@@ -3,6 +3,8 @@ import type { Lot, ZoneId } from '../../engine/econState';
 import { lotName, STAGE_LABEL, USES_BY_ID, ZONES_BY_ID } from '../../engine/property';
 import { lotAsOf, lotColor, lotProgress, lotSvg } from './lotIcons';
 import { SIGN_HEX } from '../../engine/design';
+import { venueForLot } from '../../engine/empire';
+import { venueBuilding } from '../../engine/empireBuild';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 
@@ -113,7 +115,11 @@ export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameSt
     const isNew = !!view.since1960 && l.stage === 'open' && (l.builtYear ?? 0) >= 1960;
     const dim = !!view.since1960 && !isNew;
     const lab = lotLabel(s, l);
-    const svg = lotSvg(l, { size: 22, glow: isNew, dim });
+    // The authoritative building record (Empire Designer): style and neon, yours or a rival's.
+    const ven = view.year === undefined ? venueForLot(s, raw.id) : undefined;
+    const bld = ven && s.empire ? venueBuilding(s.empire, ven) : undefined;
+    const look = bld?.style ? { style: bld.style, sign: bld.sign ? SIGN_HEX[bld.sign] : undefined } : undefined;
+    const svg = lotSvg(l, { size: 22, glow: isNew, dim, look });
     const html = (lab?.sign && !dim ? `<span style="display:block;filter:drop-shadow(0 0 3px ${lab.color}) drop-shadow(0 0 1px ${lab.color})">${svg}</span>` : svg) + (lab && !dim ? `<span class="llv-blabel ${lab.tier}" style="color:${lab.color}">${esc(lab.text)}</span>` : '');
     L.marker(at, { pane: 'pins', icon: L.divIcon({ className: 'llv-lotico', html, iconSize: [22, 22], iconAnchor: [11, 11] }) })
       .bindTooltip(lotTooltip(l), { className: 'llv-tip' })

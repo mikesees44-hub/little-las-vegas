@@ -62,7 +62,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       {p.odds && <AcceptanceLine a={p.odds} prefix="Success" />}
       {p.warning && <div className="text-[11px] text-amber-400 mt-1">⚠ {p.warning}</div>}
       {p.refuseEffects && p.refuseEffects.length > 0 && (
-        <div className="mt-1 text-[11px] text-stone-500">If he says no: <Chips s={s} effects={p.refuseEffects} /></div>
+        <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
       {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
       <WhyPanel s={s} action={action} compact={compact} />

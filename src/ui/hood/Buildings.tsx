@@ -256,7 +256,7 @@ function Carousel({ c, fp, color }: { c: Ctx; fp: Footprint; color: string }) {
 
 /* ---------------- one building ---------------- */
 
-export const Building = memo(function Building({ it, c, sel, tint, onPick }: { it: Item; c: Ctx; sel: boolean; tint?: string; onPick: (key: string) => void }) {
+export const Building = memo(function Building({ it, c, sel, tint, badge, onPick }: { it: Item; c: Ctx; sel: boolean; tint?: string; badge?: string; onPick: (key: string) => void }) {
   const { pr, m, tier } = c;
   const fp = it.fp;
   const hh = h32(it.key);
@@ -468,6 +468,11 @@ export const Building = memo(function Building({ it, c, sel, tint, onPick }: { i
   if (tier >= 1 && !it.vacant && it.owner !== 'private') {
     const [x, y] = P(pr, fp.u1 - 1, fp.v0 + 1, Math.max(fp.h, 4) + (icon === 'pier' ? 2 : 0));
     parts.push(<g key="flag"><path d={`M${x} ${y}v-6`} stroke="#3a2c3e" strokeWidth="0.5" /><path d={`M${x} ${y - 6}l4.5 1.6l-4.5 1.6z`} fill={ownerCol} stroke="#2a1f2e" strokeWidth="0.25" /></g>);
+  }
+  // The business-type overlay: the group's icon on a little disc over the roof.
+  if (badge && tint) {
+    const [x, y] = P(pr, (fp.u0 + fp.u1) / 2, (fp.v0 + fp.v1) / 2, Math.max(fp.h, 4) + 6);
+    parts.push(<g key="badge" pointerEvents="none"><circle cx={x} cy={y} r="6.2" fill="#1b1030" stroke={tint} strokeWidth="1.4" /><text x={x} y={y + 2.6} fontSize="7" textAnchor="middle">{badge}</text></g>);
   }
   if (sel) {
     parts.push(<path key="sel" d={plate} fill="none" stroke="#ffe066" strokeWidth="2.4" className="hv-sel" />);

@@ -7,6 +7,7 @@ import type { FactionId, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
 import { StageBar } from './Holdings';
+import { PROP_GROUPS, groupOfLot, type PropGroup } from '../../engine/propertyGroups';
 import { lotProgress, lotSvg } from '../map/lotIcons';
 
 /** One glyph per construction stage (the same marks the map uses). */
@@ -22,7 +23,11 @@ export const STATUS_LABEL: Record<Lot['status'], string> = {
 export function RealEstate({ s, zone: initial }: { s: GameState; zone?: ZoneId }) {
   const [zone, setZone] = useState<ZoneId>(initial ?? 'boardwalk');
   const z = ZONES_BY_ID[zone];
-  const lots = lotsIn(s, zone);
+  const all = lotsIn(s, zone);
+  const [kind, setKind] = useState<PropGroup | 'all'>('all');
+  const present = PROP_GROUPS.filter((g) => all.some((l) => groupOfLot(s, l) === g.id));
+  const k = present.some((g) => g.id === kind) ? kind : 'all';
+  const lots = k === 'all' ? all : all.filter((l) => groupOfLot(s, l) === k);
   const rep = zoneRep(s, zone);
   return (
     <div className="space-y-4" data-testid="real-estate">
@@ -42,6 +47,14 @@ export function RealEstate({ s, zone: initial }: { s: GameState; zone?: ZoneId }
         Land {z.land >= 1.3 ? 'is dear' : z.land <= 0.7 ? 'is cheap' : 'goes for the usual'} here (×{z.land}). Summer demand ×{z.season[0]}, winter ×{z.season[1]}{z.season[0] === z.season[1] ? ' — the same all year' : ''}.
         {z.rival && <> {FACTION_NAMES[z.rival]} already owns pieces of it; buying here annoys them.</>}
         <div className="mt-1">Appreciation {rep.rep} · trust {rep.trust} <span className="text-stone-500">(community projects build both; trust grows slower and heat wears it down)</span></div>
+      </div>
+      <div className="flex flex-wrap gap-1 text-[11px]" role="radiogroup" aria-label="Type of property">
+        {[{ id: 'all' as const, icon: '', label: 'Everything' }, ...present].map((g) => (
+          <button key={g.id} type="button" role="radio" aria-checked={k === g.id} onClick={() => setKind(g.id)}
+            className={`rounded border px-2 py-0.5 ${k === g.id ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+            {g.icon} {g.label} <span className="opacity-70">{g.id === 'all' ? all.length : all.filter((l) => groupOfLot(s, l) === g.id).length}</span>
+          </button>
+        ))}
       </div>
       <StreetStrip s={s} lots={lots} />
       <ul className="grid gap-2 md:grid-cols-2">

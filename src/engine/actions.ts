@@ -31,6 +31,7 @@ import { previewPol } from './politics';
 import type { Character } from './types';
 import { bonesActions, bonesBlock, previewBones } from './bones';
 import { ledgerActions, previewLedger } from './ledgerbook';
+import { earsActions, previewEars } from './ears';
 
 /** A capo's willingness to accept a worse contract. */
 export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
@@ -260,6 +261,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** The boss's books (ledgerbook.ts). */
   ledger: {
     preview: (s, a) => previewLedger(s, a.op),
+  },
+  /** The Ears: the Madam, the nightlife workers (ears.ts). */
+  ears: {
+    preview: (s, a) => previewEars(s, a.op),
   },
   /** Travel, trips and flight (travel.ts, fugitive.ts). */
   travel: {
@@ -936,6 +941,7 @@ export function availableActions(s: GameState): PlayerAction[] {
   out.push(...hoodActions(s).filter((a) => s.money >= previewAction(s, a).cost * 4));
   out.push(...talkActions(s), ...missionActions(s).filter((a) => s.money >= previewAction(s, a).cost * 3));
   out.push(...bonesActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 4; }), ...ledgerActions(s));
+  out.push(...earsActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 4; }));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));
   if (people.length) {

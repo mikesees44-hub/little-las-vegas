@@ -19,7 +19,7 @@ import type { EventInstance, GameState } from './types';
  *    share lately ranks lower, a starved one ranks higher, and no theme
  *    takes more than MAX_PER_THEME seats in one week;
  *  - make the bagman an institution rather than a weekly face: he comes in
- *    person every other month (or when Philadelphia is unhappy), and in the
+ *    person about once a season (or when Philadelphia is unhappy), and in the
  *    other months the envelope goes through the drop on its own.
  *
  * Mandatory events (funerals, ceremonies, dated history beats) and chain
@@ -38,8 +38,8 @@ export const YEAR_CAP = 5;
 export const INSTITUTIONAL = new Set(['bagman']);
 /** Most seats one theme may take in a week (mandatory events excepted). */
 export const MAX_PER_THEME = 2;
-/** The bagman comes in person at most once in this many weeks (unless Philadelphia is unhappy). */
-export const BAGMAN_VISIT_GAP = 7;
+/** The bagman comes in person at most once in this many weeks, about once a season (unless Philadelphia is unhappy). */
+export const BAGMAN_VISIT_GAP = 11;
 /** How far back the history goes. */
 const HISTORY = 60;
 /** The window the theme mix is measured over. */
@@ -59,6 +59,18 @@ export interface DirectorState {
   tribute: [number, number, number][];
   /** This week's envelope going through the drop (posted by the engine with the week's ledger). */
   drop?: number;
+  /** Scene variants already shown this game, per family (sceneVariants.ts): never the same scene twice until all are used. */
+  scenes?: Record<string, number[]>;
+  /** The player's last answer per template, [week, choice id] (storyPace.ts: deal renewals). */
+  answers?: Record<string, [number, string]>;
+  /** Routine business settled quietly this week, applied with the week's ledger (storyPace.ts). */
+  quiet?: import('./storyPace').QuietItem[];
+  /** The last "In motion" notes: [week, text]. */
+  motion?: [number, string][];
+  /** How this game opened (openings.ts). */
+  opening?: import('./openings').OpeningPlan;
+  /** Storylet parts already used (storylets.ts): settings and complications, by index. */
+  lets?: Record<string, number[]>;
 }
 
 export function director(s: GameState): DirectorState {
@@ -256,7 +268,7 @@ export function recordShown(s: GameState, shown: readonly EventInstance[]): void
 }
 
 /**
- * Does the bagman come in person this month? The first time, every other
+ * Does the bagman come in person this month? The first time, about once a season
  * month, and whenever Philadelphia has reason to look the boss in the eye
  * (family heat, a short envelope last time).
  */

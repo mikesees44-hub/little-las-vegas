@@ -1,4 +1,5 @@
 import { storylines } from '../../engine/livingStories';
+import { motionNotes } from '../../engine/storyPace';
 import type { GameState } from '../../engine/types';
 
 /**
@@ -10,11 +11,27 @@ export function Storylines({ s }: { s: GameState }) {
   const lines = storylines(s);
   const active = lines.filter((l) => l.arc.status === 'active');
   const done = lines.filter((l) => l.arc.status === 'done');
+  const motion = motionNotes(s);
+  const inMotion = motion.length > 0 && (
+    <section data-testid="in-motion">
+      <h2 className="text-xs uppercase tracking-widest text-gold-400 mb-2">In motion (the last few weeks)</h2>
+      <p className="text-xs text-stone-500 mb-1">Routine business your people settled the usual way: on the books, no meeting needed.</p>
+      <ul className="space-y-1">
+        {motion.map((m, i) => <li key={i} className="text-xs text-stone-400 break-words"><span className="text-stone-600">wk {m.week} · </span>{m.text}</li>)}
+      </ul>
+    </section>
+  );
   if (!lines.length) {
-    return <p className="text-sm text-stone-500" data-testid="storylines-empty">No storylines yet. Give it a few weeks: the island has a way of starting things.</p>;
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-stone-500" data-testid="storylines-empty">No storylines yet. Give it a few weeks: the island has a way of starting things.</p>
+        {inMotion}
+      </div>
+    );
   }
   return (
     <div className="space-y-4" data-testid="storylines">
+      {inMotion}
       <section>
         <h2 className="text-xs uppercase tracking-widest text-gold-400 mb-2">In progress ({active.length})</h2>
         {!active.length && <p className="text-sm text-stone-500">Nothing is brewing right now.</p>}

@@ -8,9 +8,11 @@ import { lotProgress, lotSvg } from '../map/lotIcons';
 import { ActionCard } from '../components/Orders';
 import { CharLink } from '../components/People';
 import { STATUS_LABEL } from './RealEstate';
+import { useEmpire } from '../empire/context';
+import { venueForLot } from '../../engine/empire';
 
 /** A property clicked on the map: what it is, who runs it, and who the crew thinks should. */
-export function LotPanel({ s, id }: { s: GameState; id: string }) {
+export function LotPanel({ s, id, noDesigner }: { s: GameState; id: string; noDesigner?: boolean }) {
   const l = s.econ?.lots.find((x) => x.id === id);
   if (!l) return null;
   const u = l.use ? USES_BY_ID[l.use] : undefined;
@@ -21,8 +23,12 @@ export function LotPanel({ s, id }: { s: GameState; id: string }) {
   const take = biz ? expectedTake(s, biz) : mine && l.stage === 'open' && u ? Math.max(0, propertyNet(s, l).rev - propertyNet(s, l).exp) : 0;
   const picks = mine && l.stage === 'open' && (biz || !l.tenant || l.operating) ? rankManagers(s, key, Math.max(take, 100)).slice(0, 3) : [];
   const best = picks[0];
+  const empire = useEmpire();
+  const ven = mine ? venueForLot(s, l.id) : undefined;
   return (
     <div className="space-y-3" data-testid="lot-panel">
+      {ven && !noDesigner && <button type="button" className="btn-gold w-full" data-testid="lot-open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
+      {mine && !noDesigner && !l.use && l.stage !== 'permits' && <button type="button" className="btn-gold w-full" onClick={() => empire.open({ pending: { key: `lot:${l.id}`, name: lotName(l), develop: { lotId: l.id } } })}>Develop it (Designer)</button>}
       <div className="flex items-center gap-2">
         <span dangerouslySetInnerHTML={{ __html: lotSvg(l, { size: 40 }) }} />
         <div>
