@@ -87,7 +87,8 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
     // Take the advice: the top item's order, or the recommended man for its pick.
     for (const o of whatShouldIDo(s, 5)) {
       const a = o.link.action ?? (o.link.role ? rankCandidates(s, o.link.role).candidates.find((c) => c.action && !c.disabledReason)?.action : undefined);
-      if (a && !explainAction(s, a).verdict.label.startsWith('Not yet')) { add(a); break; }
+      // Only free advice (appointments, council tasks, promotions): it must not move the money targets.
+      if (a && previewAction(s, a).cost === 0 && !explainAction(s, a).verdict.label.startsWith('Not yet')) { add(a); break; }
     }
   }
   return { choices, actions };
