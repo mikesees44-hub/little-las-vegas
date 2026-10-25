@@ -120,8 +120,9 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
     // Take the advice: the top item's order, or the recommended man for its pick.
     for (const o of whatShouldIDo(s, 5)) {
       const a = o.link.action ?? (o.link.role ? rankCandidates(s, o.link.role).candidates.find((c) => c.action && !c.disabledReason)?.action : undefined);
-      // Only free advice (appointments, council tasks, promotions): it must not move the money targets.
-      if (a && previewAction(s, a).cost === 0 && !explainAction(s, a).verdict.label.startsWith('Not yet')) { add(a); break; }
+      // Only free advice (appointments, council tasks, promotions, bones jobs): it must not move the money targets.
+      // Officials come through POL_RATE (a payroll is a weekly bill).
+      if (a && a.kind !== 'pol' && previewAction(s, a).cost === 0 && !explainAction(s, a).verdict.label.startsWith('Not yet')) { add(a); break; }
     }
   }
   if (rand(h) < BONES_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'bones' || a.kind === 'ledger')));
