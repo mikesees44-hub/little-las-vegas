@@ -1,4 +1,5 @@
 import { ageOn } from './calendar';
+import { hasBones } from './bones';
 import { capos, crew, displayName, isFree, player } from './characters';
 import { regimeSizes } from './hierarchy';
 import { beat, hit, mgEffect, mgOf, registerAttacher, registerMinigame, type MgOption, type MgSession, type MinigameDef } from './minigame';
@@ -240,9 +241,12 @@ function ceremonyBeats(s: GameState, ses: SS): Beat[] {
     return { id: `crew_${k.id}`, label: `${displayName(k)}'s crew (${n} men)`, detail: n === minN ? `A short crew: ${k.firstName} +5.` : n === maxN ? `The strongest crew: ${k.firstName}'s faction grows (+3).` : `${k.firstName} +3.` };
   });
   const sponsorOrYou = sponsor ? displayName(sponsor) : 'Your underboss';
+  // What he did to be here (bones.ts): the ring knows, or knows he did nothing.
+  const bones = c.bones?.[0];
+  const record = bones ? ` Everyone in the ring knows why he is here: ${bones.year}, the ${bones.job} (${bones.role}).` : ` Nobody in the ring can say what he ever did for this thing of ours. Philadelphia did you a favor, and the old-timers look at the floor.`;
   return [
     { card: { scene: 'street', kicker: 'The drive', text: `${c.firstName} was told to wear a suit and wait on the corner of Pacific and Schellenger at nine. ${sponsorOrYou} picks him up. Nobody talks. Somewhere past the Rio Grande bridge, ${c.firstName} wonders, the way they all wonder, whether this is the ride you come back from.`, actors: [c.id, ...(sponsor ? [sponsor.id] : [])] }, options: next() },
-    { card: { scene: 'ceremony', kicker: 'The room', text: `The back of a closed restaurant in the Crest; blinds down, one lamp. The capos stand in a ring. On the table: a revolver, a knife, a saint card, and a candle.\n\nWho stands up for him?`, actors: [c.id, p.id, ...ring.slice(0, 3).map((k) => k.id)] }, options: sponsorOpts },
+    { card: { scene: 'ceremony', kicker: 'The room', text: `The back of a closed restaurant in the Crest; blinds down, one lamp. The capos stand in a ring. On the table: a revolver, a knife, a saint card, and a candle.${record}\n\nWho stands up for him?`, actors: [c.id, p.id, ...ring.slice(0, 3).map((k) => k.id)] }, options: sponsorOpts },
     { card: { scene: 'ceremony', kicker: 'The oath', text: `You speak. He repeats.\n\n"You came in here alive. You'll leave here a different man. This thing of ours comes before your blood, before your wife, before your children, before God himself on a Sunday. When you're called, you come. What you see, you never saw. You never touch another man's wife, and you never raise your hand to a friend of ours without the word."\n\nThe knife touches his trigger finger; one drop falls on the saint. You set the card alight in his cupped hands. It curls and blackens.\n\n"As this saint burns, so burns my soul if I betray this family."`, actors: [c.id, p.id] }, options: [
       { id: 'say_fear', label: '"Now you can\'t leave. Remember that."', detail: 'Fear: loyalty +10; his ambition cools.' },
       { id: 'say_warm', label: '"Now you eat with us. Bring your mother to Sunday dinner."', detail: 'Warmth: his opinion of you +15.' },
@@ -307,7 +311,7 @@ function ceremonyStep(s: GameState, ses: SS, move: string): void {
     d.fbi = hit(ses, 1 / 8);
     if (d.fbi) add([{ type: 'evidence', charId: c.id, amount: 5 }, { type: 'story', charId: c.id, text: 'The night he was made, a car with its lights off sat across the street. The FBI wrote down his plate.' }]);
     // The passed-over echo.
-    const passed = crew(s).filter((x) => x.rank === 'associate' && x.id !== c.id && x.goal === 'get_made' && !x.proposedWeek).slice(0, 2);
+    const passed = crew(s).filter((x) => x.rank === 'associate' && x.id !== c.id && x.goal === 'get_made' && !x.proposedWeek && !hasBones(x)).slice(0, 2);
     d.passedOver = passed.map((x) => x.id);
     for (const a of passed) {
       add([{ type: 'opinion', from: a.id, to: p.id, amount: -6, reason: `Passed over when ${c.firstName} was made`, decay: 1 }, { type: 'meter', from: a.id, to: p.id, meter: 'grievance', amount: 8 }]);
