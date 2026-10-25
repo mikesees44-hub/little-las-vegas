@@ -22,6 +22,7 @@ import type { Effect, FactionId, GameState, HeatBar, LedgerCategory, ScheduledCo
 import { addEvidence, addStory, assignTo, bumpStat, capoOf, giveBio, GOAL_INFO, tidyRegimes, validCapo } from './hierarchy';
 import { voucherBlame } from './regimes';
 import { maybePlant } from './rivalcrew';
+import { applyStoryOp, describeStoryOp } from './storyOps';
 
 const HEAT_NAMES: Record<HeatBar, string> = { local: 'Local heat', family: 'Family heat', federal: 'Federal heat' };
 
@@ -194,6 +195,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeDynOp(s, e.op);
     case 'power':
       return describePowerOp(s, e.op);
+    case 'storyOp':
+      return describeStoryOp(s, e.op);
     case 'econ':
       return describeEconOp(s, e.op);
     case 'evidence': {
@@ -795,6 +798,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'power':
       applyPowerOp(ctx, e.op, label);
+      break;
+    case 'storyOp':
+      applyStoryOp(ctx, e.op);
       break;
     case 'econ':
       applyEconOp(ctx, e.op, label);

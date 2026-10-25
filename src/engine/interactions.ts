@@ -5,6 +5,7 @@ import { fmtMoney } from './effects';
 import { getRelation, opinion } from './relations';
 import { FACTION_NAMES } from './world';
 import type { Character, Effect, GameState, Hook, InteractionId } from './types';
+import { previewRomance } from './romance';
 
 /**
  * Character interactions (the CK-style right-click menu). Each interaction
@@ -48,6 +49,7 @@ export function relationshipTo(s: GameState, c: Character): Relationship {
 
 export const INTERACTION_ORDER: InteractionId[] = [
   'dinner', 'gift_small', 'gift_large', 'bribe', 'favor', 'demand', 'threaten', 'expose', 'recruit', 'bringIn', 'make', 'promote', 'demote', 'exile', 'whack',
+  'court', 'affair', 'proposeMarriage', 'endRomance', 'separate',
 ];
 
 /** What a fictional official's envelope buys. */
@@ -132,6 +134,12 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
   const first = c.firstName;
   const adult = ageOn(c.birth, s.date) >= 16;
   switch (id) {
+    case 'court':
+    case 'affair':
+    case 'proposeMarriage':
+    case 'endRomance':
+    case 'separate':
+      return previewRomance(s, id, c);
     case 'dinner': {
       if (rel !== 'family' && rel !== 'crew') return undefined;
       if (!adult) return undefined;

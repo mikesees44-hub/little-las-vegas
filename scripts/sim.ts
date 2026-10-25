@@ -17,6 +17,7 @@ import { MAX_POPUPS } from '../src/engine/events';
 import { legalActions, previewAction } from '../src/engine/actions';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
+import { romanceActions } from '../src/engine/romance';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 
 function arg(name: string, def: string): string {
@@ -43,6 +44,8 @@ const DYNASTY_RATE = Number(arg('dynasty', '0.08'));
 const ENVOY_RATE = Number(arg('envoys', '0.03'));
 /** Chance per week of a power order (heir, grooming, protégé, amends, blitz prep/launch, front, the ladder). */
 const POWER_RATE = Number(arg('power', '0.04'));
+/** Chance per week of a romance interaction (court, affair, propose, end it, separate). */
+const ROMANCE_RATE = Number(arg('romance', '0.015'));
 /** Chance per week of an economy order (upgrade, property, managers, HQ, gifts, projects, leverage). */
 const ECON_RATE = Number(arg('econ', '0.12'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
@@ -80,6 +83,7 @@ function aiChoices(s: GameState, salt: number): PlayerChoices {
   else if (boss?.lifestyle?.points) add(pickOne(h, legal.filter((a) => a.kind === 'perk')));
   if (rand(h) < POWER_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'power')));
   if (rand(h) < ENVOY_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'scheme' && a.scheme === 'envoy')));
+  if (rand(h) < ROMANCE_RATE) add(pickOne(h, romanceActions(s).filter((a) => !previewAction(s, a).disabledReason)));
   if (rand(h) < ECON_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'econ')));
   return { choices, actions };
 }
@@ -128,6 +132,10 @@ interface GameResult {
   titles: Record<string, number>;
   /** Power-pillar counters (powerState.ts). */
   power?: Record<string, number>;
+  /** Story pillar counters at the end (content pack + romance). */
+  story?: Record<string, number>;
+  romance?: Record<string, number>;
+  packPopups: number;
 }
 
 function playOne(gi: number): GameResult {
@@ -135,7 +143,7 @@ function playOne(gi: number): GameResult {
     bankruptYear1: false, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
     deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
-    hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {},
+    hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, packPopups: 0,
   };
   const lastSeen: Record<string, number> = {};
   let s: GameState;
@@ -206,6 +214,7 @@ function playOne(gi: number): GameResult {
     r.popupsPerWeek.push(s.pendingEvents.length);
     if (s.pendingEvents.filter(isFamilyEvent).length > MAX_FAMILY_POPUPS) r.familyOver++;
     for (const e of s.pendingEvents) r.titles[e.defId] = (r.titles[e.defId] ?? 0) + 1;
+    r.packPopups += s.pendingEvents.filter((e) => e.meta?.pack).length;
     for (const e of s.pendingEvents) {
       if (!e.meta?.crew) continue;
       r.popupKeys[e.defId] = (r.popupKeys[e.defId] ?? 0) + 1;
@@ -237,6 +246,8 @@ function playOne(gi: number): GameResult {
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   if (s!.power) r.power = { ...s!.power.stats };
+  if (s!.story) r.story = { ...s!.story.stats, chainsStarted: Object.keys(s!.story.chains).length };
+  if (s!.romance) r.romance = { ...s!.romance.stats };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
   return r;
 }
@@ -308,6 +319,18 @@ if (dynGames.length) {
   const per10 = (k: string) => dynGames.reduce((a, r) => a + (r.dyn![k] ?? 0) * (520 / r.weeksPlayed), 0) / dynGames.length;
   console.log(`  House events per 10 years (mean): ${keys.map((k) => `${k} ${per10(k).toFixed(1)}`).join(', ')}`);
 }
+
+const per10g = (rs: GameResult[], pick: (r: GameResult) => Record<string, number> | undefined) => {
+  const live = rs.filter((r) => pick(r) && r.weeksPlayed > 0);
+  if (!live.length) return '';
+  const keys = Object.keys(pick(live[0])!);
+  return keys.map((k) => `${k} ${(live.reduce((a, r) => a + (pick(r)![k] ?? 0) * (520 / r.weeksPlayed), 0) / live.length).toFixed(1)}`).join(', ');
+};
+console.log(`\nSTORY (per game, per 10 years, mean)`);
+console.log(`  Content pack: ${per10g(results, (r) => r.story)}`);
+const packShare = results.reduce((a, r) => a + r.packPopups, 0) / Math.max(1, allPopups.reduce((a, b) => a + b, 0));
+console.log(`  Pack share of all popups: ${(packShare * 100).toFixed(1)}%`);
+console.log(`  Romance: ${per10g(results, (r) => r.romance)}`);
 
 console.log(`\nHEAT (share of weeks in each band)`);
 for (const b of HEAT_BARS) {

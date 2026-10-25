@@ -6,6 +6,7 @@
 
 import type { DynAction, DynOp, DynState } from './familyState';
 import type { ExtAttrs, PowerAction, PowerOp, PowerState } from './powerState';
+import type { Orientation, RomanceState, StoryOp, StoryState } from './storyState';
 import type { EconAction, EconOp, EconState } from './econState';
 
 export interface GameDate {
@@ -156,6 +157,12 @@ export interface Character {
   attrs?: ExtAttrs;
   /** His record of achievements (separate from the attributes). */
   success?: StoryEntry[];
+
+  /* ---- Story & romance pillar ---- */
+  /** Fixed at birth (see storyState.orientationFor). */
+  orientation?: Orientation;
+  /** The real biological father, when it is not the father of record (hidden paternity). */
+  bioFatherId?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
@@ -496,6 +503,8 @@ export type Effect =
   | ({ type: 'retire'; charId: string } & EffectBase)
   | ({ type: 'faction2'; factionId: string; op: 'stage' | 'remove' | 'promote'; memberId?: string } & EffectBase)
   | ({ type: 'checkBackground'; charId: string } & EffectBase)
+  /** The story pillar: pack secrets, romance, paternity (storyOps.ts). */
+  | ({ type: 'storyOp'; op: StoryOp } & EffectBase)
   /** The economy & property layer (econState.ts / econ.ts). */
   | ({ type: 'econ'; op: EconOp } & EffectBase);
 
@@ -801,6 +810,10 @@ export interface GameState {
   crewStats?: CrewStats;
   /** Event key -> week last shown (per-event cooldowns for crew decisions). */
   eventCooldowns?: Record<string, number>;
+  /** The content pack's bookkeeping (storyPack.ts). */
+  story?: StoryState;
+  /** Courtships, lovers, affairs, pregnancies (romance.ts). */
+  romance?: RomanceState;
   /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
   econ?: EconState;
 }
@@ -852,7 +865,9 @@ export type PlayerAction =
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
-  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose';
+  | 'promote' | 'demote' | 'exile' | 'make' | 'whack' | 'bringIn' | 'bribe' | 'expose'
+  /* romance (romance.ts) */
+  | 'court' | 'affair' | 'endRomance' | 'proposeMarriage' | 'separate';
 
 export interface AdvanceResult {
   state: GameState;
