@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { OrderToast, type ToastItem } from './components/OrderToast';
 import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
@@ -109,9 +110,11 @@ export function App({ startOn = 'title' }: AppProps) {
   const [orders, setOrders] = useState<PlayerAction[]>([]);
   const ordersApi = useMemo(() => ({
     orders,
-    queue: (a: PlayerAction) => setOrders((o) => [...o, a]),
+    queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
   }), [orders]);
+  const [toast, setToast] = useState<ToastItem | undefined>();
+  const closeToast = useCallback(() => setToast(undefined), []);
   const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
   const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
@@ -450,6 +453,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
+      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
     </div>
     </TravelContext.Provider>
     </OrdersContext.Provider>

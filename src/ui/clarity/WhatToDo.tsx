@@ -56,7 +56,7 @@ export function WhatToDoPanel({ s, onTab, answered = 0, compact }: { s: GameStat
                 {!compact && <div className="text-[11px] leading-snug text-stone-400">{o.text}</div>}
               </div>
               <button type="button" className={`shrink-0 whitespace-nowrap rounded border px-2 py-0.5 text-[11px] font-semibold ${queued(o) ? 'border-noir-600 text-stone-500' : 'border-gold-500 text-gold-300 hover:bg-gold-500/15'}`} disabled={queued(o)} onClick={() => go(o)}>
-                {queued(o) ? 'Ordered' : o.cta}
+                {queued(o) ? 'Set for this week ✓' : o.cta}
               </button>
             </div>
           </li>

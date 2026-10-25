@@ -69,7 +69,7 @@ export function LifestylePanel({ s }: { s: GameState }) {
                 <div className="mt-1 text-[11px] text-gold-300 font-semibold">Your life</div>
               ) : (
                 <button className="btn-ghost w-full text-xs py-1 mt-1" disabled={!!p.disabledReason || queued(a)} onClick={() => queue(a)} title={p.detail}>
-                  {queued(a) ? 'Ordered' : ls ? 'Switch to this' : 'Live this life'}
+                  {queued(a) ? 'Switching ✓' : ls ? 'Switch to this' : 'Live this life'}
                 </button>
               )}
             </div>
@@ -101,7 +101,7 @@ export function LifestylePanel({ s }: { s: GameState }) {
                         <div className="flex items-center justify-between gap-2">
                           <span className={`text-sm font-semibold ${has ? 'text-gold-300' : 'text-stone-200'}`}>{p.name}</span>
                           {has ? <span className="text-[10px] text-gold-300">Learned</span> : (
-                            <button className="btn-gold text-[11px] py-0.5 px-2" disabled={!!why || queued(a)} onClick={() => queue(a)}>{queued(a) ? 'Ordered' : 'Learn'}</button>
+                            <button className="btn-gold text-[11px] py-0.5 px-2" disabled={!!why || queued(a)} onClick={() => queue(a)}>{queued(a) ? 'Learning ✓' : 'Learn'}</button>
                           )}
                         </div>
                         <div className="text-[11px] text-stone-400">{p.text}</div>

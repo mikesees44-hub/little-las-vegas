@@ -5,6 +5,7 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Chips } from './Chips';
 import { WhyPanel } from '../clarity/WhyPanel';
+import { actionVerb } from '../verbs';
 
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
@@ -46,7 +47,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
           disabled={!!why || queued}
           onClick={() => queue(action)}
         >
-          {queued ? 'Ordered' : 'Order'}
+          {queued ? actionVerb(action).done : actionVerb(action).verb}
         </button>
       </div>
       <Chips s={s} effects={p.effects} />
