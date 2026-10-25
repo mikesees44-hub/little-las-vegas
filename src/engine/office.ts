@@ -145,6 +145,8 @@ export function officeWeek(s: GameState): void {
   if (hours) delete s.flags.office_hours;
   if (!hours && !chance(s, OFFICE_CHANCE)) return;
   const ev = buildPetition(s);
+  // The boss asked for it (office hours): it is not routine, it gets a seat (storyPace.ts).
+  if (ev && hours) ev.meta = { ...(ev.meta ?? {}), asked: 1 };
   if (ev) s.eventQueue.push(ev);
 }
 

@@ -765,6 +765,8 @@ export interface WeeklyReport {
   end: { money: number; respect: number; heat: Record<HeatBar, number> };
   lines: ReportLine[];
   log: string[];
+  /** Routine business settled without a popup this week ("In motion", storyPace.ts). */
+  motion?: string[];
 }
 
 export interface GameOver {
