@@ -8,7 +8,7 @@ import type { HouseType } from './houses';
  * Philadelphia crime families, show-business families).
  */
 
-export type Stock = 'Sicilian' | 'Calabrian' | 'Neapolitan' | 'Abruzzese' | 'Irish' | 'Galician' | 'Litvak' | 'OldStock' | 'Migration' | 'German' | 'Polish';
+export type Stock = 'Sicilian' | 'Calabrian' | 'Neapolitan' | 'Abruzzese' | 'Irish' | 'Galician' | 'Litvak' | 'OldStock' | 'Migration' | 'German' | 'Polish' | 'Caribbean';
 
 export const ORIGINS: Record<Stock, string[]> = {
   Sicilian: ['Castellammare del Golfo, Sicily', 'Sciacca, Sicily', 'Partinico, Sicily', 'Licata, Sicily', 'Termini Imerese, Sicily', 'Agrigento, Sicily', 'Bagheria, Sicily'],
@@ -22,17 +22,18 @@ export const ORIGINS: Record<Stock, string[]> = {
   Migration: ['the Great Migration from Virginia', 'the Great Migration from South Carolina', 'the Great Migration from Georgia'],
   German: ['Hamburg, Germany', 'Bremen, Germany', 'Baden, Germany'],
   Polish: ['a village near Kraków', 'Tarnów, Galicia', 'a farm outside Białystok', 'Poznań'],
+  Caribbean: ['San Juan, Puerto Rico', 'Ponce, Puerto Rico', 'Mayagüez, Puerto Rico', 'Caguas, Puerto Rico'],
 };
 
 /** Years the founder arrived (or the house was founded, for old stock). */
 export const ARRIVAL: Record<Stock, [number, number]> = {
   Sicilian: [1886, 1910], Calabrian: [1886, 1910], Neapolitan: [1882, 1908], Abruzzese: [1885, 1910],
-  Irish: [1866, 1895], Galician: [1882, 1906], Litvak: [1882, 1906], OldStock: [1866, 1888], Migration: [1895, 1918], German: [1868, 1892], Polish: [1885, 1910],
+  Irish: [1866, 1895], Galician: [1882, 1906], Litvak: [1882, 1906], OldStock: [1866, 1888], Migration: [1895, 1918], German: [1868, 1892], Polish: [1885, 1910], Caribbean: [1899, 1916],
 };
 
 export const STOCK_ETH: Record<Stock, Ethnicity> = {
   Sicilian: 'Italian', Calabrian: 'Italian', Neapolitan: 'Italian', Abruzzese: 'Italian', Irish: 'Irish', Galician: 'Jewish', Litvak: 'Jewish',
-  OldStock: 'Irish', Migration: 'Irish', German: 'Irish', Polish: 'Irish',
+  OldStock: 'Irish', Migration: 'Irish', German: 'Irish', Polish: 'Irish', Caribbean: 'Italian',
 };
 
 /** First names for stocks the engine's lists don't cover. */
@@ -53,6 +54,10 @@ export const STOCK_NAMES: Partial<Record<Stock, { M: string[]; F: string[] }>> =
     M: ['Stanisław', 'Józef', 'Jan', 'Kazimierz', 'Walter', 'Stanley', 'Joseph', 'Edward', 'Frank', 'Chester', 'Henry', 'Thaddeus'],
     F: ['Maria', 'Helena', 'Stefania', 'Jadwiga', 'Sophie', 'Helen', 'Stella', 'Josephine', 'Wanda', 'Irene', 'Genevieve'],
   },
+  Caribbean: {
+    M: ['José', 'Juan', 'Luis', 'Rafael', 'Carlos', 'Manuel', 'Miguel', 'Ramón', 'Eduardo', 'Pedro', 'Héctor', 'Ángel'],
+    F: ['María', 'Carmen', 'Ana', 'Rosa', 'Luz', 'Isabel', 'Gloria', 'Lourdes', 'Juana', 'Milagros', 'Elena', 'Teresa'],
+  },
 };
 
 /** Surnames for women who married in from outside any house, by stock. */
@@ -61,6 +66,7 @@ export const OUTSIDE_SURNAMES: Partial<Record<Stock, string[]>> = {
   Migration: ['Jackson', 'Johnson', 'Freeman', 'Washington', 'Carter', 'Brooks', 'Hill', 'Gaines', 'Reed', 'Mitchell', 'Coleman', 'Harris'],
   German: ['Schmidt', 'Becker', 'Hoffmann', 'Wagner', 'Krause', 'Vogel', 'Richter', 'Lang', 'Keller', 'Baumann'],
   Polish: ['Kowalski', 'Nowak', 'Wiśniewski', 'Lewandowski', 'Zieliński', 'Kamiński', 'Wójcik', 'Dąbrowski', 'Mazur', 'Krawczyk'],
+  Caribbean: ['Rivera', 'Rodríguez', 'Torres', 'Ortiz', 'Colón', 'Santiago', 'Vázquez', 'Morales', 'Cruz', 'Figueroa'],
 };
 
 /* ---------------------------------------------------------------- */

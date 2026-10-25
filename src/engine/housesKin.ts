@@ -179,8 +179,10 @@ function castHouse(k: K, hid: string, headId: string, full: boolean): void {
   const gm = f ? motherOf(s, f) : undefined;
 
   // The matriarch: his mother, else his grandmother, else an old aunt; the grandmother lives on if she must.
-  let mat = [m, gm].find((x) => x && living(k, x) && age(k, x) >= 50);
-  if (!mat && gf) mat = kidsOf(s, gf).find((x) => x !== f && genderOf(k, x) === 'F' && living(k, x) && age(k, x) >= 55);
+  // (A woman of your own house who married a rival's father is his mother, but she is not their matriarch: she is yours.)
+  const free = (x: string) => full || !s.characters[x]?.dynasty;
+  let mat = [m, gm].find((x) => x && living(k, x) && age(k, x) >= 50 && free(x));
+  if (!mat && gf) mat = kidsOf(s, gf).find((x) => x !== f && genderOf(k, x) === 'F' && living(k, x) && age(k, x) >= 55 && free(x));
   // Nobody old enough alive: in this telling his mother (or grandmother) did not die after all.
   for (const x of [m, gm]) {
     if (mat || !x || s.characters[x] || !L.people[x] || L.people[x].killer || age(k, x) > 88 || age(k, x) < 50) continue;

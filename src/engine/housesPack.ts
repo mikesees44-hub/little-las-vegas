@@ -2,6 +2,7 @@ import { EXTRA_HOUSES, type Stock } from './housesData';
 import type { HouseType } from './houses';
 import type { HouseSeed } from './housesHistory';
 import { PACK_DYNASTIES, type PackDynasty } from './housesPackData';
+import { showbizSeeds } from './housesShowbiz';
 
 /**
  * Adapter: the world pack's political, police and fire dynasties (extracted
@@ -49,6 +50,8 @@ export function packSeeds(): HouseSeed[] {
       faction: type === 'police' ? 'law' : undefined,
     });
   }
+  // Show business families (housesShowbiz.ts).
+  out.push(...showbizSeeds());
   return out;
 }
 

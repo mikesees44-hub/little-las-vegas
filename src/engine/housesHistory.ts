@@ -408,6 +408,7 @@ function genHouse(g: G, seed: HouseSeed): void {
   if (E < fb + 12) E = fb + randInt(L, 16, 26);
   E = Math.min(E, g.now - 1);
   if (seed.pack) {
+    shareSiblings(g, seed.pack);
     attachPackRoots(g, h, anchor, chain);
     widenPack(g, h, chain);
   }
@@ -463,7 +464,9 @@ function genHouse(g: G, seed: HouseSeed): void {
     ? `${fname}, of ${origin}, set the family up in ${seed.seat}.`
     : stock === 'Migration'
       ? `${fname} came north with ${origin} and settled in ${seed.seat}.`
-      : `${fname} came over from ${origin} and settled in ${seed.seat}.`;
+      : stock === 'Caribbean'
+        ? `${fname} came up from ${origin} and settled in ${seed.seat}.`
+        : `${fname} came over from ${origin} and settled in ${seed.seat}.`;
   L.events.push({ y: E, h: h.id, k: 'founding', t, p: founder });
 
   // Heads of the house, founder down.
@@ -515,7 +518,7 @@ function genPackPeople(g: G, h: LHouse, d: PackDynasty, stock: Stock): string {
     else if (p.maiden ? p.maiden === h.name : !rel(p.id, 'spouse').length) blood.add(p.id);
   }
   for (const p of people) {
-    const titles = [p.office.replace(/\.$/, '')];
+    const titles = p.office ? [p.office.replace(/\.$/, '')] : undefined;
     const married = !blood.has(p.id);
     mk(g, {
       first: p.first, last: p.last, maiden: married ? p.maiden ?? outsideSurname(g, stock, p.eth, h.name) : p.maiden, nick: p.nick, g: p.g, eth: p.eth,
@@ -625,6 +628,24 @@ function genPackPeople(g: G, h: LHouse, d: PackDynasty, stock: Stock): string {
   return roots[0] ?? people[0].id;
 }
 
+/** Pack brothers and sisters share the parents the line above them was given. */
+function shareSiblings(g: G, d: PackDynasty): void {
+  const { L } = g;
+  for (const p of d.people) {
+    for (const [k, sib] of p.rel) {
+      if (k !== 'sibling') continue;
+      const a = P(g, p.id);
+      const b = P(g, sib);
+      if (!a || !b || (!a.f && !a.m) || b.f || b.m) continue;
+      const pa = a.f ? P(g, a.f) : a.m ? P(g, a.m) : undefined;
+      if (pa && b.by - pa.by < 16) continue;
+      updPerson(L, sib, { f: a.f, m: a.m });
+      if (a.f) addKidRef(g.s, L, a.f, sib);
+      if (a.m) addKidRef(g.s, L, a.m, sib);
+    }
+  }
+}
+
 /** Other pack roots of the blood (cousins with no recorded parents) hang off the generated tree. */
 function attachPackRoots(g: G, h: LHouse, anchor: string, chain: string[]): void {
   const { L } = g;
@@ -638,7 +659,8 @@ function attachPackRoots(g: G, h: LHouse, anchor: string, chain: string[]): void
       // A generated son of an older man of the house, who fathered this one.
       const gfs = men.filter((x) => r.by - x.by >= 42 && r.by - x.by <= 75).sort((a, b) => b.by - a.by);
       const gf = gfs[0] ?? P(g, chain[chain.length - 1]);
-      if (!gf) continue;
+      // Nobody old enough to be a grandfather: this one stays a root of the house ("other kin").
+      if (!gf || r.by - gf.by < 42) continue;
       const by = Math.max(gf.by + 22, r.by - 30);
       f = mk(g, { first: firstName(g, 'M', h.stock as Stock, r.eth), last: h.name, g: 'M', eth: r.eth, by, bm: randInt(L, 1, 12), house: h.id, f: gf.id, m: gf.sp?.[0] });
       addKidRef(g.s, L, gf.id, f.id);
