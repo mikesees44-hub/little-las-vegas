@@ -758,9 +758,12 @@ export function syncHousehold(s: GameState, L: LineageState, c: Character, g?: G
   const have = kidsOf(s, c.id);
   for (const k of hh.kids) {
     if (have.some((x) => (L.people[x]?.first ?? s.characters[x]?.firstName) === k.name && birthYear(s, x) === k.born)) continue;
-    const kid = add({ first: k.name, last: c.lastName, g: k.male ? 'M' : 'F', eth: c.ethnicity, by: k.born, bm: k.born === s.date.y ? s.date.m : randInt(L, 1, 12), house, f: c.id, m: wife });
+    // His wife now may be a second, younger wife: the mother is a wife who was old enough to be.
+    const fits = (w: string) => { const by = birthYear(s, w); return by !== undefined && k.born - by >= 16 && k.born - by <= 45; };
+    const mom = wife && fits(wife) ? wife : spousesOfAny(s, L, c.id).find(fits);
+    const kid = add({ first: k.name, last: c.lastName, g: k.male ? 'M' : 'F', eth: c.ethnicity, by: k.born, bm: k.born === s.date.y ? s.date.m : randInt(L, 1, 12), house, f: c.id, m: mom });
     addKidRef(s, L, c.id, kid.id);
-    if (wife) addKidRef(s, L, wife, kid.id);
+    if (mom) addKidRef(s, L, mom, kid.id);
   }
 }
 
