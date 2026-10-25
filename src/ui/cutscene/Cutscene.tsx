@@ -7,7 +7,16 @@ import { stinger } from '../audio';
  * Video slot: drop a clip's URL here under a cutscene key and it plays in
  * place of the drawn still (muted, inline, with the still as poster fallback).
  */
-export const CUTSCENE_VIDEOS: Partial<Record<string, string>> = {};
+const CHURCH = '/_blob/25fa9dfa1f331c39f1c4837e8fafa445'; // funeral at St. Ann's (user's Gemini clip)
+const OFFICE = '/_blob/46a7b354dd048daa000e67374ee4b0f7'; // the boss's office: loyalty (user's Gemini clip)
+export const CUTSCENE_VIDEOS: Partial<Record<string, string>> = {
+  opening: CHURCH,
+  funeral: CHURCH,
+  boss_death: CHURCH,
+  succession: OFFICE,
+  sitdown: OFFICE,
+  betrayal_confrontation: OFFICE,
+};
 
 export function prefersReducedMotion(): boolean {
   try {
@@ -65,7 +74,7 @@ export function CutscenePlayer({ cues, onDone }: { cues: CutsceneCue[]; onDone: 
       <div className="relative flex-1 overflow-hidden">
         <div className={`absolute inset-0 ${reduced ? '' : pan}`} key={`${cue.key}${i}`}>
           {video ? (
-            <video src={video} autoPlay={!reduced} muted playsInline loop className="w-full h-full object-cover" />
+            <video src={video} autoPlay={!reduced} muted playsInline loop className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }} />
           ) : (
             <NoirStill cue={cue.key} seed={cue.week + i} />
           )}
