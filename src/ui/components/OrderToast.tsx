@@ -19,7 +19,7 @@ export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: T
   const { verb } = actionVerb(item.action);
   const chips = (p.effects ?? []).slice(0, 4).map((e) => (e as { label?: string }).label).filter(Boolean) as string[];
   return (
-    <div className="fixed z-[60] bottom-4 left-1/2 -translate-x-1/2 w-[min(92vw,460px)] rounded-lg border border-gold-500 bg-noir-900/95 shadow-2xl px-4 py-3" role="status" data-testid="order-toast">
+    <div className="fixed z-[60] bottom-4 left-1/2 -translate-x-1/2 w-[min(92vw,460px)] rounded-lg border border-gold-500 bg-noir-900/95 shadow-2xl px-4 py-3 pointer-events-none" role="status" data-testid="order-toast">
       <div className="flex items-start gap-3">
         <div className="text-gold-300 text-lg leading-none mt-0.5">✓</div>
         <div className="min-w-0 flex-1">
@@ -32,7 +32,7 @@ export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: T
             It happens when you hit <span className="text-gold-300">Advance Week</span>.
           </div>
         </div>
-        <div className="flex flex-col gap-1 shrink-0">
+        <div className="flex flex-col gap-1 shrink-0 pointer-events-auto">
           <button className="btn-ghost text-[11px] py-0.5 px-2" onClick={onUndo}>Undo</button>
           <button className="text-stone-500 text-[11px]" onClick={onClose} aria-label="Close">✕</button>
         </div>

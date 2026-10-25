@@ -401,8 +401,7 @@ export interface TributeState {
 export const DEFAULT_POLICY: Split & { auto: boolean } = { personal: 1500, treasury: 7500, reserve: 1000, auto: true };
 
 export function ensureTribute(s: GameState): TributeState {
-  if (!s.tribute) {
-    s.tribute = {
+  const fresh = (): TributeState => ({
       v: 1, rng: hashSeed(`${s.seed}:tribute`),
       acct: { personal: 0, reserve: 0, envelope: 0, clearing: 0, crew: {} },
       journal: [], books: [], reports: [], policy: { ...DEFAULT_POLICY },
@@ -410,7 +409,17 @@ export function ensureTribute(s: GameState): TributeState {
       arrears: {}, why: {}, carry: {}, costAvg: 2000, allowances: {}, cool: {}, putIn: [], agHist: [], forgiven: 0, favors: [], petitionsTo: {}, lastKeep: {}, terms: {}, disputes: [], investments: [], beats: [], said: [], greed: [], held: [],
       lastCollect: 0, lastAlloc: 0, rivals: {}, shortHist: {},
       stats: { audiences: 0, quiet: 0, shortfalls: 0, disputes: 0, grievances: 0, petitions: 0, granted: 0, audits: 0, caught: 0, covers: 0, crises: 0, insolvencies: 0, disagreements: 0 },
-    };
+    });
+  if (!s.tribute) { s.tribute = fresh(); return s.tribute; }
+  // Save migration: a save from an older build gets whatever fields it lacks (never overwriting what it has).
+  const t = s.tribute as unknown as Record<string, unknown>;
+  const d = fresh() as unknown as Record<string, unknown>;
+  for (const k of Object.keys(d)) {
+    if (t[k] === undefined) t[k] = d[k];
+    else if (k === 'stats' || k === 'ub' || k === 'acct') {
+      const tv = t[k] as Record<string, unknown>, dv = d[k] as Record<string, unknown>;
+      for (const kk of Object.keys(dv)) if (tv[kk] === undefined) tv[kk] = dv[kk];
+    }
   }
   return s.tribute;
 }

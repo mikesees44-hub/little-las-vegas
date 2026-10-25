@@ -28,6 +28,7 @@ import { applyStoryOp, describeStoryOp } from './storyOps';
 import { applyBonesOp, bonesBlock, describeBonesOp, mayPropose } from './bones';
 import { applyLedgerOp, describeLedgerOp } from './ledgerbook';
 import { applyTributeOp, describeTributeOp } from './tributeOps';
+import { applyEarsOp, describeEarsOp } from './ears';
 import { applyMinigameEffect, describeMinigame } from './minigame';
 import { onArrest } from './trial';
 
@@ -216,6 +217,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeLedgerOp(s, e.op);
     case 'tribute':
       return describeTributeOp(s, e.op);
+    case 'ears':
+      return describeEarsOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -844,6 +847,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'tribute':
       applyTributeOp(ctx, e.op, label);
+      break;
+    case 'ears':
+      applyEarsOp(ctx, e.op, label);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

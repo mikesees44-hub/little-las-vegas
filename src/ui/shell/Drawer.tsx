@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { GameState } from '../../engine/types';
 import { PANELS_BY_ID, sectionOf, type SectionCtx } from './panels';
+import { Guard } from '../components/Guard';
 import type { PanelId } from './routes';
 
 /**
@@ -50,7 +51,7 @@ export function Drawer({ s, panel, section, sections, ctx, onSection, onClose, e
       </nav>
       <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" data-testid={`section-${cur.id}`}>
         {cur.blurb && <p className="mb-3 text-xs text-stone-500">{cur.blurb}</p>}
-        {cur.render(s, ctx)}
+        <Guard label={cur.label} resetKey={`${panel}:${cur.id}`}>{cur.render(s, ctx)}</Guard>
       </div>
     </section>
   );

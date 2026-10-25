@@ -1,23 +1,23 @@
 import { useState } from 'react';
-import { expectedTake, isOpen, owned, playerSlots, staffNeed, washCapacity } from '../../engine/business';
-import { CATALOG, CATEGORY_LABEL, SHOP_KINDS } from '../../engine/catalog';
+import { expectedTake, owned, playerSlots, washCapacity } from '../../engine/business';
+import { CATALOG, SHOP_KINDS } from '../../engine/catalog';
 import { displayName } from '../../engine/characters';
 import { UNWASHED_SAFE } from '../../engine/economy';
 import { bankChecklist, casinoStatus, frontMan, hasBank } from '../../engine/goals';
 import { reached } from '../../engine/history';
 import { bookCapacity, LEND_AMOUNTS } from '../../engine/loans';
-import type { BusinessCategory, GameState } from '../../engine/types';
+import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
+import { PROP_GROUPS, groupOfBiz, type PropGroup } from '../../engine/propertyGroups';
 import { ActionCard } from './Orders';
-
-const CATS: BusinessCategory[] = ['front', 'racket', 'property'];
 
 export function Businesses({ s }: { s: GameState }) {
   const mine = owned(s);
   const cap = washCapacity(s);
   const ours = s.districts.filter((d) => (d.influence.player ?? 0) >= 20);
   const [district, setDistrict] = useState(ours[0]?.id ?? 'boardwalk');
-  const [cat, setCat] = useState<BusinessCategory>('front');
+  const shopGroups = PROP_GROUPS.filter((g) => SHOP_KINDS.some((k) => groupOfBiz(k) === g.id));
+  const [cat, setCat] = useState<PropGroup>(shopGroups[0]?.id ?? 'food');
   const slots = playerSlots(s, district);
   const weekly = mine.reduce((a, b) => a + expectedTake(s, b), 0);
   const upkeep = mine.reduce((a, b) => a + b.upkeep, 0);
@@ -33,50 +33,10 @@ export function Businesses({ s }: { s: GameState }) {
       </section>
 
       <section>
-        <div className="panel-title">What you own</div>
-        {CATS.map((c) => {
-          const list = mine.filter((b) => (b.category ?? CATALOG[b.kind].category) === c);
-          if (!list.length) return null;
-          return (
-            <div key={c} className="mt-2">
-              <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{c === 'property' ? 'Properties' : `${CATEGORY_LABEL[c]}s`}</div>
-              <ul className="divide-y divide-noir-800 text-sm">
-                {list.map((b) => {
-                  const def = CATALOG[b.kind];
-                  const staff = (b.staffIds ?? []).map((id) => s.characters[id]).filter(Boolean);
-                  const need = staffNeed(b);
-                  return (
-                    <li key={b.id} className="py-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-                      <div className="min-w-0">
-                        <div className="text-stone-200">{b.name}</div>
-                        <div className="text-[11px] text-stone-500">
-                          {def.name} · {s.districts.find((d) => d.id === b.districtId)?.name}
-                          {need > 0 && <> · staff {staff.length}/{need}{staff.length ? ` (${staff.map((m) => m.firstName).join(', ')})` : ''}</>}
-                          {def.launder > 0 && <> · washes {fmt$(def.launder)}/wk</>}
-                          {def.heat >= 0.3 && <span className="text-amber-400"> · draws heat</span>}
-                          {def.fedHeat >= 0.2 && <span className="text-sky-300"> · federal interest</span>}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-xs tabular-nums ${isOpen(s, b) ? 'text-gold-300' : 'text-red-400'}`}>
-                          {isOpen(s, b) ? (def.base === 0 ? 'by the score' : `~${fmt$(expectedTake(s, b))}/wk`) : `padlocked to wk ${b.closedUntil}`}
-                        </div>
-                        {b.kind !== 'casino' && <SellButton s={s} id={b.id} />}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          );
-        })}
-      </section>
-
-      <section>
         <div className="panel-title">Open a business</div>
         <div className="mt-2 flex flex-wrap gap-2 items-center">
-          {CATS.map((c) => (
-            <button key={c} className={`tab ${cat === c ? 'tab-active' : ''}`} onClick={() => setCat(c)}>{c === 'property' ? 'Properties' : `${CATEGORY_LABEL[c]}s`}</button>
+          {shopGroups.map((g) => (
+            <button key={g.id} className={`tab ${cat === g.id ? 'tab-active' : ''}`} onClick={() => setCat(g.id)} title={g.blurb}>{g.icon} {g.label}</button>
           ))}
           <select className="rounded bg-noir-900 border border-noir-600 p-1.5 text-sm ml-auto" value={district} onChange={(e) => setDistrict(e.target.value)} aria-label="District">
             {s.districts.map((d) => {
@@ -89,7 +49,7 @@ export function Businesses({ s }: { s: GameState }) {
           You can run {slots.max} places in {s.districts.find((d) => d.id === district)?.name} ({slots.used} used) — your share of its storefronts. Push into a district to open more.
         </p>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          {SHOP_KINDS.filter((k) => CATALOG[k].category === cat).map((k) => (
+          {SHOP_KINDS.filter((k) => groupOfBiz(k) === cat).map((k) => (
             <div key={k}>
               <ActionCard s={s} action={{ kind: 'buyBusiness', biz: k, district }} label={`${CATALOG[k].name} — ${fmt$(CATALOG[k].cost)}`} />
               <p className="text-[11px] text-stone-500 px-1 mt-0.5 italic">{CATALOG[k].blurb}</p>
@@ -154,7 +114,7 @@ export function Businesses({ s }: { s: GameState }) {
   );
 }
 
-function SellButton({ s, id }: { s: GameState; id: string }) {
+export function SellButton({ s, id }: { s: GameState; id: string }) {
   return (
     <details className="text-right">
       <summary className="text-[11px] text-stone-500 cursor-pointer hover:text-gold-300 list-none">sell…</summary>

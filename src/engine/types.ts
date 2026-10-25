@@ -14,6 +14,7 @@ import type { EconAction, EconOp, EconState } from './econState';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
 import type { BonesAction, BonesEntry, BonesOp, BonesState } from './bonesState';
 import type { LedgerAction, LedgerBookState, LedgerOp } from './ledgerbookState';
+import type { EarsAction, EarsOp, EarsState } from './earsState';
 
 export interface GameDate {
   y: number;
@@ -544,7 +545,9 @@ export type Effect =
   /** The boss's books and the receipts (ledgerbook.ts). */
   | ({ type: 'ledger'; op: LedgerOp } & EffectBase)
   /** The weekly take (tributeOps.ts). */
-  | ({ type: 'tribute'; op: import('./tributeOps').TributeOp } & EffectBase);
+  | ({ type: 'tribute'; op: import('./tributeOps').TributeOp } & EffectBase)
+  /** The Ears: the Madam, the nightlife workers, the connection web (ears.ts). */
+  | ({ type: 'ears'; op: EarsOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -880,6 +883,10 @@ export interface GameState {
   ledgerBook?: LedgerBookState;
   /** The weekly take: accounts, agreements, the underboss's envelope (tribute.ts; optional for old saves). */
   tribute?: import('./tributeState').TributeState;
+  /** The Empire Designer: properties, buildings, venues, staff, supplies (empireState.ts; optional for old saves). */
+  empire?: import('./empireState').EmpireState;
+  /** The Ears: the Madam, the nightlife workers, operators, the connection web (optional for old saves). */
+  ears?: EarsState;
 }
 
 export interface PlayerChoices {
@@ -934,7 +941,8 @@ export type PlayerAction =
   | { kind: 'pol'; op: PolAction }
   | { kind: 'bones'; op: BonesAction }
   | { kind: 'ledger'; op: LedgerAction }
-  | { kind: 'tribute'; op: import('./tributeOps').TributeAction };
+  | { kind: 'tribute'; op: import('./tributeOps').TributeAction }
+  | { kind: 'ears'; op: EarsAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

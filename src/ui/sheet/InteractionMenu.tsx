@@ -11,6 +11,8 @@ import { useClarity } from '../clarity/context';
 import { useTravel } from '../travel/context';
 import { useShell } from '../shell/context';
 import { menuFor, rankedGifts, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
+import { EarsPicker } from '../ears/EarsPicker';
+import { ConnectionsList } from '../ears/Connections';
 
 /** What you can do now first; what is blocked (with its reason) after. */
 function sortItems(s: GameState, items: MenuItem[]): MenuItem[] {
@@ -48,13 +50,14 @@ function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; 
   if (it.action) return <ActionCard s={s} action={it.action} label={it.label} compact />;
   const o = it.open!;
   if (o.type === 'gifts' && gifts) return <GiftPicker s={s} c={c} />;
+  if (o.type === 'ears' && gifts) return <div className="sm:col-span-2 rounded-md border border-noir-700 p-2">{o.mode === 'web' ? <ConnectionsList s={s} id={c.id} compact /> : <EarsPicker s={s} target={c} mode={o.mode} />}</div>;
   const run = () => {
     if (o.type === 'plan') { onDone?.(); plan(o.kind, c.id); }
     else if (o.type === 'trip') { onDone?.(); travel.plan(c.id); }
     else if (o.type === 'flee') { onDone?.(); travel.flee(c.id); }
     else if (o.type === 'marriage') { onDone?.(); openPicker({ kind: 'marriage', memberId: c.id }); }
     else if (o.type === 'go') { onDone?.(); shell.go(o.to); }
-    else if (o.type === 'gifts') setGifts(true);
+    else if (o.type === 'gifts' || o.type === 'ears') setGifts(true);
   };
   return (
     <button type="button" onClick={run} className={`w-full rounded-md border px-3 py-2 text-left ${it.hostile ? 'border-blood-500/50 hover:bg-blood-500/10' : 'border-noir-700 bg-noir-800/70 hover:border-gold-500'}`}>

@@ -127,6 +127,40 @@ shared popup pipeline (`registerEventSource`).
 | `design.ts` | A place's name, style (Doo Wop, Deco, Tiki, Colonial, Mid-century, Victorian: tourist draw) and neon color, keyed like managers (`econ.designs`); hooks for key staff and, later, Building → Floor → Space |
 | `goodlife.ts` | **The Good Life**: homes, cars, trucks, a boat, toys at period prices; respect, family opinion, stress relief, upkeep, resale; unexplained-wealth federal heat, rivals notice, RICO forfeiture from Oct 1970; the house owns it, so the heir inherits |
 
+## The Empire Designer (wave 2)
+
+Every motel, rooming house, hotel, restaurant, bar and nightclub the family (or a rival) runs is one reusable system.
+A Deal that signs for one opens the Designer (Holdings → Empire Designer, the building on the map, or the Deal's
+"Set it up" button). A new owner is done in under a minute: name, look (Doo Wop is Wildwood's own), Owner mode,
+"Open for business". Every tab goes deeper, down to the toilet paper. `GameState.empire` (optional; old saves migrate
+the first week: the scan builds records for the places you already own). Own seeded stream (`empire.rng`).
+
+| File | What it does |
+|---|---|
+| `empireState.ts` | Module 16's records, linked by id: Property (lot, zoning, permitted uses, value, debts, history) → Building (style, neon, condition, stories, sprinklers/elevator/ramps, every look it has had) → Floor → Space (room blocks, dining room, lounge, club, pool…); Venue (the business unit: concept, policy, inventory, durables, departments, staff, reputation, monthly/yearly statements, proposals); Department; Employment; SupplierContract; Project; OperatingPolicy; OperatingPreset |
+| `empireData.ts` | Concepts (budget motel, hourly-stay motel, rooming house, boutique hotel, luxury resort, restaurant, bar, nightclub), departments (the club's head is the **booking manager**), space types, guest segments (families, the young crowd, couples, business, high rollers, short stays, summer workers), suppliers |
+| `empireCatalog.ts` | The data-driven purchasing catalog (~100 rows: mattresses to toilet paper to stage lighting): price, quality, life (weeks or washes), workload, power, years on the market (Module 13), expectations that rise with the years |
+| `empireBuild.ts` | Layouts (rooms over floors, services on the ground floor), area and zoning checks, period codes (sprinklers and elevators above 3 stories, ramps from 1973), fit-out |
+| `empireStaff.ts` | Workload by department, staffing targets, persistent workers (wage, skill, satisfaction, ambition), family/crew heads, promotion |
+| `empireOps.ts` | The operating engine: the season curve, a logit market where every simulated venue (yours and rivals') and the rest of the island compete by price, quality, reputation, style, amenities and neighborhood; covers, drinks, club guests; inventory use, deliveries, reorders and shortages; linen wear by washing; durable wear and replacement; deterioration and breakdowns; the operating statement |
+| `empireProjects.ts` | 28 projects: cosmetic, furniture, equipment, remodels, wings and floors, amenities, structural, energy, access, technology, fire safety, conversions (budget ↔ hourly, boutique, resort). Prerequisites, cost paid weekly, weeks, rooms out of service, real effects on the records |
+| `empireAI.ts` | Delegation: Owner (default), Manager, Micromanage; presets (built-in and saved); the manager's week (prices toward the occupancy target, seasonal hiring and layoffs, purchasing at the tier, proposals, small jobs on his own), gripes and resignation |
+| `empireActs.ts` | HOOK for the act-booking phase: the booking manager's skill sets the tier of act he can land; the month's act (world-pack entertainers: fee, draw) and his 10% cut |
+| `empire.ts` | The hub: venue creation and migration, rivals (the town's motels and rooming houses; new ones as they open; spin-offs by your ambitious ex-heads), ledger posting, projects, staff months, rival bankruptcies, the map sync, commands (`EmpireCmd`), the random player's orders |
+
+**Money.** Configuration commands never move money: `applyEmpireCmd(s, cmd)` (UI, immediate, a copy) and the order
+`{ kind: 'econ', op: { type: 'empire', cmd } }` (sim) only change records. Each week a player venue posts by name:
+its takings (the business line), payroll, supplies & linen, operating costs (utilities, upkeep, taxes, insurance,
+licenses, office & commissions, ads, the act), replacements and projects as capital, the manager's share. A venue's
+business has `upkeep` 0 (its statement covers it) and `expectedTake` returns its last operating income.
+**Hooks:** `econBusiness` (economy) → `venueBusiness`; `expectedTake` → `venueTake`; `econWeek` → `empireWeek`;
+`venue.policy.network` is the later Madam/Ears phase's abstract ledger line + vice heat; `venue.policy.act` the
+booking phase's act record.
+
+`npx tsx scripts/empireAcceptance.ts` runs Module 17 (adapted): a lot on Ocean Avenue bought in 1965 and developed as
+a 20-room economy motel, a 40-room boutique hotel with a restaurant, and a 100-room resort, each five years on the
+real engine (`tests/empire.test.ts` asserts it).
+
 ## Variety: the story director and living storylines
 
 | File | What it does |
@@ -255,3 +289,21 @@ level (`routine` … `shadow`) and the crisis stage; `tribute.favors` records ev
 on whose authority, and a `Telling` of truth / said / believed-by / known-by) — the underboss already grants extensions
 on his own routine authority and covers for his earners without telling the Don; `petitionsTo` counts who people bring
 petitions to.
+
+## The Ears: the Madam, the nightlife workers, the connection web
+
+Nightlife workers are the best spies, and the Madam is the boss's friend, not his employee. Everything here is
+off-screen and non-explicit (a set-up, then a report), every woman is an adult who decides for herself, and the player
+never coerces, holds debts over, recruits by force or trades in people: the operators who do are enemies to fight.
+
+| File | What it does |
+|---|---|
+| `earsState.ts` | `GameState.ears` (optional, its own seeded stream): the Madam (her house, public face, lieutenants, successor, money, network, the protection cut, intel pact, venture, ally, squeeze, favors), the Ears (work, venue, network, trust, nerve, discretion, charm, price, goal, her own lines), operators, links, jobs, held hints, story hooks |
+| `ears.ts` | Setup per game (fictional names from the world pack's pools); the weekly/monthly tick; orders `{ kind: 'ears', op }` (ask her: "Can you get close to him?" / "Give him a dance", take care of her, protect her, the Madam's diplomacy, going after an operator) with odds and every reason; effect ops `{ type: 'ears', op }`; reports and intel that feed secrets, hooks (affairs and graft only), dirt on officials, plant-found events, rival plots uncovered, the boss's case; the popup source (the Madam, a woman asking for protection, web stories, hints) through the story director |
+| `earsWeb.ts` | Who is attached to whom: likes, a regular, girlfriend, mistress, in love, an ex, owes; strength, hidden until an Ear reveals it; grows from visits, dates, romances, reports and on its own; jealousy, a man protecting her, pillow-talk leaks to a rival, breakups, a pregnancy, a wife finding out. Only between a man and a woman drawn to each other; same-sex romances stay private and are never leverage |
+| `earsData.ts` | The words: hint settings, one-liners by subject, reports, her opinion of him by his nature, refusals, counter-offers, protection pleas, the Madam's scenes. Every pool is drawn without repeats per game |
+
+UI: `src/ui/ears` — `NightPanel` (Town → The Night: the Madam, the Ears, operators, what came in), `AttachmentBoard`
+(Town → Who's attached to whom; a club hub can drop it in as is), `EarsPicker` (the person menu's "The Ears" category),
+`ConnectionsList` / `ConnectionsSection` (person menu and character sheet). Jobs and the Madam's squeeze show on the
+In Motion strip. The sim's random player uses the Ears' orders (`--ears 0.06`).

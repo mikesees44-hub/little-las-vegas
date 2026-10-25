@@ -3,6 +3,7 @@ import { capos, hasTrait, player } from './characters';
 import { fam } from './familyState';
 import { capability, challengePressure } from './heir';
 import { MODE_INFO } from './ledgerbook';
+import { EARS_PURPOSE } from './ears';
 import { controlIndex } from './polIntegrity';
 import { peekCtl } from './polGov';
 import { pwView } from './powerState';
@@ -112,6 +113,7 @@ function opOf(a: PlayerAction): string | undefined {
     case 'travel': return a.op.type;
     case 'ledger': return a.op.op;
     case 'bones': return a.op.op;
+    case 'ears': return a.op.op;
     case 'legal':
     case 'underbelly': return a.op;
     default: return undefined;
@@ -126,6 +128,7 @@ export function pillarPurpose(a: PlayerAction): string | undefined {
     case 'pol': return op ? POL_PURPOSE[op] : undefined;
     case 'travel': return op ? TRAVEL_PURPOSE[op] : undefined;
     case 'ledger': return op ? LEDGER_PURPOSE[op] : undefined;
+    case 'ears': return op ? EARS_PURPOSE[op] : undefined;
     case 'bones':
     case 'legal':
     case 'underbelly': return OTHER_PURPOSE[`${a.kind}:${op}`];

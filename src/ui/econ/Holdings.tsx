@@ -11,9 +11,11 @@ import {
 } from '../../engine/property';
 import { nextStep, racketSummary, stepsOf, tree } from '../../engine/rackets';
 import { permitAuthority } from '../../engine/construction';
+import { groupOfBiz, groupOfLot, grouped } from '../../engine/propertyGroups';
 import type { Business, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
+import { SellButton } from '../components/Businesses';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { CharLink } from '../components/People';
 
@@ -43,24 +45,71 @@ export function Holdings({ s }: { s: GameState }) {
         <Stat label="Under construction" value={`${building.length}`} sub={building.length ? building.map((l) => STAGE_LABEL[l.stage!]).join(', ') : 'nothing breaking ground'} />
       </section>
 
-      <section>
-        <div className="panel-title">Businesses</div>
-        {biz.length === 0 && <p className="text-xs text-stone-500">You own nothing yet.</p>}
-        <ul className="mt-2 space-y-2">
-          {biz.map((b) => <BizRow key={b.id} s={s} b={b} m={ms[b.id]} />)}
-        </ul>
-      </section>
+      <OwnedGroups s={s} biz={biz} lots={lots} ms={ms} />
 
       <SupplyChain s={s} />
-
-      <section>
-        <div className="panel-title">Buildings & land</div>
-        {lots.length === 0 && <p className="text-xs text-stone-500">No property yet. The real-estate market is on the map and under Real Estate.</p>}
-        <ul className="mt-2 space-y-2">
-          {lots.map((l) => <LotRow key={l.id} s={s} l={l} m={ms[`lot:${l.id}`]} />)}
-        </ul>
-      </section>
     </div>
+  );
+}
+
+/** Everything you own in one list, grouped by type (or by neighborhood), each group folding open. */
+function OwnedGroups({ s, biz, lots, ms }: { s: GameState; biz: Business[]; lots: Lot[]; ms: Record<string, Manager> }) {
+  const [by, setBy] = useState<'type' | 'place'>('type');
+  const [shut, setShut] = useState<Record<string, boolean>>({});
+  type Item = { key: string; biz?: Business; lot?: Lot; take: number };
+  // A building that houses one of your businesses shows once, as the business.
+  const items: Item[] = [
+    ...biz.map((b) => ({ key: b.id, biz: b, take: expectedTake(s, b) })),
+    ...lots.filter((l) => !l.bizId || !biz.some((b) => b.id === l.bizId)).map((l) => {
+      let take = 0;
+      if (l.stage === 'open' && !l.bizId) {
+        if (l.tenant && !l.operating) take = l.rent;
+        else { const n = propertyNet(s, l); take = n.rev - n.exp; }
+      }
+      return { key: `lot:${l.id}`, lot: l, take };
+    }),
+  ];
+  const groups = by === 'type'
+    ? grouped(items, (x) => (x.biz ? groupOfBiz(x.biz.kind) : groupOfLot(s, x.lot!))).map((g) => ({ id: g.group.id as string, title: `${g.group.icon} ${g.group.label}`, items: g.items }))
+    : (() => {
+        const zone = (x: Item) => (x.biz ? s.districts.find((d) => d.id === x.biz!.districtId)?.name : ZONES_BY_ID[x.lot!.zone as keyof typeof ZONES_BY_ID]?.name) ?? 'Elsewhere';
+        const names = [...new Set(items.map(zone))].sort();
+        return names.map((n) => ({ id: n, title: `📍 ${n}`, items: items.filter((x) => zone(x) === n) }));
+      })();
+  return (
+    <section data-testid="owned-groups">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="panel-title">What you own</div>
+        <div className="flex gap-1 text-[11px]" role="radiogroup" aria-label="Group by">
+          {(['type', 'place'] as const).map((k) => (
+            <button key={k} type="button" role="radio" aria-checked={by === k} onClick={() => setBy(k)}
+              className={`rounded border px-2 py-0.5 ${by === k ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+              {k === 'type' ? 'By type' : 'By neighborhood'}
+            </button>
+          ))}
+        </div>
+      </div>
+      {items.length === 0 && <p className="text-xs text-stone-500 mt-1">You own nothing yet. Open a place below, or buy a building from the map.</p>}
+      <div className="mt-2 space-y-2">
+        {groups.map((g) => {
+          const open = !shut[g.id];
+          const take = g.items.reduce((a, x) => a + x.take, 0);
+          return (
+            <div key={g.id} className="rounded-md border border-noir-700 bg-noir-900/40" data-testid="owned-group">
+              <button type="button" className="w-full flex items-center justify-between gap-2 px-3 py-2 text-left" onClick={() => setShut((x) => ({ ...x, [g.id]: open }))} aria-expanded={open}>
+                <span className="font-semibold text-stone-100">{g.title} <span className="text-stone-500 font-normal">· {g.items.length}</span></span>
+                <span className="text-xs tabular-nums text-gold-300">~{fmt$(take)}/wk <span className="text-stone-500">{open ? '▾' : '▸'}</span></span>
+              </button>
+              {open && (
+                <ul className="space-y-2 px-2 pb-2">
+                  {g.items.map((x) => (x.biz ? <BizRow key={x.key} s={s} b={x.biz} m={ms[x.biz.id]} /> : <LotRow key={x.key} s={s} l={x.lot!} m={ms[`lot:${x.lot!.id}`]} />))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 
@@ -81,12 +130,12 @@ function SupplyChain({ s }: { s: GameState }) {
         ))}
       </div>
       <p className="text-[11px] text-stone-500 mt-1">Your own builds: −{Math.round(sc.cost * 100)}% cost, −{Math.round(sc.time * 100)}% time, fewer failed inspections. Others' builds pay your companies when you hold the contract or supply them. {e?.stats.contractsWon ? `${e.stats.contractsWon} contracts won so far.` : ''}</p>
-      {(e?.contracts.length ?? 0) > 0 && (
+      {(e?.contracts?.length ?? 0) > 0 && (
         <ul className="text-xs mt-1">
           {e!.contracts.map((c) => <li key={c.id} className="text-stone-300">{c.name} — {fmt$(c.weekly)}/wk, {c.weeksLeft} wk left</li>)}
         </ul>
       )}
-      {(e?.tenders.length ?? 0) > 0 && (
+      {(e?.tenders?.length ?? 0) > 0 && (
         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
           {e!.tenders.map((t) => <ActionCard key={t.id} s={s} action={{ kind: 'econ', op: { type: 'bid', contractId: t.id } }} />)}
         </div>
@@ -121,6 +170,7 @@ function BizRow({ s, b, m }: { s: GameState; b: Business; m?: Manager }) {
         <div className="text-right text-xs tabular-nums">
           <div className={isOpen(s, b) ? 'text-gold-300' : 'text-red-400'}>{isOpen(s, b) ? `~${fmt$(expectedTake(s, b))}/wk expected` : `padlocked to wk ${b.closedUntil}`}</div>
           {lastNet !== undefined && <div className={lastNet < 0 ? 'text-red-400' : 'text-stone-400'}>last week {fmt$(lastNet)}</div>}
+          {b.kind !== 'casino' && <SellButton s={s} id={b.id} />}
           <div className="text-stone-500">upkeep {fmt$(b.upkeep)}</div>
         </div>
       </div>

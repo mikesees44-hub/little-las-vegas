@@ -13,6 +13,7 @@ import { Portrait } from '../portrait/Portrait';
 import { SheetFrame } from '../shell/SheetFrame';
 import { InteractionMenu } from '../sheet/InteractionMenu';
 import { PoliticsSection } from '../sheet/PoliticsSection';
+import { ConnectionsSection } from '../ears/Connections';
 import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
@@ -157,6 +158,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
         </section>
 
         <PoliticsSection s={s} c={c} />
+        <ConnectionsSection s={s} id={c.id} />
 
         <InteractionMenu s={s} c={c} />
       </div>

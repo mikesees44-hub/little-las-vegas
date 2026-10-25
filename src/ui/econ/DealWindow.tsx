@@ -10,6 +10,8 @@ import { Chips } from '../components/Chips';
 import { Modal } from '../components/Modal';
 import { AcceptanceLine, useOrders } from '../components/Orders';
 import { fmt$ } from '../format';
+import { useEmpire } from '../empire/context';
+import { BIZ_CONCEPT, USE_CONCEPT } from '../../engine/empire';
 
 /**
  * The Deal window: buying a place is signing a contract with a named seller.
@@ -73,6 +75,7 @@ const mgrId = (m: DealManager | undefined): string | undefined => (!m ? undefine
 
 export function DealWindow({ s, target, onClose }: { s: GameState; target: DealTarget; onClose: () => void }) {
   const { queue } = useOrders();
+  const empire = useEmpire();
   const [step, setStep] = useState<Step>('terms');
   const [terms, setTerms] = useState<DealTerms>({ haggles: 0, cash: 0 });
   const [signed, setSigned] = useState(false);
@@ -112,7 +115,19 @@ export function DealWindow({ s, target, onClose }: { s: GameState; target: DealT
           <p className="deal-beat font-display text-lg italic text-gold-200" style={{ animationDelay: '1300ms' }}>{v.seller.lastLine(v.soured, v.cashPart)}</p>
           {mgrLabel && <p className="deal-beat text-sm text-stone-400" style={{ animationDelay: '1700ms' }}>Monday morning, {mgrLabel} has the keys.</p>}
           <p className="text-[11px] text-stone-500">The money changes hands when the week turns. Every dollar shows in the weekly report.</p>
-          <div className="flex justify-end"><button type="button" className="btn-gold" onClick={onClose}>Close</button></div>
+          {(() => {
+            const lot = target.kind === 'lot' ? s.econ?.lots.find((l) => l.id === target.lotId) : undefined;
+            const lodging = target.kind === 'biz' ? !!BIZ_CONCEPT[target.biz] : !!lot && (!lot.use || lot.use === 'motel' || lot.use === 'boarding' || !!USE_CONCEPT[lot.use]);
+            if (!lodging) return <div className="flex justify-end"><button type="button" className="btn-gold" onClick={onClose}>Close</button></div>;
+            const key = target.kind === 'lot' ? `lot:${target.lotId}` : `biz:${target.biz}:${target.district}`;
+            const go = () => { onClose(); empire.open({ pending: { key, name: terms.name || v.place, develop: lot && !lot.use ? { lotId: lot.id } : undefined } }); };
+            return (
+              <div className="flex flex-wrap justify-end gap-2">
+                <button type="button" className="btn-ghost" onClick={onClose}>Later</button>
+                <button type="button" className="btn-gold" onClick={go} data-testid="open-designer">Set it up in the Designer →</button>
+              </div>
+            );
+          })()}
         </div>
       </Modal>
     );

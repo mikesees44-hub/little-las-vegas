@@ -3,6 +3,7 @@ import { noteScore } from './ledgerbook';
 import { commitDeal, previewDeal } from './deals';
 import { workload } from './applicants';
 import { styleDraw } from './design';
+import { commitEmpire, empireActions, empireWeek, previewEmpire, venueBusiness } from './empire';
 import { commitLux, goodLifeWeek, luxActions, previewLux, truckBonus } from './goodlife';
 import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
@@ -69,6 +70,9 @@ export function econTakeMult(s: GameState, b: Business): number {
 /** The week of a business: racket variance, then the manager's hidden skim and his share. */
 export function econBusiness(ctx: Ctx, b: Business, amt: number, label: string): { amt: number; label: string } {
   const s = ctx.s;
+  // A venue of the Empire Designer posts its own operating statement.
+  const ven = venueBusiness(ctx, b);
+  if (ven) return ven;
   if (!s.econ) return { amt, label };
   const e = s.econ;
   const r = racketWeek(ctx, b, amt, label);
@@ -130,6 +134,7 @@ export function econWeek(ctx: Ctx): void {
   bigScoresWeek(ctx);
   capoBooksWeek(s);
   goodLifeWeek(ctx);
+  empireWeek(ctx);
   for (const b of s.businesses) if (b.owner === 'player' && isClub(b)) ensureStaff(s, b);
 }
 
@@ -756,6 +761,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'empire': return previewEmpire(s, a.cmd);
     case 'luxBuy': case 'luxSell': return previewLux(s, a);
     case 'rename': {
       const nm = a.name.trim().slice(0, 40);
@@ -1067,6 +1073,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       break;
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
+    case 'empire': commitEmpire(ctx, a.cmd); break;
     case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
     case 'rename': {
       const nm = a.name.trim().slice(0, 40);
@@ -1288,6 +1295,7 @@ export function econActions(s: GameState): PlayerAction[] {
   }
   const lux = luxActions(s);
   if (lux.length && w % 9 === 0) out.push(op(lux[w % lux.length]));
+  out.push(...empireActions(s));
   const lease = e.lots.find((l) => l.status === 'lease');
   if (lease && w % 3 === 0) out.push(op({ type: 'leaseLot', lotId: lease.id }));
   for (const l of e.lots.filter((x) => (x.status === 'owned' || x.status === 'leased') && x.stage === 'purchase').slice(0, 1)) {
