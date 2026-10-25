@@ -34,7 +34,7 @@ export function managerOf(s: GameState, key: string): Manager | undefined {
 /** Income multiplier from the manager's skill (0.90 .. 1.30); 1 when nobody's in charge. */
 export function managerMult(m: Manager | undefined): number {
   if (!m) return 1;
-  return 0.9 + Math.max(0, Math.min(100, m.skill)) * 0.004;
+  return 0.9 + Math.max(0, Math.min(100, m.skill * (m.effort ?? 1))) * 0.004;
 }
 
 /** Share of the take a manager skims each week (hidden). */
@@ -180,4 +180,45 @@ export function staffAmbition(m: StaffMember): { fate: 'manager' | 'own_club' | 
 
 export function bossName(s: GameState): string {
   return player(s).firstName;
+}
+
+/* ---------------- the crew's suggestion ---------------- */
+
+export interface ManagerPick {
+  source: ManagerSource;
+  charId?: string;
+  pro?: number;
+  name: string;
+  /** Expected weekly gain over running it unmanaged, after salary, share and the skim you'd expect. */
+  value: number;
+  why: string;
+}
+
+/**
+ * Ranks who could run a place, best first. A simple local ranking (swap in a
+ * shared `rankCandidates` when one exists): the extra take his skill brings,
+ * minus his salary and share, minus what someone of his honesty would skim.
+ * Strangers' honesty is unknown, so the crew guesses from his references.
+ */
+export function rankManagers(s: GameState, key: string, take: number): ManagerPick[] {
+  const value = (m: Manager, honestyGuess: number) => {
+    const gross = take * managerMult(m);
+    const skim = gross * managerSkimRate(s, { ...m, honesty: honestyGuess });
+    return Math.round(gross - take - m.salary - (gross - skim) * m.share - skim);
+  };
+  const out: ManagerPick[] = [];
+  for (const c of familyCandidates(s)) {
+    const m = managerFromChar(s, c, 'family');
+    out.push({ source: 'family', charId: c.id, name: m.name, value: value(m, m.honesty), why: `family · business ${m.skill} · honesty ${m.honesty}` });
+  }
+  for (const c of crewCandidates(s)) {
+    const m = managerFromChar(s, c, 'crew');
+    out.push({ source: 'crew', charId: c.id, name: m.name, value: value(m, m.honesty), why: `${c.rank} · business ${m.skill} · honesty ${m.honesty}` });
+  }
+  proCandidates(s, key).forEach((p, i) => {
+    const m = managerFromPro(s, p);
+    const guess = p.hint.startsWith('References glowing') ? 75 : p.hint.startsWith('References fine') ? 55 : 30;
+    out.push({ source: 'pro', pro: i, name: p.name, value: value(m, guess), why: `hired pro · skill ${p.skill} · ${p.hint.toLowerCase()}` });
+  });
+  return out.sort((a, b) => b.value - a.value);
 }

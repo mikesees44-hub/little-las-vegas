@@ -21,7 +21,7 @@ import type { BusinessKind, FactionId, GameState } from './types';
  * they open and run through the normal business pipeline.
  */
 
-export type UseCat = 'boardwalk' | 'services' | 'music' | 'realestate' | 'industrial' | 'food';
+export type UseCat = 'boardwalk' | 'services' | 'music' | 'realestate' | 'industrial' | 'food' | 'public';
 
 export interface PropertyUse {
   id: string;
@@ -41,7 +41,13 @@ export interface PropertyUse {
   biz?: BusinessKind;
   zones?: ZoneId[];
   minYear?: number;
+  /** Built only by the city (schools, firehouses ...). */
+  npcOnly?: boolean;
+  /** Map icon. */
+  icon?: UseIcon;
 }
+
+export type UseIcon = 'hotel' | 'motel' | 'house' | 'apartment' | 'store' | 'pizza' | 'club' | 'pier' | 'warehouse' | 'public';
 
 const U = (id: string, name: string, cat: UseCat, cost: number, weeks: number, rev: number, exp: number, seasonal: boolean, launder: number, extra: Partial<PropertyUse> = {}): PropertyUse =>
   ({ id, name, cat, cost, weeks, rev, exp, seasonal, launder, ...extra });
@@ -125,7 +131,8 @@ export const USES: PropertyUse[] = [
   // Industrial
   B('truckyard', 'industrial', 'trucking', 14),
   B('contractor', 'industrial', 'construction', 14),
-  U('concrete', 'Concrete plant', 'industrial', 20000, 26, 600, 400, false, 700),
+  B('concreteplant', 'industrial', 'concrete', 14),
+  B('lumberyard', 'industrial', 'lumber', 10),
   B('carting', 'industrial', 'waste', 14),
   U('commlaundry', 'Commercial laundry', 'industrial', 9000, 14, 330, 220, false, 900),
   U('beverage', 'Beverage distributor', 'industrial', 15000, 20, 520, 360, true, 700),
@@ -140,12 +147,33 @@ export const USES: PropertyUse[] = [
   B('trattoria', 'food', 'restaurant', 12),
   U('diner', 'Diner', 'food', 5000, 10, 300, 210, false, 250),
   U('bakery', 'Italian bakery', 'food', 3000, 7, 170, 110, false, 150),
+  // Public works (the city builds these)
+  U('school', 'Public school', 'public', 40000, 52, 0, 0, false, 0, { npcOnly: true }),
+  U('firehouse', 'Firehouse', 'public', 12000, 26, 0, 0, false, 0, { npcOnly: true }),
+  U('pavilion', 'Beach pavilion', 'public', 8000, 20, 0, 0, false, 0, { npcOnly: true, zones: ['boardwalk', 'crest', 'north', 'piers'] }),
+  U('library', 'Public library', 'public', 15000, 30, 0, 0, false, 0, { npcOnly: true }),
 ];
+
+/** The map icon for a use. */
+export function useIcon(u: PropertyUse): UseIcon {
+  if (u.icon) return u.icon;
+  if (u.cat === 'public') return 'public';
+  const id = u.id;
+  if (id === 'hotel' || id === 'condo' || id === 'office' || id === 'mall') return 'hotel';
+  if (id === 'motel' || id === 'boarding' || id === 'boardinghouse' || id === 'rooming' || id === 'flophouse') return 'motel';
+  if (id === 'house' || id === 'duplex' || id === 'cottage') return 'house';
+  if (id === 'apartments' || id === 'storefront') return 'apartment';
+  if (id === 'pizza' || id === 'deli' || id === 'trattoria' || id === 'diner' || id === 'bakery' || id === 'icecream') return 'pizza';
+  if (u.cat === 'music') return 'club';
+  if (id === 'ride' || id === 'funhouse' || id === 'arcade' || id === 'minigolf' || id === 'stand') return 'pier';
+  if (u.cat === 'industrial' || id === 'warehouse' || id === 'marina' || id === 'garage' || id === 'taxigarage' || id === 'gas' || id === 'carwash') return 'warehouse';
+  return 'store';
+}
 
 export const USES_BY_ID: Record<string, PropertyUse> = Object.fromEntries(USES.map((u) => [u.id, u]));
 
 export const USE_CAT_LABEL: Record<UseCat, string> = {
-  boardwalk: 'Boardwalk', services: 'Services', music: 'Music & nightlife', realestate: 'Real estate', industrial: 'Industrial', food: 'Food',
+  boardwalk: 'Boardwalk', services: 'Services', music: 'Music & nightlife', realestate: 'Real estate', industrial: 'Industrial', food: 'Food', public: 'Public works',
 };
 
 export interface ZoneInfo {
@@ -178,7 +206,7 @@ export const ZONES: ZoneInfo[] = [
 ];
 export const ZONES_BY_ID = Object.fromEntries(ZONES.map((z) => [z.id, z])) as Record<ZoneId, ZoneInfo>;
 
-export const LOTS_PER_ZONE = 8;
+export const LOTS_PER_ZONE = 12;
 
 /** Seasonal demand multiplier for a zone this week (1 for year-round places). */
 export function zoneSeason(zone: ZoneId, inSeason: boolean, seasonal = true): number {
@@ -222,14 +250,33 @@ export function stageWeeks(total: number): Record<string, number> {
   return out;
 }
 
-/** Weeks to build this use on this lot (a fit-out on a leased storefront is half). */
-export function buildWeeks(lot: Lot, use: PropertyUse): number {
-  return lot.status === 'leased' ? Math.max(BUILD_STAGES.length, Math.ceil(use.weeks / 2)) : Math.max(BUILD_STAGES.length, use.weeks);
+/**
+ * The construction supply chain: owning a construction firm, a concrete plant,
+ * a lumber yard and a trucking outfit makes your own builds cheaper, faster
+ * and better built (fewer failed inspections).
+ */
+export const SUPPLY: { kind: BusinessKind; cost: number; time: number; quality: number; role: string }[] = [
+  { kind: 'construction', cost: 0.12, time: 0.15, quality: 0.1, role: 'general contractor' },
+  { kind: 'concrete', cost: 0.08, time: 0.05, quality: 0.05, role: 'concrete' },
+  { kind: 'lumber', cost: 0.07, time: 0, quality: 0.03, role: 'lumber' },
+  { kind: 'trucking', cost: 0.04, time: 0.05, quality: 0, role: 'hauling' },
+];
+
+export function supplyChain(s?: GameState): { cost: number; time: number; quality: number; owned: BusinessKind[] } {
+  const owned = SUPPLY.filter((x) => s?.businesses.some((b) => b.owner === 'player' && b.kind === x.kind && !(b.closedUntil !== undefined && b.closedUntil > s.week))).map((x) => x.kind);
+  const pick = SUPPLY.filter((x) => owned.includes(x.kind));
+  return { cost: pick.reduce((a, x) => a + x.cost, 0), time: pick.reduce((a, x) => a + x.time, 0), quality: pick.reduce((a, x) => a + x.quality, 0), owned };
 }
 
-/** Building cost (fit-out on a lease costs half). */
-export function buildCost(lot: Lot, use: PropertyUse): number {
-  return Math.round((lot.status === 'leased' ? use.cost * 0.5 : use.cost) * Math.max(0.8, ZONES_BY_ID[lot.zone].land));
+/** Weeks to build this use on this lot (a fit-out on a leased storefront is half; your own supply chain is faster). */
+export function buildWeeks(lot: Lot, use: PropertyUse, s?: GameState): number {
+  const base = lot.status === 'leased' ? Math.ceil(use.weeks / 2) : use.weeks;
+  return Math.max(BUILD_STAGES.length, Math.round(base * (1 - supplyChain(s).time)));
+}
+
+/** Building cost (fit-out on a lease costs half; your own supply chain is cheaper). */
+export function buildCost(lot: Lot, use: PropertyUse, s?: GameState): number {
+  return Math.round((lot.status === 'leased' ? use.cost * 0.5 : use.cost) * Math.max(0.8, ZONES_BY_ID[lot.zone].land) * (1 - supplyChain(s).cost));
 }
 
 export function underConstruction(lot: Lot): boolean {
@@ -284,7 +331,7 @@ export function propertyWash(s: GameState): number {
 /* ---------------- the market ---------------- */
 
 function usesFor(z: ZoneInfo, year: number): PropertyUse[] {
-  return USES.filter((u) => (u.minYear ?? 0) <= year && (u.zones ? u.zones.includes(z.id) : z.cats.includes(u.cat)) && u.cost <= 40000);
+  return USES.filter((u) => !u.npcOnly && (u.minYear ?? 0) <= year && (u.zones ? u.zones.includes(z.id) : z.cats.includes(u.cat)) && u.cost <= 40000);
 }
 
 const OWNER_NAMES = ['Gus Papadakis', 'the Morey brothers', 'Abe Kaplan', 'the Sorensen family', 'Vince DiNardo', 'Mrs. Hallahan', 'the Kovacs family', 'Sid Weintraub', 'Lou Castellano', 'the Brennan estate', 'Joe Pirelli', 'Harry Lenz'];
@@ -305,29 +352,30 @@ export function newLot(s: GameState, e: EconState, z: ZoneInfo, idx: number): Lo
   const lot: Lot = { id: eid(e, 'lot'), zone: z.id, idx, address, status: 'sale', owner: 'private', price: land, rent: 0, condition: 100 };
   const uses = usesFor(z, s.date.y);
   const someUse = () => pick(e, uses);
-  if (roll < 25) {
-    // Vacant land for sale.
+  if (roll < 40) {
+    // Vacant land for sale (the island still had plenty in 1960; the Crest most of all).
     return lot;
   }
+  if (z.id === 'crest' && roll < 55) return lot;
   const u = someUse();
   lot.use = u.id;
   lot.stage = 'open';
   lot.builtYear = s.date.y - randInt(e, 2, 40);
   lot.condition = randInt(e, 45, 95);
   const bldg = Math.round(u.cost * z.land * 0.85 * (0.6 + 0.4 * lot.condition / 100) * inflation(s) / 50) * 50;
-  if (roll < 55) {
+  if (roll < 62) {
     // A building for sale; most with a going concern inside.
     lot.price = land + bldg;
     if (chance(e, 0.6)) lot.tenant = `${pick(e, OWNER_NAMES)}'s ${u.name.toLowerCase()}`;
     lot.rent = tenantRent(s, lot);
-  } else if (roll < 70) {
+  } else if (roll < 74) {
     // An empty storefront to lease.
     lot.status = 'lease';
     lot.use = undefined;
     lot.stage = undefined;
     lot.rent = Math.max(15, Math.round(land * 0.006));
     lot.price = 0;
-  } else if (roll < 90 || !z.rival) {
+  } else if (roll < 92 || !z.rival) {
     lot.status = 'private';
     lot.price = land + bldg;
     lot.tenant = `${pick(e, OWNER_NAMES)}'s ${u.name.toLowerCase()}`;
@@ -350,6 +398,7 @@ export function goodwill(s: GameState, lot: Lot): number {
 
 export function lotName(lot: Lot): string {
   const u = lot.use ? USES_BY_ID[lot.use] : undefined;
+  if (lot.name) return `${lot.name}, ${lot.address}`;
   return u ? `${u.name}, ${lot.address}` : `Lot at ${lot.address}`;
 }
 

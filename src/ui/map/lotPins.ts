@@ -1,6 +1,8 @@
 import type * as Leaflet from 'leaflet';
 import type { Lot, ZoneId } from '../../engine/econState';
 import { lotName, STAGE_LABEL, USES_BY_ID, ZONES_BY_ID } from '../../engine/property';
+import { lotAsOf, lotColor, lotProgress, lotSvg } from './lotIcons';
+import { SIGN_HEX } from '../../engine/design';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 
@@ -11,7 +13,6 @@ import { fmt$ } from '../format';
  * whose colour shows who holds it.
  */
 
-export const LOT_GLYPH: Record<string, string> = { purchase: '$', permits: '§', siteprep: '≈', foundation: '▁', framing: '#', exterior: '▣', interior: '◩', open: '★' };
 
 /** Off-island zones: a center to lay the lots around. */
 const CENTERS: Partial<Record<ZoneId, [number, number]>> = {
@@ -20,8 +21,8 @@ const CENTERS: Partial<Record<ZoneId, [number, number]>> = {
   sphilly: [39.9236, -75.1662],
 };
 
-/** Minimum zoom for lot pins. */
-export const LOT_ZOOM = 14.5;
+/** Minimum zoom for building icons (Wildwood level). */
+export const LOT_ZOOM = 12.5;
 
 function pointIn(poly: number[][], x: number, y: number): boolean {
   let inside = false;
@@ -70,21 +71,53 @@ function esc(t: string): string {
 }
 
 export function lotTooltip(l: Lot): string {
-  const status = { sale: `For sale ${fmt$(l.price)}`, lease: `For lease ${fmt$(l.rent)}/wk`, private: 'Privately held', owned: 'Yours', leased: 'Yours (leased)', rival: 'Rival-owned' }[l.status];
-  const stage = l.stage ? ` · ${STAGE_LABEL[l.stage]}` : '';
+  const status = { sale: `For sale ${fmt$(l.price)}`, lease: `For lease ${fmt$(l.rent)}/wk`, private: 'Privately held', owned: 'Yours', leased: 'Yours (leased)', rival: 'Rival-owned', public: 'The city' }[l.status];
+  const stage = l.stage ? ` · ${STAGE_LABEL[l.stage]}${l.stage !== 'open' && l.stage !== 'purchase' ? ` ${Math.round(lotProgress(l) * 100)}%` : ''}` : '';
   const what = l.use ? USES_BY_ID[l.use].name : 'Vacant lot';
-  return `<b>${esc(lotName(l))}</b><br>${esc(what)}${esc(stage)}<br>${esc(status)}${l.tenant ? `<br>${esc(l.tenant)}` : ''}`;
+  const by = l.developer && l.stage !== 'open' ? `<br>Building: ${esc(l.developer)}${l.contractor ? ' (your crews)' : ''}` : '';
+  const built = l.builtYear && l.stage === 'open' ? ` · built ${l.builtYear}` : '';
+  return `<b>${esc(lotName(l))}</b><br>${esc(what)}${esc(stage)}${built}<br>${esc(status)}${l.tenant ? `<br>${esc(l.tenant)}` : ''}${by}${l.stopWork ? `<br><span style="color:#e2563d">Stop-work: ${esc(l.stopWork.reason)}</span>` : ''}`;
 }
 
-/** Redraws every lot pin into the layer. */
-export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameState, geo?: GeoJSON.FeatureCollection): void {
+/**
+ * The name label under a building: yours always (once the island is in view),
+ * rivals' from the normal Wildwood zoom, everyone else's only up close. The
+ * tier is a CSS class the map shows or hides by zoom (declutter).
+ */
+export function lotLabel(s: GameState, l: Lot): { text: string; color: string; sign?: boolean; tier: 'own-player' | 'own-rival' | 'own-other' } | undefined {
+  if (!l.use || !l.stage || l.stage === 'purchase') return undefined;
+  const mine = l.status === 'owned' || l.status === 'leased';
+  const u = USES_BY_ID[l.use];
+  const biz = l.bizId ? s.businesses.find((b) => b.id === l.bizId) : undefined;
+  const sign = mine ? s.econ?.designs?.[biz ? biz.id : `lot:${l.id}`]?.sign : undefined;
+  const text = (l.name ?? biz?.name ?? u.name) + (l.stage !== 'open' ? ' (building)' : '');
+  const tier = mine ? 'own-player' : l.status === 'rival' ? 'own-rival' : 'own-other';
+  return { text, color: sign ? SIGN_HEX[sign] : lotColor(l), sign: !!sign, tier };
+}
+
+export interface LotView {
+  /** Show the town as it stood in this year. */
+  year?: number;
+  /** Highlight what went up since 1960. */
+  since1960?: boolean;
+}
+
+/** Redraws every lot into the layer as a building icon. */
+export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameState, geo?: GeoJSON.FeatureCollection, view: LotView = {}, onClick?: (lotId: string) => void): void {
   layer.clearLayers();
-  for (const l of s.econ?.lots ?? []) {
+  for (const raw of s.econ?.lots ?? []) {
+    const l = view.year !== undefined ? lotAsOf(raw, view.year, s.date.y) : raw;
+    if (!l) continue;
     const at = lotPosition(l, geo);
     if (!at) continue;
-    const glyph = l.stage ? LOT_GLYPH[l.stage] : '·';
-    L.marker(at, { pane: 'pins', icon: L.divIcon({ className: `llv-lot llv-lot-${l.status}`, html: `<span>${glyph}</span>`, iconSize: [14, 14] }) })
+    const isNew = !!view.since1960 && l.stage === 'open' && (l.builtYear ?? 0) >= 1960;
+    const dim = !!view.since1960 && !isNew;
+    const lab = lotLabel(s, l);
+    const svg = lotSvg(l, { size: 22, glow: isNew, dim });
+    const html = (lab?.sign && !dim ? `<span style="display:block;filter:drop-shadow(0 0 3px ${lab.color}) drop-shadow(0 0 1px ${lab.color})">${svg}</span>` : svg) + (lab && !dim ? `<span class="llv-blabel ${lab.tier}" style="color:${lab.color}">${esc(lab.text)}</span>` : '');
+    L.marker(at, { pane: 'pins', icon: L.divIcon({ className: 'llv-lotico', html, iconSize: [22, 22], iconAnchor: [11, 11] }) })
       .bindTooltip(lotTooltip(l), { className: 'llv-tip' })
+      .on('click', () => onClick?.(raw.id))
       .addTo(layer);
   }
 }

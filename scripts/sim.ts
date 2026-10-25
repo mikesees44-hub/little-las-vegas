@@ -5,6 +5,7 @@
  *   npm run sim                      # 200 games x 10 years
  *   npm run sim -- --games 50 --years 5 --seed test --json sim-report.json
  */
+import { autoDeal } from '../src/engine/deals';
 import { writeFileSync } from 'node:fs';
 import { newGameWith, type StartId } from '../src/engine/starts';
 import { AGE_RANGE, BACKGROUNDS, BIRTHPLACES, VICES, creatorBase, validateCharOptions, type CharOptions } from '../src/engine/charCreate';
@@ -127,6 +128,8 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
   }
   const actions: PlayerAction[] = [];
   const add = (a: PlayerAction | undefined) => {
+    // Purchases go through the Deal (haggle, maybe cash, the crew's pick to run it).
+    if (a) a = autoDeal(s, a, h);
     if (a && !actions.some((x) => JSON.stringify(x) === JSON.stringify(a))) {
       if (budget && a.kind !== 'perk' && a.kind !== 'lifestyle' && !affordable(s, budget, a)) return; // the allowance may be spent by an earlier pick
       actions.push(a);

@@ -125,3 +125,38 @@ body {
 .llv-lot-lease span { background: #6aa7c9; }
 .llv-lot-owned span, .llv-lot-leased span { background: #e7c25a; border-color: #ecd38f; }
 .llv-lot-rival span { background: #b0302a; color: #f3e6c4; }
+
+/* Building icons on the map: the crane swings while a site is under construction. */
+.llv-lotico { background: none; border: none; }
+.llv-crane { transform-origin: 19px 22px; animation: llv-crane 3.2s ease-in-out infinite alternate; }
+@keyframes llv-crane { from { transform: rotate(-9deg); } to { transform: rotate(7deg); } }
+@media (prefers-reduced-motion: reduce) { .llv-crane { animation: none; } }
+
+/* The Deal window's signing beat: each line fades in after the last. */
+.deal-beat {
+  opacity: 0;
+  animation: deal-beat 600ms ease-out forwards;
+}
+@keyframes deal-beat {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deal-beat { animation: none; opacity: 1; }
+}
+
+/* Building and business labels on the map (declutter by zoom: data-labels on the map element). */
+.llv-blabel {
+  position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 1px;
+  font: 600 10px/1.1 ui-sans-serif, system-ui, sans-serif; white-space: nowrap; letter-spacing: 0.02em;
+  max-width: 11em; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+  text-shadow: 0 0 3px #0b0a09, 0 0 3px #0b0a09, 0 0 2px #0b0a09;
+}
+.llv-biz { background: none; border: none; }
+.llv-biz .dot { position: absolute; inset: 0; border-radius: 9999px; border: 1px solid #0b0a09; box-shadow: 0 0 4px rgba(231, 194, 90, 0.6); }
+.llv-biz .llv-blabel { margin-top: 2px; }
+[data-labels='mine'] .llv-blabel.own-rival,
+[data-labels='mine'] .llv-blabel.own-other,
+[data-labels='rivals'] .llv-blabel.own-other { display: none; }
+[data-labels='mine'] .llv-blabel.own-player { max-width: 7em; font-size: 9px; }
+.llv-home .dot { display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1; color: #0b0a09; }

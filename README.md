@@ -121,6 +121,11 @@ shared popup pipeline (`registerEventSource`).
 | `scores.ts` | Big scores with kick-up and credit disputes (uses the capo's contract), the monthly "short or skimming?" envelope |
 | `hq.ts` | Headquarters (social club, back of a restaurant, car, walk-and-talks), federal bugs (technician/warrant/informant) that add to each talker's evidence, sweeps |
 | `gifts.ts` | ~130 period gifts, tastes and the opinion math, season tickets (inheritable), community projects (appreciation vs trust), leverage gifts with acceptance odds |
+| `construction.ts` | Permits (pluggable authority + per-lot verdicts from politics), inspections and stop-work orders, the supply chain's cut of others' builds, the town's own construction month by month, city bids |
+| `deals.ts` | **The Deal**: every purchase is a contract with a named seller from the world pack (realtor/bank for property, fence/fixer/numbers banker for rackets). Haggling (odds with reasons, decided by seed + place + month so the window can show it), cash under the table (cheaper, spends dirty money, federal heat), who runs it, a name and a look. One order `{ type: 'deal' }`; `autoDeal` is the sim's version |
+| `applicants.ts` | Who runs a place: family incl. in-laws (18+ only; teens can only help out summers), crew, hired locals; the people who *ask* (pitch, motive), each with time and energy — a busy or worn-out manager brings `effort` × his skill |
+| `design.ts` | A place's name, style (Doo Wop, Deco, Tiki, Colonial, Mid-century, Victorian: tourist draw) and neon color, keyed like managers (`econ.designs`); hooks for key staff and, later, Building → Floor → Space |
+| `goodlife.ts` | **The Good Life**: homes, cars, trucks, a boat, toys at period prices; respect, family opinion, stress relief, upkeep, resale; unexplained-wealth federal heat, rivals notice, RICO forfeiture from Oct 1970; the house owns it, so the heir inherits |
 
 ## Variety: the story director and living storylines
 

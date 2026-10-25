@@ -1,6 +1,10 @@
 import type { ActionPreview } from './actions';
 import { noteScore } from './ledgerbook';
-import { isOpen, newBusiness } from './business';
+import { commitDeal, previewDeal } from './deals';
+import { workload } from './applicants';
+import { styleDraw } from './design';
+import { commitLux, goodLifeWeek, luxActions, previewLux, truckBonus } from './goodlife';
+import { expectedTake, isOpen, newBusiness } from './business';
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
 import { crew, hasTrait, isFree, shortName } from './characters';
@@ -9,7 +13,7 @@ import { fmtMoney, shiftInfluence } from './effects';
 import {
   GIFTS_BY_ID, LEVERAGE, PROJECTS, PROJECTS_BY_KIND, TEAMS, giftAvailable, giftOpinion, giftPrice, houseTickets, leverageOdds, teamPlaying, ticketHeir, trustGain,
 } from './gifts';
-import { addStory } from './hierarchy';
+import { addEvidence, addStory } from './hierarchy';
 import { bugText, HQ_INFO, hqMorale, hqRestaurants, hqWeek, SWEEP_COST, SWEEP_FIND } from './hq';
 import { heat, money, respect, type Ctx } from './ledger';
 import {
@@ -17,9 +21,12 @@ import {
   managerSkimRate, managing, newStaff, proCandidates, staffAmbition, ROLE_LABEL,
 } from './managers';
 import {
-  BUILD_STAGES, STAGE_COST, STAGE_LABEL, USES_BY_ID, ZONES, ZONES_BY_ID, buildCost, buildWeeks, districtTilt, generateLots, goodwill, inflation, lotName, propertyNet,
-  propertyWash, stageWeeks, underConstruction,
+  STAGE_COST, USES_BY_ID, ZONES, ZONES_BY_ID, buildCost, districtTilt, generateLots, goodwill, inflation, lotName, propertyNet,
+  propertyWash, supplyChain, underConstruction,
 } from './property';
+import {
+  bidOdds, businessForLot, canSlow, constructionWeek, contractsWeek, ensureInspector, fixCost, inspectorBribe, permitAuthority, scheduleWeeks, startBuild, stopWorkEvent, townMonth,
+} from './construction';
 import { applyTreeHeat, collectCost, collectPreview, commitCollect, nextStep, racketMult, racketMut, racketOf, racketWeek } from './rackets';
 import { addOpinion, changeMeter, setModifier } from './relations';
 import { chance, pick, randInt } from './rng';
@@ -50,7 +57,7 @@ export function initEcon(s: GameState): void {
 export function econTakeMult(s: GameState, b: Business): number {
   if (!s.econ) return 1;
   const def = CATALOG[b.kind];
-  let m = racketMult(s, b) * managerMult(managerOf(s, b.id));
+  let m = racketMult(s, b) * managerMult(managerOf(s, b.id)) * styleDraw(s, b.id) * (b.kind === 'trucking' ? truckBonus(s) : 1);
   m *= districtTilt(b.districtId, isInSeason(s.date), def.season[0] >= 1.8 && def.season[1] <= 0.6);
   const r = racketOf(s, b);
   if (isClub(b) && r.competition) m *= 1 - r.competition / 200;
@@ -112,7 +119,9 @@ export function econWeek(ctx: Ctx): void {
   if (e.lastMonth && e.lastMonth !== mk) econMonth(ctx);
   e.lastMonth = mk;
   tidy(s);
-  constructionWeek(ctx);
+  if (!e.inspector) ensureInspector(s);
+  constructionWeek(ctx, (l) => openLot(ctx, l));
+  contractsWeek(ctx);
   propertyWeek(ctx);
   managersWeek(ctx);
   projectsWeek(ctx);
@@ -120,6 +129,7 @@ export function econWeek(ctx: Ctx): void {
   hqWeek(ctx, (amt, label) => money(ctx, amt, label, 'cost'));
   bigScoresWeek(ctx);
   capoBooksWeek(s);
+  goodLifeWeek(ctx);
   for (const b of s.businesses) if (b.owner === 'player' && isClub(b)) ensureStaff(s, b);
 }
 
@@ -150,91 +160,36 @@ function tidy(s: GameState): void {
 }
 
 /**
- * Who signs the building permits (the inspector, the zoning board). Other
- * layers plug in here (politics: officials you own speed permits through,
- * honest ones block them). Returns a verdict for this week, or undefined.
+ * Who signs the building permits, per lot (the politics layer: officials you
+ * own speed permits through, honest ones block them). Lives in construction.ts.
  */
-export type PermitVerdict = { verdict: 'fast' | 'blocked'; why: string };
-export type PermitAuthority = (s: GameState, lot: Lot) => PermitVerdict | undefined;
-const PERMIT_AUTHORITIES: PermitAuthority[] = [];
-export function registerPermitAuthority(fn: PermitAuthority): void {
-  if (!PERMIT_AUTHORITIES.includes(fn)) PERMIT_AUTHORITIES.push(fn);
-}
-function permitVerdict(s: GameState, lot: Lot): PermitVerdict | undefined {
-  for (const fn of PERMIT_AUTHORITIES) {
-    const v = fn(s, lot);
-    if (v) return v;
-  }
-  return undefined;
-}
-
-/**
- * Installments that come due on their own (a building stage, a community
- * project) wait rather than take the last of the treasury: they never leave
- * less than this for the payroll.
- */
-export const BUILD_CUSHION = 3000;
-
-function constructionWeek(ctx: Ctx): void {
-  const s = ctx.s;
-  const e = s.econ!;
-  for (const l of e.lots) {
-    if (!underConstruction(l) || (l.status !== 'owned' && l.status !== 'leased')) continue;
-    const u = USES_BY_ID[l.use!];
-    const weeks = stageWeeks(buildWeeks(l, u));
-    const st = l.stage!;
-    l.stalled = undefined;
-    if ((l.stageWeek ?? 0) === 0) {
-      const cost = Math.round(buildCost(l, u) * STAGE_COST[st]);
-      if (s.money - cost < BUILD_CUSHION) {
-        l.stalled = `No money for ${STAGE_LABEL[st].toLowerCase()} (${fmtMoney(cost)}): the contractor waits until it leaves you ${fmtMoney(BUILD_CUSHION)} for the payroll`;
-        continue;
-      }
-      if (st === 'permits' && s.heat.local >= 70 && chance(e, 0.3)) {
-        l.stalled = 'The building inspector wants to talk first';
-        continue;
-      }
-      if (st === 'permits') {
-        const v = permitVerdict(s, l);
-        if (v?.verdict === 'blocked') {
-          l.stalled = v.why;
-          continue;
-        }
-        if (v?.verdict === 'fast') {
-          l.stageWeek = Math.max(0, weeks[st] - 1);
-          ctx.log.push(`${lotName(l)}: ${v.why}.`);
-        }
-      }
-      money(ctx, -cost, `Construction: ${lotName(l)} — ${STAGE_LABEL[st].toLowerCase()}`, 'cost');
-      l.invested = (l.invested ?? 0) + cost;
-    }
-    l.stageWeek = (l.stageWeek ?? 0) + 1;
-    if (l.stageWeek >= weeks[st]) {
-      const next = BUILD_STAGES[BUILD_STAGES.indexOf(st) + 1];
-      l.stageWeek = 0;
-      if (next) l.stage = next;
-      else openLot(ctx, l);
-    }
-  }
-}
+export { registerPermitVerdict as registerPermitAuthority, BUILD_CUSHION, type PermitVerdict, type PermitVerdictFn } from './construction';
+import { BUILD_CUSHION } from './construction';
 
 /** The ribbon is cut: a catalog use becomes a Business; any other use starts earning. */
 export function openLot(ctx: Ctx, l: Lot): void {
   const s = ctx.s;
   const e = s.econ!;
   const u = USES_BY_ID[l.use!];
+  const mine = l.status === 'owned' || l.status === 'leased';
   l.stage = 'open';
   l.stageWeek = 0;
   l.builtYear = s.date.y;
   l.condition = 100;
+  l.permit = undefined;
+  l.contractor = undefined;
+  if (!mine) {
+    // Someone else's building opens: it joins the town.
+    e.stats.npcBuilt++;
+    l.tenant = l.status === 'public' ? `${u.name} (the city)` : `${l.developer ?? 'a developer'}'s ${u.name.toLowerCase()}`;
+    if (u.id === 'motel' || u.cost >= 20000) ctx.log.push(`New on the island: ${lotName(l)} (${l.developer ?? 'a developer'}).`);
+    return;
+  }
   l.operating = true;
   l.tenant = undefined;
   e.stats.built++;
   if (u.biz) {
-    const z = ZONES_BY_ID[l.zone];
-    const b = newBusiness(s, u.biz, z.district ?? `zone:${l.zone}`);
-    b.id = `b${s.nextId++}`;
-    b.cost = u.cost;
+    const b = businessForLot(s, l);
     s.businesses.push(b);
     l.bizId = b.id;
   }
@@ -263,7 +218,7 @@ function propertyWeek(ctx: Ctx): void {
     }
     const key = `lot:${l.id}`;
     const m = e.managers[key];
-    const { rev, exp } = propertyNet(s, l, managerMult(m));
+    const { rev, exp } = propertyNet(s, l, managerMult(m) * styleDraw(s, key));
     let net = rev - exp;
     if (m && net > 0) {
       const skim = Math.round(net * managerSkimRate(s, m));
@@ -418,6 +373,8 @@ export function econMonth(ctx: Ctx): void {
   const mo = hqMorale(s);
   if (mo || e.cooldowns.hqMood) for (const c of crew(s)) setModifier(s, c.id, s.playerId, 'Where we do business', mo);
   e.cooldowns.hqMood = mo;
+  // The town builds, burns and bids.
+  townMonth(ctx);
   // The bagman's numbers: who came up short?
   const sc = capoBooksMonth(s);
   if (sc) e.cooldowns.shortCapo = s.week;
@@ -459,6 +416,13 @@ export function econEventSource(s: GameState): EventInstance | undefined {
     if (!k.startsWith('skimflag:')) continue;
     delete e.cooldowns[k];
     const ev = skimEvent(s, k.slice(9));
+    if (ev) return ev;
+  }
+  // A stop-work order on one of your sites.
+  for (const k of Object.keys(e.cooldowns)) {
+    if (!k.startsWith('stop:')) continue;
+    delete e.cooldowns[k];
+    const ev = stopWorkEvent(s, k.slice(5));
     if (ev) return ev;
   }
   // Someone on a club's staff wants something more.
@@ -693,6 +657,36 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
       if (l) l.tenant = op.name;
       break;
     }
+    case 'clearStop': {
+      const l = e.lots.find((x) => x.id === op.lotId);
+      if (l) { l.stopWork = undefined; l.stalled = undefined; }
+      break;
+    }
+    case 'bribeStop': {
+      const l = e.lots.find((x) => x.id === op.lotId);
+      const insp = permitAuthority(s).inspector;
+      if (!l) break;
+      if (insp && hasTrait(insp, 'Honest')) {
+        addEvidence(s, s.characters[s.playerId], 3);
+        heat(ctx, 'local', 2, `${label}: the inspector reported the envelope`, 'event');
+        ctx.log.push(`${insp.firstName} ${insp.lastName} is honest. He reported the envelope.`);
+      } else {
+        l.stopWork = undefined;
+        l.stalled = undefined;
+        if (l.permit) l.permit.bribed = true;
+      }
+      break;
+    }
+    case 'outbid': {
+      const l = e.lots.find((x) => x.id === op.lotId);
+      if (!l || !l.bidder) break;
+      l.status = 'rival';
+      l.owner = l.bidder;
+      l.bidder = undefined;
+      e.stats.outbid++;
+      ctx.log.push(`${FACTION_NAMES[l.owner as RivalId]} outbid you for ${lotName(l)}.`);
+      break;
+    }
   }
 }
 
@@ -713,6 +707,9 @@ export function describeEconOp(s: GameState, op: EconOp): string | undefined {
     case 'ticket': return `${TEAMS[op.team].name} season tickets`;
     case 'lotSold': return 'The building changes hands';
     case 'tenant': return undefined;
+    case 'clearStop': return 'Work resumes';
+    case 'bribeStop': return 'If he takes it, work resumes';
+    case 'outbid': return 'The rival gets the lot';
   }
 }
 
@@ -758,6 +755,16 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       effects.push(note(c.text));
       return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
     }
+    case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'luxBuy': case 'luxSell': return previewLux(s, a);
+    case 'rename': {
+      const nm = a.name.trim().slice(0, 40);
+      const lot = a.key.startsWith('lot:') ? e?.lots.find((l) => `lot:${l.id}` === a.key) : undefined;
+      const b = s.businesses.find((x) => x.id === a.key && x.owner === 'player');
+      const title = `Rename ${placeName(s, a.key)} "${nm}"`;
+      const why = !nm ? 'No name' : !b && !(lot && (lot.status === 'owned' || lot.status === 'leased')) ? 'Not yours' : undefined;
+      return { title, detail: 'A new sign goes up over the door.', effects: [note(`The sign reads "${nm}"`)], cost: 0, because: `renamed ${placeName(s, a.key)} "${nm}"`, disabledReason: why, category: 'event' };
+    }
     case 'buyLot': {
       const l = e?.lots.find((x) => x.id === a.lotId);
       if (!l) return noop('Buy property', 'No such lot');
@@ -770,9 +777,12 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       if (z.rival) effects.push({ type: 'rivalOpinion', rival: z.rival as RivalId, amount: -3, reason: 'Buying on our turf', label: title });
       effects.push(note(a.going ? `You run ${u?.name.toLowerCase()} (the old owner stays on as manager)` : l.tenant ? `${l.tenant} pays you ${fmtMoney(l.rent)}/wk rent` : l.use ? 'An empty building' : 'Vacant land: build on it'));
       const why = l.status !== 'sale' ? (l.status === 'rival' ? `${FACTION_NAMES[l.owner as RivalId] ?? 'A rival'} owns it` : 'Not for sale') : a.going && !l.tenant ? 'No business inside to buy' : s.money < price ? `Needs ${fmtMoney(price)}` : undefined;
+      const rival = l.bidder ? s.rivals.find((r) => r.id === l.bidder) : undefined;
+      const acceptance = rival ? lotBidOdds(s, rival) : undefined;
       return {
-        title, detail: `${z.name}. ${a.going ? `Building ${fmtMoney(l.price)} + goodwill ${fmtMoney(gw)}.` : ''}${l.use && l.stage === 'open' ? ` Built ${l.builtYear}, condition ${Math.round(l.condition)}%.` : ''}`.trim(),
+        title, detail: `${z.name}. ${a.going ? `Building ${fmtMoney(l.price)} + goodwill ${fmtMoney(gw)}.` : ''}${l.use && l.stage === 'open' ? ` Built ${l.builtYear}, condition ${Math.round(l.condition)}%.` : ''}${rival ? ` ${FACTION_NAMES[rival.id]} is bidding for it too.` : ''}`.trim(),
         effects, cost: price, because: `bought ${lotName(l)}`, disabledReason: why, category: 'event',
+        acceptance, refuseEffects: rival ? [{ type: 'econ', op: { op: 'outbid', lotId: l.id }, label: `${title}: outbid` }] : undefined,
       };
     }
     case 'leaseLot': {
@@ -790,17 +800,18 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       const l = e?.lots.find((x) => x.id === a.lotId);
       const u = USES_BY_ID[a.use];
       if (!l || !u) return noop('Build', 'Nothing to build');
-      const cost = buildCost(l, u);
-      const weeks = buildWeeks(l, u);
+      const cost = buildCost(l, u, s);
+      const weeks = scheduleWeeks(s, l, u);
+      const sc = supplyChain(s);
       const title = `Build: ${u.name} at ${l.address}`;
       const first = Math.round(cost * STAGE_COST.permits);
       const z = ZONES_BY_ID[l.zone];
       const fits = u.zones ? u.zones.includes(l.zone) : true;
-      const why = (l.status !== 'owned' && l.status !== 'leased') ? 'You don\'t own it' : (l.use && l.stage === 'open') ? 'Something already stands there' : underConstruction(l) ? 'Already building' : !fits ? `Not in ${z.name}` : (u.minYear ?? 0) > s.date.y ? `Not before ${u.minYear}` : s.money < first ? `Needs ${fmtMoney(first)} to start` : undefined;
+      const why = u.npcOnly ? 'Only the city builds those' : (l.status !== 'owned' && l.status !== 'leased') ? 'You don\'t own it' : (l.use && l.stage === 'open') ? 'Something already stands there' : underConstruction(l) ? 'Already building' : !fits ? `Not in ${z.name}` : (u.minYear ?? 0) > s.date.y ? `Not before ${u.minYear}` : s.money < first ? `Needs ${fmtMoney(first)} to start` : undefined;
       const earn = u.biz ? `becomes a ${CATALOG[u.biz].name.toLowerCase()}` : `~${fmtMoney((u.rev - u.exp) * inflation(s))}/wk in an average week${u.seasonal ? ` (seasonal: ×${z.season[0]} in summer here)` : ''}`;
       return {
-        title, detail: `${weeks} weeks from permits to opening, ${fmtMoney(cost)} paid stage by stage. Then it ${earn}.`,
-        effects: [note(`Construction: ${weeks} weeks, ${fmtMoney(cost)} over 6 stages`)],
+        title, detail: `About ${weeks} weeks from permits to opening (the inspector and ${permitAuthority(s).zoning} first), ${fmtMoney(cost)} paid stage by stage. Then it ${earn}.${sc.owned.length ? ` Your own ${sc.owned.join(', ')}: −${Math.round(sc.cost * 100)}% cost, −${Math.round(sc.time * 100)}% time.` : ' Owning a construction company, a concrete plant, a lumber yard and trucks makes building cheaper and faster.'}`,
+        effects: [note(`Construction: ~${weeks} weeks, ${fmtMoney(cost)} over 6 stages`)],
         cost: first, because: `broke ground on ${u.name.toLowerCase()} at ${l.address}`, disabledReason: why, category: 'event',
       };
     }
@@ -832,8 +843,74 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       if (!l) return noop('Permits', 'No such lot');
       const title = `Call in a favor at City Hall: permits for ${l.address}`;
       return {
-        title, effects: [{ type: 'favor', amount: -1, label: title }, note('Skips the rest of survey & permits')],
+        title, effects: [{ type: 'favor', amount: -1, label: title }, note('Zoning and the inspector sign this week')],
         cost: 0, because: `called in a favor for building permits`, disabledReason: l.stage !== 'permits' ? 'Not waiting on permits' : s.favors < 1 ? 'No favors to call in' : undefined, category: 'event',
+      };
+    }
+    case 'bribeInspector': {
+      const l = e?.lots.find((x) => x.id === a.lotId);
+      const insp = permitAuthority(s).inspector;
+      if (!l) return noop('Inspector', 'No such lot');
+      const cost = inspectorBribe(s, l);
+      const title = `An envelope for ${insp ? `${insp.firstName} ${insp.lastName}` : 'the building inspector'}: ${l.address}`;
+      const reasons = [{ label: 'Base', value: 55 }, ...(insp ? [
+        ...(hasTrait(insp, 'Honest') ? [{ label: 'Honest', value: -45 }] : []),
+        ...(hasTrait(insp, 'Greedy') ? [{ label: 'Greedy', value: 25 }] : []),
+        ...((e?.stats.inspectorPaid ?? 0) > 0 ? [{ label: 'Took one before', value: 20 }] : []),
+      ] : []), ...(s.heat.local > 60 ? [{ label: `Local heat ${s.heat.local}`, value: -15 }] : [])];
+      const sum = reasons.reduce((x, r) => x + r.value, 0);
+      const waiting = l.stage === 'permits' && (l.permit?.inspector ?? 0) > 0;
+      return {
+        title, detail: 'His permit signed today, or a stop-work order lifted. Bribed sites also pass his inspections more easily.',
+        effects: [{ type: 'money', amount: -cost, label: title }, note('Permit signed / stop-work lifted')],
+        acceptance: { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons },
+        refuseEffects: insp && hasTrait(insp, 'Honest') ? [{ type: 'evidence', charId: s.playerId, amount: 3, label: `${title}: he reported it` }, { type: 'heat', bar: 'local', amount: 2, label: `${title}: he reported it` }] : [{ type: 'money', amount: -Math.round(cost / 4), label: `${title}: refused (a lunch on you anyway)` }],
+        cost, because: `paid off the building inspector at ${l.address}`,
+        disabledReason: !(l.status === 'owned' || l.status === 'leased') ? 'Not yours' : !waiting && !l.stopWork ? 'Nothing he is holding up' : s.money < cost ? `Needs ${fmtMoney(cost)}` : undefined,
+        category: 'event', warning: insp && hasTrait(insp, 'Honest') ? 'He is honest. He may report it.' : undefined,
+      };
+    }
+    case 'puppetPermit': {
+      const l = e?.lots.find((x) => x.id === a.lotId);
+      const auth = permitAuthority(s);
+      const p = auth.puppet?.(s);
+      const title = `${p ? `${p.firstName} ${p.lastName}` : 'Your man on the commission'} pushes the zoning through: ${l?.address ?? '?'}`;
+      return {
+        title, detail: `An official who owes you sits on ${auth.zoning}. The variance passes at the next meeting, or sooner.`,
+        effects: [note('Zoning approved this week')], cost: 0, because: 'had the zoning pushed through',
+        disabledReason: !l ? 'No such lot' : !p ? `No official of yours on ${auth.zoning}` : l.stage !== 'permits' || !(l.permit?.zoning ?? 0) ? 'Zoning is not holding it up' : undefined, category: 'event',
+      };
+    }
+    case 'fixCode': {
+      const l = e?.lots.find((x) => x.id === a.lotId);
+      if (!l) return noop('Fix', 'No such lot');
+      const cost = fixCost(s, l);
+      const title = `Fix the code violations at ${l.address}`;
+      return { title, detail: l.stopWork?.reason, effects: [{ type: 'money', amount: -cost, label: title }, note('Stop-work order lifted')], cost, because: `fixed the code at ${l.address}`, disabledReason: !l.stopWork ? 'No stop-work order' : s.money < cost ? `Needs ${fmtMoney(cost)}` : undefined, category: 'event' };
+    }
+    case 'slowRival': {
+      const l = e?.lots.find((x) => x.id === a.lotId);
+      if (!l) return noop('Slow', 'No such lot');
+      const rival = l.owner !== 'private' && l.owner !== 'city' && l.owner !== 'player' ? (l.owner as RivalId) : undefined;
+      const title = `Slow down ${rival ? FACTION_NAMES[rival] : 'the'} build at ${l.address}`;
+      return {
+        title, detail: 'The concrete truck is late, the lumber is short, the hod carriers call in sick. Four weeks lost.',
+        effects: [note('Their build stalls 4 weeks'), { type: 'heat', bar: 'local', amount: 1, label: title }, ...(rival ? [{ type: 'rivalOpinion' as const, rival, amount: -5, reason: 'Sabotaged our construction', label: title }] : [])],
+        cost: 0, because: `slowed down a rival's construction at ${l.address}`,
+        disabledReason: !underConstruction(l) || l.status === 'owned' || l.status === 'leased' ? 'Not a rival build' : canSlow(s) ?? ((e?.cooldowns[`slow:${l.id}`] ?? -99) > s.week - 8 ? 'Already slowed' : undefined), category: 'event',
+      };
+    }
+    case 'bid': {
+      const t = e?.tenders.find((x) => x.id === a.contractId);
+      if (!t) return noop('Bid', 'No such job');
+      const title = `Bid on the city job: ${t.name}`;
+      const odds = bidOdds(s);
+      return {
+        title, detail: `${fmtMoney(t.value)} over ${t.weeks} weeks; your margin about 15%. Bids close week ${t.closes}.`,
+        effects: [note(`~${fmtMoney(Math.round(t.value * 0.15 / t.weeks))}/wk for ${t.weeks} wk`)], acceptance: odds,
+        refuseEffects: [{ type: 'econ', op: { op: 'note', text: 'Someone else got it' }, label: title }],
+        cost: 0, because: `bid on the city's ${t.name.toLowerCase()}`,
+        disabledReason: !supplyChain(s).owned.includes('construction') ? 'You need a construction company' : undefined, category: 'event',
       };
     }
     case 'manager': {
@@ -844,7 +921,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
         if (p) m = managerFromPro(s, p);
       } else {
         const c = a.charId ? s.characters[a.charId] : undefined;
-        if (c) m = managerFromChar(s, c, a.source);
+        if (c) { m = managerFromChar(s, c, a.source); m.effort = workload(s, c, a.key).effort; }
       }
       if (!m) return noop(`Manager for ${place}`, 'Nobody to put in');
       const title = `${m.name} runs ${place}`;
@@ -989,6 +1066,17 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       if (b) commitCollect(ctx, b);
       break;
     }
+    case 'deal': commitDeal(ctx, a.target, a.terms); break;
+    case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
+    case 'rename': {
+      const nm = a.name.trim().slice(0, 40);
+      const lot = a.key.startsWith('lot:') ? e.lots.find((l) => `lot:${l.id}` === a.key) : undefined;
+      if (lot) lot.name = nm;
+      const b = s.businesses.find((x) => x.id === (lot?.bizId ?? a.key));
+      if (b) b.name = nm;
+      if (b && !lot) { const l2 = e.lots.find((l) => l.bizId === b.id); if (l2) l2.name = nm; }
+      break;
+    }
     case 'buyLot': {
       const l = e.lots.find((x) => x.id === a.lotId);
       if (!l) break;
@@ -1027,10 +1115,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
     case 'build': {
       const l = e.lots.find((x) => x.id === a.lotId);
       if (!l) break;
-      l.use = a.use;
-      l.stage = 'permits';
-      l.stageWeek = 0;
-      l.tenant = undefined;
+      startBuild(s, l, a.use);
       break;
     }
     case 'renovate': {
@@ -1042,17 +1127,41 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
     }
     case 'permits': {
       const l = e.lots.find((x) => x.id === a.lotId);
-      if (l?.stage === 'permits') {
-        if ((l.stageWeek ?? 0) === 0) {
-          // The permits fee is still paid.
-          const u = USES_BY_ID[l.use!];
-          const cost = Math.round(buildCost(l, u) * STAGE_COST.permits);
-          money(ctx, -cost, `Construction: ${lotName(l)} — permits (expedited)`, 'cost');
-          l.invested = (l.invested ?? 0) + cost;
-        }
-        l.stage = 'siteprep';
-        l.stageWeek = 0;
-      }
+      if (l?.stage === 'permits') l.permit = { ...(l.permit ?? { zoning: 0, inspector: 0 }), zoning: 0, inspector: 0 };
+      break;
+    }
+    case 'bribeInspector': {
+      const l = e.lots.find((x) => x.id === a.lotId);
+      if (!l) break;
+      if (l.permit) { l.permit.inspector = 0; l.permit.bribed = true; }
+      e.stats.inspectorPaid = (e.stats.inspectorPaid ?? 0) + 1;
+      l.stopWork = undefined;
+      l.stalled = undefined;
+      break;
+    }
+    case 'puppetPermit': {
+      const l = e.lots.find((x) => x.id === a.lotId);
+      if (l?.permit) l.permit.zoning = 0;
+      break;
+    }
+    case 'fixCode': {
+      const l = e.lots.find((x) => x.id === a.lotId);
+      if (l) { l.stopWork = undefined; l.stalled = undefined; }
+      break;
+    }
+    case 'slowRival': {
+      const l = e.lots.find((x) => x.id === a.lotId);
+      if (l) l.stopWork = { weeks: 4 + (l.stopWork?.weeks ?? 0), reason: 'no concrete, no trucks, no men — somebody made some calls' };
+      e.cooldowns[`slow:${a.lotId}`] = s.week;
+      break;
+    }
+    case 'bid': {
+      const t = e.tenders.find((x) => x.id === a.contractId);
+      if (!t) break;
+      e.tenders = e.tenders.filter((x) => x.id !== t.id);
+      e.contracts.push({ id: t.id, name: t.name, weekly: Math.round(t.value * 0.15 / t.weeks), weeksLeft: t.weeks, kind: 'city' });
+      e.stats.contractsWon++;
+      ctx.log.push(`Your construction company won the city's bid: ${t.name}.`);
       break;
     }
     case 'manager': {
@@ -1062,7 +1171,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
         if (p) m = managerFromPro(s, p);
       } else {
         const c = a.charId ? s.characters[a.charId] : undefined;
-        if (c) m = managerFromChar(s, c, a.source);
+        if (c) { m = managerFromChar(s, c, a.source); m.effort = workload(s, c, a.key).effort; }
       }
       if (m) {
         const old = e.managers[a.key];
@@ -1159,10 +1268,10 @@ export function econActions(s: GameState): PlayerAction[] {
     const b = mine[w % mine.length];
     if (nextStep(s, b)) out.push(op({ type: 'upgrade', bizId: b.id }));
     if (['bookmaking', 'vending', 'numbers', 'cargo'].includes(b.kind)) out.push(op({ type: 'collect', bizId: b.id }));
-    if (!e.managers[b.id]) {
+    if (!e.managers[b.id] && expectedTake(s, b) >= 150) {
       const fam = familyCandidates(s)[0];
       out.push(fam ? op({ type: 'manager', key: b.id, source: 'family', charId: fam.id }) : op({ type: 'manager', key: b.id, source: 'pro', pro: w % 3 }));
-    } else {
+    } else if (e.managers[b.id]) {
       out.push(op({ type: 'oversight', key: b.id, level: (['weekly', 'monthly', 'quarterly', 'hands_off'] as const)[w % 4] }));
       if (w % 5 === 0) out.push(op({ type: 'audit', key: b.id }));
       const kid = assistantCandidates(s)[0];
@@ -1172,16 +1281,18 @@ export function econActions(s: GameState): PlayerAction[] {
     if (crewC && w % 7 === 0) out.push(op({ type: 'manager', key: b.id, source: 'crew', charId: crewC.id }));
   }
   // Property: something cheap for sale, building on what we own.
-  const sale = e.lots.filter((l) => l.status === 'sale' && l.price * 4 <= s.money).sort((a, b) => a.price - b.price);
+  const sale = e.lots.filter((l) => l.status === 'sale' && l.price * 5 <= s.money).sort((a, b) => a.price - b.price);
   if (sale.length) {
     const l = sale[w % Math.min(6, sale.length)];
     out.push(op({ type: 'buyLot', lotId: l.id, going: !!l.tenant && w % 2 === 0 }));
   }
+  const lux = luxActions(s);
+  if (lux.length && w % 9 === 0) out.push(op(lux[w % lux.length]));
   const lease = e.lots.find((l) => l.status === 'lease');
   if (lease && w % 3 === 0) out.push(op({ type: 'leaseLot', lotId: lease.id }));
   for (const l of e.lots.filter((x) => (x.status === 'owned' || x.status === 'leased') && x.stage === 'purchase').slice(0, 1)) {
     const z = ZONES_BY_ID[l.zone];
-    const uses = Object.values(USES_BY_ID).filter((u) => (u.zones ? u.zones.includes(l.zone) : z.cats.includes(u.cat)) && (u.minYear ?? 0) <= s.date.y && buildCost(l, u) * 3 <= s.money);
+    const uses = Object.values(USES_BY_ID).filter((u) => (u.zones ? u.zones.includes(l.zone) : z.cats.includes(u.cat)) && (u.minYear ?? 0) <= s.date.y && buildCost(l, u) * 5 <= s.money);
     if (uses.length) out.push(op({ type: 'build', lotId: l.id, use: uses[w % uses.length].id }));
   }
   const owned = e.lots.filter((l) => l.status === 'owned' && l.stage === 'open');
@@ -1192,7 +1303,12 @@ export function econActions(s: GameState): PlayerAction[] {
     if (w % 13 === 0) out.push(op({ type: 'sellLot', lotId: l.id }));
   }
   const building = e.lots.find((l) => l.stage === 'permits' && (l.status === 'owned' || l.status === 'leased'));
-  if (building) out.push(op({ type: 'permits', lotId: building.id }));
+  if (building) out.push(op({ type: 'permits', lotId: building.id }), op({ type: 'bribeInspector', lotId: building.id }));
+  const stopped = e.lots.find((l) => l.stopWork && (l.status === 'owned' || l.status === 'leased'));
+  if (stopped) out.push(op({ type: 'fixCode', lotId: stopped.id }));
+  for (const t of e.tenders.slice(0, 1)) out.push(op({ type: 'bid', contractId: t.id }));
+  const rivalSite = e.lots.find((l) => underConstruction(l) && l.status === 'rival');
+  if (rivalSite && w % 4 === 0) out.push(op({ type: 'slowRival', lotId: rivalSite.id }));
   // HQ.
   if (w % 9 === 0) out.push(op({ type: 'sweep' }));
   if (w % 17 === 0) {
@@ -1204,11 +1320,11 @@ export function econActions(s: GameState): PlayerAction[] {
   const people = crew(s).concat(Object.values(s.characters).filter((c) => c.alive && c.dynasty && c.id !== s.playerId));
   if (people.length) {
     const c = people[w % people.length];
-    const affordable = Object.values(GIFTS_BY_ID).filter((g) => giftAvailable(g, s.date.y) && giftPrice(s, g) * 4 <= s.money);
+    const affordable = Object.values(GIFTS_BY_ID).filter((g) => giftAvailable(g, s.date.y) && giftPrice(s, g) * 12 <= s.money);
     if (affordable.length) out.push(op({ type: 'gift', giftId: affordable[(w * 7) % affordable.length].id, to: c.id }));
   }
   const p = PROJECTS[w % PROJECTS.length];
-  if (p.cost * 5 <= s.money) out.push(op({ type: 'project', kind: p.kind, zone: ZONES[w % 8].id }));
+  if (p.cost * 12 <= s.money) out.push(op({ type: 'project', kind: p.kind, zone: ZONES[w % 8].id }));
   const officials = Object.values(s.characters).filter((c) => c.alive && c.office && c.faction !== 'player');
   if (officials.length) {
     const c = officials[w % officials.length];
@@ -1220,4 +1336,16 @@ export function econActions(s: GameState): PlayerAction[] {
   }
   for (const t of houseTickets(s)) if (teamPlaying(t.team, s) && people.length) out.push(op({ type: 'invite', team: t.team, to: people[(w + 3) % people.length].id }));
   return out;
+}
+
+/** Odds you beat a rival bidding for the same lot. */
+export function lotBidOdds(s: GameState, rival: { id: RivalId; money: number }): { chance: number; reasons: { label: string; value: number }[] } {
+  const reasons = [
+    { label: 'Base', value: 55 },
+    { label: `Your respect ${s.respect}`, value: Math.round((s.respect - 40) / 3) },
+    { label: `${FACTION_NAMES[rival.id]} has deep pockets`, value: -Math.min(30, Math.round(rival.money / 3000)) },
+    ...(s.favors > 0 ? [{ label: 'A word at the title company', value: 8 }] : []),
+  ];
+  const sum = reasons.reduce((a, r) => a + r.value, 0);
+  return { chance: Math.max(0.1, Math.min(0.9, sum / 100)), reasons };
 }

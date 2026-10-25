@@ -354,7 +354,7 @@ export type BusinessKind =
   | 'safehouse'
   // economy pillar (wave 2): transport, services, entertainment, nightlife
   | 'cargo' | 'trucking' | 'towing' | 'waste' | 'cleaning' | 'bidrig' | 'labor' | 'taxi' | 'pawn' | 'label' | 'talent'
-  | 'burlesque' | 'gentsclub' | 'hoodclub' | 'supperclub' | 'adulttheater' | 'filmdist' | 'deli';
+  | 'burlesque' | 'gentsclub' | 'hoodclub' | 'supperclub' | 'adulttheater' | 'filmdist' | 'deli' | 'concrete' | 'lumber';
 
 export interface Business {
   id: string;

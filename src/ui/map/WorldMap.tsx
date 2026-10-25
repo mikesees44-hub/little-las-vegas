@@ -1,8 +1,9 @@
-import { drawLots, LOT_ZOOM } from './lotPins';
+import { drawLots, LOT_ZOOM, type LotView } from './lotPins';
+import { LUX_BY_ID, owned as luxOwned } from '../../engine/goodlife';
 import { clearTravel, drawTravel } from './travelLayer';
 import { useEffect, useRef, useState } from 'react';
 import type * as Leaflet from 'leaflet';
-import { owned } from '../../engine/business';
+import { expectedTake, owned } from '../../engine/business';
 import { CATALOG } from '../../engine/catalog';
 import { CITY_LIST, CITIES_BY_ID, GROUP_LABEL, stake, type OwnerGroup } from '../../engine/cities';
 import { FACTION_NAMES } from '../../engine/world';
@@ -51,6 +52,12 @@ export interface WorldMapProps {
   onLevel?: (l: Level) => void;
   /** Imperative fly-to requests from breadcrumbs (bump the nonce to repeat). */
   flyTo?: { level: Level; nonce: number };
+  /** The property layer's timeline (year shown, new-since-1960 highlight). */
+  lots?: LotView;
+  /** A property was clicked. */
+  onLot?: (lotId: string) => void;
+  /** One of your businesses clicked on the map. */
+  onBiz?: (bizId: string) => void;
 }
 
 export function WorldMap(props: WorldMapProps) {
@@ -91,7 +98,7 @@ export function WorldMap(props: WorldMapProps) {
 
   useEffect(() => {
     api.current?.update(props);
-  }, [props.s, props.mode, props.selectedDistrict]);
+  }, [props.s, props.mode, props.selectedDistrict, props.lots?.year, props.lots?.since1960]);
 
   useEffect(() => {
     if (props.flyTo) api.current?.fly(props.flyTo.level);
@@ -277,6 +284,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   const districtLayer = L.layerGroup();
   const districtPins = L.layerGroup();
   const lotLayer = L.layerGroup();
+  const homeLayer = L.layerGroup().addTo(map);
   let districtsGeo: GeoJSON.FeatureCollection | undefined;
 
   // Popup buttons (capture phase: Leaflet stops propagation inside popups).
@@ -381,7 +389,16 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
   function drawDistricts(p: WorldMapProps) {
     if (!districtsGeo) return;
     const s = p.s;
-    drawLots(L, lotLayer, s, districtsGeo);
+    drawLots(L, lotLayer, s, districtsGeo, p.lots, (id) => latest.current.onLot?.(id));
+    // The Good Life: the boss's homes and the boat.
+    homeLayer.clearLayers();
+    for (const o of luxOwned(s)) {
+      const it = LUX_BY_ID[o.id];
+      if (!it?.pin) continue;
+      L.marker([it.pin.lat, it.pin.lon], { pane: 'pins', icon: L.divIcon({ className: 'llv-biz llv-home', html: `<span class="dot" style="background:#e7c25a">${it.cat === 'boat' ? '⚓' : '⌂'}</span><span class="llv-blabel own-player" style="color:#e7c25a">${esc(it.name.replace(/^An? /, ''))}</span>`, iconSize: [14, 14], iconAnchor: [7, 7] }) })
+        .bindTooltip(`<b>${esc(it.name)}</b><br>${esc(it.pin.place)} · yours since ${o.year}`, { className: 'llv-tip' })
+        .addTo(homeLayer);
+    }
     districtLayer.clearLayers();
     districtPins.clearLayers();
     L.geoJSON(districtsGeo as never, {
@@ -405,8 +422,11 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       const pts = spots(ring, biz.length + 2);
       biz.forEach((b, i) => {
         const cat = CATALOG[b.kind].category;
-        L.circleMarker(pts[i + 2] ?? pts[0], { pane: 'pins', radius: 4, color: '#0b0a09', weight: 1, fillColor: cat === 'racket' ? '#b0302a' : cat === 'front' ? '#e7c25a' : '#99aaaa', fillOpacity: 1 })
-          .bindTooltip(`<b>${esc(b.name)}</b><br>${esc(CATALOG[b.kind].name)}`, { className: 'llv-tip' })
+        const fill = cat === 'racket' ? '#b0302a' : cat === 'front' ? '#e7c25a' : '#99aaaa';
+        const m = s.econ?.managers[b.id];
+        L.marker(pts[i + 2] ?? pts[0], { pane: 'pins', icon: L.divIcon({ className: 'llv-biz', html: `<span class="dot" style="background:${fill}"></span><span class="llv-blabel own-player" style="color:#e7c25a">${esc(b.name)}</span>`, iconSize: [10, 10], iconAnchor: [5, 5] }) })
+          .bindTooltip(`<b>${esc(b.name)}</b><br>${esc(CATALOG[b.kind].name)} · yours<br>${m ? `Run by ${esc(m.name)}` : 'Nobody in charge'} · ~${fmt$(expectedTake(s, b))}/wk`, { className: 'llv-tip' })
+          .on('click', () => latest.current.onBiz?.(b.id))
           .addTo(districtPins);
       });
       const hq = s.rivals.find((r) => r.homeDistrict === id && s.characters[r.leaderId]?.alive);
@@ -460,6 +480,8 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       if (!on && map.hasLayer(l.m)) map.removeLayer(l.m);
     }
     el.dataset.level = levelFor(z);
+    // Building labels declutter by zoom: yours first, rivals' at the normal view, the rest up close.
+    el.dataset.labels = z >= 15 ? 'all' : z >= 14.5 ? 'rivals' : 'mine';
     latest.current.onLevel?.(levelFor(z));
   }
   map.on('zoomend', onZoom);

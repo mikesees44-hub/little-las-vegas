@@ -174,7 +174,7 @@ export function IslandMap({ s, selected, onSelect }: { s: GameState; selected?: 
         )) : <span>{mode === 'heat' ? 'Cool → hot' : mode === 'income' ? 'Your weekly take, low → high' : 'Rival share, low → high'}</span>}
         <span><span className="inline-block w-2 h-2 mr-1 rounded-full bg-[#e7c25a]" />front</span>
         <span><span className="inline-block w-2 h-2 mr-1 rounded-full bg-[#b0302a]" />racket</span>
-        <span><span className="inline-block w-2 h-2 mr-1 rounded-sm bg-[#e7c25a]" />building (★ open, § permits … ◩ interior)</span>
+        <span>buildings grow from stakes to frame to finished place; gold = yours</span>
       </div>
     </div>
   );
