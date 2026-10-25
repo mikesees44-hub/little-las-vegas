@@ -230,6 +230,7 @@ export function App() {
     setAutoOpened({});
     setSpeed(0);
     setTab('map');
+    try { window.scrollTo(0, 0); } catch { /* no window */ }
   }
 
   /** A new game from the creator (or a quick restart): always opens on the funeral. */
