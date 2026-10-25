@@ -1046,7 +1046,10 @@ function finishJob(ctx: Ctx, E: EarsState, job: EarJob): void {
     ];
   }
   if (prot && prot.alive) text += ` ${prot.firstName}, who is sweet on her, was waiting outside in his car.`;
-  s.eventQueue.push(ev(s, 'ears_report', `${c.firstName} reports on ${t.firstName}`, text, choices, [c.id, t.id], 55, { charId: c.id, theme: 'town', asked: 1, due: 1 }, true));
+  const rep = ev(s, 'ears_report', `${c.firstName} reports on ${t.firstName}`, text, choices, [c.id, t.id], 55, { charId: c.id, theme: 'town', asked: 1, due: 1 }, true);
+  // Unanswered, she is paid what was agreed.
+  rep.defaultChoiceId = 'pay';
+  s.eventQueue.push(rep);
   if (job.mode === 'close' && !ok && spotted) ear.loyalty = clamp(ear.loyalty - 5);
 }
 
@@ -1330,7 +1333,7 @@ function hookEvent(s: GameState, E: EarsState, h: RngHolder, hk: PendingHook): E
       return ev(s, 'ears_web_pregnant', `${her.firstName} is expecting`,
         line(E, 'w_preg', PREGNANT, h, { a: callName(a), her: her.firstName }),
         [
-          { id: 'help', label: '"Whatever you decide, you won\'t be alone." ($800)', detail: 'A doctor in Philadelphia, rent paid, no questions. Her choice what comes next.', because: `helped ${her.firstName} quietly`, effects: [{ type: 'money', amount: -800, label }, X({ op: 'loyalty', earId: her.id, amount: 20 }, label), X({ op: 'note', text: `${her.firstName} is expecting; you made sure she was looked after.` }, label)] },
+          { id: 'help', label: '"Whatever you decide, you won\'t be alone." ($800)', detail: 'A good doctor, the rent paid, no questions asked. What comes next is her choice.', because: `helped ${her.firstName} quietly`, effects: [{ type: 'money', amount: -800, label }, X({ op: 'loyalty', earId: her.id, amount: 20 }, label), X({ op: 'note', text: `${her.firstName} is expecting; you made sure she was looked after.` }, label)] },
           { id: 'his', label: `"It's ${a.firstName}'s to handle. I'll tell him."`, detail: 'A man should know. Whether he does right is up to him.', because: `told ${a.firstName} about ${her.firstName}`, effects: a.faction === 'player' ? [{ type: 'opinion', from: a.id, to: s.playerId, amount: 3, reason: 'The boss told me straight', decay: 1, label }] : [X({ op: 'reveal', a: a.id, b: her.id }, label)] },
           { id: 'out', label: 'Stay out of it', detail: 'Not your business.', because: `stayed out of ${her.firstName}'s trouble`, effects: [X({ op: 'loyalty', earId: her.id, amount: -3 }, label)] },
         ], [her.id, a.id], 36, { charId: her.id, theme: 'romance' });
