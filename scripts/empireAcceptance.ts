@@ -3,7 +3,6 @@ import { dateOfWeek, toDays } from '../src/engine/calendar';
 import { createVenue, empireWeek, runCmd, startProject, venueBusiness, venueByKey } from '../src/engine/empire';
 import { roomCount, roomsByType, venueBuilding } from '../src/engine/empireBuild';
 import { CONCEPTS } from '../src/engine/empireData';
-import { revenueOf } from '../src/engine/empireOps';
 import type { ConceptId, Venue } from '../src/engine/empireState';
 import { ensureEcon } from '../src/engine/econState';
 import { initEcon } from '../src/engine/econ';

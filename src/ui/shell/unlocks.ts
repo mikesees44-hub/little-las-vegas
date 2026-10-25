@@ -49,6 +49,7 @@ const RULES: Record<string, (s: GameState) => boolean> = {
   'borgata.grievances': (s) => maxGrievance(s) >= 40 || s.factions.length > 0,
   'borgata.orders': (s) => s.week >= 3,
   'holdings.property': (s) => s.week >= 3 || s.money >= 15000 || lotsOwned(s),
+  'holdings.designer': (s) => s.week >= 3 || Object.values(s.empire?.venues ?? {}).some((v) => v.owner === 'player'),
   'holdings.books': (s) => s.week >= 6 || Object.keys(s.econ?.cases ?? {}).length > 0,
   'holdings.hq': (s) => s.heat.federal >= 20 || (s.econ?.hq.found ?? 0) > 0 || s.week >= 8,
   'ops.travel': (s) => s.week >= 3 || s.outposts.length > 0 || (s.travel?.trips?.length ?? 0) > 0,

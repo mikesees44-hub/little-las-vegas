@@ -33,6 +33,7 @@ import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Feed } from './Feed';
 import { GoodLifePanel } from '../econ/GoodLife';
+import { EmpireSection } from '../empire/EmpireSection';
 import type { PanelId, Route } from './routes';
 
 /**
@@ -121,6 +122,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'rackets', label: 'Rackets & Fronts', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
+      { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
     ],
