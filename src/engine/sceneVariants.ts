@@ -66,8 +66,8 @@ export interface Family {
   /** Which popups belong to the family. */
   match: (ev: EventInstance) => boolean;
   scenes: Scene[];
-  /** Rebuild the whole popup from the scene (title, text and choices) instead of just retelling it. */
-  rebuild?: boolean;
+  /** A catch-all (the crew's settings): tried only when no specific family matches. */
+  fallback?: boolean;
 }
 
 const FAMILIES: Family[] = [];
@@ -77,7 +77,7 @@ export function registerFamily(f: Family): void {
 }
 
 export function familyOf(ev: EventInstance): Family | undefined {
-  return FAMILIES.find((f) => f.match(ev));
+  return FAMILIES.find((f) => !f.fallback && f.match(ev)) ?? FAMILIES.find((f) => f.fallback && f.match(ev));
 }
 
 export function allFamilies(): readonly Family[] {
@@ -173,7 +173,7 @@ export function chooseScene(s: GameState, fam: Family, c: SceneCtx): number | un
 
 /** Retell one popup as a fresh scene of its family. Returns true if it was dressed. */
 export function dressScene(s: GameState, ev: EventInstance): boolean {
-  if (ev.meta?.scene !== undefined && typeof ev.meta.scene === 'string') return false;
+  if (ev.meta?.sv !== undefined) return false;
   const fam = familyOf(ev);
   if (!fam) return false;
   const c = sceneCtx(s, ev, fam.id);
@@ -192,7 +192,7 @@ export function dressScene(s: GameState, ev: EventInstance): boolean {
     // A scene that cannot be told with what is on the table keeps the original telling.
     return false;
   }
-  ev.meta = { ...(ev.meta ?? {}), scene: `${fam.id}:${idx}` };
+  ev.meta = { ...(ev.meta ?? {}), sv: `${fam.id}:${idx}` };
   return true;
 }
 

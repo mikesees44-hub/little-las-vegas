@@ -119,6 +119,8 @@ function nameSet(s: GameState): Set<string> {
 interface GameStat {
   texts: number; skels: number; rep26Text: number; rep26Skel: number; maxSkel: number; maxSkelText: string; skelsOver2: number; mandOver2: number;
   skelCounts: Record<string, number>;
+  /** Scenes shown in the first 12 weeks (fresh-game check). */
+  opening: string[];
   popups: number; distinctIds: number; distinctTitles: number; rep8: number; rep26: number;
   maxTemplate: number; maxTemplateId: string; maxWeek: number; familyOver: number;
   counts: Record<string, number>; themes: Record<string, number>;
@@ -135,6 +137,7 @@ function playOne(gi: number): GameStat {
   const skelLast = new Map<string, number>();
   const skelCounts: Record<string, number> = {};
   const skelMand = new Set<string>();
+  const opening: string[] = [];
   let rt = 0, rs = 0;
   let names = nameSet(s);
   for (let w = 0; w < WEEKS && !s.gameOver; w++) {
@@ -150,6 +153,7 @@ function playOne(gi: number): GameStat {
       textLast.set(full, s.week);
       skelLast.set(sk, s.week);
       skelCounts[sk] = (skelCounts[sk] ?? 0) + 1;
+      if (w < 12) opening.push(sk);
       if (e.mandatory) skelMand.add(sk);
     }
     maxWeek = Math.max(maxWeek, evs.length);
@@ -187,7 +191,7 @@ function playOne(gi: number): GameStat {
     texts: textLast.size, skels: skelLast.size, rep26Text: popups ? rt / popups : 0, rep26Skel: popups ? rs / popups : 0, maxSkel, maxSkelText,
     skelsOver2: Object.entries(skelCounts).filter(([k, v]) => v > 2 && !skelMand.has(k)).length,
     mandOver2: Object.entries(skelCounts).filter(([k, v]) => v > 2 && skelMand.has(k)).length,
-    skelCounts,
+    skelCounts, opening,
     popups, distinctIds: Object.keys(counts).length, distinctTitles: titles.size, rep8: popups ? r8 / popups : 0, rep26: popups ? r26 / popups : 0,
     maxTemplate, maxTemplateId, maxWeek, familyOver, counts, themes,
   };
@@ -223,6 +227,17 @@ console.log(`distinct scenes per game ${avg((g) => g.skels).toFixed(1)}  share $
 console.log(`26-week repeat, identical text   ${pct(avg((g) => g.rep26Text))}`);
 console.log(`26-week repeat, same scene       ${pct(avg((g) => g.rep26Skel))}`);
 console.log(`most-seen scene per game avg ${avg((g) => g.maxSkel).toFixed(1)}x, worst ${Math.max(...games.map((g) => g.maxSkel))}x; scenes seen 3+ times per game ${avg((g) => g.skelsOver2).toFixed(1)} (mandatory beats ${avg((g) => g.mandOver2).toFixed(1)})`);
+{
+  // Fresh games: how much of one game's first 12 weeks shows up in another game's first 12 weeks.
+  let sum = 0, n = 0;
+  for (let i = 0; i < games.length; i++) for (let j = 0; j < games.length; j++) {
+    if (i === j || !games[i].opening.length) continue;
+    const other = new Set(games[j].opening);
+    sum += games[i].opening.filter((x) => other.has(x)).length / games[i].opening.length;
+    n++;
+  }
+  console.log(`opening overlap (weeks 0-11 scenes also in another game's opening) ${pct(n ? sum / n : 0)}`);
+}
 console.log(`max single template/game avg ${avg((g) => g.maxTemplate).toFixed(1)}, worst ${Math.max(...games.map((g) => g.maxTemplate))}; games over 5: ${games.filter((g) => g.maxTemplate > 5).length}`);
 console.log(`\nTop ${TOP} templates (avg per game, worst game):`);
 for (const [k, v] of Object.entries(total).sort((a, b) => b[1] - a[1]).slice(0, TOP)) console.log(`  ${k.padEnd(34)} ${(v / GAMES).toFixed(2).padStart(6)}  worst ${perGameMax[k]}`);
@@ -236,4 +251,4 @@ for (const [k, v] of Object.entries(themes).sort((a, b) => b[1] - a[1])) console
 console.log('\nMoney flows per game (ledger categories):');
 console.log('  ' + Object.entries(flows).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${Math.round(v / GAMES)}`).join(' · '));
 console.log('  event money by source: ' + Object.entries(bySource).sort((a, b) => a[1] - b[1]).slice(0, 14).map(([k, v]) => `${k} ${Math.round(v / GAMES)}`).join(' · '));
-if (JSON_OUT) writeFileSync(JSON_OUT, JSON.stringify({ games: games.map(({ skelCounts: _s, ...g }) => g), total, perGameMax, themes }, null, 2));
+if (JSON_OUT) writeFileSync(JSON_OUT, JSON.stringify({ games: games.map(({ skelCounts: _s, opening: _o, ...g }) => g), total, perGameMax, themes }, null, 2));
