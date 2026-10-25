@@ -1,4 +1,5 @@
 import { initEcon } from './econ';
+import { ensureHood } from './hoodState';
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
@@ -333,6 +334,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   initDynasty(s);
   initPolitics(s);
   initEcon(s);
+  ensureHood(s);
   if (!opts.skipHouses) setupHouses(s);
   return s;
 }

@@ -5,6 +5,7 @@ import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
 import { commitEcon, econActions, previewEcon } from './econ';
+import { commitHood, hoodActions, previewHood } from './hood';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
@@ -234,6 +235,11 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   econ: {
     preview: (s, a) => previewEcon(s, a.op),
     commit: (ctx, a) => commitEcon(ctx, a.op),
+  },
+  /** The neighborhoods (hood.ts): restyle a place you own. */
+  hood: {
+    preview: (s, a) => previewHood(s, a.op),
+    commit: (ctx, a) => commitHood(ctx, a.op),
   },
   /** Making your bones (bones.ts). */
   bones: {
@@ -915,6 +921,7 @@ export function availableActions(s: GameState): PlayerAction[] {
   out.push(...dynastyActions(s));
   out.push(...powerActions(s));
   out.push(...econActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 3; }));
+  out.push(...hoodActions(s).filter((a) => s.money >= previewAction(s, a).cost * 4));
   out.push(...bonesActions(s).filter((a) => { const c = previewAction(s, a).cost; return c === 0 || s.money >= c * 4; }), ...ledgerActions(s));
   // A couple of interactions with random people.
   const people = Object.values(s.characters).filter((c) => c.alive && c.id !== s.playerId && (c.faction === 'player' || c.dynasty));

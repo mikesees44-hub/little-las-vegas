@@ -1,5 +1,6 @@
 import { displayName } from '../engine/characters';
 import type { GameState } from '../engine/types';
+import { ensureHood } from '../engine/hoodState';
 
 /**
  * Three save slots in localStorage. Every read and write is wrapped: in a
@@ -125,6 +126,7 @@ export function loadSlot(n: number, kv: KV | undefined = store()): GameState | u
     const raw = get(kv, SLOT(n));
     if (!raw) return undefined;
     const s = JSON.parse(raw) as GameState;
+    if (s && s.version === 2) ensureHood(s); // older saves: the neighborhood records
     return s && s.version === 2 ? s : undefined;
   } catch {
     return undefined;

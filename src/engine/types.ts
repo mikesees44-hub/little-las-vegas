@@ -11,6 +11,8 @@ import type { Orientation, RomanceState, StoryOp, StoryState } from './storyStat
 import type { PolAction, PolOp, PolState } from './polState';
 import type { MgState, MinigameId } from './minigame';
 import type { EconAction, EconOp, EconState } from './econState';
+import type { HoodAction } from './hood';
+import type { HoodState } from './hoodState';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
 import type { BonesAction, BonesEntry, BonesOp, BonesState } from './bonesState';
 import type { LedgerAction, LedgerBookState, LedgerOp } from './ledgerbookState';
@@ -866,6 +868,8 @@ export interface GameState {
   mg?: MgState;
   /** Economy & property empire: rackets, lots, managers, HQ, gifts (optional for old saves). */
   econ?: EconState;
+  /** The neighborhoods: their economy, reputation, police, history; the looks of other people's places (hoodState.ts; optional for old saves). */
+  hood?: HoodState;
   /** Travel, trips and fugitives (optional for old saves). */
   travel?: TravelState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
@@ -920,6 +924,7 @@ export type PlayerAction =
   | { kind: 'background'; charId: string }
   | { kind: 'order'; key: string; via: OrderVia }
   | { kind: 'econ'; op: EconAction }
+  | { kind: 'hood'; op: HoodAction }
   | { kind: 'travel'; op: TravelAction }
   | { kind: 'pol'; op: PolAction }
   | { kind: 'bones'; op: BonesAction }
