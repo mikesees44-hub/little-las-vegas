@@ -9,6 +9,7 @@ import { chance, hashSeed, rand, randInt, type RngHolder } from './rng';
 import { RACKETS, r50, racketInfo, type Fit, type RacketInfo, type SitCtx, type Situation } from './racketData';
 import type { Dial, DialOpt, RacketCmd, RacketOp, RacketOutcome } from './racketState';
 import { racketOf, racketMut, applyTreeHeat } from './rackets';
+import { whichRacket } from './racketHub';
 import { dressScene, registerFamily, sceneCtx } from './sceneVariants';
 import type { ActionPreview } from './actions';
 import type { Business, BusinessKind, Character, Effect, EventInstance, GameState, PlayerAction } from './types';
@@ -461,8 +462,8 @@ export function previewRacket(s: GameState, cmd: RacketCmd): ActionPreview {
       const man = bestRunner(s, cmd.kind);
       const locks = startLocks(s, cmd.kind);
       const label = `Start: ${def.name}${d ? ` in ${d.name}` : ''}`;
-      const effects: Effect[] = [{ type: 'money', amount: -def.cost, label }, { type: 'addBusiness', business: b, label }];
-      effects.push({ type: 'econ', op: { op: 'note', text: man ? `${displayName(man)} runs it (best ${FIT_OF(cmd.kind)} among your free men)` : `No free man to run it: it limps at 40% until one is` }, label });
+      const effects: Effect[] = [{ type: 'money', amount: -def.cost, label: def.name }, { type: 'addBusiness', business: b, label: d?.name ?? def.name }];
+      effects.push({ type: 'econ', op: { op: 'note', text: man ? `${displayName(man)} runs it (best ${FIT_OF(cmd.kind)} among your free men)` : `No free man to run it: it limps at 40% until one is` } });
       if (cmd.kind === 'narcotics') effects.push({ type: 'schedule', key: 'narcotics_rumor', minWeeks: 3, maxWeeks: 8, chance: 0.35, hint: 'word may reach Philadelphia', label });
       const capo = d?.capoId ? s.characters[d.capoId] : undefined;
       return {
@@ -554,8 +555,9 @@ export function racketActions(s: GameState): PlayerAction[] {
     if (dialOf(s, b, d.id) !== o.id) out.push(RK({ c: 'dial', bizId: b.id, dial: d.id, opt: o.id }));
     out.push(RK({ c: 'advice', bizId: b.id }));
   }
-  const kinds = (Object.keys(RACKETS) as BusinessKind[]).filter((k) => k !== 'narcotics' && !startLocks(s, k).length);
-  if (kinds.length) out.push(RK({ c: 'start', kind: kinds[s.week % kinds.length] }));
+  // A new racket: what "Which racket should I start?" ranks first.
+  const best = whichRacket(s)[0];
+  if (best) out.push(RK({ c: 'start', kind: best.kind }));
   return out;
 }
 
