@@ -209,3 +209,7 @@ body {
 @keyframes hv-bounce { to { transform: translateY(-3px); } }
 @keyframes hv-tram { from { translate: 0 0; } to { translate: var(--tx) var(--ty); } }
 @media (prefers-reduced-motion: reduce) { .hv-spin, .hv-crane, .hv-wave, .hv-bob, .hv-chase, .hv-flicker, .hv-sel, .hv-bounce, .hv-tram > g { animation: none; } }
+/* South Jersey illustrated: headlights on the Parkway after dark. */
+.rv-cars { animation: rv-cars 2.4s linear infinite; }
+@keyframes rv-cars { to { stroke-dashoffset: -28; } }
+@media (prefers-reduced-motion: reduce) { .rv-cars { animation: none; } }
