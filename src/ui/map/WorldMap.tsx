@@ -78,6 +78,7 @@ export function WorldMap(props: WorldMapProps) {
         api.current = buildMap(L.default ?? (L as unknown as typeof Leaflet), host.current, base, latest);
         api.current.update(latest.current);
         setStatus('ready');
+        if (latest.current.flyTo) api.current.fly(latest.current.flyTo.level); // a fly asked for before the map was ready
         const { loadFine } = await import('./geoFine');
         if (cancelled) return;
         const fine = await loadFine();

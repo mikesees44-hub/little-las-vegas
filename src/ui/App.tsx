@@ -1,81 +1,57 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { OrderToast, type ToastItem } from './components/OrderToast';
-import { alerts as computeAlerts, type Alert } from '../engine/alerts';
+import { alerts as computeAlerts } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
-import { MusicToggle } from './audio';
-import { ClockControls, newWarnings, tickerLine, useClock, type Speed } from './clock';
-import { PlannerContext, SchemePlanner, SchemesPanel } from './components/Schemes';
-import { TablePanel } from './components/TablePanel';
-import { LifestylePanel } from './components/Lifestyle';
-import { Newspapers } from './components/Newspaper';
-import { LawPanel } from './components/LawPanel';
-import { UnderbellyPanel } from './components/UnderbellyPanel';
-import { OfficePanel } from './components/OfficePanel';
-import { PowerTab, type PowerSub } from './power/PowerTab';
-import { AudiencePanel } from './power/AudiencePanel';
-import { CrisisBanner } from './power/CrisisBanner';
-import { Businesses } from './components/Businesses';
-import { Holdings } from './econ/Holdings';
-import { RealEstate } from './econ/RealEstate';
-import { HQPanel } from './econ/HQPanel';
-import { TheBooks } from './books/TheBooks';
-import { GiftsPanel } from './econ/Gifts';
-import { GoodLifePanel } from './econ/GoodLife';
+import { newWarnings, tickerLine, useClock, type Speed } from './clock';
+import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
-import { Chronicle } from './components/Chronicle';
-import { Storylines } from './components/Storylines';
-import { CrewList } from './components/CrewList';
-import { CrewTree } from './components/CrewTree';
 import { EventModal } from './components/EventModal';
-import { FamilyTab } from './family/FamilyTab';
-import { Header } from './components/Header';
-import { OrdersContext, OrdersTray } from './components/Orders';
-import { SheetContext } from './components/People';
 import { ReportModal } from './components/ReportModal';
-import { ClarityContext, type ClarityApi } from './clarity/context';
+import type { ClarityApi } from './clarity/context';
 import { PickerModal } from './clarity/CandidatePicker';
-import { GlossaryOverlay, HelpButton } from './clarity/Glossary';
+import { GlossaryOverlay } from './clarity/Glossary';
 import { WhatToDoModal } from './clarity/WhatToDo';
 import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
 import { applySettings, getSettings } from './settings';
-import { TravelContext } from './travel/context';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
-import { FugitiveBanner } from './travel/Panels';
 import { minigameOf, opensScene } from '../engine/minigames';
 import { MinigameScreen } from './minigames/MinigameScreen';
 import { NewspaperReel, type Reel } from './minigames/NewspaperReel';
 
-import { CityHall } from './cityhall/CityHall';
 import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
+import { PANELS, type SectionCtx } from './shell/panels';
+import { routeFor, type PanelId, type Route } from './shell/routes';
+import { Providers } from './shell/Providers';
+import type { MapFocus, ShellApi } from './shell/context';
+import { Shell } from './shell/Shell';
+import { TopBar } from './shell/TopBar';
+import { LeftRail } from './shell/LeftRail';
+import { Drawer } from './shell/Drawer';
+import { AlertsPanel, GoalsCard, StreetFeedCard, ThisWeekCard } from './shell/RightRail';
+import { InMotionStrip } from './shell/InMotionStrip';
+import { inMotion, type MotionChip } from './shell/inMotion';
+import { shellAlerts, type ShellAlert } from './shell/alertRoutes';
+import { guidedGoals, type GuidedGoal } from './shell/goals';
+import { useShellState } from './shell/useShellState';
+import { HintHost, Toast } from './shell/HintHost';
+import { Modal } from './components/Modal';
+import { SheetFrame } from './shell/SheetFrame';
+import { PolSheet } from './cityhall/CityHall';
+import { ContextMenu } from './sheet/InteractionMenu';
+import type { MenuCategoryId } from './sheet/menuCatalog';
 
-export type Tab = 'map' | 'tree' | 'business' | 'crew' | 'schemes' | 'table' | 'lifestyle' | 'family' | 'law' | 'town' | 'cityhall' | 'papers' | 'chronicle' | 'storylines' | 'holdings' | 'realestate' | 'hq' | 'books' | 'gifts' | 'goodlife' | PowerSub;
-/** The bar: ten groups. Family and Town hold sub-screens, so every screen stays reachable. */
-const TABS: { id: Tab; label: string; subs?: { id: Tab; label: string }[] }[] = [
-  { id: 'map', label: 'The Island' },
-  { id: 'business', label: 'Rackets & Fronts', subs: [{ id: 'business', label: 'Buy & sell' }, { id: 'holdings', label: 'Holdings' }, { id: 'realestate', label: 'Real Estate' }, { id: 'hq', label: 'Headquarters' }, { id: 'books', label: 'The Books' }] },
-  { id: 'tree', label: 'Crew' },
-  { id: 'crew', label: 'Administration' },
-  { id: 'schemes', label: 'Schemes' },
-  { id: 'table', label: 'The Table' },
-  { id: 'family', label: 'Family', subs: [{ id: 'family', label: 'The House' }, { id: 'lifestyle', label: 'Lifestyle' }, { id: 'gifts', label: 'Gifts & Giving' }, { id: 'goodlife', label: 'The Good Life' }] },
-  { id: 'power', label: 'Power', subs: [{ id: 'power', label: 'Heirs & Ambition' }, { id: 'grievances', label: 'Passed Over' }, { id: 'blitz', label: 'Balance & Blitz' }, { id: 'front', label: 'The Front' }] },
-  { id: 'town', label: 'Town', subs: [{ id: 'town', label: 'Underbelly & Office' }, { id: 'cityhall', label: 'City Hall' }, { id: 'papers', label: 'The Papers' }] },
-  { id: 'law', label: 'The Law' },
-  { id: 'chronicle', label: 'Chronicle', subs: [{ id: 'chronicle', label: 'Chronicle' }, { id: 'storylines', label: 'Storylines' }] },
-];
-function tabGroup(t: Tab): Tab {
-  return TABS.find((g) => g.id === t || g.subs?.some((x) => x.id === t))?.id ?? t;
-}
+/** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
+export type Tab = string;
 type Mode = 'week' | 'month';
 
 /** The opening scene: the old boss's funeral at St. Ann's (plays for every new game). */
@@ -103,7 +79,9 @@ export function App({ startOn = 'title' }: AppProps) {
   const [mode, setMode] = useState<Mode>('week');
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
-  const [tab, setTab] = useState<Tab>('map');
+  const [reportLog, setReportLog] = useState<WeeklyReport[]>([]);
+  const [route, setRoute] = useState<Route>({});
+  const goRef = useRef<(r: Route | string) => void>(() => {});
   const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
@@ -116,7 +94,11 @@ export function App({ startOn = 'title' }: AppProps) {
   }), [orders]);
   const [toast, setToast] = useState<ToastItem | undefined>();
   const closeToast = useCallback(() => setToast(undefined), []);
-  const sheetApi = useMemo(() => ({ open: (id: string) => setSheet(id) }), []);
+  const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number; category?: string } | undefined>();
+  const sheetApi = useMemo(() => ({
+    open: (id: string) => { setCtxMenu(undefined); setSheet(id); },
+    menu: (id: string, category?: string, at?: { x: number; y: number }) => setCtxMenu({ id, category, x: at?.x ?? 80, y: at?.y ?? 120 }),
+  }), []);
   const [planner, setPlanner] = useState<{ kind: SchemeKind; targetId?: string; opts?: Partial<SchemeOptions> } | undefined>();
   const plannerApi = useMemo(() => ({ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => { setSheet(undefined); setPlanner({ kind, targetId, opts }); } }), []);
 
@@ -127,7 +109,7 @@ export function App({ startOn = 'title' }: AppProps) {
     openPicker: (role, opts) => { setSheet(undefined); setPicker({ role, pool: opts?.pool, onPick: opts?.onPick }); },
     openHelp: (focus) => setHelp({ focus }),
     openAdvice: () => setAdvice(true),
-    goTab: (t) => setTab(t as Tab),
+    goTab: (t) => goRef.current(t),
   }), []);
 
   const [tripPlan, setTripPlan] = useState<{ leaderId: string; destId?: string } | undefined>();
@@ -173,6 +155,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
+      setReportLog((l) => [...l, r.report].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
@@ -183,10 +166,11 @@ export function App({ startOn = 'title' }: AppProps) {
           setSpeed(0);
           setClockNote(warn.length ? `Paused: ${warn[0]}` : 'Paused');
         }
-      } else setReports([r.report]);
+      }
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
+      setReportLog((l) => [...l, ...r.reports].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
@@ -252,7 +236,9 @@ export function App({ startOn = 'title' }: AppProps) {
     setReels([]);
     setAutoOpened({});
     setSpeed(0);
-    setTab('map');
+    setRoute({});
+    setReportLog([]);
+    setCtxMenu(undefined);
     try { window.scrollTo(0, 0); } catch { /* no window */ }
   }
 
@@ -287,13 +273,46 @@ export function App({ startOn = 'title' }: AppProps) {
     } catch { /* storage unavailable */ }
   }
 
-  function onAlert(a: Alert) {
-    if (a.charId) setSheet(a.charId);
-    else if (a.tab) setTab(a.tab as Tab);
-    else if (a.kind === 'decision') { setAdvancing(false); setEventIdx(0); }
+  const shellUi = useShellState(s, orders, sheet);
+  const [mapFocus, setMapFocus] = useState<MapFocus | undefined>();
+  const focusMap = (f: Omit<MapFocus, 'nonce'>) => setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 }));
+  const [helpMenu, setHelpMenu] = useState(false);
+  const [lastRoute, setLastRoute] = useState<Route>({ panel: 'borgata' });
+  /** Open a drawer section (an alert can reveal one that is still hidden). */
+  function openRoute(r: Route) {
+    if (r.panel && r.section) shellUi.reveal(`${r.panel}.${r.section}`);
+    if (r.panel) setLastRoute(r);
+    setRoute(r);
+  }
+  function go(r: Route | string) {
+    openRoute(typeof r === 'string' ? routeFor(r) : r);
+  }
+  const shellAlertList = useMemo(() => shellAlerts(s, alertList).filter((a) => !(shellUi.snoozed[a.key] > s.week)), [s, alertList, shellUi.snoozed]);
+  function onAlert(a: ShellAlert) {
+    if (a.mapFocus) focusMap(a.mapFocus);
+    if (a.kind === 'decision') { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }
+    else if (a.charId) setSheet(a.charId);
+    else if (a.route?.panel) openRoute(a.route);
+  }
+  function onChip(c: MotionChip) {
+    if (c.focus) focusMap(c.focus);
+    if (c.orders) { (document.querySelector('[data-testid=orders-button]') as HTMLButtonElement | null)?.click(); return; }
+    if (c.charId) setSheet(c.charId);
+    else if (c.route) openRoute(c.route);
+  }
+  const goals = useMemo(() => guidedGoals(s, shellUi.flags), [s, shellUi.flags]);
+  function showGoal(g: GuidedGoal) {
+    if (g.show?.focus) focusMap({ level: g.show.focus });
+    if (g.show?.route) openRoute(g.show.route);
+    if (g.show?.tour) tour(g.show.tour);
   }
 
+  const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports };
+  const shellApi: ShellApi = { go, focus: focusMap };
+  goRef.current = go;
+
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
+  const overlayOpen = !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   const busy = !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
@@ -306,14 +325,25 @@ export function App({ startOn = 'title' }: AppProps) {
   });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || (e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'SELECT') return;
-      e.preventDefault();
-      setSpeed((v) => (v === 0 ? 2 : 0));
-      setClockNote(undefined);
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setSpeed((v) => (v === 0 ? 2 : 0));
+        setClockNote(undefined);
+        return;
+      }
+      if (menu || overlayOpen) return;
+      const fk = /^F([1-8])$/.exec(e.key);
+      const p = fk ? PANELS[Number(fk[1]) - 1] : PANELS.find((x) => x.key === e.key.toLowerCase());
+      if (p && shellUi.visiblePanels.includes(p.id)) {
+        e.preventDefault();
+        setRoute((r) => (r.panel === p.id ? {} : { panel: p.id }));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [menu, overlayOpen, shellUi.visiblePanels]);
 
   if (menu) {
     return (
@@ -322,112 +352,71 @@ export function App({ startOn = 'title' }: AppProps) {
     );
   }
 
+  const motion = inMotion(s, { orders: orders.length });
+  const panel = route.panel && shellUi.visiblePanels.includes(route.panel) ? route.panel : undefined;
+  const sections = panel ? shellUi.sectionsOf(panel) : [];
+  const section = panel ? (sections.includes(route.section ?? '') ? route.section : sections[0]) : undefined;
+  const goalIdx = goals.findIndex((g) => !g.done);
+  const badges: Partial<Record<PanelId, number>> = {};
+  for (const a of shellAlertList) if (a.route?.panel && a.severity !== 'info') badges[a.route.panel] = (badges[a.route.panel] ?? 0) + 1;
+  const right = (
+    <>
+      <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
+      <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} />
+      {!s.gameOver && <GoalsCard goals={goals} onShow={showGoal} />}
+      <div className="2xl:hidden"><StreetFeedCard s={s} /></div>
+    </>
+  );
+
   return (
-    <SheetContext.Provider value={sheetApi}>
-    <ClarityContext.Provider value={clarityApi}>
-    <PlannerContext.Provider value={plannerApi}>
-    <OrdersContext.Provider value={ordersApi}>
-    <TravelContext.Provider value={travelApi}>
-    <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
-      <Header s={s}>
-        {!s.gameOver && (
+    <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
+      <Shell
+        top={(
+          <TopBar s={s} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+            onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
+            onReview={() => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
+            ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
+            seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0} />
+        )}
+        rail={<LeftRail visible={shellUi.visiblePanels} active={panel} badges={badges} dots={shellUi.dots} onOpen={(p) => { shellUi.seenPanel(p); if (panel === p) setRoute({}); else openRoute(p === lastRoute.panel ? lastRoute : { panel: p }); }} onHelp={() => setHelpMenu(true)} />}
+        map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
+        overlay={(
           <>
-            <ClockControls speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote} />
-            <MusicToggle />
-            <button className="btn-gold py-1.5" onClick={() => startAdvance('week')}>Advance Week</button>
-            <button className="btn-ghost py-1.5" onClick={() => startAdvance('month')}>Advance Month</button>
-            <button className="btn-ghost py-1.5 border-gold-600 text-gold-300" onClick={() => setAdvice(true)} data-testid="wsid-button">What should I do?</button>
-            <HelpButton onClick={() => setHelp({})} />
-            <div className="text-xs text-stone-400">
-              {s.pendingEvents.length ? (
-                <>
-                  {s.pendingEvents.length - unanswered.length}/{s.pendingEvents.length} decisions made ·{' '}
-                  <button className="underline text-gold-300" onClick={() => { setAdvancing(false); setEventIdx(0); }}>review</button>
-                </>
-              ) : 'Nothing on the table this week.'}
-              {orders.length > 0 && <> · {orders.length} order{orders.length > 1 ? 's' : ''} queued</>}
-              {s.lastReport && <> · <button className="underline text-gold-300" onClick={() => setReports([s.lastReport!])}>last report</button></>}
-              {ticker && speed > 0 && <div className="text-[11px] text-stone-500 truncate max-w-[60vw]">{ticker}</div>}
-            </div>
+            <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
+            {!s.gameOver && goalIdx >= 0 && !panel && (
+              <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
+                className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
+                ➚ {goals[goalIdx].title}
+              </button>
+            )}
+            {s.gameOver && (
+              <div className="absolute inset-0 z-[1090] flex items-center justify-center bg-black/60 p-4">
+                <div className="panel p-6 text-center max-w-xl" data-testid="game-over">
+                  <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
+                  <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    <button className="btn-gold" onClick={() => setMenu('start')}>New Game…</button>
+                    {(Object.keys(STARTS) as StartId[]).map((k) => (
+                      <button key={k} className="btn-ghost" title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
-      </Header>
-
-      {s.gameOver && (
-        <div className="panel p-6 text-center">
-          <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
-          <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <button className="btn-gold" onClick={() => setMenu('start')}>New Game…</button>
-            {(Object.keys(STARTS) as StartId[]).map((k) => (
-              <button key={k} className="btn-ghost" title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!s.gameOver && <OrdersTray s={s} />}
-      {!s.gameOver && <CrisisBanner s={s} onOpen={() => setTab('power')} />}
-
-      <nav className="tabbar flex overflow-x-auto border-b border-noir-700" data-testid="tabbar">
-        {TABS.map((t) => (
-          <button key={t.id} data-tab={t.id} className={`tab ${tabGroup(tab) === t.id ? 'tab-active' : ''}`} onClick={() => setTab(t.id)}>{t.label}</button>
-        ))}
-      </nav>
-      {(() => {
-        const g = TABS.find((x) => x.id === tabGroup(tab));
-        return g?.subs ? (
-          <div className="flex flex-wrap gap-1 -mt-2" data-testid="subtabs">
-            {g.subs.map((x) => (
-              <button key={x.id} data-tab={x.id} className={`text-xs px-2 py-1 rounded ${tab === x.id ? 'bg-noir-700 text-gold-400' : 'text-stone-400 hover:text-stone-200'}`} onClick={() => setTab(x.id)}>{x.label}</button>
-            ))}
-          </div>
-        ) : null;
-      })()}
-
-      {!s.gameOver && <FugitiveBanner s={s} onOpen={() => setTab('law')} />}
-      {tab === 'map' ? (
-        <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => setTab('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
-      ) : (
-        <main className="panel p-3 sm:p-4">
-          {tab === 'business' && <Businesses s={s} />}
-          {tab === 'holdings' && <Holdings s={s} />}
-          {tab === 'realestate' && <RealEstate s={s} />}
-          {tab === 'hq' && <HQPanel s={s} />}
-          {tab === 'books' && <TheBooks s={s} />}
-          {tab === 'gifts' && <GiftsPanel s={s} />}
-          {tab === 'goodlife' && <GoodLifePanel s={s} />}
-          {tab === 'tree' && <CrewTree s={s} />}
-          {tab === 'crew' && <CrewList s={s} />}
-          {tab === 'schemes' && <SchemesPanel s={s} />}
-          {tab === 'table' && <TablePanel s={s} />}
-          {tab === 'lifestyle' && <LifestylePanel s={s} />}
-          {tab === 'family' && (
-            <FamilyTab s={s} pendingLaw={pendingLaw} pendingHeir={pendingHeir} onLaw={setPendingLaw} onHeir={setPendingHeir} />
-          )}
-          {tab === 'law' && <LawPanel s={s} />}
-          {tab === 'town' && (
-            <div className="space-y-6">
-              <OfficePanel s={s} />
-              <AudiencePanel s={s} />
-              <UnderbellyPanel s={s} />
-            </div>
-          )}
-          {tab === 'cityhall' && <CityHall s={s} />}
-          {tab === 'papers' && <Newspapers s={s} />}
-          {(tab === 'power' || tab === 'grievances' || tab === 'blitz' || tab === 'front') && <PowerTab s={s} sub={tab} />}
-          {tab === 'chronicle' && <Chronicle s={s} />}
-          {tab === 'storylines' && <Storylines s={s} />}
-        </main>
-      )}
-
-      <footer className="panel p-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-        <span>Seed: <span className="text-stone-300">{s.seed}</span></span>
-        <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed (optional)" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-36" />
-        <button className="btn-ghost text-xs py-1" data-testid="footer-new" onClick={() => { setSpeed(0); setMenu('start'); }}>New Game</button>
-        <button className="btn-ghost text-xs py-1" data-testid="footer-menu" onClick={() => { setSpeed(0); setMenu('title'); }}>Main Menu</button>
-        <span className="ml-auto">Saved automatically in slot {slot}{s.flags.ironman ? ' · ironman' : ''}.</span>
-      </footer>
+        drawer={panel && (
+          <Drawer s={s} panel={panel} section={section} sections={sections} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
+            onSection={(id) => { shellUi.seenSection(`${panel}.${id}`); openRoute({ panel, section: id }); }} onClose={() => setRoute({})} />
+        )}
+        right={right}
+        rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
+        bottom={<InMotionStrip chips={motion} onChip={onChip} />}
+        alertCount={shellAlertList.length}
+        danger={shellAlertList.some((a) => a.severity === 'danger')}
+      />
+      {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
+      {!menu && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {current && scene && (
         <MinigameScreen
@@ -448,19 +437,42 @@ export function App({ startOn = 'title' }: AppProps) {
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
       {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
-      {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
+      {sheet && !current && (s.characters[sheet] || !s.pol?.people[sheet]
+        ? <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />
+        : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}
+      {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category as MenuCategoryId | undefined} onClose={() => setCtxMenu(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
-      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => setTab(t as Tab)} onClose={() => setAdvice(false)} />}
+      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
+      {helpMenu && (
+        <Modal onClose={() => setHelpMenu(false)}>
+          <div className="p-4 space-y-2" data-testid="help-menu">
+            <div className="panel-title">Help</div>
+            <button className="btn-ghost w-full border-gold-600 text-gold-300" data-testid="wsid-button" onClick={() => { setHelpMenu(false); setAdvice(true); }}>What should I do?</button>
+            <button className="btn-ghost w-full" onClick={() => { setHelpMenu(false); setHelp({}); }}>The glossary: every term in the game</button>
+            <p className="text-[11px] text-stone-500">Keys: Y H B L O D T C (or F1–F8) open the panels · Esc closes · Space pauses · right-click any face for everything you can do to him.</p>
+          </div>
+        </Modal>
+      )}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
-    </div>
-    </TravelContext.Provider>
-    </OrdersContext.Provider>
-    </PlannerContext.Provider>
-    </ClarityContext.Provider>
-    </SheetContext.Provider>
+    </Providers>
   );
+}
+
+/** Pulse a tour target ("Show me"): by data-tour, then by data-testid. */
+function tour(id: string) {
+  let n = 0;
+  const tick = () => {
+    const el = id.startsWith('text:')
+      ? [...document.querySelectorAll('.panel-title, h2, h3')].find((x) => x.textContent?.trim() === id.slice(5))
+      : document.querySelector(`[data-tour="${id}"]`) ?? document.querySelector(`[data-testid="${id}"]`);
+    if (!el) { if (n++ < 10) setTimeout(tick, 120); return; }
+    el.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    el.classList.add('llv-tour');
+    setTimeout(() => el.classList.remove('llv-tour'), 4200);
+  };
+  setTimeout(tick, 60);
 }

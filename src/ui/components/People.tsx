@@ -5,7 +5,7 @@ import type { Character, FactionId, GameState, Trait } from '../../engine/types'
 import { Portrait } from '../portrait/Portrait';
 
 /** Opening a character sheet from anywhere. */
-export const SheetContext = createContext<{ open: (id: string) => void }>({ open: () => {} });
+export const SheetContext = createContext<{ open: (id: string) => void; menu?: (id: string, category?: string, at?: { x: number; y: number }) => void }>({ open: () => {} });
 export function useSheet() {
   return useContext(SheetContext);
 }
@@ -16,11 +16,11 @@ export const FACTION_TINT: Record<FactionId, string> = {
 
 /** A name you can click to open the person's sheet. */
 export function CharLink({ s, id, children, className }: { s: GameState; id?: string; children?: ReactNode; className?: string }) {
-  const { open } = useSheet();
+  const { open, menu } = useSheet();
   const c = id ? s.characters[id] : undefined;
   if (!c) return <span className={className}>{children ?? '—'}</span>;
   return (
-    <button type="button" className={`underline decoration-dotted decoration-stone-600 underline-offset-2 hover:text-gold-300 text-left ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }}>
+    <button type="button" className={`underline decoration-dotted decoration-stone-600 underline-offset-2 hover:text-gold-300 text-left ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }} onContextMenu={menu ? (e) => { e.preventDefault(); e.stopPropagation(); menu(c.id, undefined, { x: e.clientX, y: e.clientY }); } : undefined}>
       {children ?? displayName(c)}
     </button>
   );
@@ -28,9 +28,9 @@ export function CharLink({ s, id, children, className }: { s: GameState; id?: st
 
 /** A clickable portrait. */
 export function Face({ s, c, size = 48, className }: { s: GameState; c: Character; size?: number; className?: string }) {
-  const { open } = useSheet();
+  const { open, menu } = useSheet();
   return (
-    <button type="button" className={`shrink-0 rounded-md hover:ring-2 hover:ring-gold-400 ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }} title={displayName(c)}>
+    <button type="button" className={`shrink-0 rounded-md hover:ring-2 hover:ring-gold-400 ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }} onContextMenu={menu ? (e) => { e.preventDefault(); e.stopPropagation(); menu(c.id, undefined, { x: e.clientX, y: e.clientY }); } : undefined} title={`${displayName(c)} — right-click for everything you can do`}>
       <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined} />
     </button>
   );

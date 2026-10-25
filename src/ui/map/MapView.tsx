@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Alert } from '../../engine/alerts';
 import { CITIES_BY_ID, GROUP_LABEL, hasPermission, needsPermission, stake, standing, type OwnerGroup } from '../../engine/cities';
 import { SCHEME_INFO } from '../../engine/schemes';
@@ -14,13 +14,18 @@ import { LotPanel } from '../econ/LotPanel';
 import { BizPanel } from '../econ/BizPanel';
 import { useTravel } from '../travel/context';
 import { TravellersPanel } from '../travel/Panels';
+import type { MapFocus } from '../shell/context';
 
 /**
  * The map screen: the real map with its overlays (modes, breadcrumbs, legend,
  * the boss's card, alerts) and the side panel (a district, a city, or the
  * whole board), plus the envoys-abroad panel under it.
  */
-export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
+export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, focus }: {
+  /** Inside the map-first shell: full height, no side panel or alert rail; district and city cards float over the map. */
+  shell?: boolean;
+  /** Point the map at something (alerts, chips): a mode, a district or city, a level. */
+  focus?: MapFocus;
   s: GameState;
   alerts: Alert[];
   onAlert: (a: Alert) => void;
@@ -38,11 +43,21 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
   const [lot, setLot] = useState<string | undefined>();
   const go = (l: Level) => setFly({ level: l, nonce: (fly?.nonce ?? 0) + 1 });
   const crumbs: { l: Level; t: string }[] = [{ l: 'usa', t: 'USA' }, { l: 'region', t: 'South Jersey' }, { l: 'wildwood', t: 'Wildwood' }];
+  // The shell opens on the island, not the nation.
+  useEffect(() => { if (shell) setFly({ level: 'wildwood', nonce: 1 }); }, [shell]);
+  useEffect(() => {
+    if (!focus) return;
+    if (focus.mode) setMode(focus.mode);
+    if (focus.district) { setDistrict(focus.district); setCity(undefined); }
+    if (focus.city) { setCity(focus.city); setDistrict(undefined); }
+    const l = focus.level ?? (focus.district ? 'wildwood' : undefined);
+    if (l) setFly((f) => ({ level: l, nonce: (f?.nonce ?? 0) + 1 }));
+  }, [focus?.nonce]);
 
   return (
-    <div className="space-y-3">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="panel relative isolate overflow-hidden h-[calc(100vh-190px)] min-h-[520px]">
+    <div className={shell ? 'h-full' : 'space-y-3'}>
+      <div className={shell ? 'relative h-full' : 'grid gap-3 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_400px]'} data-shell={shell ? '' : undefined}>
+        <div className={shell ? 'relative isolate overflow-hidden h-full' : 'panel relative isolate overflow-hidden h-[calc(100vh-190px)] min-h-[520px]'}>
           <WorldMap
             s={s}
             mode={mode}
@@ -83,7 +98,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
             )}
             {level !== 'usa' && <button onClick={() => go('usa')} className="self-start rounded bg-noir-900/90 border border-noir-600 px-2 py-0.5 text-[11px] text-stone-300 hover:text-gold-300">← Back to US</button>}
           </div>
-          <div className="absolute right-12 top-2 z-[1000]"><AlertRail s={s} items={alerts} onAlert={onAlert} /></div>
+          {!shell && <div className="absolute right-12 top-2 z-[1000]"><AlertRail s={s} items={alerts} onAlert={onAlert} /></div>}
           <div className="absolute left-2 bottom-6 z-[1000] hidden sm:block"><PlayerCard s={s} /></div>
           <div className="absolute right-2 bottom-6 z-[1000] rounded bg-noir-900/90 border border-noir-700 px-2 py-1.5 text-[10px] text-stone-400 max-w-[50%]" data-testid="map-legend">
             <div className="uppercase tracking-[0.25em] text-stone-500 mb-0.5">Who holds what</div>
@@ -108,11 +123,11 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy }: {
               <button className="text-xs text-stone-500 hover:text-gold-300 mb-2" onClick={() => setCity(undefined)}>← the whole board</button>
               <CityPanel s={s} id={city} onEnvoy={onEnvoy} />
             </>
-          ) : <Overview s={s} />}
+          ) : shell ? null : <Overview s={s} />}
         </aside>
       </div>
-      <EnvoysAbroad s={s} />
-      <TravellersPanel s={s} />
+      {!shell && <EnvoysAbroad s={s} />}
+      {!shell && <TravellersPanel s={s} />}
     </div>
   );
 }

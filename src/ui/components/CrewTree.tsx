@@ -256,7 +256,7 @@ export function GeneralOrders({ s }: { s: GameState }) {
 /* The chart                                                           */
 /* ------------------------------------------------------------------ */
 
-export function CrewTree({ s }: { s: GameState }) {
+export function CrewTree({ s, chartOnly }: { s: GameState; chartOnly?: boolean }) {
   const boss = player(s);
   const ub = crew(s).filter((c) => c.rank === 'underboss');
   const cons = crew(s).filter((c) => c.rank === 'consigliere');
@@ -313,9 +313,9 @@ export function CrewTree({ s }: { s: GameState }) {
         </section>
       )}
 
-      <FactionsPanel s={s} />
-      <BooksPanel s={s} />
-      <GeneralOrders s={s} />
+      {!chartOnly && <FactionsPanel s={s} />}
+      {!chartOnly && <BooksPanel s={s} />}
+      {!chartOnly && <GeneralOrders s={s} />}
     </div>
   );
 }

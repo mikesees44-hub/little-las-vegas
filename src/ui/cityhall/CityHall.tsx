@@ -11,7 +11,7 @@ import { mName, unpackRow, type PolPerson } from '../../engine/polState';
 import type { Character, GameState, PlayerAction } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { Portrait } from '../portrait/Portrait';
-import { FACTION_TINT } from '../components/People';
+import { FACTION_TINT, useSheet } from '../components/People';
 import { OfficialPicker } from '../clarity/Pickers';
 
 /** A world person as a portrait sitter (engine characters use their own record). */
@@ -51,7 +51,7 @@ const SUBS: { id: Sub; label: string }[] = [
 /** City Hall: the government, the calendar, the bills, your officials and the people of the world. */
 export function CityHall({ s }: { s: GameState }) {
   const [sub, setSub] = useState<Sub>('offices');
-  const [open, setOpen] = useState<string | undefined>();
+  const { open: setOpen } = useSheet();
   if (!s.pol) return <p className="text-sm text-stone-500" data-testid="cityhall">City Hall opens next week.</p>;
   const pol = s.pol;
   const crack = pol.crackdown && s.week < pol.crackdown.until;
@@ -77,7 +77,6 @@ export function CityHall({ s }: { s: GameState }) {
       {sub === 'officials' && <Officials s={s} onOpen={setOpen} />}
       {sub === 'family' && <Family s={s} />}
       {sub === 'people' && <People s={s} onOpen={setOpen} />}
-      {open && <PolSheet s={s} id={open} onClose={() => setOpen(undefined)} onOpen={setOpen} />}
     </div>
   );
 }
@@ -388,7 +387,7 @@ function People({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }) {
 
 /* ------------------------------------------------------------------ */
 
-export function PolSheet({ s, id, onClose, onOpen }: { s: GameState; id: string; onClose: () => void; onOpen: (id: string) => void }) {
+export function PolSheet({ s, id, onClose, onOpen, embedded }: { s: GameState; id: string; onClose: () => void; onOpen: (id: string) => void; embedded?: boolean }) {
   const p = s.pol?.people[id];
   if (!p) return null;
   const w = PEOPLE_BY_ID[p.id];
@@ -398,9 +397,9 @@ export function PolSheet({ s, id, onClose, onOpen }: { s: GameState; id: string;
   const favs = favorsFor(s, p);
   const official = groupOf(p.inst) !== 'street' && groupOf(p.inst) !== 'showbiz' && groupOf(p.inst) !== 'civilian';
   const kin = w?.relationships.filter((r) => ['spouse', 'parent', 'child', 'sibling'].includes(r.kind) && s.pol!.people[r.id]).slice(0, 4) ?? [];
+  const Outer = embedded ? EmbeddedFrame : OverlayFrame;
   return (
-    <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto bg-black/70 p-2 sm:p-6" onClick={onClose} data-testid="pol-sheet">
-      <div className="panel w-full max-w-2xl p-3 sm:p-4" onClick={(e) => e.stopPropagation()}>
+    <Outer onClose={onClose}>
         <div className="flex items-start gap-3">
           <Face s={s} p={p} size={72} />
           <div className="min-w-0 flex-1">
@@ -415,7 +414,7 @@ export function PolSheet({ s, id, onClose, onOpen }: { s: GameState; id: string;
               {official && <CtlBadge v={idx} />}
             </div>
           </div>
-          <button className="btn-ghost text-xs py-1" onClick={onClose}>Close ✕</button>
+          {!embedded && <button className="btn-ghost text-xs py-1" onClick={onClose}>Close ✕</button>}
         </div>
         {w && (
           <div className="mt-2 space-y-1 text-xs text-stone-300">
@@ -458,9 +457,19 @@ export function PolSheet({ s, id, onClose, onOpen }: { s: GameState; id: string;
             <ul className="text-xs text-stone-400">{p.log.map((l, i) => <li key={i}>{l}</li>)}</ul>
           </div>
         )}
-      </div>
+    </Outer>
+  );
+}
+
+function OverlayFrame({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto bg-black/70 p-2 sm:p-6" onClick={onClose} data-testid="pol-sheet">
+      <div className="panel w-full max-w-2xl p-3 sm:p-4" onClick={(e) => e.stopPropagation()}>{children}</div>
     </div>
   );
+}
+function EmbeddedFrame({ children }: { children: React.ReactNode; onClose: () => void }) {
+  return <div className="p-3 sm:p-4" data-testid="pol-sheet">{children}</div>;
 }
 
 /** The holder of an office (for other screens). */

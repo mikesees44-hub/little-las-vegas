@@ -55,7 +55,7 @@ export function FamilyTab({ s, pendingLaw, pendingHeir, onLaw, onHeir }: {
   );
 }
 
-function HouseHeader({ s }: { s: GameState }) {
+export function HouseHeader({ s }: { s: GameState }) {
   const boss = player(s);
   const marks = treeMarks(s);
   const heir = marks.heirId ? s.characters[marks.heirId] : undefined;
