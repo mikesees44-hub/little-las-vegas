@@ -6,6 +6,7 @@ import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { activeTask, seatPower } from './council';
 import { hasSpecialist } from './crewlife';
+import { queueHeist } from './minigameHeist';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
 import type { Ctx } from './ledger';
 import { addOpinion, changeMeter, opinion } from './relations';
@@ -424,6 +425,8 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
     }
     case 'heist': {
       const h = HEISTS[sc.opts.heist ?? 'jewelry'];
+      // The job is played (or let play out) as a mini-game: minigameHeist.ts.
+      if (queueHeist(ctx, sc, odds.chance)) break;
       if (success) {
         const take = randInt(s, h.payout[0] / 100, h.payout[1] / 100) * 100;
         // The man who carries the bag hands in the count. It is as honest as he is.

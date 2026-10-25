@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { alerts as computeAlerts, type Alert } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
-import { newGame } from '../engine/newGame';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
@@ -39,6 +38,9 @@ import { TravelContext } from './travel/context';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { FugitiveBanner } from './travel/Panels';
+import { minigameOf, opensScene } from '../engine/minigames';
+import { MinigameScreen } from './minigames/MinigameScreen';
+import { NewspaperReel, type Reel } from './minigames/NewspaperReel';
 
 import { CityHall } from './cityhall/CityHall';
 import { ElectionNight } from './cityhall/ElectionNight';
@@ -69,8 +71,10 @@ function freshSeed(): string {
 }
 
 export function App() {
-  const [s, setS] = useState<GameState>(() => loadGame() ?? newGame(freshSeed()));
+  const [s, setS] = useState<GameState>(() => loadGame() ?? newGameWith(freshSeed()));
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [mgMoves, setMgMoves] = useState<Record<string, string[]>>({});
+  const [scene, setScene] = useState<{ iid: string; choiceId: string; m: NonNullable<ReturnType<typeof minigameOf>> } | null>(null);
   const [eventIdx, setEventIdx] = useState<number | null>(null);
   const [mode, setMode] = useState<Mode>('week');
   const [advancing, setAdvancing] = useState(false);
@@ -112,17 +116,39 @@ export function App() {
     return [];
   });
   const [night, setNight] = useState<ElectionResult[]>([]);
+  const [reels, setReels] = useState<Reel[]>([]);
+
+  // The scripted scenes (Made the boss) open by themselves, once.
+  const [autoOpened, setAutoOpened] = useState<Record<string, boolean>>({});
+  useEffect(() => {
+    if (scene || cues.length || reports) return;
+    const i = s.pendingEvents.findIndex((e) => e.defId === 'made_boss' && !answers[e.iid] && !autoOpened[e.iid]);
+    if (i < 0) return;
+    const ev = s.pendingEvents[i];
+    const ch = ev.choices.find((c) => c.id === 'play');
+    const m = ch ? minigameOf(ch) : undefined;
+    setAutoOpened((x) => ({ ...x, [ev.iid]: true }));
+    if (!m) return;
+    setAdvancing(false);
+    setEventIdx(i);
+    setScene({ iid: ev.iid, choiceId: 'play', m });
+  }, [s, scene, cues.length, reports, answers, autoOpened]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
-  function run(m: Mode, a: Record<string, string>, quiet = false) {
-    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders };
+  function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
+    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves };
+    // A ceremony the player sat through replaces the old single card.
+    const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
+    const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
     if (m === 'week') {
       const r = advanceWeek(s, choices);
       setS(r.state);
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state));
+      setCues(cutscenesBetween(s, r.state).filter(cueFilter));
+      setReels(r.state.mg?.reels ?? []);
       if (quiet) {
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
@@ -136,9 +162,12 @@ export function App() {
       setS(r.state);
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state));
+      setCues(cutscenesBetween(s, r.state).filter(cueFilter));
+      setReels(r.state.mg?.reels ?? []);
       setReports(r.reports);
     }
     setAnswers({});
+    setMgMoves({});
     setOrders([]);
     setPendingLaw(undefined);
     setPendingHeir(undefined);
@@ -156,6 +185,21 @@ export function App() {
   function choose(choiceId: string) {
     if (eventIdx === null) return;
     const ev = s.pendingEvents[eventIdx];
+    const ch = ev.choices.find((c) => c.id === choiceId);
+    const m = ch ? minigameOf(ch) : undefined;
+    // A mini-game choice opens the scene; the answer is recorded when it ends.
+    if (ch && m && opensScene(ch)) {
+      setScene({ iid: ev.iid, choiceId, m });
+      return;
+    }
+    commit(choiceId);
+  }
+
+  function commit(choiceId: string, moves?: string[]) {
+    if (eventIdx === null) return;
+    const ev = s.pendingEvents[eventIdx];
+    const mv = moves ? { ...mgMoves, [ev.iid]: moves } : mgMoves;
+    if (moves) setMgMoves(mv);
     const next = { ...answers, [ev.iid]: choiceId };
     setAnswers(next);
     if (!advancing) {
@@ -164,13 +208,15 @@ export function App() {
     }
     const nextIdx = s.pendingEvents.findIndex((e) => !next[e.iid]);
     if (nextIdx >= 0) setEventIdx(nextIdx);
-    else run(mode, next);
+    else run(mode, next, false, mv);
   }
 
   function restart(seed?: string, start: StartId = 'classic') {
     clearSave();
     setS(newGameWith(seed || freshSeed(), start));
     setAnswers({});
+    setMgMoves({});
+    setScene(null);
     setOrders([]);
     setReports(null);
     setEventIdx(null);
@@ -185,7 +231,7 @@ export function App() {
   }
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const busy = !!current || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || cues.length > 0;
+  const busy = !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: unanswered.length,
     step: () => run('week', answers, true),
@@ -308,12 +354,26 @@ export function App() {
         <span className="ml-auto">Saved automatically in this browser.</span>
       </footer>
 
-      {current && (
+      {current && scene && (
+        <MinigameScreen
+          key={scene.iid}
+          s={s}
+          game={scene.m.game}
+          iid={scene.m.iid}
+          params={scene.m.params}
+          parts={scene.m.parts}
+          onCancel={() => setScene(null)}
+          onDone={(moves) => { const c = scene.choiceId; setScene(null); commit(c, moves); }}
+        />
+      )}
+      {current && !scene && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reports && !current && !sheet && !planner && !cues.length && !night.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
+      {reports && !current && !sheet && !planner && !cues.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}

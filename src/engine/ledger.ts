@@ -23,6 +23,8 @@ export interface Ctx {
   heatGained: Record<HeatBar, number>;
   /** Number of event popups surfaced this week. */
   popups: number;
+  /** Moves the player made in this week's mini-games (event iid -> moves). */
+  mgMoves?: Record<string, string[]>;
 }
 
 export function newCtx(s: GameState): Ctx {
