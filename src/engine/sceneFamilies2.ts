@@ -70,7 +70,7 @@ registerFamily({
     { title: (c) => `${c.who!.firstName} is drifting`, text: (c) => { const k = drift(c); return `${k.n} hasn't come by the club in a month. Somebody saw him getting into a car with Atlantic City plates. Nobody from the family has talked to him since summer.`; } },
     { title: (c) => `${c.who!.firstName} stopped coming around`, text: (c) => { const k = drift(c); return `${k.msg ? nm(k.msg) : 'Your driver'} mentions it the way men mention things they have been sitting on: ${k.n} skipped the last two collections, sent a kid instead, and was at Mass at a different parish. "Something's eating him."`; } },
     { title: (c) => `${c.who!.firstName} at the wrong bar`, text: (c) => { const k = drift(c); return `${k.n} has been drinking at a bar in North Wildwood where your people do not drink, three nights a week, alone, at the end of the bar. The bartender there talks to ${k.rs}. Whatever ${k.f} is thinking, he is thinking it where they can hear.`; } },
-    { title: (c) => `${c.who!.firstName}'s empty chair`, text: (c) => { const k = drift(c); return `Friday at the Shamrock, every chair at the long table filled but one. ${k.n} sent word he was sick. He was not sick: ${k.msg ? k.msg.firstName : 'somebody'} saw him at the Steel Pier with his kids, which is fine, and with a man from ${k.rs}, which is not.`; } },
+    { title: (c) => `${c.who!.firstName}'s empty chair`, text: (c) => { const k = drift(c); return `Friday at the Shamrock, every chair at the long table filled but one. ${k.n} sent word he was sick. He was not sick: ${k.msg ? k.msg.firstName : 'somebody'} saw him at the Steel Pier with his kids, which is fine, and with one of ${k.rs}'s men, which is not.`; } },
     { title: (c) => `${c.who!.firstName} wants to be left alone`, text: (c) => { const k = drift(c); return `${k.n} has been fishing off the jetty at the Inlet every morning, alone, and does not want company. ${k.msg ? k.msg.firstName : 'His capo'} tried. "He says he's thinking. I don't like it when guys think."${c.dead ? ` He was close to ${c.dead.first}.` : ''}`; } },
     { title: (c) => `${c.who!.firstName}'s phone`, text: (c) => { const k = drift(c); return `Your man at the phone company says ${k.n}'s line has been calling an Atlantic City number at night: short calls, the same number, which belongs to a laundry ${k.rs} owns. ${k.f} has not been by the club in weeks.`; } },
     { title: (c) => `${c.who!.firstName} moved his money`, text: (c) => { const k = drift(c); return `${k.n} closed his account at the Marine National Bank and took it all in cash, which a man does when he is going somewhere or buying something. Either way he did not mention it, and he has not been by the club.`; } },
@@ -127,7 +127,7 @@ registerFamily({
   scenes: FAVORS.map((v): Scene => ({
     when: (c) => (!v.when || v.when(c)) && !!v.who(c),
     title: () => v.title ?? 'A favor is asked',
-    text: (c) => `${v.who(c)!.name} ${v.ask}.${c.dead && c.dead.weeks <= 3 ? ' He knows it is a bad time, and asks anyway.' : ''}`,
+    text: (c) => `${v.who(c)!.name}${v.who(c)!.name.includes(',') ? ',' : ''} ${v.ask}.${c.dead && c.dead.weeks <= 3 ? ' He knows it is a bad time, and asks anyway.' : ''}`,
     choices: (c) => {
       const who = v.who(c)!.name;
       const label = `A favor for ${who.split(',')[0]}`;

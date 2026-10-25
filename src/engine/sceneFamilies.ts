@@ -97,7 +97,7 @@ registerFamily({
     },
     {
       title: () => "Nardi's barbershop",
-      text: (c) => { const b = bag(c); const who = pickWith(c.h, BAGMEN); return `Saturday morning at Nardi's on Rio Grande Avenue. ${who} takes the chair next to yours, and the barber suddenly remembers he is out of cigarettes. Under the striped cloth, the talk is about ${b.sal}'s grandson's First Communion and a figure: ${$(b.env)}.`; },
+      text: (c) => { const b = bag(c); const who = pickWith(c.h, BAGMEN); return `Saturday morning at Nardi's on Rio Grande Avenue. ${who.charAt(0).toUpperCase()}${who.slice(1)} takes the chair next to yours, and the barber suddenly remembers he is out of cigarettes. Under the striped cloth, the talk is about ${b.sal}'s grandson's First Communion and a figure: ${$(b.env)}.`; },
       choices: (_c, ch) => relabel(ch, { short: { detail: 'Blame the season. The barber will be back any minute.' } }),
     },
     {
@@ -134,7 +134,7 @@ registerFamily({
     {
       when: (c) => c.season === 'fall',
       title: () => 'Closing up the stands',
-      text: (c) => { const b = bag(c); const who = pickWith(c.h, BAGMEN); return `The week the boardwalk closes. ${who} watches the men nail plywood over the custard stand and says it always makes him sad, the end of a season. Not so sad he forgets the envelope: ${$(b.env)}, counted twice on the hood of his car.`; },
+      text: (c) => { const b = bag(c); const who = pickWith(c.h, BAGMEN); return `The week the boardwalk closes. ${who.charAt(0).toUpperCase()}${who.slice(1)} watches the men nail plywood over the custard stand and says it always makes him sad, the end of a season. Not so sad he forgets the envelope: ${$(b.env)}, counted twice on the hood of his car.`; },
     },
   ],
 });

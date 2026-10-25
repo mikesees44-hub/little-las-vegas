@@ -112,7 +112,7 @@ function payTheDrop(ctx: Ctx): void {
 /** Routine business settled quietly this week (storyPace.ts): on the books, and an "In motion" note in the report. */
 function payQuiet(ctx: Ctx): string[] {
   const items = takeQuiet(ctx.s);
-  for (const q of items) if (!ctx.s.gameOver) applyEffects(ctx, q.effects, { label: `In motion: ${q.title}`, because: q.because, category: q.category ?? 'event' });
+  for (const q of items) if (!ctx.s.gameOver) applyEffects(ctx, q.effects.map((e) => ({ ...e, label: `In motion: ${e.label ?? q.title}` })), { label: `In motion: ${q.title}`, because: q.because, category: q.category ?? 'event' });
   return items.map((q) => q.note);
 }
 
