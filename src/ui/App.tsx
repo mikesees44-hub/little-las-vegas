@@ -1,23 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import { alerts as computeAlerts, type Alert } from '../engine/alerts';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { alerts as computeAlerts } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
-import { MusicToggle } from './audio';
-import { ClockControls, newWarnings, tickerLine, useClock, type Speed } from './clock';
+import { newWarnings, tickerLine, useClock, type Speed } from './clock';
 import { SchemePlanner } from './components/Schemes';
-import { CrisisBanner } from './power/CrisisBanner';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
-import { Header } from './components/Header';
-import { OrdersTray } from './components/Orders';
 import { ReportModal } from './components/ReportModal';
 import type { ClarityApi } from './clarity/context';
 import { PickerModal } from './clarity/CandidatePicker';
-import { GlossaryOverlay, HelpButton } from './clarity/Glossary';
+import { GlossaryOverlay } from './clarity/Glossary';
 import { WhatToDoModal } from './clarity/WhatToDo';
 import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
@@ -26,17 +22,28 @@ import { registerAppearances } from './portrait/genes';
 import { applySettings, getSettings } from './settings';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
-import { FugitiveBanner } from './travel/Panels';
 import { minigameOf, opensScene } from '../engine/minigames';
 import { MinigameScreen } from './minigames/MinigameScreen';
 import { NewspaperReel, type Reel } from './minigames/NewspaperReel';
 
 import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
-import { PANELS, PANELS_BY_ID, sectionOf, type SectionCtx } from './shell/panels';
-import { routeFor, type Route } from './shell/routes';
+import { PANELS, type SectionCtx } from './shell/panels';
+import { routeFor, type PanelId, type Route } from './shell/routes';
 import { Providers } from './shell/Providers';
-import type { ShellApi } from './shell/context';
+import type { MapFocus, ShellApi } from './shell/context';
+import { Shell } from './shell/Shell';
+import { TopBar } from './shell/TopBar';
+import { LeftRail } from './shell/LeftRail';
+import { Drawer } from './shell/Drawer';
+import { AlertsPanel, GoalsCard, StreetFeedCard, ThisWeekCard } from './shell/RightRail';
+import { InMotionStrip } from './shell/InMotionStrip';
+import { inMotion, type MotionChip } from './shell/inMotion';
+import { shellAlerts, type ShellAlert } from './shell/alertRoutes';
+import { guidedGoals, type GuidedGoal } from './shell/goals';
+import { useShellState } from './shell/useShellState';
+import { HintHost, Toast } from './shell/HintHost';
+import { Modal } from './components/Modal';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -68,7 +75,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
   const [route, setRoute] = useState<Route>({});
-  const go = (r: Route | string) => setRoute(typeof r === 'string' ? routeFor(r) : r);
+  const goRef = useRef<(r: Route | string) => void>(() => {});
   const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
@@ -90,7 +97,7 @@ export function App({ startOn = 'title' }: AppProps) {
     openPicker: (role, opts) => { setSheet(undefined); setPicker({ role, pool: opts?.pool, onPick: opts?.onPick }); },
     openHelp: (focus) => setHelp({ focus }),
     openAdvice: () => setAdvice(true),
-    goTab: (t) => setRoute(routeFor(t)),
+    goTab: (t) => goRef.current(t),
   }), []);
 
   const [tripPlan, setTripPlan] = useState<{ leaderId: string; destId?: string } | undefined>();
@@ -146,7 +153,7 @@ export function App({ startOn = 'title' }: AppProps) {
           setSpeed(0);
           setClockNote(warn.length ? `Paused: ${warn[0]}` : 'Paused');
         }
-      } else setReports([r.report]);
+      }
     } else {
       const r = advanceMonth(s, choices);
       setS(r.state);
@@ -250,16 +257,46 @@ export function App({ startOn = 'title' }: AppProps) {
     } catch { /* storage unavailable */ }
   }
 
-  function onAlert(a: Alert) {
-    if (a.charId) setSheet(a.charId);
-    else if (a.tab) go(a.tab);
-    else if (a.kind === 'decision') { setAdvancing(false); setEventIdx(0); }
+  const shellUi = useShellState(s, orders, sheet);
+  const [mapFocus, setMapFocus] = useState<MapFocus | undefined>();
+  const focusMap = (f: Omit<MapFocus, 'nonce'>) => setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 }));
+  const [helpMenu, setHelpMenu] = useState(false);
+  const [lastRoute, setLastRoute] = useState<Route>({ panel: 'borgata' });
+  /** Open a drawer section (an alert can reveal one that is still hidden). */
+  function openRoute(r: Route) {
+    if (r.panel && r.section) shellUi.reveal(`${r.panel}.${r.section}`);
+    if (r.panel) setLastRoute(r);
+    setRoute(r);
+  }
+  function go(r: Route | string) {
+    openRoute(typeof r === 'string' ? routeFor(r) : r);
+  }
+  const shellAlertList = useMemo(() => shellAlerts(s, alertList).filter((a) => !(shellUi.snoozed[a.key] > s.week)), [s, alertList, shellUi.snoozed]);
+  function onAlert(a: ShellAlert) {
+    if (a.mapFocus) focusMap(a.mapFocus);
+    if (a.kind === 'decision') { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }
+    else if (a.charId) setSheet(a.charId);
+    else if (a.route?.panel) openRoute(a.route);
+  }
+  function onChip(c: MotionChip) {
+    if (c.focus) focusMap(c.focus);
+    if (c.orders) { (document.querySelector('[data-testid=orders-button]') as HTMLButtonElement | null)?.click(); return; }
+    if (c.charId) setSheet(c.charId);
+    else if (c.route) openRoute(c.route);
+  }
+  const goals = useMemo(() => guidedGoals(s, shellUi.flags), [s, shellUi.flags]);
+  function showGoal(g: GuidedGoal) {
+    if (g.show?.focus) focusMap({ level: g.show.focus });
+    if (g.show?.route) openRoute(g.show.route);
+    if (g.show?.tour) tour(g.show.tour);
   }
 
   const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go };
-  const shellApi: ShellApi = { go, focus: () => {} };
+  const shellApi: ShellApi = { go, focus: focusMap };
+  goRef.current = go;
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
+  const overlayOpen = !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   const busy = !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
@@ -272,14 +309,25 @@ export function App({ startOn = 'title' }: AppProps) {
   });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || (e.target as HTMLElement)?.tagName === 'INPUT' || (e.target as HTMLElement)?.tagName === 'SELECT') return;
-      e.preventDefault();
-      setSpeed((v) => (v === 0 ? 2 : 0));
-      setClockNote(undefined);
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setSpeed((v) => (v === 0 ? 2 : 0));
+        setClockNote(undefined);
+        return;
+      }
+      if (menu || overlayOpen) return;
+      const fk = /^F([1-8])$/.exec(e.key);
+      const p = fk ? PANELS[Number(fk[1]) - 1] : PANELS.find((x) => x.key === e.key.toLowerCase());
+      if (p && shellUi.visiblePanels.includes(p.id)) {
+        e.preventDefault();
+        setRoute((r) => (r.panel === p.id ? {} : { panel: p.id }));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [menu, overlayOpen, shellUi.visiblePanels]);
 
   if (menu) {
     return (
@@ -288,79 +336,65 @@ export function App({ startOn = 'title' }: AppProps) {
     );
   }
 
+  const motion = inMotion(s, { orders: orders.length });
+  const panel = route.panel && shellUi.visiblePanels.includes(route.panel) ? route.panel : undefined;
+  const sections = panel ? shellUi.sectionsOf(panel) : [];
+  const section = panel ? (sections.includes(route.section ?? '') ? route.section : sections[0]) : undefined;
+  const goalIdx = goals.findIndex((g) => !g.done);
+  const badges: Partial<Record<PanelId, number>> = {};
+  for (const a of shellAlertList) if (a.route?.panel && a.severity !== 'info') badges[a.route.panel] = (badges[a.route.panel] ?? 0) + 1;
+  const right = (
+    <>
+      <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
+      <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} />
+      {!s.gameOver && <GoalsCard goals={goals} onShow={showGoal} />}
+      <div className="2xl:hidden"><StreetFeedCard s={s} /></div>
+    </>
+  );
+
   return (
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
-    <div className="mx-auto w-full max-w-[2400px] px-3 sm:px-4 xl:px-6 py-3 sm:py-4 space-y-3">
-      <Header s={s}>
-        {!s.gameOver && (
+      <Shell
+        top={(
+          <TopBar s={s} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+            onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
+            onReview={() => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
+            ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
+            seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0} />
+        )}
+        rail={<LeftRail visible={shellUi.visiblePanels} active={panel} badges={badges} dots={shellUi.dots} onOpen={(p) => (panel === p ? setRoute({}) : openRoute(p === lastRoute.panel ? lastRoute : { panel: p }))} onHelp={() => setHelpMenu(true)} />}
+        map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
+        overlay={(
           <>
-            <ClockControls speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote} />
-            <MusicToggle />
-            <button className="btn-gold py-1.5" onClick={() => startAdvance('week')}>Advance Week</button>
-            <button className="btn-ghost py-1.5" onClick={() => startAdvance('month')}>Advance Month</button>
-            <button className="btn-ghost py-1.5 border-gold-600 text-gold-300" onClick={() => setAdvice(true)} data-testid="wsid-button">What should I do?</button>
-            <HelpButton onClick={() => setHelp({})} />
-            <div className="text-xs text-stone-400">
-              {s.pendingEvents.length ? (
-                <>
-                  {s.pendingEvents.length - unanswered.length}/{s.pendingEvents.length} decisions made ·{' '}
-                  <button className="underline text-gold-300" onClick={() => { setAdvancing(false); setEventIdx(0); }}>review</button>
-                </>
-              ) : 'Nothing on the table this week.'}
-              {orders.length > 0 && <> · {orders.length} order{orders.length > 1 ? 's' : ''} queued</>}
-              {s.lastReport && <> · <button className="underline text-gold-300" onClick={() => setReports([s.lastReport!])}>last report</button></>}
-              {ticker && speed > 0 && <div className="text-[11px] text-stone-500 truncate max-w-[60vw]">{ticker}</div>}
-            </div>
+            <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
+            {s.gameOver && (
+              <div className="absolute inset-0 z-[1090] flex items-center justify-center bg-black/60 p-4">
+                <div className="panel p-6 text-center max-w-xl" data-testid="game-over">
+                  <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
+                  <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
+                  <div className="mt-4 flex flex-wrap justify-center gap-2">
+                    <button className="btn-gold" onClick={() => setMenu('start')}>New Game…</button>
+                    {(Object.keys(STARTS) as StartId[]).map((k) => (
+                      <button key={k} className="btn-ghost" title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
-      </Header>
-
-      {s.gameOver && (
-        <div className="panel p-6 text-center">
-          <h2 className="font-display text-3xl text-gold-400">The End of the House of {s.houseName}</h2>
-          <p className="mt-2 text-stone-300">{s.gameOver.text}</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
-            <button className="btn-gold" onClick={() => setMenu('start')}>New Game…</button>
-            {(Object.keys(STARTS) as StartId[]).map((k) => (
-              <button key={k} className="btn-ghost" title={STARTS[k].text} onClick={() => restart(undefined, k)}>{STARTS[k].name}</button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!s.gameOver && <OrdersTray s={s} />}
-      {!s.gameOver && <CrisisBanner s={s} onOpen={() => go('power')} />}
-
-      <nav className="tabbar flex overflow-x-auto border-b border-noir-700" data-testid="tabbar">
-        <button data-tab="map" className={`tab ${!route.panel ? 'tab-active' : ''}`} onClick={() => setRoute({})}>The Island</button>
-        {PANELS.map((p) => (
-          <button key={p.id} data-tab={p.id} className={`tab ${route.panel === p.id ? 'tab-active' : ''}`} onClick={() => setRoute({ panel: p.id })}>{p.label}</button>
-        ))}
-      </nav>
-      {route.panel && (
-        <div className="flex flex-wrap gap-1 -mt-2" data-testid="subtabs">
-          {PANELS_BY_ID[route.panel].sections.map((x) => (
-            <button key={x.id} data-tab={`${route.panel}.${x.id}`} className={`text-xs px-2 py-1 rounded ${sectionOf(route.panel!, route.section)?.id === x.id ? 'bg-noir-700 text-gold-400' : 'text-stone-400 hover:text-stone-200'}`} onClick={() => setRoute({ panel: route.panel, section: x.id })}>{x.label}</button>
-          ))}
-        </div>
-      )}
-
-      {!s.gameOver && <FugitiveBanner s={s} onOpen={() => go('law')} />}
-      {!route.panel ? (
-        <MapView s={s} alerts={alertList} onAlert={onAlert} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} />
-      ) : (
-        <main className="panel p-3 sm:p-4">
-          {sectionOf(route.panel, route.section)?.render(s, sectionCtx)}
-        </main>
-      )}
-
-      <footer className="panel p-3 flex flex-wrap items-center gap-2 text-xs text-stone-500">
-        <span>Seed: <span className="text-stone-300">{s.seed}</span></span>
-        <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed (optional)" className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-36" />
-        <button className="btn-ghost text-xs py-1" data-testid="footer-new" onClick={() => { setSpeed(0); setMenu('start'); }}>New Game</button>
-        <button className="btn-ghost text-xs py-1" data-testid="footer-menu" onClick={() => { setSpeed(0); setMenu('title'); }}>Main Menu</button>
-        <span className="ml-auto">Saved automatically in slot {slot}{s.flags.ironman ? ' · ironman' : ''}.</span>
-      </footer>
+        drawer={panel && (
+          <Drawer s={s} panel={panel} section={section} sections={sections} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
+            onSection={(id) => { shellUi.seenSection(`${panel}.${id}`); openRoute({ panel, section: id }); }} onClose={() => setRoute({})} />
+        )}
+        right={right}
+        rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
+        bottom={<InMotionStrip chips={motion} onChip={onChip} />}
+        alertCount={shellAlertList.length}
+        danger={shellAlertList.some((a) => a.severity === 'danger')}
+      />
+      {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
+      {!menu && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {current && scene && (
         <MinigameScreen
@@ -384,11 +418,33 @@ export function App({ startOn = 'title' }: AppProps) {
       {sheet && !current && <CharacterSheet s={s} id={sheet} onClose={() => setSheet(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
       {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
+      {helpMenu && (
+        <Modal onClose={() => setHelpMenu(false)}>
+          <div className="p-4 space-y-2" data-testid="help-menu">
+            <div className="panel-title">Help</div>
+            <button className="btn-ghost w-full border-gold-600 text-gold-300" data-testid="wsid-button" onClick={() => { setHelpMenu(false); setAdvice(true); }}>What should I do?</button>
+            <button className="btn-ghost w-full" onClick={() => { setHelpMenu(false); setHelp({}); }}>The glossary: every term in the game</button>
+            <p className="text-[11px] text-stone-500">Keys: Y H B L O D T C (or F1–F8) open the panels · Esc closes · Space pauses · right-click any face for everything you can do to him.</p>
+          </div>
+        </Modal>
+      )}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
-    </div>
     </Providers>
   );
+}
+
+/** Pulse a tour target ("Show me"): by data-tour, then by data-testid. */
+function tour(id: string) {
+  let n = 0;
+  const tick = () => {
+    const el = document.querySelector(`[data-tour="${id}"]`) ?? document.querySelector(`[data-testid="${id}"]`);
+    if (!el) { if (n++ < 10) setTimeout(tick, 120); return; }
+    el.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
+    el.classList.add('llv-tour');
+    setTimeout(() => el.classList.remove('llv-tour'), 4200);
+  };
+  setTimeout(tick, 60);
 }

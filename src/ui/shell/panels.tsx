@@ -56,6 +56,8 @@ export interface SectionDef {
   label: string;
   /** One line under the section tabs: what this is for. */
   blurb?: string;
+  /** Needs room: the drawer opens wide (org chart, family tree, City Hall). */
+  wide?: boolean;
   render: (s: GameState, ctx: SectionCtx) => ReactNode;
 }
 
@@ -88,7 +90,7 @@ export const PANELS: PanelDef[] = [
     id: 'house', icon: '♔', label: 'The House', short: 'House', key: 'h',
     blurb: 'Your blood: the tree, marriages, the heir, the house\'s name.',
     sections: [
-      { id: 'tree', label: 'Family Tree', render: (s) => <div className="space-y-3" data-testid="family-tab"><HouseHeader s={s} /><DynastyTree s={s} /></div> },
+      { id: 'tree', label: 'Family Tree', wide: true, render: (s) => <div className="space-y-3" data-testid="family-tab"><HouseHeader s={s} /><DynastyTree s={s} /></div> },
       { id: 'marriages', label: 'Marriages & Children', render: (s) => <MarriagePanel s={s} /> },
       { id: 'succession', label: 'Succession', blurb: 'One place for the heir: the law, how he is named, who is pushing.', render: (s, c) => <Succession s={s} pendingLaw={c.pendingLaw} pendingHeir={c.pendingHeir} onLaw={c.onLaw} onHeir={c.onHeir} /> },
       { id: 'activities', label: 'Activities', render: (s) => <ActivitiesPanel s={s} /> },
@@ -100,7 +102,7 @@ export const PANELS: PanelDef[] = [
     id: 'borgata', icon: '⚑', label: 'The Borgata', short: 'Borgata', key: 'b',
     blurb: 'Your men: the org chart, the council, the capos, who gets made.',
     sections: [
-      { id: 'chart', label: 'Org Chart', render: (s) => <CrewTree s={s} chartOnly /> },
+      { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
       { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <CrewListPart key="m" s={s} part="men" />) },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
@@ -112,7 +114,7 @@ export const PANELS: PanelDef[] = [
     id: 'holdings', icon: '$', label: 'Holdings', short: 'Holdings', key: 'l',
     blurb: 'Everything that makes or keeps money: places, property, the books.',
     sections: [
-      { id: 'rackets', label: 'Rackets & Fronts', blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
+      { id: 'rackets', label: 'Rackets & Fronts', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
@@ -142,7 +144,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'Outside the family: your case, City Hall, the underbelly, patronage.',
     sections: [
       { id: 'case', label: 'Your Case', blurb: 'The government\'s case against the boss, from a file to a trial, and the fugitive road.', render: (s) => <LawPanel s={s} /> },
-      { id: 'cityhall', label: 'City Hall & People', render: (s) => <CityHall s={s} /> },
+      { id: 'cityhall', label: 'City Hall & People', wide: true, render: (s) => <CityHall s={s} /> },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'patronage', label: 'Patronage', render: (s) => <PatronagePanel s={s} /> },
     ],
