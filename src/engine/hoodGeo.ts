@@ -1,5 +1,5 @@
 import type { Lot, ZoneId } from './econState';
-import { AVE_V, CAUSEWAY, CROSS, CROSS_BY_NAME, HOODS, PIERS, SEED, WEST_WILDWOOD, ZONE_RUNS, type AveId, type HoodId, type RunId } from './hoodData';
+import { AVE_V, CAUSEWAY, CROSS, CROSS_BY_NAME, FILL, HOODS, PIERS, SEED, WEST_WILDWOOD, ZONE_RUNS, type AveId, type HoodId, type RunId } from './hoodData';
 import { USES_BY_ID, useIcon, type UseIcon } from './property';
 import type { GameState } from './types';
 
@@ -62,7 +62,7 @@ function slotOf(zone: ZoneId, run: RunId, b: { cross: string; u0: number; u1: nu
 function pierSlot(zone: ZoneId, cross: string, k: number): Slot | undefined {
   const p = PIERS.find((x) => x.u === CROSS_BY_NAME[cross]?.u);
   if (!p) return undefined;
-  const seg = p.len / 3;
+  const seg = p.len / 4;
   const v1 = -20 - k * seg;
   return { tag: `pier:${cross}:${k}`, zone, run: 'pier', cross, u0: p.u - p.w / 2 + 5, u1: p.u + p.w / 2 - 5, v0: v1 - seg + 6, v1, front: 'v0', pier: p.id };
 }
@@ -71,7 +71,7 @@ function pierSlot(zone: ZoneId, cross: string, k: number): Slot | undefined {
 function zoneSlots(zone: ZoneId): Slot[] {
   if (zone === 'piers') {
     const out: Slot[] = [];
-    for (const p of PIERS) for (let k = 0; k < 3; k++) { const c = CROSS.find((x) => x.u === p.u)!; out.push(pierSlot(zone, c.n, k)!); }
+    for (const p of PIERS) for (let k = 0; k < 4; k++) { const c = CROSS.find((x) => x.u === p.u)!; out.push(pierSlot(zone, c.n, k)!); }
     return out;
   }
   const out: Slot[] = [];
@@ -86,6 +86,33 @@ for (const r of SEED) {
   const i = CROSS.findIndex((c) => c.n === cross);
   if (i < 0 || i >= CROSS.length - 1) continue;
   SEED_SLOT[id] = slotOf(zone, run, { cross, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b' | 'w');
+}
+
+/** A generated record's slot, from its id (`hf.<zone>.<run>.<cross index>.<half>`). */
+function fillSlot(id: string): Slot | undefined {
+  if (!id.startsWith('hf.')) return undefined;
+  const [, zone, run, ci, half] = id.split('.');
+  const i = Number(ci);
+  if (!CROSS[i + 1]) return undefined;
+  return slotOf(zone as ZoneId, run as RunId, { cross: CROSS[i].n, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b');
+}
+
+/** Every half-block the generated records may take (not already a 1960 seed's), in a stable order. */
+export function fillCandidates(): { id: string; zone: ZoneId; p: number; uses: string[] }[] {
+  const seeded = new Set<string>();
+  for (const sl of Object.values(SEED_SLOT)) for (const t of taken(sl.tag)) seeded.add(t);
+  const out: { id: string; zone: ZoneId; p: number; uses: string[] }[] = [];
+  for (const f of FILL) {
+    for (const b of blocksOf(f.from, f.to)) {
+      const ci = CROSS.findIndex((c) => c.n === b.cross);
+      for (const half of ['a', 'b'] as const) {
+        const sl = slotOf(f.zone, f.run, b, half);
+        if (seeded.has(sl.tag)) continue;
+        out.push({ id: `hf.${f.zone}.${f.run}.${ci}.${half}`, zone: f.zone, p: f.p, uses: f.uses });
+      }
+    }
+  }
+  return out;
 }
 
 function taken(tag: string): string[] {
@@ -108,7 +135,7 @@ export function placeAll(s: GameState): Map<string, Parcel> {
   const out = new Map<string, Parcel>();
   const used = new Set<string>();
   for (const l of lots) {
-    const sl = SEED_SLOT[l.id];
+    const sl = SEED_SLOT[l.id] ?? fillSlot(l.id);
     if (!sl) continue;
     for (const t of taken(sl.tag)) used.add(t);
     out.set(l.id, { ...sl, key: l.id });
@@ -148,8 +175,8 @@ export function placeAll(s: GameState): Map<string, Parcel> {
 
 /** Size of a building by what it is: width along the street, depth, height (m). */
 const SIZE: Record<UseIcon, [number, number, number]> = {
-  hotel: [54, 44, 34], motel: [70, 30, 8], house: [20, 18, 9], apartment: [34, 30, 16], store: [24, 30, 6], pizza: [22, 28, 6],
-  club: [32, 34, 10], pier: [40, 50, 0], warehouse: [44, 36, 9], public: [60, 46, 14],
+  hotel: [99, 44, 34], motel: [99, 30, 8], house: [22, 20, 9], apartment: [99, 32, 16], store: [99, 28, 7], pizza: [99, 28, 7],
+  club: [99, 40, 10], pier: [99, 99, 0], warehouse: [99, 38, 9], public: [99, 46, 14],
 };
 
 export function iconOf(l: Pick<Lot, 'use'>): UseIcon | undefined {
@@ -163,7 +190,8 @@ export function footprint(p: Parcel, icon: UseIcon | undefined): Footprint {
   const [w, d, h] = SIZE[icon];
   const slotW = p.u1 - p.u0;
   const slotD = p.v1 - p.v0;
-  const ww = Math.min(slotW - 4, slotW >= 70 && (icon === 'motel' || icon === 'public' || icon === 'hotel') ? Math.max(w, slotW - 10) : w);
+  // Commercial fronts fill their slot wall to wall; houses sit in a yard.
+  const ww = Math.min(slotW - 3, w);
   const dd = Math.min(slotD - 4, d);
   const um = (p.u0 + p.u1) / 2;
   const [v0, v1] = p.front === 'v0' ? [p.v0 + 3, p.v0 + 3 + dd] : [p.v1 - 3 - dd, p.v1 - 3];

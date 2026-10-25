@@ -60,7 +60,7 @@ export const BOARDWALK = { from: crossU('Cresse Ave'), to: crossU('16th Ave'), w
 
 /** How far the beach runs out (to the waterline) — wide at the Crest, thin at the north end. */
 export function beachWidth(u: number): number {
-  const pts: [number, number][] = [[0, 250], [2800, 235], [4400, 215], [5300, 150], [6400, 95], [7100, 60], [7600, 30]];
+  const pts: [number, number][] = [[0, 165], [2800, 150], [4400, 140], [5300, 105], [6400, 70], [7100, 45], [7600, 25]];
   for (let i = 1; i < pts.length; i++) {
     if (u <= pts[i][0]) {
       const [a, b] = [pts[i - 1], pts[i]];
@@ -87,10 +87,10 @@ export function bayEdge(u: number): number {
 export interface Pier { id: string; name: string; u: number; w: number; len: number; sign: SignColor }
 /** The amusement piers of 1960 (positions approximate). */
 export const PIERS: Pier[] = [
-  { id: 'hunts', name: 'Hunt\'s Pier', u: crossU('Oak Ave'), w: 74, len: 300, sign: 'red' },
-  { id: 'marine', name: 'Marine Pier', u: crossU('Schellenger Ave'), w: 70, len: 290, sign: 'turquoise' },
-  { id: 'sportland', name: 'Sportland Pier', u: crossU('Rio Grande Ave'), w: 62, len: 270, sign: 'pink' },
-  { id: 'casino', name: 'Casino Pier', u: crossU('25th Ave'), w: 56, len: 210, sign: 'gold' },
+  { id: 'hunts', name: 'Hunt\'s Pier', u: crossU('Oak Ave'), w: 74, len: 210, sign: 'red' },
+  { id: 'marine', name: 'Marine Pier', u: crossU('Schellenger Ave'), w: 70, len: 200, sign: 'turquoise' },
+  { id: 'sportland', name: 'Sportland Pier', u: crossU('Rio Grande Ave'), w: 62, len: 190, sign: 'pink' },
+  { id: 'casino', name: 'Casino Pier', u: crossU('25th Ave'), w: 56, len: 150, sign: 'gold' },
 ];
 
 /** Places on the island that are part of the ground, not property (no record). */
@@ -104,7 +104,7 @@ export const LANDMARKS: { n: string; u: number; v: number; kind: 'lighthouse' | 
 /** The Rio Grande Avenue causeway: from the island's bay edge over the marsh to the mainland. */
 export const CAUSEWAY = { u: crossU('Rio Grande Ave'), mainlandV: 2200 };
 /** West Wildwood: the little island in the back bay. */
-export const WEST_WILDWOOD = { u0: crossU('Spencer Ave') - 120, u1: crossU('Rio Grande Ave') - 40, v0: 840, v1: 1080 };
+export const WEST_WILDWOOD = { u0: crossU('Pine Ave') - 60, u1: crossU('Davis Ave') + 40, v0: 840, v1: 1080 };
 
 /* ---------------- neighborhoods ---------------- */
 
@@ -156,8 +156,8 @@ export const ZONE_RUNS: Partial<Record<ZoneId, Run[]>> = {
   docks: [{ run: 'pk+', from: 'Lincoln Ave', to: 'Andrews Ave' }, { run: 'pk-', from: 'Garfield Ave', to: 'Andrews Ave' }],
   crest: [{ run: 'oc-', from: 'Lake Rd', to: 'Rambler Rd' }, { run: 'oc+', from: 'Jefferson Ave', to: 'Rambler Rd' }, { run: 'at+', from: 'Morning Glory Rd', to: 'Cardinal Rd' }],
   north: [{ run: 'at+', from: '26th Ave', to: '3rd Ave' }, { run: 'nj-', from: '24th Ave', to: '5th Ave' }, { run: 'oc+', from: '15th Ave', to: '3rd Ave' }],
-  causeway: [{ run: 'cw', from: 'Spencer Ave', to: 'Davis Ave' }],
-  westww: [{ run: 'ww', from: 'Spencer Ave', to: 'Rio Grande Ave' }],
+  causeway: [{ run: 'cw', from: 'Pine Ave', to: 'Andrews Ave' }],
+  westww: [{ run: 'ww', from: 'Pine Ave', to: 'Davis Ave' }],
 };
 
 /* ---------------- the authored 1960 records ---------------- */
@@ -191,7 +191,7 @@ export const SEED: SeedRow[] = [
   ['bw16', 'boardwalk', 'bw', 'Spencer Ave', 'b', 'souvenir', 'Seaside Beachwear', 'sale', 'private', 'Joe Pirelli', 'midcentury', 'pink', 1947, 58],
   ['bw17', 'boardwalk', 'bw', 'Garfield Ave', 'a', 'rooming', 'The Driftwood Rooming House', 'private', 'private', 'the Brennan estate', 'victorian', 'white', 1911, 46],
   ['bw18', 'boardwalk', 'bw', 'Garfield Ave', 'b', 'supper', 'The Flamingo Supper Club', 'rival', 'manno', 'Manno crew', 'tiki', 'pink', 1955, 84],
-  ['bw19', 'boardwalk', 'bw', 'Lincoln Ave', 'a', 'icecream', 'Polar Cub Soft Serve', 'private', 'private', 'Vince DiNardo', 'doowop', 'turquoise', 1958, 90],
+  ['bw19', 'boardwalk', 'bw', 'Lincoln Ave', 'a', 'icecream', 'Arctic Penguin Soft Serve', 'private', 'private', 'Vince DiNardo', 'doowop', 'turquoise', 1958, 90],
   ['bw20', 'boardwalk', 'bw', 'Lincoln Ave', 'b', 'motel', 'The Tropicana Motel', 'sale', 'private', 'the Kovacs family', 'doowop', 'turquoise', 1957, 86],
   ['bw21', 'boardwalk', 'bw', 'Youngs Ave', 'a', 'beachrental', 'Beach Chair & Umbrella Co.', 'private', 'private', 'the Morey brothers', 'colonial', 'gold', 1950, 73],
   ['bw22', 'boardwalk', 'bw', 'Hildreth Ave', 'a', 'motel', 'The Coral Reef Motor Inn', 'rival', 'feldstein', 'Feldstein\'s people', 'doowop', 'pink', 1959, 95],
@@ -201,11 +201,11 @@ export const SEED: SeedRow[] = [
   ['pr03', 'piers', 'pier', 'Rio Grande Ave', 2, 'funhouse', 'Laff-Land Funhouse', 'private', 'private', 'the pier company', 'tiki', 'pink', 1954, 78],
   ['pr04', 'piers', 'pier', '25th Ave', 2, 'ride', 'Carousel by the Sea', 'private', 'private', 'the pier company', 'victorian', 'gold', 1925, 66],
   // Motel row in the Crest (the boom is just starting).
-  ['cr01', 'crest', 'oc-', 'Heather Rd', 'w', 'motel', 'The Satellite', 'private', 'private', 'the Kovacs family', 'doowop', 'turquoise', 1959, 97],
-  ['cr02', 'crest', 'oc-', 'Toledo Ave', 'w', 'motel', 'The Pink Flamingo', 'private', 'private', 'Gus Papadakis', 'doowop', 'pink', 1958, 94],
-  ['cr03', 'crest', 'oc-', 'Fern Rd', 'w', 'motel', 'The Caribbean', 'private', 'private', 'Harry Lenz', 'tiki', 'green', 1957, 92],
-  ['cr04', 'crest', 'oc-', 'Rochester Ave', 'a', 'motel', 'The Ebb Tide', 'rival', 'feldstein', 'Feldstein\'s people', 'midcentury', 'blue', 1956, 90],
-  ['cr05', 'crest', 'oc+', 'Stockton Rd', 'a', 'diner', 'The Starlux Diner', 'private', 'private', 'Mrs. Hallahan', 'doowop', 'red', 1955, 88],
+  ['cr01', 'crest', 'oc-', 'Heather Rd', 'w', 'motel', 'The Sputnik Motor Inn', 'private', 'private', 'the Kovacs family', 'doowop', 'turquoise', 1959, 97],
+  ['cr02', 'crest', 'oc-', 'Toledo Ave', 'w', 'motel', 'The Coral Flamingo', 'private', 'private', 'Gus Papadakis', 'doowop', 'pink', 1958, 94],
+  ['cr03', 'crest', 'oc-', 'Fern Rd', 'w', 'motel', 'The Bali Hai Court', 'private', 'private', 'Harry Lenz', 'tiki', 'green', 1957, 92],
+  ['cr04', 'crest', 'oc-', 'Rochester Ave', 'a', 'motel', 'The Tidewater Inn', 'rival', 'feldstein', 'Feldstein\'s people', 'midcentury', 'blue', 1956, 90],
+  ['cr05', 'crest', 'oc+', 'Stockton Rd', 'a', 'diner', 'The Rocket Diner', 'private', 'private', 'Mrs. Hallahan', 'doowop', 'red', 1955, 88],
   // The Pacific Avenue strip.
   ['pa01', 'pacific', 'pa+', 'Spicer Ave', 'a', 'jazzclub', 'The Blue Moon', 'rival', 'kessler', 'Kessler\'s Clubs', 'deco', 'blue', 1946, 72],
   ['pa02', 'pacific', 'pa+', 'Wildwood Ave', 'a', 'burlesque', 'The Velvet Rope', 'rival', 'manno', 'Manno crew', 'deco', 'red', 1950, 65],
@@ -217,3 +217,40 @@ export const SEED: SeedRow[] = [
 ];
 
 export const SEED_IDS = new Set(SEED.map((r) => r[0]));
+
+/* ---------------- the rest of the street ---------------- */
+
+/**
+ * Frontage the 1960 town had filled in: each free half-block on these runs
+ * gets an ordinary independent business (a record like any other) with the
+ * given chance, drawn from the run's mix. Generated once per game from the
+ * seed; ids encode the slot (`hf.<zone>.<run>.<cross index>.<half>`).
+ */
+export const FILL: { zone: ZoneId; run: RunId; from: string; to: string; p: number; uses: string[] }[] = [
+  { zone: 'boardwalk', run: 'bw', from: 'Roberts Ave', to: 'Andrews Ave', p: 0.72, uses: ['souvenir', 'stand', 'arcade', 'photo', 'pizza', 'icecream', 'giftshop', 'tshirt', 'beachrental', 'arcade', 'pizza', 'icecream', 'stand', 'giftshop'] },
+  { zone: 'pacific', run: 'pa+', from: 'Burk Ave', to: 'Rio Grande Ave', p: 0.32, uses: ['jazzclub', 'supper', 'comedy', 'records', 'barber', 'pizza', 'trattoria', 'deli', 'hoodclub', 'diner', 'salon', 'bookstore'] },
+  { zone: 'pacific', run: 'pa-', from: 'Burk Ave', to: 'Rio Grande Ave', p: 0.28, uses: ['jazzclub', 'hoodclub', 'records', 'pizza', 'trattoria', 'deli', 'diner', 'barber', 'comedy'] },
+  { zone: 'downtown', run: 'nj+', from: 'Cedar Ave', to: 'Rio Grande Ave', p: 0.22, uses: ['barber', 'salon', 'hardware', 'pharmacy', 'florist', 'tailor', 'shoerepair', 'bookstore', 'deli', 'bakery', 'diner', 'drycleaner', 'furniture', 'appliances', 'funeral', 'printer'] },
+  { zone: 'downtown', run: 'nj-', from: 'Cedar Ave', to: 'Rio Grande Ave', p: 0.18, uses: ['barber', 'pharmacy', 'bakery', 'deli', 'hardware', 'florist', 'diner', 'bookstore'] },
+  { zone: 'crest', run: 'oc-', from: 'Lake Rd', to: 'Rambler Rd', p: 0.34, uses: ['motel', 'motel', 'motel', 'motel', 'motel', 'cottage'] },
+  { zone: 'crest', run: 'oc+', from: 'Jefferson Ave', to: 'Rambler Rd', p: 0.12, uses: ['motel', 'diner', 'icecream', 'cottage', 'giftshop'] },
+  { zone: 'north', run: 'at+', from: '26th Ave', to: '3rd Ave', p: 0.18, uses: ['hoodclub', 'jazzclub', 'cottage', 'rooming', 'pizza', 'deli', 'barber', 'motel'] },
+  { zone: 'north', run: 'oc+', from: '15th Ave', to: '3rd Ave', p: 0.15, uses: ['cottage', 'motel', 'rooming', 'icecream'] },
+  { zone: 'docks', run: 'pk+', from: 'Lincoln Ave', to: 'Andrews Ave', p: 0.25, uses: ['warehouse', 'dockwh', 'marina', 'wholesale', 'machineshop', 'commlaundry'] },
+  { zone: 'causeway', run: 'cw', from: 'Pine Ave', to: 'Andrews Ave', p: 0.3, uses: ['gas', 'diner', 'motel', 'garage', 'carwash', 'lumberyard'] },
+  { zone: 'westww', run: 'ww', from: 'Pine Ave', to: 'Davis Ave', p: 0.15, uses: ['cottage', 'house', 'marina', 'bakery'] },
+];
+
+export const SURNAMES = ['Kaplan', 'DiNardo', 'Papadakis', 'Lenz', 'Sorensen', 'Kovacs', 'Weintraub', 'Castellano', 'Brennan', 'Pirelli', 'Fiorentino', 'Yeager', 'Rubin', 'Mastro', 'Kriebel', 'Duffy', 'Ianelli', 'Novak', 'Albrecht', 'Marchetti', 'Hallahan', 'Russo', 'Schmidt', 'O\'Hara', 'Petrakis', 'Galloway'];
+export const FIRSTNAMES = ['Gus', 'Abe', 'Vince', 'Dot', 'Harry', 'Sid', 'Lou', 'Joe', 'Max', 'Connie', 'Walt', 'Sal', 'Bea', 'Rose', 'Pete', 'Marge', 'Eddie', 'Frank', 'Irene', 'Stan'];
+export const ADJ = ['Seaside', 'Ocean Breeze', 'Sandy\'s', 'Sunny', 'Starlight', 'Boardwalk', 'Neptune\'s', 'Mermaid', 'Captain\'s', 'Tropical', 'Jolly', 'Lucky', 'Sea Gull', 'Surfside', 'Shore'];
+export const NOUN: Record<string, string[]> = {
+  souvenir: ['Souvenirs', 'Seashell Shop'], stand: ['Hot Dogs', 'Franks', 'Lemonade'], arcade: ['Arcade', 'Fun Center', 'Playland'], photo: ['Photo', 'Snapshots'], pizza: ['Pizza', 'Tomato Pies'],
+  icecream: ['Frozen Custard', 'Ice Cream', 'Soft Serve'], giftshop: ['Gifts', 'Taffy', 'Fudge'], tshirt: ['Novelties'], beachrental: ['Umbrellas'], bikes: ['Bikes'],
+  jazzclub: ['Lounge', 'Club'], supper: ['Supper Club'], comedy: ['Comedy Club'], records: ['Records'], barber: ['Barber Shop'], trattoria: ['Ristorante'], deli: ['Deli', 'Subs'],
+  hoodclub: ['Tavern', 'Bar & Grill'], diner: ['Diner'], salon: ['Beauty Salon'], bookstore: ['News & Books'], hardware: ['Hardware'], pharmacy: ['Pharmacy'], florist: ['Flowers'],
+  tailor: ['Tailor'], shoerepair: ['Shoe Repair'], bakery: ['Bakery'], drycleaner: ['Cleaners'], furniture: ['Furniture'], appliances: ['Appliances'], funeral: ['Funeral Home'], printer: ['Printing'],
+  motel: ['Motel', 'Motor Inn', 'Court'], hotel: ['Hotel'], cottage: ['Cottages'], rooming: ['Guest House'], warehouse: ['Storage'], dockwh: ['Marine Supply'], marina: ['Marina'],
+  wholesale: ['Seafood Co.'], machineshop: ['Machine Works'], commlaundry: ['Linen Service'], gas: ['Service Station'], garage: ['Garage'], carwash: ['Car Wash'], house: ['Cottage'], lumberyard: ['Lumber'],
+};
+export const MOTEL_NAMES = ['The Sea Gull', 'The Sandpiper', 'The Surf Rider', 'The Royal Islander', 'The Aqua Vista', 'The Shore Crest', 'The Blue Marlin', 'The Coral Sands', 'The Ala Kai', 'The Sea Horse', 'The Monte Carlo', 'The Jet Stream', 'The Sea Shell', 'The Mayan Sun', 'The Imperial 400', 'The Gemini', 'The Orbit', 'The Tahitian', 'The Driftwood', 'The Sun Deck'];

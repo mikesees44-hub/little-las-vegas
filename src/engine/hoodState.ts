@@ -1,6 +1,9 @@
 import type { BuildStyle, SignColor } from './design';
 import type { Lot } from './econState';
-import { HOOD_IDS, HOODS, SEED, type HoodId } from './hoodData';
+import { CROSS } from './hoodData';
+import { ADJ, FIRSTNAMES, HOOD_IDS, HOODS, MOTEL_NAMES, NOUN, SEED, SURNAMES, type HoodId } from './hoodData';
+import { fillCandidates } from './hoodGeo';
+import { chance, pick, randInt } from './rng';
 import { inflation, tenantRent, USES_BY_ID, ZONES_BY_ID } from './property';
 import { hashSeed } from './rng';
 import type { GameState } from './types';
@@ -79,11 +82,24 @@ export interface HoodState {
   /** The look of places other people own (yours live in `econ.designs`). */
   styles: Record<string, { style: BuildStyle; sign: SignColor; since: number }>;
   counts: { sales: number; rivalBuys: number; closures: number; openings: number; renos: number; restyles: number };
+  /** The rest of the 1960 street has been laid out. */
+  filled?: boolean;
 }
 
 const BASE: Record<HoodId, [rep: number, police: number, infra: number]> = {
   boardwalk: [72, 30, 64], pacific: [55, 42, 58], downtown: [60, 35, 52], docks: [40, 28, 40], crest: [80, 18, 70], north: [62, 26, 55], causeway: [45, 22, 45], westww: [58, 12, 38],
 };
+
+const AVE_NAME: Record<string, string> = { bw: 'the Boardwalk', oc: 'Ocean Ave', at: 'Atlantic Ave', pa: 'Pacific Ave', nj: 'New Jersey Ave', pk: 'Park Blvd', cw: 'Route 47', ww: 'Glenwood Ave' };
+
+/** A street address for a generated record, from its slot. */
+function addressOf(id: string): string {
+  const [, , run, ci, half] = id.split('.');
+  const i = Number(ci);
+  const ave = AVE_NAME[run.slice(0, 2)] ?? 'the Boardwalk';
+  if (run === 'bw') return `Boardwalk at ${CROSS[i]?.n ?? ''}`;
+  return `${(i + 1) * 100 + (half === 'b' ? 51 : 1) + (run.endsWith('-') ? 1 : 0)} ${ave}`;
+}
 
 function seedLot(s: GameState, i: number): Lot {
   const [id, zone, run, cross, , use, name, status, owner, who, , , built, cond] = SEED[i];
@@ -101,6 +117,35 @@ function seedLot(s: GameState, i: number): Lot {
   if (status === 'lease') { lot.price = 0; lot.rent = Math.max(15, Math.round(land * 0.006)); }
   else lot.rent = tenantRent(s, lot);
   return lot;
+}
+
+/** A generated 1960 business on a half-block (an ordinary independent record). */
+function fillLot(s: GameState, h: { rng: number }, id: string, zone: Lot['zone'], use: string, idx: number): Lot {
+  const u = USES_BY_ID[use];
+  const z = ZONES_BY_ID[zone];
+  const sur = pick(h, SURNAMES);
+  const who = `${pick(h, FIRSTNAMES)} ${sur}`;
+  const noun = pick(h, NOUN[use] ?? [u.name]);
+  const name = use === 'motel' ? `${pick(h, MOTEL_NAMES)}${chance(h, 0.4) ? ` ${noun}` : ''}` : chance(h, 0.5) ? `${sur}'s ${noun}` : `${pick(h, ADJ)} ${noun}`;
+  const cond = randInt(h, 48, 96);
+  const built = zone === 'crest' && use === 'motel' ? randInt(h, 1954, 1960) : randInt(h, 1922, 1959);
+  const land = Math.round(1500 * z.land * inflation(s) / 50) * 50;
+  const bldg = Math.round(u.cost * z.land * 0.85 * (0.6 + 0.4 * cond / 100) * inflation(s) / 50) * 50;
+  const roll = randInt(h, 0, 99);
+  const status: Lot['status'] = roll < 6 ? 'lease' : roll < 13 ? 'sale' : 'private';
+  const lot: Lot = {
+    id, zone, idx, address: '', status, owner: 'private', price: land + bldg, rent: 0, condition: cond,
+    use: status === 'lease' ? undefined : use, stage: status === 'lease' ? undefined : 'open', builtYear: built,
+    name: status === 'lease' ? undefined : name, tenant: status === 'lease' ? undefined : who,
+    history: [{ year: built, week: 0, owner: 'private', how: 'built', by: who }],
+  };
+  if (status === 'lease') { lot.price = 0; lot.rent = Math.max(15, Math.round(land * 0.006)); } else lot.rent = tenantRent(s, lot);
+  return lot;
+}
+
+/** What the layer remembers of a lot, to notice changes made by any system. */
+export function lotSig(l: Lot): string {
+  return `${l.status}|${l.owner}|${l.tenant ?? ''}|${l.use ?? ''}|${l.stage ?? ''}|${l.name ?? ''}`;
 }
 
 function blankStats(): Record<HoodId, HoodStat> {
@@ -129,5 +174,18 @@ export function ensureHood(s: GameState): HoodState | undefined {
     e.lots.push(seedLot(s, i));
     if (r[7] !== 'lease') h.styles[r[0]] ??= { style: r[10], sign: r[11], since: r[12] };
   });
+  if (!h.filled) {
+    h.filled = true;
+    const rr = { rng: hashSeed(`${s.seed}:fill`) };
+    let n = 0;
+    for (const c of fillCandidates()) {
+      if (have.has(c.id) || !chance(rr, c.p)) continue;
+      const l = fillLot(s, rr, c.id, c.zone, pick(rr, c.uses), 200 + n++);
+      l.address = addressOf(c.id);
+      e.lots.push(l);
+    }
+  }
+  for (const l of e.lots) h.seen[l.id] ??= lotSig(l);
+  h.lastMonth ??= `${s.date.y}-${s.date.m}`;
   return h;
 }

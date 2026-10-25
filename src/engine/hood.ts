@@ -4,7 +4,7 @@ import { designMut, designOf, STYLES, SIGN_HEX, type BuildStyle, type SignColor 
 import { marketValue } from './econ';
 import type { Lot, ZoneId } from './econState';
 import { HOOD_IDS, HOODS, HOODS_BY_ID, hoodOfZone, type HoodId } from './hoodData';
-import { ensureHood, POLICIES, type HoodEvent, type HoodEventKind, type HoodSnapRow, type HoodState, type PolicyId } from './hoodState';
+import { ensureHood, lotSig as sig, POLICIES, type HoodEvent, type HoodEventKind, type HoodSnapRow, type HoodState, type PolicyId } from './hoodState';
 import { inflation, lotName, USES, USES_BY_ID, useIcon, ZONES_BY_ID, type UseCat } from './property';
 import { chance, hashSeed, pick, rand } from './rng';
 import type { Ctx } from './ledger';
@@ -81,9 +81,6 @@ function monthKey(s: GameState): string {
   return `${s.date.y}-${s.date.m}`;
 }
 
-function sig(l: Lot): string {
-  return `${l.status}|${l.owner}|${l.tenant ?? ''}|${l.use ?? ''}|${l.stage ?? ''}|${l.name ?? ''}`;
-}
 
 function ownerLabel(o: FactionId | 'private' | 'city', by?: string): string {
   if (o === 'private') return by ?? 'a private owner';
@@ -162,7 +159,6 @@ export function hoodMonth(ctx: Ctx): void {
   const e = s.econ!;
   const year = s.date.y;
   const era = eraEcon(year);
-  noticeChanges(s, h);
   const lots = e.lots.filter((l) => drawnHood(l));
   // Neighborhood conditions drift toward what the records say.
   for (const id of HOOD_IDS) {
@@ -294,12 +290,10 @@ export function hoodWeek(ctx: Ctx): void {
   const h = ensureHood(s);
   if (!h) return;
   const mk = monthKey(s);
-  if (h.lastMonth === undefined) {
-    h.lastMonth = mk;
-    for (const l of s.econ!.lots) h.seen[l.id] = sig(l);
-    if (!h.snaps.length) h.snaps.push({ y: s.date.y, by: snapshot(s) });
-    return;
-  }
+  // The town as it stood when the layer first looked (the "then" of then-and-now).
+  if (!h.snaps.length) h.snaps.push({ y: s.date.y, by: snapshot(s) });
+  // Ownership changes made by any system this week go into the deeds and the log.
+  noticeChanges(s, h);
   if (h.lastMonth !== mk) {
     h.lastMonth = mk;
     hoodMonth(ctx);

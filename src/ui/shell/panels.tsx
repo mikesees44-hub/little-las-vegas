@@ -34,6 +34,7 @@ import { PatronagePanel } from '../town/Patronage';
 import { Feed } from './Feed';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
+import { HoodDashboard } from '../hood/HoodDashboard';
 import type { PanelId, Route } from './routes';
 
 /**
@@ -155,6 +156,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'case', label: 'Your Case', blurb: 'The government\'s case against the boss, from a file to a trial, and the fugitive road.', render: (s) => <LawPanel s={s} /> },
       { id: 'cityhall', label: 'City Hall & People', wide: true, render: (s) => <CityHall s={s} /> },
+      { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => <HoodDashboard s={s} /> },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'patronage', label: 'Patronage', render: (s) => <PatronagePanel s={s} /> },
     ],
