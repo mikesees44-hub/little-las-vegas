@@ -91,8 +91,8 @@ const PAD: Dial = {
   id: 'pad', name: 'The pad', ask: 'Who on the force is paid to look the other way?', def: 'none',
   opts: [
     { id: 'none', label: 'Nobody special', blurb: 'The beat cops\' envelopes, nothing more.' },
-    { id: 'precinct', label: 'The precinct sergeant', blurb: 'A call before the vice squad comes.', weekly: 60, raid: 0.4, heat: -0.2 },
-    { id: 'captain', label: 'The captain himself', blurb: 'Raids happen to other people.', weekly: 140, raid: 0.15, heat: -0.4 },
+    { id: 'precinct', label: 'The precinct sergeant', blurb: 'A call before the vice squad comes.', weekly: 40, raid: 0.4, heat: -0.2 },
+    { id: 'captain', label: 'The captain himself', blurb: 'Raids happen to other people.', weekly: 100, raid: 0.15, heat: -0.4 },
   ],
 };
 
@@ -332,7 +332,7 @@ export const RACKETS: Partial<Record<BusinessKind, RacketInfo>> = {
           { title: () => 'Somebody\'s wife', text: (_c, x) => `The wife of a man who lost the house money at ${x.b.name} came to the club and made a scene. She wants it back. People were listening.` },
         ],
         choices: (x) => [
-          ch('winback', 'Let him win some back', 'let a sore loser win some back', [cash(x, -x.t * 0.6)], 'He calms down.'),
+          ch('winback', 'Let him win some back', 'let a sore loser win some back', [cash(x, -x.t * 0.4)], 'He calms down.'),
           ch('lean', 'Have a word with him', 'leaned on a sore loser', [heatE(x, 2), { type: 'evidence', charId: x.s.playerId, amount: 1, label: x.b.name }], 'He stops talking. Somebody remembers why.'),
           ch('marker', 'Give him a marker on the house', 'gave a sore loser a marker', [cash(x, -x.t * 0.2), { type: 'favor', amount: 1, label: x.b.name }], 'He owes you now.'),
         ],
@@ -431,7 +431,7 @@ export const RACKETS: Partial<Record<BusinessKind, RacketInfo>> = {
           { title: () => 'An insurance man', text: () => 'A shipping company\'s insurance investigator is offering money for information about the missing loads. Somebody might take it.' },
         ],
         choices: (x) => [
-          ch('lie', 'Lie low for a month', 'had the dock crew lie low', [{ type: 'closeBusiness', businessId: x.b.id, weeks: 4, label: x.b.name }, heatE(x, -4)]),
+          ch('lie', 'Lie low for two weeks', 'had the dock crew lie low', [{ type: 'closeBusiness', businessId: x.b.id, weeks: 2, label: x.b.name }, heatE(x, -4)]),
           ch('fall', 'Pay a checker to take the fall', 'paid a checker to take the fall', [cash(x, -x.t * 1.2)], 'He does six months and comes home to an envelope.'),
           ch('ride', 'Ride it out', 'rode out the Waterfront Commission', [roll(x, 0.6, 'the inquiry', { text: 'He went away with nothing.' }, { evidence: 4, heat: 3, text: 'A checker talked.' })]),
         ],
@@ -469,8 +469,8 @@ export const RACKETS: Partial<Record<BusinessKind, RacketInfo>> = {
           { title: () => 'The members are restless', text: (_c, x) => `${nm(x.runner)} says the chambermaids are angry about the contract and a reformer is listening to them. If the vote goes the wrong way, the local is gone.` },
         ],
         choices: (x) => [
-          ch('back', 'Back your man', 'backed your man in the union election', [cash(x, -x.t * 1.2), roll(x, 0.75, 'the union vote', { respect: 1, text: 'Your man won by forty votes.' }, { boost: [-35, 26], text: 'The reformer won. The local is cold for a while.' })]),
-          ch('deal', 'Make a deal with the reformer', 'made a deal with the union reformer', [boost(x, -15, 26)], 'Less money for a while, no risk.'),
+          ch('back', 'Back your man', 'backed your man in the union election', [cash(x, -x.t * 0.8), roll(x, 0.75, 'the union vote', { respect: 1, text: 'Your man won by forty votes.' }, { boost: [-30, 20], text: 'The reformer won. The local is cold for a while.' })]),
+          ch('deal', 'Make a deal with the reformer', 'made a deal with the union reformer', [boost(x, -10, 20)], 'Less money for a while, no risk.'),
           ch('stuff', 'Make sure of the count', 'made sure of the union count', [roll(x, 0.88, 'the count', { text: 'The count came out right.' }, { evidence: 5, fed: 3, boost: [-35, 26], text: 'Federal monitors noticed the ballots.' }), heatE(x, 1, 'federal')], 'Abstract fraud: likely, and on the record if it fails.'),
         ],
       },
