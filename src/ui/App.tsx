@@ -78,11 +78,13 @@ function freshSeed(): string {
   return Math.random().toString(36).slice(2, 10);
 }
 
-export function App() {
+/** `startOn: 'game'` skips the title screen (tests, embedding). */
+export interface AppProps { startOn?: 'title' | 'game' }
+export function App({ startOn = 'title' }: AppProps) {
   const [slot, setSlot] = useState(() => currentSlot());
   const [s, setS] = useState<GameState>(() => loadSlot(currentSlot()) ?? newGameWith(freshSeed()));
   /** The title screen / new-game flow (shown on first load). */
-  const [menu, setMenu] = useState<MenuScreen | undefined>('title');
+  const [menu, setMenu] = useState<MenuScreen | undefined>(startOn === 'title' ? 'title' : undefined);
   useEffect(() => applySettings(), []);
   registerAppearances(s.seed, s.characters);
   const [answers, setAnswers] = useState<Record<string, string>>({});

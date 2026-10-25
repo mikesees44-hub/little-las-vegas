@@ -64,8 +64,8 @@ const ECON_RATE = Number(arg('econ', '0.12'));
 const TRAVEL_RATE = Number(arg('travel', '0.04'));
 /** Which start to play: classic, rise or sees. */
 const START = arg('start', 'classic') as StartId;
-/** Share of games started through the character creator with random (valid, normal-difficulty) picks. */
-const CUSTOM_RATE = Number(arg('custom', '0.2'));
+/** Share of games started through the character creator with random (valid, normal-difficulty) picks (--custom 0.2). Off by default so the balance targets match master. */
+const CUSTOM_RATE = Number(arg('custom', '0'));
 
 /** Random creator picks, retried until valid (falls back to none). */
 function randomCharOptions(seed: string, start: StartId): CharOptions | undefined {
