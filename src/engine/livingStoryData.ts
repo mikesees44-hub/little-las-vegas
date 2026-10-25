@@ -100,7 +100,7 @@ const crown: ArcTemplate = {
           effects: (v) => [opn(R(v, 'underboss'), v.s.playerId, 15, 'Named me successor', 0), opn(R(v, 'heir'), v.s.playerId, -15, 'Passed me over'), { type: 'familyOpinion', amount: -2, reason: 'The chair went outside the family' }] },
         { id: 'heir', label: `Settle it: ${v_first('heir')} is the successor; ${v_first('underboss')} retires with honor`, because: 'named the heir and retired the underboss', note: (v) => `You named ${v.f('heir')}. ${v.f('underboss')} was given a dinner, an envelope and a house in Florida.`, finish: (v) => `${v.f('underboss')} went to Florida. Some of his capos went quiet.`,
           disabled: (v) => (v.c.underboss?.dynasty ? 'He is family; he cannot be retired' : undefined),
-          effects: (v) => [{ type: 'money', amount: -2500 }, { type: 'retire', charId: R(v, 'underboss') }, opn(R(v, 'heir'), v.s.playerId, 15, 'Named me'), { type: 'crewOpinion', amount: -2, reason: 'The underboss was put out to pasture' }] },
+          effects: (v) => [{ type: 'money', amount: -1500 }, { type: 'retire', charId: R(v, 'underboss') }, opn(R(v, 'heir'), v.s.playerId, 15, 'Named me'), { type: 'crewOpinion', amount: -2, reason: 'The underboss was put out to pasture' }] },
         { id: 'share', label: 'Divide the work: the street to one, the books to the other', detail: 'Both get something. Neither gets the chair.', because: 'divided the work between the two claimants', note: (v) => `${v.f('underboss')} kept the street, ${v.f('heir')} got the books. Neither got the chair.`, finish: () => 'An uneasy peace: the kind that lasts exactly as long as the boss does.',
           effects: (v) => [opn(R(v, 'underboss'), v.s.playerId, 3, 'Kept the street'), opn(R(v, 'heir'), v.s.playerId, 3, 'Got the books'), { type: 'respect', amount: 1 }] },
       ],
@@ -140,7 +140,7 @@ const rat: ArcTemplate = {
       text: (v) => `${v.n('adviser')} closes the office door. A bartender in Rio Grande heard it from a cab driver who heard it from a county clerk: ${v.n('suspect')} has been seen at a diner in Cape May Court House with a man in a gray suit. Nobody can say what was said, or whether the man in the gray suit was a cop, a lawyer, or ${v.f('suspect')}'s brother-in-law.`,
       choices: [
         { id: 'speak', label: 'Talk to him yourself, man to man', because: 'asked the man about the rumor yourself', note: (v) => `You asked ${v.f('suspect')} about the diner. He looked you in the eye and said it was his wife's cousin.`, next: 'reply', effects: (v) => [opn(R(v, 'suspect'), v.s.playerId, -5, 'The boss asked me if I am a rat')] },
-        { id: 'lawyer', label: 'Ask the family lawyer what the law can and cannot do ($600)', because: 'asked the lawyer about the rumor', note: () => 'The lawyer explained what a cooperating witness can and cannot give a grand jury. You changed nothing, and listened more.', next: 'reply', effects: (v) => [{ type: 'money', amount: -600 }, { type: 'evidence', charId: v.s.playerId, amount: -2 }] },
+        { id: 'lawyer', label: 'Ask the family lawyer what the law can and cannot do ($400)', because: 'asked the lawyer about the rumor', note: () => 'The lawyer explained what a cooperating witness can and cannot give a grand jury. You changed nothing, and listened more.', next: 'reply', effects: (v) => [{ type: 'money', amount: -400 }, { type: 'evidence', charId: v.s.playerId, amount: -2 }] },
         { id: 'wait', label: 'Wait. A rumor is not proof.', because: 'waited on the rumor', note: (v) => `You told ${v.f('adviser')} you would wait for something better than a cab driver.`, next: 'reply', effects: (v) => [opn(R(v, 'adviser'), v.s.playerId, -4, 'The boss would not listen')] },
       ],
     },
@@ -269,8 +269,8 @@ const velvet: ArcTemplate = {
       id: 'petition', title: 'An audience, by appointment', wait: [2, 4],
       text: (v) => `${v.n('manager')} asks for an appointment, which nobody does. ${He(v.c.manager)} brings the books of ${v.n('biz')} for the last three seasons, every column in ${his(v.c.manager)} handwriting. "I'm not asking for anything I didn't build," ${he(v.c.manager)} says. "But I've had an offer from Atlantic City, and I wanted you to hear it from me."`,
       choices: [
-        { id: 'partner', label: 'A real piece of the place ($1,000 now, and a share)', because: 'made the manager a partner', note: (v) => `You gave ${v.f('manager')} a piece of ${v.n('biz')}, on paper.`, next: 'future',
-          effects: (v) => [{ type: 'money', amount: -1000 }, { type: 'wealth', charId: R(v, 'manager'), amount: 1000 }, opn(R(v, 'manager'), v.s.playerId, 18, 'Made me a partner', 0)] },
+        { id: 'partner', label: 'A real piece of the place ($600 now, and a share)', because: 'made the manager a partner', note: (v) => `You gave ${v.f('manager')} a piece of ${v.n('biz')}, on paper.`, next: 'future',
+          effects: (v) => [{ type: 'money', amount: -600 }, { type: 'wealth', charId: R(v, 'manager'), amount: 600 }, opn(R(v, 'manager'), v.s.playerId, 18, 'Made me a partner', 0)] },
         { id: 'mentor', label: `Pay ${'{manager}'} to teach the boy the business ($300)`, detail: 'Both can say no.', because: 'asked the manager to teach your relative', note: (v) => `You asked ${v.f('manager')} to teach ${v.f('nephew')} the business, and paid for it.`, next: 'future',
           effects: (v) => [{ type: 'money', amount: -300 }, opn(R(v, 'manager'), R(v, 'nephew'), 5, 'Teaching him the business'), opn(R(v, 'manager'), v.s.playerId, 4, 'At least the boss asked')] },
         { id: 'refuse', label: '"Family is family. Take the offer if you want it."', because: 'kept the appointment as it was', note: (v) => `You told ${v.f('manager')} that family is family.`, next: 'future',
@@ -377,8 +377,8 @@ const daughterLaw: ArcTemplate = {
       choices: [
         { id: 'support', label: 'Tell her you are proud of her, and mean it', because: 'blessed your daughter\'s law career', note: (v) => `You told ${v.f('daughter')} you were proud of her. She cried, which she never does.`, next: 'school',
           effects: (v) => [opn(R(v, 'daughter'), v.s.playerId, 18, 'Respected my choice', 0)] },
-        { id: 'pay', label: 'Pay the tuition anyway, through the parish ($1,500)', detail: 'She will figure it out eventually.', because: 'quietly paid your daughter\'s tuition', note: () => 'A scholarship from the parish appeared. She did not ask how.', next: 'school',
-          effects: (v) => [{ type: 'money', amount: -1500 }, opn(R(v, 'daughter'), v.s.playerId, 8, 'Supported me')] },
+        { id: 'pay', label: 'Pay the tuition anyway, through the parish ($800)', detail: 'She will figure it out eventually.', because: 'quietly paid your daughter\'s tuition', note: () => 'A scholarship from the parish appeared. She did not ask how.', next: 'school',
+          effects: (v) => [{ type: 'money', amount: -800 }, opn(R(v, 'daughter'), v.s.playerId, 8, 'Supported me')] },
         { id: 'pressure', label: '"The family needs you in the business, not in a courtroom."', because: 'pressed your daughter to join the business', note: (v) => `You told ${v.f('daughter')} the family needs her. She went to Camden anyway.`, next: 'school',
           effects: (v) => [grudge(R(v, 'daughter'), v.s.playerId, 25), opn(R(v, 'daughter'), v.s.playerId, -15, 'Tried to stop me')] },
       ],
@@ -429,7 +429,7 @@ const deadCase: ArcTemplate = {
       id: 'audit', title: 'The trucking invoices', wait: [0, 1],
       text: (v) => `${v.n('keeper')} keeps the family's numbers, and has found something he does not like: a trucking company in Rio Grande billing your produce business for four deliveries a week that nobody can remember receiving. He is not accusing anybody. He would just like to know where twelve hundred dollars a month goes.`,
       choices: [
-        { id: 'audit', label: 'Bring in an outside accountant ($800)', because: 'had the invoices audited', note: () => 'An accountant from Philadelphia spent a week with the invoices and a cold.', next: 'case', effects: (v) => [{ type: 'money', amount: -800 }, { type: 'evidence', charId: v.s.playerId, amount: -2 }] },
+        { id: 'audit', label: 'Bring in an outside accountant ($500)', because: 'had the invoices audited', note: () => 'An accountant from Philadelphia spent a week with the invoices and a cold.', next: 'case', effects: (v) => [{ type: 'money', amount: -500 }, { type: 'evidence', charId: v.s.playerId, amount: -2 }] },
         { id: 'dispute', label: '"Those invoices are fine. Leave them alone."', because: 'told the bookkeeper to leave the invoices alone', note: (v) => `You told ${v.f('keeper')} to leave it. He wrote it down anyway.`, next: 'case', effects: (v) => [grudge(R(v, 'keeper'), v.s.playerId, 15), opn(R(v, 'keeper'), v.s.playerId, -6, 'Told me not to look')] },
         { id: 'burn', label: 'The invoices go in the furnace', detail: 'No paper, no question. Missing paper is also a question.', because: 'burned the trucking invoices', note: () => 'The invoices went in the furnace at the bakery.', next: 'case', effects: (v) => [{ type: 'evidence', charId: v.s.playerId, amount: -3 }, { type: 'heat', bar: 'federal', amount: 3 }] },
       ],
@@ -446,8 +446,8 @@ const deadCase: ArcTemplate = {
       id: 'settle', title: 'The lawyers', wait: [2, 4],
       text: (v) => `The family lawyer lays it out: ${v.n('investigator')} has a file, the file has your company's name, and the file can be closed in court, closed with a check, or kept open for years by a man who likes keeping files open.`,
       choices: [
-        { id: 'settle', label: 'Settle the civil side and pay the back taxes ($1,500)', because: 'settled the trucking case', note: () => 'You paid. The trucking company went bankrupt. The file closed, mostly.', next: 'dormant', effects: () => [{ type: 'money', amount: -1500 }, { type: 'heat', bar: 'federal', amount: -4 }] },
-        { id: 'fight', label: 'Fight it in court ($800)', because: 'fought the trucking case in court', note: () => 'You fought it. The judge granted a continuance, then another.', next: 'dormant', effects: () => [{ type: 'money', amount: -800 }, { type: 'respect', amount: 1 }] },
+        { id: 'settle', label: 'Settle the civil side and pay the back taxes ($900)', because: 'settled the trucking case', note: () => 'You paid. The trucking company went bankrupt. The file closed, mostly.', next: 'dormant', effects: () => [{ type: 'money', amount: -900 }, { type: 'heat', bar: 'federal', amount: -4 }] },
+        { id: 'fight', label: 'Fight it in court ($500)', because: 'fought the trucking case in court', note: () => 'You fought it. The judge granted a continuance, then another.', next: 'dormant', effects: () => [{ type: 'money', amount: -500 }, { type: 'respect', amount: 1 }] },
         { id: 'records', label: 'Hand over the trucking company\'s records, and only those', detail: 'Lawful cooperation about someone else\'s fraud.', because: 'handed over the trucking company\'s records', note: () => 'You handed over the trucking company\'s records, and nothing else.', next: 'dormant', effects: () => [{ type: 'heat', bar: 'federal', amount: -2 }, { type: 'crewOpinion', amount: -1, reason: 'The boss gave papers to the Prosecutor' }] },
       ],
     },
@@ -493,19 +493,19 @@ const election: ArcTemplate = {
       id: 'debate', title: 'The boardwalk question', wait: [2, 6],
       text: (v) => `The campaign is about the boardwalk: tear down the old piers for a new convention hotel, or keep the town the way the summer people like it. ${v.n('candidate')}'s people come to see you. They are not asking for anything, they say, and then they mention the price of radio time.`,
       choices: [
-        { id: 'back', label: 'Contribute to his campaign ($1,500)', because: 'backed the incumbent\'s campaign', note: (v) => `You put money behind ${v.n('candidate')}.`, next: 'election',
+        { id: 'back', label: 'Contribute to his campaign ($800)', because: 'backed the incumbent\'s campaign', note: (v) => `You put money behind ${v.n('candidate')}.`, next: 'election',
           effects: (v) => {
             const e = openElection(v);
             const cand = R(v, 'candidate').slice(4);
-            return [{ type: 'money', amount: -1500 }, ...(e && e.candidates.some((c) => c.id === cand) ? [{ type: 'pol', op: { op: 'campaign', election: e.id, cand, fund: 1500 } } as Effect] : [{ type: 'favor', amount: 1 } as Effect])];
+            return [{ type: 'money', amount: -800 }, ...(e && e.candidates.some((c) => c.id === cand) ? [{ type: 'pol', op: { op: 'campaign', election: e.id, cand, fund: 800 } } as Effect] : [{ type: 'favor', amount: 1 } as Effect])];
           } },
         { id: 'neutral', label: 'Stay out of it. Shake both their hands.', because: 'stayed neutral in the election', note: () => 'You shook both their hands at the Elks.', next: 'election', effects: () => [] },
-        { id: 'other', label: 'Quietly back the young man with the plan ($1,000)', because: 'backed the challenger', note: () => 'You put money behind the challenger, through a dentist in the Crest.', next: 'election',
+        { id: 'other', label: 'Quietly back the young man with the plan ($600)', because: 'backed the challenger', note: () => 'You put money behind the challenger, through a dentist in the Crest.', next: 'election',
           effects: (v) => {
             const e = openElection(v);
             const cand = R(v, 'candidate').slice(4);
             const other = e?.candidates.find((c) => c.id !== cand);
-            return [{ type: 'money', amount: -1000 }, ...(e && other ? [{ type: 'pol', op: { op: 'campaign', election: e.id, cand: other.id, fund: 1000 } } as Effect] : [])];
+            return [{ type: 'money', amount: -600 }, ...(e && other ? [{ type: 'pol', op: { op: 'campaign', election: e.id, cand: other.id, fund: 600 } } as Effect] : [])];
           } },
       ],
     },
@@ -564,9 +564,9 @@ const boardwalkRival: ArcTemplate = {
       id: 'response', title: 'Compete or cooperate', wait: [4, 8],
       text: (v) => `${v.n('founder')}'s place is full every night. Yours is full on Saturdays. Your capos have ideas, some of them involving the fire marshal. ${v.f('founder')} sends a bottle of champagne and a note: "No hard feelings. There's room on this island for two good rooms."`,
       choices: [
-        { id: 'compete', label: 'Compete: a better band, better steaks, lower cover ($600)', because: 'competed with the new club fairly', note: () => 'You hired a better band and cut the cover charge.', next: 'season', effects: () => [{ type: 'money', amount: -600 }, { type: 'respect', amount: 1 }] },
-        { id: 'partner', label: `Offer to buy a piece of ${'{founder}'}'s place ($1,500)`, detail: 'The answer is theirs.', because: 'offered to buy into the rival club', note: (v) => (op(v.s, R(v, 'founder'), v.s.playerId) > -10 ? `${v.f('founder')} said yes, on paper, with ${his(v.c.founder)} own lawyer.` : `${v.f('founder')} said no, politely. You kept your money.`), next: 'season',
-          effects: (v) => (op(v.s, R(v, 'founder'), v.s.playerId) > -10 ? [{ type: 'money', amount: -1500 }, opn(R(v, 'founder'), v.s.playerId, 10, 'Treated me like a partner')] : []) },
+        { id: 'compete', label: 'Compete: a better band, better steaks, lower cover ($400)', because: 'competed with the new club fairly', note: () => 'You hired a better band and cut the cover charge.', next: 'season', effects: () => [{ type: 'money', amount: -400 }, { type: 'respect', amount: 1 }] },
+        { id: 'partner', label: `Offer to buy a piece of ${'{founder}'}'s place ($900)`, detail: 'The answer is theirs.', because: 'offered to buy into the rival club', note: (v) => (op(v.s, R(v, 'founder'), v.s.playerId) > -10 ? `${v.f('founder')} said yes, on paper, with ${his(v.c.founder)} own lawyer.` : `${v.f('founder')} said no, politely. You kept your money.`), next: 'season',
+          effects: (v) => (op(v.s, R(v, 'founder'), v.s.playerId) > -10 ? [{ type: 'money', amount: -900 }, opn(R(v, 'founder'), v.s.playerId, 10, 'Treated me like a partner')] : []) },
         { id: 'squeeze', label: 'Let the fire marshal take an interest', detail: 'Abstract, legal-looking, and everyone will know.', because: 'sent the fire marshal to the rival club', note: () => 'The fire marshal found the capacity sign was wrong.', next: 'season',
           effects: (v) => [{ type: 'heat', bar: 'local', amount: 4 }, grudge(R(v, 'founder'), v.s.playerId, 25), { type: 'respect', amount: -1 }] },
       ],

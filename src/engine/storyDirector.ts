@@ -150,6 +150,8 @@ export function shownIn(s: GameState, id: string, weeks: number): number {
 export const WARNINGS: Record<string, { cooldown: number; cap: number }> = {
   crew_courted: { cooldown: 4, cap: 5 }, drifting: { cooldown: 4, cap: 5 }, power_grievance: { cooldown: 4, cap: 5 },
   crew_debt: { cooldown: 5, cap: 5 }, crew_offer_reported: { cooldown: 5, cap: 5 },
+  // Each is a different associate's name going to Philadelphia: the books only open so often.
+  crew_vouch: { cooldown: 5, cap: 5 },
 };
 
 /** Is a template on the director's global cooldown or over its yearly cap? */
@@ -174,6 +176,8 @@ export function allowed(s: GameState, e: EventInstance): boolean {
  */
 export function freshness(s: GameState, id: string): number {
   if (templateBlocked(s, id)) return 0;
+  // A warning about one man is about a different man each time: it is not "the same story again".
+  if (WARNINGS[id]) return 2.5;
   const last = lastShown(s, id);
   if (last === undefined) return 4;
   const n = shownIn(s, id, 52);

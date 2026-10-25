@@ -61,7 +61,9 @@ export function addOpinion(
   const fromChar = s.characters[from];
   // Trait shaping: Vengeful never lets negatives decay; Loyal-to-a-fault halves slights; Patient cools faster.
   if (fromChar) {
-    if (value < 0 && hasTrait(fromChar, 'Loyal-to-a-fault') && to === s.playerId) value = Math.round(value / 2);
+    // (`|| 0`: a halved -1 rounds to -0, which does not survive JSON.)
+    if (value < 0 && hasTrait(fromChar, 'Loyal-to-a-fault') && to === s.playerId) value = Math.round(value / 2) || 0;
+    if (value === 0) return undefined;
     if (value < 0 && hasTrait(fromChar, 'Vengeful')) decay = 0;
     else if (value < 0 && hasTrait(fromChar, 'Patient') && decay > 0) decay += 1;
   }

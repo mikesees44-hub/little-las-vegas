@@ -33,6 +33,18 @@ const SEED = arg('seed', 'variety');
 const TOP = Number(arg('top', '15'));
 const START = arg('start', 'classic') as StartId;
 const JSON_OUT = arg('json', '');
+/** Money flows by ledger category, summed over all games (to check a change against the economy). */
+const flows: Record<string, number> = {};
+const bySource: Record<string, number> = {};
+function sourceOf(id: string): string {
+  if (id.startsWith('pack_p2_')) return 'pack2';
+  if (id.startsWith('pack_p3_')) return 'pack3';
+  if (id.startsWith('pack_')) return 'pack1';
+  if (id.startsWith('arc_')) return 'arcs';
+  if (/^(pitch|score|beef|vouch|dispute|life|kid|law|wife|courted)_/.test(id)) return 'crewVariants';
+  if (id.startsWith('crew_')) return 'crew';
+  return id.split('_')[0];
+}
 /** Templates allowed to come back on a fixed cadence (excluded from the max-per-template check). */
 const INSTITUTIONAL = new Set(['bagman']);
 
@@ -105,7 +117,17 @@ function playOne(gi: number): GameStat {
       }
       last[e.defId] = s.week;
     }
-    s = advanceWeek(s, aiChoices(s, w)).state;
+    const shown = s.pendingEvents.map((e) => [e.title, sourceOf(e.defId)] as const);
+    const r = advanceWeek(s, aiChoices(s, w));
+    for (const l of r.report.lines) {
+      if (l.stat !== 'money') continue;
+      flows[l.category] = (flows[l.category] ?? 0) + l.amount;
+      if (l.category === 'event') {
+        const src = shown.find(([t]) => l.label.startsWith(t))?.[1] ?? 'other';
+        bySource[src] = (bySource[src] ?? 0) + l.amount;
+      }
+    }
+    s = r.state;
   }
   let maxTemplate = 0, maxTemplateId = '';
   for (const [k, v] of Object.entries(counts)) if (!INSTITUTIONAL.has(k) && v > maxTemplate) { maxTemplate = v; maxTemplateId = k; }
@@ -144,4 +166,7 @@ console.log(`\nTop ${TOP} templates (avg per game, worst game):`);
 for (const [k, v] of Object.entries(total).sort((a, b) => b[1] - a[1]).slice(0, TOP)) console.log(`  ${k.padEnd(34)} ${(v / GAMES).toFixed(2).padStart(6)}  worst ${perGameMax[k]}`);
 console.log('\nTheme mix:');
 for (const [k, v] of Object.entries(themes).sort((a, b) => b[1] - a[1])) console.log(`  ${k.padEnd(12)} ${pct(v / allPopups)}`);
+console.log('\nMoney flows per game (ledger categories):');
+console.log('  ' + Object.entries(flows).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${Math.round(v / GAMES)}`).join(' · '));
+console.log('  event money by source: ' + Object.entries(bySource).sort((a, b) => a[1] - b[1]).slice(0, 14).map(([k, v]) => `${k} ${Math.round(v / GAMES)}`).join(' · '));
 if (JSON_OUT) writeFileSync(JSON_OUT, JSON.stringify({ games, total, perGameMax, themes }, null, 2));

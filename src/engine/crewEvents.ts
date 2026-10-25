@@ -667,7 +667,8 @@ function scoreDef(key: string, whats: string[], title: (nm: string) => string, w
   return {
     key,
     cooldown: 2,
-    weight,
+    // The first season the crew is out hustling: scores come a little more often while the house finds its feet.
+    weight: (s) => weight(s) * (s.week <= 52 ? 1.5 : 1),
     subjects: (s) => men(s).filter((c) => available(s, c) && c.rank !== 'capo' && (c.craft === 'earner' || c.craft === 'burglar' || c.craft === 'driver' || c.craft === 'bookmaker' || c.attributes.business >= 50 || hasTrait(c, 'Gambler'))),
     build: (s, c) => {
       const what = pick(s, whats);

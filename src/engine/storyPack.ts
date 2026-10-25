@@ -658,8 +658,9 @@ export function storyEventSource(s: GameState): EventInstance | undefined {
 export function storyPoolSource(s: GameState): EventInstance | undefined {
   if (s.gameOver) return undefined;
   const st = ensureStory(s);
-  if (s.week < 5 || s.week - st.lastRandom < (s.week <= FIRST_YEAR ? RANDOM_GAP + 1 : RANDOM_GAP)) return undefined;
-  if (rand(st) > (s.week <= FIRST_YEAR ? RANDOM_CHANCE * 0.8 : RANDOM_CHANCE)) return undefined;
+  // After the first year the chains and the living storylines carry more of the load: the pool comes a little less often.
+  if (s.week < 5 || s.week - st.lastRandom < RANDOM_GAP + 1) return undefined;
+  if (rand(st) > (s.week <= FIRST_YEAR ? RANDOM_CHANCE * 0.8 : RANDOM_CHANCE * 0.75)) return undefined;
   const spent = packSpend(s, st);
   const shares = themeShares(s);
   const pool = EVENTS.filter((e) => !e.trigger.mandatory && (spent[PACK_OF[e.id]] ?? 0) < (PACK_DEFS[PACK_OF[e.id]]?.budget ?? 99) && poolEligible(s, e, st));

@@ -30,9 +30,9 @@ export interface StoryPackDef {
 }
 
 export const STORY_PACKS: StoryPackDef[] = [
-  { id: 'pack1', title: 'Little Las Vegas: Event Content Pack', events: PACK1_EVENTS, chains: PACK1_CHAINS, weight: 1, budget: 18, costScale: 0.75 },
-  { id: 'pack2', title: 'Little Las Vegas: Content Pack 2 (women, kin, show business, the world)', events: PACK2_EVENTS, chains: PACK2_CHAINS, weight: 1.2, budget: 14, costScale: 0.4 },
-  { id: 'pack3', title: 'Little Las Vegas: Content Pack 3 (small things that get big)', events: PACK3_EVENTS, chains: PACK3_CHAINS, weight: 1.3, budget: 12, costScale: 0.6 },
+  { id: 'pack1', title: 'Little Las Vegas: Event Content Pack', events: PACK1_EVENTS, chains: PACK1_CHAINS, weight: 1, budget: 18, costScale: 0.6 },
+  { id: 'pack2', title: 'Little Las Vegas: Content Pack 2 (women, kin, show business, the world)', events: PACK2_EVENTS, chains: PACK2_CHAINS, weight: 1.2, budget: 14, costScale: 0.25 },
+  { id: 'pack3', title: 'Little Las Vegas: Content Pack 3 (small things that get big)', events: PACK3_EVENTS, chains: PACK3_CHAINS, weight: 1.3, budget: 12, costScale: 0.4 },
 ];
 
 function rewriteFx(fx: Fx, rename: Map<string, string>): Fx {
