@@ -28,6 +28,7 @@ import { previewPol } from './politics';
 import type { Character } from './types';
 import { bonesActions, bonesBlock, previewBones } from './bones';
 import { ledgerActions, previewLedger } from './ledgerbook';
+import { previewTribute } from './tributeOps';
 
 /** A capo's willingness to accept a worse contract. */
 export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
@@ -242,6 +243,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** The boss's books (ledgerbook.ts). */
   ledger: {
     preview: (s, a) => previewLedger(s, a.op),
+  },
+  /** The weekly take (tributeOps.ts). */
+  tribute: {
+    preview: (s, a) => previewTribute(s, a.op),
   },
   /** Travel, trips and flight (travel.ts, fugitive.ts). */
   travel: {

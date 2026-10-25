@@ -51,6 +51,9 @@ import { kinEventSource } from './housesEvents';
 import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
+import { archiveAccounts, reconcileAccounts, tributeOpen } from './tribute';
+import { tributeBegin, tributeEnd, tributeWeek } from './tributeFlow';
+import './tributeEvents';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -265,6 +268,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const s = cloneState(input);
   const ctx = newCtx(s);
   const start = snapshot(s);
+  tributeOpen(s);
   const info = seasonInfo(s.date);
   const weekOf = s.week;
   const dateOf = { ...s.date };
@@ -274,6 +278,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const resolving = s.pendingEvents;
   noteAnswers(s, resolving, choices);
   resolveChoices(ctx, choices);
+  if (!s.gameOver) tributeBegin(ctx, resolving, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
   if (!s.gameOver) arcsResolve(ctx, resolving, choices);
@@ -318,6 +323,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     politicsWeek(ctx);
     newsWeek(ctx);
     reelsWeek(ctx, input);
+    tributeWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 
@@ -335,6 +341,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     s.pendingEvents = generateWeekEvents(s);
     payTheDrop(ctx);
     motion = payQuiet(ctx);
+    tributeEnd(ctx);
     attachMinigames(s);
     markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
@@ -356,6 +363,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   };
   const errs = reconcile(report);
   if (errs.length) throw new Error(`Ledger does not reconcile in week ${weekOf}: ${errs.join('; ')}`);
+  const acctErrs = reconcileAccounts(s);
+  if (acctErrs.length) throw new Error(`Accounts do not reconcile in week ${weekOf}: ${acctErrs.join('; ')}`);
+  archiveAccounts(s);
   if (!s.gameOver) archiveWeek(s, report);
   s.lastReport = report;
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);

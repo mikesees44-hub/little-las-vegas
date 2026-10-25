@@ -542,7 +542,9 @@ export type Effect =
   /** Making your bones (bones.ts). */
   | ({ type: 'bones'; op: BonesOp } & EffectBase)
   /** The boss's books and the receipts (ledgerbook.ts). */
-  | ({ type: 'ledger'; op: LedgerOp } & EffectBase);
+  | ({ type: 'ledger'; op: LedgerOp } & EffectBase)
+  /** The weekly take (tributeOps.ts). */
+  | ({ type: 'tribute'; op: import('./tributeOps').TributeOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -739,7 +741,9 @@ export type LedgerCategory =
   | 'rival'
   | 'heat'
   | 'consequence'
-  | 'drift';
+  | 'drift'
+  /** Money moved between the family's own accounts (tribute.ts): never revenue. */
+  | 'transfer';
 
 export interface ReportLine {
   stat: Stat;
@@ -874,6 +878,8 @@ export interface GameState {
   bones?: BonesState;
   /** The boss's private ledger (optional for old saves). */
   ledgerBook?: LedgerBookState;
+  /** The weekly take: accounts, agreements, the underboss's envelope (tribute.ts; optional for old saves). */
+  tribute?: import('./tributeState').TributeState;
 }
 
 export interface PlayerChoices {
@@ -885,6 +891,8 @@ export interface PlayerChoices {
   designatedHeirId?: string;
   /** Mini-games the player played this week: event iid -> the moves he made (replayed by the engine). */
   minigames?: Record<string, string[]>;
+  /** The Monday envelope split the Don chose in the audience (tribute.ts), and the petitions he granted. */
+  envelope?: import('./tributeOps').EnvelopeChoice;
 }
 
 export type PlayerAction =
@@ -925,7 +933,8 @@ export type PlayerAction =
   | { kind: 'travel'; op: TravelAction }
   | { kind: 'pol'; op: PolAction }
   | { kind: 'bones'; op: BonesAction }
-  | { kind: 'ledger'; op: LedgerAction };
+  | { kind: 'ledger'; op: LedgerAction }
+  | { kind: 'tribute'; op: import('./tributeOps').TributeAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

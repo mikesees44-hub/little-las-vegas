@@ -1,18 +1,19 @@
+import { collectTake, coverFromReserve, payFromPersonal } from './tribute';
 import { econBusiness } from './econ';
-import { noteKick, tagLast } from './ledgerbook';
+import { tagLast } from './ledgerbook';
 import { perkMod } from './lifestyle';
 import { isInSeason, seasonMultiplier } from './calendar';
 import { CATALOG } from './catalog';
 import { expectedTake, isOpen, owned, ownsKind, staffFactor, washCapacity } from './business';
 import { activeTask } from './council';
-import { crewHustle, specialistFees } from './crewlife';
+import { specialistFees } from './crewlife';
 import { crew, displayName, hasTrait, isFree, player, shortName } from './characters';
 import { scheduleConsequence } from './effects';
 import { runLoans } from './loans';
 import { outpostIncome } from './schemes';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
-import { chance, gauss, randInt } from './rng';
+import { chance, randInt } from './rng';
 import type { Character, GameState } from './types';
 
 /**
@@ -133,66 +134,18 @@ export function runEconomy(ctx: Ctx): void {
       tagLast(ctx, undefined, d.id);
     }
   }
-  // Street hustle by free soldiers & associates.
-  gross += crewHustle(ctx, mult);
-
   // 2. Business income (net of upkeep shown separately).
   const biz = runBusinesses(ctx);
   gross += biz.gross;
   const upkeep = biz.upkeep;
-  let dirty = gross - biz.clean; // street + hustle + rackets (kick-ups added below)
+  let dirty = gross - biz.clean; // street + rackets (the crews' take added below)
 
-  // 3. Capo kick-ups with trait-driven variance and skimming.
-  const slow = new Set(isInSeason(s.date) ? [] : slowPayers(s).map((c) => c.id));
-  for (const d of s.districts) {
-    const capo = d.capoId ? s.characters[d.capoId] : undefined;
-    if (!capo || !isFree(s, capo) || capo.faction !== 'player') continue;
-    const infl = d.influence.player ?? 0;
-    if (infl <= 0) continue;
-    const skill = 0.85 + capo.attributes.business / 400; // 0.85 .. 1.10
-    const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo));
-    const take = d.streetBase * (infl / 100) * mult * skill * variance * (s.edicts?.blitz ? 1.2 : 1);
-    const capoShare = take * (capo.keep ?? CAPO_CUT);
-    const owed = take - capoShare;
-    const skim = Math.round(owed * skimRate(s, capo));
-    let kick = Math.round(owed - skim);
-    let held = 0;
-    // A slow payer holds part of the winter envelope back ("the winter's slow, I'll make it up in the spring").
-    if (!isInSeason(s.date) && kick > 0 && slow.has(capo.id)) {
-      held = Math.round(kick * (firstWinter(s) ? FIRST_WINTER_HOLDBACK : SLOW_PAY_HOLDBACK));
-      kick -= held;
-      capo.arrears = (capo.arrears ?? 0) + held;
-      capo.wealth += held;
-    }
-    capo.wealth += Math.round(capoShare) + skim;
-    capo.lastEarn = Math.round(take);
-    if (skim > 0) capo.skimmed = (capo.skimmed ?? 0) + skim;
-    if (kick > 0) {
-      const k = money(ctx, kick, `Kick-up: ${shortName(capo)} (${d.name})`, 'kickup');
-      tagLast(ctx, capo.id, d.id);
-      gross += k;
-      dirty += k;
-    }
-    noteKick(s, capo.id, d.id, owed, Math.max(0, kick), held, skim);
-  }
-  // In the season the slow payers make good what they held back.
-  if (isInSeason(s.date)) {
-    for (const capo of crew(s)) {
-      if (!capo.arrears || !isFree(s, capo)) continue;
-      const pay = Math.min(capo.arrears, Math.max(100, Math.round(capo.arrears * ARREARS_REPAY)), Math.max(0, capo.wealth));
-      if (pay <= 0) continue;
-      capo.arrears -= pay;
-      capo.wealth -= pay;
-      const k = money(ctx, pay, `Late kick-up: ${shortName(capo)} makes good on the winter`, 'kickup');
-      tagLast(ctx, capo.id, s.districts.find((x) => x.capoId === capo.id)?.id);
-      gross += k;
-      dirty += k;
-    }
-  }
-  // Crew work (Rise to Power): small, steady jobs by the men in each capo's regime.
-  const work = crewWork(ctx, mult);
-  gross += work;
-  dirty += work;
+  // 3. The weekly take (tribute.ts): every man's hustle, the capos' corners, crew work and arrears
+  // go up through the capos to the underboss and into the Don's envelope (split on Monday).
+  const take = collectTake(ctx, mult);
+  gross += take;
+  dirty += take;
+
   // Outposts in other cities.
   const out = outpostIncome(ctx);
   gross += out;
@@ -204,7 +157,8 @@ export function runEconomy(ctx: Ctx): void {
   ctx.gross = gross;
 
   // 4. Costs.
-  const ub = crew(s).filter((c) => (c.rank === 'underboss' || c.rank === 'consigliere') && isFree(s, c));
+  // The underboss is paid by his share of the take (tribute.ts), not a wage.
+  const ub = crew(s).filter((c) => (c.rank === 'consigliere' || (c.rank === 'underboss' && c.id !== s.council?.underboss?.holderId)) && isFree(s, c));
   const ubWages = ub.reduce((a, c) => a + WAGES[c.rank as 'underboss' | 'consigliere'], 0);
   if (ubWages) money(ctx, -ubWages, `Wages: ${ub.map((c) => c.rank).join(' & ')}`, 'cost');
   const men = crew(s).filter((c) => c.rank === 'soldier' || c.rank === 'associate');
@@ -229,7 +183,7 @@ export function runEconomy(ctx: Ctx): void {
   }
   // Keeping up appearances: the boss's household grows with the treasury.
   const lifestyle = Math.round((150 + Math.max(0, s.money - 60000) * 0.006) * (s.edicts?.lowprofile ? 0.5 : 1));
-  money(ctx, -lifestyle, `Household & appearances (${boss.firstName}'s family)${s.edicts?.lowprofile ? ' — low profile' : ''}`, 'cost');
+  payFromPersonal(ctx, lifestyle, `Household & appearances (${boss.firstName}'s family)${s.edicts?.lowprofile ? ' — low profile' : ''}`, 'household');
   specialistFees(ctx);
 
   // 5. Debts.
@@ -247,7 +201,8 @@ export function runEconomy(ctx: Ctx): void {
   s.incomeHistory.push(gross);
   if (s.incomeHistory.length > 12) s.incomeHistory.shift();
 
-  // 7. Being broke has consequences.
+  // 7. When the family runs dry the reserve covers it; being broke has consequences.
+  coverFromReserve(ctx);
   if (s.money < 0) {
     s.weeksInRed++;
     respect(ctx, -1, 'Word is the boss can\'t make payroll', 'drift');
