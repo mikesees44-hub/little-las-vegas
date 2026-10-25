@@ -9,6 +9,7 @@ import { Face } from '../components/People';
 import { CharLink } from '../components/People';
 import { EnvelopeSplit, splitDollars } from './EnvelopeSplit';
 import type { EnvelopeChoice } from '../../engine/tributeOps';
+import { OFFICE_ART } from './officeArt';
 
 const pct = (bp: number) => `${Math.round(bp / 100)}%`;
 
@@ -89,8 +90,8 @@ export function CrewTable({ s, rep, open, onToggle }: { s: GameState; rep: Tribu
   return (
     <div className="overflow-x-auto">
       <div className="mb-1 flex justify-end"><button type="button" className="btn-ghost text-[10px]" onClick={() => setAll(!all)} data-testid="crew-all">{all ? 'Fold the crews' : 'Every man'}</button></div>
-      <table className="w-full text-[12px] min-w-[460px]" data-testid="crew-table">
-        <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Crew</th><th className="text-right">Due</th><th className="text-right">Paid</th><th className="text-right">Short</th><th className="text-right">Capo kept</th><th className="text-right">Up</th></tr></thead>
+      <table className="w-full table-fixed text-[12px] min-w-[460px]" data-testid="crew-table">
+        <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th className="w-[34%]">Crew</th><th className="text-right">Due</th><th className="text-right">Paid</th><th className="text-right">Short</th><th className="text-right">Capo kept</th><th className="text-right">Up</th></tr></thead>
         <tbody>{crews.flatMap(row)}</tbody>
       </table>
       {rep.direct.some((m) => m.due > 0) && <div className="mt-1 text-[11px] text-stone-400">Men with no capo paid the underboss directly: {fmt$(rep.direct.reduce((a, m) => a + m.paid, 0))} of {fmt$(rep.direct.reduce((a, m) => a + m.due, 0))}.</div>}
@@ -131,12 +132,13 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
   return (
     <div className="fixed inset-0 z-[1180] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-3" onClick={onClose} data-testid="audience-scene">
       <div className="panel w-full sm:max-w-5xl max-h-[96vh] overflow-y-auto rounded-b-none sm:rounded-lg border-gold-600/50 bg-gradient-to-b from-noir-900 to-noir-950" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-start justify-between gap-2 border-b border-noir-700 px-3 sm:px-5 py-2">
-          <div>
+        <div className="relative overflow-hidden flex items-start justify-between gap-2 border-b border-noir-700 px-3 sm:px-5 py-3 sm:py-10" data-testid="audience-header">
+          <img src={OFFICE_ART} alt="" aria-hidden className="pointer-events-none absolute right-0 top-0 h-full w-[60%] sm:w-[380px] object-cover object-[center_45%] opacity-40 sm:opacity-70" style={{ maskImage: 'linear-gradient(to right, transparent, black 45%)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 45%)' }} />
+          <div className="relative">
             <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{date} · Monday morning, the Don's office</div>
             <h2 className="font-display text-xl sm:text-2xl text-gold-400 leading-tight">{ev?.title ?? (ub ? `${ub.firstName} ${ub.lastName} brought the take` : 'The week\'s take')}</h2>
           </div>
-          <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={onClose}>{ev ? 'Later ✕' : 'Close ✕'}</button>
+          <button type="button" className="relative text-xs text-stone-300 hover:text-gold-300 drop-shadow" onClick={onClose}>{ev ? 'Later ✕' : 'Close ✕'}</button>
         </div>
         <div className="grid gap-3 p-3 sm:p-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
           {/* Left: the man, his words, the crews */}

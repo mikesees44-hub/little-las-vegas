@@ -26,7 +26,7 @@ export function numWord(n: number): string {
 /** Money the way a man says it across a desk: "forty-three hundred", "thirty-seven grand". */
 export function spoken(v: number): string {
   const n = Math.max(0, Math.round(v));
-  if (n < 100) return `${numWord(n)} dollars`;
+  if (n < 100) return n === 1 ? 'a dollar' : `${numWord(n)} dollars`;
   if (n < 1000) {
     const r = Math.round(n / 50) * 50;
     if (r === 100) return 'a hundred';

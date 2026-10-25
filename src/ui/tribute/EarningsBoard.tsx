@@ -41,7 +41,7 @@ function Bars({ title, rows, testid }: { title: string; rows: { key: string; lab
       {rows.length === 0 ? <div className="text-[11px] text-stone-500">Nothing yet.</div> : (
         <svg width="100%" viewBox={`0 0 300 ${rows.length * 18}`} role="img" aria-label={title} className="block">
           {rows.map((r, i) => {
-            const bw = Math.max(1, (r.v / max) * 150);
+            const bw = Math.max(1, (r.v / max) * 110);
             return (
               <g key={r.key} transform={`translate(0 ${i * 18})`}>
                 <text x={0} y={12} className="fill-stone-300" fontSize={10}>{r.label.length > 18 ? `${r.label.slice(0, 17)}…` : r.label}</text>
@@ -101,21 +101,21 @@ export function EarningsBoard({ s }: { s: GameState }) {
       <div className="overflow-x-auto">
         <table className="w-full text-[12px] min-w-[720px]" data-testid="earnings-table">
           <thead className="text-[10px] text-stone-500">
-            <tr>{th('name', 'Man')}{th('rank', 'Rank')}{th('crew', 'Crew')}{th('earned', 'Earned', true)}{th('up', 'Kicked up', true)}{th('kept', 'Kept', true)}<th className="text-left uppercase tracking-widest pl-2">8 weeks up</th>{th('wealth', 'His money', true)}<th className="text-left uppercase tracking-widest pl-2">Flags</th></tr>
+            <tr className="[&>th:first-child]:sticky [&>th:first-child]:left-0 [&>th:first-child]:z-[1] [&>th:first-child]:bg-noir-900">{th('name', 'Man')}{th('up', 'Kicked up', true)}{th('earned', 'Earned', true)}{th('kept', 'Kept', true)}{th('wealth', 'His money', true)}<th className="text-left uppercase tracking-widest pl-2">8 weeks up</th>{th('rank', 'Rank')}{th('crew', 'Crew')}<th className="text-left uppercase tracking-widest pl-2">Flags</th></tr>
           </thead>
           <tbody>
             {rows.map((r) => {
               const c = s.characters[r.id];
               return (
                 <tr key={r.id} className="border-t border-noir-800" data-testid="earnings-row">
-                  <td className="py-0.5 pr-2"><span className="inline-flex items-center gap-1.5">{c && <Face s={s} c={c} size={22} />}<CharLink s={s} id={r.id} /></span></td>
-                  <td className="pr-2 capitalize text-stone-400">{r.rank}</td>
-                  <td className="pr-2 text-stone-400">{crewName(r)}</td>
-                  <td className="pr-2 text-right tabular-nums">{r.earned ? fmt$(r.earned) : '—'}</td>
+                  <td className="py-0.5 pr-2 sticky left-0 z-[1] bg-noir-900"><span className="inline-flex items-center gap-1.5">{c && <Face s={s} c={c} size={22} />}<CharLink s={s} id={r.id} /></span></td>
                   <td className="pr-2 text-right tabular-nums text-gold-300">{r.up ? fmt$(r.up) : '—'}{r.short ? <div className="text-[10px] text-red-300">short {fmt$(r.short)}</div> : null}</td>
+                  <td className="pr-2 text-right tabular-nums">{r.earned ? fmt$(r.earned) : '—'}</td>
                   <td className="pr-2 text-right tabular-nums">{r.kept ? fmt$(r.kept) : '—'}</td>
-                  <td className="pl-2"><Sparkline values={r.trend} label={`${name(r.id)}: kicked up over 8 weeks`} /></td>
                   <td className="pr-2 text-right tabular-nums">{fmt$(r.wealth)}{r.debt ? <div className="text-[10px] text-amber-300">owes {fmt$(r.debt)}</div> : null}</td>
+                  <td className="pl-2"><Sparkline values={r.trend} label={`${name(r.id)}: kicked up over 8 weeks`} /></td>
+                  <td className="pl-2 pr-2 capitalize text-stone-400">{r.rank}</td>
+                  <td className="pr-2 text-stone-400">{crewName(r)}</td>
                   <td className="pl-2">{r.flags.map((f) => <span key={f} className={`mr-1 inline-block rounded border px-1 text-[10px] ${FLAG_TONE[f]}`}>{FLAG_LABEL[f]}</span>)}</td>
                 </tr>
               );
@@ -123,13 +123,12 @@ export function EarningsBoard({ s }: { s: GameState }) {
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-noir-600 text-stone-200" data-testid="earnings-total">
-              <td className="py-1" colSpan={3}>The whole family ({board.rows.length} men)</td>
-              <td className="text-right tabular-nums">{fmt$(tot.earned)}</td>
-              <td className="text-right tabular-nums text-gold-300">{fmt$(tot.up)}</td>
-              <td className="text-right tabular-nums">{fmt$(tot.kept)}</td>
-              <td />
-              <td className="text-right tabular-nums">{fmt$(tot.wealth)}</td>
-              <td />
+              <td className="py-1 sticky left-0 bg-noir-900">The whole family ({board.rows.length} men)</td>
+              <td className="pr-2 text-right tabular-nums text-gold-300">{fmt$(tot.up)}</td>
+              <td className="pr-2 text-right tabular-nums">{fmt$(tot.earned)}</td>
+              <td className="pr-2 text-right tabular-nums">{fmt$(tot.kept)}</td>
+              <td className="pr-2 text-right tabular-nums">{fmt$(tot.wealth)}</td>
+              <td colSpan={4} />
             </tr>
           </tfoot>
         </table>
