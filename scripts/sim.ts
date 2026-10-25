@@ -177,6 +177,8 @@ interface GameResult {
   crashed?: string;
   /** Played by a careless boss (no budget). */
   careless?: boolean;
+  /** Longest run of weeks in the red during year 1. */
+  redStreakY1: number;
   bankruptYear1: boolean;
   bankruptEver: boolean;
   everNegative: boolean;
@@ -223,7 +225,7 @@ interface GameResult {
 
 function playOne(gi: number): GameResult {
   const r: GameResult = {
-    bankruptYear1: false, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
+    bankruptYear1: false, redStreakY1: 0, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
     successionFailures: [], unexplained: [], popupsPerWeek: [], heatSamples: { local: [], family: [], federal: [] },
     deathCauses: {}, rivalMoves: {}, weeksPlayed: 0, finalRespect: 0, orders: {}, finalBusinesses: 0, peakUnwashed: 0,
     hierarchyErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, packPopups: 0, mg: {},
@@ -239,7 +241,7 @@ function playOne(gi: number): GameResult {
   }
   r.popupsPerWeek.push(s.pendingEvents.length);
   let consecutiveRed = 0;
-  r.careless = isCareless(`${SEED}-${gi}`, CARELESS);
+  r.careless = isCareless(gi, CARELESS);
   const budget = r.careless ? undefined : newBudget(`${SEED}-${gi}`, s.money);
   for (let w = 0; w < WEEKS; w++) {
     if (s.gameOver) break;
@@ -295,6 +297,7 @@ function playOne(gi: number): GameResult {
     if (s.money < 0) {
       r.everNegative = true;
       consecutiveRed++;
+      if (s.week <= 53) r.redStreakY1 = Math.max(r.redStreakY1, consecutiveRed);
       if (consecutiveRed >= INSOLVENT_WEEKS) {
         r.bankruptEver = true;
         if (s.week <= 53) r.bankruptYear1 = true;
@@ -379,6 +382,7 @@ console.log(`\nECONOMY`);
 console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (treasury < $0 for ${INSOLVENT_WEEKS}+ straight weeks)`);
 console.log(`  Bankrupt at any point:      ${pct(results.filter((r) => r.bankruptEver).length, GAMES)}`);
 console.log(`  Ever in the red:            ${pct(results.filter((r) => r.everNegative).length, GAMES)}`);
+console.log(`  Longest red run in year 1:  1-3 weeks ${pct(results.filter((r) => r.redStreakY1 >= 1 && r.redStreakY1 < 4).length, GAMES)}, 4-7 weeks ${pct(results.filter((r) => r.redStreakY1 >= 4 && r.redStreakY1 < 8).length, GAMES)}, 8+ ${pct(results.filter((r) => r.redStreakY1 >= 8).length, GAMES)}`);
 console.log(`  Treasury at Memorial Day (p10 / median / p90):`);
 const medians: number[] = [];
 for (let y = 0; y < YEARS; y++) {

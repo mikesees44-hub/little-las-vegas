@@ -1,4 +1,5 @@
 import { previewUnderbelly } from './underbelly';
+import { costHint, moneyCost, withCostHint } from './costHints';
 import { LAWYER, RETAINER } from './longgame';
 import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
@@ -16,7 +17,7 @@ import { CB_LABEL, casusBelli, DISTRICT_PRIZE, RAID_COST, raidOdds, resolveRaid 
 import { isFree } from './characters';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
-import { CAPO_CUT } from './economy';
+import { CAPO_CUT, FIRST_WINTER_PER_NEW, firstWinterAhead } from './economy';
 import { CITIES_BY_ID, hasPermission, needsPermission } from './cities';
 import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds, topRival } from './schemes';
 import { OFFICE_BRIBE } from './interactions';
@@ -659,7 +660,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       if (def.category === 'racket' && def.heat >= 0.3) effects.push({ type: 'schedule', key: 'business_trouble', minWeeks: 2, maxWeeks: 8, chance: 0.25, hint: 'new places attract attention', label });
       return {
         title: label,
-        detail: `${def.name} in ${d?.name ?? '?'}: ~${fmtMoney(def.base * def.season[0])}/wk in season, ${fmtMoney(def.base * def.season[1])} off-season · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}`,
+        detail: `${def.name} in ${d?.name ?? '?'}: ~${fmtMoney(def.base * def.season[0])}/wk in season, ${fmtMoney(def.base * def.season[1])} off-season · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}${firstWinterAhead(s) ? ` · the first winter: +${fmtMoney(FIRST_WINTER_PER_NEW)}/wk to winterize it` : ''}`,
         effects,
         cost: def.cost,
         because: `bought ${b.name}`,
@@ -797,7 +798,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
 export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
   const def = DEFS[a.kind] as Def<typeof a.kind>;
   const p = def.preview(s, a as never);
-  return { ...p, effects: named(p.title, p.effects), refuseEffects: p.refuseEffects ? named(`${p.title}: refused`, p.refuseEffects) : undefined };
+  const detail = p.disabledReason ? p.detail : withCostHint(p.detail, costHint(s, Math.max(p.cost, moneyCost(p.effects))));
+  return { ...p, detail, effects: named(p.title, p.effects), refuseEffects: p.refuseEffects ? named(`${p.title}: refused`, p.refuseEffects) : undefined };
 }
 
 /** Projected treasury after the queued orders (for UI affordability). */

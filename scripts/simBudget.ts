@@ -35,8 +35,11 @@ export interface Budget {
 
 const unit = (seed: string, salt: string) => (hashSeed(`${seed}:${salt}`) % 10000) / 10000;
 
-/** Is this game's boss a careless one (the old random player)? `share` of the games are. */
-export const isCareless = (seed: string, share: number) => unit(seed, 'careless') < share;
+/**
+ * Is game `gi` played by a careless boss (the old random player)? Exactly `share` of the games are,
+ * spread evenly through the run (so a 40-game run has the same mix as a 100-game one).
+ */
+export const isCareless = (gi: number, share: number) => Math.floor((gi + 1) * share) > Math.floor(gi * share);
 
 export function newBudget(seed: string, startMoney = 0): Budget {
   const spendShare = 0.35 + unit(seed, 'spend') * 0.5;

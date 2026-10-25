@@ -162,8 +162,10 @@ function end(_s: GameState, ses: DS): void {
     return;
   }
   if (v !== undefined) {
-    const mult = 0.6 + (v / 100) * 0.9;
-    for (const e of ses.parts.accept ?? []) fx.push(e.type === 'money' ? { ...e, amount: Math.round((e.amount * mult) / 50) * 50 } : e);
+    // A deal in your favor means more of their money, and less of yours (a truce you pay for gets cheaper).
+    const gain = 0.6 + (v / 100) * 0.9;
+    const pay = 0.6 + (1 - v / 100) * 0.9;
+    for (const e of ses.parts.accept ?? []) fx.push(e.type === 'money' ? { ...e, amount: Math.round((e.amount * (e.amount < 0 ? pay : gain)) / 50) * 50 } : e);
   } else fx.push(...(ses.parts.refuse ?? []));
   ses.outcome = { title: label, text: v !== undefined ? `A deal at ${v}${v >= 50 ? ', in your favor' : ''}.` : d.walked === 'you' ? 'You walked away.' : `${d.otherFirst} walked away.`, tone: v !== undefined && v >= 50 ? 'good' : 'mixed', effects: fx };
 }

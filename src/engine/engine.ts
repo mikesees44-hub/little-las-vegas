@@ -1,4 +1,5 @@
 import { econEventSource, econWeek } from './econ';
+import { markCostlyChoices } from './costHints';
 import { travelWeek } from './travel';
 import { officeWeek } from './office';
 import { powerWeek } from './power';
@@ -301,6 +302,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
     attachMinigames(s);
+    markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
   } else {
     s.pendingEvents = [];
