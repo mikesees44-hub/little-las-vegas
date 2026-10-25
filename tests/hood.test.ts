@@ -6,6 +6,7 @@ import { HOODS, HOODS_BY_ID, SEED } from '../src/engine/hoodData';
 import { footprint, hoodBounds, iconOf, placeAll } from '../src/engine/hoodGeo';
 import { ensureHood } from '../src/engine/hoodState';
 import { newGame } from '../src/engine/newGame';
+import { upgradeSave } from '../src/engine/upgradeSave';
 import type { GameState } from '../src/engine/types';
 import { playWeeks, randomChoices } from './helpers';
 
@@ -96,7 +97,10 @@ describe('neighborhoods: the Boardwalk, 1960', () => {
     delete old.hood;
     old.econ!.lots = old.econ!.lots.filter((l) => !/^(bw|pr|cr|pa|nw)\d\d$/.test(l.id) && !l.id.startsWith('hf.'));
     const n0 = old.econ!.lots.length;
-    ensureHood(old);
+    delete old.talks;
+    delete old.missions;
+    upgradeSave(old); // what loading a save does
+    expect(old.hood && old.talks && old.missions).toBeTruthy();
     const n1 = old.econ!.lots.length;
     expect(n1).toBeGreaterThan(n0 + SEED.length - 1);
     ensureHood(old);

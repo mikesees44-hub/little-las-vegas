@@ -148,7 +148,15 @@ export function IslandView({ s, onSurvey, onHood, focusHood }: { s: GameState; o
     const el = host.current;
     if (!el) return;
     const size = () => {
-      const m = Math.round(Math.max(el.clientWidth, el.clientHeight) * 0.6) || 400;
+      // Kept within a pixel budget (about 16 megapixels at the screen's density), so phones and
+      // Retina screens never rasterize a layer too big for the GPU.
+      const W = el.clientWidth || 800;
+      const H = el.clientHeight || 600;
+      const dpr = Math.min(3, (typeof window !== 'undefined' && window.devicePixelRatio) || 1);
+      const budget = 16e6 / (dpr * dpr);
+      let m = Math.round(Math.max(W, H) * 0.6);
+      while (m > 160 && (W + 2 * m) * (H + 2 * m) > budget) m -= 40;
+      m = Math.max(160, m);
       if (m !== marginRef.current) { marginRef.current = m; setMargin(m); applyG(); }
     };
     size();
