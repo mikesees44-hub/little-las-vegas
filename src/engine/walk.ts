@@ -305,7 +305,7 @@ export function whoIsAround(s: GameState): WalkNpc[] {
     if (!l || l.status !== 'rival') continue;
     const r = s.rivals.find((x) => x.id === l.owner);
     const c = r ? s.characters[r.leaderId] : undefined;
-    if (free(s, c)) place(c, 'rival', h.id, `${r!.shortName ?? r!.name} hold ${l.name ?? h.label}`);
+    if (free(s, c)) place(c, 'rival', h.id, `Outside ${l.name ?? h.label}, which his people hold`);
   }
   // One of the Ears, at the hotel bar.
   const ear = Object.values(s.ears?.ears ?? {}).filter((e) => e.known && e.status !== 'gone').sort((a, b) => h32(`${a.id}:${s.week}`) - h32(`${b.id}:${s.week}`))[0];

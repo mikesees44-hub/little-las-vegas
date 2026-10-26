@@ -12,6 +12,7 @@ import { ActionCard } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
 import { StressBar } from '../family/bits';
 import { TravelButton } from '../travel/context';
+import { useShell } from '../shell/context';
 import { DistrictProperty } from '../econ/DistrictProperty';
 
 export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: string; onOpenBusiness: () => void }) {
@@ -79,6 +80,7 @@ export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: str
 
 export function PlayerCard({ s }: { s: GameState }) {
   const b = player(s);
+  const shell = useShell();
   return (
     <div className="flex items-end gap-2 rounded-lg border border-gold-600/50 bg-noir-900/90 p-2 shadow-lg shadow-black/50" data-testid="player-card">
       <Face s={s} c={b} size={64} />
@@ -87,7 +89,10 @@ export function PlayerCard({ s }: { s: GameState }) {
         <div className="text-[11px] text-stone-400">Head of the house · {ageOn(b.birth, s.date)} yrs · health {b.health}</div>
         <div className="mt-1"><TraitIcons c={b} /></div>
         <div className="mt-1"><StressBar s={s} c={b} /></div>
-        <div className="mt-1"><TravelButton s={s} charId={b.id} className="text-[11px] rounded border border-gold-600/60 px-2 py-0.5 text-gold-300 hover:bg-gold-500/10 disabled:opacity-40" /></div>
+        <div className="mt-1 flex gap-1">
+          <TravelButton s={s} charId={b.id} className="text-[11px] rounded border border-gold-600/60 px-2 py-0.5 text-gold-300 hover:bg-gold-500/10 disabled:opacity-40" />
+          <button type="button" className="text-[11px] rounded border border-gold-600/60 px-2 py-0.5 text-gold-300 hover:bg-gold-500/10" onClick={() => shell.focus({ walk: true })} title="Walk the Boardwalk as the boss" data-testid="player-walk">Walk the town</button>
+        </div>
       </div>
     </div>
   );
