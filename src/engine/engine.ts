@@ -55,7 +55,7 @@ import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
 import { archiveAccounts, reconcileAccounts, tributeOpen } from './tribute';
-import { twoPots } from './money';
+import { recordMoneyWeek, twoPots } from './money';
 import { tributeBegin, tributeEnd, tributeWeek } from './tributeFlow';
 import './tributeEvents';
 import { earsWeek } from './ears';
@@ -389,6 +389,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   archiveAccounts(s);
   if (!s.gameOver) archiveWeek(s, report);
   s.lastReport = report;
+  if (!s.gameOver) recordMoneyWeek(s);
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
   tidyState(s);
   return { state: s, report, log: ctx.log };

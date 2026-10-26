@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { moneyView, racketNetMult, heldDistricts, territoryMult, squeezeWhy, type FlowRow, type MoneyView as MV } from '../../engine/money';
+import { moneyView, racketNetMult, heldDistricts, territoryMult, squeezeWhy, type FlowRow, type FlowStage, type MoneyView as MV } from '../../engine/money';
 import { normSplit } from '../../engine/tributeState';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -22,12 +22,16 @@ export function MoneyView({ s }: { s: GameState }) {
         <p className="text-sm text-stone-400">The money starts moving when you advance the first week. Everything is collected on its own.</p>
       ) : (
         <>
-          <Flow v={v} onGo={go} />
+          <WeekFlow v={v} onGo={go} />
           {v.leak && <LeakCard s={s} v={v} />}
           <div className="grid gap-3 md:grid-cols-2">
             <Chart v={v} />
             <TopEarners v={v} onGo={go} />
           </div>
+          <details className="rounded-md border border-noir-700 bg-noir-800/30 min-w-0" data-testid="money-lines">
+            <summary className="cursor-pointer px-3 py-2 text-[12px] text-stone-300 hover:text-gold-300">Every line, week {v.week}</summary>
+            <div className="px-3 pb-3"><Flow v={v} onGo={go} /></div>
+          </details>
         </>
       )}
       <Levers s={s} />
@@ -117,6 +121,72 @@ function Flow({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
   );
 }
 
+/** Fixed colors for the stages (identity follows the source, never its rank). */
+const SOURCE_TONE: Record<string, string> = { business: 'bg-gold-500', rackets: 'bg-emerald-600', crews: 'bg-sky-600', street: 'bg-violet-500', loans: 'bg-amber-700', other: 'bg-stone-500' };
+const USE_TONE: Record<string, string> = { payroll: 'bg-blood-400', cops: 'bg-sky-700', upkeep: 'bg-stone-500', lifestyle: 'bg-amber-500', philly: 'bg-violet-600', debt: 'bg-orange-700', raids: 'bg-red-800', invest: 'bg-emerald-700', other: 'bg-stone-600' };
+
+/** One stacked bar (2px gaps between segments) with its legend underneath; tap a legend entry to go where it is run. */
+function Stack({ items, tones, total, onGo, testid }: { items: FlowStage[]; tones: Record<string, string>; total: number; onGo: (to: string) => void; testid: string }) {
+  return (
+    <div className="min-w-0" data-testid={testid}>
+      <div className="flex h-4 w-full gap-[2px] overflow-hidden rounded-sm bg-noir-900">
+        {items.map((x) => (
+          <div key={x.key} className={`${tones[x.key] ?? 'bg-stone-500'} h-full first:rounded-l-sm last:rounded-r-sm`} style={{ width: `${Math.max(1.5, (x.amount / Math.max(1, total)) * 100)}%` }} title={`${x.label}: ${fmt$(x.amount)} (${Math.round((x.amount / Math.max(1, total)) * 100)}%)`} />
+        ))}
+      </div>
+      <ul className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 text-[11px]">
+        {items.map((x) => (
+          <li key={x.key} className="min-w-0">
+            <button type="button" disabled={!x.route} onClick={() => x.route && onGo(x.route)} className="flex w-full items-center justify-between gap-1.5 text-left enabled:hover:text-gold-300 text-stone-300">
+              <span className="flex min-w-0 items-center gap-1.5"><span className={`inline-block h-2 w-2 shrink-0 rounded-sm ${tones[x.key] ?? 'bg-stone-500'}`} /><span className="truncate">{x.label}</span></span>
+              <span className="tabular-nums text-stone-200">{fmt$(x.amount)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** This week's money as one flow: where it came from → your cut → the two pots → where it went → net. */
+function WeekFlow({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
+  const potTotal = Math.max(1, v.famIn + v.pocketIn);
+  const famPct = Math.round((v.famIn / potTotal) * 100);
+  return (
+    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0 space-y-2" data-testid="money-weekflow">
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="panel-title">This week's money · week {v.week}</div>
+        <span className="text-[10px] text-stone-500">all collected on its own</span>
+      </div>
+      <div>
+        <div className="flex justify-between text-[10px] uppercase tracking-widest text-emerald-400/80"><span>Came in</span><span className="tabular-nums" data-testid="money-flow-in">{fmt$(v.inTotal)}</span></div>
+        {v.sources.length ? <Stack items={v.sources} tones={SOURCE_TONE} total={v.inTotal} onGo={onGo} testid="money-sources" /> : <p className="text-[11px] text-stone-500">Nothing came in.</p>}
+      </div>
+      <div className="text-center text-[11px] text-stone-400" aria-hidden>↓ your cut {v.cutPct}% ↓</div>
+      <div className="flex gap-[2px] min-w-0" data-testid="money-split">
+        <div className="min-w-0 rounded-l-sm border border-gold-600/50 bg-gold-500/15 px-2 py-1" style={{ flexGrow: Math.max(25, famPct), flexBasis: 0 }}>
+          <div className="text-[10px] uppercase tracking-widest text-gold-400/80 truncate">The Family</div>
+          <div className="tabular-nums text-sm font-semibold text-gold-300" data-testid="money-fam-in">+{fmt$(v.famIn)}</div>
+        </div>
+        <div className="min-w-0 rounded-r-sm border border-amber-600/40 bg-amber-500/10 px-2 py-1" style={{ flexGrow: Math.max(25, 100 - famPct), flexBasis: 0 }}>
+          <div className="text-[10px] uppercase tracking-widest text-amber-300/80 truncate">Your Pocket</div>
+          <div className="tabular-nums text-sm font-semibold text-amber-200" data-testid="money-pocket-in">+{fmt$(v.pocketIn)}</div>
+        </div>
+      </div>
+      <div className="text-center text-[11px] text-stone-400" aria-hidden>↓</div>
+      <div>
+        <div className="flex justify-between text-[10px] uppercase tracking-widest text-red-400/80"><span>Went out</span><span className="tabular-nums" data-testid="money-flow-out">{fmt$(v.outTotal)}</span></div>
+        {v.uses.length ? <Stack items={v.uses} tones={USE_TONE} total={v.outTotal} onGo={onGo} testid="money-uses" /> : <p className="text-[11px] text-stone-500">Nothing went out.</p>}
+        <div className="mt-1 text-[10px] text-stone-500 tabular-nums">The Family paid {fmt$(v.famOut)}; your Pocket paid {fmt$(v.pocketOut)}.</div>
+      </div>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-noir-700 pt-2">
+        <span className="text-sm text-stone-300">Net this week</span>
+        <span className={`font-display text-xl tabular-nums ${v.net >= 0 ? 'text-emerald-300' : 'text-red-300'}`} data-testid="money-flow-net">{v.net >= 0 ? '+' : '−'}{fmt$(Math.abs(v.net))}</span>
+      </div>
+    </section>
+  );
+}
+
 function LeakCard({ s, v }: { s: GameState; v: MV }) {
   const { go } = useShell();
   const l = v.leak!;
@@ -135,31 +205,46 @@ function LeakCard({ s, v }: { s: GameState; v: MV }) {
   );
 }
 
-/** Family and Pocket over the last 12 weeks, as two lines (inline SVG). */
+/** The last 8 weeks: money in and money out, one axis, with the two pots under it (inline SVG). */
 function Chart({ v }: { v: MV }) {
-  const h = v.hist;
-  const W = 320, H = 120, P = 6;
-  if (h.length < 2) return <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 text-[11px] text-stone-500" data-testid="money-chart">The chart fills in as the weeks go by.</section>;
-  const ys = h.flatMap((x) => [x.family, x.pocket]);
-  const lo = Math.min(0, ...ys), hi = Math.max(1, ...ys);
+  const h = v.hist.filter((x) => x.in !== undefined && x.out !== undefined);
+  const W = 320, H = 120, P = 8;
+  const [hover, setHover] = useState<number | undefined>(undefined);
+  if (h.length < 2) return <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 text-[11px] text-stone-500" data-testid="money-chart">The trend fills in as the weeks go by.</section>;
+  const hi = Math.max(1, ...h.flatMap((x) => [x.in!, x.out!]));
   const X = (i: number) => P + (i * (W - 2 * P)) / (h.length - 1);
-  const Y = (y: number) => H - P - ((y - lo) / (hi - lo)) * (H - 2 * P);
-  const path = (k: 'family' | 'pocket') => h.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x[k]).toFixed(1)}`).join(' ');
+  const Y = (y: number) => H - P - (y / hi) * (H - 2 * P);
+  const path = (k: 'in' | 'out') => h.map((x, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(x[k]!).toFixed(1)}`).join(' ');
   const last = h[h.length - 1];
+  const at = hover !== undefined ? h[hover] : last;
   return (
     <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid="money-chart">
-      <div className="panel-title">The last {h.length} weeks</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full h-auto" role="img" aria-label={`The Family ${fmt$(last.family)} and your Pocket ${fmt$(last.pocket)} over ${h.length} weeks`}>
-        {lo < 0 && <line x1={P} x2={W - P} y1={Y(0)} y2={Y(0)} stroke="#57534e" strokeDasharray="3 3" strokeWidth={1} />}
-        <path d={path('family')} fill="none" stroke="#d4a72c" strokeWidth={2.25} strokeLinejoin="round" />
-        <path d={path('pocket')} fill="none" stroke="#f59e0b" strokeOpacity={0.85} strokeWidth={2} strokeDasharray="5 3" strokeLinejoin="round" />
-        <circle cx={X(h.length - 1)} cy={Y(last.family)} r={3} fill="#d4a72c" />
-        <circle cx={X(h.length - 1)} cy={Y(last.pocket)} r={3} fill="#f59e0b" />
+      <div className="flex items-baseline justify-between gap-2">
+        <div className="panel-title">The last {h.length} weeks</div>
+        <span className="text-[10px] text-stone-500 tabular-nums">wk {h[0].week}–{last.week}</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full h-auto touch-none" role="img" aria-label={`Money in and out over ${h.length} weeks; last week in ${fmt$(last.in!)}, out ${fmt$(last.out!)}`}
+        onMouseLeave={() => setHover(undefined)}>
+        <line x1={P} x2={W - P} y1={Y(0)} y2={Y(0)} stroke="#44403c" strokeWidth={1} />
+        <line x1={P} x2={W - P} y1={Y(hi)} y2={Y(hi)} stroke="#292524" strokeWidth={1} strokeDasharray="2 3" />
+        {hover !== undefined && <line x1={X(hover)} x2={X(hover)} y1={P} y2={H - P} stroke="#57534e" strokeWidth={1} />}
+        <path d={path('in')} fill="none" stroke="#34d399" strokeWidth={2} strokeLinejoin="round" />
+        <path d={path('out')} fill="none" stroke="#f87171" strokeWidth={2} strokeDasharray="5 3" strokeLinejoin="round" />
+        {h.map((x, i) => (
+          <g key={x.week}>
+            <circle cx={X(i)} cy={Y(x.in!)} r={hover === i || i === h.length - 1 ? 4 : 2.5} fill="#34d399" stroke="#1c1917" strokeWidth={2} />
+            <circle cx={X(i)} cy={Y(x.out!)} r={hover === i || i === h.length - 1 ? 4 : 2.5} fill="#f87171" stroke="#1c1917" strokeWidth={2} />
+            <rect x={X(i) - (W - 2 * P) / (h.length - 1) / 2} y={0} width={(W - 2 * P) / (h.length - 1)} height={H} fill="transparent"
+              onMouseEnter={() => setHover(i)} onClick={() => setHover(i)}><title>{`Week ${x.week}: in ${fmt$(x.in!)}, out ${fmt$(x.out!)}, net ${fmt$(x.in! - x.out!)}`}</title></rect>
+          </g>
+        ))}
+        <text x={W - P} y={P + 2} textAnchor="end" fontSize={9} fill="#78716c">{fmt$(hi)}</text>
       </svg>
-      <div className="mt-1 flex flex-wrap justify-between gap-2 text-[11px] tabular-nums">
-        <span className="text-gold-300">━ The Family {fmt$(last.family)}</span>
-        <span className="text-amber-300">┅ Your Pocket {fmt$(last.pocket)}</span>
-        <span className="text-stone-500">wk {h[0].week}–{last.week}</span>
+      <div className="mt-1 flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-[11px] tabular-nums" data-testid="money-chart-legend">
+        <span className="text-stone-300"><span className="text-emerald-400">━</span> In {fmt$(at.in!)}</span>
+        <span className="text-stone-300"><span className="text-red-400">┅</span> Out {fmt$(at.out!)}</span>
+        <span className={at.in! - at.out! >= 0 ? 'text-emerald-300' : 'text-red-300'}>Net {at.in! - at.out! >= 0 ? '+' : '−'}{fmt$(Math.abs(at.in! - at.out!))}</span>
+        <span className="w-full text-stone-500">Week {at.week}: the Family {fmt$(at.family)} · your Pocket {fmt$(at.pocket)}</span>
       </div>
     </section>
   );

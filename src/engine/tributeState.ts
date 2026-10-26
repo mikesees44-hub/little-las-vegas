@@ -419,6 +419,8 @@ export interface TributeState {
   pots?: 2;
   /** The week the boss ordered "Squeeze harder this week" (one global lever, money.ts). */
   squeeze?: number;
+  /** The money trend: each of the last 12 weeks' money in, money out, and the two pots (money.ts recordMoneyWeek). */
+  flow?: import('./money').MoneyWeek[];
   /** Short history of who was short, by man (week list). */
   shortHist: Record<string, number[]>;
   stats: { audiences: number; quiet: number; shortfalls: number; disputes: number; grievances: number; petitions: number; granted: number; audits: number; caught: number; covers: number; crises: number; insolvencies: number; disagreements: number };
