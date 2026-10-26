@@ -60,7 +60,7 @@ function viewOf(p: Placed): { key?: AssetKey; quarter?: number } {
   return {};
 }
 
-function Building({ p, sel, edit, color, label, onDown }: { p: Placed; sel: boolean; edit: boolean; color: string; label: string; onDown: (e: React.PointerEvent, mode: 'move' | 'rot' | 'size') => void }) {
+function Building({ p, sel, edit, color, label, hs, onDown }: { p: Placed; sel: boolean; edit: boolean; color: string; label: string; hs: number; onDown: (e: React.PointerEvent, mode: 'move' | 'rot' | 'size') => void }) {
   const { w, d } = p.f.properties.footprint;
   const rot = p.f.properties.rotation;
   const v = viewOf(p);
@@ -96,9 +96,9 @@ function Building({ p, sel, edit, color, label, onDown }: { p: Placed; sel: bool
       </g>
       {edit && sel && (
         <g transform={`translate(${p.u} ${-p.v}) rotate(${rot})`}>
-          <line x1="0" y1={-d / 2} x2="0" y2={-d / 2 - 14} stroke="#ffe28a" strokeWidth="1" />
-          <circle cx="0" cy={-d / 2 - 16} r="4.5" fill="#ffe28a" stroke="#1b1030" strokeWidth="1" style={{ cursor: 'grab' }} data-testid="plan-rot" onPointerDown={(e) => { e.stopPropagation(); onDown(e, 'rot'); }} />
-          <rect x={w / 2 - 4} y={-d / 2 - 4} width="8" height="8" fill="#5ff2e6" stroke="#1b1030" strokeWidth="1" style={{ cursor: 'nwse-resize' }} data-testid="plan-size" onPointerDown={(e) => { e.stopPropagation(); onDown(e, 'size'); }} />
+          <line x1="0" y1={-d / 2} x2="0" y2={-d / 2 - 3 * hs} stroke="#ffe28a" strokeWidth="1" />
+          <circle cx="0" cy={-d / 2 - 3 * hs} r={hs} fill="#ffe28a" stroke="#1b1030" strokeWidth="1" style={{ cursor: 'grab' }} data-testid="plan-rot" onPointerDown={(e) => { e.stopPropagation(); onDown(e, 'rot'); }} />
+          <rect x={w / 2 - hs} y={-d / 2 - hs} width={2 * hs} height={2 * hs} fill="#5ff2e6" stroke="#1b1030" strokeWidth="1" style={{ cursor: 'nwse-resize' }} data-testid="plan-size" onPointerDown={(e) => { e.stopPropagation(); onDown(e, 'size'); }} />
         </g>
       )}
     </g>
@@ -198,7 +198,10 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
   const [exportText, setExportText] = useState<string | undefined>();
   const year = peek ?? s.date.y;
   const svg = useRef<SVGSVGElement>(null);
-  const [vb, setVb] = useState({ x: AREA.u0, y: -AREA.v1, w: AREA.u1 - AREA.u0, h: AREA.v1 - AREA.v0 });
+  // A phone starts on Hunt's Pier and the blocks round it; a big screen sees the whole first area.
+  const [vb, setVb] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640
+    ? { x: 3750 - 150, y: -300, w: 300, h: 560 }
+    : { x: AREA.u0, y: -AREA.v1, w: AREA.u1 - AREA.u0, h: AREA.v1 - AREA.v0 }));
   const drag = useRef<{ mode: 'pan' | 'move' | 'rot' | 'size'; id?: string; sx: number; sy: number; vb: typeof vb; start?: PlaceEdit & { u: number; v: number }; moved: boolean } | undefined>();
 
   const byLot = useMemo(() => new Map(items.filter((x) => x.lot).map((x) => [x.lot!.id, x])), [items]);
@@ -339,7 +342,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
           const it = p.it;
           const color = it ? (it.mine ? OWNER_COLOR.player : it.forSale ? OWNER_COLOR.sale : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private) : p.f.properties.establishment ? '#c7a64a' : '#e8dfcb';
           const label = (it?.name ?? p.f.properties.name).replace(/^The /, '');
-          return <Building key={p.f.id} p={p} sel={sel === p.f.id} edit={edit} color={color} label={label.length > 26 ? `${label.slice(0, 25)}…` : label} onDown={(e, mode) => onDown(e, mode, p)} />;
+          return <Building key={p.f.id} p={p} sel={sel === p.f.id} edit={edit} color={color} label={label.length > 26 ? `${label.slice(0, 25)}…` : label} hs={Math.max(3, vb.w / 90)} onDown={(e, mode) => onDown(e, mode, p)} />;
         })}
       </svg>
       {/* Toolbar. */}
@@ -375,7 +378,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
         </div>
       )}
       {selP && edit && !exportText && (
-        <div className="absolute z-20 right-2 top-12 w-[min(300px,calc(100%-1rem))] panel p-2 space-y-1.5 text-xs" data-plan-ui data-testid="plan-edit-panel">
+        <div className="absolute z-20 left-2 right-2 bottom-10 md:left-auto md:bottom-auto md:right-2 md:top-12 md:w-[300px] panel p-2 space-y-1.5 text-xs" data-plan-ui data-testid="plan-edit-panel">
           <div className="flex justify-between gap-2"><span className="font-display text-sm text-[#ffd1e6] truncate">{selP.it?.name ?? selP.f.properties.name}</span><button type="button" className="text-stone-400" onClick={() => setSel(undefined)}>done</button></div>
           <div className="text-stone-400">Drag it to move; the yellow handle turns it; the square resizes it.</div>
           <div className="grid grid-cols-3 gap-1">

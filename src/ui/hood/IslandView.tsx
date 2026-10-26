@@ -407,7 +407,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
       {plan && !scene && <div className="absolute inset-0 z-[998]"><PlanView s={s} items={items} onPick={(k) => { setSel(k); setMenu(false); }} onClose={() => { setPlan(false); setSel(undefined); }} /></div>}
       {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setDistricts(false); setMenu(false); }} onScene={(sc) => { setScene(sc); setDistricts(false); }} onMap={() => setScene(undefined)} onDistricts={() => { setSel(undefined); setDistricts(true); }} /></div>}
       {/* Controls. */}
-      <div data-hv-ui className="absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%]">
+      <div data-hv-ui className={`absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%] ${plan && !scene ? 'hidden' : ''}`}>
         {!scene && !plan && <div className="flex flex-wrap justify-end gap-1">
           <button type="button" className="hv-btn hv-on" onClick={() => { setScene(sceneForHood(hood)); setHood(undefined); onHood?.(undefined); }} title="Down to street level (the neighborhood you have picked, or the Boardwalk)" data-testid="hv-street">Street level</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
