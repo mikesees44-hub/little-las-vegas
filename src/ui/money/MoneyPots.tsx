@@ -32,7 +32,8 @@ export function usePots(s: GameState) {
 export function dipLine(s: GameState, queued = 0): string {
   const p = dipPenalty(s, queued);
   const n = recentDips(s) + queued;
-  return p ? `You have dipped ${n} time${n > 1 ? 's' : ''} in ${DIP.window} weeks: one more and each capo thinks ${-p} less of you.` : `Once in ${DIP.window} weeks the capos let it go; dip more and they think less of you.`;
+  if (!p) return `Once in ${DIP.window} weeks the capos let it go; dip more and they think less of you.`;
+  return `${queued ? 'Counting what you have ordered, that is' : 'You have dipped'} ${n} time${n > 1 ? 's' : ''} in ${DIP.window} weeks: one more and each capo thinks ${-p} less of you.`;
 }
 
 const sgn = (n: number) => `${n >= 0 ? '+' : '−'}${fmt$(Math.abs(n))}`;

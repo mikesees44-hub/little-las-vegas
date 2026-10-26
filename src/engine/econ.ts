@@ -1,3 +1,4 @@
+import { pocketPrice } from './pocket';
 import type { ActionPreview } from './actions';
 import { noteScore } from './ledgerbook';
 import { commitDeal, previewDeal } from './deals';
@@ -981,16 +982,17 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       const price = giftPrice(s, g);
       const r = giftOpinion(s, c, g, price);
       const title = `Gift: ${g.name} for ${c.firstName} ${c.lastName}`;
+      const pp = pocketPrice(s, price, title);
       const effects: Effect[] = [
-        { type: 'money', amount: -price, label: title },
+        ...pp.effects,
         { type: 'opinion', from: c.id, to: s.playerId, amount: r.opinion, reason: r.fit < 0 ? `An awkward gift (${g.name.toLowerCase()})` : `Gave me ${g.name.toLowerCase()}`, decay: 1, label: title },
         { type: 'meter', from: c.id, to: s.playerId, meter: 'trust', amount: r.trust, label: title },
         { type: 'econ', op: { op: 'gift', to: c.id, giftId: g.id, fit: r.fit, value: price }, label: title },
       ];
       return {
         title, detail: r.reasons.map((x) => `${x.label} ${x.value >= 0 ? '+' : ''}${x.value}`).join(' · '),
-        effects, cost: price, because: `gave ${c.firstName} ${g.name.toLowerCase()}`,
-        disabledReason: !c.alive ? 'Dead' : c.id === s.playerId ? 'For yourself? Buy it yourself' : !giftAvailable(g, s.date.y) ? 'Not available this year' : s.money < price ? `Needs ${fmtMoney(price)}` : undefined,
+        effects, cost: price, pot: 'pocket', because: `gave ${c.firstName} ${g.name.toLowerCase()}`,
+        disabledReason: !c.alive ? 'Dead' : c.id === s.playerId ? 'For yourself? Buy it yourself' : !giftAvailable(g, s.date.y) ? 'Not available this year' : pp.why,
         category: 'event', acceptance: undefined,
       };
     }
