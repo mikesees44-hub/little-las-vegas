@@ -903,6 +903,8 @@ export interface GameState {
   briefing?: import('./briefing').BriefingState;
   /** Your Rounds: the boss's evenings, the lanes' neglect, the advisors' free hand (rounds.ts; optional, starts when used). */
   rounds?: import('./rounds').RoundsState;
+  /** The week as days: the clock's day, the evenings and the check-in answers (days.ts; optional, dropped when the week turns). */
+  days?: import('./days').DaysState;
 }
 
 export interface PlayerChoices {
@@ -920,6 +922,10 @@ export interface PlayerChoices {
   briefingSkip?: string[];
   /** Your Rounds: the evenings the boss lives this week (round ids from rounds.ts). */
   rounds?: string[];
+  /** The morning check-ins (checkins.ts): "day:capoId" -> answer id. Undefined: the layer is off this week. */
+  checkins?: Record<string, string>;
+  /** Mornings the boss skipped the check-in (0 Monday … 6 Sunday). */
+  skipDays?: number[];
 }
 
 export type PlayerAction =

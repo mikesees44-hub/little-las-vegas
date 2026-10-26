@@ -834,7 +834,7 @@ function underbossSummary(s: GameState): string | undefined {
   return `The take: ${fmtMoney(rep.presented)}${diff !== undefined && diff !== 0 ? ` (${diff > 0 ? 'up' : 'down'} ${fmtMoney(Math.abs(diff))})` : ''}${short ? ` · ${num(short)} crew${short > 1 ? 's' : ''} short` : ' · everybody paid'}${pending ? ' · I\'m waiting in the office' : ''}.`;
 }
 
-function capoSummary(s: GameState, k: Character): string | undefined {
+export function capoSummary(s: GameState, k: Character): string | undefined {
   const d = s.districts.find((x) => x.capoId === k.id);
   if (!d) return undefined;
   const cl = latestReport(s)?.crews?.find((x) => x.capoId === k.id);

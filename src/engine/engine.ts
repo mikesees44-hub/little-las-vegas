@@ -62,6 +62,7 @@ import { earsWeek } from './ears';
 import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
+import { checkinPlan, checkinsWeek } from './checkins';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -278,7 +279,10 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const delegated = delegatedActions(input, choices);
   const picked = chosenRounds(input, choices);
   const roundOpts = picked ? roundOptions(input) : [];
+  const mornings = checkinPlan(input, choices.checkins, choices.skipDays);
   const s = cloneState(input);
+  // The days plan is only the week's choices (sent in `choices`): the new week starts on a Monday with none.
+  delete s.days;
   const ctx = newCtx(s);
   const start = snapshot(s);
   tributeOpen(s);
@@ -294,6 +298,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => d.action)] } : choices);
   if (!s.gameOver) recordDelegation(s, weekOf, delegated);
   const roundLines = !s.gameOver && picked ? roundsWeek(ctx, picked, roundOpts) : [];
+  if (!s.gameOver && mornings) roundLines.push(...checkinsWeek(ctx, mornings.list, choices.checkins ?? {}, mornings.missed));
   if (!s.gameOver) tributeBegin(ctx, resolving, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
