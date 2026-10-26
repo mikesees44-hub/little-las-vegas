@@ -181,7 +181,7 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
                     return (
                       <label key={p.id} className="flex items-start gap-2 py-0.5" data-testid="petition">
                         <input type="checkbox" disabled={decided || !ev} checked={g} onChange={() => setGrant(g ? grant.filter((x) => x !== p.id) : [...grant, p.id])} className="mt-1 accent-gold-400" />
-                        <span className="text-stone-300">{by ? `${by.firstName} ${by.lastName}` : '?'} asks for {p.text} — <b className="text-gold-300">{fmt$(p.amount)}</b> <span className="text-stone-500">({p.kind === 'extension' ? 'no money, time' : p.from === 'reserve' ? 'from the reserve' : 'off the top of the envelope'})</span></span>
+                        <span className="text-stone-300">{by ? `${by.firstName} ${by.lastName}` : '?'} asks for {p.text} — <b className="text-gold-300">{fmt$(p.amount)}</b> <span className="text-stone-500">({p.kind === 'extension' ? 'no money, time' : p.from === 'reserve' ? 'from the Family' : 'off the top of the envelope'})</span></span>
                       </label>
                     );
                   })}</>}
@@ -192,21 +192,21 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
               <ul className="mt-1 space-y-0.5">{ob.map((o, i) => <li key={i} className="flex justify-between gap-2"><span className="text-stone-300">{o.what}</span><span className="tabular-nums text-stone-400">{fmt$(o.amount)}{o.weekly ? '/wk' : o.due !== undefined ? ` in ${o.due} wk` : ''}</span></li>)}</ul>
             </details>
             <div className="rounded border border-gold-600/30 bg-noir-900/60 p-2 text-[12px]" data-testid="audience-rec">
-              <div className="text-[10px] uppercase tracking-widest text-stone-500">{rep.acting ? 'He has no advice' : 'His recommended split'}</div>
+              <div className="text-[10px] uppercase tracking-widest text-stone-500">{rep.acting ? 'He has no advice' : 'His advice on your cut'}</div>
               <div className="text-gold-300 font-semibold">{splitText(rep.rec)}</div>
               <ul className="text-[11px] text-stone-400">{rep.recWhy.map((w, i) => <li key={i}>{w}</li>)}</ul>
             </div>
             {decided ? (
               <div className="rounded border border-emerald-700/50 bg-emerald-900/10 p-2 text-[12px]" data-testid="audience-done">
-                <div className="text-emerald-300 font-semibold">Split {rep.alloc!.by === 'quiet' ? 'by your standing policy (a quiet week)' : rep.alloc!.by === 'his' ? 'his way' : rep.alloc!.by === 'custom' ? 'your way' : 'the usual way'}: {splitText(rep.alloc!.split)}</div>
-                <div className="tabular-nums text-stone-300">{fmt$(rep.alloc!.personal)} to you · {fmt$(rep.alloc!.treasury)} to the family · {fmt$(rep.alloc!.reserve)} to the reserve</div>
+                <div className="text-emerald-300 font-semibold">{rep.alloc!.by === 'quiet' ? 'Went in on its own at your cut' : rep.alloc!.by === 'his' ? 'His advice on your cut' : rep.alloc!.by === 'custom' ? 'Your own cut this week' : 'Your usual cut'}: {splitText(rep.alloc!.split)}</div>
+                <div className="tabular-nums text-stone-300">{fmt$(rep.alloc!.personal)} to your Pocket · {fmt$(rep.alloc!.treasury + rep.alloc!.reserve)} to the Family{rep.alloc!.reserve ? ` (${fmt$(rep.alloc!.reserve)} set aside)` : ''}</div>
                 {onPolicy && (
                   <div className="mt-2 space-y-2">
-                    <div className="text-[11px] text-stone-400">Set the standing split for quiet weeks:</div>
+                    <div className="text-[11px] text-stone-400">Your cut, every week from now on:</div>
                     <EnvelopeSplit env={rep.presented} value={split} onChange={setSplit} />
                     <div className="flex flex-wrap gap-2">
-                      <button type="button" className="btn-gold text-xs" disabled={same(split, t.policy)} onClick={() => onPolicy(split)} data-testid="set-policy">Make this my standing split</button>
-                      <button type="button" className="btn-ghost text-xs" onClick={() => onPolicy(split, !t.policy.auto)} data-testid="toggle-auto">{t.policy.auto ? 'Hold the audience every week' : 'Only call me when it matters'}</button>
+                      <button type="button" className="btn-gold text-xs" disabled={same(split, t.policy)} onClick={() => onPolicy(split)} data-testid="set-policy">Make this my cut</button>
+                      <button type="button" className="btn-ghost text-xs" onClick={() => onPolicy(split, !t.policy.auto)} data-testid="toggle-auto">{t.policy.auto ? 'See every envelope myself' : 'Only call me when something is wrong'}</button>
                     </div>
                   </div>
                 )}
@@ -214,15 +214,15 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
             ) : (
               <div className="space-y-2">
                 <EnvelopeSplit env={rep.presented} value={split} onChange={setSplit} />
-                <label className="flex items-center gap-2 text-[11px] text-stone-400"><input type="checkbox" checked={standing} onChange={(e) => setStanding(e.target.checked)} className="accent-gold-400" data-testid="standing" /> Make it my standing split for quiet weeks</label>
+                <label className="flex items-center gap-2 text-[11px] text-stone-400"><input type="checkbox" checked={standing} onChange={(e) => setStanding(e.target.checked)} className="accent-gold-400" data-testid="standing" /> Make it my cut from now on</label>
                 <div className="grid gap-1.5 sm:grid-cols-3">
                   <button type="button" className="btn-gold text-xs" disabled={!ev} onClick={() => pick(same(split, rep.rec) ? 'his' : same(split, normSplit(t.policy)) ? 'policy' : 'custom', split)} data-testid="accept-split">
-                    Take it: {fmt$(d.personal)} / {fmt$(d.treasury)} / {fmt$(d.reserve)}
+                    Take it: {fmt$(d.personal)} to you · {fmt$(d.treasury + d.reserve)} to the Family
                   </button>
-                  <button type="button" className="btn-ghost text-xs" disabled={!ev} onClick={() => { setSplit(normSplit(rep.rec)); pick('his', normSplit(rep.rec)); }} data-testid="accept-his">His way ({pct(rep.rec.personal)} / {pct(rep.rec.treasury)} / {pct(rep.rec.reserve)})</button>
-                  <button type="button" className="btn-ghost text-xs" disabled={!ev} onClick={() => { const p = normSplit(t.policy); pick('policy', p); }} data-testid="accept-usual">The usual ({pct(t.policy.personal)} / {pct(t.policy.treasury)} / {pct(t.policy.reserve)})</button>
+                  <button type="button" className="btn-ghost text-xs" disabled={!ev} onClick={() => { setSplit(normSplit(rep.rec)); pick('his', normSplit(rep.rec)); }} data-testid="accept-his">His advice: a {pct(rep.rec.personal)} cut</button>
+                  <button type="button" className="btn-ghost text-xs" disabled={!ev} onClick={() => { const p = normSplit(t.policy); pick('policy', p); }} data-testid="accept-usual">Your usual {pct(t.policy.personal)} cut</button>
                 </div>
-                <p className="text-[10px] text-stone-500">One envelope, one split: the money moves in a single set of transfers when the week turns. It cannot be split twice.</p>
+                <p className="text-[10px] text-stone-500">One number, your cut; the Family takes the rest, to the dollar, when the week turns. If you do nothing, your usual cut applies.</p>
               </div>
             )}
           </div>

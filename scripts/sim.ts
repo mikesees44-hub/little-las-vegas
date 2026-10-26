@@ -36,7 +36,7 @@ import { polActions } from '../src/engine/politics';
 import { population } from '../src/engine/polPeople';
 import { minigameOf, randomMoves } from '../src/engine/minigames';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
-import { houseCash } from '../src/engine/tributeState';
+import { familyCash, houseCash } from '../src/engine/tributeState';
 import { tributeActions } from '../src/engine/tributeOps';
 import { envelopeChoice } from './simBudget';
 
@@ -52,7 +52,7 @@ const JSON_OUT = arg('json', '');
 /** Stress succession: force the boss to die every N weeks (0 = off). */
 const STRESS = Number(arg('stress', '0'));
 const WEEKS = YEARS * 52;
-const INSOLVENT_WEEKS = 8; // "bankrupt" = treasury below $0 for 8+ consecutive weeks
+const INSOLVENT_WEEKS = 8; // "bankrupt" = the Family (treasury + set aside) below $0 for 8+ consecutive weeks
 
 /** Chance per week that the random player gives an order (buy, lend, launch a job ...). */
 const ORDER_RATE = Number(arg('orders', '0.15'));
@@ -209,8 +209,8 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
   // The weekly take: the envelope split (careful: sensible; careless: greedy), sometimes an order.
   const envelope = envelopeChoice(s, budget, h);
   if (rand(h) < TRIBUTE_RATE) add(pickOne(h, tributeActions(s).filter((a) => !previewAction(s, a).disabledReason && (!budget || affordable(s, budget, a)))));
-  // The careless boss treats every pocket as one (he empties his own into the family when it runs low).
-  if (!budget && (s.tribute?.acct.personal ?? 0) > 500) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: s.tribute!.acct.personal } });
+  // Two pots: the careless boss takes a greedy cut and keeps it; only now and then, with the Family in the red, does he put some back.
+  if (!budget && s.money < 0 && (s.tribute?.acct.personal ?? 0) > 500 && rand(h) < 0.15) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: s.tribute!.acct.personal } });
   if (budget && s.money < 0 && (s.tribute?.acct.personal ?? 0) > 1500 && rand(h) < 0.5) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: Math.round((s.tribute!.acct.personal * 0.6) / 100) * 100 } });
   return { choices, actions, minigames, envelope };
 }
@@ -268,6 +268,7 @@ interface GameResult {
   treasuryOnly?: number[];
   personalByYear?: number[];
   /** Money pace (money.ts redo): house-cash change per week, summed by window; the boss's cut in year 1. */
+  minFamY1?: number;
   pace?: { early: number[]; summer: number[]; winter: number[]; y3: number[]; cutY1: number; y1Weeks: number };
   /** Weeks the treasury itself was in the red (the reserve and the Don's own money not counted). */
   treasuryRed?: number;
@@ -375,6 +376,9 @@ function playOne(gi: number): GameResult {
       }
     }
     const cash = houseCash(s);
+    // Two pots (money.ts): bankruptcy is the Family's (treasury + what is set aside), not the boss's pocket.
+    const famCash = familyCash(s);
+    if (s.week <= 53) r.minFamY1 = Math.min(r.minFamY1 ?? Infinity, famCash);
     {
       const pc = (r.pace ??= { early: [], summer: [], winter: [], y3: [], cutY1: 0, y1Weeks: 0 });
       const d = cash - prevCash;
@@ -390,7 +394,7 @@ function playOne(gi: number): GameResult {
     }
     prevCash = cash;
     if (s.money < 0) r.treasuryRed = (r.treasuryRed ?? 0) + 1;
-    if (cash < 0) {
+    if (famCash < 0) {
       r.everNegative = true;
       consecutiveRed++;
       if (s.week <= 53) r.redStreakY1 = Math.max(r.redStreakY1, consecutiveRed);
@@ -415,7 +419,7 @@ function playOne(gi: number): GameResult {
     for (const b of HEAT_BARS) r.heatSamples[b].push(s.heat[b]);
     if ((s.week - 1) % 52 === 0) {
       r.treasuryByYear.push(cash);
-      (r.treasuryOnly ??= []).push(s.money);
+      (r.treasuryOnly ??= []).push(familyCash(s));
       (r.personalByYear ??= []).push(s.tribute?.acct.personal ?? 0);
       if (r.houseErrors.length < 5) r.houseErrors.push(...validateHouses(s).slice(0, 5).map((x) => `week ${s.week}: ${x}`));
     }
@@ -503,7 +507,7 @@ console.log(`  House tree errors:          ${houseErr.length}`);
 for (const u of houseErr.slice(0, 5)) console.log(`    - ${u}`);
 
 console.log(`\nECONOMY`);
-console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (treasury < $0 for ${INSOLVENT_WEEKS}+ straight weeks)`);
+console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (the Family < $0 for ${INSOLVENT_WEEKS}+ straight weeks; the boss's Pocket does not count)`);
 console.log(`  Bankrupt at any point:      ${pct(results.filter((r) => r.bankruptEver).length, GAMES)}`);
 console.log(`  Ever in the red:            ${pct(results.filter((r) => r.everNegative).length, GAMES)}`);
 console.log(`  Longest red run in year 1:  1-3 weeks ${pct(results.filter((r) => r.redStreakY1 >= 1 && r.redStreakY1 < 4).length, GAMES)}, 4-7 weeks ${pct(results.filter((r) => r.redStreakY1 >= 4 && r.redStreakY1 < 8).length, GAMES)}, 8+ ${pct(results.filter((r) => r.redStreakY1 >= 8).length, GAMES)}`);
@@ -523,7 +527,7 @@ if (CARELESS > 0 && CARELESS < 1) {
 {
   const tq = (k: number) => money(quantile(results.map((r) => r.treasuryOnly?.[k]).filter((x): x is number => x !== undefined), 0.5));
   const pq = (k: number) => money(quantile(results.map((r) => r.personalByYear?.[k]).filter((x): x is number => x !== undefined), 0.5));
-  console.log(`  Of which (median): family treasury after years 1/3: ${tq(0)} / ${tq(2)}; the Don's own money: ${pq(0)} / ${pq(2)}; weeks the treasury itself was red (mean): ${(results.reduce((a, r) => a + (r.treasuryRed ?? 0), 0) / GAMES).toFixed(1)}`);
+  console.log(`  Of which (median): the Family (treasury + set aside) after years 1/3/10: ${tq(0)} / ${tq(2)} / ${tq(9)}; your Pocket: ${pq(0)} / ${pq(2)} / ${pq(9)}; weeks the treasury itself was red (mean): ${(results.reduce((a, r) => a + (r.treasuryRed ?? 0), 0) / GAMES).toFixed(1)}`);
   const tg = results.filter((r) => r.tribute);
   if (tg.length) {
     const keys = Object.keys(tg[0].tribute!);
@@ -654,6 +658,7 @@ const moves: Record<string, number> = {};
 for (const r of results) for (const [k, v] of Object.entries(r.rivalMoves)) moves[k] = (moves[k] ?? 0) + v;
 console.log(`  Rival actions per game:     ${Object.entries(moves).map(([k, v]) => `${k} ${(v / GAMES).toFixed(0)}`).join(', ')}`);
 
+if (arg('pergame', '0') !== '0') for (const [i, r] of results.entries()) console.log(`  game ${i} ${r.careless ? 'careless' : 'careful '} lowest Family in year 1 ${money(r.minFamY1 ?? NaN)}, after year 1 ${money(r.treasuryOnly?.[0] ?? NaN)} (+ Pocket ${money(r.personalByYear?.[0] ?? NaN)}), places ${r.finalBusinesses}${r.bankruptYear1 ? ' BANKRUPT' : ''}`);
 if (LEDGER) printLedger();
 if (LEDGER && arg('ledger', '0') !== '1') dumpLedger(arg('ledger', '0'));
 

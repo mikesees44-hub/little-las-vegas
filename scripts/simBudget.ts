@@ -147,6 +147,7 @@ export const choiceCost = (c: Choice) => moneyOut(c.effects);
  * for himself, a token reserve), set as his standing policy on day one.
  */
 export function envelopeChoice(s: GameState, b: Budget | undefined, h: { rng: number }): EnvelopeChoice | undefined {
+  // Two pots (money.ts): one number, the boss's cut; the Family takes the rest. A careless boss is greedy.
   const t = s.tribute;
   if (!b) {
     if (s.week <= 1 || !t) return { split: { personal: 5500, treasury: 4500, reserve: 0 }, standing: true };
@@ -155,11 +156,11 @@ export function envelopeChoice(s: GameState, b: Budget | undefined, h: { rng: nu
     const p = 5000 + Math.floor(rand(h) * 2000);
     return { report: pend.id, split: { personal: p, reserve: 0, treasury: 10000 - p }, grant: pend.petitions.filter(() => rand(h) < 0.3).map((x) => x.id) };
   }
-  if (s.week <= 1 || !t) return { split: { personal: 1500, treasury: 7500, reserve: 1000 }, standing: true };
+  if (s.week <= 1 || !t) return { split: { personal: 2500, treasury: 7500, reserve: 0 }, standing: true };
   const pend = t.reports.find((r) => r.status === 'presented');
   const low = spare(s, b) < 0;
-  const split = low ? { personal: 500, treasury: 8500, reserve: 1000 } : { personal: 1500, treasury: 7000, reserve: 1500 };
-  if (!pend) return low !== t.policy.personal <= 500 ? { split, standing: true } : undefined;
+  const split = low ? { personal: 1000, treasury: 9000, reserve: 0 } : { personal: 2500, treasury: 7500, reserve: 0 };
+  if (!pend) return low !== t.policy.personal <= 1000 ? { split, standing: true } : undefined;
   if (rand(h) < 0.4) return { report: pend.id, split: pend.rec, grant: pend.petitions.filter((x) => x.amount <= room(s, b)).map((x) => x.id) };
   return { report: pend.id, split, standing: rand(h) < 0.3, grant: pend.petitions.filter((x) => x.amount <= room(s, b) && rand(h) < 0.5).map((x) => x.id) };
 }

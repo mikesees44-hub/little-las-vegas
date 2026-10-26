@@ -16,6 +16,7 @@ export const PANEL_IDS: PanelId[] = ['you', 'house', 'borgata', 'holdings', 'ops
 /** Old tab ids (the pre-shell tab bar, alerts' `tab`, advice links) → where they live now. */
 export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   map: {},
+  money: { panel: 'holdings', section: 'money' },
   // Rackets & Fronts
   business: { panel: 'holdings', section: 'rackets' },
   holdings: { panel: 'holdings', section: 'rackets' },

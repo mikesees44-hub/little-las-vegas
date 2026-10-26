@@ -122,8 +122,18 @@ export function opportunities(s: GameState): Opportunity[] {
   if (ev >= OPEN_FILE - 8) out.push({ id: 'evidence', kind: 'threat', score: 500 + ev * 20, title: `Your file: ${Math.round(ev)}/100`, text: `The FBI opens a case at ${OPEN_FILE}. Give orders through the underboss or a capo instead of yourself.`, cta: 'The Law →', link: { tab: 'law' } });
 
   // Money: short, or idle.
-  if (s.money < 2000) out.push({ id: 'broke', kind: 'threat', score: 1200 + (2000 - s.money) / 2, title: 'Short of cash', text: 'In the red, respect and loyalty bleed every week. Lean on the bars, collect the shylock book, or sell what you cannot run.', cta: 'Raise cash →', link: { action: usable(s, { kind: 'order', key: 'shakedown', via: 'direct' }), tab: 'business' } });
-  else {
+  // Two pots (money.ts): everything is collected on its own; the levers are your cut and one squeeze.
+  const cutBp = s.tribute?.policy.personal ?? 2500;
+  if (s.money < 2000) {
+    const sq = usable(s, { kind: 'tribute', op: { op: 'squeeze' } });
+    out.push({ id: 'broke', kind: 'threat', score: 1200 + (2000 - s.money) / 2, title: 'The Family is short of cash', text: `In the red, respect and loyalty bleed every week. ${sq ? 'Squeeze the street harder this week, ' : ''}${cutBp > 1500 ? `take a smaller cut (now ${cutBp / 100}%), ` : ''}or sell what you cannot run. Holdings › Money shows the biggest leak.`, cta: sq ? 'Squeeze harder →' : 'Where it goes →', link: sq ? { action: sq, tab: 'money' } : { tab: 'money' } });
+    if (cutBp > 1500 && (s.tribute?.acct.personal ?? 0) > 0) out.push({ id: 'cut-down', kind: 'threat', score: 900, title: `Your cut is ${cutBp / 100}% while the Family runs dry`, text: 'Your Pocket fills while the Family pays the wages. Take 10% less until the season comes.', cta: 'Lower my cut →', link: { action: { kind: 'tribute', op: { op: 'policy', split: { personal: Math.max(500, cutBp - 1000), treasury: 10000 - Math.max(500, cutBp - 1000) - (s.tribute?.policy.reserve ?? 0), reserve: s.tribute?.policy.reserve ?? 0 } } }, tab: 'money' } });
+  } else {
+    // A rich Family and a thin Pocket: the boss can take more (the Good Life, gifts, his own lawyers).
+    const cost = Math.max(1200, s.tribute?.costAvg ?? 2000);
+    if (s.money >= 12 * cost && cutBp <= 2500 && s.week >= 6) out.push({ id: 'cut-up', kind: 'opportunity', score: 220 + s.money / 200, title: 'The Family is flush: take a bigger cut', text: `The Family holds ${fmtMoney(s.money)}, about ${Math.round(s.money / cost)} weeks of bills. A ${cutBp / 100 + 10}% cut fills your Pocket faster for the Good Life, gifts and your own lawyers.`, cta: `Take ${cutBp / 100 + 10}% →`, link: { action: { kind: 'tribute', op: { op: 'policy', split: { personal: cutBp + 1000, treasury: 10000 - cutBp - 1000 - (s.tribute?.policy.reserve ?? 0), reserve: s.tribute?.policy.reserve ?? 0 } } }, tab: 'money' } });
+  }
+  if (s.money >= 2000) {
     const room = s.districts.some((d) => { const sl = playerSlots(s, d.id); return (d.influence.player ?? 0) >= 20 && sl.used < sl.max; });
     if (s.money >= 12000 && room) out.push({ id: 'idle', kind: 'opportunity', score: 300 + s.money / 40 + (preSeason(s) ? 400 : 0), title: `${fmtMoney(s.money)} sitting idle`, text: `${preSeason(s) ? 'The Season is coming: buy now and the place earns ×2.5 all summer. ' : isInSeason(s.date) ? 'It is the Season: every week a new place is open counts. ' : ''}You have storefronts free.`, cta: 'Buy a place →', link: { tab: 'business' } });
     // The next racket, as the Rackets hub would rank it.

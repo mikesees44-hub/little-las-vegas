@@ -1,4 +1,5 @@
 import { econTakeMult, econWash } from './econ';
+import { incomeBoost, racketNetMult, WASH_SCALE } from './money';
 import { venueTake } from './empire';
 import { perkMod } from './lifestyle';
 import { isInSeason } from './calendar';
@@ -122,6 +123,8 @@ export function expectedTake(s: GameState, b: Business): number {
   const runner = (b.staffIds ?? []).map((id) => s.characters[id]).find(Boolean);
   if (runner && hasTrait(runner, 'Gambler') && b.category === 'racket') v *= 0.9;
   v *= econTakeMult(s, b);
+  // The money pass (money.ts): rackets pay more, and more again as the family runs more of them.
+  if (b.category === 'racket') v *= incomeBoost(s, 'rackets') * racketNetMult(s);
   return Math.round(v);
 }
 
@@ -142,6 +145,8 @@ export function washCapacity(s: GameState): number {
   if (books) cap *= 1.25;
   cap *= 1 + 0.2 * Math.min(1.5, activeTask(s, 'bag_launder'));
   cap *= 1 + perkMod(s, 'launder') / 100;
+  // The money pass (money.ts): the fronts claim more customers, in step with the bigger take.
+  cap *= WASH_SCALE;
   return Math.round(cap);
 }
 

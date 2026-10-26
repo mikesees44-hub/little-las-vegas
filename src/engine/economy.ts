@@ -1,4 +1,5 @@
 import { collectTake, coverFromReserve, payFromPersonal } from './tribute';
+import { greedSkim, incomeBoost, squeezeMult } from './money';
 import { econBusiness } from './econ';
 import { tagLast } from './ledgerbook';
 import { perkMod } from './lifestyle';
@@ -85,7 +86,7 @@ export function slowPayers(s: GameState): Character[] {
 /** Share of washed money the counting room keeps. */
 export const LAUNDER_FEE = 0.05;
 /** Unwashed cash above this draws the IRS. */
-export const UNWASHED_SAFE = 15000;
+export const UNWASHED_SAFE = 22000;
 
 /** Weekly variance spread for a capo's kick-up, driven by traits. */
 export function kickupSpread(c: Character): number {
@@ -105,6 +106,8 @@ export function skimRate(s: GameState, c: Character): number {
   if (hasTrait(c, 'Ambitious') && op < 10) r += 0.08;
   if (hasTrait(c, 'Gambler')) r += 0.04;
   if (op < -20) r += 0.06;
+  // A boss who takes a greedy cut of the envelope (money.ts) teaches the capos to help themselves.
+  r += greedSkim(s);
   if (op > 40) r *= 0.5;
   r *= 1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_tax'));
   const fear = s.relations[`${c.id}>${s.playerId}`]?.fear ?? 0;
@@ -129,7 +132,7 @@ export function runEconomy(ctx: Ctx): void {
     if (infl <= 0) continue;
     const capo = d.capoId ? s.characters[d.capoId] : undefined;
     if (capo && isFree(s, capo) && capo.faction === 'player') continue;
-    const amt = Math.round(d.streetBase * (infl / 100) * mult * NO_CAPO_EFFICIENCY * (s.edicts?.blitz ? 1.2 : 1));
+    const amt = Math.round(d.streetBase * (infl / 100) * mult * NO_CAPO_EFFICIENCY * (s.edicts?.blitz ? 1.2 : 1) * incomeBoost(s, 'street') * squeezeMult(s));
     if (amt > 0) {
       gross += money(ctx, amt, `Street take: ${d.name} (no capo, ${infl}% of the action)`, 'street');
       tagLast(ctx, undefined, d.id);

@@ -21,8 +21,8 @@ const held = (s: GameState, pct: number) => s.districts.filter((d) => (d.influen
 export const RISE_GOALS: RiseGoal[] = [
   {
     id: 'first_summer',
-    title: 'Make the summer pay: $15,000 in the treasury',
-    hint: 'The numbers bank and the arcade do their best business before Labor Day. Buy a front or two while the money is good.',
+    title: 'Make the summer pay: $15,000 in the Family',
+    hint: 'Everything comes in on its own every week; your cut goes to your Pocket. The numbers bank and the arcade do their best business before Labor Day: buy a front or two while the money is good.',
     done: (s) => s.money >= 15000,
     reward: () => [{ type: 'respect', amount: 4, label: 'Goal: a good first summer' }],
   },

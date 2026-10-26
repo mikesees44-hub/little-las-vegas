@@ -11,7 +11,7 @@ import { money, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { gauss, rand, type RngHolder } from './rng';
 import { tributeTalk } from './tributeTalk';
-import { squeezeMult } from './money';
+import { greedSkim, incomeBoost, squeezeMult, territoryMult } from './money';
 import {
   balances, ensureTribute, normSplit, noteFavor, sumSplit,
   type AcctId, type MemberLine, type Petition, type ShortReason, type SourceLine, type Split,
@@ -406,6 +406,8 @@ export function collectTake(ctx: Ctx, mult: number): number {
   const ub = rep.ubId ? s.characters[rep.ubId] : undefined;
   // "Squeeze harder this week" (money.ts): the one global lever on the crews' corners and hustle.
   const blitz = (s.edicts?.blitz ? 1.2 : 1) * squeezeMult(s);
+  // The money pass: the take scales with the island the family runs (money.ts).
+  const reach = territoryMult(s);
   const crewOf = (capoId: string) => {
     let cl = rep.crews.find((x) => x.capoId === capoId);
     if (!cl) {
@@ -433,7 +435,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
   const hustleBy: Record<string, { n: number; paid: number }> = {};
   for (const c of idleMen(s)) {
     const craft = c.craft === 'earner' || c.craft === 'bookmaker' ? 1.2 : c.craft === 'collector' ? 1.1 : 1;
-    const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft;
+    const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft * incomeBoost(s, 'hustle') * reach;
     c.lastEarn = Math.round(earned);
     const terms = memberTerms(s, c);
     const pol = c.policy ?? 'tax';
@@ -459,7 +461,8 @@ export function collectTake(ctx: Ctx, mult: number): number {
   if (hustleBy.earn?.n) ctx.log.push(`${hustleBy.earn.n} men kept everything they hustled this week.`);
 
   // 2. The corners of each capo's district (the old kick-up: same dice, same contract, same skim).
-  const slow = new Set(isInSeason(s.date) ? [] : slowPayers(s).map((c) => c.id));
+  // A boss whose cut is greedy (money.ts) gets every capo dragging his feet with the winter envelope.
+  const slow = new Set(isInSeason(s.date) ? [] : greedSkim(s) > 0 ? capos(s).map((c) => c.id) : slowPayers(s).map((c) => c.id));
   for (const d of s.districts) {
     const capo = d.capoId ? s.characters[d.capoId] : undefined;
     if (!capo || !isFree(s, capo) || capo.faction !== 'player') continue;
@@ -467,7 +470,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
     if (infl <= 0) continue;
     const skill = 0.85 + capo.attributes.business / 400;
     const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo));
-    const take = d.streetBase * (infl / 100) * mult * skill * variance * blitz;
+    const take = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach;
     const keep = capo.keep ?? 0.3;
     const owedTotal = take - take * keep;
     const cl = crewOf(capo.id);

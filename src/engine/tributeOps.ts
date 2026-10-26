@@ -377,6 +377,8 @@ export function tributeActions(s: GameState): PlayerAction[] {
   if (w % 26 === 11 && holder(s, 'underboss')) out.push({ kind: 'tribute', op: { op: 'auditUb' } });
   const men = crew(s).filter((c) => c.rank === 'associate' && isFree(s, c));
   if (men.length && w % 17 === 3) out.push({ kind: 'tribute', op: { op: 'terms', charId: men[w % men.length].id, kind: 'fixed', weeks: 12, amount: 15 } });
+  // The one global lever (money.ts): squeeze the street now and then.
+  if (w % 13 === 4 && !squeezeWhy(s)) out.push({ kind: 'tribute', op: { op: 'squeeze' } });
   return out;
 }
 

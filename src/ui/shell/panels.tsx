@@ -36,6 +36,7 @@ import { Feed } from './Feed';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
 import { WeeklyTake } from '../tribute/WeeklyTake';
+import { MoneyView } from '../money/MoneyView';
 import { EarningsBoard } from '../tribute/EarningsBoard';
 import { HoodDashboard } from '../hood/HoodDashboard';
 import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
@@ -121,7 +122,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'Your men: the org chart, the council, the capos, who gets made.',
     sections: [
       { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
-      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and you take your cut: the audience, the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },
+      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and your cut goes in on its own: the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },
       { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
       { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
@@ -134,13 +135,14 @@ export const PANELS: PanelDef[] = [
     id: 'holdings', icon: '$', label: 'Holdings', short: 'Holdings', key: 'l',
     blurb: 'Everything that makes or keeps money: places, property, the books.',
     sections: [
+      { id: 'money', label: 'Money', blurb: 'Two pots: the Family and your Pocket. Where last week\'s money came from and where it went, your cut, and the biggest leak.', render: (s) => <MoneyView s={s} /> },
       { id: 'hub', label: 'The Rackets', wide: true, blurb: 'Every racket on the island: what it pays, what it takes, how you run it. Start one, set how it runs, take the next step.', render: (s) => <RacketHub s={s} /> },
       { id: 'rackets', label: 'What you own', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
       { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
-      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'The envelope, the accounts (treasury, your own, the reserve), obligations, investments and the historical ledger.', render: (s) => <WeeklyTake s={s} /> },
+      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'The envelope in detail: every crew and every man, the accounts (the Family, your Pocket), obligations, investments and the historical ledger.', render: (s) => <WeeklyTake s={s} /> },
     ],
   },
   {

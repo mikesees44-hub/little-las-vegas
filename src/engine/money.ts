@@ -1,4 +1,5 @@
 import { CATALOG } from './catalog';
+import { isInSeason } from './calendar';
 import { shortName } from './characters';
 import { earningsBoard } from './crewPurse';
 import type { Ctx } from './ledger';
@@ -43,10 +44,64 @@ export function twoPots(ctx: Ctx): void {
 }
 
 /* ------------------------------------------------------------------ */
+/* Bigger, faster money: the take scales with what the family holds    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The money pass's rebalance (sim targets in README): the crews' corners and hustle, the street with
+ * no capo, and the rackets pay more than they used to, and each grows with the family's reach.
+ */
+export const INCOME = { corners: 1.75, hustle: 1.6, street: 1.5, rackets: 1.35 } as const;
+/**
+ * The season surge: the boost is biggest from Memorial Day to Labor Day (the island is full) and
+ * small in the winter, so the first winter still bites a boss who spent the summer's money.
+ */
+export const SEASON_BOOST = { summer: 1.3, winter: 0 } as const;
+
+/** The money pass's income multiplier for one stream this week (season-weighted). */
+export function incomeBoost(s: GameState, k: keyof typeof INCOME): number {
+  const f = isInSeason(s.date) ? SEASON_BOOST.summer : SEASON_BOOST.winter;
+  return Math.max(1, 1 + (INCOME[k] - 1) * f);
+}
+/** The fronts wash more (the books claim more customers), so the bigger take does not all pile up unwashed. */
+export const WASH_SCALE = 2.2;
+/** Every district the family runs (50%+ of the action) makes every corner pay more: protection prices go up. */
+export const TERRITORY_STEP = 0.06;
+export const TERRITORY_CAP = 0.45;
+/** Every racket past the first feeds the others (layoff bets, runners, a fence): the network. */
+export const NETWORK_STEP = 0.05;
+export const NETWORK_CAP = 0.35;
+
+/** Districts where the family holds 50%+ of the action. */
+export function heldDistricts(s: GameState): number {
+  return s.districts.filter((d) => (d.influence.player ?? 0) >= 50).length;
+}
+
+/** The territory multiplier on the crews' corners and hustle (1 + 6% a district held, capped). */
+export function territoryMult(s: GameState): number {
+  return 1 + Math.min(TERRITORY_CAP, TERRITORY_STEP * heldDistricts(s));
+}
+
+/** The rackets' network multiplier (1 + 5% for each racket past the first, capped). */
+export function racketNetMult(s: GameState): number {
+  const n = s.businesses.filter((b) => b.owner === 'player' && b.category === 'racket').length;
+  return 1 + Math.min(NETWORK_CAP, NETWORK_STEP * Math.max(0, n - 1));
+}
+
+/** Your cut above this, and the capos notice: each skims a little more (economy.ts skimRate). */
+export const GREED_CUT = 4000;
+
+/** Extra skim the capos allow themselves when the boss's cut is greedy (0 at 40% or less). */
+export function greedSkim(s: GameState): number {
+  const cut = s.tribute?.policy.personal ?? 0;
+  return cut >= 5000 ? 0.12 : cut > GREED_CUT ? 0.05 : 0;
+}
+
+/* ------------------------------------------------------------------ */
 /* The one lever: Squeeze harder this week                             */
 /* ------------------------------------------------------------------ */
 
-export const SQUEEZE = { mult: 1.3, markers: 0.45, heat: 3, opinion: -3, gap: 4 } as const;
+export const SQUEEZE = { mult: 1.3, markers: 0.45, heat: 2, opinion: -3, gap: 4 } as const;
 
 /** This week's squeeze multiplier on the crews' corners and hustle (1 when not squeezing). */
 export function squeezeMult(s: GameState): number {
