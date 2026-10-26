@@ -3,6 +3,7 @@ import { isInSeason } from './calendar';
 import { capos, isFree } from './characters';
 import { expectedTake, isOpen, owned } from './business';
 import { ensureEcon } from './econState';
+import { venueTake } from './empire';
 import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { xfer } from './tribute';
@@ -68,8 +69,9 @@ export function canHold(s: GameState, c: Character | undefined): c is Character 
 }
 
 /** May this business be somebody's steady earner? */
-export function eligible(b: Business): boolean {
-  return b.owner === 'player' && !NOT_EARNER.includes(b.kind);
+export function eligible(s: GameState, b: Business): boolean {
+  // A venue with its own books (payroll, supplies: empire.ts) is its manager's to run, not a steady earner.
+  return b.owner === 'player' && !NOT_EARNER.includes(b.kind) && venueTake(s, b) === undefined;
 }
 
 /** Who holds a business as his steady earner (the boss or a capo), if anyone. Cheap: called by expectedTake. */
@@ -85,7 +87,7 @@ export function earnerOf(s: GameState, charId: string): Business | undefined {
   const id = map(s)[charId];
   if (!id || !canHold(s, s.characters[charId])) return undefined;
   const b = s.businesses.find((x) => x.id === id && x.owner === 'player');
-  return b && eligible(b) ? b : undefined;
+  return b && eligible(s, b) ? b : undefined;
 }
 
 export function hasEarner(s: GameState, charId: string): boolean {
@@ -110,7 +112,7 @@ export function holders(s: GameState): Character[] {
 
 /** Businesses that could be given to somebody now (eligible, open or not, held by nobody). */
 export function freeEarners(s: GameState): Business[] {
-  return owned(s).filter((b) => eligible(b) && !holderOf(s, b.id));
+  return owned(s).filter((b) => eligible(s, b) && !holderOf(s, b.id));
 }
 
 /** What the business would pay as a steady earner a week (its expected take, steadied). */
@@ -152,7 +154,7 @@ export function earnerPreview(s: GameState, who: string, bizId: string): { title
     };
   }
   const title = boss ? `Make ${b?.name ?? 'it'} your own earner` : `Give ${c.firstName} ${b?.name ?? 'it'}`;
-  const why = !b ? 'Not yours' : !eligible(b) ? 'A crew that works by the score, a one-shot or a cost cannot be a steady earner' : cur?.id === b.id ? 'It is already his' : holderOf(s, b.id) && holderOf(s, b.id) !== who ? `It is already ${s.characters[holderOf(s, b.id)!]?.firstName}'s` : undefined;
+  const why = !b ? 'Not yours' : !eligible(s, b) ? 'A crew that works by the score, a one-shot, a cost or a venue with its own books cannot be a steady earner' : cur?.id === b.id ? 'It is already his' : holderOf(s, b.id) && holderOf(s, b.id) !== who ? `It is already ${s.characters[holderOf(s, b.id)!]?.firstName}'s` : undefined;
   const wk = b ? earnerWeekly(s, b) : 0;
   const detail = boss
     ? `About $${wk.toLocaleString('en-US')}/wk, every week, no swings: your piece (half, ~$${Math.round(wk * BOSS_PIECE).toLocaleString('en-US')}) goes straight into your Pocket, the rest to the Family.`
@@ -182,7 +184,7 @@ export function setEarner(s: GameState, who: string, bizId: string): void {
 export function routeEarner(ctx: Ctx, b: Business, amt: number): { amt: number; label: string; who: string } | undefined {
   const s = ctx.s;
   const who = holderOf(s, b.id);
-  if (!who || amt <= 0) return undefined;
+  if (!who || amt <= 0 || earnerOf(s, who)?.id !== b.id) return undefined;
   const c = s.characters[who];
   const a = Math.round(amt);
   if (who === s.playerId) {

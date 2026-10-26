@@ -559,6 +559,7 @@ for (const u of houseErr.slice(0, 5)) console.log(`    - ${u}`);
 
 console.log(`\nECONOMY`);
 console.log(`  Bankrupt in year 1:         ${pct(results.filter((r) => r.bankruptYear1).length, GAMES)}   (the Family < $0 for ${INSOLVENT_WEEKS}+ straight weeks; the boss's Pocket does not count)`);
+{ const bk = results.map((r, i) => (r.bankruptYear1 ? i : -1)).filter((i) => i >= 0); if (bk.length) console.log(`    (replay with --only: ${bk.join(', ')})`); }
 console.log(`  Bankrupt at any point:      ${pct(results.filter((r) => r.bankruptEver).length, GAMES)}`);
 console.log(`  Ever in the red:            ${pct(results.filter((r) => r.everNegative).length, GAMES)}`);
 console.log(`  Longest red run in year 1:  1-3 weeks ${pct(results.filter((r) => r.redStreakY1 >= 1 && r.redStreakY1 < 4).length, GAMES)}, 4-7 weeks ${pct(results.filter((r) => r.redStreakY1 >= 4 && r.redStreakY1 < 8).length, GAMES)}, 8+ ${pct(results.filter((r) => r.redStreakY1 >= 8).length, GAMES)}`);
