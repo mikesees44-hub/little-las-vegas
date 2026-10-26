@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { MoneyView } from '../src/ui/money/MoneyView';
+import { PANELS } from '../src/ui/shell/panels';
 import { newGame } from '../src/engine/newGame';
 import { advanceWeek } from '../src/engine/engine';
 import { newBusiness } from '../src/engine/business';
@@ -141,5 +145,22 @@ describe('old saves and tidy state', () => {
     tidyState(copy);
     expect(copy).toEqual(s);
     expect(JSON.parse(JSON.stringify(s))).toStrictEqual(JSON.parse(JSON.stringify(copy)));
+  });
+});
+
+describe('the Money screen renders', () => {
+  it('is a Holdings panel section with the flow, the cut split, the trend and the levers', () => {
+    const sec = PANELS.find((p) => p.id === 'holdings')!.sections.find((x) => x.id === 'money');
+    expect(sec).toBeDefined();
+    const s = play(newGame('money-ui'), 9, true);
+    const html = renderToString(createElement(MoneyView, { s }));
+    for (const id of ['money-weekflow', 'money-sources', 'money-split', 'money-uses', 'money-flow-net', 'money-chart-legend', 'money-levers', 'money-pots']) expect(html).toContain(`data-testid="${id}"`);
+    expect(html).toContain('Came in');
+    expect(html).toContain('Went out');
+    expect(html).toMatch(/The last (<!-- -->)?8(<!-- -->)? weeks/);
+  });
+  it('before the first week it says the money starts on its own', () => {
+    const html = renderToString(createElement(MoneyView, { s: newGame('money-ui0') }));
+    expect(html).toContain('Everything is collected on its own');
   });
 });

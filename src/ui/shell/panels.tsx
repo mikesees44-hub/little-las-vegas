@@ -135,7 +135,7 @@ export const PANELS: PanelDef[] = [
     id: 'holdings', icon: '$', label: 'Holdings', short: 'Holdings', key: 'l',
     blurb: 'Everything that makes or keeps money: places, property, the books.',
     sections: [
-      { id: 'money', label: 'Money', blurb: 'Two pots: the Family and your Pocket. Where last week\'s money came from and where it went, your cut, and the biggest leak.', render: (s) => <MoneyView s={s} /> },
+      { id: 'money', label: 'Money', wide: true, blurb: 'This week\'s money in one picture: where it came from, your cut into the Family and your Pocket, where it went, and the last 8 weeks. Everything is collected on its own.', render: (s) => <MoneyView s={s} /> },
       { id: 'hub', label: 'The Rackets', wide: true, blurb: 'Every racket on the island: what it pays, what it takes, how you run it. Start one, set how it runs, take the next step.', render: (s) => <RacketHub s={s} /> },
       { id: 'rackets', label: 'What you own', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
