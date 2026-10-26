@@ -60,6 +60,8 @@ import { tributeBegin, tributeEnd, tributeWeek } from './tributeFlow';
 import './tributeEvents';
 import { earsWeek } from './ears';
 import { racketEventSource } from './racketLife';
+import { delegatedActions, recordDelegation } from './briefing';
+import { chosenRounds, roundOptions, roundsWeek } from './rounds';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -272,6 +274,10 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     const report = emptyReport(s);
     return { state: s, report, log: [] };
   }
+  // The Sit-Down's trusted advisors and the boss's rounds are read off the week as the player saw it.
+  const delegated = delegatedActions(input, choices);
+  const picked = chosenRounds(input, choices);
+  const roundOpts = picked ? roundOptions(input) : [];
   const s = cloneState(input);
   const ctx = newCtx(s);
   const start = snapshot(s);
@@ -285,7 +291,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   s.cutscenes = [];
   const resolving = s.pendingEvents;
   noteAnswers(s, resolving, choices);
-  resolveChoices(ctx, choices);
+  resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => d.action)] } : choices);
+  if (!s.gameOver) recordDelegation(s, weekOf, delegated);
+  const roundLines = !s.gameOver && picked ? roundsWeek(ctx, picked, roundOpts) : [];
   if (!s.gameOver) tributeBegin(ctx, resolving, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
@@ -363,6 +371,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
 
   const report: WeeklyReport = {
     ...(motion.length ? { motion } : {}),
+    ...(delegated.length || roundLines.length ? { rounds: [...delegated.map((d) => d.text + '.'), ...roundLines] } : {}),
     week: weekOf,
     date: dateOf,
     seasonLabel: info.label,

@@ -12,6 +12,8 @@ import { HoodDashboard } from './HoodDashboard';
 import { ISO, P, PLAN, palette, poly, type Mood } from './iso';
 import { StreetCard } from './StreetCard';
 import { PaintedView, sceneForHood, type Scene } from './PaintedView';
+import { DistrictCards } from './DistrictCards';
+import { PlanView } from './PlanView';
 import { useShell } from '../shell/context';
 
 /**
@@ -96,6 +98,8 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
   const [moodSet, setMoodSet] = useState<'auto' | Mood>(() => (typeof localStorage !== 'undefined' ? pref().mood : undefined) ?? 'auto');
   const [overlay, setOverlay] = useState<HoodOverlay>('none');
   const [sel, setSel] = useState<string | undefined>();
+  const [districts, setDistricts] = useState(false);
+  const [plan, setPlan] = useState(false);
   const [hood, setHood] = useState<HoodId | undefined>();
   const [menu, setMenu] = useState(false);
   // Street level: the painted block and Pacific Avenue (live hotspots over the user's art).
@@ -193,6 +197,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
   useEffect(() => { home(); }, [projMode]);
   const goHood = useCallback((id: HoodId | undefined) => {
     setHood(id);
+    setDistricts(false);
     onHood?.(id);
     if (!id) return;
     setSel(undefined);
@@ -370,7 +375,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
     : overlay === 'police' ? [['Quiet', 'rgb(120,170,220)'], ['Crawling with cops', 'rgb(20,60,200)']]
     : overlay === 'rival' ? [['Rival-held', OWNER_COLOR.manno], ['Rival pull (area)', 'rgb(200,30,40)']] : [];
 
-  const panelOpen = !!selItem || !!hood;
+  const panelOpen = !!selItem || !!hood || districts;
   return (
     <div className="absolute inset-0 overflow-hidden select-none" data-testid="island-view" data-mood={mood} data-overlay={overlay} data-tier={tier} style={{ background: pal.bay, touchAction: 'none' }}>
       <div ref={host} className="absolute inset-0" onClick={() => { if (!wasDrag()) { setSel(undefined); } }}>
@@ -399,22 +404,25 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
           </svg>
         </div>
       </div>
-      {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setMenu(false); }} onScene={setScene} onMap={() => setScene(undefined)} /></div>}
+      {plan && !scene && <div className="absolute inset-0 z-[998]"><PlanView s={s} items={items} onPick={(k) => { setSel(k); setMenu(false); }} onClose={() => { setPlan(false); setSel(undefined); }} /></div>}
+      {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setDistricts(false); setMenu(false); }} onScene={(sc) => { setScene(sc); setDistricts(false); }} onMap={() => setScene(undefined)} onDistricts={() => { setSel(undefined); setDistricts(true); }} /></div>}
       {/* Controls. */}
-      <div data-hv-ui className="absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%]">
-        {!scene && <div className="flex flex-wrap justify-end gap-1">
+      <div data-hv-ui className={`absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%] ${plan && !scene ? 'hidden' : ''}`}>
+        {!scene && !plan && <div className="flex flex-wrap justify-end gap-1">
           <button type="button" className="hv-btn hv-on" onClick={() => { setScene(sceneForHood(hood)); setHood(undefined); onHood?.(undefined); }} title="Down to street level (the neighborhood you have picked, or the Boardwalk)" data-testid="hv-street">Street level</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
           <button type="button" className="hv-btn" onClick={whole} title="The whole island">⤢</button>
           <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Recenter on the Boardwalk" data-testid="hv-recenter">⌂ Recenter</button>
+          <button type="button" className={`hv-btn ${districts ? 'hv-on' : ''}`} onClick={() => { setSel(undefined); setHood(undefined); onHood?.(undefined); setDistricts((x) => !x); }} title="The six districts, with the painted cards" data-testid="hv-districts">Districts</button>
+          <button type="button" className="hv-btn" onClick={() => { setSel(undefined); setDistricts(false); setPlan(true); }} title="The block map: where each business stands, to scale, with the editor" data-testid="hv-plan">Block map</button>
         </div>}
         <div className="flex gap-1" role="group" aria-label="Light">
           {(['auto', 'day', 'dusk', 'night'] as const).map((m) => (
             <button key={m} type="button" className={`hv-btn ${moodSet === m ? 'hv-on' : ''}`} onClick={() => { setMoodSet(m); savePref({ mood: m }); }} title={m === 'auto' ? 'Follows the heat' : m}>{m === 'auto' ? 'Auto' : m === 'day' ? '☀' : m === 'dusk' ? '◐' : '☾'}</button>
           ))}
         </div>
-        {!scene && <div className="flex gap-1">
+        {!scene && !plan && <div className="flex gap-1">
           <button type="button" className={`hv-btn ${projMode === 'iso' ? 'hv-on' : ''}`} onClick={() => { setProjMode('iso'); savePref({ proj: 'iso' }); }}>2.5D</button>
           <button type="button" className={`hv-btn ${projMode === 'plan' ? 'hv-on' : ''}`} onClick={() => { setProjMode('plan'); savePref({ proj: 'plan' }); }}>Plan</button>
           {onSurvey && <button type="button" className="hv-btn" onClick={onSurvey} title="The survey map (districts)">Survey map</button>}
@@ -434,12 +442,13 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
         )}
         {moodSet === 'auto' && mood !== 'day' && <div className="rounded bg-noir-900/90 border border-blood-500/60 px-2 py-1 text-[10px] text-rose-200 max-w-[220px]">The heat is on. The island looks different after dark.</div>}
       </div>
-      {!scene && <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
+      {!scene && !plan && <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
         {HOODS.map((h) => <button key={h.id} type="button" onClick={() => goHood(h.id)} className={`hv-chip ${hood === h.id ? 'hv-on' : ''}`}>{h.name}</button>)}
       </div>}
       {panelOpen && (
         <div data-hv-ui className="absolute z-[1002] panel overflow-y-auto p-3 inset-x-0 bottom-0 max-h-[62%] rounded-b-none md:inset-x-auto md:right-2 md:top-36 md:bottom-12 md:max-h-none md:w-[380px] md:rounded-b-lg llv-slide-right" data-testid="hv-panel">
           {selItem ? <StreetCard s={s} it={selItem} mood={mood} onClose={() => setSel(undefined)} />
+            : districts ? <DistrictCards s={s} onClose={() => setDistricts(false)} onStreet={(sc) => { setDistricts(false); setScene(sc); }} onHood={(id) => { setDistricts(false); setScene(undefined); goHood(id); }} />
             : hood ? <HoodDashboard key={hood} s={s} initial={hood} compact onClose={() => { setHood(undefined); onHood?.(undefined); }} onFull={() => shell.go('town.hoods')} onStreet={(id) => { setScene(sceneForHood(id)); setHood(undefined); onHood?.(undefined); }} /> : null}
         </div>
       )}

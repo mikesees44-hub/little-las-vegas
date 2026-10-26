@@ -3,6 +3,7 @@ import { ensureEars } from './ears';
 import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
 import { ensureHood } from './hoodState';
+import { SEED } from './hoodData';
 import { ensureMissions } from './missions';
 import { ensureTalks } from './talks';
 import { ensureDynState } from './familyState';
@@ -33,7 +34,8 @@ export function upgradeSave(s: GameState): GameState {
   }
   // The neighborhood records, the talks and the missions are made at load too,
   // so an old save can walk the streets before its first week is played.
-  if (s.hood === undefined) for (const step of [ensureHood, ensureTalks, ensureMissions]) {
+  // A save from before a 1960 record was authored gets it too (where its ground is free).
+  if (s.hood === undefined || (s.econ?.lots.length && SEED.some((r) => !s.econ!.lots.some((l) => l.id === r[0])))) for (const step of [ensureHood, ensureTalks, ensureMissions]) {
     try { step(s); } catch { /* the weekly update will try again */ }
   }
   // The old player-run call service goes back to the Madam's network.

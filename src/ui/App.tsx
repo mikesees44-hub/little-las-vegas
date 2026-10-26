@@ -54,6 +54,10 @@ import { AudienceScene } from './tribute/AudienceScene';
 import { TributeUiContext, type TributeUiApi } from './tribute/context';
 import type { EnvelopeChoice } from '../engine/tributeOps';
 import { EmpireHost } from './empire/context';
+import { briefing as buildBriefing, setTrust, type BriefLink } from '../engine/briefing';
+import { usualWeek } from '../engine/rounds';
+import { SitDown } from './sitdown/SitDown';
+import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -97,6 +101,11 @@ export function App({ startOn = 'title' }: AppProps) {
   const [envelope, setEnvelopeState] = useState<EnvelopeChoice | undefined>();
   const setEnvelope = (e: EnvelopeChoice | undefined) => { envelopeRef.current = e; setEnvelopeState(e); };
   const [office, setOffice] = useState<string | undefined>();
+  // The Sit-Down and Your Rounds: this week's evenings (undefined: the usual week), the items put off, the screen.
+  const [roundsPick, setRoundsPick] = useState<string[] | undefined>();
+  const [briefSkip, setBriefSkip] = useState<string[]>([]);
+  const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
+  const [sitSeen, setSitSeen] = useState<string | undefined>();
   const ordersApi = useMemo(() => ({
     orders,
     queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
@@ -159,7 +168,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
-    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}) };
+    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), rounds: roundsPick ?? usualWeek(s), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) };
     // A ceremony the player sat through replaces the old single card.
     const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
     const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
@@ -190,6 +199,9 @@ export function App({ startOn = 'title' }: AppProps) {
     setAnswers({});
     setMgMoves({});
     setOrders([]);
+    setRoundsPick(undefined);
+    setBriefSkip([]);
+    setSitdown(undefined);
     setEnvelope(undefined);
     setPendingLaw(undefined);
     setPendingHeir(undefined);
@@ -238,6 +250,9 @@ export function App({ startOn = 'title' }: AppProps) {
     setMgMoves({});
     setScene(null);
     setOrders([]);
+    setRoundsPick(undefined);
+    setBriefSkip([]);
+    setSitdown(undefined);
     setReports(null);
     setEventIdx(null);
     setSheet(undefined);
@@ -299,7 +314,8 @@ export function App({ startOn = 'title' }: AppProps) {
   function go(r: Route | string) {
     openRoute(typeof r === 'string' ? routeFor(r) : r);
   }
-  const shellAlertList = useMemo(() => shellAlerts(s, alertList).filter((a) => !(shellUi.snoozed[a.key] > s.week)), [s, alertList, shellUi.snoozed]);
+  const briefForRail = useMemo(() => buildBriefing(s), [s]);
+  const shellAlertList = useMemo(() => { const folded = coveredBy(briefForRail, briefSkip); return shellAlerts(s, alertList).filter((a) => !(shellUi.snoozed[a.key] > s.week) && !folded(a)); }, [s, alertList, shellUi.snoozed, briefForRail, briefSkip]);
   function onAlert(a: ShellAlert) {
     if (a.mapFocus) focusMap(a.mapFocus);
     if (a.kind === 'decision') { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }
@@ -333,8 +349,19 @@ export function App({ startOn = 'title' }: AppProps) {
   goRef.current = go;
 
   const current = eventIdx !== null ? s.pendingEvents[eventIdx] : undefined;
-  const overlayOpen = !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  const brief = briefForRail;
+  /** Leave the sit-down for whatever an option or a card points at. */
+  function followLink(l: BriefLink) {
+    setSitdown(undefined);
+    if (l.event) { const i = s.pendingEvents.findIndex((e) => e.iid === l.event); if (i >= 0) { setAdvancing(false); setEventIdx(i); } }
+    else if (l.office) tributeApi.openAudience();
+    else if (l.trip) travelApi.plan(l.trip);
+    else if (l.charId) setSheet(l.charId);
+    else if (l.tab === 'map') setRoute({});
+    else if (l.tab) go(l.tab);
+  }
+  const overlayOpen = !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
     step: () => run('week', answers, true),
@@ -344,6 +371,17 @@ export function App({ startOn = 'title' }: AppProps) {
       if (why === 'A decision is waiting' && !busy) { setAdvancing(false); setEventIdx(s.pendingEvents.findIndex((e) => !answers[e.iid])); }
     },
   });
+  const sitKey = `${s.seed}:${s.week}`;
+  useEffect(() => {
+    if (menu || s.gameOver || speed !== 0 || sitSeen === sitKey) return;
+    if (current || scene || cues.length || reels.length || night.length || reports || sheet || planner || tripPlan || fleeFor || picker || office || ctxMenu) return;
+    let seen: string | null = null;
+    try { seen = sessionStorage.getItem('llv-sitdown'); } catch { /* storage unavailable */ }
+    setSitSeen(sitKey);
+    if (seen === sitKey) return;
+    try { sessionStorage.setItem('llv-sitdown', sitKey); } catch { /* storage unavailable */ }
+    if (getSettings().sitdownEachWeek !== false) setSitdown('council');
+  }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
@@ -383,7 +421,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
-      <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} />
+      {!s.gameOver && <SitDownCard s={s} b={briefForRail} onOpen={() => setSitdown('council')} onRounds={() => setSitdown('rounds')} />}
+      <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} hideAdvice />
       {!s.gameOver && <GoalsCard goals={goals} onShow={showGoal} />}
       <div className="2xl:hidden"><StreetFeedCard s={s} /></div>
     </>
@@ -400,7 +439,8 @@ export function App({ startOn = 'title' }: AppProps) {
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
             onReview={() => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
-            seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0} />
+            seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
+            onSitDown={() => setSitdown('council')} sitCount={brief.items.length} />
         )}
         rail={<LeftRail visible={shellUi.visiblePanels} active={panel} badges={badges} dots={shellUi.dots} onOpen={(p) => { shellUi.seenPanel(p); if (panel === p) setRoute({}); else openRoute(p === lastRoute.panel ? lastRoute : { panel: p }); }} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
@@ -442,6 +482,12 @@ export function App({ startOn = 'title' }: AppProps) {
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
       {!menu && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
+      {sitdown && !current && !scene && (
+        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={roundsPick} setRounds={setRoundsPick} skip={briefSkip} setSkip={setBriefSkip}
+          onTrust={(k, on) => setS((x) => setTrust(x, k, on))} onLink={followLink} onClose={() => setSitdown(undefined)}
+          onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
+          lesson={s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
+      )}
       {current && scene && (
         <MinigameScreen
           key={scene.iid}

@@ -121,7 +121,7 @@ export const BIZ_NAMES: Record<BusinessKind, string[]> = {
   carlot: ['Honest Al\'s Motors', 'Causeway Used Cars', 'Boardwalk Auto Sales'],
   arcade: ['Skee-Ball parlor', 'Pinball arcade', 'Penny arcade on the pier', 'Fascination parlor'],
   boarding: ['Rooming house on Spencer', 'Ocean Ave guest house', 'Glenwood rooms'],
-  club: ['The Riptide Lounge', 'Club Bolero', 'The Starlight Room', 'The Velvet Anchor', 'The Hurricane Room', 'Club Avalon', 'The Moonglow'],
+  club: ['The Riptide Lounge', 'Club Bolero', 'The Starlight Room', 'The Velvet Anchor', 'The Hurricane Room', 'Club Sorrento', 'The Moonglow'],
   bank: ['Shore Federal Savings & Loan'],
   casino: ['A boardwalk casino stake'],
   numbers: ['Pacific Ave numbers bank', 'Cigar-store policy wheel', 'Back-room numbers drop', 'Bayside numbers bank'],

@@ -2,7 +2,7 @@ import type { BuildStyle, SignColor } from './design';
 import type { Lot } from './econState';
 import { CROSS } from './hoodData';
 import { ADJ, FIRSTNAMES, HOOD_IDS, HOODS, MOTEL_NAMES, NOUN, SEED, SURNAMES, type HoodId } from './hoodData';
-import { fillCandidates } from './hoodGeo';
+import { fillCandidates, seedBlocked } from './hoodGeo';
 import { chance, pick, randInt } from './rng';
 import { inflation, tenantRent, USES_BY_ID, ZONES_BY_ID } from './property';
 import { hashSeed } from './rng';
@@ -171,6 +171,7 @@ export function ensureHood(s: GameState): HoodState | undefined {
   const have = new Set(e.lots.map((l) => l.id));
   SEED.forEach((r, i) => {
     if (have.has(r[0])) return;
+    if (h.filled && seedBlocked(r[0], have)) return;
     e.lots.push(seedLot(s, i));
     if (r[7] !== 'lease') h.styles[r[0]] ??= { style: r[10], sign: r[11], since: r[12] };
   });

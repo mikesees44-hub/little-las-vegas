@@ -95,8 +95,9 @@ function OppLine({ s, o }: { s: GameState; o: Opportunity }) {
   );
 }
 
-export function ThisWeekCard({ s, onReport }: { s: GameState; onReport: () => void }) {
-  const w = thisWeek(s);
+export function ThisWeekCard({ s, onReport, hideAdvice }: { s: GameState; onReport: () => void; /** The sit-down covers threats and opportunities. */ hideAdvice?: boolean }) {
+  const w0 = thisWeek(s);
+  const w = hideAdvice ? { ...w0, threats: [], opportunities: [] } : w0;
   const info = seasonInfo(s.date);
   const sign = (n: number) => (n > 0 ? `+${n}` : `${n}`);
   return (

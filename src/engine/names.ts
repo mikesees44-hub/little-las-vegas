@@ -70,7 +70,7 @@ export const NICKNAMES: string[] = [
 ];
 
 export const BUSINESS_NAMES: Record<string, string[]> = {
-  club: ['The Riptide Lounge', 'Club Bolero', 'The Starlight Room', 'The Velvet Anchor', 'The Hurricane Room', 'Club Avalon', 'The Moonglow'],
+  club: ['The Riptide Lounge', 'Club Bolero', 'The Starlight Room', 'The Velvet Anchor', 'The Hurricane Room', 'Club Sorrento', 'The Moonglow'],
   numbers: ['Pacific Ave numbers bank', 'Cigar-store policy wheel', 'Back-room numbers drop'],
   bookmaking: ['Wire room over the barbershop', 'Racing book at the newsstand', 'Telephone book on Rio Grande'],
   arcade: ['Skee-Ball parlor', 'Pinball arcade', 'Penny arcade on the pier'],

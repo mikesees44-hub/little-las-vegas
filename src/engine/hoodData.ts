@@ -193,7 +193,7 @@ export const SEED: SeedRow[] = [
   ['bw18', 'boardwalk', 'bw', 'Garfield Ave', 'b', 'supper', 'The Flamingo Supper Club', 'rival', 'manno', 'Manno crew', 'tiki', 'pink', 1955, 84],
   ['bw19', 'boardwalk', 'bw', 'Lincoln Ave', 'a', 'icecream', 'Arctic Penguin Soft Serve', 'private', 'private', 'Vince DiNardo', 'doowop', 'turquoise', 1958, 90],
   ['bw20', 'boardwalk', 'bw', 'Lincoln Ave', 'b', 'motel', 'The Tropicana Motel', 'sale', 'private', 'the Kovacs family', 'doowop', 'turquoise', 1957, 86],
-  ['bw21', 'boardwalk', 'bw', 'Youngs Ave', 'a', 'beachrental', 'Beach Chair & Umbrella Co.', 'private', 'private', 'the Morey brothers', 'colonial', 'gold', 1950, 73],
+  ['bw21', 'boardwalk', 'bw', 'Youngs Ave', 'a', 'beachrental', 'Beach Chair & Umbrella Co.', 'private', 'private', 'the Mahaffey brothers', 'colonial', 'gold', 1950, 73],
   ['bw22', 'boardwalk', 'bw', 'Hildreth Ave', 'a', 'motel', 'The Coral Reef Motor Inn', 'rival', 'feldstein', 'Feldstein\'s people', 'doowop', 'pink', 1959, 95],
   // On the piers: a signature ride each.
   ['pr01', 'piers', 'pier', 'Oak Ave', 2, 'ride', 'The Flyer', 'private', 'private', 'the pier company', 'deco', 'red', 1957, 85],
@@ -222,6 +222,44 @@ export const SEED: SeedRow[] = [
   // Anglesea.
   ['nw01', 'north', 'at+', '22nd Ave', 'a', 'hoodclub', 'The Anglesea Inn', 'rival', 'kessler', 'Kessler\'s Clubs', 'victorian', 'green', 1902, 58],
   ['nw02', 'north', 'oc+', '10th Ave', 'a', 'cottage', 'Seabreeze Cottages', 'private', 'private', 'the Sorensen family', 'victorian', 'white', 1922, 63],
+  // The places the user painted for the street level (fictional, or long gone: the Shamrock, Chemical Bank).
+  // Downtown: the barber, the laundry, the pizza parlor and the soda fountain on New Jersey Avenue.
+  ['sa01', 'downtown', 'nj+', 'Cedar Ave', 'a', 'barber', 'Bayshore Barber Shop', 'private', 'private', 'Carmine Ianelli', 'midcentury', 'red', 1948, 71],
+  ['sa02', 'downtown', 'nj+', 'Cedar Ave', 'b', 'laundromat', 'Spin City Laundry', 'private', 'private', 'Dot Kriebel', 'doowop', 'turquoise', 1957, 86],
+  ['sa03', 'downtown', 'nj+', 'Spicer Ave', 'a', 'pizza', 'Moon Slice Pizza', 'private', 'private', 'Eddie Mastro', 'doowop', 'pink', 1956, 80],
+  ['sa04', 'downtown', 'nj+', 'Spicer Ave', 'b', 'pharmacy', 'Penny Candy & Soda', 'private', 'private', 'Bea Galloway', 'victorian', 'pink', 1931, 66],
+  // The Shamrock: the old Victorian corner tavern where everybody drinks (and some back rooms get used).
+  // (3700 Pacific Avenue, per the user's research; the game's block for it is approximate.)
+  ['sa05', 'pacific', 'pa-', 'Spencer Ave', 'a', 'hoodclub', 'The Shamrock', 'private', 'private', 'Packy Gallagher', 'victorian', 'green', 1899, 61],
+  ['sa06', 'downtown', 'nj-', 'Oak Ave', 'a', 'hoodclub', 'The Bella Napoli Social Club', 'private', 'private', 'the club\'s members', 'colonial', 'green', 1921, 63],
+  ['sa07', 'downtown', 'nj-', 'Pine Ave', 'a', 'office', 'Chemical Bank', 'private', 'private', 'the bank', 'deco', 'white', 1926, 58],
+  // Pacific Avenue: an Italian place, a deli and a bar.
+  ['sa08', 'pacific', 'pa-', 'Spicer Ave', 'a', 'trattoria', 'Bellavita', 'private', 'private', 'Connie Russo', 'midcentury', 'red', 1951, 77],
+  ['sa09', 'pacific', 'pa+', 'Magnolia Ave', 'b', 'deli', 'Bayview Deli', 'private', 'private', 'Max Rubin', 'midcentury', 'turquoise', 1949, 72],
+  // The Red Garter: a banjo-and-beer saloon (long gone; its block and years here are unverified).
+  ['sa20', 'pacific', 'pa+', 'Oak Ave', 'b', 'hoodclub', 'The Red Garter', 'private', 'private', 'Banjo Bill Kearney', 'victorian', 'red', 1958, 74],
+  ['sa10', 'pacific', 'pa+', 'Burk Ave', 'a', 'hoodclub', 'The Anchor Bar & Lounge', 'private', 'private', 'Walt O\'Hara', 'deco', 'turquoise', 1947, 70],
+  // The south end of the Boardwalk.
+  ['sa11', 'boardwalk', 'bw', 'Roberts Ave', 'a', 'icecream', 'Starlight Scoops', 'private', 'private', 'Irene Petrakis', 'doowop', 'pink', 1957, 88],
+  ['sa12', 'boardwalk', 'bw', 'Roberts Ave', 'b', 'giftshop', 'Seaside Sweets Fudge', 'private', 'private', 'Marge Yeager', 'victorian', 'red', 1928, 70],
+  ['sa13', 'boardwalk', 'bw', 'Hand Ave', 'a', 'arcade', 'Lucky Sevens Arcade', 'private', 'private', 'Stan Fiorentino', 'doowop', 'turquoise', 1954, 78],
+  ['sa14', 'boardwalk', 'bw', 'Bennett Ave', 'a', 'trattoria', 'Captain\'s Table Seafood', 'private', 'private', 'Frank Schmidt', 'midcentury', 'red', 1952, 75],
+  // Two new motels in the Crest.
+  ['sa15', 'crest', 'oc-', 'Lavender Rd', 'w', 'motel', 'The Blue Comet Motel', 'private', 'private', 'the Novak family', 'doowop', 'blue', 1958, 95],
+  ['sa16', 'crest', 'oc-', 'Myrtle Rd', 'w', 'motel', 'The Starfin Motel', 'private', 'private', 'Harry Lenz', 'doowop', 'turquoise', 1959, 96],
+  // The cab garage at the foot of the causeway; the seafood house and the cafe on the harbor lane.
+  ['sa17', 'causeway', 'cw', 'Pine Ave', 'a', 'taxigarage', 'Shore Cab Co.', 'private', 'private', 'Sal Petrakis', 'midcentury', 'gold', 1950, 68],
+  ['sa18', 'docks', 'pk-', 'Garfield Ave', 'a', 'trattoria', 'The Seafood House', 'private', 'private', 'Lou Kriebel', 'victorian', 'white', 1934, 64],
+  ['sa19', 'docks', 'pk-', 'Garfield Ave', 'b', 'diner', 'The Cafe', 'private', 'private', 'Connie Duffy', 'victorian', 'red', 1930, 62],
+  // Batch 4 (the user's three-quarter models): ownable places on the block map. Klug's and the two
+  // motels are near-miss names (the real ones still operate); Groff's is closed (real name kept);
+  // the Hurricane is long gone (real name kept); the Boathouse is generic.
+  ['sb01', 'boardwalk', 'bw', '26th Ave', 'a', 'diner', 'Klug\'s', 'private', 'private', 'Hank Klug', 'midcentury', 'blue', 1948, 74],
+  ['sb02', 'pacific', 'pa+', 'Burk Ave', 'b', 'jazzclub', 'The Hurricane Club', 'private', 'private', 'Dutch Mahler', 'midcentury', 'red', 1952, 70],
+  ['sb03', 'boardwalk', 'bw', 'Bennett Ave', 'b', 'trattoria', 'Groff\'s Restaurant', 'private', 'private', 'Elsie Brandt', 'colonial', 'green', 1946, 68],
+  ['sb04', 'docks', 'pk+', 'Youngs Ave', 'w', 'trattoria', 'The Boathouse', 'private', 'private', 'Cap Lindqvist', 'victorian', 'blue', 1949, 66],
+  ['sb05', 'crest', 'oc-', 'Buttercup Rd', 'w', 'motel', 'The Wai-Kiki Oceanfront Resort', 'private', 'private', 'the Kalani family', 'doowop', 'turquoise', 1959, 94],
+  ['sb06', 'crest', 'oc-', 'Atlanta Ave', 'w', 'motel', 'The Malibu Beach Motel', 'private', 'private', 'Ray Delmonico', 'doowop', 'red', 1958, 92],
 ];
 
 export const SEED_IDS = new Set(SEED.map((r) => r[0]));
@@ -271,4 +309,4 @@ export const NOUN: Record<string, string[]> = {
   motel: ['Motel', 'Motor Inn', 'Court'], hotel: ['Hotel'], cottage: ['Cottages'], rooming: ['Guest House'], warehouse: ['Storage'], dockwh: ['Marine Supply'], marina: ['Marina'],
   wholesale: ['Seafood Co.'], machineshop: ['Machine Works'], commlaundry: ['Linen Service'], gas: ['Service Station'], garage: ['Garage'], carwash: ['Car Wash'], house: ['Cottage'], lumberyard: ['Lumber'],
 };
-export const MOTEL_NAMES = ['The Sea Gull', 'The Sandpiper', 'The Surf Rider', 'The Royal Islander', 'The Aqua Vista', 'The Shore Crest', 'The Blue Marlin', 'The Coral Sands', 'The Ala Kai', 'The Sea Horse', 'The Monte Carlo', 'The Jet Stream', 'The Sea Shell', 'The Mayan Sun', 'The Imperial 400', 'The Gemini', 'The Orbit', 'The Tahitian', 'The Driftwood', 'The Sun Deck'];
+export const MOTEL_NAMES = ['The Sea Gull', 'The Sandpiper', 'The Surf Rider', 'The Royal Islander', 'The Aqua Vista', 'The Shore Crest', 'The Blue Heron', 'The Coral Sands', 'The Ala Kai', 'The Sea Horse', 'The Monte Carlo', 'The Jet Stream', 'The Sea Shell', 'The Mayan Sun', 'The Imperial 400', 'The Gemini', 'The Orbit', 'The Tahitian', 'The Driftwood', 'The Sun Deck'];

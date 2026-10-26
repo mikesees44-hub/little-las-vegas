@@ -6,7 +6,8 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { OWNER_COLOR } from '../map/lotIcons';
 import { HOOD_ART } from './art/districtArt';
-import { DISTRICT_CARD } from './districts';
+import { DISTRICT_CARD, DISTRICTS } from './districts';
+import { AssetImg } from './AssetImg';
 
 function Meter({ label, value, max = 100, color, hint }: { label: string; value: number; max?: number; color: string; hint?: string }) {
   return (
@@ -55,7 +56,7 @@ export function HoodDashboard({ s, initial, compact, onClose, onFull, onStreet }
       </div>
       {HOOD_ART[id] && (
         <figure className="relative overflow-hidden rounded-lg border border-[#ff5fa2]/40" data-testid="hood-art">
-          <img src={HOOD_ART[id]} alt={DISTRICT_CARD[id]?.title ?? v.name} className="block w-full h-auto max-h-48 object-cover" />
+          <AssetImg k={DISTRICTS.find((d) => d.id === id)?.asset} inline={HOOD_ART[id]} alt={DISTRICT_CARD[id]?.title ?? v.name} className="block w-full h-auto max-h-48 object-cover" />
           <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-2 pb-1.5 pt-6">
             <div className="font-display text-sm text-[#ffd1e6]">{DISTRICT_CARD[id]?.title}</div>
             <div className="text-[11px] text-stone-200 leading-snug">{DISTRICT_CARD[id]?.line}</div>

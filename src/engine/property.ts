@@ -334,7 +334,7 @@ function usesFor(z: ZoneInfo, year: number): PropertyUse[] {
   return USES.filter((u) => !u.npcOnly && (u.minYear ?? 0) <= year && (u.zones ? u.zones.includes(z.id) : z.cats.includes(u.cat)) && u.cost <= 40000);
 }
 
-const OWNER_NAMES = ['Gus Papadakis', 'the Morey brothers', 'Abe Kaplan', 'the Sorensen family', 'Vince DiNardo', 'Mrs. Hallahan', 'the Kovacs family', 'Sid Weintraub', 'Lou Castellano', 'the Brennan estate', 'Joe Pirelli', 'Harry Lenz'];
+const OWNER_NAMES = ['Gus Papadakis', 'the Mahaffey brothers', 'Abe Kaplan', 'the Sorensen family', 'Vince DiNardo', 'Mrs. Hallahan', 'the Kovacs family', 'Sid Weintraub', 'Lou Castellano', 'the Brennan estate', 'Joe Pirelli', 'Harry Lenz'];
 
 /** Lays out the lots of every zone (once, at the start). */
 export function generateLots(s: GameState, e: EconState): void {

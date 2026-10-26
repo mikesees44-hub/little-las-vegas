@@ -279,7 +279,7 @@ function supplyIncome(ctx: Ctx, l: Lot, u: PropertyUse, st: string): void {
 
 /* ---------------- monthly: the town builds ---------------- */
 
-const DEVELOPERS = ['Sid Weintraub', 'the Morey brothers', 'Gus Papadakis', 'Lou Castellano', 'Harry Lenz', 'the Kovacs family', 'Vince DiNardo', 'the Brennan estate', 'a Philadelphia syndicate', 'a Baltimore dentist'];
+const DEVELOPERS = ['Sid Weintraub', 'the Mahaffey brothers', 'Gus Papadakis', 'Lou Castellano', 'Harry Lenz', 'the Kovacs family', 'Vince DiNardo', 'the Brennan estate', 'a Philadelphia syndicate', 'a Baltimore dentist'];
 
 /** Weight of a use for a builder in a zone and year (the Crest motel boom of 1958–66). */
 function useWeight(u: PropertyUse, zone: ZoneId, year: number): number {

@@ -120,6 +120,23 @@ function taken(tag: string): string[] {
   return tag.endsWith(':w') ? [tag, tag.replace(/:w$/, ':a'), tag.replace(/:w$/, ':b')] : [tag, tag.replace(/:[ab]$/, ':w')];
 }
 
+/**
+ * Whether a 1960 record's ground is already built on by a generated record
+ * (an old save made before the record was authored): then it isn't added.
+ */
+export function seedBlocked(seedId: string, lotIds: Iterable<string>): boolean {
+  const sl = SEED_SLOT[seedId];
+  if (!sl) return false;
+  const mine = new Set(taken(sl.tag));
+  for (const id of lotIds) {
+    if (!id.startsWith('hf.')) continue;
+    const [, , run, ci, half] = id.split('.');
+    const c = CROSS[Number(ci)];
+    if (c && mine.has(`${run}:${c.n}:${half}`)) return true;
+  }
+  return false;
+}
+
 let memoKey = '';
 let memo: Map<string, Parcel> = new Map();
 
