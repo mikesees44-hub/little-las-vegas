@@ -113,7 +113,7 @@ function LotCard({ s, l }: { s: GameState; l: Lot }) {
         {l.status === 'sale' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id } }} compact />}
         {l.status === 'sale' && l.tenant && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id, going: true } }} compact />}
         {l.status === 'lease' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: l.id } }} compact />}
-        {(l.status === 'owned' || l.status === 'leased') && <p className="text-stone-400">Yours — managed under Holdings.</p>}
+        {(l.status === 'owned' || l.status === 'leased') && <p className="text-stone-400">Yours — managed under Rackets › Your places.</p>}
         {l.status !== 'owned' && l.status !== 'leased' && l.stage && l.stage !== 'open' && l.stage !== 'purchase' && (
           <p className="text-amber-300/80">Under construction by {l.developer ?? 'someone'}: {STAGE_LABEL[l.stage]} ({Math.round(lotProgress(l) * 100)}%){l.contractor ? ' — your crews hold the contract' : ''}{l.stopWork ? ` — stopped: ${l.stopWork.reason}` : ''}</p>
         )}

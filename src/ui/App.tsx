@@ -30,8 +30,14 @@ import { NewspaperReel, type Reel } from './minigames/NewspaperReel';
 
 import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
-import { PANELS, type SectionCtx } from './shell/panels';
-import { routeFor, type PanelId, type Route } from './shell/routes';
+import type { SectionCtx } from './shell/panels';
+import type { HomeId, Route } from './shell/routes';
+import { homeForKey, resolveRoute, type NavRoute } from './shell/nav';
+import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
+import { HelpBody } from './shell/ShellHelp';
+import { SettingsPanel } from './menu/StartMenu';
+import { OrdersTray } from './components/Orders';
+import { whatShouldIDo } from '../engine/opportunities';
 import { Providers } from './shell/Providers';
 import type { MapFocus, ShellApi } from './shell/context';
 import { Shell } from './shell/Shell';
@@ -89,7 +95,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const [advancing, setAdvancing] = useState(false);
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
   const [reportLog, setReportLog] = useState<WeeklyReport[]>([]);
-  const [route, setRoute] = useState<Route>({});
+  const [route, setRoute] = useState<NavRoute>({});
   const goRef = useRef<(r: Route | string) => void>(() => {});
   const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
@@ -304,23 +310,23 @@ export function App({ startOn = 'title' }: AppProps) {
   const [mapFocus, setMapFocus] = useState<MapFocus | undefined>();
   const focusMap = (f: Omit<MapFocus, 'nonce'>) => setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 }));
   const [helpMenu, setHelpMenu] = useState(false);
-  const [lastRoute, setLastRoute] = useState<Route>({ panel: 'borgata' });
-  /** Open a drawer section (an alert can reveal one that is still hidden). */
-  function openRoute(r: Route) {
-    if (r.panel && r.section) shellUi.reveal(`${r.panel}.${r.section}`);
-    if (r.panel) setLastRoute(r);
-    setRoute(r);
+  /** Open a home or one of its sections, from any route the game uses (an alert can reveal one that is still hidden). */
+  function openRoute(r: Route | string) {
+    const n = resolveRoute(r);
+    if (n.key) { shellUi.reveal(n.key); shellUi.seenSection(n.key); }
+    setRoute(n);
   }
   function go(r: Route | string) {
-    openRoute(typeof r === 'string' ? routeFor(r) : r);
+    openRoute(r);
   }
   const briefForRail = useMemo(() => buildBriefing(s), [s]);
+  const oppsForNav = useMemo(() => (route.home ? whatShouldIDo(s, 12) : []), [s, route.home]);
   const shellAlertList = useMemo(() => { const folded = coveredBy(briefForRail, briefSkip); return shellAlerts(s, alertList).filter((a) => !(shellUi.snoozed[a.key] > s.week) && !folded(a)); }, [s, alertList, shellUi.snoozed, briefForRail, briefSkip]);
   function onAlert(a: ShellAlert) {
     if (a.mapFocus) focusMap(a.mapFocus);
     if (a.kind === 'decision') { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }
     else if (a.charId) setSheet(a.charId);
-    else if (a.route?.panel) openRoute(a.route);
+    else if (a.route?.panel || a.route?.home) openRoute(a.route);
   }
   function onChip(c: MotionChip) {
     if (c.focus) focusMap(c.focus);
@@ -393,16 +399,16 @@ export function App({ startOn = 'title' }: AppProps) {
         return;
       }
       if (menu || overlayOpen) return;
-      const fk = /^F([1-8])$/.exec(e.key);
-      const p = fk ? PANELS[Number(fk[1]) - 1] : PANELS.find((x) => x.key === e.key.toLowerCase());
-      if (p && shellUi.visiblePanels.includes(p.id)) {
+      if (e.key === '?') { e.preventDefault(); setHelpMenu(true); return; }
+      const h = homeForKey(e.key);
+      if (h) {
         e.preventDefault();
-        setRoute((r) => (r.panel === p.id ? {} : { panel: p.id }));
+        setRoute((r) => (r.home === h ? {} : { home: h }));
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [menu, overlayOpen, shellUi.visiblePanels]);
+  }, [menu, overlayOpen]);
 
   if (menu) {
     return (
@@ -412,12 +418,41 @@ export function App({ startOn = 'title' }: AppProps) {
   }
 
   const motion = inMotion(s, { orders: orders.length });
-  const panel = route.panel && shellUi.visiblePanels.includes(route.panel) ? route.panel : undefined;
-  const sections = panel ? shellUi.sectionsOf(panel) : [];
-  const section = panel ? (sections.includes(route.section ?? '') ? route.section : sections[0]) : undefined;
+  const home = route.home;
+  const homeGroups = home ? shellUi.groupsOf(home) : [];
   const goalIdx = goals.findIndex((g) => !g.done);
-  const badges: Partial<Record<PanelId, number>> = {};
-  for (const a of shellAlertList) if (a.route?.panel && a.severity !== 'info') badges[a.route.panel] = (badges[a.route.panel] ?? 0) + 1;
+  const badges: Partial<Record<HomeId, number>> = {};
+  for (const a of shellAlertList) {
+    const h = a.severity !== 'info' ? alertHome(a) : undefined;
+    if (h) badges[h] = (badges[h] ?? 0) + 1;
+  }
+  if (unanswered.length) badges.week = (badges.week ?? 0) + unanswered.length;
+  const homeDoNow = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length }) : [];
+  const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); };
+  function onDoNow(d: DoNowItem) {
+    const a = d.act;
+    if (a.kind === 'decisions') openDecisions();
+    else if (a.kind === 'sitdown') setSitdown(a.tab);
+    else if (a.kind === 'office') tributeApi.openAudience(a.reportId);
+    else if (a.kind === 'route') openRoute(a.route);
+    else if (a.kind === 'alert') onAlert(a.alert);
+  }
+  const navExtras = {
+    'nav.settings': <SettingsPanel />,
+    'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
+  };
+  const weekTop = home === 'week' && !s.gameOver ? (
+    <section className="mb-4" data-testid="week-routine">
+      <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">Your week</div>
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
+        <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('rounds')} data-testid="week-rounds">☕ Your rounds</button>
+        <button type="button" className="btn-ghost text-xs" disabled={!s.pendingEvents.length} onClick={openDecisions} data-testid="week-decisions">✉ Decisions {s.pendingEvents.length - unanswered.length}/{s.pendingEvents.length}</button>
+        <button type="button" className="btn-gold text-xs" onClick={() => { setRoute({}); startAdvance('week'); }} data-testid="week-advance">Advance Week ▸</button>
+      </div>
+      {orders.length > 0 && <div className="mt-2" data-testid="week-orders"><div className="mb-1 text-[11px] text-stone-400">Orders for this week, carried out when you advance:</div><OrdersTray s={s} /></div>}
+    </section>
+  ) : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
@@ -437,17 +472,17 @@ export function App({ startOn = 'title' }: AppProps) {
         top={(
           <TopBar s={s} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
-            onReview={() => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
+            onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
             onSitDown={() => setSitdown('council')} sitCount={brief.items.length} />
         )}
-        rail={<LeftRail visible={shellUi.visiblePanels} active={panel} badges={badges} dots={shellUi.dots} onOpen={(p) => { shellUi.seenPanel(p); if (panel === p) setRoute({}); else openRoute(p === lastRoute.panel ? lastRoute : { panel: p }); }} onHelp={() => setHelpMenu(true)} />}
+        rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
         overlay={(
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
-            {!s.gameOver && goalIdx >= 0 && !panel && (
+            {!s.gameOver && goalIdx >= 0 && !home && (
               <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
                 className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
                 ➚ {goals[goalIdx].title}
@@ -469,9 +504,10 @@ export function App({ startOn = 'title' }: AppProps) {
             )}
           </>
         )}
-        drawer={panel && (
-          <Drawer s={s} panel={panel} section={section} sections={sections} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
-            onSection={(id) => { shellUi.seenSection(`${panel}.${id}`); openRoute({ panel, section: id }); }} onClose={() => setRoute({})} />
+        drawer={home && (
+          <Drawer s={s} home={home} sel={route.key} groups={homeGroups} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
+            onOpen={(key) => openRoute({ home, key })} onClose={() => setRoute({})}
+            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop} />
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
@@ -525,9 +561,7 @@ export function App({ startOn = 'title' }: AppProps) {
         <Modal onClose={() => setHelpMenu(false)}>
           <div className="p-4 space-y-2" data-testid="help-menu">
             <div className="panel-title">Help</div>
-            <button className="btn-ghost w-full border-gold-600 text-gold-300" data-testid="wsid-button" onClick={() => { setHelpMenu(false); setAdvice(true); }}>What should I do?</button>
-            <button className="btn-ghost w-full" onClick={() => { setHelpMenu(false); setHelp({}); }}>The glossary: every term in the game</button>
-            <p className="text-[11px] text-stone-500">Keys: Y H B L O D T C (or F1–F8) open the panels · Esc closes · Space pauses · right-click any face for everything you can do to him.</p>
+            <HelpBody onAdvice={() => { setHelpMenu(false); setAdvice(true); }} onGlossary={() => { setHelpMenu(false); setHelp({}); }} />
           </div>
         </Modal>
       )}

@@ -207,7 +207,7 @@ function Overview({ s, v, go }: { s: GameState; v: Venue; go: (t: TabId) => void
       </div>
       <Section title="Who runs it">
         <div className="text-sm text-stone-300">
-          {m ? <>{m.name} <span className="text-xs text-stone-500">· general manager · skill {m.skill}{m.effort && m.effort < 0.95 ? ` (at ${Math.round(m.effort * 100)}%)` : ''} · {fmt$(m.salary)}/wk</span></> : <span className="text-stone-400">No general manager: the night clerk keeps it going. Pick one on the map panel or the Holdings drawer.</span>}
+          {m ? <>{m.name} <span className="text-xs text-stone-500">· general manager · skill {m.skill}{m.effort && m.effort < 0.95 ? ` (at ${Math.round(m.effort * 100)}%)` : ''} · {fmt$(m.salary)}/wk</span></> : <span className="text-stone-400">No general manager: the night clerk keeps it going. Pick one on the map panel or in Rackets › Your places.</span>}
         </div>
         <div className="flex flex-wrap gap-1">
           {v.deptIds.map((id) => e.depts[id]).filter(Boolean).map((d) => {
