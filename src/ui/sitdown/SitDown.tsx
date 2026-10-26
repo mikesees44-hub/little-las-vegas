@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { briefing, recommendedActions, shortName, type BriefItem, type BriefLink, type BriefOption, type Briefing, type Speaker } from '../../engine/briefing';
-import { LANE_NAME, LANES, leeway, neglect, roundOptions, roundSlots, usualWeek, type Lane, type Round } from '../../engine/rounds';
+import { ALL_LANES, LANE_NAME, leeway, neglect, roundOptions, roundSlots, usualWeek, type Lane, type Round } from '../../engine/rounds';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { Chips } from '../components/Chips';
@@ -203,7 +203,7 @@ function ItemBlock({ it, skipped, orders, onChoose, onLink, who }: {
 /* Your Rounds                                                         */
 /* ------------------------------------------------------------------ */
 
-const LANE_GLYPH: Record<Lane, string> = { people: '☕', fun: '♠', family: '♥' };
+const LANE_GLYPH: Record<Lane, string> = { people: '☕', fun: '♠', family: '♥', self: '§' };
 
 function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameState; b: Briefing; rounds: string[] | undefined; setRounds: (r: string[] | undefined) => void; onTrust: (k: string, on: boolean) => void; onDone: () => void }) {
   const opts = useMemo(() => roundOptions(s), [s]);
@@ -243,7 +243,7 @@ function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameSt
             ))}
           </ul>
         </section>
-        {LANES.map((lane) => {
+        {ALL_LANES.map((lane) => {
           const n = ng.find((x) => x.lane === lane);
           return (
             <section key={lane} className="rounded-md border border-noir-700 bg-noir-900/80 p-2 text-[12px]" data-testid={`lane-${lane}`}>
@@ -281,7 +281,7 @@ function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameSt
         </div>
       )}
       <footer className="flex items-center gap-2 border-t border-noir-700 px-3 py-2">
-        <span className="flex-1 text-[11px] text-stone-500">Your evenings happen when you advance the week.</span>
+        <span className="flex-1 text-[11px] text-stone-500">Your evenings land on days of the week (This Week); they happen as the clock runs, or all at once when you advance.</span>
         <button type="button" className="btn-gold text-xs sm:text-sm" onClick={onDone} data-testid="rounds-done">Done — back to the map</button>
       </footer>
     </div>

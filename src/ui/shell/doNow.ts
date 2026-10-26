@@ -19,6 +19,8 @@ import type { HomeId, Route } from './routes';
 export type DoNowAct =
   | { kind: 'decisions' }
   | { kind: 'sitdown'; tab: 'council' | 'rounds' }
+  /** Today's morning meeting and evening (the day window). */
+  | { kind: 'day' }
   | { kind: 'office'; reportId?: string }
   | { kind: 'route'; route: Route }
   | { kind: 'alert'; alert: ShellAlert }
@@ -40,6 +42,8 @@ export interface DoNowInput {
   unanswered: number;
   /** Things the sit-down has for the boss. */
   brief: number;
+  /** Problems at this morning's meeting still waiting on an answer (who brought the first, and whether it is urgent). */
+  morning?: { open: number; name?: string; urgent?: boolean };
 }
 
 /** Alerts that carry no route: the home they belong to. */
@@ -80,6 +84,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
   const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
   if (home === 'week') {
     if (x.unanswered > 0) out.push({ id: 'decisions', tone: 'warn', title: `${plural(x.unanswered, 'decision')} on your desk`, text: 'Answer them before the week turns, or they are decided for you.', cta: 'Read them', act: { kind: 'decisions' } });
+    if (x.morning && x.morning.open > 0) out.push({ id: 'morning', tone: x.morning.urgent ? 'danger' : 'warn', title: x.morning.open === 1 ? `${x.morning.name ?? 'A capo'} has a problem at this morning's meeting` : `${x.morning.open} problems at this morning's meeting`, text: 'One tap to answer. Leave it and he does it his own way, and notices.', cta: 'Hear him', act: { kind: 'day' } });
     if (x.brief > 0) out.push({ id: 'sitdown', tone: 'info', title: `The sit-down: ${plural(x.brief, 'thing')} from your people`, text: 'Your underboss, consigliere and the rest, each with a recommendation.', cta: 'Hear them', act: { kind: 'sitdown', tab: 'council' } });
   }
   if (home === 'money') {

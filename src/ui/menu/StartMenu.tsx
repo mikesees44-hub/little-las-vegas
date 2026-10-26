@@ -4,7 +4,7 @@ import type { GameState } from '../../engine/types';
 import { musicPlaying, savePref, startMusic, stopMusic } from '../audio';
 import { NoirStill } from '../cutscene/NoirStill';
 import { deleteSlot, freeSlot, listSlots, type SlotMeta } from '../save';
-import { getSettings, setSettings, type Settings, type TextSpeed } from '../settings';
+import { AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode } from '../settings';
 import { CharacterCreator } from './CharacterCreator';
 
 /**
@@ -203,11 +203,17 @@ export function SettingsPanel() {
           <option value="slow">Slow</option><option value="normal">Normal</option><option value="fast">Fast</option><option value="instant">Instant</option>
         </select>
       </label>
-      <div className="panel p-3 space-y-2">
+      <label className={row}><span>Time <span className="block text-xs text-stone-500">Running clock: the days tick by, Monday to Sunday; Space pauses. Turn-based: one Advance Week at a time.</span></span>
+        <select value={st.timeMode ?? 'clock'} onChange={(e) => upd({ timeMode: e.target.value as TimeMode })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200" data-testid="setting-time-mode">
+          <option value="clock">Running clock</option><option value="turns">Turn-based</option>
+        </select>
+      </label>
+      <div className="panel p-3 space-y-2" data-testid="setting-autopause">
         <div className="text-stone-300">Autopause (when the clock is running)</div>
-        <label className="flex items-center justify-between"><span className="text-stone-400">When a decision is waiting</span><input type="checkbox" checked={st.pauseOnDecision} onChange={(e) => upd({ pauseOnDecision: e.target.checked })} /></label>
-        <label className="flex items-center justify-between"><span className="text-stone-400">On a new warning or a cutscene</span><input type="checkbox" checked={st.pauseOnWarning} onChange={(e) => upd({ pauseOnWarning: e.target.checked })} /></label>
-        <p className="text-[11px] text-stone-500">With decisions unpaused, unanswered cards take their default answer when the week turns.</p>
+        {AUTO_PAUSE.map((a) => (
+          <label key={a.key} className="flex items-center justify-between"><span className="text-stone-400">{a.label}</span><input type="checkbox" checked={st[a.key] === undefined ? a.key !== 'pauseOnEvening' : !!st[a.key]} onChange={(e) => upd({ [a.key]: e.target.checked })} /></label>
+        ))}
+        <p className="text-[11px] text-stone-500">With decisions unpaused, unanswered cards take their default answer when the week turns. The clock also stops when you switch tabs.</p>
       </div>
     </div>
   );
