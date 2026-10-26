@@ -113,10 +113,10 @@ export function earnerWeekly(s: GameState, b: Business): number {
  * The best free business for a man: steady kinds first, then the bigger take,
  * then one in his own district. Undefined when there is nothing to give.
  */
-export function suggestFor(s: GameState, c: Character): Business | undefined {
+export function suggestFor(s: GameState, c: Character, exclude: ReadonlySet<string> = new Set()): Business | undefined {
   const d = s.districts.find((x) => x.capoId === c.id);
   const score = (b: Business) => (expectedTake(s, b) + 40) * (steadyWord(b.kind) === 'steady' ? 1.5 : 1) * (d && b.districtId === d.id ? 1.3 : 1) * (isOpen(s, b) ? 1 : 0.5);
-  return freeEarners(s).sort((a, b) => score(b) - score(a) || (a.id < b.id ? -1 : 1))[0];
+  return freeEarners(s).filter((b) => !exclude.has(b.id)).sort((a, b) => score(b) - score(a) || (a.id < b.id ? -1 : 1))[0];
 }
 
 /** The one-tap order: give a man his steady earner (or take it back with bizId ''). */

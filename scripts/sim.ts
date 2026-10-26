@@ -42,6 +42,7 @@ import { familyCash, houseCash } from '../src/engine/tributeState';
 import { tributeActions } from '../src/engine/tributeOps';
 import { envelopeChoice } from './simBudget';
 import { moneyView } from '../src/engine/money';
+import { earnerOf, holderOf, holders } from '../src/engine/earners';
 
 function arg(name: string, def: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -305,6 +306,16 @@ interface GameResult {
   /** Politics counters at the end (polState.ts). */
   pol?: Record<string, number>;
   mg: Record<string, number>;
+  /** Steady earners (earners.ts): each business's weekly money (by id), whether it was somebody's earner, and the end state. */
+  earn?: { weeks: Record<string, { kind: string; held: boolean; xs: number[] }>; holders: number; capos: number; boss: number };
+}
+
+function earnEnd(s: GameState, r: GameResult): void {
+  if (!r.earn) return;
+  const hs = holders(s);
+  r.earn.holders = hs.filter((c) => earnerOf(s, c.id)).length;
+  r.earn.capos = hs.filter((c) => c.id !== s.playerId).length;
+  r.earn.boss = earnerOf(s, s.playerId) ? 1 : 0;
 }
 
 function playOne(gi: number): GameResult {
@@ -418,6 +429,21 @@ function playOne(gi: number): GameResult {
     }
     prevCash = cash;
     if (s.money < 0) r.treasuryRed = (r.treasuryRed ?? 0) + 1;
+    {
+      // Steady earners vs the rest: every racket's (and earner's) money this week, by place.
+      const ew = (r.earn ??= { weeks: {}, holders: 0, capos: 0, boss: 0 }).weeks;
+      const byBiz: Record<string, number> = {};
+      for (const l of res.report.lines) if (l.stat === 'money' && l.src && l.category === 'business') byBiz[l.src] = (byBiz[l.src] ?? 0) + l.amount;
+      for (const b of s.businesses) {
+        if (b.owner !== 'player' || (b.category !== 'racket' && !holderOf(s, b.id)) || (b.closedUntil ?? 0) > s.week) continue;
+        const held = holderOf(s, b.id);
+        const rec = (ew[b.id] ??= { kind: b.kind, held: !!held, xs: [] });
+        if (rec.held !== !!held) { rec.held = !!held; rec.xs = []; }
+        // The boss's own earner pays his Pocket (no family line): count what it paid there.
+        const x = held === s.playerId ? (s.tribute?.books[s.tribute.books.length - 1]?.x.filter((t) => t[0] === `ext:earner:${b.id}`).reduce((a, t) => a + t[2], 0) ?? 0) : byBiz[b.id] ?? 0;
+        rec.xs.push(x);
+      }
+    }
     if (famCash < 0) {
       r.everNegative = true;
       consecutiveRed++;
@@ -467,6 +493,7 @@ function playOne(gi: number): GameResult {
   r.finalRespect = s!.respect;
   if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
+  earnEnd(s!, r);
   if (s!.travel) r.travel = { ...s!.travel.stats };
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   if (s!.lineage) {
@@ -592,6 +619,24 @@ const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
 if (econGames.length) {
   const keys = Object.keys(econGames[0].econ!);
   console.log(`  Economy layer per game (mean): ${keys.map((k) => `${k} ${(econGames.reduce((a, r) => a + (r.econ![k] ?? 0), 0) / econGames.length).toFixed(1)}`).join(', ')}`);
+}
+{
+  // Steady earners: modest but constant; the loose rackets swing more.
+  const cv = (xs: number[]) => { const m = xs.reduce((a, x) => a + x, 0) / xs.length; const sd = Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / xs.length); return m > 0 ? sd / m : NaN; };
+  const steady: { m: number; cv: number }[] = [];
+  const loose: { m: number; cv: number }[] = [];
+  const kinds: Record<string, number> = {};
+  for (const r of results) for (const w of Object.values(r.earn?.weeks ?? {})) {
+    if (w.xs.length < 8) continue;
+    const xs = w.xs.slice(1);
+    const m = xs.reduce((a, x) => a + x, 0) / xs.length;
+    (w.held ? steady : loose).push({ m, cv: cv(xs) });
+    if (w.held) kinds[w.kind] = (kinds[w.kind] ?? 0) + 1;
+  }
+  const med = (xs: number[]) => money(quantile(xs.filter((x) => Number.isFinite(x)), 0.5));
+  const medR = (xs: number[]) => quantile(xs.filter((x) => Number.isFinite(x)), 0.5).toFixed(2);
+  const eg = results.filter((r) => r.earn);
+  console.log(`  Steady earners: ${steady.length} held (${Object.entries(kinds).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ')}), median weekly ${med(steady.map((x) => x.m))}, spread (CV) ${medR(steady.map((x) => x.cv))} | other rackets: ${loose.length}, median weekly ${med(loose.map((x) => x.m))}, spread (CV) ${medR(loose.map((x) => x.cv))} | at the end: ${(eg.reduce((a, r) => a + r.earn!.holders, 0) / Math.max(1, eg.length)).toFixed(1)} of ${(eg.reduce((a, r) => a + r.earn!.capos + 1, 0) / Math.max(1, eg.length)).toFixed(1)} men hold one (boss in ${pct(eg.filter((r) => r.earn!.boss).length, eg.length)})`);
 }
 const hoodGames = results.filter((r) => r.hood && r.weeksPlayed > 0);
 if (hoodGames.length) {

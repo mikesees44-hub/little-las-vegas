@@ -74,7 +74,7 @@ export function hubCards(s: GameState): HubCard[] {
       ...crewTake(kind, def.base * def.season[0], def.base * def.season[1]), upkeep: def.upkeep,
       heat: def.heat, fed: def.fedHeat, men: def.staff, ladder: tree(kind).map((t) => t.name),
       owned: owned(s).filter((b) => b.kind === kind), locks, warns, laws: lawsFor(s, kind),
-      start: START(kind),
+      start: kind === 'narcotics' ? undefined : START(kind),
     };
   });
 }
