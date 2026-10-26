@@ -102,7 +102,19 @@ export function Popover({ button, children, align = 'right', testid }: { button:
   );
 }
 
-export const menuItem = 'block w-full text-left rounded px-2 py-1.5 text-sm text-stone-300 hover:bg-noir-700 hover:text-gold-300 disabled:opacity-40';
+/** Settings and help from the game menu (they live in You). */
+function GameMenuLinks({ close }: { close: () => void }) {
+  const { go } = useShell();
+  return (
+    <>
+      <button type="button" className={menuItem} data-testid="menu-settings-ingame" onClick={() => { close(); go('settings'); }}>Settings</button>
+      <button type="button" className={menuItem} data-testid="menu-help-ingame" onClick={() => { close(); go('help'); }}>Help & keyboard</button>
+      <div className="my-1 h-px bg-noir-700" />
+    </>
+  );
+}
+
+export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-stone-300 hover:bg-noir-700 hover:text-gold-300 disabled:opacity-40';
 
 /**
  * The slim CK top bar: house, resources with week deltas and their ledger
@@ -184,8 +196,9 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
             {ticker && speed > 0 && <span className="hidden xl:inline text-[11px] text-stone-500 truncate max-w-[24rem]">{ticker}</span>}
             <div className="ml-auto">
               <Popover testid="game-menu" button={(o, t) => <button className="h-8 w-8 rounded border border-noir-600 text-stone-300 hover:border-gold-500" aria-label="Game menu" aria-expanded={o} onClick={t} data-testid="game-menu-button">≡</button>}>
-                {() => (
+                {(close) => (
                   <div className="space-y-1 text-xs">
+                    <GameMenuLinks close={close} />
                     <div className="px-2 pt-1 text-stone-500">Seed <span className="text-stone-300">{s.seed}</span> · slot {slot}{s.flags.ironman ? ' · ironman' : ''}</div>
                     <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed for a new game (optional)" className="inp text-xs" />
                     <button className={menuItem} data-testid="footer-new" onClick={onNewGame}>New Game…</button>

@@ -185,7 +185,7 @@ export function SlotList({ slots, onLoad, onDelete }: { slots: (SlotMeta | undef
   );
 }
 
-function SettingsPanel() {
+export function SettingsPanel() {
   const [st, setSt] = useState<Settings>(() => getSettings());
   const [music, setMusic] = useState(() => musicPlaying());
   const upd = (p: Partial<Settings>) => setSt(setSettings(p));

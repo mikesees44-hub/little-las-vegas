@@ -484,7 +484,7 @@ function consigliereItems(s: GameState, cons: Character | undefined): Draft[] {
         { id: 'bodyguards', label: 'Hire bodyguards', action: { kind: 'power', op: { op: 'bodyguards', on: true } }, why: 'pay for it and sleep' },
         wait('Maybe it\'s talk.'),
       ],
-      open: { label: 'Open Operations', link: { tab: 'schemes' } },
+      open: { label: 'Jobs under way', link: { tab: 'schemes' } },
     });
   }
   // Disputes before the Table.
@@ -608,7 +608,7 @@ function consigliereItems(s: GameState, cons: Character | undefined): Draft[] {
         { id: 'cancel', label: 'Call it off', action: { kind: 'cancelScheme', schemeId: blown.id }, why: 'a blown plan only makes enemies', bonus: 900 },
         wait('Push through; it\'s too late to look weak.'),
       ],
-      open: { label: 'Open Operations', link: { tab: 'schemes' } },
+      open: { label: 'Jobs under way', link: { tab: 'schemes' } },
     });
   }
   // Office hours: the town comes to ask (now and then, when the door can open).

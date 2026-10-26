@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameState, PlayerAction } from '../../engine/types';
-import { PANELS } from './panels';
 import { sectionVisible } from './unlocks';
 import { loadGoalFlags, saveGoalFlags, type UiGoalFlags } from './goals';
-import type { PanelId } from './routes';
+import { HOMES_BY_ID, itemOf, NAV_ONLY, NAV_TREE, REGISTRY_KEYS, type NavGroup } from './nav';
+import type { HomeId } from './routes';
 
 function read<T>(key: string, dflt: T): T {
   try { const v = localStorage.getItem(key); return v ? (JSON.parse(v) as T) : dflt; } catch { return dflt; }
@@ -12,7 +12,7 @@ function write(key: string, v: unknown): void {
   try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* not remembered */ }
 }
 
-export const ALL_SECTION_KEYS = PANELS.flatMap((p) => p.sections.map((x) => `${p.id}.${x.id}`));
+export const ALL_SECTION_KEYS = REGISTRY_KEYS;
 
 /**
  * The shell's per-viewer conveniences: snoozed alerts, sections revealed so
@@ -47,8 +47,8 @@ export function useShellState(s: GameState, orders: PlayerAction[], sheetId?: st
     write(`llv-unlocked-${seed}`, next);
     if (!first.current && seen.length) {
       setFresh((f) => [...f, ...add]);
-      const sec = PANELS.flatMap((p) => p.sections.map((x) => ({ k: `${p.id}.${x.id}`, p, x }))).find((e) => e.k === add[0]);
-      if (sec) setToast(`New: ${sec.p.label} › ${sec.x.label}`);
+      const it = itemOf(add[0]);
+      if (it) setToast(`New: ${HOMES_BY_ID[it.home].label} › ${it.label}`);
     }
     first.current = false;
   }, [visibleNow]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -70,15 +70,17 @@ export function useShellState(s: GameState, orders: PlayerAction[], sheetId?: st
     setSeen(next);
     write(`llv-unlocked-${seed}`, next);
   };
-  const sectionsOf = (panel: PanelId) => PANELS.find((p) => p.id === panel)!.sections.map((x) => x.id).filter((id) => unlocked.has(`${panel}.${id}`));
-  const visiblePanels = PANELS.filter((p) => sectionsOf(p.id).length > 0).map((p) => p.id);
-  const dots = new Set(fresh.map((k) => k.split('.')[0] as PanelId));
+  const open = (k: string) => unlocked.has(k) || (NAV_ONLY as readonly string[]).includes(k);
+  /** A home's places open to this boss (an item shows when any of its views is open; a hidden view stays hidden). */
+  const groupsOf = (home: HomeId): NavGroup[] => NAV_TREE[home]
+    .map((g) => ({ ...g, items: g.items.filter((it) => it.keys.some(open)).map((it) => (it.keys.every(open) ? it : { ...it, keys: it.keys.filter(open), views: it.views?.filter((_, i) => open(it.keys[i])) })) }))
+    .filter((g) => g.items.length > 0);
+  const dots = new Set(fresh.map((k) => itemOf(k)?.home).filter((h): h is HomeId => !!h));
   return {
     snoozed,
     snooze: (key: string, until: number) => { const n = { ...snoozed, [key]: until }; setSnoozed(n); write(`llv-snooze-${seed}`, n); },
-    unlocked, reveal, sectionsOf, visiblePanels, fresh: new Set(fresh),
+    unlocked, reveal, open, groupsOf, fresh: new Set(fresh),
     seenSection: (key: string) => setFresh((f) => f.filter((x) => x !== key)),
-    seenPanel: (panel: PanelId) => setFresh((f) => f.filter((x) => !x.startsWith(`${panel}.`) || false)),
     dots, toast, clearToast: () => setToast(undefined), flags,
   };
 }
