@@ -141,7 +141,7 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{sp.title}</div>
           <div className="truncate font-semibold text-stone-100">{sp.name}</div>
-          {!sp.empty && <span className={`text-[10px] ${sp.quality >= 0.55 ? 'text-emerald-300' : sp.quality >= 0.35 ? 'text-amber-300' : 'text-red-300'}`} title="How good his advice is: his skill for the seat and what he thinks of you">{sp.qualityWord}</span>}
+          {!sp.empty && sp.role !== 'wife' && <span className={`text-[10px] ${sp.quality >= 0.55 ? 'text-emerald-300' : sp.quality >= 0.35 ? 'text-amber-300' : 'text-red-300'}`} title="How good his advice is: his skill for the seat and what he thinks of you">{sp.qualityWord}</span>}
         </div>
       </div>
       {sp.summary && <p className="mt-2 rounded bg-noir-800/70 px-2 py-1 text-[11px] text-stone-300" data-testid="advisor-summary">{sp.summary}</p>}
@@ -234,7 +234,7 @@ function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameSt
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">⚖ Delegate</div>
           <p className="mt-1 text-[11px] text-stone-400 leading-snug">Trusted people handle their own small business: fewer things for you, an evening back once two of them do. A free hand too long and men start going to them first.</p>
           <ul className="mt-1.5 space-y-1">
-            {b.speakers.filter((sp) => !sp.empty).map((sp) => (
+            {b.seats.filter((sp) => !sp.empty).map((sp) => (
               <li key={sp.key} className="flex items-center gap-2">
                 <input type="checkbox" className="accent-amber-500" checked={!!s.briefing?.trust[sp.key]} onChange={(e) => onTrust(sp.key, e.target.checked)} data-testid={`rounds-trust-${sp.key}`} />
                 <span className="flex-1 truncate text-stone-200">{sp.name} <span className="text-stone-500">· {sp.title}</span></span>

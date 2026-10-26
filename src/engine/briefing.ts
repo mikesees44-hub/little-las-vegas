@@ -135,6 +135,8 @@ export interface Speaker {
 export interface Briefing {
   week: number;
   speakers: Speaker[];
+  /** Every seat, quiet ones too (the delegation list). */
+  seats: Speaker[];
   /** Every item, best first. */
   items: BriefItem[];
   /** Decisions already on the desk (shown as a pointer, never repeated). */
@@ -256,7 +258,7 @@ function qualityOf(s: GameState, c: Character | undefined, skill: keyof Characte
 }
 
 function qualityWord(q: number): string {
-  return q >= 0.75 ? 'Sharp' : q >= 0.55 ? 'Steady' : q >= 0.35 ? 'Uneven' : 'Out of his depth';
+  return q >= 0.75 ? 'Sharp' : q >= 0.55 ? 'Steady' : q >= 0.35 ? 'Uneven' : 'Out of depth';
 }
 
 interface Seat0 {
@@ -819,7 +821,7 @@ function capoSummary(s: GameState, k: Character): string | undefined {
 export function briefing(s: GameState): Briefing {
   const speakers: Speaker[] = [];
   const decisions = s.pendingEvents.length;
-  if (s.gameOver) return { week: s.week, speakers, items: [], decisions, quiet: true };
+  if (s.gameOver) return { week: s.week, speakers, seats: [], items: [], decisions, quiet: true };
   const busy = waitingAbout(s);
   const used = new Set<string>();
   const usedLines = new Set<string>();
@@ -873,7 +875,7 @@ export function briefing(s: GameState): Briefing {
   // Who speaks: seats with something to say, the two council seats always (even to say "nothing"), and an empty seat's nudge.
   const shown = speakers.filter((sp) => sp.items.length || sp.empty && (sp.role === 'underboss' || sp.role === 'consigliere') || sp.role === 'underboss' || (sp.role === 'consigliere' && !!sp.charId));
   shown.sort((a, b) => order(a) - order(b) || (b.items[0]?.priority ?? 0) - (a.items[0]?.priority ?? 0));
-  return { week: s.week, speakers: shown, items, decisions, quiet: items.length === 0 };
+  return { week: s.week, speakers: shown, seats: speakers, items, decisions, quiet: items.length === 0 };
 }
 
 function order(sp: Speaker): number {
