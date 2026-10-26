@@ -367,7 +367,10 @@ export type BusinessKind =
   | 'safehouse'
   // economy pillar (wave 2): transport, services, entertainment, nightlife
   | 'cargo' | 'trucking' | 'towing' | 'waste' | 'cleaning' | 'bidrig' | 'labor' | 'taxi' | 'pawn' | 'label' | 'talent'
-  | 'burlesque' | 'gentsclub' | 'hoodclub' | 'supperclub' | 'adulttheater' | 'filmdist' | 'deli' | 'concrete' | 'lumber';
+  | 'burlesque' | 'gentsclub' | 'hoodclub' | 'supperclub' | 'adulttheater' | 'filmdist' | 'deli' | 'concrete' | 'lumber'
+  // the Start-a-Racket menu (racketMenu.ts): every classic operation, abstract
+  | 'protection' | 'afterhours' | 'bootleg' | 'cigarettes' | 'guns' | 'counterfeit' | 'insurance' | 'bustout'
+  | 'washing' | 'chopshop' | 'court' | 'payoff' | 'taxdodge';
 
 export interface Business {
   id: string;

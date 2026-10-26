@@ -273,6 +273,8 @@ export interface EconState {
   cases: Record<string, { skimming: boolean; shortfall: number; week: number }>;
   stats: EconStats;
   lastMonth?: string;
+  /** Steady earners (earners.ts): character id (the boss or a capo) -> business id. */
+  earners?: Record<string, string>;
 }
 
 /* ---------------- ops and actions ---------------- */

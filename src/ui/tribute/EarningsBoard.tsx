@@ -1,3 +1,4 @@
+import { earnerLines } from '../../engine/earners';
 import { useMemo, useState } from 'react';
 import { earningsBoard, FLAG_LABEL, upToCollected, type BoardRow, type PurseFlag } from '../../engine/crewPurse';
 import { latestReport } from '../../engine/tribute';
@@ -62,6 +63,7 @@ export function EarningsBoard({ s }: { s: GameState }) {
   const [crewF, setCrewF] = useState<string>('all');
   const board = useMemo(() => earningsBoard(s), [s]);
   const rep = latestReport(s);
+  const earners = earnerLines(s);
   const name = (id?: string) => (id ? `${s.characters[id]?.firstName ?? '?'} ${s.characters[id]?.lastName ?? ''}` : '');
   const crewName = (r: BoardRow) => (r.rank === 'underboss' || r.rank === 'consigliere' ? 'the administration' : r.crewId ? `${s.characters[r.crewId]?.lastName ?? '?'} crew` : 'no crew');
   const rows = board.rows
@@ -92,6 +94,12 @@ export function EarningsBoard({ s }: { s: GameState }) {
         <Bars title={`Top earners, week ${board.week}`} rows={top} testid="chart-top" />
         <Bars title={`Kicked up by crew, week ${board.week}`} rows={byCrew} testid="chart-crews" />
       </div>
+      {earners.length > 0 && (
+        <ul className="rounded border border-emerald-700/50 bg-emerald-900/10 px-2 py-1.5 text-[11px] text-emerald-200 space-y-0.5" data-testid="earner-lines">
+          <li className="text-[10px] uppercase tracking-wider text-stone-500">Steady earners</li>
+          {earners.map((x, i) => <li key={i}>★ {x.text}</li>)}
+        </ul>
+      )}
       <div className="flex flex-wrap items-center gap-1 text-[11px]">
         <span className="text-stone-500">Show:</span>
         {[['all', 'Everyone'], ...crews.map((k) => [k, `${s.characters[k]?.lastName ?? '?'} crew`]), ['admin', 'Administration']].map(([id, label]) => (

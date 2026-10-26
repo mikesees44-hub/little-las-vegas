@@ -158,7 +158,7 @@ export function actionVerb(a: PlayerAction): Verb {
     case 'background': return v('Check him out', 'Checking');
     case 'order': return ORDER[a.key] ?? v('Give the order', 'Ordered');
     case 'econ': {
-      if (a.op.type === 'racket') return a.op.cmd.c === 'start' ? v('Start it', 'Starting') : a.op.cmd.c === 'advice' ? v('Take the advice', 'Advice taken') : v('Set it', 'Set');
+      if (a.op.type === 'racket') return a.op.cmd.c === 'start' ? v('Start it', 'Starting') : a.op.cmd.c === 'earner' ? (a.op.cmd.bizId ? v('Give it to him', 'Given') : v('Take it back', 'Taken back')) : a.op.cmd.c === 'advice' ? v('Take the advice', 'Advice taken') : v('Set it', 'Set');
       return ECON[op(a)] ?? v('Do it', 'Set');
     }
     case 'pol': return POL[op(a)] ?? v('Make the move', 'Moving');

@@ -18,6 +18,7 @@ import { OPEN_FILE } from './longgame';
 import { openGrievances } from './grievances';
 import { PETITION_IDS } from './office';
 import { whichRacket } from './racketHub';
+import { earnerAction, hasEarner, kindWord, suggestFor } from './earners';
 import { getRelation, opinion } from './relations';
 import { honoreeOptions, suggestGuests } from './activities';
 import { LIFESTYLE_IDS, LIFESTYLES } from './lifestyle';
@@ -359,6 +360,27 @@ function underbossItems(s: GameState, ub: Character | undefined): Draft[] {
         open: { label: 'Open the take', link: { tab: 'take' } },
       });
     }
+  }
+  // A capo with no steady earner of his own (earners.ts): give him one, one tap.
+  for (const k of capos(s).filter((c) => c.faction === 'player' && isFree(s, c) && !hasEarner(s, c.id)).sort((a, b) => (a.id < b.id ? -1 : 1))) {
+    const b = suggestFor(s, k);
+    if (!b || out.some((d) => d.charId === k.id)) continue;
+    const what = `${kindWord(b.kind)}${b.districtId ? ` in ${s.districts.find((d) => d.id === b.districtId)?.name ?? ''}` : ''}`;
+    out.push({
+      id: `earner:${k.id}`, charId: k.id, priority: 420 + (opinion(s, k.id, boss.id) < 0 ? 120 : 0), topic: `${nm(k)}'s earner`, about: [k.id],
+      says: [
+        `Give ${nm(k)} the ${what}. A capo needs one thing that's his.`,
+        `${nm(k)} has nothing steady of his own. ${b.name} would do it.`,
+        `Put ${b.name} under ${nm(k)}. He'll kick up every week and stop grumbling.`,
+      ],
+      opts: [
+        { id: 'give', label: `Give him ${b.name}`, action: earnerAction(k.id, b.id), why: 'steady money every week, and a loyal capo', bonus: 900 },
+        wait('He can wait for something better.'),
+      ],
+      routine: true,
+      open: { label: 'Open the rackets', link: { tab: 'holdings' } },
+    });
+    break;
   }
   // Unhappy capos.
   for (const k of capos(s)) {

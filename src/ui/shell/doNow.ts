@@ -2,6 +2,7 @@ import type { AlertKind } from '../../engine/alerts';
 import { capos, displayName } from '../../engine/characters';
 import { holder, SEAT_INFO, SEATS } from '../../engine/council';
 import { idleMen } from '../../engine/business';
+import { racketGaps } from '../../engine/racketMenu';
 import type { Opportunity } from '../../engine/opportunities';
 import type { GameState } from '../../engine/types';
 import type { ShellAlert } from './alertRoutes';
@@ -92,6 +93,17 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
     if (idleCapos.length) out.push({ id: 'idle-capos', tone: 'info', title: idleCapos.length === 1 ? `${displayName(idleCapos[0])} has no district` : `${idleCapos.length} capos without a district`, text: 'A capo with nothing to run earns nothing and starts to wonder.', cta: 'Give him one', act: { kind: 'route', route: { panel: 'borgata', section: 'capos' } } });
     const idle = idleMen(s).length;
     if (idle >= 3) out.push({ id: 'idle-men', tone: 'info', title: `${idle} men with nothing to do`, text: 'Start a racket or open a place and they go to work.', cta: 'Put them to work', act: { kind: 'route', route: { panel: 'holdings', section: 'hub' } } });
+  }
+  if (home === 'biz') {
+    // Rackets & steady earners (racketMenu.ts): impossible to miss.
+    const g = racketGaps(s);
+    const hub: DoNowAct = { kind: 'route', route: { panel: 'holdings', section: 'hub' } };
+    if (g.rackets < 3) out.push({ id: 'start-racket', tone: 'good', title: g.rackets ? `Only ${plural(g.rackets, 'racket')} running` : 'No rackets running yet', text: 'Protection, untaxed smokes, a numbers bank, the book, guns, the Madam\'s arrangement: a few taps and it opens next week.', cta: 'Start a racket', act: hub });
+    if (g.noEarner.length) {
+      const boss = g.noEarner.find((c) => c.id === s.playerId);
+      const men = g.noEarner.filter((c) => c.id !== s.playerId);
+      out.push({ id: 'steady-earners', tone: 'info', title: men.length === 1 && !boss ? `${displayName(men[0])} has no steady earner` : men.length ? `${plural(men.length, 'capo')}${boss ? ' and you' : ''} without a steady earner` : 'You have no steady earner of your own', text: 'One thing that is his: it pays every week, summer and winter. A capo with one kicks up reliably and stays loyal; without one he grumbles.', cta: 'Give them one', act: hub });
+    }
   }
   const alerts = x.alerts.filter((a) => a.kind !== 'decision' && alertHome(a) === home)
     .map((a): DoNowItem => ({ id: `a:${a.key}`, tone: a.severity, title: a.title, text: a.text, cta: a.charId ? 'See him' : 'Go', act: { kind: 'alert', alert: a } }));

@@ -11,12 +11,15 @@ import { specialistFees } from './crewlife';
 import { crew, displayName, hasTrait, isFree, player, shortName } from './characters';
 import { scheduleConsequence } from './effects';
 import { runLoans } from './loans';
-import { favorShare, paceOf } from './racketLife';
+import { dialK, favorShare, paceOf } from './racketLife';
+import { racketOf, tierMult } from './rackets';
 import { outpostIncome } from './schemes';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { chance, randInt } from './rng';
 import type { Character, GameState } from './types';
+import { hasEarner, routeEarner } from './earners';
+import { ensureEcon } from './econState';
 
 /**
  * The weekly economy. ONE ledger, applied once per week, in a fixed order:
@@ -80,9 +83,14 @@ export const ARREARS_REPAY = 0.2;
  */
 export function slowPayers(s: GameState): Character[] {
   const score = (c: Character) => opinion(s, c.id, s.playerId) - (hasTrait(c, 'Greedy') ? 25 : 0) - (hasTrait(c, 'Gambler') ? 20 : 0) + (hasTrait(c, 'Honest') || hasTrait(c, 'Loyal-to-a-fault') ? 100 : 0);
-  return crew(s).filter((c) => c.rank === 'capo' && isFree(s, c) && score(c) < 25)
+  // A capo with his own steady earner (earners.ts) never drags his feet.
+  return crew(s).filter((c) => c.rank === 'capo' && isFree(s, c) && score(c) < 25 && !hasEarner(s, c.id))
     .sort((a, b) => score(a) - score(b) || (a.id < b.id ? -1 : 1)).slice(0, 2);
 }
+/** Local heat a week each pad on the payroll takes off the rackets'. */
+export const PAD_COOLING = 0.6;
+/** Weeks a bust-out runs before the score. */
+export const BUSTOUT_WEEKS = 6;
 /** Share of washed money the counting room keeps. */
 export const LAUNDER_FEE = 0.05;
 /** Unwashed cash above this draws the IRS. */
@@ -112,6 +120,8 @@ export function skimRate(s: GameState, c: Character): number {
   r *= 1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_tax'));
   const fear = s.relations[`${c.id}>${s.playerId}`]?.fear ?? 0;
   r *= 1 - Math.min(0.8, fear / 100);
+  // A capo with his own steady earner (earners.ts) has less reason to help himself.
+  if (hasEarner(s, c.id)) r *= 0.5;
   return Math.min(0.3, r);
 }
 
@@ -222,7 +232,9 @@ export function operationalHeat(ctx: Ctx): void {
   const s = ctx.s;
   const mult = seasonMultiplier(s.date) > 1 ? 1.4 : 0.6;
   const open = owned(s).filter((b) => isOpen(s, b));
-  const raw = open.reduce((a, b) => a + b.heat, 0);
+  // The pad (racketMenu: payoffs) cools the rest: 0.6 a week each, never below zero.
+  const pads = open.filter((b) => b.kind === 'payoff').reduce((a, b) => a + dialK(s, b, 'cool') * (1 + 0.3 * racketOf(s, b).tier), 0);
+  const raw = Math.max(0, open.reduce((a, b) => a + b.heat, 0) - PAD_COOLING * pads);
   // Accumulate fractional heat so small sources still count over time.
   s.flags.heatFrac = (s.flags.heatFrac ?? 0) + raw * mult;
   const whole = Math.floor(s.flags.heatFrac);
@@ -293,12 +305,26 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
           }
         }
       } else amt = 0;
+    } else if (b.kind === 'bustout') {
+      // A bust-out: nothing while the credit is run up, then one big score and the store is finished.
+      amt = 0;
+      if (s.week - (b.boughtWeek ?? s.week) >= BUSTOUT_WEEKS) {
+        const e = ensureEcon(s);
+        amt = Math.round(((b.cost ?? def.cost) * randInt(e, 26, 36)) / 10 * staffFactor(s, b) * dialK(s, b, 'score') * tierMult(s, b));
+        label = `Score: ${b.name} went bankrupt on schedule; the goods were long gone`;
+        heat(ctx, 'local', 3, `Creditors and a bankruptcy trustee: ${b.name}`, 'heat');
+        s.businesses = s.businesses.filter((x) => x.id !== b.id);
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${b.name} went bankrupt. The creditors found empty shelves.`, kind: 'misc' });
+      }
     }
     ({ amt, label } = econBusiness(ctx, b, amt, label));
+    // A steady earner (earners.ts): the boss's goes to his Pocket, a capo keeps his end and kicks up the rest.
+    const er = routeEarner(ctx, b, amt);
+    if (er) ({ amt, label } = er);
     if (amt !== 0) {
       // A losing week (the book paid out) is a loss, not negative gross.
       const got = Math.max(0, money(ctx, Math.round(amt), label, 'business'));
-      tagLast(ctx, b.staffIds?.[0], b.id);
+      tagLast(ctx, er?.who ?? b.staffIds?.[0], b.id);
       gross += got;
       if (def.category === 'front') clean += got;
     }

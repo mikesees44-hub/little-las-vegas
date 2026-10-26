@@ -40,6 +40,8 @@ const BIZ_GROUP: Record<BusinessKind, PropGroup> = {
   laundromat: 'transport', carlot: 'transport',
   vice: 'quiet', stag: 'quiet', blackmail: 'quiet', jewel: 'quiet', bankcrew: 'quiet', fencing: 'quiet', narcotics: 'quiet',
   safehouse: 'homes',
+  protection: 'quiet', court: 'quiet', payoff: 'quiet', afterhours: 'nightlife', bootleg: 'quiet', cigarettes: 'quiet',
+  guns: 'quiet', counterfeit: 'quiet', chopshop: 'transport', insurance: 'money', bustout: 'money', washing: 'money', taxdodge: 'money',
 };
 
 export function groupOfBiz(kind: BusinessKind): PropGroup {

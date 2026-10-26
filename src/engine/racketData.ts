@@ -1,6 +1,7 @@
 import type { SceneCtx } from './sceneVariants';
 import type { Dial, RacketOutcome } from './racketState';
 import type { Business, BusinessKind, Character, Choice, Effect, GameState } from './types';
+import { NARC_DIAL, RACKETS2 } from './racketData2';
 
 /**
  * The living rackets, as data: for every racket, what it is in one line,
@@ -672,7 +673,7 @@ export const RACKETS: Partial<Record<BusinessKind, RacketInfo>> = {
     kind: 'narcotics', fit: 'force', respect: 0,
     line: 'Abstract and forbidden: Philadelphia\'s rule is no narcotics, and Philadelphia finds out.',
     pays: 'More than anything else on the island, until the reckoning.',
-    dials: [],
+    dials: [NARC_DIAL],
     sits: [
       {
         id: 'word', def: 'shut', weight: 2,
@@ -687,6 +688,7 @@ export const RACKETS: Partial<Record<BusinessKind, RacketInfo>> = {
       },
     ],
   },
+  ...(RACKETS2 as Partial<Record<BusinessKind, RacketInfo>>),
 };
 
 /* ------------------------------------------------------------------ */

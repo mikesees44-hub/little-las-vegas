@@ -1,3 +1,4 @@
+import { StartHereButton } from '../econ/StartRacket';
 import { useMemo, useState } from 'react';
 import { rivalName } from '../../engine/construction';
 import { crew } from '../../engine/characters';
@@ -141,6 +142,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
           </ul>
         </div>
       )}
+      <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? 'boardwalk'} onGo={() => shell.go('holdings.hub')} />
       <div className="flex flex-wrap gap-1.5" data-testid="walk-verbs">
         {it && <button type="button" className="btn-gold text-xs py-1" onClick={() => setInside(true)} data-testid="walk-go-in">{mine ? 'Go in · Manage' : 'Go in'}</button>}
         {mine && <button type="button" className="btn-ghost text-xs py-1" onClick={() => shell.go('holdings.rackets')}>Your holdings</button>}
