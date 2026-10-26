@@ -219,3 +219,6 @@ body {
 @keyframes pv-land { from { transform: scale(1.35); opacity: 0; filter: blur(6px); } 60% { opacity: 1; } to { transform: scale(1); opacity: 1; filter: blur(0); } }
 @keyframes pv-walk { from { transform: scale(0.82) translateY(4%); opacity: 0; filter: blur(4px); } 50% { opacity: 1; } to { transform: scale(1); opacity: 1; filter: blur(0); } }
 @media (prefers-reduced-motion: reduce) { .pv-land, .pv-walk { animation: none; } }
+.llv-turn { animation: llv-turn 0.35s ease-out both; }
+@keyframes llv-turn { from { opacity: 0.2; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .llv-turn { animation: none; } }

@@ -33,6 +33,13 @@ export const ASSET_URLS = {
   starlight_scoops_twilight: '/_blob/7e2505b318bb47ea3a47bb874d9cc5ef',
   shamrock_turnaround: '/_blob/06b8b19431f90c264765c19d130837dc',
   shamrock_twilight: '/_blob/9df33d34d933a070df88ce46db4387b6',
+  // Batch 2 (the Red Garter and Hunt's Pier are long gone: real names kept).
+  red_garter_turnaround: '/_blob/47eaeb236cc6bb8171e71e8f04b542cb',
+  red_garter_interior_twilight: '/_blob/bde2e32996f279c0d8235812d781fbd3',
+  boardwalk_fun_shop: '/_blob/0ff6b4fc9576df202684e444a83742c7',
+  /** A 1970s-and-later attraction: not used in 1960 (an anachronism). */
+  wipeout_slide: '/_blob/620786f99c8ab046201101fcc43fcf3b',
+  hunts_pier_golf_entrance: '/_blob/93541d93f15cefbfdc4a44395c0a9379',
   // The user's own art (imports/art/final/<file>.webp), to be uploaded.
   street_7sees: undefined,
   street_crablegs: undefined,
@@ -52,6 +59,12 @@ export const ASSET_URLS = {
   scene_boss_office: undefined,
   scene_club_stage: undefined,
   scene_capemay_harbor: undefined,
+  // Batch 2, signs repainted with fictional names (the real ones still operate).
+  storefront_peanut_gallery: undefined,
+  storefront_marios_pizza: undefined,
+  storefront_olympia_fascination: undefined,
+  storefront_eddies_fun_palace: undefined,
+  storefront_royal_casino_arcade: undefined,
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
@@ -64,6 +77,7 @@ export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
   bayview_deli_turnaround: [1536, 1024],
   starlight_scoops_turnaround: [1536, 1024],
   shamrock_turnaround: [1536, 1024],
+  red_garter_turnaround: [1536, 1024],
   neighborhood_twilight_1958: [1536, 1024],
   boardwalk_blue_hour_1958: [1600, 874],
 };
@@ -80,6 +94,7 @@ export const TURNAROUND_SPLIT: Partial<Record<AssetKey, { cx: number; cy: number
   bayview_deli_turnaround: { cx: 768 / 1536, cy: 502 / 1024 },
   starlight_scoops_turnaround: { cx: 768 / 1536, cy: 511 / 1024 },
   shamrock_turnaround: { cx: 767 / 1536, cy: 510 / 1024 },
+  red_garter_turnaround: { cx: 768 / 1536, cy: 512 / 1024 },
 };
 
 declare global {

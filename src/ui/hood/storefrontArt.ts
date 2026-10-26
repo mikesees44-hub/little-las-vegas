@@ -9,6 +9,13 @@ import type { AssetKey } from './art/assetUrls';
 export interface StorefrontArt { key: AssetKey | AssetKey[]; turn?: boolean; inside?: AssetKey }
 
 const BY_NAME: [RegExp, StorefrontArt][] = [
+  [/red garter/i, { key: 'red_garter_turnaround', turn: true, inside: 'red_garter_interior_twilight' }],
+  [/peanut gallery/i, { key: ['storefront_peanut_gallery', 'seaside_fudge'] }],
+  [/mario's/i, { key: ['storefront_marios_pizza', 'neon_moon_pizza'] }],
+  [/olympia/i, { key: ['storefront_olympia_fascination', 'lucky_sevens_arcade'] }],
+  [/eddie's fun/i, { key: ['storefront_eddies_fun_palace', 'lucky_sevens_arcade'] }],
+  [/royal casino/i, { key: ['storefront_royal_casino_arcade', 'lucky_sevens_arcade'] }],
+  [/fun shop|novelt/i, { key: 'boardwalk_fun_shop' }],
   [/shamrock/i, { key: 'shamrock_turnaround', turn: true, inside: 'shamrock_twilight' }],
   [/starlight scoops/i, { key: 'starlight_scoops_turnaround', turn: true, inside: 'starlight_scoops_twilight' }],
   [/lucky sevens/i, { key: ['lucky_sevens_arcade', 'storefront_lucky_sevens'] }],
@@ -29,14 +36,21 @@ const BY_NAME: [RegExp, StorefrontArt][] = [
 ];
 
 const BY_USE: Record<string, StorefrontArt | StorefrontArt[]> = {
-  arcade: { key: ['lucky_sevens_arcade', 'storefront_lucky_sevens'] },
+  arcade: [
+    { key: ['lucky_sevens_arcade', 'storefront_lucky_sevens'] },
+    { key: ['storefront_olympia_fascination', 'lucky_sevens_arcade'] },
+    { key: ['storefront_eddies_fun_palace', 'lucky_sevens_arcade'] },
+    { key: ['storefront_royal_casino_arcade', 'lucky_sevens_arcade'] },
+  ],
   hoodclub: { key: ['anchor_tavern', 'storefront_anchor_bar'] },
   bar: { key: ['anchor_tavern', 'storefront_anchor_bar'] },
   trattoria: { key: 'bellavita_restaurant_turnaround', turn: true },
   barber: { key: 'bayshore_barber' },
-  pizza: { key: 'neon_moon_pizza' },
+  pizza: [{ key: 'neon_moon_pizza' }, { key: ['storefront_marios_pizza', 'neon_moon_pizza'] }],
   pharmacy: { key: 'penny_candy_soda' },
-  giftshop: [{ key: 'penny_candy_soda' }, { key: 'seaside_fudge' }],
+  giftshop: [{ key: 'penny_candy_soda' }, { key: 'seaside_fudge' }, { key: ['storefront_peanut_gallery', 'seaside_fudge'] }],
+  souvenir: { key: 'boardwalk_fun_shop' },
+  tshirt: { key: 'boardwalk_fun_shop' },
   laundromat: { key: 'spin_city_laundromat' },
   drycleaner: { key: 'spin_city_laundromat' },
   commlaundry: { key: 'spin_city_laundromat' },
