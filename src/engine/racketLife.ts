@@ -12,7 +12,7 @@ import { racketOf, racketMut, applyTreeHeat } from './rackets';
 import { whichRacket } from './racketHub';
 import { dressScene, registerFamily, sceneCtx } from './sceneVariants';
 import type { ActionPreview } from './actions';
-import { canHold, earnerOf, earnerPreview, earnersMonth, setEarner } from './earners';
+import { canHold, earnerOf, earnerPreview, earnersMonth, holders, setEarner, suggestFor } from './earners';
 import type { Business, BusinessKind, Character, Effect, EventInstance, GameState, PlayerAction } from './types';
 
 /**
@@ -597,6 +597,12 @@ export function racketActions(s: GameState): PlayerAction[] {
     const o = d.opts[(s.week >> 1) % d.opts.length];
     if (dialOf(s, b, d.id) !== o.id) out.push(RK({ c: 'dial', bizId: b.id, dial: d.id, opt: o.id }));
     out.push(RK({ c: 'advice', bizId: b.id }));
+  }
+  // A steady earner for a man who has none (the boss or a capo).
+  for (const c of holders(s)) {
+    if (earnerOf(s, c.id)) continue;
+    const b = suggestFor(s, c);
+    if (b) { out.push(RK({ c: 'earner', who: c.id, bizId: b.id })); break; }
   }
   // A new racket: what "Which racket should I start?" ranks first.
   const best = whichRacket(s)[0];

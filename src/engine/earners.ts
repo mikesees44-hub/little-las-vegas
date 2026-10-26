@@ -210,3 +210,16 @@ export function earnersMonth(ctx: Ctx): void {
 export function steadyMult(s: GameState, charId: string): number {
   return hasEarner(s, charId) ? 0.5 : 1;
 }
+
+/** Last week's steady-earner lines, for the Earnings board: "Sal kicked up $1,200 — his numbers bank". */
+export function earnerLines(s: GameState): { who: string; text: string; amount: number }[] {
+  const out: { who: string; text: string; amount: number }[] = [];
+  for (const l of s.lastReport?.lines ?? []) {
+    if (l.stat !== 'money' || !l.who || !/ kicked up \$[\d,]+ — his /.test(l.label)) continue;
+    out.push({ who: l.who, text: l.label.replace(/ \([^)]*\)$/, ''), amount: l.amount });
+  }
+  const boss = s.characters[s.playerId];
+  const b = boss ? earnerOf(s, boss.id) : undefined;
+  if (b) out.unshift({ who: boss.id, text: `${earnerName(s, boss, b)}: about $${earnerWeekly(s, b).toLocaleString('en-US')} a week into your Pocket`, amount: earnerWeekly(s, b) });
+  return out;
+}

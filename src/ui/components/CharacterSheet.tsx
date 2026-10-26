@@ -1,3 +1,5 @@
+import { canHold } from '../../engine/earners';
+import { EarnerRow } from '../econ/SteadyEarners';
 import { ageOn, dateOfWeek, formatDate } from '../../engine/calendar';
 import { capoLoyalty, capoOf, CRAFT_INFO, GOAL_INFO, OUTSIDE_INFO, outsideGuys, regime, VICE_INFO } from '../../engine/hierarchy';
 import { warningsFor } from './CrewTree';
@@ -106,6 +108,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
             <div className="text-xs text-stone-300 mt-1 space-y-0.5">
               {!c.goal && <div>Ambition: <span className="text-stone-100">{c.ambition}</span></div>}
               <div>Own money: <span className="text-stone-100">{fmt$(c.wealth)}</span></div>
+              {canHold(s, c) && <div className="pt-1"><div className="text-[10px] uppercase tracking-wider text-stone-500">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
               {c.imprisonedUntil && c.imprisonedUntil > s.week && <div className="text-red-300">In jail until week {c.imprisonedUntil}</div>}
               {!showsLife && (c.record ?? 0) > 0 && <div>Record: {c.record} arrest{c.record! > 1 ? 's' : ''}</div>}
               {!showsLife && (isBoss || (c.evidence ?? 0) > 0) && <EvidenceLine s={s} c={c} />}

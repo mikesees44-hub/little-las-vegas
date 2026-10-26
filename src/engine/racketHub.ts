@@ -17,7 +17,7 @@ import type { Business, BusinessKind, Character, GameState, PlayerAction } from 
  */
 
 /** Hub order: the rackets a new boss can start first come first. */
-export const HUB_ORDER: BusinessKind[] = ['numbers', 'bookmaking', 'cardgame', 'loansharking', 'fencing', 'cargo', 'bidrig', 'labor', 'blackmail', 'jewel', 'bankcrew', 'stag', 'vice', 'narcotics'];
+export const HUB_ORDER: BusinessKind[] = ['protection', 'numbers', 'bookmaking', 'cardgame', 'loansharking', 'cigarettes', 'bootleg', 'afterhours', 'court', 'fencing', 'cargo', 'chopshop', 'bidrig', 'labor', 'insurance', 'washing', 'taxdodge', 'bustout', 'blackmail', 'jewel', 'bankcrew', 'stag', 'guns', 'counterfeit', 'payoff', 'vice', 'narcotics'];
 
 export interface HubCard {
   kind: BusinessKind;
@@ -74,7 +74,7 @@ export function hubCards(s: GameState): HubCard[] {
       ...crewTake(kind, def.base * def.season[0], def.base * def.season[1]), upkeep: def.upkeep,
       heat: def.heat, fed: def.fedHeat, men: def.staff, ladder: tree(kind).map((t) => t.name),
       owned: owned(s).filter((b) => b.kind === kind), locks, warns, laws: lawsFor(s, kind),
-      start: kind === 'narcotics' ? undefined : START(kind),
+      start: START(kind),
     };
   });
 }
@@ -118,7 +118,7 @@ export function whichRacket(s: GameState): RacketPick[] {
   const summer = isInSeason(s.date);
   const heatNow = s.heat.local + s.heat.federal;
   for (const kind of HUB_ORDER) {
-    if (kind === 'vice' || kind === 'narcotics') continue;
+    if (kind === 'vice' || kind === 'narcotics' || kind === 'bustout' || kind === 'payoff') continue;
     if (startLocks(s, kind).length) continue;
     const def = CATALOG[kind];
     const info = RACKETS[kind] as RacketInfo;

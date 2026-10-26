@@ -10,6 +10,8 @@ import type { Business, GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard, useOrders } from '../components/Orders';
 import { CharLink } from '../components/People';
+import { StartRacket } from './StartRacket';
+import { SteadyEarners } from './SteadyEarners';
 
 /**
  * THE RACKETS: every racket on one page. What it is, what it takes to start,
@@ -32,6 +34,10 @@ export function RacketHub({ s }: { s: GameState }) {
         <Stat label="Pads & arrangements" value={`${fmt$(costs)}/wk`} sub={costs ? 'paid every week' : 'nobody on the pad'} />
         <Stat label="Heat" value={`${Math.round(s.heat.local)} / ${Math.round(s.heat.federal)}`} sub="local / federal" />
       </section>
+
+      <StartRacket s={s} />
+
+      <SteadyEarners s={s} />
 
       <WhichRacket s={s} />
 
