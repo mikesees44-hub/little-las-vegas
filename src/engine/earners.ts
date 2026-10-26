@@ -1,4 +1,5 @@
-import { CATALOG } from './catalog';
+import { CATALOG, seasonalMult } from './catalog';
+import { isInSeason } from './calendar';
 import { capos, isFree } from './characters';
 import { expectedTake, isOpen, owned } from './business';
 import { ensureEcon } from './econState';
@@ -13,8 +14,8 @@ import type { Business, BusinessKind, Character, Effect, GameState } from './typ
  * dough ("Sal's numbers bank", "Your piece of the Flyer").
  *
  *  - It pays its expected take every week with no swings (no hit numbers, no
- *    bad Saturdays, no missed loads) and a little more (+15%: the man watches
- *    it himself).
+ *    bad Saturdays, no missed loads), the same in winter as in summer (the
+ *    year's average season), and a little more (+15%: the man watches it himself).
  *  - A capo keeps 15% of it as his end and kicks the rest up, one line in the
  *    week's books: "Sal kicked up $1,200 — his numbers bank".
  *  - The boss's own earner: his piece (half) pays straight into his Pocket, the rest to the Family.
@@ -27,6 +28,14 @@ import type { Business, BusinessKind, Character, Effect, GameState } from './typ
 
 /** The capo's own end of his earner. */
 export const EARNER_KEEP = 0.15;
+/** Weeks of the season (Memorial Day to Labor Day) in a 52-week year. */
+const SEASON_WEEKS = 14;
+/** A steady earner's season multiplier: the year's average, so it pays the same summer and winter. */
+export function yearMult(kind: BusinessKind): number {
+  const [a, z] = CATALOG[kind].season;
+  return (a * SEASON_WEEKS + z * (52 - SEASON_WEEKS)) / 52;
+}
+
 /** The boss's piece of his own earner (into his Pocket); the rest stays with the Family. */
 export const BOSS_PIECE = 0.5;
 /** The take goes up when the man watches it himself. */
@@ -106,9 +115,11 @@ export function freeEarners(s: GameState): Business[] {
 
 /** What the business would pay as a steady earner a week (its expected take, steadied). */
 export function earnerWeekly(s: GameState, b: Business): number {
-  const held = !!holderOf(s, b.id);
   const t = expectedTake(s, b);
-  return Math.round(held ? t : t * (1 + EARNER_STEADY));
+  if (holderOf(s, b.id)) return t;
+  // As it would pay held: the year's average season, +15%.
+  const now = seasonalMult(b.kind, isInSeason(s.date));
+  return Math.round(now > 0 ? (t * yearMult(b.kind) / now) * (1 + EARNER_STEADY) : 0);
 }
 
 /**
@@ -117,7 +128,7 @@ export function earnerWeekly(s: GameState, b: Business): number {
  */
 export function suggestFor(s: GameState, c: Character, exclude: ReadonlySet<string> = new Set()): Business | undefined {
   const d = s.districts.find((x) => x.capoId === c.id);
-  const score = (b: Business) => (expectedTake(s, b) + 40) * (steadyWord(b.kind) === 'steady' ? 1.5 : 1) * (d && b.districtId === d.id ? 1.3 : 1) * (isOpen(s, b) ? 1 : 0.5);
+  const score = (b: Business) => (earnerWeekly(s, b) + 40) * (steadyWord(b.kind) === 'steady' ? 1.5 : 1) * (d && b.districtId === d.id ? 1.3 : 1) * (isOpen(s, b) ? 1 : 0.5);
   return freeEarners(s).filter((b) => !exclude.has(b.id)).sort((a, b) => score(b) - score(a) || (a.id < b.id ? -1 : 1))[0];
 }
 

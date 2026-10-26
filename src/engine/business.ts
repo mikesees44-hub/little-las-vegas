@@ -1,4 +1,4 @@
-import { EARNER_STEADY, holderOf } from './earners';
+import { EARNER_STEADY, holderOf, yearMult } from './earners';
 import { econTakeMult, econWash } from './econ';
 import { incomeBoost, racketNetMult, WASH_SCALE } from './money';
 import { venueTake } from './empire';
@@ -118,7 +118,9 @@ export function expectedTake(s: GameState, b: Business): number {
   if (!isOpen(s, b)) return 0;
   const ven = venueTake(s, b);
   if (ven !== undefined) return ven;
-  const mult = seasonalMult(b.kind, isInSeason(s.date));
+  // A steady earner (earners.ts) pays the same all year: the year's average season, summer and winter alike.
+  const held = !!holderOf(s, b.id);
+  const mult = held ? yearMult(b.kind) : seasonalMult(b.kind, isInSeason(s.date));
   let v = b.weeklyBase * mult * controlFactor(s, b) * staffFactor(s, b);
   if (b.kind === 'construction' && s.favors > 0) v *= 1.4;
   const runner = (b.staffIds ?? []).map((id) => s.characters[id]).find(Boolean);
@@ -127,7 +129,7 @@ export function expectedTake(s: GameState, b: Business): number {
   // The money pass (money.ts): rackets pay more, and more again as the family runs more of them.
   if (b.category === 'racket') v *= incomeBoost(s, 'rackets') * racketNetMult(s);
   // A steady earner: the man watches it himself (earners.ts).
-  if (holderOf(s, b.id)) v *= 1 + EARNER_STEADY;
+  if (held) v *= 1 + EARNER_STEADY;
   return Math.round(v);
 }
 

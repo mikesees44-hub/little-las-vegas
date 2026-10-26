@@ -1,9 +1,9 @@
-import { CATALOG } from './catalog';
+import { CATALOG, seasonalMult } from './catalog';
 import { isInSeason } from './calendar';
 import { countKind, expectedTake, idleMen, isBusy, newBusiness, owned } from './business';
 import { capos, isFree } from './characters';
 import { CUT_INFO, type CutTier } from './earsState';
-import { canHold, earnerOf, EARNER_STEADY, steadyWord } from './earners';
+import { canHold, earnerOf, EARNER_STEADY, steadyWord, yearMult } from './earners';
 import { lawsFor } from './racketHub';
 import { bestDistrict, bestRunner, startLocks } from './racketLife';
 import { racketInfo, type Fit } from './racketData';
@@ -213,6 +213,8 @@ export interface StartSummary {
   weekly: number;
   other: number;
   byScore?: string;
+  /** As a steady earner: the same every week, summer and winter. */
+  steady?: boolean;
   heat: MenuRow['heat'];
   federal: MenuRow['heat'];
   risk: string;
@@ -267,9 +269,12 @@ export function startSummary(s: GameState, key: MenuKey, runnerId?: string, dist
   if (kind === 'bustout') warns.push('One-shot: the store is finished when it pays.');
   if (kind === 'payoff') warns.push('It earns nothing. It costs $' + def.upkeep + ' a week and cools every racket you run.');
   if (def.staff > idleMen(s).length) warns.push(`Needs ${def.staff} free m${def.staff > 1 ? 'en' : 'an'} on the street (you have ${idleMen(s).length}); short-handed it makes 40%.`);
-  const extra = asEarner ? (1 + EARNER_STEADY) : 1;
+  // A steady earner pays the year's average season every week, +15%.
+  const now = seasonalMult(kind, isInSeason(s.date));
+  const gross = est.weekly + def.upkeep;
+  const steadyWk = asEarner && now > 0 ? Math.round((gross * yearMult(kind) / now) * (1 + EARNER_STEADY) - def.upkeep) : undefined;
   return {
-    title: m.title, cost: def.cost, weekly: Math.round(est.weekly * (est.weekly > 0 ? extra : 1)), other: Math.round(est.other * (est.other > 0 ? extra : 1)), byScore: est.byScore,
+    title: m.title, cost: def.cost, weekly: steadyWk ?? est.weekly, other: steadyWk ?? est.other, byScore: est.byScore, steady: steadyWk !== undefined,
     heat: heatWord(def.heat), federal: heatWord(def.fedHeat), risk: m.risk, objects: m.objects,
     philly: PHILLY[kind] ?? 'Nothing to say: it is your island.',
     warns, laws: lawsFor(s, kind), locks: startLocks(s, kind),

@@ -208,7 +208,7 @@ function Summary({ s, k, runner, district, earner, budget, queued, onStart }: { 
   const already = !!sum.action && queued.some((o) => JSON.stringify(o) === JSON.stringify(sum.action));
   const rows: [string, string, string?][] = [
     ['Startup cost', k === 'madam' ? 'Nothing: you agree a cut with her' : fmt$(sum.cost)],
-    ['Weekly take', sum.byScore ? `${sum.weekly ? `~${fmt$(sum.weekly)}/wk · ` : ''}${sum.byScore}` : `~${fmt$(sum.weekly)}/wk now · ~${fmt$(sum.other)} the other season`, sum.weekly < 0 ? 'text-red-300' : 'text-gold-300'],
+    ['Weekly take', sum.byScore ? `${sum.weekly ? `~${fmt$(sum.weekly)}/wk · ` : ''}${sum.byScore}` : sum.steady ? `~${fmt$(sum.weekly)}/wk, every week, summer and winter` : `~${fmt$(sum.weekly)}/wk now · ~${fmt$(sum.other)} the other season`, sum.weekly < 0 ? 'text-red-300' : 'text-gold-300'],
     ['Heat', `${sum.heat} local · ${sum.federal} federal`, sum.heat === 'high' || sum.federal === 'high' ? 'text-red-300' : sum.heat === 'some' || sum.federal === 'some' ? 'text-amber-300' : 'text-stone-200'],
     ['Risk', sum.risk],
     ['Who objects', sum.objects],
