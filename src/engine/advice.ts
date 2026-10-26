@@ -165,7 +165,9 @@ function named(s: GameState, e: Effect, when: When, fallback: string): NamedEffe
   const text = describeEffect(s, e);
   if (!text) return undefined;
   const st = statOf(e);
-  const amt = e.type === 'money' || e.type === 'respect' || e.type === 'heat' ? e.amount : undefined;
+  // From the pocket: the Family's money (the stat) moves only by what the pocket cannot cover.
+  const amt = e.type === 'money' && e.pot === 'pocket' ? (e.amount < 0 ? -Math.max(0, -e.amount - Math.max(0, s.tribute?.acct.personal ?? 0)) : 0)
+    : e.type === 'money' || e.type === 'respect' || e.type === 'heat' ? e.amount : undefined;
   return { label: e.label ?? fallback, text, tone: toneOf(s, e), when, stat: st, min: amt, max: amt };
 }
 

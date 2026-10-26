@@ -74,7 +74,10 @@ describe('travel: modes, time and cost', () => {
     expect(q.block).toBeUndefined();
     const r = advanceWeek(s, { actions: [trip(plan)] });
     s = r.state;
-    expect(r.report.lines.some((l) => l.stat === 'money' && l.amount === -q.cost && /Vacation: Rome/.test(l.label))).toBe(true);
+    // A vacation is the boss's own: his pocket pays first (the journal), the Family the rest (the ledger).
+    const fromFamily = r.report.lines.filter((l) => l.stat === 'money' && /Vacation: Rome/.test(l.label)).reduce((a, l) => a - l.amount, 0);
+    const fromPocket = r.state.tribute!.books.find((b) => b.week === r.report.week)!.x.filter((x) => x[0] === 'personal' && /Vacation: Rome/.test(x[4] ?? '')).reduce((a, x) => a + x[2], 0);
+    expect(fromFamily + fromPocket).toBe(q.cost);
     expect(travellers(s).length).toBe(1);
     let weeks = 1;
     while (travellers(s).length && weeks < 6) { s = advanceWeek(s).state; weeks++; }

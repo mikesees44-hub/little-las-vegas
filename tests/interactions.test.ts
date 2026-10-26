@@ -37,7 +37,9 @@ describe('character interactions', () => {
     const before = opinion(s, c.id, s.playerId);
     const r = advanceWeek(s, { actions: [{ kind: 'interact', id: 'gift_large', target: c.id }] });
     expect(opinion(r.state, c.id, r.state.playerId)).toBeGreaterThan(before);
-    expect(r.report.lines.some((l) => l.label === `Gift to ${c.firstName}`)).toBe(true);
+    // Paid from the boss's pocket (the week's journal), or by the Family when the pocket is short (the ledger).
+    const paid = r.report.lines.some((l) => l.label.startsWith(`Gift to ${c.firstName}`)) || r.state.tribute!.books.find((b) => b.week === r.report.week)!.x.some((x) => x[0] === 'personal' && x[4] === `Gift to ${c.firstName}`);
+    expect(paid).toBe(true);
   });
   it('requests can be refused, and refusal has its own consequences', () => {
     let accepted = 0;
