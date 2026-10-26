@@ -740,7 +740,7 @@ export function commitDirty(ctx: Ctx, a: DirtyAction): void {
   }
 
   applyEffects(ctx, fx.map((e) => ({ ...e, label: e.label ?? label })), { label, because: `sent ${boss ? 'yourself' : name} on a job`, category: 'street' });
-  const how = outcome === 'clean' ? 'went clean' : outcome === 'messy' ? 'went through, messy: somebody saw something' : outcome === 'bust' ? 'came up empty' : 'went wrong: picked up';
+  const how = outcome === 'clean' ? 'went clean' : outcome === 'messy' ? 'went through, but somebody saw something' : outcome === 'bust' ? 'came up empty' : `went wrong: ${boss ? 'you were' : 'he was'} picked up`;
   const money = take > 0 ? ` $${take.toLocaleString('en-US')} ${a.pay === 'pocket' ? 'into your pocket' : a.job === 'torch' ? 'from the insurer (clean money)' : 'to the Family (dirty cash)'}${!boss ? `; ${c.firstName} kept his end` : ''}.` : '';
   const text = `${j.title}${tName ? ` (${tName})` : ''}, ${boss ? 'you' : c.firstName}: ${how}.${money}${extra}`;
   ctx.log.push(`Dirty work — ${text}`);

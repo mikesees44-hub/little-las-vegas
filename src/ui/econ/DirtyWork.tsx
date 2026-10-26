@@ -111,7 +111,7 @@ export function DirtyWork({ s, onDone }: { s: GameState; onDone?: () => void }) 
           <ul className="mt-1 space-y-1">
             {results.map((r, i) => (
               <li key={i} className="text-xs text-stone-300" data-testid="dw-result" data-outcome={r.outcome}>
-                <span className={`font-semibold ${OUTCOME[r.outcome].cls}`}>{OUTCOME[r.outcome].word}.</span> {r.text}
+                <span className={`mr-1 rounded px-1 text-[10px] font-semibold uppercase tracking-wide bg-noir-900 ${OUTCOME[r.outcome].cls}`}>{OUTCOME[r.outcome].word}</span>{r.text}
               </li>
             ))}
           </ul>
@@ -356,10 +356,14 @@ function Summary({ s, job, who, target, pocket, setPocket, orders, onGo, onRacke
  * best man already picked, plus a link into the full Dirty Work flow.
  */
 export function DirtyHere({ s, lot, biz, onGo }: { s: GameState; lot?: Lot; biz?: Business; onGo: () => void }) {
+  const { orders } = useOrders();
   const jobs = jobsForPlace(s, lot, biz);
   if (!jobs.length || s.gameOver) return null;
   const main = jobs[0];
-  const man = defaultMan(s, main.job);
+  // The best man not already sent on something this week.
+  const sent = queuedMen(orders);
+  const mine = orders.find((o): o is Extract<PlayerAction, { kind: 'dirty' }> => o.kind === 'dirty' && o.op.job === main.job && o.op.target === main.target);
+  const man = (mine ? crewFor(s, main.job).find((r) => r.c.id === mine.op.who) : undefined) ?? crewFor(s, main.job).filter((r) => !r.busy && r.role !== 'boss' && !sent.has(r.c.id)).sort((a, b) => b.odds - a.odds)[0] ?? defaultMan(s, main.job);
   const a = man ? jobAction(s, main.job, man.c.id, main.target) : undefined;
   const sum = man ? jobSummary(s, main.job, man.c.id, main.target) : undefined;
   return (
