@@ -5,6 +5,7 @@ import { heat, type Ctx } from './ledger';
 import { chance, gauss, randInt } from './rng';
 import type { Business, BusinessKind, GameState } from './types';
 import { dialHeat, dialIncome, dialK, dialRaid } from './racketLife';
+import { holderOf } from './earners';
 
 /**
  * Deeper rackets. Each racket keeps its own book on the business's econ
@@ -146,6 +147,71 @@ export const RACKET_TREES: Partial<Record<BusinessKind, TreeStep[]>> = {
     T('A pressing plant contract', 5000, 0.25, 'Your own records, pressed cheap.'),
     T('A national distributor', 9000, 0.35, 'The doo-wop act goes national.'),
   ],
+  protection: [
+    T('A second block', 1500, 0.25, 'Pacific Avenue and the side streets.', { heat: 0.1 }),
+    T('A friendly sergeant on the beat', 2500, 0.15, 'Complaints go nowhere.', { heat: -0.2 }),
+    T('The whole avenue', 5000, 0.3, 'Every storefront from the Crest to Anglesea pays.', { heat: 0.1 }),
+  ],
+  afterhours: [
+    T('A second room upstairs', 2500, 0.2, 'Dice upstairs, drinks down.'),
+    T('A doorman with a memory', 3500, 0.15, 'Nobody gets in who should not.', { heat: -0.2 }),
+    T('A name piano player', 5000, 0.25, 'The musicians come after their own gigs.'),
+  ],
+  bootleg: [
+    T('A second truck', 2000, 0.2, 'Twice the cases.'),
+    T('A warehouse in the pines', 3500, 0.2, 'Somewhere nobody looks.', { heat: -0.15 }),
+    T('A distributor\'s salesman', 5000, 0.25, 'He sells your cases with his own.'),
+  ],
+  cigarettes: [
+    T('A van of your own', 1500, 0.2, 'No more borrowed station wagons.'),
+    T('Every newsstand in the county', 3000, 0.25, 'Cartons under every counter.'),
+    T('A carton route to Philadelphia', 5000, 0.25, 'The bigger city pays more tax.', { heat: 0.05 }),
+  ],
+  guns: [
+    T('A checker at the freight yard', 3000, 0.2, 'Crates that are counted once.'),
+    T('A barn in the pines', 5000, 0.15, 'Nothing stays on the island.', { heat: -0.2 }),
+    T('Buyers in three states', 8000, 0.3, 'More buyers, farther away.', { heat: 0.1 }),
+  ],
+  counterfeit: [
+    T('Better paper', 3000, 0.2, 'Notes that pass at a bank.'),
+    T('Passers in Baltimore', 5000, 0.25, 'Far from the island.', { heat: -0.15 }),
+    T('Stamps too', 7000, 0.25, 'Postage stamps sell to dealers by the sheet.'),
+  ],
+  insurance: [
+    T('A second adjuster', 2500, 0.2, 'Two companies, two arrangements.'),
+    T('A lawyer who files claims', 4000, 0.2, 'The paperwork is perfect.', { heat: -0.15 }),
+    T('Claims across the county', 6000, 0.3, 'Not just the island.', { heat: 0.1 }),
+  ],
+  bustout: [
+    T('A bigger store', 2500, 0.2, 'More credit to run up.'),
+    T('A salesman on the inside', 4000, 0.2, 'Suppliers ship without asking.'),
+    T('A buyer for the whole stock', 6000, 0.25, 'The goods leave by the truckload.'),
+  ],
+  washing: [
+    T('A bookkeeper with two sets of books', 3000, 0.2, 'Neat columns, every week.', { heat: -0.1 }),
+    T('A friend at the savings bank', 5000, 0.25, 'Deposits nobody questions.'),
+    T('Out-of-town clients', 8000, 0.3, 'New York money, quietly.', { heat: 0.1 }),
+  ],
+  chopshop: [
+    T('A paint booth', 2000, 0.2, 'Some cars leave whole, in a new color.'),
+    T('A parts dealer in Camden', 4000, 0.25, 'The parts leave the county.', { heat: -0.15 }),
+    T('A tow-truck contract', 6000, 0.25, 'The cars come to you.', { heat: 0.1 }),
+  ],
+  court: [
+    T('A back room at the social club', 1000, 0.2, 'Coffee, a long table, no windows.'),
+    T('Word in Cape May and Ocean City', 2500, 0.25, 'Operators come from up the shore.'),
+    T('The bigger disputes', 5000, 0.3, 'Contractors, union men, club owners.'),
+  ],
+  payoff: [
+    T('The inspector too', 1500, 0, 'Building and fire: no surprises.', { heat: -0.2 }),
+    T('A desk sergeant downtown', 3000, 0, 'Arrests end at the desk.', { heat: -0.2 }),
+    T('A man in the prosecutor\'s office', 6000, 0, 'You hear about indictments first.', { heat: -0.2 }),
+  ],
+  taxdodge: [
+    T('A second front\'s books', 2000, 0.25, 'More invoices from nowhere.'),
+    T('An accountant from Philadelphia', 3500, 0.2, 'He has done this before.', { heat: -0.2 }),
+    T('A shell company in Delaware', 6000, 0.3, 'The invoices have a real address now.'),
+  ],
   construction: [
     T('A second crew and a crane', 5000, 0.25, 'Two jobs at once; builds go faster.'),
     T('Union men who owe you', 6000, 0.2, 'No strikes on your sites.', { heat: 0.05 }),
@@ -262,6 +328,8 @@ export function racketWeek(ctx: Ctx, b: Business, amt: number, label: string): {
   const e = ensureEcon(s);
   const kinds: BusinessKind[] = ['bookmaking', 'numbers', 'cargo', 'vending'];
   if (!kinds.includes(b.kind)) return { amt, label };
+  // A steady earner pays its expected take, no swings (earners.ts).
+  if (holderOf(s, b.id)) return { amt, label };
   const r = racketMut(s, b);
   const steps = stepsOf(s, b);
   const raidMult = steps.reduce((a, st) => a * (st.raid ?? 1), 1) * dialRaid(s, b);

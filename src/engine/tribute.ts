@@ -1,3 +1,4 @@
+import { steadyMult } from './earners';
 import { idleMen } from './business';
 import { isInSeason } from './calendar';
 import { capos, crew, hasTrait, isFree, player, shortName } from './characters';
@@ -469,7 +470,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
     const infl = d.influence.player ?? 0;
     if (infl <= 0) continue;
     const skill = 0.85 + capo.attributes.business / 400;
-    const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo));
+    const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo) * steadyMult(s, capo.id));
     const take = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach;
     const keep = capo.keep ?? 0.3;
     const owedTotal = take - take * keep;

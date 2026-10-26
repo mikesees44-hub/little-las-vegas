@@ -67,12 +67,16 @@ export type RacketOp =
   | { op: 'racket'; cmd: 'roll'; bizId: string; p: number; what: string; win: RacketOutcome; lose: RacketOutcome }
   | { op: 'racket'; cmd: 'boost'; bizId: string; pct: number; weeks: number }
   | { op: 'racket'; cmd: 'var'; bizId: string; key: string; amount: number }
-  | { op: 'racket'; cmd: 'dial'; bizId: string; dial: string; opt: string };
+  | { op: 'racket'; cmd: 'dial'; bizId: string; dial: string; opt: string }
+  /** Steady earners (earners.ts): give `who` the business as his earner ('' takes it back). */
+  | { op: 'racket'; cmd: 'earner'; bizId: string; who: string };
 
 /** Player orders of the rackets (inside `{ kind: 'econ', op: { type: 'racket', cmd } }`). */
 export type RacketCmd =
   /** Open a racket: the best district and the best-fit man are picked for you. */
-  | { c: 'start'; kind: BusinessKind; district?: string }
+  | { c: 'start'; kind: BusinessKind; district?: string; runner?: string; earner?: boolean }
+  /** Give a man (the boss or a capo) his steady earner; bizId '' takes it back. */
+  | { c: 'earner'; who: string; bizId: string }
   /** Change a standing decision. */
   | { c: 'dial'; bizId: string; dial: string; opt: string }
   /** Take the advice: set every dial of one racket to what the advisor recommends. */

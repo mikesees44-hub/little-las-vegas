@@ -1,3 +1,4 @@
+import { EARNER_STEADY, holderOf } from './earners';
 import { econTakeMult, econWash } from './econ';
 import { incomeBoost, racketNetMult, WASH_SCALE } from './money';
 import { venueTake } from './empire';
@@ -125,6 +126,8 @@ export function expectedTake(s: GameState, b: Business): number {
   v *= econTakeMult(s, b);
   // The money pass (money.ts): rackets pay more, and more again as the family runs more of them.
   if (b.category === 'racket') v *= incomeBoost(s, 'rackets') * racketNetMult(s);
+  // A steady earner: the man watches it himself (earners.ts).
+  if (holderOf(s, b.id)) v *= 1 + EARNER_STEADY;
   return Math.round(v);
 }
 
@@ -161,9 +164,12 @@ export function districtSlots(s: GameState, districtId: string): number {
 }
 
 /** How many places the crew can run in a district: its share of the storefronts. */
+/** Operations with no storefront of their own (an envelope, a sit-down, a second set of books). */
+export const NO_SLOT: BusinessKind[] = ['payoff', 'court', 'taxdodge'];
+
 export function playerSlots(s: GameState, districtId: string): { used: number; max: number } {
   const d = s.districts.find((x) => x.id === districtId);
   const max = d ? Math.floor((districtSlots(s, districtId) * (d.influence.player ?? 0)) / 100) : 0;
-  const used = owned(s).filter((b) => b.districtId === districtId && CATALOG[b.kind].category !== 'property' && b.kind !== 'bank' && b.kind !== 'casino').length;
+  const used = owned(s).filter((b) => b.districtId === districtId && CATALOG[b.kind].category !== 'property' && b.kind !== 'bank' && b.kind !== 'casino' && !NO_SLOT.includes(b.kind)).length;
   return { used, max };
 }

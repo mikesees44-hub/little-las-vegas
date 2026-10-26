@@ -1,5 +1,5 @@
 import { availableIn, CATALOG } from './catalog';
-import { countKind, expectedTake, idleMen, isOpen, newBusiness, owned, playerSlots, staffNeed } from './business';
+import { countKind, expectedTake, idleMen, isOpen, newBusiness, NO_SLOT, owned, playerSlots, staffNeed } from './business';
 import { crew, displayName, isFree } from './characters';
 import { ensureEcon } from './econState';
 import { addEvidence } from './hierarchy';
@@ -12,6 +12,7 @@ import { racketOf, racketMut, applyTreeHeat } from './rackets';
 import { whichRacket } from './racketHub';
 import { dressScene, registerFamily, sceneCtx } from './sceneVariants';
 import type { ActionPreview } from './actions';
+import { canHold, earnerOf, earnerPreview, earnersMonth, setEarner } from './earners';
 import type { Business, BusinessKind, Character, Effect, EventInstance, GameState, PlayerAction } from './types';
 
 /**
@@ -35,6 +36,8 @@ import type { Business, BusinessKind, Character, Effect, EventInstance, GameStat
 export const SIT_GAP = 10; // weeks between situations at one racket
 export const SIT_GLOBAL_GAP = 3; // weeks between racket situations at all
 export const SIT_CHANCE = 0.4;
+/** Monthly chance a man on the narcotics pipeline is picked up and talks (× the shipments dial). */
+export const NARC_RAT = 0.08;
 
 /* ------------------------------------------------------------------ */
 /* Dials                                                               */
@@ -163,7 +166,8 @@ export function racketLifeWeek(ctx: Ctx): void {
       heat(ctx, 'local', 1, `The Madam's arrangement: the vice squad watches whose houses you protect`, 'heat');
     }
   }
-  // Monthly: Philadelphia's mood, the numbers players drifting, a contractor's favor.
+  earnersMonth(ctx);
+  // Monthly: Philadelphia's mood, the numbers players drifting, a contractor's favor, a rat on the pipeline.
   if (s.date.d <= 7) {
     const ph = s.rivals.find((r) => r.id === 'philly');
     for (const b of owned(s)) {
@@ -175,6 +179,16 @@ export function racketLifeWeek(ctx: Ctx): void {
           const r = racketMut(s, b);
           r.runners = Math.max(2, Math.min(20, (r.runners ?? 6) + pl));
         }
+      }
+      if (b.kind === 'narcotics' && isOpen(s, b) && chance(E(s), NARC_RAT * dialK(s, b, 'rat'))) {
+        // Somebody on the pipeline was picked up and is talking: the classic way dope sinks a family.
+        addEvidence(s, s.characters[s.playerId], 3);
+        heat(ctx, 'federal', 3, `${b.name}: a man on the pipeline was picked up and is talking`, 'heat');
+        ctx.log.push(`A man who handled ${b.name}'s shipments was picked up by federal narcotics agents. Nobody knows what he is telling them.`);
+      }
+      if (b.kind === 'court' && dialK(s, b, 'favor', 0) && chance(E(s), 0.3)) {
+        s.favors += 1;
+        ctx.log.push(`A man the sit-down court ruled for owes the family a favor.`);
       }
       if (b.kind === 'loansharking' && dialK(s, b, 'favor', 0) && chance(E(s), 0.15)) {
         s.favors += 1;
@@ -328,6 +342,10 @@ export function describeRacketOp(s: GameState, op: RacketOp): string {
       const o = d?.opts.find((x) => x.id === op.opt);
       return `${d?.name ?? 'Set'}: ${o?.label ?? op.opt}${o ? ` (${optEffects(o)})` : ''}`;
     }
+    case 'earner': {
+      const c = s.characters[op.who];
+      return b ? `${c?.firstName ?? 'He'}'s steady earner: ${b.name}` : `${c?.firstName ?? 'He'} gives up his steady earner`;
+    }
   }
 }
 
@@ -346,6 +364,10 @@ export function optEffects(o: DialOpt): string {
 
 export function applyRacketOp(ctx: Ctx, op: RacketOp, label: string): void {
   const s = ctx.s;
+  if (op.cmd === 'earner') {
+    if (canHold(s, s.characters[op.who])) setEarner(s, op.who, op.bizId);
+    return;
+  }
   const b = s.businesses.find((x) => x.id === op.bizId && x.owner === 'player');
   if (!b) return;
   const r = racketMut(s, b);
@@ -424,7 +446,7 @@ export function bestDistrict(s: GameState, kind: BusinessKind): string | undefin
     const same = owned(s).filter((b) => b.districtId === id && b.kind === kind).length * 15;
     return (d.influence.player ?? 0) + capo - same;
   };
-  return s.districts.filter((d) => (d.influence.player ?? 0) >= 20 && (def.category === 'property' || (() => { const sl = playerSlots(s, d.id); return sl.used < sl.max; })()))
+  return s.districts.filter((d) => (d.influence.player ?? 0) >= 20 && (def.category === 'property' || NO_SLOT.includes(kind) || (() => { const sl = playerSlots(s, d.id); return sl.used < sl.max; })()))
     .map((d) => d.id).sort((a, b) => score(b) - score(a) || (a < b ? -1 : 1))[0];
 }
 
@@ -444,6 +466,7 @@ export function startLocks(s: GameState, kind: BusinessKind): { why: string; how
     const op = ph && s.characters[ph.leaderId]?.alive ? opinion(s, ph.leaderId, s.playerId) : 0;
     if (op < info.blessing) out.push({ why: `Needs the Table's blessing: Philadelphia thinks ${op} of you (needs ${info.blessing})`, how: 'Pay the envelope in full, send a gift, lay bets off to Philadelphia.' });
   }
+  if (kind === 'taxdodge' && !owned(s).some((b) => CATALOG[b.kind].category === 'front')) out.push({ why: 'Needs a front whose books can carry the invoices', how: 'Open a restaurant, a bar or any legit front first.' });
   if (kind === 'narcotics' && s.edicts?.nojunk) out.push({ why: 'Your own edict bans narcotics', how: 'You would have to lift it.' });
   return out;
 }
@@ -459,12 +482,20 @@ export function previewRacket(s: GameState, cmd: RacketCmd): ActionPreview {
       const district = cmd.district ?? bestDistrict(s, cmd.kind);
       const d = s.districts.find((x) => x.id === district);
       const b = newBusiness(s, cmd.kind, district ?? s.districts[0].id);
-      const man = bestRunner(s, cmd.kind);
+      const pick = cmd.runner ? s.characters[cmd.runner] : undefined;
+      const man = pick && pick.id !== s.playerId && pick.rank !== 'capo' ? pick : bestRunner(s, cmd.kind);
       const locks = startLocks(s, cmd.kind);
       const label = `Start: ${def.name}${d ? ` in ${d.name}` : ''}`;
       const effects: Effect[] = [{ type: 'money', amount: -def.cost, label: def.name }, { type: 'addBusiness', business: b, label: d?.name ?? def.name }];
-      effects.push({ type: 'econ', op: { op: 'note', text: man ? `${displayName(man)} runs it (best ${FIT_OF(cmd.kind)} among your free men)` : `No free man to run it: it limps at 40% until one is` } });
-      if (cmd.kind === 'narcotics') effects.push({ type: 'schedule', key: 'narcotics_rumor', minWeeks: 3, maxWeeks: 8, chance: 0.35, hint: 'word may reach Philadelphia', label });
+      const boss = pick?.id === s.playerId;
+      const holder = pick && canHold(s, pick) ? pick : undefined;
+      const runs = holder ? `${boss ? 'You' : displayName(holder)} run${boss ? '' : 's'} it${def.staff ? man ? ` with ${displayName(man)} on the street` : ' (no free man for the street yet: 40% until one is)' : ''}` : man && def.staff ? `${displayName(man)} runs it (${FIT_OF(cmd.kind)} ${man.attributes[FIT_OF(cmd.kind)]})` : def.staff ? 'No free man to run it: it limps at 40% until one is' : 'It runs itself';
+      effects.push({ type: 'econ', op: { op: 'note', text: runs } });
+      if (holder && cmd.earner) effects.push({ type: 'econ', op: { op: 'note', text: boss ? 'It becomes your own steady earner: it pays into your Pocket' : `It becomes ${holder.firstName}'s steady earner: he keeps 15% and kicks up the rest` } });
+      if (cmd.kind === 'narcotics') {
+        effects.push({ type: 'schedule', key: 'narcotics_rumor', minWeeks: 3, maxWeeks: 8, chance: 0.35, hint: 'word may reach Philadelphia', label });
+        effects.push({ type: 'crewOpinion', amount: -3, reason: 'Touched dope against the old rules', label });
+      }
       const capo = d?.capoId ? s.characters[d.capoId] : undefined;
       return {
         title: label,
@@ -485,6 +516,10 @@ export function previewRacket(s: GameState, cmd: RacketCmd): ActionPreview {
         cost: 0, because: `set ${b.name} to ${o.label.toLowerCase()}`,
         disabledReason: dialOf(s, b, d.id) === o.id ? 'That is how it runs now' : undefined, category: 'event',
       };
+    }
+    case 'earner': {
+      const p = earnerPreview(s, cmd.who, cmd.bizId);
+      return { title: p.title, detail: p.detail, effects: p.effects, cost: 0, because: p.because, disabledReason: p.disabledReason, category: 'event' };
     }
     case 'advice': {
       const b = s.businesses.find((x) => x.id === cmd.bizId && x.owner === 'player');
@@ -509,6 +544,14 @@ export function commitRacket(ctx: Ctx, cmd: RacketCmd): void {
   racketMut(s, b);
   bump(s, 'rkStarts');
   const need = staffNeed(b);
+  // The man the boss picked runs it on the street (a soldier or associate who is free).
+  const pick = cmd.runner ? s.characters[cmd.runner] : undefined;
+  if (pick && need > 0 && idleMen(s).some((m) => m.id === pick.id)) {
+    (b.staffIds ??= []).push(pick.id);
+    ctx.log.push(`${displayName(pick)} now runs ${b.name}.`);
+  }
+  // The boss or a capo picked: it is his, and (if asked) his steady earner.
+  if (pick && cmd.earner && canHold(s, pick) && !earnerOf(s, pick.id)) setEarner(s, pick.id, b.id);
   while ((b.staffIds ?? []).length < need) {
     const m = bestRunner(s, cmd.kind);
     if (!m) break;
