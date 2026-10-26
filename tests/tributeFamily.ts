@@ -11,6 +11,8 @@ import { reconcile } from '../src/engine/ledger';
 import { upToCollected } from '../src/engine/crewPurse';
 import { moneyGrievances } from '../src/engine/tributeGrievance';
 import { ubProfile } from '../src/engine/underboss';
+import { ensureAttrs } from '../src/engine/attrs';
+import { holder } from '../src/engine/council';
 
 /**
  * The spec's required family: one Don, one underboss, one consigliere, three
@@ -48,6 +50,10 @@ export function requiredFamily(seed = 'tribute-52'): GameState {
   const greedy = three[1];
   if (!greedy.traits.includes('Greedy')) greedy.traits = [...greedy.traits.filter((t) => t !== 'Honest' && t !== 'Loyal-to-a-fault'), 'Greedy'];
   greedy.keep = 0.25;
+  // A capable underboss (skill >= 0.95), so a 25-man family does not swamp him and he gives real advice
+  // (demonstration 9, and 'his advice' in demonstration 6) instead of depending on how many men leave.
+  const ub = holder(s, 'underboss');
+  if (ub) { const x = ensureAttrs(s, ub); for (const k of ['finance', 'organization', 'judgment'] as const) x.v[k] = Math.max(x.v[k], 60); }
   // Ten enterprises.
   const kinds: BusinessKind[] = ['laundromat', 'vending', 'pizza', 'motel', 'bar', 'stand', 'carlot'];
   const owned = () => s.businesses.filter((b) => b.owner === 'player').length;
