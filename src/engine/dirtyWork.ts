@@ -225,8 +225,11 @@ export function targetsFor(s: GameState, job: DirtyJobId): TargetChoice[] {
   switch (j.target) {
     case 'route': return ROUTES;
     case 'fix': return FIXES;
-    case 'shop': return (s.econ?.lots ?? []).filter(shopOk).map((l) => ({ id: l.id, name: l.name ?? lotName(l), note: `${l.address} · about $${shopTake(s, l).toLocaleString('en-US')}${(s.dirty?.cool[`shakedown:${l.id}`] ?? -99) > s.week - j.cool ? ' · shaken down lately' : ''}`, district: lotDistrict(l) }))
-      .sort((a, b) => (b.note.includes('lately') ? -1 : 0) - (a.note.includes('lately') ? -1 : 0) || (a.name < b.name ? -1 : 1)).slice(0, 40);
+    case 'shop': {
+      const recent = (l: Lot) => (s.dirty?.cool[`shakedown:${l.id}`] ?? -99) > s.week - j.cool;
+      return (s.econ?.lots ?? []).filter(shopOk).sort((a, b) => Number(recent(a)) - Number(recent(b)) || shopTake(s, b) - shopTake(s, a) || (a.id < b.id ? -1 : 1)).slice(0, 40)
+        .map((l) => ({ id: l.id, name: l.name ?? lotName(l), note: `${l.address} · about $${shopTake(s, l).toLocaleString('en-US')}${recent(l) ? ' · shaken down lately' : ''}`, district: lotDistrict(l) }));
+    }
     case 'rivalLot': return (s.econ?.lots ?? []).filter((l) => rivalLotOk(s, l)).map((l) => ({ id: l.id, name: l.name ?? lotName(l), note: `${FACTION_NAMES[l.owner as RivalId]} · ${l.address}`, rival: l.owner as RivalId, district: lotDistrict(l) })).slice(0, 40);
     case 'rival': return MOB_RIVALS(s).map((r) => ({ id: r.id, name: r.name, note: `Muscle ${Math.round(r.muscle)} · ${r.war ? 'at war with you' : 'at peace'}`, rival: r.id }));
     case 'person': {
@@ -258,7 +261,19 @@ function insurance(s: GameState, b: Business): number {
 /** The target's display name (or undefined). */
 export function targetName(s: GameState, job: DirtyJobId, id: string | undefined): string | undefined {
   if (!id) return undefined;
-  return targetsFor(s, job).find((t) => t.id === id)?.name ?? (s.characters[id] ? displayName(s.characters[id]) : undefined);
+  const j = JOBS_BY_ID[job];
+  switch (j.target) {
+    case 'route': return ROUTES.find((t) => t.id === id)?.name;
+    case 'fix': return FIXES.find((t) => t.id === id)?.name;
+    case 'shop': { const l = s.econ?.lots.find((x) => x.id === id); return shopOk(l) ? l.name ?? lotName(l) : undefined; }
+    case 'rivalLot': { const l = s.econ?.lots.find((x) => x.id === id); return rivalLotOk(s, l) ? l.name ?? lotName(l) : undefined; }
+    case 'rival': return MOB_RIVALS(s).find((r) => r.id === id)?.name;
+    case 'person': return personOk(s, s.characters[id], job) ? displayName(s.characters[id]) : undefined;
+    case 'official': { const c = s.characters[id]; return c?.alive && c.office && OFFICE_BRIBE[c.office] ? displayName(c) : undefined; }
+    case 'loan': return s.loans.find((l) => l.id === id)?.borrower.split(',')[0];
+    case 'mine': { const b = s.businesses.find((x) => x.id === id); return b && torchable(s, b) ? b.name : undefined; }
+    default: return undefined;
+  }
 }
 
 /* ------------------------------------------------------------------ */
