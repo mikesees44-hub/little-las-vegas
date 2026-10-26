@@ -831,7 +831,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
 export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
   const def = DEFS[a.kind] as Def<typeof a.kind>;
   const p = def.preview(s, a as never);
-  const detail = p.disabledReason ? p.detail : withCostHint(p.detail, costHint(s, Math.max(p.cost, moneyCost(p.effects))));
+  const detail = p.disabledReason ? p.detail : withCostHint(p.detail, p.pot === 'pocket' ? costHint(s, p.cost, 'pocket') : costHint(s, Math.max(p.cost, moneyCost(p.effects))));
   return { ...p, detail, effects: named(p.title, p.effects), refuseEffects: p.refuseEffects ? named(`${p.title}: refused`, p.refuseEffects) : undefined };
 }
 
@@ -845,15 +845,16 @@ export function queuedCost(s: GameState, actions: readonly PlayerAction[]): numb
  * and the Family covers what it cannot; draws move money from the Family into the Pocket.
  * `family` is the Family's committed spending (as `queuedCost` always was); `pocketLeft` / `familyLeft` are the pots after the orders.
  */
-export function queuedMoney(s: GameState, actions: readonly PlayerAction[]): { family: number; pocket: number; pocketLeft: number; familyLeft: number } {
+export function queuedMoney(s: GameState, actions: readonly PlayerAction[]): { family: number; pocket: number; pocketLeft: number; familyLeft: number; dips: number } {
   let pocket = Math.max(0, s.tribute?.acct.personal ?? 0);
   let family = 0;
   let fromPocket = 0;
   let back = 0;
+  let dips = 0;
   for (const a of actions) {
     const p = previewAction(s, a);
     if (p.toPocket) {
-      if (p.toPocket > 0) family += p.toPocket;
+      if (p.toPocket > 0) { family += p.toPocket; dips++; }
       else back += Math.min(-p.toPocket, Math.max(0, pocket));
       pocket = Math.max(0, pocket + p.toPocket);
     }
@@ -862,9 +863,10 @@ export function queuedMoney(s: GameState, actions: readonly PlayerAction[]): { f
       pocket -= own;
       fromPocket += own;
       family += p.cost - own;
+      if (p.cost > own) dips++;
     } else if (!p.toPocket) family += p.cost;
   }
-  return { family, pocket: fromPocket, pocketLeft: pocket, familyLeft: Math.round(s.money) - family + back };
+  return { family, pocket: fromPocket, pocketLeft: pocket, familyLeft: Math.round(s.money) - family + back, dips };
 }
 
 /** Resolve the week's orders in order, re-checking each against the live state. */

@@ -29,9 +29,10 @@ export function usePots(s: GameState) {
 }
 
 /** What the capos think of one more dip, in a sentence. */
-export function dipLine(s: GameState): string {
-  const p = dipPenalty(s);
-  return p ? `You have dipped ${recentDips(s)} time${recentDips(s) > 1 ? 's' : ''} in ${DIP.window} weeks: each capo thinks ${-p} less of you.` : `Once in ${DIP.window} weeks the capos let it go; dip more and they think less of you.`;
+export function dipLine(s: GameState, queued = 0): string {
+  const p = dipPenalty(s, queued);
+  const n = recentDips(s) + queued;
+  return p ? `You have dipped ${n} time${n > 1 ? 's' : ''} in ${DIP.window} weeks: one more and each capo thinks ${-p} less of you.` : `Once in ${DIP.window} weeks the capos let it go; dip more and they think less of you.`;
 }
 
 const sgn = (n: number) => `${n >= 0 ? '+' : '−'}${fmt$(Math.abs(n))}`;
@@ -100,7 +101,7 @@ export function MoveMoney({ s }: { s: GameState }) {
             onClick={() => queue({ kind: 'tribute', op: { op: 'move', from: 'treasury', to: 'personal', amount: amt } })}>
             Take a draw: {fmt$(amt)} into your pocket
           </button>
-          <p className="mt-0.5 text-[10px] text-stone-500 leading-snug">{canDraw ? dipLine(s) : `The Family has ${fmt$(fam)}.`}</p>
+          <p className="mt-0.5 text-[10px] text-stone-500 leading-snug">{canDraw ? dipLine(s, queuedMoney(s, orders).dips) : `The Family has ${fmt$(fam)}.`}</p>
         </div>
         <div>
           <button type="button" className="btn-ghost w-full text-xs" disabled={!canBack} data-testid="move-back"

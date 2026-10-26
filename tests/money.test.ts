@@ -164,3 +164,69 @@ describe('the Money screen renders', () => {
     expect(html).toContain('Everything is collected on its own');
   });
 });
+
+describe("the boss's pocket", () => {
+  const capoOps = (s: GameState) => Object.values(s.characters).filter((c) => c.alive && c.rank === 'capo' && c.faction === 'player').map((c) => c.id);
+
+  it('a new boss starts with money of his own and takes 40% of every envelope', () => {
+    const s = newGame('pocket-start');
+    expect(pocketCash(s)).toBe(3000);
+    expect(s.tribute!.policy.personal).toBe(4000);
+    const r = play(s, 4);
+    expect(pocketCash(r)).toBeGreaterThan(5000);
+  });
+
+  it('an older two-pot save on the old 25% default moves to 40% once; a cut the boss chose stays', () => {
+    const s0 = play(newGame('pocket-old'), 2);
+    const a = JSON.parse(JSON.stringify(s0)) as GameState;
+    delete a.tribute!.cut40;
+    a.tribute!.policy = { personal: 2500, treasury: 7500, reserve: 0, auto: true };
+    const b = JSON.parse(JSON.stringify(a)) as GameState;
+    b.tribute!.policy = { personal: 3000, treasury: 7000, reserve: 0, auto: true };
+    expect(advanceWeek(upgradeSave(a), {}).state.tribute!.policy.personal).toBe(4000);
+    expect(advanceWeek(upgradeSave(b), {}).state.tribute!.policy.personal).toBe(3000);
+  });
+
+  it('the Good Life is paid from the pocket; short, the rest comes from the Family and the capos notice repeat dips', () => {
+    let s = play(newGame('pocket-buy'), 2);
+    s.tribute!.acct.personal = 0;
+    const buy = { kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' } } as const;
+    const p = previewAction(s, buy);
+    expect(p.pot).toBe('pocket');
+    expect(p.disabledReason).toBeUndefined();
+    const price = p.cost;
+    const r = advanceWeek(s, { actions: [buy] });
+    // His cut of the week's envelope lands first; the Family pays only what the pocket could not.
+    const line = r.report.lines.find((l) => /Cadillac Eldorado \((the rest|from the Family)/.test(l.label));
+    expect(line!.amount).toBeLessThan(0);
+    expect(line!.amount).toBeGreaterThanOrEqual(-price);
+    const book = r.state.tribute!.books.find((b) => b.week === s.week)!;
+    const own = book.x.filter((x) => x[0] === 'personal' && /Cadillac/.test(x[4] ?? '')).reduce((a, x) => a + x[2], 0);
+    expect(own - line!.amount).toBe(price);
+    expect(r.state.tribute!.dips).toContain(s.week);
+    // A second dip within 8 weeks costs opinion with every capo.
+    s = r.state;
+    s.tribute!.acct.personal = 0;
+    const id = capoOps(s)[0];
+    const dipMods = (x: GameState) => Object.values(x.relations).filter((r) => r.from === id && r.to === x.playerId).flatMap((r) => r.modifiers).filter((m) => /keeps dipping/.test(m.reason));
+    expect(dipMods(s)).toEqual([]);
+    const r2 = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'luxBuy', item: 'jukebox' } }, { kind: 'econ', op: { type: 'luxBuy', item: 'cruiser' } }] });
+    expect(dipMods(r2.state).length).toBe(1);
+    expect(dipMods(r2.state)[0].value).toBeLessThan(0);
+  });
+
+  it('a draw moves Family money into the pocket (both pots reconcile) and putting it back pleases the capos', () => {
+    const s = play(newGame('pocket-draw'), 2);
+    const pk = pocketCash(s);
+    const draw = { kind: 'tribute', op: { op: 'move', from: 'treasury', to: 'personal', amount: 2000 } } as const;
+    const pv = previewAction(s, draw);
+    expect(pv.title).toMatch(/Take a draw: \$2,000 from the Family into your pocket/);
+    expect(pv.toPocket).toBe(2000);
+    const r = advanceWeek(s, { actions: [draw] });
+    const j = r.state.tribute!.books.find((b) => b.week === s.week)!;
+    expect(j.x.some((x) => x[0] === 'treasury' && x[1] === 'personal' && x[2] === 2000)).toBe(true);
+    expect(pocketCash(r.state)).toBeGreaterThanOrEqual(pk + 2000 - 1000);
+    const v = moneyView(r.state);
+    expect(v.net).toBe(v.familyDelta + v.pocketDelta);
+  });
+});

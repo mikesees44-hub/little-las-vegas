@@ -68,7 +68,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       </div>
       {short > 0 && !why && !queued && (
         <div className="mt-1 text-[11px] text-amber-300 leading-snug" data-testid="dip-note">
-          Your pocket has {fmt$(Math.max(0, q.pocketLeft))}; the other {fmt$(short)} comes out of the Family. {dipPenalty(s) ? `The capos notice: −${-dipPenalty(s)} opinion each (${recentDips(s) + 1} dips in ${DIP.window} weeks).` : `Once in ${DIP.window} weeks the capos let it go.`}
+          Your pocket has {fmt$(Math.max(0, q.pocketLeft))}; the other {fmt$(short)} comes out of the Family. {dipPenalty(s, q.dips) ? `The capos notice: −${-dipPenalty(s, q.dips)} opinion each (${recentDips(s) + q.dips + 1} dips in ${DIP.window} weeks).` : `Once in ${DIP.window} weeks the capos let it go.`}
         </div>
       )}
       <Chips s={s} effects={p.effects} />

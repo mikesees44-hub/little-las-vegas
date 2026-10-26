@@ -21,9 +21,9 @@ export function recentDips(s: GameState): number {
   return (s.tribute?.dips ?? []).filter((w) => s.week - w < DIP.window).length;
 }
 
-/** What the capos think if the boss dips once more now (0 or negative). */
-export function dipPenalty(s: GameState): number {
-  const n = recentDips(s);
+/** What the capos think if the boss dips once more now (0 or negative); `queued`: dips already ordered this week. */
+export function dipPenalty(s: GameState, queued = 0): number {
+  const n = recentDips(s) + queued;
   return n < 1 ? 0 : -Math.min(DIP.max, DIP.step * n);
 }
 

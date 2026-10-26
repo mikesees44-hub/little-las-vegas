@@ -108,7 +108,8 @@ function heatWeight(s: GameState, bar: HeatBar): number {
 /** Dollar-equivalent of one effect for the player, as of now. */
 export function effectValue(s: GameState, e: Effect): number {
   switch (e.type) {
-    case 'money': return e.amount;
+    // The boss's own money is for spending: what his pocket pays weighs little against what it buys.
+    case 'money': return e.pot === 'pocket' && e.amount < 0 ? Math.round(e.amount * 0.1) : e.amount;
     case 'respect': return e.amount * 250;
     case 'heat': return -e.amount * heatWeight(s, e.bar);
     case 'opinion': {
@@ -579,7 +580,8 @@ function risksOf(s: GameState, a: PlayerAction, p: ActionPreview): Risk[] {
       if (ev >= OPEN_FILE - 5) out.push({ text: `Your file would be ${Math.round(ev)}/100: the FBI opens a case at ${OPEN_FILE}`, chance: ev >= OPEN_FILE ? 1 : 0.5, source: 'Giving the order yourself', severity: ev >= OPEN_FILE ? 'high' : 'mid' });
     }
   }
-  if (p.cost > 0 && s.money - p.cost < 1000 && !p.disabledReason) out.push({ text: `Leaves only ${fmtMoney(s.money - p.cost)} in the treasury`, chance: 1, source: 'Treasury', severity: s.money - p.cost < 0 ? 'high' : 'mid' });
+  const famCost = p.pot === 'pocket' ? Math.max(0, p.cost - Math.max(0, s.tribute?.acct.personal ?? 0)) : p.cost;
+  if (famCost > 0 && s.money - famCost < 1000 && !p.disabledReason) out.push({ text: `Leaves only ${fmtMoney(s.money - famCost)} of Family money`, chance: 1, source: 'Family money', severity: s.money - famCost < 0 ? 'high' : 'mid' });
   const own = pillarRisks(s, a);
   if (own) out.push(...own);
   else if (p.warning && a.kind !== 'order') out.push({ text: p.warning, chance: 1, source: 'Warning', severity: 'high' });
