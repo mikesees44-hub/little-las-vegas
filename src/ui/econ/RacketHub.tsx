@@ -28,14 +28,14 @@ export function RacketHub({ s }: { s: GameState }) {
   const costs = dialCosts(s).reduce((a, x) => a + (x.o.weekly ?? 0), 0);
   return (
     <div className="space-y-4" data-testid="racket-hub">
+      <StartRacket s={s} />
+
       <section className="grid grid-cols-2 sm:grid-cols-4 gap-2">
         <Stat label="Rackets you run" value={`${running.length}`} sub={`of ${cards.length} on the island`} />
         <Stat label="Their take" value={`~${fmt$(racketTake(s))}/wk`} sub="this week, expected" />
         <Stat label="Pads & arrangements" value={`${fmt$(costs)}/wk`} sub={costs ? 'paid every week' : 'nobody on the pad'} />
         <Stat label="Heat" value={`${Math.round(s.heat.local)} / ${Math.round(s.heat.federal)}`} sub="local / federal" />
       </section>
-
-      <StartRacket s={s} />
 
       <SteadyEarners s={s} />
 

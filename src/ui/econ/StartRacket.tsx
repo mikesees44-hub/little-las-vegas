@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { previewAction, queuedCost } from '../../engine/actions';
 import { CATALOG } from '../../engine/catalog';
-import { MENU_BY_KEY, MENU_GROUPS, menuRows, runnersFor, defaultRunner, startSummary, whereFor, type MenuGroup, type MenuKey, type MenuRow, type RunnerChoice } from '../../engine/racketMenu';
+import { placeStart, MENU_BY_KEY, MENU_GROUPS, menuRows, runnersFor, defaultRunner, startSummary, whereFor, type MenuGroup, type MenuKey, type MenuRow, type RunnerChoice } from '../../engine/racketMenu';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { useOrders } from '../components/Orders';
@@ -15,6 +15,23 @@ import { useOrders } from '../components/Orders';
  */
 type Step = 'groups' | 'list' | 'who' | 'where' | 'sum';
 
+/**
+ * Where "Start a racket here" (a Walk or Street card) wants the next racket:
+ * set just before the shell opens the Rackets hub, read once when the flow mounts.
+ */
+export const startHint: { district?: string; name?: string; at?: number } = {};
+export function hintStart(district: string, name: string): void {
+  startHint.district = district;
+  startHint.name = name;
+  startHint.at = Date.now();
+}
+function takeHint(): { district?: string; name?: string } {
+  if (!startHint.at || Date.now() - startHint.at > 15000) return {};
+  const h = { district: startHint.district, name: startHint.name };
+  startHint.at = undefined;
+  return h;
+}
+
 export function StartRacket({ s, onDone }: { s: GameState; onDone?: () => void }) {
   const { orders, queue } = useOrders();
   const [step, setStep] = useState<Step>('groups');
@@ -24,6 +41,7 @@ export function StartRacket({ s, onDone }: { s: GameState; onDone?: () => void }
   const [district, setDistrict] = useState<string | undefined>();
   const [earner, setEarner] = useState(true);
   const [started, setStarted] = useState<string | undefined>();
+  const [here] = useState(takeHint);
 
   const pickRacket = (k: MenuKey) => {
     setKey(k);
@@ -32,7 +50,8 @@ export function StartRacket({ s, onDone }: { s: GameState; onDone?: () => void }
     const d = defaultRunner(s, k);
     setRunner(d?.c.id);
     setEarner(true);
-    setDistrict(whereFor(s, k)[0]?.id);
+    const ws = whereFor(s, k);
+    setDistrict(here.district && ws.some((w) => w.id === here.district) ? here.district : ws[0]?.id);
     setStep('who');
   };
   const back = () => setStep(step === 'sum' ? (key === 'madam' ? 'list' : 'where') : step === 'where' ? 'who' : step === 'who' ? 'list' : 'groups');
@@ -54,6 +73,7 @@ export function StartRacket({ s, onDone }: { s: GameState; onDone?: () => void }
         {steps.map((st, i) => <li key={st} className={`h-1 flex-1 rounded ${steps.indexOf(step) >= i ? 'bg-gold-400' : 'bg-noir-700'}`} />)}
       </ol>
 
+      {here.name && step === 'groups' && !started && <div className="mt-2 rounded border border-gold-600/50 bg-gold-500/10 px-2 py-1.5 text-xs text-gold-200" data-testid="sr-here">Starting in {here.name}: pick what to run there.</div>}
       {started && step === 'groups' && <div className="mt-2 rounded border border-emerald-700 bg-emerald-900/20 px-2 py-1.5 text-xs text-emerald-200" data-testid="sr-started">✓ {started}: ordered. It opens when the week ends.</div>}
 
       {step === 'groups' && (
@@ -229,6 +249,18 @@ function Summary({ s, k, runner, district, earner, budget, queued, onStart }: { 
         {already ? 'Ordered ✓' : k === 'madam' ? 'Agree the cut' : 'Start it'}
       </button>
       {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
+    </div>
+  );
+}
+
+/** "Start a racket here" on a Walk or Street card: the cheapest kinds that fit this district now, one tap to the flow. */
+export function StartHereButton({ s, place, onGo }: { s: GameState; place?: string; onGo: () => void }) {
+  const p = placeStart(s, place);
+  if (!p || s.gameOver) return null;
+  return (
+    <div className="rounded border border-gold-600/40 bg-gold-500/5 px-2 py-1.5" data-testid="start-here">
+      <button type="button" className="btn-gold text-xs py-1" onClick={() => { hintStart(p.district, p.name); onGo(); }} data-testid="start-here-btn">♣ Start a racket here</button>
+      <span className="ml-2 text-[11px] text-stone-400">{p.name} fits {p.picks.map((r) => r.title.toLowerCase()).join(', ')}{p.picks.length >= 3 ? ', and more' : ''}.</span>
     </div>
   );
 }

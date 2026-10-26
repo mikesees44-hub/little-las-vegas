@@ -19,6 +19,8 @@ import { OrdersContext } from '../src/ui/components/Orders';
 import { StartRacket } from '../src/ui/econ/StartRacket';
 import { SteadyEarners } from '../src/ui/econ/SteadyEarners';
 import type { BusinessKind, GameState, PlayerAction } from '../src/engine/types';
+import { placeStart, racketGaps } from '../src/engine/racketMenu';
+import { doNow } from '../src/ui/shell/doNow';
 
 function rich(seed = 'earn'): GameState {
   const s = newGame(seed);
@@ -238,6 +240,21 @@ describe('Steady earners', () => {
     const up = upgradeSave(old);
     expect(earnerOf(up, k.id)).toBeUndefined();
     expect(() => week(up)).not.toThrow();
+  });
+});
+
+describe('impossible to miss', () => {
+  it('Rackets & Businesses: "Do this now" asks for a racket and for steady earners; a district offers "start a racket here"', () => {
+    const s = rich('earn-miss');
+    const g = racketGaps(s);
+    expect(g.noEarner.length).toBeGreaterThan(0);
+    const items = doNow(s, 'biz', { alerts: [], opps: [], unanswered: 0, brief: 0 });
+    expect(items.some((i) => i.id === 'steady-earners')).toBe(true);
+    if (g.rackets < 3) expect(items.some((i) => i.id === 'start-racket')).toBe(true);
+    const d = whereFor(s, 'protection')[0];
+    const p = placeStart(s, d.id);
+    expect(p?.picks.length).toBeGreaterThan(0);
+    expect(placeStart(s, 'nowhere')).toBeUndefined();
   });
 });
 

@@ -34,6 +34,7 @@ import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
 import { homeForKey, resolveRoute, type NavRoute } from './shell/nav';
 import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
+import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
 import { SettingsPanel } from './menu/StartMenu';
 import { OrdersTray } from './components/Orders';
@@ -453,6 +454,14 @@ export function App({ startOn = 'title' }: AppProps) {
       {orders.length > 0 && <div className="mt-2" data-testid="week-orders"><div className="mb-1 text-[11px] text-stone-400">Orders for this week, carried out when you advance:</div><OrdersTray s={s} /></div>}
     </section>
   ) : undefined;
+  // Rackets & Businesses: "Start a racket" first, big, and who still lacks a steady earner.
+  const gaps = home === 'biz' && !s.gameOver ? racketGaps(s) : undefined;
+  const bizTop = gaps ? (
+    <section className="mb-4" data-testid="biz-start">
+      <button type="button" className="btn-gold w-full py-3 text-base" onClick={() => openRoute({ panel: 'holdings', section: 'hub' })} data-testid="biz-start-racket">♣ Start a racket</button>
+      <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Street money, vice, contraband, working the system, payoffs.</div>
+    </section>
+  ) : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
@@ -507,7 +516,7 @@ export function App({ startOn = 'title' }: AppProps) {
         drawer={home && (
           <Drawer s={s} home={home} sel={route.key} groups={homeGroups} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
             onOpen={(key) => openRoute({ home, key })} onClose={() => setRoute({})}
-            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop} />
+            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop ?? bizTop} />
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}

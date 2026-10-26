@@ -1,3 +1,5 @@
+import { StartHereButton } from '../econ/StartRacket';
+import { useShell } from '../shell/context';
 import { useState } from 'react';
 import { STYLES, SIGN_HEX, type BuildStyle, type SignColor } from '../../engine/design';
 import { lookOf, restyleCost } from '../../engine/hood';
@@ -118,6 +120,7 @@ function Restyle({ s, lotId }: { s: GameState; lotId: string }) {
  */
 export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; mood: Mood; onClose: () => void }) {
   const empire = useEmpire();
+  const shell = useShell();
   const l = it.lot;
   // The Empire Designer: your hotel, motel, restaurant, bar or club opens in it;
   // an empty lot of yours is developed through it.
@@ -155,6 +158,7 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
           </ul>
         </div>
       )}
+      <StartHereButton s={s} place={l?.zone ?? (it.biz?.districtId as string | undefined)} onGo={() => shell.go('holdings.hub')} />
       {ven && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
       {!ven && develop && l && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ pending: { key: `lot:${l.id}`, name: lotName(l), develop: { lotId: l.id } } })}>Develop it in the Designer</button>}
       {it.mine && l && l.stage === 'open' && l.use && (

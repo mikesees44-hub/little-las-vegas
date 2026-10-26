@@ -8,6 +8,7 @@ import { lawsFor } from './racketHub';
 import { bestDistrict, bestRunner, startLocks } from './racketLife';
 import { racketInfo, type Fit } from './racketData';
 import { opinion } from './relations';
+import { ZONES_BY_ID } from './property';
 import type { BusinessKind, Character, GameState, PlayerAction } from './types';
 
 /**
@@ -281,4 +282,31 @@ export function startSummary(s: GameState, key: MenuKey, runnerId?: string, dist
     earner: asEarner ? (holder!.id === s.playerId ? 'Your own steady earner: your piece (half) pays straight into your Pocket every week, no swings; the rest goes to the Family.' : `${holder!.firstName}'s steady earner: he keeps 15%, kicks up the rest every week, and is more loyal for it.`) : undefined,
     action: { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind, ...(district ? { district } : {}), ...(runnerId ? { runner: runnerId } : {}), ...(asEarner ? { earner: true } : {}) } } },
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* "Start a racket here" (Walk and Street cards), and what is missing   */
+/* ------------------------------------------------------------------ */
+
+/** A place on the island (a zone or a district id) as the district a racket would open in, with the cheapest kinds that fit there now. */
+export function placeStart(s: GameState, place: string | undefined): { district: string; name: string; picks: MenuRow[] } | undefined {
+  if (!place) return undefined;
+  const district = s.districts.some((d) => d.id === place) ? place : (ZONES_BY_ID as Record<string, { district?: string } | undefined>)[place]?.district;
+  const d = district ? s.districts.find((x) => x.id === district) : undefined;
+  if (!d) return undefined;
+  const picks: MenuRow[] = [];
+  for (const g of MENU_GROUPS) for (const r of menuRows(s, g.id)) {
+    if (r.key === 'madam' || r.locked) continue;
+    if (!fits(s, r.key, d.id)) continue;
+    picks.push(r);
+  }
+  picks.sort((a, b) => Number(!!b.first) - Number(!!a.first) || a.cost - b.cost);
+  return picks.length ? { district: d.id, name: d.name, picks: picks.slice(0, 3) } : undefined;
+}
+
+/** Why the boss should start a racket now: too few rackets, or men without a steady earner. Pure. */
+export function racketGaps(s: GameState): { rackets: number; noEarner: Character[] } {
+  const rackets = owned(s).filter((b) => CATALOG[b.kind].category === 'racket').length + (s.ears?.madam && s.ears.madam.cut > 0 ? 1 : 0);
+  const noEarner = [s.characters[s.playerId], ...capos(s).filter((c) => c.faction === 'player')].filter((c) => c && canHold(s, c) && !earnerOf(s, c.id));
+  return { rackets, noEarner };
 }
