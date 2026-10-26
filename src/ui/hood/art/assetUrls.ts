@@ -126,6 +126,28 @@ export const ASSET_URLS = {
   cutout_hereford_light: undefined,
   cutout_hurricane: undefined,
   cutout_nw_city_hall: undefined,
+  // The c batch and 108-112 (transparent; near-miss names where the real ones may operate).
+  cutout_sea_shell_shoppe: undefined,
+  cutout_curlys_fries: undefined,
+  cutout_route_69_diner: undefined,
+  cutout_bobby_ds: undefined,
+  cutout_shore_motel: undefined,
+  cutout_octopus_mini_golf: undefined,
+  cutout_shore_house: undefined,
+  cutout_beach_haus: undefined,
+  cutout_star_lux: undefined,
+  cutout_corner_inn: undefined,
+  cutout_seafood_shack: undefined,
+  cutout_brick_church: undefined,
+  cutout_ship_and_shore: undefined,
+  cutout_al_pizza: undefined,
+  cutout_al_pizza_front: undefined,
+  cutout_al_pizza_corner: undefined,
+  cutout_sammys_pancake_house: undefined,
+  cutout_sammys_cafe: undefined,
+  cutout_boat_tag: undefined,
+  /** A steel looping coaster: late era (from 1976) only. */
+  cutout_loop_coaster: undefined,
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
