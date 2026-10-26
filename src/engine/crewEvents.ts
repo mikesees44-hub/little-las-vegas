@@ -11,6 +11,7 @@ import { chance, pick, randInt, shuffle, weightedPick } from './rng';
 import { needsSanction, sanctioned } from './schemes';
 import { FACTION_NAMES } from './world';
 import { freshness } from './storyDirector';
+import { markKinShown } from './housesEvents';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -736,6 +737,8 @@ export function subjectOk(s: GameState, key: string, id: string): boolean {
 export function markShown(s: GameState, ev: EventInstance): void {
   if (!s.eventCooldowns) s.eventCooldowns = {};
   s.eventCooldowns[ev.defId] = s.week;
+  // A kin hook's own cooldowns (housesEvents.ts) start when it is actually shown.
+  markKinShown(s, ev);
   if (ev.meta?.charId) s.eventCooldowns[`${ev.defId}:${ev.meta.charId}`] = s.week;
   // A dispute is about a pair: neither man brings the same kind of fight back soon.
   if (ev.defId === 'crew_dispute' || ev.meta?.pair) for (const id of ev.actors ?? []) s.eventCooldowns[`${ev.defId}:${id}`] = s.week;

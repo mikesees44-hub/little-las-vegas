@@ -27,13 +27,15 @@ function weekOfDate(y: number, m: number, d: number): number {
 }
 
 describe('business catalog', () => {
-  it('every kind is complete and fronts are the only things that wash money', () => {
+  it('every kind is complete and fronts (plus the laundering racket) are the only things that wash money', () => {
     for (const k of Object.keys(CATALOG) as BusinessKind[]) {
       const d = CATALOG[k];
       expect(d.name.length).toBeGreaterThan(2);
       expect(d.season).toHaveLength(2);
       expect(d.cost).toBeGreaterThanOrEqual(0);
-      if (d.category === 'racket') expect(d.launder).toBe(0);
+      // The one racket whose whole business is washing ("Laundering for other outfits") washes some of ours too.
+      if (d.category === 'racket' && k !== 'washing') expect(d.launder).toBe(0);
+      if (k === 'washing') expect(d.launder).toBeGreaterThan(0);
       if (d.category === 'front') expect(d.launder).toBeGreaterThan(0);
     }
     expect(SHOP_KINDS.length).toBeGreaterThanOrEqual(22);

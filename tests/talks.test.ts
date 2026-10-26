@@ -33,6 +33,16 @@ describe('talks: agree, refuse, delay, counteroffer, or go his own way', () => {
       g.talks && (g.talks.cooldown = {});
       commitTalk(ctx, { t: 'ask', talk, target: c.id });
     }
+    // Only a rival boss can go his own way (~5-10% a talk), and the five of them are a sliver of
+    // the ~100 people above, so the loop gives them only a handful of talks: ask them directly too.
+    const bosses = g.rivals.map((r) => g.characters[r.leaderId]).filter((c) => c?.alive);
+    for (let i = 0; i < 300; i++) {
+      const c = bosses[i % bosses.length];
+      const talk = TALK_IDS[i % TALK_IDS.length];
+      if (talkApplies(g, talk, c)) continue;
+      g.talks && (g.talks.cooldown = {});
+      commitTalk(ctx, { t: 'ask', talk, target: c.id });
+    }
     const st = ensureTalks(g).stats;
     expect(st.agreed).toBeGreaterThan(0);
     expect(st.refused).toBeGreaterThan(0);

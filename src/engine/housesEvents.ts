@@ -302,13 +302,20 @@ export function kinEventSource(s: GameState): EventInstance | undefined {
       break;
     }
   }
-  const e = pickd.h.build(s, pickd.c);
-  if (!e) return undefined;
+  // The cooldowns are stamped when the hook actually reaches the boss (markKinShown, via the
+  // pipeline's markShown), not here: a hook crowded out of a busy week comes back next week
+  // instead of burning its cooldown unseen.
+  return pickd.h.build(s, pickd.c);
+}
+
+/** Stamps the kin cooldowns for a hook the boss actually saw (or that was settled quietly). */
+export function markKinShown(s: GameState, e: EventInstance): void {
+  const key = e.meta?.kin;
+  if (!key) return;
   const C = cd(s);
   C['kin:any'] = s.week;
-  C[`kin:${pickd.h.key}`] = s.week;
-  C[`kin:p:${pickd.c.id}`] = s.week;
-  return e;
+  C[`kin:${key}`] = s.week;
+  if (e.meta?.charId) C[`kin:p:${e.meta.charId}`] = s.week;
 }
 
 /** The hooks' keys (tests). */
