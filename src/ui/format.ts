@@ -10,7 +10,7 @@ export function signed(n: number): string {
 }
 
 export const STAT_LABEL: Record<Stat, string> = {
-  money: 'Treasury',
+  money: 'Family money',
   respect: 'Respect',
   'heat.local': 'Local heat',
   'heat.family': 'Family heat',

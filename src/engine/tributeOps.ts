@@ -1,3 +1,4 @@
+import { dipNote, noteDip } from './pocket';
 import type { ActionPreview } from './actions';
 import { capos, crew, displayName, isFree } from './characters';
 import { holder } from './council';
@@ -76,10 +77,14 @@ export function previewTribute(s: GameState, a: TributeAction): ActionPreview {
     }
     case 'move': {
       const have = pocketBalance(s, a.from);
-      const title = `Move ${$(a.amount)}: ${a.from} → ${a.to}`;
+      const draw = a.to === 'personal' && a.from !== 'personal';
+      const back = a.from === 'personal' && a.to !== 'personal';
+      const title = draw ? `Take a draw: ${$(a.amount)} from the Family into your pocket` : back ? `Put ${$(a.amount)} of your pocket back in the Family` : `Move ${$(a.amount)} inside the Family`;
       return {
-        title, detail: a.from === 'personal' ? 'Your own money back into the family. The men notice a boss who does that.' : a.to === 'personal' ? 'Out of the family into your pocket.' : 'Between the family\'s accounts.',
-        effects: [op(a)], cost: a.from === 'treasury' ? a.amount : 0, because: `moved ${$(a.amount)} from ${a.from} to ${a.to}`, category: 'event',
+        title, detail: back ? 'Your own money back into the Family. The capos like a boss who does that.' : draw ? 'Family money into your own pocket, for your house, cars and fun. The capos notice a boss who dips too often.' : 'Between the Family\'s own lines.',
+        effects: [op(a), ...(draw ? [dipNote(s)] : back ? [{ type: 'econ' as const, op: { op: 'note' as const, text: 'The capos notice: +2 opinion each' }, label: 'The capos' }] : [])],
+        cost: a.from === 'treasury' ? a.amount : 0, toPocket: draw ? a.amount : back ? -a.amount : undefined,
+        because: draw ? `took a ${$(a.amount)} draw from the Family` : back ? `put ${$(a.amount)} of his own back in the Family` : `moved ${$(a.amount)}`, category: 'event',
         disabledReason: a.from === a.to ? 'Same account' : !(a.amount > 0) ? 'Nothing to move' : have < a.amount ? `Only ${$(Math.max(0, have))} there` : undefined,
       };
     }
@@ -119,7 +124,7 @@ export function previewTribute(s: GameState, a: TributeAction): ActionPreview {
       };
     }
     case 'squeeze': {
-      const cut = s.tribute?.policy.personal ?? 2500;
+      const cut = s.tribute?.policy.personal ?? 4000;
       return {
         title: 'Squeeze harder this week', detail: `Every crew leans on its corners and every man on his hustle: about ${Math.round((SQUEEZE.mult - 1) * 100)}% more comes up this week, and the welshers pay ${Math.round(SQUEEZE.markers * 100)}% of their markers. The street feels it and so do the capos. Your cut (${cut / 100}%) applies as usual.`,
         effects: [{ type: 'heat', bar: 'local', amount: SQUEEZE.heat, label: 'Squeezing the street' }, { type: 'crewOpinion', amount: SQUEEZE.opinion, reason: 'Squeezed us hard for the envelope', label: 'The capos' }, op(a)],
@@ -137,7 +142,7 @@ export function describeTributeOp(s: GameState, o: TributeOp): string | undefine
   switch (o.op) {
     case 'note': return o.text;
     case 'policy': return o.split ? `Standing split: ${splitText(normSplit(o.split))}` : o.auto ? 'Quiet weeks by the standing split' : 'The audience every week';
-    case 'move': return `${$(o.amount)}: ${o.from} → ${o.to}`;
+    case 'move': return o.to === 'personal' ? `${$(o.amount)} from the Family into your pocket` : o.from === 'personal' ? `${$(o.amount)} from your pocket back into the Family` : `${$(o.amount)} moved inside the Family`;
     case 'audit': return 'The books are gone through';
     case 'auditUb': return 'His count is checked';
     case 'terms': return `New terms for ${s.characters[o.charId]?.firstName ?? '?'}`;
@@ -232,6 +237,7 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
         for (const c of capos(s)) addOpinion(s, c.id, s.playerId, 'Put his own money into the family', 2, 1);
         t.putIn = [...t.putIn, s.week].slice(-6);
       }
+      if (o.to === 'personal' && o.from !== 'personal') noteDip(ctx);
       break;
     }
     case 'audit':

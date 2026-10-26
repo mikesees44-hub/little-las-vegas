@@ -333,7 +333,7 @@ function Summary({ seed, start, base, o, errors }: { seed: string; start: StartI
   const rows: [string, string | number, string | number, boolean?][] = [
     ['Name', `${b0.firstName} ${b0.lastName}`, `${b1.firstName}${b1.nickname ? ` "${b1.nickname}"` : ''} ${b1.lastName}`],
     ['Age', ageOn(b0.birth, base.date), ageOn(b1.birth, after.date)],
-    ['Treasury', fmt$(base.money), fmt$(after.money), true],
+    ['Family money', fmt$(base.money), fmt$(after.money), true],
     ['Debts', base.debts.length, after.debts.length, true],
     ['Respect', base.respect, after.respect, true],
     ['Local heat', base.heat.local, after.heat.local, true],

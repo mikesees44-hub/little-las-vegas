@@ -271,8 +271,8 @@ export function previewRomance(s: GameState, id: InteractionId, c: Character): I
       const label = `Courting ${first}`;
       const acc = romanceAcceptance(s, boss, c, 'court');
       return {
-        id, title: `Court ${first}`, detail: c.gender === boss.gender ? 'Dinner at the Admiral, a drive down to the Point. In 1960 this would have to stay between the two of you.' : 'Dinner at the Admiral, a walk on the boardwalk after the crowds go home. Flowers on Sunday.', cost: 100,
-        effects: [{ type: 'money', amount: -100, label }, withRomanceOp(label, { op: 'romance', a: boss.id, b: c.id })],
+        id, title: `Court ${first}`, detail: c.gender === boss.gender ? 'Dinner at the Admiral, a drive down to the Point. In 1960 this would have to stay between the two of you.' : 'Dinner at the Admiral, a walk on the boardwalk after the crowds go home. Flowers on Sunday.', cost: 100, pot: 'pocket',
+        effects: [{ type: 'money', pot: 'pocket', amount: -100, label }, withRomanceOp(label, { op: 'romance', a: boss.id, b: c.id })],
         refuseEffects: [withRomanceOp(`${first} said no`, { op: 'rebuff', by: c.id, of: boss.id })],
         acceptance: notInto ? undefined : acc, because: `courted ${nm}`, disabledReason: notInto ?? jailed,
       };
@@ -284,8 +284,8 @@ export function previewRomance(s: GameState, id: InteractionId, c: Character): I
       const sp = spouseOf(s, c);
       const acc = romanceAcceptance(s, boss, c, 'affair');
       return {
-        id, title: `Start an affair with ${first}`, detail: `${sp ? `${first} is married to ${displayName(sp)}. ` : ''}A room at the Admiral, a back booth in Cape May. Secrets get out.`, cost: 200,
-        effects: [{ type: 'money', amount: -200, label }, withRomanceOp(label, { op: 'romance', a: boss.id, b: c.id })],
+        id, title: `Start an affair with ${first}`, detail: `${sp ? `${first} is married to ${displayName(sp)}. ` : ''}A room at the Admiral, a back booth in Cape May. Secrets get out.`, cost: 200, pot: 'pocket',
+        effects: [{ type: 'money', pot: 'pocket', amount: -200, label }, withRomanceOp(label, { op: 'romance', a: boss.id, b: c.id })],
         refuseEffects: [withRomanceOp(`${first} turned you down`, { op: 'rebuff', by: c.id, of: boss.id })],
         acceptance: notInto ? undefined : acc, because: `started an affair with ${nm}`, disabledReason: notInto ?? jailed,
       };
@@ -295,8 +295,8 @@ export function previewRomance(s: GameState, id: InteractionId, c: Character): I
       const label = `Proposed to ${first}`;
       const weeks = s.week - together.since;
       return {
-        id, title: `Propose to ${first}`, detail: 'A ring from Bailey Banks & Biddle, and a word with the monsignor.', cost: 500,
-        effects: [{ type: 'money', amount: -500, label }, withRomanceOp(label, { op: 'marry', a: boss.id, b: c.id })],
+        id, title: `Propose to ${first}`, detail: 'A ring from Bailey Banks & Biddle, and a word with the monsignor.', cost: 500, pot: 'pocket',
+        effects: [{ type: 'money', pot: 'pocket', amount: -500, label }, withRomanceOp(label, { op: 'marry', a: boss.id, b: c.id })],
         refuseEffects: [{ type: 'opinion', from: c.id, to: boss.id, amount: -5, reason: 'Asked too soon', decay: 1, label: `${first} said not yet` }],
         acceptance: romanceAcceptance(s, boss, c, 'marry'), because: `proposed to ${nm}`,
         disabledReason: weeks < 8 ? `You have courted ${first} only ${weeks} weeks` : undefined,
@@ -535,8 +535,8 @@ export function buildChildEvent(s: GameState, child: Character): EventInstance {
   const label = `${child.firstName}`;
   const text = `${mother ? displayName(mother) : 'She'} had a ${child.gender === 'M' ? 'boy' : 'girl'} at Burdette Tomlin. ${child.firstName}. ${legal ? `${legal.firstName} ${legal.lastName} handed out cigars on the boardwalk; he thinks the baby is his. ` : 'There is no husband to hand out cigars. '}She sent you one photograph, no note. You know whose jaw that is.`;
   return ev(s, 'rom_child', `A ${child.gender === 'M' ? 'son' : 'daughter'} at Burdette Tomlin`, text, [
-    { id: 'pay', label: 'Pay quietly', detail: legal ? `$3,000 in an envelope. ${child.firstName} grows up as ${legal.firstName}'s.` : '$3,000 in an envelope, and a promise to stay away.', because: `paid quietly for ${child.firstName}`, effects: [{ type: 'money', amount: -3000, label }, withRomanceOp(label, { op: 'child', childId: child.id, mode: 'pay' })] },
-    { id: 'ack', label: 'Acknowledge the child, privately', detail: 'You will be there. The secret stays between the three of you.', because: `acknowledged ${child.firstName} privately`, effects: [{ type: 'money', amount: -1000, label }, withRomanceOp(label, { op: 'child', childId: child.id, mode: 'acknowledge' }), { type: 'dyn', op: { op: 'stress', charId: boss.id, amount: -4, source: 'honor' }, label }] },
+    { id: 'pay', label: 'Pay quietly', detail: legal ? `$3,000 in an envelope. ${child.firstName} grows up as ${legal.firstName}'s.` : '$3,000 in an envelope, and a promise to stay away.', because: `paid quietly for ${child.firstName}`, effects: [{ type: 'money', pot: 'pocket', amount: -3000, label }, withRomanceOp(label, { op: 'child', childId: child.id, mode: 'pay' })] },
+    { id: 'ack', label: 'Acknowledge the child, privately', detail: 'You will be there. The secret stays between the three of you.', because: `acknowledged ${child.firstName} privately`, effects: [{ type: 'money', pot: 'pocket', amount: -1000, label }, withRomanceOp(label, { op: 'child', childId: child.id, mode: 'acknowledge' }), { type: 'dyn', op: { op: 'stress', charId: boss.id, amount: -4, source: 'honor' }, label }] },
     { id: 'legit', label: 'Give the child your name', detail: `${child.firstName} joins the house and the line of succession.${legal ? ` ${legal.firstName} will never forgive it.` : ''} The parish will talk.`, because: `gave ${child.firstName} your name`, effects: [withRomanceOp(label, { op: 'child', childId: child.id, mode: 'legitimize' }), { type: 'respect', amount: -3, label }, { type: 'familyOpinion', amount: -8, reason: 'Brought his bastard into the house', label }] },
     { id: 'deny', label: 'Deny everything', detail: 'Children grow up. They ask questions.', because: `denied ${child.firstName}`, effects: [withRomanceOp(label, { op: 'child', childId: child.id, mode: 'deny' }), { type: 'dyn', op: { op: 'stress', charId: boss.id, amount: 6, source: 'honor' }, label }] },
   ], [child.id, ...(mother ? [mother.id] : [])], 58, true, { subject: child.id });
@@ -554,7 +554,7 @@ function buildDiscovery(s: GameState, r: Romance, betrayed: Character, cheater: 
     text = `${betrayed.firstName} found the matchbook from the Admiral in your good suit, and then she found the rest. She is not crying. She has packed a bag and put it by the door, and she wants to hear what you have to say first.`;
     choices.push(
       { id: 'beg', label: 'Swear it is over', detail: 'End it and mean it.', because: `swore to ${betrayed.firstName} it was over`, effects: [withRomanceOp(label, { op: 'endRomance', romanceId: r.id, reason: 'found out' }), { type: 'opinion', from: betrayed.id, to: boss.id, amount: 15, reason: 'He ended it', decay: 1, label }] },
-      { id: 'gift', label: 'A mink and a week in Miami Beach', detail: '$2,500. It buys time, not forgiveness.', because: `bought ${betrayed.firstName} off with a mink`, effects: [{ type: 'money', amount: -2500, label }, { type: 'opinion', from: betrayed.id, to: boss.id, amount: 10, reason: 'A mink and an apology', decay: 1, label }] },
+      { id: 'gift', label: 'A mink and a week in Miami Beach', detail: '$2,500. It buys time, not forgiveness.', because: `bought ${betrayed.firstName} off with a mink`, effects: [{ type: 'money', pot: 'pocket', amount: -2500, label }, { type: 'opinion', from: betrayed.id, to: boss.id, amount: 10, reason: 'A mink and an apology', decay: 1, label }] },
       { id: 'cold', label: 'It is none of her business', because: `told ${betrayed.firstName} it was none of her business`, effects: [{ type: 'opinion', from: betrayed.id, to: boss.id, amount: -15, reason: 'Does not even pretend', decay: 1, label }, { type: 'familyOpinion', amount: -4, reason: 'Shamed his wife', label }] },
     );
   } else if (betrayed.id === boss.id) {
@@ -568,13 +568,13 @@ function buildDiscovery(s: GameState, r: Romance, betrayed: Character, cheater: 
     text = `${displayName(betrayed)} knows about you and ${cheater.firstName}. ${betrayed.faction === 'player' ? 'He has not said a word to you. He has said plenty at the Anchor Bar, and the men are listening.' : `${betrayed.firstName} has told everyone in ${betrayed.faction !== 'none' ? 'his outfit' : 'town'} who will listen.`}`;
     choices.push(
       { id: 'end', label: `End it with ${cheater.firstName}`, because: `ended it with ${cheater.firstName} when ${betrayed.firstName} found out`, effects: [withRomanceOp(label, { op: 'endRomance', romanceId: r.id, reason: 'found out' }), { type: 'opinion', from: betrayed.id, to: boss.id, amount: 10, reason: 'At least he ended it', decay: 1, label }] },
-      { id: 'pay', label: `Make it right with ${betrayed.firstName}`, detail: '$3,000 and an apology in the back room.', because: `paid ${betrayed.firstName} for the insult`, effects: [{ type: 'money', amount: -3000, label }, { type: 'opinion', from: betrayed.id, to: boss.id, amount: 20, reason: 'Made it right', decay: 1, label }, { type: 'meter', from: betrayed.id, to: boss.id, meter: 'grievance', amount: -25, label }] },
+      { id: 'pay', label: `Make it right with ${betrayed.firstName}`, detail: '$3,000 and an apology in the back room.', because: `paid ${betrayed.firstName} for the insult`, effects: [{ type: 'money', pot: 'pocket', amount: -3000, label }, { type: 'opinion', from: betrayed.id, to: boss.id, amount: 20, reason: 'Made it right', decay: 1, label }, { type: 'meter', from: betrayed.id, to: boss.id, meter: 'grievance', amount: -25, label }] },
       { id: 'nothing', label: 'Carry on as if nothing happened', detail: 'He will not forget it. Nor will the men.', because: `carried on with ${cheater.firstName}`, effects: [{ type: 'respect', amount: -1, label }] },
     );
   } else {
     text = `${displayName(betrayed)} has found out about ${displayName(cheater)} and ${displayName(lover)}. In a town this size, it is the only thing anyone talks about at the bakery, and it has reached your table.`;
     choices.push(
-      { id: 'peace', label: 'Keep the peace', detail: 'A word with everyone involved.', because: `kept the peace between ${betrayed.firstName} and ${lover.firstName}`, effects: [{ type: 'money', amount: -500, label }, { type: 'meter', from: betrayed.id, to: lover.id, meter: 'grievance', amount: -20, label }, { type: 'opinion', from: betrayed.id, to: boss.id, amount: 5, reason: 'Kept the peace', decay: 1, label }] },
+      { id: 'peace', label: 'Keep the peace', detail: 'A word with everyone involved.', because: `kept the peace between ${betrayed.firstName} and ${lover.firstName}`, effects: [{ type: 'money', pot: 'pocket', amount: -500, label }, { type: 'meter', from: betrayed.id, to: lover.id, meter: 'grievance', amount: -20, label }, { type: 'opinion', from: betrayed.id, to: boss.id, amount: 5, reason: 'Kept the peace', decay: 1, label }] },
       { id: 'stay', label: 'Stay out of it', because: `stayed out of ${betrayed.firstName}'s business`, effects: [] },
     );
   }
@@ -588,7 +588,7 @@ function buildThreat(s: GameState, r: Romance, member: Character, partner: Chara
   const who = rival ? `A man from ${rival.name}` : 'A reporter from the Wildwood Leader';
   const choices: EventInstance['choices'] = [
     { id: 'hush', label: rival ? `Tell ${rival.shortName} this is off limits` : 'Buy the story and burn it', detail: rival ? 'Some things are not done. They will remember you said so.' : '$2,500 to the editor. The negatives go in the furnace.', because: `protected ${member.firstName}`, effects: [
-      ...(rival ? [{ type: 'rivalOpinion', rival: rival.id as RivalId, amount: -10, reason: 'Told us to keep our mouths shut', label } as Effect, { type: 'respect', amount: 1, label } as Effect] : [{ type: 'money', amount: -2500, label } as Effect]),
+      ...(rival ? [{ type: 'rivalOpinion', rival: rival.id as RivalId, amount: -10, reason: 'Told us to keep our mouths shut', label } as Effect, { type: 'respect', amount: 1, label } as Effect] : [{ type: 'money', pot: 'pocket', amount: -2500, label } as Effect]),
       withRomanceOp(label, { op: 'hush', romanceId: r.id }),
       { type: 'opinion', from: member.id, to: s.playerId, amount: 25, reason: 'Protected me', decay: 0, label },
     ] },

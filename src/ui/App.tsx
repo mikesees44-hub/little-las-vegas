@@ -550,7 +550,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
-      {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal reports={reports} onClose={() => setReports(null)} />}
+      {reports && !current && !sheet && !planner && !cues.length && !night.length && !reels.length && <ReportModal s={s} reports={reports} onClose={() => setReports(null)} />}
       {sheet && !current && (s.characters[sheet] || !s.pol?.people[sheet]
         ? <CharacterSheet key={sheet} s={s} id={sheet} onClose={() => setSheet(undefined)} />
         : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}

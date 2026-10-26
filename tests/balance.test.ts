@@ -67,8 +67,12 @@ describe('balance', () => {
     const s = game('bal-hint');
     expect(costHint(s, 500)).toBeUndefined();
     expect(costHint(s, 2000)).toBeUndefined(); // under a quarter of $30,000
-    expect(costHint(s, 9000)).toMatch(/Costly: \$9,000, 30% of the treasury/);
-    expect(costHint(s, 40000)).toMatch(/more than the treasury holds.*in the red/);
+    expect(costHint(s, 9000)).toMatch(/Costly: \$9,000, 30% of Family money/);
+    expect(costHint(s, 40000)).toMatch(/more than Family money holds.*in the red/);
+    // The boss's own things: his pocket pays first, and the hint says what the Family covers.
+    s.tribute!.acct.personal = 3000;
+    expect(costHint(s, 2500, 'pocket')).toMatch(/83% of your pocket/);
+    expect(costHint(s, 5000, 'pocket')).toMatch(/your pocket covers \$3,000; the other \$2,000 comes out of Family money/);
     s.pendingEvents = [{ iid: 'x', defId: 'test', week: s.week, title: '', text: '', mandatory: false, priority: 1, defaultChoiceId: 'a', choices: [
       { id: 'a', label: 'Pay', because: 'paid', effects: [{ type: 'money', amount: -12000 }] },
       { id: 'b', label: 'Do not', because: 'did not', effects: [] },

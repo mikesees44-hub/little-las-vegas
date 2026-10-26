@@ -1,3 +1,4 @@
+import { startPocket } from './tributeState';
 import { ageOn } from './calendar';
 import { birthForAge, displayName, makeCharacter } from './characters';
 import { emptyCouncil, fillCouncil } from './council';
@@ -53,6 +54,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
 
 function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameState {
   if (charOptions) applyCharOptions(s, start, charOptions);
+  startPocket(s);
   refreshDynastyAfterStart(s);
   setupHouses(s);
   // Re-deal the first week's cards for the new situation.

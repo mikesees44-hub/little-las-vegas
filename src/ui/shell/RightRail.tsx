@@ -15,6 +15,7 @@ import { useShell } from './context';
 import type { GuidedGoal } from './goals';
 import { seasonInfo } from '../../engine/calendar';
 import { TakeLine } from '../tribute/TakeLine';
+import { WeekPotsLine } from '../money/MoneyPots';
 
 export const ALERT_GLYPH: Record<string, string> = {
   unhappy: '☹', defector: '⇄', heat: '♨', money: '$', heir: '♔', loan: '%', staff: '⚒', decision: '✉', scheme: '☠', dispute: '⚖', war: '⚔', family: '♥', lifestyle: '✦', law: '§', underbelly: '⚓',
@@ -111,11 +112,11 @@ export function ThisWeekCard({ s, onReport, hideAdvice }: { s: GameState; onRepo
       ) : (
         <div className="mt-1 space-y-0.5">
           <RichTip align="left" tip={<>
-            <span className="block text-gold-300 font-semibold">Money in {fmt$(w.money.inflow)} · out {fmt$(w.money.outflow)}</span>
+            <span className="block text-gold-300 font-semibold">Family money: in {fmt$(w.money.inflow)} · out {fmt$(w.money.outflow)}</span>
             {w.money.topIn.map((l, i) => <span key={`i${i}`} className="flex justify-between gap-2"><span className="truncate">{l.label}</span><span className="text-emerald-400">+{fmt$(l.amount)}</span></span>)}
             {w.money.topOut.map((l, i) => <span key={`o${i}`} className="flex justify-between gap-2"><span className="truncate">{l.label}</span><span className="text-red-400">{fmt$(l.amount)}</span></span>)}
           </>}>
-            <div className="flex gap-2"><span className="w-12 text-stone-500">Money</span><span className={`font-semibold tabular-nums ${w.money.delta >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{w.money.delta >= 0 ? '+' : ''}{fmt$(w.money.delta)}</span><span className="text-stone-500 truncate">in {fmt$(w.money.inflow)} · out {fmt$(w.money.outflow)}</span></div>
+            <div className="flex gap-2"><span className="w-12 shrink-0 text-stone-500">Money</span><WeekPotsLine s={s} className="text-stone-300" /></div>
           </RichTip>
           <div className="flex gap-2 tabular-nums"><span className="w-12 text-stone-500">Resp</span><span className={(w.respect ?? 0) >= 0 ? 'text-emerald-300' : 'text-red-300'}>{sign(w.respect ?? 0)}</span>
             <span className="text-stone-500">Heat</span><span>L {sign(w.heat!.local)} F {sign(w.heat!.family)} D {sign(w.heat!.federal)}</span></div>

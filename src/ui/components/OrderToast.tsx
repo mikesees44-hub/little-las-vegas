@@ -27,7 +27,7 @@ export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: T
           <div className="text-sm font-semibold text-stone-100">{p.title}</div>
           {p.detail && <div className="text-xs text-stone-400 mt-0.5 line-clamp-2">{p.detail}</div>}
           <div className="text-xs text-stone-300 mt-1">
-            {p.cost > 0 ? <span className="text-red-300">Costs {fmt$(p.cost)}. </span> : null}
+            {p.toPocket ? <span className="text-sky-300">Moves {fmt$(Math.abs(p.toPocket))} {p.toPocket > 0 ? 'from Family money into your pocket' : 'from your pocket into Family money'}. </span> : p.cost > 0 ? <span className="text-red-300">Costs {fmt$(p.cost)} {p.pot === 'pocket' ? 'from your pocket' : 'from Family money'}. </span> : null}
             {chips.length > 0 && <span className="text-stone-400">{chips.join(' · ')}. </span>}
             It happens when you hit <span className="text-gold-300">Advance Week</span>.
           </div>

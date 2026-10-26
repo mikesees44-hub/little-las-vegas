@@ -6,10 +6,12 @@ import { REASON_LABEL, splitText, type TributeReport } from '../../engine/tribut
 import type { GameState } from '../../engine/types';
 import { owned } from '../../engine/business';
 import { fmt$ } from '../format';
+import { BigPots, MoveMoney } from '../money/MoneyPots';
 import { useOrders } from '../components/Orders';
 import { CharLink } from '../components/People';
 import { CrewTable } from './AudienceScene';
 import { useTributeUi } from './context';
+import { useShell } from '../shell/context';
 import { EarningsBoard } from './EarningsBoard';
 
 const TABS = [
@@ -29,7 +31,7 @@ function Box({ title, note, children, id }: { title: string; note?: string; chil
   );
 }
 
-const ACCT_LABEL: Record<string, string> = { treasury: 'Family treasury', personal: 'Your own', reserve: 'Reserve', envelope: 'Pending envelope', clearing: 'Underboss clearing' };
+const ACCT_LABEL: Record<string, string> = { treasury: 'Family money', personal: 'Your pocket', reserve: 'Kept for lawyers & emergencies', envelope: 'Envelope on your desk', clearing: 'With the underboss (being counted)' };
 const acctName = (s: GameState, id: string) => {
   if (ACCT_LABEL[id]) return ACCT_LABEL[id];
   if (id.startsWith('crew:')) { const c = s.characters[id.slice(5)]; return `${c?.firstName ?? '?'}'s crew account`; }
@@ -47,6 +49,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
   const t = s.tribute;
   const ui = useTributeUi();
   const { queue } = useOrders();
+  const { go } = useShell();
   if (!t) return <div className="text-sm text-stone-400" data-testid="weekly-take">The first envelope comes at the end of your first week.</div>;
   const rep = latestReport(s);
   const pend = pendingReport(s);
@@ -106,13 +109,11 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
         </Box>
       )}
       {tab === 'accounts' && (
-        <Box title="Accounts" note="The family treasury runs the business; your own money pays your household and the Good Life first; the reserve covers the treasury when it runs dry. Moving money between them is never income." id="take-accounts">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 text-[12px]">
-            {(['treasury', 'personal', 'reserve', 'envelope'] as const).map((k) => (
-              <div key={k} className="rounded border border-noir-700 bg-noir-900/60 px-2 py-1" data-testid={`acct-${k}`}><div className="text-[10px] uppercase tracking-widest text-stone-500">{ACCT_LABEL[k]}</div><div className={`tabular-nums text-lg ${a[k] < 0 ? 'text-red-400' : 'text-gold-300'}`}>{fmt$(a[k])}</div></div>
-            ))}
-          </div>
-          <MoveMoney />
+        <Box title="Accounts" note="Family money runs the business; your pocket pays for your house, cars, fun and family. Moving money between them is never income." id="take-accounts">
+          <BigPots s={s} compact />
+          {a.envelope > 0 && <div className="mt-1 text-[11px] text-amber-300" data-testid="acct-envelope">{ACCT_LABEL.envelope}: {fmt$(a.envelope)} (split at your cut when you advance)</div>}
+          <div className="mt-2"><MoveMoney s={s} /></div>
+          <button type="button" className="mt-1 text-[11px] text-gold-300 hover:underline" onClick={() => go('holdings.money')}>The Money screen ▸</button>
           <div className="mt-3 text-[10px] uppercase tracking-widest text-stone-500">Individual accounts: the crew</div>
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[420px]"><tbody>
             {crew(s).filter((c) => c.rank !== 'civilian').sort((x, y) => y.wealth - x.wealth).slice(0, 30).map((c) => (
@@ -124,7 +125,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
       )}
       {tab === 'agreements' && <Agreements s={s} />}
       {tab === 'investments' && (
-        <Box title="Investments" note="Pitched by the capos in the audience, paid from the reserve. Their returns come up with the take." id="take-investments">
+        <Box title="Investments" note="Pitched by the capos in the audience, paid from Family money. Their returns come up with the envelope." id="take-investments">
           {t.investments.length === 0 ? <p className="text-[12px] text-stone-500">No investments yet. A capo with a head for business will pitch one.</p> : (
             <ul className="text-[12px]">{t.investments.slice().reverse().map((i) => <li key={i.id} className="flex justify-between gap-2 border-t border-noir-800 py-0.5"><span><CharLink s={s} id={i.byId} />: {i.what}</span><span className="tabular-nums text-stone-400">{fmt$(i.amount)} · {i.status === 'funded' ? `${fmt$(i.weekly)}/wk till wk ${i.until}` : i.status}</span></li>)}</ul>
           )}
@@ -143,7 +144,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
       {tab === 'rivals' && (
         <Box title="The Other Families' Books" note="They run the same way: capos keep their end, the boss takes his, a reserve for the bad week. A family can run dry, or split." id="take-rivals">
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[480px]">
-            <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Family</th><th className="text-right">Treasury</th><th className="text-right">Reserve</th><th className="text-right">Boss's own</th><th className="text-right">Last week up</th><th>Capos</th></tr></thead>
+            <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Family</th><th className="text-right">Family money</th><th className="text-right">Kept for emergencies</th><th className="text-right">Boss's pocket</th><th className="text-right">Last week up</th><th>Capos</th></tr></thead>
             <tbody>{rivalBooksView(s).map((r) => (
               <tr key={r.id} className="border-t border-noir-800"><td>{r.name}{r.books.insolvent ? <span className="text-red-300"> · insolvent</span> : ''}{r.books.fragments ? <span className="text-amber-300"> · split {r.books.fragments}×</span> : ''}</td>
                 <td className="text-right tabular-nums">{fmt$(r.money)}</td><td className="text-right tabular-nums">{fmt$(r.books.reserve)}</td><td className="text-right tabular-nums">{fmt$(r.books.personal)}</td><td className="text-right tabular-nums">{fmt$(r.books.last?.toBoss ?? 0)}</td>
@@ -162,7 +163,7 @@ function AudienceSummary({ s, rep, pending }: { s: GameState; rep: TributeReport
     <div className="text-[12px] space-y-1">
       <div><span className="text-stone-400">Week {rep.week}:</span> {ub ? <CharLink s={s} id={ub.id} /> : 'nobody'} {rep.acting ? '(acting)' : ''} — {UB_TYPE_LABEL[rep.ubType]}</div>
       <div className="tabular-nums">Came up {fmt$(rep.collected)} · his share {fmt$(rep.ubShare)} · <b className="text-gold-300">envelope {fmt$(rep.presented)}</b>{rep.lastPresented !== undefined ? ` · last week ${fmt$(rep.lastPresented)}` : ''}</div>
-      {rep.alloc ? <div className="text-emerald-300 tabular-nums">Split: {fmt$(rep.alloc.personal)} to you · {fmt$(rep.alloc.treasury)} to the family · {fmt$(rep.alloc.reserve)} put aside</div> : pending ? <div className="text-amber-300">The envelope is on your desk. He is waiting for your split.</div> : null}
+      {rep.alloc ? <div className="text-emerald-300 tabular-nums">Split: {fmt$(rep.alloc.personal)} to your pocket · {fmt$(rep.alloc.treasury + rep.alloc.reserve)} to the Family</div> : pending ? <div className="text-amber-300">The envelope is on your desk. He is waiting for your split.</div> : null}
       {rep.talk[0] && <p className="italic text-stone-300">“{rep.talk.slice(0, 3).map((x) => x.text).join(' ')}”</p>}
     </div>
   );
@@ -173,32 +174,16 @@ function CrewView({ s, rep }: { s: GameState; rep: TributeReport }) {
   return <CrewTable s={s} rep={rep} open={open} onToggle={(id) => setOpen(open === id ? undefined : id)} />;
 }
 
-function MoveMoney() {
-  const { queue } = useOrders();
-  const [from, setFrom] = useState<'personal' | 'treasury' | 'reserve'>('personal');
-  const [to, setTo] = useState<'personal' | 'treasury' | 'reserve'>('treasury');
-  const [amt, setAmt] = useState(1000);
-  return (
-    <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]" data-testid="move-money">
-      <span className="text-stone-400">Move</span>
-      <input type="number" min={0} step={100} value={amt} onChange={(e) => setAmt(Number(e.target.value))} className="w-24 rounded border border-noir-600 bg-noir-950 px-1 tabular-nums" aria-label="Amount" />
-      <select value={from} onChange={(e) => setFrom(e.target.value as typeof from)} className="rounded border border-noir-600 bg-noir-950" aria-label="From"><option value="personal">from your own</option><option value="treasury">from the treasury</option><option value="reserve">from the reserve</option></select>
-      <select value={to} onChange={(e) => setTo(e.target.value as typeof to)} className="rounded border border-noir-600 bg-noir-950" aria-label="To"><option value="treasury">to the treasury</option><option value="personal">to your own</option><option value="reserve">to the reserve</option></select>
-      <button type="button" className="btn-ghost text-[11px]" disabled={from === to || !(amt > 0)} onClick={() => queue({ kind: 'tribute', op: { op: 'move', from, to, amount: amt } })}>Order it</button>
-    </div>
-  );
-}
-
 function Agreements({ s }: { s: GameState }) {
   const t = s.tribute!;
   const ks = capos(s);
   const men = crew(s).filter((c) => c.rank === 'soldier' || c.rank === 'associate');
   return (
-    <Box title="Financial Agreements" note="Every agreement has a stable id. Capos: revenue share of their district (the contract). Men: a share of their hustle (or a flat figure, an exemption, an extension). Enterprises: the family's own businesses pay their profit (after upkeep) into the treasury. Investments: a weekly return into the take." id="take-agreements">
+    <Box title="Financial Agreements" note="Every agreement has a stable id. Capos: revenue share of their district (the contract). Men: a share of their hustle (or a flat figure, an exemption, an extension). Enterprises: the family's own businesses pay their profit (after upkeep) into Family money. Investments: a weekly return into the take." id="take-agreements">
       <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[460px]"><tbody>
         {ks.map((k) => <tr key={k.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:capo:{k.id}</td><td><CharLink s={s} id={k.id} /></td><td className="text-stone-300">revenue share: keeps {Math.round((k.keep ?? 0.3) * 100)}%, remits {100 - Math.round((k.keep ?? 0.3) * 100)}%</td></tr>)}
         {men.slice(0, 40).map((c) => <tr key={c.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:member:{c.id}</td><td><CharLink s={s} id={c.id} /></td><td className="text-stone-300">{memberTerms(s, c).text}{c.capoId ? ` · through ${s.characters[c.capoId]?.firstName ?? '?'}` : ' · direct to the underboss'}</td></tr>)}
-        {owned(s).slice(0, 20).map((b) => <tr key={b.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:ent:{b.id}</td><td>{b.name}</td><td className="text-stone-300">profit share: 100% of the week after upkeep ({fmt$(b.upkeep)}/wk) to the treasury</td></tr>)}
+        {owned(s).slice(0, 20).map((b) => <tr key={b.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:ent:{b.id}</td><td>{b.name}</td><td className="text-stone-300">profit share: 100% of the week after upkeep ({fmt$(b.upkeep)}/wk) to Family money</td></tr>)}
         {t.investments.filter((i) => i.status === 'funded').map((i) => <tr key={i.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:inv:{i.id}</td><td>{i.what}</td><td className="text-stone-300">investment return: {fmt$(i.weekly)}/wk till wk {i.until}</td></tr>)}
       </tbody></table></div>
       {t.agHist.length > 0 && <><div className="mt-2 text-[10px] uppercase tracking-widest text-stone-500">History</div><ul className="text-[11px] text-stone-400">{t.agHist.slice(-12).reverse().map((h, i) => <li key={i}>wk {h.week} · {h.id}: {h.text}</li>)}</ul></>}

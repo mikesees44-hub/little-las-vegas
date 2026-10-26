@@ -1,3 +1,4 @@
+import { earnPocket, spendPocket } from './pocket';
 import { applyPowerOp, describePowerOp } from './power';
 import { applyEconOp, describeEconOp } from './econ';
 import { applyTravelOp, describeTravelOp } from './travel';
@@ -47,7 +48,7 @@ function signed(n: number): string {
 export function describeEffect(s: GameState, e: Effect): string | undefined {
   switch (e.type) {
     case 'money':
-      return `${e.amount >= 0 ? '+' : ''}${fmtMoney(e.amount)}`;
+      return e.pot === 'pocket' ? (e.amount >= 0 ? `+${fmtMoney(e.amount)} to your pocket` : `${fmtMoney(e.amount)} from your pocket`) : e.amount >= 0 ? `+${fmtMoney(e.amount)}` : `${fmtMoney(e.amount)} from the Family`;
     case 'respect':
       return `${signed(e.amount)} Respect`;
     case 'heat':
@@ -345,7 +346,10 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
   const boss = player(s);
   switch (e.type) {
     case 'money':
-      money(ctx, e.amount, label, e.category ?? cat);
+      if (e.pot === 'pocket') {
+        if (e.amount < 0) spendPocket(ctx, -e.amount, label, 'fx');
+        else earnPocket(ctx, e.amount, label, 'fx');
+      } else money(ctx, e.amount, label, e.category ?? cat);
       break;
     case 'respect':
       respect(ctx, e.amount, label, cat);

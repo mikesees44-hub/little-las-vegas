@@ -1,3 +1,4 @@
+import { pocketPrice } from './pocket';
 import { ACTIVITIES, activityBlock, activityCost, finishActivity, honoreeOptions, startActivity, suggestGuests, ACTIVITY_KINDS } from './activities';
 import { ageOn } from './calendar';
 import { ALL_TRAITS, capos, crew, displayName, hasTrait, isFree, player, relationLabel } from './characters';
@@ -370,9 +371,9 @@ export function previewDynasty(s: GameState, a: DynAction): ActionPreview {
       else if (age < info.minAge) why = `Too young (from ${info.minAge})`;
       else if (fam(s, c.id).guardian?.kind === a.kind && fam(s, c.id).guardian?.guardianId === a.guardianId) why = 'Already so';
       else if (a.kind === 'capo' && (!g?.alive || g.rank !== 'capo' || g.faction !== 'player')) why = 'Choose one of your capos';
-      else if (s.money < info.cost) why = `Needs ${fmtMoney(info.cost)}`;
+      else if (info.cost) why = pocketPrice(s, info.cost, title).why;
       return {
-        title, detail: info.text, effects: info.cost ? [{ type: 'money', amount: -info.cost }] : [], cost: info.cost,
+        title, detail: info.text, effects: info.cost ? pocketPrice(s, info.cost, title).effects : [], cost: info.cost, pot: 'pocket',
         because: `sent ${c.firstName} to ${info.guardian.toLowerCase()}`, disabledReason: why, category: 'event',
       };
     }
@@ -381,12 +382,12 @@ export function previewDynasty(s: GameState, a: DynAction): ActionPreview {
       const cost = activityCost(a.activity, a.guests.length);
       const hon = a.honoreeId ? s.characters[a.honoreeId] : honoreeOptions(s, a.activity)[0];
       const title = `Host ${def.name.toLowerCase()}${hon && (a.activity === 'wedding' || a.activity === 'christening' || a.activity === 'funeral') ? ` for ${hon.firstName}` : ''}`;
-      const why = activityBlock(s, a.activity, a.guests, a.honoreeId) ?? (s.money < cost ? `Needs ${fmtMoney(cost)}` : undefined);
+      const why = activityBlock(s, a.activity, a.guests, a.honoreeId) ?? pocketPrice(s, cost, title).why;
       return {
         title, detail: `${def.text} ${def.weeks} week${def.weeks > 1 ? 's' : ''} at ${def.place}; ${a.guests.length} guest${a.guests.length === 1 ? '' : 's'}. When it ends: −${def.relief} stress, +${def.renown} renown, guests +${def.opinion} opinion.`,
         // Relief and renown come when it ends (activities.ts), so only the bill is an effect here.
-        effects: [{ type: 'money', amount: -cost }],
-        cost, because: `hosted ${def.name.toLowerCase()}`, disabledReason: why, category: 'event',
+        effects: pocketPrice(s, cost, title).effects,
+        cost, pot: 'pocket', because: `hosted ${def.name.toLowerCase()}`, disabledReason: why, category: 'event',
       };
     }
     case 'decision': {

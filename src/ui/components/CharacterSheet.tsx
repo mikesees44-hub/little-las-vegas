@@ -135,7 +135,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
           ) : (
             <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
               <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">The house</div>
-              <div className="text-xs text-stone-300 mt-1">Respect {s.respect} · Treasury {fmt$(s.money)} · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
+              <div className="text-xs text-stone-300 mt-1">Respect {s.respect} · Family money {fmt$(s.money)} · your pocket {fmt$(s.tribute?.acct.personal ?? 0)} · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
             </section>
           )}
         </div>
@@ -222,7 +222,7 @@ function HisLife({ s, c }: { s: GameState; c: Character }) {
       <div className="mt-1 grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 text-xs text-stone-300">
           {c.rank === 'capo' ? (
-            <div>Runs a crew of {men.length}{outside.length ? ` and ${outside.length} outside guy${outside.length > 1 ? 's' : ''}` : ''} · kicks up {Math.round((1 - (c.keep ?? 0.3)) * 100)}% · his treasury {fmt$(c.wealth)}</div>
+            <div>Runs a crew of {men.length}{outside.length ? ` and ${outside.length} outside guy${outside.length > 1 ? 's' : ''}` : ''} · kicks up {Math.round((1 - (c.keep ?? 0.3)) * 100)}% · his own money {fmt$(c.wealth)}</div>
           ) : c.outside ? (
             <div>{OUTSIDE_INFO[c.outside]}{k ? <> for <CharLink s={s} id={k.id} />'s crew</> : ''} · not a member</div>
           ) : (

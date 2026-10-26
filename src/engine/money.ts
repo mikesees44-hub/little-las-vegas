@@ -25,6 +25,9 @@ import type { GameState, PlayerAction, ReportLine } from './types';
 /* Migration: an older save moves to the two pots inside its next week */
 /* ------------------------------------------------------------------ */
 
+/** The default cut: 40% of every envelope goes to the boss's own pocket. */
+export const DEFAULT_CUT = 4000;
+
 /** Old default (15% you / 75% family / 10% reserve). */
 const OLD_DEFAULT = { personal: 1500, reserve: 1000 };
 
@@ -36,9 +39,14 @@ const OLD_DEFAULT = { personal: 1500, reserve: 1000 };
 export function twoPots(ctx: Ctx): void {
   const s = ctx.s;
   const t = ensureTribute(s);
+  // The bigger-pocket pass: a boss still on the old 25% default moves to the new 40% (once; a cut he chose stays).
+  if (!t.cut40) {
+    if (t.pots === 2 && t.policy.personal === 2500 && t.policy.reserve === 0) t.policy = { ...normSplit({ personal: DEFAULT_CUT, reserve: 0 }), auto: t.policy.auto };
+    t.cut40 = 1;
+  }
   if (t.pots === 2) return;
   if (t.acct.reserve > 0) xfer(ctx, 'reserve', 'treasury', t.acct.reserve, 'transfer', `w${s.week}:twopots`, { label: 'Two pots: the old reserve folded into the Family', category: 'transfer' });
-  const personal = t.policy.personal === OLD_DEFAULT.personal && t.policy.reserve === OLD_DEFAULT.reserve ? 2500 : t.policy.personal;
+  const personal = t.policy.personal === OLD_DEFAULT.personal && t.policy.reserve === OLD_DEFAULT.reserve ? DEFAULT_CUT : t.policy.personal;
   t.policy = { ...normSplit({ personal, reserve: 0 }), auto: t.policy.auto };
   t.pots = 2;
 }
@@ -89,12 +97,12 @@ export function racketNetMult(s: GameState): number {
 }
 
 /** Your cut above this, and the capos notice: each skims a little more (economy.ts skimRate). */
-export const GREED_CUT = 4000;
+export const GREED_CUT = 5000;
 
-/** Extra skim the capos allow themselves when the boss's cut is greedy (0 at 40% or less). */
+/** Extra skim the capos allow themselves when the boss's cut is greedy (0 at 50% or less). */
 export function greedSkim(s: GameState): number {
   const cut = s.tribute?.policy.personal ?? 0;
-  return cut >= 5000 ? 0.12 : cut > GREED_CUT ? 0.05 : 0;
+  return cut >= 6000 ? 0.12 : cut > GREED_CUT ? 0.05 : 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -304,7 +312,7 @@ function crewItems(s: GameState, items: FlowItem[]): FlowItem[] {
 export function moneyView(s: GameState, lite = false): MoneyView {
   const t = s.tribute;
   const r = s.lastReport;
-  const pol = t?.policy ?? { personal: 2500, treasury: 7500, reserve: 0 };
+  const pol = t?.policy ?? { personal: 4000, treasury: 6000, reserve: 0 };
   const base: MoneyView = {
     family: familyCash(s), setAside: t?.acct.reserve ?? 0, pocket: pocketCash(s), waiting: t?.reports.find((x) => x.status === 'presented')?.presented ?? 0,
     familyDelta: 0, pocketDelta: 0, inRows: [], outRows: [], inTotal: 0, outTotal: 0, net: 0, famIn: 0, pocketIn: 0, famOut: 0, pocketOut: 0, sources: [], uses: [], cutPct: pctOf(pol.personal), setAsidePct: pctOf(pol.reserve), hist: [], top: [],

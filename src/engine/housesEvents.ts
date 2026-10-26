@@ -73,7 +73,7 @@ const HOOKS: Hook[] = [
         `${cap(who(s, c))} has set the table for the whole family, and she has let it be known that the boss sits at her right hand, not on the telephone. She has things to say about who is speaking to whom.`,
         [
           { id: 'go', label: 'Go, and listen', detail: 'An afternoon lost. The family sees you at her table.', because: `sat at ${c.firstName}'s table`, effects: [op(c.id, b.id, 15, 'Came to Sunday dinner', label), { type: 'familyOpinion', amount: 3, reason: 'The boss came to dinner', label }] },
-          { id: 'flowers', label: 'Send flowers and an envelope ($200)', detail: 'She will say it is lovely. She will not mean it.', because: `sent flowers to ${c.firstName}'s table`, effects: [{ type: 'money', amount: -200, label }, op(c.id, b.id, 4, 'Sent flowers', label)] },
+          { id: 'flowers', label: 'Send flowers and an envelope ($200)', detail: 'She will say it is lovely. She will not mean it.', because: `sent flowers to ${c.firstName}'s table`, effects: [{ type: 'money', pot: 'pocket', amount: -200, label }, op(c.id, b.id, 4, 'Sent flowers', label)] },
           { id: 'skip', label: 'Business comes first', detail: 'She will remember. So will the aunts.', because: `skipped ${c.firstName}'s Sunday dinner`, effects: [op(c.id, b.id, -15, 'Too busy for his family', label), { type: 'familyOpinion', amount: -3, reason: 'The boss skipped dinner', label }] },
         ], 'go');
     },
@@ -166,7 +166,7 @@ const HOOKS: Hook[] = [
           ? `${cap(who(s, c))}, the rabbi of the family, at your kitchen door. The Hebrew school roof leaks, he says. He also says people tell him things he cannot repeat, and that he prays for you. He means both.`
           : `${cap(who(s, c))}, in the collar, at your kitchen door. The parish school roof leaks, he says. He also says he hears things in the confessional he cannot repeat, and that he prays for you. He means both.`,
         [
-          { id: 'roof', label: 'Pay for the roof ($500)', detail: rabbi ? 'The congregation knows who paid.' : 'The parish knows who paid. So does the Monsignor.', because: rabbi ? 'paid for the Hebrew school roof' : 'paid for the parish school roof', effects: [{ type: 'money', amount: -500, label }, op(c.id, b.id, 15, 'Fixed the school roof', label), { type: 'respect', amount: 1, label }, { type: 'heat', bar: 'local', amount: -1, label }] },
+          { id: 'roof', label: 'Pay for the roof ($500)', detail: rabbi ? 'The congregation knows who paid.' : 'The parish knows who paid. So does the Monsignor.', because: rabbi ? 'paid for the Hebrew school roof' : 'paid for the parish school roof', effects: [{ type: 'money', pot: 'pocket', amount: -500, label }, op(c.id, b.id, 15, 'Fixed the school roof', label), { type: 'respect', amount: 1, label }, { type: 'heat', bar: 'local', amount: -1, label }] },
           { id: 'confess', label: rabbi ? 'Go to services' : 'Go to confession', detail: rabbi ? 'You sit in the back row. He sees you.' : 'You tell him what a man can tell a priest.', because: rabbi ? `went to services with ${title}` : `went to confession with ${title}`, effects: [op(c.id, b.id, 10, rabbi ? 'Came to services' : 'Came to confession', label), { type: 'familyOpinion', amount: 1, reason: rabbi ? 'The boss went to services' : 'The boss went to confession', label }] },
           { id: 'no', label: rabbi ? 'Not today, Rabbi' : 'Not today, Father', because: `sent ${title} away`, effects: [op(c.id, b.id, -6, 'Sent me away', label)] },
         ], 'roof');
@@ -198,7 +198,7 @@ const HOOKS: Hook[] = [
         `${displayName(c)} drives a cab and has opinions about it. He has asked his sister to ask you, and now he is asking you himself: he wants in. ${wife?.alive ? `${wife.firstName} has not said what she thinks. She will, if you get it wrong.` : ''}`,
         [
           { id: 'in', label: 'Bring him around', detail: 'An associate. Family is family.', because: `brought ${c.firstName} into the crew`, effects: [{ type: 'recruit', charId: c.id, label }, op(c.id, b.id, 20, 'Brought me in', label), ...fx(5, 'Took care of my brother')] },
-          { id: 'job', label: 'Find him a straight job ($300)', detail: 'A dispatcher\'s job at a friend\'s cab company.', because: `found ${c.firstName} a straight job`, effects: [{ type: 'money', amount: -300, label }, op(c.id, b.id, 5, 'Found me a job', label), ...fx(10, 'Kept my brother out of it')] },
+          { id: 'job', label: 'Find him a straight job ($300)', detail: 'A dispatcher\'s job at a friend\'s cab company.', because: `found ${c.firstName} a straight job`, effects: [{ type: 'money', pot: 'pocket', amount: -300, label }, op(c.id, b.id, 5, 'Found me a job', label), ...fx(10, 'Kept my brother out of it')] },
           { id: 'no', label: 'Tell him no', because: `turned ${c.firstName} down`, effects: [op(c.id, b.id, -15, 'Turned me down', label), ...fx(-6, 'Turned my brother away')] },
         ], 'job');
     },
@@ -213,7 +213,7 @@ const HOOKS: Hook[] = [
         `${cap(who(s, c))} has been at the social club four nights this week, waiting to be asked. He is blood. He is also young, and the young ones are the ones who get hurt.`,
         [
           { id: 'in', label: 'Bring him in', detail: 'An associate, under a capo who will watch him.', because: `brought ${c.firstName} into the crew`, effects: [{ type: 'recruit', charId: c.id, label }, op(c.id, b.id, 15, 'Brought me in', label)] },
-          { id: 'school', label: 'Pay for school instead ($400)', detail: 'Rutgers, or the trade school in Camden. His mother will light a candle for you.', because: `paid for ${c.firstName}'s schooling`, effects: [{ type: 'money', amount: -400, label }, op(c.id, b.id, 6, 'Paid for my school', label), { type: 'familyOpinion', amount: 2, reason: 'The boss kept a cousin out of it', label }] },
+          { id: 'school', label: 'Pay for school instead ($400)', detail: 'Rutgers, or the trade school in Camden. His mother will light a candle for you.', because: `paid for ${c.firstName}'s schooling`, effects: [{ type: 'money', pot: 'pocket', amount: -400, label }, op(c.id, b.id, 6, 'Paid for my school', label), { type: 'familyOpinion', amount: 2, reason: 'The boss kept a cousin out of it', label }] },
           { id: 'no', label: 'Send him home', because: `sent ${c.firstName} home`, effects: [op(c.id, b.id, -12, 'Sent me home', label)] },
         ], 'school');
     },
@@ -233,8 +233,8 @@ const HOOKS: Hook[] = [
       return ev(s, 'godchild', c, `Your godchild's ${day}`,
         `${displayName(c)}${father ? `, ${father.firstName}'s ${c.gender === 'M' ? 'boy' : 'girl'},` : ''} has ${day === 'graduation' ? 'a graduation' : `a ${day}`} ${day === 'graduation' ? 'this week' : `${where} this ${jewish ? 'Saturday' : 'Sunday'}`}. The whole crew will be watching to see if the godfather comes.`,
         [
-          { id: 'go', label: 'Go, with an envelope ($150)', detail: 'You stand in the back. Everybody sees you anyway.', because: `went to ${c.firstName}'s ${day}`, effects: [{ type: 'money', amount: -150, label }, op(c.id, b.id, 15, 'My godfather came', label), ...fx(10, 'Came for my kid'), { type: 'crewOpinion', amount: 1, reason: 'The boss came', label }] },
-          { id: 'send', label: 'Send the envelope ($150)', because: `sent an envelope for ${c.firstName}'s ${day}`, effects: [{ type: 'money', amount: -150, label }, op(c.id, b.id, 5, 'Sent a card', label)] },
+          { id: 'go', label: 'Go, with an envelope ($150)', detail: 'You stand in the back. Everybody sees you anyway.', because: `went to ${c.firstName}'s ${day}`, effects: [{ type: 'money', pot: 'pocket', amount: -150, label }, op(c.id, b.id, 15, 'My godfather came', label), ...fx(10, 'Came for my kid'), { type: 'crewOpinion', amount: 1, reason: 'The boss came', label }] },
+          { id: 'send', label: 'Send the envelope ($150)', because: `sent an envelope for ${c.firstName}'s ${day}`, effects: [{ type: 'money', pot: 'pocket', amount: -150, label }, op(c.id, b.id, 5, 'Sent a card', label)] },
           { id: 'forget', label: 'Forget', because: `forgot ${c.firstName}'s ${day}`, effects: [op(c.id, b.id, -10, 'My godfather forgot', label), ...fx(-8, 'Forgot my kid')] },
         ], 'go');
     },

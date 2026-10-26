@@ -460,7 +460,7 @@ export interface EffectBase {
 }
 
 export type Effect =
-  | ({ type: 'money'; amount: number; category?: LedgerCategory } & EffectBase)
+  | ({ type: 'money'; amount: number; category?: LedgerCategory; /** 'pocket': the boss's own money pays (the rest from the Family); a gain goes into his pocket. */ pot?: 'pocket' } & EffectBase)
   | ({ type: 'respect'; amount: number } & EffectBase)
   | ({ type: 'heat'; bar: HeatBar; amount: number } & EffectBase)
   | ({ type: 'opinion'; from: string; to: string; amount: number; reason: string; decay?: number } & EffectBase)

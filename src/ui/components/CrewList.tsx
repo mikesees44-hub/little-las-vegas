@@ -113,7 +113,7 @@ function Vassals({ s }: { s: GameState }) {
               <Face s={s} c={c} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
-                <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · skims ~{Math.round(skimRate(s, c) * 100)}% · treasury {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
+                <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · skims ~{Math.round(skimRate(s, c) * 100)}% · his own money {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
                 <TraitIcons c={c} />
               </div>
               <div className="text-right">

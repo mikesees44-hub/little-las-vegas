@@ -1,6 +1,6 @@
 import { formatDate } from '../../engine/calendar';
 import { sumLines } from '../../engine/ledger';
-import type { ReportLine, Stat, WeeklyReport } from '../../engine/types';
+import type { GameState, ReportLine, Stat, WeeklyReport } from '../../engine/types';
 import { fmt$, signed, STAT_LABEL } from '../format';
 import { Modal } from './Modal';
 
@@ -12,7 +12,20 @@ function valueOf(r: WeeklyReport['start'], st: Stat): number {
   return r.heat[st.slice(5) as 'local' | 'family' | 'federal'];
 }
 
-export function ReportModal({ reports, onClose }: { reports: WeeklyReport[]; onClose: () => void }) {
+/** What the Family and the boss's pocket each gained over these weeks (from the week's books). */
+function potsGained(s: GameState | undefined, reports: WeeklyReport[]): { family: number; pocket: number } | undefined {
+  const books = s?.tribute?.books ?? [];
+  const a = books.find((b) => b.week === reports[0].week);
+  const z = books.find((b) => b.week === reports[reports.length - 1].week);
+  if (!a || !z) return undefined;
+  const fam = (x: Record<string, number>) => (x.treasury ?? 0) + (x.reserve ?? 0);
+  return { family: Math.round(fam(z.end) - fam(a.start)), pocket: Math.round((z.end.personal ?? 0) - (a.start.personal ?? 0)) };
+}
+
+const sg = (n: number) => `${n >= 0 ? '+' : '−'}${fmt$(Math.abs(n))}`;
+
+export function ReportModal({ s, reports, onClose }: { s?: GameState; reports: WeeklyReport[]; onClose: () => void }) {
+  const pots = potsGained(s, reports);
   const first = reports[0];
   const last = reports[reports.length - 1];
   const lines: (ReportLine & { week: number })[] = reports.flatMap((r) => r.lines.map((l) => ({ ...l, week: r.week })));
@@ -33,6 +46,7 @@ export function ReportModal({ reports, onClose }: { reports: WeeklyReport[]; onC
             <div className="text-xs text-stone-400">
               {first.seasonLabel} ×{first.multiplier} · gross earnings {fmt$(reports.reduce((a, r) => a + r.grossIncome, 0))}
             </div>
+            {pots && <div className="mt-1 text-sm text-stone-200 tabular-nums" data-testid="report-pots">{reports.length > 1 ? 'These weeks' : 'This week'}: <span className={pots.family >= 0 ? 'text-emerald-300' : 'text-red-300'}>{sg(pots.family)}</span> to the Family, <span className={pots.pocket >= 0 ? 'text-emerald-300' : 'text-red-300'}>{sg(pots.pocket)}</span> to your pocket</div>}
           </div>
           <button className="btn-ghost" onClick={onClose}>Close</button>
         </div>

@@ -283,7 +283,7 @@ interface GameResult {
   /** Money pace (money.ts redo): house-cash change per week, summed by window; the boss's cut in year 1. */
   minFamY1?: number;
   /** The money curve: what came in (both pots, from outside), the net, and the Family, at weeks 1, 4, 8, 20. */
-  curve?: Record<number, { inc: number; net: number; fam: number }>;
+  curve?: Record<number, { inc: number; net: number; fam: number; pocket: number }>;
   pace?: { early: number[]; summer: number[]; winter: number[]; y3: number[]; cutY1: number; y1Weeks: number };
   /** Weeks the treasury itself was in the red (the reserve and the Don's own money not counted). */
   treasuryRed?: number;
@@ -390,7 +390,7 @@ function playOne(gi: number): GameResult {
     if (budget) trackBudget(budget, res.report.lines);
     s = after;
     r.weeksPlayed++;
-    if (CURVE_WEEKS.includes(res.report.week)) { const mv = moneyView(s); (r.curve ??= {})[res.report.week] = { inc: mv.inTotal, net: mv.net, fam: familyCash(s) }; }
+    if (CURVE_WEEKS.includes(res.report.week)) { const mv = moneyView(s); (r.curve ??= {})[res.report.week] = { inc: mv.inTotal, net: mv.net, fam: familyCash(s), pocket: mv.pocket }; }
     if (s.playerId !== prevPlayer || (s.gameOver && s.gameOver.reason === 'no_heir')) {
       r.bossDeaths++;
       if (!s.gameOver) {
@@ -562,8 +562,8 @@ if (CARELESS > 0 && CARELESS < 1) {
   const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
   const med = (f: (p: NonNullable<GameResult['pace']>) => number) => money(quantile(results.filter((r) => r.pace).map((r) => f(r.pace!)).filter((x) => Number.isFinite(x)), 0.5));
   {
-    const cq = (wk: number, k: 'inc' | 'net' | 'fam') => money(quantile(results.map((r) => r.curve?.[wk]?.[k]).filter((x): x is number => x !== undefined), 0.5));
-    console.log(`  Money curve (median): ${CURVE_WEEKS.map((wk) => `wk ${wk} in ${cq(wk, 'inc')} net ${cq(wk, 'net')} Family ${cq(wk, 'fam')}`).join(' | ')}`);
+    const cq = (wk: number, k: 'inc' | 'net' | 'fam' | 'pocket') => money(quantile(results.map((r) => r.curve?.[wk]?.[k]).filter((x): x is number => x !== undefined), 0.5));
+    console.log(`  Money curve (median): ${CURVE_WEEKS.map((wk) => `wk ${wk} in ${cq(wk, 'inc')} net ${cq(wk, 'net')} Family ${cq(wk, 'fam')} Pocket ${cq(wk, 'pocket')}`).join(' | ')}`);
   }
   console.log(`  Money pace (median of per-game mean weekly house-cash change): first summer (wk 1-13) ${med((p) => avg(p.early))}, 2nd summer ${med((p) => avg(p.summer))}, 2nd winter ${med((p) => avg(p.winter))}, year 3 ${med((p) => avg(p.y3))}; the boss's weekly cut in year 1 ${med((p) => p.cutY1 / Math.max(1, p.y1Weeks))}`);
 }

@@ -13,10 +13,11 @@ export function GoodLifePanel({ s }: { s: GameState }) {
   const worth = mine.reduce((a, o) => a + resaleValue(s, o), 0);
   return (
     <div className="space-y-5" data-testid="good-life">
-      <section className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <Stat label="Your pocket" value={fmt$(s.tribute?.acct.personal ?? 0)} sub="Pays for all of this; short, the Family covers the rest" />
         <Stat label="Things you own" value={`${mine.length}`} />
         <Stat label="Worth today" value={fmt$(worth)} />
-        <Stat label="Upkeep" value={`${fmt$(weeklyUpkeep(s))}/wk`} />
+        <Stat label="Upkeep" value={`${fmt$(weeklyUpkeep(s))}/wk`} sub="From your pocket" />
         <Stat label="Federal heat" value={`${s.heat.federal}`} warn={s.heat.federal >= 50} sub={forfeitureLaw(s) ? 'RICO: assets can be seized' : 'Unexplained wealth draws the IRS'} />
       </section>
       <section>

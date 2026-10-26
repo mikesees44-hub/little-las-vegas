@@ -48,8 +48,12 @@ export const GLOSSARY: GlossaryEntry[] = [
     long: 'Winning fights, keeping your word and paying Philadelphia on time raise it; raids, refusals and being in the red lower it. Every 3 points over 40 is +1% on most acceptance odds.',
   },
   {
-    id: 'money', term: 'Treasury', section: 'Money',
-    short: 'Cash on hand. Orders are paid from it the week they are carried out. In the red, respect and loyalty bleed every week.',
+    id: 'money', term: 'Family money', section: 'Money',
+    short: 'The Family\'s cash: it pays the crew, the cops, Philadelphia and the upkeep, and buys businesses. Orders are paid from it the week they are carried out. In the red, respect and loyalty bleed every week.',
+  },
+  {
+    id: 'pocket', term: 'Your pocket', section: 'Money',
+    short: 'Your own money: your cut of every envelope (40% unless you change it). It pays for your house, cars, fun, gifts and your family. Short, the Family covers the rest, and the capos notice a boss who dips too often.',
   },
   {
     id: 'unwashed', term: 'Unwashed cash / laundering', section: 'Money',
@@ -158,7 +162,7 @@ export function statHelp(stat: Stat | 'unwashed' | 'favors'): string {
 /** Tooltip for an effect chip: what this kind of change means. */
 export function effectHelp(e: Effect): string | undefined {
   switch (e.type) {
-    case 'money': return e.amount < 0 ? 'Paid from the treasury when the order is carried out.' : 'Added to the treasury.';
+    case 'money': return e.pot === 'pocket' ? (e.amount < 0 ? 'Paid from your pocket when the order is carried out (the Family covers what it cannot).' : 'Into your pocket.') : e.amount < 0 ? 'Paid from Family money when the order is carried out.' : 'Added to Family money.';
     case 'respect': return BY_ID.respect.short;
     case 'heat': return BY_ID[`heat.${e.bar}`].short;
     case 'opinion': return BY_ID.opinion.short;

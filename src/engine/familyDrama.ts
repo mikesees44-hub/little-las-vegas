@@ -91,7 +91,7 @@ const DRAMAS: Drama[] = [
             dynFx({ op: 'stress', charId: c.id, amount: -8, source: 'domestic' }, label),
           ] },
           { id: 'apartment', label: 'An apartment in Ocean City', detail: '$2,000, and the kind of secret that can have a child.', because: isBoss ? 'set a woman up in an apartment' : `paid for ${c.firstName}'s apartment`, effects: [
-            { type: 'money', amount: -2000, label },
+            { type: 'money', pot: 'pocket', amount: -2000, label },
             dynFx({ op: 'secret', charId: c.id, kind: 'affair' }, label),
             dynFx({ op: 'secret', charId: c.id, kind: 'bastard' }, label),
             dynFx({ op: 'stress', charId: c.id, amount: -12, source: 'domestic' }, label),
@@ -110,7 +110,7 @@ const DRAMAS: Drama[] = [
       const label = `${w.firstName} found the money`;
       const amt = Math.round(Math.max(s.unwashed, 8000) / 1000) * 1000;
       return event(s, 'dyn_money', `${w.firstName} found the money`, `${displayName(w)} went down to the cellar for the Christmas lights and found a shoebox — $${amt.toLocaleString('en-US')} in rubber bands. She is sitting at the kitchen table with it when you come home.`, [
-        { id: 'allowance', label: 'A household allowance', detail: 'And a mink for Christmas.', because: `gave ${w.firstName} an allowance`, effects: [{ type: 'money', amount: -1500, label }, { type: 'opinion', from: w.id, to: s.playerId, amount: 10, reason: 'Takes care of the house', decay: 1, label }] },
+        { id: 'allowance', label: 'A household allowance', detail: 'And a mink for Christmas.', because: `gave ${w.firstName} an allowance`, effects: [{ type: 'money', pot: 'pocket', amount: -1500, label }, { type: 'opinion', from: w.id, to: s.playerId, amount: 10, reason: 'Takes care of the house', decay: 1, label }] },
         { id: 'truth', label: 'Tell her the truth', because: `told ${w.firstName} the truth about the money`, effects: [
           { type: 'opinion', from: w.id, to: s.playerId, amount: hasTrait(w, 'Honest') || hasTrait(w, 'Pious') ? -15 : -4, reason: 'The truth about the money', decay: 1, label },
           { type: 'meter', from: w.id, to: s.playerId, meter: 'trust', amount: 15, label },
@@ -133,8 +133,8 @@ const DRAMAS: Drama[] = [
       const label = `${w.firstName} and the lawyer`;
       const settle = Math.min(20000, Math.max(3000, Math.round(Math.max(0, s.money) * 0.3 / 100) * 100));
       return event(s, 'dyn_flip', `${w.firstName} has a lawyer`, `${displayName(w)} has been driving to a lawyer in Cape May Court House every Tuesday. The lawyer has been taking calls from Newark. She knows where the shoebox is, and she knows who comes to the house.`, [
-        { id: 'winback', label: 'Win her back', detail: 'Flowers, a week in Miami Beach, and a promise.', because: `won ${w.firstName} back`, effects: [{ type: 'money', amount: -3000, label }, { type: 'opinion', from: w.id, to: s.playerId, amount: 25, reason: 'He came back to me', decay: 1, label }, dynFx({ op: 'stress', charId: s.playerId, amount: -5, source: 'domestic' }, label)] },
-        { id: 'settle', label: `A settlement ($${settle.toLocaleString('en-US')})`, detail: 'She keeps the house and keeps quiet.', because: `paid ${w.firstName} to keep quiet`, effects: [{ type: 'money', amount: -settle, label }, { type: 'opinion', from: w.id, to: s.playerId, amount: 15, reason: 'Took care of me', decay: 1, label }, { type: 'heat', bar: 'federal', amount: 3, label }] },
+        { id: 'winback', label: 'Win her back', detail: 'Flowers, a week in Miami Beach, and a promise.', because: `won ${w.firstName} back`, effects: [{ type: 'money', pot: 'pocket', amount: -3000, label }, { type: 'opinion', from: w.id, to: s.playerId, amount: 25, reason: 'He came back to me', decay: 1, label }, dynFx({ op: 'stress', charId: s.playerId, amount: -5, source: 'domestic' }, label)] },
+        { id: 'settle', label: `A settlement ($${settle.toLocaleString('en-US')})`, detail: 'She keeps the house and keeps quiet.', because: `paid ${w.firstName} to keep quiet`, effects: [{ type: 'money', pot: 'pocket', amount: -settle, label }, { type: 'opinion', from: w.id, to: s.playerId, amount: 15, reason: 'Took care of me', decay: 1, label }, { type: 'heat', bar: 'federal', amount: 3, label }] },
         { id: 'talk', label: 'Let her talk — she knows nothing', because: `let ${w.firstName} talk to the FBI`, effects: [{ type: 'heat', bar: 'federal', amount: 15, label }, { type: 'heat', bar: 'local', amount: 4, label }, dynFx({ op: 'stress', charId: s.playerId, amount: 12, source: 'paranoia' }, label), { type: 'familyOpinion', amount: -6, reason: 'Let his own wife go to the Feds', label }] },
       ], [w.id], 56);
     },
@@ -164,7 +164,7 @@ const DRAMAS: Drama[] = [
           { type: 'familyOpinion', amount: -8, reason: 'Brought his bastard into the house', label },
           dynFx({ op: 'stress', charId: boss.id, amount: -6, source: 'honor' }, label),
         ] },
-        { id: 'pay', label: 'Pay his mother', detail: '$3,000 a year to stay in Atlantic City. He may not stay quiet forever.', because: `paid to keep ${kid.firstName} quiet`, effects: [{ type: 'money', amount: -3000, label }, dynFx({ op: 'claimant', charId: kid.id, on: old }, label)] },
+        { id: 'pay', label: 'Pay his mother', detail: '$3,000 a year to stay in Atlantic City. He may not stay quiet forever.', because: `paid to keep ${kid.firstName} quiet`, effects: [{ type: 'money', pot: 'pocket', amount: -3000, label }, dynFx({ op: 'claimant', charId: kid.id, on: old }, label)] },
         { id: 'deny', label: 'Deny everything', because: `denied ${kid.firstName}`, effects: [dynFx({ op: 'claimant', charId: kid.id, on: true }, label), dynFx({ op: 'stress', charId: boss.id, amount: 6, source: 'honor' }, label), { type: 'opinion', from: kid.id, to: boss.id, amount: -30, reason: 'Denied me', decay: 0, label }] },
       ], [kid.id], 52);
     },
@@ -183,7 +183,7 @@ const DRAMAS: Drama[] = [
       const label = `${c.firstName} against ${heir.firstName}`;
       return event(s, 'dyn_rivalry', 'Sibling rivalry', `${displayName(c)} says what everyone at the table is thinking: ${heir.firstName} is not fit to sit in the chair. ${heir.firstName} puts his fork down. The women take the children into the kitchen.`, [
         { id: 'back', label: `Back ${heir.firstName}`, because: `backed ${heir.firstName} as heir`, effects: [{ type: 'opinion', from: c.id, to: boss.id, amount: -15, reason: 'Passed me over', decay: 1, label }, { type: 'opinion', from: heir.id, to: boss.id, amount: 10, reason: 'Backed me', decay: 1, label }, { type: 'opinion', from: c.id, to: heir.id, amount: -10, reason: 'Took what should be mine', decay: 1, label }] },
-        { id: 'share', label: `Give ${c.firstName} his own end`, detail: '$3,000 and a piece of the docks.', because: `gave ${c.firstName} his own end`, effects: [{ type: 'money', amount: -3000, label }, { type: 'opinion', from: c.id, to: boss.id, amount: 15, reason: 'Gave me my own end', decay: 1, label }, dynFx({ op: 'goal', charId: c.id, goal: 'own_business' }, label)] },
+        { id: 'share', label: `Give ${c.firstName} his own end`, detail: '$3,000 and a piece of the docks.', because: `gave ${c.firstName} his own end`, effects: [{ type: 'money', pot: 'pocket', amount: -3000, label }, { type: 'opinion', from: c.id, to: boss.id, amount: 15, reason: 'Gave me my own end', decay: 1, label }, dynFx({ op: 'goal', charId: c.id, goal: 'own_business' }, label)] },
         { id: 'switch', label: `Make ${c.firstName} your heir`, detail: 'Appoint him. The house will talk.', because: `named ${c.firstName} heir over ${heir.firstName}`, effects: [dynFx({ op: 'appoint', charId: c.id }, label), { type: 'opinion', from: heir.id, to: boss.id, amount: -30, reason: 'Took the chair from me', decay: 0, label }, { type: 'opinion', from: c.id, to: boss.id, amount: 20, reason: 'Named me heir', decay: 1, label }, dynFx({ op: 'goal', charId: heir.id, goal: 'the_chair' }, label)] },
       ], [c.id, heir.id], 50);
     },
@@ -216,8 +216,8 @@ const DRAMAS: Drama[] = [
       const rel = relationLabel(s, boss, c) === 'kin' ? 'cousin' : relationLabel(s, boss, c);
       const label = `The Feds and your ${rel}`;
       return event(s, 'dyn_feds', `Your ${rel} in the Feds' sights`, `Two agents picked up your ${rel} ${displayName(c)} outside a diner in Rio Grande and kept him nine hours. He says he told them nothing. He is sweating through his shirt.`, [
-        { id: 'lawyer', label: 'The best lawyer in Philadelphia', detail: '$3,000. The file gets thinner.', because: `got your ${rel} a lawyer`, effects: [{ type: 'money', amount: -3000, label }, dynFx({ op: 'evidence', charId: c.id, amount: -25 }, label), { type: 'opinion', from: c.id, to: boss.id, amount: 10, reason: 'Got me a lawyer', decay: 1, label }] },
-        { id: 'florida', label: 'Send him to Florida for a while', detail: 'Six months in Hallandale. Out of reach.', because: `sent your ${rel} to Florida`, effects: [dynFx({ op: 'away', charId: c.id, weeks: 26 }, label), dynFx({ op: 'evidence', charId: c.id, amount: -35 }, label), { type: 'money', amount: -1000, label }, { type: 'opinion', from: c.id, to: boss.id, amount: -5, reason: 'Sent me away', decay: 1, label }] },
+        { id: 'lawyer', label: 'The best lawyer in Philadelphia', detail: '$3,000. The file gets thinner.', because: `got your ${rel} a lawyer`, effects: [{ type: 'money', pot: 'pocket', amount: -3000, label }, dynFx({ op: 'evidence', charId: c.id, amount: -25 }, label), { type: 'opinion', from: c.id, to: boss.id, amount: 10, reason: 'Got me a lawyer', decay: 1, label }] },
+        { id: 'florida', label: 'Send him to Florida for a while', detail: 'Six months in Hallandale. Out of reach.', because: `sent your ${rel} to Florida`, effects: [dynFx({ op: 'away', charId: c.id, weeks: 26 }, label), dynFx({ op: 'evidence', charId: c.id, amount: -35 }, label), { type: 'money', pot: 'pocket', amount: -1000, label }, { type: 'opinion', from: c.id, to: boss.id, amount: -5, reason: 'Sent me away', decay: 1, label }] },
         { id: 'trust', label: 'He knows to keep quiet', because: `trusted your ${rel} to keep quiet`, effects: [dynFx({ op: 'stress', charId: boss.id, amount: 8, source: 'paranoia' }, label), { type: 'heat', bar: 'federal', amount: 3, label }, { type: 'opinion', from: c.id, to: boss.id, amount: 5, reason: 'Trusts me', decay: 1, label }] },
       ], [c.id], 52);
     },
@@ -235,7 +235,7 @@ const DRAMAS: Drama[] = [
       const head = s.characters[h.headId];
       const label = `${h.name}: an in-law feud`;
       return event(s, 'dyn_inlaws', 'An in-law feud', `${displayName(head)} says the house of ${s.houseName} shamed his daughter ${wife.firstName} — seated at the wrong table at the christening, and nobody stood when she came in. ${h.name} remembers these things.`, [
-        { id: 'apologize', label: 'Flowers and an apology', because: `apologized to ${h.name}`, effects: [{ type: 'money', amount: -1000, label }, { type: 'opinion', from: head.id, to: s.playerId, amount: 15, reason: 'Apologized properly', decay: 1, label }, { type: 'opinion', from: wife.id, to: s.playerId, amount: 5, reason: 'Made peace with my father', decay: 1, label }] },
+        { id: 'apologize', label: 'Flowers and an apology', because: `apologized to ${h.name}`, effects: [{ type: 'money', pot: 'pocket', amount: -1000, label }, { type: 'opinion', from: head.id, to: s.playerId, amount: 15, reason: 'Apologized properly', decay: 1, label }, { type: 'opinion', from: wife.id, to: s.playerId, amount: 5, reason: 'Made peace with my father', decay: 1, label }] },
         { id: 'remind', label: 'Remind them who they married into', because: `put ${h.name} in its place`, effects: [{ type: 'opinion', from: head.id, to: s.playerId, amount: -15, reason: 'Insulted my family', decay: 1, label }, { type: 'opinion', from: wife.id, to: s.playerId, amount: -10, reason: 'Insulted my father', decay: 1, label }, { type: 'respect', amount: 1, label }] },
       ], [head.id, wife.id]);
     },
@@ -326,7 +326,7 @@ export function buildClaim(s: GameState, c: Character): EventInstance {
   const p = fam(s, c.id);
   const why = p.bastardOf ? 'he is the old man\'s blood, recognized or not' : 'the chair should have been his';
   return event(s, 'dyn_claim', `${c.firstName} presses a claim`, `${displayName(c)} tells anyone at the Shamrock who will listen that ${why}. A few of the older men are listening. ${boss.firstName}, this has to be settled before it spreads.`, [
-    { id: 'buy', label: 'Buy him off', detail: '$5,000 and a car lot in Rio Grande.', because: `bought off ${c.firstName}'s claim`, effects: [{ type: 'money', amount: -5000, label }, dynFx({ op: 'claimant', charId: c.id, on: false }, label), { type: 'opinion', from: c.id, to: boss.id, amount: 15, reason: 'Made it right', decay: 1, label }] },
+    { id: 'buy', label: 'Buy him off', detail: '$5,000 and a car lot in Rio Grande.', because: `bought off ${c.firstName}'s claim`, effects: [{ type: 'money', pot: 'pocket', amount: -5000, label }, dynFx({ op: 'claimant', charId: c.id, on: false }, label), { type: 'opinion', from: c.id, to: boss.id, amount: 15, reason: 'Made it right', decay: 1, label }] },
     { id: 'capos', label: 'Let the capos speak for you', detail: 'Respect pays for it.', because: `let the capos settle ${c.firstName}'s claim`, effects: [{ type: 'respect', amount: -4, label }, dynFx({ op: 'claimant', charId: c.id, on: false }, label), { type: 'crewOpinion', amount: 3, reason: 'Asked our counsel', label }] },
     { id: 'exile', label: 'Run him off the island', detail: 'He may turn up with a rival crew.', because: `ran ${c.firstName} off the island`, effects: [{ type: 'exile', charId: c.id, label }, dynFx({ op: 'claimant', charId: c.id, on: false }, label), { type: 'respect', amount: 2, label }] },
   ], [c.id], 70, true);

@@ -79,7 +79,7 @@ export function CaposSection({ s }: { s: GameState }) {
             <Face s={s} c={c} size={40} />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs font-normal text-stone-500">{d ? `holds ${d.name}` : 'no district'}</span></div>
-              <div className="text-[11px] text-stone-400">skims ~{Math.round(skimRate(s, c) * 100)}% · treasury {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
+              <div className="text-[11px] text-stone-400">skims ~{Math.round(skimRate(s, c) * 100)}% · his own money {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
               <TraitIcons c={c} />
             </div>
             <ContractStepper s={s} c={c} />

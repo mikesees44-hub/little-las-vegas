@@ -1,4 +1,5 @@
 import { payFromPersonal } from './tribute';
+import { pocketPrice } from './pocket';
 import type { ActionPreview } from './actions';
 import { ensureEcon } from './econState';
 import { fmtMoney } from './effects';
@@ -133,9 +134,9 @@ export function previewLux(s: GameState, a: LuxAction): ActionPreview {
     const price = luxPrice(s, it);
     const title = `The Good Life: ${it.name}`;
     const c = conspicuous(s, price);
-    // The Don's own money pays first (the weekly take's personal account); the family covers the rest.
-    const own = Math.min(price, Math.max(0, s.tribute?.acct.personal ?? 0));
-    const effects: Effect[] = [...(own > 0 ? [{ type: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: own }, label: `${title}: from your own money` } as Effect] : []), { type: 'money', amount: -price, label: title }];
+    // Your pocket pays; if it is short, the rest comes out of the Family (a dip the capos notice).
+    const pp = pocketPrice(s, price, title);
+    const effects: Effect[] = [...pp.effects];
     if (it.respect) effects.push({ type: 'respect', amount: it.respect, label: title });
     if (it.family) effects.push({ type: 'familyOpinion', amount: it.family, reason: `Bought ${it.name.replace(/^An? /, 'a ').toLowerCase()}`, label: title });
     if (it.relief) effects.push({ type: 'dyn', op: { op: 'stress', charId: s.playerId, amount: -it.relief, source: 'paranoia' }, label: title });
@@ -143,8 +144,8 @@ export function previewLux(s: GameState, a: LuxAction): ActionPreview {
     if (price >= 15000) for (const r of rivalsWhoNotice(s)) effects.push({ type: 'rivalOpinion', rival: r, amount: -2, reason: 'Flashing his money around', label: `${title}: the rivals notice` });
     effects.push({ type: 'econ', op: { op: 'note', text: `Upkeep ${fmtMoney(Math.round(it.upkeep * inflation(s)))}/wk · passes to the heir` }, label: title });
     const have = owned(s).some((o) => o.id === it.id);
-    const why = (it.minYear ?? 0) > s.date.y ? `Not before ${it.minYear}` : it.unique && have ? 'You already have one' : s.money < price ? `Needs ${fmtMoney(price)}` : undefined;
-    return { title, detail: it.blurb, effects, cost: price, because: `bought ${it.name.replace(/^An? /, 'a ').toLowerCase()}`, disabledReason: why, category: 'event', warning: forfeitureLaw(s) && c.heat >= 2 ? 'Under RICO, what the government can tie to the rackets it can seize.' : undefined };
+    const why = (it.minYear ?? 0) > s.date.y ? `Not before ${it.minYear}` : it.unique && have ? 'You already have one' : pp.why;
+    return { title, detail: it.blurb, effects, cost: price, pot: 'pocket', because: `bought ${it.name.replace(/^An? /, 'a ').toLowerCase()}`, disabledReason: why, category: 'event', warning: forfeitureLaw(s) && c.heat >= 2 ? 'Under RICO, what the government can tie to the rackets it can seize.' : undefined };
   }
   const o = owned(s).find((x) => x.uid === a.uid);
   const it = o ? LUX_BY_ID[o.id] : undefined;
@@ -153,7 +154,7 @@ export function previewLux(s: GameState, a: LuxAction): ActionPreview {
   const title = `Sell ${it.name.replace(/^An? /, 'the ').replace(/^A /, 'the ')}`;
   return {
     title, detail: `Paid ${fmtMoney(o.paid)} in ${o.year}.`,
-    effects: [{ type: 'money', amount: v, label: title }, ...(it.family >= 5 ? [{ type: 'familyOpinion', amount: -Math.ceil(it.family / 2), reason: 'Sold something we loved', label: title } as Effect] : [])],
+    effects: [{ type: 'money', amount: v, pot: 'pocket', label: title }, ...(it.family >= 5 ? [{ type: 'familyOpinion', amount: -Math.ceil(it.family / 2), reason: 'Sold something we loved', label: title } as Effect] : [])],
     cost: 0, because: `sold ${it.name.replace(/^An? /, 'the ').toLowerCase()}`, category: 'event',
   };
 }
@@ -198,7 +199,7 @@ export function luxActions(s: GameState): LuxAction[] {
   const out: LuxAction[] = [];
   for (const it of LUX) {
     const p = previewLux(s, { type: 'luxBuy', item: it.id });
-    if (!p.disabledReason && luxPrice(s, it) * 6 <= s.money) out.push({ type: 'luxBuy', item: it.id });
+    if (!p.disabledReason && (luxPrice(s, it) <= (s.tribute?.acct.personal ?? 0) * 0.8 || luxPrice(s, it) * 6 <= s.money)) out.push({ type: 'luxBuy', item: it.id });
   }
   if (s.money < 3000) for (const o of owned(s)) out.push({ type: 'luxSell', uid: o.uid });
   return out;

@@ -1,7 +1,8 @@
 import { createContext, useContext, useState } from 'react';
 import { sameTarget, targetOf } from '../../engine/deals';
 import { DealWindow } from '../econ/DealWindow';
-import { previewAction, queuedCost } from '../../engine/actions';
+import { previewAction, queuedMoney } from '../../engine/actions';
+import { dipPenalty, DIP, recentDips } from '../../engine/pocket';
 import type { Acceptance } from '../../engine/interactions';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -33,30 +34,45 @@ function same(a: PlayerAction, b: PlayerAction): boolean {
 export function ActionCard({ s, action, compact, label }: { s: GameState; action: PlayerAction; compact?: boolean; label?: string }) {
   const { orders, queue } = useOrders();
   const p = previewAction(s, action);
-  const budget = s.money - queuedCost(s, orders);
+  const others = orders.filter((o) => !same(o, action));
+  const q = queuedMoney(s, others);
+  const budget = q.familyLeft;
+  // The boss's own things: his pocket pays; if it is short, one tap takes the rest from the Family.
+  const pocket = p.pot === 'pocket';
+  const short = pocket ? Math.max(0, p.cost - Math.max(0, q.pocketLeft)) : 0;
+  // The preview's "Costly:" note reads the pots as they are; with other orders queued the dip note below is the truth.
+  const detail = pocket && others.length && q.pocketLeft !== Math.max(0, s.tribute?.acct.personal ?? 0) ? p.detail?.replace(/\s*Costly:.*$/, '') : p.detail;
   // A purchase opens the Deal window instead of queueing at the asking price.
   const deal = action.kind === 'econ' && action.op.type === 'deal' ? undefined : targetOf(action);
   const [dealing, setDealing] = useState(false);
   const queued = orders.some((o) => same(o, action) || (!!deal && o.kind === 'econ' && o.op.type === 'deal' && sameTarget(o.op.target, deal)));
-  const broke = !p.disabledReason && p.cost > 0 && p.cost > budget ? `Only ${fmt$(budget)} left after this week's orders` : undefined;
+  const broke = p.disabledReason || !(p.cost > 0) ? undefined
+    : pocket ? (short > budget ? `Not enough: your pocket has ${fmt$(Math.max(0, q.pocketLeft))} and the Family ${fmt$(Math.max(0, budget))} after this week's orders` : undefined)
+    : p.cost > budget ? `Only ${fmt$(budget)} of Family money left after this week's orders` : undefined;
   // At the table the price can come down: only a hard block stops the offer.
   const why = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
   return (
     <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`}>
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-[10rem] flex-1">
           <div className="font-semibold text-stone-100 text-sm">{label ?? p.title}</div>
-          {(!compact || action.kind === 'talk') && p.detail && <div className="text-xs text-stone-400 mt-0.5">{p.detail}</div>}
+          {(!compact || action.kind === 'talk') && detail && <div className="text-xs text-stone-400 mt-0.5">{detail}</div>}
+          {p.cost > 0 && <div className={`text-[11px] mt-0.5 tabular-nums ${pocket ? 'text-amber-300' : 'text-gold-400'}`} data-testid="price-pot">{fmt$(p.cost)} {pocket ? 'from your pocket' : 'from Family money'}</div>}
         </div>
         <button
-          className={queued ? 'btn-ghost text-xs py-1 shrink-0' : 'btn-gold text-xs py-1 shrink-0'}
+          className={queued ? 'btn-ghost text-xs py-1 shrink-0 max-w-full' : 'btn-gold text-xs py-1 shrink-0 max-w-full'}
           disabled={!!why || queued}
           onClick={() => (deal ? setDealing(true) : queue(action))}
           data-testid={deal ? 'make-offer' : undefined}
         >
-          {queued ? (deal ? 'Signed ✓' : actionVerb(action).done) : deal ? 'Make an offer' : actionVerb(action).verb}
+          {queued ? (deal ? 'Signed ✓' : actionVerb(action).done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${actionVerb(action).verb.toLowerCase()}` : actionVerb(action).verb}
         </button>
       </div>
+      {short > 0 && !why && !queued && (
+        <div className="mt-1 text-[11px] text-amber-300 leading-snug" data-testid="dip-note">
+          Your pocket has {fmt$(Math.max(0, q.pocketLeft))}; the other {fmt$(short)} comes out of the Family. {dipPenalty(s, q.dips) ? `The capos notice: −${-dipPenalty(s, q.dips)} opinion each (${recentDips(s) + q.dips + 1} dips in ${DIP.window} weeks).` : `Once in ${DIP.window} weeks the capos let it go.`}
+        </div>
+      )}
       <Chips s={s} effects={p.effects} />
       {p.acceptance && <AcceptanceLine a={p.acceptance} />}
       {p.odds && <AcceptanceLine a={p.odds} prefix="Success" />}
@@ -91,13 +107,13 @@ export function AcceptanceLine({ a, prefix = 'Will accept' }: { a: Acceptance; p
 export function OrdersTray({ s }: { s: GameState }) {
   const { orders, remove } = useOrders();
   if (!orders.length) return null;
-  const cost = queuedCost(s, orders);
+  const q = queuedMoney(s, orders);
   return (
     <div className="panel p-3" data-testid="orders-tray">
-      <div className="flex items-baseline justify-between gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="panel-title text-base">This week's orders</div>
-        <div className="text-xs text-stone-400">
-          Committed {fmt$(cost)} · treasury after orders <span className={s.money - cost < 0 ? 'text-red-400' : 'text-gold-300'}>{fmt$(s.money - cost)}</span>
+        <div className="text-xs text-stone-400 tabular-nums">
+          After them: Family money <span className={q.familyLeft < 0 ? 'text-red-400' : 'text-gold-300'}>{fmt$(q.familyLeft)}</span> · your pocket <span className="text-amber-200">{fmt$(q.pocketLeft)}</span>
         </div>
       </div>
       <ul className="mt-2 space-y-1.5">

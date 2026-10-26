@@ -20,7 +20,8 @@ describe('The Good Life', () => {
     expect(owned(r.state).map((o) => o.id)).toContain('cadillac');
     // Upkeep every week after, by name.
     const r2 = advanceWeek(r.state, {});
-    expect(r2.report.lines.some((l) => l.label.startsWith('The Good Life: upkeep'))).toBe(true);
+    const upkeepPaid = r2.report.lines.some((l) => l.label.startsWith('The Good Life: upkeep')) || r2.state.tribute!.books.find((b) => b.week === r2.report.week)!.x.some((x) => x[0] === 'personal' && /^The Good Life: upkeep/.test(x[4] ?? ''));
+    expect(upkeepPaid).toBe(true);
   });
   it('a car loses value, a house holds it; a color TV waits for color', () => {
     const s = newGame('lux2');

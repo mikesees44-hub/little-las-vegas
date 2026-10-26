@@ -252,7 +252,7 @@ function donsHabits(ctx: Ctx): void {
   const avg = t.greed.slice(-8).reduce((a, b) => a + b, 0) / Math.min(8, n);
   const cost = Math.max(1200, t.costAvg);
   const age = ageOn(boss.birth, s.date);
-  if (avg >= 5000) {
+  if (avg >= 6000) {
     if (s.money < 4 * cost && s.week % 4 === 0) for (const k of capos(s)) addOpinion(s, k.id, boss.id, 'The boss bleeds the family while it runs short', -3, 1);
     t.beats.push({ kind: age >= 65 ? 'aging' : 'greed', week: s.week, pri: 56 });
   } else if (avg <= 1000) {
@@ -289,7 +289,7 @@ export function tributeEnd(ctx: Ctx): void {
       const a = rep.alloc!;
       const ub = rep.ubId ? s.characters[rep.ubId] : undefined;
       const d = director(s);
-      d.motion = [...(d.motion ?? []), [s.week, `${ub ? ub.firstName : 'The count'} brought the take (${$(rep.presented)}): ${$(a.personal)} to you, ${$(a.treasury)} to the family, ${$(a.reserve)} put aside (${splitText(a.split)}).`] as [number, string]].slice(-30);
+      d.motion = [...(d.motion ?? []), [s.week, `${ub ? ub.firstName : 'The count'} brought the envelope (${$(rep.presented)}): ${$(a.personal)} to your pocket, ${$(a.treasury + a.reserve)} to the Family (${splitText(a.split)}).`] as [number, string]].slice(-30);
     }
   }
   // The running average of the week's outgoings, for the underboss's advice.
