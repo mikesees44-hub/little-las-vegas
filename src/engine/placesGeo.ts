@@ -209,7 +209,7 @@ export function applyPlaceEdits(edits: Record<string, PlaceEdit>, list: PlaceFea
   });
 }
 
-/** The corrected layer as a GeoJSON FeatureCollection (for "Export corrections"). */
+/** The corrected layer as a GeoJSON FeatureCollection (for "Copy corrections"). */
 export function placesGeoJson(list: PlaceFeature[]): { type: 'FeatureCollection'; features: PlaceFeature[] } {
   return { type: 'FeatureCollection', features: list };
 }

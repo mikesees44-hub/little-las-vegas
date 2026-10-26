@@ -20,7 +20,7 @@ import { Turnaround } from './Turnaround';
  * a cutout of one view of its painting (the view that faces you). The
  * properties shown are the ones open in the game year. Click one for its
  * details; "Edit map" lets you move, turn and resize buildings, save the
- * corrections in this browser and export them as GeoJSON.
+ * corrections in this browser and copy them to the clipboard as GeoJSON (no download links: the published page cannot follow them).
  *
  * The areas, block by block from the first one (the Boardwalk around Hunt's
  * Pier): the Pacific Avenue clubs round Taylor Avenue, the Boardwalk north
@@ -350,19 +350,18 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const all = useMemo(() => applyPlaceEdits(edits), [edits]);
+  const [copied, setCopied] = useState<'copied' | 'manual' | undefined>();
   const doExport = () => {
     // Authored features with their corrections, plus any game record you placed by hand.
     const extra = placed.filter((p) => !p.authored && edits[p.f.id]).map((p) => p.f);
     const text = JSON.stringify(placesGeoJson([...all, ...extra]), null, 2);
+    // Copied, not downloaded: the published page can't follow blob: or data: links.
+    // The box below always shows the JSON, selected, for copying by hand.
     setExportText(text);
+    setCopied(undefined);
     try {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([text], { type: 'application/geo+json' }));
-      a.download = 'wildwood-places-corrections.geojson';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    } catch { /* the text box below has it */ }
+      void navigator.clipboard.writeText(text).then(() => setCopied('copied'), () => setCopied('manual'));
+    } catch { setCopied('manual'); }
   };
   const nEdits = Object.keys(edits).length;
 
@@ -392,7 +391,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
         <button type="button" className={`hv-btn ${edit ? 'hv-on' : ''}`} onClick={() => setEdit((x) => !x)} data-testid="plan-edit">{edit ? 'Editing map' : 'Edit map'}</button>
         {edit && <>
           <button type="button" className="hv-btn" onClick={() => setSaved(saveEdits(edits) ? 'saved' : 'failed')} data-testid="plan-save">Save corrections{nEdits ? ` (${nEdits})` : ''}</button>
-          <button type="button" className="hv-btn" onClick={doExport} data-testid="plan-export">Export corrections</button>
+          <button type="button" className="hv-btn" onClick={doExport} data-testid="plan-export">Copy corrections</button>
           {sel && edits[sel] && <button type="button" className="hv-btn" onClick={() => setEdits((all) => { const n = { ...all }; delete n[sel]; return n; })}>Undo this one</button>}
           <label className="hv-btn flex items-center gap-1">Peek
             <select className="bg-transparent text-[11px]" value={peek ?? ''} onChange={(e) => setPeek(e.target.value ? Number(e.target.value) : undefined)} data-testid="plan-peek">
@@ -400,7 +399,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
               {[1955, 1960, 1965, 1970, 1975, 1980, 1986].map((y) => <option key={y} value={y}>{y}</option>)}
             </select>
           </label>
-          {saved && <span className={`text-[11px] ${saved === 'saved' ? 'text-emerald-300' : 'text-rose-300'}`} data-testid="plan-saved">{saved === 'saved' ? 'Saved in this browser' : 'Could not save here — use Export'}</span>}
+          {saved && <span className={`text-[11px] ${saved === 'saved' ? 'text-emerald-300' : 'text-rose-300'}`} data-testid="plan-saved">{saved === 'saved' ? 'Saved in this browser' : 'Could not save here — use Copy corrections'}</span>}
         </>}
       </div>
       <div className="absolute left-2 bottom-2 z-10 rounded bg-[#1b1030]/85 border border-[#ff5fa2]/60 px-2 py-1 text-[11px] text-[#ffd1e6] max-w-[70%]" data-plan-ui>
@@ -410,9 +409,11 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       </div>
       {exportText && (
         <div className="absolute right-2 bottom-2 z-20 w-[min(420px,calc(100%-1rem))] panel p-2 space-y-1" data-plan-ui data-testid="plan-export-box">
-          <div className="flex justify-between text-xs text-stone-300"><span>wildwood-places-corrections.geojson</span><button type="button" onClick={() => setExportText(undefined)}>close ×</button></div>
-          <textarea readOnly value={exportText} className="w-full h-40 bg-noir-900 text-[10px] font-mono text-stone-300 p-1" onFocus={(e) => e.currentTarget.select()} />
-          <button type="button" className="hv-btn" onClick={() => { try { void navigator.clipboard.writeText(exportText); } catch { /* select the text instead */ } }}>Copy</button>
+          <div className="flex justify-between gap-2 text-xs text-stone-300">
+            <span data-testid="plan-copied">{copied === 'copied' ? 'Copied to the clipboard (GeoJSON)' : copied === 'manual' ? 'Select all and copy (GeoJSON)' : 'Copying…'}</span>
+            <button type="button" onClick={() => setExportText(undefined)}>close ×</button>
+          </div>
+          <textarea readOnly autoFocus value={exportText} className="w-full h-40 bg-noir-900 text-[10px] font-mono text-stone-300 p-1" ref={(el) => { if (el && copied === 'manual') el.select(); }} onFocus={(e) => e.currentTarget.select()} />
         </div>
       )}
       {selP && edit && !exportText && (
