@@ -101,7 +101,7 @@ export function roundSlots(s: GameState): { slots: number; why: { label: string;
 
 const stress = (s: GameState, amount: number, label: string): Effect[] => (s.dyn ? [{ type: 'dyn', op: { op: 'stress', charId: s.playerId, amount, source: 'domestic' }, label } as Effect] : []);
 const money = (amount: number, label: string): Effect => ({ type: 'money', amount, category: 'event', label });
-const op = (from: string, to: string, amount: number, reason: string): Effect => ({ type: 'opinion', from, to, amount, reason, label: reason });
+const op = (from: string, to: string, amount: number, reason: string, decay?: number): Effect => ({ type: 'opinion', from, to, amount, reason, label: reason, ...(decay !== undefined ? { decay } : {}) });
 
 function usable(s: GameState, a: PlayerAction): PlayerAction | undefined {
   const p = previewAction(s, a);
@@ -294,9 +294,9 @@ export function roundsWeek(ctx: Ctx, picked: string[] | undefined, opts: Round[]
   for (const ng of neglect(s)) {
     if (ng.weeks < 3) continue;
     if (ng.lane === 'family') {
-      if (wife?.alive) applyEffects(ctx, [op(wife.id, boss.id, -2, `${ng.line}`)], { label: 'Never home', because: 'were never home', category: 'event' });
+      if (wife?.alive) applyEffects(ctx, [op(wife.id, boss.id, -2, 'Never home for dinner', 1)], { label: 'Never home', because: 'were never home', category: 'event' });
       const heir = chooseHeir(s, boss).heir;
-      if (heir && heir.id !== wife?.id && ng.weeks >= 6) applyEffects(ctx, [op(heir.id, boss.id, -1, 'He never has time for me')], { label: 'Never home', because: 'were never home', category: 'event' });
+      if (heir && heir.id !== wife?.id && ng.weeks >= 6) applyEffects(ctx, [op(heir.id, boss.id, -1, 'He never has time for me', 1)], { label: 'Never home', because: 'were never home', category: 'event' });
     } else if (ng.lane === 'fun') {
       if (s.dyn) applyEffects(ctx, stress(s, ng.weeks >= 6 ? 3 : 2, 'No night off in weeks'), { label: 'No night off', because: 'never took a night off', category: 'event' });
     } else if (ng.weeks % 2 === 0) {
