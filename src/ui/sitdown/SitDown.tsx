@@ -281,7 +281,7 @@ function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameSt
         </div>
       )}
       <footer className="flex items-center gap-2 border-t border-noir-700 px-3 py-2">
-        <span className="flex-1 text-[11px] text-stone-500">Your evenings happen when you advance the week.</span>
+        <span className="flex-1 text-[11px] text-stone-500">Your evenings land on days of the week (This Week); they happen as the clock runs, or all at once when you advance.</span>
         <button type="button" className="btn-gold text-xs sm:text-sm" onClick={onDone} data-testid="rounds-done">Done — back to the map</button>
       </footer>
     </div>

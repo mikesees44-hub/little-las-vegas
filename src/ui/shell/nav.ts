@@ -45,7 +45,7 @@ export interface NavGroupDef {
 }
 
 export const HOMES: HomeDef[] = [
-  { id: 'week', icon: '◷', label: 'This Week', short: 'Week', key: 'w', blurb: 'What needs you before you advance the week: the sit-down, decisions, jobs under way, the news.' },
+  { id: 'week', icon: '◷', label: 'This Week', short: 'Week', key: 'w', blurb: 'Your week, day by day: the morning meeting with your capos, your evenings, the sit-down, decisions, jobs under way, the news.' },
   { id: 'money', icon: '$', label: 'Money', short: 'Money', key: 'm', blurb: 'The Family\'s money and your own pocket: what came in, where it went, who earned it.' },
   { id: 'biz', icon: '♣', label: 'Rackets & Businesses', short: 'Rackets', key: 'r', blurb: 'What you run and what you own: rackets, places, real estate, hotels.' },
   { id: 'family', icon: '⚑', label: 'The Family', short: 'Family', key: 'f', blurb: 'Your men and your blood: the council, the capos, who gets made, your wife, your kids, your heir.' },

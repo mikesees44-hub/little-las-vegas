@@ -61,6 +61,7 @@ import { TributeUiContext, type TributeUiApi } from './tribute/context';
 import type { EnvelopeChoice } from '../engine/tributeOps';
 import { EmpireHost } from './empire/context';
 import { briefing as buildBriefing, setTrust, type BriefLink } from '../engine/briefing';
+import { dayCheckIns } from '../engine/checkins';
 import { daysOf, plannedRounds, setWeekRounds, tickDay, weekChoices, weekPlan } from '../engine/days';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
@@ -460,12 +461,14 @@ export function App({ startOn = 'title' }: AppProps) {
     if (h) badges[h] = (badges[h] ?? 0) + 1;
   }
   if (unanswered.length) badges.week = (badges.week ?? 0) + unanswered.length;
-  const homeDoNow = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length }) : [];
+  const morningOpen = dayCheckIns(s, daysOf(s).day).filter((c) => c.problem && !daysOf(s).answers[c.key] && !daysOf(s).skipped.includes(c.day));
+  const homeDoNow = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
   const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); };
   function onDoNow(d: DoNowItem) {
     const a = d.act;
     if (a.kind === 'decisions') openDecisions();
     else if (a.kind === 'sitdown') setSitdown(a.tab);
+    else if (a.kind === 'day') { setSpeed(0); setDayWin(daysOf(s).day); }
     else if (a.kind === 'office') tributeApi.openAudience(a.reportId);
     else if (a.kind === 'route') openRoute(a.route);
     else if (a.kind === 'alert') onAlert(a.alert);
