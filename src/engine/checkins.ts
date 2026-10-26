@@ -218,7 +218,7 @@ export function checkinsWeek(ctx: Ctx, list: CheckIn[], answers: Record<string, 
     if (mine?.effects.length) applyEffects(ctx, mine.effects, { label: `${c.name} did it his own way`, because: `left ${c.name} to it`, category: 'event' });
     if (!missed[c.day]) {
       ignored++;
-      applyEffects(ctx, [op(k.id, B, -1, 'The boss didn\'t answer me')], { label: `${c.name} waited for an answer`, because: 'never answered him', category: 'event' });
+      applyEffects(ctx, [op(k.id, B, -2, 'The boss didn\'t answer me')], { label: `${c.name} waited for an answer`, because: 'never answered him', category: 'event' });
     }
     ownWay.push(c.name);
   }
