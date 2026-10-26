@@ -68,7 +68,7 @@ export const menuItem = 'block w-full text-left rounded px-2 py-1.5 text-sm text
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse }: {
+export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount }: {
   s: GameState;
   speed: Speed;
   setSpeed: (v: Speed) => void;
@@ -84,6 +84,9 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
   setSeedInput: (v: string) => void;
   slot: number;
   pulse?: boolean;
+  /** The Sit-Down (sitdown/SitDown.tsx): opens the week's council and rounds. */
+  onSitDown?: () => void;
+  sitCount?: number;
 }) {
   const info = seasonInfo(s.date);
   const boss = player(s);
@@ -131,6 +134,12 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
               className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${pending > answered ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
               ✉ {answered}/{pending}<span className="hidden sm:inline"> decisions</span>
             </button>
+            {onSitDown && (
+              <button type="button" onClick={onSitDown} data-testid="sitdown-button" title="Your people, and your rounds this week"
+                className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${sitCount ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
+                ♜ <span className="hidden sm:inline">Sit-down </span>{sitCount ? `(${sitCount})` : ''}
+              </button>
+            )}
             <OrdersButton s={s} />
             <span className="hidden sm:inline-flex"><MusicToggle /></span>
             {note && <span className="text-[11px] text-amber-300 truncate max-w-[40vw]">{note}</span>}
