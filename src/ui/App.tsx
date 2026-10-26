@@ -8,7 +8,7 @@ import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, S
 import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
-import { newWarnings, tickerLine, useClock, type Speed } from './clock';
+import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Speed } from './clock';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
@@ -21,7 +21,7 @@ import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings } from './settings';
+import { applySettings, getSettings, pausesOn, timeMode } from './settings';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { minigameOf, opensScene } from '../engine/minigames';
@@ -61,7 +61,9 @@ import { TributeUiContext, type TributeUiApi } from './tribute/context';
 import type { EnvelopeChoice } from '../engine/tributeOps';
 import { EmpireHost } from './empire/context';
 import { briefing as buildBriefing, setTrust, type BriefLink } from '../engine/briefing';
-import { usualWeek } from '../engine/rounds';
+import { daysOf, plannedRounds, setWeekRounds, tickDay, weekChoices, weekPlan } from '../engine/days';
+import { WeekPlanner } from './rounds/WeekPlanner';
+import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 
@@ -107,8 +109,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const [envelope, setEnvelopeState] = useState<EnvelopeChoice | undefined>();
   const setEnvelope = (e: EnvelopeChoice | undefined) => { envelopeRef.current = e; setEnvelopeState(e); };
   const [office, setOffice] = useState<string | undefined>();
-  // The Sit-Down and Your Rounds: this week's evenings (undefined: the usual week), the items put off, the screen.
-  const [roundsPick, setRoundsPick] = useState<string[] | undefined>();
+  // The Sit-Down and Your Rounds: the items put off, the screen. The week's evenings and the
+  // morning check-ins live in the state's days plan (engine/days.ts), so a reload keeps them.
   const [briefSkip, setBriefSkip] = useState<string[]>([]);
   const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
   const [sitSeen, setSitSeen] = useState<string | undefined>();
@@ -148,6 +150,16 @@ export function App({ startOn = 'title' }: AppProps) {
     if (!menu) saveSlot(slot, s);
   }, [s, menu, slot]);
   const [speed, setSpeed] = useState<Speed>(0);
+  // The running clock's day: the evening scenes that just happened, the day window.
+  const [evenings, setEvenings] = useState<{ cue: EveningCue; s: GameState }[]>([]);
+  const [dayWin, setDayWin] = useState<number | undefined>();
+  const clockMode = timeMode() === 'clock';
+  // An evening's scene stays a few seconds while the clock runs (it waits for you while paused).
+  useEffect(() => {
+    if (!evenings.length || speed === 0) return;
+    const t = setTimeout(() => setEvenings((x) => x.slice(1)), 4200 + 1400 * (4 - speed));
+    return () => clearTimeout(t);
+  }, [evenings, speed]);
   const [clockNote, setClockNote] = useState<string | undefined>();
   const [ticker, setTicker] = useState<string | undefined>();
   const [cues, setCues] = useState<CutsceneCue[]>([]);
@@ -174,7 +186,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
-    const choices: PlayerChoices = { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), rounds: roundsPick ?? usualWeek(s), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) };
+    // The one place a week's choices are built (the clock and Advance Week alike): the days plan supplies the evenings and the mornings.
+    const choices: PlayerChoices = weekChoices(s, { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) });
     // A ceremony the player sat through replaces the old single card.
     const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
     const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
@@ -188,10 +201,13 @@ export function App({ startOn = 'title' }: AppProps) {
       if (quiet) {
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
-        if ((warn.length || r.state.cutscenes?.length) && getSettings().pauseOnWarning) {
+        const heads = weekHeadlines(s, r.state).filter((h) => pausesOn(h.kind === 'hit' ? 'pauseOnViolence' : h.kind === 'arrest' ? 'pauseOnArrest' : 'pauseOnLife'));
+        const urgent = pausesOn('pauseOnCapo') ? morningStop(r.state) : undefined;
+        if (heads.length) { setSpeed(0); setClockNote(`Paused: ${heads[0].text}`); }
+        else if ((warn.length || r.state.cutscenes?.length) && getSettings().pauseOnWarning) {
           setSpeed(0);
           setClockNote(warn.length ? `Paused: ${warn[0]}` : 'Paused');
-        }
+        } else if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
       }
     } else {
       const r = advanceMonth(s, choices);
@@ -205,7 +221,6 @@ export function App({ startOn = 'title' }: AppProps) {
     setAnswers({});
     setMgMoves({});
     setOrders([]);
-    setRoundsPick(undefined);
     setBriefSkip([]);
     setSitdown(undefined);
     setEnvelope(undefined);
@@ -256,10 +271,11 @@ export function App({ startOn = 'title' }: AppProps) {
     setMgMoves({});
     setScene(null);
     setOrders([]);
-    setRoundsPick(undefined);
     setBriefSkip([]);
     setSitdown(undefined);
     setReports(null);
+    setEvenings([]);
+    setDayWin(undefined);
     setEventIdx(null);
     setSheet(undefined);
     setPlanner(undefined);
@@ -366,11 +382,25 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab === 'map') setRoute({});
     else if (l.tab) go(l.tab);
   }
-  const overlayOpen = !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  const overlayOpen = dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = dayWin !== undefined || !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
+  function stepDay() {
+    const d = daysOf(s).day;
+    const id = weekPlan(s)[d];
+    if (id) {
+      setEvenings((x) => [...x.slice(-1), { cue: { week: s.week, day: d, roundId: id }, s }]);
+      if (pausesOn('pauseOnEvening')) { setSpeed(0); setClockNote('Paused: your evening'); }
+    }
+    if (d >= 6) { run('week', answers, true); return; }
+    const next = tickDay(s);
+    setS(next);
+    const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
+    if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
+  }
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
-    step: () => run('week', answers, true),
+    step: stepDay,
     onPause: (why) => {
       setSpeed(0);
       setClockNote(`Paused: ${why.toLowerCase()}`);
@@ -379,7 +409,7 @@ export function App({ startOn = 'title' }: AppProps) {
   });
   const sitKey = `${s.seed}:${s.week}`;
   useEffect(() => {
-    if (menu || s.gameOver || speed !== 0 || sitSeen === sitKey) return;
+    if (menu || s.gameOver || speed !== 0 || sitSeen === sitKey || daysOf(s).day > 0) return;
     if (current || scene || cues.length || reels.length || night.length || reports || sheet || planner || tripPlan || fleeFor || picker || office || ctxMenu) return;
     let seen: string | null = null;
     try { seen = sessionStorage.getItem('llv-sitdown'); } catch { /* storage unavailable */ }
@@ -393,6 +423,7 @@ export function App({ startOn = 'title' }: AppProps) {
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.code === 'Space') {
+        if (timeMode() !== 'clock') return;
         e.preventDefault();
         setSpeed((v) => (v === 0 ? 2 : 0));
         setClockNote(undefined);
@@ -451,8 +482,13 @@ export function App({ startOn = 'title' }: AppProps) {
         <button type="button" className="btn-gold text-xs" onClick={() => { setRoute({}); startAdvance('week'); }} data-testid="week-advance">Advance Week ▸</button>
       </div>
       {orders.length > 0 && <div className="mt-2" data-testid="week-orders"><div className="mb-1 text-[11px] text-stone-400">Orders for this week, carried out when you advance:</div><OrdersTray s={s} /></div>}
+      <div className="mt-3" data-testid="your-rounds">
+        <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">Your rounds · day by day</div>
+        <WeekPlanner key={s.week} s={s} update={setS} onSitDown={() => setSitdown('rounds')} />
+      </div>
     </section>
   ) : undefined;
+  const youTop = home === 'you' && !s.gameOver ? <PersonalActions s={s} update={setS} onWeek={() => setRoute({ home: 'week' })} /> : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
@@ -470,7 +506,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <EmpireHost s={s} setS={setS}>
       <Shell
         top={(
-          <TopBar s={s} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+          <TopBar s={s} clockMode={clockMode} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
@@ -482,6 +518,19 @@ export function App({ startOn = 'title' }: AppProps) {
         overlay={(
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
+            {clockMode && !s.gameOver && !home && (
+              <div className="pointer-events-none absolute left-1/2 top-2 z-[1001] flex max-w-[calc(100%-1rem)] -translate-x-1/2 justify-center">
+                <TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} />
+              </div>
+            )}
+            {evenings.length > 0 && (
+              <div className="pointer-events-none absolute bottom-14 md:bottom-3 right-2 z-[1130] flex flex-col items-end gap-2">
+                {evenings.map((e) => (
+                  <EveningScene key={`${e.cue.week}:${e.cue.day}`} s={e.s} cue={e.cue} onClose={() => setEvenings((x) => x.filter((y) => y !== e))}
+                    onMore={() => { setEvenings([]); setRoute({ home: 'week' }); }} />
+                ))}
+              </div>
+            )}
             {!s.gameOver && goalIdx >= 0 && !home && (
               <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
                 className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
@@ -507,7 +556,7 @@ export function App({ startOn = 'title' }: AppProps) {
         drawer={home && (
           <Drawer s={s} home={home} sel={route.key} groups={homeGroups} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
             onOpen={(key) => openRoute({ home, key })} onClose={() => setRoute({})}
-            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop} />
+            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop ?? youTop} />
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
@@ -519,7 +568,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {!menu && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {sitdown && !current && !scene && (
-        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={roundsPick} setRounds={setRoundsPick} skip={briefSkip} setSkip={setBriefSkip}
+        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => setS((x) => setWeekRounds(x, ids))} skip={briefSkip} setSkip={setBriefSkip}
           onTrust={(k, on) => setS((x) => setTrust(x, k, on))} onLink={followLink} onClose={() => setSitdown(undefined)}
           onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
           lesson={s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
@@ -564,6 +613,17 @@ export function App({ startOn = 'title' }: AppProps) {
             <HelpBody onAdvice={() => { setHelpMenu(false); setAdvice(true); }} onGlossary={() => { setHelpMenu(false); setHelp({}); }} />
           </div>
         </Modal>
+      )}
+      {dayWin !== undefined && !current && (
+        <div className="fixed inset-0 z-[1180] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" onClick={() => setDayWin(undefined)}>
+          <div className="panel w-full sm:max-w-2xl max-h-[92dvh] overflow-y-auto rounded-b-none sm:rounded-lg p-3" onClick={(e) => e.stopPropagation()} data-testid="day-window">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="panel-title">Your day</div>
+              <button type="button" className="btn-gold px-3 py-1 text-xs" onClick={() => setDayWin(undefined)} data-testid="day-window-close">Done</button>
+            </div>
+            <WeekPlanner s={s} update={setS} initialDay={dayWin} onSitDown={() => { setDayWin(undefined); setSitdown('rounds'); }} />
+          </div>
+        </div>
       )}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}

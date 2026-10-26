@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { formatDate, seasonInfo } from '../../engine/calendar';
+import { formatDay } from '../../engine/days';
 import { displayName, player } from '../../engine/characters';
 import { heatBand } from '../../engine/heat';
 import { statHelp } from '../../engine/glossary';
@@ -121,8 +122,10 @@ export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount }: {
+export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount }: {
   s: GameState;
+  /** Running clock (days tick by) rather than turn-based (settings). */
+  clockMode?: boolean;
   speed: Speed;
   setSpeed: (v: Speed) => void;
   note?: string;
@@ -168,14 +171,14 @@ export function TopBar({ s, speed, setSpeed, note, onAdvance, pending, answered,
           <Num v={s.favors} reasons={[]} term="favors"><Chip label="Favors" value={`${s.favors}`} /></Num>
         </div>
         <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
-          <div className="text-[11px] sm:text-xs text-stone-300 whitespace-nowrap">{formatDate(s.date)} · Wk {s.week}</div>
+          <div className="text-[11px] sm:text-xs text-stone-300 whitespace-nowrap" data-testid="topbar-date">{clockMode ? formatDay(s) : formatDate(s.date)} · Wk {s.week}</div>
           <div className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden sm:inline"> · {info.countdownLabel}</span></div>
         </div>
         {!s.gameOver && (
           <div className="order-4 flex w-full lg:w-auto items-center gap-1 sm:gap-1.5 flex-wrap">
-            <div className="llv-clock-compact"><ClockControls speed={speed} setSpeed={setSpeed} /></div>
+            {clockMode && <div className="llv-clock-compact"><ClockControls speed={speed} setSpeed={setSpeed} /></div>}
             <div className="flex">
-              <button className={`btn-gold h-8 py-0 px-2 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week">Advance Week ▸</button>
+              <button className={`btn-gold h-8 py-0 px-2 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-gold h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>

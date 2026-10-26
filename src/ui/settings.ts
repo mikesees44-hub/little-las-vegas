@@ -13,6 +13,41 @@ export interface Settings {
   pauseOnWarning: boolean;
   /** Open the Sit-Down at the start of every week (default on). */
   sitdownEachWeek?: boolean;
+  /** "Running clock": the days tick by (Crusader Kings style); "Turn-based": one Advance Week at a time. */
+  timeMode?: TimeMode;
+  /** Stop the clock on a hit or a killing in your family. */
+  pauseOnViolence?: boolean;
+  /** Stop the clock when one of yours is arrested. */
+  pauseOnArrest?: boolean;
+  /** Stop the clock on a birth or a death in your house. */
+  pauseOnLife?: boolean;
+  /** Stop the clock when a capo brings an urgent problem to the morning meeting. */
+  pauseOnCapo?: boolean;
+  /** Stop the clock after each of your evenings (the report scene). */
+  pauseOnEvening?: boolean;
+}
+export type TimeMode = 'clock' | 'turns';
+
+/** The autopause list (Settings): what stops the running clock by itself. */
+export const AUTO_PAUSE: { key: keyof Settings; label: string }[] = [
+  { key: 'pauseOnDecision', label: 'When a decision is waiting' },
+  { key: 'pauseOnCapo', label: 'When a capo has an urgent problem' },
+  { key: 'pauseOnViolence', label: 'On a hit or a killing' },
+  { key: 'pauseOnArrest', label: 'When one of yours is arrested' },
+  { key: 'pauseOnLife', label: 'On a birth or a death in your house' },
+  { key: 'pauseOnWarning', label: 'On a new warning or a cutscene' },
+  { key: 'pauseOnEvening', label: 'After each of your evenings' },
+];
+
+/** The running clock is the default for new players. */
+export function timeMode(): TimeMode {
+  return getSettings().timeMode ?? 'clock';
+}
+
+/** An autopause rule (the new ones default on, the evening report off). */
+export function pausesOn(key: keyof Settings): boolean {
+  const v = getSettings()[key];
+  return v === undefined ? key !== 'pauseOnEvening' : !!v;
 }
 
 const KEY = 'llv.settings';
