@@ -908,6 +908,8 @@ export interface GameState {
   rounds?: import('./rounds').RoundsState;
   /** The week as days: the clock's day, the evenings and the check-in answers (days.ts; optional, dropped when the week turns). */
   days?: import('./days').DaysState;
+  /** Dirty work: one-off jobs, their cooldowns and results (dirtyWork.ts; optional, starts when used). */
+  dirty?: import('./dirtyWork').DirtyState;
 }
 
 export interface PlayerChoices {
@@ -974,7 +976,9 @@ export type PlayerAction =
   | { kind: 'bones'; op: BonesAction }
   | { kind: 'ledger'; op: LedgerAction }
   | { kind: 'tribute'; op: import('./tributeOps').TributeAction }
-  | { kind: 'ears'; op: EarsAction };
+  | { kind: 'ears'; op: EarsAction }
+  /** Dirty work: a one-off job (dirtyWork.ts). */
+  | { kind: 'dirty'; op: import('./dirtyWork').DirtyAction };
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'
