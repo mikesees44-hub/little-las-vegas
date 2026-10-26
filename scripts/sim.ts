@@ -25,6 +25,8 @@ import { validatePlayer } from '../src/engine/dynasty';
 import { rand } from '../src/engine/rng';
 import { MAX_POPUPS } from '../src/engine/events';
 import { legalActions, previewAction } from '../src/engine/actions';
+import { recommendedActions, setTrust } from '../src/engine/briefing';
+import { usualWeek } from '../src/engine/rounds';
 import { ORDERS } from '../src/engine/events';
 import { validateHierarchy } from '../src/engine/hierarchy';
 import { houseSummaries, validateHouses } from '../src/engine/housesView';
@@ -102,6 +104,12 @@ const LEDGER = arg('ledger', '0') !== '0';
 const CARELESS = arg('reckless', '0') !== '0' ? 1 : Number(arg('careless', '0.5'));
 /** Chance per week of a weekly-take order (forgive, an extension, an audit, a flat figure, moving money). */
 const TRIBUTE_RATE = Number(arg('tribute', '0.06'));
+/** Chance per week the boss does what his people recommend at the Sit-Down (briefing.ts). */
+const SITDOWN_RATE = Number(arg('sitdown', '0.12'));
+/** Share of games where the boss lives his rounds (the usual week, rounds.ts); the rest never use them. */
+const ROUNDS_RATE = Number(arg('rounds', '0.6'));
+/** Share of games where the boss trusts his underboss (and a capo) with their small stuff from week 4. */
+const TRUST_RATE = Number(arg('trust', '0.3'));
 
 /** Random creator picks, retried until valid (falls back to none). */
 function randomCharOptions(seed: string, start: StartId): CharOptions | undefined {
@@ -191,6 +199,8 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
       if (a && a.kind !== 'pol' && previewAction(s, a).cost === 0 && !explainAction(s, a).verdict.label.startsWith('Not yet')) { add(a); break; }
     }
   }
+  // The Sit-Down: "Do what they recommend" (the affordable picks).
+  if (rand(h) < SITDOWN_RATE) for (const r of recommendedActions(s, undefined, actions)) add(r.action);
   if (rand(h) < BONES_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'bones' || a.kind === 'ledger')));
   if (rand(h) < EARS_RATE) add(pickOne(h, legal.filter((a) => a.kind === 'ears')));
   if (rand(h) < RACKET_RATE) {
@@ -332,7 +342,15 @@ function playOne(gi: number): GameResult {
     }
     const prevPlayer = s.playerId;
     let res;
+    // Delegation: some bosses trust the underboss and the first capo from week 4 (briefing.ts).
+    if (w === 4 && (hashSeed(`${SEED}-${gi}:trust`) % 1000) / 1000 < TRUST_RATE) {
+      s = setTrust(s, 'underboss', true);
+      const k = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'capo');
+      if (k) s = setTrust(s, `capo:${k.id}`, true);
+    }
     const ch = aiChoices(s, w, budget);
+    // Your Rounds: the usual week, in some games (rounds.ts).
+    if ((hashSeed(`${SEED}-${gi}:rounds`) % 1000) / 1000 < ROUNDS_RATE) ch.rounds = usualWeek(s);
     for (const a of ch.actions ?? []) r.orders[a.kind] = (r.orders[a.kind] ?? 0) + 1;
     if (LEDGER) for (const a of ch.actions ?? []) orderTap(s.week, a.kind === 'order' ? `order:${a.key}` : 'op' in a && a.op && typeof a.op === 'object' ? `${a.kind}:${String(Object.values(a.op)[0])}` : a.kind, previewAction(s, a).cost);
     try {

@@ -778,6 +778,8 @@ export interface WeeklyReport {
   log: string[];
   /** Routine business settled without a popup this week ("In motion", storyPace.ts). */
   motion?: string[];
+  /** Your Rounds and the trusted advisors' work, as short lines. */
+  rounds?: string[];
 }
 
 export interface GameOver {
@@ -897,6 +899,10 @@ export interface GameState {
   empire?: import('./empireState').EmpireState;
   /** The Ears: the Madam, the nightlife workers, operators, the connection web (optional for old saves). */
   ears?: EarsState;
+  /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */
+  briefing?: import('./briefing').BriefingState;
+  /** Your Rounds: the boss's evenings, the lanes' neglect, the advisors' free hand (rounds.ts; optional, starts when used). */
+  rounds?: import('./rounds').RoundsState;
 }
 
 export interface PlayerChoices {
@@ -910,6 +916,10 @@ export interface PlayerChoices {
   minigames?: Record<string, string[]>;
   /** The Monday envelope split the Don chose in the audience (tribute.ts), and the petitions he granted. */
   envelope?: import('./tributeOps').EnvelopeChoice;
+  /** Sit-Down items the boss said "not now" to (trusted advisors leave them alone). */
+  briefingSkip?: string[];
+  /** Your Rounds: the evenings the boss lives this week (round ids from rounds.ts). */
+  rounds?: string[];
 }
 
 export type PlayerAction =

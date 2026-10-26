@@ -11,6 +11,8 @@ export interface Settings {
   pauseOnDecision: boolean;
   /** Stop the clock on a new warning or a cutscene. */
   pauseOnWarning: boolean;
+  /** Open the Sit-Down at the start of every week (default on). */
+  sitdownEachWeek?: boolean;
 }
 
 const KEY = 'llv.settings';

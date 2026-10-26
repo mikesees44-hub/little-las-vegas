@@ -19,6 +19,7 @@ export function ReportModal({ reports, onClose }: { reports: WeeklyReport[]; onC
   const sums = sumLines(lines);
   const log = reports.flatMap((r) => r.log.map((t) => ({ week: r.week, t })));
   const motion = reports.flatMap((r) => (r.motion ?? []).map((t) => ({ week: r.week, t })));
+  const evenings = reports.flatMap((r) => (r.rounds ?? []).map((t) => ({ week: r.week, t })));
   return (
     <Modal onClose={onClose} wide>
       <div className="p-4 sm:p-6">
@@ -84,6 +85,14 @@ export function ReportModal({ reports, onClose }: { reports: WeeklyReport[]; onC
           );
         })}
 
+        {evenings.length > 0 && (
+          <>
+            <h3 className="panel-title mt-5">Your rounds</h3>
+            <ul className="mt-2 space-y-1 text-sm italic text-stone-300" data-testid="report-rounds">
+              {evenings.map((l, i) => <li key={i} className="border-l-2 border-gold-600/50 pl-2">{reports.length > 1 && <span className="not-italic text-stone-600 mr-1">wk {l.week}</span>}{l.t}</li>)}
+            </ul>
+          </>
+        )}
         {motion.length > 0 && (
           <>
             <h3 className="panel-title mt-5">In motion</h3>
