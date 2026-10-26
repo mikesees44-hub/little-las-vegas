@@ -16,6 +16,7 @@ import { challengePressure, successionCandidates } from './heir';
 import { regime } from './hierarchy';
 import { OPEN_FILE } from './longgame';
 import { openGrievances } from './grievances';
+import { PETITION_IDS } from './office';
 import { whichRacket } from './racketHub';
 import { getRelation, opinion } from './relations';
 import { honoreeOptions, suggestGuests } from './activities';
@@ -594,6 +595,29 @@ function consigliereItems(s: GameState, cons: Character | undefined): Draft[] {
         wait(),
       ],
       open: { label: 'Open grievances', link: { tab: 'grievances' } },
+    });
+  }
+  // Our own plans, blown.
+  const blown = s.schemes.find((x) => x.owner === 'player' && x.discovered);
+  if (blown) {
+    const tgt = blown.targetId ? s.characters[blown.targetId] : undefined;
+    out.push({
+      id: `blown:${blown.id}`, priority: 650 + (blown.kind === 'murder' ? 400 : 0), topic: 'A plan in the open', covers: [{ kind: 'scheme' }],
+      says: [`They know about the ${blown.kind === 'murder' ? 'hit' : blown.kind}${tgt ? ` on ${displayName(tgt)}` : ''}. Every day it runs, it costs us.`, `Our ${blown.kind === 'murder' ? 'contract' : 'plan'}${tgt ? ` against ${shortName(tgt)}` : ''} is blown. Somebody talked.`, `I'd call it off. ${tgt ? `${shortName(tgt)} knows` : 'They know'} what we're doing.`],
+      opts: [
+        { id: 'cancel', label: 'Call it off', action: { kind: 'cancelScheme', schemeId: blown.id }, why: 'a blown plan only makes enemies', bonus: 900 },
+        wait('Push through; it\'s too late to look weak.'),
+      ],
+      open: { label: 'Open Operations', link: { tab: 'schemes' } },
+    });
+  }
+  // Office hours: the town comes to ask (now and then, when the door can open).
+  if (s.week % 4 === 2 && !s.pendingEvents.some((e) => PETITION_IDS.includes(e.defId) || e.defId.startsWith('audience')) && !previewAction(s, { kind: 'officeHours' }).disabledReason) {
+    out.push({
+      id: 'court', priority: 230, topic: 'Office hours', routine: true,
+      says: ['There are people in town who need things. Let them ask you, not the priest.', 'Half the island wants a favor. Hold office hours; we\'ll know who owes us.', 'The barber, the widow, the man with the liquor license — they\'d like a word.'],
+      opts: [{ id: 'hours', label: 'Hold office hours', action: { kind: 'officeHours' }, why: 'every favor granted is a favor owed', bonus: 400 }, wait()],
+      open: { label: 'Hold court', link: { tab: 'office' } },
     });
   }
   // No heir.
