@@ -263,7 +263,7 @@ export const SEED: SeedRow[] = [
   ['sb03', 'boardwalk', 'bw', 'Bennett Ave', 'b', 'trattoria', 'Groff\'s Restaurant', 'private', 'private', 'Elsie Brandt', 'colonial', 'green', 1946, 68],
   ['sb04', 'docks', 'pk+', 'Youngs Ave', 'w', 'trattoria', 'The Boathouse', 'private', 'private', 'Cap Lindqvist', 'victorian', 'blue', 1949, 66],
   ['sb05', 'crest', 'oc-', 'Buttercup Rd', 'w', 'motel', 'The Wai-Kiki Oceanfront Resort', 'private', 'private', 'the Kalani family', 'doowop', 'turquoise', 1959, 94],
-  ['sb06', 'crest', 'oc-', 'Atlanta Ave', 'w', 'motel', 'The Malibu Beach Motel', 'private', 'private', 'Ray Delmonico', 'doowop', 'red', 1958, 92],
+  ['sb06', 'crest', 'oc-', 'Atlanta Ave', 'w', 'motel', 'The Malibu Motel', 'private', 'private', 'Ray Delmonico', 'doowop', 'red', 1958, 92],
 ];
 
 export const SEED_IDS = new Set(SEED.map((r) => r[0]));

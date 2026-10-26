@@ -10,7 +10,7 @@
  * the game picks it up. Nothing else in the code names a URL.
  */
 export const ASSET_URLS = {
-  // The 22 already in the asset store.
+  // Already in the asset store (31 keys).
   lucky_sevens_arcade: '/_blob/bfd25fc16456180aed155add75bbf8f1',
   anchor_tavern: '/_blob/b739dfd7f2b5a6e1a39eed183b8a9026',
   lobster_seafood_house: '/_blob/29cf5a79d3800ce05d745fd5e76a3a2b',
@@ -123,9 +123,9 @@ export const ASSET_URLS = {
   cutout_holy_redeemer: undefined,
   cutout_wai_kiki: undefined,
   cutout_a_frame_cottage: undefined,
-  cutout_malibu_beach_motel: undefined,
+  cutout_malibu: undefined,
   cutout_seafoam_cottage: undefined,
-  cutout_bils_corner_deli: undefined,
+  cutout_bills_corner_deli: undefined,
   cutout_wildwood_high: undefined,
   cutout_lollypop_motel: undefined,
   cutout_klugs: undefined,
@@ -133,27 +133,46 @@ export const ASSET_URLS = {
   cutout_hurricane: undefined,
   cutout_nw_city_hall: undefined,
   // The c batch and 108-112 (transparent; near-miss names where the real ones may operate).
-  cutout_sea_shell_shoppe: undefined,
-  cutout_curlys_fries: undefined,
+  cutout_sea_shell: undefined,
+  cutout_curleys: undefined,
   cutout_route_69_diner: undefined,
-  cutout_bobby_ds: undefined,
+  cutout_bobby_dees: undefined,
   cutout_shore_motel: undefined,
   cutout_octopus_mini_golf: undefined,
   cutout_shore_house: undefined,
-  cutout_beach_haus: undefined,
-  cutout_star_lux: undefined,
+  cutout_beach_house: undefined,
+  cutout_starlux: undefined,
   cutout_corner_inn: undefined,
   cutout_seafood_shack: undefined,
   cutout_brick_church: undefined,
-  cutout_ship_and_shore: undefined,
-  cutout_al_pizza: undefined,
-  cutout_al_pizza_front: undefined,
-  cutout_al_pizza_corner: undefined,
-  cutout_sammys_pancake_house: undefined,
-  cutout_sammys_cafe: undefined,
+  cutout_ship_n_shore: undefined,
+  cutout_alp_pizza: undefined,
+  cutout_alp_pizza_front: undefined,
+  cutout_alp_pizza_corner: undefined,
+  cutout_samuels_pancake_house: undefined,
+  cutout_samuels_cafe: undefined,
   cutout_boat_tag: undefined,
   /** A steel looping coaster: late era (from 1976) only. */
   cutout_loop_coaster: undefined,
+  // Batch 5 (art2): the rest of the user's pictures, so every one has a home.
+  // Houses for the residential blocks (transparent models).
+  cutout_house_yellow_beach: undefined,
+  cutout_victorian_boardinghouse: undefined,
+  cutout_shingle_estate: undefined,
+  cutout_red_victorian: undefined,
+  cutout_white_shore_home: undefined,
+  /** A seafood shack by the docks (the navy backdrop keyed out). */
+  cutout_ricks_seafood: undefined,
+  /** Pacific Avenue's Doo Wop strip at blue hour (Ocean's Club, the Driftwood Lounge): a walk backdrop. */
+  street_pacific_neon: undefined,
+  /** The Doo Wop blocks from above (THE CARIBBEAN repainted THE CARIBBEE): a backdrop. */
+  scene_doowop_neighborhood: undefined,
+  /** The Starburst building (pizza window, the Neon arcade, the Starburst lounge). */
+  storefront_starburst: undefined,
+  /** Atlantic City's boards with casino towers (BALLY'S / CAESAR'S repainted): late era only (1978 on). */
+  scene_ac_boardwalk: undefined,
+  /** South Jersey from the air (the shore towns pinned): the trip planner's header. */
+  scene_region_map: undefined,
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
@@ -199,6 +218,21 @@ export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
   walk_hunts_flyer: [1400, 1050],
   walk_castle_dungeon: [1400, 974],
   walk_pier_beach: [1576, 998],
+  street_7sees: [1024, 559],
+  street_crablegs: [1024, 559],
+  street_taylor_offshore: [1024, 559],
+  street_taylor_rockclub: [1024, 559],
+  street_docks_day: [1024, 559],
+  street_docks_day2: [1024, 559],
+  street_pacific_neon: [1024, 559],
+  scene_doowop_neighborhood: [1024, 559],
+  storefront_starburst: [1024, 559],
+  scene_boardwalk_tram: [335, 249],
+  scene_boss_office: [336, 249],
+  scene_club_stage: [335, 249],
+  scene_capemay_harbor: [335, 250],
+  scene_ac_boardwalk: [335, 250],
+  scene_region_map: [336, 250],
 };
 
 /**

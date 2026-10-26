@@ -32,7 +32,7 @@ export interface PlanArea { id: string; name: string; u0: number; u1: number; v0
 export const PLAN_AREAS: PlanArea[] = [
   { id: 'hunts', name: 'The Boardwalk around Hunt\'s Pier', u0: 3500, u1: 4170, v0: -270, v1: 420 },
   { id: 'taylor', name: 'Pacific Ave clubs, churches, the high school', u0: 2990, u1: 3600, v0: -40, v1: 560 },
-  { id: 'rio', name: 'Rio Grande Ave: the Star-Lux', u0: 4420, u1: 4800, v0: -140, v1: 300 },
+  { id: 'rio', name: 'Rio Grande Ave: the Starlux', u0: 4420, u1: 4800, v0: -140, v1: 300 },
   { id: 'bwnorth', name: 'The Boardwalk north to 23rd Ave', u0: 4560, u1: 5460, v0: -220, v1: 300 },
   { id: 'nw', name: 'North Wildwood: City Hall to Hereford Inlet', u0: 6440, u1: 7360, v0: -120, v1: 520 },
   { id: 'crest', name: 'The Crest: the motels', u0: 1790, u1: 2400, v0: -120, v1: 300 },
