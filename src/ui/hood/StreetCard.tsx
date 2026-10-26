@@ -16,6 +16,38 @@ import { venueByKey, venueForLot } from '../../engine/empire';
 import { lotName } from '../../engine/property';
 import { Facade, type FacadeKind, type FacadeSpec } from './Facade';
 import type { Mood } from './iso';
+import { AssetImg } from './AssetImg';
+import { Turnaround } from './Turnaround';
+import { storefrontArt } from './storefrontArt';
+
+/**
+ * The storefront: the user's painting for this place (by its name, or the
+ * kind of business) when there is one — a four-angle sheet turns round —
+ * with its current name on a plate; the drawn postcard when there isn't, or
+ * when the painting can't be loaded.
+ */
+function Storefront({ it, f }: { it: Item; f: FacadeSpec }) {
+  const art = storefrontArt(it);
+  const postcard = <div className="rounded-lg overflow-hidden shadow-lg shadow-black/50 rotate-[-0.6deg]" data-testid="sv-postcard"><Facade f={f} /></div>;
+  const [shown, setShown] = useState<'store' | 'inline' | 'fallback' | undefined>();
+  if (!art) return postcard;
+  const turn = art.turn && !Array.isArray(art.key);
+  return (
+    <div className="space-y-1.5" data-testid="sv-storefront">
+      <div className="relative rounded-lg overflow-hidden shadow-lg shadow-black/50 border border-[#ff5fa2]/30">
+        {turn
+          ? <Turnaround k={art.key as never} name={it.name} fallback={postcard} />
+          : <AssetImg k={art.key} alt={`${it.name}, the storefront`} className="block w-full h-auto" fallback={postcard} onShown={setShown} />}
+        {(turn || shown === 'store') && (
+          <div className="pointer-events-none absolute left-2 top-2 max-w-[80%] rounded border border-[#5ff2e6]/60 bg-[#1b1030]/85 px-2 py-0.5 font-display text-[12px] leading-tight text-[#ffd1e6] truncate" data-testid="sv-plate">{it.name}{f.closed ? ' · closed' : ''}</div>
+        )}
+      </div>
+      {art.inside && (
+        <AssetImg k={art.inside} alt={`${it.name}, inside`} className="block w-full h-28 object-cover rounded border border-noir-700" />
+      )}
+    </div>
+  );
+}
 
 /** What the street view draws for a record. */
 export function facadeOf(s: GameState, it: Item, mood: Mood): FacadeSpec {
@@ -104,7 +136,7 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
         </div>
         <button type="button" onClick={onClose} className="text-xs text-stone-400 hover:text-gold-300 shrink-0" aria-label="Close">close ×</button>
       </div>
-      <div className="rounded-lg overflow-hidden shadow-lg shadow-black/50 rotate-[-0.6deg]"><Facade f={f} /></div>
+      <Storefront it={it} f={f} />
       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <div className="text-stone-500">Held by</div>
         <div className="text-stone-200 flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: OWNER_COLOR[it.owner] ?? OWNER_COLOR.private }} />{ownerText(s, it)}</div>

@@ -65,7 +65,7 @@ export function lookOf(s: GameState, l: Lot): { style: BuildStyle; sign: SignCol
 
 /* ---------------- names ---------------- */
 
-const OWNERS = ['Gus Papadakis', 'the Morey brothers', 'Abe Kaplan', 'the Sorensen family', 'Vince DiNardo', 'Mrs. Hallahan', 'the Kovacs family', 'Sid Weintraub', 'Lou Castellano', 'the Brennan estate', 'Joe Pirelli', 'Harry Lenz', 'Dot Fiorentino', 'the Yeager brothers', 'Max Rubin', 'Connie Mastro', 'Walt Kriebel', 'the Duffy sisters', 'Sal Ianelli', 'Bea Novak'];
+const OWNERS = ['Gus Papadakis', 'the Mahaffey brothers', 'Abe Kaplan', 'the Sorensen family', 'Vince DiNardo', 'Mrs. Hallahan', 'the Kovacs family', 'Sid Weintraub', 'Lou Castellano', 'the Brennan estate', 'Joe Pirelli', 'Harry Lenz', 'Dot Fiorentino', 'the Yeager brothers', 'Max Rubin', 'Connie Mastro', 'Walt Kriebel', 'the Duffy sisters', 'Sal Ianelli', 'Bea Novak'];
 const SIXTIES = ['Fun-O-Rama', 'Starlight', 'Satellite', 'Rocket', 'Tiki Hut', 'Sea Breeze', 'Jet Set', 'Holiday', 'Twist', 'Pink Cadillac', 'Surf Rider', 'Moon Shot'];
 const SEVENTIES = ['Boogie', 'Sunshine', 'Rainbow', 'Mellow', 'Shore Thing', 'Groovy', 'Bicentennial', 'Disco', 'Captain\'s', 'Seventh Wave'];
 const LATE = ['Neon Nights', 'Jackpot', 'Lucky Seven', 'Big Shot', 'Pac-Pier', 'Rad', 'Totally', 'Atlantic'];
