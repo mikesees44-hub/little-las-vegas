@@ -1,4 +1,5 @@
 import { StartHereButton } from '../econ/StartRacket';
+import { DirtyHere } from '../econ/DirtyWork';
 import { useShell } from '../shell/context';
 import { useState } from 'react';
 import { STYLES, SIGN_HEX, type BuildStyle, type SignColor } from '../../engine/design';
@@ -159,6 +160,7 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
         </div>
       )}
       <StartHereButton s={s} place={l?.zone ?? (it.biz?.districtId as string | undefined)} onGo={() => shell.go('holdings.hub')} />
+      <DirtyHere s={s} lot={l} biz={it.mine ? it.biz : undefined} onGo={() => shell.go('holdings.dirty')} />
       {ven && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
       {!ven && develop && l && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ pending: { key: `lot:${l.id}`, name: lotName(l), develop: { lotId: l.id } } })}>Develop it in the Designer</button>}
       {it.mine && l && l.stage === 'open' && l.use && (

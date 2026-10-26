@@ -33,6 +33,7 @@ import { bonesActions, bonesBlock, previewBones } from './bones';
 import { ledgerActions, previewLedger } from './ledgerbook';
 import { previewTribute } from './tributeOps';
 import { earsActions, previewEars } from './ears';
+import { commitDirty, previewDirty } from './dirtyWork';
 
 /** A capo's willingness to accept a worse contract. */
 export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
@@ -122,6 +123,7 @@ export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, h
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   pol: { preview: (s, a) => previewPol(s, a.op) },
+  dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
   askPermission: {
     preview: (s, a) => {
       const c = CITIES_BY_ID[a.city];

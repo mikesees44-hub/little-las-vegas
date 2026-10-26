@@ -43,6 +43,7 @@ import { tributeActions } from '../src/engine/tributeOps';
 import { envelopeChoice } from './simBudget';
 import { moneyView } from '../src/engine/money';
 import { earnerOf, holderOf, holders } from '../src/engine/earners';
+import { defaultMan, jobLock, JOBS, jobSummary, targetsFor } from '../src/engine/dirtyWork';
 
 function arg(name: string, def: string): string {
   const i = process.argv.indexOf(`--${name}`);
@@ -89,6 +90,8 @@ const BONES_RATE = Number(arg('bones', '0.1'));
 const EARS_RATE = Number(arg('ears', '0.06'));
 /** Chance per week of a racket order (set how a racket runs, take the advice on one, start the next racket). */
 const RACKET_RATE = Number(arg('rackets', '0.08'));
+/** Chance per week of a dirty-work job (dirtyWork.ts): the smart pick (best expected take for the risk, heat permitting). Off by default so the balance targets match master. */
+const DIRTY_RATE = Number(arg('dirty', '0'));
 /** Which start to play: classic, rise, sees, associate, soldier or capo. */
 /** Chance per week of a trip (a vacation, a business trip, or a move while on the lam). */
 const TRAVEL_RATE = Number(arg('travel', '0.04'));
@@ -226,7 +229,26 @@ function aiChoices(s: GameState, salt: number, budget?: Budget): PlayerChoices {
   // Two pots: the careless boss takes a greedy cut and keeps it; only now and then, with the Family in the red, does he put some back.
   if (!budget && s.money < 0 && (s.tribute?.acct.personal ?? 0) > 500 && rand(h) < 0.15) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: s.tribute!.acct.personal } });
   if (budget && s.money < 0 && (s.tribute?.acct.personal ?? 0) > 1500 && rand(h) < 0.5) add({ kind: 'tribute', op: { op: 'move', from: 'personal', to: 'treasury', amount: Math.round((s.tribute!.acct.personal * 0.6) / 100) * 100 } });
+  // Dirty work: a smart boss picks the job worth the most for its risk, and stays off it when the heat is up.
+  if (DIRTY_RATE > 0 && rand(h) < DIRTY_RATE) add(smartJob(s, actions));
   return { choices, actions, minigames, envelope };
+}
+
+function smartJob(s: GameState, queued: PlayerAction[]): PlayerAction | undefined {
+  let best: { a: PlayerAction; ev: number } | undefined;
+  for (const j of JOBS) {
+    if (j.wrap || j.id === 'dope' || jobLock(s, j.id)) continue;
+    if ((j.heat.local ?? 0) > 0 && s.heat.local > 55) continue;
+    if ((j.heat.federal ?? 0) > 0 && s.heat.federal > 45) continue;
+    const m = defaultMan(s, j.id);
+    if (!m || queued.some((q) => q.kind === 'dirty' && q.op.who === m.c.id)) continue;
+    const ts = targetsFor(s, j.id);
+    const sum = jobSummary(s, j.id, m.c.id, ts[0]?.id);
+    if (sum.lock || !sum.action || sum.cost > s.money - 15000) continue;
+    const ev = (sum.odds / 100) * ((sum.take[0] + sum.take[1]) / 2) * 0.9 - sum.cost - sum.arrest * 60;
+    if (ev > 300 && (!best || ev > best.ev)) best = { a: sum.action, ev };
+  }
+  return best?.a;
 }
 
 const pct = (n: number, d: number) => (d ? ((100 * n) / d).toFixed(1) + '%' : 'n/a');
@@ -308,6 +330,8 @@ interface GameResult {
   mg: Record<string, number>;
   /** Steady earners (earners.ts): each business's weekly money (by id), whether it was somebody's earner, and the end state. */
   earn?: { weeks: Record<string, { kind: string; held: boolean; xs: number[] }>; holders: number; capos: number; boss: number };
+  /** Dirty work: the jobs and their take (dirtyWork.ts), and everything else that came in. */
+  dirty?: { jobs: number; clean: number; messy: number; bust: number; pinched: number; rats: number; take: number; gross: number; byJob: Record<string, number> };
 }
 
 function earnEnd(s: GameState, r: GameResult): void {
@@ -398,6 +422,14 @@ function playOne(gi: number): GameResult {
     for (const b of HEAT_BARS) if (res.report.end.heat[b] !== after.heat[b]) r.unexplained.push(`week ${res.report.week}: heat snapshot mismatch`);
 
     if (LEDGER) ledgerTap(s.week, res.report.lines);
+    if (DIRTY_RATE > 0) {
+      const dw = (r.dirty ??= { jobs: 0, clean: 0, messy: 0, bust: 0, pinched: 0, rats: 0, take: 0, gross: 0, byJob: {} });
+      dw.gross += res.report.grossIncome;
+      for (const x of res.state.dirty?.log ?? []) if (x.week === res.report.week) {
+        dw.jobs++; dw[x.outcome]++; dw.take += x.take; if (x.rat) dw.rats++;
+        dw.byJob[x.job] = (dw.byJob[x.job] ?? 0) + 1;
+      }
+    }
     if (budget) trackBudget(budget, res.report.lines);
     s = after;
     r.weeksPlayed++;
@@ -645,6 +677,18 @@ if (hoodGames.length) {
   console.log(`  Neighborhoods per game (mean): ${keys.map((k) => `${k} ${(hoodGames.reduce((a, r) => a + (r.hood![k] ?? 0), 0) / hoodGames.length).toFixed(1)}`).join(', ')}`);
 }
 
+{
+  const dg = results.filter((r) => r.dirty);
+  if (dg.length) {
+    const m = (f: (d: NonNullable<GameResult['dirty']>) => number) => dg.reduce((a, r) => a + f(r.dirty!), 0) / dg.length;
+    const by: Record<string, number> = {};
+    for (const r of dg) for (const [k, v] of Object.entries(r.dirty!.byJob)) by[k] = (by[k] ?? 0) + v;
+    console.log(`\nDIRTY WORK (per game, mean; rate ${DIRTY_RATE})`);
+    console.log(`  Jobs ${m((d) => d.jobs).toFixed(1)}: clean ${m((d) => d.clean).toFixed(1)}, messy ${m((d) => d.messy).toFixed(1)}, came up empty ${m((d) => d.bust).toFixed(1)}, picked up ${m((d) => d.pinched).toFixed(1)}, rats ${m((d) => d.rats).toFixed(2)}`);
+    console.log(`  Take ${money(m((d) => d.take))} (${money(m((d) => d.take) / YEARS)} a year) vs the week's gross income ${money(m((d) => d.gross))}: dirty work is ${pct(m((d) => d.take), m((d) => d.gross) + m((d) => d.take))} of all money in`);
+    console.log(`  By job: ${Object.entries(by).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${(v / dg.length).toFixed(1)}`).join(', ')}`);
+  }
+}
 console.log(`\nDYNASTY`);
 console.log(`  Games where the boss died:  ${pct(gamesWithBossDeath, GAMES)}  (${bossDeaths} boss deaths total)`);
 console.log(`  Successions:                ${successions}  (valid: ${successions - succFails.length})`);

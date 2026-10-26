@@ -187,6 +187,7 @@ export function actionVerb(a: PlayerAction): Verb {
       return v('Do it', 'Set');
     }
     case 'hood': return v('Restyle it', 'Restyling');
+    case 'dirty': return a.op.job === 'shakedown' ? v('Shake them down', 'Shakedown on') : v('Do it', 'Job on');
     case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v('Ask him', 'Asked');
     case 'mission': return v('Do it', 'Decided');
     case 'power': {
