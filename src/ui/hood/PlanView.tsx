@@ -31,7 +31,7 @@ import { Turnaround } from './Turnaround';
 export interface PlanArea { id: string; name: string; u0: number; u1: number; v0: number; v1: number }
 export const PLAN_AREAS: PlanArea[] = [
   { id: 'hunts', name: 'The Boardwalk around Hunt\'s Pier', u0: 3500, u1: 4170, v0: -270, v1: 420 },
-  { id: 'taylor', name: 'Pacific Ave clubs round Taylor Ave', u0: 3150, u1: 3600, v0: -60, v1: 420 },
+  { id: 'taylor', name: 'Pacific Ave clubs round Taylor Ave', u0: 3150, u1: 3600, v0: -40, v1: 480 },
   { id: 'bwnorth', name: 'The Boardwalk north to 23rd Ave', u0: 4560, u1: 5460, v0: -220, v1: 300 },
   { id: 'nw', name: 'North Wildwood: City Hall to Hereford Inlet', u0: 6440, u1: 7360, v0: -120, v1: 520 },
   { id: 'crest', name: 'The Crest: Atlantic Ave motels', u0: 1860, u1: 2180, v0: -120, v1: 300 },
@@ -406,7 +406,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       <div className="absolute left-2 bottom-2 z-10 rounded bg-[#1b1030]/85 border border-[#ff5fa2]/60 px-2 py-1 text-[11px] text-[#ffd1e6] max-w-[70%]" data-plan-ui>
         <span className="font-display">{A.name}</span>
         <span className="text-stone-400"> · {placed.filter((p) => p.authored).length} placed, {placed.filter((p) => p.f.properties.located === 'verified').length} verified · dashed = approximate (in edit)</span>
-        {elsewhere.length > 0 && <span className="hidden md:inline text-stone-400"> · elsewhere: {elsewhere.map((f) => f.properties.name).join(', ')}</span>}
+        {elsewhere.length > 0 && <span className="hidden md:inline text-stone-400"> · {elsewhere.length} more in the other areas</span>}
       </div>
       {exportText && (
         <div className="absolute right-2 bottom-2 z-20 w-[min(420px,calc(100%-1rem))] panel p-2 space-y-1" data-plan-ui data-testid="plan-export-box">
