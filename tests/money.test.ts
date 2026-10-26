@@ -122,7 +122,7 @@ describe('old saves and tidy state', () => {
     expect(n.pots).toBe(2);
     expect(n.acct.reserve).toBe(0);
     expect(n.policy.reserve).toBe(0);
-    expect(n.policy.personal).toBe(2500);
+    expect(n.policy.personal).toBe(4000);
     expect(r.report.lines.some((l) => /old reserve folded into the Family/.test(l.label))).toBe(true);
     expect(n.flow!.length).toBe(1);
     expect(moneyHist(r.state).length).toBeGreaterThan(1); // the old weeks come from the archived books

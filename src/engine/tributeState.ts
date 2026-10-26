@@ -417,6 +417,10 @@ export interface TributeState {
   moneyGrievances?: string[];
   /** 2 = the two-pot money model (the reserve folded into the Family). Older saves lack it until money.ts migrates them. */
   pots?: 2;
+  /** Weeks the boss dipped into the Family for himself (draws, short purchases): pocket.ts. */
+  dips?: number[];
+  /** The bigger-pocket pass moved a boss still on the old 25% default to the new 40% (once). */
+  cut40?: 1;
   /** The week the boss ordered "Squeeze harder this week" (one global lever, money.ts). */
   squeeze?: number;
   /** The money trend: each of the last 12 weeks' money in, money out, and the two pots (money.ts recordMoneyWeek). */
@@ -430,7 +434,7 @@ export interface TributeState {
  * Two pots (money.ts): the Family (the treasury, with an optional "set aside" line — the old reserve) and
  * Your Pocket (personal). The envelope split is one control, your cut; set-aside starts at 0%.
  */
-export const DEFAULT_POLICY: Split & { auto: boolean } = { personal: 2500, treasury: 7500, reserve: 0, auto: true };
+export const DEFAULT_POLICY: Split & { auto: boolean } = { personal: 4000, treasury: 6000, reserve: 0, auto: true };
 
 export function ensureTribute(s: GameState): TributeState {
   const fresh = (): TributeState => ({
@@ -443,7 +447,7 @@ export function ensureTribute(s: GameState): TributeState {
       stats: { audiences: 0, quiet: 0, shortfalls: 0, disputes: 0, grievances: 0, petitions: 0, granted: 0, audits: 0, caught: 0, covers: 0, crises: 0, insolvencies: 0, disagreements: 0 },
     });
   // A new game starts on the two pots; an older save is moved over by money.ts (twoPots) inside its next week.
-  if (!s.tribute) { s.tribute = { ...fresh(), pots: 2 }; return s.tribute; }
+  if (!s.tribute) { s.tribute = { ...fresh(), pots: 2, cut40: 1 }; return s.tribute; }
   // Save migration: a save from an older build gets whatever fields it lacks (never overwriting what it has).
   const t = s.tribute as unknown as Record<string, unknown>;
   const d = fresh() as unknown as Record<string, unknown>;
@@ -455,6 +459,11 @@ export function ensureTribute(s: GameState): TributeState {
     }
   }
   return s.tribute;
+}
+
+/** The new boss's own money on day one: 12% of what the Family starts with (up to $3,000). */
+export function startPocket(s: GameState): void {
+  ensureTribute(s).acct.personal = Math.min(3000, Math.round((Math.max(0, s.money) * 0.12) / 100) * 100);
 }
 
 /** All balances, the treasury included (for the books and the reconciliation). */

@@ -1,3 +1,4 @@
+import { startPocket } from './tributeState';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
 import { ageOn, START_DATE } from './calendar';
@@ -339,5 +340,6 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   ensureHood(s);
   initEars(s);
   if (!opts.skipHouses) setupHouses(s);
+  startPocket(s);
   return s;
 }

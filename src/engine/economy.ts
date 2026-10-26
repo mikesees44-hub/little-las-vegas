@@ -185,8 +185,8 @@ export function runEconomy(ctx: Ctx): void {
       if (fresh) money(ctx, -FIRST_WINTER_PER_NEW * fresh, `The first winter: winterizing the ${fresh} place${fresh > 1 ? 's' : ''} you took on this summer`, 'cost');
     }
   }
-  // Keeping up appearances: the boss's household grows with the treasury.
-  const lifestyle = Math.round((150 + Math.max(0, s.money - 60000) * 0.006) * (s.edicts?.lowprofile ? 0.5 : 1));
+  // Keeping up appearances: the boss's household grows with his own money (a rich man lives richer).
+  const lifestyle = Math.round((150 + Math.max(0, (s.tribute?.acct.personal ?? 0) - 25000) * 0.004) * (s.edicts?.lowprofile ? 0.5 : 1));
   payFromPersonal(ctx, lifestyle, `Household & appearances (${boss.firstName}'s family)${s.edicts?.lowprofile ? ' — low profile' : ''}`, 'household');
   specialistFees(ctx);
 

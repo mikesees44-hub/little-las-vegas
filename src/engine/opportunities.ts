@@ -123,7 +123,7 @@ export function opportunities(s: GameState): Opportunity[] {
 
   // Money: short, or idle.
   // Two pots (money.ts): everything is collected on its own; the levers are your cut and one squeeze.
-  const cutBp = s.tribute?.policy.personal ?? 2500;
+  const cutBp = s.tribute?.policy.personal ?? 4000;
   if (s.money < 2000) {
     const sq = usable(s, { kind: 'tribute', op: { op: 'squeeze' } });
     out.push({ id: 'broke', kind: 'threat', score: 1200 + (2000 - s.money) / 2, title: 'The Family is short of cash', text: `In the red, respect and loyalty bleed every week. ${sq ? 'Squeeze the street harder this week, ' : ''}${cutBp > 1500 ? `take a smaller cut (now ${cutBp / 100}%), ` : ''}or sell what you cannot run. Holdings › Money shows the biggest leak.`, cta: sq ? 'Squeeze harder →' : 'Where it goes →', link: sq ? { action: sq, tab: 'money' } : { tab: 'money' } });
@@ -131,7 +131,7 @@ export function opportunities(s: GameState): Opportunity[] {
   } else {
     // A rich Family and a thin Pocket: the boss can take more (the Good Life, gifts, his own lawyers).
     const cost = Math.max(1200, s.tribute?.costAvg ?? 2000);
-    if (s.money >= 12 * cost && cutBp <= 2500 && s.week >= 6) out.push({ id: 'cut-up', kind: 'opportunity', score: 220 + s.money / 200, title: 'The Family is flush: take a bigger cut', text: `The Family holds ${fmtMoney(s.money)}, about ${Math.round(s.money / cost)} weeks of bills. A ${cutBp / 100 + 10}% cut fills your Pocket faster for the Good Life, gifts and your own lawyers.`, cta: `Take ${cutBp / 100 + 10}% →`, link: { action: { kind: 'tribute', op: { op: 'policy', split: { personal: cutBp + 1000, treasury: 10000 - cutBp - 1000 - (s.tribute?.policy.reserve ?? 0), reserve: s.tribute?.policy.reserve ?? 0 } } }, tab: 'money' } });
+    if (s.money >= 12 * cost && cutBp <= 4000 && s.week >= 6) out.push({ id: 'cut-up', kind: 'opportunity', score: 220 + s.money / 200, title: 'The Family is flush: take a bigger cut', text: `The Family holds ${fmtMoney(s.money)}, about ${Math.round(s.money / cost)} weeks of bills. A ${cutBp / 100 + 10}% cut fills your Pocket faster for the Good Life, gifts and your own lawyers.`, cta: `Take ${cutBp / 100 + 10}% →`, link: { action: { kind: 'tribute', op: { op: 'policy', split: { personal: cutBp + 1000, treasury: 10000 - cutBp - 1000 - (s.tribute?.policy.reserve ?? 0), reserve: s.tribute?.policy.reserve ?? 0 } } }, tab: 'money' } });
   }
   if (s.money >= 2000) {
     const room = s.districts.some((d) => { const sl = playerSlots(s, d.id); return (d.influence.player ?? 0) >= 20 && sl.used < sl.max; });

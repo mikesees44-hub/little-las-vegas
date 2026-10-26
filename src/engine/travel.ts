@@ -1,3 +1,4 @@
+import { pocketPrice } from './pocket';
 import type { ActionPreview } from './actions';
 import { guestGroup } from './activities';
 import { addDays, ageOn, dateOfWeek, formatDate, isInSeason, monthName } from './calendar';
@@ -213,7 +214,8 @@ function planBlock(s: GameState, plan: TripPlan, q: TripQuote): string | undefin
     if (drivers.some((x) => !dp.has(x) || plan.guests.includes(x))) return 'A driver can\'t come';
     if (q.people > cars * 4) return `${q.people} people don't fit in ${cars} car${cars > 1 ? 's' : ''}`;
   }
-  if (q.cost > s.money) return `Needs ${fmtMoney(q.cost)}`;
+  // A vacation is the boss's own: his pocket pays, the Family covers what it cannot.
+  if (q.cost > s.money + (plan.purpose === 'business' ? 0 : Math.max(0, s.tribute?.acct.personal ?? 0))) return `Needs ${fmtMoney(q.cost)}`;
   return undefined;
 }
 
@@ -279,8 +281,9 @@ export function previewTravel(s: GameState, a: TravelAction): ActionPreview {
       return {
         title: label,
         detail: `${L ? displayName(L) : '?'}${a.plan.guests.length ? ` and ${a.plan.guests.length} guest${a.plan.guests.length > 1 ? 's' : ''}` : ''}. ${q.out} day${q.out > 1 ? 's' : ''} each way, ${q.stay} there; arrives ${q.arriveDate}.${a.plan.leaderId === s.playerId ? ' While he is gone the underboss runs things and the capos get ideas.' : ''}`,
-        effects: [{ type: 'money', amount: -q.cost, label }],
+        effects: a.plan.purpose === 'business' ? [{ type: 'money', amount: -q.cost, label }] : pocketPrice(s, q.cost, label).effects,
         cost: q.cost,
+        pot: a.plan.purpose === 'business' ? undefined : 'pocket',
         because: verb(s, a.plan),
         disabledReason: q.block,
         warning: risks.length ? risks.join(' · ') : undefined,

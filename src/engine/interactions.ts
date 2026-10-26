@@ -1,3 +1,4 @@
+import { pocketPrice } from './pocket';
 import { bonesBlock } from './bones';
 import { perkMod } from './lifestyle';
 import { ageOn } from './calendar';
@@ -35,6 +36,8 @@ export interface InteractionPreview {
   refuseEffects?: Effect[];
   acceptance?: Acceptance;
   cost: number;
+  /** 'pocket': the boss's own money pays (pocket.ts). */
+  pot?: 'pocket';
   because: string;
   disabledReason?: string;
 }
@@ -147,9 +150,9 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
       if (!adult) return undefined;
       const label = `Sunday dinner: ${first}`;
       return {
-        id, title: `Invite ${first} to Sunday dinner`, detail: 'Gravy at two. Nobody leaves before the cannoli.', cost: 150,
+        id, title: `Invite ${first} to Sunday dinner`, detail: 'Gravy at two. Nobody leaves before the cannoli.', cost: 150, pot: 'pocket',
         effects: [
-          { type: 'money', amount: -150, label },
+          ...pocketPrice(s, 150, label).effects,
           { type: 'opinion', from: c.id, to: boss.id, amount: rel === 'family' ? 8 : 12, reason: 'Broke bread at the boss\'s table', decay: 1, label },
           { type: 'meter', from: c.id, to: boss.id, meter: 'trust', amount: 5, label },
         ],
@@ -166,13 +169,13 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
       return {
         id, title: id === 'gift_small' ? `Send ${first} a gift (${fmtMoney(amt)})` : `Send ${first} something special (${fmtMoney(amt)})`,
         detail: id === 'gift_small' ? 'A case of Canadian Club, a box of cigars.' : 'A new Cadillac. A mink for his wife.',
-        cost: amt,
+        cost: amt, pot: 'pocket',
         effects: [
-          { type: 'money', amount: -amt, label },
+          ...pocketPrice(s, amt, label).effects,
           { type: 'opinion', from: c.id, to: boss.id, amount: value, reason: 'Sent me a generous gift', decay: 2, label },
         ],
         because: `sent ${first} a gift`,
-        disabledReason: s.money < amt ? `Needs ${fmtMoney(amt)}` : undefined,
+        disabledReason: pocketPrice(s, amt, label).why,
       };
     }
     case 'bribe': {

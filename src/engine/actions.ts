@@ -68,6 +68,10 @@ export interface ActionPreview {
   effects: Effect[];
   /** Up-front money cost (for affordability checks across queued orders). */
   cost: number;
+  /** Who pays `cost`: 'pocket' is the boss's own money (the rest from the Family); absent, the Family. */
+  pot?: 'pocket';
+  /** Money moved into the boss's pocket by this order (a draw), or out of it into the Family (negative: putting it back). */
+  toPocket?: number;
   because: string;
   disabledReason?: string;
   category: LedgerCategory;
@@ -629,8 +633,9 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
         refuseEffects: p.refuseEffects,
         acceptance: p.acceptance,
         cost: p.cost,
+        pot: p.pot,
         because: p.because,
-        disabledReason: p.disabledReason ?? (p.cost > s.money ? `Needs ${fmtMoney(p.cost)}` : undefined),
+        disabledReason: p.disabledReason ?? (!p.pot && p.cost > s.money ? `Needs ${fmtMoney(p.cost)}` : undefined),
         category: 'event',
       };
     },
@@ -832,7 +837,34 @@ export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
 
 /** Projected treasury after the queued orders (for UI affordability). */
 export function queuedCost(s: GameState, actions: readonly PlayerAction[]): number {
-  return actions.reduce((acc, a) => acc + previewAction(s, a).cost, 0);
+  return queuedMoney(s, actions).family;
+}
+
+/**
+ * What this week's queued orders take from each pot, in order: the Pocket pays the boss's own things first
+ * and the Family covers what it cannot; draws move money from the Family into the Pocket.
+ * `family` is the Family's committed spending (as `queuedCost` always was); `pocketLeft` / `familyLeft` are the pots after the orders.
+ */
+export function queuedMoney(s: GameState, actions: readonly PlayerAction[]): { family: number; pocket: number; pocketLeft: number; familyLeft: number } {
+  let pocket = Math.max(0, s.tribute?.acct.personal ?? 0);
+  let family = 0;
+  let fromPocket = 0;
+  let back = 0;
+  for (const a of actions) {
+    const p = previewAction(s, a);
+    if (p.toPocket) {
+      if (p.toPocket > 0) family += p.toPocket;
+      else back += Math.min(-p.toPocket, Math.max(0, pocket));
+      pocket = Math.max(0, pocket + p.toPocket);
+    }
+    if (p.pot === 'pocket') {
+      const own = Math.min(p.cost, Math.max(0, pocket));
+      pocket -= own;
+      fromPocket += own;
+      family += p.cost - own;
+    } else if (!p.toPocket) family += p.cost;
+  }
+  return { family, pocket: fromPocket, pocketLeft: pocket, familyLeft: Math.round(s.money) - family + back };
 }
 
 /** Resolve the week's orders in order, re-checking each against the live state. */

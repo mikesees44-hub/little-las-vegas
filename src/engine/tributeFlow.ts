@@ -252,7 +252,7 @@ function donsHabits(ctx: Ctx): void {
   const avg = t.greed.slice(-8).reduce((a, b) => a + b, 0) / Math.min(8, n);
   const cost = Math.max(1200, t.costAvg);
   const age = ageOn(boss.birth, s.date);
-  if (avg >= 5000) {
+  if (avg >= 6000) {
     if (s.money < 4 * cost && s.week % 4 === 0) for (const k of capos(s)) addOpinion(s, k.id, boss.id, 'The boss bleeds the family while it runs short', -3, 1);
     t.beats.push({ kind: age >= 65 ? 'aging' : 'greed', week: s.week, pri: 56 });
   } else if (avg <= 1000) {

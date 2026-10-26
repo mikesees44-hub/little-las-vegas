@@ -905,7 +905,7 @@ export function prepareReport(ctx: Ctx): void {
   if (s.money < weeklyCosts(s)) rep.issues.push({ kind: 'treasury', amount: Math.round(s.money), severity: 2, text: `The family's treasury is down to $${Math.round(s.money).toLocaleString('en-US')}.` });
   if (rep.acting) rep.issues.push({ kind: 'acting', severity: 2, text: 'Nobody holds the underboss\'s seat. The count is rough and late.' });
   const avgGreed = t.greed.length ? t.greed.reduce((a, b) => a + b, 0) / t.greed.length : 0;
-  if (t.greed.length >= 6 && avgGreed >= 5000) rep.issues.push({ kind: 'greed', severity: 2, text: `You have taken ${Math.round(avgGreed / 100)}% for yourself, week after week. The men notice when the family is short.` });
+  if (t.greed.length >= 6 && avgGreed >= 6000) rep.issues.push({ kind: 'greed', severity: 2, text: `You have taken ${Math.round(avgGreed / 100)}% for yourself, week after week. The men notice when the family is short.` });
   // A petition, sometimes.
   if (rand(h) < PETITION_ODDS) {
     const p = makePetition(s, t, rep, h);
