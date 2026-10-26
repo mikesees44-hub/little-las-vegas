@@ -229,12 +229,15 @@ export const SEED: SeedRow[] = [
   ['sa03', 'downtown', 'nj+', 'Spicer Ave', 'a', 'pizza', 'Moon Slice Pizza', 'private', 'private', 'Eddie Mastro', 'doowop', 'pink', 1956, 80],
   ['sa04', 'downtown', 'nj+', 'Spicer Ave', 'b', 'pharmacy', 'Penny Candy & Soda', 'private', 'private', 'Bea Galloway', 'victorian', 'pink', 1931, 66],
   // The Shamrock: the old Victorian corner tavern where everybody drinks (and some back rooms get used).
-  ['sa05', 'downtown', 'nj-', 'Magnolia Ave', 'a', 'hoodclub', 'The Shamrock', 'private', 'private', 'Packy Gallagher', 'victorian', 'green', 1899, 61],
+  // (3700 Pacific Avenue, per the user's research; the game's block for it is approximate.)
+  ['sa05', 'pacific', 'pa-', 'Spencer Ave', 'a', 'hoodclub', 'The Shamrock', 'private', 'private', 'Packy Gallagher', 'victorian', 'green', 1899, 61],
   ['sa06', 'downtown', 'nj-', 'Oak Ave', 'a', 'hoodclub', 'The Bella Napoli Social Club', 'private', 'private', 'the club\'s members', 'colonial', 'green', 1921, 63],
   ['sa07', 'downtown', 'nj-', 'Pine Ave', 'a', 'office', 'Chemical Bank', 'private', 'private', 'the bank', 'deco', 'white', 1926, 58],
   // Pacific Avenue: an Italian place, a deli and a bar.
   ['sa08', 'pacific', 'pa-', 'Spicer Ave', 'a', 'trattoria', 'Bellavita', 'private', 'private', 'Connie Russo', 'midcentury', 'red', 1951, 77],
   ['sa09', 'pacific', 'pa+', 'Magnolia Ave', 'b', 'deli', 'Bayview Deli', 'private', 'private', 'Max Rubin', 'midcentury', 'turquoise', 1949, 72],
+  // The Red Garter: a banjo-and-beer saloon (long gone; its block and years here are unverified).
+  ['sa20', 'pacific', 'pa+', 'Oak Ave', 'b', 'hoodclub', 'The Red Garter', 'private', 'private', 'Banjo Bill Kearney', 'victorian', 'red', 1958, 74],
   ['sa10', 'pacific', 'pa+', 'Burk Ave', 'a', 'hoodclub', 'The Anchor Bar & Lounge', 'private', 'private', 'Walt O\'Hara', 'deco', 'turquoise', 1947, 70],
   // The south end of the Boardwalk.
   ['sa11', 'boardwalk', 'bw', 'Roberts Ave', 'a', 'icecream', 'Starlight Scoops', 'private', 'private', 'Irene Petrakis', 'doowop', 'pink', 1957, 88],
