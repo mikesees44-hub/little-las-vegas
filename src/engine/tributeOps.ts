@@ -6,6 +6,7 @@ import type { Ctx } from './ledger';
 import { addOpinion, changeMeter } from './relations';
 import { rand } from './rng';
 import { xfer } from './tribute';
+import { applySqueeze, SQUEEZE, squeezeWhy } from './money';
 import { moneyGrievance, settleMoneyGrievance } from './tributeGrievance';
 import { ensureTribute, normSplit, noteFavor, REASON_LABEL, splitText, type ShortReason, type Split } from './tributeState';
 import type { GameState, PlayerAction } from './types';
@@ -36,7 +37,9 @@ export type TributeAction =
   | { op: 'terms'; charId: string; kind: 'fixed' | 'exempt' | 'extension' | 'standard'; weeks: number; amount?: number }
   | { op: 'forgive'; charId: string }
   | { op: 'ubRate'; bp: number }
-  | { op: 'allowance'; charId: string; weekly: number };
+  | { op: 'allowance'; charId: string; weekly: number }
+  /** Squeeze harder this week (money.ts): the one global lever on collection. */
+  | { op: 'squeeze' };
 
 export type TributeOp =
   | TributeAction
@@ -115,6 +118,14 @@ export function previewTribute(s: GameState, a: TributeAction): ActionPreview {
         cost: 0, because: `set the underboss's share at ${a.bp / 100}%`, category: 'event', disabledReason: a.bp === cur ? 'That is his share now' : a.bp < 500 || a.bp > 2000 ? 'Out of range' : undefined,
       };
     }
+    case 'squeeze': {
+      const cut = s.tribute?.policy.personal ?? 2500;
+      return {
+        title: 'Squeeze harder this week', detail: `Every crew leans on its corners and every man on his hustle: about ${Math.round((SQUEEZE.mult - 1) * 100)}% more comes up this week, and the welshers pay ${Math.round(SQUEEZE.markers * 100)}% of their markers. The street feels it and so do the capos. Your cut (${cut / 100}%) applies as usual.`,
+        effects: [{ type: 'heat', bar: 'local', amount: SQUEEZE.heat, label: 'Squeezing the street' }, { type: 'crewOpinion', amount: SQUEEZE.opinion, reason: 'Squeezed us hard for the envelope', label: 'The capos' }, op(a)],
+        cost: 0, because: 'squeezed the street harder for a week', category: 'event', disabledReason: squeezeWhy(s),
+      };
+    }
     case 'allowance': {
       const c = s.characters[a.charId];
       return { title: `${c?.firstName ?? '?'}: ${a.weekly ? `${$(a.weekly)} a week from your own money` : 'no allowance'}`, effects: [op(a), ...(c && a.weekly ? [{ type: 'opinion' as const, from: c.id, to: s.playerId, amount: 10, reason: 'Gave me an allowance', decay: 1 }] : [])], cost: 0, because: `set ${c?.firstName ?? 'his'} allowance`, category: 'event', disabledReason: !c?.alive ? 'Not available' : undefined };
@@ -133,6 +144,7 @@ export function describeTributeOp(s: GameState, o: TributeOp): string | undefine
     case 'forgive': return `${s.characters[o.charId]?.firstName ?? '?'}'s arrears forgiven`;
     case 'ubRate': return `Underboss's share ${o.bp / 100}%`;
     case 'allowance': return `${s.characters[o.charId]?.firstName ?? '?'}: ${o.weekly ? `${$(o.weekly)}/wk allowance` : 'no allowance'}`;
+    case 'squeeze': return `This week: about ${Math.round((SQUEEZE.mult - 1) * 100)}% more from the crews`;
     case 'demand': return `${s.characters[o.charId]?.firstName ?? '?'} pays what he owes, now`;
     case 'refund': return `${$(o.amount)} back to ${s.characters[o.charId]?.firstName ?? '?'}`;
     case 'pay': return `${$(o.amount)} to ${s.characters[o.charId]?.firstName ?? '?'} (${o.from})`;
@@ -203,6 +215,9 @@ export function applyTributeOp(ctx: Ctx, o: TributeOp, label: string): void {
         t.ub.stage = o.stage;
         if (o.stage === 5) t.ub.refused = s.week;
       }
+      break;
+    case 'squeeze':
+      applySqueeze(ctx);
       break;
     case 'policy':
       if (o.split) t.policy = { ...normSplit(o.split), auto: t.policy.auto };

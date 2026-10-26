@@ -1,4 +1,5 @@
 import { CATALOG } from './catalog';
+import { markerPayRate } from './money';
 import { ensureEcon, type RacketState } from './econState';
 import { heat, type Ctx } from './ledger';
 import { chance, gauss, randInt } from './rng';
@@ -270,7 +271,7 @@ export function racketWeek(ctx: Ctx, b: Business, amt: number, label: string): {
     const sd = steps.some((st) => st.steady) || dialK(s, b, 'steady', 0) ? 0.035 : 0.07;
     const hold = Math.max(-0.06, 0.1 + gauss(e) * sd);
     const onCredit = Math.round(handle * 0.015 * dialK(s, b, 'markers'));
-    const paidIn = Math.round((r.markers ?? 0) * 0.15);
+    const paidIn = Math.round((r.markers ?? 0) * markerPayRate(s));
     r.handle = handle;
     r.lastHold = Math.round(hold * 1000) / 10;
     r.markers = Math.max(0, (r.markers ?? 0) + onCredit - paidIn);

@@ -1,0 +1,308 @@
+import { CATALOG } from './catalog';
+import { shortName } from './characters';
+import { earningsBoard } from './crewPurse';
+import type { Ctx } from './ledger';
+import { xfer } from './tribute';
+import { ensureTribute, familyCash, normSplit, pctOf, pocketCash } from './tributeState';
+import type { GameState, PlayerAction, ReportLine } from './types';
+
+/**
+ * MONEY, MADE SIMPLE. Two pots instead of four:
+ *  - The Family: the treasury (`s.money`), everything operational. The old reserve lives on as an
+ *    optional "set aside for lawyers & emergencies" line inside it (`tribute.acct.reserve`, filled only
+ *    if the boss sets a set-aside share; it covers the treasury when it runs dry).
+ *  - Your Pocket: the boss's own money (`tribute.acct.personal`): the Good Life, gifts, his household.
+ * The envelope is split by ONE number, your cut, every week on its own. Everything the family earns is
+ * collected automatically; the only lever is one global "Squeeze harder this week".
+ *
+ * `moneyView` is the Money screen (Holdings › Money, the top bar): this week as IN → OUT → NET, from
+ * the one ledger (the Family) and the week's transfer journal (the Pocket and the set-aside), so its
+ * NET is exactly the change in Family + Pocket. Pure; safe in render.
+ */
+
+/* ------------------------------------------------------------------ */
+/* Migration: an older save moves to the two pots inside its next week */
+/* ------------------------------------------------------------------ */
+
+/** Old default (15% you / 75% family / 10% reserve). */
+const OLD_DEFAULT = { personal: 1500, reserve: 1000 };
+
+/**
+ * Called by the engine right after the week's books open: the old reserve is folded into the Family
+ * (a journal transfer and a ledger line, so both reconcile), the set-aside share goes to 0, and a
+ * boss still on the old default split gets the new default cut (25%). His own money stays his.
+ */
+export function twoPots(ctx: Ctx): void {
+  const s = ctx.s;
+  const t = ensureTribute(s);
+  if (t.pots === 2) return;
+  if (t.acct.reserve > 0) xfer(ctx, 'reserve', 'treasury', t.acct.reserve, 'transfer', `w${s.week}:twopots`, { label: 'Two pots: the old reserve folded into the Family', category: 'transfer' });
+  const personal = t.policy.personal === OLD_DEFAULT.personal && t.policy.reserve === OLD_DEFAULT.reserve ? 2500 : t.policy.personal;
+  t.policy = { ...normSplit({ personal, reserve: 0 }), auto: t.policy.auto };
+  t.pots = 2;
+}
+
+/* ------------------------------------------------------------------ */
+/* The one lever: Squeeze harder this week                             */
+/* ------------------------------------------------------------------ */
+
+export const SQUEEZE = { mult: 1.3, markers: 0.45, heat: 3, opinion: -3, gap: 4 } as const;
+
+/** This week's squeeze multiplier on the crews' corners and hustle (1 when not squeezing). */
+export function squeezeMult(s: GameState): number {
+  return s.tribute?.squeeze === s.week ? SQUEEZE.mult : 1;
+}
+
+/** Share of a book's markers paid in this week (welshers lean harder when squeezed). */
+export function markerPayRate(s: GameState): number {
+  return s.tribute?.squeeze === s.week ? SQUEEZE.markers : 0.15;
+}
+
+export function squeezeWhy(s: GameState): string | undefined {
+  const w = s.tribute?.squeeze;
+  if (w !== undefined && s.week - w < SQUEEZE.gap) return `Squeezed ${s.week - w === 0 ? 'this week' : `${s.week - w} week${s.week - w > 1 ? 's' : ''} ago`}; the street needs ${SQUEEZE.gap} weeks to forget`;
+  return undefined;
+}
+
+/** The order's own effect: this week is a squeeze week (its heat and the men's mood are chips on the order). */
+export function applySqueeze(ctx: Ctx): void {
+  const s = ctx.s;
+  const t = ensureTribute(s);
+  if (squeezeWhy(s)) return;
+  t.squeeze = s.week;
+}
+
+/* ------------------------------------------------------------------ */
+/* The Money view                                                      */
+/* ------------------------------------------------------------------ */
+
+export type FlowGroup =
+  | 'rackets' | 'business' | 'kickups' | 'street' | 'rents' | 'cut' | 'otherIn'
+  | 'wages' | 'philly' | 'upkeep' | 'pad' | 'goodlife' | 'loans' | 'raids' | 'invest' | 'otherOut';
+
+export const GROUP_LABEL: Record<FlowGroup, string> = {
+  rackets: 'Rackets', business: 'Businesses', kickups: 'Kick-ups from the crews', street: 'The street (hustle, corners with no capo)', rents: 'Rents & vig', cut: 'Your cut of the envelope', otherIn: 'Other money in',
+  wages: 'Wages & payroll', philly: 'Philadelphia\'s tribute', upkeep: 'Upkeep & running costs', pad: 'Envelopes: cops & politicians', goodlife: 'The Good Life & your household', loans: 'Loan payments', raids: 'Raids, fines & rivals', invest: 'Buying & building', otherOut: 'Other spending',
+};
+
+/** Where a group is managed (a shell route or old tab id). */
+export const GROUP_ROUTE: Partial<Record<FlowGroup, string>> = {
+  rackets: 'holdings.hub', business: 'holdings.rackets', kickups: 'borgata.earnings', street: 'borgata.capos', rents: 'holdings.property', cut: 'borgata.take',
+  wages: 'borgata.capos', philly: 'diplomacy.table', upkeep: 'holdings.rackets', pad: 'town.cityhall', goodlife: 'you.possessions', loans: 'holdings.take', raids: 'borgata.orders', invest: 'holdings.property',
+};
+
+export interface FlowItem { label: string; amount: number; who?: string; src?: string }
+export interface FlowRow { group: FlowGroup; label: string; amount: number; pot: 'family' | 'pocket' | 'both'; items: FlowItem[]; route?: string }
+
+export interface Leak { group: FlowGroup | 'short' | 'cut'; label: string; amount: number; why: string; fix: string; action?: PlayerAction; route?: string }
+
+export interface MoneyView {
+  /** The week this flow is (the last week played), or undefined before the first week. */
+  week?: number;
+  family: number;
+  setAside: number;
+  pocket: number;
+  /** An envelope on the desk waiting for the Monday split (not yet in either pot). */
+  waiting: number;
+  familyDelta: number;
+  pocketDelta: number;
+  inRows: FlowRow[];
+  outRows: FlowRow[];
+  inTotal: number;
+  outTotal: number;
+  /** inTotal − outTotal == familyDelta + pocketDelta (every dollar from the ledger and the journal). */
+  net: number;
+  cutPct: number;
+  setAsidePct: number;
+  /** Family and Pocket at the end of each of the last 12 weeks. */
+  hist: { week: number; family: number; pocket: number }[];
+  top: { id: string; name: string; amount: number; kind: 'man' | 'place' }[];
+  leak?: Leak;
+}
+
+const PAD = /^(Payroll: |Bribe: |Envelopes for the beat cops)|Grease the Chief|on the pad|envelopes downtown|friends at the federal building|lunches in Trenton|No-show jobs/i;
+const WAGES = /^Wages|: payroll \(|salaries|Manager's share|Bodyguards|Lawyers & family support|Running things from inside|specialist|fee/i;
+const UPKEEP = /^Upkeep|Off-season|first winter|^Laundering|supplies|utilities|^Lease: |Property tax|\(capital\)|Perks: thin margins|Bookkeeper's hours|The mattresses|^Headquarters|^HQ|In exile/i;
+const INVEST = /^(Construction: |Community: |Buy |Bought |Open |Build |Upgrade )|: .*\(week \d+ of \d+, capital\)|^Investment: |Deal: |down payment/i;
+const RENTS = /^(Vig: |Loan repaid: |Rent: |Property: )/;
+
+/** Which group a Family ledger line belongs to. */
+export function lineGroup(s: GameState, l: ReportLine): FlowGroup {
+  const pos = l.amount > 0;
+  if (pos) {
+    if (RENTS.test(l.label)) return 'rents';
+    if (l.category === 'kickup') return 'kickups';
+    if (l.category === 'street') return 'street';
+    if (l.category === 'business') {
+      const b = l.src ? s.businesses.find((x) => x.id === l.src) : undefined;
+      if (b && CATALOG[b.kind]?.category === 'racket') return 'rackets';
+      return 'business';
+    }
+    return 'otherIn';
+  }
+  if (l.category === 'tribute') return 'philly';
+  if (l.category === 'debt') return 'loans';
+  if (l.category === 'heat' || l.category === 'rival') return 'raids';
+  if (/^(The Good Life|Household & appearances)/.test(l.label)) return 'goodlife';
+  if (PAD.test(l.label)) return 'pad';
+  if (INVEST.test(l.label)) return 'invest';
+  if (WAGES.test(l.label)) return 'wages';
+  if (UPKEEP.test(l.label)) return 'upkeep';
+  if (l.category === 'business') return 'upkeep'; // a losing week at a place
+  if (l.category === 'event' && Math.abs(l.amount) >= 1500) return 'invest';
+  return 'otherOut';
+}
+
+const POTS = new Set(['treasury', 'reserve', 'personal']);
+
+/** The Pocket's and the set-aside's own movements this week (journal transfers with the outside world). */
+function journalFlows(s: GameState, week: number): { inn: { g: FlowGroup; pot: 'family' | 'pocket'; label: string; a: number }[]; out: { g: FlowGroup; pot: 'family' | 'pocket'; label: string; a: number }[] } {
+  const b = s.tribute?.books.find((x) => x.week === week);
+  const inn: { g: FlowGroup; pot: 'family' | 'pocket'; label: string; a: number }[] = [];
+  const out: { g: FlowGroup; pot: 'family' | 'pocket'; label: string; a: number }[] = [];
+  if (!b) return { inn, out };
+  for (const [f, to, a, c, n] of b.x) {
+    // The treasury side is in the ledger; moves between the pots cancel.
+    if (f === 'treasury' || to === 'treasury') continue;
+    if (POTS.has(f) && POTS.has(to)) continue;
+    if (POTS.has(to)) {
+      if (to === 'personal') inn.push({ g: c === 'don_personal_share' ? 'cut' : 'otherIn', pot: 'pocket', label: c === 'don_personal_share' ? 'Your cut of the envelope' : n ?? 'Into your Pocket', a });
+      else inn.push({ g: 'kickups', pot: 'family', label: 'Set aside from the envelope (lawyers & emergencies)', a });
+    } else if (POTS.has(f)) {
+      const pot = f === 'personal' ? 'pocket' : 'family';
+      const label = n ?? (to.startsWith('wealth:') ? 'To one of the men' : 'Spent');
+      const g: FlowGroup = f === 'personal' ? (/allowance/i.test(label) || /^(Household|The Good Life)/.test(label) || to === 'ext:household' ? 'goodlife' : 'otherOut') : /^Investment: /.test(label) ? 'invest' : /Lawyers/i.test(label) ? 'wages' : 'otherOut';
+      out.push({ g, pot, label, a });
+    }
+  }
+  return { inn, out };
+}
+
+function rowsOf(entries: { g: FlowGroup; pot: 'family' | 'pocket'; item: FlowItem }[]): FlowRow[] {
+  const by = new Map<FlowGroup, FlowRow>();
+  for (const e of entries) {
+    const r = by.get(e.g) ?? { group: e.g, label: GROUP_LABEL[e.g], amount: 0, pot: e.pot, items: [], route: GROUP_ROUTE[e.g] };
+    if (r.pot !== e.pot) r.pot = 'both';
+    r.amount += e.item.amount;
+    const same = r.items.find((x) => x.label === e.item.label && x.who === e.item.who);
+    if (same) same.amount += e.item.amount;
+    else r.items.push({ ...e.item });
+    by.set(e.g, r);
+  }
+  const rows = [...by.values()].filter((r) => r.amount !== 0);
+  for (const r of rows) r.items.sort((a, b) => b.amount - a.amount);
+  return rows.sort((a, b) => b.amount - a.amount);
+}
+
+/** Kick-up lines grouped by crew (the capo who sent it up), so the row reads "Moretti's crew $X". */
+function crewItems(s: GameState, items: FlowItem[]): FlowItem[] {
+  const by = new Map<string, FlowItem>();
+  for (const it of items) {
+    const c = it.who ? s.characters[it.who] : undefined;
+    const key = c && c.rank === 'capo' ? c.id : it.label.startsWith('Set aside') ? 'aside' : 'other';
+    const label = c && c.rank === 'capo' ? `${shortName(c)}'s crew` : key === 'aside' ? it.label : it.label.startsWith('Late kick-up') || it.label.startsWith('Arrears') ? 'Late money & arrears' : 'Other kick-ups';
+    const x = by.get(key) ?? { label, amount: 0, who: c?.rank === 'capo' ? c.id : undefined };
+    x.amount += it.amount;
+    by.set(key, x);
+  }
+  return [...by.values()].sort((a, b) => b.amount - a.amount);
+}
+
+export function moneyView(s: GameState): MoneyView {
+  const t = s.tribute;
+  const r = s.lastReport;
+  const pol = t?.policy ?? { personal: 2500, treasury: 7500, reserve: 0 };
+  const base: MoneyView = {
+    family: familyCash(s), setAside: t?.acct.reserve ?? 0, pocket: pocketCash(s), waiting: t?.reports.find((x) => x.status === 'presented')?.presented ?? 0,
+    familyDelta: 0, pocketDelta: 0, inRows: [], outRows: [], inTotal: 0, outTotal: 0, net: 0, cutPct: pctOf(pol.personal), setAsidePct: pctOf(pol.reserve), hist: [], top: [],
+  };
+  base.hist = (t?.books ?? []).slice(-12).map((b) => ({ week: b.week, family: Math.round((b.end.treasury ?? 0) + (b.end.reserve ?? 0)), pocket: b.end.personal ?? 0 }));
+  if (!r) return base;
+  base.week = r.week;
+  const ins: { g: FlowGroup; pot: 'family' | 'pocket'; item: FlowItem }[] = [];
+  const outs: { g: FlowGroup; pot: 'family' | 'pocket'; item: FlowItem }[] = [];
+  for (const l of r.lines) {
+    if (l.stat !== 'money' || l.amount === 0 || l.category === 'transfer') continue;
+    const g = lineGroup(s, l);
+    const item = { label: l.label, amount: Math.abs(l.amount), who: l.who, src: l.src };
+    (l.amount > 0 ? ins : outs).push({ g, pot: 'family', item });
+  }
+  const j = journalFlows(s, r.week);
+  for (const x of j.inn) ins.push({ g: x.g, pot: x.pot, item: { label: x.label, amount: x.a } });
+  for (const x of j.out) outs.push({ g: x.g, pot: x.pot, item: { label: x.label, amount: x.a } });
+  base.inRows = rowsOf(ins);
+  base.outRows = rowsOf(outs);
+  const kick = base.inRows.find((x) => x.group === 'kickups');
+  if (kick) kick.items = crewItems(s, kick.items);
+  base.inTotal = base.inRows.reduce((a, x) => a + x.amount, 0);
+  base.outTotal = base.outRows.reduce((a, x) => a + x.amount, 0);
+  base.net = base.inTotal - base.outTotal;
+  const b = t?.books.find((x) => x.week === r.week);
+  const famStart = r.start.money + (b?.start.reserve ?? 0);
+  const famEnd = r.end.money + (b?.end.reserve ?? 0);
+  base.familyDelta = Math.round(famEnd - famStart);
+  base.pocketDelta = b ? (b.end.personal ?? 0) - (b.start.personal ?? 0) : 0;
+  base.top = topEarners(s, r.lines);
+  base.leak = biggestLeak(s, base);
+  return base;
+}
+
+/** The family's five best earners last week: men by what they kicked up, places by what they paid in. */
+export function topEarners(s: GameState, lines: readonly ReportLine[] = s.lastReport?.lines ?? []): MoneyView['top'] {
+  const out: MoneyView['top'] = [];
+  for (const row of earningsBoard(s).rows) {
+    const c = s.characters[row.id];
+    if (c && row.up > 0) out.push({ id: c.id, name: `${c.firstName} ${c.lastName}`, amount: row.up, kind: 'man' });
+  }
+  const places = new Map<string, number>();
+  for (const l of lines) if (l.stat === 'money' && l.category === 'business' && l.src && s.businesses.some((b) => b.id === l.src)) places.set(l.src, (places.get(l.src) ?? 0) + l.amount);
+  for (const [id, a] of places) if (a > 0) out.push({ id, name: s.businesses.find((b) => b.id === id)!.name, amount: Math.round(a), kind: 'place' });
+  return out.sort((a, b) => b.amount - a.amount).slice(0, 5);
+}
+
+/** The biggest leak this week, with a one-click fix. */
+export function biggestLeak(s: GameState, v: Pick<MoneyView, 'outRows' | 'inTotal' | 'familyDelta' | 'cutPct' | 'family'>): Leak | undefined {
+  const cands: Leak[] = [];
+  const t = s.tribute;
+  const rep = t?.reports[t.reports.length - 1];
+  // A crew that came in short: have the books checked.
+  if (rep) {
+    const worst = [...rep.crews].sort((a, b) => b.short - a.short)[0];
+    const k = worst ? s.characters[worst.capoId] : undefined;
+    if (worst && k && worst.short >= 150) cands.push({ group: 'short', label: `${shortName(k)}'s crew came in short`, amount: worst.short, why: `${k.firstName}'s men owed ${fmt(worst.due)} and paid ${fmt(worst.paid)}.`, fix: `Go through ${k.firstName}'s crew books ($200)`, action: { kind: 'tribute', op: { op: 'audit', capoId: k.id } } });
+  }
+  // A place that lost money: look at it.
+  const places = new Map<string, number>();
+  for (const l of s.lastReport?.lines ?? []) if (l.stat === 'money' && l.src && s.businesses.some((b) => b.id === l.src && b.owner === 'player')) places.set(l.src, (places.get(l.src) ?? 0) + l.amount);
+  const loser = [...places.entries()].sort((a, b) => a[1] - b[1])[0];
+  if (loser && loser[1] <= -150) {
+    const b = s.businesses.find((x) => x.id === loser[0])!;
+    cands.push({ group: 'upkeep', label: `${b.name} lost money`, amount: -loser[1], why: `It cost more to run than it took in last week.`, fix: `Open ${b.name}: change how it runs, or sell it`, route: 'holdings.rackets' });
+  }
+  // The family running dry while the boss takes a big cut.
+  if (v.familyDelta < 0 && v.cutPct > 15 && v.family < 8000) {
+    const lower = Math.max(10, v.cutPct - 10);
+    cands.push({ group: 'cut', label: 'Your cut while the Family runs dry', amount: Math.abs(v.familyDelta), why: `The Family lost ${fmt(-v.familyDelta)} this week and has ${fmt(v.family)} left.`, fix: `Lower your cut to ${lower}% until it recovers`, action: { kind: 'tribute', op: { op: 'policy', split: normSplit({ personal: lower * 100, reserve: t?.policy.reserve ?? 0 }) } } });
+  }
+  // The heaviest kind of spending, where it is managed.
+  const FIX: Partial<Record<FlowGroup, string>> = {
+    wages: 'Put idle men on a racket, or let an associate go', pad: 'Check who you are paying at City Hall', upkeep: 'Look at what each place costs to run', philly: 'Send Sal Moretti a gift, or take the tribute perk',
+    goodlife: 'Sell something you do not use (upkeep every week)', loans: 'Pay the loan down when the season comes', raids: 'Lie low: cool the heat before the next raid', otherOut: 'Check last week\'s report line by line',
+  };
+  const spend = v.outRows.filter((r) => r.group !== 'invest' && FIX[r.group]).sort((a, b) => b.amount - a.amount)[0];
+  if (spend && v.inTotal > 0 && spend.amount >= v.inTotal * 0.2) cands.push({ group: spend.group, label: spend.label, amount: spend.amount, why: `${Math.round((spend.amount / v.inTotal) * 100)}% of everything that came in went here.`, fix: FIX[spend.group]!, route: spend.route });
+  return cands.sort((a, b) => b.amount - a.amount)[0];
+}
+
+/** The top bar: each pot with its change, and the top 3 in and out. */
+export function moneyTop(s: GameState): { family: number; pocket: number; setAside: number; familyDelta?: number; pocketDelta?: number; topIn: FlowItem[]; topOut: FlowItem[] } {
+  const v = moneyView(s);
+  return {
+    family: v.family, pocket: v.pocket, setAside: v.setAside, familyDelta: v.week !== undefined ? v.familyDelta : undefined, pocketDelta: v.week !== undefined ? v.pocketDelta : undefined,
+    topIn: v.inRows.slice(0, 3).map((r) => ({ label: r.label, amount: r.amount })), topOut: v.outRows.slice(0, 3).map((r) => ({ label: r.label, amount: r.amount })),
+  };
+}
+
+function fmt(n: number): string {
+  return `$${Math.round(n).toLocaleString('en-US')}`;
+}

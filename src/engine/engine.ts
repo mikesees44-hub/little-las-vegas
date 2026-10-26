@@ -55,6 +55,7 @@ import { archiveWeek, ledgerWeek } from './ledgerbook';
 import { tidyState } from './tidy';
 import { cloneLedgerBook } from './ledgerbookState';
 import { archiveAccounts, reconcileAccounts, tributeOpen } from './tribute';
+import { twoPots } from './money';
 import { tributeBegin, tributeEnd, tributeWeek } from './tributeFlow';
 import './tributeEvents';
 import { earsWeek } from './ears';
@@ -275,6 +276,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const ctx = newCtx(s);
   const start = snapshot(s);
   tributeOpen(s);
+  twoPots(ctx);
   const info = seasonInfo(s.date);
   const weekOf = s.week;
   const dateOf = { ...s.date };
