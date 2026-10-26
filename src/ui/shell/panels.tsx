@@ -33,6 +33,7 @@ import { CaposSection, MenRoster } from '../borgata/Capos';
 import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Feed } from './Feed';
+import { WalkLauncher } from '../hood/WalkLauncher';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { HousesPanel } from '../houses/HousesPanel';
 import { WeeklyTake } from '../tribute/WeeklyTake';
@@ -101,6 +102,7 @@ export const PANELS: PanelDef[] = [
       { id: 'character', label: 'Character', render: (s) => stack(<PowerPart key="st" s={s} part="station" />, <CharacterSheet key="cs" s={s} id={s.playerId} onClose={() => {}} embedded />) },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
       { id: 'possessions', label: 'The Good Life', blurb: 'Homes, cars, the boat and the toys. Every one costs upkeep, and the feds count what the books cannot explain.', render: (s) => <GoodLifePanel s={s} /> },
+      { id: 'walk', label: 'Walk the town', blurb: 'Out on the Boardwalk as yourself: walk up to a place to go in, buy it or run it; call a meeting; plan a trip.', render: (s) => <WalkLauncher s={s} /> },
       { id: 'court', label: 'Hold court', blurb: 'Office hours and the Audience: the people who come to the boss.', render: (s) => stack(<OfficePanel key="o" s={s} />, <AudiencePanel key="a" s={s} />) },
     ],
   },

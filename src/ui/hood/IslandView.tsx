@@ -15,6 +15,7 @@ import { PaintedView, sceneForHood, type Scene } from './PaintedView';
 import { DistrictCards } from './DistrictCards';
 import { PlanView } from './PlanView';
 import { useShell } from '../shell/context';
+import { WalkView } from './WalkView';
 
 /**
  * Wildwood up close: the illustrated 1960 island (the third map level).
@@ -81,7 +82,7 @@ const TIER_AT = [0.33, 1.9, 4.5];
 const TIER_SC = [0.22, 0.9, 2.6, 6];
 const tierOf = (sc: number) => (sc < TIER_AT[0] ? 0 : sc < TIER_AT[1] ? 1 : sc < TIER_AT[2] ? 2 : 3);
 
-export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameState; onSurvey?: () => void; onHood?: (id?: HoodId) => void; focusHood?: { id: HoodId; nonce: number }; land?: { scene: Scene; nonce: number } }) {
+export function IslandView({ s, onSurvey, onHood, focusHood, land, walk }: { s: GameState; onSurvey?: () => void; onHood?: (id?: HoodId) => void; focusHood?: { id: HoodId; nonce: number }; land?: { scene: Scene; nonce: number }; /** A nonce: down onto the Boardwalk as the boss. */ walk?: number }) {
   const shell = useShell();
   const host = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
@@ -105,6 +106,9 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
   // Street level: the painted block and Pacific Avenue (live hotspots over the user's art).
   const [scene, setScene] = useState<Scene | undefined>(land?.scene);
   useEffect(() => { if (land) setScene(land.scene); }, [land?.nonce]);
+  // Walking the Boardwalk as the boss (WalkView): over everything else on the island.
+  const [walking, setWalking] = useState(false);
+  useEffect(() => { if (walk) { setWalking(true); setSel(undefined); } }, [walk]);
   const pr = projMode === 'iso' ? ISO : PLAN;
   const mood: Mood = moodSet === 'auto' ? moodFor(s) : moodSet;
   const pal = palette(mood);
@@ -410,6 +414,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
       <div data-hv-ui className={`absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[60%] ${plan && !scene ? 'hidden' : ''}`}>
         {!scene && !plan && <div className="flex flex-wrap justify-end gap-1">
           <button type="button" className="hv-btn hv-on" onClick={() => { setScene(sceneForHood(hood)); setHood(undefined); onHood?.(undefined); }} title="Down to street level (the neighborhood you have picked, or the Boardwalk)" data-testid="hv-street">Street level</button>
+          <button type="button" className="hv-btn hv-on" onClick={() => { setSel(undefined); setWalking(true); }} title="Walk the Boardwalk as the boss: Hunt's Pier up to the next pier" data-testid="hv-walk">Walk the boardwalk</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
           <button type="button" className="hv-btn" onClick={whole} title="The whole island">⤢</button>
@@ -445,7 +450,8 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land }: { s: GameSt
       {!scene && !plan && <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
         {HOODS.map((h) => <button key={h.id} type="button" onClick={() => goHood(h.id)} className={`hv-chip ${hood === h.id ? 'hv-on' : ''}`}>{h.name}</button>)}
       </div>}
-      {panelOpen && (
+      {walking && <div className="absolute inset-0 z-[1003]" data-hv-ui><WalkView s={s} onClose={() => setWalking(false)} /></div>}
+      {panelOpen && !walking && (
         <div data-hv-ui className="absolute z-[1002] panel overflow-y-auto p-3 inset-x-0 bottom-0 max-h-[62%] rounded-b-none md:inset-x-auto md:right-2 md:top-36 md:bottom-12 md:max-h-none md:w-[380px] md:rounded-b-lg llv-slide-right" data-testid="hv-panel">
           {selItem ? <StreetCard s={s} it={selItem} mood={mood} onClose={() => setSel(undefined)} />
             : districts ? <DistrictCards s={s} onClose={() => setDistricts(false)} onStreet={(sc) => { setDistricts(false); setScene(sc); }} onHood={(id) => { setDistricts(false); setScene(undefined); goHood(id); }} />

@@ -40,6 +40,12 @@ export const ASSET_URLS = {
   /** A 1970s-and-later attraction: not used in 1960 (an anachronism). */
   wipeout_slide: '/_blob/620786f99c8ab046201101fcc43fcf3b',
   hunts_pier_golf_entrance: '/_blob/93541d93f15cefbfdc4a44395c0a9379',
+  // The walkable Boardwalk (WalkView): the aerial is the ground; Hunt's Pier, the Flyer and the
+  // Castle Dungeon are long gone (real names kept). The sprites are transparent.
+  walk_aerial_boardwalk: '/_blob/808e66ca93fb49574999f664a2d305c7',
+  walk_hunts_flyer: '/_blob/b0ab84a6e77d03f334eeee89da0049e0',
+  walk_castle_dungeon: '/_blob/78c2fc492df0d89734d60ee7b769433e',
+  walk_pier_beach: '/_blob/a794332636e2db2d58db2be4688a5bde',
   // The user's own art (imports/art/final/<file>.webp), to be uploaded.
   street_7sees: undefined,
   street_crablegs: undefined,
@@ -189,6 +195,10 @@ export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
   shore_comedy_turnaround: [1536, 1024],
   neighborhood_twilight_1958: [1536, 1024],
   boardwalk_blue_hour_1958: [1600, 874],
+  walk_aerial_boardwalk: [1536, 1024],
+  walk_hunts_flyer: [1400, 1050],
+  walk_castle_dungeon: [1400, 974],
+  walk_pier_beach: [1576, 998],
 };
 
 /**

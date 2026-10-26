@@ -26,7 +26,7 @@ import { storefrontArt } from './storefrontArt';
  * with its current name on a plate; the drawn postcard when there isn't, or
  * when the painting can't be loaded.
  */
-function Storefront({ it, f }: { it: Item; f: FacadeSpec }) {
+export function Storefront({ it, f }: { it: Item; f: FacadeSpec }) {
   const art = storefrontArt(it);
   const postcard = <div className="rounded-lg overflow-hidden shadow-lg shadow-black/50 rotate-[-0.6deg]" data-testid="sv-postcard"><Facade f={f} /></div>;
   const [shown, setShown] = useState<'store' | 'inline' | 'fallback' | undefined>();

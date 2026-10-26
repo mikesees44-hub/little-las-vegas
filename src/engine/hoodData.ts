@@ -200,6 +200,10 @@ export const SEED: SeedRow[] = [
   ['pr02', 'piers', 'pier', 'Schellenger Ave', 2, 'ride', 'The Giant Wheel', 'private', 'private', 'the pier company', 'doowop', 'turquoise', 1955, 82],
   ['pr03', 'piers', 'pier', 'Rio Grande Ave', 2, 'funhouse', 'Laff-Land Funhouse', 'private', 'private', 'the pier company', 'tiki', 'pink', 1954, 78],
   ['pr04', 'piers', 'pier', '25th Ave', 2, 'ride', 'Carousel by the Sea', 'private', 'private', 'the pier company', 'victorian', 'gold', 1925, 66],
+  // Ocean Avenue behind the boards at Hunt's Pier (the walkable stretch, walkData.ts): fictional places.
+  ['ow01', 'boardwalk', 'oc+', 'Oak Ave', 'a', 'motel', 'The Pelican Court', 'sale', 'private', 'the Lindgren family', 'doowop', 'turquoise', 1956, 74],
+  ['ow02', 'boardwalk', 'oc+', 'Oak Ave', 'b', 'diner', 'Irma\'s Luncheonette', 'private', 'private', 'Irma Szabo', 'midcentury', 'red', 1947, 68],
+  ['ow03', 'boardwalk', 'oc+', 'Pine Ave', 'a', 'motel', 'The Driftline Motor Inn', 'private', 'private', 'Walt Brennan', 'doowop', 'pink', 1958, 90],
   // Motel row in the Crest (the boom is just starting).
   ['cr01', 'crest', 'oc-', 'Heather Rd', 'w', 'motel', 'The Sputnik Motor Inn', 'private', 'private', 'the Kovacs family', 'doowop', 'turquoise', 1959, 97],
   ['cr02', 'crest', 'oc-', 'Toledo Ave', 'w', 'motel', 'The Coral Flamingo', 'private', 'private', 'Gus Papadakis', 'doowop', 'pink', 1958, 94],

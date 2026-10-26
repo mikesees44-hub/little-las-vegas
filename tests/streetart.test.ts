@@ -15,8 +15,8 @@ import { upgradeSave } from '../src/engine/upgradeSave';
 describe('street art: the asset manifest, storefront paintings, turnarounds and districts', () => {
   it('names every asset-store image once, by URL, in one manifest; the user\'s own art waits for its upload', () => {
     const urls = Object.values(ASSET_URLS).filter((u): u is string => !!u);
-    expect(urls.length).toBe(27);
-    expect(new Set(urls).size).toBe(27);
+    expect(urls.length).toBe(31);
+    expect(new Set(urls).size).toBe(31);
     for (const u of urls) expect(u).toMatch(/^\/_blob\/[0-9a-f]{32}$/);
     // Nothing else in the UI names a /_blob/ image URL for the street art.
     for (const f of ['src/ui/hood/PaintedView.tsx', 'src/ui/hood/StreetCard.tsx', 'src/ui/hood/DistrictCards.tsx', 'src/ui/hood/HoodDashboard.tsx', 'src/ui/hood/Turnaround.tsx']) {
