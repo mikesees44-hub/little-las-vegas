@@ -495,7 +495,7 @@ export function normSplit(x: Partial<Split>): Split {
 }
 
 export const pctOf = (bp: number) => Math.round(bp / 100);
-export const splitText = (x: Split) => `your cut ${pctOf(x.personal)}% · the Family ${pctOf(x.treasury + x.reserve)}%${x.reserve ? ` (${pctOf(x.reserve)}% set aside)` : ''}`;
+export const splitText = (x: Split) => `your cut ${pctOf(x.personal)}% · the Family ${pctOf(x.treasury + x.reserve)}%${x.reserve ? ` (${pctOf(x.reserve)}% kept for lawyers & emergencies)` : ''}`;
 
 /** The Family's money: the treasury plus what is set aside for lawyers & emergencies (the old reserve). */
 export function familyCash(s: GameState): number {

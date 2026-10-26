@@ -289,7 +289,7 @@ export function tributeEnd(ctx: Ctx): void {
       const a = rep.alloc!;
       const ub = rep.ubId ? s.characters[rep.ubId] : undefined;
       const d = director(s);
-      d.motion = [...(d.motion ?? []), [s.week, `${ub ? ub.firstName : 'The count'} brought the take (${$(rep.presented)}): ${$(a.personal)} to you, ${$(a.treasury)} to the family, ${$(a.reserve)} put aside (${splitText(a.split)}).`] as [number, string]].slice(-30);
+      d.motion = [...(d.motion ?? []), [s.week, `${ub ? ub.firstName : 'The count'} brought the envelope (${$(rep.presented)}): ${$(a.personal)} to your pocket, ${$(a.treasury + a.reserve)} to the Family (${splitText(a.split)}).`] as [number, string]].slice(-30);
     }
   }
   // The running average of the week's outgoings, for the underboss's advice.

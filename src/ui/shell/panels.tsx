@@ -100,7 +100,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'character', label: 'Character', render: (s) => stack(<PowerPart key="st" s={s} part="station" />, <CharacterSheet key="cs" s={s} id={s.playerId} onClose={() => {}} embedded />) },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
-      { id: 'possessions', label: 'The Good Life', blurb: 'Homes, cars, the boat and the toys. Every one costs upkeep, and the feds count what the books cannot explain.', render: (s) => <GoodLifePanel s={s} /> },
+      { id: 'possessions', label: 'The Good Life', blurb: 'Homes, cars, the boat and the toys, paid from your pocket. Every one costs upkeep, and the feds count what the books cannot explain.', render: (s) => <GoodLifePanel s={s} /> },
       { id: 'court', label: 'Hold court', blurb: 'Office hours and the Audience: the people who come to the boss.', render: (s) => stack(<OfficePanel key="o" s={s} />, <AudiencePanel key="a" s={s} />) },
     ],
   },
@@ -135,14 +135,14 @@ export const PANELS: PanelDef[] = [
     id: 'holdings', icon: '$', label: 'Holdings', short: 'Holdings', key: 'l',
     blurb: 'Everything that makes or keeps money: places, property, the books.',
     sections: [
-      { id: 'money', label: 'Money', wide: true, blurb: 'This week\'s money in one picture: where it came from, your cut into the Family and your Pocket, where it went, and the last 8 weeks. Everything is collected on its own.', render: (s) => <MoneyView s={s} /> },
+      { id: 'money', label: 'Money', wide: true, blurb: 'Family money and your pocket, moving money between them, and last week in plain words: what came in, your cut, what went out. Everything is collected on its own.', render: (s) => <MoneyView s={s} /> },
       { id: 'hub', label: 'The Rackets', wide: true, blurb: 'Every racket on the island: what it pays, what it takes, how you run it. Start one, set how it runs, take the next step.', render: (s) => <RacketHub s={s} /> },
       { id: 'rackets', label: 'What you own', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
       { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
-      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'The envelope in detail: every crew and every man, the accounts (the Family, your Pocket), obligations, investments and the historical ledger.', render: (s) => <WeeklyTake s={s} /> },
+      { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'The envelope in detail: every crew and every man, the accounts (Family money, your pocket), what is owed, investments and the full books.', render: (s) => <WeeklyTake s={s} /> },
     ],
   },
   {

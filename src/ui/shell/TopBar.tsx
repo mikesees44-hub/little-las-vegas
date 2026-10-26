@@ -7,47 +7,45 @@ import { HEAT_BARS, type GameState, type HeatBar, type Stat } from '../../engine
 import { fmt$ } from '../format';
 import { ClockControls, type Speed } from '../clock';
 import { MusicToggle } from '../audio';
-import { Num, RichTip, type Reason } from './Num';
+import { Num, type Reason } from './Num';
 import { moneyTop } from '../../engine/money';
 import { useShell } from './context';
 import { OrdersButton } from './OrdersPopover';
+import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
 
-/** Top 3 in and top 3 out, from the Money view (the ledger and the week's journal). */
-function MoneyTip({ s, pot }: { s: GameState; pot: 'family' | 'pocket' }) {
-  const m = moneyTop(s);
-  const row = (x: { label: string; amount: number }, sign: 1 | -1, i: number) => (
-    <span key={`${sign}${i}`} className="flex justify-between gap-3"><span className="truncate">{x.label}</span><span className={`tabular-nums ${sign > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{sign > 0 ? '+' : '−'}{fmt$(x.amount)}</span></span>
-  );
-  return (
-    <>
-      <span className="block font-semibold text-gold-300">{pot === 'family' ? 'The Family' : 'Your Pocket'}: {fmt$(pot === 'family' ? m.family : m.pocket)}</span>
-      <span className="block text-stone-400 mb-1">{pot === 'family' ? `Everything operational: wages, Philadelphia, the places.${m.setAside ? ` ${fmt$(m.setAside)} set aside for lawyers & emergencies.` : ''}` : 'Your cut of every envelope: the Good Life, gifts, your household, your own lawyers.'}</span>
-      {m.topIn.length > 0 && <span className="block text-[10px] uppercase tracking-widest text-stone-500">Top in, last week</span>}
-      {m.topIn.map((x, i) => row(x, 1, i))}
-      {m.topOut.length > 0 && <span className="block mt-1 text-[10px] uppercase tracking-widest text-stone-500">Top out</span>}
-      {m.topOut.map((x, i) => row(x, -1, i))}
-      <span className="block mt-1 border-t border-noir-700 pt-0.5 text-stone-500">Click for where every dollar went. Unwashed: {fmt$(s.unwashed)}</span>
-    </>
-  );
-}
-
-/** The two pots in the top bar, each with last week's change; click opens Holdings › Money. */
+/**
+ * The two pots in the top bar ("Family money", "Your pocket"), each with last week's change.
+ * A tap opens the money popover: the two big numbers, last week in one line, Move money, and the Money screen.
+ */
 function MoneyChips({ s }: { s: GameState }) {
   const { go } = useShell();
   const m = moneyTop(s);
+  const p = usePots(s);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    window.addEventListener('keydown', onKey);
+    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+  }, [open]);
   return (
-    <>
-      <RichTip tip={<MoneyTip s={s} pot="family" />} align="left" testid="topbar-family">
-        <button type="button" data-tour="treasury" onClick={() => go('holdings.money')} aria-label={`The Family ${fmt$(m.family)}: open Money`} title={statHelp('money')}>
-          <Chip label="The Family" value={fmt$(m.family)} d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash />
-        </button>
-      </RichTip>
-      <RichTip tip={<MoneyTip s={s} pot="pocket" />} align="left" testid="topbar-pocket">
-        <button type="button" onClick={() => go('holdings.money')} aria-label={`Your Pocket ${fmt$(m.pocket)}: open Money`}>
-          <Chip label="Your Pocket" value={fmt$(m.pocket)} d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash />
-        </button>
-      </RichTip>
-    </>
+    <div ref={ref} className="flex items-center gap-1" data-testid="topbar-money">
+      <button type="button" data-tour="treasury" className="flex items-center gap-1" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Family money ${fmt$(m.family)}, your pocket ${fmt$(m.pocket)}: open the money`} title={statHelp('money')} data-testid="topbar-family">
+        <Chip label="Family money" value={fmt$(m.family)} d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash after={p.familyAfter} />
+        <span data-testid="topbar-pocket"><Chip label="Your pocket" value={fmt$(m.pocket)} d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash after={p.pocketAfter} /></span>
+      </button>
+      {open && (
+        <div className="fixed left-2 right-2 top-[7.5rem] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 z-[1200] sm:w-[440px] max-h-[75vh] overflow-y-auto panel p-2 space-y-2" data-testid="money-popover">
+          <BigPots s={s} compact />
+          <div className="text-[12px] text-stone-300"><WeekPotsLine s={s} /></div>
+          <MoveMoney s={s} />
+          <button type="button" className="btn-gold w-full text-xs" onClick={() => { setOpen(false); go('holdings.money'); }} data-testid="money-popover-open">Open the Money screen: where every dollar came from and went ▸</button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -69,7 +67,7 @@ function delta(s: GameState, k: 'money' | 'respect' | HeatBar): number | undefin
   return r.end.heat[k] - r.start.heat[k];
 }
 
-function Chip({ label, value, d, good, bar, barColor, tone, cash }: { label: string; value: string; d?: number; good?: boolean; bar?: number; barColor?: string; tone?: string; cash?: boolean }) {
+function Chip({ label, value, d, good, bar, barColor, tone, cash, after }: { label: string; value: string; d?: number; good?: boolean; bar?: number; barColor?: string; tone?: string; cash?: boolean; /** Where it lands after this week's orders. */ after?: number }) {
   return (
     <span className="inline-flex flex-col rounded bg-noir-800 border border-noir-700 px-1.5 sm:px-2 py-0.5 min-w-[52px] cursor-help">
       <span className="text-[9px] uppercase tracking-widest text-stone-500 leading-tight whitespace-nowrap">{label}</span>
@@ -77,6 +75,7 @@ function Chip({ label, value, d, good, bar, barColor, tone, cash }: { label: str
         {value}
         {d !== undefined && d !== 0 && <span className={`ml-1 text-[10px] font-normal ${good ? 'text-emerald-400' : 'text-red-400'}`}>{d > 0 ? '+' : ''}{cash ? fmt$(d) : d}</span>}
       </span>
+      {after !== undefined && <span className="text-[9px] leading-tight text-sky-300 tabular-nums whitespace-nowrap">→ {fmt$(after)} after orders</span>}
       {bar !== undefined && <span className="mt-0.5 block h-0.5 rounded bg-noir-700 overflow-hidden"><span className={`block h-full ${barColor}`} style={{ width: `${Math.max(0, Math.min(100, bar))}%` }} /></span>}
     </span>
   );

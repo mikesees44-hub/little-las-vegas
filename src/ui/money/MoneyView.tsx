@@ -5,64 +5,52 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard, useOrders } from '../components/Orders';
 import { useShell } from '../shell/context';
+import { BigPots, MoveMoney } from './MoneyPots';
 
 /**
- * HOLDINGS › MONEY (also the top bar's Family and Pocket): last week as a flow,
- * IN → OUT → NET, every number from the ledger (the Family) and the week's
- * journal (your Pocket); the last 12 weeks of both pots; the top earners; the
- * biggest leak with its fix; your cut and the one lever.
+ * THE MONEY SCREEN, one page, top to bottom:
+ *  1. the two big numbers (Family money / Your pocket) with Move money;
+ *  2. last week in plain words: came in → your cut → went out → what each pot gained;
+ *  3. the last 8 weeks;
+ *  4. who earned it;
+ *  5. every line, folded.
+ * Every number comes from the ledger (the Family) and the week's journal (your pocket).
+ * Self-contained: `MoneySection` slots into any panel or a "Money" home.
  */
 export function MoneyView({ s }: { s: GameState }) {
   const v = moneyView(s);
   const { go } = useShell();
   return (
     <div className="space-y-3 min-w-0" data-testid="money-view">
-      <Pots s={s} v={v} />
+      <section className="space-y-2 min-w-0" data-testid="money-head">
+        <BigPots s={s} />
+        {v.waiting > 0 && <p className="text-[11px] text-amber-300">An envelope of {fmt$(v.waiting)} is on your desk: it is split at your cut when you advance.</p>}
+        <MoveMoney s={s} />
+      </section>
       {v.week === undefined ? (
-        <p className="text-sm text-stone-400">The money starts moving when you advance the first week. Everything is collected on its own.</p>
+        <>
+          <p className="text-sm text-stone-400">The money starts moving when you advance the first week. Everything is collected on its own.</p>
+          <Levers s={s} />
+        </>
       ) : (
         <>
-          <WeekFlow v={v} onGo={go} />
-          {v.leak && <LeakCard s={s} v={v} />}
-          <div className="grid gap-3 md:grid-cols-2">
-            <Chart v={v} />
-            <TopEarners v={v} onGo={go} />
-          </div>
+          <WeekFlow s={s} v={v} onGo={go} />
+          <Chart v={v} />
+          <TopEarners v={v} onGo={go} />
           <details className="rounded-md border border-noir-700 bg-noir-800/30 min-w-0" data-testid="money-lines">
-            <summary className="cursor-pointer px-3 py-2 text-[12px] text-stone-300 hover:text-gold-300">Every line, week {v.week}</summary>
+            <summary className="cursor-pointer px-3 py-2 text-[12px] text-stone-300 hover:text-gold-300">Every line of week {v.week}</summary>
             <div className="px-3 pb-3"><Flow v={v} onGo={go} /></div>
           </details>
         </>
       )}
-      <Levers s={s} />
     </div>
   );
 }
 
-function Delta({ d }: { d?: number }) {
-  if (d === undefined || d === 0) return null;
-  return <span className={`text-xs tabular-nums ${d > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{d > 0 ? '+' : '−'}{fmt$(Math.abs(d))} last week</span>;
-}
+/** The Money screen as a section component (for a "Money" home). */
+export const MoneySection = MoneyView;
 
-function Pots({ s, v }: { s: GameState; v: MV }) {
-  return (
-    <div className="grid grid-cols-2 gap-2" data-testid="money-pots">
-      <div className="rounded-md border border-gold-600/50 bg-noir-800/70 px-3 py-2 min-w-0">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-gold-400/80">The Family</div>
-        <div className={`font-display text-xl sm:text-2xl tabular-nums ${v.family < 0 ? 'text-red-400' : 'text-gold-300'}`} data-testid="money-family">{fmt$(v.family)}</div>
-        <Delta d={v.week !== undefined ? v.familyDelta : undefined} />
-        <div className="text-[10px] text-stone-500 leading-snug">Wages, Philadelphia, the places, the pad.{v.setAside > 0 ? ` ${fmt$(v.setAside)} of it set aside for lawyers & emergencies.` : ''}</div>
-      </div>
-      <div className="rounded-md border border-amber-600/40 bg-noir-800/70 px-3 py-2 min-w-0">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-amber-300/80">Your Pocket</div>
-        <div className="font-display text-xl sm:text-2xl tabular-nums text-amber-200" data-testid="money-pocket">{fmt$(v.pocket)}</div>
-        <Delta d={v.week !== undefined ? v.pocketDelta : undefined} />
-        <div className="text-[10px] text-stone-500 leading-snug">Your cut ({v.cutPct}%) every week. The Good Life, gifts, your household, your own lawyers.</div>
-      </div>
-      {v.waiting > 0 && <div className="col-span-2 text-[11px] text-amber-300">An envelope of {fmt$(v.waiting)} is on your desk: it goes in at your cut when you advance{s.tribute?.policy.auto === false ? '' : ' (or answer the underboss)'}.</div>}
-    </div>
-  );
-}
+const sgn = (n: number) => `${n >= 0 ? '+' : '−'}${fmt$(Math.abs(n))}`;
 
 /** One horizontal bar row, scaled to the week's biggest row. */
 function Bar({ r, max, tone, onGo, testid }: { r: FlowRow; max: number; tone: 'in' | 'out'; onGo: (to: string) => void; testid?: string }) {
@@ -72,7 +60,7 @@ function Bar({ r, max, tone, onGo, testid }: { r: FlowRow; max: number; tone: 'i
     <li className="min-w-0" data-testid={testid}>
       <button type="button" className="block w-full text-left group" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
         <div className="flex items-baseline justify-between gap-2 text-[12px]">
-          <span className="truncate text-stone-300 group-hover:text-gold-300">{r.label}{r.pot === 'pocket' ? <span className="text-amber-300/80"> · Pocket</span> : r.pot === 'both' ? <span className="text-stone-500"> · both</span> : ''}</span>
+          <span className="truncate text-stone-300 group-hover:text-gold-300">{r.label}{r.pot === 'pocket' ? <span className="text-amber-300/80"> · your pocket</span> : r.pot === 'both' ? <span className="text-stone-500"> · both</span> : ''}</span>
           <span className={`tabular-nums font-semibold ${tone === 'in' ? 'text-emerald-300' : 'text-red-300'}`}>{tone === 'in' ? '+' : '−'}{fmt$(r.amount)}</span>
         </div>
         <div className="mt-0.5 h-2.5 rounded-sm bg-noir-900 border border-noir-700 overflow-hidden">
@@ -97,7 +85,7 @@ function Flow({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
   return (
     <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid="money-flow">
       <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">Last week, week {v.week}</div>
+        <div className="panel-title">Every line, week {v.week}</div>
         <span className="text-[10px] text-stone-500">tap a bar for every line</span>
       </div>
       <div className="mt-2 grid gap-3 md:grid-cols-[1fr_1fr]">
@@ -115,7 +103,7 @@ function Flow({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 border-t border-noir-700 pt-2">
         <span className="text-sm text-stone-300">Net</span>
         <span className={`font-display text-lg tabular-nums ${v.net >= 0 ? 'text-emerald-300' : 'text-red-300'}`} data-testid="money-net">{v.net >= 0 ? '+' : '−'}{fmt$(Math.abs(v.net))}</span>
-        <span className="w-full text-[10px] text-stone-500 tabular-nums">= the Family {v.familyDelta >= 0 ? '+' : '−'}{fmt$(Math.abs(v.familyDelta))} and your Pocket {v.pocketDelta >= 0 ? '+' : '−'}{fmt$(Math.abs(v.pocketDelta))}. Money moved between the two is not counted twice.</span>
+        <span className="w-full text-[10px] text-stone-500 tabular-nums">= the Family {v.familyDelta >= 0 ? '+' : '−'}{fmt$(Math.abs(v.familyDelta))} and your pocket {v.pocketDelta >= 0 ? '+' : '−'}{fmt$(Math.abs(v.pocketDelta))}. Money moved between the two is not counted twice.</span>
       </div>
     </section>
   );
@@ -148,41 +136,47 @@ function Stack({ items, tones, total, onGo, testid }: { items: FlowStage[]; tone
   );
 }
 
-/** This week's money as one flow: where it came from → your cut → the two pots → where it went → net. */
-function WeekFlow({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
+/** Last week in plain words: where it came from → your cut → where it went → what each pot gained. */
+function WeekFlow({ s, v, onGo }: { s: GameState; v: MV; onGo: (to: string) => void }) {
   const potTotal = Math.max(1, v.famIn + v.pocketIn);
   const famPct = Math.round((v.famIn / potTotal) * 100);
   return (
     <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0 space-y-2" data-testid="money-weekflow">
       <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">This week's money · week {v.week}</div>
-        <span className="text-[10px] text-stone-500">all collected on its own</span>
+        <div className="panel-title">Last week (week {v.week})</div>
+        <span className="text-[10px] text-stone-500">collected on its own</span>
       </div>
       <div>
-        <div className="flex justify-between text-[10px] uppercase tracking-widest text-emerald-400/80"><span>Came in</span><span className="tabular-nums" data-testid="money-flow-in">{fmt$(v.inTotal)}</span></div>
+        <div className="flex justify-between text-[11px] font-semibold text-emerald-300"><span>1. Came in</span><span className="tabular-nums" data-testid="money-flow-in">{fmt$(v.inTotal)}</span></div>
         {v.sources.length ? <Stack items={v.sources} tones={SOURCE_TONE} total={v.inTotal} onGo={onGo} testid="money-sources" /> : <p className="text-[11px] text-stone-500">Nothing came in.</p>}
       </div>
-      <div className="text-center text-[11px] text-stone-400" aria-hidden>↓ your cut {v.cutPct}% ↓</div>
-      <div className="flex gap-[2px] min-w-0" data-testid="money-split">
-        <div className="min-w-0 rounded-l-sm border border-gold-600/50 bg-gold-500/15 px-2 py-1" style={{ flexGrow: Math.max(25, famPct), flexBasis: 0 }}>
-          <div className="text-[10px] uppercase tracking-widest text-gold-400/80 truncate">The Family</div>
-          <div className="tabular-nums text-sm font-semibold text-gold-300" data-testid="money-fam-in">+{fmt$(v.famIn)}</div>
-        </div>
-        <div className="min-w-0 rounded-r-sm border border-amber-600/40 bg-amber-500/10 px-2 py-1" style={{ flexGrow: Math.max(25, 100 - famPct), flexBasis: 0 }}>
-          <div className="text-[10px] uppercase tracking-widest text-amber-300/80 truncate">Your Pocket</div>
-          <div className="tabular-nums text-sm font-semibold text-amber-200" data-testid="money-pocket-in">+{fmt$(v.pocketIn)}</div>
-        </div>
-      </div>
-      <div className="text-center text-[11px] text-stone-400" aria-hidden>↓</div>
       <div>
-        <div className="flex justify-between text-[10px] uppercase tracking-widest text-red-400/80"><span>Went out</span><span className="tabular-nums" data-testid="money-flow-out">{fmt$(v.outTotal)}</span></div>
+        <div className="text-[11px] font-semibold text-amber-200">2. Split into the two pots (your cut is {v.cutPct}% of the envelope)</div>
+        <div className="mt-1 flex gap-[2px] min-w-0" data-testid="money-split">
+          <div className="min-w-0 rounded-l-sm border border-gold-600/50 bg-gold-500/15 px-2 py-1" style={{ flexGrow: Math.max(25, famPct), flexBasis: 0 }}>
+            <div className="text-[10px] text-gold-400 truncate">Family money</div>
+            <div className="tabular-nums text-sm font-semibold text-gold-300" data-testid="money-fam-in">+{fmt$(v.famIn)}</div>
+          </div>
+          <div className="min-w-0 rounded-r-sm border border-amber-600/40 bg-amber-500/10 px-2 py-1" style={{ flexGrow: Math.max(25, 100 - famPct), flexBasis: 0 }}>
+            <div className="text-[10px] text-amber-300 truncate">Your pocket</div>
+            <div className="tabular-nums text-sm font-semibold text-amber-200" data-testid="money-pocket-in">+{fmt$(v.pocketIn)}</div>
+          </div>
+        </div>
+        <Levers s={s} />
+      </div>
+      <div>
+        <div className="flex justify-between text-[11px] font-semibold text-red-300"><span>3. Went out</span><span className="tabular-nums" data-testid="money-flow-out">{fmt$(v.outTotal)}</span></div>
         {v.uses.length ? <Stack items={v.uses} tones={USE_TONE} total={v.outTotal} onGo={onGo} testid="money-uses" /> : <p className="text-[11px] text-stone-500">Nothing went out.</p>}
-        <div className="mt-1 text-[10px] text-stone-500 tabular-nums">The Family paid {fmt$(v.famOut)}; your Pocket paid {fmt$(v.pocketOut)}.</div>
+        <div className="mt-1 text-[11px] text-stone-400 tabular-nums">The Family paid {fmt$(v.famOut)}; your pocket paid {fmt$(v.pocketOut)}.</div>
       </div>
-      <div className="flex flex-wrap items-baseline justify-between gap-2 border-t border-noir-700 pt-2">
-        <span className="text-sm text-stone-300">Net this week</span>
-        <span className={`font-display text-xl tabular-nums ${v.net >= 0 ? 'text-emerald-300' : 'text-red-300'}`} data-testid="money-flow-net">{v.net >= 0 ? '+' : '−'}{fmt$(Math.abs(v.net))}</span>
+      <div className="border-t border-noir-700 pt-2" data-testid="money-flow-net">
+        <div className="text-[11px] font-semibold text-stone-200">4. What each pot gained</div>
+        <div className="mt-0.5 grid grid-cols-2 gap-2 tabular-nums">
+          <span className={`font-display text-lg ${v.familyDelta >= 0 ? 'text-emerald-300' : 'text-red-300'}`} data-testid="money-net-family">{sgn(v.familyDelta)} <span className="text-[11px] font-sans text-stone-400">Family</span></span>
+          <span className={`font-display text-lg ${v.pocketDelta >= 0 ? 'text-emerald-300' : 'text-red-300'}`} data-testid="money-net-pocket">{sgn(v.pocketDelta)} <span className="text-[11px] font-sans text-stone-400">your pocket</span></span>
+        </div>
       </div>
+      {v.leak && <LeakCard s={s} v={v} />}
     </section>
   );
 }
@@ -191,8 +185,8 @@ function LeakCard({ s, v }: { s: GameState; v: MV }) {
   const { go } = useShell();
   const l = v.leak!;
   return (
-    <section className="rounded-md border border-blood-400/60 bg-blood-400/5 p-3 min-w-0" data-testid="money-leak">
-      <div className="text-[10px] uppercase tracking-widest text-red-300/90">The biggest leak</div>
+    <div className="rounded-md border border-blood-400/60 bg-blood-400/5 p-2 min-w-0" data-testid="money-leak">
+      <div className="text-[10px] uppercase tracking-widest text-red-300/90">Where money leaks</div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className="text-sm text-stone-200">{l.label}</span>
         <span className="tabular-nums text-red-300 font-semibold">−{fmt$(l.amount)}</span>
@@ -201,7 +195,7 @@ function LeakCard({ s, v }: { s: GameState; v: MV }) {
       <div className="mt-1.5">
         {l.action ? <ActionCard s={s} action={l.action} compact label={l.fix} /> : l.route ? <button type="button" className="btn-gold text-xs" onClick={() => go(l.route!)} data-testid="money-leak-fix">{l.fix} ▸</button> : <span className="text-[11px] text-gold-300">{l.fix}</span>}
       </div>
-    </section>
+    </div>
   );
 }
 
@@ -244,7 +238,7 @@ function Chart({ v }: { v: MV }) {
         <span className="text-stone-300"><span className="text-emerald-400">━</span> In {fmt$(at.in!)}</span>
         <span className="text-stone-300"><span className="text-red-400">┅</span> Out {fmt$(at.out!)}</span>
         <span className={at.in! - at.out! >= 0 ? 'text-emerald-300' : 'text-red-300'}>Net {at.in! - at.out! >= 0 ? '+' : '−'}{fmt$(Math.abs(at.in! - at.out!))}</span>
-        <span className="w-full text-stone-500">Week {at.week}: the Family {fmt$(at.family)} · your Pocket {fmt$(at.pocket)}</span>
+        <span className="w-full text-stone-500">Week {at.week}: Family money {fmt$(at.family)} · your pocket {fmt$(at.pocket)}</span>
       </div>
     </section>
   );
@@ -255,7 +249,7 @@ function TopEarners({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
   return (
     <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid="money-top">
       <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">Top earners</div>
+        <div className="panel-title">Who earned it</div>
         <button type="button" className="text-[11px] text-gold-300 hover:underline" onClick={() => onGo('borgata.earnings')} data-testid="money-earnings-link">The Family's Earnings ▸</button>
       </div>
       <ol className="mt-1.5 space-y-1">
@@ -271,10 +265,10 @@ function TopEarners({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
   );
 }
 
-/** Your cut (the one split control), the optional set-aside, and the one lever. */
+/** Your cut (the one split control), the optional lawyers & emergencies line, and the one lever. */
 function Levers({ s }: { s: GameState }) {
   const { orders, queue } = useOrders();
-  const pol = s.tribute?.policy ?? { personal: 2500, treasury: 7500, reserve: 0, auto: true };
+  const pol = s.tribute?.policy ?? { personal: 4000, treasury: 6000, reserve: 0, auto: true };
   const queued = [...orders].reverse().find((o) => o.kind === 'tribute' && o.op.op === 'policy' && o.op.split);
   const cur = queued && queued.kind === 'tribute' && queued.op.op === 'policy' && queued.op.split ? queued.op.split : pol;
   const [cut, setCut] = useState(Math.round(cur.personal / 100));
@@ -284,33 +278,32 @@ function Levers({ s }: { s: GameState }) {
   const env = s.tribute?.reports[s.tribute.reports.length - 1]?.presented ?? 0;
   const sq = squeezeWhy(s);
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0 space-y-3" data-testid="money-levers">
+    <div className="mt-2 rounded-md border border-noir-700 bg-noir-900/40 p-2 min-w-0 space-y-2" data-testid="money-levers">
       <div>
         <div className="flex items-baseline justify-between gap-2">
-          <div className="panel-title">Your cut</div>
+          <span className="text-[12px] text-stone-200">Your cut of every envelope</span>
           <span className="font-display text-lg text-amber-200 tabular-nums" data-testid="money-cut">{cut}%</span>
         </div>
         <input type="range" min={0} max={60} step={5} value={cut} onChange={(e) => setCut(Number(e.target.value))} className="w-full accent-amber-400" aria-label="Your cut of the envelope, percent" data-testid="money-cut-slider" />
-        <p className="text-[11px] text-stone-400">Every week the underboss's envelope is split on its own: <b className="text-amber-200">{cut}%</b> to your Pocket, the rest to the Family{env ? <> (last week's {fmt$(env)}: <span className="tabular-nums">{fmt$(Math.floor((env * cut) / 100))} / {fmt$(env - Math.floor((env * cut) / 100))}</span>)</> : ''}. No meeting needed; he only asks to see you when something is wrong.</p>
+        <p className="text-[11px] text-stone-400">{cut}% goes to your pocket, the rest to the Family{env ? <> (last envelope {fmt$(env)}: <span className="tabular-nums">{fmt$(Math.floor((env * cut) / 100))} to you, {fmt$(env - Math.floor((env * cut) / 100))} to the Family</span>)</> : ''}. {cut > 50 ? <span className="text-red-300">Over 50% the capos start keeping a little more for themselves.</span> : 'Up to 50% the capos accept it.'}</p>
         {!showAside ? (
-          <button type="button" className="mt-1 text-[11px] text-stone-400 hover:text-gold-300" onClick={() => setShowAside(true)} data-testid="money-aside-open">+ Set some aside for lawyers & emergencies</button>
+          <button type="button" className="mt-1 text-[11px] text-stone-400 hover:text-gold-300" onClick={() => setShowAside(true)} data-testid="money-aside-open">+ Keep some of the Family's share for lawyers & emergencies</button>
         ) : (
           <div className="mt-1.5">
-            <div className="flex justify-between text-[11px] text-stone-400"><span>Set aside inside the Family (covers a dry week)</span><span className="tabular-nums text-stone-200">{aside}%</span></div>
-            <input type="range" min={0} max={20} step={5} value={aside} onChange={(e) => setAside(Number(e.target.value))} className="w-full accent-emerald-500" aria-label="Set aside, percent" data-testid="money-aside-slider" />
+            <div className="flex justify-between text-[11px] text-stone-400"><span>Kept for lawyers & emergencies (still Family money; it covers a dry week)</span><span className="tabular-nums text-stone-200">{aside}%</span></div>
+            <input type="range" min={0} max={20} step={5} value={aside} onChange={(e) => setAside(Number(e.target.value))} className="w-full accent-emerald-500" aria-label="Kept for lawyers and emergencies, percent" data-testid="money-aside-slider" />
           </div>
         )}
         <button type="button" className="btn-gold text-xs mt-1" disabled={!changed} data-testid="money-cut-apply"
           onClick={() => queue({ kind: 'tribute', op: { op: 'policy', split: normSplit({ personal: cut * 100, reserve: aside * 100 }) } })}>
-          {changed ? `Make it ${cut}%${aside ? ` (+${aside}% set aside)` : ''} from this week` : queued ? 'Changes when you advance' : 'Your cut stands'}
+          {changed ? `Make it ${cut}%${aside ? ` (+${aside}% kept for emergencies)` : ''} from next week` : queued ? 'Changes when you advance' : 'Your cut stands'}
         </button>
       </div>
       <div className="border-t border-noir-700 pt-2">
-        <div className="panel-title">Everything comes in on its own</div>
-        <p className="text-[11px] text-stone-400">Rackets, places, kick-ups, rents and the vig are collected every week without you. The family's reach pays: {heldDistricts(s)} district{heldDistricts(s) === 1 ? '' : 's'} held (corners pay ×{territoryMult(s).toFixed(2)}), rackets feed each other (×{racketNetMult(s).toFixed(2)}).</p>
+        <p className="text-[11px] text-stone-400">Need more this week? Rackets, places, kick-ups, rents and loan interest come in on their own. You hold {heldDistricts(s)} district{heldDistricts(s) === 1 ? '' : 's'} (corners pay ×{territoryMult(s).toFixed(2)}); your rackets feed each other (×{racketNetMult(s).toFixed(2)}).</p>
         <div className="mt-1.5"><ActionCard s={s} action={{ kind: 'tribute', op: { op: 'squeeze' } }} compact /></div>
         {sq && <p className="text-[10px] text-stone-500 mt-0.5">{sq}.</p>}
       </div>
-    </section>
+    </div>
   );
 }

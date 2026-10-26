@@ -168,7 +168,7 @@ export function DealWindow({ s, target, onClose }: { s: GameState; target: DealT
               <Figure label="Asking" value={fmt$(v.asking)} />
               <Figure label="Agreed" value={fmt$(v.agreed)} tone={v.agreed < v.asking ? 'good' : v.agreed > v.asking ? 'bad' : undefined} />
               <Figure label="You pay" value={fmt$(v.price)} tone={v.price < v.asking ? 'good' : v.price > v.asking ? 'bad' : undefined} />
-              <Figure label="Treasury" value={fmt$(s.money)} tone={s.money < v.price ? 'bad' : undefined} />
+              <Figure label="Family money" value={fmt$(s.money)} tone={s.money < v.price ? 'bad' : undefined} />
             </div>
             {v.rounds.map((r, i) => (
               <div key={i} className={`rounded border px-3 py-2 text-sm ${r.ok ? 'border-emerald-700/60 bg-emerald-900/20' : 'border-blood-500/60 bg-blood-900/20'}`} data-testid="haggle-round">
