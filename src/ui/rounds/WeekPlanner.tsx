@@ -57,7 +57,7 @@ export function RoundButton({ s, r, on, block, onPick, showReading }: { s: GameS
         {r.suggestedBy && <span className="block text-[10px] text-amber-300">{r.suggestedBy}</span>}
         <span className="block text-[10px] leading-snug text-stone-500">{r.text}</span>
         {r.decline && <span className="block text-[10px] text-stone-400">She decides. If she says no, you pay only the Madam's fee.</span>}
-        {r.risk && <span className="block text-[10px] text-red-300/80">Risk {Math.round(r.risk.chance * 100)}%: {r.risk.text.toLowerCase()}</span>}
+        {r.risk && <span className="block text-[10px] text-red-300/80">Risk {Math.round(r.risk.chance * 100)}%: {r.risk.text}</span>}
         {block && !on && <span className="block text-[10px] text-stone-500">{block}</span>}
       </button>
       {showReading && r.reading && (

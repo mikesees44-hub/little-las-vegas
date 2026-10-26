@@ -10,14 +10,14 @@ import { LANE_GLYPH, RoundButton, type Update } from './WeekPlanner';
 /** One evening that just happened: the clock's short report scene (non-explicit; report only). */
 export interface EveningCue { week: number; day: number; roundId: string }
 
-export function EveningScene({ s, cue, onClose, onMore }: { s: GameState; cue: EveningCue; onClose: () => void; onMore?: () => void }) {
+export function EveningScene({ s, cue, onClose, onMore, older }: { s: GameState; cue: EveningCue; onClose: () => void; onMore?: () => void; /** An earlier scene still showing (phones show only the latest). */ older?: boolean }) {
   const r = useMemo(() => roundOptions(s).find((x) => x.id === cue.roundId), [s, cue.roundId]);
   if (!r || cue.week !== s.week) return null;
   const out = roundOutcome(s, r);
   const reading = r.reading === 'lawyer' ? lawyerReading(s).lines : r.reading === 'doctor' ? doctorReading(s).lines : undefined;
   const paid = r.action ? undefined : out.declined ? Math.round(r.cost / 3) : r.cost;
   return (
-    <div className="pointer-events-auto w-[min(360px,calc(100vw-1rem))] rounded-lg border border-gold-600/60 bg-noir-900/[0.97] p-3 shadow-2xl shadow-black/80 llv-slide-right" data-testid="evening-scene" role="status">
+    <div className={`pointer-events-auto w-[min(360px,calc(100vw-1rem))] ${older ? 'hidden md:block' : ''} rounded-lg border border-gold-600/60 bg-noir-900/[0.97] p-3 shadow-2xl shadow-black/80 llv-slide-right`} data-testid="evening-scene" role="status">
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{DAY_NAMES[cue.day]} evening</div>
@@ -64,9 +64,15 @@ export function PersonalActions({ s, update, onWeek }: { s: GameState; update: U
   const opts = useMemo(() => roundOptions(s), [s]);
   const plan = weekPlan(s);
   const d = daysOf(s);
-  const mine: Round[] = opts.filter((o) => MINE.includes(o.id) || o.lane === 'fun').sort((a, b) => MINE.indexOf(b.id) - MINE.indexOf(a.id)).sort((a, b) => (MINE.includes(a.id) ? 0 : 1) - (MINE.includes(b.id) ? 0 : 1));
+  const rank = (id: string) => (MINE.includes(id) ? MINE.indexOf(id) : 100);
+  const mine: Round[] = opts.filter((o) => MINE.includes(o.id) || o.lane === 'fun').sort((a, b) => rank(a.id) - rank(b.id));
   const nextFree = (id: string) => {
     for (let day = d.day; day < 7; day++) if (!plan[day] && !dayBlock(s, day, id)) return day;
+    return undefined;
+  };
+  /** Every evening taken: the latest one still ahead gives way (never Sunday dinner). */
+  const giveWay = (id: string) => {
+    for (let day = 6; day >= d.day; day--) if (plan[day] && plan[day] !== 'fam:sunday' && !dayBlock(s, day, id)) return day;
     return undefined;
   };
   return (
@@ -78,12 +84,15 @@ export function PersonalActions({ s, update, onWeek }: { s: GameState; update: U
       <div className="grid gap-1.5 sm:grid-cols-2">
         {mine.slice(0, 8).map((r) => {
           const on = plan.indexOf(r.id);
-          const free = on < 0 ? nextFree(r.id) : undefined;
+          const open = on < 0 ? nextFree(r.id) : undefined;
+          const swap = on < 0 && open === undefined ? giveWay(r.id) : undefined;
+          const free = open ?? swap;
+          const instead = swap !== undefined ? opts.find((o) => o.id === plan[swap])?.label : undefined;
           return (
             <div key={r.id}>
               <RoundButton s={s} r={r} on={on >= 0} showReading block={on < 0 && free === undefined ? 'No free evening left this week' : undefined}
                 onPick={() => update((x) => (on >= 0 ? (on >= d.day ? setEvening(x, on, null) : x) : free !== undefined ? setEvening(x, free, r.id) : x))} />
-              <div className="px-1 text-[10px] text-stone-500" data-testid={`booked-${r.id}`}>{on >= 0 ? `Booked: ${DAY_NAMES[on]} evening${on >= d.day ? ' (tap to cancel)' : ''}` : free !== undefined ? `Tap to book ${DAY_NAMES[free]} evening` : ''}</div>
+              <div className="px-1 text-[10px] text-stone-500" data-testid={`booked-${r.id}`}>{on >= 0 ? `Booked: ${DAY_NAMES[on]} evening${on >= d.day ? ' (tap to cancel)' : ''}` : free !== undefined ? `Tap to book ${DAY_NAMES[free]} evening${instead ? ` instead of ${instead}` : ''}` : ''}</div>
             </div>
           );
         })}

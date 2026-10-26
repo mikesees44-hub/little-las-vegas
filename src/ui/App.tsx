@@ -425,6 +425,8 @@ export function App({ startOn = 'title' }: AppProps) {
       if (e.code === 'Space') {
         if (timeMode() !== 'clock') return;
         e.preventDefault();
+        // A focused button would click on the key's release and undo the toggle.
+        (document.activeElement as HTMLElement | null)?.blur?.();
         setSpeed((v) => (v === 0 ? 2 : 0));
         setClockNote(undefined);
         return;
@@ -519,14 +521,14 @@ export function App({ startOn = 'title' }: AppProps) {
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
             {clockMode && !s.gameOver && !home && (
-              <div className="pointer-events-none absolute left-1/2 top-2 z-[1001] flex max-w-[calc(100%-1rem)] -translate-x-1/2 justify-center">
+              <div className="pointer-events-none absolute left-2 right-[120px] bottom-12 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex md:max-w-[calc(100%-330px)]">
                 <TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} />
               </div>
             )}
             {evenings.length > 0 && (
-              <div className="pointer-events-none absolute bottom-14 md:bottom-3 right-2 z-[1130] flex flex-col items-end gap-2">
-                {evenings.map((e) => (
-                  <EveningScene key={`${e.cue.week}:${e.cue.day}`} s={e.s} cue={e.cue} onClose={() => setEvenings((x) => x.filter((y) => y !== e))}
+              <div className="pointer-events-none absolute bottom-24 md:bottom-14 right-2 z-[1130] flex flex-col items-end gap-2">
+                {evenings.map((e, i) => (
+                  <EveningScene key={`${e.cue.week}:${e.cue.day}`} s={e.s} cue={e.cue} older={i < evenings.length - 1} onClose={() => setEvenings((x) => x.filter((y) => y !== e))}
                     onMore={() => { setEvenings([]); setRoute({ home: 'week' }); }} />
                 ))}
               </div>

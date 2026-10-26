@@ -316,8 +316,8 @@ export function roundsWeek(ctx: Ctx, picked: string[] | undefined, opts: Round[]
     const fx = out.declined ? r.decline!.effects : r.effects;
     if (fx.length) applyEffects(ctx, fx, { label: r.label, because, category: 'event' });
     if (out.risked && r.risk) {
-      if (r.risk.effects.length) applyEffects(ctx, r.risk.effects, { label: `${r.label}: ${r.risk.text.toLowerCase()}`, because: r.risk.text.toLowerCase(), category: 'event' });
-      if (r.risk.pocket) payFromPersonal(ctx, r.risk.pocket, `${r.label}: ${r.risk.text.toLowerCase()}`, `round:${r.id}:risk`);
+      if (r.risk.effects.length) applyEffects(ctx, r.risk.effects, { label: `${r.label}: ${r.risk.text}`, because: r.risk.text, category: 'event' });
+      if (r.risk.pocket) payFromPersonal(ctx, r.risk.pocket, `${r.label}: ${r.risk.text}`, `round:${r.id}:risk`);
     }
     lines.push(out.line);
     R.last[r.lane] = s.week;
