@@ -106,6 +106,8 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   }, [escEnabled, onClose]);
   useEffect(() => { body.current?.scrollTo?.({ top: 0 }); }, [home, key]);
   const isFresh = (it: NavItem) => it.keys.some((k) => fresh?.has(k));
+  // The places to switch between: the whole home when it is short, else the open place's group.
+  const tabs = !cur ? [] : items.length <= 6 ? items : groups.find((g) => g.items.includes(cur))?.items ?? items;
   const sec = key ? sectionDef(key) : undefined;
   return (
     <section className={`absolute inset-y-0 left-0 z-[1100] flex w-full ${cur?.wide ? 'md:w-[min(1080px,calc(100%-24px))]' : 'md:w-[min(680px,calc(100%-24px))]'} flex-col border-r border-gold-600/30 bg-noir-900/[0.97] shadow-2xl shadow-black/70 llv-slide-left`} data-testid={`drawer-${home}`} aria-label={def.label}>
@@ -125,9 +127,9 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
         </h2>
         <button type="button" className="ml-auto h-8 w-8 shrink-0 rounded border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300" onClick={onClose} aria-label="Close" data-testid="drawer-close">×</button>
       </header>
-      {cur && items.length > 1 && (
+      {cur && tabs.length > 1 && (
         <nav className="flex gap-0.5 overflow-x-auto border-b border-noir-700 px-2 tabbar" data-testid="subtabs" aria-label={`${def.label}: places`}>
-          {items.map((x) => (
+          {tabs.map((x) => (
             <button key={x.id} type="button" data-tab={x.id} data-testid={`nav-tab-${x.id}`} onClick={() => onOpen(x.id)} aria-current={x === cur ? 'page' : undefined}
               className={`relative tab whitespace-nowrap text-xs px-2.5 py-2 ${x === cur ? 'tab-active' : ''}`}>
               <span className="mr-1 text-gold-500/80">{glyph(x.icon)}</span>{x.label}

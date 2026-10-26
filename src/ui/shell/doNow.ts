@@ -55,7 +55,8 @@ const KIND_HOME: Partial<Record<AlertKind, HomeId>> = {
 function oppHome(o: Opportunity): HomeId | undefined {
   if (/^heat:|^evidence$|^stress$|^lifestyle$|^perk$/.test(o.id)) return 'you';
   if (/^unwashed$|^broke$|^cut-|^lend$/.test(o.id)) return 'money';
-  if (/^idle$|^racket$|^staff$|^goal:/.test(o.id)) return 'biz';
+  if (/^goal:/.test(o.id)) return 'week';
+  if (/^idle$|^racket$|^staff$/.test(o.id)) return 'biz';
   if (/^plot$|^unhappy:|^drift:|^pressure:|^heir$|^books$|^bones$/.test(o.id)) return 'family';
   if (/^dispute:|^official$/.test(o.id)) return 'town';
   if (o.link.role?.kind === 'capo' || o.link.role?.kind === 'seat') return 'family';
