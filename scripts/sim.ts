@@ -267,6 +267,8 @@ interface GameResult {
   /** The family treasury alone (s.money), and the Don's own money, at each Memorial Day. */
   treasuryOnly?: number[];
   personalByYear?: number[];
+  /** Money pace (money.ts redo): house-cash change per week, summed by window; the boss's cut in year 1. */
+  pace?: { early: number[]; summer: number[]; winter: number[]; y3: number[]; cutY1: number; y1Weeks: number };
   /** Weeks the treasury itself was in the red (the reserve and the Don's own money not counted). */
   treasuryRed?: number;
   tribute?: Record<string, number>;
@@ -307,6 +309,7 @@ function playOne(gi: number): GameResult {
   }
   r.popupsPerWeek.push(s.pendingEvents.length);
   let consecutiveRed = 0;
+  let prevCash = houseCash(s);
   r.careless = isCareless(gi, CARELESS);
   const budget = r.careless ? undefined : newBudget(`${SEED}-${gi}`, s.money);
   for (let w = 0; w < WEEKS; w++) {
@@ -372,6 +375,20 @@ function playOne(gi: number): GameResult {
       }
     }
     const cash = houseCash(s);
+    {
+      const pc = (r.pace ??= { early: [], summer: [], winter: [], y3: [], cutY1: 0, y1Weeks: 0 });
+      const d = cash - prevCash;
+      const wk = s.week - 1;
+      if (wk <= 13) pc.early.push(d);
+      if (wk > 52 && wk <= 66) pc.summer.push(d);
+      if (wk > 66 && wk <= 104) pc.winter.push(d);
+      if (wk > 104 && wk <= 156) pc.y3.push(d);
+      if (wk <= 52) {
+        pc.y1Weeks++;
+        for (const rp of s.tribute?.reports ?? []) if (rp.alloc && rp.alloc.week === res.report.week) pc.cutY1 += rp.alloc.personal;
+      }
+    }
+    prevCash = cash;
     if (s.money < 0) r.treasuryRed = (r.treasuryRed ?? 0) + 1;
     if (cash < 0) {
       r.everNegative = true;
@@ -512,6 +529,11 @@ if (CARELESS > 0 && CARELESS < 1) {
     const keys = Object.keys(tg[0].tribute!);
     console.log(`  Weekly take per game (mean): ${keys.map((k) => `${k} ${(tg.reduce((a, r) => a + (r.tribute![k] ?? 0), 0) / tg.length).toFixed(1)}`).join(', ')}`);
   }
+}
+{
+  const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
+  const med = (f: (p: NonNullable<GameResult['pace']>) => number) => money(quantile(results.filter((r) => r.pace).map((r) => f(r.pace!)).filter((x) => Number.isFinite(x)), 0.5));
+  console.log(`  Money pace (median of per-game mean weekly house-cash change): first summer (wk 1-13) ${med((p) => avg(p.early))}, 2nd summer ${med((p) => avg(p.summer))}, 2nd winter ${med((p) => avg(p.winter))}, year 3 ${med((p) => avg(p.y3))}; the boss's weekly cut in year 1 ${med((p) => p.cutY1 / Math.max(1, p.y1Weeks))}`);
 }
 console.log(`  Final respect (median):     ${quantile(results.map((r) => r.finalRespect), 0.5)}`);
 console.log(`  Businesses at the end (median): ${quantile(results.map((r) => r.finalBusinesses), 0.5)}   peak unwashed cash (median): ${money(quantile(results.map((r) => r.peakUnwashed), 0.5))}`);

@@ -415,12 +415,20 @@ export interface TributeState {
   ubHist?: import('./underboss').UbRecord[];
   /** Money grievances opened by the take (ids in the power layer's grievance list). */
   moneyGrievances?: string[];
+  /** 2 = the two-pot money model (the reserve folded into the Family). Older saves lack it until money.ts migrates them. */
+  pots?: 2;
+  /** The week the boss ordered "Squeeze harder this week" (one global lever, money.ts). */
+  squeeze?: number;
   /** Short history of who was short, by man (week list). */
   shortHist: Record<string, number[]>;
   stats: { audiences: number; quiet: number; shortfalls: number; disputes: number; grievances: number; petitions: number; granted: number; audits: number; caught: number; covers: number; crises: number; insolvencies: number; disagreements: number };
 }
 
-export const DEFAULT_POLICY: Split & { auto: boolean } = { personal: 1500, treasury: 7500, reserve: 1000, auto: true };
+/**
+ * Two pots (money.ts): the Family (the treasury, with an optional "set aside" line — the old reserve) and
+ * Your Pocket (personal). The envelope split is one control, your cut; set-aside starts at 0%.
+ */
+export const DEFAULT_POLICY: Split & { auto: boolean } = { personal: 2500, treasury: 7500, reserve: 0, auto: true };
 
 export function ensureTribute(s: GameState): TributeState {
   const fresh = (): TributeState => ({
@@ -432,7 +440,8 @@ export function ensureTribute(s: GameState): TributeState {
       lastCollect: 0, lastAlloc: 0, rivals: {}, shortHist: {}, purse: {}, life: {}, moneyGrievances: [],
       stats: { audiences: 0, quiet: 0, shortfalls: 0, disputes: 0, grievances: 0, petitions: 0, granted: 0, audits: 0, caught: 0, covers: 0, crises: 0, insolvencies: 0, disagreements: 0 },
     });
-  if (!s.tribute) { s.tribute = fresh(); return s.tribute; }
+  // A new game starts on the two pots; an older save is moved over by money.ts (twoPots) inside its next week.
+  if (!s.tribute) { s.tribute = { ...fresh(), pots: 2 }; return s.tribute; }
   // Save migration: a save from an older build gets whatever fields it lacks (never overwriting what it has).
   const t = s.tribute as unknown as Record<string, unknown>;
   const d = fresh() as unknown as Record<string, unknown>;
@@ -475,7 +484,17 @@ export function normSplit(x: Partial<Split>): Split {
 }
 
 export const pctOf = (bp: number) => Math.round(bp / 100);
-export const splitText = (x: Split) => `${pctOf(x.personal)}% you · ${pctOf(x.treasury)}% family · ${pctOf(x.reserve)}% reserve`;
+export const splitText = (x: Split) => `your cut ${pctOf(x.personal)}% · the Family ${pctOf(x.treasury + x.reserve)}%${x.reserve ? ` (${pctOf(x.reserve)}% set aside)` : ''}`;
+
+/** The Family's money: the treasury plus what is set aside for lawyers & emergencies (the old reserve). */
+export function familyCash(s: GameState): number {
+  return Math.round(s.money + (s.tribute?.acct.reserve ?? 0));
+}
+
+/** Your Pocket: the boss's own money. */
+export function pocketCash(s: GameState): number {
+  return s.tribute?.acct.personal ?? 0;
+}
 
 /** Record a favor (patronage). Returns it. */
 export function noteFavor(s: GameState, f: Omit<Favor, 'id' | 'week' | 'tell'> & { truth?: string; knownBy?: string[] }): Favor {

@@ -11,6 +11,7 @@ import { money, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { gauss, rand, type RngHolder } from './rng';
 import { tributeTalk } from './tributeTalk';
+import { squeezeMult } from './money';
 import {
   balances, ensureTribute, normSplit, noteFavor, sumSplit,
   type AcctId, type MemberLine, type Petition, type ShortReason, type SourceLine, type Split,
@@ -403,7 +404,8 @@ export function collectTake(ctx: Ctx, mult: number): number {
   const h: RngHolder = t;
   const carried = t.acct.clearing;
   const ub = rep.ubId ? s.characters[rep.ubId] : undefined;
-  const blitz = s.edicts?.blitz ? 1.2 : 1;
+  // "Squeeze harder this week" (money.ts): the one global lever on the crews' corners and hustle.
+  const blitz = (s.edicts?.blitz ? 1.2 : 1) * squeezeMult(s);
   const crewOf = (capoId: string) => {
     let cl = rep.crews.find((x) => x.capoId === capoId);
     if (!cl) {
@@ -712,46 +714,32 @@ export function recommendSplit(s: GameState, rep: TributeReport): { split: Split
   const pol = normSplit(t.policy);
   if (rep.ubType === 'acting' || rep.ubType === 'none') return { split: pol, why: ['Nobody holds the seat; he goes by your standing split.'] };
   if (rep.ubType === 'overwhelmed') return { split: pol, why: ['Same as always. He has not had time to look at what is coming.'] };
+  // Two pots (money.ts): he only advises on your cut; what you set aside stays as you set it.
   const cost = weeklyCosts(s);
   const why: string[] = [];
+  const reserve = pol.reserve;
   const debts = s.debts.reduce((a, d) => a + d.weeklyPayment * Math.min(4, d.weeksLeft), 0);
-  const ob = obligations(s);
-  const legal = ob.filter((o) => o.kind === 'legal' && !o.weekly).reduce((a, o) => a + o.amount, 0);
-  const philly = ob.find((o) => o.kind === 'tribute');
-  const reserveTarget = 3 * cost + debts + legal + (philly && (philly.due ?? 9) <= 2 ? philly.amount : 0);
-  let reserve = 800;
-  if (t.acct.reserve < reserveTarget / 2) {
-    reserve = 2500;
-    why.push(`The reserve has $${t.acct.reserve.toLocaleString('en-US')}; with ${legal ? 'legal bills, ' : ''}${debts ? 'loan payments, ' : ''}three weeks of bills it should hold $${reserveTarget.toLocaleString('en-US')}.`);
-  } else if (t.acct.reserve < reserveTarget) {
-    reserve = 1500;
-    why.push(`Put a little more aside: the reserve is under $${reserveTarget.toLocaleString('en-US')}.`);
-  } else why.push('The reserve is healthy.');
-  let treasury: number;
-  if (s.money < 2 * cost) {
-    treasury = 7500;
-    why.push(`The family has $${Math.round(s.money).toLocaleString('en-US')} against about $${cost.toLocaleString('en-US')} a week going out.`);
-  } else if (s.money < 6 * cost) treasury = 6500;
-  else {
-    treasury = 5000;
-    why.push('The family\'s operating money is comfortable.');
-  }
-  let personal = 10000 - reserve - treasury;
-  // A loyal man never tells the boss to take more than a fifth; the rest stays working for the family.
-  if (rep.ubType === 'loyal' && personal > 2000) {
-    treasury += personal - 2000;
+  const legal = obligations(s).filter((o) => o.kind === 'legal' && !o.weekly).reduce((a, o) => a + o.amount, 0);
+  const fam = s.money + t.acct.reserve;
+  let personal: number;
+  if (fam < 2 * cost + debts + legal) {
+    personal = 1500;
+    why.push(`The Family has $${Math.round(fam).toLocaleString('en-US')} against about $${cost.toLocaleString('en-US')} a week going out${debts || legal ? ' and bills coming' : ''}. Take a smaller cut.`);
+  } else if (fam < 6 * cost) {
     personal = 2000;
+    why.push(`The Family is covered for a few weeks, not more. Take a little less until it has a cushion of $${(6 * cost).toLocaleString('en-US')}.`);
+  } else {
+    personal = 3500;
+    why.push('The Family\'s operating money is comfortable. You can take more.');
   }
+  // A loyal man never tells the boss to take more than 30%; the rest stays working for the family.
+  if (rep.ubType === 'loyal' && personal > 3000) personal = 3000;
   if (rep.ubType === 'ambitious') {
-    const more = Math.min(1000, treasury - 4000);
-    personal += more;
-    treasury -= more;
+    personal = Math.min(6000, personal + 1000);
     why.push('"You earned it. Enjoy it. Let me worry about the crews."');
   }
-  if (rep.ubType === 'loyal' && s.money < 2 * cost) {
-    const less = Math.max(0, personal - 1000);
-    personal -= less;
-    treasury += less;
+  if (rep.ubType === 'loyal' && fam < 2 * cost) {
+    personal = 1000;
     why.push('"Take less this week. The family needs it more than you do."');
   }
   return { split: normSplit({ personal: Math.max(0, personal), reserve }), why };
@@ -850,7 +838,9 @@ function grantPetition(ctx: Ctx, t: TributeState, rep: TributeReport, p: Petitio
       return got > 0;
     }
     case 'investment': {
-      const got = xfer(ctx, 'reserve', `ext:inv:${p.id}`, p.amount, 'expense', k, { note: `Investment: ${p.text}` });
+      // Two pots: what is set aside pays first, then the envelope, then the Family's treasury.
+      const from = t.acct.reserve >= p.amount ? 'reserve' : t.acct.envelope >= p.amount ? 'envelope' : 'treasury';
+      const got = xfer(ctx, from, `ext:inv:${p.id}`, p.amount, 'expense', k, { note: `Investment: ${p.text}`, label: `Investment: ${p.text}`, category: 'cost' });
       if (got <= 0) return false;
       const weeks = 20 + (hashInt(p.id) % 20);
       t.investments.push({ id: p.id, week: s.week, byId: p.byId, what: p.text, amount: got, weekly: Math.max(20, Math.round(got * 0.016)), until: s.week + weeks, good: p.honest, status: 'funded' });
@@ -937,7 +927,7 @@ function makePetition(s: GameState, t: TributeState, rep: TributeReport, h: RngH
   const broke = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c) && ((c.wealth < 150 && (c.household?.kids?.length ?? 0) > 0) || (t.life?.[c.id]?.debt ?? 0) >= 300));
   if (broke.length) kinds.push('advance', 'help');
   const pitchers = capos(s).filter((c) => isFree(s, c) && c.attributes.business >= 55);
-  if (pitchers.length && t.acct.reserve >= 2000) kinds.push('investment');
+  if (pitchers.length && s.money + t.acct.reserve >= 4000) kinds.push('investment');
   const hot = crew(s).filter((c) => isFree(s, c) && (c.evidence ?? 0) >= 60);
   if (hot.length) kinds.push('legal');
   if (!kinds.length) return undefined;
@@ -967,7 +957,7 @@ function makePetition(s: GameState, t: TributeState, rep: TributeReport, h: RngH
       const k = any(pitchers);
       const what = any(['a piece of a car wash on Rio Grande Avenue', 'a jukebox route in Villas', 'a share of a motel going up on Ocean Avenue', 'a linen service for the boardwalk hotels', 'a trucking outfit in Rio Grande', 'a pizza stand on the Crest end', 'a vending route in Cape May Court House', 'a bowling alley that needs new pins']);
       const good = rand(h) < 0.35 + k.attributes.business / 200 + (honesty(s, k) >= 50 ? 0.1 : -0.15);
-      return { id, kind, byId: k.id, amount: r100(Math.min(t.acct.reserve * 0.6, 1500 + rand(h) * 4500)), from: 'reserve', honest: good, text: what };
+      return { id, kind, byId: k.id, amount: r100(Math.min((s.money + t.acct.reserve) * 0.3, 1500 + rand(h) * 4500)), from: t.acct.reserve >= 1500 ? 'reserve' : 'treasury', honest: good, text: what };
     }
     case 'legal': {
       const m = any(hot);

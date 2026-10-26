@@ -34,7 +34,8 @@ const AUDIENCE_GAP = 3;
 
 export function audienceWanted(s: GameState, rep: TributeReport): { want: boolean; mandatory: boolean; asked: boolean; why: string } {
   const t = ensureTribute(s);
-  if (t.stats.audiences === 0 && rep.week >= 2) return { want: true, mandatory: true, asked: false, why: 'first' };
+  // Two pots (money.ts): no "first audience" any more. Your cut goes in on its own every week; he asks to
+  // see you only when something is wrong (a shortfall that matters, a dispute, a petition), or a crisis.
   if (!t.policy.auto) return { want: true, mandatory: false, asked: true, why: 'asked' };
   if (t.ub.stage === 3) return { want: true, mandatory: true, asked: false, why: 'crisis' };
   const last = t.held[t.held.length - 1] ?? -99;
@@ -57,13 +58,14 @@ function audienceTitle(s: GameState, rep: TributeReport): string {
 export function buildAudience(s: GameState, rep: TributeReport, w: ReturnType<typeof audienceWanted>): EventInstance {
   const t = ensureTribute(s);
   const pol = t.policy;
+  const cut = (sp: { personal: number; treasury: number; reserve: number }) => `${$(rep.presented * sp.personal / 10000)} to your Pocket · ${$(rep.presented * (sp.treasury + sp.reserve) / 10000)} to the Family`;
   const choices: Choice[] = [
-    { id: 'policy', label: `Your usual split (${splitText(pol)})`, detail: 'The envelope goes the way it always does.', because: `split the envelope the usual way (${splitText(pol)})`, effects: [op({ op: 'note', text: `${$(rep.presented * pol.personal / 10000)} to you · ${$(rep.presented * pol.treasury / 10000)} to the family · ${$(rep.presented * pol.reserve / 10000)} to the reserve` }, 'The envelope')] },
+    { id: 'policy', label: `Your cut, as always (${pctOf(pol.personal)}%)`, detail: 'Your cut goes to your Pocket; the rest goes to the Family. Nothing else to do.', because: `took his usual cut of the envelope (${pctOf(pol.personal)}%)`, effects: [op({ op: 'note', text: cut(pol) }, 'The envelope')] },
   ];
-  if (Math.abs(rep.rec.personal - pol.personal) >= 300 || Math.abs(rep.rec.reserve - pol.reserve) >= 300) {
-    choices.push({ id: 'his', label: `Take his advice (${splitText(rep.rec)})`, detail: rep.recWhy.join(' '), because: `took the underboss's advice on the envelope (${splitText(rep.rec)})`, effects: [op({ op: 'note', text: `${$(rep.presented * rep.rec.personal / 10000)} to you · ${$(rep.presented * rep.rec.treasury / 10000)} to the family · ${$(rep.presented * rep.rec.reserve / 10000)} to the reserve` }, 'The envelope')] });
+  if (Math.abs(rep.rec.personal - pol.personal) >= 300) {
+    choices.push({ id: 'his', label: `Take his advice: a ${pctOf(rep.rec.personal)}% cut this week`, detail: rep.recWhy.join(' '), because: `took the underboss's advice on his cut (${pctOf(rep.rec.personal)}%)`, effects: [op({ op: 'note', text: cut(rep.rec) }, 'The envelope')] });
   }
-  choices.push({ id: 'custom', label: 'Split it yourself', detail: 'Set your own split in the office (percentages or dollars). Must come to every dollar in the envelope.', because: 'split the envelope himself', effects: [op({ op: 'note', text: 'Your split, to the dollar' }, 'The envelope')] });
+  choices.push({ id: 'custom', label: 'Set a different cut', detail: 'One slider in the office: your cut. The Family takes the rest, to the dollar.', because: 'set his own cut of the envelope', effects: [op({ op: 'note', text: 'Your cut, to the dollar' }, 'The envelope')] });
   const lines = rep.talk.slice(0, 4).map((x) => `"${x.text}"`).join(' ');
   return {
     iid: `ev${s.nextId++}`, defId: AUDIENCE_ID, week: s.week, mandatory: w.mandatory, priority: w.mandatory ? 90 : 68,
