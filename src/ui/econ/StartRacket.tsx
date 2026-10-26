@@ -161,7 +161,7 @@ function Who({ s, kind, runner, setRunner, earner, setEarner, onNext }: { s: Gam
       {sel?.canEarn && (
         <label className="mt-2 flex items-center gap-2 text-xs text-stone-200">
           <input type="checkbox" checked={earner} onChange={(e) => setEarner(e.target.checked)} data-testid="sr-earner" />
-          {sel.role === 'boss' ? 'Make it my own steady earner (pays into my Pocket)' : `Make it ${sel.c.firstName}'s steady earner`}
+          {sel.role === 'boss' ? 'Make it my own steady earner (my piece pays into my Pocket)' : `Make it ${sel.c.firstName}'s steady earner`}
         </label>
       )}
       <button type="button" className="btn-gold mt-3 w-full sm:w-auto" disabled={!runner} onClick={onNext} data-testid="sr-next">Next: where →</button>

@@ -174,8 +174,10 @@ describe('Steady earners', () => {
     const x = bk.x.find((t) => t[0] === `ext:earner:${b.id}` && t[1] === 'personal');
     expect(x?.[2]).toBeGreaterThan(50);
     expect(pocketCash(s)).toBeGreaterThanOrEqual(0);
-    // No family ledger line for it: it is his.
-    expect((s.lastReport?.lines ?? []).some((l) => l.src === b.id && l.stat === 'money' && l.amount > 0)).toBe(false);
+    // His piece is half; the other half is a family line that says so.
+    const fam = (s.lastReport?.lines ?? []).find((l) => l.src === b.id && l.stat === 'money' && l.amount > 0);
+    expect(fam?.label).toMatch(/your piece/);
+    expect(Math.abs((fam?.amount ?? 0) - (x?.[2] ?? 0))).toBeLessThanOrEqual(1);
   });
 
   it('one tap gives a capo an existing business; he likes it; one man per business', () => {

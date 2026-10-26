@@ -17,7 +17,7 @@ import type { Business, BusinessKind, Character, Effect, GameState } from './typ
  *    it himself).
  *  - A capo keeps 15% of it as his end and kicks the rest up, one line in the
  *    week's books: "Sal kicked up $1,200 — his numbers bank".
- *  - The boss's own earner pays straight into his Pocket.
+ *  - The boss's own earner: his piece (half) pays straight into his Pocket, the rest to the Family.
  *  - A capo with one is more loyal and kicks up more reliably (he skims half as
  *    much, never drags his feet with the winter envelope, and his corners
  *    swing less); a capo without one grumbles a little more every month.
@@ -27,6 +27,8 @@ import type { Business, BusinessKind, Character, Effect, GameState } from './typ
 
 /** The capo's own end of his earner. */
 export const EARNER_KEEP = 0.15;
+/** The boss's piece of his own earner (into his Pocket); the rest stays with the Family. */
+export const BOSS_PIECE = 0.5;
 /** The take goes up when the man watches it himself. */
 export const EARNER_STEADY = 0.15;
 /** Opinion while he has one (a standing modifier, not stacking). */
@@ -142,7 +144,7 @@ export function earnerPreview(s: GameState, who: string, bizId: string): { title
   const why = !b ? 'Not yours' : !eligible(b) ? 'A crew that works by the score, a one-shot or a cost cannot be a steady earner' : cur?.id === b.id ? 'It is already his' : holderOf(s, b.id) && holderOf(s, b.id) !== who ? `It is already ${s.characters[holderOf(s, b.id)!]?.firstName}'s` : undefined;
   const wk = b ? earnerWeekly(s, b) : 0;
   const detail = boss
-    ? `About $${wk.toLocaleString('en-US')}/wk, every week, straight into your Pocket instead of the Family.`
+    ? `About $${wk.toLocaleString('en-US')}/wk, every week, no swings: your piece (half, ~$${Math.round(wk * BOSS_PIECE).toLocaleString('en-US')}) goes straight into your Pocket, the rest to the Family.`
     : `About $${wk.toLocaleString('en-US')}/wk, every week: he keeps ${Math.round(EARNER_KEEP * 100)}% and kicks up the rest. He is more loyal and kicks up more reliably.${cur ? ` (Replaces ${earnerName(s, c, cur)}.)` : ''}`;
   const effects: Effect[] = [op];
   if (!boss && !cur) effects.push({ type: 'opinion', from: c.id, to: s.playerId, amount: 4, reason: 'Gave me something of my own', decay: 1, label: 'Steady earner' });
@@ -173,8 +175,10 @@ export function routeEarner(ctx: Ctx, b: Business, amt: number): { amt: number; 
   const c = s.characters[who];
   const a = Math.round(amt);
   if (who === s.playerId) {
-    xfer(ctx, `ext:earner:${b.id}`, 'personal', a, 'business_income', `w${s.week}:earner:${b.id}`, { note: `Your piece of ${b.name}` });
-    return { amt: 0, label: '', who };
+    // Your piece: half of it, every week, into your Pocket; the other half stays with the Family.
+    const piece = Math.round(a * BOSS_PIECE);
+    xfer(ctx, `ext:earner:${b.id}`, 'personal', piece, 'business_income', `w${s.week}:earner:${b.id}`, { note: `Your piece of ${b.name}` });
+    return { amt: a - piece, who, label: `Business: ${b.name} (your piece, $${piece.toLocaleString('en-US')}, went to your Pocket)` };
   }
   const keep = Math.round(a * EARNER_KEEP);
   xfer(ctx, `ext:earner:${b.id}`, `wealth:${c.id}`, keep, 'capo_distribution', `w${s.week}:earnerkeep:${b.id}`, { note: `${c.firstName} ${c.lastName} keeps his end of ${b.name}` });
@@ -220,6 +224,6 @@ export function earnerLines(s: GameState): { who: string; text: string; amount: 
   }
   const boss = s.characters[s.playerId];
   const b = boss ? earnerOf(s, boss.id) : undefined;
-  if (b) out.unshift({ who: boss.id, text: `${earnerName(s, boss, b)}: about $${earnerWeekly(s, b).toLocaleString('en-US')} a week into your Pocket`, amount: earnerWeekly(s, b) });
+  if (b) out.unshift({ who: boss.id, text: `${earnerName(s, boss, b)}: about $${Math.round(earnerWeekly(s, b) * BOSS_PIECE).toLocaleString('en-US')} a week into your Pocket`, amount: Math.round(earnerWeekly(s, b) * BOSS_PIECE) });
   return out;
 }

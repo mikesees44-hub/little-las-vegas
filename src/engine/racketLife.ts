@@ -599,7 +599,8 @@ export function racketActions(s: GameState): PlayerAction[] {
     out.push(RK({ c: 'advice', bizId: b.id }));
   }
   // A steady earner for a man who has none (the boss or a capo).
-  for (const c of holders(s)) {
+  // Capos first; the boss takes his own piece last.
+  for (const c of [...holders(s)].reverse()) {
     if (earnerOf(s, c.id)) continue;
     const b = suggestFor(s, c);
     if (b) { out.push(RK({ c: 'earner', who: c.id, bizId: b.id })); break; }

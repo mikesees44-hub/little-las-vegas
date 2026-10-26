@@ -25,7 +25,7 @@ export function SteadyEarners({ s }: { s: GameState }) {
   return (
     <section className="rounded-md border border-emerald-700/50 bg-emerald-900/10 p-3" data-testid="steady-earners">
       <div className="panel-title">Steady earners</div>
-      <p className="text-[11px] text-stone-400 mt-0.5">Every capo, and you, can have one thing that is his: it pays every week, no swings. A capo keeps 15%, kicks up the rest, and stays loyal; without one he grumbles. Yours pays into your Pocket.</p>
+      <p className="text-[11px] text-stone-400 mt-0.5">Every capo, and you, can have one thing that is his: it pays every week, no swings. A capo keeps 15%, kicks up the rest, and stays loyal; without one he grumbles. Yours: your piece (half) pays into your Pocket.</p>
       <ul className="mt-2 space-y-1.5">
         {men.map((c) => <EarnerRow key={c.id} s={s} c={c} suggest={sugs[c.id] ?? ''} />)}
       </ul>
@@ -48,7 +48,7 @@ export function EarnerRow({ s, c, suggest }: { s: GameState; c: Character; sugge
     <li className="rounded border border-noir-700 bg-noir-900/50 px-2 py-1.5" data-testid="earner-row" data-who={c.id}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">
         <div className="text-xs text-stone-200 font-semibold">{boss ? 'You' : <CharLink s={s} id={c.id} />}<span className="ml-1 text-[10px] font-normal uppercase tracking-wider text-stone-500">{boss ? 'boss' : 'capo'}</span></div>
-        {b && <div className="text-[11px] text-gold-300 tabular-nums">~{fmt$(earnerWeekly(s, b))}/wk{boss ? ' → your Pocket' : ''}</div>}
+        {b && <div className="text-[11px] text-gold-300 tabular-nums">~{fmt$(earnerWeekly(s, b))}/wk{boss ? ' (half to your Pocket)' : ''}</div>}
       </div>
       {b ? (
         <div className="text-[11px] text-emerald-200" data-testid="earner-has">★ {earnerName(s, c, b)} <span className="text-stone-500">({b.name}{steadyWord(b.kind) === 'steady' ? ', steady kind' : ''})</span></div>

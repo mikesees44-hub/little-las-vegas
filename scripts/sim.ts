@@ -439,8 +439,8 @@ function playOne(gi: number): GameResult {
         const held = holderOf(s, b.id);
         const rec = (ew[b.id] ??= { kind: b.kind, held: !!held, xs: [] });
         if (rec.held !== !!held) { rec.held = !!held; rec.xs = []; }
-        // The boss's own earner pays his Pocket (no family line): count what it paid there.
-        const x = held === s.playerId ? (s.tribute?.books[s.tribute.books.length - 1]?.x.filter((t) => t[0] === `ext:earner:${b.id}`).reduce((a, t) => a + t[2], 0) ?? 0) : byBiz[b.id] ?? 0;
+        // The boss's own earner: his piece went to his Pocket; count it with the Family's half.
+        const x = (byBiz[b.id] ?? 0) + (held === s.playerId ? (s.tribute?.books[s.tribute.books.length - 1]?.x.filter((t) => t[0] === `ext:earner:${b.id}`).reduce((a, t) => a + t[2], 0) ?? 0) : 0);
         rec.xs.push(x);
       }
     }

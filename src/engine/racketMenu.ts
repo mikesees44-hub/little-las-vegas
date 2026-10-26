@@ -162,7 +162,7 @@ export function runnersFor(s: GameState, kind: BusinessKind): RunnerChoice[] {
   const out: RunnerChoice[] = [];
   const boss = s.characters[s.playerId];
   const earnable = steadyWord(kind) !== 'scores';
-  if (boss?.alive) out.push({ c: boss, role: 'boss', skill: boss.attributes[fit], fit, load: loadOf(boss), canEarn: earnable && !earnerOf(s, boss.id), note: earnerOf(s, boss.id) ? 'You already have your own earner' : earnable ? 'Yours: it pays straight into your Pocket' : 'You keep an eye on it' });
+  if (boss?.alive) out.push({ c: boss, role: 'boss', skill: boss.attributes[fit], fit, load: loadOf(boss), canEarn: earnable && !earnerOf(s, boss.id), note: earnerOf(s, boss.id) ? 'You already have your own earner' : earnable ? 'Yours: your piece of it pays into your Pocket' : 'You keep an eye on it' });
   for (const k of capos(s).filter((c) => c.faction === 'player' && isFree(s, c)).sort((a, b) => b.attributes[fit] - a.attributes[fit] || (a.id < b.id ? -1 : 1))) {
     const has = earnerOf(s, k.id);
     out.push({ c: k, role: 'capo', skill: k.attributes[fit], fit, loyalty: opinion(s, k.id, s.playerId), load: loadOf(k), canEarn: earnable && !has, note: has ? `Already has his ${has.name}` : earnable ? 'No steady earner yet: this could be his' : 'His crew runs it' });
@@ -273,7 +273,7 @@ export function startSummary(s: GameState, key: MenuKey, runnerId?: string, dist
     heat: heatWord(def.heat), federal: heatWord(def.fedHeat), risk: m.risk, objects: m.objects,
     philly: PHILLY[kind] ?? 'Nothing to say: it is your island.',
     warns, laws: lawsFor(s, kind), locks: startLocks(s, kind),
-    earner: asEarner ? (holder!.id === s.playerId ? 'Your own steady earner: it pays straight into your Pocket, every week, no swings.' : `${holder!.firstName}'s steady earner: he keeps 15%, kicks up the rest every week, and is more loyal for it.`) : undefined,
+    earner: asEarner ? (holder!.id === s.playerId ? 'Your own steady earner: your piece (half) pays straight into your Pocket every week, no swings; the rest goes to the Family.' : `${holder!.firstName}'s steady earner: he keeps 15%, kicks up the rest every week, and is more loyal for it.`) : undefined,
     action: { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind, ...(district ? { district } : {}), ...(runnerId ? { runner: runnerId } : {}), ...(asEarner ? { earner: true } : {}) } } },
   };
 }
