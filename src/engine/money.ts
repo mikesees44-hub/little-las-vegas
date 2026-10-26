@@ -48,7 +48,7 @@ export function twoPots(ctx: Ctx): void {
 /* ------------------------------------------------------------------ */
 
 /**
- * The money pass's rebalance (sim targets in README): the crews' corners and hustle, the street with
+ * The money pass's rebalance (check with `npx tsx scripts/sim.ts --games 30 --years 1`, the "Money curve" line): the crews' corners and hustle, the street with
  * no capo, and the rackets pay more than they used to, and each grows with the family's reach.
  */
 export const INCOME = { corners: 1.75, hustle: 1.6, street: 1.5, rackets: 1.35 } as const;
