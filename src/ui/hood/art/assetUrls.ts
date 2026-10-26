@@ -59,15 +59,73 @@ export const ASSET_URLS = {
   scene_boss_office: undefined,
   scene_club_stage: undefined,
   scene_capemay_harbor: undefined,
-  // Batch 2, signs repainted with fictional names (the real ones still operate).
-  storefront_peanut_gallery: undefined,
-  storefront_marios_pizza: undefined,
+  // Batch 2, signs repainted in the near-miss style (the real businesses still operate).
+  storefront_nutty_hut: undefined,
+  storefront_old_macks_pizza: undefined,
   storefront_olympia_fascination: undefined,
-  storefront_eddies_fun_palace: undefined,
-  storefront_royal_casino_arcade: undefined,
+  storefront_eds_fun_arcade: undefined,
+  storefront_casino_arcadia: undefined,
+  // Batch 3. Defunct places and public landmarks keep their names; still-operating
+  // ones are near misses (Ebb Tyde, Gateway 25 / Kohl Bros., Uncle Vinny's, Pompei's,
+  // Sportsland, Lil' Nicky's, Lollypop, Fudge Kitchenette).
+  storefront_boardwalk_bazaar: undefined,
+  storefront_taffy_tides: undefined,
+  storefront_flashback_photo: undefined,
+  storefront_surfside_outfitters: undefined,
+  motel_ebb_tyde: undefined,
+  storefront_schumanns: undefined,
+  motel_satellite: undefined,
+  storefront_gateway_25: undefined,
+  shore_comedy_turnaround: undefined,
+  shore_comedy_interior: undefined,
+  storefront_romeos_pizzeria: undefined,
+  club_oasis: undefined,
+  club_stardust: undefined,
+  uncle_vinnys_stage: undefined,
+  club_quo_vadis: undefined,
+  club_rainbow_marquee: undefined,
+  club_rainbow_musical_bar: undefined,
+  club_riptide: undefined,
+  club_hurricane: undefined,
+  landmark_nw_city_hall: undefined,
+  landmark_hereford_light: undefined,
+  storefront_pompeis: undefined,
+  storefront_sportsland: undefined,
+  storefront_lil_nickys: undefined,
+  motel_lollypop: undefined,
+  sign_lollypop: undefined,
+  storefront_fudge_kitchenette: undefined,
+  // Transparent building sprites (the Town Explorer cutouts): used as-is on the block map.
+  cutout_bank: undefined,
+  cutout_barber: undefined,
+  cutout_cab: undefined,
+  cutout_candy: undefined,
+  cutout_fudge: undefined,
+  cutout_gift: undefined,
+  cutout_laundry: undefined,
+  cutout_pizza: undefined,
+  cutout_social: undefined,
+  cutout_taffy: undefined,
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
+
+/**
+ * Ready-cut transparent sprites for paintings: the block map draws these
+ * as they are, and cuts the painting itself only when the sprite is missing.
+ */
+export const SPRITE_OF: Partial<Record<AssetKey, AssetKey>> = {
+  chemical_bank: 'cutout_bank',
+  bayshore_barber: 'cutout_barber',
+  shore_cab_garage: 'cutout_cab',
+  penny_candy_soda: 'cutout_candy',
+  seaside_fudge: 'cutout_fudge',
+  storefront_boardwalk_bazaar: 'cutout_gift',
+  spin_city_laundromat: 'cutout_laundry',
+  neon_moon_pizza: 'cutout_pizza',
+  italian_social_club: 'cutout_social',
+  storefront_taffy_tides: 'cutout_taffy',
+};
 
 /** Pixel size of each image (for crops and hotspot frames). */
 export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
@@ -78,6 +136,7 @@ export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
   starlight_scoops_turnaround: [1536, 1024],
   shamrock_turnaround: [1536, 1024],
   red_garter_turnaround: [1536, 1024],
+  shore_comedy_turnaround: [1536, 1024],
   neighborhood_twilight_1958: [1536, 1024],
   boardwalk_blue_hour_1958: [1600, 874],
 };
@@ -95,6 +154,7 @@ export const TURNAROUND_SPLIT: Partial<Record<AssetKey, { cx: number; cy: number
   starlight_scoops_turnaround: { cx: 768 / 1536, cy: 511 / 1024 },
   shamrock_turnaround: { cx: 767 / 1536, cy: 510 / 1024 },
   red_garter_turnaround: { cx: 768 / 1536, cy: 512 / 1024 },
+  shore_comedy_turnaround: { cx: 768 / 1536, cy: 504 / 1024 },
 };
 
 declare global {
