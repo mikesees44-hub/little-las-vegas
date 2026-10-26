@@ -30,6 +30,8 @@ import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
 import { Relationships } from './Relationships';
 import { BonesFacts } from '../books/BonesFacts';
 import { PurseSection } from '../tribute/PurseSection';
+import { DirtyOnPerson } from '../econ/DirtyWork';
+import { useShell } from '../shell/context';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -57,6 +59,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
   const secrets = knownSecrets(s, c.id);
   const hooks = s.hooks.filter((h) => h.holder === 'player' && h.targetId === c.id);
   const showsLife = (c.faction === 'player' || !!c.outside) && !isBoss;
+  const shell = useShell();
 
   return (
     <SheetFrame onClose={onClose} embedded={embedded}>
@@ -88,6 +91,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
               )}
               <div className="mt-1.5"><TraitIcons c={c} labels /></div>
               {c.alive && !s.gameOver && <div className="mt-1.5"><TravelButton s={s} charId={c.id} /></div>}
+              {c.alive && !s.gameOver && !isBoss && <div className="mt-1.5"><DirtyOnPerson s={s} charId={c.id} onGo={() => { onClose(); shell.go('holdings.dirty'); }} /></div>}
             </div>
           </div>
           {!embedded && <button className="btn-ghost text-xs" onClick={onClose}>Close</button>}

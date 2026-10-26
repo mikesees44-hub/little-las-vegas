@@ -88,6 +88,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   biz: [
     { items: [
       { keys: ['holdings.hub'], icon: '♣', label: 'The rackets', sub: 'Every racket on the island: start one, decide how it runs, what it pays.' },
+      { keys: ['holdings.dirty'], icon: '✂', label: 'Dirty work', sub: 'One-off jobs: hijack a truck, shake down a shop, fix a fight, move a load.' },
       { keys: ['holdings.rackets'], icon: '▣', label: 'Your places', sub: 'The businesses you own by type: managers, upgrades, the take. Buy a new one.' },
       { keys: ['holdings.property'], icon: '▦', label: 'Real estate', sub: 'Lots and buildings in every neighborhood: buy, build, rent out.' },
       { keys: ['holdings.designer'], icon: '✧', label: 'Hotels & motels', sub: 'Set up your motels and hotels your way: the look, the staff, the supplies.' },

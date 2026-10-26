@@ -1,4 +1,5 @@
 import { StartHereButton } from '../econ/StartRacket';
+import { DirtyHere } from '../econ/DirtyWork';
 import { useMemo, useState } from 'react';
 import { rivalName } from '../../engine/construction';
 import { crew } from '../../engine/characters';
@@ -109,7 +110,6 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
   const mine = !!it?.mine;
   const buyable = !!lot && !mine && lot.status !== 'public' && lot.status !== 'lease';
   const leasable = !!lot && !mine && lot.status === 'lease';
-  const shake = !!lot && !mine && lot.status !== 'public' && lot.owner === 'private';
   const badge = it?.building ? 'Going up' : it?.closed ? 'Closed' : it?.forSale && !mine ? `For sale${lot?.price ? ` · ${fmt$(lot.price)}` : ''}` : it?.forLease ? 'For rent' : mine ? 'Yours' : lot?.status === 'rival' ? 'Rival-held' : h.landmark || !lot ? 'Landmark' : undefined;
   return (
     <div className="space-y-3" data-testid="walk-card" data-spot={h.id}>
@@ -153,7 +153,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
       {meet && <MeetingPicker s={s} place={it?.name ?? h.label} here={here} />}
       {buyable && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: lot!.id } }} compact label={`Make an offer on ${it?.name ?? h.label}`} />}
       {leasable && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: lot!.id } }} compact label="Lease the storefront" />}
-      {shake && <ActionCard s={s} action={{ kind: 'order', key: 'shakedown', via: 'direct' }} compact label="Shake them down (the strip pays for protection)" />}
+      <DirtyHere s={s} lot={lot} biz={mine ? it?.biz : undefined} onGo={() => shell.go('holdings.dirty')} />
     </div>
   );
 }

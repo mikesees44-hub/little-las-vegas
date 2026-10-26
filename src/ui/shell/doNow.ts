@@ -3,6 +3,7 @@ import { capos, displayName } from '../../engine/characters';
 import { holder, SEAT_INFO, SEATS } from '../../engine/council';
 import { idleMen } from '../../engine/business';
 import { racketGaps } from '../../engine/racketMenu';
+import { defaultMan, jobLock, JOBS_BY_ID, weekTip } from '../../engine/dirtyWork';
 import type { Opportunity } from '../../engine/opportunities';
 import type { GameState } from '../../engine/types';
 import type { ShellAlert } from './alertRoutes';
@@ -109,6 +110,11 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
       const men = g.noEarner.filter((c) => c.id !== s.playerId);
       out.push({ id: 'steady-earners', tone: 'info', title: men.length === 1 && !boss ? `${displayName(men[0])} has no steady earner` : men.length ? `${plural(men.length, 'capo')}${boss ? ' and you' : ''} without a steady earner` : 'You have no steady earner of your own', text: 'One thing that is his: it pays every week, summer and winter. A capo with one kicks up reliably and stays loyal; without one he grumbles.', cta: 'Give them one', act: hub });
     }
+  }
+  // Dirty work: some weeks a job is worth more (a tip), one tap to it.
+  if (home === 'biz' || home === 'week') {
+    const tip = weekTip(s);
+    if (tip && !jobLock(s, tip.job) && defaultMan(s, tip.job)) out.push({ id: 'dirty-tip', tone: 'good', title: `A tip: ${JOBS_BY_ID[tip.job].title.toLowerCase()} this week`, text: tip.text, cta: 'Dirty work', act: { kind: 'route', route: { panel: 'holdings', section: 'dirty' } } });
   }
   const alerts = x.alerts.filter((a) => a.kind !== 'decision' && alertHome(a) === home)
     .map((a): DoNowItem => ({ id: `a:${a.key}`, tone: a.severity, title: a.title, text: a.text, cta: a.charId ? 'See him' : 'Go', act: { kind: 'alert', alert: a } }));

@@ -498,8 +498,11 @@ export function App({ startOn = 'title' }: AppProps) {
   const gaps = home === 'biz' && !s.gameOver ? racketGaps(s) : undefined;
   const bizTop = gaps ? (
     <section className="mb-4" data-testid="biz-start">
-      <button type="button" className="btn-gold w-full py-3 text-base" onClick={() => openRoute({ panel: 'holdings', section: 'hub' })} data-testid="biz-start-racket">♣ Start a racket</button>
-      <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Street money, vice, contraband, working the system, payoffs.</div>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" className="btn-gold w-full py-3 text-base" onClick={() => openRoute({ panel: 'holdings', section: 'hub' })} data-testid="biz-start-racket">♣ Start a racket</button>
+        <button type="button" className="btn-gold w-full py-3 text-base bg-red-800 border-red-500 text-red-50" onClick={() => openRoute({ panel: 'holdings', section: 'dirty' })} data-testid="biz-dirty-work">✂ Dirty work</button>
+      </div>
+      <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
     </section>
   ) : undefined;
   const youTop = home === 'you' && !s.gameOver ? <PersonalActions s={s} update={setS} onWeek={() => setRoute({ home: 'week' })} /> : undefined;
