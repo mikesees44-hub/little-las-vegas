@@ -54,9 +54,9 @@ export function twoPots(ctx: Ctx): void {
 export const INCOME = { corners: 1.75, hustle: 1.6, street: 1.5, rackets: 1.35 } as const;
 /**
  * The season surge: the boost is biggest from Memorial Day to Labor Day (the island is full) and
- * small in the winter, so the first winter still bites a boss who spent the summer's money.
+ * small in the winter (a quarter of it), so the first winter still bites a boss who spent the summer's money.
  */
-export const SEASON_BOOST = { summer: 1.3, winter: 0 } as const;
+export const SEASON_BOOST = { summer: 1.3, winter: 0.25 } as const;
 
 /** The money pass's income multiplier for one stream this week (season-weighted). */
 export function incomeBoost(s: GameState, k: keyof typeof INCOME): number {
@@ -110,7 +110,8 @@ export function squeezeMult(s: GameState): number {
 
 /** Share of a book's markers paid in this week (welshers lean harder when squeezed). */
 export function markerPayRate(s: GameState): number {
-  return s.tribute?.squeeze === s.week ? SQUEEZE.markers : 0.15;
+  // Auto-collect: the welshers pay a fifth of what they owe every week on their own (no chasing them by hand).
+  return s.tribute?.squeeze === s.week ? SQUEEZE.markers : 0.2;
 }
 
 export function squeezeWhy(s: GameState): string | undefined {

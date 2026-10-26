@@ -157,7 +157,8 @@ function Running({ s, b }: { s: GameState; b: Business }) {
       <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
         {nxt && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'upgrade', bizId: b.id } }} compact label={`Next step: ${nxt.name}`} />}
         {advice.length > 0 && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'racket', cmd: { c: 'advice', bizId: b.id } } }} compact label="Take your people's advice" />}
-        {['bookmaking', 'vending', 'numbers', 'cargo'].includes(b.kind) && !collectPreview(s, b).why && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'collect', bizId: b.id } }} compact />}
+        {/* The book's markers come in on their own every week (money.ts markerPayRate); no chasing them by hand. */}
+        {['vending', 'numbers', 'cargo'].includes(b.kind) && !collectPreview(s, b).why && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'collect', bizId: b.id } }} compact />}
       </div>
     </div>
   );

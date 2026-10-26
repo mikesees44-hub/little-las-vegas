@@ -9,7 +9,7 @@ import {
 import {
   BUILD_STAGES, SUPPLY, STAGE_LABEL, USES, USES_BY_ID, supplyChain, USE_CAT_LABEL, ZONES_BY_ID, buildCost, buildWeeks, lotName, ownedLots, propertyNet, stageWeeks, underConstruction,
 } from '../../engine/property';
-import { nextStep, racketSummary, stepsOf, tree } from '../../engine/rackets';
+import { collectPreview, nextStep, racketSummary, stepsOf, tree } from '../../engine/rackets';
 import { permitAuthority } from '../../engine/construction';
 import { groupOfBiz, groupOfLot, grouped } from '../../engine/propertyGroups';
 import type { Business, GameState } from '../../engine/types';
@@ -192,7 +192,8 @@ function BizRow({ s, b, m }: { s: GameState; b: Business; m?: Manager }) {
       )}
       <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
         {nxt && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'upgrade', bizId: b.id } }} compact />}
-        {['bookmaking', 'vending', 'numbers', 'cargo'].includes(b.kind) && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'collect', bizId: b.id } }} compact />}
+        {/* The book's markers come in on their own every week (money.ts markerPayRate); no chasing them by hand. */}
+        {['vending', 'numbers', 'cargo'].includes(b.kind) && !collectPreview(s, b).why && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'collect', bizId: b.id } }} compact />}
       </div>
     </li>
   );
