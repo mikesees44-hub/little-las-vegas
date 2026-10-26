@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { applyPlaceEdits, lngLatToUv, placeOpenIn, placesGeoJson, placesIn, uvToLngLat, PLACES } from '../src/engine/placesGeo';
 import { ASSET_URLS } from '../src/ui/hood/art/assetUrls';
 import { newGame } from '../src/engine/newGame';
+import { CROSS_BY_NAME, AVE_V } from '../src/engine/hoodData';
+import { PLAN_AREAS } from '../src/ui/hood/PlanView';
 
 describe('the business-location layer', () => {
   it('every feature is a well-formed GeoJSON point with a permanent building id, footprint, rotation, sources and known image keys', () => {
@@ -24,8 +26,9 @@ describe('the business-location layer', () => {
 
   it('marks a location verified only where the point itself is sourced', () => {
     const verified = PLACES.filter((f) => f.properties.located === 'verified');
-    expect(verified.map((f) => f.id)).toEqual(['hunts-pier']);
+    expect(verified.map((f) => f.id)).toEqual(['hunts-pier', 'hereford-light']);
     expect(verified[0].geometry.coordinates).toEqual([-74.80456, 38.989378]);
+    expect(verified[1].geometry.coordinates).toEqual([-74.79222, 39.00667]);
     expect(PLACES.find((f) => f.id === 'sa05')!.properties.address).toBe('3700 Pacific Ave');
     const avalon = PLACES.find((f) => f.id === 'club-avalon')!;
     expect(avalon.properties.establishment).toBe(true);
@@ -33,7 +36,7 @@ describe('the business-location layer', () => {
   });
 
   it('the street frame converts both ways', () => {
-    for (const [u, v] of [[3750, -125], [3600, 300], [4100, 50]]) {
+    for (const [u, v] of [[3750, -125], [3600, 300], [4100, 50], [2000, 175], [5200, 41], [6540, 245], [7246, 365]]) {
       const [uu, vv] = lngLatToUv(uvToLngLat(u, v));
       expect(uu).toBeCloseTo(u, 1);
       expect(vv).toBeCloseTo(v, 1);
@@ -74,5 +77,42 @@ describe('the business-location layer', () => {
     const fc = placesGeoJson(out);
     expect(fc.type).toBe('FeatureCollection');
     expect(JSON.parse(JSON.stringify(fc)).features.length).toBe(PLACES.length);
+  });
+
+  it('the frame is pinned at both sourced points: Hunt\'s Pier on Oak Ave, the lighthouse at 1st and Central', () => {
+    const [hu] = lngLatToUv(PLACES.find((f) => f.id === 'hunts-pier')!.geometry.coordinates);
+    expect(hu).toBeCloseTo(CROSS_BY_NAME['Oak Ave'].u, 0);
+    const [lu, lv] = lngLatToUv(PLACES.find((f) => f.id === 'hereford-light')!.geometry.coordinates);
+    expect(lu).toBeGreaterThan(CROSS_BY_NAME['2nd Ave'].u);
+    expect(lu).toBeLessThan(CROSS_BY_NAME['1st Ave'].u);
+    expect(lv).toBeGreaterThan(AVE_V.pa);
+    expect(lv).toBeLessThan(AVE_V.nj);
+  });
+
+  it('every feature stands in one of the block-map areas, and each area has its places', () => {
+    const inA = (a: (typeof PLAN_AREAS)[number], [u, v]: [number, number]) => u >= a.u0 - 50 && u <= a.u1 + 50 && v >= a.v0 - 50 && v <= a.v1 + 50;
+    for (const f of PLACES) expect(PLAN_AREAS.some((a) => inA(a, lngLatToUv(f.geometry.coordinates))), f.id).toBe(true);
+    for (const a of PLAN_AREAS) expect(PLACES.filter((f) => inA(a, lngLatToUv(f.geometry.coordinates))).length, a.id).toBeGreaterThanOrEqual(3);
+  });
+
+  it('still-operating businesses carry near-miss names; defunct places and landmarks keep theirs; years follow the notes', () => {
+    const names = PLACES.map((f) => f.properties.name).join(' | ');
+    expect(names).not.toMatch(/(?<!Old )Mack's|Kohr|Lollipop|Pompeo|Sportland(?! Pier)|Vinnie|Ebb Tide|Funcade|\bNut Hut|Fudge Kitchen(?!ette)|Gateway 26|Olympic|Morey|Lobster House/);
+    for (const n of ['Old Mack\'s Pizza', 'Gateway 25', 'Kohl Bros.', 'The Lollypop Motel', 'Pompei\'s', 'Sportsland', 'Uncle Vinny\'s', 'The Ebb Tyde Motel', 'The Nutty Hut', 'Ed\'s Fun Arcade', 'Casino Arcadia', 'Olympia Fascination']) expect(names).toContain(n);
+    for (const n of ['Quo Vadis', 'The Rainbow Club', 'The Hurricane Club', 'The Riptide', 'The Satellite Motel', 'Schumann\'s Restaurant', 'North Wildwood City Hall', 'The Hereford Inlet Light']) expect(names).toContain(n);
+    const by = (id: string) => PLACES.find((f) => f.id === id)!;
+    expect(by('bw-pompeis').properties.opened).toBe(1978);
+    expect(placesIn(1977).some((f) => f.id === 'bw-pompeis')).toBe(false);
+    expect(placesIn(1978).some((f) => f.id === 'bw-pompeis')).toBe(true);
+    expect(placesIn(1960).some((f) => f.id === 'bw-lil-nickys')).toBe(false);
+    expect(by('at-ebb-tyde').properties).toMatchObject({ address: '5711 Atlantic Ave, Wildwood Crest', opened: 1957 });
+    expect(by('at-satellite').properties).toMatchObject({ address: '5909 Atlantic Ave, Wildwood Crest', opened: 1958 });
+    expect(by('at-schumanns').properties.address).toBe('5901 Atlantic Ave, Wildwood Crest');
+    expect(by('nw-city-hall').properties).toMatchObject({ address: '901 Atlantic Ave, North Wildwood', public: true });
+    expect(by('nw-lollypop').properties.address).toBe('2301 Atlantic Ave, North Wildwood');
+    expect(by('nw-lollypop-sign').properties.kind).toBe('sign');
+    expect(by('pa-rainbow').properties.address).toMatch(/Spicer/);
+    // Nothing new is ownable: the new places are layer-only (no lot), and Club Avalon is never owned.
+    for (const f of PLACES.filter((x) => /^(bw|nw|pa|at)-/.test(x.id))) expect(f.properties.lotId, f.id).toBeUndefined();
   });
 });

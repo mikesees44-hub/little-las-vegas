@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AVE_V, CROSS, PIERS, beachWidth } from '../../engine/hoodData';
+import { AVENUES, AVE_V, BOARDWALK, CROSS, PIERS, beachWidth, townAt } from '../../engine/hoodData';
 import { applyPlaceEdits, lngLatToUv, placesGeoJson, placesIn, uvToLngLat, type PlaceEdit, type PlaceFeature } from '../../engine/placesGeo';
 import { rivalName } from '../../engine/construction';
 import type { GameState } from '../../engine/types';
@@ -7,7 +7,7 @@ import { OWNER_COLOR } from '../map/lotIcons';
 import type { AssetKey } from './art/assetUrls';
 import { AssetImg } from './AssetImg';
 import type { Item } from './Buildings';
-import { useCutout } from './cutout';
+import { useSprite } from './cutout';
 import { storefrontArt } from './storefrontArt';
 import { Turnaround } from './Turnaround';
 
@@ -22,10 +22,32 @@ import { Turnaround } from './Turnaround';
  * details; "Edit map" lets you move, turn and resize buildings, save the
  * corrections in this browser and export them as GeoJSON.
  *
- * First area: the Boardwalk around Hunt's Pier, up to Pacific Avenue.
+ * The areas, block by block from the first one (the Boardwalk around Hunt's
+ * Pier): the Pacific Avenue clubs round Taylor Avenue, the Boardwalk north
+ * into North Wildwood, North Wildwood's City Hall and the Hereford Inlet
+ * Light, and the Crest motels on Atlantic Avenue.
  */
 
-const AREA = { u0: 3500, u1: 4170, v0: -270, v1: 420 };
+export interface PlanArea { id: string; name: string; u0: number; u1: number; v0: number; v1: number }
+export const PLAN_AREAS: PlanArea[] = [
+  { id: 'hunts', name: 'The Boardwalk around Hunt\'s Pier', u0: 3500, u1: 4170, v0: -270, v1: 420 },
+  { id: 'taylor', name: 'Pacific Ave clubs round Taylor Ave', u0: 3150, u1: 3600, v0: -60, v1: 420 },
+  { id: 'bwnorth', name: 'The Boardwalk north to 23rd Ave', u0: 4560, u1: 5460, v0: -220, v1: 300 },
+  { id: 'nw', name: 'North Wildwood: City Hall to Hereford Inlet', u0: 6440, u1: 7360, v0: -120, v1: 520 },
+  { id: 'crest', name: 'The Crest: Atlantic Ave motels', u0: 1860, u1: 2180, v0: -120, v1: 300 },
+];
+const AREA_KEY = 'llv-place-area';
+function loadArea(): PlanArea {
+  try { const id = localStorage.getItem(AREA_KEY); return PLAN_AREAS.find((a) => a.id === id) ?? PLAN_AREAS[0]; } catch { return PLAN_AREAS[0]; }
+}
+const inArea = (A: PlanArea, u: number, v: number, pad = 50) => u >= A.u0 - pad && u <= A.u1 + pad && v >= A.v0 - pad && v <= A.v1 + pad;
+function viewBoxFor(A: PlanArea) {
+  if (typeof window !== 'undefined' && window.innerWidth < 640) {
+    const w = Math.min(320, A.u1 - A.u0);
+    return { x: (A.u0 + A.u1) / 2 - w / 2, y: -A.v1, w, h: Math.max(560, A.v1 - A.v0) };
+  }
+  return { x: A.u0, y: -A.v1, w: A.u1 - A.u0, h: A.v1 - A.v0 };
+}
 const EDIT_KEY = 'llv-place-edits';
 
 function loadEdits(): Record<string, PlaceEdit> {
@@ -38,7 +60,7 @@ function saveEdits(e: Record<string, PlaceEdit>): boolean {
 /** A building on the map: an authored feature, or a game record with no feature yet (placed from the game's grid). */
 interface Placed { f: PlaceFeature; u: number; v: number; it?: Item; authored: boolean }
 
-const KIND_FILL: Record<string, string> = { pier: '#b98b5e', ride: '#d9a441', theater: '#9b6fb3', club: '#7c5cc4', saloon: '#b3473c', tavern: '#3f8f5a', restaurant: '#c9603f', deli: '#4aa3a0', arcade: '#3fb6c9', shop: '#5f8fd6', hotel: '#d16b9b', food: '#e0a03c', minigolf: '#5fae7f', landmark: '#c7a64a' };
+const KIND_FILL: Record<string, string> = { motel: '#d16b9b', civic: '#b5643c', lighthouse: '#f2d36b', sign: '#ff5fa2', comedy: '#e07a3f', pier: '#b98b5e', ride: '#d9a441', theater: '#9b6fb3', club: '#7c5cc4', saloon: '#b3473c', tavern: '#3f8f5a', restaurant: '#c9603f', deli: '#4aa3a0', arcade: '#3fb6c9', shop: '#5f8fd6', hotel: '#d16b9b', food: '#e0a03c', minigolf: '#5fae7f', landmark: '#c7a64a' };
 
 /** Which quarter of a four-angle sheet faces the viewer at this rotation (front, corner, side, back). */
 function facingQuarter(rot: number): number {
@@ -64,7 +86,7 @@ function Building({ p, sel, edit, color, label, hs, onDown }: { p: Placed; sel: 
   const { w, d } = p.f.properties.footprint;
   const rot = p.f.properties.rotation;
   const v = viewOf(p);
-  const src = useCutout(v.key, v.quarter);
+  const src = useSprite(v.key, v.quarter);
   const [ar, setAr] = useState(0.62);
   useEffect(() => {
     if (!src) return;
@@ -78,7 +100,7 @@ function Building({ p, sel, edit, color, label, hs, onDown }: { p: Placed; sel: 
   const fdy = Math.cos(a) * (d / 2);
   const ax = p.u + fdx;
   const ay = -p.v + fdy;
-  const sw = Math.min(w, 70) * 1.05;
+  const sw = p.f.properties.kind === 'sign' ? 9 : Math.min(w, 70) * 1.05;
   const sh = sw * ar;
   const kindFill = KIND_FILL[p.f.properties.kind] ?? '#8a8f9a';
   return (
@@ -105,12 +127,15 @@ function Building({ p, sel, edit, color, label, hs, onDown }: { p: Placed; sel: 
   );
 }
 
-function Ground({ year }: { year: number }) {
-  const { u0, u1, v0, v1 } = AREA;
+function Ground({ year, A }: { year: number; A: PlanArea }) {
+  const { u0, u1, v0, v1 } = A;
   const cross = CROSS.filter((c) => c.u > u0 - 20 && c.u < u1 + 20);
   const shore = -16 - beachWidth((u0 + u1) / 2);
   const piers = PIERS.filter((p) => p.u > u0 - 60 && p.u < u1 + 60 && (p.id !== 'hunts' || year >= 1957));
-  const aves = (['oc', 'at', 'pa'] as const).map((id) => ({ id, v: AVE_V[id], n: id === 'oc' ? 'Ocean Ave' : id === 'at' ? 'Atlantic Ave' : 'Pacific Ave' }));
+  const town = townAt((u0 + u1) / 2);
+  const aves = AVENUES.filter((a) => a.v < v1 + 40 && (a.from === undefined || (u1 > a.from && u0 < (a.to ?? 1e9)))).map((a) => ({ id: a.id, v: AVE_V[a.id], n: a.names[town] ?? a.names.wildwood ?? '' }));
+  const bw0 = Math.max(u0 - 400, BOARDWALK.from);
+  const bw1 = Math.min(u1 + 400, BOARDWALK.to);
   return (
     <g data-testid="plan-ground" pointerEvents="none">
       <defs>
@@ -126,7 +151,7 @@ function Ground({ year }: { year: number }) {
       {/* Piers out over the beach and the water. */}
       {piers.map((p) => <rect key={p.id} x={p.u - p.w / 2} y={16} width={p.w} height={p.len} fill="url(#plan-deck)" stroke="#5e4128" strokeWidth="0.8" />)}
       {/* The Boardwalk. */}
-      <rect x={u0 - 400} y={0} width={u1 - u0 + 800} height={16} fill="url(#plan-planks)" stroke="#5e4128" strokeWidth="0.6" />
+      {bw1 > bw0 && <rect x={bw0} y={0} width={bw1 - bw0} height={16} fill="url(#plan-planks)" stroke="#5e4128" strokeWidth="0.6" />}
       {/* Avenues: sidewalk, curb, asphalt, center line. */}
       {aves.map((a) => (
         <g key={a.id}>
@@ -146,7 +171,7 @@ function Ground({ year }: { year: number }) {
       {/* Names. */}
       {cross.map((c) => <text key={`t-${c.n}`} x={c.u} y={-AVE_V.oc - 30} transform={`rotate(-90 ${c.u} ${-AVE_V.oc - 30})`} fontSize="5.5" fill="#fffaf0" fontWeight="700" textAnchor="middle" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{c.n}</text>)}
       {aves.map((a) => <text key={`t-${a.id}`} x={u0 + 6} y={-a.v + 2} fontSize="5.5" fill="#fffaf0" fontWeight="700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{a.n}</text>)}
-      <text x={u0 + 6} y={11} fontSize="5.5" fill="#3a2414" fontWeight="800" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>THE BOARDWALK</text>
+      {bw1 > bw0 && <text x={Math.max(u0, bw0) + 6} y={11} fontSize="5.5" fill="#3a2414" fontWeight="800" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>THE BOARDWALK</text>}
       <text x={u0 + 6} y={-shore + 22} fontSize="8" fill="#cfe9f5" fontStyle="italic" style={{ fontFamily: 'Georgia, serif' }}>Atlantic Ocean</text>
     </g>
   );
@@ -178,6 +203,7 @@ function PlaceCard({ p, s, onOpenLot, onClose }: { p: Placed; s: GameState; onOp
       {f.images.interior && <AssetImg k={f.images.interior as AssetKey} alt={`${name}, inside`} className="block w-full h-32 object-cover rounded border border-noir-700" />}
       <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
         {it && <><div className="text-stone-500">Held by</div><div className="text-stone-200 flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: OWNER_COLOR[it.mine ? 'player' : it.owner] ?? OWNER_COLOR.private }} />{it.mine ? `House of ${s.houseName}` : it.owner === 'private' ? (it.forSale ? 'On the market' : 'An independent owner') : rivalName(it.owner as never)}</div></>}
+        {f.public && <><div className="text-stone-500">Status</div><div className="text-stone-200">A public landmark: it is never for sale.</div></>}
         {f.establishment && <><div className="text-stone-500">Status</div><div className="text-stone-200">An establishment: visit it, book an act; it is never for sale.</div></>}
         <div className="text-stone-500">Location</div>
         <div><span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${f.located === 'verified' ? 'bg-emerald-700/60 text-emerald-100' : 'bg-amber-700/50 text-amber-100'}`} data-testid="place-located">{f.located === 'verified' ? 'VERIFIED' : 'APPROXIMATE'}</span> <span className="text-stone-500 tabular-nums">{lat.toFixed(5)}, {lng.toFixed(5)}</span></div>
@@ -196,12 +222,19 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
   const [sel, setSel] = useState<string | undefined>();
   const [peek, setPeek] = useState<number | undefined>();
   const [exportText, setExportText] = useState<string | undefined>();
+  const [A, setA] = useState<PlanArea>(loadArea);
   const year = peek ?? s.date.y;
   const svg = useRef<SVGSVGElement>(null);
   // A phone starts on Hunt's Pier and the blocks round it; a big screen sees the whole first area.
-  const [vb, setVb] = useState(() => (typeof window !== 'undefined' && window.innerWidth < 640
-    ? { x: 3750 - 150, y: -300, w: 300, h: 560 }
-    : { x: AREA.u0, y: -AREA.v1, w: AREA.u1 - AREA.u0, h: AREA.v1 - AREA.v0 }));
+  const [vb, setVb] = useState(() => viewBoxFor(A));
+  const goArea = (id: string) => {
+    const n = PLAN_AREAS.find((a) => a.id === id);
+    if (!n) return;
+    setA(n);
+    setVb(viewBoxFor(n));
+    setSel(undefined);
+    try { localStorage.setItem(AREA_KEY, n.id); } catch { /* per-viewer convenience only */ }
+  };
   const drag = useRef<{ mode: 'pan' | 'move' | 'rot' | 'size'; id?: string; sx: number; sy: number; vb: typeof vb; start?: PlaceEdit & { u: number; v: number }; moved: boolean } | undefined>();
 
   const byLot = useMemo(() => new Map(items.filter((x) => x.lot).map((x) => [x.lot!.id, x])), [items]);
@@ -211,7 +244,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
     const have = new Set<string>();
     for (const f of feats) {
       const [u, v] = lngLatToUv(f.geometry.coordinates);
-      if (u < AREA.u0 - 50 || u > AREA.u1 + 50 || v < AREA.v0 - 50 || v > AREA.v1 + 50) continue;
+      if (!inArea(A, u, v)) continue;
       const it = f.properties.lotId ? byLot.get(f.properties.lotId) : undefined;
       if (f.properties.lotId) have.add(f.properties.lotId);
       out.push({ f, u, v, it, authored: true });
@@ -223,7 +256,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       const pc = it.parcel;
       const u = (pc.u0 + pc.u1) / 2;
       const v = (pc.v0 + pc.v1) / 2;
-      if (u < AREA.u0 || u > AREA.u1 || v < AREA.v0 || v > AREA.v1) continue;
+      if (!inArea(A, u, v, 0)) continue;
       // A researched building stands here: the game's generated record gives way on the map.
       if (out.some((q) => q.authored && Math.abs(q.u - u) < q.f.properties.footprint.w / 2 && Math.abs(q.v - v) < q.f.properties.footprint.d / 2)) continue;
       const id = `lot:${l.id}`;
@@ -238,9 +271,9 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
     }
     // Draw from the back (inland) to the front (the ocean), so nearer buildings stand in front.
     return out.sort((a, b) => b.v - a.v);
-  }, [year, edits, items, byLot]);
+  }, [year, edits, items, byLot, A]);
   const selP = placed.find((p) => p.f.id === sel);
-  const elsewhere = useMemo(() => placesIn(year, applyPlaceEdits(edits)).filter((f) => { const [u, v] = lngLatToUv(f.geometry.coordinates); return u < AREA.u0 - 50 || u > AREA.u1 + 50 || v < AREA.v0 - 50 || v > AREA.v1 + 50; }), [year, edits]);
+  const elsewhere = useMemo(() => placesIn(year, applyPlaceEdits(edits)).filter((f) => !inArea(A, ...lngLatToUv(f.geometry.coordinates))), [year, edits, A]);
 
   const toSvg = (cx: number, cy: number): [number, number] => {
     const el = svg.current;
@@ -337,10 +370,10 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
     <div className="absolute inset-0 overflow-hidden bg-[#16365a]" data-testid="plan-view" data-year={year} data-edit={edit ? '1' : '0'}>
       <svg ref={svg} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full select-none" style={{ touchAction: 'none' }}
         onPointerDown={(e) => onDown(e, 'pan')}>
-        <Ground year={year} />
+        <Ground year={year} A={A} />
         {placed.map((p) => {
           const it = p.it;
-          const color = it ? (it.mine ? OWNER_COLOR.player : it.forSale ? OWNER_COLOR.sale : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private) : p.f.properties.establishment ? '#c7a64a' : '#e8dfcb';
+          const color = it ? (it.mine ? OWNER_COLOR.player : it.forSale ? OWNER_COLOR.sale : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private) : p.f.properties.establishment || p.f.properties.public ? '#c7a64a' : '#e8dfcb';
           const label = (it?.name ?? p.f.properties.name).replace(/^The /, '');
           return <Building key={p.f.id} p={p} sel={sel === p.f.id} edit={edit} color={color} label={label.length > 26 ? `${label.slice(0, 25)}…` : label} hs={Math.max(3, vb.w / 90)} onDown={(e, mode) => onDown(e, mode, p)} />;
         })}
@@ -348,6 +381,11 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       {/* Toolbar. */}
       <div className="absolute left-2 top-11 z-10 flex flex-wrap items-center gap-1.5 max-w-[calc(100%-1rem)]" data-plan-ui data-hv-ui>
         <button type="button" className="hv-btn" onClick={onClose} data-testid="plan-close">← Island map</button>
+        <label className="hv-btn flex items-center gap-1">Area
+          <select className="bg-transparent text-[11px] max-w-[9.5rem]" value={A.id} onChange={(e) => goArea(e.target.value)} data-testid="plan-area">
+            {PLAN_AREAS.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </select>
+        </label>
         <span className="hv-btn hv-on" data-testid="plan-year">{year}{peek !== undefined ? ' (peek)' : ''}</span>
         <button type="button" className="hv-btn" onClick={() => zoom(1 / 1.4)} aria-label="Zoom in">+</button>
         <button type="button" className="hv-btn" onClick={() => zoom(1.4)} aria-label="Zoom out">−</button>
@@ -366,7 +404,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
         </>}
       </div>
       <div className="absolute left-2 bottom-2 z-10 rounded bg-[#1b1030]/85 border border-[#ff5fa2]/60 px-2 py-1 text-[11px] text-[#ffd1e6] max-w-[70%]" data-plan-ui>
-        <span className="font-display">The Boardwalk around Hunt's Pier</span>
+        <span className="font-display">{A.name}</span>
         <span className="text-stone-400"> · {placed.filter((p) => p.authored).length} placed, {placed.filter((p) => p.f.properties.located === 'verified').length} verified · dashed = approximate (in edit)</span>
         {elsewhere.length > 0 && <span className="hidden md:inline text-stone-400"> · elsewhere: {elsewhere.map((f) => f.properties.name).join(', ')}</span>}
       </div>

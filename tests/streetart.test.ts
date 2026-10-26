@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { ASSET_URLS, ASSET_SIZE, TURNAROUND_SPLIT, type AssetKey } from '../src/ui/hood/art/assetUrls';
+import { ASSET_URLS, ASSET_SIZE, SPRITE_OF, TURNAROUND_SPLIT, type AssetKey } from '../src/ui/hood/art/assetUrls';
 import { storefrontArt } from '../src/ui/hood/storefrontArt';
 import { quarterRect } from '../src/ui/hood/Turnaround';
 import { DISTRICTS, DISTRICT_CARD } from '../src/ui/hood/districts';
@@ -95,5 +95,14 @@ describe('street art: the asset manifest, storefront paintings, turnarounds and 
       const t = readFileSync(f, 'utf8');
       expect(t, f).not.toMatch(/Club Avalon|Morey|Blue Marlin|Jolly Roger|Lobster House/);
     }
+  });
+
+  it('batch 3 and the near-miss batch 2 names find their paintings; ready-cut sprites map to paintings', () => {
+    expect(storefrontArt({ key: 'a', name: 'Old Mack\'s Pizza', useId: 'pizza' })?.key).toEqual(['storefront_old_macks_pizza', 'neon_moon_pizza']);
+    expect(storefrontArt({ key: 'a', name: 'The Shore Comedy Club', useId: 'club' })).toMatchObject({ key: 'shore_comedy_turnaround', turn: true, inside: 'shore_comedy_interior' });
+    expect(storefrontArt({ key: 'a', name: 'The Lollypop Motel', useId: 'motel' })?.key).toBe('motel_lollypop');
+    expect(storefrontArt({ key: 'a', name: 'Pompei\'s', useId: 'trattoria' })?.key).toBe('storefront_pompeis');
+    for (const k of ['storefront_peanut_gallery', 'storefront_marios_pizza', 'storefront_eddies_fun_palace', 'storefront_royal_casino_arcade']) expect(k in ASSET_URLS, k).toBe(false);
+    for (const [from, to] of Object.entries(SPRITE_OF)) { expect(from in ASSET_URLS, from).toBe(true); expect(to! in ASSET_URLS, to).toBe(true); expect(to).toMatch(/^cutout_/); }
   });
 });

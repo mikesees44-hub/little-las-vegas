@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { assetUrl, type AssetKey } from './art/assetUrls';
+import { SPRITE_OF, assetUrl, type AssetKey } from './art/assetUrls';
 import { quarterRect } from './Turnaround';
 
 /**
@@ -86,6 +86,41 @@ export function useCutout(k: AssetKey | undefined, quarter?: number): string | u
     let live = true;
     setSrc(undefined);
     if (k) cutoutOf(k, quarter).then((s) => { if (live) setSrc(s); });
+    return () => { live = false; };
+  }, [k, quarter]);
+  return src;
+}
+
+const spriteCache = new Map<string, Promise<string | undefined>>();
+
+/**
+ * The building's sprite: a ready-cut transparent image when the painting has
+ * one (SPRITE_OF) and it loads, else the painting cut in the browser.
+ */
+export function spriteOf(k: AssetKey, quarter?: number): Promise<string | undefined> {
+  const sk = quarter === undefined ? SPRITE_OF[k] : undefined;
+  const url = sk ? assetUrl(sk) : undefined;
+  if (!url || typeof document === 'undefined') return cutoutOf(k, quarter);
+  let p = spriteCache.get(url);
+  if (!p) {
+    p = new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(url);
+      img.onerror = () => { cutoutOf(k, quarter).then(resolve); };
+      img.src = url;
+    });
+    spriteCache.set(url, p);
+  }
+  return p;
+}
+
+/** Like useCutout, preferring the ready-cut sprite. */
+export function useSprite(k: AssetKey | undefined, quarter?: number): string | undefined {
+  const [src, setSrc] = useState<string | undefined>();
+  useEffect(() => {
+    let live = true;
+    setSrc(undefined);
+    if (k) spriteOf(k, quarter).then((s) => { if (live) setSrc(s); });
     return () => { live = false; };
   }, [k, quarter]);
   return src;

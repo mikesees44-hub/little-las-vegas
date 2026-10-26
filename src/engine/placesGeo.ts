@@ -29,6 +29,8 @@ export interface PlaceProps {
   datesApprox?: boolean;
   /** A landmark establishment (named for a real person): visitable, never owned. */
   establishment?: boolean;
+  /** A public building or landmark (a city hall, the lighthouse): never for sale. */
+  public?: boolean;
   rotation: number;
   footprint: { w: number; d: number };
   images: { exterior?: string[]; turnaround?: string; interior?: string };
@@ -69,14 +71,48 @@ export const PLACES: PlaceFeature[] = [
   {"type":"Feature","id":"sa09","geometry":{"type":"Point","coordinates":[-74.80849,38.992556]},"properties":{"building":"sa09","lotId":"sa09","name":"Bayview Deli","kind":"deli","address":"Pacific Ave at Magnolia Ave","opened":1949,"rotation":0,"footprint":{"w":37,"d":52},"images":{"turnaround":"bayview_deli_turnaround"},"located":"approximate","source":"Placed by the game's street order (Hunt's Pier = Oak Avenue in the game); not a sourced location. Correct it in the editor."}},
   {"type":"Feature","id":"pa01","geometry":{"type":"Point","coordinates":[-74.809693,38.991749]},"properties":{"building":"pa01","lotId":"pa01","name":"The Blue Moon","kind":"club","address":"Pacific Ave at Spicer Ave","opened":1946,"rotation":0,"footprint":{"w":37,"d":52},"images":{},"located":"approximate","source":"Placed by the game's street order (Hunt's Pier = Oak Avenue in the game); not a sourced location. Correct it in the editor."}},
   {"type":"Feature","id":"pa02","geometry":{"type":"Point","coordinates":[-74.806368,38.993979]},"properties":{"building":"pa02","lotId":"pa02","name":"The Velvet Rope","kind":"club","address":"Pacific Ave at Wildwood Ave","opened":1950,"rotation":0,"footprint":{"w":37,"d":52},"images":{},"located":"approximate","source":"Placed by the game's street order (Hunt's Pier = Oak Avenue in the game); not a sourced location. Correct it in the editor."}},
-  {"type":"Feature","id":"club-avalon","geometry":{"type":"Point","coordinates":[-74.787468,39.007669]},"properties":{"building":"nw:club-avalon","name":"Club Avalon","kind":"landmark","address":"Spruce Ave & Olde New Jersey Ave, North Wildwood","establishment":true,"rotation":0,"footprint":{"w":40,"d":45},"images":{},"located":"approximate","source":"Cross streets as given (Spruce Ave & Olde New Jersey Ave). The point is placed roughly in North Wildwood and is not geocoded. A real entertainer's club: an establishment only, never owned, never in a racket or a crime story."}},
+  {"type":"Feature","id":"club-avalon","geometry":{"type":"Point","coordinates":[-74.793986,39.006612]},"properties":{"building":"nw:club-avalon","name":"Club Avalon","kind":"landmark","address":"Spruce Ave & Olde New Jersey Ave, North Wildwood","establishment":true,"rotation":0,"footprint":{"w":40,"d":45},"images":{},"located":"approximate","source":"Cross streets as given (Spruce Ave & Olde New Jersey Ave). The point is placed roughly in North Wildwood (on the game's grid near Olde New Jersey Ave and 4th) and is not geocoded. A real entertainer's club: an establishment only, never owned, never in a racket or a crime story."}},
+  // Batch 2 and 3, block by block from Hunt's Pier. The Boardwalk north from the Sportland Pier into North Wildwood.
+  {"type":"Feature","id":"bw-sportsland","geometry":{"type":"Point","coordinates":[-74.800163,38.994751]},"properties":{"building":"ll:bw-sportsland","name":"Sportsland Bike Rental","kind":"shop","address":"Boardwalk at Rio Grande Ave","images":{"exterior":["storefront_sportsland"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. By the old Sportland Pier; its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-nutty-hut","geometry":{"type":"Point","coordinates":[-74.799994,38.994909]},"properties":{"building":"ll:bw-nutty-hut","name":"The Nutty Hut","kind":"food","address":"Boardwalk at Rio Grande Ave","images":{"exterior":["storefront_nutty_hut"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-old-macks","geometry":{"type":"Point","coordinates":[-74.799786,38.995104]},"properties":{"building":"ll:bw-old-macks","name":"Old Mack's Pizza","kind":"food","address":"Boardwalk at Davis Ave","opened":1953,"datesApprox":true,"images":{"exterior":["storefront_old_macks_pizza"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. The year is a placeholder, not sourced. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-bazaar","geometry":{"type":"Point","coordinates":[-74.799617,38.995262]},"properties":{"building":"ll:bw-bazaar","name":"Boardwalk Bazaar","kind":"shop","address":"Boardwalk at Davis Ave","images":{"exterior":["storefront_boardwalk_bazaar"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A fictional souvenir shop. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-olympia","geometry":{"type":"Point","coordinates":[-74.799408,38.995457]},"properties":{"building":"ll:bw-olympia","name":"Olympia Fascination","kind":"arcade","address":"Boardwalk at Crocker Ave","images":{"exterior":["storefront_olympia_fascination"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-taffy-tides","geometry":{"type":"Point","coordinates":[-74.799239,38.995615]},"properties":{"building":"ll:bw-taffy-tides","name":"Taffy Tides","kind":"food","address":"Boardwalk at Crocker Ave","images":{"exterior":["storefront_taffy_tides"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A fictional candy shop. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-eds-fun-arcade","geometry":{"type":"Point","coordinates":[-74.799031,38.99581]},"properties":{"building":"ll:bw-eds-fun-arcade","name":"Ed's Fun Arcade","kind":"arcade","address":"Boardwalk at Leaming Ave","images":{"exterior":["storefront_eds_fun_arcade"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-flashback","geometry":{"type":"Point","coordinates":[-74.798862,38.995968]},"properties":{"building":"ll:bw-flashback","name":"Flashback Photo","kind":"shop","address":"Boardwalk at Leaming Ave","opened":1972,"datesApprox":true,"images":{"exterior":["storefront_flashback_photo"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A fictional old-time portrait studio; the year is a placeholder. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-casino-arcadia","geometry":{"type":"Point","coordinates":[-74.798643,38.996172]},"properties":{"building":"ll:bw-casino-arcadia","name":"Casino Arcadia","kind":"arcade","address":"Boardwalk at Andrews Ave","images":{"exterior":["storefront_casino_arcadia"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-surfside","geometry":{"type":"Point","coordinates":[-74.798454,38.996349]},"properties":{"building":"ll:bw-surfside","name":"Surfside Outfitters","kind":"shop","address":"Boardwalk at Andrews Ave","images":{"exterior":["storefront_surfside_outfitters"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A fictional beachwear store. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-pompeis","geometry":{"type":"Point","coordinates":[-74.798243,38.996546]},"properties":{"building":"ll:bw-pompeis","name":"Pompei's","kind":"restaurant","address":"Boardwalk at 26th Ave, North Wildwood","opened":1978,"images":{"exterior":["storefront_pompeis"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Open from 1978 (the painted sign's \"since 1978\"). Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-lil-nickys","geometry":{"type":"Point","coordinates":[-74.798088,38.996691]},"properties":{"building":"ll:bw-lil-nickys","name":"Lil' Nicky's Pizza","kind":"food","address":"Boardwalk at 26th Ave, North Wildwood","opened":1985,"datesApprox":true,"images":{"exterior":["storefront_lil_nickys"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. A late-era stand; the year is a placeholder. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-gateway-25","geometry":{"type":"Point","coordinates":[-74.797816,38.996946]},"properties":{"building":"ll:bw-gateway-25","name":"Gateway 25 (Kohl Bros. Frozen Custard)","kind":"arcade","address":"Boardwalk at 25th Ave, North Wildwood","images":{"exterior":["storefront_gateway_25"]},"rotation":0,"footprint":{"w":66,"d":48},"located":"approximate","source":"A still-operating business: shown under a near-miss name. An arcade with the custard stand in its corner; its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"bw-fudge-kitchenette","geometry":{"type":"Point","coordinates":[-74.797543,38.9972]},"properties":{"building":"ll:bw-fudge-kitchenette","name":"The Fudge Kitchenette","kind":"food","address":"Boardwalk at 24th Ave, North Wildwood","opened":1972,"datesApprox":true,"images":{"exterior":["storefront_fudge_kitchenette"]},"rotation":0,"footprint":{"w":32,"d":40},"located":"approximate","source":"A still-operating business: shown under a near-miss name. The year is a placeholder. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  // North Wildwood: the Lollypop Motel and its sign on Atlantic Avenue, City Hall, the lighthouse.
+  {"type":"Feature","id":"nw-lollypop","geometry":{"type":"Point","coordinates":[-74.798206,38.998439]},"properties":{"building":"ll:nw-lollypop","name":"The Lollypop Motel","kind":"motel","address":"2301 Atlantic Ave, North Wildwood","images":{"exterior":["motel_lollypop"]},"rotation":180,"footprint":{"w":33,"d":52},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Address and corner (the northbound side of Atlantic at 23rd Ave): Roadside America. Its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"nw-lollypop-sign","geometry":{"type":"Point","coordinates":[-74.798418,38.998545]},"properties":{"building":"ll:nw-lollypop:sign","name":"The Lollypop Motel sign","kind":"sign","address":"2301 Atlantic Ave, North Wildwood","rotation":180,"footprint":{"w":5,"d":5},"images":{"exterior":["sign_lollypop"]},"located":"approximate","source":"The motel's standalone sign, at its Atlantic Avenue corner. Placed with the motel."}},
+  {"type":"Feature","id":"nw-city-hall","geometry":{"type":"Point","coordinates":[-74.794111,39.003238]},"properties":{"building":"ll:nw-city-hall","name":"North Wildwood City Hall","kind":"civic","address":"901 Atlantic Ave, North Wildwood","public":true,"images":{"exterior":["landmark_nw_city_hall"]},"rotation":0,"footprint":{"w":60,"d":44},"located":"approximate","source":"Address: the City of North Wildwood (northwildwood.com, historical markers). When this building went up is not given there (the city's older halls stood at Walnut & New York and at 3rd & Central), so the years are not shown. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"hereford-light","geometry":{"type":"Point","coordinates":[-74.79222,39.00667]},"properties":{"building":"nw:hereford-light","name":"The Hereford Inlet Light","kind":"lighthouse","address":"First Ave & Central Ave, North Wildwood","opened":1874,"public":true,"rotation":0,"footprint":{"w":26,"d":24},"images":{"exterior":["landmark_hereford_light"]},"located":"verified","source":"Coordinates (39.00667, -74.79222), the corner of First and Central Avenues and the year (1874): Wikipedia, \"Hereford Inlet Lighthouse\". The game's island is drawn longer than the real one, so the map's frame is pinned here as its second sourced point. A public landmark (real name kept): never for sale."}},
+  // Pacific Avenue: the clubs round the Taylor Avenue block, the Rainbow at Spicer; a pizzeria on Atlantic.
+  {"type":"Feature","id":"pa-quo-vadis","geometry":{"type":"Point","coordinates":[-74.813018,38.989518]},"properties":{"building":"ll:pa-quo-vadis","name":"Quo Vadis","kind":"club","address":"Pacific Ave at Montgomery Ave","images":{"exterior":["club_quo_vadis"]},"rotation":0,"footprint":{"w":37,"d":52},"located":"approximate","source":"A long-gone lounge (real name kept). Its block and years are not sourced. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-oasis","geometry":{"type":"Point","coordinates":[-74.812646,38.989768]},"properties":{"building":"ll:pa-oasis","name":"The Oasis","kind":"club","address":"Pacific Ave at Montgomery Ave","images":{"exterior":["club_oasis"]},"rotation":0,"footprint":{"w":37,"d":52},"located":"approximate","source":"A nightclub; its block and years are not sourced. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-riptide","geometry":{"type":"Point","coordinates":[-74.812489,38.989042]},"properties":{"building":"ll:pa-riptide","name":"The Riptide","kind":"club","address":"Pacific Ave at Montgomery Ave","images":{"exterior":["club_riptide"]},"rotation":180,"footprint":{"w":37,"d":52},"located":"approximate","source":"A long-gone club (real name kept). Its block and years are not sourced. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-stardust","geometry":{"type":"Point","coordinates":[-74.812117,38.989292]},"properties":{"building":"ll:pa-stardust","name":"The Stardust","kind":"club","address":"Pacific Ave at Montgomery Ave","images":{"exterior":["club_stardust"]},"rotation":180,"footprint":{"w":37,"d":52},"located":"approximate","source":"A nightclub; its block and years are not sourced. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-hurricane","geometry":{"type":"Point","coordinates":[-74.810983,38.990883]},"properties":{"building":"ll:pa-hurricane","name":"The Hurricane Club","kind":"club","address":"Pacific Ave at Burk Ave","images":{"exterior":["club_hurricane"]},"rotation":0,"footprint":{"w":37,"d":52},"located":"approximate","source":"A long-gone club (real name kept). Its block and years are not sourced. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-shore-comedy","geometry":{"type":"Point","coordinates":[-74.810827,38.990158]},"properties":{"building":"ll:pa-shore-comedy","name":"The Shore Comedy Club","kind":"comedy","address":"Pacific Ave at Burk Ave","opened":1982,"datesApprox":true,"images":{"turnaround":"shore_comedy_turnaround","interior":"shore_comedy_interior"},"rotation":180,"footprint":{"w":37,"d":52},"located":"approximate","source":"A fictional comedy club of the 1980s boom; the year is a placeholder. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-uncle-vinnys","geometry":{"type":"Point","coordinates":[-74.810455,38.990407]},"properties":{"building":"ll:pa-uncle-vinnys","name":"Uncle Vinny's Comedy Club","kind":"comedy","address":"Pacific Ave at Burk Ave","opened":1984,"datesApprox":true,"images":{"interior":"uncle_vinnys_stage"},"rotation":180,"footprint":{"w":37,"d":52},"located":"approximate","source":"A near-miss name for a comedy club that operates elsewhere (not in Wildwood); placed here as a fictional room. The year is a placeholder. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"at-romeos","geometry":{"type":"Point","coordinates":[-74.81128,38.98926]},"properties":{"building":"ll:at-romeos","name":"Romeo's Pizzeria","kind":"food","address":"Atlantic Ave at Taylor Ave","opened":1961,"datesApprox":true,"images":{"exterior":["storefront_romeos_pizzeria"]},"rotation":0,"footprint":{"w":37,"d":52},"located":"approximate","source":"A fictional pizzeria; its mural is of \"Let's Twist Again\" (1961), so it opens in 1961 (a placeholder). Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"pa-rainbow","geometry":{"type":"Point","coordinates":[-74.809624,38.990965]},"properties":{"building":"ll:pa-rainbow","name":"The Rainbow Club","kind":"club","address":"Pacific Ave at Spicer Ave (the corner)","opened":1950,"closed":1979,"datesApprox":true,"images":{"exterior":["club_rainbow_marquee","club_rainbow_musical_bar"]},"rotation":180,"footprint":{"w":37,"d":52},"located":"approximate","source":"Cape May Magazine, \"A Tale of Two Wildwoods\": at the corner of Pacific and Spicer Avenues, on the east side; the Levy family ran it from the 1950s into the 1970s (Chubby Checker played it in 1960). The corner is sourced; the exact years are not. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  // The Crest: Atlantic Avenue motels (addresses from the user's notes; the blocks on the game's grid are approximate).
+  {"type":"Feature","id":"at-ebb-tyde","geometry":{"type":"Point","coordinates":[-74.821283,38.981718]},"properties":{"building":"ll:at-ebb-tyde","name":"The Ebb Tyde Motel","kind":"motel","address":"5711 Atlantic Ave, Wildwood Crest","opened":1957,"images":{"exterior":["motel_ebb_tyde"]},"rotation":180,"footprint":{"w":89,"d":52},"located":"approximate","source":"A still-operating business: shown under a near-miss name. Address 5711 Atlantic Ave and the year (1957): the user's notes. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"at-satellite","geometry":{"type":"Point","coordinates":[-74.822409,38.980963]},"properties":{"building":"ll:at-satellite","name":"The Satellite Motel","kind":"motel","address":"5909 Atlantic Ave, Wildwood Crest","opened":1958,"images":{"exterior":["motel_satellite"]},"rotation":180,"footprint":{"w":42,"d":52},"located":"approximate","source":"Demolished (the real name kept). Address 5909 Atlantic Ave and the year built (1958): the user's notes; when it came down is not in them. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
+  {"type":"Feature","id":"at-schumanns","geometry":{"type":"Point","coordinates":[-74.821994,38.981241]},"properties":{"building":"ll:at-schumanns","name":"Schumann's Restaurant","kind":"restaurant","address":"5901 Atlantic Ave, Wildwood Crest","images":{"exterior":["storefront_schumanns"]},"rotation":180,"footprint":{"w":42,"d":52},"located":"approximate","source":"Long closed (the real name kept). Address 5901 Atlantic Ave: the user's notes; its years are not known. Placed on the game's street grid; the point is approximate. Correct it in the editor."}},
 ];
 
 const RAD = Math.PI / 180;
 const M_LAT = 111320;
 
-/** Island frame (u, v meters) → [lng, lat]. */
-export function uvToLngLat(u: number, v: number): [number, number] {
+/** The plain rotation: island frame (u, v meters) → [lng, lat], true to scale. */
+function rawToLngLat(u: number, v: number): [number, number] {
   const { anchor, anchorUV, bearing } = PLACE_FRAME;
   const du = u - anchorUV[0];
   const dv = v - anchorUV[1];
@@ -87,17 +123,57 @@ export function uvToLngLat(u: number, v: number): [number, number] {
   return [anchor.lng + east / (M_LAT * Math.cos(anchor.lat * RAD)), anchor.lat + north / M_LAT];
 }
 
-/** [lng, lat] → island frame (u, v meters). */
-export function lngLatToUv(p: [number, number]): [number, number] {
+function rawToUv(p: [number, number]): [number, number] {
   const { anchor, anchorUV, bearing } = PLACE_FRAME;
   const east = (p[0] - anchor.lng) * M_LAT * Math.cos(anchor.lat * RAD);
   const north = (p[1] - anchor.lat) * M_LAT;
   const b = bearing * RAD;
   const bi = (bearing - 90) * RAD;
   // The two axes are orthonormal: project onto each.
-  const du = north * Math.cos(b) + east * Math.sin(b);
-  const dv = north * Math.cos(bi) + east * Math.sin(bi);
-  return [anchorUV[0] + du, anchorUV[1] + dv];
+  return [anchorUV[0] + north * Math.cos(b) + east * Math.sin(b), anchorUV[1] + north * Math.cos(bi) + east * Math.sin(bi)];
+}
+
+/**
+ * The game draws the island longer than it is (its streets are spaced from
+ * memory), so one rotation fits only near its anchor. The frame is pinned at
+ * a second sourced point, the Hereford Inlet Light (Wikipedia: 39.00667,
+ * -74.79222, at First and Central Avenues), to the game's corner of 1st and
+ * Central; between them the frame stretches along the island. Below
+ * `WARP_FROM` (the Crest, Wildwood, Hunt's Pier) it is the plain rotation.
+ */
+const WARP_FROM = 4200;
+const HEREFORD_LIGHT: [number, number] = [-74.79222, 39.00667];
+const HEREFORD_UV: [number, number] = [7246, 365];
+const WARP_PIN = (() => {
+  const [bu, bv] = rawToUv(HEREFORD_LIGHT);
+  return { bu, du: HEREFORD_UV[0] - bu, dv: HEREFORD_UV[1] - bv };
+})();
+
+/** The offset added to the plain frame at a plain-frame u. */
+function warpAt(bu: number): [number, number] {
+  if (bu <= WARP_FROM) return [0, 0];
+  const t = Math.min(1, (bu - WARP_FROM) / (WARP_PIN.bu - WARP_FROM));
+  return [t * WARP_PIN.du, t * WARP_PIN.dv];
+}
+
+/** Island frame (u, v meters) → [lng, lat]. */
+export function uvToLngLat(u: number, v: number): [number, number] {
+  // Invert u = bu + warp(bu) (monotonic in bu): bisection.
+  let lo = u - 4000;
+  let hi = u + 4000;
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (mid + warpAt(mid)[0] < u) lo = mid; else hi = mid;
+  }
+  const bu = (lo + hi) / 2;
+  return rawToLngLat(bu, v - warpAt(bu)[1]);
+}
+
+/** [lng, lat] → island frame (u, v meters). */
+export function lngLatToUv(p: [number, number]): [number, number] {
+  const [bu, bv] = rawToUv(p);
+  const [du, dv] = warpAt(bu);
+  return [bu + du, bv + dv];
 }
 
 /** Whether a feature is open in a given year (unknown years count as open). */
