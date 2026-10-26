@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AVENUES, AVE_V, BOARDWALK, CROSS, PIERS, beachWidth, townAt } from '../../engine/hoodData';
+import { AVENUES, AVE_V, BOARDWALK, CROSS, PIERS, bayEdge, beachWidth, townAt } from '../../engine/hoodData';
 import { applyPlaceEdits, lngLatToUv, placesGeoJson, placesIn, uvToLngLat, type PlaceEdit, type PlaceFeature } from '../../engine/placesGeo';
 import { rivalName } from '../../engine/construction';
 import type { GameState } from '../../engine/types';
@@ -31,10 +31,11 @@ import { Turnaround } from './Turnaround';
 export interface PlanArea { id: string; name: string; u0: number; u1: number; v0: number; v1: number }
 export const PLAN_AREAS: PlanArea[] = [
   { id: 'hunts', name: 'The Boardwalk around Hunt\'s Pier', u0: 3500, u1: 4170, v0: -270, v1: 420 },
-  { id: 'taylor', name: 'Pacific Ave clubs round Taylor Ave', u0: 3150, u1: 3600, v0: -40, v1: 480 },
+  { id: 'taylor', name: 'Pacific Ave clubs, churches, the high school', u0: 2990, u1: 3600, v0: -40, v1: 560 },
   { id: 'bwnorth', name: 'The Boardwalk north to 23rd Ave', u0: 4560, u1: 5460, v0: -220, v1: 300 },
   { id: 'nw', name: 'North Wildwood: City Hall to Hereford Inlet', u0: 6440, u1: 7360, v0: -120, v1: 520 },
-  { id: 'crest', name: 'The Crest: Atlantic Ave motels', u0: 1860, u1: 2180, v0: -120, v1: 300 },
+  { id: 'crest', name: 'The Crest: the motels', u0: 1790, u1: 2300, v0: -120, v1: 300 },
+  { id: 'bay', name: 'The bayfront: Otten\'s Harbor to the causeway', u0: 4330, u1: 4700, v0: 360, v1: 800 },
 ];
 const AREA_KEY = 'llv-place-area';
 function loadArea(): PlanArea {
@@ -60,7 +61,7 @@ function saveEdits(e: Record<string, PlaceEdit>): boolean {
 /** A building on the map: an authored feature, or a game record with no feature yet (placed from the game's grid). */
 interface Placed { f: PlaceFeature; u: number; v: number; it?: Item; authored: boolean }
 
-const KIND_FILL: Record<string, string> = { motel: '#d16b9b', civic: '#b5643c', lighthouse: '#f2d36b', sign: '#ff5fa2', comedy: '#e07a3f', pier: '#b98b5e', ride: '#d9a441', theater: '#9b6fb3', club: '#7c5cc4', saloon: '#b3473c', tavern: '#3f8f5a', restaurant: '#c9603f', deli: '#4aa3a0', arcade: '#3fb6c9', shop: '#5f8fd6', hotel: '#d16b9b', food: '#e0a03c', minigolf: '#5fae7f', landmark: '#c7a64a' };
+const KIND_FILL: Record<string, string> = { school: '#c9a46a', church: '#d8d0c0', motel: '#d16b9b', civic: '#b5643c', lighthouse: '#f2d36b', sign: '#ff5fa2', comedy: '#e07a3f', pier: '#b98b5e', ride: '#d9a441', theater: '#9b6fb3', club: '#7c5cc4', saloon: '#b3473c', tavern: '#3f8f5a', restaurant: '#c9603f', deli: '#4aa3a0', arcade: '#3fb6c9', shop: '#5f8fd6', hotel: '#d16b9b', food: '#e0a03c', minigolf: '#5fae7f', landmark: '#c7a64a' };
 
 /** Which quarter of a four-angle sheet faces the viewer at this rotation (front, corner, side, back). */
 function facingQuarter(rot: number): number {
@@ -168,6 +169,8 @@ function Ground({ year, A }: { year: number; A: PlanArea }) {
           {aves.map((a) => <rect key={a.id} x={c.u - 5} y={-a.v - 6} width={10} height={12} fill="#4a4a50" />)}
         </g>
       ))}
+      {/* The back bay, past the island's inland edge. */}
+      {v1 + 400 > 500 && <path d={`M${u0 - 400} ${-v1 - 400}${Array.from({ length: Math.ceil((u1 - u0 + 800) / 20) + 1 }, (_, i) => { const u = u0 - 400 + i * 20; return `L${u} ${-bayEdge(u)}`; }).join('')}L${u1 + 400} ${-v1 - 400}Z`} fill="url(#plan-sea)" data-testid="plan-bay" />}
       {/* Names. */}
       {cross.map((c) => <text key={`t-${c.n}`} x={c.u} y={-AVE_V.oc - 30} transform={`rotate(-90 ${c.u} ${-AVE_V.oc - 30})`} fontSize="5.5" fill="#fffaf0" fontWeight="700" textAnchor="middle" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{c.n}</text>)}
       {aves.map((a) => <text key={`t-${a.id}`} x={u0 + 6} y={-a.v + 2} fontSize="5.5" fill="#fffaf0" fontWeight="700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{a.n}</text>)}

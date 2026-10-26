@@ -67,7 +67,7 @@ export const ASSET_URLS = {
   storefront_casino_arcadia: undefined,
   // Batch 3. Defunct places and public landmarks keep their names; still-operating
   // ones are near misses (Ebb Tyde, Gateway 25 / Kohl Bros., Uncle Vinny's, Pompei's,
-  // Sportsland, Lil' Nicky's, Lollypop, Fudge Kitchenette).
+  // Sportsland, Lil' Nicky's, Lollypop, Fudge Kitchenette; Pompeo's became Klug's).
   storefront_boardwalk_bazaar: undefined,
   storefront_taffy_tides: undefined,
   storefront_flashback_photo: undefined,
@@ -89,7 +89,7 @@ export const ASSET_URLS = {
   club_hurricane: undefined,
   landmark_nw_city_hall: undefined,
   landmark_hereford_light: undefined,
-  storefront_pompeis: undefined,
+  storefront_klugs: undefined,
   storefront_sportsland: undefined,
   storefront_lil_nickys: undefined,
   motel_lollypop: undefined,
@@ -106,6 +106,26 @@ export const ASSET_URLS = {
   cutout_pizza: undefined,
   cutout_social: undefined,
   cutout_taffy: undefined,
+  // Batch 4: the user's transparent three-quarter models (the navy backdrop keyed out
+  // where it had one). Preferred as map sprites over the storefront paintings.
+  cutout_fairview: undefined,
+  cutout_urys_waterfront: undefined,
+  cutout_boathouse: undefined,
+  cutout_groffs: undefined,
+  cutout_boardwalk_chapel: undefined,
+  cutout_st_anselms: undefined,
+  cutout_holy_redeemer: undefined,
+  cutout_wai_kiki: undefined,
+  cutout_a_frame_cottage: undefined,
+  cutout_malibu_beach_motel: undefined,
+  cutout_seafoam_cottage: undefined,
+  cutout_bils_corner_deli: undefined,
+  cutout_wildwood_high: undefined,
+  cutout_lollypop_motel: undefined,
+  cutout_klugs: undefined,
+  cutout_hereford_light: undefined,
+  cutout_hurricane: undefined,
+  cutout_nw_city_hall: undefined,
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
@@ -125,7 +145,15 @@ export const SPRITE_OF: Partial<Record<AssetKey, AssetKey>> = {
   neon_moon_pizza: 'cutout_pizza',
   italian_social_club: 'cutout_social',
   storefront_taffy_tides: 'cutout_taffy',
+  motel_lollypop: 'cutout_lollypop_motel',
+  storefront_klugs: 'cutout_klugs',
+  club_hurricane: 'cutout_hurricane',
+  landmark_hereford_light: 'cutout_hereford_light',
+  landmark_nw_city_hall: 'cutout_nw_city_hall',
 };
+
+/** Whether a key is itself a ready-cut transparent sprite (drawn as-is, never cut). */
+export const isSprite = (k: AssetKey): boolean => k.startsWith('cutout_');
 
 /** Pixel size of each image (for crops and hotspot frames). */
 export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {

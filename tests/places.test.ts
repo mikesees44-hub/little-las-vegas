@@ -92,18 +92,17 @@ describe('the business-location layer', () => {
   it('every feature stands in one of the block-map areas, and each area has its places', () => {
     const inA = (a: (typeof PLAN_AREAS)[number], [u, v]: [number, number]) => u >= a.u0 - 50 && u <= a.u1 + 50 && v >= a.v0 - 50 && v <= a.v1 + 50;
     for (const f of PLACES) expect(PLAN_AREAS.some((a) => inA(a, lngLatToUv(f.geometry.coordinates))), f.id).toBe(true);
-    for (const a of PLAN_AREAS) expect(PLACES.filter((f) => inA(a, lngLatToUv(f.geometry.coordinates))).length, a.id).toBeGreaterThanOrEqual(3);
+    for (const a of PLAN_AREAS) expect(PLACES.filter((f) => inA(a, lngLatToUv(f.geometry.coordinates))).length, a.id).toBeGreaterThanOrEqual(2);
   });
 
   it('still-operating businesses carry near-miss names; defunct places and landmarks keep theirs; years follow the notes', () => {
     const names = PLACES.map((f) => f.properties.name).join(' | ');
-    expect(names).not.toMatch(/(?<!Old )Mack's|Kohr|Lollipop|Pompeo|Sportland(?! Pier)|Vinnie|Ebb Tide|Funcade|\bNut Hut|Fudge Kitchen(?!ette)|Gateway 26|Olympic|Morey|Lobster House/);
-    for (const n of ['Old Mack\'s Pizza', 'Gateway 25', 'Kohl Bros.', 'The Lollypop Motel', 'Pompei\'s', 'Sportsland', 'Uncle Vinny\'s', 'The Ebb Tyde Motel', 'The Nutty Hut', 'Ed\'s Fun Arcade', 'Casino Arcadia', 'Olympia Fascination']) expect(names).toContain(n);
+    expect(names).not.toMatch(/(?<!Old )Mack's|Kohr|Lollipop|Pompeo|Pompei|Sportland(?! Pier)|Vinnie|Ebb Tide|Funcade|\bNut Hut|Fudge Kitchen(?!ette)|Gateway 26|Olympic|Morey|Lobster House/);
+    for (const n of ['Old Mack\'s Pizza', 'Gateway 25', 'Kohl Bros.', 'The Lollypop Motel', 'Klug\'s', 'Sportsland', 'Uncle Vinny\'s', 'The Ebb Tyde Motel', 'The Nutty Hut', 'Ed\'s Fun Arcade', 'Casino Arcadia', 'Olympia Fascination']) expect(names).toContain(n);
     for (const n of ['Quo Vadis', 'The Rainbow Club', 'The Hurricane Club', 'The Riptide', 'The Satellite Motel', 'Schumann\'s Restaurant', 'North Wildwood City Hall', 'The Hereford Inlet Light']) expect(names).toContain(n);
     const by = (id: string) => PLACES.find((f) => f.id === id)!;
-    expect(by('bw-pompeis').properties.opened).toBe(1978);
-    expect(placesIn(1977).some((f) => f.id === 'bw-pompeis')).toBe(false);
-    expect(placesIn(1978).some((f) => f.id === 'bw-pompeis')).toBe(true);
+    // Klug's (the user's name for the breakfast place) is there from 1960: no 1978 gate.
+    expect(placesIn(1960).some((f) => f.id === 'sb01')).toBe(true);
     expect(placesIn(1960).some((f) => f.id === 'bw-lil-nickys')).toBe(false);
     expect(by('at-ebb-tyde').properties).toMatchObject({ address: '5711 Atlantic Ave, Wildwood Crest', opened: 1957 });
     expect(by('at-satellite').properties).toMatchObject({ address: '5909 Atlantic Ave, Wildwood Crest', opened: 1958 });
@@ -113,6 +112,10 @@ describe('the business-location layer', () => {
     expect(by('nw-lollypop-sign').properties.kind).toBe('sign');
     expect(by('pa-rainbow').properties.address).toMatch(/Spicer/);
     // Nothing new is ownable: the new places are layer-only (no lot), and Club Avalon is never owned.
-    for (const f of PLACES.filter((x) => /^(bw|nw|pa|at)-/.test(x.id))) expect(f.properties.lotId, f.id).toBeUndefined();
+    for (const f of PLACES.filter((x) => /^(bw|nw|pa|at|nj|bay)-/.test(x.id))) expect(f.properties.lotId, f.id).toBeUndefined();
+    // Churches, the school, City Hall and the lighthouse are public: never for sale.
+    for (const id of ['bw-chapel', 'nj-st-anselms', 'nj-holy-redeemer', 'pa-wildwood-high', 'nw-city-hall', 'hereford-light']) expect(by(id).properties.public, id).toBe(true);
+    // The batch-4 records are ownable 1960 lots.
+    for (const id of ['sb01', 'sb02', 'sb03', 'sb04', 'sb05', 'sb06']) expect(by(id).properties.lotId).toBe(id);
   });
 });

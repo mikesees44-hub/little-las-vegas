@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SPRITE_OF, assetUrl, type AssetKey } from './art/assetUrls';
+import { SPRITE_OF, assetUrl, isSprite, type AssetKey } from './art/assetUrls';
 import { quarterRect } from './Turnaround';
 
 /**
@@ -24,6 +24,8 @@ function cut(img: HTMLImageElement, k: AssetKey, quarter: number | undefined): s
   cx.drawImage(img, r.x, r.y, r.w, r.h, 0, 0, w, h);
   const data = cx.getImageData(0, 0, w, h);
   const px = data.data;
+  // Already transparent round the edge (a ready-cut image): trim only, no flood.
+  const clear = [0, w - 1, (h - 1) * w, h * w - 1].every((i) => px[i * 4 + 3] < 10);
   // The backdrop's color: the mean of the four corners.
   const corner = [0, w - 1, (h - 1) * w, h * w - 1];
   const bg = [0, 1, 2].map((c) => corner.reduce((a, i) => a + px[i * 4 + c], 0) / 4);
@@ -31,7 +33,7 @@ function cut(img: HTMLImageElement, k: AssetKey, quarter: number | undefined): s
   const step = (i: number, j: number) => Math.abs(px[i * 4] - px[j * 4]) + Math.abs(px[i * 4 + 1] - px[j * 4 + 1]) + Math.abs(px[i * 4 + 2] - px[j * 4 + 2]);
   const seen = new Uint8Array(w * h);
   const stack: number[] = [];
-  const push = (i: number) => { if (!seen[i] && far(i) < 110) { seen[i] = 1; stack.push(i); } };
+  const push = (i: number) => { if (!clear && !seen[i] && far(i) < 110) { seen[i] = 1; stack.push(i); } };
   for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); }
   for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
   while (stack.length) {
@@ -46,11 +48,11 @@ function cut(img: HTMLImageElement, k: AssetKey, quarter: number | undefined): s
   // Clear the backdrop; soften the edge by one pixel; find the building's box.
   let x0 = w, y0 = h, x1 = -1, y1 = -1;
   for (let i = 0; i < w * h; i++) {
-    if (seen[i]) { px[i * 4 + 3] = 0; continue; }
+    if (seen[i] || (clear && px[i * 4 + 3] < 10)) { if (seen[i]) px[i * 4 + 3] = 0; continue; }
     const x = i % w;
     const y = (i - x) / w;
     const edge = (x > 0 && seen[i - 1]) || (x < w - 1 && seen[i + 1]) || (y > 0 && seen[i - w]) || (y < h - 1 && seen[i + w]);
-    if (edge) px[i * 4 + 3] = 150;
+    if (edge && !clear) px[i * 4 + 3] = 150;
     if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
   if (x1 < x0 || y1 < y0) return undefined;
@@ -98,7 +100,7 @@ const spriteCache = new Map<string, Promise<string | undefined>>();
  * one (SPRITE_OF) and it loads, else the painting cut in the browser.
  */
 export function spriteOf(k: AssetKey, quarter?: number): Promise<string | undefined> {
-  const sk = quarter === undefined ? SPRITE_OF[k] : undefined;
+  const sk = isSprite(k) ? k : quarter === undefined ? SPRITE_OF[k] : undefined;
   const url = sk ? assetUrl(sk) : undefined;
   if (!url || typeof document === 'undefined') return cutoutOf(k, quarter);
   let p = spriteCache.get(url);
@@ -106,7 +108,7 @@ export function spriteOf(k: AssetKey, quarter?: number): Promise<string | undefi
     p = new Promise((resolve) => {
       const img = new Image();
       img.onload = () => resolve(url);
-      img.onerror = () => { cutoutOf(k, quarter).then(resolve); };
+      img.onerror = () => { if (isSprite(k)) resolve(undefined); else cutoutOf(k, quarter).then(resolve); };
       img.src = url;
     });
     spriteCache.set(url, p);

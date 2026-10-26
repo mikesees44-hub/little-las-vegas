@@ -31,11 +31,18 @@ const BY_NAME: [RegExp, StorefrontArt][] = [
   [/quo vadis/i, { key: 'club_quo_vadis' }],
   [/rainbow club/i, { key: ['club_rainbow_marquee', 'club_rainbow_musical_bar'] }],
   [/riptide/i, { key: 'club_riptide' }],
-  [/hurricane club/i, { key: 'club_hurricane' }],
-  [/pompei's/i, { key: 'storefront_pompeis' }],
+  [/hurricane club/i, { key: ['cutout_hurricane', 'club_hurricane'] }],
+  [/klug's/i, { key: ['cutout_klugs', 'storefront_klugs'] }],
+  [/groff's/i, { key: 'cutout_groffs' }],
+  [/boathouse/i, { key: 'cutout_boathouse' }],
+  [/wai-kiki/i, { key: 'cutout_wai_kiki' }],
+  [/malibu beach/i, { key: 'cutout_malibu_beach_motel' }],
+  [/fairview/i, { key: 'cutout_fairview' }],
+  [/ury's waterfront/i, { key: 'cutout_urys_waterfront' }],
+  [/bil's corner/i, { key: 'cutout_bils_corner_deli' }],
   [/sportsland/i, { key: 'storefront_sportsland' }],
   [/lil' nicky's/i, { key: 'storefront_lil_nickys' }],
-  [/lollypop/i, { key: 'motel_lollypop' }],
+  [/lollypop/i, { key: ['cutout_lollypop_motel', 'motel_lollypop'] }],
   [/fudge kitchenette/i, { key: 'storefront_fudge_kitchenette' }],
   [/fun shop|novelt/i, { key: 'boardwalk_fun_shop' }],
   [/shamrock/i, { key: 'shamrock_turnaround', turn: true, inside: 'shamrock_twilight' }],
@@ -85,6 +92,9 @@ const BY_USE: Record<string, StorefrontArt | StorefrontArt[]> = {
   icecream: { key: 'starlight_scoops_turnaround', turn: true, inside: 'starlight_scoops_twilight' },
   storefront: { key: 'doowop_block_turnaround', turn: true },
   apartments: { key: 'doowop_block_turnaround', turn: true },
+  // Residential infill: the two cottage models, varied per record.
+  cottage: [{ key: 'cutout_seafoam_cottage' }, { key: 'cutout_a_frame_cottage' }],
+  house: [{ key: 'cutout_seafoam_cottage' }, { key: 'cutout_a_frame_cottage' }],
 };
 
 function h(s: string): number {

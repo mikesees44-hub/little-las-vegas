@@ -251,6 +251,15 @@ export const SEED: SeedRow[] = [
   ['sa17', 'causeway', 'cw', 'Pine Ave', 'a', 'taxigarage', 'Shore Cab Co.', 'private', 'private', 'Sal Petrakis', 'midcentury', 'gold', 1950, 68],
   ['sa18', 'docks', 'pk-', 'Garfield Ave', 'a', 'trattoria', 'The Seafood House', 'private', 'private', 'Lou Kriebel', 'victorian', 'white', 1934, 64],
   ['sa19', 'docks', 'pk-', 'Garfield Ave', 'b', 'diner', 'The Cafe', 'private', 'private', 'Connie Duffy', 'victorian', 'red', 1930, 62],
+  // Batch 4 (the user's three-quarter models): ownable places on the block map. Klug's and the two
+  // motels are near-miss names (the real ones still operate); Groff's is closed (real name kept);
+  // the Hurricane is long gone (real name kept); the Boathouse is generic.
+  ['sb01', 'boardwalk', 'bw', '26th Ave', 'a', 'diner', 'Klug\'s', 'private', 'private', 'Hank Klug', 'midcentury', 'blue', 1948, 74],
+  ['sb02', 'pacific', 'pa+', 'Burk Ave', 'b', 'jazzclub', 'The Hurricane Club', 'private', 'private', 'Dutch Mahler', 'midcentury', 'red', 1952, 70],
+  ['sb03', 'boardwalk', 'bw', 'Bennett Ave', 'b', 'trattoria', 'Groff\'s Restaurant', 'private', 'private', 'Elsie Brandt', 'colonial', 'green', 1946, 68],
+  ['sb04', 'docks', 'pk+', 'Youngs Ave', 'w', 'trattoria', 'The Boathouse', 'private', 'private', 'Cap Lindqvist', 'victorian', 'blue', 1949, 66],
+  ['sb05', 'crest', 'oc-', 'Buttercup Rd', 'w', 'motel', 'The Wai-Kiki Oceanfront Resort', 'private', 'private', 'the Kalani family', 'doowop', 'turquoise', 1959, 94],
+  ['sb06', 'crest', 'oc-', 'Atlanta Ave', 'w', 'motel', 'The Malibu Beach Motel', 'private', 'private', 'Ray Delmonico', 'doowop', 'red', 1958, 92],
 ];
 
 export const SEED_IDS = new Set(SEED.map((r) => r[0]));
