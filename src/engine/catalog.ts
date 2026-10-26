@@ -35,6 +35,8 @@ export interface BusinessDef {
   max?: number;
   /** Earliest game date year it can be bought. */
   minYear?: number;
+  /** Started from the Rackets hub's "Start a racket" (not the old shop list). */
+  hubOnly?: boolean;
 }
 
 export const CATALOG: Record<BusinessKind, BusinessDef> = {
@@ -91,6 +93,21 @@ export const CATALOG: Record<BusinessKind, BusinessDef> = {
   concrete: { kind: 'concrete', name: 'Concrete & ready-mix plant', category: 'front', blurb: 'Three mixer trucks and a batch plant on the bay. Every foundation on the island is poured by somebody; better you.', cost: 9000, base: 160, season: [1.5, 0.6], upkeep: 55, heat: 0.05, fedHeat: 0.01, staff: 0, launder: 1200 },
   lumber: { kind: 'lumber', name: 'Lumber & supply yard', category: 'front', blurb: 'Two-by-fours, drywall and a forklift. Contractors buy on credit and pay in favors.', cost: 7000, base: 130, season: [1.4, 0.7], upkeep: 40, heat: 0, fedHeat: 0, staff: 0, launder: 800 },
 
+  /* ---------------- the Start-a-Racket menu (racketMenu.ts) ---------------- */
+  protection: { kind: 'protection', name: 'Protection (the shakedown)', category: 'racket', blurb: 'Shops and bars on a block pay a weekly envelope so nothing bad happens to them. Nothing does.', cost: 1500, base: 110, season: [1.4, 0.9], upkeep: 5, heat: 0.2, fedHeat: 0, staff: 1, launder: 0, hubOnly: true },
+  afterhours: { kind: 'afterhours', name: 'After-hours club', category: 'racket', blurb: 'A locked door, a buzzer and a bar that pours after the legal closing time.', cost: 3000, base: 150, season: [2.0, 0.7], upkeep: 25, heat: 0.35, fedHeat: 0, staff: 1, launder: 0, hubOnly: true },
+  bootleg: { kind: 'bootleg', name: 'Untaxed liquor', category: 'racket', blurb: 'Cases with no tax stamp, sold to the bars cheaper than the distributor.', cost: 2000, base: 110, season: [1.6, 0.9], upkeep: 10, heat: 0.15, fedHeat: 0.1, staff: 1, launder: 0, hubOnly: true },
+  cigarettes: { kind: 'cigarettes', name: 'Untaxed cigarettes', category: 'racket', blurb: 'Cartons bought where the tax is low, sold where it is high. Every machine and newsstand takes them.', cost: 1800, base: 100, season: [1.3, 1.0], upkeep: 10, heat: 0.1, fedHeat: 0.05, staff: 1, launder: 0, hubOnly: true },
+  guns: { kind: 'guns', name: 'Guns (crates off the trucks)', category: 'racket', blurb: 'Crates that fall off trucks and boats, sold on to buyers out of state. Federal business.', cost: 6000, base: 300, season: [1.1, 1.0], upkeep: 30, heat: 0.35, fedHeat: 0.3, staff: 2, launder: 0, max: 1, hubOnly: true },
+  counterfeit: { kind: 'counterfeit', name: 'Counterfeit bills & stamps', category: 'racket', blurb: 'Paper from a printer in the pines, passed far from the island. The Secret Service never forgets.', cost: 7000, base: 300, season: [1.2, 1.0], upkeep: 40, heat: 0.1, fedHeat: 0.4, staff: 1, launder: 0, max: 1, hubOnly: true },
+  insurance: { kind: 'insurance', name: 'Insurance fraud', category: 'racket', blurb: 'An adjuster on the arrangement and owners who need a claim paid. The off-season is busy.', cost: 4000, base: 200, season: [0.9, 1.3], upkeep: 20, heat: 0.25, fedHeat: 0.08, staff: 1, launder: 0, hubOnly: true },
+  bustout: { kind: 'bustout', name: 'Bust-out', category: 'racket', blurb: 'Take over a failing store\'s credit, order everything, sell it out the back, let it go under. One big score; the store is finished.', cost: 3000, base: 0, season: [1, 1], upkeep: 0, heat: 0.2, fedHeat: 0.05, staff: 1, launder: 0, max: 2, hubOnly: true },
+  washing: { kind: 'washing', name: 'Laundering for other outfits', category: 'racket', blurb: 'Other people\'s dirty money through your books, for a fee. Washes some of yours too.', cost: 5000, base: 160, season: [1.1, 1.0], upkeep: 20, heat: 0.05, fedHeat: 0.1, staff: 1, launder: 800, hubOnly: true },
+  chopshop: { kind: 'chopshop', name: 'Chop shop', category: 'racket', blurb: 'A garage where stolen cars come in whole and leave as parts.', cost: 3500, base: 170, season: [1.5, 0.9], upkeep: 20, heat: 0.3, fedHeat: 0.03, staff: 2, launder: 0, hubOnly: true },
+  court: { kind: 'court', name: 'The sit-down court', category: 'racket', blurb: 'Local operators bring their disputes to the family and pay a fee for a fair word. Steady and quiet.', cost: 1000, base: 90, season: [1.3, 1.1], upkeep: 0, heat: 0.02, fedHeat: 0, staff: 0, launder: 0, max: 1, hubOnly: true },
+  payoff: { kind: 'payoff', name: 'The pad (protection for your rackets)', category: 'racket', blurb: 'A cop, an inspector and a zoning man on a weekly envelope. Costs money, earns nothing, and every racket runs cooler.', cost: 1500, base: 0, season: [1, 1], upkeep: 120, heat: 0, fedHeat: 0, staff: 0, launder: 0, max: 3, hubOnly: true },
+  taxdodge: { kind: 'taxdodge', name: 'False invoices', category: 'racket', blurb: 'A front\'s books that show less than it made: invoices from companies that do not exist. Slow, quiet money.', cost: 2500, base: 90, season: [1.1, 1.1], upkeep: 10, heat: 0.02, fedHeat: 0.06, staff: 0, launder: 0, max: 2, hubOnly: true },
+
   /* ---------------- property ---------------- */
   safehouse: { kind: 'safehouse', name: 'Safehouse', category: 'property', blurb: 'A quiet house with a cellar. Hides cash from raids and the boss from gunmen.', cost: 6000, base: 0, season: [1, 1], upkeep: 60, heat: 0, fedHeat: 0, staff: 0, launder: 150, max: 3 },
 };
@@ -98,7 +115,7 @@ export const CATALOG: Record<BusinessKind, BusinessDef> = {
 export const CATEGORY_LABEL: Record<BusinessCategory, string> = { front: 'Legit front', racket: 'Racket', property: 'Property' };
 
 /** Shop order. */
-export const SHOP_KINDS: BusinessKind[] = (Object.keys(CATALOG) as BusinessKind[]).filter((k) => !CATALOG[k].hidden);
+export const SHOP_KINDS: BusinessKind[] = (Object.keys(CATALOG) as BusinessKind[]).filter((k) => !CATALOG[k].hidden && !CATALOG[k].hubOnly);
 
 /** Kinds that run a club roster (dancers, bartenders, a band ...). */
 export const CLUB_KINDS: BusinessKind[] = ['club', 'burlesque', 'gentsclub', 'hoodclub', 'supperclub'];
@@ -155,6 +172,19 @@ export const BIZ_NAMES: Record<BusinessKind, string[]> = {
   deli: ['Sal\'s Hoagies', 'Ninth Street Deli', 'Lou\'s Italian Sandwiches', 'Shore Hoagie Shop'],
   concrete: ['Bayshore Ready-Mix', 'Island Concrete Co.', 'Cape Sand & Gravel'],
   lumber: ['Rio Grande Lumber & Supply', 'Shore Builders Supply', 'Atlantic Millwork'],
+  protection: ['Pacific Ave protection route', 'The Rio Grande envelopes', 'Shore Road shakedown', 'The boardwalk envelopes'],
+  afterhours: ['After-hours room on Schellenger', 'The Buzzer Club', 'Back door at the Anchor'],
+  bootleg: ['The no-stamp liquor route', 'Pine Barrens cases', 'Bayside liquor drop'],
+  cigarettes: ['Carolina carton route', 'The no-stamp smokes', 'Newsstand cigarette drop'],
+  guns: ['The crate business', 'Dockside crates', 'The Route 9 crates'],
+  counterfeit: ['The printer in the pines', 'Paper route to Baltimore'],
+  insurance: ['The adjuster\'s arrangement', 'Claims on Pacific', 'The off-season claims'],
+  bustout: ['Bust-out on Oak Ave', 'Bust-out of a furniture store', 'Bust-out of an appliance store'],
+  washing: ['The counting house', 'Wash for the out-of-towners', 'The bookkeeper\'s service'],
+  chopshop: ['Garage on the Causeway', 'Rio Grande body shop', 'Bayside parts yard'],
+  court: ['The Tuesday sit-downs', 'Court at the social club'],
+  payoff: ['The precinct pad', 'The inspector\'s envelope', 'The zoning man\'s envelope'],
+  taxdodge: ['The second set of books', 'Invoices from nowhere'],
   safehouse: ['Safehouse on Hand Ave', 'Cellar house in the Crest', 'Bayside bungalow', 'Farmhouse in Rio Grande'],
 };
 
