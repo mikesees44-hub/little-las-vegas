@@ -714,7 +714,7 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
         bias = bias ?? `It would be on his own ground (${d.name}): his crew earns from it`;
       }
       const about = ctx.aboutId ? s.characters[ctx.aboutId] : undefined;
-      if (about && about.id !== adv.id && sub.kind === 'event') bias = bias ?? biasLabel(s, adv.id, about.id);
+      if (about && sub.kind === 'event') bias = bias ?? (about.id === adv.id ? 'The matter is about him and his own house' : biasLabel(s, adv.id, about.id));
       const op = weigh(ctx, adv, ref, e, interest);
       (op as CounselOpinion & { bias?: string }).bias = bias;
       return { ref, adv, op, e };
