@@ -1,8 +1,10 @@
+import { growAttr } from './attrs';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, player } from './characters';
 import { fam } from './familyState';
 import type { Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
+import { paternityRumored } from './romance';
 import { chance, hashSeed, type RngHolder } from './rng';
 import type { Attributes, Character, Effect, EventInstance, GameState } from './types';
 
@@ -298,6 +300,8 @@ export function lifeTraits(s: GameState, c: Character): LifeTrait[] {
   if (f.bastardOf && !f.legitimized) out.push('bastard');
   if (f.legitimized) out.push('legitimized');
   for (const t of s.aging?.tags[c.id] ?? []) if (!out.includes(t)) out.push(t);
+  // Disputed heritage also comes from the record: another man's child, and it is known.
+  if (!out.includes('disputed') && paternityRumored(s, c)) out.push('disputed');
   if (!out.includes('formerBoss') && (f.retired !== undefined || (c.id === s.playerId && s.power?.fell && s.power.station !== 'boss'))) out.push('formerBoss');
   if (c.motherId && Object.values(s.characters).some((x) => x.id !== c.id && x.motherId === c.motherId && x.birth.y === c.birth.y && x.birth.m === c.birth.m && x.birth.d === c.birth.d)) out.push('twin');
   if (!out.includes('veteran') && c.rank !== 'civilian' && c.faction !== 'none' && ((c.bones?.length ?? 0) >= 3 || (c.madeWeek !== undefined && s.week - c.madeWeek >= 520))) out.push('veteran');
@@ -340,7 +344,7 @@ export function candidateMods(s: GameState, c: Character): { label: string; valu
 
 /** Sort key inside a tier of the blood line: disputed heritage goes last among equals. */
 export function lineOrder(s: GameState, c: Character): number {
-  return s.aging?.tags[c.id]?.includes('disputed') ? 1 : 0;
+  return s.aging?.tags[c.id]?.includes('disputed') || paternityRumored(s, c) ? 1 : 0;
 }
 
 /* ------------------------------------------------------------------ */
@@ -464,6 +468,13 @@ export function agingFor(ctx: Ctx, c: Character): { kill?: string } {
       A.stats.stages++;
       if (mine) ctx.log.push(OLD_INFO[t].symptom[Math.min(OLD_INFO[t].symptom.length - 1, L)]);
       else if (t === 'eyes' && L + 1 === 4 && tracked) ctx.log.push(`${displayName(c)} can no longer see.`);
+    }
+    // Personality with the years (only for people whose details are kept): the drive fades, the ego
+    // grows, and a sharp old man reads a room and a deal better than he did (not all of age is loss).
+    if (tracked && c.attrs && !P.t.incapable) {
+      if (chance(h, 0.04)) growAttr(s, c, 'ambition', -1);
+      if (chance(h, 0.03)) growAttr(s, c, 'pride', 1);
+      if (!(P.t.mind && P.t.mind >= 2) && chance(h, 0.04)) { growAttr(s, c, 'negotiation', 1); growAttr(s, c, 'judgment', 1); }
     }
     // Health: the slow costs.
     const hp = 0.3 * (P.t.infirm ?? 0) + 0.3 * (P.t.heart ?? 0) + (P.t.incapable ? 1 : 0);

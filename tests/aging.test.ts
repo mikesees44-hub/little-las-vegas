@@ -19,6 +19,10 @@ import { ubAuthority } from '../src/engine/shadow';
 import { ensureShadow } from '../src/engine/shadowState';
 import { newGameWith } from '../src/engine/starts';
 import { upgradeSave } from '../src/engine/upgradeSave';
+import { previewAction } from '../src/engine/actions';
+import { seatEligibility } from '../src/engine/eligibility';
+import { ensureAttrs } from '../src/engine/attrs';
+import { addSecret } from '../src/engine/secrets';
 import type { Character, GameState } from '../src/engine/types';
 
 const clone = (s: GameState): GameState => JSON.parse(JSON.stringify(s));
@@ -59,6 +63,8 @@ describe('old-age traits come on, each man on his own schedule', () => {
     const got = old.filter((c) => Object.keys(agingOf(s, c.id).t).length > 0);
     expect(got.length).toBeGreaterThan(5);
     for (const c of young) expect(Object.keys(agingOf(s, c.id).t)).toHaveLength(0);
+    // Levels progress: someone has gone past the first stage.
+    expect(old.some((c) => Object.values(agingOf(s, c.id).t).some((L) => (L ?? 0) >= 2))).toBe(true);
     const hurt = got.filter((c) => c.alive && Object.values(agingOf(s, c.id).t).some((L) => (L ?? 0) >= 1) && (['force', 'diplomacy', 'leadership'] as const).some((k) => c.attributes[k] < learnedSkills(s, c)[k]));
     expect(hurt.length).toBeGreaterThan(0);
   });
@@ -121,7 +127,11 @@ describe('old-age traits come on, each man on his own schedule', () => {
       }
       return stages;
     };
-    expect(count(true, false)).toBeLessThan(count(false, true));
+    const cared = count(true, false);
+    const plain = count(false, false);
+    const drunk = count(false, true);
+    expect(cared).toBeLessThan(plain);
+    expect(plain).toBeLessThan(drunk);
   });
 });
 
@@ -227,6 +237,71 @@ describe('family and earned traits', () => {
     expect(lifeTraits(s, a)).toContain('twin');
     const old = oldMan(s, 60);
     expect(lifeTraits(s, old)).toContain('seasoned');
+  });
+});
+
+describe('incapable means incapable', () => {
+  it('an incapable man cannot take a seat; an incapable boss cannot start schemes', () => {
+    const s = newGameWith('age-incap-gates', 'classic');
+    const boss = player(s);
+    const man = crew(s).find((c) => c.id !== boss.id && c.rank !== 'civilian' && c.rank !== 'underboss')!;
+    expect(seatEligibility(s, 'enforcer', man.id).why).toBeUndefined();
+    ensureAging(s).p[man.id] = { t: { incapable: 1 }, at: {} };
+    expect(seatEligibility(s, 'enforcer', man.id).why).toMatch(/Incapable/);
+    const agents = crew(s).filter((c) => c.id !== boss.id && c.id !== man.id && c.rank !== 'civilian').slice(0, 1).map((c) => c.id);
+    const heist = { kind: 'scheme', scheme: 'heist', agents, opts: { depth: 'planned', heist: 'jewelry' } } as const;
+    s.money = 1e6;
+    const before = previewAction(s, heist).disabledReason;
+    expect(before ?? '').not.toMatch(/Incapable/);
+    ensureAging(s).p[boss.id] = { t: { mind: 3, incapable: 1 }, at: {} };
+    expect(previewAction(s, heist).disabledReason).toMatch(/Incapable/);
+    expect(previewAction(s, { ...heist, agents: [man.id] }).disabledReason).toMatch(/Incapable/);
+  });
+});
+
+describe('disputed heritage from the record', () => {
+  it('a child known to be another man\'s gets Disputed Heritage and goes last among his equals', () => {
+    const s = newGame('age-disputed');
+    const boss = player(s);
+    const other = makeCharacter(s, { rank: 'civilian', faction: 'none', age: 40, gender: 'M' });
+    const kids: Character[] = [];
+    for (const age of [30, 28]) {
+      const k = makeCharacter(s, { rank: 'civilian', faction: 'player', dynasty: true, lastName: boss.lastName, age, gender: 'M' });
+      k.fatherId = boss.id;
+      boss.childrenIds.push(k.id);
+      kids.push(k);
+    }
+    kids[0].bioFatherId = other.id;
+    expect(lifeTraits(s, kids[0])).not.toContain('disputed');
+    const order0 = bloodLine(s, boss).map((c) => c.id);
+    expect(order0.indexOf(kids[0].id)).toBeLessThan(order0.indexOf(kids[1].id));
+    addSecret(s, other, 'bastard', ['player']);
+    expect(lifeTraits(s, kids[0])).toContain('disputed');
+    const order1 = bloodLine(s, boss).map((c) => c.id);
+    expect(order1.indexOf(kids[0].id)).toBeGreaterThan(order1.indexOf(kids[1].id));
+    const cap = capability(s, kids[0]);
+    expect(cap.reasons.some((r) => r.label === 'Disputed heritage')).toBe(true);
+  });
+});
+
+describe('personality with the years', () => {
+  it('drive fades and judgment grows in the old of the house', () => {
+    const s = newGame('age-persona');
+    const boss = player(s);
+    const men: Character[] = [];
+    for (let i = 0; i < 6; i++) {
+      const k = makeCharacter(s, { rank: 'civilian', faction: 'player', dynasty: true, lastName: boss.lastName, age: 62, gender: 'M' });
+      k.health = 95; k.conditions = [];
+      ensureAttrs(s, k);
+      men.push(k);
+    }
+    const before = men.map((c) => ({ amb: c.attrs!.v.ambition, neg: c.attrs!.v.negotiation }));
+    months(s, 60);
+    const alive = men.map((c, i) => ({ c, b: before[i] })).filter((x) => x.c.alive);
+    const amb = alive.reduce((a, x) => a + x.c.attrs!.v.ambition - x.b.amb, 0);
+    const neg = alive.reduce((a, x) => a + x.c.attrs!.v.negotiation - x.b.neg, 0);
+    expect(amb).toBeLessThan(0);
+    expect(neg).toBeGreaterThan(0);
   });
 });
 
