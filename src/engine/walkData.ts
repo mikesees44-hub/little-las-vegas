@@ -105,8 +105,12 @@ export interface WalkHotspot {
   lots?: string[];
   /** A landmark record (placesGeo id): never for sale. */
   landmark?: string;
-  /** The building art for its card (an asset key; the UI decides). */
-  art?: string;
+  /** The building art for its card (asset keys, best first; the UI decides). */
+  art?: string | string[];
+  /** Its street address on the card (else the lot's, else the Boardwalk at Hunt's Pier). */
+  address?: string;
+  /** Who holds it, when it is not a lot (a church, City Hall). */
+  ownerText?: string;
   /** Its outline also stops the boss (a building on the walkable ground). */
   blocks?: boolean;
   blurb: string;

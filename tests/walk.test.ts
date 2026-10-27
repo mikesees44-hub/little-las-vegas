@@ -102,3 +102,44 @@ describe('walking the Boardwalk: the places are game records', () => {
     expect(whoIsAround(s)).toEqual(npcs);
   });
 });
+
+describe('walking the rest of the town: the stretches', () => {
+  it('every stretch names real location-layer places and real art keys', async () => {
+    const { STRETCHES } = await import('../src/engine/walkStretches');
+    const { PLACES } = await import('../src/engine/placesGeo');
+    const { ASSET_URLS } = await import('../src/ui/hood/art/assetUrls');
+    expect(STRETCHES.length).toBeGreaterThanOrEqual(5);
+    for (const st of STRETCHES) {
+      for (const k of st.backdrop) expect(k in ASSET_URLS, `${st.id} ${k}`).toBe(true);
+      for (const id of st.places) expect(PLACES.some((f) => f.id === id), `${st.id} ${id}`).toBe(true);
+      for (const id of Object.keys(st.lines)) expect(st.places.includes(id), `${st.id} line ${id}`).toBe(true);
+    }
+    for (const f of PLACES) for (const k of [...(f.properties.images.exterior ?? []), ...(f.properties.images.views ?? [])]) expect(k in ASSET_URLS, `${f.id} ${k}`).toBe(true);
+  });
+
+  it('turns up the places standing in the game year, the zone lots, and landmarks that cannot be owned', async () => {
+    const { STRETCHES, stretchSpots, whoIsOnStretch } = await import('../src/engine/walkStretches');
+    const s = newGame('walk-2');
+    for (const st of STRETCHES) {
+      const spots = stretchSpots(s, st);
+      expect(spots.length, st.id).toBeGreaterThanOrEqual(3);
+      expect(new Set(spots.map((h) => h.id)).size).toBe(spots.length);
+      for (const h of spots) if (h.lots) expect(hotspotLot(s, h), `${st.id} ${h.id}`).toBeDefined();
+      expect(whoIsOnStretch(s, st)).toEqual(whoIsOnStretch(s, st));
+    }
+    const all = STRETCHES.flatMap((st) => stretchSpots(s, st));
+    // Not open yet in 1960; Club Avalon and the Boardwalk Chapel are landmarks, never lots.
+    expect(all.some((h) => h.id === 'pa-shore-comedy')).toBe(false);
+    for (const id of ['club-avalon', 'bw-chapel', 'hereford-light']) {
+      const h = all.find((x) => x.id === id)!;
+      expect(h, id).toBeDefined();
+      expect(h.lots, id).toBeUndefined();
+      expect(h.kind, id).toBe('landmark');
+    }
+    // A later year: the later occupant takes the building.
+    const late = { ...s, date: { ...s.date, y: 1986 } };
+    const north = stretchSpots(late, STRETCHES.find((x) => x.id === 'boards-north')!);
+    expect(north.some((h) => h.id === 'bw-sammys-cafe')).toBe(true);
+    expect(north.some((h) => h.id === 'bw-sammys')).toBe(false);
+  });
+});

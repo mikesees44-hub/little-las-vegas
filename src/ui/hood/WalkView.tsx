@@ -13,6 +13,8 @@ import { itemsOf, type Item } from './Buildings';
 import { ISO, type Mood } from './iso';
 import { usePanZoom } from './usePanZoom';
 import { MeetingPicker, WalkNpcCard, WalkSpotCard } from './WalkCard';
+import { STRETCHES_BY_ID } from '../../engine/walkStretches';
+import { StretchPicker, StretchView } from './StretchView';
 
 /**
  * Walk the Boardwalk: the boss on the street. The user's aerial painting is
@@ -69,7 +71,20 @@ const BossToken = memo(function BossToken({ s }: { s: GameState }) {
 
 const ROLE_COLOR: Record<WalkNpc['role'], string> = { capo: '#ecd38f', manager: '#ecd38f', crew: '#c49a3a', rival: '#e2563d', ear: '#ff9ec7' };
 
-export function WalkView({ s, onClose }: { s: GameState; onClose: () => void }) {
+/**
+ * Walking the town: the Boardwalk at Hunt's Pier (walkable, over the aerial)
+ * or one of the other stretches (StretchView: the painting of the street and
+ * its places as cards). "Walk to…" switches between them.
+ */
+export function WalkView({ s, onClose, initial = 'hunts' }: { s: GameState; onClose: () => void; initial?: string }) {
+  const [at, setAt] = useState(STRETCHES_BY_ID[initial] ? initial : 'hunts');
+  const st = STRETCHES_BY_ID[at];
+  return st
+    ? <StretchView key={st.id} s={s} st={st} onClose={onClose} onStretch={setAt} />
+    : <HuntsWalk s={s} onClose={onClose} onStretch={setAt} />;
+}
+
+function HuntsWalk({ s, onClose, onStretch }: { s: GameState; onClose: () => void; onStretch: (id: string) => void }) {
   const travel = useTravel();
   const host = useRef<HTMLDivElement>(null);
   const layer = useRef<HTMLDivElement>(null);
@@ -335,7 +350,7 @@ export function WalkView({ s, onClose }: { s: GameState; onClose: () => void }) 
       {/* Controls. */}
       <div className="absolute left-2 top-11 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-center gap-1.5" data-pz-ui>
         <button type="button" className="hv-btn" onClick={onClose} data-testid="walk-exit">← Island map</button>
-        <span className="rounded-full border border-[#ff5fa2] bg-[#1b1030]/85 px-2 py-0.5 font-display text-xs text-[#ffd1e6]">The Boardwalk at Hunt's Pier</span>
+        <StretchPicker at="hunts" onPick={onStretch} />
         <button type="button" className="hv-btn" onClick={() => pz.zoomBy(1.4)} aria-label="Zoom in">+</button>
         <button type="button" className="hv-btn" onClick={() => pz.zoomBy(1 / 1.4)} aria-label="Zoom out">−</button>
         <button type="button" className="hv-btn" onClick={() => follow(pos.current, true)} data-testid="walk-findme">Find me</button>

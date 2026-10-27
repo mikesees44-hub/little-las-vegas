@@ -9,7 +9,8 @@ export interface MapFocus {
   mode?: MapMode;
   level?: 'usa' | 'region' | 'wildwood';
   /** Down onto the Boardwalk as the boss (the walkable stretch at Hunt's Pier). */
-  walk?: boolean;
+  /** true for the Boardwalk at Hunt's Pier; a stretch id (walkStretches.ts) for another street. */
+  walk?: boolean | string;
   nonce: number;
 }
 

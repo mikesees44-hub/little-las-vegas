@@ -50,6 +50,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
   const [hood, setHood] = useState<HoodId | undefined>();
   const [land, setLand] = useState<{ scene: 'block' | 'street'; nonce: number } | undefined>();
   const [walk, setWalk] = useState<number | undefined>();
+  const [walkAt, setWalkAt] = useState<string | undefined>();
   const island = view === 'island';
   const region = view === 'region';
   const drawn = island || region;
@@ -59,7 +60,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
   useEffect(() => { if (shell) setFly({ level: 'wildwood', nonce: 1 }); }, [shell]);
   useEffect(() => {
     if (!focus) return;
-    if (focus.walk) { setView('island'); setWalk(focus.nonce); return; }
+    if (focus.walk) { setView('island'); setWalkAt(typeof focus.walk === 'string' ? focus.walk : undefined); setWalk(focus.nonce); return; }
     setView('map');
     if (focus.mode) setMode(focus.mode);
     if (focus.district) { setDistrict(focus.district); setCity(undefined); }
@@ -87,7 +88,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
             onBiz={(id) => { setLot(`biz:${id}`); setDistrict(undefined); setCity(undefined); }}
           />
           {region && <div className="absolute inset-0 z-[900]"><RegionView s={s} onEnvoy={onEnvoy} onStreet={() => { setLand((x) => ({ scene: 'block', nonce: (x?.nonce ?? 0) + 1 })); setView('island'); setFly({ level: 'wildwood', nonce: (fly?.nonce ?? 0) + 1 }); }} onSurvey={() => { setView('map'); setFly({ level: 'region', nonce: (fly?.nonce ?? 0) + 1 }); }} /></div>}
-          {island && <div className="absolute inset-0 z-[900]"><IslandView s={s} onSurvey={() => { setView('map'); setFly({ level: 'wildwood', nonce: (fly?.nonce ?? 0) + 1 }); }} onHood={setHood} land={land} walk={walk} /></div>}
+          {island && <div className="absolute inset-0 z-[900]"><IslandView s={s} onSurvey={() => { setView('map'); setFly({ level: 'wildwood', nonce: (fly?.nonce ?? 0) + 1 }); }} onHood={setHood} land={land} walk={walk} walkAt={walkAt} /></div>}
           <div className="absolute top-2 left-2 z-[1000] flex flex-col gap-1.5">
             <nav className="flex items-center gap-1 rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-xs" aria-label="Map level">
               {crumbs.map((c, i) => (

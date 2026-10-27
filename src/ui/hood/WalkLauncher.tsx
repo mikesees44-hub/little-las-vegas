@@ -1,5 +1,6 @@
 import { displayName, player } from '../../engine/characters';
 import { HOTSPOTS } from '../../engine/walkData';
+import { STRETCHES } from '../../engine/walkStretches';
 import { whoIsAround } from '../../engine/walk';
 import type { GameState } from '../../engine/types';
 import { useShell } from '../shell/context';
@@ -13,13 +14,19 @@ export function WalkLauncher({ s }: { s: GameState }) {
   const shell = useShell();
   const travel = useTravel();
   const npcs = whoIsAround(s);
-  const go = () => { shell.go({}); shell.focus({ walk: true }); };
+  const go = (at: string | true = true) => { shell.go({}); shell.focus({ walk: at }); };
   return (
     <div className="space-y-3" data-testid="walk-launcher">
       <p className="text-sm text-stone-300">{displayName(player(s))} on foot: the boards from Hunt's Pier up to the next pier, the beach, and Ocean Avenue behind. {HOTSPOTS.length} places to walk up to.</p>
       <div className="flex flex-wrap gap-2">
-        <button type="button" className="btn-gold" onClick={go} data-testid="walk-launch">Walk the Boardwalk</button>
+        <button type="button" className="btn-gold" onClick={() => go()} data-testid="walk-launch">Walk the Boardwalk</button>
         <button type="button" className="btn-ghost" disabled={!!s.gameOver} onClick={() => travel.plan(s.playerId)}>Plan a trip…</button>
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-stone-500">Or walk another street</div>
+        <div className="mt-1 flex flex-wrap gap-1.5" data-testid="walk-stretches">
+          {STRETCHES.map((x) => <button key={x.id} type="button" className="btn-ghost text-xs py-1" onClick={() => go(x.id)} title={x.where} data-testid={`walk-launch-${x.id}`}>{x.label}</button>)}
+        </div>
       </div>
       {npcs.length > 0 && (
         <div>

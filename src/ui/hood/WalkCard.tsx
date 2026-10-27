@@ -66,6 +66,7 @@ function ownerOf(s: GameState, h: WalkHotspot, it?: Item): { text: string; color
     if (l.owner === 'private') return { text: l.status === 'sale' ? 'On the market' : l.tenant ?? 'An independent owner', color: l.status === 'sale' ? OWNER_COLOR.sale : OWNER_COLOR.private };
     return { text: rivalName(l.owner), color: OWNER_COLOR[l.owner] ?? OWNER_COLOR.private };
   }
+  if (h.ownerText) return { text: h.ownerText, color: /city|parish|congregation/i.test(h.ownerText) ? OWNER_COLOR.city : OWNER_COLOR.private };
   if (h.kind === 'beach') return { text: 'Everybody\'s (the city keeps it)', color: OWNER_COLOR.city };
   if (h.kind === 'tram') return { text: 'The tram car company', color: OWNER_COLOR.private };
   if (h.landmark === 'hunts-pier') return { text: 'The pier company (not for sale)', color: OWNER_COLOR.private };
@@ -75,10 +76,13 @@ function ownerOf(s: GameState, h: WalkHotspot, it?: Item): { text: string; color
 function SpotArt({ s, h, it, mood }: { s: GameState; h: WalkHotspot; it?: Item; mood: Mood }) {
   const label = <div className="absolute inset-0 grid place-items-center font-display text-lg text-[#ffd1e6]">{h.label}</div>;
   if (h.art) {
-    const sprite = h.art !== 'walk_pier_beach';
+    const keys = (Array.isArray(h.art) ? h.art : [h.art]) as AssetKey[];
+    const sprite = keys[0] !== 'walk_pier_beach';
+    // The painting, or (when no picture loads: local dev, before the upload) the drawn storefront, or the name.
+    const fallback = it ? <Storefront it={it} f={facadeOf(s, it, mood)} /> : label;
     return (
       <div className={`relative overflow-hidden rounded-lg border border-[#ff5fa2]/30 ${sprite ? 'bg-gradient-to-b from-[#7fc4e8] via-[#bfe3f0] to-[#f2dfb4]' : 'bg-noir-800'}`} style={{ aspectRatio: sprite ? '4 / 3' : '1576 / 998' }} data-testid="walk-art">
-        <AssetImg k={h.art as AssetKey} alt={`${h.label}`} className={`absolute inset-0 h-full w-full ${sprite ? 'object-contain' : 'object-cover'}`} fallback={label} />
+        <AssetImg k={keys} alt={`${h.label}`} className={`absolute inset-0 h-full w-full ${sprite ? 'object-contain' : 'object-cover'}`} fallback={it ? <div className="absolute inset-0 overflow-auto">{fallback}</div> : label} />
       </div>
     );
   }
@@ -86,8 +90,13 @@ function SpotArt({ s, h, it, mood }: { s: GameState; h: WalkHotspot; it?: Item; 
   return <div className="relative h-28 rounded-lg border border-[#ff5fa2]/30 bg-gradient-to-b from-[#2a1f52] to-[#1b1030]">{label}</div>;
 }
 
-export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
+export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zone = 'boardwalk', where = 'The Boardwalk at Hunt\'s Pier', backLabel = 'Back out on the boards' }: {
   s: GameState; h: WalkHotspot; it?: Item; mood: Mood; here: WalkNpc[];
+  /** The game zone the place is in (Start a racket here). */
+  zone?: string;
+  /** The stretch, when the place has no address of its own. */
+  where?: string;
+  backLabel?: string;
   onClose: () => void;
   onNpc: (charId: string) => void;
   /** The tram stop: ride to the other end of the boards. */
@@ -102,7 +111,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
   if (inside && it) {
     return (
       <div className="space-y-2">
-        <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={() => setInside(false)} data-testid="walk-back">← Back out on the boards</button>
+        <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={() => setInside(false)} data-testid="walk-back">← {backLabel}</button>
         <StreetCard s={s} it={it} mood={mood} onClose={onClose} />
       </div>
     );
@@ -115,7 +124,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
     <div className="space-y-3" data-testid="walk-card" data-spot={h.id}>
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{lot?.address ?? 'The Boardwalk at Hunt\'s Pier'}</div>
+          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{h.address ?? lot?.address ?? where}</div>
           <div className="font-display text-xl leading-tight text-[#ffd1e6]">{it?.name ?? h.label}</div>
         </div>
         <button type="button" onClick={onClose} className="text-xs text-stone-400 hover:text-gold-300 shrink-0" aria-label="Close" data-testid="walk-card-close">close ×</button>
@@ -142,7 +151,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram }: {
           </ul>
         </div>
       )}
-      <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? 'boardwalk'} onGo={() => shell.go('holdings.hub')} />
+      <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? zone} onGo={() => shell.go('holdings.hub')} />
       <div className="flex flex-wrap gap-1.5" data-testid="walk-verbs">
         {it && <button type="button" className="btn-gold text-xs py-1" onClick={() => setInside(true)} data-testid="walk-go-in">{mine ? 'Go in · Manage' : 'Go in'}</button>}
         {mine && <button type="button" className="btn-ghost text-xs py-1" onClick={() => shell.go('holdings.rackets')}>Your holdings</button>}
