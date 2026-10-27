@@ -16,6 +16,9 @@ import { ActionCard, useOrders } from './Orders';
 import { ActionsHandle, FACTION_TINT, useSheet } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { BonesPicker } from '../clarity/Pickers';
+import { idleMen } from '../../engine/business';
+import { successionCandidates } from '../../engine/heir';
+import { DynastyTree } from '../family/DynastyTree';
 
 /* ------------------------------------------------------------------ */
 /* Warnings and badges                                                 */
@@ -111,13 +114,14 @@ function MoveMenu({ s, c }: { s: GameState; c: Character }) {
   return (
     <select
       aria-label={`Move ${c.firstName} to another crew`}
-      title={`Move ${c.firstName} to another crew`}
-      className="ml-auto h-6 w-7 shrink-0 appearance-none rounded border border-noir-600 bg-noir-900 text-center text-[12px] text-stone-300 hover:border-gold-500"
+      title={`Move ${c.firstName} to another crew (takes effect when the week turns)`}
+      className="ml-auto h-6 max-w-[7.5rem] shrink-0 rounded border border-noir-600 bg-noir-900 px-1 text-[10px] text-stone-300 hover:border-gold-500"
       value={pending && pending.kind === 'reassign' ? pending.capoId : ''}
       onChange={(e) => e.target.value && queue({ kind: 'reassign', charId: c.id, capoId: e.target.value })}
+      data-testid="move-crew"
     >
-      <option value="">{pending ? '…' : '⇄'}</option>
-      {others.map((k) => <option key={k.id} value={k.id}>{k.firstName} {k.lastName}'s crew</option>)}
+      <option value="">{pending ? `Moving to ${s.characters[(pending as { capoId: string }).capoId]?.firstName ?? '…'}` : '⇄ Move to crew…'}</option>
+      {others.map((k) => <option key={k.id} value={k.id}>Move to {k.firstName} {k.lastName}'s crew</option>)}
     </select>
   );
 }
@@ -262,7 +266,36 @@ export function GeneralOrders({ s }: { s: GameState }) {
 /* The chart                                                           */
 /* ------------------------------------------------------------------ */
 
+type ChartFilter = 'all' | 'family' | 'capos' | 'soldiers' | 'associates' | 'unemployed' | 'heirs' | `warn:${string}`;
+const FILTERS: [ChartFilter, string][] = [['all', 'Everyone'], ['family', 'Family'], ['capos', 'Capos'], ['soldiers', 'Soldiers'], ['associates', 'Associates'], ['unemployed', 'Unemployed'], ['heirs', 'Potential heirs']];
+const LEGEND: [string, string][] = [['☹', 'unhappy'], ['▲', 'ambitious'], ['⚖', 'evidence'], ['$', 'in debt'], ['⚑', 'courted'], ['⇡', "his capo's man"], ['☍', 'faction']];
+
+/** Who matches a chart filter (and a search). */
+export function chartMatches(s: GameState, f: ChartFilter, q: string): Character[] {
+  const idle = new Set(idleMen(s).map((c) => c.id));
+  const heirs = new Set(successionCandidates(s).map((c) => c.id));
+  const all = [player(s), ...crew(s)].filter((c): c is Character => !!c && c.alive);
+  const qq = q.trim().toLowerCase();
+  return all.filter((c) => {
+    if (qq && !`${c.firstName} ${c.nickname ?? ''} ${c.lastName} ${c.rank} ${c.specialty ?? ''}`.toLowerCase().includes(qq)) return false;
+    switch (f) {
+      case 'all': return true;
+      case 'family': return !!c.dynasty;
+      case 'capos': return c.rank === 'capo';
+      case 'soldiers': return c.rank === 'soldier';
+      case 'associates': return c.rank === 'associate';
+      case 'unemployed': return idle.has(c.id);
+      case 'heirs': return heirs.has(c.id);
+      default: return warningsFor(s, c).some((w) => w.g === f.slice(5));
+    }
+  });
+}
+
 export function CrewTree({ s, chartOnly }: { s: GameState; chartOnly?: boolean }) {
+  const [view, setView] = useState<'org' | 'blood'>('org');
+  const [filter, setFilter] = useState<ChartFilter>('all');
+  const [q, setQ] = useState('');
+  const flat = filter !== 'all' || q.trim() !== '';
   const boss = player(s);
   const ub = crew(s).filter((c) => c.rank === 'underboss');
   const cons = crew(s).filter((c) => c.rank === 'consigliere');
@@ -273,20 +306,43 @@ export function CrewTree({ s, chartOnly }: { s: GameState; chartOnly?: boolean }
   });
   const direct = unassigned(s);
   const be = boss.evidence ?? 0;
+  const matches = flat ? chartMatches(s, filter, q) : [];
   return (
     <div className="space-y-5" data-testid="crew-tree">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <div className="panel-title">The family</div>
-          <p className="text-xs text-stone-500">Click anyone to open his sheet. Rings show what he thinks of you; icons flag trouble.</p>
+          <p className="text-xs text-stone-500">Click anyone to open his sheet; ⋯ on a face for what you can do. Rings show what he thinks of you; icons flag trouble (tap one to list who has it).</p>
         </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-stone-400">
-          <span><span className="inline-block h-2.5 w-2.5 rounded-sm ring-2 ring-emerald-500 mr-1" />loyal</span>
-          <span><span className="inline-block h-2.5 w-2.5 rounded-sm ring-2 ring-amber-500 mr-1" />cool</span>
-          <span><span className="inline-block h-2.5 w-2.5 rounded-sm ring-2 ring-red-500 mr-1" />hostile</span>
-          <span>☹ unhappy · ▲ ambitious · ⚖ evidence · $ in debt · ⚑ courted · ⇡ his capo's man · ☍ faction</span>
+        <div className="flex gap-1" role="radiogroup" aria-label="Chart" data-testid="chart-view">
+          {(['org', 'blood'] as const).map((v) => <button key={v} type="button" role="radio" aria-checked={view === v} onClick={() => setView(v)} className={`rounded border px-2 py-0.5 text-xs ${view === v ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300'}`}>{v === 'org' ? 'Org chart' : 'Blood tree'}</button>)}
         </div>
       </div>
+      {view === 'org' && (
+        <div className="space-y-1.5" data-testid="chart-tools">
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a man: name, rank, trade…" aria-label="Search the family" data-testid="chart-search"
+            className="w-full sm:w-72 rounded border border-noir-600 bg-noir-950 px-2 py-1 text-xs text-stone-200" />
+          <div className="flex flex-wrap gap-1 text-[11px]" role="radiogroup" aria-label="Show" data-testid="chart-filters">
+            {FILTERS.map(([f, label]) => <button key={f} type="button" role="radio" aria-checked={filter === f} onClick={() => setFilter(f)} className={`rounded border px-2 py-0.5 ${filter === f ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>{label}</button>)}
+          </div>
+          <div className="flex flex-wrap gap-x-2 gap-y-1 text-[11px] text-stone-400" data-testid="chart-legend">
+            <span><span className="inline-block h-2.5 w-2.5 rounded-sm ring-2 ring-emerald-500 mr-1" />loyal</span>
+            <span><span className="inline-block h-2.5 w-2.5 rounded-sm ring-2 ring-amber-500 mr-1" />cool</span>
+            <span><span className="inline-block h-2.5 w-2.5 rounded-sm ring-2 ring-red-500 mr-1" />hostile</span>
+            {LEGEND.map(([g, label]) => <button key={g} type="button" onClick={() => setFilter(filter === `warn:${g}` ? 'all' : `warn:${g}`)} aria-pressed={filter === `warn:${g}`} className={`rounded border px-1 ${filter === `warn:${g}` ? 'border-gold-400 text-gold-300' : 'border-transparent hover:border-noir-500'}`}>{g} {label}</button>)}
+          </div>
+        </div>
+      )}
+      {view === 'blood' && <DynastyTree s={s} />}
+      {view === 'org' && flat && (
+        <section data-testid="chart-results">
+          <div className="text-[11px] text-stone-400">{matches.length} m{matches.length === 1 ? 'an' : 'en'} {q ? `matching "${q}"` : ''} · <button type="button" className="text-gold-300 underline" onClick={() => { setFilter('all'); setQ(''); }}>show the whole chart</button></div>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {matches.map((c) => <li key={c.id} className="flex items-center gap-1 rounded border border-noir-700 bg-noir-800/50 p-1.5"><TreeNode s={s} c={c} size={36} compact sub={`${RANK_BADGE[c.rank] ?? c.rank}${c.capoId ? ` · ${s.characters[c.capoId]?.firstName}'s crew` : ''}`} /><MoveMenu s={s} c={c} /></li>)}
+          </ul>
+        </section>
+      )}
+      {view === 'org' && !flat && <>
 
       {/* Boss, then the administration */}
       <div className="flex flex-col items-center">
@@ -319,6 +375,7 @@ export function CrewTree({ s, chartOnly }: { s: GameState; chartOnly?: boolean }
         </section>
       )}
 
+      </>}
       {!chartOnly && <FactionsPanel s={s} />}
       {!chartOnly && <BooksPanel s={s} />}
       {!chartOnly && <GeneralOrders s={s} />}
