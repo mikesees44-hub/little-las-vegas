@@ -156,3 +156,41 @@ describe('declutter: one home per screen, old routes land', () => {
   });
 
 });
+
+describe('declutter: Deal with [person] offers everything the old entry points did', () => {
+  it('his sheet\'s old extras (travel, dirty work, dating) are in the one menu, used everywhere', async () => {
+    const { playWeeks } = await import('./helpers');
+    const { menuFor } = await import('../src/ui/sheet/menuCatalog');
+    const { jobsForPerson } = await import('../src/engine/dirtyWork');
+    const { isAdult } = await import('../src/engine/dating');
+    const { leaderBlock } = await import('../src/engine/travel');
+    const s = playWeeks('declutter-deal', 8);
+    let dirty = 0, trip = 0, dating = 0;
+    for (const c of Object.values(s.characters).filter((x) => x.alive && x.id !== s.playerId).slice(0, 80)) {
+      const keys = new Set(menuFor(s, c).flatMap((x) => x.items.map((it) => it.key)));
+      if (jobsForPerson(s, c.id).length) { dirty++; expect(keys.has('dirty'), `${c.firstName}: dirty work`).toBe(true); }
+      const why = leaderBlock(s, c.id);
+      if (c.faction === 'player' && why !== 'Not one of yours to send' && why !== 'Not among the living') { trip++; expect(keys.has('trip'), `${c.firstName}: trip`).toBe(true); }
+      if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id)) { dating++; expect(keys.has('dating'), `${c.firstName}: dating`).toBe(true); }
+    }
+    expect(dirty + trip + dating).toBeGreaterThan(5);
+  });
+
+  it('the sheet opens Deal with as one panel: Best now first, every category, a find box', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { playWeeks } = await import('./helpers');
+    const { CharacterSheet } = await import('../src/ui/components/CharacterSheet');
+    const { menuFor } = await import('../src/ui/sheet/menuCatalog');
+    const s = playWeeks('declutter-sheet', 6);
+    const man = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'capo')!;
+    const html = renderToString(createElement(CharacterSheet, { s, id: man.id, onClose: () => {}, initialTab: 'actions' }));
+    expect(html).toContain('data-testid="interaction-menu"');
+    expect(html).toContain('data-testid="menu-cat-best"');
+    expect(html).toContain('data-testid="menu-find"');
+    expect(html).toContain(`Deal with ${man.firstName}`);
+    for (const cat of menuFor(s, man)) expect(html, cat.id).toContain(`data-testid="menu-cat-${cat.id}"`);
+    // Folded rows, not tall cards.
+    expect(html).toContain('data-testid="action-row"');
+  });
+});

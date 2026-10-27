@@ -17,6 +17,8 @@ import { casusBelli } from '../../engine/war';
 import { TALK_IDS, talkApplies } from '../../engine/talks';
 import { pwView } from '../../engine/powerState';
 import { wantedFor } from '../../engine/fugitive';
+import { jobsForPerson } from '../../engine/dirtyWork';
+import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
@@ -25,7 +27,7 @@ import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, Riv
  * categories. Pure: it lists PlayerActions (shown as order cards) and a few
  * "openers" (the scheme planner, the trip planner, the gift catalog).
  */
-export type MenuCategoryId = 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife';
+export type MenuCategoryId = 'best' | 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife';
 
 export type Opener =
   | { type: 'plan'; kind: SchemeKind }
@@ -35,7 +37,11 @@ export type Opener =
   | { type: 'marriage' }
   | { type: 'go'; to: string; label: string }
   /** The Ears (src/ui/ears): pick an Ear for a man, or his connections. */
-  | { type: 'ears'; mode: 'close' | 'dance' | 'web' };
+  | { type: 'ears'; mode: 'close' | 'dance' | 'web' }
+  /** Dirty work aimed at him (lean on him, pay him off, buy him): opens Dirty work with him chosen. */
+  | { type: 'dirty' }
+  /** You and her: dating, going steady, company (Relationships & Dating). */
+  | { type: 'dating' };
 
 export interface MenuItem {
   key: string;
@@ -55,7 +61,7 @@ export interface MenuCategory {
 }
 
 export const CATEGORY_LABEL: Record<MenuCategoryId, string> = {
-  talk: 'Talk', diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
+  best: 'Best now', talk: 'Talk', diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
   travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The Ears',
 };
 
@@ -156,6 +162,12 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   for (const k of kinds) add('intrigue', { key: `plan:${k}`, open: { type: 'plan', kind: k }, label: `${SCHEME_INFO[k].name}…`, text: SCHEME_INFO[k].text, hostile: SCHEME_INFO[k].hostile });
   addEarsItems(s, c, add);
   if (!c.office && c.faction !== 'law') add('hostile', { key: 'plan:murder', open: { type: 'plan', kind: 'murder' }, label: 'Plan a hit…', text: SCHEME_INFO.murder.text, hostile: true });
+
+  // Dirty work aimed at him: the same jobs as the old row on his sheet, now in the menu everywhere.
+  if (jobsForPerson(s, c.id).length) add('hostile', { key: 'dirty', open: { type: 'dirty' }, label: 'Dirty work on him…', text: 'Lean on him, pay him off, buy him: a one-off job with him as the target.', hostile: true });
+
+  // You and her (adults only; never your own kin unless she is your wife): dating, going steady, company.
+  if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id)) add('romance', { key: 'dating', open: { type: 'dating' }, label: `You and ${c.firstName}…`, text: 'Dating, going steady, gifts, company. She always decides.' });
 
   // Romance and marriage of the house's people.
   if (c.dynasty && c.faction === 'player' && !c.spouseId && ageOn(c.birth, s.date) >= 16) add('romance', { key: 'match', open: { type: 'marriage' }, label: `Arrange a match for ${c.firstName}…`, text: 'Compare the families\' sons and daughters; the match is theirs to accept.' });
