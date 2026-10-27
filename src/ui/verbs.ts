@@ -85,6 +85,8 @@ const ECON: Record<string, Verb> = {
   gift: v('Send a gift', 'Gift going'),
   project: v('Fund it', 'Funding'),
   car: v('Buy the car', 'Buying'),
+  luxBuy: v('Buy it', 'Buying'),
+  luxSell: v('Sell it', 'Selling'),
   property: v('Buy', 'Buying'),
   job: v('Give him the job', 'Job given'),
   invite: v('Invite', 'Invited'),
