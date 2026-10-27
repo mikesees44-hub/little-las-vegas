@@ -19,6 +19,9 @@ import { chance } from './rng';
 import { pw, type PowerAction, type PowerOp } from './powerState';
 import { climb, climbDisabled, climbOdds, chooseStation, depose, STATION_INFO, stationMonth, stationWeek, takeover, takeoverOdds } from './station';
 import { FACTION_NAMES } from './world';
+import { shadowWeek } from './shadow';
+import { applyShadowOp, commitShadow, describeShadowOp, previewShadow, shadowActions } from './shadowOps';
+import './shadowStories';
 import { monthKey } from './calendar';
 import type { Character, Effect, EventInstance, GameState, PlayerAction, RivalId } from './types';
 
@@ -82,6 +85,7 @@ export function powerWeek(ctx: Ctx): void {
   }
   if (p.crisis && !s.eventQueue.some((e) => e.defId === 'power_crisis')) s.eventQueue.push(buildCrisisBeat(s, p.crisis));
   if (!p.crisis) queue(s, audienceWeek(s));
+  if (!s.gameOver) shadowWeek(ctx);
 }
 
 function powerMonth(ctx: Ctx): void {
@@ -286,6 +290,8 @@ export function describePowerOp(s: GameState, op: PowerOp): string | undefined {
       return `${op.meter} ${op.amount > 0 ? '+' : '−'}${Math.abs(op.amount)}`;
     case 'note':
       return op.text;
+    case 'shadow':
+      return describeShadowOp(s, op.o);
     case 'climbAsked':
       return undefined;
   }
@@ -538,6 +544,9 @@ export function applyPowerOp(ctx: Ctx, op: PowerOp, label: string): void {
     case 'climbAsked':
       p.climbWeek = s.week;
       break;
+    case 'shadow':
+      applyShadowOp(ctx, op.o);
+      break;
   }
   void label;
 }
@@ -721,6 +730,8 @@ export function previewPower(s: GameState, a: PowerAction): ActionPreview {
         disabledReason: !p || p.station === 'boss' ? 'You are the boss' : !over?.alive ? 'Nobody above you' : p.station === 'exile' ? 'Come home first' : p.station === 'associate' || p.station === 'soldier' ? 'Only a capo or an independent crew can move on the boss' : crew(s).filter((c) => isFree(s, c)).length < 3 ? 'You need at least three men' : undefined,
       };
     }
+    case 'shadow':
+      return previewShadow(s, a.a);
     case 'audience':
       return { ...base, title: 'Hold court in the back room', detail: 'Let it be known you will hear people this Sunday. Someone with a real problem will come.', cost: 0, effects: [note('A petition next week (some petitioners lie)')], because: 'held court', disabledReason: s.week - (s.flags.pwr_court ?? -99) < 4 ? 'You held court recently' : undefined };
   }
@@ -846,6 +857,9 @@ export function commitPower(ctx: Ctx, a: PowerAction): void {
     case 'takeover':
       takeover(ctx, chance(p, takeoverOdds(s).chance));
       break;
+    case 'shadow':
+      commitShadow(ctx, a.a);
+      break;
     case 'audience': {
       s.flags.pwr_court = s.week;
       const ev = audienceWeek(s, true);
@@ -887,7 +901,7 @@ export function powerActions(s: GameState): PlayerAction[] {
   if (elder) out.push({ kind: 'power', op: { op: 'front', charId: elder.id, type: (['unaware', 'willing', 'elder'] as const)[w % 3] } });
   out.push({ kind: 'power', op: { op: 'endFront' } }, { kind: 'power', op: { op: 'consult' } }, { kind: 'power', op: { op: 'climb' } }, { kind: 'power', op: { op: 'takeover' } }, { kind: 'power', op: { op: 'audience' } });
   // A rotating handful a week, so the random player's menu stays balanced with the other orders.
-  return out.filter((_, i) => (i + w) % 4 === 0);
+  return [...out.filter((_, i) => (i + w) % 4 === 0), ...shadowActions(s)];
 }
 
 /** A successful coup may depose the boss instead of killing him (he plays on, lower down). */

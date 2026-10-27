@@ -321,7 +321,9 @@ export type PowerOp =
   | { op: 'meter'; meter: keyof CrisisMeters; amount: number }
   /** A chip that names what an order's commit step does. */
   | { op: 'note'; text: string }
-  | { op: 'climbAsked' };
+  | { op: 'climbAsked' }
+  /** The shadow court and the succession war (shadow.ts). */
+  | { op: 'shadow'; o: import('./shadowState').ShadowOp };
 
 /** Orders the player can give from the Power screens. */
 export type PowerAction =
@@ -343,4 +345,6 @@ export type PowerAction =
   | { op: 'consult' }
   | { op: 'climb' }
   | { op: 'takeover' }
-  | { op: 'audience' };
+  | { op: 'audience' }
+  /** The shadow court and the succession war (shadowOps.ts). */
+  | { op: 'shadow'; a: import('./shadowState').ShadowAction };

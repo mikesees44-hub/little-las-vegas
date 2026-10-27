@@ -7,6 +7,7 @@ import type { Ctx } from './ledger';
 import { opinion } from './relations';
 import { roll } from './roundsPersonal';
 import { DAY_NAMES, missedMornings } from './days';
+import { whisperOn } from './shadow';
 import type { Character, Effect, GameState, RivalId } from './types';
 
 /**
@@ -174,7 +175,8 @@ export function weekCheckIns(s: GameState): CheckIn[] {
       const urgent = day === 0 ? left.find((c) => c.urgent) : undefined;
       const p = urgent ?? (h < PROBLEM_ODDS && left.length ? left[Math.floor(roll(`${s.seed}|${s.week}|cp|${k.id}|${day}`) * left.length) % left.length] : undefined);
       if (p) used.add(p.kind);
-      const line = day === 0 ? sum : fl[Math.floor(h * 1000) % fl.length];
+      // A capo loyal to the boss may drop a line about the underboss's court (shadow.ts).
+      const line = whisperOn(s, k.id, day) ?? (day === 0 ? sum : fl[Math.floor(h * 1000) % fl.length]);
       out.push({ key: `${day}:${k.id}`, day, capoId: k.id, name: shortName(k), title: d ? `Capo · ${d.name}` : 'Capo', line, ...(p ? { problem: p } : {}) });
     }
   }

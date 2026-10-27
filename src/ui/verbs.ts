@@ -197,6 +197,11 @@ export function actionVerb(a: PlayerAction): Verb {
       if (t === 'bodyguards') return v('Hire bodyguards', 'Hiring');
       if (t === 'mattresses') return v('Go to the mattresses', 'Mattresses');
       if (t === 'takeover') return v('Take over', 'Taking over');
+      if (t === 'shadow' && a.op.op === 'shadow') {
+        const k = a.op.a.op;
+        const SV: Record<string, Verb> = { report: v('Ask for it', 'Asked'), authority: v('Set it', 'Set'), test: v('Test him', 'Testing'), meet: v('Meet him', 'Meeting set'), reward: v('Reward him', 'Rewarding'), plant: v('Plant', 'Planted'), confront: v('Confront him', 'Confronting'), council: v('Call the council', 'Council called'), honor: v('Honor it', 'Honoring'), disown: v('Disown it', 'Disowning'), retire: v('Step down', 'Stepping down'), reunite: v('Take them back', 'Taking back') };
+        return SV[k] ?? v('Do it', 'Set');
+      }
       return v('Make the move', 'Moving');
     }
     default: return v('Do it', 'Set');

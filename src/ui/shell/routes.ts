@@ -69,6 +69,8 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   succession: { panel: 'house', section: 'succession' },
   power: { panel: 'house', section: 'succession' },
   heirs: { panel: 'house', section: 'succession' },
+  court: { panel: 'house', section: 'court' },
+  shadow: { panel: 'house', section: 'court' },
   houses: { panel: 'house', section: 'houses' },
   activities: { panel: 'house', section: 'activities' },
   decisions: { panel: 'house', section: 'decisions' },
