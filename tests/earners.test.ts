@@ -1,4 +1,4 @@
-import { ownTotal } from '../src/engine/crewFinance';
+import { finOf, ownTotal } from '../src/engine/crewFinance';
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -139,13 +139,16 @@ describe('Steady earners', () => {
     const takes: number[] = [];
     for (let i = 0; i < 6; i++) {
       const w0 = ownTotal(s, k.id);
+      const wk = s.week;
       s = week(s);
       const line = (s.lastReport?.lines ?? []).find((l) => l.src === b.id && l.stat === 'money' && l.amount > 0);
       expect(line?.label).toMatch(new RegExp(`${k.firstName} kicked up \\$[\\d,]+ — his protection`));
       expect(line?.who).toBe(k.id);
       takes.push(line!.amount);
-      // His own money (cash and savings: crewFinance.ts) does not go down on an earner's week.
-      expect(ownTotal(s, k.id)).toBeGreaterThan(w0 - 1);
+      // His own money (cash and savings: crewFinance.ts) does not go down on an earner's week
+      // (what he chose to buy for himself that week, a car or a ring, is his own business).
+      const bought = (finOf(s, k.id)?.hist ?? []).filter((e) => e.w >= wk && e.amt < 0).reduce((a, e) => a - e.amt, 0);
+      expect(ownTotal(s, k.id) + bought).toBeGreaterThan(w0 - 1);
     }
     expect(earnerLines(s).some((x) => x.who === k.id)).toBe(true);
     void EARNER_KEEP;
