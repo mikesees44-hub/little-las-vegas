@@ -1,7 +1,7 @@
 import type { ZoneId } from './econState';
 import type { BuildStyle, SignColor } from './design';
 import type { FactionId } from './types';
-import { profileAt } from './cityPackage';
+import { occupantIn, occupantsOf, profileAt } from './cityPackage';
 import { WILDWOOD_PACKAGE as PKG } from '../worldpack/cities';
 
 /**
@@ -140,9 +140,12 @@ export const ZONE_RUNS: Partial<Record<ZoneId, Run[]>> = (() => {
  */
 export type SeedRow = [string, ZoneId, RunId, string, 'a' | 'b' | 'w' | 0 | 1 | 2, string, string, 'private' | 'rival' | 'sale' | 'lease' | 'public', FactionId | 'private' | 'city', string, BuildStyle, SignColor, number, number];
 
-const BIZ_ON = new Map(PKG.businesses.map((b) => [b.parcelId, b]));
-export const SEED: SeedRow[] = PKG.parcels.filter((x) => x.slot && x.market).map((x) => {
-  const b = BIZ_ON.get(x.id)!;
+/** The year the 1960 records are written for (a later occupant takes over in play: hoodState.syncHomeOccupants). */
+export const SEED_YEAR = 1960;
+/** A parcel's main occupant in 1960 (else its first); a business sharing the property never is. */
+const primaryOf = (id: string) => occupantIn(PKG, id, SEED_YEAR) ?? occupantsOf(PKG, id)[0];
+export const SEED: SeedRow[] = PKG.parcels.filter((x) => x.slot && x.market && primaryOf(x.id)).map((x) => {
+  const b = primaryOf(x.id)!;
   const st = x.structure!;
   return [x.id, x.zone as ZoneId, x.slot!.run as RunId, x.slot!.cross, x.slot!.half, b.use, b.name, x.market!.status, x.market!.owner as FactionId | 'private' | 'city', b.operator ?? '', st.style as BuildStyle, st.sign as SignColor, st.built!, st.condition!];
 });
@@ -173,3 +176,22 @@ export const FIRSTNAMES = GEN.names!.firstnames;
 export const ADJ = GEN.names!.adj;
 export const NOUN: Record<string, string[]> = GEN.names!.noun;
 export const MOTEL_NAMES = GEN.names!.motels;
+
+/**
+ * The town's house lots (the package's residential parcels): a house of the
+ * town's people (its kind, when it went up, its look) or empty ground for one.
+ * Placed by a point (`hoodGeo.extraSlots`); who lives there is game state
+ * (housing.ts). Invented and approximately placed (the package says so).
+ */
+export interface ResSeed { id: string; zone: ZoneId; address: string; use?: string; built?: number; cond?: number; style?: BuildStyle; status: 'private' | 'sale'; art?: string }
+export const RES_SEED: ResSeed[] = PKG.parcels.filter((x) => x.residential && x.zone && x.market && x.pos).map((x) => {
+  const r: ResSeed = { id: x.id, zone: x.zone as ZoneId, address: x.address ?? x.id, status: x.market!.status === 'sale' ? 'sale' : 'private' };
+  if (x.residential!.use) {
+    r.use = x.residential!.use;
+    r.built = x.structure?.built ?? 1925;
+    r.cond = x.structure?.condition ?? 70;
+    r.style = (x.structure?.style ?? 'colonial') as BuildStyle;
+  }
+  if (x.art?.[0]) r.art = x.art[0];
+  return r;
+});

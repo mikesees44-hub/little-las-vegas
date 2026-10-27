@@ -99,6 +99,12 @@ export interface Lot {
   past?: { use: string; from: number; to: number; why: string }[];
   /** A rival is bidding for this lot too. */
   bidder?: FactionId;
+  /** A house lot (housing.ts): a house of the town's people, or empty ground for one. */
+  home?: 1;
+  /** The household living in the house (a living-layer household id). */
+  hh?: string;
+  /** That household owns it (else it rents from whoever holds the lot). */
+  hhOwns?: 1;
 }
 
 /* ---------------- managers & staff ---------------- */
@@ -299,6 +305,8 @@ export type EconOp =
   | { op: 'clearStop'; lotId: string }
   | { op: 'bribeStop'; lotId: string }
   | { op: 'outbid'; lotId: string }
+  /** The Family's loan desk: an applicant's answer (familyBank.ts). */
+  | { op: 'loanApp'; id: string; verdict: 'approve' | 'deny' | 'counter'; amt?: number }
   /** The living rackets (racketLife.ts). */
   | RacketOp;
 
@@ -316,6 +324,10 @@ export type EconAction =
   /** Rename a place you own (a business id or `lot:<id>`). */
   | { type: 'rename'; key: string; name: string }
   | { type: 'leaseLot'; lotId: string }
+  /** The Family's loan desk (familyBank.ts): its terms, an applicant's answer, a loan's default plan. */
+  | { type: 'bank'; cmd: import('./familyBank').BankCmd }
+  /** A house of yours: sell it or rent it to a family of the town (housing.ts). */
+  | { type: 'home'; cmd: import('./housing').HomeCmd }
   | { type: 'build'; lotId: string; use: string }
   | { type: 'renovate'; lotId: string }
   | { type: 'sellLot'; lotId: string }

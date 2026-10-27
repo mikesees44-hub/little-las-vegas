@@ -3,7 +3,7 @@ import { DatingHere, DatingLink } from '../dating/DatingPanel';
 import { datingSettings } from '../../engine/datingState';
 import { DirtyHere } from '../econ/DirtyWork';
 import { useMemo, useState } from 'react';
-import { rivalName } from '../../engine/construction';
+import { placeAction, placeOwnerLabel, placeRunByLabel } from '../../engine/placeEligibility';
 import { crew } from '../../engine/characters';
 import { hotspotLot, type WalkNpc } from '../../engine/walk';
 import type { WalkHotspot } from '../../engine/walkData';
@@ -65,8 +65,10 @@ function ownerOf(s: GameState, h: WalkHotspot, it?: Item): { text: string; color
   if (it?.mine) return { text: `House of ${s.houseName}`, color: OWNER_COLOR.player };
   const l = it?.lot;
   if (l) {
-    if (l.owner === 'private') return { text: l.status === 'sale' ? 'On the market' : l.tenant ?? 'An independent owner', color: l.status === 'sale' ? OWNER_COLOR.sale : OWNER_COLOR.private };
-    return { text: rivalName(l.owner), color: OWNER_COLOR[l.owner] ?? OWNER_COLOR.private };
+    // The same words as the street card, the block map and Holdings (placeEligibility).
+    const text = placeOwnerLabel(s, l);
+    if (l.owner === 'private') return { text, color: l.status === 'sale' ? OWNER_COLOR.sale : OWNER_COLOR.private };
+    return { text, color: OWNER_COLOR[l.owner] ?? OWNER_COLOR.private };
   }
   if (h.ownerText) return { text: h.ownerText, color: /city|parish|congregation/i.test(h.ownerText) ? OWNER_COLOR.city : OWNER_COLOR.private };
   if (h.kind === 'beach') return { text: 'Everybody\'s (the city keeps it)', color: OWNER_COLOR.city };
@@ -135,7 +137,8 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zon
       <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
         <div className="text-stone-500">Held by</div>
         <div className="text-stone-200 flex items-center gap-1.5" data-testid="walk-owner"><span className="inline-block h-2.5 w-2.5 rounded-full shrink-0" style={{ background: own.color }} />{own.text}</div>
-        {lot && <><div className="text-stone-500">Status</div><div className="text-stone-200">{STATUS_LABEL[lot.status]}{badge ? ` · ${badge}` : ''}</div></>}
+        {lot && <><div className="text-stone-500">Runs it</div><div className="text-stone-200" data-testid="walk-runs">{placeRunByLabel(s, lot)}</div></>}
+        {lot && <><div className="text-stone-500">Status</div><div className="text-stone-200" data-testid="walk-status">{STATUS_LABEL[lot.status]}{badge ? ` · ${badge}` : ''}</div></>}
         {!lot && badge && <><div className="text-stone-500">Status</div><div className="text-stone-200">{badge}</div></>}
       </div>
       <p className="text-xs text-stone-300 leading-relaxed">{h.blurb}</p>
@@ -155,7 +158,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zon
       )}
       <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? zone} onGo={() => shell.go('holdings.hub')} />
       <div className="flex flex-wrap gap-1.5" data-testid="walk-verbs">
-        {it && <button type="button" className="btn-gold text-xs py-1" onClick={() => setInside(true)} data-testid="walk-go-in">{mine ? 'Go in · Manage' : 'Go in'}</button>}
+        {it && <button type="button" className="btn-gold text-xs py-1" onClick={() => setInside(true)} data-testid="walk-go-in">{placeAction(s, lot, 'goIn')?.label ?? (mine ? 'Go in · Manage' : 'Go in')}</button>}
         {mine && <button type="button" className="btn-ghost text-xs py-1" onClick={() => shell.go('holdings.rackets')}>Your holdings</button>}
         <button type="button" className={`btn-ghost text-xs py-1 ${meet ? 'ring-1 ring-gold-400' : ''}`} onClick={() => setMeet((x) => !x)} data-testid="walk-call-meeting">Call a meeting here</button>
         {h.kind === 'tram' && onTram && <button type="button" className="btn-ghost text-xs py-1" onClick={onTram} data-testid="walk-tram">Ride the tram car</button>}

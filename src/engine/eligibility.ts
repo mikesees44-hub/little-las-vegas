@@ -68,3 +68,6 @@ export function seatPreview(s: GameState, seat: Seat, charId: string): SeatPrevi
     warning: prev ? `${prev.firstName} ${prev.lastName} loses the seat and holds it against you (−15 opinion)${RANK_SEATS.includes(seat) ? `, and goes back to soldier` : ''}.` : undefined,
   };
 }
+
+/** Places (map, street, walk and interior cards): the same central check, in placeEligibility.ts. */
+export { placeActions, placeAction, placeCondition, isOperating, placeOwnerLabel, placeRunByLabel } from './placeEligibility';

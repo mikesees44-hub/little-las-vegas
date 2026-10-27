@@ -12,6 +12,8 @@ import { TablePanel } from '../components/TablePanel';
 import { UnderbellyPanel } from '../components/UnderbellyPanel';
 import { CityHall } from '../cityhall/CityHall';
 import { HQPanel } from '../econ/HQPanel';
+import { LoanDesk } from '../econ/LoanDesk';
+import { HousesSummary } from '../econ/HomePanel';
 import { Holdings } from '../econ/Holdings';
 import { RacketHub } from '../econ/RacketHub';
 import { DirtyWork } from '../econ/DirtyWork';
@@ -153,6 +155,7 @@ export const PANELS: PanelDef[] = [
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
       { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },
       { id: 'hq', label: 'Headquarters', render: (s) => <HQPanel s={s} /> },
+      { id: 'loandesk', label: 'Loan desk', blurb: 'Your bank or your book: the people Chemical Bank turned down, your terms (the rate up to the vig), and what happens when they stop paying.', render: (s) => <LoanDesk s={s} /> },
       { id: 'books', label: 'The Books', render: (s) => <TheBooks s={s} /> },
       { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'The envelope in detail: every crew and every man, the accounts (Family money, your pocket), what is owed, investments and the full books.', render: (s) => <WeeklyTake s={s} /> },
     ],
@@ -185,7 +188,7 @@ export const PANELS: PanelDef[] = [
       { id: 'case', label: 'Your Case', blurb: 'The government\'s case against the boss, from a file to a trial, and the fugitive road.', render: (s) => <LawPanel s={s} /> },
       { id: 'cityhall', label: 'City Hall & People', wide: true, render: (s) => <CityHall s={s} /> },
       { id: 'happening', label: 'What\'s happening', blurb: 'The Boardwalk\'s people living their own lives: the stories going on, the talk of the street, and the people, as far as you know.', render: (s) => <Happening s={s} /> },
-      { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => <HoodDashboard s={s} /> },
+      { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => stack(<HousesSummary key="h" s={s} />, <HoodDashboard key="d" s={s} />) },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'night', label: 'The Night', blurb: 'The Madam, the Ears who hear everything, and the men who exploit women. Set-ups and reports only; she always decides.', render: (s) => <NightPanel s={s} /> },
       { id: 'attached', label: 'Who\'s attached to whom', blurb: 'The connection web: who is sweet on whom, who is a regular, who keeps someone on the side. The Ears reveal the rest.', render: (s) => <AttachmentBoard s={s} /> },

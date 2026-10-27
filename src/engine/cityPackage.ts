@@ -132,8 +132,17 @@ export interface Parcel {
   /** Land value multiplier for an aggregate town. */
   value?: number;
   art?: string[];
+  /**
+   * A house lot (Wildwood): the house standing on it (`use`: bungalow, cottage,
+   * house, duplex, shorehouse, rooming) or, with no use, an empty lot. Who lives
+   * there is game state (housing.ts), never the package's.
+   */
+  residential?: { use?: string };
   evidence: Evidence;
 }
+
+/** The kinds of house a residential parcel can hold. */
+export const RESIDENTIAL_USES = ['bungalow', 'cottage', 'house', 'duplex', 'shorehouse', 'rooming'];
 
 /** How a business is named: invented; a near-miss of a real one still operating; or its real (defunct) name. */
 export type NamePolicy = 'fictional' | 'near-miss' | 'historical';
@@ -153,6 +162,12 @@ export interface BusinessRec {
   art?: string[];
   /** Weekly takings in season for an aggregate town (1960 dollars). */
   take?: number;
+  /**
+   * A second business sharing the property with the main occupant (a custard
+   * stand in an arcade's corner, a bar on a pier): it rents its corner from
+   * whoever holds the building, and never displaces the main occupant.
+   */
+  shares?: boolean;
   evidence: Evidence;
 }
 
@@ -461,6 +476,8 @@ export function validateCityPackage(raw: unknown, opts: ValidateOpts = {}): City
     if (x.footprint && (!isNum(x.footprint.w) || !isNum(x.footprint.d) || x.footprint.w <= 0 || x.footprint.d <= 0)) err(`${path}.footprint`, `${what}: footprint must be positive width and depth (m).`);
     if (x.structure?.built !== undefined) yearsOk(`${path}.structure`, { from: x.structure.built }, `${what} structure`);
     yearsOk(`${path}.structure.years`, x.structure?.years, `${what} structure`);
+    if (x.residential?.use !== undefined && !RESIDENTIAL_USES.includes(x.residential.use)) err(`${path}.residential.use`, `${what}: "${x.residential.use}" is not a kind of house (${RESIDENTIAL_USES.join(', ')}).`);
+    if (x.residential && !x.market) err(`${path}.market`, `${what}: a house lot needs a market (who holds it at the start).`);
     if (x.market && x.ownable === false && x.market.status !== 'public') err(`${path}.market`, `${what}: marked never ownable but listed as "${x.market.status}".`);
     evidenceOk(path, x.evidence, what);
   });
@@ -475,6 +492,7 @@ export function validateCityPackage(raw: unknown, opts: ValidateOpts = {}): City
     if (!isStr(b.use)) err(`${path}.use`, `${what}: no use (diner, motel, club ...).`);
     yearsOk(`${path}.years`, b.years, what);
     if (b.namePolicy === 'historical' && b.years?.to === undefined) err(`${path}.namePolicy`, `${what}: a real name is only for a business that has closed — give years.to, or use a near-miss name.`);
+    if (b.shares && pc && !pkg.businesses.some((o) => o.parcelId === pc.id && !o.shares)) warn(`${path}.shares`, `${what}: shares a property, but nothing else stands on parcel ${pc.id}.`);
     if (b.namePolicy === 'near-miss' && !isStr(b.nearMissOf)) warn(`${path}.nearMissOf`, `${what}: near-miss name, but not of what (research note).`);
     if (b.namePolicy === 'near-miss' && b.nearMissOf && b.nearMissOf.trim().toLowerCase() === b.name.trim().toLowerCase()) err(`${path}.name`, `${what}: a near-miss name must differ from the real one.`);
     if (!['fictional', 'near-miss', 'historical'].includes(b.namePolicy)) err(`${path}.namePolicy`, `${what}: namePolicy must be fictional, near-miss or historical.`);
@@ -696,11 +714,29 @@ export function evidenceSummary(pkg: CityPackage): Record<Confidence, number> {
 }
 
 /** What stands on a parcel in a year: the business whose years cover it (latest opened wins). */
-export function occupantIn(pkg: CityPackage, parcelId: string, year: number): BusinessRec | undefined {
+export function occupantIn(pkg: Pick<CityPackage, 'businesses'>, parcelId: string, year: number): BusinessRec | undefined {
   let best: BusinessRec | undefined;
   for (const b of pkg.businesses) {
-    if (b.parcelId !== parcelId || !yearsCover(b.years, year)) continue;
+    if (b.parcelId !== parcelId || b.shares || !yearsCover(b.years, year)) continue;
     if (!best || (b.years.from ?? 0) > (best.years.from ?? 0)) best = b;
   }
   return best;
+}
+
+/** The businesses sharing a property with its main occupant in a year (a custard stand in an arcade's corner). */
+export function coOccupantsIn(pkg: Pick<CityPackage, 'businesses'>, parcelId: string, year: number): BusinessRec[] {
+  return pkg.businesses.filter((b) => b.parcelId === parcelId && b.shares && yearsCover(b.years, year));
+}
+
+/** Every main occupant a parcel has had, oldest first (the building outlives them). */
+export function occupantsOf(pkg: Pick<CityPackage, 'businesses'>, parcelId: string): BusinessRec[] {
+  return pkg.businesses.filter((b) => b.parcelId === parcelId && !b.shares).sort((a, b) => (a.years.from ?? 0) - (b.years.from ?? 0));
+}
+
+/** When a parcel's building stands from: its structure's years or built year, else its first occupant's opening (unknown: always). */
+export function standsFrom(pkg: Pick<CityPackage, 'businesses'>, pc: Pick<Parcel, 'id' | 'structure'>): number | undefined {
+  const st = pc.structure?.years?.from ?? pc.structure?.built;
+  if (st !== undefined) return st;
+  const first = occupantsOf(pkg, pc.id)[0];
+  return first?.years.from;
 }

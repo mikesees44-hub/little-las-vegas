@@ -158,7 +158,8 @@ describe('events', () => {
       if (c) {
         found = true;
         expect(c.becauseWeek).toBeLessThan(c.week);
-        expect(c.week - c.becauseWeek!).toBeLessThanOrEqual(8);
+        // The longest delay a consequence is scheduled with (a crewman's loan comes back in 6-12 weeks).
+        expect(c.week - c.becauseWeek!).toBeLessThanOrEqual(12);
       }
     }
     expect(found).toBe(true);

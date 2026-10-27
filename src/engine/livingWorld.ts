@@ -8,6 +8,7 @@ import type { Lot } from './econState';
 import { inflation, USES, USES_BY_ID, ZONES_BY_ID } from './property';
 import { CATALOG } from './catalog';
 import { stakeEnded, stakeShare } from './crewFinance';
+import { familyBankName } from './familyBank';
 import { FACTION_NAMES } from './world';
 import { expireRequests, queueRequest } from './livingAsk';
 import { capoBriefs, channelsWeek, districtCapo, fact, factById, gossipMonth, knows, pruneFacts, remember } from './livingKnow';
@@ -147,8 +148,9 @@ function lenderAcct(L: LivingState, s: GameState, d: Td): string {
 
 export function lenderName(s: GameState, L: LivingState, d: Td): string {
   if (d.lender.startsWith('tp')) return pname(L.people[d.lender]);
+  if (d.lender === 'family' && d.fb) return d.fb.via === 'bank' ? familyBankName(s) : `the House of ${s.houseName}'s book`;
   if (d.lender === 'family') return `the House of ${s.houseName}`;
-  if (d.lender === 'bank') return 'the Marine National Bank';
+  if (d.lender === 'bank') return 'Chemical Bank';
   if (d.lender.startsWith('rival:')) return `${FACTION_NAMES[d.lender.slice(6) as FactionId] ?? 'a rival'}'s shylock`;
   const c = s.characters[d.lender];
   return c ? `${c.firstName} ${c.lastName}` : 'a lender';
@@ -260,6 +262,7 @@ function endBusiness(ctx: Ctx, L: LivingState, b: Tb, keepStaff: boolean): void 
   const home = own && L.hh[own.hh] && L.hh[own.hh].gone === undefined ? `h:${own.hh}` : 'x:estate';
   const l0 = ctx.s.econ?.lots.find((x) => x.id === b.lot);
   for (const st of b.stk ?? []) {
+    if (st.c === 'family') { if (b.cash > 0) pay(ctx, L, `b:${b.lot}`, 'family', Math.round(b.cash * st.pct), `The Family's share of what was left`, 'business'); continue; }
     const c = ctx.s.characters[st.c];
     const got = c?.alive && b.cash > 0 ? pay(ctx, L, `b:${b.lot}`, `wealth:${c.id}`, Math.round(b.cash * st.pct), `${c.firstName} ${c.lastName}'s share of what was left`) : 0;
     if (c) stakeEnded(ctx.s, c.id, b.lot, got, `${l0?.name ?? 'the place'} ${keepStaff ? 'was sold' : 'closed'}`);
@@ -504,6 +507,12 @@ function businessesWeek(ctx: Ctx, L: LivingState, x: Idx): void {
       const draw = Math.round((b.cash - cushion) * 0.6);
       // A silent partner from the crews takes his share of the draw first.
       for (const st of b.stk ?? []) {
+        if (st.c === 'family') {
+          // The Family is a partner (it took a piece for a loan he could not pay).
+          const share = Math.round(draw * st.pct);
+          if (share > 0) st.paid += pay(ctx, L, `b:${lotId}`, 'family', share, `The Family's share of ${lotName(l)}`, 'business');
+          continue;
+        }
         const c = s.characters[st.c];
         const share = Math.round(draw * st.pct);
         if (!c || share <= 0) continue;
@@ -550,12 +559,15 @@ function householdsWeek(ctx: Ctx, L: LivingState, x: Idx): void {
     let behind = paid < up;
     if (hh.rent) {
       const r = Math.round(hh.rent * x.infl);
-      if (pay(ctx, L, `h:${id}`, 'x:rent', r, `${hh.name}: the rent`) < r) behind = true;
+      // A house the Family holds: the rent comes to the Family, out of the household's own money.
+      const home = hh.lot ? x.lots.get(hh.lot) : undefined;
+      const landlord = home && !home.hhOwns && (home.status === 'owned' || home.status === 'leased') ? 'family' : 'x:rent';
+      if (pay(ctx, L, `h:${id}`, landlord, r, landlord === 'family' ? `Rent: ${hh.name} at ${home!.address}` : `${hh.name}: the rent`, 'business') < r) behind = true;
     }
     hh.behind = behind ? (hh.behind ?? 0) + 1 : 0;
     // A comfortable family lives up to its money.
     const comfortable = 2000 * x.infl;
-    if (hh.cash > comfortable) pay(ctx, L, `h:${id}`, 'x:market', Math.round((hh.cash - comfortable) * 0.012), `${hh.name}: a new car, the church, the good china`);
+    if (hh.cash > comfortable && !hh.save) pay(ctx, L, `h:${id}`, 'x:market', Math.round((hh.cash - comfortable) * 0.012), `${hh.name}: a new car, the church, the good china`);
     // When the house runs dry, a man's own money goes in.
     if (behind) {
       for (const p of presentMembers(L, hh, x.week)) if (p.stash > 0 && p.t[WARM] + p.t[HON] > 80) pay(ctx, L, `p:${p.id}`, `h:${id}`, p.stash, `${pname(p)} puts in what ${he(p)} had put aside`);
@@ -650,8 +662,9 @@ function personWeek(ctx: Ctx, L: LivingState, p: Tp, x: Idx): void {
   if (need >= 80 && (p.cd.borrow ?? -99) + 12 <= x.week && !L.debts.some((d) => d.hh === p.hh && d.st === 'open') && !hhBorrowedLately(L, p, x)) {
     cands.push({ k: 'borrow', score: need * 0.75 - p.t[AMB] * 0.05 + n('borrow'), run: () => borrow(ctx, L, p, x, Math.round(upkeepOf(L, hh, x) * 6), 'to keep the house going') });
   }
-  const mine = L.debts.filter((d) => d.by === p.id && d.st === 'open');
-  if (mine.length && need <= 25) cands.push({ k: 'repay', score: 26 + p.t[HON] * 0.25 + n('repay'), run: () => repayEarly(ctx, L, p, mine[0], x) });
+  // (A house's mortgage runs its term; and money put by for the builder is not for paying ahead.)
+  const mine = L.debts.filter((d) => d.by === p.id && d.st === 'open' && !d.lot);
+  if (mine.length && need <= 25 && !hh.save) cands.push({ k: 'repay', score: 26 + p.t[HON] * 0.25 + n('repay'), run: () => repayEarly(ctx, L, p, mine[0], x) });
   if (working && p.job && L.biz[p.job] && L.biz[p.job].owner !== p.id && p.t[AMB] >= 60 && (p.cd.raise ?? -99) + 52 <= x.week) {
     cands.push({ k: 'raise', score: p.t[AMB] * 0.35 + n('raise'), run: () => askRaise(ctx, L, p, x) });
   }
@@ -1276,9 +1289,10 @@ function settleGrudge(ctx: Ctx, L: LivingState, p: Tp, target: string, x: Idx): 
 function startOpenBusiness(ctx: Ctx, L: LivingState, p: Tp, x: Idx): void {
   const s = ctx.s;
   p.cd.invest = x.week;
-  const hood = L.hh[p.hh]?.hood ?? L.hoods[0];
+  // A place of his own is opened in the simulated district (a family from the Crest opens on the Boardwalk).
+  const hood = L.hoods.includes(L.hh[p.hh]?.hood) ? L.hh[p.hh].hood : L.hoods[0];
   const zones = HOODS_BY_ID[hood].zones;
-  const lots = [...x.lots.values()].filter((l) => zones.includes(l.zone) && l.status === 'sale' && l.price > 0).sort((a, b) => a.price - b.price || a.id.localeCompare(b.id));
+  const lots = [...x.lots.values()].filter((l) => zones.includes(l.zone) && !l.home && l.status === 'sale' && l.price > 0).sort((a, b) => a.price - b.price || a.id.localeCompare(b.id));
   const l = lots[0];
   if (!l) return;
   const fid = fact(s, L, 'plans_biz', [p.id], `${pname(p)} has ${his(p)} eye on ${l.address}: ${he(p)} wants a place of ${his(p)} own.`, 1, { at: l.id, amt: l.price });
@@ -1297,8 +1311,8 @@ function openBusinessStage(ctx: Ctx, L: LivingState, p: Tp, x: Idx): boolean {
     closeStory(s, st, why);
   };
   if (!l || l.status !== 'sale') {
-    const hood = L.hh[p.hh]?.hood ?? L.hoods[0];
-    l = [...x.lots.values()].filter((y) => HOODS_BY_ID[hood].zones.includes(y.zone) && y.status === 'sale' && y.price > 0).sort((a, b) => a.price - b.price)[0];
+    const hood = L.hoods.includes(L.hh[p.hh]?.hood) ? L.hh[p.hh].hood : L.hoods[0];
+    l = [...x.lots.values()].filter((y) => HOODS_BY_ID[hood].zones.includes(y.zone) && !y.home && y.status === 'sale' && y.price > 0).sort((a, b) => a.price - b.price)[0];
     if (!l) { giveUp('Nothing he could buy came up.'); return false; }
     plan.target = l.id;
   }
@@ -1502,8 +1516,9 @@ function leaveDistrict(ctx: Ctx, L: LivingState, ps: Tp[], x: Idx, txt: string):
 /** A family with no work, no money and the bills piling up leaves; their debts go with them, unpaid (never forgotten). */
 function migrationMonth(ctx: Ctx, L: LivingState, x: Idx): void {
   const s = ctx.s;
+  // The district's own people (the town's house families elsewhere on the island are counted by housing.ts).
   let pop = 0;
-  for (const id in L.people) if (present(L.people[id], x.week)) pop++;
+  for (const id in L.people) if (present(L.people[id], x.week) && L.hoods.includes(L.hh[L.people[id].hh]?.hood)) pop++;
   for (const hh of Object.values(L.hh)) {
     if (hh.gone !== undefined) continue;
     const ms = presentMembers(L, hh, x.week);
@@ -1868,12 +1883,16 @@ export function districtTotals(s: GameState, L: LivingState, hood?: HoodId): Dis
   let people = 0, adults = 0, children = 0, employed = 0, unemployed = 0, workingOut = 0;
   for (const id in L.people) {
     const p = L.people[id];
-    if (!present(p, s.week) || !hoods.includes(L.hh[p.hh]?.hood)) continue;
-    people++;
+    if (!present(p, s.week)) continue;
+    const here = hoods.includes(L.hh[p.hh]?.hood);
     const a = ageOf(p, y, m);
+    // The district's positions are filled by whoever works them (a family from the Crest works the Boardwalk too).
+    if (a >= 18 && p.job && lotIds.has(p.job)) employed++;
+    if (!here) continue;
+    people++;
     if (a < 18) { children++; continue; }
     adults++;
-    if (p.job && lotIds.has(p.job)) employed++;
+    if (p.job && lotIds.has(p.job)) continue;
     else if (p.job === 'out') workingOut++;
     else if (!p.job && a < 66) unemployed++;
   }

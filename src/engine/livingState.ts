@@ -138,6 +138,10 @@ export interface Th {
   gone?: number;
   /** Weeks behind on the house. */
   behind?: number;
+  /** The house lot they live in (housing.ts), owned or rented. */
+  lot?: string;
+  /** Saving up to build or buy a house of their own (they do not spend down to the comfortable line). */
+  save?: 1;
 }
 
 export interface Tb {
@@ -163,7 +167,7 @@ export interface Tb {
   stk?: { c: string; pct: number; w: number; paid: number }[];
 }
 
-export type DebtSt = 'open' | 'paid' | 'default' | 'forgiven' | 'skipped';
+export type DebtSt = 'open' | 'paid' | 'default' | 'forgiven' | 'skipped' | 'seized';
 
 export interface Td {
   id: string;
@@ -188,6 +192,10 @@ export interface Td {
   dw?: number;
   /** The capo got him more time (week). */
   grace?: number;
+  /** A house loan: the lot it was for (Chemical Bank's mortgage, or the Family's). */
+  lot?: string;
+  /** A loan from the Family's bank or book, with its terms (familyBank.ts). */
+  fb?: import('./familyBank').FbTerms;
 }
 
 export type FactKind =
@@ -197,7 +205,8 @@ export type FactKind =
   | 'courting' | 'engaged' | 'married' | 'parted' | 'affair' | 'affair_out' | 'separated' | 'expecting' | 'born'
   | 'came_of_age' | 'went_away' | 'came_back' | 'moved_in' | 'moved_out' | 'died'
   | 'skim' | 'skim_caught' | 'theft' | 'thief' | 'grudge' | 'revenge_prep' | 'revenge' | 'settled' | 'talked_cops'
-  | 'stake' | 'asked_help' | 'helped' | 'refused_help' | 'patron' | 'boss_helped' | 'boss_refused' | 'capo_settled' | 'mediated';
+  | 'stake' | 'asked_help' | 'helped' | 'refused_help' | 'patron' | 'boss_helped' | 'boss_refused' | 'capo_settled' | 'mediated'
+  | 'bought_lot' | 'broke_ground' | 'house_built' | 'bought_house' | 'sold_house' | 'foreclosed' | 'rented_house' | 'bank_no' | 'bank_yes' | 'collector' | 'seized';
 
 export interface Tf {
   id: string;

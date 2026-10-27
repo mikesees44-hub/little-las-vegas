@@ -215,7 +215,8 @@ export function constructionWeek(ctx: Ctx, onOpen: (l: Lot) => void): void {
       l.invested = (l.invested ?? 0) + cost;
     }
     // Others' builds pay your companies if you hold the contract or supply them.
-    if (!mine && (l.stageWeek ?? 0) === 0) supplyIncome(ctx, l, u, st);
+    // (A family's own house pays its builder out of its own money: housing.ts.)
+    if (!mine && (l.stageWeek ?? 0) === 0 && !(l.home && l.hh)) supplyIncome(ctx, l, u, st);
     if (st === 'permits') {
       // Waiting on the inspector and the commission.
       const p = (l.permit ??= { zoning: 0, inspector: weeks.permits });
@@ -317,7 +318,8 @@ export function townMonth(ctx: Ctx): void {
   const boom = year <= 1966 ? 1 : 0;
   const starts = randInt(e, 0, 2) + boom;
   for (let i = 0; i < starts; i++) {
-    const vacant = e.lots.filter((l) => !l.use && (l.status === 'sale' || l.status === 'private' || l.status === 'rival'));
+    // House lots are for the town's families (housing.ts), not the developers.
+    const vacant = e.lots.filter((l) => !l.use && !l.home && (l.status === 'sale' || l.status === 'private' || l.status === 'rival'));
     if (!vacant.length) break;
     // The Crest fills first in the boom.
     const crest = vacant.filter((l) => l.zone === 'crest');

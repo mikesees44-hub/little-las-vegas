@@ -1,3 +1,4 @@
+import { isOperating } from './placeEligibility';
 import { isInSeason } from './calendar';
 import { devJobBonus } from './devState';
 import { crewStrength } from './strength';
@@ -200,7 +201,8 @@ function lotDistrict(l: Lot): string | undefined {
 
 /** A private shop on the island that can be shaken down (not public, not yours, not a landmark). */
 export function shopOk(l: Lot | undefined): l is Lot {
-  return !!l && l.owner === 'private' && l.status !== 'public' && !!l.use && !LANDMARK.test(`${l.name ?? ''} ${l.address} ${l.tenant ?? ''}`);
+  // Only a going concern (placeEligibility): a shop that closed has nobody to shake down.
+  return !!l && l.owner === 'private' && l.status !== 'public' && !!l.use && isOperating(l) && !LANDMARK.test(`${l.name ?? ''} ${l.address} ${l.tenant ?? ''}`);
 }
 
 function rivalLotOk(s: GameState, l: Lot | undefined): l is Lot {
@@ -464,6 +466,11 @@ export function jobLock(s: GameState, job: DirtyJobId, target?: string): { why: 
   if (job === 'rigbid' && !s.districts.some((x) => (x.influence.player ?? 0) >= 40)) return { why: 'You do not run a district', how: 'Hold 40% of a district and its contracts are yours to steer.' };
   if (job === 'welsher' && !s.loans.some((l) => l.weeksLate > 0) && !owned(s).some((b) => b.kind === 'loansharking')) return { why: 'Nobody owes you', how: 'Put money on the street (a shylock book, or Money › Lend) and somebody will be late.' };
   if (job === 'dope' && s.edicts.nojunk) return { why: 'You laid down the law: no junk', how: 'Lift the edict in The Family › Standing orders.' };
+  if ((job === 'shakedown' || job === 'cardgame') && target) {
+    // Aimed at a going concern: a place that closed has no till and no game (placeEligibility).
+    const l = s.econ?.lots.find((x) => x.id === target);
+    if (l && !isOperating(l)) return { why: 'It closed: nobody is running it', how: 'Pick a place that is open for business.' };
+  }
   if (j.target && !j.targetOptional && !j.wrap && !targetsFor(s, job).length) return { why: 'Nothing to aim it at right now', how: j.target === 'rivalLot' ? 'The other families have no places on the island.' : j.target === 'mine' ? 'You own no place that could burn for the insurance.' : 'Try again later.' };
   return undefined;
 }
@@ -769,7 +776,11 @@ export function lastResults(s: GameState): DirtyResult[] {
 export function jobsForPlace(s: GameState, lot: Lot | undefined, biz?: Business): { job: DirtyJobId; target: string; label: string }[] {
   const out: { job: DirtyJobId; target: string; label: string }[] = [];
   if (shopOk(lot)) out.push({ job: 'shakedown', target: lot.id, label: 'Shake them down' });
-  if (rivalLotOk(s, lot)) out.push({ job: 'runoff', target: lot.id, label: 'Run them off' }, { job: 'cardgame', target: lot.id, label: 'Rob their game' });
+  if (rivalLotOk(s, lot)) {
+    out.push({ job: 'runoff', target: lot.id, label: 'Run them off' });
+    // There is a back-room game to rob only where the place is open.
+    if (isOperating(lot)) out.push({ job: 'cardgame', target: lot.id, label: 'Rob their game' });
+  }
   if (biz && torchable(s, biz)) out.push({ job: 'torch', target: biz.id, label: 'An insurance fire' });
   return out;
 }

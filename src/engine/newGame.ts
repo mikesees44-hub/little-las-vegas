@@ -4,6 +4,7 @@ import { ensureDating } from './datingState';
 import { SCHEMA } from './trustMigrations';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
+import { ensureHousing } from './housing';
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
@@ -347,5 +348,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   startPocket(s);
   // Relationships & Dating: the settings and the night's roster, ready on the first screen (its own dice).
   ensureProviders(s, ensureDating(s));
+  // The town's house lots and houses (the families move in with the first week).
+  ensureHousing(s);
   return s;
 }

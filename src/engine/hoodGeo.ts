@@ -2,6 +2,9 @@ import type { Lot, ZoneId } from './econState';
 import { AVE_V, CAUSEWAY, CROSS, CROSS_BY_NAME, FILL, HOODS, PIERS, SEED, WEST_WILDWOOD, ZONE_RUNS, type AveId, type HoodId, type RunId } from './hoodData';
 import { USES_BY_ID, useIcon, type UseIcon } from './property';
 import type { GameState } from './types';
+import { homePackage } from './homePackage';
+import { AVENUES } from './hoodData';
+import type { Parcel as PkgParcel } from './cityPackage';
 
 /**
  * Where every record stands on the illustrated island. Pure and
@@ -50,7 +53,7 @@ function band(run: RunId): { v0: number; v1: number; front: 'v0' | 'v1' } {
   return run.endsWith('+') ? { v0: ave + STREET_HALF, v1: ave + STREET_HALF + 52, front: 'v0' } : { v0: ave - STREET_HALF - 52, v1: ave - STREET_HALF, front: 'v1' };
 }
 
-type Slot = Omit<Parcel, 'key'> & { tag: string };
+export type Slot = Omit<Parcel, 'key'> & { tag: string };
 
 function slotOf(zone: ZoneId, run: RunId, b: { cross: string; u0: number; u1: number }, half: 'a' | 'b' | 'w'): Slot {
   const bd = band(run);
@@ -86,6 +89,41 @@ for (const r of SEED) {
   const i = CROSS.findIndex((c) => c.n === cross);
   if (i < 0 || i >= CROSS.length - 1) continue;
   SEED_SLOT[id] = slotOf(zone, run, { cross, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b' | 'w');
+}
+
+/** A grid slot by name (a package parcel's `slot`): undefined if the street is not on the grid. */
+export function slotRect(zone: ZoneId, run: RunId, cross: string, half: 'a' | 'b' | 'w' | 0 | 1 | 2): Slot | undefined {
+  if (run === 'pier') return pierSlot(zone, cross, half as number);
+  const i = CROSS.findIndex((c) => c.n === cross);
+  if (i < 0 || i >= CROSS.length - 1) return undefined;
+  return slotOf(zone, run, { cross, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b' | 'w');
+}
+
+/** A package parcel placed by a point (not on a grid slot): its footprint around the point, its front toward the nearest avenue. */
+export function posSlot(pc: Pick<PkgParcel, 'id' | 'zone' | 'pos' | 'footprint' | 'rotation'>): Slot | undefined {
+  if (!pc.pos) return undefined;
+  const { u, v } = pc.pos;
+  const turned = Math.abs(((pc.rotation ?? 0) % 180)) === 90;
+  const w = pc.footprint?.w ?? 16;
+  const d = pc.footprint?.d ?? 22;
+  const [du, dv] = turned ? [d, w] : [w, d];
+  let best = AVENUES[0];
+  for (const a of AVENUES) if (Math.abs(a.v - v) < Math.abs(best.v - v)) best = a;
+  const inland = v >= best.v;
+  const cross = [...CROSS].reverse().find((c) => c.u <= u)?.n ?? CROSS[0].n;
+  return { tag: `pos:${pc.id}`, zone: (pc.zone ?? 'downtown') as ZoneId, run: `${best.id}${inland ? '+' : '-'}` as RunId, cross, u0: u - du / 2, u1: u + du / 2, v0: v - dv / 2, v1: v + dv / 2, front: inland ? 'v0' : 'v1' };
+}
+
+/** The extra package parcels of this game (placed by point, or added live) and where they stand. */
+export function extraSlots(s: Pick<GameState, 'addedPlaces'>): Map<string, Slot> {
+  const pkg = homePackage(s);
+  const out = new Map<string, Slot>();
+  for (const pc of pkg.parcels) {
+    if (SEED_SLOT[pc.id] || !pc.market || !pc.zone) continue;
+    const sl = pc.slot ? slotRect(pc.zone as ZoneId, pc.slot.run as RunId, pc.slot.cross, pc.slot.half) : posSlot(pc);
+    if (sl) out.set(pc.id, sl);
+  }
+  return out;
 }
 
 /** A generated record's slot, from its id (`hf.<zone>.<run>.<cross index>.<half>`). */
@@ -125,16 +163,21 @@ function taken(tag: string): string[] {
  * (an old save made before the record was authored): then it isn't added.
  */
 export function seedBlocked(seedId: string, lotIds: Iterable<string>): boolean {
-  const sl = SEED_SLOT[seedId];
-  if (!sl) return false;
+  return !!seedBlocker(seedId, lotIds);
+}
+
+/** The generated record standing on a 1960 record's ground (undefined: the ground is free). */
+export function seedBlocker(seedId: string, lotIds: Iterable<string>, slot: Slot | undefined = SEED_SLOT[seedId]): string | undefined {
+  const sl = slot;
+  if (!sl) return undefined;
   const mine = new Set(taken(sl.tag));
   for (const id of lotIds) {
     if (!id.startsWith('hf.')) continue;
     const [, , run, ci, half] = id.split('.');
     const c = CROSS[Number(ci)];
-    if (c && mine.has(`${run}:${c.n}:${half}`)) return true;
+    if (c && mine.has(`${run}:${c.n}:${half}`)) return id;
   }
-  return false;
+  return undefined;
 }
 
 let memoKey = '';
@@ -147,12 +190,16 @@ let memo: Map<string, Parcel> = new Map();
 export function placeAll(s: GameState): Map<string, Parcel> {
   const lots = s.econ?.lots ?? [];
   const mine = s.businesses.filter((b) => b.owner === 'player' && !lots.some((l) => l.bizId === b.id) && (!!ZONE_RUNS[b.districtId as ZoneId] || b.districtId === 'piers'));
-  const key = `${lots.length}:${lots.map((l) => l.id).join(',')}|${mine.map((b) => b.id).join(',')}`;
+  const extra = extraSlots(s);
+  const key = `${lots.length}:${lots.map((l) => l.id).join(',')}|${mine.map((b) => b.id).join(',')}|${[...extra.keys()].join(',')}`;
   if (key === memoKey) return memo;
   const out = new Map<string, Parcel>();
   const used = new Set<string>();
+  // Ground taken by parcels placed by a point: nothing placed by index stands on it.
+  const pts = [...extra.values()].filter((x) => x.tag.startsWith('pos:'));
+  const overlaps = (a: Slot) => pts.some((b) => a.zone !== 'piers' && a.u0 < b.u1 && b.u0 < a.u1 && a.v0 < b.v1 && b.v0 < a.v1);
   for (const l of lots) {
-    const sl = SEED_SLOT[l.id] ?? fillSlot(l.id);
+    const sl = SEED_SLOT[l.id] ?? extra.get(l.id) ?? fillSlot(l.id);
     if (!sl) continue;
     for (const t of taken(sl.tag)) used.add(t);
     out.set(l.id, { ...sl, key: l.id });
@@ -167,7 +214,7 @@ export function placeAll(s: GameState): Map<string, Parcel> {
     if (!list.length) return;
     for (let k = 0; k < list.length; k++) {
       const sl = list[(pref + k) % list.length];
-      if (used.has(sl.tag)) continue;
+      if (used.has(sl.tag) || overlaps(sl)) continue;
       for (const t of taken(sl.tag)) used.add(t);
       out.set(key, { ...sl, key });
       return;

@@ -895,8 +895,14 @@ export interface GameState {
   hood?: HoodState;
   /** Towns away from home that someone of yours has visited: their lots, materialized from the town package (towns.ts; optional for old saves). */
   towns?: Record<string, TownState>;
+  /** Places added from the town editor's "Add a Place" into this game, by stable id (addPlace.ts; optional for old saves). */
+  addedPlaces?: import('./addPlace').AddedPlaces;
   /** The living neighborhood: townsfolk, households, businesses, debts, the world-event ledger, causal stories (livingState.ts; optional for old saves). */
   living?: import('./livingState').LivingState;
+  /** The town's houses: families saving, buying lots, building, moving in (housing.ts; optional for old saves). */
+  housing?: import('./housing').HousingState;
+  /** The Family's loan desk: the bank's or the book's lending policy, applicants, defaults (familyBank.ts; optional for old saves). */
+  fbank?: import('./familyBank').FbState;
   /** Talks with people, pacts with families, the families' own diplomacy (talks.ts; optional for old saves). */
   talks?: TalkState;
   /** The Mission Board's cases (missions.ts; optional for old saves). */
