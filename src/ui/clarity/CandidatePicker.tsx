@@ -6,7 +6,7 @@ import { Modal } from '../components/Modal';
 import { useOrders } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { AdvisorQuotes } from './AdvisorQuote';
-import { verbOf } from '../verbs';
+import { specificButton } from '../actionFacts';
 import { Tip } from './Tip';
 
 /**
@@ -147,7 +147,7 @@ export function CandidatePicker({ s, role, pool, onPick, selected, onToggle, lim
           const handler = team ? () => onToggle!(c.id) : onPick ? () => onPick(c) : c.action ? () => queue(c.action!) : undefined;
           return (
             <CandidateCard key={c.id} s={s} c={c} ranking={ranking} picked={picked || (!!selected && selected.includes(c.id))} onPick={picked && !team ? undefined : handler}
-              pickLabel={team ? (picked ? 'On the team ✓ (remove)' : 'Add to the team') : onPick ? (selected?.includes(c.id) ? 'Chosen' : 'Choose') : c.action ? verbOf(c.action).verb : 'Choose'} />
+              pickLabel={team ? (picked ? 'On the team ✓ (remove)' : 'Add to the team') : onPick ? (selected?.includes(c.id) ? 'Chosen' : 'Choose') : c.action ? specificButton(s, c.action) : 'Choose'} />
           );
         })}
       </div>

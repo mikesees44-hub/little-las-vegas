@@ -298,6 +298,14 @@ function knowableBias(s: GameState, adv: Character, c: Character, tie: string | 
   return undefined;
 }
 
+/** The label (if any) the player would see on this adviser's backing of this man. */
+export function biasLabel(s: GameState, adviserId: string, candId: string): string | undefined {
+  const a = s.characters[adviserId];
+  const c = s.characters[candId];
+  if (!a || !c) return undefined;
+  return knowableBias(s, a, c, tieTo(s, a, c, false)?.text);
+}
+
 function pickCandidates(s: GameState, adv: Character, raw: RawCand[], stepUp = false): { list: BriefCandidate[]; bias?: string } {
   const live = raw.filter((x) => !x.unavailable);
   const w = selfInterest(s, adv);

@@ -1,5 +1,6 @@
 import type { ActionPreview } from '../engine/actions';
 import type { PlayerAction } from '../engine/types';
+import { TALKS } from '../engine/talks';
 
 /**
  * The button word for an action ("Buy", "Order the hit", "Bribe") and the
@@ -191,7 +192,7 @@ export function actionVerb(a: PlayerAction): Verb {
     }
     case 'hood': return v('Restyle it', 'Restyling');
     case 'dirty': return a.op.job === 'shakedown' ? v('Shake them down', 'Shakedown on') : v('Do it', 'Job on');
-    case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v('Ask him', 'Asked');
+    case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v(TALKS[a.op.talk]?.label ?? 'Talk to him', 'Asked');
     case 'mission': return v('Do it', 'Decided');
     case 'power': {
       const t = op(a);
