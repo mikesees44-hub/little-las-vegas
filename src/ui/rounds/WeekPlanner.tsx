@@ -125,7 +125,16 @@ function Evening({ s, day, update, locked }: { s: GameState; day: number; update
   const pick = plan[day];
   const r = pick ? opts.find((x) => x.id === pick) : undefined;
   const [choosing, setChoosing] = useState(false);
+  const [confirm, setConfirm] = useState<Round | undefined>();
   const open = eveningOpen(s, day);
+  const elsewhere = (o: Round) => plan.findIndex((x, i) => x === o.id && i !== day);
+  /** Picking an evening: straight in on a free night; on a booked one, ask first (what it replaces, what it costs, who pays). */
+  const choose = (o: Round) => {
+    if (o.id === pick) { update((x) => setEvening(x, day, null)); setChoosing(false); return; }
+    if (r) { setConfirm(o); return; }
+    update((x) => setEvening(x, day, o.id));
+    setChoosing(false);
+  };
   return (
     <section data-testid="evening" className="space-y-1.5">
       <h4 className="text-[10px] uppercase tracking-[0.25em] text-stone-500">☾ {DAY_NAMES[day]} evening · yours</h4>
@@ -133,6 +142,17 @@ function Evening({ s, day, update, locked }: { s: GameState; day: number; update
         <>
           {r ? <RoundButton s={s} r={r} on onPick={() => !locked && update((x) => setEvening(x, day, null))} showReading block={locked ? 'Done' : undefined} />
             : <p className="text-[11px] text-stone-500">A free evening. Home by nine, or pick something.</p>}
+          {r && !locked && <p className="text-[10px] text-stone-500" data-testid="evening-pays">{r.cost ? `${fmt$(r.cost)} from your pocket on ${DAY_NAMES[day]} night (the Family covers what the pocket can't). ` : 'Costs nothing. '}Cancelling costs nothing until then: tap it to clear the evening.</p>}
+          {confirm && r && (
+            <div className="rounded border border-gold-500/70 bg-gold-500/10 p-2 text-[12px]" role="alertdialog" aria-label="Replace the evening" data-testid="evening-replace">
+              <div className="text-stone-200"><b>{DAY_NAMES[day]} is booked:</b> {r.label}.</div>
+              <div className="mt-0.5 text-stone-300">Replace it with <b>{confirm.label}</b>{confirm.cost ? ` — ${fmt$(confirm.cost)} from your pocket on ${DAY_NAMES[day]} night` : ' — costs nothing'}?{r.cost ? ` ${r.label} (${fmt$(r.cost)}) is not charged.` : ''}{elsewhere(confirm) >= 0 ? ` It moves from ${DAY_NAMES[elsewhere(confirm)]}, which becomes free.` : ''}</div>
+              <div className="mt-1.5 flex gap-1.5">
+                <button type="button" className="btn-gold text-xs py-1" onClick={() => { update((x) => setEvening(x, day, confirm.id)); setConfirm(undefined); setChoosing(false); }} data-testid="evening-replace-yes">Replace with {confirm.label}{confirm.cost ? ` — ${fmt$(confirm.cost)}` : ''}</button>
+                <button type="button" className="btn-ghost text-xs py-1" onClick={() => setConfirm(undefined)} data-testid="evening-replace-no">Keep {r.label}</button>
+              </div>
+            </div>
+          )}
           {!locked && (
             <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => setChoosing((c) => !c)} data-testid="evening-choose">{choosing ? 'Close the list' : r ? 'Do something else' : 'Plan the evening'}</button>
           )}
@@ -144,7 +164,7 @@ function Evening({ s, day, update, locked }: { s: GameState; day: number; update
                 return (
                   <div key={lane} className="space-y-1">
                     <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{LANE_GLYPH[lane]} {LANE_NAME[lane]}</div>
-                    {xs.map((o) => <RoundButton key={o.id} s={s} r={o} on={o.id === pick} block={dayBlock(s, day, o.id)} showReading onPick={() => { update((x) => setEvening(x, day, o.id === pick ? null : o.id)); setChoosing(false); }} />)}
+                    {xs.map((o) => <RoundButton key={o.id} s={s} r={o} on={o.id === pick} block={dayBlock(s, day, o.id)} showReading onPick={() => choose(o)} />)}
                   </div>
                 );
               })}

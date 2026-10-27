@@ -26,7 +26,7 @@ import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings, pausesOn, timeMode } from './settings';
+import { applySettings, getSettings, helpLevel, pausesOn, timeMode } from './settings';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { minigameOf, opensScene } from '../engine/minigames';
@@ -602,7 +602,7 @@ export function App({ startOn = 'title' }: AppProps) {
                 ))}
               </div>
             )}
-            {!s.gameOver && goalIdx >= 0 && !home && (
+            {!s.gameOver && goalIdx >= 0 && !home && helpLevel() !== 'experienced' && (
               <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
                 className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
                 ➚ {goals[goalIdx].title}
@@ -636,13 +636,13 @@ export function App({ startOn = 'title' }: AppProps) {
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
-      {!menu && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
+      {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {sitdown && !current && !scene && (
         <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => setS((x) => setWeekRounds(x, ids))} skip={briefSkip} setSkip={setBriefSkip}
           onTrust={(k, on) => setS((x) => setTrust(x, k, on))} onLink={followLink} onClose={() => setSitdown(undefined)}
           onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
-          lesson={s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
+          lesson={helpLevel() === 'guided' && s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
       )}
       {current && scene && (
         <MinigameScreen
