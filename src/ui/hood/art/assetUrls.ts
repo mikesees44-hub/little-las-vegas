@@ -10,7 +10,7 @@
  * the game picks it up. Nothing else in the code names a URL.
  */
 export const ASSET_URLS = {
-  // Already in the asset store (all 145 keys).
+  // Already in the asset store (all 148 keys).
   lucky_sevens_arcade: '/_blob/bfd25fc16456180aed155add75bbf8f1',
   anchor_tavern: '/_blob/b739dfd7f2b5a6e1a39eed183b8a9026',
   lobster_seafood_house: '/_blob/29cf5a79d3800ce05d745fd5e76a3a2b',
@@ -184,6 +184,11 @@ export const ASSET_URLS = {
   cutout_rio_grande_motel: '/_blob/2929ad3ca5f5980d16239d59553d26f6',
   /** Photoreal: the island from the air looking north (the title, the walk launcher). */
   scene_island_aerial: '/_blob/9745943082c2d3c28c9923769b95cfe0',
+  // The Boss's Office (ui/office): the room upstairs, the club in cutaway, and the club as a
+  // transparent 3/4 building for the map.
+  office_interior: '/_blob/47678064ebd951bb3aaa629bb66de875',
+  social_club_cutaway: '/_blob/50ad4234a3c2b59c7222e69e8bc9c50c',
+  social_club_building: '/_blob/5fe16427d4863a49e4d0dc865cdc3e33',
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
@@ -245,6 +250,9 @@ export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
   scene_ac_boardwalk: [335, 250],
   scene_region_map: [336, 250],
   scene_island_aerial: [1536, 1024],
+  office_interior: [1697, 927],
+  social_club_cutaway: [1697, 927],
+  social_club_building: [1536, 1024],
 };
 
 /**

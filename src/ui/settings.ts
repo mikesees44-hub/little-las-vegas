@@ -35,6 +35,17 @@ export interface Settings {
   priority?: 'money' | 'heat' | 'loyalty' | 'family';
   /** Map: the lighting of the illustrated island (time of day). */
   mapLighting?: 'day' | 'dusk' | 'night' | 'auto';
+  /** Where each week starts: the Boss's Office, the Desk, or the map. Unset: Office for new games, Desk for older saves. */
+  weekStart?: WeekStart;
+}
+export type WeekStart = 'office' | 'desk' | 'map';
+
+/** The flag a new game carries (set when it is created) so the Office is its default home. */
+export const OFFICE_HOME_FLAG = 'officeHome';
+
+/** Where this game starts each week: the setting, else Office for games begun with the Office, Desk for older saves. */
+export function weekStart(s: { flags: Record<string, number> }): WeekStart {
+  return getSettings().weekStart ?? (s.flags[OFFICE_HOME_FLAG] ? 'office' : 'desk');
 }
 export type HelpLevel = 'guided' | 'standard' | 'experienced';
 export type AutoBriefings = 'major' | 'all' | 'off';
@@ -98,6 +109,12 @@ export function getSettings(): Settings {
   }
   cached = s;
   return s;
+}
+
+/** Forget the cached settings (read again from storage next time): tests, and another tab's change. */
+export function reloadSettings(): Settings {
+  cached = undefined;
+  return getSettings();
 }
 
 export function setSettings(patch: Partial<Settings>): Settings {
