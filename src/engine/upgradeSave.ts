@@ -1,6 +1,7 @@
 import { ensureBones } from './bonesState';
 import { ensureEars } from './ears';
 import { ensureDirty } from './dirtyWork';
+import { ensureDev } from './devState';
 import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
 import { ensureHood } from './hoodState';
@@ -30,7 +31,7 @@ export function upgradeSave(s: GameState): GameState {
   // created by the weekly update itself, so loading never changes the dice.
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
-    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;

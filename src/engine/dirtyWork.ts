@@ -1,4 +1,6 @@
 import { isInSeason } from './calendar';
+import { devJobBonus } from './devState';
+import { crewStrength } from './strength';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, isFree } from './characters';
 import { owned } from './business';
@@ -377,6 +379,11 @@ export function jobOdds(s: GameState, job: DirtyJobId, whoId: string, target?: s
     if (j.spec && c.specialty === j.spec) reasons.push({ label: `A ${j.spec}`, value: 12 });
     if (c.id === s.playerId) reasons.push({ label: 'You do it yourself', value: 5 });
   }
+  // Family development: cars for scores and loads, the crews' equipment for muscle.
+  const wheels = j.tile === 'scores' || j.tile === 'goods' ? devJobBonus(s) : 0;
+  if (wheels) reasons.push({ label: 'Your cars and garage (Transportation)', value: wheels });
+  const kit = j.tile === 'muscle' && !j.wrap ? Math.min(6, Math.round((crewStrength(s).parts.find((p) => p.key === 'gear')?.value ?? 0) / 2)) : 0;
+  if (kit) reasons.push({ label: 'Your crews\' equipment', value: kit });
   const bar = j.heat.federal && !j.heat.local ? 'federal' : 'local';
   const h = s.heat[bar];
   if (h > 20) reasons.push({ label: `${bar === 'federal' ? 'Federal' : 'Local'} heat on you (${Math.round(h)})`, value: -Math.round((h - 20) / 4) });

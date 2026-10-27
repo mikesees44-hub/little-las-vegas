@@ -1,3 +1,4 @@
+import { devValue } from './develop';
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
 import { bestDistrict } from './racketLife';
 import { crewTake } from './racketHub';
@@ -449,6 +450,7 @@ function previewDispute(s: GameState, a: Extract<PlayerAction, { kind: 'raiseDis
 function derived(s: GameState, a: PlayerAction, p: ActionPreview): NamedEffect[] {
   const out: NamedEffect[] = [];
   switch (a.kind) {
+    case 'dev': { const u = devValue(s, a.op).upkeep; if (u) out.push(money('Upkeep', -u, -u, 'per week')); break; }
     case 'buyBusiness': {
       const d = CATALOG[a.biz];
       if (d.base) out.push(money(`${d.name}: the take`, Math.round(d.base * d.season[1] - d.upkeep), Math.round(d.base * d.season[0] - d.upkeep), 'per week', `${fmtMoney(Math.round(d.base * d.season[1] - d.upkeep))}/wk off-season to ${fmtMoney(Math.round(d.base * d.season[0] - d.upkeep))}/wk in season, after upkeep`));
@@ -510,6 +512,7 @@ function derived(s: GameState, a: PlayerAction, p: ActionPreview): NamedEffect[]
 
 function derivedValue(s: GameState, a: PlayerAction, chanceOk: number): number {
   switch (a.kind) {
+    case 'dev': return devValue(s, a.op).value;
     case 'scheme': {
       if (a.scheme === 'heist') { const h = HEISTS[a.opts.heist ?? 'jewelry']; return chanceOk * ((h.payout[0] + h.payout[1]) / 2 - h.heatAmt * heatWeight(s, h.heat)); }
       if (a.scheme === 'envoy') { const c = CITIES[a.opts.city ?? '']; return chanceOk * (c ? c.income * 20 : 0); }

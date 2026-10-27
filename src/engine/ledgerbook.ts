@@ -1,3 +1,4 @@
+import { devKeeperMult, devReportErr } from './devState';
 import type { ActionPreview } from './actions';
 import { attr } from './attrs';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
@@ -102,7 +103,7 @@ export function keeperSkill(s: GameState): number {
   const c = keeper(s);
   if (!c) return 0.7;
   const v = (attr(s, c, 'finance') + attr(s, c, 'organization')) / 2;
-  return Math.max(0.6, Math.min(1.5, 0.6 + v / 125 + (c.specialty === 'accountant' ? 0.2 : 0)));
+  return Math.max(0.6, Math.min(1.5, 0.6 + v / 125 + (c.specialty === 'accountant' ? 0.2 : 0))) * devKeeperMult(s);
 }
 
 /** How honest a man is with the family (0-100). */
@@ -129,7 +130,7 @@ export function detectChance(mode: BooksMode, skill: number, ratio: number): num
 
 /** The figure the boss expects from a capo's envelope (exact with full books). */
 export function expectedKick(s: GameState, n: KickNote, week: number, mode: BooksMode = s.ledgerBook?.mode ?? 'coded'): number {
-  const err = MODE_INFO[mode].err;
+  const err = MODE_INFO[mode].err * devReportErr(s);
   return Math.round(n.owed * (1 + (roll01(s.seed, 'exp', n.k, week) - 0.5) * 2 * err) / 10) * 10;
 }
 

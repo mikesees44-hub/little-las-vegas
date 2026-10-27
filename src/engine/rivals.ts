@@ -1,3 +1,4 @@
+import { strengthTotal } from './strength';
 import { rivalTake } from './rivalBooks';
 import { alliedWithFaction } from './familyHouses';
 import { pactWith } from './talks';
@@ -82,7 +83,7 @@ function playerExposure(s: GameState): number {
 }
 
 function playerMuscle(s: GameState): number {
-  return Math.min(100, crew(s).filter((c) => isFree(s, c)).reduce((a, c) => a + c.attributes.force / 18, 0));
+  return strengthTotal(s);
 }
 
 export function scoreMoves(s: GameState, r: Rival): Candidate[] {

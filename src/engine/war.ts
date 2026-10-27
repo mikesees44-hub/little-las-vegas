@@ -5,6 +5,7 @@ import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { chance, randInt } from './rng';
 import { FACTION_NAMES } from './world';
+import { rivalStrength, strengthTotal } from './strength';
 import type { CasusBelli, Effect, EventInstance, GameState, RivalId, War } from './types';
 
 /**
@@ -18,8 +19,15 @@ import type { CasusBelli, Effect, EventInstance, GameState, RivalId, War } from 
 export const RAID_COST = 1500;
 export const DISTRICT_PRIZE = 25;
 
+/** The family's muscle: the crew strength assessment (strength.ts), men first, then equipment, leadership and the rest. */
 export function playerMuscle(s: GameState): number {
-  return Math.min(100, crew(s).filter((c) => isFree(s, c)).reduce((a, c) => a + c.attributes.force / 18, 0));
+  return strengthTotal(s);
+}
+
+/** A rival's muscle in a fight: its men adjusted for its equipment and development (strength.ts). */
+export function rivalMuscle(s: GameState, rival: string): number {
+  const r = s.rivals.find((x) => x.id === rival);
+  return r ? rivalStrength(s, r) : 50;
 }
 
 /** Which casus belli the player holds against a rival for a district, best first. */
@@ -48,7 +56,7 @@ export function warWith(s: GameState, rival: string): War | undefined {
 export function raidOdds(s: GameState, w: War): number {
   const r = s.rivals.find((x) => x.id === w.rival);
   const mine = playerMuscle(s);
-  return Math.max(0.1, Math.min(0.9, 0.5 + (mine - (r?.muscle ?? 50)) / 120 + perkMod(s, 'raid') / 100));
+  return Math.max(0.1, Math.min(0.9, 0.5 + (mine - (r ? rivalStrength(s, r) : 50)) / 120 + perkMod(s, 'raid') / 100));
 }
 
 export function startWar(ctx: Ctx, rival: RivalId, district: string, cb: CasusBelli, sanctioned: boolean): War {
@@ -114,7 +122,7 @@ export function warWeek(ctx: Ctx): void {
       continue;
     }
     // Attrition: muscle decides the drift.
-    const drift = Math.round((playerMuscle(s) - r.muscle) / 25);
+    const drift = Math.round((playerMuscle(s) - rivalStrength(s, r)) / 25);
     if (drift) changeScore(s, w.id, drift);
     if (!w.sanctioned && s.week % 4 === 0) applyEffects(ctx, [{ type: 'heat', bar: 'family', amount: 2, label: `Unsanctioned war with ${r.shortName}: Philadelphia is unhappy` }], { label: '', because: '' });
     if (w.score <= -60 && !s.eventQueue.some((e) => e.defId === 'war_terms')) s.eventQueue.push(buildEnemyTerms(s, w));

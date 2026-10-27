@@ -7,6 +7,7 @@ import { ZONES_BY_ID } from './property';
 import { capos, displayName, hasTrait, isFree } from './characters';
 import { holder, SEAT_INFO } from './council';
 import { crewFor, JOBS_BY_ID, targetsFor } from './dirtyWork';
+import { devAdviserIds, devBriefLines } from './develop';
 import { isRivalMob } from './ears';
 import { fmtMoney } from './effects';
 import { bestDistrict } from './racketLife';
@@ -216,6 +217,13 @@ export function advisersFor(s: GameState, sub: AdviceSubject): AdviserRef[] {
   const r = readSubject(s, sub);
   const out: AdviserRef[] = [];
   const add = (c: Character | undefined, role: AdviserRole, district?: string) => { if (usable(s, c) && !out.some((x) => x.charId === c.id)) out.push(ref(s, c, role, district)); };
+  // Family development: the man in charge of it speaks first (the bagman on the books, the capo on his crew's gear).
+  if (sub.kind === 'action' && sub.action.kind === 'dev') for (const id of devAdviserIds(s, sub.action.op)) {
+    const c = s.characters[id];
+    const seat = (['bagman', 'enforcer', 'fixer', 'consigliere', 'underboss'] as const).find((x) => holder(s, x)?.id === id);
+    const role: AdviserRole | undefined = seat ?? (c?.rank === 'capo' ? 'capo' : c?.rank === 'underboss' || c?.rank === 'consigliere' ? c.rank : undefined);
+    if (role) add(c, role);
+  }
   add(underbossOf(s), 'underboss');
   add(consigliereOf(s), 'consigliere');
   const d = r.district ? s.districts.find((x) => x.id === r.district) : undefined;
@@ -566,6 +574,16 @@ export function adviceBrief(s: GameState, sub: AdviceSubject, adviserId?: string
     }
     b.reactions.push({ who: 'The town', kind: 'town', text: 'People talk about who bought what; the papers notice a big buy', likelihood: p.cost >= 10000 ? 'likely' : 'unlikely', reasons: [`a ${fmtMoney(p.cost)} purchase`], k: 'estimate' });
     b.unknowns.push({ text: 'What the seller is not telling you about the place', k: 'unknown' });
+  } else if (a.kind === 'dev') {
+    major = p.cost >= 2000;
+    const l = devBriefLines(s, a.op);
+    for (const x of l.does) b.accomplishes.push({ text: x, k: 'known' });
+    for (const x of l.needs) b.requirements.push({ text: x, k: 'known' });
+    for (const x of l.catches) b.obstacles.push({ text: x, k: 'known' });
+    const cops = copsReaction(s, p.effects);
+    if (cops) b.reactions.push(cops);
+    if (a.op.t === 'buy' && p.effects.some((e) => e.type === 'rivalOpinion')) b.reactions.push({ who: 'The other families', kind: 'rival', text: 'They hear you are arming up, and may do the same', likelihood: 'possible', reasons: ['a big order of heavy equipment is talked about'], k: 'estimate' });
+    b.unknowns.push({ text: 'What the other families have really bought: you only hear about it', k: 'unknown' });
   } else {
     major = p.cost >= 2000 || ex.risks.some((x) => x.severity === 'high');
     if (r.rival) { const rr = rivalReaction(s, adv, r.rival, 'They will hear about it, and may answer it', 25, ['it touches their people']); if (rr) b.reactions.push(rr); }

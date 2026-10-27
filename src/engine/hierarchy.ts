@@ -1,3 +1,4 @@
+import { devObeyBonus } from './devState';
 import { ageOn } from './calendar';
 import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { holder } from './council';
@@ -442,6 +443,7 @@ export function obeyOdds(s: GameState, agent: Character): { obey: number; distor
   if (hasTrait(agent, 'Hot-headed') || hasTrait(agent, 'Greedy')) obey -= 0.1;
   if (hasTrait(agent, 'Ambitious') && op < 20) obey -= 0.08;
   obey -= messengerPenalty(s);
+  obey += devObeyBonus(s);
   obey = Math.max(0.15, Math.min(0.95, obey));
   const disobey = Math.max(0.02, Math.min(0.4, (1 - obey) * (op < 0 ? 0.6 : 0.3)));
   return { obey, distort: Math.max(0, 1 - obey - disobey) };
