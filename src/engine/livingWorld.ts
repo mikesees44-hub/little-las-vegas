@@ -1151,7 +1151,7 @@ function askHelp(ctx: Ctx, L: LivingState, p: Tp, x: Idx, tr: Trouble): void {
   // The capo decides: a small matter with his own man, he settles himself; the rest goes to the boss (rarely more than once a month).
   const own = tr.debt && s.characters[tr.debt.lender]?.capoId === capo.id;
   const small = amount < 150 * x.infl;
-  if ((own && small) || (L.lastAsk !== undefined && x.week - L.lastAsk < 4) || st.ask) {
+  if ((own && small) || (L.lastAsk !== undefined && x.week - L.lastAsk < 8) || st.ask) {
     if (own && tr.debt) {
       tr.debt.missed = 0;
       tr.debt.next = x.week + 4;

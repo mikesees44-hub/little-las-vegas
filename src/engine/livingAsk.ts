@@ -122,7 +122,7 @@ export function livingRequest(s: GameState, st: Ts): EventInstance | undefined {
   const text = [`${capo.firstName} ${capo.lastName} has something from the Boardwalk.`, ...lines.map((x) => `• ${x}`), ask].join('\n\n');
   return {
     iid: `living:${st.id}`, defId: 'living_request', title, text, week: s.week, choices, defaultChoiceId: 'decline', mandatory: true, priority: 44,
-    // A real situation waiting on an answer (and the capo brings one at most every four weeks): not held back as "the same story again".
+    // A real situation waiting on an answer (and the capo brings one at most every eight weeks): not held back as "the same story again".
     meta: { story: st.id, charId: capo.id, due: 1 }, actors: [capo.id],
   };
 }
