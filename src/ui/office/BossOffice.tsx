@@ -92,7 +92,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     : undefined;
 
   return (
-    <div className="absolute inset-0 z-[1090] overflow-y-auto bg-noir-950/[0.98] pb-16 md:pb-2" data-testid="boss-office" role="region" aria-label="The Boss's Office">
+    <div className="absolute inset-0 z-[1090] overflow-y-auto bg-noir-950 pb-16 md:pb-2" data-testid="boss-office" role="region" aria-label="The Boss's Office">
       <div className="mx-auto max-w-[1500px] p-2 sm:p-3">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <div>
@@ -107,8 +107,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
         {room.absence && (
           <div className="mb-2 rounded border border-amber-500/60 bg-amber-900/20 px-2 py-1.5 text-[12px] text-amber-100" data-testid="office-absence">{room.absence.note}</div>
         )}
-        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div>
+        <div className="relative">
             <div className="relative w-full overflow-hidden rounded-md border border-gold-700/50 shadow-xl shadow-black/70" style={{ aspectRatio: '1697 / 927' }} data-testid="office-stage">
               <AssetImg k="office_interior" alt="The boss's office: a walnut desk with the envelope, the ledger, the phone and the paper; photographs on the credenza; the map on the wall; the door" className="absolute inset-0 h-full w-full object-cover" fallback={<PaintedFallback />} />
               {seatC && (
@@ -136,7 +135,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                 <button key={h.id} type="button" onClick={() => act(h)} data-testid={`office-spot-${h.id}`} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${status[h.id]}`}
                   className="group absolute rounded-md border border-transparent transition-colors hover:border-gold-400/80 hover:bg-gold-300/10 focus-visible:border-gold-300 focus-visible:bg-gold-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300"
                   style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }}>
-                  <span className={`${chip} absolute left-0.5 top-0.5`}>
+                  <span className={`${chip} absolute left-0.5 ${h.id === 'chair' ? 'bottom-0.5' : 'top-0.5'}`}>
                     <span aria-hidden>{h.icon}</span>
                     <span className="hidden sm:inline">{h.label}</span>
                     {badge(h.id)}
@@ -144,43 +143,43 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                 </button>
               ))}
             </div>
-          </div>
-          <aside className="space-y-2">
-            {monday && !panel && (
-              <BriefCard s={s} brief={brief} monday onEnvelope={() => { onMondayDone(); openEnvelope(); }} onDoor={() => { onMondayDone(); setPanel('door'); }} onDesk={() => { onMondayDone(); api.openDesk(); }} onDone={onMondayDone} />
-            )}
-            {panel ? (
-              <div className="rounded-md border border-gold-600/50 bg-noir-900/90 p-2.5" data-testid={`office-panel-${panel}`}>
-                <button type="button" className="mb-1 text-[11px] text-stone-400 hover:text-gold-300" onClick={() => setPanel(undefined)} data-testid="office-panel-back">← Back to the office</button>
-                {panelBody}
+            {((monday && !panel) || panel) && (
+              <div className="mt-2 space-y-2 md:absolute md:right-2 md:top-2 md:z-10 md:mt-0 md:max-h-[calc(100%-16px)] md:w-[min(400px,46%)] md:overflow-y-auto" data-testid="office-card">
+                {monday && !panel && (
+                  <BriefCard s={s} brief={brief} monday onEnvelope={() => { onMondayDone(); openEnvelope(); }} onDoor={() => { onMondayDone(); setPanel('door'); }} onDesk={() => { onMondayDone(); api.openDesk(); }} onDone={onMondayDone} />
+                )}
+                {panel && (
+                  <div className="rounded-md border border-gold-600/60 bg-noir-900/[0.97] p-2.5 shadow-xl shadow-black/70" data-testid={`office-panel-${panel}`}>
+                    <button type="button" className="mb-1 text-[11px] text-stone-400 hover:text-gold-300" onClick={() => setPanel(undefined)} data-testid="office-panel-back">← Back to the office</button>
+                    {panelBody}
+                  </div>
+                )}
               </div>
-            ) : (
-              <ul className="space-y-1" data-testid="office-list" aria-label="What is in the office">
-                {(['chair', 'envelope', 'door', 'ledger', 'phone', 'calendar', 'newspaper', 'photos', 'map'] as Hotspot['id'][]).map((id) => {
-                  const h = HOTSPOTS.find((x) => x.id === id)!;
-                  return (
-                    <li key={id}>
-                      <button type="button" onClick={() => act(h)} data-testid={`office-item-${id}`}
-                        className="flex w-full items-start gap-2 rounded border border-noir-700 bg-noir-900/70 px-2 py-1.5 text-left hover:border-gold-500 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300">
-                        <span className="w-5 shrink-0 text-center text-gold-300" aria-hidden>{h.icon}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] font-semibold text-stone-100">{h.label} {badge(id)}</span>
-                          <span className="block truncate text-[11px] text-stone-400">{status[id]}</span>
-                        </span>
-                        <span className="shrink-0 text-[11px] text-gold-300">▸</span>
-                      </button>
-                    </li>
-                  );
-                })}
-                <li className="grid grid-cols-2 gap-1.5 pt-1">
-                  <button type="button" className="btn-ghost text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
-                  <button type="button" className="btn-ghost text-xs" onClick={api.openDesk} data-testid="office-desk">▤ The desk's list</button>
-                  <button type="button" className="btn-gold col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
-                </li>
-              </ul>
             )}
-          </aside>
         </div>
+        <ul className="mt-2 grid gap-1 sm:grid-cols-2 xl:grid-cols-3" data-testid="office-list" aria-label="What is in the office">
+          {(['chair', 'envelope', 'door', 'ledger', 'phone', 'calendar', 'newspaper', 'photos', 'map'] as Hotspot['id'][]).map((id) => {
+            const h = HOTSPOTS.find((x) => x.id === id)!;
+            return (
+              <li key={id}>
+                <button type="button" onClick={() => act(h)} data-testid={`office-item-${id}`}
+                  className="flex w-full items-start gap-2 rounded border border-noir-700 bg-noir-900/70 px-2 py-1.5 text-left hover:border-gold-500 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300">
+                  <span className="w-5 shrink-0 text-center text-gold-300" aria-hidden>{h.icon}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[13px] font-semibold text-stone-100">{h.label} {badge(id)}</span>
+                    <span className="block truncate text-[11px] text-stone-400">{status[id]}</span>
+                  </span>
+                  <span className="shrink-0 text-[11px] text-gold-300">▸</span>
+                </button>
+              </li>
+            );
+          })}
+          <li className="grid grid-cols-2 gap-1.5 sm:col-span-2 xl:col-span-3 xl:grid-cols-4 pt-1">
+            <button type="button" className="btn-ghost text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
+            <button type="button" className="btn-ghost text-xs" onClick={api.openDesk} data-testid="office-desk">▤ The desk's list</button>
+            <button type="button" className="btn-gold col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
+          </li>
+        </ul>
       </div>
     </div>
   );

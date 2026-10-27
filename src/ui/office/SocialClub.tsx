@@ -39,7 +39,7 @@ export function SocialClub({ s, onUpstairs, onHq, onMap }: { s: GameState; onUps
   const btn = 'absolute rounded-md border border-transparent hover:border-gold-400/80 hover:bg-gold-300/10 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300';
   const lab = 'absolute left-1 top-1 rounded border border-gold-600/50 bg-noir-950/85 px-1.5 py-0.5 text-[11px] text-gold-200';
   return (
-    <div className="absolute inset-0 z-[1090] overflow-y-auto bg-noir-950/[0.98] pb-16 md:pb-2" data-testid="social-club" role="region" aria-label="The Shore Social Club">
+    <div className="absolute inset-0 z-[1090] overflow-y-auto bg-noir-950 pb-16 md:pb-2" data-testid="social-club" role="region" aria-label="The Shore Social Club">
       <div className="mx-auto max-w-[1300px] p-2 sm:p-3">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <div>

@@ -183,22 +183,24 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
   for (const c of openMornings(s)) {
     const p = c.problem!;
     const own = p.answers.find((a) => a.id === p.own);
+    const k = s.characters[c.capoId];
     out.push({
-      key: `am:${c.key}`, kind: 'morning', name: c.name, charId: c.capoId,
+      key: `am:${c.key}`, kind: 'morning', name: k ? displayName(k) : c.name, charId: c.capoId,
       why: `${DAY_NAMES[c.day]} morning: ${clip(p.text)}`, urgent: p.urgent,
       ref: { day: c.day },
-      delegate: own ? { label: `Leave it to ${c.name.split(' ')[0]}`, does: `His way: ${own.label}`, op: { kind: 'checkin', key: c.key, answer: own.id } } : undefined,
+      delegate: own ? { label: `Leave it to ${k ? shortFirst(k) : c.name}`, does: `His way: ${own.label}`, op: { kind: 'checkin', key: c.key, answer: own.id } } : undefined,
     });
   }
   const b = briefing(s);
   for (const it of b.items) {
     if (ui.briefSkip?.includes(it.id)) continue;
     const rec = it.options.find((o) => o.id === it.recommended);
+    const who = it.charId ? s.characters[it.charId] : it.role === 'underboss' || it.role === 'consigliere' ? holder(s, it.role) : undefined;
     out.push({
-      key: `sd:${it.id}`, kind: 'sitdown', name: it.speaker, charId: it.charId,
+      key: `sd:${it.id}`, kind: 'sitdown', name: who ? displayName(who) : it.speaker, charId: who?.id,
       why: `${it.topic}: ${clip(it.line)}`,
       ref: { brief: it.id },
-      delegate: rec?.action && rec.id !== 'wait' ? { label: `Do what ${it.speaker.split(' ')[0]} recommends`, does: rec.label, op: { kind: 'order', action: rec.action } } : undefined,
+      delegate: rec?.action && rec.id !== 'wait' ? { label: `Do what ${who ? shortFirst(who) : it.speaker} recommends`, does: rec.label, op: { kind: 'order', action: rec.action } } : undefined,
     });
   }
   const lawyer = personalRounds(s, undefined).find((r) => r.id === 'self:lawyer');

@@ -644,7 +644,7 @@ export function App({ startOn = 'title' }: AppProps) {
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
             {!s.gameOver && !home && !officeView && (
-              <div className="pointer-events-none absolute right-2 top-14 md:top-auto md:right-auto md:bottom-14 md:left-3 z-[1001]"><ClubOnMap s={s} onOpen={() => setOfficeView('club')} /></div>
+              <div className="pointer-events-none absolute left-2 bottom-[92px] md:left-auto md:bottom-3 md:right-3 z-[1001]"><ClubOnMap s={s} onOpen={() => setOfficeView('club')} /></div>
             )}
             {officeScreen}
             {clockMode && !s.gameOver && !home && (
@@ -694,7 +694,7 @@ export function App({ startOn = 'title' }: AppProps) {
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
-      {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
+      {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen || mondayCard} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {sitdown && !current && !scene && (
         <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => setS((x) => setWeekRounds(x, ids))} skip={briefSkip} setSkip={setBriefSkip}
