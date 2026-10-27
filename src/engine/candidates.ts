@@ -1,4 +1,5 @@
 import { ageOn } from './calendar';
+import { seatEligibility } from './eligibility';
 import { owned, expectedTake } from './business';
 import { capos, crew, displayName, hasTrait, isFree, player, relationLabel, relatives } from './characters';
 import { holder, SEAT_INFO, seatOf, seatPower, TASKS } from './council';
@@ -303,7 +304,8 @@ function seatRole(s: GameState, seat: Seat, pool: Character[]): Raw[] {
       opportunityCost: sitting ? undefined : opportunityCost(s, c, info.name),
       keepJob: info.name,
       action: sitting ? undefined : { kind: 'appoint', seat, charId: c.id },
-      disabledReason: !isFree(s, c) ? 'He is in jail' : undefined,
+      // The same rule as every other Appoint button (eligibility.ts).
+      disabledReason: sitting ? undefined : seatEligibility(s, seat, c.id).why,
     };
   });
 }

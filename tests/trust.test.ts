@@ -7,6 +7,11 @@ import { player } from '../src/engine/characters';
 import { pocketCash } from '../src/engine/tributeState';
 import { netWorth, ownMoney, wealthOf } from '../src/engine/wealth';
 import { CharacterSheet } from '../src/ui/components/CharacterSheet';
+import { fundingBlock, previewAction } from '../src/engine/actions';
+import { seatEligibility } from '../src/engine/eligibility';
+import { RETAINER_CAP, RETAINER_EARLY_CAP } from '../src/engine/longgame';
+import { verbOf } from '../src/ui/verbs';
+import type { GameState, PlayerAction } from '../src/engine/types';
 
 /** The text of the first element carrying this test id. */
 function byTestId(html: string, id: string): string | undefined {
@@ -40,5 +45,98 @@ describe('A01: one answer for the boss\'s own money', () => {
       expect(html).not.toMatch(/Own money: <span[^>]*>\$/); // the old mislabeled line is gone for the boss
       s = advanceWeek(s, {}).state;
     }
+  });
+});
+
+describe('A02: the lawyer\'s retainer means what it says', () => {
+  it('can be signed before any charge, builds a capped defense that carries into a case', () => {
+    const s = newGameWith('trust-a02', 'classic');
+    expect(s.legal?.stage ?? 'quiet').toBe('quiet');
+    const p = previewAction(s, { kind: 'legal', op: 'retainer' });
+    expect(p.disabledReason).toBeUndefined();
+    expect(p.detail).toMatch(/before anybody is charged/);
+    const r = advanceWeek(s, { actions: [{ kind: 'legal', op: 'retainer' }] }).state;
+    expect(r.legal!.defense).toBe(10);
+    const r2 = advanceWeek(advanceWeek(r, { actions: [{ kind: 'legal', op: 'retainer' }] }).state, { actions: [{ kind: 'legal', op: 'retainer' }] }).state;
+    expect(r2.legal!.defense).toBe(RETAINER_EARLY_CAP); // capped before a charge
+    expect(previewAction(r2, { kind: 'legal', op: 'retainer' }).disabledReason).toMatch(/Before any charge/);
+  });
+  it('the disabled reason matches the state: in prison there is nothing to retain him for', () => {
+    const s = newGameWith('trust-a02b', 'classic');
+    s.legal = { stage: 'prison', personId: s.playerId, defense: 0, since: s.week };
+    expect(previewAction(s, { kind: 'legal', op: 'retainer' }).disabledReason).toMatch(/serving your sentence/);
+    s.legal = { stage: 'investigation', personId: s.playerId, defense: 45, since: s.week };
+    const p = previewAction(s, { kind: 'legal', op: 'retainer' });
+    expect(p.disabledReason).toBeUndefined();
+    expect(p.effects.find((e) => e.type === 'legal')).toMatchObject({ amount: RETAINER_CAP - 45 });
+  });
+});
+
+describe('A04: one appointment, one eligibility, every entry point', () => {
+  it('"Make Donato underboss" and "Seat him as underboss" are the same preview, both enabled, both name who is replaced', () => {
+    const s = newGameWith('trust-a04', 'sees');
+    const donato = Object.values(s.characters).find((c) => c.firstName === 'Donato' && c.alive)!;
+    const seat = previewAction(s, { kind: 'appoint', seat: 'underboss', charId: donato.id });
+    const promote = previewAction(s, { kind: 'interact', id: 'promote', target: donato.id });
+    expect(promote.disabledReason).toBe(seat.disabledReason);
+    expect(promote.title).toBe(seat.title);
+    expect(promote.effects.map((e) => e.type)).toEqual(seat.effects.map((e) => e.type));
+    expect(seat.title).toMatch(/in Vito's place/);
+    expect(seat.warning).toMatch(/Vito .* loses the seat/);
+  });
+  it('the picker, the menu and the order agree on who can\'t be seated', () => {
+    const s = newGameWith('trust-a04b', 'classic');
+    const assoc = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'associate')!;
+    expect(seatEligibility(s, 'underboss', assoc.id).why).toMatch(/made man/);
+    expect(previewAction(s, { kind: 'appoint', seat: 'underboss', charId: assoc.id }).disabledReason).toMatch(/made man/);
+    expect(seatEligibility(s, 'bagman', assoc.id).why).toBeUndefined();
+  });
+  it('promoting a capo to underboss sets the rank AND the seat (they never drift apart)', () => {
+    const s = newGameWith('trust-a04c', 'sees');
+    const donato = Object.values(s.characters).find((c) => c.firstName === 'Donato' && c.alive)!;
+    const r = advanceWeek(s, { actions: [{ kind: 'interact', id: 'promote', target: donato.id }] }).state;
+    expect(r.characters[donato.id].rank).toBe('underboss');
+    expect(r.council.underboss.holderId).toBe(donato.id);
+    expect(Object.values(r.characters).filter((c) => c.alive && c.faction === 'player' && c.rank === 'underboss')).toHaveLength(1);
+  });
+});
+
+describe('A07: the numbers runners order says what it does', () => {
+  it('reads "Hire runners — $300" with cost, timing and consequences', () => {
+    const s = newGameWith('trust-a07', 'classic');
+    const b = s.businesses.find((x) => x.owner === 'player' && x.kind === 'numbers');
+    expect(b).toBeDefined();
+    const a: PlayerAction = { kind: 'econ', op: { type: 'collect', bizId: b!.id } };
+    const p = previewAction(s, a);
+    expect(p.verb).toBe('Hire runners — $300');
+    expect(verbOf(a, p).verb).toBe('Hire runners — $300');
+    expect(p.cost).toBe(300);
+    expect(p.detail).toMatch(/From next week/);
+    expect(p.detail).toMatch(/no weekly wage/);
+    expect(verbOf(a).verb).not.toBe('Collect');
+  });
+});
+
+describe('A13: the Family only covers a short pocket when the player says so', () => {
+  const buy = (s: GameState): PlayerAction | undefined => {
+    for (const id of ['rowhouse', 'cresthouse', 'cadillac']) {
+      const a: PlayerAction = { kind: 'econ', op: { type: 'luxBuy', item: id } } as PlayerAction;
+      const p = previewAction(s, a);
+      if (!p.disabledReason && p.pot === 'pocket' && p.cost > pocketCash(s)) return a;
+    }
+    return undefined;
+  };
+  it('a short pocket order without consent is not carried out; with consent it dips, by name', () => {
+    const s = newGameWith('trust-a13', 'classic');
+    const a = buy(s)!;
+    expect(a).toBeDefined();
+    expect(fundingBlock(s, a)).toMatch(/not approved Family money/);
+    const no = advanceWeek(s, { actions: [a] });
+    expect(no.log.join('\n')).toMatch(/Order not carried out.*not approved Family money/);
+    expect(no.state.econ?.goodLife?.length ?? 0).toBe(s.econ?.goodLife?.length ?? 0);
+    const yes = advanceWeek(s, { actions: [{ ...a, fund: 'family' }] });
+    expect(fundingBlock(s, { ...a, fund: 'family' })).toBeUndefined();
+    expect((yes.state.econ?.goodLife?.length ?? 0)).toBe((s.econ?.goodLife?.length ?? 0) + 1);
+    expect(yes.report.lines.some((l) => /from the Family/.test(l.label))).toBe(true);
   });
 });

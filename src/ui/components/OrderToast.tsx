@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { previewAction } from '../../engine/actions';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
-import { actionVerb } from '../verbs';
+import { verbOf } from '../verbs';
 
 export interface ToastItem { action: PlayerAction; index: number; at: number }
 
@@ -16,7 +16,7 @@ export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: T
     return () => window.clearTimeout(t);
   }, [item.at, onClose]);
   const p = previewAction(s, item.action);
-  const { verb } = actionVerb(item.action);
+  const { verb } = verbOf(item.action, p);
   const chips = (p.effects ?? []).slice(0, 4).map((e) => (e as { label?: string }).label).filter(Boolean) as string[];
   return (
     <div className="fixed z-[60] bottom-4 left-1/2 -translate-x-1/2 w-[min(92vw,460px)] rounded-lg border border-gold-500 bg-noir-900/95 shadow-2xl px-4 py-3 pointer-events-none" role="status" data-testid="order-toast">
@@ -27,7 +27,7 @@ export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: T
           <div className="text-sm font-semibold text-stone-100">{p.title}</div>
           {p.detail && <div className="text-xs text-stone-400 mt-0.5 line-clamp-2">{p.detail}</div>}
           <div className="text-xs text-stone-300 mt-1">
-            {p.toPocket ? <span className="text-sky-300">Moves {fmt$(Math.abs(p.toPocket))} {p.toPocket > 0 ? 'from Family money into your pocket' : 'from your pocket into Family money'}. </span> : p.cost > 0 ? <span className="text-red-300">Costs {fmt$(p.cost)} {p.pot === 'pocket' ? 'from your pocket' : 'from Family money'}. </span> : null}
+            {p.toPocket ? <span className="text-sky-300">Moves {fmt$(Math.abs(p.toPocket))} {p.toPocket > 0 ? 'from Family money into your pocket' : 'from your pocket into Family money'}. </span> : p.cost > 0 ? <span className="text-red-300">Costs {fmt$(p.cost)} {p.pot === 'pocket' ? (item.action.fund === 'family' ? 'from your pocket, the rest from Family money (you approved it)' : 'from your pocket') : 'from Family money'}. </span> : null}
             {chips.length > 0 && <span className="text-stone-400">{chips.join(' · ')}. </span>}
             It happens when you hit <span className="text-gold-300">Advance Week</span>.
           </div>

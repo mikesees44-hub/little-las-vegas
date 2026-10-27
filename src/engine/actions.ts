@@ -1,6 +1,7 @@
 import { previewUnderbelly } from './underbelly';
 import { costHint, moneyCost, withCostHint } from './costHints';
-import { LAWYER, RETAINER } from './longgame';
+import { LAWYER, RETAINER, RETAINER_CAP, RETAINER_EARLY_CAP } from './longgame';
+import { seatPreview } from './eligibility';
 import { LIFESTYLE_IDS, LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
 import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
@@ -17,7 +18,6 @@ import { bookCapacity, LEND_AMOUNTS } from './loans';
 import { playerHook, previewInteraction, type Acceptance, type Reason } from './interactions';
 import { newDispute, tableMembers as tableMembersFor } from './table';
 import { CB_LABEL, casusBelli, DISTRICT_PRIZE, RAID_COST, raidOdds, resolveRaid } from './war';
-import { isFree } from './characters';
 import { SEAT_INFO, TASKS } from './council';
 import { EDICTS, POLICY_LABEL, SPECIALTY_INFO } from './crewlife';
 import { CAPO_CUT, FIRST_WINTER_PER_NEW, firstWinterAhead } from './economy';
@@ -84,6 +84,8 @@ export interface ActionPreview {
   odds?: Acceptance;
   /** Extra warnings shown in red under the card. */
   warning?: string;
+  /** The button's words, when the action knows better than the generic verb ("Hire runners — $300"). */
+  verb?: string;
 }
 
 type ActionOf<K extends PlayerAction['kind']> = Extract<PlayerAction, { kind: K }>;
@@ -447,22 +449,9 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   },
   appoint: {
     preview: (s, a) => {
-      const c = s.characters[a.charId];
-      const info = SEAT_INFO[a.seat];
-      const label = `Appoint ${c?.firstName ?? '?'} ${info.name.toLowerCase()}`;
-      let why: string | undefined;
-      why = need(!!c && c.alive && c.faction === 'player' && c.id !== s.playerId && c.rank !== 'civilian', 'Not one of your men', why);
-      why = need(!c || isFree(s, c), 'He is in jail', why);
-      why = need(s.council[a.seat].holderId !== a.charId, 'Already in that seat', why);
-      return {
-        title: label,
-        detail: `${info.blurb} Uses his ${info.skill} (${c?.attributes[info.skill] ?? 0}).`,
-        effects: c ? [{ type: 'seat', seat: a.seat, charId: c.id, label }] : [],
-        cost: 0,
-        because: `made ${c?.firstName ?? 'someone'} ${info.name.toLowerCase()}`,
-        disabledReason: why,
-        category: 'event',
-      };
+      // The one seat preview (eligibility.ts): the council, the sheet's menu and "Make him underboss" agree.
+      const p = seatPreview(s, a.seat, a.charId);
+      return { ...p, cost: 0, category: 'event' };
     },
   },
   councilTask: {
@@ -503,14 +492,27 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       const l = s.legal;
       const open = !!l && l.personId === s.playerId && ['investigation', 'grandjury', 'indicted', 'trial'].includes(l.stage);
       if (a.op === 'retainer') {
+        // The retainer contract (A02): it can be signed before any charge. Before a case he can only
+        // prepare so much (defense up to RETAINER_EARLY_CAP); once a case is open, up to RETAINER_CAP.
+        // The defense carries into any case the FBI opens later. Not while serving a sentence or on parole.
         const label = `Retainer: ${LAWYER}`;
+        const stage = l && l.personId === s.playerId ? l.stage : 'quiet';
+        const defense = l && l.personId === s.playerId ? l.defense : 0;
+        const cap = open ? RETAINER_CAP : RETAINER_EARLY_CAP;
+        const gain = Math.max(0, Math.min(10, cap - defense));
+        const why = stage === 'prison' ? 'You are serving your sentence: there is no case left to defend'
+          : stage === 'parole' ? 'You are on parole: the case is over'
+          : gain <= 0 ? (open ? 'He has done all he can' : `Before any charge he can only prepare so much (defense ${defense}/${cap}); the rest once a case is open`)
+          : s.money < RETAINER ? `Needs $${RETAINER.toLocaleString('en-US')}` : undefined;
         return {
           title: `Put ${LAWYER} on retainer`,
-          detail: 'He starts building the defense now, before anybody is charged.',
-          effects: [{ type: 'money', amount: -RETAINER, label }, { type: 'legal', op: 'defense', amount: 10, label }],
+          detail: open
+            ? `He works the case against you: +${gain} defense now (up to ${RETAINER_CAP}).`
+            : `No case against you yet: he starts building the defense now, before anybody is charged. +${gain} defense, kept for any case the FBI opens later (before a charge, up to ${RETAINER_EARLY_CAP}).`,
+          effects: [{ type: 'money', amount: -RETAINER, label }, { type: 'legal', op: 'defense', amount: gain, label }],
           cost: RETAINER,
           because: 'put a criminal lawyer on retainer',
-          disabledReason: !open ? 'There is no case against you' : (l!.defense >= 50 ? 'He has done all he can' : s.money < RETAINER ? `Needs $${RETAINER.toLocaleString('en-US')}` : undefined),
+          disabledReason: why,
           category: 'event',
         };
       }
@@ -638,6 +640,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
         pot: p.pot,
         because: p.because,
         disabledReason: p.disabledReason ?? (!p.pot && p.cost > s.money ? `Needs ${fmtMoney(p.cost)}` : undefined),
+        warning: p.warning,
         category: 'event',
       };
     },
@@ -871,8 +874,21 @@ export function queuedMoney(s: GameState, actions: readonly PlayerAction[]): { f
   return { family, pocket: fromPocket, pocketLeft: pocket, familyLeft: Math.round(s.money) - family + back, dips };
 }
 
+/**
+ * Why a pocket order can't be paid now without the Family (undefined: it can).
+ * The Family only covers a short Pocket when the order says so (`fund: 'family'`),
+ * which the button that names the amount sets. A stale preview (the Pocket was
+ * spent by something else first) is caught here and the order is not carried out.
+ */
+export function fundingBlock(s: GameState, a: PlayerAction, p: ActionPreview = previewAction(s, a)): string | undefined {
+  if (p.pot !== 'pocket' || !(p.cost > 0) || a.fund === 'family') return undefined;
+  const pocket = Math.max(0, Math.round(s.tribute?.acct.personal ?? 0));
+  if (p.cost <= pocket) return undefined;
+  return `your pocket had $${pocket.toLocaleString('en-US')} of $${Math.round(p.cost).toLocaleString('en-US')}, and you had not approved Family money for the rest`;
+}
+
 /** Resolve the week's orders in order, re-checking each against the live state. */
-export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[]): void {
+export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts: { strictFunding?: boolean } = {}): void {
   const s = ctx.s;
   for (const a of actions) {
     if (s.gameOver) break;
@@ -881,6 +897,11 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[]): void
     const p = previewAction(s, a);
     if (p.disabledReason) {
       ctx.log.push(`Order not carried out — ${p.title}: ${p.disabledReason}.`);
+      continue;
+    }
+    const unfunded = opts.strictFunding ? fundingBlock(s, a, p) : undefined;
+    if (unfunded) {
+      ctx.log.push(`Order not carried out — ${p.title}: ${unfunded}.`);
       continue;
     }
     if (p.acceptance && !chance(s, p.acceptance.chance)) {

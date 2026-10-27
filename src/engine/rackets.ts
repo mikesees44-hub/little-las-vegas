@@ -396,15 +396,22 @@ export function racketWeek(ctx: Ctx, b: Business, amt: number, label: string): {
 }
 
 /** Collecting: lean on welshers (bookmaking markers) or the competition (vending). Returns [money, heat, text]. */
-export function collectPreview(s: GameState, b: Business): { amount: number; heat: number; text: string; why?: string } {
+export function collectPreview(s: GameState, b: Business): { amount: number; heat: number; text: string; why?: string; verb?: string; detail?: string } {
   const r = racketOf(s, b);
   if (b.kind === 'bookmaking') {
     const m = Math.round((r.markers ?? 0) * 0.5);
-    return { amount: m, heat: 1, text: `Lean on the welshers: collect half the markers (${fmt(r.markers ?? 0)} out)`, why: m < 100 ? 'Not enough on the markers to chase' : undefined };
+    return { amount: m, heat: 1, text: `Lean on the welshers: collect half the markers (${fmt(r.markers ?? 0)} out)`, why: m < 100 ? 'Not enough on the markers to chase' : undefined, verb: `Collect the markers (+${fmt(m)})` };
   }
-  if (b.kind === 'vending') return { amount: 0, heat: 2, text: 'Muscle the competition\'s machines out of the bars', why: (r.competition ?? 0) < 15 ? 'No competition worth the trouble' : undefined };
-  if (b.kind === 'numbers') return { amount: 0, heat: 1, text: 'Put new runners on the corners (+2)', why: (r.runners ?? 6) >= 18 ? 'Every corner is covered' : s.money < 300 ? 'Needs $300' : undefined };
-  if (b.kind === 'cargo') return { amount: 0, heat: 1, text: 'Cultivate a new friend on the docks (+1 contact)', why: (r.contacts ?? 1) >= 5 ? 'You know everybody on the docks' : s.money < 600 ? 'Needs $600' : undefined };
+  if (b.kind === 'vending') return { amount: 0, heat: 2, text: 'Muscle the competition\'s machines out of the bars', why: (r.competition ?? 0) < 15 ? 'No competition worth the trouble' : undefined, verb: 'Muscle them out' };
+  if (b.kind === 'numbers') {
+    // The take grows with the square root of the runners, up to ×1.4 (about 12 runners).
+    const n = r.runners ?? 6;
+    const mult = (k: number) => Math.min(1.4, Math.max(0.5, Math.sqrt(k / 6)));
+    const gain = Math.round((mult(n + 2) / mult(n) - 1) * 100);
+    const detail = `Two more runners on the corners (${n} → ${n + 2}). One-time $300 to set them up, out of Family money; no weekly wage, they work for a cut of the slips. From next week the bank's take is ${gain > 0 ? `+${gain}%` : 'no higher (the corners are saturated)'}. +1 local heat now, and more men carrying slips for the vice squad to pick up.`;
+    return { amount: 0, heat: 1, text: 'Put new runners on the corners (+2)', why: n >= 18 ? 'Every corner is covered' : s.money < 300 ? 'Needs $300' : undefined, verb: 'Hire runners — $300', detail };
+  }
+  if (b.kind === 'cargo') return { amount: 0, heat: 1, text: 'Cultivate a new friend on the docks (+1 contact)', why: (r.contacts ?? 1) >= 5 ? 'You know everybody on the docks' : s.money < 600 ? 'Needs $600' : undefined, verb: 'Buy a friend on the docks — $600', detail: `One more contact on the docks (${r.contacts ?? 1} → ${(r.contacts ?? 1) + 1}): more loads come your way from next week. One-time $600 out of Family money. +1 local heat now.` };
   return { amount: 0, heat: 0, text: '', why: 'Nothing to collect' };
 }
 

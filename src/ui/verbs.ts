@@ -1,3 +1,4 @@
+import type { ActionPreview } from '../engine/actions';
 import type { PlayerAction } from '../engine/types';
 
 /**
@@ -68,7 +69,7 @@ const ORDER: Record<string, Verb> = {
 
 const ECON: Record<string, Verb> = {
   upgrade: v('Upgrade', 'Upgrading'),
-  collect: v('Collect', 'Collecting'),
+  collect: v('Give the order', 'Ordered'),
   buyLot: v('Buy the lot', 'Buying'),
   leaseLot: v('Lease the lot', 'Leasing'),
   build: v('Build', 'Building'),
@@ -201,4 +202,19 @@ export function actionVerb(a: PlayerAction): Verb {
     }
     default: return v('Do it', 'Set');
   }
+}
+
+/**
+ * The button words for one action: the preview's own verb when it names the
+ * thing exactly ("Hire runners — $300"), else the generic verb for the kind.
+ */
+export function verbOf(a: PlayerAction, p?: Pick<ActionPreview, 'verb'>): Verb {
+  const base = actionVerb(a);
+  return p?.verb ? { verb: p.verb, done: base.done } : base;
+}
+
+/** The same order, whoever approved its funding (for "is it queued?" checks). */
+export function sameOrder(a: PlayerAction, b: PlayerAction): boolean {
+  const strip = (x: PlayerAction) => JSON.stringify({ ...x, fund: undefined });
+  return strip(a) === strip(b);
 }

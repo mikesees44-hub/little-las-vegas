@@ -120,6 +120,7 @@ export function App({ startOn = 'title' }: AppProps) {
     orders,
     queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
+    replace: (i: number, a: PlayerAction) => setOrders((o) => o.map((x, j) => (j === i ? a : x))),
   }), [orders]);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();

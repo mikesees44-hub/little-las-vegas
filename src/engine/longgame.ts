@@ -28,6 +28,9 @@ export const GRAND_JURY = 50;
 export const GJ_WEEKS = 6;
 export const TRIAL_WEEKS = 8;
 export const RETAINER = 2500;
+/** How far a retainer builds the defense once a case is open, and before any charge (A02). */
+export const RETAINER_CAP = 50;
+export const RETAINER_EARLY_CAP = 20;
 export const BAIL = 10000;
 export const INSIDE_COST = 150;
 export const LAWYER = 'Abe Lindner, Esq.';
