@@ -171,7 +171,8 @@ describe('A03: goals have prerequisites and are invalidated by rank changes', ()
   it('a man who gets made loses "make his bones" the next week; a loaded old save is repaired', () => {
     const s = newGameWith('trust-a03b', 'sees');
     const donato = Object.values(s.characters).find((c) => c.firstName === 'Donato' && c.alive)!;
-    // Simulate an old save: the capo still carries the stale goal.
+    // Simulate an old save (from before the schema stamp): the capo still carries the stale goal.
+    delete s.schema;
     s.dyn!.people[donato.id].goal = 'make_bones';
     donato.ambition = 'Make his bones';
     expect(famGoalBlock(s, donato, 'make_bones')).toMatch(/already made/);

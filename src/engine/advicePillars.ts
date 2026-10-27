@@ -47,6 +47,22 @@ const POWER_PURPOSE: Record<string, string> = {
   audience: 'Hear the town\'s problems: favors owed and goodwill, for a Sunday afternoon.',
 };
 
+/** Shadow-court orders ride on `{ op: 'shadow', a }`: their purpose is keyed by the inner order. */
+const SHADOW_PURPOSE: Record<import('./shadowState').ShadowAction['op'], string> = {
+  report: 'Hear what the underboss has been doing in your name: every meeting, as he chooses to tell it.',
+  authority: 'Decide how much the underboss may do without you: more hands free for you, or a shorter leash on him.',
+  test: 'Find out where a man really stands on the succession, before you have to count on him.',
+  meet: 'Learn privately what a man wants, and what anyone has promised him behind your back.',
+  reward: 'Pay a man who stands with your heir, so he keeps standing there.',
+  plant: 'Put eyes in the underboss\'s court: know who he meets before it becomes a faction.',
+  confront: 'Show the underboss you know about his meetings, and watch what he admits.',
+  council: 'See every capo at one table on the succession, and remind them whose family it is.',
+  honor: 'Stand behind a promise made in the family\'s name: the man it was made to remembers.',
+  disown: 'Refuse a promise you never made. The man it was made to will not forget.',
+  retire: 'Step down on your own terms and hand the chair to your heir, before someone takes it.',
+  reunite: 'Bring back the men who walked out, and make the family whole again.',
+};
+
 const POL_PURPOSE: Record<string, string> = {
   cultivate: 'Start (or warm) a personal tie: the cheapest way to make an official yours, slowly.',
   payroll: 'The fastest way to own him: a weekly envelope. The scrutiny grows with it.',
@@ -124,7 +140,7 @@ function opOf(a: PlayerAction): string | undefined {
 export function pillarPurpose(a: PlayerAction): string | undefined {
   const op = opOf(a);
   switch (a.kind) {
-    case 'power': return op ? POWER_PURPOSE[op] : undefined;
+    case 'power': return a.op.op === 'shadow' ? SHADOW_PURPOSE[a.op.a.op] : op ? POWER_PURPOSE[op] : undefined;
     case 'pol': return op ? POL_PURPOSE[op] : undefined;
     case 'travel': return op ? TRAVEL_PURPOSE[op] : undefined;
     case 'ledger': return op ? LEDGER_PURPOSE[op] : undefined;

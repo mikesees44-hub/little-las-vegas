@@ -10,7 +10,7 @@
  * the game picks it up. Nothing else in the code names a URL.
  */
 export const ASSET_URLS = {
-  // Already in the asset store (31 keys).
+  // Already in the asset store (all 145 keys).
   lucky_sevens_arcade: '/_blob/bfd25fc16456180aed155add75bbf8f1',
   anchor_tavern: '/_blob/b739dfd7f2b5a6e1a39eed183b8a9026',
   lobster_seafood_house: '/_blob/29cf5a79d3800ce05d745fd5e76a3a2b',

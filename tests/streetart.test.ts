@@ -13,17 +13,21 @@ import { ISO } from '../src/ui/hood/iso';
 import { upgradeSave } from '../src/engine/upgradeSave';
 
 describe('street art: the asset manifest, storefront paintings, turnarounds and districts', () => {
-  it('names every asset-store image once, by URL, in one manifest; the user\'s own art waits for its upload', () => {
+  it('names every asset-store image once, by URL, in one manifest; the user\'s own art is all uploaded', () => {
+    // All 145 keys are uploaded now (31 originals + 114 of the user's own art).
+    const keys = Object.keys(ASSET_URLS);
     const urls = Object.values(ASSET_URLS).filter((u): u is string => !!u);
-    expect(urls.length).toBe(31);
-    expect(new Set(urls).size).toBe(31);
+    expect(keys.length).toBe(145);
+    expect(urls.length).toBe(keys.length);
+    expect(new Set(urls).size).toBe(urls.length);
     for (const u of urls) expect(u).toMatch(/^\/_blob\/[0-9a-f]{32}$/);
     // Nothing else in the UI names a /_blob/ image URL for the street art.
     for (const f of ['src/ui/hood/PaintedView.tsx', 'src/ui/hood/StreetCard.tsx', 'src/ui/hood/DistrictCards.tsx', 'src/ui/hood/HoodDashboard.tsx', 'src/ui/hood/Turnaround.tsx']) {
       expect(readFileSync(f, 'utf8')).not.toMatch(/_blob\//);
     }
+    // Nothing is left waiting for its upload.
     const pending = Object.entries(ASSET_URLS).filter(([, u]) => u === undefined).map(([k]) => k);
-    expect(pending.length).toBeGreaterThanOrEqual(18);
+    expect(pending).toEqual([]);
   });
 
   it('every four-angle sheet has its size and its measured split, and the quarters stay inside the image', () => {
