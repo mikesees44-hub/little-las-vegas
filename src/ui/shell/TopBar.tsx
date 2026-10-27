@@ -120,7 +120,7 @@ export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk }: {
+export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen }: {
   s: GameState;
   /** Running clock (days tick by) rather than turn-based (settings). */
   clockMode?: boolean;
@@ -142,6 +142,9 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
   onSitDown?: () => void;
   /** The Boss's Desk (This Week). */
   onDesk?: () => void;
+  /** The Boss's Office (upstairs at the club). */
+  onOffice?: () => void;
+  officeOpen?: boolean;
   sitCount?: number;
 }) {
   const info = seasonInfo(s.date);
@@ -192,6 +195,10 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${sitCount ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
                 ♜ <span className="hidden sm:inline">Sit-down </span>{sitCount ? `(${sitCount})` : ''}
               </button>
+            )}
+            {onOffice && (
+              <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
+                className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>
             )}
             {onDesk && (
               <button type="button" onClick={onDesk} data-testid="desk-button" title="The Boss's Desk: everything waiting on you this week"

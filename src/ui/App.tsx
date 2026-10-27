@@ -26,7 +26,7 @@ import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings, helpLevel, pausesOn, timeMode } from './settings';
+import { applySettings, getSettings, helpLevel, OFFICE_HOME_FLAG, pausesOn, timeMode, weekStart } from './settings';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { minigameOf, opensScene } from '../engine/minigames';
@@ -76,6 +76,10 @@ import { BossDesk, ReadyToAdvance } from './desk/BossDesk';
 import { readyReview } from '../engine/desk';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
+import { BossOffice } from './office/BossOffice';
+import { ClubOnMap, SocialClub } from './office/SocialClub';
+import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
+import { answerCheckIn } from '../engine/days';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -124,6 +128,11 @@ export function App({ startOn = 'title' }: AppProps) {
   const [briefSkip, setBriefSkip] = useState<string[]>([]);
   const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
   const [sitSeen, setSitSeen] = useState<string | undefined>();
+  // The Boss's Office (ui/office): the room upstairs or the club from the street; Monday's arrival card;
+  // visitors the boss said to see later this week (UI only: they stay on the desk).
+  const [officeView, setOfficeView] = useState<'office' | 'club' | undefined>();
+  const [mondayCard, setMondayCard] = useState(false);
+  const [later, setLater] = useState<{ week: number; keys: string[] }>({ week: 0, keys: [] });
   const lastQueued = useRef<{ a: PlayerAction; at: number } | undefined>(undefined);
   const ordersApi = useMemo(() => ({
     orders,
@@ -336,12 +345,16 @@ export function App({ startOn = 'title' }: AppProps) {
     setRoute({});
     setReportLog([]);
     setCtxMenu(undefined);
+    setOfficeView(undefined);
+    setMondayCard(false);
     try { window.scrollTo(0, 0); } catch { /* no window */ }
   }
 
   /** A new game from the creator (or a quick restart): always opens on the funeral. */
   function beginGame(next: GameState, n: number) {
     settledRef.current = undefined;
+    // New games start each week in the Boss's Office (the setting can change it; older saves keep the desk).
+    next.flags[OFFICE_HOME_FLAG] = 1;
     setCurrentSlot(n);
     setSlot(n);
     setS(next);
@@ -466,6 +479,11 @@ export function App({ startOn = 'title' }: AppProps) {
     setSitSeen(sitKey);
     if (seen === sitKey) return;
     try { sessionStorage.setItem('llv-sitdown', sitKey); } catch { /* storage unavailable */ }
+    // Where the week starts (Settings): the office, with the man across the desk and his briefing
+    // (the sit-down is one step away, at the door); the desk's list; or the map.
+    const start = weekStart(s);
+    if (start === 'office') { setRoute({}); setOfficeView('office'); setMondayCard(true); return; }
+    if (start === 'desk') setRoute({ home: 'week' });
     if (getSettings().sitdownEachWeek !== false) setSitdown('council');
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
@@ -539,11 +557,32 @@ export function App({ startOn = 'title' }: AppProps) {
     openLedger: () => openRoute({ panel: 'holdings', section: 'take' }),
     openCalendar: (day) => { setSpeed(0); setDayWin(day ?? daysOf(s).day); },
     openDecisions: openDecisions,
-    openMap: () => setRoute({}),
+    openMap: () => { setRoute({}); setOfficeView(undefined); },
     openFamily: () => openRoute({ panel: 'house', section: 'tree' }),
     openNews: () => openRoute({ panel: 'chronicle', section: 'papers' }),
     openAdvance: () => startAdvance('week'),
   };
+  const laterKeys = later.week === s.week ? later.keys : [];
+  const officeUi = { answers, briefSkip, later: laterKeys };
+  function officeDelegate(op: DelegateOp) {
+    if (op.kind === 'answer') setAnswers((a) => ({ ...a, [op.iid]: op.choiceId }));
+    else if (op.kind === 'checkin') setS((x) => answerCheckIn(x, op.key, op.answer));
+    else ordersApi.queue(op.action);
+  }
+  function officeInvite(v: OfficeVisitor) {
+    if (v.ref.event) deskApi.onEvent(v.ref.event);
+    else if (v.ref.day !== undefined) deskApi.onDay(v.ref.day);
+    else if (v.ref.brief) setSitdown('council');
+    else officeApi.openCalendar();
+  }
+  function officeLater(v: OfficeVisitor) {
+    setLater({ week: s.week, keys: [...laterKeys, v.key] });
+    if (v.ref.brief && !briefSkip.includes(v.ref.brief)) setBriefSkip([...briefSkip, v.ref.brief]);
+  }
+  const officeScreen = s.gameOver ? undefined
+    : officeView === 'office' ? <BossOffice key={s.week} s={s} ui={officeUi} monday={mondayCard} onMondayDone={() => setMondayCard(false)} onInvite={officeInvite} onDelegate={officeDelegate} onLater={officeLater} onClub={() => setOfficeView('club')} />
+    : officeView === 'club' ? <SocialClub s={s} onUpstairs={() => setOfficeView('office')} onHq={() => openRoute({ panel: 'holdings', section: 'hq' })} onMap={() => setOfficeView(undefined)} />
+    : undefined;
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
@@ -596,13 +635,18 @@ export function App({ startOn = 'title' }: AppProps) {
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
-            onSitDown={() => setSitdown('council')} sitCount={brief.items.length} onDesk={() => setRoute({ home: 'week' })} />
+            onSitDown={() => setSitdown('council')} sitCount={brief.items.length} onDesk={() => setRoute({ home: 'week' })}
+            onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'} />
         )}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
         overlay={(
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
+            {!s.gameOver && !home && !officeView && (
+              <div className="pointer-events-none absolute right-2 top-14 md:top-auto md:right-auto md:bottom-14 md:left-3 z-[1001]"><ClubOnMap s={s} onOpen={() => setOfficeView('club')} /></div>
+            )}
+            {officeScreen}
             {clockMode && !s.gameOver && !home && (
               <div className="pointer-events-none absolute left-2 right-[120px] bottom-12 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex md:max-w-[calc(100%-330px)]">
                 <TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} />
