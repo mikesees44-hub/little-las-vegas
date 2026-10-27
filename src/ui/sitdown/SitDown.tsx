@@ -7,6 +7,7 @@ import { useOrders } from '../components/Orders';
 import { Chips } from '../components/Chips';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
+import { TableButton } from '../advice/CounselTable';
 
 /**
  * The week, as the boss lives it: the Sit-Down (his people come in, one card
@@ -156,7 +157,7 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
         <p className="mt-2 italic text-stone-500">"Nothing that needs you this week."</p>
       ) : (
         <div className="mt-2 space-y-3">
-          {sp.items.map((it) => <ItemBlock key={it.id} it={it} skipped={skip.includes(it.id)} orders={orders} onChoose={onChoose} onLink={onLink} who={shortName(c)} />)}
+          {sp.items.map((it) => <ItemBlock key={it.id} s={s} it={it} skipped={skip.includes(it.id)} orders={orders} onChoose={onChoose} onLink={onLink} who={shortName(c)} />)}
         </div>
       )}
       {!sp.empty && (
@@ -169,8 +170,8 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
   );
 }
 
-function ItemBlock({ it, skipped, orders, onChoose, onLink, who }: {
-  it: BriefItem; skipped: boolean; orders: PlayerAction[]; who: string;
+function ItemBlock({ s, it, skipped, orders, onChoose, onLink, who }: {
+  s: GameState; it: BriefItem; skipped: boolean; orders: PlayerAction[]; who: string;
   onChoose: (it: BriefItem, o: BriefOption) => void; onLink: (l: BriefLink) => void;
 }) {
   const picked = it.options.find((o) => o.action && orders.some((x) => same(x, o.action!)));
@@ -196,7 +197,10 @@ function ItemBlock({ it, skipped, orders, onChoose, onLink, who }: {
         })}
       </div>
       <p className="mt-1 text-[11px] text-gold-300/90" data-testid="item-reason">{it.reason.replace(/^\S+ says/, `${who} says`)}</p>
-      {it.open && <button type="button" className="mt-0.5 text-[10px] text-stone-400 hover:text-gold-300" onClick={() => onLink(it.open!.link)}>{it.open.label} ▸</button>}
+      <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3">
+        {it.open && <button type="button" className="text-[10px] text-stone-400 hover:text-gold-300" onClick={() => onLink(it.open!.link)}>{it.open.label} ▸</button>}
+        {it.options.some((o) => o.action) && <TableButton s={s} subject={{ kind: 'brief', itemId: it.id }} onOption={(id) => { const o = it.options.find((x) => x.id === id); if (o) onChoose(it, o); }} label="Ask the table" testid={`table-${it.id}`} className="text-[10px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" />}
+      </div>
     </div>
   );
 }

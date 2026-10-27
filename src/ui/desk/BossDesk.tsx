@@ -1,3 +1,4 @@
+import { TableButton } from '../advice/CounselTable';
 import { bossDesk, readyReview, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -67,7 +68,7 @@ export function BossDesk({ s, ui, api }: { s: GameState; ui: DeskUi; api: DeskAp
 }
 
 /** "Ready to advance?": what is unanswered and what it becomes, the orders that run, what is known to cost. */
-export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean }) {
+export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onAnswer }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean; onAnswer?: (iid: string, choiceId: string) => void }) {
   const r = readyReview(s, ui);
   return (
     <Modal onClose={onClose}>
@@ -79,7 +80,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month }: {
         {r.unanswered.length > 0 && (
           <div data-testid="ready-unanswered">
             <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Not decided — this is what happens</div>
-            <ul className="mt-1 space-y-0.5 text-[12px]">{r.unanswered.map((u) => <li key={u.iid}><span className="text-stone-200">{u.title}</span> <span className="text-stone-500">→</span> <span className="text-amber-200">{u.becomes}</span></li>)}</ul>
+            <ul className="mt-1 space-y-0.5 text-[12px]">{r.unanswered.map((u) => <li key={u.iid}><span className="text-stone-200">{u.title}</span> <span className="text-stone-500">→</span> <span className="text-amber-200">{u.becomes}</span> <TableButton s={s} subject={{ kind: 'event', iid: u.iid }} onChoose={onAnswer ? (c) => onAnswer(u.iid, c) : undefined} testid="ready-table" /></li>)}</ul>
           </div>
         )}
         {r.mornings.length > 0 && (

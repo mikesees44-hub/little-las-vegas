@@ -725,7 +725,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
-      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} />}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => setAnswers((x) => ({ ...x, [iid]: c }))} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
