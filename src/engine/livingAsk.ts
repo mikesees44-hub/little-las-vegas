@@ -48,12 +48,14 @@ function debtOf(L: LivingState, st: Ts): Td | undefined {
   return L.debts.find((d) => d.st === 'open' && st.f.includes(d.fid)) ?? L.debts.find((d) => d.st === 'open' && st.cast.includes(d.by) && st.k === 'debt');
 }
 
-type AskKind = 'debt' | 'theft' | 'failing' | 'house';
+type AskKind = 'debt' | 'theft' | 'failing' | 'house' | 'build';
 
 function kindOf(L: LivingState, st: Ts): AskKind {
   if (debtOf(L, st)) return 'debt';
   if (st.k === 'theft') return 'theft';
   if (st.k === 'failing') return 'failing';
+  // A family whose builder stopped work on their new house (housing.ts).
+  if (st.f.some((id) => factById(L, id)?.k === 'broke_ground')) return 'build';
   return 'house';
 }
 
@@ -110,6 +112,13 @@ export function livingRequest(s: GameState, st: Ts): EventInstance | undefined {
     title = `${lot?.name ?? 'A shop'} is going under`;
     ask = `${who} cannot pay ${his(asker)} people or ${his(asker)} suppliers. ${he(asker) === 'she' ? 'She' : 'He'} is asking the Family for a loan.`;
     choices.push(mk('lend', `Lend ${him(asker)} $${loan.toLocaleString('en-US')} (20 weeks, 10%)`, `Family money now; ${who} pays it back weekly, with a little on top.`, `lent ${who} money for the shop`, loan, short(loan)));
+  } else if (kind === 'build') {
+    const f = [...st.f].reverse().map((id) => factById(L, id)).find((x) => x?.k === 'asked_help');
+    const amt = Math.max(100, Math.round(((f?.amt ?? 500) + 99) / 100) * 100);
+    title = `${hh?.name ?? 'A family'}: the builder stopped work`;
+    ask = `They are $${amt.toLocaleString('en-US')} short for the builder on their new house. They are asking the Family.`;
+    choices.push(mk('lend', `Lend them $${amt.toLocaleString('en-US')} (20 weeks, 10%)`, `Family money to the builder's bill now; they pay it back weekly, a little on top.`, `lent ${who} money for the house`, amt, short(amt)));
+    choices.push(mk('give', `Pay it for them ($${amt.toLocaleString('en-US')})`, `Family money, a gift. The house goes up and they will remember who finished it.`, `paid ${who}'s builder`, amt, short(amt)));
   } else {
     const amt = up * 6;
     title = `${hh?.name ?? 'A family'} cannot make ends meet`;
@@ -119,7 +128,7 @@ export function livingRequest(s: GameState, st: Ts): EventInstance | undefined {
     if (place && !asker.job) choices.push(mk('job', `Give ${him(asker)} a job at ${ix.lots.get(place)?.name ?? 'one of your places'}`, `Steady wages at one of the Family's places.`, `gave ${who} a job`));
   }
   choices.push(mk('decline', `Leave it to ${cn}`, `You stay out of it. ${cn} will tell ${him(asker)} there is nothing to be done.`, `stayed out of ${who}'s trouble`));
-  const text = [`${capo.firstName} ${capo.lastName} has something from the Boardwalk.`, ...lines.map((x) => `• ${x}`), ask].join('\n\n');
+  const text = [`${capo.firstName} ${capo.lastName} has something from ${hh ? HOODS_BY_ID[hh.hood]?.name ?? 'the Boardwalk' : 'the Boardwalk'}.`, ...lines.map((x) => `• ${x}`), ask].join('\n\n');
   return {
     iid: `living:${st.id}`, defId: 'living_request', title, text, week: s.week, choices, defaultChoiceId: 'decline', mandatory: true, priority: 44,
     // A real situation waiting on an answer (and the capo brings one at most every eight weeks): not held back as "the same story again".
@@ -275,8 +284,9 @@ export function applyLivingOp(ctx: Ctx, o: LivingOp): void {
     }
     case 'lend': {
       const amt = o.amt ?? 0;
-      const f = note('boss_helped', `The boss lent ${who} $${amt} to keep the shop going.`, 1, amt);
-      const nd = newDebt(ctx, L, { lender: 'family', from: 'family', by: asker, amt, rate: 0.1, weeks: 20, why: 'a loan from the Family for the shop', fid: f });
+      const house = kindOf(L, st) === 'build';
+      const f = note('boss_helped', house ? `The boss lent ${who} $${amt} to finish the house.` : `The boss lent ${who} $${amt} to keep the shop going.`, 1, amt);
+      const nd = newDebt(ctx, L, { lender: 'family', from: 'family', by: asker, amt, rate: 0.1, weeks: 20, why: house ? 'a loan from the Family for the house' : 'a loan from the Family for the shop', fid: f });
       if (nd) gratitude(s, L, asker.id, 25);
       return;
     }

@@ -36,6 +36,7 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   designer: { panel: 'holdings', section: 'designer' },
   empire: { panel: 'holdings', section: 'designer' },
   hq: { panel: 'holdings', section: 'hq' },
+  loandesk: { panel: 'holdings', section: 'loandesk' },
   books: { panel: 'holdings', section: 'books' },
   take: { panel: 'holdings', section: 'take' },
   tribute: { panel: 'holdings', section: 'take' },

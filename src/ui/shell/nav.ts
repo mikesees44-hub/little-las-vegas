@@ -94,6 +94,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['holdings.property'], icon: '▦', label: 'Real estate', sub: 'Lots and buildings in every neighborhood: buy, build, rent out.' },
       { keys: ['holdings.designer'], icon: '✧', label: 'Hotels & motels', sub: 'Set up your motels and hotels your way: the look, the staff, the supplies.' },
       { keys: ['holdings.hq'], icon: '♜', label: 'Headquarters', sub: 'Your social club: who meets there, bugs, and sweeping for them.' },
+      { keys: ['holdings.loandesk'], icon: '%', label: 'Loan desk', sub: 'Your bank or book: who Chemical Bank turned down, your rate (up to the vig), what happens if they don\'t pay.' },
     ] },
   ],
   family: [

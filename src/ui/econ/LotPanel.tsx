@@ -11,6 +11,7 @@ import { CharLink } from '../components/People';
 import { STATUS_LABEL } from './RealEstate';
 import { useEmpire } from '../empire/context';
 import { venueForLot } from '../../engine/empire';
+import { HomePanel } from './HomePanel';
 
 /** A property clicked on the map: what it is, who runs it, and who the crew thinks should. */
 export function LotPanel({ s, id, noDesigner }: { s: GameState; id: string; noDesigner?: boolean }) {
@@ -37,6 +38,7 @@ export function LotPanel({ s, id, noDesigner }: { s: GameState; id: string; noDe
           <div className="text-xs text-stone-400">{ZONES_BY_ID[l.zone].name} · {STATUS_LABEL[l.status]}{l.owner !== 'player' && l.owner !== 'private' ? ` (${rivalName(l.owner)})` : ''}{l.builtYear && l.stage === 'open' ? ` · built ${l.builtYear}` : ''}</div>
         </div>
       </div>
+      {l.home && <HomePanel s={s} l={l} />}
       {l.stage && l.stage !== 'open' && l.stage !== 'purchase' && <div className="text-xs text-amber-300">Under construction: {STAGE_LABEL[l.stage]} ({Math.round(lotProgress(l) * 100)}%){l.developer ? ` by ${l.developer}` : ''}{l.stopWork ? ` — stopped: ${l.stopWork.reason}` : ''}</div>}
       <div className="text-sm">
         <div className="text-[10px] uppercase tracking-widest text-stone-500">Who runs it</div>
