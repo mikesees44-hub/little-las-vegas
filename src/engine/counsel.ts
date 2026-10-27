@@ -352,7 +352,7 @@ function evalAction(ctx: Ctx, adv: Character, ref: AdviserRef, a: PlayerAction):
     raws.push(...effectRaws(s, [], p.cost, p.pot === 'pocket' ? 'pocket' : 'family'));
     const man = s.characters[who];
     if (sum.take[1] > 0) raws.push({ text: `${fmtMoney(sum.take[0])}–${fmtMoney(sum.take[1])} if it goes clean`, k: 'known', about: 'money', mag: clamp((sum.take[0] + sum.take[1]) / 2 * (sum.odds / 100) / 700, 0.5, 7), pro: true });
-    if (sum.odds) raws.push({ text: `${sum.odds}% it goes clean with ${man?.id === s.playerId ? 'you' : man?.firstName ?? 'him'} on it`, k: 'known', about: 'gain', mag: clamp((sum.odds - 50) / 10, 0.3, 4), pro: sum.odds >= 55 });
+    if (sum.odds) raws.push({ text: `${sum.odds >= 55 ? '' : 'Only '}${sum.odds}% it goes clean with ${man?.id === s.playerId ? 'you' : man?.firstName ?? 'him'} on it`, k: 'known', about: 'gain', mag: clamp((sum.odds - 50) / 10, 0.3, 4), pro: sum.odds >= 55 });
     if (sum.arrest) raws.push({ text: `If it goes wrong, ${sum.arrest}% it ends in an arrest${sum.rat ? `, and ${sum.rat}% the man picked up talks` : ''}`, k: 'known', about: 'law', mag: clamp((100 - sum.odds) / 100 * (sum.arrest + sum.rat) / 12, 0.5, 6), pro: false });
     if (sum.heat) {
       const fed = /federal/i.test(sum.heat);
