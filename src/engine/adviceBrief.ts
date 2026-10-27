@@ -142,7 +142,7 @@ export interface AdviceBrief {
 const ROLE_TITLE: Record<AdviserRole, string> = { underboss: 'Your underboss', consigliere: 'Your consigliere', capo: 'Capo', bagman: 'Your bagman', fixer: 'Your fixer', enforcer: 'Your enforcer' };
 const BASE_STANCE: Record<AdviserRole, Stance> = { underboss: 'steady', consigliere: 'cautious', capo: 'bold', bagman: 'money', fixer: 'cautious', enforcer: 'bold' };
 
-function stanceOf(c: Character, role: AdviserRole): Stance {
+export function stanceOf(c: Character, role: AdviserRole): Stance {
   if (hasTrait(c, 'Hot-headed') || hasTrait(c, 'Cruel')) return 'bold';
   if (hasTrait(c, 'Patient') || hasTrait(c, 'Paranoid') || hasTrait(c, 'Cowardly')) return 'cautious';
   if (hasTrait(c, 'Greedy') && role !== 'consigliere') return 'money';
@@ -166,7 +166,7 @@ function consigliereOf(s: GameState): Character | undefined {
 }
 
 /** The topic, the district and the money/muscle/law flavour of a subject. */
-function readSubject(s: GameState, sub: AdviceSubject): { topic: Topic; district?: string; action?: PlayerAction; ev?: EventInstance; rival?: RivalId; targetId?: string } {
+export function readSubject(s: GameState, sub: AdviceSubject): { topic: Topic; district?: string; action?: PlayerAction; ev?: EventInstance; rival?: RivalId; targetId?: string } {
   if (sub.kind === 'seat') return { topic: 'appoint' };
   if (sub.kind === 'capo') return { topic: 'appoint', district: sub.district };
   if (sub.kind === 'event') {
@@ -238,8 +238,8 @@ function readErr(adv: Character, key: string, skill: number): number {
   const h = hashSeed(`${adv.id}|${key}`) % 1000;
   return ((h / 1000) - 0.5) * 2 * Math.max(0, 100 - skill) / 250;
 }
-const pctRead = (adv: Character, key: string, skill: number, p: number) => Math.max(2, Math.min(97, Math.round(p * 100 * (1 + readErr(adv, key, skill)))));
-const moneyRead = (adv: Character, key: string, skill: number, v: number) => Math.round((v * (1 + readErr(adv, key, skill))) / 10) * 10;
+export const pctRead = (adv: Character, key: string, skill: number, p: number) => Math.max(2, Math.min(97, Math.round(p * 100 * (1 + readErr(adv, key, skill)))));
+export const moneyRead = (adv: Character, key: string, skill: number, v: number) => Math.round((v * (1 + readErr(adv, key, skill))) / 10) * 10;
 
 const SKILL_WORD: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
 
