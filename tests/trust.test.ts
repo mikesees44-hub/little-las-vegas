@@ -142,6 +142,7 @@ describe('A13: the Family only covers a short pocket when the player says so', (
   };
   it('a short pocket order without consent is not carried out; with consent it dips, by name', () => {
     const s = newGameWith('trust-a13', 'classic');
+    s.tribute!.acct.personal = 1000; // a short pocket (the boss now starts with $100k)
     const a = buy(s)!;
     expect(a).toBeDefined();
     expect(fundingBlock(s, a)).toMatch(/not approved Family money/);

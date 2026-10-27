@@ -249,6 +249,7 @@ describe('economy pillar: gifts', () => {
   });
   it('a gift through the ledger moves opinion and trust and is recorded', () => {
     const s = rich('give');
+    if (s.tribute) s.tribute.acct.personal = 0; // the pocket is short (the boss now starts with $100k)
     const c = Object.values(s.characters).find((x) => x.alive && x.faction === 'player' && x.rank === 'capo')!;
     const a: PlayerAction = { kind: 'econ', op: { type: 'gift', giftId: 'coupedeville', to: c.id }, fund: 'family' }; // the pocket is short: the player approves Family money (A13)
     const p = previewAction(s, a);

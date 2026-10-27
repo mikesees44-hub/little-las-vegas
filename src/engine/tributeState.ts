@@ -461,9 +461,11 @@ export function ensureTribute(s: GameState): TributeState {
   return s.tribute;
 }
 
-/** The new boss's own money on day one: 12% of what the Family starts with (up to $3,000). */
+/** The new boss's own money on day one: $100,000 of his own (the user's call, 2026-10-27). */
+export const BOSS_START_POCKET = 100_000;
 export function startPocket(s: GameState): void {
-  ensureTribute(s).acct.personal = Math.min(3000, Math.round((Math.max(0, s.money) * 0.12) / 100) * 100);
+  const notBoss = s.flags?.start_associate || s.flags?.start_soldier || s.flags?.start_capo;
+  ensureTribute(s).acct.personal = notBoss ? Math.min(3000, Math.round((Math.max(0, s.money) * 0.12) / 100) * 100) : BOSS_START_POCKET;
 }
 
 /** All balances, the treasury included (for the books and the reconciliation). */

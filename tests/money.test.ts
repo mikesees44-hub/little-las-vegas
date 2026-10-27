@@ -170,7 +170,7 @@ describe("the boss's pocket", () => {
 
   it('a new boss starts with money of his own and takes 40% of every envelope', () => {
     const s = newGame('pocket-start');
-    expect(pocketCash(s)).toBe(3000);
+    expect(pocketCash(s)).toBe(100_000);
     expect(s.tribute!.policy.personal).toBe(4000);
     const r = play(s, 4);
     expect(pocketCash(r)).toBeGreaterThan(5000);
