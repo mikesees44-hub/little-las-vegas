@@ -11,7 +11,7 @@ import { useOffice } from '../desk/officeApi';
 import { fmt$ } from '../format';
 import { AssetImg } from '../hood/AssetImg';
 import { Portrait } from '../portrait/Portrait';
-import { HOTSPOTS, type Hotspot, type OfficePanel } from './hotspots';
+import { HOTSPOTS, openHotspot, type Hotspot, type OfficePanel } from './hotspots';
 
 /**
  * THE BOSS'S OFFICE: upstairs at the Shore Social Club. The painted room
@@ -66,12 +66,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const answered = s.pendingEvents.filter((e) => ui.answers?.[e.iid]).length;
 
   const openEnvelope = () => (rep ? api.openEnvelope() : api.openLedger());
-  function act(h: Hotspot) {
-    if ('panel' in h.entry) { setPanel(h.entry.panel); return; }
-    if (h.id === 'envelope') { openEnvelope(); return; }
-    const f = api[h.entry.api] as (x?: number) => void;
-    f();
-  }
+  const act = (h: Hotspot) => openHotspot(h, api, { hasReport: !!rep, panel: setPanel });
   const badge = (id: Hotspot['id']): ReactNode => {
     if (id === 'envelope' && envelopeWaiting) return <span className="text-emerald-300">{fmt$(rep!.reported)}</span>;
     if (id === 'door' && visitors.length) return <span className={`rounded-full px-1 font-bold text-white ${visitors.some((v) => v.urgent) ? 'bg-red-600' : 'bg-blood-500'}`}>{visitors.length}</span>;
@@ -81,7 +76,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
 
   const status: Record<Hotspot['id'], string> = {
     chair: brief.seat.role === 'none' ? 'Nobody in the chair' : `${brief.seat.name} · ${brief.seat.title.toLowerCase()}`,
-    envelope: envelopeWaiting ? `${fmt$(rep!.reported)} on the desk: hear the count` : rep ? 'Heard this week · the envelope pages' : 'No count yet · the weekly envelope page',
+    envelope: envelopeWaiting ? `${fmt$(rep!.reported)} on the desk: hear the count` : rep ? `Counted: ${fmt$(rep.reported)} · go over it again` : 'No count yet · the weekly envelope page',
     door: visitors.length ? `${visitors.length} waiting${visitors.some((v) => v.urgent) ? ' · urgent' : ''}` : 'Nobody waiting',
     ledger: 'The money, the accounts, the agreements',
     phone: room.absence?.kind === 'prison' ? 'From inside: only your lawyer' : 'Your lawyer, your people, the other bosses',
@@ -208,7 +203,7 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone }: {
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
-        <button type="button" className="btn-gold text-xs" onClick={onEnvelope} data-testid="office-hear-count">{brief.reportId ? 'Hear the count' : 'The envelope pages'}</button>
+        <button type="button" className="btn-gold text-xs" onClick={onEnvelope} data-testid="office-hear-count">{brief.count !== undefined ? 'Hear the count' : 'The envelope pages'}</button>
         <button type="button" className="btn-ghost text-xs" onClick={onDoor} data-testid="office-see-waiting">See who's waiting</button>
         <button type="button" className="btn-ghost text-xs" onClick={onDesk} data-testid="office-review-desk">Review the desk</button>
         <button type="button" className="btn-ghost text-xs" onClick={onDone} data-testid="office-something-else">{monday ? 'Start with something else' : 'Thanks, that\'s all'}</button>

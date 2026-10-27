@@ -35,6 +35,17 @@ export const HOTSPOTS: Hotspot[] = [
   { id: 'chair', label: 'The chair across', hint: 'Your underboss: the week\'s briefing', icon: '♜', rect: { x: 85.5, y: 40, w: 14, h: 21 }, entry: { panel: 'brief' } },
 ];
 
+/**
+ * What clicking an object does: one existing entry point, or one of the office's panels. The
+ * envelope opens the envelope meeting when there is a report, else the envelope pages (the ledger).
+ */
+export function openHotspot(h: Hotspot, api: OfficeApi, o: { hasReport: boolean; panel: (p: OfficePanel) => void }): void {
+  if ('panel' in h.entry) { o.panel(h.entry.panel); return; }
+  if (h.id === 'envelope' && !o.hasReport) { api.openLedger(); return; }
+  const f = api[h.entry.api] as () => void;
+  f();
+}
+
 export const HOTSPOT_BY_ID = Object.fromEntries(HOTSPOTS.map((h) => [h.id, h])) as Record<Hotspot['id'], Hotspot>;
 
 /** The club in cutaway (social_club_cutaway, 1697 × 927): upstairs is the office, downstairs the bar. */
