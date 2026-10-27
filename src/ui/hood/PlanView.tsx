@@ -39,6 +39,9 @@ export const PLAN_AREAS: PlanArea[] = [
   { id: 'crest', name: 'The Crest: the motels', u0: 1790, u1: 2400, v0: -120, v1: 300 },
   { id: 'nwboard', name: 'The Boardwalk, 23rd to 16th Ave', u0: 5340, u1: 5990, v0: -160, v1: 280 },
   { id: 'bay', name: 'The bayfront: Otten\'s Harbor to the causeway', u0: 4330, u1: 4700, v0: 360, v1: 800 },
+  { id: 'homes', name: 'Wildwood\'s houses: Oak Ave to Schellenger', u0: 3720, u1: 4180, v0: 60, v1: 640 },
+  { id: 'crestsouth', name: 'The Crest\'s south end: empty lots', u0: 240, u1: 900, v0: 120, v1: 520 },
+  { id: 'nwhomes', name: 'North Wildwood\'s houses: 26th to 20th Ave', u0: 5080, u1: 5640, v0: 40, v1: 620 },
 ];
 const AREA_KEY = 'llv-place-area';
 function loadArea(): PlanArea {
@@ -64,7 +67,7 @@ function saveEdits(e: Record<string, PlaceEdit>): boolean {
 /** A building on the map: an authored feature, or a game record with no feature yet (placed from the game's grid). */
 interface Placed { f: PlaceFeature; u: number; v: number; it?: Item; authored: boolean }
 
-const KIND_FILL: Record<string, string> = { school: '#c9a46a', church: '#d8d0c0', motel: '#d16b9b', civic: '#b5643c', lighthouse: '#f2d36b', sign: '#ff5fa2', comedy: '#e07a3f', pier: '#b98b5e', ride: '#d9a441', theater: '#9b6fb3', club: '#7c5cc4', saloon: '#b3473c', tavern: '#3f8f5a', restaurant: '#c9603f', deli: '#4aa3a0', arcade: '#3fb6c9', shop: '#5f8fd6', hotel: '#d16b9b', food: '#e0a03c', minigolf: '#5fae7f', landmark: '#c7a64a' };
+const KIND_FILL: Record<string, string> = { lot: '#d9c48f', house: '#e6b98a', school: '#c9a46a', church: '#d8d0c0', motel: '#d16b9b', civic: '#b5643c', lighthouse: '#f2d36b', sign: '#ff5fa2', comedy: '#e07a3f', pier: '#b98b5e', ride: '#d9a441', theater: '#9b6fb3', club: '#7c5cc4', saloon: '#b3473c', tavern: '#3f8f5a', restaurant: '#c9603f', deli: '#4aa3a0', arcade: '#3fb6c9', shop: '#5f8fd6', hotel: '#d16b9b', food: '#e0a03c', minigolf: '#5fae7f', landmark: '#c7a64a' };
 
 /** Which quarter of a four-angle sheet faces the viewer at this rotation (front, corner, side, back). */
 function facingQuarter(rot: number): number {
@@ -260,7 +263,8 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
     // The rest of the game's records in the area: placed from the game's own grid (approximate).
     for (const it of items) {
       const l = it.lot;
-      if (!l || have.has(l.id) || it.vacant || l.zone === 'piers') continue;
+      // Empty ground is drawn only where it is a house lot for sale (the town's own lots).
+      if (!l || have.has(l.id) || (it.vacant && !(l.home && it.forSale)) || l.zone === 'piers') continue;
       const pc = it.parcel;
       const u = (pc.u0 + pc.u1) / 2;
       const v = (pc.v0 + pc.v1) / 2;
@@ -271,7 +275,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       const e = edits[id];
       const base: PlaceFeature = {
         type: 'Feature', id, geometry: { type: 'Point', coordinates: uvToLngLat(u, v) },
-        properties: { building: l.id, lotId: l.id, name: it.name, kind: it.icon === 'club' ? 'club' : it.icon === 'pizza' ? 'food' : it.icon === 'motel' || it.icon === 'hotel' ? 'hotel' : 'shop', address: l.address, opened: l.builtYear, rotation: pc.front === 'v1' ? 180 : 0, footprint: { w: Math.round(pc.u1 - pc.u0), d: Math.round(pc.v1 - pc.v0) }, images: {}, located: 'approximate', source: 'From the game\'s own street grid (a generated or authored record with no researched location).' },
+        properties: { building: l.id, lotId: l.id, name: it.name, kind: it.vacant ? 'lot' : it.icon === 'house' ? 'house' : it.icon === 'club' ? 'club' : it.icon === 'pizza' ? 'food' : it.icon === 'motel' || it.icon === 'hotel' ? 'hotel' : 'shop', address: l.address, opened: l.builtYear, rotation: pc.front === 'v1' ? 180 : 0, footprint: { w: Math.round(pc.u1 - pc.u0), d: Math.round(pc.v1 - pc.v0) }, images: {}, located: 'approximate', source: 'From the game\'s own street grid (a generated or authored record with no researched location).' },
       };
       const f = e ? applyPlaceEdits({ [id]: e }, [base])[0] : base;
       const [uu, vv] = lngLatToUv(f.geometry.coordinates);
@@ -381,7 +385,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
         {placed.map((p) => {
           const it = p.it;
           const color = it ? (it.mine ? OWNER_COLOR.player : it.forSale ? OWNER_COLOR.sale : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private) : p.f.properties.establishment || p.f.properties.public ? '#c7a64a' : '#e8dfcb';
-          const label = (it?.name ?? p.f.properties.name).replace(/^The /, '');
+          const label = it?.vacant && it.lot ? `Lot for sale $${it.lot.price.toLocaleString('en-US')}` : (it?.name ?? p.f.properties.name).replace(/^The /, '');
           return <Building key={p.f.id} p={p} sel={sel === p.f.id} edit={edit} color={color} label={label.length > 26 ? `${label.slice(0, 25)}…` : label} hs={Math.max(3, vb.w / 90)} onDown={(e, mode) => onDown(e, mode, p)} />;
         })}
       </svg>

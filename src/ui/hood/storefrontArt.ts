@@ -1,4 +1,8 @@
 import type { AssetKey } from './art/assetUrls';
+import { RES_SEED } from '../../engine/hoodData';
+
+/** The town's houses: the painting the package chose for each one (by lot id). */
+const RES_ART: Record<string, string> = Object.fromEntries(RES_SEED.filter((r) => r.art).map((r) => [r.id, r.art!]));
 
 /**
  * Which of the user's storefront paintings stands for a building: by the
@@ -114,6 +118,8 @@ const BY_USE: Record<string, StorefrontArt | StorefrontArt[]> = {
   cottage: [{ key: 'cutout_seafoam_cottage' }, { key: 'cutout_a_frame_cottage' }, { key: 'cutout_shore_house' }, { key: 'cutout_house_yellow_beach' }],
   house: [{ key: 'cutout_seafoam_cottage' }, { key: 'cutout_shore_house' }, { key: 'cutout_house_yellow_beach' }, { key: 'cutout_white_shore_home' }, { key: 'cutout_red_victorian' }, { key: 'cutout_shingle_estate' }],
   duplex: [{ key: 'cutout_white_shore_home' }, { key: 'cutout_house_yellow_beach' }],
+  bungalow: [{ key: 'cutout_seafoam_cottage' }, { key: 'cutout_house_yellow_beach' }, { key: 'cutout_a_frame_cottage' }],
+  shorehouse: [{ key: 'cutout_red_victorian' }, { key: 'cutout_shingle_estate' }, { key: 'cutout_white_shore_home' }],
   // The old Victorians the summer help sleeps in.
   boarding: [{ key: 'cutout_victorian_boardinghouse' }, { key: 'cutout_red_victorian' }],
   boardinghouse: [{ key: 'cutout_victorian_boardinghouse' }, { key: 'cutout_red_victorian' }],
@@ -131,6 +137,9 @@ function h(s: string): number {
 export function storefrontArt(it: { key: string; name: string; useId?: string; vacant?: boolean; building?: boolean }): StorefrontArt | undefined {
   if (it.vacant || it.building) return undefined;
   for (const [re, a] of BY_NAME) if (re.test(it.name)) return a;
+  // A house of the town that still stands as the package painted it.
+  const res = RES_ART[it.key];
+  if (res && it.useId && /^(bungalow|cottage|house|duplex|shorehouse|rooming)$/.test(it.useId)) return { key: res as AssetKey };
   const u = it.useId ? BY_USE[it.useId] : undefined;
   if (!u) return undefined;
   return Array.isArray(u) ? u[h(it.key) % u.length] : u;

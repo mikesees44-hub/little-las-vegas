@@ -71,7 +71,7 @@ export interface HousingState {
   /** A family waiting on the Family's loan desk: what it means to do when the money comes. */
   wait: Record<string, { lot: string; use: string; app: string; w: number }>;
   /** At the start: empty house lots and houses (the caps are measured from these). */
-  init: { vacant: number; houses: number };
+  init: { vacant: number; houses: number; hh?: number; pop?: number };
   stats: HousingStats;
   lastMonth?: string;
 }
@@ -233,8 +233,8 @@ function peopleHouses(ctx: Ctx, L: LivingState, H: HousingState): void {
     n++;
     pop += hh.members.length;
   }
-  L.base.hh += n;
-  L.base.pop += pop;
+  H.init.hh = n;
+  H.init.pop = pop;
   H.peopled = 1;
 }
 
@@ -591,8 +591,8 @@ function monthly(ctx: Ctx, L: LivingState, H: HousingState): void {
   }
   // Newcomers: an empty house finds a family from off the island now and then (in season more).
   const emptyHouses = homeLots(s).filter((l) => l.use && l.stage === 'open' && !l.hh && l.status === 'sale').sort((a, b) => a.id.localeCompare(b.id));
-  const hhCount = Object.values(L.hh).filter((h) => h.gone === undefined).length;
-  if (emptyHouses.length && hhCount < L.base.hh * 1.4 && roll(L, s.week, 'newcomer') < (isInSeason(s.date) ? 0.6 : 0.3)) {
+  const hhCount = Object.values(L.hh).filter((h) => h.gone === undefined && !L.hoods.includes(h.hood)).length;
+  if (emptyHouses.length && hhCount < (H.init.hh ?? 150) * 1.4 && roll(L, s.week, 'newcomer') < (isInSeason(s.date) ? 0.6 : 0.3)) {
     const l = emptyHouses[Math.floor(roll(L, s.week, 'newcomer:which') * emptyHouses.length)];
     const hh = familyFor(ctx, L, l, true, 0);
     delete l.hh;

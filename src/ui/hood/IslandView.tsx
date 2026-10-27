@@ -337,7 +337,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   const buildings = useMemo(() => items.map((it) => { const g = overlay === 'category' ? groupOfItem(s, it) : undefined; return <Building key={it.key} it={it} c={ctx} sel={it.key === sel} tint={tintOf(s, it, overlay)} badge={g && tier >= 1 ? PROP_GROUP_BY_ID[g].icon : undefined} onPick={pick} />; }), [items, ctx, sel, overlay, s, pick, tier]);
   const labels = useMemo(() => (tier < 2 ? null : (
     <g style={{ pointerEvents: 'none' }} fontWeight="700" textAnchor="middle">
-      {items.filter((it) => it.icon).map((it) => {
+      {items.filter((it) => it.icon || (it.vacant && it.forSale && it.lot?.home)).map((it) => {
         const c = P(pr, (it.fp.u0 + it.fp.u1) / 2, it.fp.v0);
         const y = c[1] - (it.fp.h + (it.icon === 'pier' ? 36 : 6)) * pr.hz - 4;
         const ls = 10.5 / scB;

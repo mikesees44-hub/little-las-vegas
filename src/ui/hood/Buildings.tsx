@@ -75,7 +75,7 @@ export function itemsOf(s: GameState, parcels: Map<string, Parcel>, pr: Proj): I
     const icon = open || building ? iconOf(l) : l.status === 'lease' ? 'store' : undefined;
     const look = lookOf(s, l);
     const biz = l.bizId ? s.businesses.find((b) => b.id === l.bizId) : undefined;
-    const name = l.name ?? biz?.name ?? (l.use ? USES_BY_ID[l.use]?.name : l.status === 'lease' ? 'Storefront for rent' : 'Empty lot');
+    const name = l.name ?? biz?.name ?? (l.use ? USES_BY_ID[l.use]?.name : l.status === 'lease' ? 'Storefront for rent' : l.status === 'sale' ? `For sale: empty lot, $${l.price.toLocaleString('en-US')}` : 'Empty lot');
     out.push({
       key, lot: l, biz, parcel: p, fp: footprint(p, icon), icon, useId: l.use, name, style: look.style, sign: SIGN_HEX[look.sign],
       owner: mine ? 'player' : l.owner, mine, open, closed: open && placeCondition(l) === 'closed', building, progress: lotProgress(l),
@@ -294,7 +294,7 @@ export const Building = memo(function Building({ it, c, sel, tint, badge, onPick
     parts.push(<path key="lot" d={fpPoly} fill={lit('#f1dcae', m)} stroke={lit('#b89a68', m)} strokeWidth="0.8" strokeDasharray="3 2" />);
     if (it.forSale && tier >= 1) {
       const [x, y] = P(pr, fp.u0 + 6, fp.v0 + 4);
-      parts.push(<g key="fs"><path d={`M${x} ${y}v-9`} stroke="#5b4a3a" strokeWidth="0.7" /><rect x={x - 6} y={y - 14} width="12" height="5.5" fill={lit('#ffffff', m)} stroke="#c0392b" strokeWidth="0.6" />{tier >= 2 && <text x={x} y={y - 10} fontSize="2.6" textAnchor="middle" fill="#c0392b" fontWeight="700">FOR SALE</text>}</g>);
+      parts.push(<g key="fs"><path d={`M${x} ${y}v-9`} stroke="#5b4a3a" strokeWidth="0.7" /><rect x={x - 6} y={y - 14} width="12" height="5.5" fill={lit('#ffffff', m)} stroke="#c0392b" strokeWidth="0.6" />{tier >= 2 && <text x={x} y={y - 10} fontSize="2.6" textAnchor="middle" fill="#c0392b" fontWeight="700">FOR SALE</text>}{tier >= 2 && it.lot?.price ? <text x={x} y={y - 7.4} fontSize="2.1" textAnchor="middle" fill="#2a1f2e" fontWeight="700">${it.lot.price.toLocaleString('en-US')}</text> : null}</g>);
     }
   } else if (it.building) {
     const frame = lit('#c08a4a', m);

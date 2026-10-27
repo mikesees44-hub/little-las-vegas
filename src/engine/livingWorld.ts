@@ -1289,9 +1289,10 @@ function settleGrudge(ctx: Ctx, L: LivingState, p: Tp, target: string, x: Idx): 
 function startOpenBusiness(ctx: Ctx, L: LivingState, p: Tp, x: Idx): void {
   const s = ctx.s;
   p.cd.invest = x.week;
-  const hood = L.hh[p.hh]?.hood ?? L.hoods[0];
+  // A place of his own is opened in the simulated district (a family from the Crest opens on the Boardwalk).
+  const hood = L.hoods.includes(L.hh[p.hh]?.hood) ? L.hh[p.hh].hood : L.hoods[0];
   const zones = HOODS_BY_ID[hood].zones;
-  const lots = [...x.lots.values()].filter((l) => zones.includes(l.zone) && l.status === 'sale' && l.price > 0).sort((a, b) => a.price - b.price || a.id.localeCompare(b.id));
+  const lots = [...x.lots.values()].filter((l) => zones.includes(l.zone) && !l.home && l.status === 'sale' && l.price > 0).sort((a, b) => a.price - b.price || a.id.localeCompare(b.id));
   const l = lots[0];
   if (!l) return;
   const fid = fact(s, L, 'plans_biz', [p.id], `${pname(p)} has ${his(p)} eye on ${l.address}: ${he(p)} wants a place of ${his(p)} own.`, 1, { at: l.id, amt: l.price });
@@ -1310,8 +1311,8 @@ function openBusinessStage(ctx: Ctx, L: LivingState, p: Tp, x: Idx): boolean {
     closeStory(s, st, why);
   };
   if (!l || l.status !== 'sale') {
-    const hood = L.hh[p.hh]?.hood ?? L.hoods[0];
-    l = [...x.lots.values()].filter((y) => HOODS_BY_ID[hood].zones.includes(y.zone) && y.status === 'sale' && y.price > 0).sort((a, b) => a.price - b.price)[0];
+    const hood = L.hoods.includes(L.hh[p.hh]?.hood) ? L.hh[p.hh].hood : L.hoods[0];
+    l = [...x.lots.values()].filter((y) => HOODS_BY_ID[hood].zones.includes(y.zone) && !y.home && y.status === 'sale' && y.price > 0).sort((a, b) => a.price - b.price)[0];
     if (!l) { giveUp('Nothing he could buy came up.'); return false; }
     plan.target = l.id;
   }
@@ -1515,8 +1516,9 @@ function leaveDistrict(ctx: Ctx, L: LivingState, ps: Tp[], x: Idx, txt: string):
 /** A family with no work, no money and the bills piling up leaves; their debts go with them, unpaid (never forgotten). */
 function migrationMonth(ctx: Ctx, L: LivingState, x: Idx): void {
   const s = ctx.s;
+  // The district's own people (the town's house families elsewhere on the island are counted by housing.ts).
   let pop = 0;
-  for (const id in L.people) if (present(L.people[id], x.week)) pop++;
+  for (const id in L.people) if (present(L.people[id], x.week) && L.hoods.includes(L.hh[L.people[id].hh]?.hood)) pop++;
   for (const hh of Object.values(L.hh)) {
     if (hh.gone !== undefined) continue;
     const ms = presentMembers(L, hh, x.week);
@@ -1881,12 +1883,16 @@ export function districtTotals(s: GameState, L: LivingState, hood?: HoodId): Dis
   let people = 0, adults = 0, children = 0, employed = 0, unemployed = 0, workingOut = 0;
   for (const id in L.people) {
     const p = L.people[id];
-    if (!present(p, s.week) || !hoods.includes(L.hh[p.hh]?.hood)) continue;
-    people++;
+    if (!present(p, s.week)) continue;
+    const here = hoods.includes(L.hh[p.hh]?.hood);
     const a = ageOf(p, y, m);
+    // The district's positions are filled by whoever works them (a family from the Crest works the Boardwalk too).
+    if (a >= 18 && p.job && lotIds.has(p.job)) employed++;
+    if (!here) continue;
+    people++;
     if (a < 18) { children++; continue; }
     adults++;
-    if (p.job && lotIds.has(p.job)) employed++;
+    if (p.job && lotIds.has(p.job)) continue;
     else if (p.job === 'out') workingOut++;
     else if (!p.job && a < 66) unemployed++;
   }

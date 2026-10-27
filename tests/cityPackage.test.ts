@@ -127,7 +127,8 @@ describe('Wildwood through the package', () => {
     const s = newGame('pkg-lots');
     const r = reconcileHomeLots(s.econ!.lots);
     expect(r.missingSeeds).toEqual([]);
-    expect(r.matched).toBe(HD.SEED.length);
+    // Every package parcel seeds a lot: the 1960 records and the town's house lots.
+    expect(r.matched).toBe(HD.SEED.length + HD.RES_SEED.length);
     expect(r.generated).toBeGreaterThan(20);
   });
 
