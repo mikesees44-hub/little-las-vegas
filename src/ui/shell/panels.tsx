@@ -29,6 +29,7 @@ import { PowerPart } from '../power/PowerTab';
 import { TravellersPanel } from '../travel/Panels';
 import { RivalBoard } from './sections/RivalBoard';
 import { Succession } from '../house/Succession';
+import { ShadowCourt } from '../power/ShadowCourt';
 import { CouncilSeats } from '../borgata/CouncilSeats';
 import { CaposSection, MenRoster } from '../borgata/Capos';
 import { PlanNew } from './sections/PlanNew';
@@ -115,6 +116,7 @@ export const PANELS: PanelDef[] = [
       { id: 'houses', label: 'All the Houses', wide: true, blurb: 'Every family on the island and beyond: trees back to the old country, the living and the dead.', render: (s, c) => <HousesPanel s={s} selected={c.houseSel} onSelect={c.onHouseSel} /> },
       { id: 'marriages', label: 'Marriages & Children', render: (s) => <MarriagePanel s={s} /> },
       { id: 'succession', label: 'Succession', blurb: 'One place for the heir: the law, how he is named, who is pushing.', render: (s, c) => <Succession s={s} pendingLaw={c.pendingLaw} pendingHeir={c.pendingHeir} onLaw={c.onLaw} onHeir={c.onHeir} /> },
+      { id: 'court', label: 'The Succession', blurb: 'Who backs whom as far as you know it, the underboss\'s court, the promises you have heard of, and your moves.', render: (s) => <ShadowCourt s={s} /> },
       { id: 'activities', label: 'Activities', render: (s) => <ActivitiesPanel s={s} /> },
       { id: 'decisions', label: 'Decisions', render: (s) => <DecisionsPanel s={s} /> },
       { id: 'legacy', label: 'Legacy & Renown', render: (s) => <LegacyPanel s={s} /> },

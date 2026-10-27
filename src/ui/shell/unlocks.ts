@@ -42,6 +42,10 @@ const RULES: Record<string, (s: GameState) => boolean> = {
     const b = player(s);
     return ageOn(b.birth, s.date) >= 50 || b.health < 60 || !!s.power?.crisis || s.week >= 6;
   },
+  'house.court': (s) => {
+    const b = player(s);
+    return ageOn(b.birth, s.date) >= 50 || b.health < 60 || (s.shadow?.stats.learned ?? 0) > 0 || s.week >= 6;
+  },
   'house.legacy': (s) => (s.dyn?.renownTotal ?? 0) > 0 || s.week >= 8,
   'house.decisions': (s) => (s.dyn?.renownTotal ?? 0) > 0 || s.week >= 8,
   'house.houses': (s) => (s.dyn?.renownTotal ?? 0) > 0 || s.week >= 8,

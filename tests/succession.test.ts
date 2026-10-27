@@ -198,3 +198,21 @@ describe('in the full game', () => {
     for (const a of shadowActions(s)) expect(previewAction(s, a).title.length).toBeGreaterThan(3);
   });
 });
+
+describe('the Succession screen', () => {
+  it('renders, and shows only what the Don knows', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { ShadowCourt } = await import('../src/ui/power/ShadowCourt');
+    const s = runYears(build1975('acc-1'), 6);
+    const html = renderToString(createElement(ShadowCourt, { s }));
+    expect(html).toContain('data-testid="shadow-court"');
+    expect(html).toContain('data-testid="crew-support"');
+    const sh = s.shadow!;
+    // A decision the Don has not confirmed is never printed.
+    const hidden = sh.sessions.flatMap((x) => (donKnows(s, x.id) === 'confirmed' ? [] : x.petitions.map((p) => p.decision ?? ''))).filter((d) => d && !sh.sessions.some((y) => donKnows(s, y.id) === 'confirmed' && y.petitions.some((p) => p.decision === d)));
+    expect(hidden.length).toBeGreaterThan(0);
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    for (const d of hidden) expect(html).not.toContain(esc(d));
+  });
+});

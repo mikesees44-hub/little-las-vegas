@@ -58,7 +58,7 @@ export function shadowDrafts(s: GameState, role: 'underboss' | 'consigliere' | '
       const planted = S.plant && !S.plant.blown && S.plant.until >= s.week;
       const plantMan = crew(s).filter((m) => m.rank === 'soldier' && isFree(s, m) && m.id !== ub.id).sort((x, y) => x.id.localeCompare(y.id))[0];
       out.push({
-        id: 'court', charId: ub.id, priority: 500 + known.length * 60 + (known.some((x) => x.ses.auth === 'unauthorized') ? 300 : 0), topic: `${nameOf(s, ub.id)}'s court`, open,
+        id: 'court', charId: ub.id, about: [ub.id], priority: 500 + known.length * 60 + (known.some((x) => x.ses.auth === 'unauthorized') ? 300 : 0), topic: `${nameOf(s, ub.id)}'s court`, open,
         says: [
           `${nameOf(s, ub.id)} is holding his own court. ${known.length} meeting${known.length > 1 ? 's' : ''} I know of. ${a.don} petitions came to you in two months; at least ${a.ubKnown} went to him.`,
           `Men are going to ${nameOf(s, ub.id)} instead of you. Not a crime. Not nothing either.`,

@@ -108,7 +108,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
     { title: 'Your blood', items: [
       { keys: ['house.tree'], icon: '♔', label: 'Family tree', sub: 'Your wife, your children, your house.' },
       { keys: ['house.marriages'], icon: '♥', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
-      { keys: ['house.succession'], icon: '♕', label: 'Your heir', sub: 'Who takes over when you go, and the rule that decides it.' },
+      { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'] },
       { keys: ['house.activities'], icon: '✦', label: 'Dinners & outings', sub: 'Host a dinner, a feast, a trip: the guests think better of you.' },
       { keys: ['house.decisions'], icon: '➚', label: 'House ambitions', sub: 'Big moves for the house, what each takes and how close you are.' },
       { keys: ['house.legacy'], icon: '★', label: 'Legacy & renown', sub: 'What the house is known for, and renown to spend.' },
