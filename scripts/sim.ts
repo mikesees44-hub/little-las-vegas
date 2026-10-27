@@ -37,6 +37,9 @@ import { romanceActions } from '../src/engine/romance';
 import { polActions } from '../src/engine/politics';
 import { population } from '../src/engine/polPeople';
 import { minigameOf, randomMoves } from '../src/engine/minigames';
+import { districtTotals } from '../src/engine/livingWorld';
+import { finOf } from '../src/engine/crewFinance';
+import { purseMen } from '../src/engine/crewPurse';
 import { HEAT_BARS, type GameState, type PlayerAction, type PlayerChoices } from '../src/engine/types';
 import { familyCash, houseCash } from '../src/engine/tributeState';
 import { tributeActions } from '../src/engine/tributeOps';
@@ -335,6 +338,8 @@ interface GameResult {
   /** Steady earners (earners.ts): each business's weekly money (by id), whether it was somebody's earner, and the end state. */
   earn?: { weeks: Record<string, { kind: string; held: boolean; xs: number[] }>; holders: number; capos: number; boss: number };
   /** Dirty work: the jobs and their take (dirtyWork.ts), and everything else that came in. */
+  /** The living district (livingWorld.ts): start and end counts, its stats, and week timings. */
+  living?: { pop0: number; pop1: number; hh1: number; biz0: number; biz1: number; facts: number; asks: number; answered: number; stats: Record<string, number>; ms: number[]; finWorth: number[] };
   dirty?: { jobs: number; clean: number; messy: number; bust: number; pinched: number; rats: number; take: number; gross: number; byJob: Record<string, number> };
 }
 
@@ -346,6 +351,18 @@ function earnEnd(s: GameState, r: GameResult): void {
   r.earn.boss = earnerOf(s, s.playerId) ? 1 : 0;
 }
 
+function livingEnd(s: GameState, r: GameResult, ms: number[]): void {
+  const L = s.living;
+  if (!L) return;
+  const t = districtTotals(s, L);
+  r.living = {
+    pop0: L.base.pop, pop1: t.people, hh1: t.households, biz0: L.base.biz, biz1: Object.keys(L.biz).length, facts: L.stats.facts,
+    asks: L.stories.filter((x) => x.ask).length, answered: L.stories.filter((x) => x.ask?.ans && x.ask.ans !== 'capo').length,
+    stats: { ...L.stats } as unknown as Record<string, number>, ms,
+    finWorth: purseMen(s).map((c) => { const f = finOf(s, c.id); return Math.round(c.wealth + (f?.bank ?? 0) + (f?.assets.reduce((a, x) => a + x.value, 0) ?? 0) - (f?.loans.reduce((a, d) => a + d.out, 0) ?? 0)); }),
+  };
+}
+
 function playOne(gi: number): GameResult {
   const r: GameResult = {
     bankruptYear1: false, redStreakY1: 0, bankruptEver: false, everNegative: false, treasuryByYear: [], bossDeaths: 0, successions: 0,
@@ -354,6 +371,7 @@ function playOne(gi: number): GameResult {
     hierarchyErrors: [], houseErrors: [], crew: { defections: 0, coups: 0, flips: 0, makings: 0, rivalCrewMoves: 0 }, popupKeys: {}, repeats: 0, familyOver: 0, titles: {}, packPopups: 0, mg: {},
   };
   const lastSeen: Record<string, number> = {};
+  let weekMs: number[] | undefined;
   let s: GameState;
   try {
     const custom = (hashSeed(`${SEED}-${gi}:custom`) % 1000) / 1000 < CUSTOM_RATE ? randomCharOptions(`${SEED}-${gi}`, START) : undefined;
@@ -399,7 +417,9 @@ function playOne(gi: number): GameResult {
     for (const a of ch.actions ?? []) r.orders[a.kind] = (r.orders[a.kind] ?? 0) + 1;
     if (LEDGER) for (const a of ch.actions ?? []) orderTap(s.week, a.kind === 'order' ? `order:${a.key}` : 'op' in a && a.op && typeof a.op === 'object' ? `${a.kind}:${String(Object.values(a.op)[0])}` : a.kind, previewAction(s, a).cost);
     try {
+      const t0w = performance.now();
       res = advanceWeek(s, ch);
+      (weekMs ??= []).push(performance.now() - t0w);
     } catch (e) {
       const msg = (e as Error).message;
       if (/reconcile/.test(msg)) r.unexplained.push(msg);
@@ -530,6 +550,7 @@ function playOne(gi: number): GameResult {
   if (s!.crewStats) r.crew = { ...s!.crewStats };
   r.finalBusinesses = s!.businesses.filter((b) => b.owner === 'player').length;
   earnEnd(s!, r);
+  livingEnd(s!, r, weekMs ?? []);
   if (s!.travel) r.travel = { ...s!.travel.stats };
   if (s!.dyn) r.dyn = { ...s!.dyn.stats, renown: s!.dyn.renownTotal };
   if (s!.lineage) {
@@ -825,6 +846,22 @@ const checks = [
   ['no week with more than one family popup', results.every((r) => r.familyOver === 0)],
   ['no hierarchy integrity errors', hier.length === 0],
 ] as const;
+{
+  const lv = results.map((r) => r.living).filter((x): x is NonNullable<GameResult['living']> => !!x);
+  if (lv.length) {
+    const ms = lv.flatMap((x) => x.ms).sort((a, b) => a - b);
+    const sum = (k: string) => lv.reduce((a, x) => a + (x.stats[k] ?? 0), 0);
+    const worth = lv.flatMap((x) => x.finWorth);
+    console.log(`\nTHE LIVING BOARDWALK (B12-B14, B32)`);
+    console.log(`  People start → end:         ${lv.map((x) => `${x.pop0}→${x.pop1}`).join(', ')}`);
+    console.log(`  Businesses start → end:     ${lv.map((x) => `${x.biz0}→${x.biz1}`).join(', ')}`);
+    console.log(`  Facts per week:             ${(lv.reduce((a, x) => a + x.facts, 0) / Math.max(1, results.reduce((a, r) => a + r.weeksPlayed, 0))).toFixed(1)}`);
+    console.log(`  Per game: marriages ${(sum('marriages') / lv.length).toFixed(1)}, births ${(sum('births') / lv.length).toFixed(1)}, deaths ${(sum('deaths') / lv.length).toFixed(1)}, loans ${(sum('loans') / lv.length).toFixed(1)}, defaults ${(sum('defaults') / lv.length).toFixed(1)}, opened ${(sum('opened') / lv.length).toFixed(1)}, closed ${(sum('closed') / lv.length).toFixed(1)}, sold ${(sum('sold') / lv.length).toFixed(1)}, skims ${(sum('skims') / lv.length).toFixed(1)}, thefts ${(sum('thefts') / lv.length).toFixed(1)}, affairs ${(sum('affairs') / lv.length).toFixed(1)}, revenge ${(sum('revenge') / lv.length).toFixed(1)}`);
+    console.log(`  Requests brought to the boss: ${lv.reduce((a, x) => a + x.asks, 0)} (${lv.reduce((a, x) => a + x.answered, 0)} answered by him)`);
+    console.log(`  Crew net worth (all men):   p10 ${money(quantile(worth, 0.1))}, median ${money(quantile(worth, 0.5))}, p90 ${money(quantile(worth, 0.9))}`);
+    console.log(`  Week time (whole engine):   p50 ${quantile(ms, 0.5).toFixed(1)} ms, p95 ${quantile(ms, 0.95).toFixed(1)} ms, max ${ms[ms.length - 1].toFixed(1)} ms over ${ms.length} weeks`);
+  }
+}
 console.log(`\nTARGETS`);
 for (const [name, ok] of checks) console.log(`  [${ok ? 'PASS' : 'FAIL'}] ${name}`);
 

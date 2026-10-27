@@ -1,3 +1,4 @@
+import { netWorthOf } from '../src/engine/crewFinance';
 import { describe, expect, it } from 'vitest';
 import { advanceWeek } from '../src/engine/engine';
 import { CAR_PRICE, earningsBoard, HOUSE_DOWN, linesOf, purseOf, upToCollected } from '../src/engine/crewPurse';
@@ -23,9 +24,8 @@ describe("the men's own money", () => {
     for (const rank of ['capo', 'soldier', 'associate'] as const) {
       const men = crew(s).filter((c) => c.rank === rank && start.characters[c.id]);
       expect(men.length).toBeGreaterThan(0);
-      // What he put by: a car or a house bought out of savings in these weeks is still his (as below).
-      const bought = (id: string) => { const l = t.life?.[id]; return ((l?.car ?? -1) >= start.week ? CAR_PRICE : 0) + ((l?.house ?? -1) >= start.week ? HOUSE_DOWN : 0); };
-      expect(median(men.map((c) => c.wealth + bought(c.id) - start.characters[c.id].wealth))).toBeGreaterThan(0);
+      // What he is worth: cash, the bank, his house and stakes, less what he owes (crewFinance.ts).
+      expect(median(men.map((c) => netWorthOf(s, c.id) - start.characters[c.id].wealth))).toBeGreaterThan(0);
       // Each of them kept something in the open over the last weeks.
       expect(men.filter((c) => purseOf(s, c.id).reduce((a, r) => a + r.kept, 0) > 0).length).toBeGreaterThanOrEqual(Math.ceil(men.length / 2));
     }

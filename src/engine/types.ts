@@ -555,7 +555,9 @@ export type Effect =
   /** The weekly take (tributeOps.ts). */
   | ({ type: 'tribute'; op: import('./tributeOps').TributeOp } & EffectBase)
   /** The Ears: the Madam, the nightlife workers, the connection web (ears.ts). */
-  | ({ type: 'ears'; op: EarsOp } & EffectBase);
+  | ({ type: 'ears'; op: EarsOp } & EffectBase)
+  /** The living district: requests from its people, asking around, help (livingAsk.ts). */
+  | ({ type: 'living'; op: import('./livingAsk').LivingOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -891,6 +893,8 @@ export interface GameState {
   hood?: HoodState;
   /** Towns away from home that someone of yours has visited: their lots, materialized from the town package (towns.ts; optional for old saves). */
   towns?: Record<string, TownState>;
+  /** The living neighborhood: townsfolk, households, businesses, debts, the world-event ledger, causal stories (livingState.ts; optional for old saves). */
+  living?: import('./livingState').LivingState;
   /** Talks with people, pacts with families, the families' own diplomacy (talks.ts; optional for old saves). */
   talks?: TalkState;
   /** The Mission Board's cases (missions.ts; optional for old saves). */
@@ -986,6 +990,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'order'; key: string; via: OrderVia }
   | { kind: 'econ'; op: EconAction }
   | { kind: 'hood'; op: HoodAction }
+  /** The living district (livingAsk.ts): ask around about someone, help a family. */
+  | { kind: 'living'; op: import('./livingAsk').LivingAction }
   | { kind: 'talk'; op: TalkOp }
   | { kind: 'mission'; op: MissionOp }
   | { kind: 'travel'; op: TravelAction }

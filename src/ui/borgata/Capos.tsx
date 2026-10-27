@@ -1,3 +1,6 @@
+import { seenSkim, seenWealth } from '../../engine/crewFinance';
+import { purseFlags } from '../../engine/crewPurse';
+import { getSettings } from '../settings';
 import { previewAction } from '../../engine/actions';
 import { capos, crew, displayName, isFree } from '../../engine/characters';
 import { capoDistrict } from '../../engine/candidates';
@@ -8,7 +11,6 @@ import { regime } from '../../engine/hierarchy';
 import { opinion } from '../../engine/relations';
 import { ageOn } from '../../engine/calendar';
 import type { Character, GameState, PlayerAction, Rank, Seat } from '../../engine/types';
-import { fmt$ } from '../format';
 import { OpinionBadge } from '../components/CrewList';
 import { useOrders } from '../components/Orders';
 import { CharLink, Face, TraitIcons } from '../components/People';
@@ -79,7 +81,7 @@ export function CaposSection({ s }: { s: GameState }) {
             <Face s={s} c={c} size={40} />
             <div className="min-w-0 flex-1">
               <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs font-normal text-stone-500">{d ? `holds ${d.name}` : 'no district'}</span></div>
-              <div className="text-[11px] text-stone-400">skims ~{Math.round(skimRate(s, c) * 100)}% · his own money {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
+              <div className="text-[11px] text-stone-400">{seenSkim(s, c, purseFlags(s, c), !!getSettings().devIds, skimRate(s, c))} · his own money {seenWealth(s, c, !!getSettings().devIds)} · {regime(s, c.id).length} men</div>
               <TraitIcons c={c} />
             </div>
             <ContractStepper s={s} c={c} />
@@ -111,7 +113,7 @@ export function MenRoster({ s }: { s: GameState }) {
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm"><CharLink s={s} id={c.id}>{displayName(c)}</CharLink>{c.dynasty && <span className="ml-1 text-gold-400" title="Member of the house">♦</span>}</div>
                 <div className="text-[11px] text-stone-400">
-                  <span className="capitalize">{c.specialty ? SPECIALTY_INFO[c.specialty].name : c.rank}</span>{seat && <> · {SEAT_INFO[seat as Seat].name}</>} · {ageOn(c.birth, s.date)} · {fmt$(c.wealth)}
+                  <span className="capitalize">{c.specialty ? SPECIALTY_INFO[c.specialty].name : c.rank}</span>{seat && <> · {SEAT_INFO[seat as Seat].name}</>} · {ageOn(c.birth, s.date)} · {seenWealth(s, c, !!getSettings().devIds)}
                   {!c.specialty && <> · <span className="text-stone-300">{POLICY_LABEL[c.policy ?? 'tax']}</span></>}
                   {(c.defectStage ?? 0) > 0 && <span className="text-red-400"> · ⚠ drifting</span>}
                   {!isFree(s, c) && <span className="text-red-400"> · jailed to wk {c.imprisonedUntil}</span>}

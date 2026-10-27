@@ -35,6 +35,7 @@ import { CouncilSeats } from '../borgata/CouncilSeats';
 import { CaposSection, MenRoster } from '../borgata/Capos';
 import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
+import { Happening } from '../town/Happening';
 import { Feed } from './Feed';
 import { WalkLauncher } from '../hood/WalkLauncher';
 import { GoodLifePanel } from '../econ/GoodLife';
@@ -181,6 +182,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'case', label: 'Your Case', blurb: 'The government\'s case against the boss, from a file to a trial, and the fugitive road.', render: (s) => <LawPanel s={s} /> },
       { id: 'cityhall', label: 'City Hall & People', wide: true, render: (s) => <CityHall s={s} /> },
+      { id: 'happening', label: 'What\'s happening', blurb: 'The Boardwalk\'s people living their own lives: the stories going on, the talk of the street, and the people, as far as you know.', render: (s) => <Happening s={s} /> },
       { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => <HoodDashboard s={s} /> },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'night', label: 'The Night', blurb: 'The Madam, the Ears who hear everything, and the men who exploit women. Set-ups and reports only; she always decides.', render: (s) => <NightPanel s={s} /> },

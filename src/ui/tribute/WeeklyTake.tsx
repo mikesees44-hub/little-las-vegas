@@ -1,3 +1,4 @@
+import { seenWealth } from '../../engine/crewFinance';
 import { useState, type ReactNode } from 'react';
 import { FirstSettlement } from '../components/EmptyState';
 import { Guard } from '../components/Guard';
@@ -136,7 +137,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
           <div className="mt-3 text-[10px] uppercase tracking-widest text-stone-500">Individual accounts: the crew</div>
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[420px]"><tbody>
             {crew(s).filter((c) => c.rank !== 'civilian').sort((x, y) => y.wealth - x.wealth).slice(0, 30).map((c) => (
-              <tr key={c.id} className="border-t border-noir-800"><td><CharLink s={s} id={c.id} /> <span className="text-stone-500">{c.rank}</span></td><td className="text-stone-400">{c.rank === 'capo' ? `keeps ${Math.round((c.keep ?? 0.3) * 100)}%` : c.rank === 'underboss' ? `${t.ub.rateBp / 100}% of the take` : c.rank === 'consigliere' ? 'a wage' : memberTerms(s, c).text}</td><td className="text-right tabular-nums">{fmt$(c.wealth)}</td><td className="text-right tabular-nums text-red-300">{(t.arrears[c.id] ?? 0) + (c.arrears ?? 0) ? fmt$((t.arrears[c.id] ?? 0) + (c.arrears ?? 0)) : ''}</td></tr>
+              <tr key={c.id} className="border-t border-noir-800"><td><CharLink s={s} id={c.id} /> <span className="text-stone-500">{c.rank}</span></td><td className="text-stone-400">{c.rank === 'capo' ? `keeps ${Math.round((c.keep ?? 0.3) * 100)}%` : c.rank === 'underboss' ? `${t.ub.rateBp / 100}% of the take` : c.rank === 'consigliere' ? 'a wage' : memberTerms(s, c).text}</td><td className="text-right tabular-nums">{seenWealth(s, c, !!getSettings().devIds)}</td><td className="text-right tabular-nums text-red-300">{(t.arrears[c.id] ?? 0) + (c.arrears ?? 0) ? fmt$((t.arrears[c.id] ?? 0) + (c.arrears ?? 0)) : ''}</td></tr>
             ))}
           </tbody></table></div>
           {Object.keys(t.allowances).length > 0 && <div className="mt-2 text-[11px] text-stone-400">Allowances from your own money: {Object.entries(t.allowances).map(([id, w]) => `${s.characters[id]?.firstName ?? '?'} ${fmt$(w)}/wk`).join(' · ')}</div>}

@@ -7,6 +7,7 @@ import { countKind, isOpen, newBusiness, owned, playerSlots } from './business';
 import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
 import { commitEcon, econActions, previewEcon } from './econ';
 import { commitHood, hoodActions, previewHood } from './hood';
+import { previewLiving } from './livingAsk';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
@@ -249,6 +250,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   econ: {
     preview: (s, a) => previewEcon(s, a.op),
     commit: (ctx, a) => commitEcon(ctx, a.op),
+  },
+  /** The living district (livingAsk.ts): ask around about someone, help a family. */
+  living: {
+    preview: (s, a) => previewLiving(s, a.op),
   },
   /** The neighborhoods (hood.ts): restyle a place you own. */
   hood: {
