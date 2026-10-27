@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ACTION_ENTRIES } from '../src/ui/shell/actionEntries';
 import { HOME_IDS, LEGACY_TAB_ROUTE } from '../src/ui/shell/routes';
-import { itemOf, NAV_ONLY, NAV_TREE, REGISTRY_KEYS, resolveRoute } from '../src/ui/shell/nav';
+import { itemOf, NAV_ITEMS, NAV_ONLY, NAV_TREE, REGISTRY_KEYS, resolveRoute } from '../src/ui/shell/nav';
 
 /**
  * The declutter guard (TAB_AUDIT.md): screens and buttons were combined, but
@@ -150,4 +150,9 @@ describe('declutter: one home per screen, old routes land', () => {
       expect(itemOf(r.key!)!.keys, k).toContain(r.key);
     }
   });
+  it('fewer places than before (52 → 35), and no home over ten', () => {
+    expect(NAV_ITEMS.length).toBeLessThanOrEqual(35);
+    for (const h of HOME_IDS) expect(NAV_TREE[h].flatMap((g) => g.items).length, h).toBeLessThanOrEqual(10);
+  });
+
 });

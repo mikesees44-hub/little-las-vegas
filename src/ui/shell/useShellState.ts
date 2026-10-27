@@ -73,7 +73,7 @@ export function useShellState(s: GameState, orders: PlayerAction[], sheetId?: st
   const open = (k: string) => unlocked.has(k) || (NAV_ONLY as readonly string[]).includes(k);
   /** A home's places open to this boss (an item shows when any of its views is open; a hidden view stays hidden). */
   const groupsOf = (home: HomeId): NavGroup[] => NAV_TREE[home]
-    .map((g) => ({ ...g, items: g.items.filter((it) => it.keys.some(open)).map((it) => (it.keys.every(open) ? it : { ...it, keys: it.keys.filter(open), views: it.views?.filter((_, i) => open(it.keys[i])) })) }))
+    .map((g) => ({ ...g, items: g.items.filter((it) => it.keys.some(open)).map((it) => (it.keys.every(open) ? it : { ...it, id: it.keys.find(open)!, keys: it.keys.filter(open), views: it.views?.filter((_, i) => open(it.keys[i])) })) }))
     .filter((g) => g.items.length > 0);
   const dots = new Set(fresh.map((k) => itemOf(k)?.home).filter((h): h is HomeId => !!h));
   return {

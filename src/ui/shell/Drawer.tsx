@@ -96,7 +96,8 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   const def = HOMES_BY_ID[home];
   const items = groups.flatMap((g) => g.items);
   const item = sel ? itemOf(sel) : undefined;
-  const cur = item && items.includes(item) ? item : undefined;
+  // The home's own copy of the place (its views filtered to what is open to this boss).
+  const cur = item ? items.find((x) => x === item || x.id === item.id || x.keys.includes(sel!)) : undefined;
   const key = cur ? (cur.keys.includes(sel!) ? sel! : cur.keys[0]) : undefined;
   const body = useRef<HTMLDivElement>(null);
   // Escape closes the drawer only when nothing nearer (a popover, a sheet, a menu) is open.
@@ -162,7 +163,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
                 ))}
               </div>
             )}
-            <p className="mb-3 text-xs text-stone-500">{sec?.blurb && cur.keys.length === 1 && sec.blurb.length > cur.sub.length ? sec.blurb : cur.sub}</p>
+            <p className="mb-3 text-xs text-stone-500">{sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub}</p>
             <Guard label={cur.label} resetKey={`${home}:${key}`}>{extras[key!] ?? (sec ? sec.render(s, ctx) : null)}</Guard>
           </>
         )}
