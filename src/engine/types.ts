@@ -893,6 +893,8 @@ export interface GameState {
   hood?: HoodState;
   /** Towns away from home that someone of yours has visited: their lots, materialized from the town package (towns.ts; optional for old saves). */
   towns?: Record<string, TownState>;
+  /** Places added from the town editor's "Add a Place" into this game, by stable id (addPlace.ts; optional for old saves). */
+  addedPlaces?: import('./addPlace').AddedPlaces;
   /** The living neighborhood: townsfolk, households, businesses, debts, the world-event ledger, causal stories (livingState.ts; optional for old saves). */
   living?: import('./livingState').LivingState;
   /** Talks with people, pacts with families, the families' own diplomacy (talks.ts; optional for old saves). */

@@ -1,7 +1,7 @@
 import type { ZoneId } from './econState';
 import type { BuildStyle, SignColor } from './design';
 import type { FactionId } from './types';
-import { profileAt } from './cityPackage';
+import { occupantIn, occupantsOf, profileAt } from './cityPackage';
 import { WILDWOOD_PACKAGE as PKG } from '../worldpack/cities';
 
 /**
@@ -140,9 +140,12 @@ export const ZONE_RUNS: Partial<Record<ZoneId, Run[]>> = (() => {
  */
 export type SeedRow = [string, ZoneId, RunId, string, 'a' | 'b' | 'w' | 0 | 1 | 2, string, string, 'private' | 'rival' | 'sale' | 'lease' | 'public', FactionId | 'private' | 'city', string, BuildStyle, SignColor, number, number];
 
-const BIZ_ON = new Map(PKG.businesses.map((b) => [b.parcelId, b]));
-export const SEED: SeedRow[] = PKG.parcels.filter((x) => x.slot && x.market).map((x) => {
-  const b = BIZ_ON.get(x.id)!;
+/** The year the 1960 records are written for (a later occupant takes over in play: hoodState.syncHomeOccupants). */
+export const SEED_YEAR = 1960;
+/** A parcel's main occupant in 1960 (else its first); a business sharing the property never is. */
+const primaryOf = (id: string) => occupantIn(PKG, id, SEED_YEAR) ?? occupantsOf(PKG, id)[0];
+export const SEED: SeedRow[] = PKG.parcels.filter((x) => x.slot && x.market && primaryOf(x.id)).map((x) => {
+  const b = primaryOf(x.id)!;
   const st = x.structure!;
   return [x.id, x.zone as ZoneId, x.slot!.run as RunId, x.slot!.cross, x.slot!.half, b.use, b.name, x.market!.status, x.market!.owner as FactionId | 'private' | 'city', b.operator ?? '', st.style as BuildStyle, st.sign as SignColor, st.built!, st.condition!];
 });
