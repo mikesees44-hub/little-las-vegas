@@ -4,6 +4,7 @@ import { sameOrder } from './verbs';
 import { clockSpaceAllowed, shortcutBlocked } from './keys';
 import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
+import { ConfirmOrder } from './components/ConfirmOrder';
 import { HousesNavContext } from './houses/nav';
 import { alerts as computeAlerts } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
@@ -26,7 +27,7 @@ import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings, helpLevel, OFFICE_HOME_FLAG, pausesOn, timeMode, weekStart } from './settings';
+import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, pausesOn, timeMode, weekStart } from './settings';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { minigameOf, opensScene } from '../engine/minigames';
@@ -136,7 +137,9 @@ export function App({ startOn = 'title' }: AppProps) {
   const lastQueued = useRef<{ a: PlayerAction; at: number } | undefined>(undefined);
   const ordersApi = useMemo(() => ({
     orders,
-    queue: (a: PlayerAction) => {
+    queue: (a: PlayerAction, confirmed?: boolean) => {
+      // "Are you sure?" first (Settings › Confirm orders); tests and the double-click guard skip it.
+      if (!confirmed && getSettings().confirmOrders !== false && import.meta.env.MODE !== 'test') { setConfirm(a); return; }
       // A double click is one order: the same order again within a moment is ignored.
       const now = Date.now();
       if (lastQueued.current && now - lastQueued.current.at < 600 && sameOrder(lastQueued.current.a, a)) return;
@@ -154,6 +157,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }), [orders]);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
+  const [confirm, setConfirm] = useState<PlayerAction | undefined>();
   const closeToast = useCallback(() => setToast(undefined), []);
   const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number; category?: string } | undefined>();
   const sheetApi = useMemo(() => ({
@@ -759,6 +763,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
+      {confirm && <ConfirmOrder s={s} action={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} onNeverAsk={() => { setSettings({ confirmOrders: false }); const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }}
         onApprove={() => { setOrders((o) => o.map((x, j) => (j === toast.index ? { ...x, fund: 'family' } : x))); setToast({ ...toast, action: { ...toast.action, fund: 'family' }, short: 0, at: Date.now() }); }} />}
       </EmpireHost>

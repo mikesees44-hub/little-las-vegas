@@ -27,6 +27,8 @@ export interface Settings {
   pauseOnEvening?: boolean;
   /** Developer inspector: show the engine's internal ids (agreements) next to their names. */
   devIds?: boolean;
+  /** Ask "Are you sure?" before an order is given (default on). */
+  confirmOrders?: boolean;
   /** How much the game explains: Guided (every tip, briefings on big moves), Standard, Experienced (quiet). */
   helpLevel?: HelpLevel;
   /** Adviser briefings that open by themselves: on big moves (default), on everything, or only when asked. */
