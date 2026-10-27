@@ -136,6 +136,9 @@ export function purseWeek(ctx: Ctx, rep: TributeReport): void {
     const prev = t.purse[c.id] ?? [];
     const avg = (prev.reduce((a, r) => a + r.kept, 0) + k) / (prev.length + 1);
     const spent = live(ctx, t, c, life, k, avg);
+    // His own financial life (savings, the mortgage, loans between the men, a stake in a business: crewFinance.ts),
+    // before the week's row is written, so the row's money is what he has at the end of the week.
+    if (c.alive) financeWeek(ctx, c, life, k, spent);
     const row: PurseWeek = { w: s.week, earned: l.earned, owed: l.owed, up: l.up, short: l.short, kept: k, spent, wealth: Math.round(c.wealth) };
     const rows = (t.purse[c.id] ??= []);
     if (rows.length && rows[rows.length - 1].w === s.week) rows[rows.length - 1] = row;
@@ -145,8 +148,6 @@ export function purseWeek(ctx: Ctx, rep: TributeReport): void {
     life.up += l.up;
     life.kept += k;
     life.spent += spent;
-    // His own financial life: savings, the mortgage, loans between the men, a stake in a business (crewFinance.ts).
-    if (c.alive) financeWeek(ctx, c, life, k, spent);
   }
   // The dead and the departed: their purses close (the heir's inheritance is the dynasty's business).
   for (const id of Object.keys(t.purse)) if (!alive.has(id)) delete t.purse[id];

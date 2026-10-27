@@ -246,7 +246,7 @@ function financeMonth(ctx: Ctx, c: Character, life: PurseLife, fin: FinLife): vo
     const down = Math.round(price * 0.25);
     if (c.wealth + fin.bank >= down + need * 10 && roll(s, c.id, 'home') < 0.35) {
       if (c.wealth < down) fin.bank -= mv(ctx, 'ext:bank', `wealth:${c.id}`, Math.min(fin.bank, down - c.wealth), `hdraw:${c.id}`, `${c.firstName} ${c.lastName} draws on his savings`);
-      const got = mv(ctx, `wealth:${c.id}`, 'ext:life:a house', down, `home:${c.id}`, `${c.firstName} ${c.lastName}: down payment on a house`);
+      const got = mv(ctx, `wealth:${c.id}`, 'ext:realty', down, `home:${c.id}`, `${c.firstName} ${c.lastName}: down payment on a house`);
       if (got >= down) {
         life.house = s.week;
         life.last = 'bought a house';
@@ -264,7 +264,7 @@ function financeMonth(ctx: Ctx, c: Character, life: PurseLife, fin: FinLife): vo
   if ((fin.goal === 'business' || fin.risk >= 60) && liquid >= 2500 && stakes < 2 && roll(s, c.id, 'stake') < 0.25) takeStake(ctx, c, fin, liquid);
   // A gambler's lucky night now and then (varied outcomes, paid by the track).
   if (fin.risk >= 70 && c.wealth > 100 && roll(s, c.id, 'luck') < 0.06) {
-    const won = mv(ctx, 'ext:life:the track', `wealth:${c.id}`, Math.round(200 + roll(s, c.id, 'won') * 1800), `won:${c.id}`, `${c.firstName} ${c.lastName} hits at the track`);
+    const won = mv(ctx, 'ext:track', `wealth:${c.id}`, Math.round(200 + roll(s, c.id, 'won') * 1800), `won:${c.id}`, `${c.firstName} ${c.lastName} hits at the track`);
     if (won) note(fin, s.week, `hit big at the track ($${won.toLocaleString('en-US')})`, won, 1);
   }
 }
@@ -430,4 +430,16 @@ export function seenSkim(s: GameState, c: Character, flags: string[], dev = fals
   if (k && k.week >= 0) return k.skimming ? `caught skimming ($${k.shortfall.toLocaleString('en-US')})` : 'his books checked out';
   if (flags.includes('above')) return 'lives above his envelope (talk)';
   return 'no sign of a skim';
+}
+
+/** A man's own money: cash in hand and what he has in the bank (not his house, his car or his stakes). */
+export function ownTotal(s: GameState, id: string): number {
+  return Math.round((s.characters[id]?.wealth ?? 0) + (finOf(s, id)?.bank ?? 0));
+}
+
+/** What he is worth: his own money, plus his house, car, stakes and notes, less what he owes. */
+export function netWorthOf(s: GameState, id: string): number {
+  const f = finOf(s, id);
+  const life = s.tribute?.life?.[id];
+  return Math.round(ownTotal(s, id) + (f?.assets.reduce((a, x) => a + x.value, 0) ?? 0) - (f?.loans.reduce((a, d) => a + d.out, 0) ?? 0) - (life?.debt ?? 0));
 }

@@ -33,14 +33,15 @@ export function FinancialLife({ s, c }: { s: GameState; c: Character }) {
   const v = finView(s, c, dev);
   const dealings = characterDealings(s, c.id, 6);
   const sec = (title: string, rows: { text: string; label: Label }[], empty: string) => (
-    <div>
-      <div className="text-[10px] uppercase tracking-widest text-stone-500">{title}</div>
+    <details className="group" open={rows.length > 0 && rows.length <= 3}>
+      <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-stone-500">{title} <span className="normal-case tracking-normal text-stone-600">({rows.length ? `${rows.length} known` : 'nothing known'}) · More…</span></summary>
       {rows.length ? <ul>{rows.map((r, i) => <Line key={i} text={r.text} label={r.label} />)}</ul> : <div className="text-xs text-stone-500">{empty}</div>}
-    </div>
+    </details>
   );
   return (
     <section className="space-y-2" data-testid="financial-life">
       <div className="panel-title">Financial life</div>
+      <div className="text-[11px] text-stone-500">What you know of his money. <span className="text-emerald-300">Verified</span>: in the envelope's books or plain to see. <span className="text-sky-300">Reported</span>: someone told you. <span className="text-amber-300">Rumor</span>: talk. <span className="text-stone-400">Estimate</span>: your own read.</div>
       <ul>
         <Line text={`Cash: ${v.cash.text}`} label={v.cash.label} />
         {v.savings && <Line text={v.savings.text} label={v.savings.label} />}
@@ -51,10 +52,10 @@ export function FinancialLife({ s, c }: { s: GameState; c: Character }) {
       {sec('What he owns', v.assets, 'Nothing you know of.')}
       {sec('What he owes', v.debts, 'Nothing you know of.')}
       {v.hist.length > 0 && (
-        <div>
-          <div className="text-[10px] uppercase tracking-widest text-stone-500">Big money moments</div>
-          <ul>{v.hist.slice(0, 8).map((h, i) => <li key={i} className="text-xs text-stone-300"><span className="text-stone-500 tabular-nums">{formatDate(dateOfWeek(Math.max(1, h.w)))}</span> — {h.text}<Tag l={h.label} /></li>)}</ul>
-        </div>
+        <details open={v.hist.length <= 3}>
+          <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-stone-500">Big money moments <span className="normal-case tracking-normal text-stone-600">({v.hist.length}) · More…</span></summary>
+          <ul>{v.hist.map((h, i) => <li key={i} className="text-xs text-stone-300"><span className="text-stone-500 tabular-nums">{formatDate(dateOfWeek(Math.max(1, h.w)))}</span> — {h.text}<Tag l={h.label} /></li>)}</ul>
+        </details>
       )}
       {dealings.length > 0 && (
         <div>

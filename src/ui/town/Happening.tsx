@@ -22,6 +22,24 @@ type Tab = 'stories' | 'talk' | 'people';
 
 const when = (w: number) => formatDate(dateOfWeek(Math.max(1, w)));
 
+/** A short list first; everything else one tap away (nothing is hidden for good). */
+function More<T>({ items, first, render, label }: { items: T[]; first: number; render: (x: T, i: number) => JSX.Element; label: string }) {
+  const [open, setOpen] = useState(false);
+  const shown = open ? items : items.slice(0, first);
+  return (
+    <>
+      {shown.map(render)}
+      {items.length > first && (
+        <li className="list-none">
+          <button type="button" className="text-[11px] text-gold-400 underline decoration-dotted underline-offset-2" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="living-more">
+            {open ? 'Show less' : `More… (${items.length - first} more ${label})`}
+          </button>
+        </li>
+      )}
+    </>
+  );
+}
+
 export function SeenChip({ seen }: { seen: Seen }) {
   const cls = seen.lvl === 'public' ? 'border-stone-600 text-stone-400' : seen.lvl === 'confirmed' ? 'border-emerald-700 text-emerald-300' : 'border-amber-700 text-amber-300';
   const word = seen.lvl === 'public' ? 'Public' : seen.lvl === 'confirmed' ? 'Confirmed' : 'Rumor';
@@ -58,7 +76,7 @@ function StoryCard({ s, v, onPerson }: { s: GameState; v: StoryView; onPerson: (
         <span className={`text-[10px] uppercase tracking-widest ${v.open ? 'text-gold-400' : 'text-stone-500'}`}>{v.open ? 'Going on' : 'Over'}</span>
       </header>
       <ol className="mt-1 space-y-1">
-        {v.beats.map((b, i) => (
+        <More items={v.beats} first={3} label={v.beats.length - 3 === 1 ? 'step' : 'steps'} render={(b, i) => (
           <li key={b.id} className="text-[13px] text-stone-300 flex gap-2">
             <span className="text-stone-600 tabular-nums shrink-0">{i === 0 ? '•' : '→'}</span>
             <span className="min-w-0">
@@ -66,7 +84,7 @@ function StoryCard({ s, v, onPerson }: { s: GameState; v: StoryView; onPerson: (
               <span className="text-[11px] text-stone-500 whitespace-nowrap">{when(b.w)}</span> <SeenChip seen={b.seen} />
             </span>
           </li>
-        ))}
+        )} />
       </ol>
       {v.gaps > 0 && <div className="mt-1 text-[11px] text-stone-500">…and {v.gaps === 1 ? 'one thing' : `${v.gaps} things`} in this you have not heard about.</div>}
       {v.asked && <div className="mt-1 text-[11px] text-stone-400">Brought to you by {s.characters[v.asked.via] ? <CharLink s={s} id={v.asked.via} /> : 'your capo'} ({when(v.asked.w)}){v.asked.ans ? `: ${ans[v.asked.ans] ?? v.asked.ans}.` : ': waiting on your answer.'}</div>}
@@ -119,19 +137,23 @@ function PersonCard({ s, id, onClose, onPerson }: { s: GameState; id: string; on
         <div>
           <div className="text-[10px] uppercase tracking-widest text-stone-500">People in {his} life (that you know of)</div>
           <ul className="text-xs text-stone-300">
-            {v.ties.slice(0, 10).map((t, i) => (
+            <More items={v.ties} first={6} label="people" render={(t, i) => (
               <li key={`${t.id}:${i}`}>{t.what} {L.people[t.id] ? <button type="button" className="underline decoration-dotted underline-offset-2 hover:text-gold-300" onClick={() => onPerson(t.id)}>{t.name}</button> : s.characters[t.id] ? <CharLink s={s} id={t.id} /> : t.name}{t.how !== 'public' && <span className="text-stone-500"> ({t.how === 'rumor' ? 'talk' : 'confirmed'})</span>}</li>
-            ))}
+            )} />
           </ul>
         </div>
       )}
       <div>
         <div className="text-[10px] uppercase tracking-widest text-stone-500">What you have heard</div>
-        {v.facts.length ? <ul>{v.facts.map((f) => <li key={f.id} className="text-xs text-stone-300 py-0.5">{f.seen.lvl === 'rumor' ? <span className="italic">“{f.text}”</span> : f.text} <SeenChip seen={f.seen} /></li>)}</ul> : <div className="text-xs text-stone-500">Nothing beyond the public record.</div>}
+        {v.facts.length ? <ul><More items={v.facts} first={4} label="things" render={(f) => <li key={f.id} className="text-xs text-stone-300 py-0.5">{f.seen.lvl === 'rumor' ? <span className="italic">“{f.text}”</span> : f.text} <SeenChip seen={f.seen} /></li>} /></ul> : <div className="text-xs text-stone-500">Nothing beyond the public record.</div>}
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
-        <ActionCard s={s} action={{ kind: 'living', op: { op: 'ask', pid: id } }} compact />
-        {hh && hh.gone === undefined && <ActionCard s={s} action={{ kind: 'living', op: { op: 'give', hh: hh.id, amt: gift } }} compact />}
+      <div>
+        <div className="text-[10px] uppercase tracking-widest text-stone-500">What you can do</div>
+        <div className="text-[11px] text-stone-500 mb-1">Asking around is free (it takes your capo's time, one person a week). Help is a gift of Family money. A button you cannot use says why.</div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <ActionCard s={s} action={{ kind: 'living', op: { op: 'ask', pid: id } }} />
+          {hh && hh.gone === undefined && <ActionCard s={s} action={{ kind: 'living', op: { op: 'give', hh: hh.id, amt: gift } }} />}
+        </div>
       </div>
       {v.dev && (
         <div className="rounded border border-dashed border-stone-600 px-2 py-1 text-[11px] text-stone-400" data-testid="living-dev">
@@ -185,21 +207,21 @@ export function Happening({ s }: { s: GameState }) {
               <button key={k} type="button" className={`text-[11px] px-2 py-0.5 rounded border ${filter === k ? 'border-gold-400 text-gold-300' : 'border-noir-700 text-stone-500'}`} onClick={() => setFilter(k)}>{k === 'all' ? 'Everything' : k === 'rumor' ? 'Rumors' : k === 'confirmed' ? 'Confirmed' : 'Public'}</button>
             ))}
           </div>
-          {facts.length ? <ul>{facts.map((f) => <FactRow key={f.id} s={s} f={f} onPerson={open} />)}</ul> : <EmptyState kind="none" title="Nothing yet." />}
+          {facts.length ? <ul><More items={facts} first={20} label="things you heard" render={(f) => <FactRow key={f.id} s={s} f={f} onPerson={open} />} /></ul> : <EmptyState kind="none" title="Nothing yet." />}
         </section>
       )}
       {tab === 'people' && (
         <section>
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find someone…" aria-label="Find someone on the Boardwalk" className="w-full sm:w-72 mb-2 rounded border border-noir-700 bg-noir-900 px-2 py-1 text-sm text-stone-200" />
           <ul className="divide-y divide-noir-800">
-            {shown.slice(0, 80).map((r) => (
+            <More items={shown} first={25} label="people" render={(r) => (
               <li key={r.id} className="py-1.5">
                 <button type="button" className="text-left w-full" onClick={() => open(r.id)} data-testid="living-person-row">
                   <span className="text-sm text-stone-200">{r.name}</span> <span className="text-xs text-stone-500">{r.age}</span>
                   <span className="block text-xs text-stone-400">{r.role}{r.known ? ` · you've heard ${r.known} thing${r.known === 1 ? '' : 's'}` : ''}{r.dealt ? ' · has dealt with you' : ''}</span>
                 </button>
               </li>
-            ))}
+            )} />
           </ul>
         </section>
       )}
