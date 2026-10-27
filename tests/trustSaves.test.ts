@@ -9,6 +9,7 @@ import { SCHEMA } from '../src/engine/trustMigrations';
 import { upgradeSave } from '../src/engine/upgradeSave';
 import type { GameState, PlayerChoices } from '../src/engine/types';
 import { loadSlot, readBackup, saveSlot, type KV } from '../src/ui/save';
+import { packSave } from '../src/ui/save';
 import { randomChoices } from './helpers';
 
 /** An in-memory localStorage, optionally with a size limit (characters). */
@@ -113,7 +114,7 @@ describe('B31: versioned saves and deterministic replay', () => {
   });
   it('when storage is full the backup is dropped, never the game', () => {
     const s = newGameWith('trust-b31d', 'classic');
-    const size = json(s).length;
+    const size = packSave(json(s)).length; // saves are stored compressed
     const kv = memKV(Math.round(size * 1.6));
     kv.data.set('little-las-vegas:backup', 'x'.repeat(Math.round(size * 0.8)));
     expect(saveSlot(1, s, kv)).toBe(true);

@@ -1,6 +1,19 @@
 import { displayName } from '../engine/characters';
 import { upgradeSave } from '../engine/upgradeSave';
 import type { GameState } from '../engine/types';
+import LZ from 'lz-string';
+
+/** Saves are stored compressed (about a tenth the size); old plain-JSON saves still load. */
+const LZ_TAG = 'LZ1:';
+export function packSave(json: string): string {
+  try { return LZ_TAG + LZ.compressToUTF16(json); } catch { return json; }
+}
+export function unpackSave(raw: string): string {
+  if (!raw.startsWith(LZ_TAG)) return raw;
+  const out = LZ.decompressFromUTF16(raw.slice(LZ_TAG.length));
+  if (out == null || out === '') throw new Error('corrupt compressed save');
+  return out;
+}
 
 /**
  * Three save slots in localStorage. Every read and write is wrapped: in a
@@ -113,7 +126,7 @@ export function listSlots(kv: KV | undefined = store()): (SlotMeta | undefined)[
       if (m) return JSON.parse(m) as SlotMeta;
       const raw = get(kv, SLOT(n));
       if (!raw) return undefined;
-      return metaOf(JSON.parse(raw) as GameState, n);
+      return metaOf(JSON.parse(unpackSave(raw)) as GameState, n);
     } catch {
       return undefined;
     }
@@ -121,8 +134,7 @@ export function listSlots(kv: KV | undefined = store()): (SlotMeta | undefined)[
 }
 
 /**
- * One backup copy (saves run to a megabyte or two and the browser allows
- * about five): the stored save as it was before a load migrated it, or a save
+ * One backup copy (saves are compressed; the browser allows about five megabytes): the stored save as it was before a load migrated it, or a save
  * that could not be read at all. `{ slot, why, at, raw }`.
  */
 const BACKUP = 'little-las-vegas:backup';
@@ -147,7 +159,7 @@ export function loadSlot(n: number, kv: KV | undefined = store()): GameState | u
   if (!raw) return undefined;
   let s: GameState;
   try {
-    s = JSON.parse(raw) as GameState;
+    s = JSON.parse(unpackSave(raw)) as GameState;
   } catch {
     // Unreadable: keep the bytes (the slot may be overwritten next) and report no game.
     keepBackup(kv, { slot: n, why: 'corrupt', at: Date.now(), raw });
@@ -169,7 +181,7 @@ export function loadSlot(n: number, kv: KV | undefined = store()): GameState | u
 export function saveSlot(n: number, s: GameState, kv: KV | undefined = store()): boolean {
   let raw: string;
   try {
-    raw = JSON.stringify(s);
+    raw = packSave(JSON.stringify(s));
   } catch {
     return false;
   }
