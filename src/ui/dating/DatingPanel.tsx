@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { datingView, personRow, PREGNANCY_RULES, type FamilyLine, type PersonRow, type ProviderRow } from '../../engine/dating';
 import {
   MATURE_BLURB, MATURE_LABEL, PREGNANCY_LABEL, setDatingSettings,
@@ -281,7 +281,7 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
 }
 
 /** On someone's sheet (Relationships tab): where things stand with her and the next step; a link to the whole screen. */
-export function DatingSection({ s, id }: { s: GameState; id: string }) {
+export function DatingSection({ s, id, fallback = null }: { s: GameState; id: string; /** Shown instead of nothing (the Deal with menu). */ fallback?: ReactNode }) {
   const shell = useShell();
   const c = s.characters[id];
   if (!c) return null;
@@ -296,10 +296,10 @@ export function DatingSection({ s, id }: { s: GameState; id: string }) {
     );
   }
   // Adults only: nothing of this kind is shown on a minor's sheet.
-  if (!c.alive || !isAdult(s, c) || c.dynasty && s.characters[s.playerId]?.spouseId !== id) return null;
+  if (!c.alive || !isAdult(s, c) || c.dynasty && s.characters[s.playerId]?.spouseId !== id) return <>{fallback}</>;
   const v = datingView(s);
   const r = [...v.relationships, ...v.people].find((x) => x.id === id) ?? (s.dating?.providers[id] && v.settings.mature !== 'off' ? personRow(s, c) : undefined);
-  if (!r) return null;
+  if (!r) return <>{fallback}</>;
   return (
     <section className="mt-3" data-testid="dating-sheet">
       <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500 mb-1">You and {c.firstName}</div>

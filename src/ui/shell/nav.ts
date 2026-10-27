@@ -66,22 +66,17 @@ export const FALLBACK_HOME: Record<PanelId, HomeId> = {
 export const NAV_ONLY = ['nav.settings', 'nav.help'] as const;
 
 export const NAV: Record<HomeId, NavGroupDef[]> = {
+  // The front page of This Week is the Boss's Desk (App.tsx): what needs you now. Below it, two places.
   week: [
-    { title: 'Under way', items: [
-      { keys: ['ops.progress'], icon: '⚙', label: 'Jobs under way', sub: 'The hits, heists, envoys and plots your people are working on right now.' },
-      { keys: ['ops.missions'], icon: '◈', label: 'The big cases', sub: 'Long jobs stage by stage, and talks waiting on your answer.' },
-      { keys: ['ops.plan'], icon: '✚', label: 'Plan a job', sub: 'Start a hit, a heist, an envoy or a plot: who does it, how long, the odds.' },
-    ] },
-    { title: 'What happened', items: [
-      { keys: ['chronicle.all', 'chronicle.mine', 'chronicle.street', 'chronicle.family', 'chronicle.papers', 'chronicle.stories'], icon: '✎', label: 'The news', sub: 'Your story, the street, the family, the papers and the storylines.', views: ['Everything', 'Yours', 'The street', 'Family', 'The papers', 'Storylines'] },
-      { keys: ['chronicle.reports'], icon: '▤', label: 'Weekly reports', sub: 'Each week\'s report: money, respect and heat, line by line.' },
+    { items: [
+      { keys: ['ops.progress', 'ops.missions', 'ops.plan'], icon: '⚙', label: 'Jobs', sub: 'What your people are working on, the big cases stage by stage, and planning a new job.', views: ['Under way', 'The big cases', 'Plan a job'] },
+      { keys: ['chronicle.all', 'chronicle.mine', 'chronicle.street', 'chronicle.family', 'chronicle.papers', 'chronicle.stories', 'chronicle.reports'], icon: '✎', label: 'The news', sub: 'Your story, the street, the family, the papers, the storylines and each week\'s report.', views: ['Everything', 'Yours', 'The street', 'Family', 'The papers', 'Storylines', 'Weekly reports'] },
     ] },
   ],
   money: [
     { items: [
       { keys: ['holdings.money'], icon: '$', label: 'This week\'s money', sub: 'Where it came from, your cut into the Family and your Pocket, where it went, the last 8 weeks.' },
-      { keys: ['holdings.take'], aliases: ['borgata.take'], icon: '✉', label: 'The weekly envelope', sub: 'What the underboss brings every Monday: each crew, your cut, agreements, the ledger.' },
-      { keys: ['borgata.earnings'], icon: '▥', label: 'Who earned what', sub: 'Every man in the family: what he earned, kicked up and kept, and what he is worth.' },
+      { keys: ['holdings.take', 'borgata.earnings'], aliases: ['borgata.take'], icon: '✉', label: 'The envelope', sub: 'What the underboss brings every Monday, crew by crew, and what every man earned and kept.', views: ['This week\'s envelope', 'Who earned what'] },
       { keys: ['holdings.books'], icon: '✍', label: 'The books & dirty money', sub: 'How the books are kept, washing dirty money, loans, and the bookkeeper.' },
     ] },
   ],
@@ -89,67 +84,52 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
     { items: [
       { keys: ['holdings.hub'], icon: '♣', label: 'The rackets', sub: 'Every racket on the island: start one, decide how it runs, what it pays.' },
       { keys: ['holdings.dirty'], icon: '✂', label: 'Dirty work', sub: 'One-off jobs: hijack a truck, shake down a shop, fix a fight, move a load.' },
-      { keys: ['holdings.tech', 'holdings.gear'], icon: '⚙', label: 'Family development', sub: 'Technology, connections and crew equipment: how the family gets tougher over the years.', views: ['Technology & connections', 'Crew equipment'] },
-      { keys: ['holdings.rackets'], icon: '▣', label: 'Your places', sub: 'The businesses you own by type: managers, upgrades, the take. Buy a new one.' },
-      { keys: ['holdings.property'], icon: '▦', label: 'Real estate', sub: 'Lots and buildings in every neighborhood: buy, build, rent out.' },
-      { keys: ['holdings.designer'], icon: '✧', label: 'Hotels & motels', sub: 'Set up your motels and hotels your way: the look, the staff, the supplies.' },
-      { keys: ['holdings.hq'], icon: '♜', label: 'Headquarters', sub: 'Your social club: who meets there, bugs, and sweeping for them.' },
+      { keys: ['holdings.rackets', 'holdings.property', 'holdings.designer', 'holdings.hq'], icon: '▣', label: 'What you own', sub: 'Your places, your real estate, your hotels and motels, and your headquarters.', views: ['Your places', 'Real estate', 'Hotels & motels', 'Headquarters'] },
       { keys: ['holdings.loandesk'], icon: '%', label: 'Loan desk', sub: 'Your bank or book: who Chemical Bank turned down, your rate (up to the vig), what happens if they don\'t pay.' },
+      { keys: ['holdings.tech', 'holdings.gear'], icon: '⚙', label: 'Family development', sub: 'Technology, connections and crew equipment: how the family gets tougher over the years.', views: ['Technology & connections', 'Crew equipment'] },
     ] },
   ],
   family: [
     { title: 'Your crew', items: [
-      { keys: ['borgata.chart'], icon: '⚑', label: 'Who\'s who', sub: 'The whole family on one chart. Click anyone to open him.' },
+      { keys: ['borgata.chart', 'borgata.capos'], icon: '⚑', label: 'Your men', sub: 'The whole family on one chart, and who runs each district with every man under him.', views: ['Who\'s who', 'Capos & soldiers'] },
       { keys: ['borgata.council'], icon: '♜', label: 'The council', sub: 'Five seats, one job each a week. Fill a seat, give it a job.' },
-      { keys: ['borgata.capos'], icon: '⚔', label: 'Capos & soldiers', sub: 'Who runs each district, and every man under them.' },
       { keys: ['borgata.membership'], icon: '✋', label: 'Getting made', sub: 'Philadelphia\'s books, and the young men who want in.' },
       { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
-      { keys: ['borgata.grievances'], icon: '☍', label: 'Grudges & factions', sub: 'Who feels passed over, and who is ganging up.' },
-      { keys: ['diplomacy.front'], icon: '♛', label: 'The front boss', sub: 'When the Don the papers see and the man who really runs things are different men.' },
+      { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
     ] },
     { title: 'Your blood', items: [
-      { keys: ['house.tree'], icon: '♔', label: 'Family tree', sub: 'Your wife, your children, your house.' },
+      { keys: ['house.tree', 'house.houses'], icon: '♔', label: 'Your house', sub: 'Your wife, your children, your house, and every family\'s tree back to the old country.', views: ['Family tree', 'Every house'] },
       { keys: ['house.marriages'], icon: '♥', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
       { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'] },
       { keys: ['house.activities'], icon: '✦', label: 'Dinners & outings', sub: 'Host a dinner, a feast, a trip: the guests think better of you.' },
-      { keys: ['house.decisions'], icon: '➚', label: 'House ambitions', sub: 'Big moves for the house, what each takes and how close you are.' },
-      { keys: ['house.legacy'], icon: '★', label: 'Legacy & renown', sub: 'What the house is known for, and renown to spend.' },
-      { keys: ['house.houses'], icon: '⚘', label: 'Every house', sub: 'Every family\'s tree, back to the old country: the living and the dead.' },
+      { keys: ['house.decisions', 'house.legacy'], icon: '★', label: 'The house\'s name', sub: 'Big moves for the house, what it is known for, and renown to spend.', views: ['Ambitions', 'Legacy & renown'] },
     ] },
   ],
   town: [
     { title: 'On the street', items: [
-      { keys: ['town.happening'], icon: '☷', label: 'What\'s happening', sub: 'The Boardwalk\'s people on their own: stories going on, the talk, who\'s who.' },
+      { keys: ['town.happening', 'town.attached'], icon: '☷', label: 'The street', sub: 'The Boardwalk\'s people on their own: stories, the talk, and who\'s with whom.', views: ['What\'s happening', 'Who\'s with whom'] },
       { keys: ['you.walk'], icon: '⇢', label: 'Walk the boardwalk', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.' },
       { keys: ['town.hoods'], icon: '⌂', label: 'Neighborhoods', sub: 'Each neighborhood: who lives and works there, who owns what, the police.' },
       { keys: ['town.night'], icon: '☾', label: 'The Night & the Ears', sub: 'The Madam and the girls who hear everything. She always decides.' },
-      { keys: ['town.attached'], icon: '⚭', label: 'Who\'s with whom', sub: 'Sweethearts, regulars, and who keeps someone on the side.' },
       { keys: ['town.underbelly'], icon: '⚓', label: 'The underbelly', sub: 'Outfits that prey on people, and what you do about them.' },
     ] },
-    { title: 'The other families', items: [
-      { keys: ['diplomacy.board'], icon: '♞', label: 'The other families', sub: 'Every family and power you deal with. Click a face for what you can do.' },
-      { keys: ['diplomacy.pacts'], icon: '✍', label: 'Pacts & truces', sub: 'Truces and partnerships, and how the families deal with each other.' },
-      { keys: ['diplomacy.table'], icon: '⚖', label: 'The Table & wars', sub: 'Philadelphia\'s sit-down: disputes, rulings, and wars.' },
-      { keys: ['diplomacy.balance'], icon: '▲', label: 'Who\'s strongest', sub: 'Muscle, money, men, allies and heat for every family.' },
-    ] },
-    { title: 'City Hall & the cops', items: [
-      { keys: ['town.cityhall'], icon: '⌸', label: 'City Hall & cops', sub: 'Who holds every seat that matters, from the commission to Trenton.' },
-      { keys: ['town.patronage'], icon: '❦', label: 'Gifts & patronage', sub: 'Season tickets, public projects, no-show jobs: buying goodwill.' },
+    { title: 'The other families & City Hall', items: [
+      { keys: ['diplomacy.board', 'diplomacy.balance'], icon: '♞', label: 'The other families', sub: 'Every family and power you deal with, and who is strongest. Click a face for what you can do.', views: ['The board', 'Who\'s strongest'] },
+      { keys: ['diplomacy.pacts', 'diplomacy.table'], icon: '⚖', label: 'The Table', sub: 'Truces and partnerships, and Philadelphia\'s sit-down: disputes, rulings, wars.', views: ['Pacts & truces', 'Disputes & wars'] },
+      { keys: ['town.cityhall', 'town.patronage'], icon: '⌸', label: 'City Hall', sub: 'Who holds every seat that matters, and buying goodwill: tickets, projects, no-show jobs.', views: ['Who holds what', 'Gifts & patronage'] },
     ] },
   ],
   you: [
     { title: 'The boss', items: [
       { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
       { keys: ['you.dating'], icon: '♥', label: 'Relationships & Dating', sub: 'People you know, dates and relationships, adult services (with prices), pregnancies and children. She always decides.' },
-      { keys: ['you.lifestyle'], icon: '♠', label: 'How you rule', sub: 'Your style as boss and its perks. Experience builds every week.' },
-      { keys: ['you.possessions'], icon: '♦', label: 'The good life', sub: 'Homes, cars, the boat and the toys. Each one costs upkeep.' },
+      { keys: ['you.lifestyle', 'you.possessions'], icon: '♠', label: 'How you live', sub: 'Your style as boss and its perks, and the good life: homes, cars, the boat.', views: ['How you rule', 'The good life'] },
       { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
       { keys: ['ops.travel'], icon: '✈', label: 'Trips & envoys', sub: 'Your trips, and the men you sent to other cities.' },
       { keys: ['town.case'], icon: '§', label: 'Your case', sub: 'The government\'s case against you, from a file to a trial.' },
     ] },
     { title: 'The game', items: [
-      { keys: ['nav.settings'], icon: '⚙', label: 'Settings', sub: 'Motion, text speed, and when the game pauses by itself.' },
-      { keys: ['nav.help'], icon: '?', label: 'Help & keys', sub: 'What should I do, the glossary, and the keyboard shortcuts.' },
+      { keys: ['nav.settings', 'nav.help'], icon: '⚙', label: 'Settings & help', sub: 'Motion, text speed, when the game pauses; what should I do, the glossary, the keys.', views: ['Settings', 'Help & keys'] },
     ] },
   ],
 };

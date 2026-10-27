@@ -43,7 +43,6 @@ import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
 import { SettingsPanel } from './menu/StartMenu';
-import { OrdersTray } from './components/Orders';
 import { whatShouldIDo } from '../engine/opportunities';
 import { Providers } from './shell/Providers';
 import type { MapFocus, ShellApi } from './shell/context';
@@ -531,7 +530,9 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   if (unanswered.length) badges.week = (badges.week ?? 0) + unanswered.length;
   const morningOpen = dayCheckIns(s, daysOf(s).day).filter((c) => c.problem && !daysOf(s).answers[c.key] && !daysOf(s).skipped.includes(c.day));
-  const homeDoNow = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
+  const homeDoNowAll = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
+  // This Week's front page is the Boss's Desk, which lists the decisions, the morning and the sit-down: said once.
+  const homeDoNow = home === 'week' ? homeDoNowAll.filter((d) => d.act.kind !== 'decisions' && d.act.kind !== 'day' && d.act.kind !== 'sitdown') : homeDoNowAll;
   const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); };
   function onDoNow(d: DoNowItem) {
     const a = d.act;
@@ -590,18 +591,15 @@ export function App({ startOn = 'title' }: AppProps) {
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
-      <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">Your week</div>
-      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+      <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('rounds')} data-testid="week-rounds">☕ Your rounds</button>
-        <button type="button" className="btn-ghost text-xs" disabled={!s.pendingEvents.length} onClick={openDecisions} data-testid="week-decisions">✉ Decisions {s.pendingEvents.length - unanswered.length}/{s.pendingEvents.length}</button>
         <button type="button" className="btn-gold text-xs" onClick={() => { setRoute({}); startAdvance('week'); }} data-testid="week-advance">Advance Week ▸</button>
       </div>
-      {orders.length > 0 && <div className="mt-2" data-testid="week-orders"><div className="mb-1 text-[11px] text-stone-400">Orders for this week, carried out when you advance:</div><OrdersTray s={s} /></div>}
-      <div className="mt-3" data-testid="your-rounds">
-        <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">Your rounds · day by day</div>
-        <WeekPlanner key={s.week} s={s} update={setS} onSitDown={() => setSitdown('rounds')} />
-      </div>
+      <details className="mt-3 group" data-testid="your-rounds">
+        <summary className="cursor-pointer list-none text-[10px] uppercase tracking-[0.25em] text-stone-500 hover:text-gold-300">Your rounds · day by day <span className="normal-case tracking-normal text-gold-400 group-open:hidden">▸ open the week</span></summary>
+        <div className="mt-1.5"><WeekPlanner key={s.week} s={s} update={setS} onSitDown={() => setSitdown('rounds')} /></div>
+      </details>
     </section>
   ) : undefined;
   // Rackets & Businesses: "Start a racket" first, big, and who still lacks a steady earner.
@@ -640,6 +638,8 @@ export function App({ startOn = 'title' }: AppProps) {
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
             onSitDown={() => setSitdown('council')} sitCount={brief.items.length} onDesk={() => setRoute({ home: 'week' })}
+            mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
+            onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'} />
         )}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
