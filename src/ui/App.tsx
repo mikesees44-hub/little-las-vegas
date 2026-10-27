@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
 import { HousesNavContext } from './houses/nav';
 import { alerts as computeAlerts } from '../engine/alerts';
@@ -73,9 +74,9 @@ import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 export type Tab = string;
 type Mode = 'week' | 'month';
 
-/** The opening scene: the old boss's funeral at St. Ann's (plays for every new game). */
-function openingCue(week: number): CutsceneCue {
-  return { key: 'opening', title: "St. Ann's, Wildwood · May 1960", text: 'The church smells of lilies and floor wax. The old man lies in a bronze casket that cost more than most of the mourners make in a year. In nine days the boardwalk opens. By then somebody has to be running things. You stand in the front pew, and behind you the capos are counting.', week };
+/** The opening title card: the scenario's own premise and the real date (engine/scenes.ts openingCard). */
+function openingCue(s: GameState): CutsceneCue {
+  return { ...openingCard(s), week: s.week };
 }
 
 function freshSeed(): string {
@@ -301,7 +302,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setS(next);
     resetUi();
     setMenu(undefined);
-    setCues([openingCue(next.week)]);
+    setCues([openingCue(next)]);
     try { sessionStorage.setItem('llv-opening-' + next.seed, '1'); } catch { /* storage unavailable */ }
   }
 
@@ -320,7 +321,7 @@ export function App({ startOn = 'title' }: AppProps) {
     try {
       if (loaded.week <= 1 && !sessionStorage.getItem('llv-opening-' + loaded.seed)) {
         sessionStorage.setItem('llv-opening-' + loaded.seed, '1');
-        setCues([openingCue(loaded.week)]);
+        setCues([openingCue(loaded)]);
       }
     } catch { /* storage unavailable */ }
   }

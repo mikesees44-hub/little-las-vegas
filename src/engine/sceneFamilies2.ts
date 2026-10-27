@@ -331,15 +331,24 @@ registerFamily({
 /* The opening of a reign                                              */
 /* ------------------------------------------------------------------ */
 
-const CLASSIC_OPENINGS: ((c: SceneCtx) => string)[] = [
+/** The old man is dead (the classic start when his father is gone). */
+const FUNERAL_OPENINGS: ((c: SceneCtx) => string)[] = [
   () => 'The old man is gone, and the island looks at you.',
   () => 'The old man\'s funeral is over. On the steps of St. Ann\'s, a line forms to shake your hand: capos, councilmen, a bartender, a priest. Each of them wants to see what kind of man the island has now.',
-  () => 'Memorial Day, 1960. The boardwalk opens for the season this morning, and so do you: the old man\'s chair at the Shamrock is yours. Everybody who comes in today takes a good look.',
   () => 'The old man died in his sleep at Burdette Tomlin with your hand on his. By the time you come down to the lobby, three men are waiting to tell you how things should go now.',
   () => 'The old man\'s lawyer reads the will in an office on Pacific Avenue: the house to his widow, the boat to his brother, and the island, which is not in the will, to you. Everyone in the room already knows.',
-  () => 'Dawn on the boardwalk, the planks still wet. The old man used to walk it every morning to count the stands. This morning you walk it alone, and the men opening the shutters nod at you the way they nodded at him.',
   () => 'The wake on Glenwood Avenue runs until two. At the end of it, the old man\'s capos sit at the kitchen table and wait for you to sit down first. You do.',
   () => 'Philadelphia\'s bagman comes to the old man\'s funeral, signs the book, and on his way out tells you Sal Moretti expects things to go on as before. He does not say "or else." He does not have to.',
+];
+/** Either way the old man is out of the chair (dead or retired). */
+const CHAIR_OPENINGS: ((c: SceneCtx) => string)[] = [
+  (c) => c.s.date.m === 5 && c.s.date.d >= 28 ? `Memorial Day, ${c.s.date.y}. The boardwalk opened for the season this weekend, and so do you: the old man's chair at the Shamrock is yours. Everybody who comes in today takes a good look.` : 'The old man\'s chair at the Shamrock is yours. Everybody who comes in today takes a good look.',
+  () => 'Dawn on the boardwalk, the planks still wet. The old man walked it every morning to count the stands. This morning you walk it alone, and the men opening the shutters nod at you the way they nodded at him.',
+];
+/** The old man is alive and has stepped aside. */
+const RETIRED_OPENINGS: ((c: SceneCtx) => string)[] = [
+  () => 'The old man has stepped aside, and the island looks at you.',
+  () => 'The old man has moved his card games to Florida and left you the back room, the list of names and the envelope from Philadelphia. Everyone on the island wants to see what you do with them.',
 ];
 
 const SUCCESSIONS: ((c: SceneCtx) => string)[] = [
@@ -354,7 +363,10 @@ registerFamily({
   id: 'made_boss',
   match: (ev) => ev.defId === 'made_boss',
   scenes: [
-    ...CLASSIC_OPENINGS.map((text): Scene => ({ when: (c) => c.ev.title === 'Made the boss' && !/is gone\. /.test(c.ev.text) && c.s.week <= 2, title: () => 'Made the boss', text })),
+    // The opening is told a different way each game, always true to its premise (scenes.ts openingPremise).
+    ...FUNERAL_OPENINGS.map((text): Scene => ({ when: (c) => c.ev.meta?.premise === 'funeral' && c.ev.title === 'Made the boss' && !/is gone\. /.test(c.ev.text) && c.s.week <= 2, title: () => 'Made the boss', text })),
+    ...CHAIR_OPENINGS.map((text): Scene => ({ when: (c) => (c.ev.meta?.premise === 'funeral' || c.ev.meta?.premise === 'retired') && c.ev.title === 'Made the boss' && c.s.week <= 2, title: () => 'Made the boss', text })),
+    ...RETIRED_OPENINGS.map((text): Scene => ({ when: (c) => c.ev.meta?.premise === 'retired' && c.ev.title === 'Made the boss' && c.s.week <= 2, title: () => 'Made the boss', text })),
     ...SUCCESSIONS.map((text): Scene => ({ when: (c) => / takes the chair\.$/.test(c.ev.text), title: (c) => c.ev.title, text })),
     { when: (c) => c.ev.title === 'First day with the crew', title: () => 'First day with the crew', text: (c) => c.ev.text },
   ],

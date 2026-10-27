@@ -23,6 +23,7 @@ import { EmptyState } from '../src/ui/components/EmptyState';
 import { TraitCap } from '../src/ui/menu/CharacterCreator';
 import { founderGenes, genesOf } from '../src/ui/portrait/genes';
 import { SCHEMA } from '../src/engine/trustMigrations';
+import { boardwalkLine, openingCard, openingPremise } from '../src/engine/scenes';
 import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
@@ -276,5 +277,40 @@ describe('A12: beard and build are separate, and old faces keep their beard', ()
     expect(loaded.characters[boss.id].appearance!.genes!.beard).toBe(0.77);
     expect(loaded.characters[boss.id].appearance!.genes!.heavy).toBe(0.77);
     expect(loaded.schema).toBe(SCHEMA);
+  });
+});
+
+describe('A14: the opening agrees with its scenario and the date', () => {
+  it('House of Sees opens on the retirement dinner, never a funeral or "the old man is gone"', () => {
+    const s = newGameWith('trust-a14', 'sees');
+    const ev = s.pendingEvents.find((e) => e.defId === 'made_boss')!;
+    expect(ev.meta?.premise).toBe('sees');
+    expect(ev.title).not.toBe('Made the boss');
+    expect(ev.text).not.toMatch(/is gone|casket|funeral/i);
+    const card = openingCard(s);
+    expect(card.key).toBe('sitdown');
+    expect(card.title).toMatch(/Bolero/);
+    expect(card.text).not.toMatch(/casket|funeral|nine days/i);
+    expect(card.text).toMatch(/heir/);
+  });
+  it('no opening says "in nine days the boardwalk opens" on Memorial Day, when the season is already on', () => {
+    for (const start of ['classic', 'sees', 'rise', 'associate', 'capo'] as const) {
+      const s = newGameWith(`trust-a14-${start}`, start);
+      expect(s.date).toEqual({ y: 1960, m: 5, d: 30 });
+      const texts = [openingCard(s).text, ...s.pendingEvents.filter((e) => e.defId === 'made_boss').map((e) => e.text)];
+      for (const t of texts) expect(t, start).not.toMatch(/nine days|boarded up for the season/);
+      expect(openingCard(s).text, start).toMatch(/Memorial Day|opened for the season/);
+    }
+    expect(boardwalkLine({ y: 1960, m: 5, d: 21 })).toMatch(/In 9 days/);
+    expect(boardwalkLine({ y: 1960, m: 10, d: 21 })).toMatch(/boarded up/);
+  });
+  it('a climbing start (associate) opens on the corner, not the boss\'s chair; the funeral only when the old man is dead', () => {
+    const a = newGameWith('trust-a14b', 'associate');
+    expect(a.pendingEvents.find((e) => e.defId === 'made_boss')!.title).toBe('First day with the crew');
+    const c = newGameWith('trust-a14c', 'classic');
+    const p = c.characters[c.playerId];
+    const father = p.fatherId ? c.characters[p.fatherId] : undefined;
+    expect(openingPremise(c, 'classic')).toBe(!father || !father.alive ? 'funeral' : 'retired');
+    expect(openingCard(c).key).toBe(openingPremise(c, 'classic') === 'funeral' ? 'opening' : 'sitdown');
   });
 });
