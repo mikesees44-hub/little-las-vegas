@@ -1,6 +1,6 @@
 import { previewAction, queuedMoney } from './actions';
 import { briefing } from './briefing';
-import { weekCheckIns } from './checkins';
+import { weekCheckIns, type CheckProblem } from './checkins';
 import { DAY_NAMES, daysOf, weekPlan } from './days';
 import { fmtMoney } from './effects';
 import { roundOptions } from './rounds';
@@ -17,6 +17,12 @@ import type { GameState, PlayerAction } from './types';
  *
  * Pure: reads the state and the UI's unsent answers and orders.
  */
+
+/** What a capo does with a problem nobody answered: his own answer, in words. */
+function ownWay(p: CheckProblem): string {
+  const a = p.answers.find((x) => x.id === p.own);
+  return a ? `${a.label} (${a.hint})` : 'he handles it his own way';
+}
 
 export type DeskKind = 'decision' | 'morning' | 'sitdown' | 'order' | 'bill' | 'upcoming';
 
@@ -61,7 +67,7 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     if (!c.problem || c.day < d.day || d.skipped.includes(c.day)) continue;
     const ans = d.answers[c.key];
     const a = ans ? c.problem.answers.find((x) => x.id === ans) : undefined;
-    groups.morning.push({ key: `am:${c.key}`, kind: 'morning', title: `${DAY_NAMES[c.day]}: ${c.name}`, detail: a ? `You said: ${a.label}` : c.problem.text, ifNothing: ans ? undefined : c.problem.own, done: !!ans, urgent: c.problem.urgent && !ans, ref: { day: c.day, charId: c.capoId } });
+    groups.morning.push({ key: `am:${c.key}`, kind: 'morning', title: `${DAY_NAMES[c.day]}: ${c.name}`, detail: a ? `You said: ${a.label}` : c.problem.text, ifNothing: ans ? undefined : ownWay(c.problem), done: !!ans, urgent: c.problem.urgent && !ans, ref: { day: c.day, charId: c.capoId } });
   }
   const b = briefing(s);
   for (const it of b.items) {
@@ -112,7 +118,7 @@ export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
     return { iid: e.iid, title: e.title, becomes: ch ? ch.label : 'Nothing' };
   });
   const d = daysOf(s);
-  const mornings = weekCheckIns(s).filter((c) => c.problem && c.day >= d.day && !d.skipped.includes(c.day) && !d.answers[c.key]).map((c) => ({ key: c.key, title: `${DAY_NAMES[c.day]}: ${c.name}`, becomes: c.problem!.own }));
+  const mornings = weekCheckIns(s).filter((c) => c.problem && c.day >= d.day && !d.skipped.includes(c.day) && !d.answers[c.key]).map((c) => ({ key: c.key, title: `${DAY_NAMES[c.day]}: ${c.name}`, becomes: ownWay(c.problem!) }));
   const os = orders.map((a) => { const p = previewAction(s, a); return { title: p.title, cost: p.cost, pot: (p.pot === 'pocket' ? 'pocket' : 'family') as 'family' | 'pocket' }; });
   const q = queuedMoney(s, orders);
   const opts = roundOptions(s);

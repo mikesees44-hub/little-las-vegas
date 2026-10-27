@@ -241,6 +241,8 @@ function readErr(adv: Character, key: string, skill: number): number {
 const pctRead = (adv: Character, key: string, skill: number, p: number) => Math.max(2, Math.min(97, Math.round(p * 100 * (1 + readErr(adv, key, skill)))));
 const moneyRead = (adv: Character, key: string, skill: number, v: number) => Math.round((v * (1 + readErr(adv, key, skill))) / 10) * 10;
 
+const SKILL_WORD: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
+
 const LIKE: Likelihood[] = ['unlikely', 'possible', 'likely'];
 const likeOf = (score: number): Likelihood => (score >= 60 ? 'likely' : score >= 30 ? 'possible' : 'unlikely');
 
@@ -489,7 +491,7 @@ export function adviceBrief(s: GameState, sub: AdviceSubject, adviserId?: string
     for (const w of sum.warns) b.obstacles.push({ text: w, k: 'known' });
     const raw: RawCand[] = runnersFor(s, kind).filter((x) => x.role !== 'boss').map((x) => ({
       c: x.c, score: x.skill - x.load * 8 + (x.canEarn ? 6 : 0),
-      why: [{ text: `${x.fit[0].toUpperCase()}${x.fit.slice(1)} ${x.skill}`, k: 'known' }, { text: x.note, k: 'known' }, ...(x.loyalty !== undefined ? [loyaltyLine(s, x.c)] : [])],
+      why: [{ text: `${SKILL_WORD[x.fit] ?? x.fit} ${x.skill}`, k: 'known' }, { text: x.note, k: 'known' }, ...(x.loyalty !== undefined ? [loyaltyLine(s, x.c)] : [])],
       action: { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind, ...(r.district ? { district: r.district } : {}), runner: x.c.id } } },
       unavailable: x.note === 'Busy this week' ? 'Busy this week' : undefined,
     }));
@@ -511,7 +513,7 @@ export function adviceBrief(s: GameState, sub: AdviceSubject, adviserId?: string
     major = true;
     const raw: RawCand[] = crewFor(s, j.id).filter((x) => x.role !== 'boss').map((x) => ({
       c: x.c, score: x.odds - x.heat * 0.3,
-      why: [{ text: `${j.fit[0].toUpperCase()}${j.fit.slice(1)} ${x.skill} · nerve ${x.nerve}`, k: 'known' }, { text: x.note, k: 'known' }, ...(x.heat >= 40 ? [{ text: `The law has a file on him (${x.heat})`, k: 'known' as const }] : []), ...(x.loyalty !== undefined ? [loyaltyLine(s, x.c)] : [])],
+      why: [{ text: `${SKILL_WORD[j.fit] ?? j.fit} ${x.skill} · nerve ${x.nerve}`, k: 'known' }, { text: x.note, k: 'known' }, ...(x.heat >= 40 ? [{ text: `The law has a file on him (${x.heat})`, k: 'known' as const }] : []), ...(x.loyalty !== undefined ? [loyaltyLine(s, x.c)] : [])],
       outlook: { text: `About ${pctRead(adv, `odds:${j.id}:${x.c.id}`, adv.attributes.force, x.odds / 100)}% it goes clean (his read)`, k: 'estimate' },
       action: { kind: 'dirty', op: { ...a.op, who: x.c.id } }, unavailable: x.busy,
     }));
@@ -558,7 +560,7 @@ export function adviceBrief(s: GameState, sub: AdviceSubject, adviserId?: string
       }
     }
     if (a.kind === 'buyBusiness') {
-      const raw: RawCand[] = runnersFor(s, a.biz).filter((x) => x.role !== 'boss').map((x) => ({ c: x.c, score: x.skill - x.load * 8, why: [{ text: `${x.fit} ${x.skill}`, k: 'known' }, { text: x.note, k: 'known' }] }));
+      const raw: RawCand[] = runnersFor(s, a.biz).filter((x) => x.role !== 'boss').map((x) => ({ c: x.c, score: x.skill - x.load * 8, why: [{ text: `${SKILL_WORD[x.fit] ?? x.fit} ${x.skill}`, k: 'known' }, { text: x.note, k: 'known' }] }));
       const { list, bias } = pickCandidates(s, adv, raw);
       b.candidates = list; b.bias = bias;
     }
@@ -611,5 +613,5 @@ export function isMajorSubject(s: GameState, sub: AdviceSubject): boolean {
 
 /** The player's name for a role (for buttons: "Ask the consigliere"). */
 export function askLabel(a: AdviserRef): string {
-  return a.role === 'capo' ? `Ask ${a.name.split(' ')[0]} (${a.title.toLowerCase()})` : `Ask the ${a.role}`;
+  return a.role === 'capo' ? `Ask ${a.name.split(' ')[0]} (${a.title})` : `Ask the ${a.role}`;
 }

@@ -85,7 +85,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month }: {
         {r.mornings.length > 0 && (
           <div data-testid="ready-mornings">
             <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Capos' requests you haven't answered</div>
-            <ul className="mt-1 space-y-0.5 text-[12px]">{r.mornings.map((m) => <li key={m.key}><span className="text-stone-200">{m.title}</span> <span className="text-stone-500">→ he does it his way:</span> <span className="text-stone-300">{m.becomes}</span></li>)}</ul>
+            <ul className="mt-1 space-y-0.5 text-[12px]">{r.mornings.map((m) => <li key={m.key}><span className="text-stone-200">{m.title}</span> <span className="text-stone-500">→ his way:</span> <span className="text-stone-300">{m.becomes}</span></li>)}</ul>
           </div>
         )}
         <div data-testid="ready-orders">
