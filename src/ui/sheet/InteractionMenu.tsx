@@ -1,5 +1,6 @@
 import { previewAction } from '../../engine/actions';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEscape } from '../keys';
+import { useMemo, useRef, useState } from 'react';
 import { displayName } from '../../engine/characters';
 import { GIFT_CAT_LABEL } from '../../engine/gifts';
 import type { Character, GameState } from '../../engine/types';
@@ -100,11 +101,7 @@ export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; 
   const c = s.characters[id];
   const { open } = useSheet();
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
+  useEscape(true, onClose);
   if (!c) return null;
   const w = typeof window !== 'undefined' ? window.innerWidth : 1200;
   const h = typeof window !== 'undefined' ? window.innerHeight : 800;

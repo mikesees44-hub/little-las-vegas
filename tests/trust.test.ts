@@ -24,6 +24,7 @@ import { TraitCap } from '../src/ui/menu/CharacterCreator';
 import { founderGenes, genesOf } from '../src/ui/portrait/genes';
 import { SCHEMA } from '../src/engine/trustMigrations';
 import { boardwalkLine, openingCard, openingPremise } from '../src/engine/scenes';
+import { clockSpaceAllowed, onEscape, runEscape, shortcutBlocked } from '../src/ui/keys';
 import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
@@ -312,5 +313,47 @@ describe('A14: the opening agrees with its scenario and the date', () => {
     const father = p.fatherId ? c.characters[p.fatherId] : undefined;
     expect(openingPremise(c, 'classic')).toBe(!father || !father.alive ? 'funeral' : 'retired');
     expect(openingCard(c).key).toBe(openingPremise(c, 'classic') === 'funeral' ? 'opening' : 'sitdown');
+  });
+});
+
+describe('B10: keyboard rules', () => {
+  const el = (tagName: string, extra: Record<string, unknown> = {}) => ({ tagName, getAttribute: (k: string) => (extra[k] as string) ?? null, hasAttribute: (k: string) => k in extra, ...extra }) as unknown as EventTarget;
+  const ev = (target: EventTarget | null, o: Partial<KeyboardEvent> = {}) => ({ target, metaKey: false, ctrlKey: false, altKey: false, repeat: false, defaultPrevented: false, ...o });
+  it('typing in a field, a select, a slider or editable text never fires a home letter', () => {
+    for (const t of [el('INPUT', { type: 'text' }), el('TEXTAREA'), el('SELECT'), el('INPUT', { type: 'range' }), el('DIV', { isContentEditable: true }), el('DIV', { role: 'textbox' })]) {
+      expect(shortcutBlocked(ev(t))).toBe(true);
+    }
+    expect(shortcutBlocked(ev(el('BODY')))).toBe(false);
+    expect(shortcutBlocked(ev(el('BODY'), { repeat: true }))).toBe(true); // a held W is one press
+    expect(shortcutBlocked(ev(el('BODY'), { ctrlKey: true }))).toBe(true);
+  });
+  it('Space on a focused button activates the button, not the clock', () => {
+    expect(clockSpaceAllowed(ev(el('BUTTON')))).toBe(false);
+    expect(clockSpaceAllowed(ev(el('A', { href: '#' })))).toBe(false);
+    expect(clockSpaceAllowed(ev(el('DIV', { role: 'tab' })))).toBe(false);
+    expect(clockSpaceAllowed(ev(el('INPUT', { type: 'checkbox' })))).toBe(false);
+    expect(clockSpaceAllowed(ev(el('BODY')))).toBe(true);
+    expect(clockSpaceAllowed(ev(el('DIV')))).toBe(true);
+  });
+  it('Escape closes only the nearest surface, last opened first', () => {
+    const closed: string[] = [];
+    const offDrawer = onEscape(() => closed.push('drawer'));
+    const offSheet = onEscape(() => closed.push('sheet'));
+    const offPop = onEscape(() => closed.push('popover'));
+    expect(runEscape()).toBe(true);
+    expect(closed).toEqual(['popover']);
+    offPop();
+    runEscape();
+    expect(closed).toEqual(['popover', 'sheet']);
+    offSheet();
+    runEscape();
+    offDrawer();
+    expect(closed).toEqual(['popover', 'sheet', 'drawer']);
+    expect(runEscape()).toBe(false);
+  });
+  it('the walk view takes WASD in the capture phase and stops them reaching the home letters', async () => {
+    const src = (await import('node:fs')).readFileSync(new URL('../src/ui/hood/WalkView.tsx', import.meta.url), 'utf8');
+    expect(src).toMatch(/addEventListener\('keydown', down, true\)/);
+    expect(src).toMatch(/stopImmediatePropagation/);
   });
 });

@@ -55,7 +55,7 @@ export function CutscenePlayer({ cues, onDone }: { cues: CutsceneCue[]; onDone: 
   };
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onDone();
+      if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); onDone(); }
       else if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         e.stopImmediatePropagation();

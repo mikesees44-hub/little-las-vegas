@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useEscape } from '../keys';
 import { queuedMoney } from '../../engine/actions';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -12,11 +13,10 @@ export function OrdersButton({ s }: { s: GameState }) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+    return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
+  useEscape(open, () => setOpen(false));
   const cost = queuedMoney(s, orders).family;
   return (
     <div className="relative" ref={ref}>

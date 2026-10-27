@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useEscape } from '../keys';
 
 /**
  * The frame of the one person view. On its own it is a drawer on the right,
@@ -6,12 +7,7 @@ import { useEffect, type ReactNode } from 'react';
  * panel drawer stay in sight. Embedded (the You panel) it is a plain block.
  */
 export function SheetFrame({ children, onClose, embedded }: { children: ReactNode; onClose?: () => void; embedded?: boolean }) {
-  useEffect(() => {
-    if (embedded || !onClose) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
-    window.addEventListener('keydown', onKey, true);
-    return () => window.removeEventListener('keydown', onKey, true);
-  }, [embedded, onClose]);
+  useEscape(!embedded && !!onClose, () => onClose?.());
   if (embedded) return <div className="llv-sheet-embedded">{children}</div>;
   return (
     <div className="fixed inset-0 z-[1150] flex justify-end bg-black/40 sm:bg-black/25" onClick={onClose} data-testid="sheet-frame">

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { clockSpaceAllowed, shortcutBlocked } from './keys';
 import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
 import { HousesNavContext } from './houses/nav';
@@ -424,17 +425,15 @@ export function App({ startOn = 'title' }: AppProps) {
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+      // The keyboard rules (keys.ts): typing wins, a focused control keeps Space/Enter, a held key is one press.
       if (e.code === 'Space') {
-        if (timeMode() !== 'clock') return;
+        if (timeMode() !== 'clock' || !clockSpaceAllowed(e)) return;
         e.preventDefault();
-        // A focused button would click on the key's release and undo the toggle.
-        (document.activeElement as HTMLElement | null)?.blur?.();
         setSpeed((v) => (v === 0 ? 2 : 0));
         setClockNote(undefined);
         return;
       }
+      if (shortcutBlocked(e)) return;
       if (menu || overlayOpen) return;
       if (e.key === '?') { e.preventDefault(); setHelpMenu(true); return; }
       const h = homeForKey(e.key);
