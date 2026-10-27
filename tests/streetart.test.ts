@@ -14,10 +14,10 @@ import { upgradeSave } from '../src/engine/upgradeSave';
 
 describe('street art: the asset manifest, storefront paintings, turnarounds and districts', () => {
   it('names every asset-store image once, by URL, in one manifest; the user\'s own art is all uploaded', () => {
-    // All 145 keys are uploaded now (31 originals + 114 of the user's own art).
+    // All 148 keys are uploaded now (31 originals + 114 of the user's own art + the 3 Boss's Office pictures).
     const keys = Object.keys(ASSET_URLS);
     const urls = Object.values(ASSET_URLS).filter((u): u is string => !!u);
-    expect(keys.length).toBe(145);
+    expect(keys.length).toBe(148);
     expect(urls.length).toBe(keys.length);
     expect(new Set(urls).size).toBe(urls.length);
     for (const u of urls) expect(u).toMatch(/^\/_blob\/[0-9a-f]{32}$/);

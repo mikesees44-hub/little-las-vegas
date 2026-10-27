@@ -6,7 +6,7 @@ import { NoirStill } from '../cutscene/NoirStill';
 import { AssetImg } from '../hood/AssetImg';
 import { CUTSCENE_ART, NOIR_GRADE } from '../hood/art/sceneArt';
 import { deleteSlot, freeSlot, listSlots, type SlotMeta } from '../save';
-import { HELP_LEVELS, type AutoBriefings, AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode } from '../settings';
+import { HELP_LEVELS, type AutoBriefings, AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode, type WeekStart } from '../settings';
 import { CharacterCreator } from './CharacterCreator';
 
 /**
@@ -215,6 +215,11 @@ export function SettingsPanel() {
           </select>
         </label>
       </div>
+      <label className={row}><span>Start each week in <span className="block text-xs text-stone-500">Where Monday finds you: upstairs in your office, at the desk's list, or on the map.</span></span>
+        <select value={st.weekStart ?? ''} onChange={(e) => upd({ weekStart: (e.target.value || undefined) as WeekStart | undefined })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200" data-testid="setting-week-start">
+          <option value="">Default (Office for new games, Desk for older saves)</option><option value="office">The Office</option><option value="desk">The Desk</option><option value="map">The map</option>
+        </select>
+      </label>
       <label className={row}><span>Reduced motion <span className="block text-xs text-stone-500">No pans, rain or flicker; cutscene text appears at once.</span></span><input type="checkbox" checked={st.reducedMotion} onChange={(e) => upd({ reducedMotion: e.target.checked })} /></label>
       <label className={row}><span>Text speed</span>
         <select value={st.textSpeed} onChange={(e) => upd({ textSpeed: e.target.value as TextSpeed })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200">
