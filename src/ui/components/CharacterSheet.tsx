@@ -28,6 +28,7 @@ import { PowerFacts } from '../power/PowerFacts';
 import { fam } from '../../engine/familyState';
 import { GRAND_JURY, OPEN_FILE, stageLabel } from '../../engine/longgame';
 import { Relationships } from './Relationships';
+import { DatingSection } from '../dating/DatingPanel';
 import { BonesFacts } from '../books/BonesFacts';
 import { PurseSection } from '../tribute/PurseSection';
 import { DirtyOnPerson } from '../econ/DirtyWork';
@@ -207,6 +208,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         <FamilySection s={s} id={c.id} />
 
         <Relationships s={s} c={c} />
+        <DatingSection s={s} id={c.id} />
 
         <section className="mt-3">
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Secrets & hooks</div>

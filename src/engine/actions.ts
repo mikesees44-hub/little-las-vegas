@@ -8,6 +8,7 @@ import { availableIn, CATALOG, SHOP_KINDS } from './catalog';
 import { commitEcon, econActions, previewEcon } from './econ';
 import { commitHood, hoodActions, previewHood } from './hood';
 import { previewLiving } from './livingAsk';
+import { previewDating } from './dating';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
@@ -285,6 +286,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** The Ears: the Madam, the nightlife workers (ears.ts). */
   ears: {
     preview: (s, a) => previewEars(s, a.op),
+  },
+  /** Relationships & Dating (dating.ts): she decides; the Pocket pays. */
+  dating: {
+    preview: (s, a) => previewDating(s, a.op),
   },
   /** Travel, trips and flight (travel.ts, fugitive.ts). */
   travel: {

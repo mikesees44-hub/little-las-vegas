@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DatingLink } from '../dating/DatingPanel';
 import { ageOn } from '../../engine/calendar';
 import { capos, displayName, player, relationLabel } from '../../engine/characters';
 import { alliedHouse, activeAlliances, HOUSE_KIND_LABEL, houseMembers, marriageable } from '../../engine/familyHouses';
@@ -20,6 +21,7 @@ export function MarriagePanel({ s }: { s: GameState }) {
   const kids = Object.values(s.characters).filter((c) => c.alive && c.dynasty && ageOn(c.birth, s.date) < 16).sort((a, b) => ageOn(b.birth, s.date) - ageOn(a.birth, s.date));
   return (
     <div className="space-y-5" data-testid="marriage-panel">
+      <DatingLink s={s} tab="family" text="your own: dates, pregnancies you know of, children by blood, the talk" />
       <section>
         <div className="panel-title">Arranged marriages</div>
         <p className="text-xs text-stone-400">A marriage between houses makes an alliance for as long as it stands: they won't move against you, they send men to your wars, and their votes at the Table lean your way. The bride's family pays the dowry.</p>

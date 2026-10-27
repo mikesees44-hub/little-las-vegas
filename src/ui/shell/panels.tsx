@@ -47,6 +47,7 @@ import { HoodDashboard } from '../hood/HoodDashboard';
 import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
 import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
+import { DatingPanel } from '../dating/DatingPanel';
 import { AttachmentBoard } from '../ears/Connections';
 import type { PanelId, Route } from './routes';
 
@@ -104,6 +105,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'The boss himself: his sheet, how he rules, who comes to see him.',
     sections: [
       { id: 'character', label: 'Character', render: (s) => stack(<PowerPart key="st" s={s} part="station" />, <CharacterSheet key="cs" s={s} id={s.playerId} onClose={() => {}} embedded />) },
+      { id: 'dating', label: 'Relationships & Dating', blurb: 'People you know, dates and relationships, adult services with their prices, and family & consequences. She always decides.', render: (s) => <DatingPanel s={s} /> },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
       { id: 'possessions', label: 'The Good Life', blurb: 'Homes, cars, the boat and the toys, paid from your pocket. Every one costs upkeep, and the feds count what the books cannot explain.', render: (s) => <GoodLifePanel s={s} /> },
       { id: 'walk', label: 'Walk the town', blurb: 'Out on the Boardwalk as yourself: walk up to a place to go in, buy it or run it; call a meeting; plan a trip.', render: (s) => <WalkLauncher s={s} /> },

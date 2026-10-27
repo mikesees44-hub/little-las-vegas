@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { MapMode } from '../components/IslandMap';
 import type { Route } from './routes';
+import type { GameState } from '../../engine/types';
 
 /** A request to point the map at something (alerts, In Motion chips, the street feed). */
 export interface MapFocus {
@@ -18,6 +19,8 @@ export interface MapFocus {
 export interface ShellApi {
   go: (r: Route | string) => void;
   focus: (f: Omit<MapFocus, 'nonce'>) => void;
+  /** Change the game now (settings that take effect at once, e.g. the content settings). Absent in isolated renders. */
+  update?: (f: (s: GameState) => GameState) => void;
 }
 
 export const ShellContext = createContext<ShellApi>({ go: () => {}, focus: () => {} });

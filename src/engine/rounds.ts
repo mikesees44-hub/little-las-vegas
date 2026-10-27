@@ -12,6 +12,7 @@ import { activeRomances, partnerOf } from './romance';
 import { personalRounds, roll } from './roundsPersonal';
 import { payFromPersonal } from './tribute';
 import { pocketCash } from './tributeState';
+import { adultOn, datingEvenings } from './datingState';
 import { suggestGuests } from './activities';
 import type { Character, Effect, GameState, PlayerAction, PlayerChoices, RivalId } from './types';
 
@@ -68,6 +69,10 @@ export interface Round {
   result: string[];
   /** Paid from your Pocket (the Family covers what the Pocket can't); an order's own cost when `action` is set. */
   cost: number;
+  /** Paid from the Pocket only: the Family never tops it up without the player's approval (a paid evening's company). */
+  pocketOnly?: boolean;
+  /** Adult content: offered only while the mature-content setting is not Off (re-checked when the evening comes). */
+  adult?: boolean;
 }
 
 export interface RoundsState {
@@ -102,6 +107,8 @@ export function roundSlots(s: GameState): { slots: number; why: { label: string;
   const trusted = Object.values(s.briefing?.trust ?? {}).filter(Boolean).length;
   if (trusted >= 2) why.push({ label: 'Your people carry the small stuff', value: 1 });
   let slots = why.reduce((a, w) => a + w.value, 0);
+  const dates = datingEvenings(s);
+  if (dates) { why.push({ label: `Dates and company this week`, value: -dates }); slots -= dates; }
   if (boss.imprisonedUntil !== undefined && boss.imprisonedUntil > s.week) { slots = 1; why.push({ label: 'In prison: visiting day only', value: 0 }); }
   if (s.travel?.fugitives.some((f) => !f.end && f.personId === boss.id)) { slots = Math.min(slots, 2); why.push({ label: 'In hiding', value: 0 }); }
   return { slots: Math.max(1, Math.min(6, slots)), why };
@@ -309,6 +316,8 @@ export function roundsWeek(ctx: Ctx, picked: string[] | undefined, opts: Round[]
     const r = opts.find((x) => x.id === id);
     if (!r || done.reduce((a, x) => a + x.slots, 0) + r.slots > slots || s.gameOver) continue;
     if (r.who && !s.characters[r.who]?.alive) continue;
+    if (r.adult && !adultOn(s)) continue;
+    if (r.pocketOnly && r.cost > pocketCash(s)) { lines.push(`${r.label}: not this week — your pocket is short, and an evening like this never comes out of Family money.`); continue; }
     if (r.cost > (r.action ? s.money : roundCash(s))) { lines.push(`${r.label}: not this week — the money isn't there.`); continue; }
     done.push(r);
     const out = roundOutcome(s, r);

@@ -1,4 +1,6 @@
 import { StartHereButton } from '../econ/StartRacket';
+import { DatingHere, DatingLink } from '../dating/DatingPanel';
+import { datingSettings } from '../../engine/datingState';
 import { DirtyHere } from '../econ/DirtyWork';
 import { useMemo, useState } from 'react';
 import { rivalName } from '../../engine/construction';
@@ -159,6 +161,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zon
         {h.kind === 'tram' && onTram && <button type="button" className="btn-ghost text-xs py-1" onClick={onTram} data-testid="walk-tram">Ride the tram car</button>}
         {(h.kind === 'tram' || h.kind === 'pier') && <button type="button" className="btn-ghost text-xs py-1" disabled={!!s.gameOver} onClick={() => travel.plan(s.playerId)} data-testid="walk-trip">Plan a trip</button>}
       </div>
+      {h.kind === 'business' && <DatingLink s={s} tab={datingSettings(s).mature === 'off' ? 'people' : 'adult'} text={datingSettings(s).mature === 'off' ? 'who you know here, asking someone out' : 'asking someone out, or company for the evening (her price, your pocket)'} />}
       {meet && <MeetingPicker s={s} place={it?.name ?? h.label} here={here} />}
       {buyable && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: lot!.id } }} compact label={`Make an offer on ${it?.name ?? h.label}`} />}
       {leasable && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: lot!.id } }} compact label="Lease the storefront" />}
@@ -192,6 +195,7 @@ export function WalkNpcCard({ s, n, place, onClose }: { s: GameState; n: WalkNpc
       <ActionCard s={s} action={{ kind: 'talk', op: { t: 'ask', talk: 'meeting', target: c.id } }} compact label={`Sit down with ${c.firstName} at ${place}`} />
       {mine && <ActionCard s={s} action={{ kind: 'talk', op: { t: 'ask', talk: 'advice', target: c.id } }} compact label={`Ask ${c.firstName} what he hears`} />}
       {!mine && n.role !== 'ear' && <ActionCard s={s} action={{ kind: 'talk', op: { t: 'ask', talk: 'business', target: c.id } }} compact label={`Talk business with ${c.firstName}`} />}
+      <DatingHere s={s} id={c.id} />
     </div>
   );
 }

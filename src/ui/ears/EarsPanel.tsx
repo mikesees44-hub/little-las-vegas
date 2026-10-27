@@ -9,6 +9,7 @@ import { CharLink, Face } from '../components/People';
 import { Tip } from '../clarity';
 import { fmt$ } from '../format';
 import { ConnectionsList } from './Connections';
+import { DatingLink } from '../dating/DatingPanel';
 
 function Meter({ label, value, tone, tip, shown }: { label: string; value: number; tone: string; tip?: string; shown?: string }) {
   const body = (
@@ -167,6 +168,7 @@ export function NightPanel({ s }: { s: GameState }) {
   return (
     <div className="space-y-3" data-testid="night-panel">
       <p className="text-xs text-stone-500">Everything here happens off-screen: a set-up, then a report. Every woman decides for herself what she does, for whom, and for how much.</p>
+      <DatingLink s={s} tab="adult" text="the clubs and the street: who offers company, her price, which account pays" />
       <nav className="flex flex-wrap gap-1">
         {tabs.map(([id, label]) => (
           <button key={id} type="button" onClick={() => setTab(id)} data-testid={`night-tab-${id}`} className={`rounded px-2 py-1 text-xs font-semibold ${tab === id ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{label}</button>

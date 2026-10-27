@@ -1,4 +1,5 @@
 import { briefing } from './briefing';
+import { datingPhone } from './dating';
 import { capos, displayName, isFree, player } from './characters';
 import { weekCheckIns } from './checkins';
 import { holder } from './council';
@@ -216,7 +217,7 @@ export interface PhoneEntry {
   key: string;
   name: string;
   charId?: string;
-  kind: 'lawyer' | 'crew' | 'rival';
+  kind: 'lawyer' | 'crew' | 'rival' | 'dating' | 'company';
   /** "Your lawyer · on retainer", "Capo · Pine Avenue", "Boss of the Manno family". */
   role: string;
   /** Why he can't be called right now. */
@@ -247,6 +248,8 @@ export function officePhone(s: GameState): PhoneEntry[] {
     if (!c?.alive) continue;
     out.push({ key: c.id, name: displayName(c), charId: c.id, kind: 'rival', role: `Head of ${r.name}`, blocked: !isFree(s, c) ? 'Inside: no phone' : undefined });
   }
+  // Relationships & Dating: the women he is seeing, and (only when mature content is on) a number for company.
+  for (const d of datingPhone(s)) out.push({ key: d.key, name: d.name, charId: d.charId, kind: d.adult ? 'company' : 'dating', role: d.role, blocked: d.blocked });
   return out;
 }
 
