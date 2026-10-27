@@ -12,6 +12,7 @@ import { chance, hashSeed, pick, rand } from './rng';
 import type { Ctx } from './ledger';
 import type { FactionId, GameState, RivalId } from './types';
 import { FACTION_NAMES } from './world';
+import { livingHoodOfLot, livingRunsLot } from './livingState';
 
 /**
  * The neighborhoods, month by month. Owners sell to owners; rivals buy out
@@ -196,6 +197,8 @@ export function hoodMonth(ctx: Ctx): void {
   const rivals = s.rivals.filter((r) => r.kind === 'mob' && s.characters[r.leaderId]?.alive);
   for (const l of lots) {
     if (isMine(l) || l.status === 'public') continue;
+    // The living district's people run their own places (livingWorld.ts): no dice here.
+    if (livingRunsLot(s, l) || (s.living && livingHoodOfLot(s.living, l) && l.status !== 'rival')) continue;
     const hood = drawnHood(l)!;
     const st = h.stats[hood];
     const u = l.use ? USES_BY_ID[l.use] : undefined;

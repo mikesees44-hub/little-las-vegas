@@ -888,6 +888,8 @@ export interface GameState {
   econ?: EconState;
   /** The neighborhoods: their economy, reputation, police, history; the looks of other people's places (hoodState.ts; optional for old saves). */
   hood?: HoodState;
+  /** The living neighborhood: townsfolk, households, businesses, debts, the world-event ledger, causal stories (livingState.ts; optional for old saves). */
+  living?: import('./livingState').LivingState;
   /** Talks with people, pacts with families, the families' own diplomacy (talks.ts; optional for old saves). */
   talks?: TalkState;
   /** The Mission Board's cases (missions.ts; optional for old saves). */
