@@ -97,6 +97,22 @@ const OTHER_PURPOSE: Record<string, string> = {
   officeHours: 'Hear the island\'s problems: goodwill, favors owed, sometimes a lead.',
 };
 
+/** The shadow court's moves (power › shadow). */
+const SHADOW_PURPOSE: Record<string, string> = {
+  report: 'Hear what the underboss has been deciding in your name, and see what he leaves out.',
+  authority: 'Set how much the underboss may decide without you.',
+  test: 'Give him a small thing to handle and watch how he handles it.',
+  meet: 'Sit down with him alone: what he wants, said to your face.',
+  reward: 'Pay a man for loyalty you can see, so others notice.',
+  plant: 'Put eyes on the underboss\'s court: who comes to see him, and why.',
+  confront: 'Put what you heard in front of him and watch his answer.',
+  council: 'Call the family together on the succession, in the open.',
+  honor: 'Keep a promise made in your name: it costs, and it holds men.',
+  disown: 'Refuse a promise made in your name: the man it was made to remembers.',
+  retire: 'Step down and choose how: a quiet exit, or a seat at the table.',
+  reunite: 'Take back men who broke away, before they become someone else\'s.',
+};
+
 /** Purposes for romance interactions (merged into advice.ts's interaction table). */
 export const ROMANCE_PURPOSE: Record<string, string> = {
   court: 'A courtship in the open: if it goes well, a marriage and an alliance of houses. Only if the other adult wants it too.',
@@ -124,7 +140,7 @@ function opOf(a: PlayerAction): string | undefined {
 export function pillarPurpose(a: PlayerAction): string | undefined {
   const op = opOf(a);
   switch (a.kind) {
-    case 'power': return op ? POWER_PURPOSE[op] : undefined;
+    case 'power': return a.op.op === 'shadow' ? SHADOW_PURPOSE[a.op.a.op] ?? 'Work the succession court: who backs whom, and what he promised.' : op ? POWER_PURPOSE[op] : undefined;
     case 'pol': return op ? POL_PURPOSE[op] : undefined;
     case 'travel': return op ? TRAVEL_PURPOSE[op] : undefined;
     case 'ledger': return op ? LEDGER_PURPOSE[op] : undefined;

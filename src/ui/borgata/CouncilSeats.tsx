@@ -1,3 +1,4 @@
+import { AdviceButton } from '../advice/AdviceButton';
 import { crew, displayName, isFree } from '../../engine/characters';
 import { holder, SEAT_INFO, SEATS, seatPower, TASKS } from '../../engine/council';
 import { successionCandidates } from '../../engine/heir';
@@ -59,6 +60,7 @@ export function CouncilSeats({ s }: { s: GameState }) {
                 {cands.length > 0 && <button type="button" className="flex-1 rounded border border-noir-600 px-1 py-0.5 text-[10px] text-stone-300 hover:border-gold-500" onClick={() => openPicker({ kind: 'seat', seat: st })}>{h ? 'Replace…' : `Appoint (${cands.length})…`}</button>}
                 {h && <MoreButton id={h.id} category="business" />}
               </div>
+              <div className="mt-1 text-center" data-testid={`seat-advice-${st}`}><AdviceButton s={s} subject={{ kind: 'seat', seat: st }} auto={false} label="Who should it be?" /></div>
             </div>
           );
         })}
