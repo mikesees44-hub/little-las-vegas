@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { getSettings, TEXT_CPS } from '../settings';
 import type { CutsceneCue } from '../../engine/types';
 import { NoirStill } from './NoirStill';
+import { AssetImg } from '../hood/AssetImg';
+import { CUTSCENE_ART, NOIR_GRADE } from '../hood/art/sceneArt';
 import { stinger } from '../audio';
 
 /**
@@ -77,6 +79,9 @@ export function CutscenePlayer({ cues, onDone }: { cues: CutsceneCue[]; onDone: 
         <div className={`absolute inset-0 ${reduced ? '' : pan}`} key={`${cue.key}${i}`}>
           {video ? (
             <video src={video} autoPlay={!reduced} muted playsInline loop className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }} />
+          ) : CUTSCENE_ART[cue.key] ? (
+            // The user's painting of the place, graded noir; the drawn still when it can't load.
+            <AssetImg k={CUTSCENE_ART[cue.key]} alt="" className="w-full h-full object-cover" style={{ filter: NOIR_GRADE }} fallback={<NoirStill cue={cue.key} seed={cue.week + i} />} />
           ) : (
             <NoirStill cue={cue.key} seed={cue.week + i} />
           )}

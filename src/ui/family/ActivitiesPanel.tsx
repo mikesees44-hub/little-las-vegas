@@ -10,6 +10,7 @@ import { OpinionBadge } from '../components/CrewList';
 import { ActionCard } from '../components/Orders';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
+import { ACTIVITY_ART, Backdrop } from '../hood/art/sceneArt';
 import { Label } from './bits';
 
 /** Hosted activities (CK feasts): choose one, pick guests, order it. */
@@ -74,7 +75,8 @@ function Planner({ s, kind }: { s: GameState; kind: ActivityKind }) {
   const toggle = (id: string) => setGuests((g) => (g.includes(id) ? g.filter((x) => x !== id) : g.length >= def.maxGuests ? g : [...g, id]));
   const needs = kind === 'wedding' || kind === 'christening' || kind === 'funeral';
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/40 p-3" data-testid="activity-planner">
+    <section className="relative isolate overflow-hidden rounded-md border border-noir-700 bg-noir-800/40 p-3" data-testid="activity-planner">
+      <Backdrop k={ACTIVITY_ART[kind]} opacity={0.18} className="-z-10" contain={kind === 'sunday'} />
       <div className="panel-title text-base">{def.name}</div>
       <p className="text-xs text-stone-400">{def.text}</p>
       {needs && (

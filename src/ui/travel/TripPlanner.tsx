@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Backdrop, tripArt } from '../hood/art/sceneArt';
 import { ageOn, monthName } from '../../engine/calendar';
 import { displayName } from '../../engine/characters';
 import { guestGroup } from '../../engine/activities';
@@ -65,7 +66,8 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
   return (
     <Modal onClose={onClose} wide>
       <div className="p-4 sm:p-5 space-y-4" data-testid="trip-planner">
-        <div className="flex items-start justify-between gap-2">
+        <div className="relative isolate overflow-hidden -mx-2 -mt-2 rounded px-2 pt-2 flex items-start justify-between gap-2">
+          <Backdrop k={tripArt(plan.destId, s.date.y)} opacity={0.3} className="-z-10" />
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Plan a trip</div>
             <h2 className="font-display text-2xl text-gold-400 leading-tight">{d?.name ?? 'Somewhere'}</h2>

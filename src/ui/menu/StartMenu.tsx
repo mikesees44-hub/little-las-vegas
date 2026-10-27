@@ -3,6 +3,8 @@ import { newGameWith, type StartId } from '../../engine/starts';
 import type { GameState } from '../../engine/types';
 import { musicPlaying, savePref, startMusic, stopMusic } from '../audio';
 import { NoirStill } from '../cutscene/NoirStill';
+import { AssetImg } from '../hood/AssetImg';
+import { CUTSCENE_ART, NOIR_GRADE } from '../hood/art/sceneArt';
 import { deleteSlot, freeSlot, listSlots, type SlotMeta } from '../save';
 import { AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode } from '../settings';
 import { CharacterCreator } from './CharacterCreator';
@@ -62,7 +64,7 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
     <div className="min-h-screen bg-noir-950" data-testid="start-menu" role="dialog" aria-modal="true" aria-label="Little Las Vegas">
       {screen === 'title' && (
         <div className="relative min-h-screen flex flex-col overflow-hidden">
-          <div className="absolute inset-0 opacity-90" aria-hidden><NoirStill cue="title" seed={7} /></div>
+          <div className="absolute inset-0 opacity-90" aria-hidden><AssetImg k={CUTSCENE_ART.title} alt="" className="h-full w-full object-cover" style={{ filter: NOIR_GRADE }} fallback={<NoirStill cue="title" seed={7} />} /></div>
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/85" />
           <div className="relative flex-1 flex flex-col items-center justify-end sm:justify-center px-4 pb-10 pt-24 text-center">
             <div className="text-[10px] sm:text-xs uppercase tracking-[0.5em] text-stone-400">Wildwood, New Jersey · 1960</div>
