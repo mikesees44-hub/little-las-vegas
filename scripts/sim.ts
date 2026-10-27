@@ -43,6 +43,7 @@ import { tributeActions } from '../src/engine/tributeOps';
 import { envelopeChoice } from './simBudget';
 import { moneyView } from '../src/engine/money';
 import { earnerOf, holderOf, holders } from '../src/engine/earners';
+import { build1975, donDies, runYears } from '../tests/successionScenario';
 import { defaultMan, jobLock, JOBS, jobSummary, targetsFor } from '../src/engine/dirtyWork';
 
 function arg(name: string, def: string): string {
@@ -297,6 +298,9 @@ interface GameResult {
   bones?: Record<string, number>;
   /** The Ears' counters at the end of the game (earsState.ts). */
   ears?: Record<string, number>;
+  /** The shadow court and the succession war (shadow.ts). */
+  shadow?: Record<string, number>;
+  succOutcomes?: string[];
   /** Travel counters at the end of the game (travelState.ts). */
   travel?: Record<string, number>;
   hierarchyErrors: string[];
@@ -548,6 +552,10 @@ function playOne(gi: number): GameResult {
     const { intel, ...rest } = s!.ears.stats;
     r.ears = { ...rest, ...Object.fromEntries(Object.entries(intel).map(([k, v]) => [`intel_${k}`, v])), madamOpinion: opinion(s!, s!.ears.madam.id, s!.playerId), knownEars: Object.values(s!.ears.ears).filter((e) => e.known).length, linksKnown: s!.ears.links.filter((l) => !l.hidden).length };
   }
+  if (s!.shadow) {
+    r.shadow = { ...s!.shadow.stats, pressure: s!.shadow.hist[s!.shadow.hist.length - 1]?.[1] ?? 0, knownSessions: s!.shadow.sessions.filter((x) => s!.shadow!.know[s!.playerId]?.[x.id]).length };
+    r.succOutcomes = s!.shadow.successions.map((x) => x.outcome);
+  }
   if (s!.bones || s!.ledgerBook) r.bones = { ...(s!.bones?.stats ?? {}), ...Object.fromEntries(Object.entries(s!.ledgerBook?.stats ?? {}).map(([k, v]) => [`books_${k}`, v])) };
   if (s!.hood) r.hood = { ...s!.hood.counts, log: s!.hood.log.length, ...Object.fromEntries(Object.entries(s!.talks?.stats ?? {}).map(([k, v]) => [`talk_${k}`, v])), missionsEnded: s!.missions?.stats.ended ?? 0, missionDecisions: s!.missions?.stats.decisions ?? 0 };
   if (s!.econ) r.econ = { ...s!.econ.stats, buildings: s!.econ.lots.filter((l) => l.status === 'owned' || l.status === 'leased').length, managers: Object.keys(s!.econ.managers).length };
@@ -647,6 +655,31 @@ const earGames = results.filter((r) => r.ears && r.weeksPlayed > 0);
 if (earGames.length) {
   const keys = [...new Set(earGames.flatMap((r) => Object.keys(r.ears!)))].sort();
   console.log(`  The Ears per game (mean): ${keys.map((k) => `${k} ${(earGames.reduce((a, r) => a + (r.ears![k] ?? 0), 0) / earGames.length).toFixed(1)}`).join(', ')}`);
+}
+const shGames = results.filter((r) => r.shadow && r.weeksPlayed > 0);
+if (shGames.length) {
+  const keys = [...new Set(shGames.flatMap((r) => Object.keys(r.shadow!)))].sort();
+  console.log(`  The shadow court per game (mean): ${keys.map((k) => `${k} ${(shGames.reduce((a, r) => a + (r.shadow![k] ?? 0), 0) / shGames.length).toFixed(1)}`).join(', ')}`);
+  const outs: Record<string, number> = {};
+  for (const o of shGames.flatMap((r) => r.succOutcomes ?? [])) outs[o] = (outs[o] ?? 0) + 1;
+  console.log(`  Succession outcomes: ${Object.entries(outs).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}`);
+}
+// The spec's 1975 acceptance organization, headless (--succession N seeds x 15 years).
+const SUCC = Number(arg('succession', '0'));
+if (SUCC > 0) {
+  const outs: Record<string, number> = {};
+  const tot: Record<string, number> = {};
+  for (let i = 0; i < SUCC; i++) {
+    const s = runYears(build1975(`${SEED}-1975-${i}`), 15);
+    for (const [k, v] of Object.entries(s.shadow!.stats)) tot[k] = (tot[k] ?? 0) + v;
+    for (const x of s.shadow!.successions) outs[x.outcome] = (outs[x.outcome] ?? 0) + 1;
+    const f = runYears(build1975(`${SEED}-1975-${i}`), 5);
+    donDies(f, 3);
+    for (const x of f.shadow!.successions) outs[`forced:${x.outcome}`] = (outs[`forced:${x.outcome}`] ?? 0) + 1;
+  }
+  console.log(`\nSUCCESSION (1975 org, ${SUCC} seeds x 15 years, headless)`);
+  console.log(`  per run (mean): ${Object.entries(tot).map(([k, v]) => `${k} ${(v / SUCC).toFixed(1)}`).join(', ')}`);
+  console.log(`  outcomes: ${Object.entries(outs).map(([k, v]) => `${k} ${v}`).join(', ')}`);
 }
 const econGames = results.filter((r) => r.econ && r.weeksPlayed > 0);
 if (econGames.length) {

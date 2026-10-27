@@ -898,6 +898,8 @@ export interface GameState {
   ledgerBook?: LedgerBookState;
   /** The weekly take: accounts, agreements, the underboss's envelope (tribute.ts; optional for old saves). */
   tribute?: import('./tributeState').TributeState;
+  /** The aging Don, the underboss's shadow court and the succession war (shadow.ts; optional for old saves). */
+  shadow?: import('./shadowState').ShadowState;
   /** The Empire Designer: properties, buildings, venues, staff, supplies (empireState.ts; optional for old saves). */
   empire?: import('./empireState').EmpireState;
   /** The Ears: the Madam, the nightlife workers, operators, the connection web (optional for old saves). */

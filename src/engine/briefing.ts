@@ -1,4 +1,5 @@
 import { previewAction } from './actions';
+import { shadowDrafts } from './shadowBrief';
 import { explainAction } from './advice';
 import { selfInterest, tieTo } from './advisors';
 import { mayPropose, needsBones } from './bones';
@@ -876,6 +877,8 @@ export function briefing(s: GameState): Briefing {
     const c = sp.c;
     const quality = sp.empty ? 0 : qualityOf(s, c, sp.skill);
     const drafts = sp.empty ? [] : sp.role === 'underboss' ? underbossItems(s, c) : sp.role === 'consigliere' ? consigliereItems(s, c) : sp.role === 'bagman' ? bagmanItems(s, c) : sp.role === 'capo' ? capoItems(s, c!) : wifeItems(s, c!);
+    // The shadow court: what the underboss raises, what the consigliere hears, a promise a loyal capo was made (shadowBrief.ts).
+    if (!sp.empty && (sp.role === 'underboss' || sp.role === 'consigliere' || sp.role === 'capo')) drafts.push(...shadowDrafts(s, sp.role, c));
     const items: BriefItem[] = [];
     for (const d of drafts.sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))) {
       if (items.length >= MAX_PER_SPEAKER) break;

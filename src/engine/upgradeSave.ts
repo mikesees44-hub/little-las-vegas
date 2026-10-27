@@ -15,6 +15,7 @@ import { migrateVice } from './racketLife';
 import { ensureRomance, ensureStory } from './storyState';
 import { ensureTravel } from './travelState';
 import { ensureTribute } from './tributeState';
+import { ensureShadow } from './shadowState';
 import type { GameState } from './types';
 
 /**
@@ -27,7 +28,7 @@ export function upgradeSave(s: GameState): GameState {
   // created by the weekly update itself, so loading never changes the dice.
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
-    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;
