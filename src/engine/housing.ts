@@ -158,6 +158,9 @@ export function ensureHousing(s: GameState): HousingState | undefined {
       if (r.use && hood) hood.styles[r.id] ??= { style: r.style ?? 'colonial', sign: 'white', since: r.built ?? 1925 };
     });
     H.lotsIn = RES_SEED.length;
+    // The neighborhood's record of how each lot looked, for the new house lots too
+    // (so a new game already holds exactly what a load would add).
+    if (hood) ensureHood(s);
     if (!H.init.vacant) {
       const res = e.lots.filter((l) => l.home);
       H.init = { vacant: res.filter((l) => !l.use).length, houses: res.filter((l) => l.use).length };

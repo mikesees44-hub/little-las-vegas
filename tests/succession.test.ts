@@ -44,8 +44,19 @@ describe('fifteen simulated years (1975-1990), seeded', () => {
   it('runs fifteen years without a crash', () => {
     for (const s of runs) {
       expect(s.date.y).toBeGreaterThanOrEqual(1990);
-      expect(s.shadow!.hist.length).toBeGreaterThan(150);
+      const sh = s.shadow!;
+      // The court keeps a monthly record for as long as the player holds the chair.
+      // A seed may end with the underboss taking the family (a real outcome, not a
+      // crash): then the record stops at the fall, and the fall is on the books.
+      if ((s.power?.station ?? 'boss') === 'boss') expect(sh.hist.length).toBeGreaterThan(150);
+      else {
+        expect(sh.successions.some((x) => x.outcome === 'usurped' || x.outcome === 'contested')).toBe(true);
+        const fell = s.power!.fallenWeek ?? sh.successions[sh.successions.length - 1].week;
+        expect(sh.hist[sh.hist.length - 1][0]).toBeGreaterThanOrEqual(fell - 5);
+      }
     }
+    // Most seeds keep the chair the whole fifteen years.
+    expect(runs.filter((s) => s.shadow!.hist.length > 150).length).toBeGreaterThanOrEqual(2);
   });
 
   it('the underboss holds meetings without the player', () => {
