@@ -325,6 +325,7 @@ function evalAction(ctx: Ctx, adv: Character, ref: AdviserRef, a: PlayerAction):
     const kind = a.op.cmd.kind;
     const def = CATALOG[kind];
     const district = a.op.cmd.district ?? ctx.district;
+    if (a.op.cmd.runner) manId = a.op.cmd.runner;
     const sum = startSummary(s, kind, a.op.cmd.runner ?? manId, district);
     const now = moneyRead(adv, `take:${kind}`, adv.attributes.business, sum.weekly);
     const other = moneyRead(adv, `off:${kind}`, adv.attributes.business, sum.other);
