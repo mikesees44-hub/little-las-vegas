@@ -188,7 +188,7 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
         )}
         {sessions.length === 0 ? <p className="text-xs text-stone-500">You have not heard of any meeting he held without you. That does not mean there were none.</p> : (
           <ul className="space-y-1.5">
-            {sessions.slice(0, 8).map(({ ses, b }) => (
+            {sessions.slice(0, 5).map(({ ses, b }) => (
               <li key={ses.id} className="rounded border border-noir-700 bg-noir-900/50 p-2 text-xs" data-testid="known-session">
                 <div className="flex flex-wrap items-center gap-x-2">
                   <span className="text-stone-300">{when(ses.week)}</span>
@@ -205,6 +205,7 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
             ))}
           </ul>
         )}
+        {sessions.length > 5 && <p className="text-[11px] text-stone-500">…and {sessions.length - 5} earlier meeting{sessions.length - 5 === 1 ? '' : 's'} you know of.</p>}
       </section>
 
       {/* Promises */}
@@ -228,10 +229,11 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
       <section className="space-y-2" data-testid="succession-actions">
         <H>Moves</H>
         <div className="grid gap-2 sm:grid-cols-2">
-          <ActionCard s={live} action={act({ op: 'report' })} compact />
-          <ActionCard s={live} action={act({ op: 'confront' })} compact />
+          {ub && <ActionCard s={live} action={act({ op: 'report' })} compact />}
+          {ub && <ActionCard s={live} action={act({ op: 'confront' })} compact />}
           <ActionCard s={live} action={act({ op: 'council' })} compact />
-          <div className="space-y-1">
+          {!ub && <p className="text-xs text-stone-500 self-center">Nobody holds the underboss seat, so nobody holds a court of his own. Fill it from The council.</p>}
+          {ub && <div className="space-y-1">
             <label className="block text-[11px] text-stone-400">Plant someone in the underboss's court:{' '}
               <select className="mt-0.5 w-full rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={plantPick} onChange={(e) => setPlant(e.target.value)} data-testid="plant-pick">
                 {ears.map((e) => <option key={e.id} value={`ear:${e.id}`}>{displayName(s.characters[e.id])} (an Ear)</option>)}
@@ -239,7 +241,7 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
               </select>
             </label>
             {plantPick && <ActionCard s={live} action={act({ op: 'plant', kind: plantPick.startsWith('ear:') ? 'ear' : 'man', id: plantPick.slice(4) })} compact />}
-          </div>
+          </div>}
         </div>
         <details className="text-xs">
           <summary className="cursor-pointer text-[11px] text-stone-400">Step down…</summary>
