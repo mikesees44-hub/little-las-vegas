@@ -3,6 +3,7 @@ import { occupantIn, yearsCover, type CityPackage } from '../../engine/cityPacka
 import { townAggregate, type TownLot } from '../../engine/towns';
 import type { GameState } from '../../engine/types';
 import { ConfBadge, TownLayers, drawables, extentOf, type Drawn } from '../editor/townDraw';
+import { firstLook } from '../editor/TownEditor';
 
 /**
  * A town away from home, up close (Cape May first). Until someone of yours
@@ -24,7 +25,7 @@ export function TownView({ s, pkg, onClose }: { s: GameState; pkg: CityPackage; 
   const items = useMemo(() => drawables(pkg, year), [pkg, year]);
   const [sel, setSel] = useState<string | undefined>();
   const svg = useRef<SVGSVGElement>(null);
-  const [vb, setVb] = useState(() => extentOf(pkg, new Set(pkg.districts.slice(0, 2).map((d) => d.id))));
+  const [vb, setVb] = useState(() => extentOf(pkg, firstLook(pkg)));
   const [px, setPx] = useState(800);
   useEffect(() => {
     const el = svg.current;
@@ -70,7 +71,7 @@ export function TownView({ s, pkg, onClose }: { s: GameState; pkg: CityPackage; 
       <svg ref={svg} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full select-none" style={{ touchAction: 'none' }} onPointerDown={(e) => down(e)}>
         <TownLayers pkg={pkg} year={year} sel={sel} items={items.filter((d) => d.kind !== 'placement')} scale={vb.w / Math.max(1, px)} fill={lotFill} onDown={(e, d) => down(e, d)} />
       </svg>
-      <div className="absolute left-2 top-2 right-2 z-10 space-y-1.5" data-tv-ui>
+      <div className="absolute left-2 top-11 right-2 z-10 space-y-1.5" data-tv-ui>
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" className="hv-btn" onClick={onClose} data-testid="tv-close">← South Jersey</button>
           <span className="font-display text-lg text-gold-300 drop-shadow">{pkg.displayName}, {year}</span>
@@ -88,12 +89,12 @@ export function TownView({ s, pkg, onClose }: { s: GameState; pkg: CityPackage; 
         </div>
       </div>
       {selItem && (
-        <div className="absolute z-20 inset-x-0 bottom-0 max-h-[55%] overflow-y-auto panel p-3 rounded-b-none md:inset-x-auto md:right-2 md:top-28 md:bottom-auto md:w-[340px] md:max-h-[calc(100%-9rem)] md:rounded-b-lg text-xs space-y-1.5" data-tv-ui data-testid="tv-card">
+        <div className="absolute z-20 inset-x-0 bottom-24 max-h-[50%] overflow-y-auto panel p-3 md:inset-x-auto md:right-2 md:top-40 md:bottom-auto md:w-[340px] md:max-h-[calc(100%-9rem)] md:rounded-b-lg text-xs space-y-1.5" data-tv-ui data-testid="tv-card">
           <PlaceCard pkg={pkg} d={selItem} year={year} lot={town?.lots[selItem.id]} known={!!town} onClose={() => setSel(undefined)} />
         </div>
       )}
       {town && town.log.length > 0 && !selItem && (
-        <div className="absolute z-10 right-2 bottom-2 w-[min(320px,calc(100%-1rem))] rounded bg-noir-900/90 border border-noir-700 p-2 text-[11px] text-stone-300 space-y-0.5" data-tv-ui data-testid="tv-log">
+        <div className="absolute z-10 right-2 bottom-24 md:bottom-2 w-[min(320px,calc(100%-1rem))] rounded bg-noir-900/90 border border-noir-700 p-2 text-[11px] text-stone-300 space-y-0.5" data-tv-ui data-testid="tv-log">
           {town.log.slice(-4).reverse().map((l, i) => <div key={i}><span className="text-stone-500">{l.y}</span> {l.text}</div>)}
         </div>
       )}

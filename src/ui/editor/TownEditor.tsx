@@ -34,6 +34,12 @@ function recordOfPath(pkg: CityPackage, path: string): string | undefined {
   return list?.[Number(m[2])]?.id;
 }
 
+/** Where a town opens: its first district on a phone, the first two on a big screen. */
+export function firstLook(p: CityPackage): Set<string> {
+  const phone = typeof window !== 'undefined' && window.innerWidth < 640;
+  return new Set(p.districts.slice(0, phone ? 1 : 2).map((d) => d.id));
+}
+
 const inp = 'bg-noir-900 border border-noir-700 rounded px-1 py-0.5 text-xs text-stone-200 w-full';
 
 export function TownEditor({ year: gameYear, onClose }: { year: number; onClose: () => void }) {
@@ -51,7 +57,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
   const [pasted, setPasted] = useState<ReturnType<typeof importCityPackage> | undefined>();
   const [draftHere, setDraftHere] = useState<string | undefined>(() => loadDraft(pkg.id));
   const svg = useRef<SVGSVGElement>(null);
-  const [vb, setVb] = useState(() => extentOf(pkg, new Set(pkg.districts.slice(0, 2).map((d) => d.id))));
+  const [vb, setVb] = useState(() => extentOf(pkg, firstLook(pkg)));
   const [px, setPx] = useState(800);
 
   useEffect(() => {
@@ -72,7 +78,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
   };
   const open = (p: CityPackage) => {
     setPkg(p); setUndo([]); setSel(undefined); setPoly([]); setTool('select'); setIssues(undefined);
-    setVb(extentOf(p, new Set(p.districts.slice(0, 2).map((d) => d.id))));
+    setVb(extentOf(p, firstLook(p)));
     setDraftHere(loadDraft(p.id));
     setYear(Math.min(Math.max(gameYear, p.era.from), p.era.to));
   };
@@ -187,7 +193,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
       </svg>
 
       {/* Toolbar. */}
-      <div className="absolute left-2 top-2 right-2 z-10 flex flex-wrap items-center gap-1.5" data-te-ui>
+      <div className="absolute left-2 top-11 right-2 z-10 flex flex-wrap items-center gap-1.5" data-te-ui>
         <button type="button" className="hv-btn" onClick={onClose} data-testid="te-close">← Block map</button>
         <label className="hv-btn flex items-center gap-1">Town
           <select className="bg-transparent text-[11px] max-w-[8rem]" value={CITY_PACKAGES[pkg.townId]?.id === pkg.id ? pkg.townId : ''} onChange={(e) => { const p = CITY_PACKAGES[e.target.value]; if (p) open(p); }} data-testid="te-town">
@@ -217,7 +223,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
       </div>
 
       {/* District jumps and the summary. */}
-      <div className="absolute left-2 bottom-2 z-10 max-w-[min(620px,calc(100%-1rem))] rounded bg-[#1b1030]/90 border border-[#ff5fa2]/50 px-2 py-1 text-[11px] text-[#ffd1e6] space-y-1" data-te-ui data-testid="te-summary">
+      <div className={`absolute left-2 bottom-2 z-10 max-w-[min(620px,calc(100%-1rem))] ${f && !box ? 'max-md:hidden' : ''} rounded bg-[#1b1030]/90 border border-[#ff5fa2]/50 px-2 py-1 text-[11px] text-[#ffd1e6] space-y-1`} data-te-ui data-testid="te-summary">
         <div><span className="font-display">{pkg.displayName}</span> <span className="text-stone-400">· {pkg.status} · v{pkg.contentVersion} · {pkg.districts.length} districts, {pkg.parcels.length} parcels, {open1960} open in {year}</span></div>
         <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-stone-300"><span><ConfBadge c="verified" /> {ev.verified}</span><span><ConfBadge c="approximate" /> {ev.approximate}</span><span><ConfBadge c="invented" /> {ev.invented}</span><span className="text-stone-500">solid / dashed / dotted outlines</span></div>
         <div className="flex flex-wrap gap-1">
@@ -229,7 +235,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
 
       {/* Validation results. */}
       {issues && (
-        <div className="absolute z-20 right-2 top-24 w-[min(380px,calc(100%-1rem))] max-h-[45%] overflow-y-auto panel p-2 text-xs space-y-1" data-te-ui data-testid="te-issues">
+        <div className="absolute z-20 right-2 top-32 w-[min(380px,calc(100%-1rem))] max-h-[45%] overflow-y-auto panel p-2 text-xs space-y-1" data-te-ui data-testid="te-issues">
           <div className="flex justify-between"><span className={issues.errors.length ? 'text-rose-300 font-bold' : 'text-emerald-300 font-bold'} data-testid="te-valid">{issues.errors.length ? `${issues.errors.length} error${issues.errors.length > 1 ? 's' : ''}` : 'Valid'}{issues.warnings.length ? `, ${issues.warnings.length} to research` : ''}</span><button type="button" onClick={() => setIssues(undefined)}>close ×</button></div>
           {[...issues.errors.map((x) => ['e', x] as const), ...issues.warnings.map((x) => ['w', x] as const)].slice(0, 60).map(([k, x], i) => (
             <button key={i} type="button" className={`block w-full text-left ${k === 'e' ? 'text-rose-200' : 'text-amber-200'}`} onClick={() => setSel(recordOfPath(pkg, x.path))}>{k === 'e' ? '✕' : '!'} {x.message}</button>
@@ -239,7 +245,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
 
       {/* Export / import / new town. */}
       {box && (
-        <div className="absolute z-30 right-2 top-12 w-[min(440px,calc(100%-1rem))] panel p-2 space-y-1.5 text-xs" data-te-ui data-testid={`te-box-${box}`}>
+        <div className="absolute z-30 right-2 top-20 w-[min(440px,calc(100%-1rem))] panel p-2 space-y-1.5 text-xs" data-te-ui data-testid={`te-box-${box}`}>
           <div className="flex justify-between text-stone-300">
             <span>{box === 'export' ? (note ?? 'Copying…') : box === 'import' ? 'Paste a town package (JSON). Nothing changes until it checks out.' : 'A new town'}</span>
             <button type="button" onClick={() => { setBox(undefined); setPasted(undefined); }}>close ×</button>
@@ -260,11 +266,11 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
 
       {/* The selected record. */}
       {f && !box && (
-        <div className="absolute z-20 left-2 right-2 bottom-24 max-h-[50%] overflow-y-auto md:left-auto md:bottom-auto md:right-2 md:top-24 md:w-[340px] md:max-h-[calc(100%-8rem)] panel p-2 space-y-1.5 text-xs" data-te-ui data-testid="te-panel" data-id={sel}>
+        <div className="absolute z-20 left-2 right-2 bottom-24 max-h-[50%] overflow-y-auto md:left-auto md:bottom-auto md:right-2 md:top-32 md:w-[340px] md:max-h-[calc(100%-10rem)] panel p-2 space-y-1.5 text-xs" data-te-ui data-testid="te-panel" data-id={sel}>
           <RecordForm pkg={pkg} id={sel!} year={year} onEdit={edit} onSelect={setSel} onDelete={() => { edit(removeRecord(pkg, sel!)); setSel(undefined); }} onClose={() => setSel(undefined)} />
         </div>
       )}
-      {tool !== 'select' && <div className="absolute z-10 left-1/2 -translate-x-1/2 top-24 rounded bg-black/70 px-2 py-1 text-[11px] text-stone-200 pointer-events-none" data-testid="te-hint">{tool === 'district' ? 'Tap the corners of the district, then Finish' : `Tap the map to place a ${tool}`}</div>}
+      {tool !== 'select' && <div className="absolute z-10 left-1/2 -translate-x-1/2 top-36 rounded bg-black/70 px-2 py-1 text-[11px] text-stone-200 pointer-events-none" data-testid="te-hint">{tool === 'district' ? 'Tap the corners of the district, then Finish' : `Tap the map to place a ${tool}`}</div>}
     </div>
   );
 }
