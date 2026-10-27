@@ -1,3 +1,4 @@
+import { applyLivingOp, describeLivingOp } from './livingAsk';
 import { earnPocket, spendPocket } from './pocket';
 import { applyPowerOp, describePowerOp } from './power';
 import { applyEconOp, describeEconOp } from './econ';
@@ -210,6 +211,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describePolOp(s, e.op);
     case 'econ':
       return describeEconOp(s, e.op);
+    case 'living':
+      return describeLivingOp(s, e.op);
     case 'travel':
       return describeTravelOp(s, e.op);
     case 'bones':
@@ -839,6 +842,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'econ':
       applyEconOp(ctx, e.op, label);
+      break;
+    case 'living':
+      applyLivingOp(ctx, e.op);
       break;
     case 'travel':
       applyTravelOp(ctx, e.op, label);

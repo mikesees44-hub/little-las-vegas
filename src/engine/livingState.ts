@@ -283,6 +283,8 @@ export interface LivingState {
   base: { pop: number; hh: number; biz: number };
   lastMonth?: string;
   lastAsk?: number;
+  /** Week the boss last had someone ask around. */
+  askW?: number;
   /** Last week was in the summer season (the help is let go when it ends). */
   season?: boolean;
   /** Closed shops waiting for a buyer: lot id -> the household that gets the price. */

@@ -8,7 +8,8 @@ import type { Lot } from './econState';
 import { inflation, USES, USES_BY_ID, ZONES_BY_ID } from './property';
 import { CATALOG } from './catalog';
 import { FACTION_NAMES } from './world';
-import { channelsWeek, districtCapo, fact, factById, gossipMonth, knows, pruneFacts, remember } from './livingKnow';
+import { expireRequests, queueRequest } from './livingAsk';
+import { capoBriefs, channelsWeek, districtCapo, fact, factById, gossipMonth, knows, pruneFacts, remember } from './livingKnow';
 import { closeLivingBooks, livingMoneyHeld, pay, reconcileLiving } from './livingMoney';
 import { closeStory, link, openStory, openStoryOf, pruneStories, storyById } from './livingStory';
 import {
@@ -220,6 +221,10 @@ function wantStaff(L: LivingState, b: Tb, l: Lot, x: Idx): number {
   return Math.max(kin, Math.min(pos - 1, cap + kin));
 }
 
+export function hireAt(s: GameState, L: LivingState, p: Tp, lotId: string, how: string): void {
+  hire(s, L, p, lotId, buildIdx(s, L), how);
+}
+
 function hire(s: GameState, L: LivingState, p: Tp, lotId: string, x: Idx, how: string): void {
   const l = x.lots.get(lotId);
   p.job = lotId;
@@ -289,6 +294,8 @@ function openBusiness(ctx: Ctx, L: LivingState, owner: Tp, l: Lot, x: Idx, from:
   l.status = 'private';
   l.owner = 'private';
   l.tenant = `${owner.f} ${owner.l}`;
+  const was = L.biz[l.id];
+  if (was) endBusiness(ctx, L, was, false);
   const b: Tb = { lot: l.id, owner: owner.id, cash: 0, staff: [], since: s.week, red: 0, net: 0, rev: 0, tn: l.tenant };
   L.biz[l.id] = b;
   if (owner.job && owner.job !== l.id) unemploy(L, owner);
@@ -357,8 +364,9 @@ function syncLots(ctx: Ctx, L: LivingState, x: Idx): void {
       endBusiness(ctx, L, b, true);
       continue;
     }
-    // Burned, torn down or closed by someone else.
+    // Burned, torn down, or put up for sale by someone else.
     if (!l || l.stage !== 'open') { closeBusiness(ctx, L, b, 'the building is gone'); continue; }
+    if (!isLivingBizLot(l)) { closeBusiness(ctx, L, b, 'the place changed hands'); continue; }
     if (b.tn === undefined) b.tn = l.tenant;
   }
   // A lot sold out from under its seller (the boss bought a closed shop): the seller is paid.
@@ -872,6 +880,7 @@ function advancePlan(ctx: Ctx, L: LivingState, p: Tp, x: Idx): boolean {
       return false;
     }
     case 'skim': {
+      if (p.job !== plan.target || !L.biz[plan.target!]) { p.plan = undefined; return false; }
       // Conceal: a man who no longer needs it, and has a conscience, puts some back and stops.
       const need = moneyNeed(L, p, x);
       plan.next = x.week + 4;
@@ -1122,6 +1131,8 @@ function askHelp(ctx: Ctx, L: LivingState, p: Tp, x: Idx, tr: Trouble): void {
   }
   st.ask = { w: x.week, iid: '', via: capo.id };
   L.lastAsk = x.week;
+  capoBriefs(s, L, st.f, capo, p.id);
+  queueRequest(s, st);
 }
 
 /* --- grudges, revenge ----------------------------------------------- */
@@ -1337,24 +1348,25 @@ function die(ctx: Ctx, L: LivingState, p: Tp, x: Idx, cause: string): void {
   const b = p.job ? L.biz[p.job] : undefined;
   const fid = fact(s, L, 'died', [p.id], `${pname(p)} died${a >= 18 ? `, ${a} years old` : ''} (${cause}).`, 0);
   L.stats.deaths++;
-  if (b && b.owner === p.id) {
-    // The business passes to the widow, else the eldest grown child here; else it is sold off.
-    const heirs = [p.sp ? L.people[p.sp] : undefined, ...p.kids.map((k) => L.people[k]).sort((m, n) => m.by - n.by || m.bm - n.bm)]
-      .filter((q): q is Tp => present(q, x.week) && age(q, x) >= 18 && !q.sepd);
-    const heir = heirs[0];
-    const l = x.lots.get(b.lot);
+  if (b && b.owner !== p.id) b.staff = b.staff.filter((id) => id !== p.id);
+  // Every place he owned passes to the widow, else the eldest grown child here; else it is closed and sold off.
+  const heirs = [p.sp ? L.people[p.sp] : undefined, ...p.kids.map((k) => L.people[k]).sort((m, n) => m.by - n.by || m.bm - n.bm)]
+    .filter((q): q is Tp => present(q, x.week) && age(q, x) >= 18 && !q.sepd);
+  const heir = heirs[0];
+  for (const ob of Object.values(L.biz).filter((y) => y.owner === p.id).sort((m, n) => m.lot.localeCompare(n.lot))) {
+    const l = x.lots.get(ob.lot);
     if (heir && l) {
-      b.owner = heir.id;
-      if (heir.job && heir.job !== b.lot) unemploy(L, heir);
-      b.staff = b.staff.filter((id) => id !== heir.id);
-      heir.job = b.lot;
-      heir.wage = undefined;
+      ob.owner = heir.id;
+      ob.staff = ob.staff.filter((id) => id !== heir.id);
+      if (!heir.job || !L.biz[heir.job] || L.biz[heir.job].owner !== heir.id) {
+        if (heir.job && heir.job !== ob.lot) unemploy(L, heir);
+        heir.job = ob.lot;
+        heir.wage = undefined;
+      }
       l.tenant = `${heir.f} ${heir.l}`;
-      b.tn = l.tenant;
+      ob.tn = l.tenant;
       fact(s, L, 'inherited', [heir.id], `${pname(heir)} runs ${lotName(l)} now.`, 0, { c: [fid], at: l.id });
-    } else closeBusiness(ctx, L, b, `${pname(p)} died and nobody was left to run it`, fid);
-  } else if (b) {
-    b.staff = b.staff.filter((id) => id !== p.id);
+    } else closeBusiness(ctx, L, ob, `${pname(p)} died and nobody was left to run it`, fid);
   }
   if (hh) hh.members = hh.members.filter((id) => id !== p.id);
   // His own money goes to the house.
@@ -1742,6 +1754,7 @@ export function livingWeek(ctx: Ctx): void {
     stripDeparted(L, s);
   }
   channelsWeek(ctx, L);
+  expireRequests(ctx, L);
   const errs = reconcileLiving(L);
   if (errs.length) throw new Error(`The district's books do not reconcile in week ${s.week}: ${errs.slice(0, 3).join('; ')}`);
   closeLivingBooks(L);

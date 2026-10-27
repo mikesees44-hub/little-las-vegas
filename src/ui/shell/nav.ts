@@ -117,6 +117,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   ],
   town: [
     { title: 'On the street', items: [
+      { keys: ['town.happening'], icon: '☷', label: 'What\'s happening', sub: 'The Boardwalk\'s people on their own: stories going on, the talk, who\'s who.' },
       { keys: ['you.walk'], icon: '⇢', label: 'Walk the boardwalk', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.' },
       { keys: ['town.hoods'], icon: '⌂', label: 'Neighborhoods', sub: 'Each neighborhood: who lives and works there, who owns what, the police.' },
       { keys: ['town.night'], icon: '☾', label: 'The Night & the Ears', sub: 'The Madam and the girls who hear everything. She always decides.' },

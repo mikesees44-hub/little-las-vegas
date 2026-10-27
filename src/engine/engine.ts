@@ -1,6 +1,7 @@
 import { econEventSource, econWeek } from './econ';
 import { hoodWeek } from './hood';
 import { livingWeek } from './livingWorld';
+import { livingEventSource } from './livingAsk';
 import { talksWeek } from './talks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
@@ -73,6 +74,7 @@ registerEventSource(econEventSource);
 registerEventSource(bonesEventSource);
 registerEventSource(kinEventSource);
 registerEventSource(racketEventSource);
+registerEventSource(livingEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:

@@ -1,8 +1,6 @@
 import type { Ctx } from './ledger';
-import { ensureEars } from './ears';
 import { HOODS_BY_ID } from './hoodData';
-import { forgetFacts, learnFact } from './shadow';
-import type { Belief, KnowLvl } from './shadowState';
+import { forgetFacts, learnFact, type Belief, type KnowLvl } from './shadowState';
 import { clamp, pname, present, roll, type FactKind, type LivingState, type Tf, type Tp } from './livingState';
 import type { Character, GameState } from './types';
 
@@ -202,8 +200,7 @@ export function channelsWeek(ctx: Ctx, L: LivingState): void {
     }
   }
   // The Ears hear the night: affairs, vice, a thief with money to spend.
-  const E = s.ears ? ensureEars(s) : undefined;
-  if (E && E.madam) {
+  if (s.ears?.madam) {
     for (const f of recent) {
       if (!(f.k === 'affair' || f.k === 'thief' || f.k === 'skim' || f.k === 'revenge_prep' || f.k === 'talked_cops')) continue;
       if (roll(L, s.week, `ear:${f.id}`) < 0.06) bossLearns(s, f, 'rumor', 'an Ear, late one night');
@@ -270,4 +267,21 @@ export function personName(s: GameState, id: string): string {
   if (id === 'family') return `the House of ${s.houseName}`;
   if (id.startsWith('rival:')) return s.rivals.find((r) => r.id === id.slice(6))?.name ?? 'another family';
   return 'someone';
+}
+
+/**
+ * The capo brings a trouble to the boss: what the person who asked told him,
+ * and what he knew himself, the boss now knows (confirmed: the capo heard it
+ * from the people in it). What nobody told the capo stays unknown.
+ */
+export function capoBriefs(s: GameState, L: LivingState, fids: string[], capo: Character, askerId: string): void {
+  for (const fid of fids) {
+    const f = factById(L, fid);
+    if (!f) continue;
+    if (f.sec === 3 && !f.a.includes(capo.id)) continue;
+    if (knows(f, askerId) || knows(f, capo.id)) {
+      tell(f, capo.id);
+      bossLearns(s, f, 'confirmed', `${capo.firstName} ${capo.lastName}, bringing it to you`);
+    }
+  }
 }

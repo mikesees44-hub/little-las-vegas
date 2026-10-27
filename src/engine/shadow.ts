@@ -236,32 +236,6 @@ export function learn(s: GameState, viewer: string, recId: string, lvl: KnowLvl,
   return true;
 }
 
-/**
- * Someone hears of a fact from the living district (livingKnow.ts). The same
- * record of belief and the same rule as `learn` (never downgrades; a rumor may
- * carry a distorted version), kept in the same map so "what the boss knows" is
- * one place; the succession court's own statistics are left alone.
- */
-export function learnFact(s: GameState, viewer: string, recId: string, lvl: KnowLvl, via: string, txt?: string, wrong?: boolean): boolean {
-  const sh = ensureShadow(s);
-  const k = (sh.know[viewer] ??= {});
-  const was = k[recId];
-  if (was && (was.lvl === 'confirmed' || lvl === 'rumor')) return false;
-  k[recId] = { lvl, w: s.week, via, ...(txt && lvl === 'rumor' ? { txt } : {}), ...(wrong && lvl === 'rumor' ? { wrong: 1 as const } : {}) };
-  return true;
-}
-
-/** Forget beliefs about records that no longer exist (the living district prunes old facts). */
-export function forgetFacts(s: GameState, keep: (recId: string) => boolean, prefix: string): void {
-  const sh = s.shadow;
-  if (!sh) return;
-  for (const viewer of Object.keys(sh.know)) {
-    const k = sh.know[viewer];
-    for (const id of Object.keys(k)) if (id.startsWith(prefix) && !keep(id)) delete k[id];
-    if (!Object.keys(k).length) delete sh.know[viewer];
-  }
-}
-
 /** The Don comes to believe a man backs someone (a rumor may be wrong). */
 export function seeBacking(s: GameState, manId: string, prefer: string | undefined, lvl: KnowLvl, via: string, goal?: PlanGoal): void {
   const sh = ensureShadow(s);

@@ -36,6 +36,11 @@ function internal(id: LAcct): boolean {
   return id.startsWith('h:') || id.startsWith('p:') || id.startsWith('b:');
 }
 
+function exists(L: LivingState, id: LAcct): boolean {
+  const k = id.slice(2);
+  return id.startsWith('h:') ? !!L.hh[k] : id.startsWith('p:') ? !!L.people[k] : !!L.biz[k];
+}
+
 function getBal(L: LivingState, id: LAcct): number {
   const k = id.slice(2);
   if (id.startsWith('h:')) return L.hh[k]?.cash ?? 0;
@@ -70,6 +75,8 @@ export function pay(ctx: Ctx, L: LivingState, from: LAcct, to: LAcct, amount: nu
   if (!(a > 0) || from === to) return 0;
   a = Math.min(a, available(s, L, from));
   if (a <= 0) return 0;
+  // A household that is gone or a business that closed cannot receive anything.
+  if (internal(to) && !exists(L, to)) return 0;
   const key = `w${s.week}:town:${L.j.length}:${from}>${to}`;
   // The outside ends first: a pocket or the Family that cannot pay moves nothing.
   if (from.startsWith('wealth:')) {
