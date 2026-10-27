@@ -18,6 +18,7 @@ import type { MapFocus } from '../shell/context';
 import { IslandView } from '../hood/IslandView';
 import { RegionView } from '../region/RegionView';
 import { HOODS_BY_ID, type HoodId } from '../../engine/hoodData';
+import { MapMenu } from '../hood/MapControls';
 
 /**
  * The map screen: the real map with its overlays (modes, breadcrumbs, legend,
@@ -99,12 +100,14 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
               ))}
               {island && hood && <span className="flex items-center gap-1"><span className="text-stone-600">›</span><span className="text-gold-300 font-semibold" data-testid="crumb-hood">{HOODS_BY_ID[hood].name}</span></span>}
             </nav>
-            {!drawn && <div className="flex gap-1 flex-wrap" role="group" aria-label="Map mode">
-              {(['control', 'heat', 'income', 'rival'] as MapMode[]).map((m) => (
-                <button key={m} onClick={() => setMode(m)} className={`rounded px-2 py-0.5 text-[11px] font-semibold border ${mode === m ? 'bg-gold-500 text-noir-950 border-gold-400' : 'bg-noir-900/85 text-stone-300 border-noir-600 hover:border-gold-500'}`}>
-                  {m === 'rival' ? 'Rival influence' : m[0].toUpperCase() + m.slice(1)}
-                </button>
-              ))}
+            {!drawn && <div className="self-start" role="group" aria-label="Map mode">
+              <MapMenu label={`Show: ${mode === 'rival' ? 'Rival influence' : mode[0].toUpperCase() + mode.slice(1)}`} testid="survey-show">
+                {(close) => (['control', 'heat', 'income', 'rival'] as MapMode[]).map((m) => (
+                  <button key={m} type="button" role="menuitem" onClick={() => { setMode(m); close(); }} className={`hv-mi ${mode === m ? 'text-gold-300 bg-gold-500/10' : ''}`}>
+                    {m === 'rival' ? 'Rival influence' : m[0].toUpperCase() + m.slice(1)}
+                  </button>
+                ))}
+              </MapMenu>
             </div>}
             {!drawn && shell && level === 'region' && <button onClick={() => setView('region')} className="self-start rounded bg-gold-500 text-noir-950 border border-gold-400 px-2 py-0.5 text-[11px] font-semibold" data-testid="to-region">South Jersey illustrated</button>}
             {!drawn && shell && level === 'wildwood' && <button onClick={() => setView('island')} className="self-start rounded bg-gold-500 text-noir-950 border border-gold-400 px-2 py-0.5 text-[11px] font-semibold" data-testid="to-island">Wildwood up close</button>}
