@@ -344,7 +344,7 @@ export function planFor(_s: GameState, L: LivingState, hh: Th, l: Lot, x: Pick<L
 }
 
 /** Buy the lot, break ground with a builder. The money must already be in the house (own savings and loans). */
-function breakGround(ctx: Ctx, L: LivingState, H: HousingState, hh: Th, plan: HomePlan, how: string): boolean {
+function breakGround(ctx: Ctx, L: LivingState, H: HousingState, hh: Th, plan: HomePlan, how: string, want?: 'mine'): boolean {
   const s = ctx.s;
   const l = plan.lot;
   if (l.use || l.status !== 'sale' || hh.cash < plan.price) return false;
@@ -357,7 +357,7 @@ function breakGround(ctx: Ctx, L: LivingState, H: HousingState, hh: Th, plan: Ho
   l.hhOwns = 1;
   delete l.bidder;
   H.stats.lotsBought++;
-  const b = chooseBuilder(s, L, l.id);
+  const b = (want === 'mine' ? builders(s).find((x) => x.mine) : undefined) ?? chooseBuilder(s, L, l.id);
   startBuild(s, l, plan.use, `${hh.name.replace(/^the /, 'the ')}`);
   l.contractor = false;
   l.hh = hh.id;
@@ -379,7 +379,7 @@ function breakGround(ctx: Ctx, L: LivingState, H: HousingState, hh: Th, plan: Ho
  * real lender for the rest. Returns what happened in words (for tests and the
  * log), or undefined when it was not ready.
  */
-export function tryToBuild(ctx: Ctx, hhId: string, lotId?: string): string | undefined {
+export function tryToBuild(ctx: Ctx, hhId: string, lotId?: string, o: { builder?: 'mine' } = {}): string | undefined {
   const s = ctx.s;
   const L = s.living;
   const H = ensureHousing(s);
@@ -397,7 +397,7 @@ export function tryToBuild(ctx: Ctx, hhId: string, lotId?: string): string | und
   const plan = planFor(s, L, hh, l, x);
   const head = headOf(L, hh, s.week);
   if (!head) return undefined;
-  if (plan.need <= 0) return breakGround(ctx, L, H, hh, plan, 'paid for out of their own savings') ? 'cash' : undefined;
+  if (plan.need <= 0) return breakGround(ctx, L, H, hh, plan, 'paid for out of their own savings', o.builder) ? 'cash' : undefined;
   // Not even the lot and a third of the house saved: they keep saving.
   if (plan.own < plan.total * 0.2) { hh.save = 1; return undefined; }
   // They borrow a little over the price: a builder's bill always comes in higher.
@@ -411,7 +411,7 @@ export function tryToBuild(ctx: Ctx, hhId: string, lotId?: string): string | und
     // The payments start when they move in.
     d.next = s.week + 20;
     H.stats.bankYes++;
-    return breakGround(ctx, L, H, hh, plan, `with $${plan.own.toLocaleString('en-US')} of their own and a Chemical Bank mortgage`) ? 'bank' : undefined;
+    return breakGround(ctx, L, H, hh, plan, `with $${plan.own.toLocaleString('en-US')} of their own and a Chemical Bank mortgage`, o.builder) ? 'bank' : undefined;
   }
   H.stats.bankNo++;
   fact(s, L, 'bank_no', [head.id], `Chemical Bank turned ${pname(head)} down for $${plan.need.toLocaleString('en-US')} to build at ${l.address}: ${v.why.join('; ')}.`, 1, { at: l.id, amt: plan.need });
