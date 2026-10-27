@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from 'react';
+import { FirstSettlement } from '../components/EmptyState';
+import { Guard } from '../components/Guard';
 import { agreementHistoryLine, agreementName } from '../../engine/agreements';
 import { getSettings } from '../settings';
 import { capos, crew, isFree } from '../../engine/characters';
@@ -52,7 +54,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
   const ui = useTributeUi();
   const { queue } = useOrders();
   const { go } = useShell();
-  if (!t) return <div className="text-sm text-stone-400" data-testid="weekly-take">The first envelope comes at the end of your first week.</div>;
+  if (!t) return <div data-testid="weekly-take"><FirstSettlement what="The weekly envelope" week={s.week} /></div>;
   const rep = latestReport(s);
   const pend = pendingReport(s);
   const a = accountsView(s);
@@ -64,13 +66,15 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
             className={`rounded border px-2 py-0.5 text-[11px] ${tab === id ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>{label}</button>
         ))}
       </div>
+      <Guard label="This page of the envelope" resetKey={`${tab}:${s.week}`}>
+      {(tab === 'audience' || tab === 'crews' || tab === 'envelope') && !rep && <FirstSettlement what={tab === 'audience' ? 'The underboss\'s audience' : tab === 'crews' ? 'What each crew sent up' : 'The envelope history'} week={s.week} />}
       {tab === 'audience' && rep && (
         <Box title="The Underboss Audience" note="Every Monday the underboss brings the take. Quiet weeks go by your standing split; he asks to see you when something needs you." id="take-audience">
           <AudienceSummary s={s} rep={rep} pending={!!pend} />
           <button type="button" className="btn-gold mt-2 text-xs" onClick={() => ui.openAudience(rep.id)} data-testid="open-office">{pend ? 'He is waiting: open the office' : 'Open the office (this week\'s report)'}</button>
         </Box>
       )}
-      {tab === 'envelope' && (
+      {tab === 'envelope' && rep && (
         <Box title="The Envelope" note="What reached you each week and where it went." id="take-envelope">
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[440px]">
             <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Week</th><th className="text-right">Presented</th><th className="text-right">You</th><th className="text-right">Family</th><th className="text-right">Reserve</th><th>How</th></tr></thead>
@@ -155,6 +159,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
           </table></div>
         </Box>
       )}
+      </Guard>
     </div>
   );
 }
@@ -202,7 +207,7 @@ function Ledger({ s }: { s: GameState }) {
   const t = s.tribute!;
   const [wk, setWk] = useState<number | undefined>(t.books[t.books.length - 1]?.week);
   const b = t.books.find((x) => x.week === wk) ?? t.books[t.books.length - 1];
-  if (!b) return <Box title="Historical Ledger"><p className="text-[12px] text-stone-500">Nothing yet.</p></Box>;
+  if (!b) return <Box title="Historical Ledger"><FirstSettlement what="The ledger" week={s.week} /></Box>;
   const keys = ['treasury', 'personal', 'reserve', 'envelope', 'clearing'];
   return (
     <Box title="Historical Ledger" note="Every transfer between accounts, week by week, and the balances it reconciles to." id="take-ledger">

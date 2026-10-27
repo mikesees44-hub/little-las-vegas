@@ -19,6 +19,7 @@ import { roundOptions } from '../src/engine/rounds';
 import { agreementHistoryLine, agreementName } from '../src/engine/agreements';
 import { WeeklyTake } from '../src/ui/tribute/WeeklyTake';
 import { lotAccessibleName } from '../src/ui/map/lotPins';
+import { EmptyState } from '../src/ui/components/EmptyState';
 import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
@@ -220,5 +221,27 @@ describe('A08: every map lot is a named button', () => {
       expect(n.length).toBeGreaterThan(3);
       expect(n).toMatch(/yours|for sale|for lease|privately held|rival-owned|the city's/);
     }
+  });
+});
+
+describe('A10: an empty money page says why it is empty', () => {
+  it('before the first settlement the audience, crews, envelope and ledger say "not settled yet"; afterwards they fill in', () => {
+    const s = newGameWith('trust-a10', 'sees');
+    for (const tab of ['audience', 'crews', 'envelope', 'ledger'] as const) {
+      const html = renderToString(createElement(WeeklyTake, { s, initial: tab }));
+      expect(html, tab).toContain('data-testid="empty-pending"');
+      expect(html, tab).toMatch(/after your first week settles/);
+    }
+    const next = advanceWeek(s, {}).state;
+    const aud = renderToString(createElement(WeeklyTake, { s: next, initial: 'audience' }));
+    expect(aud).toContain('data-testid="take-audience"');
+    expect(aud).not.toContain('data-testid="empty-pending"');
+    const crews = renderToString(createElement(WeeklyTake, { s: next, initial: 'crews' }));
+    expect(crews).toContain('data-testid="take-crews"');
+  });
+  it('the four kinds look and read different', () => {
+    const kinds = ['pending', 'none', 'unavailable', 'failed'] as const;
+    const html = kinds.map((k) => renderToString(createElement(EmptyState, { kind: k, title: 't' })));
+    expect(new Set(html.map((h) => h.match(/>([^<]+)<\/div><div class="font-semibold/)?.[1])).size).toBe(4);
   });
 });
