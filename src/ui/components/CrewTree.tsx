@@ -13,7 +13,7 @@ import { FACTION_NAMES } from '../../engine/world';
 import { fmt$ } from '../format';
 import { Portrait } from '../portrait/Portrait';
 import { ActionCard, useOrders } from './Orders';
-import { FACTION_TINT, useSheet } from './People';
+import { ActionsHandle, FACTION_TINT, useSheet } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { BonesPicker } from '../clarity/Pickers';
 
@@ -83,7 +83,10 @@ export function TreeNode({ s, c, size = 44, sub, compact }: { s: GameState; c: C
   const { open } = useSheet();
   const badge = c.outside ? OUTSIDE_INFO[c.outside] : c.specialty ? c.specialty : RANK_BADGE[c.rank];
   const op = c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined;
+  // "Soldier · Collector", never "SoldierCollector"; and no "Bookie · Bookie" when the badge and the trade are one word.
+  const subText = sub && badge && sub.toLowerCase().startsWith(badge.toLowerCase()) ? sub.slice(badge.length).replace(/^\s*·\s*/, '') : sub;
   return (
+    <span className="relative flex min-w-0 items-center gap-2">
     <button type="button" onClick={() => open(c.id)} className="group flex min-w-0 items-center gap-2 text-left" data-testid="tree-node" title={`${displayName(c)}${op !== undefined ? ` — thinks ${op} of you` : ''}`}>
       <span className={`relative shrink-0 rounded-md ring-2 ${ringFor(s, c)} ${c.alive ? '' : 'opacity-60'} group-hover:ring-gold-300`}>
         <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={op} />
@@ -91,10 +94,12 @@ export function TreeNode({ s, c, size = 44, sub, compact }: { s: GameState; c: C
       </span>
       <span className="min-w-0">
         <span className={`block truncate ${compact ? 'text-xs' : 'text-sm'} font-semibold text-stone-100 group-hover:text-gold-300`}>{callName(c)} {c.lastName}</span>
-        {(sub || (badge && size < 40)) && <span className="block truncate text-[11px] text-stone-400">{size < 40 && badge ? <span className="uppercase tracking-wider text-[9px] text-gold-300 mr-1">{badge}</span> : null}{sub}</span>}
+        {(subText || (badge && size < 40)) && <span className="block truncate text-[11px] text-stone-400" data-testid="tree-sub">{size < 40 && badge ? <span className="uppercase tracking-wider text-[9px] text-gold-300">{badge}</span> : null}{size < 40 && badge && subText ? ' · ' : ''}{subText}</span>}
         <Badges items={warningsFor(s, c)} />
       </span>
     </button>
+    <span className="pointer-events-none absolute left-0 top-0" style={{ width: size, height: size }}><ActionsHandle c={c} size={size} /></span>
+    </span>
   );
 }
 
