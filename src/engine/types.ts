@@ -917,6 +917,8 @@ export interface GameState {
   days?: import('./days').DaysState;
   /** Dirty work: one-off jobs, their cooldowns and results (dirtyWork.ts; optional, starts when used). */
   dirty?: import('./dirtyWork').DirtyState;
+  /** Family development: technology, connections, crew equipment, the other families' progress (devState.ts; optional for old saves). */
+  dev?: import('./devState').DevState;
 }
 
 export interface PlayerChoices {
@@ -994,6 +996,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'ears'; op: EarsAction }
   /** Dirty work: a one-off job (dirtyWork.ts). */
   | { kind: 'dirty'; op: import('./dirtyWork').DirtyAction }
+  /** Family development: technology, connections and crew equipment (develop.ts). */
+  | { kind: 'dev'; op: import('./develop').DevAction }
 );
 
 export type InteractionId =

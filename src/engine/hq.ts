@@ -1,3 +1,4 @@
+import { devBugMult } from './devState';
 import { crew, isFree, player } from './characters';
 import { ensureEcon, type BugSource, type HQKind } from './econState';
 import { addEvidence } from './hierarchy';
@@ -82,7 +83,7 @@ export function bugOdds(s: GameState): number {
   const e = s.econ;
   const kind = e?.hq.kind ?? 'social';
   const rat = hasInformant(s);
-  return HQ_INFO[kind].bug * (0.001 + (s.heat.federal / 100) * 0.008) * (rat ? 2 : 1);
+  return HQ_INFO[kind].bug * (0.001 + (s.heat.federal / 100) * 0.008) * (rat ? 2 : 1) * devBugMult(s);
 }
 
 export function hasInformant(s: GameState): boolean {

@@ -30,6 +30,7 @@ import { rivalSchemes, runSchemes } from './schemes';
 import { secretsMonth } from './secrets';
 import { rivalDisputes, tableWeek } from './table';
 import { warWeek } from './war';
+import { devWeek } from './develop';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { fireConsequences } from './consequences';
 import { killCharacter, monthlyLife, validatePlayer } from './dynasty';
@@ -333,6 +334,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     if (intel) s.eventQueue.push(intel);
   }
   if (!s.gameOver) {
+    devWeek(ctx);
     rivalWeek(ctx);
     rivalCrewWeek(ctx);
     rivalSchemes(ctx);
