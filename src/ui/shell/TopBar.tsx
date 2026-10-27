@@ -120,7 +120,7 @@ export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount }: {
+export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk }: {
   s: GameState;
   /** Running clock (days tick by) rather than turn-based (settings). */
   clockMode?: boolean;
@@ -140,6 +140,8 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
   pulse?: boolean;
   /** The Sit-Down (sitdown/SitDown.tsx): opens the week's council and rounds. */
   onSitDown?: () => void;
+  /** The Boss's Desk (This Week). */
+  onDesk?: () => void;
   sitCount?: number;
 }) {
   const info = seasonInfo(s.date);
@@ -190,6 +192,10 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${sitCount ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
                 ♜ <span className="hidden sm:inline">Sit-down </span>{sitCount ? `(${sitCount})` : ''}
               </button>
+            )}
+            {onDesk && (
+              <button type="button" onClick={onDesk} data-testid="desk-button" title="The Boss's Desk: everything waiting on you this week"
+                className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">▤<span className="hidden sm:inline"> Desk</span></button>
             )}
             <OrdersButton s={s} />
             <span className="hidden sm:inline-flex"><MusicToggle /></span>

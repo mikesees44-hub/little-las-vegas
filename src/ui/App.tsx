@@ -72,6 +72,8 @@ import { daysOf, plannedRounds, setWeekRounds, tickDay, weekChoices, weekPlan } 
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
+import { BossDesk, ReadyToAdvance } from './desk/BossDesk';
+import { readyReview } from '../engine/desk';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
@@ -258,11 +260,28 @@ export function App({ startOn = 'title' }: AppProps) {
     setAdvancing(false);
   }
 
+  /** Advance: the "Ready to advance?" review first, unless nothing is waiting and nothing is queued. */
+  const [ready, setReady] = useState<Mode | undefined>();
   function startAdvance(m: Mode) {
+    if (!readyReview(s, { answers, orders, briefSkip }).clear) { setReady(m); return; }
     setMode(m);
     setAdvancing(true);
-    if (unanswered.length) setEventIdx(s.pendingEvents.findIndex((e) => !answers[e.iid]));
-    else run(m, answers);
+    run(m, answers);
+  }
+  /** "Review first": the decisions one by one (the week turns after the last), else the first unanswered morning. */
+  function reviewFirst(m: Mode) {
+    setReady(undefined);
+    if (unanswered.length) { setMode(m); setAdvancing(true); setEventIdx(s.pendingEvents.findIndex((e) => !answers[e.iid])); return; }
+    const r = readyReview(s, { answers, orders, briefSkip });
+    const day = r.mornings[0] ? Number(r.mornings[0].key.split(':')[0]) : undefined;
+    setSpeed(0);
+    setDayWin(Number.isFinite(day) ? day : daysOf(s).day);
+  }
+  function advanceAnyway(m: Mode) {
+    setReady(undefined);
+    setMode(m);
+    setAdvancing(true);
+    run(m, answers);
   }
 
   function choose(choiceId: string) {
@@ -412,7 +431,7 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab === 'map') setRoute({});
     else if (l.tab) go(l.tab);
   }
-  const overlayOpen = dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const overlayOpen = !!ready || dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   const busy = dayWin !== undefined || !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
@@ -504,8 +523,17 @@ export function App({ startOn = 'title' }: AppProps) {
     'nav.settings': <SettingsPanel />,
     'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
   };
+  const deskApi = {
+    onEvent: (iid: string) => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => e.iid === iid))); },
+    onDay: (day: number) => { setSpeed(0); setDayWin(day); },
+    onSitDown: () => setSitdown('council'),
+    onCancelOrder: (i: number) => ordersApi.remove(i),
+    onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
+    onChar: (id: string) => setSheet(id),
+  };
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
+      <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
       <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">Your week</div>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
@@ -554,7 +582,7 @@ export function App({ startOn = 'title' }: AppProps) {
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
-            onSitDown={() => setSitdown('council')} sitCount={brief.items.length} />
+            onSitDown={() => setSitdown('council')} sitCount={brief.items.length} onDesk={() => setRoute({ home: 'week' })} />
         )}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
@@ -639,6 +667,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
