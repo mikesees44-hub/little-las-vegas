@@ -11,7 +11,7 @@ import { setModifier } from '../src/engine/relations';
 import type { Choice, GameState, PlayerAction } from '../src/engine/types';
 
 const text = (b: AdviceBrief) => JSON.stringify(b);
-const racket = (s: GameState, runner?: string): AdviceSubject => ({ kind: 'action', action: { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind: 'numbers', ...(runner ? { runner } : {}) } } } });
+const racket = (_s: GameState, runner?: string): AdviceSubject => ({ kind: 'action', action: { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind: 'numbers', ...(runner ? { runner } : {}) } } } });
 const dirty = (s: GameState): AdviceSubject => ({ kind: 'action', action: { kind: 'dirty', op: { job: 'hijack', who: crew(s).find((c) => c.rank === 'soldier')!.id } } });
 
 function withEvent(s: GameState): GameState {
