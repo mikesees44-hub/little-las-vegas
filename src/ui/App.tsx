@@ -390,7 +390,8 @@ export function App({ startOn = 'title' }: AppProps) {
 
   const shellUi = useShellState(s, orders, sheet);
   const [mapFocus, setMapFocus] = useState<MapFocus | undefined>();
-  const focusMap = (f: Omit<MapFocus, 'nonce'>) => setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 }));
+  // Showing something on the map (a walk, a district, an alert's place) leaves the Office for the map.
+  const focusMap = (f: Omit<MapFocus, 'nonce'>) => { setOfficeView(undefined); setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 })); };
   const [helpMenu, setHelpMenu] = useState(false);
   /** Open a home or one of its sections, from any route the game uses (an alert can reveal one that is still hidden). */
   function openRoute(r: Route | string) {

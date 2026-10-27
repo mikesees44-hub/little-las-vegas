@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { previewAction, queuedMoney } from '../../engine/actions';
-import { targetOf } from '../../engine/deals';
+import { sameTarget, targetOf } from '../../engine/deals';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { sameOrder, verbOf } from '../verbs';
 import { ActionCard, useOrders } from './Orders';
+import { DealWindow } from '../econ/DealWindow';
 
 /**
  * The universal action row: one order folded to a line — what it is, what it
@@ -16,6 +17,7 @@ import { ActionCard, useOrders } from './Orders';
 export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: GameState; action: PlayerAction; label?: string; hostile?: boolean; open?: boolean }) {
   const { orders, queue } = useOrders();
   const [open, setOpen] = useState(!!startOpen);
+  const [dealing, setDealing] = useState(false);
   const p = previewAction(s, action);
   const others = orders.filter((o) => !sameOrder(o, action));
   const q = queuedMoney(s, others);
@@ -25,10 +27,11 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
     : pocket ? (short > q.familyLeft ? 'Not enough money after this week\'s orders' : undefined)
     : p.cost > q.familyLeft ? 'Not enough Family money after this week\'s orders' : undefined;
   const deal = action.kind === 'econ' && action.op.type === 'deal' ? undefined : targetOf(action);
-  const why = p.disabledReason ?? broke;
-  const queued = orders.some((o) => sameOrder(o, action));
-  // A purchase across the desk, or a pocket that needs Family money: the full card handles those.
-  const needsCard = !!deal || short > 0;
+  // At the table the price can come down: only a hard block stops an offer (as on the full card).
+  const why = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
+  const queued = orders.some((o) => sameOrder(o, action) || (!!deal && o.kind === 'econ' && o.op.type === 'deal' && sameTarget(o.op.target, deal)));
+  // A pocket that needs Family money: the full card asks for it.
+  const needsCard = !deal && short > 0;
   const odds = p.odds ?? p.acceptance;
   const pct = odds ? Math.round(odds.chance * 100) : undefined;
   if (open) {
@@ -54,9 +57,10 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
       </button>
       <button type="button" disabled={!!why || queued}
         className={`shrink-0 text-xs py-1 ${queued || why ? 'btn-ghost' : 'btn-gold'}`}
-        onClick={() => (needsCard ? setOpen(true) : queue(action))} data-testid="action-row-go">
-        {queued ? verbOf(action, p).done : needsCard ? 'More ▸' : verbOf(action, p).verb}
+        onClick={() => (deal ? setDealing(true) : needsCard ? setOpen(true) : queue(action))} data-testid={deal ? 'make-offer' : 'action-row-go'}>
+        {queued ? (deal ? 'Signed ✓' : verbOf(action, p).done) : deal ? 'Make an offer' : needsCard ? 'More ▸' : verbOf(action, p).verb}
       </button>
+      {dealing && deal && <DealWindow s={s} target={deal} onClose={() => setDealing(false)} />}
     </div>
   );
 }

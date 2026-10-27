@@ -2,7 +2,8 @@ import { expectedTake } from '../../engine/business';
 import { managerOf, rankManagers, SOURCE_LABEL } from '../../engine/managers';
 import { lotName, propertyNet, STAGE_LABEL, USES_BY_ID, ZONES_BY_ID } from '../../engine/property';
 import { rivalName } from '../../engine/construction';
-import { placeAction, placeRunByLabel } from '../../engine/placeEligibility';
+import { placeRunByLabel } from '../../engine/placeEligibility';
+import { PlaceVerbs } from '../hood/PlaceVerbs';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { lotProgress, lotSvg } from '../map/lotIcons';
@@ -58,9 +59,8 @@ export function LotPanel({ s, id, noDesigner }: { s: GameState; id: string; noDe
           )}
         </div>
       )}
-      {l.status === 'sale' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id } }} compact />}
-      {l.status === 'sale' && l.use && (placeAction(s, l, 'buyBusiness')?.why ? <div className="text-[11px] text-stone-500" data-testid="lot-no-going">Buy the business with it: {placeAction(s, l, 'buyBusiness')!.why}.</div> : <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id, going: true } }} compact />)}
-      {l.status === 'lease' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: l.id } }} compact />}
+      {/* This place: buy it, buy the business, lease it, fix it up, the dirty work here — the same list as the walk card. */}
+      <PlaceVerbs s={s} lot={l} biz={mine ? biz : undefined} title="What you can do here" hide={['goIn', 'inside', 'meeting', 'restyle', 'manage', 'develop', ...(noDesigner ? ['renovate' as const] : [])]} />
       {l.status === 'rival' && l.stage && l.stage !== 'open' && l.stage !== 'purchase' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'slowRival', lotId: l.id } }} compact />}
     </div>
   );

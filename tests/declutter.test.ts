@@ -194,3 +194,34 @@ describe('declutter: Deal with [person] offers everything the old entry points d
     expect(html).toContain('data-testid="action-row"');
   });
 });
+
+describe('declutter: This place offers what the old place cards did', () => {
+  it('every lot: buy, buy the business, lease, dirty work, go in and a meeting — or the reason why not', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { playWeeks } = await import('./helpers');
+    const { PlaceVerbs } = await import('../src/ui/hood/PlaceVerbs');
+    const { jobsForPlace } = await import('../src/engine/dirtyWork');
+    const { placeActions } = await import('../src/engine/placeEligibility');
+    const s = playWeeks('declutter-place', 6);
+    const lots = (s.econ?.lots ?? []).slice(0, 60);
+    expect(lots.length).toBeGreaterThan(20);
+    let sale = 0, lease = 0, dirty = 0;
+    for (const l of lots) {
+      const mine = l.status === 'owned' || l.status === 'leased';
+      const biz = mine && l.bizId ? s.businesses.find((b) => b.id === l.bizId) : undefined;
+      const html = renderToString(createElement(PlaceVerbs, { s, lot: l, biz, on: { goIn: () => {}, meeting: () => {} } }));
+      // The old walk card: go in, a meeting here.
+      expect(html, l.id).toContain('data-testid="walk-call-meeting"');
+      if (placeActions(s, l, biz).some((a) => a.id === 'goIn')) expect(html, l.id).toContain('data-testid="walk-go-in"');
+      // The old walk card and lot panel: an offer when it is for sale, a lease when it is for rent.
+      if (l.status === 'sale') { sale++; expect(html, l.id).toContain('data-testid="make-offer"'); }
+      if (l.status === 'lease') { lease++; expect(html, l.id).toContain('Lease the storefront'); }
+      // The old dirty-here row.
+      if (jobsForPlace(s, l, biz).length) { dirty++; expect(html, l.id).toContain('data-testid="dirty-here"'); }
+      // Whatever does not fit says why.
+      if (placeActions(s, l, biz).some((a) => a.why && ['offer', 'buyBusiness', 'lease', 'renovate'].includes(a.id))) expect(html, l.id).toContain('data-testid="place-not-now"');
+    }
+    expect(sale + lease + dirty).toBeGreaterThan(3);
+  });
+});

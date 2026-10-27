@@ -1,14 +1,14 @@
 import { StartHereButton } from '../econ/StartRacket';
 import { DatingHere, DatingLink } from '../dating/DatingPanel';
 import { datingSettings } from '../../engine/datingState';
-import { DirtyHere } from '../econ/DirtyWork';
 import { useMemo, useState } from 'react';
-import { placeAction, placeOwnerLabel, placeRunByLabel } from '../../engine/placeEligibility';
+import { placeOwnerLabel, placeRunByLabel } from '../../engine/placeEligibility';
 import { crew } from '../../engine/characters';
 import { hotspotLot, type WalkNpc } from '../../engine/walk';
 import type { WalkHotspot } from '../../engine/walkData';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
+import { PlaceVerbs } from './PlaceVerbs';
 import { Face, useSheet } from '../components/People';
 import { STATUS_LABEL } from '../econ/RealEstate';
 import { fmt$ } from '../format';
@@ -121,8 +121,6 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zon
     );
   }
   const mine = !!it?.mine;
-  const buyable = !!lot && !mine && lot.status !== 'public' && lot.status !== 'lease';
-  const leasable = !!lot && !mine && lot.status === 'lease';
   const badge = it?.building ? 'Going up' : it?.closed ? 'Closed' : it?.forSale && !mine ? `For sale${lot?.price ? ` · ${fmt$(lot.price)}` : ''}` : it?.forLease ? 'For rent' : mine ? 'Yours' : lot?.status === 'rival' ? 'Rival-held' : h.landmark || !lot ? 'Landmark' : undefined;
   return (
     <div className="space-y-3" data-testid="walk-card" data-spot={h.id}>
@@ -157,18 +155,15 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zon
         </div>
       )}
       <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? zone} onGo={() => shell.go('holdings.hub')} />
-      <div className="flex flex-wrap gap-1.5" data-testid="walk-verbs">
-        {it && <button type="button" className="btn-gold text-xs py-1" onClick={() => setInside(true)} data-testid="walk-go-in">{placeAction(s, lot, 'goIn')?.label ?? (mine ? 'Go in · Manage' : 'Go in')}</button>}
-        {mine && <button type="button" className="btn-ghost text-xs py-1" onClick={() => shell.go('holdings.rackets')}>Your holdings</button>}
-        <button type="button" className={`btn-ghost text-xs py-1 ${meet ? 'ring-1 ring-gold-400' : ''}`} onClick={() => setMeet((x) => !x)} data-testid="walk-call-meeting">Call a meeting here</button>
-        {h.kind === 'tram' && onTram && <button type="button" className="btn-ghost text-xs py-1" onClick={onTram} data-testid="walk-tram">Ride the tram car</button>}
-        {(h.kind === 'tram' || h.kind === 'pier') && <button type="button" className="btn-ghost text-xs py-1" disabled={!!s.gameOver} onClick={() => travel.plan(s.playerId)} data-testid="walk-trip">Plan a trip</button>}
-      </div>
+      {/* This place: every verb it offers, the same on every card (PlaceVerbs). */}
+      <PlaceVerbs s={s} lot={lot} biz={mine ? it?.biz : undefined}
+        on={{ goIn: it ? () => setInside(true) : undefined, meeting: () => setMeet((x) => !x) }}
+        extra={<>
+          {h.kind === 'tram' && onTram && <button type="button" className="btn-ghost text-xs py-1" onClick={onTram} data-testid="walk-tram">Ride the tram car</button>}
+          {(h.kind === 'tram' || h.kind === 'pier') && <button type="button" className="btn-ghost text-xs py-1" disabled={!!s.gameOver} onClick={() => travel.plan(s.playerId)} data-testid="walk-trip">Plan a trip</button>}
+        </>} />
       {h.kind === 'business' && <DatingLink s={s} tab={datingSettings(s).mature === 'off' ? 'people' : 'adult'} text={datingSettings(s).mature === 'off' ? 'who you know here, asking someone out' : 'asking someone out, or company for the evening (her price, your pocket)'} />}
       {meet && <MeetingPicker s={s} place={it?.name ?? h.label} here={here} />}
-      {buyable && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: lot!.id } }} compact label={`Make an offer on ${it?.name ?? h.label}`} />}
-      {leasable && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: lot!.id } }} compact label="Lease the storefront" />}
-      <DirtyHere s={s} lot={lot} biz={mine ? it?.biz : undefined} onGo={() => shell.go('holdings.dirty')} />
     </div>
   );
 }
