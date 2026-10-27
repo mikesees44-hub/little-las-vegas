@@ -793,6 +793,8 @@ export interface GameOver {
 
 export interface GameState {
   version: 2;
+  /** Save migrations applied (trustMigrations.ts SCHEMA); absent in older saves. */
+  schema?: number;
   seed: string;
   rng: number;
   nextId: number;

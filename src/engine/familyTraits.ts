@@ -213,9 +213,12 @@ export const GOAL_INFO: Record<GoalId, string> = {
   grow_up: 'Grow up',
 };
 
+/** Already made (or the boss): "make his bones" is behind him. */
+const madeAlready = (c: Character) => ['soldier', 'capo', 'underboss', 'consigliere', 'boss'].includes(c.rank);
+
 /** A goal that follows from a path and temperament (drives behaviour and events). */
 export function goalFor(_s: GameState, c: Character, path: LifePath, isHeir: boolean): GoalId {
-  if (path === 'life') return hasTrait(c, 'Ambitious') || (!isHeir && hasTrait(c, 'Greedy')) ? 'the_chair' : 'make_bones';
+  if (path === 'life') return hasTrait(c, 'Ambitious') || (!isHeir && hasTrait(c, 'Greedy')) ? 'the_chair' : madeAlready(c) ? (isHeir ? 'the_chair' : 'protect_family') : 'make_bones';
   if (path === 'straight') return isHeir || hasTrait(c, 'Honest') ? 'get_out' : 'own_business';
   if (path === 'priest') return 'priesthood';
   if (path === 'politics') return 'politics';
@@ -230,6 +233,6 @@ export function seedGoal(s: GameState, c: Character, isHeir: boolean): GoalId {
   if (a < 16) return 'grow_up';
   if (c.id === s.playerId) return 'protect_family';
   if (c.gender === 'F') return c.spouseId ? 'protect_family' : 'marry_well';
-  if (c.rank !== 'civilian') return hasTrait(c, 'Ambitious') && !isHeir ? 'the_chair' : 'make_bones';
+  if (c.rank !== 'civilian') return hasTrait(c, 'Ambitious') && !isHeir ? 'the_chair' : madeAlready(c) ? (isHeir ? 'the_chair' : 'protect_family') : 'make_bones';
   return hasTrait(c, 'Honest') ? 'get_out' : isHeir ? 'the_chair' : 'own_business';
 }

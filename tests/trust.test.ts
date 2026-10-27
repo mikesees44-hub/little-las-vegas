@@ -12,6 +12,9 @@ import { seatEligibility } from '../src/engine/eligibility';
 import { RETAINER_CAP, RETAINER_EARLY_CAP } from '../src/engine/longgame';
 import { verbOf } from '../src/ui/verbs';
 import type { GameState, PlayerAction } from '../src/engine/types';
+import { fam } from '../src/engine/familyState';
+import { famGoalBlock, personalGoalBlock } from '../src/engine/goalRules';
+import { upgradeSave } from '../src/engine/upgradeSave';
 
 /** The text of the first element carrying this test id. */
 function byTestId(html: string, id: string): string | undefined {
@@ -138,5 +141,34 @@ describe('A13: the Family only covers a short pocket when the player says so', (
     expect(fundingBlock(s, { ...a, fund: 'family' })).toBeUndefined();
     expect((yes.state.econ?.goodLife?.length ?? 0)).toBe((s.econ?.goodLife?.length ?? 0) + 1);
     expect(yes.report.lines.some((l) => /from the Family/.test(l.label))).toBe(true);
+  });
+});
+
+describe('A03: goals have prerequisites and are invalidated by rank changes', () => {
+  const madeRanks = ['soldier', 'capo', 'underboss', 'consigliere', 'boss'];
+  it('no made man starts with "Make his bones" (House of Sees and The House)', () => {
+    for (const start of ['sees', 'classic'] as const) {
+      const s = newGameWith(`trust-a03-${start}`, start);
+      for (const c of Object.values(s.characters).filter((x) => x.alive && madeRanks.includes(x.rank))) {
+        expect(fam(s, c.id)?.goal, `${c.firstName} ${c.lastName}`).not.toBe('make_bones');
+        expect(c.ambition, `${c.firstName} ${c.lastName}`).not.toMatch(/make his bones/i);
+        if (c.goal) expect(personalGoalBlock(s, c, c.goal)).toBeUndefined();
+      }
+      expect(famGoalBlock(s, player(s), fam(s, s.playerId)?.goal ?? 'protect_family')).toBeUndefined();
+    }
+  });
+  it('a man who gets made loses "make his bones" the next week; a loaded old save is repaired', () => {
+    const s = newGameWith('trust-a03b', 'sees');
+    const donato = Object.values(s.characters).find((c) => c.firstName === 'Donato' && c.alive)!;
+    // Simulate an old save: the capo still carries the stale goal.
+    s.dyn!.people[donato.id].goal = 'make_bones';
+    donato.ambition = 'Make his bones';
+    expect(famGoalBlock(s, donato, 'make_bones')).toMatch(/already made/);
+    const loaded = upgradeSave(JSON.parse(JSON.stringify(s)));
+    expect(loaded.dyn!.people[donato.id].goal).not.toBe('make_bones');
+    expect(loaded.characters[donato.id].ambition).not.toMatch(/make his bones/i);
+    // And the weekly update repairs it too.
+    const next = advanceWeek(s, {}).state;
+    expect(next.dyn!.people[donato.id].goal).not.toBe('make_bones');
   });
 });

@@ -1,4 +1,5 @@
 import { startPocket } from './tributeState';
+import { SCHEMA } from './trustMigrations';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
 import { ageOn, START_DATE } from './calendar';
@@ -33,6 +34,7 @@ export type StartingProblem = keyof typeof STARTING_PROBLEMS;
 function emptyState(seed: string): GameState {
   return {
     version: 2,
+    schema: SCHEMA,
     seed,
     rng: hashSeed(seed),
     nextId: 1,
