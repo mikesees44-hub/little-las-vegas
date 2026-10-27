@@ -4,6 +4,7 @@ import { talksWeek } from './talks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
 import { travelWeek } from './travel';
+import { townsWeek } from './towns';
 import { officeWeek } from './office';
 import { powerWeek } from './power';
 import { underbellyWeek } from './underbelly';
@@ -318,6 +319,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     lifestyleWeek(ctx);
     legalWeek(ctx);
     travelWeek(ctx);
+    townsWeek(s);
     trialWeek(ctx);
     minigamesWeek(ctx);
     underbellyWeek(ctx);

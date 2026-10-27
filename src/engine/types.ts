@@ -13,6 +13,7 @@ import type { MgState, MinigameId } from './minigame';
 import type { EconAction, EconOp, EconState } from './econState';
 import type { HoodAction } from './hood';
 import type { HoodState } from './hoodState';
+import type { TownState } from './towns';
 import type { TalkOp, TalkState } from './talks';
 import type { MissionOp, MissionState } from './missions';
 import type { TravelAction, TravelOp, TravelState } from './travelState';
@@ -888,6 +889,8 @@ export interface GameState {
   econ?: EconState;
   /** The neighborhoods: their economy, reputation, police, history; the looks of other people's places (hoodState.ts; optional for old saves). */
   hood?: HoodState;
+  /** Towns away from home that someone of yours has visited: their lots, materialized from the town package (towns.ts; optional for old saves). */
+  towns?: Record<string, TownState>;
   /** Talks with people, pacts with families, the families' own diplomacy (talks.ts; optional for old saves). */
   talks?: TalkState;
   /** The Mission Board's cases (missions.ts; optional for old saves). */

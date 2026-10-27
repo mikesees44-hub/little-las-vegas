@@ -5,6 +5,7 @@ import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
 import { ensureHood } from './hoodState';
 import { SEED } from './hoodData';
+import { migrateTowns } from './towns';
 import { ensureMissions } from './missions';
 import { ensureTalks } from './talks';
 import { ensureDynState } from './familyState';
@@ -45,6 +46,8 @@ export function upgradeSave(s: GameState): GameState {
   if (s.days && s.days.week !== s.week) delete s.days;
   // The old player-run call service goes back to the Madam's network.
   try { migrateVice(s); } catch { /* nothing to move */ }
+  // Towns away from home: merge a corrected package by stable ids (ownership and debts untouched).
+  if (s.towns) try { migrateTowns(s); } catch { /* the weekly update will try again */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
   return s;
