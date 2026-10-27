@@ -30,7 +30,7 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk }: { s: GameSt
     return () => window.removeEventListener('keydown', k, true);
   }, [onYes, onNo]);
   return (
-    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-label="Are you sure?" data-testid="confirm-order">
+    <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-label="Are you sure?" data-testid="confirm-order">
       <div className="w-[min(94vw,520px)] max-h-[90vh] overflow-y-auto rounded-lg border border-gold-500 bg-noir-900 shadow-2xl p-4">
         <div className="text-[11px] uppercase tracking-widest text-gold-400">Are you sure?</div>
         <div className="mt-1 text-base font-semibold text-stone-100">{f.button}</div>
