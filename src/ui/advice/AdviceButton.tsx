@@ -9,6 +9,7 @@ import { useSheet } from '../components/People';
 import { Portrait } from '../portrait/Portrait';
 import { FACTION_TINT } from '../components/People';
 import { autoBriefings } from '../settings';
+import { TableModal } from './CounselTable';
 
 /**
  * ADVISER BRIEFINGS in the UI: "Ask for advice" on any order, seat or
@@ -43,7 +44,7 @@ function Lines({ title, lines, testid }: { title: string; lines: BriefLine[]; te
 const LIKE_CLASS: Record<Reaction['likelihood'], string> = { likely: 'text-red-300', possible: 'text-amber-300', unlikely: 'text-stone-400' };
 
 /** The whole briefing. `onChoose` takes a decision's option (event subjects); orders are queued here. */
-export function AdvicePanel({ s, subject, onClose, onChoose, initialAdviser }: { s: GameState; subject: AdviceSubject; onClose: () => void; onChoose?: (choiceId: string) => void; initialAdviser?: string }) {
+export function AdvicePanel({ s, subject, onClose, onChoose, initialAdviser, onTable }: { s: GameState; subject: AdviceSubject; onClose: () => void; onChoose?: (choiceId: string) => void; initialAdviser?: string; onTable?: () => void }) {
   const [who, setWho] = useState<string | undefined>(initialAdviser);
   const [others, setOthers] = useState(false);
   const [plan, setPlan] = useState(false);
@@ -124,6 +125,7 @@ export function AdvicePanel({ s, subject, onClose, onChoose, initialAdviser }: {
             {b.others.map((o) => <button key={o.charId} type="button" className="btn-ghost text-xs" onClick={() => setWho(o.charId)}>{askLabel(o)}</button>)}
           </span>
         )}
+        {onTable && <button type="button" className="btn-ghost text-xs" onClick={onTable} data-testid="advice-ask-table">⚖ Ask the whole table</button>}
         {b.plan && <button type="button" className="btn-ghost text-xs" onClick={() => setPlan((x) => !x)} data-testid="advice-view-plan">{plan ? 'Hide the plan' : 'View plan'}</button>}
         <button type="button" className="btn-ghost text-xs" onClick={onClose} data-testid="advice-not-now">Not now</button>
       </div>
@@ -159,26 +161,28 @@ function PlanFacts({ s, b }: { s: GameState; b: AdviceBrief }) {
  * "Ask for advice" (always there), plus — when automatic briefings are on and
  * the move is a big one — his one-line take right under the order.
  */
-export function AdviceButton({ s, subject, onChoose, auto = true, label = 'Ask for advice' }: { s: GameState; subject: AdviceSubject; onChoose?: (choiceId: string) => void; auto?: boolean; label?: string }) {
-  const [openIt, setOpen] = useState(false);
+export function AdviceButton({ s, subject, onChoose, auto = true, label = 'Ask for advice', table = true }: { s: GameState; subject: AdviceSubject; onChoose?: (choiceId: string) => void; auto?: boolean; label?: string; table?: boolean }) {
+  const [openIt, setOpen] = useState<false | 'one' | 'table'>(false);
   const mode = autoBriefings();
   const showAuto = auto && mode !== 'off' && !openIt;
   const short = useMemo(() => (showAuto ? adviceBrief(s, subject) : undefined), [showAuto, s, subject]);
   const autoNote = short && (mode === 'all' || short.major) ? short : undefined;
   return (
     <>
-      <button type="button" className="text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen(true); }} data-testid="ask-advice">☏ {label}</button>
+      <button type="button" className="text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen('one'); }} data-testid="ask-advice">☏ {label}</button>
+      {table && <button type="button" className="text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen('table'); }} data-testid="ask-table">⚖ Ask the table</button>}
       {autoNote && (
         <span className="text-[11px] text-stone-400" data-testid="auto-brief">
           <span className="text-stone-500">{autoNote.adviser.role === 'capo' ? autoNote.adviser.name.split(' ')[0] : `The ${autoNote.adviser.role}`}:</span> {autoNote.verdict.text.toLowerCase()}{autoNote.recommendation?.charId ? `; he'd use ${s.characters[autoNote.recommendation.charId]?.firstName}` : ''}{autoNote.bias ? ' (possible bias)' : ''}.
         </span>
       )}
-      {openIt && typeof document !== 'undefined' && createPortal(
+      {openIt === 'one' && typeof document !== 'undefined' && createPortal(
         <div className="relative z-[1200]" onClick={(e) => e.stopPropagation()}>
           <Modal onClose={() => setOpen(false)} wide>
-            <AdvicePanel s={s} subject={subject} onClose={() => setOpen(false)} onChoose={onChoose} />
+            <AdvicePanel s={s} subject={subject} onClose={() => setOpen(false)} onChoose={onChoose} onTable={table ? () => setOpen('table') : undefined} />
           </Modal>
         </div>, document.body)}
+      {openIt === 'table' && <TableModal s={s} subject={subject} onChoose={onChoose} onClose={() => setOpen(false)} onSingle={() => setOpen('one')} />}
     </>
   );
 }

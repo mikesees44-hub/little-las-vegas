@@ -12,6 +12,10 @@ import { fmt$ } from '../format';
 import { AssetImg } from '../hood/AssetImg';
 import { Portrait } from '../portrait/Portrait';
 import { HOTSPOTS, openHotspot, type Hotspot, type OfficePanel } from './hotspots';
+import { holder } from '../../engine/council';
+import { briefing } from '../../engine/briefing';
+import type { CounselSubject } from '../../engine/counsel';
+import { TableButton, TableModal } from '../advice/CounselTable';
 
 /**
  * THE BOSS'S OFFICE: upstairs at the Shore Social Club. The painted room
@@ -64,6 +68,12 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const envelopeWaiting = rep?.status === 'presented';
   const seatC = brief.seat.charId ? s.characters[brief.seat.charId] : undefined;
   const answered = s.pendingEvents.filter((e) => ui.answers?.[e.iid]).length;
+  // "Bring in the consigliere": the table on the first thing waiting at the door (a decision, else a sit-down item).
+  const [tableOpen, setTableOpen] = useState(false);
+  const tableFor = visitors.find((v) => v.ref.event || v.ref.brief);
+  const tableSubject: CounselSubject | undefined = tableFor?.ref.event ? { kind: 'event', iid: tableFor.ref.event } : tableFor?.ref.brief ? { kind: 'brief', itemId: tableFor.ref.brief } : undefined;
+  const cons = holder(s, 'consigliere');
+  const table = { label: cons && cons.id !== brief.seat.charId ? 'Bring in the consigliere' : 'Call in the table', about: tableFor ? tableFor.why.split('.')[0] : undefined, onOpen: tableSubject ? () => setTableOpen(true) : undefined };
 
   const openEnvelope = () => (rep ? api.openEnvelope() : api.openLedger());
   const act = (h: Hotspot) => openHotspot(h, api, { hasReport: !!rep, panel: setPanel });
@@ -88,7 +98,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
 
   const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} />
     : panel === 'phone' ? <PhonePanel s={s} />
-    : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={api.openDesk} onDone={() => setPanel(undefined)} />
+    : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={api.openDesk} onDone={() => setPanel(undefined)} table={table} />
     : undefined;
 
   return (
@@ -146,7 +156,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
             {((monday && !panel) || panel) && (
               <div className="mt-2 space-y-2 md:absolute md:right-2 md:top-2 md:z-10 md:mt-0 md:max-h-[calc(100%-16px)] md:w-[min(400px,46%)] md:overflow-y-auto" data-testid="office-card">
                 {monday && !panel && (
-                  <BriefCard s={s} brief={brief} monday onEnvelope={() => { onMondayDone(); openEnvelope(); }} onDoor={() => { onMondayDone(); setPanel('door'); }} onDesk={() => { onMondayDone(); api.openDesk(); }} onDone={onMondayDone} />
+                  <BriefCard s={s} brief={brief} monday onEnvelope={() => { onMondayDone(); openEnvelope(); }} onDoor={() => { onMondayDone(); setPanel('door'); }} onDesk={() => { onMondayDone(); api.openDesk(); }} onDone={onMondayDone} table={table} />
                 )}
                 {panel && (
                   <div className="rounded-md border border-gold-600/60 bg-noir-900/[0.97] p-2.5 shadow-xl shadow-black/70" data-testid={`office-panel-${panel}`}>
@@ -181,13 +191,16 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
           </li>
         </ul>
       </div>
+      {tableOpen && tableSubject && <TableModal s={s} subject={tableSubject} onClose={() => setTableOpen(false)}
+        onChoose={tableSubject.kind === 'event' ? (choiceId) => onDelegate({ kind: 'answer', iid: tableSubject.iid, choiceId }) : undefined}
+        onOption={tableSubject.kind === 'brief' ? (id) => { const it = officeBriefItem(s, tableSubject.itemId); const o = it?.options.find((x) => x.id === id); if (o?.action) onDelegate({ kind: 'order', action: o.action }); } : undefined} />}
     </div>
   );
 }
 
 /** The man across the desk and his one or two lines. Monday's arrival has the four ways to start. */
-function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone }: {
-  s: GameState; brief: ReturnType<typeof officeBriefing>; monday?: boolean;
+function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table }: {
+  s: GameState; brief: ReturnType<typeof officeBriefing>; monday?: boolean; table?: { label: string; about?: string; onOpen?: () => void };
   onEnvelope: () => void; onDoor: () => void; onDesk: () => void; onDone: () => void;
 }) {
   const c = brief.seat.charId ? s.characters[brief.seat.charId] : undefined;
@@ -206,6 +219,7 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone }: {
         <button type="button" className="btn-ghost text-xs" onClick={onDoor} data-testid="office-see-waiting">See who's waiting</button>
         <button type="button" className="btn-ghost text-xs" onClick={onDesk} data-testid="office-review-desk">Review the desk</button>
         <button type="button" className="btn-ghost text-xs" onClick={onDone} data-testid="office-something-else">{monday ? 'Start with something else' : 'Thanks, that\'s all'}</button>
+        {table && <button type="button" className="btn-ghost col-span-2 text-xs" disabled={!table.onOpen} onClick={table.onOpen} title={table.about ? `Everyone's view on: ${table.about}` : 'Nothing waiting at the door to weigh'} data-testid="office-table">⚖ {table.label}{table.about ? <span className="text-stone-500"> — on {table.about.length > 38 ? `${table.about.slice(0, 37)}…` : table.about}</span> : <span className="text-stone-500"> (nothing waiting to weigh)</span>}</button>}
       </div>
     </section>
   );
@@ -234,6 +248,7 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater }: { s: GameStat
                 <button type="button" className="btn-gold px-2 py-0.5 text-[11px]" onClick={() => onInvite(v)} data-testid="office-invite">Invite in</button>
                 {v.delegate && <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" title={v.delegate.does} onClick={() => onDelegate(v.delegate!.op)} data-testid="office-delegate">{v.delegate.label} <span className="text-stone-500">({v.delegate.does})</span></button>}
                 <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => onLater(v)} data-testid="office-later">Schedule for later</button>
+                {v.ref.event && <TableButton s={s} subject={{ kind: 'event', iid: v.ref.event }} onChoose={(choiceId) => onDelegate({ kind: 'answer', iid: v.ref.event!, choiceId })} className="btn-ghost px-2 py-0.5 text-[11px]" testid="office-visitor-table" />}
               </div>
             </li>
           );
@@ -284,4 +299,8 @@ function PhonePanel({ s }: { s: GameState }) {
       </ul>
     </div>
   );
+}
+
+function officeBriefItem(s: GameState, id: string) {
+  return briefing(s).items.find((x) => x.id === id);
 }
