@@ -123,6 +123,18 @@ export const ROMANCE_PURPOSE: Record<string, string> = {
   separate: 'End a marriage that has stopped working. In 1960 the parish and the in-laws will talk.',
 };
 
+const DATING_PURPOSE: Record<string, string> = {
+  talk: 'Get to know her: no money, no evening. Her feelings warm a little; she decides how much time she gives you.',
+  invite: 'Ask her out. She decides from her own feelings, her marriage, her other man and what she knows of you; if she says no, you pay nothing.',
+  gift: 'A gift warms her a little, less each time, and never decides anything for her. Too much too soon can backfire.',
+  steady: 'Ask her to be your girl: a courtship (or an affair, if someone is married). Only when she is drawn to you.',
+  commit: 'Make it exclusive. She decides; it makes a proposal more likely later.',
+  reconcile: 'Ask your wife to come home after a separation. She decides whether a promise means anything.',
+  meet: 'A proper introduction to a woman from the neighborhood. Nothing is promised.',
+  paid: 'An evening of company, agreed and paid, between adults. It makes no feelings and no relationship; it has risks you can see before you confirm.',
+  askOut: 'Ask a woman who works nights out as yourself, off the clock. She can say no, keep it professional, or take it personally.',
+};
+
 function opOf(a: PlayerAction): string | undefined {
   switch (a.kind) {
     case 'power': return a.op.op;
@@ -131,6 +143,7 @@ function opOf(a: PlayerAction): string | undefined {
     case 'ledger': return a.op.op;
     case 'bones': return a.op.op;
     case 'ears': return a.op.op;
+    case 'dating': return a.op.op;
     case 'legal':
     case 'underbelly': return a.op;
     default: return undefined;
@@ -146,6 +159,7 @@ export function pillarPurpose(a: PlayerAction): string | undefined {
     case 'travel': return op ? TRAVEL_PURPOSE[op] : undefined;
     case 'ledger': return op ? LEDGER_PURPOSE[op] : undefined;
     case 'ears': return op ? EARS_PURPOSE[op] : undefined;
+    case 'dating': return op ? DATING_PURPOSE[op] : undefined;
     case 'bones':
     case 'legal':
     case 'underbelly': return OTHER_PURPOSE[`${a.kind}:${op}`];

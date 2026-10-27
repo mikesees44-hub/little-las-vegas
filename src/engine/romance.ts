@@ -845,6 +845,8 @@ function pregnancyTick(s: GameState, R: RomanceState, r: Romance, a: Character, 
   const woman = a.gender === 'F' ? a : b.gender === 'F' ? b : undefined;
   const man = a.gender === 'M' ? a : b.gender === 'M' ? b : undefined;
   if (!woman || !man) return;
+  // The boss's own relationships: only an evening together, at the player's setting (dating.ts PREGNANCY_RULES).
+  if (s.dating && (woman.id === s.playerId || man.id === s.playerId)) return;
   const wa = age(s, woman);
   if (wa < ADULT || wa > 42) return;
   if (R.pregnancies.some((p) => p.motherId === woman.id)) return;

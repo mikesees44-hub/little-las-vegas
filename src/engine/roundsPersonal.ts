@@ -1,6 +1,7 @@
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, player } from './characters';
 import { madamOf } from './ears';
+import { adultOn } from './datingState';
 import { fam } from './familyState';
 import { heatBand } from './heat';
 import { convictionOdds, LAWYER, OPEN_FILE, RETAINER_CAP, RETAINER_EARLY_CAP, stageLabel } from './longgame';
@@ -148,6 +149,8 @@ export interface PersonalRound {
   cost: number;
   /** Which reading the report scene shows. */
   reading?: 'lawyer' | 'doctor';
+  pocketOnly?: boolean;
+  adult?: boolean;
 }
 
 const stressFx = (s: GameState, amount: number, label: string, source: 'domestic' | 'paranoia' = 'domestic'): Effect[] => (s.dyn ? [{ type: 'dyn', op: { op: 'stress', charId: s.playerId, amount, source }, label } as Effect] : []);
@@ -231,7 +234,7 @@ export function personalRounds(s: GameState, wife: Character | undefined): Perso
 
   // An evening the Madam arranges (adults only, her choice, off-screen).
   const madam = madamOf(s);
-  if (madam?.alive && opinion(s, madam.id, B) >= -10) {
+  if (madam?.alive && opinion(s, madam.id, B) >= -10 && adultOn(s)) {
     const r = roll(`${s.seed}|${s.week}|escort-risk`);
     const rival = s.rivals.find((x) => x.kind === 'mob' && s.characters[x.leaderId]?.alive);
     const risks: { text: string; effects: Effect[]; pocket?: number }[] = [
@@ -248,7 +251,7 @@ export function personalRounds(s: GameState, wife: Character | undefined): Perso
       decline: { chance: 0.15, text: `The lady said no. That's her right, and ${madam.firstName} doesn't ask twice. You had a drink alone.`, effects: stressFx(s, -2, 'A drink alone') },
       risk: { chance: hasTrait(boss, 'Womanizer') ? 0.3 : 0.2, ...risk },
       result: ['Dinner somewhere in Cape May nobody knows you. You came home before the milk truck.', 'A quiet evening, arranged with care. The report ends there.'],
-      cost: 350,
+      cost: 350, pocketOnly: true, adult: true,
     });
   }
   return out;

@@ -557,7 +557,9 @@ export type Effect =
   /** The Ears: the Madam, the nightlife workers, the connection web (ears.ts). */
   | ({ type: 'ears'; op: EarsOp } & EffectBase)
   /** The living district: requests from its people, asking around, help (livingAsk.ts). */
-  | ({ type: 'living'; op: import('./livingAsk').LivingOp } & EffectBase);
+  | ({ type: 'living'; op: import('./livingAsk').LivingOp } & EffectBase)
+  /** Relationships & Dating: dates, gifts, paid company, introductions (dating.ts). */
+  | ({ type: 'dating'; op: import('./dating').DatingOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -913,6 +915,8 @@ export interface GameState {
   empire?: import('./empireState').EmpireState;
   /** The Ears: the Madam, the nightlife workers, operators, the connection web (optional for old saves). */
   ears?: EarsState;
+  /** Relationships & Dating: bonds, providers, rumors, content settings (datingState.ts; optional for old saves). */
+  dating?: import('./datingState').DatingState;
   /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */
   briefing?: import('./briefing').BriefingState;
   /** Your Rounds: the boss's evenings, the lanes' neglect, the advisors' free hand (rounds.ts; optional, starts when used). */
@@ -1004,6 +1008,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'dirty'; op: import('./dirtyWork').DirtyAction }
   /** Family development: technology, connections and crew equipment (develop.ts). */
   | { kind: 'dev'; op: import('./develop').DevAction }
+  /** Relationships & Dating (dating.ts): invite, gifts, going steady, paid company, introductions. */
+  | { kind: 'dating'; op: import('./dating').DatingAction }
 );
 
 export type InteractionId =
