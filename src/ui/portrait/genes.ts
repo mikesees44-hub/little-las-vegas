@@ -31,6 +31,9 @@ export function rng(seed: number) {
 export const LOCI = [
   'skin', 'hair', 'faceLen', 'jaw', 'cheek', 'chin', 'nose', 'noseSize', 'eyes', 'eyeColor',
   'brow', 'ears', 'lips', 'wave', 'bald', 'grey', 'freckle', 'heavy',
+  // Appended last so every older locus keeps its roll. 'heavy' is the build; 'beard' the beard shadow
+  // (they were one slider: "Beard shadow / heavy build"). A founder's beard follows his build, as before.
+  'beard',
 ] as const;
 export type Locus = (typeof LOCI)[number];
 export type Genes = Record<Locus, number>;
@@ -59,9 +62,14 @@ export function registerAppearances(seed: string, chars: Record<string, Pick<Cha
   for (const c of Object.values(chars)) if (c.appearance?.genes) setGeneOverride(seed, c.id, c.appearance.genes as Partial<Genes>);
 }
 
+/** A chosen face from before the split: its one "heavy" slider set the beard too. */
+function splitOld(o: Partial<Genes>): Partial<Genes> {
+  return o.heavy !== undefined && o.beard === undefined ? { ...o, beard: o.heavy } : o;
+}
+
 function withOverride(seed: string, id: string, g: Genes): Genes {
   const o = overrides.get(`${seed}\u0000${id}`);
-  return o ? { ...g, ...o } : g;
+  return o ? { ...g, ...splitOld(o) } : g;
 }
 
 export function founderGenes(seed: string, id: string): Genes {
@@ -71,6 +79,7 @@ export function founderGenes(seed: string, id: string): Genes {
   const r = rng(hash(`${seed}:genes:${id}`));
   const g = {} as Genes;
   for (const l of LOCI) g[l] = r();
+  g.beard = g.heavy;
   if (founderCache.size > 4000) founderCache.clear();
   founderCache.set(key, g);
   return withOverride(seed, id, g);
@@ -83,7 +92,7 @@ export function founderGenes(seed: string, id: string): Genes {
  */
 export function genesOf(seed: string, c: Pick<Character, 'id' | 'fatherId' | 'motherId' | 'bioFatherId' | 'appearance'>): Genes {
   const own = founderGenes(seed, c.id);
-  if (c.appearance?.genes) return { ...own, ...(c.appearance.genes as Partial<Genes>) };
+  if (c.appearance?.genes) return { ...own, ...splitOld(c.appearance.genes as Partial<Genes>) };
   const dad = c.bioFatherId ?? c.fatherId;
   if (!dad && !c.motherId) return own;
   const f = dad ? founderGenes(seed, dad) : own;

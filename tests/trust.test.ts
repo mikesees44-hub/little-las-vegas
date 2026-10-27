@@ -20,6 +20,9 @@ import { agreementHistoryLine, agreementName } from '../src/engine/agreements';
 import { WeeklyTake } from '../src/ui/tribute/WeeklyTake';
 import { lotAccessibleName } from '../src/ui/map/lotPins';
 import { EmptyState } from '../src/ui/components/EmptyState';
+import { TraitCap } from '../src/ui/menu/CharacterCreator';
+import { founderGenes, genesOf } from '../src/ui/portrait/genes';
+import { SCHEMA } from '../src/engine/trustMigrations';
 import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
@@ -243,5 +246,35 @@ describe('A10: an empty money page says why it is empty', () => {
     const kinds = ['pending', 'none', 'unavailable', 'failed'] as const;
     const html = kinds.map((k) => renderToString(createElement(EmptyState, { kind: k, title: 't' })));
     expect(new Set(html.map((h) => h.match(/>([^<]+)<\/div><div class="font-semibold/)?.[1])).size).toBe(4);
+  });
+});
+
+describe('A11: the trait cap is explained', () => {
+  it('at the cap it says "3 of 3 selected. Remove one to choose another." with the points apart', () => {
+    const html = renderToString(createElement(TraitCap, { traits: ['Ambitious', 'Cruel', 'Drinker'] }));
+    expect(html).toMatch(/3 of 3 selected\./);
+    expect(html).toMatch(/Remove one to choose another\./);
+    expect(html).toMatch(/Good traits cost \d+ pts · flaws give back \d+ pts/);
+    expect(renderToString(createElement(TraitCap, { traits: ['Cruel'] }))).toMatch(/You can pick 2 more/);
+  });
+});
+
+describe('A12: beard and build are separate, and old faces keep their beard', () => {
+  it('founders look as before (beard follows build); a chosen beard is independent; old saves migrate', () => {
+    const f = founderGenes('trust-a12', 'c1');
+    expect(f.beard).toBe(f.heavy);
+    const chosen = genesOf('trust-a12', { id: 'c2', appearance: { genes: { heavy: 0.9, beard: 0.1 } } });
+    expect(chosen.heavy).toBe(0.9);
+    expect(chosen.beard).toBe(0.1);
+    // An old save chose one "heavy" value for both.
+    const old = genesOf('trust-a12', { id: 'c3', appearance: { genes: { heavy: 0.85 } } });
+    expect(old.beard).toBe(0.85);
+    const s = newGameWith('trust-a12', 'classic');
+    const boss = player(s);
+    boss.appearance = { genes: { heavy: 0.77 } };
+    const loaded = upgradeSave(JSON.parse(JSON.stringify(s)));
+    expect(loaded.characters[boss.id].appearance!.genes!.beard).toBe(0.77);
+    expect(loaded.characters[boss.id].appearance!.genes!.heavy).toBe(0.77);
+    expect(loaded.schema).toBe(SCHEMA);
   });
 });
