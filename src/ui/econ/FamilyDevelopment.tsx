@@ -3,7 +3,7 @@ import { AdviceButton } from '../advice/AdviceButton';
 import { ActionCard } from '../components/Orders';
 import { useSheet } from '../components/People';
 import { fmt$ } from '../format';
-import { capos } from '../../engine/characters';
+import { capos, crew, displayName, isFree } from '../../engine/characters';
 import {
   gearOffers, legitIncome, opportunityText, pathViews, recommendTier, repairCost, shortage, weeklyUpkeep,
   type DevAction, type PathView, type TierView,
@@ -87,11 +87,34 @@ function PathCard({ s, p }: { s: GameState; p: PathView }) {
       <div className="mt-1 text-[11px] text-stone-400">
         In charge: {p.resp ? <button type="button" className="text-gold-300 underline-offset-2 hover:underline" onClick={() => sheet.open(p.resp!.id)}>{p.resp.firstName} {p.resp.lastName}</button> : <span className="text-amber-300">nobody (it would run at 60%)</span>}
         {p.resp && <span className="text-stone-500"> · works at {Math.round(p.eff * 100)}%</span>}
+        <InCharge s={s} p={p} />
       </div>
       <ol className="mt-2 space-y-2">
         {p.tiers.map((t) => <TierRow key={t.def.id} s={s} t={t} next={p.next?.def.id === t.def.id} top={t.def.tier === p.tier} />)}
       </ol>
     </div>
+  );
+}
+
+/** "Put someone else in charge…": who answers for a path (the engine's `resp` order). */
+function InCharge({ s, p }: { s: GameState; p: PathView }) {
+  const [open, setOpen] = useState(false);
+  const men = useMemo(() => crew(s).filter((c) => c.id !== s.playerId && c.id !== p.resp?.id && isFree(s, c)).sort((a, b) => b.attributes.business - a.attributes.business), [s, p.resp?.id]);
+  const [who, setWho] = useState<string | undefined>(undefined);
+  if (!men.length || s.gameOver) return null;
+  const pick = who && men.some((m) => m.id === who) ? who : men[0].id;
+  return (
+    <>
+      {' · '}<button type="button" className="text-gold-400 hover:text-gold-300" onClick={() => setOpen((x) => !x)} data-testid="dev-resp-open">{open ? 'never mind' : p.resp ? 'put someone else in charge…' : 'put someone in charge…'}</button>
+      {open && (
+        <div className="mt-1.5 space-y-1.5" data-testid="dev-resp">
+          <select className="inp text-xs" value={pick} onChange={(e) => setWho(e.target.value)} aria-label={`Who answers for ${p.def.label}`}>
+            {men.map((m) => <option key={m.id} value={m.id}>{displayName(m)} · business {m.attributes.business}</option>)}
+          </select>
+          <ActionCard s={s} compact action={dev({ t: 'resp', path: p.def.id, who: pick })} />
+        </div>
+      )}
+    </>
   );
 }
 
