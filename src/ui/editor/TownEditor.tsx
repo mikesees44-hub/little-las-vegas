@@ -100,7 +100,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
   const down = (e: React.PointerEvent, d?: Drawn) => {
     if ((e.target as Element).closest('[data-te-ui]')) return;
     e.stopPropagation();
-    if (!d && tool !== 'select') {
+    if (tool !== 'select' && (!d || d.kind === 'district')) {
       const at = toUV(e.clientX, e.clientY);
       if (tool === 'parcel') { const r = addParcel(pkg, at); edit(r.pkg); setSel(r.id); setTool('select'); }
       if (tool === 'landmark') { const r = addLandmark(pkg, 'New landmark', 'landmark', at); edit(r.pkg); setSel(r.id); setTool('select'); }
@@ -223,7 +223,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
       </div>
 
       {/* District jumps and the summary. */}
-      <div className={`absolute left-2 bottom-2 z-10 max-w-[min(620px,calc(100%-1rem))] ${f && !box ? 'max-md:hidden' : ''} rounded bg-[#1b1030]/90 border border-[#ff5fa2]/50 px-2 py-1 text-[11px] text-[#ffd1e6] space-y-1`} data-te-ui data-testid="te-summary">
+      <div className={`absolute left-2 md:left-auto md:right-2 bottom-2 z-10 max-w-[min(620px,calc(100%-1rem))] ${f && !box ? 'max-md:hidden' : ''} rounded bg-[#1b1030]/90 border border-[#ff5fa2]/50 px-2 py-1 text-[11px] text-[#ffd1e6] space-y-1`} data-te-ui data-testid="te-summary">
         <div><span className="font-display">{pkg.displayName}</span> <span className="text-stone-400">· {pkg.status} · v{pkg.contentVersion} · {pkg.districts.length} districts, {pkg.parcels.length} parcels, {open1960} open in {year}</span></div>
         <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-stone-300"><span><ConfBadge c="verified" /> {ev.verified}</span><span><ConfBadge c="approximate" /> {ev.approximate}</span><span><ConfBadge c="invented" /> {ev.invented}</span><span className="text-stone-500">solid / dashed / dotted outlines</span></div>
         <div className="flex flex-wrap gap-1">
@@ -235,7 +235,7 @@ export function TownEditor({ year: gameYear, onClose }: { year: number; onClose:
 
       {/* Validation results. */}
       {issues && (
-        <div className="absolute z-20 right-2 top-32 w-[min(380px,calc(100%-1rem))] max-h-[45%] overflow-y-auto panel p-2 text-xs space-y-1" data-te-ui data-testid="te-issues">
+        <div className="absolute z-20 right-2 left-2 md:left-2 md:right-auto top-32 md:w-[380px] max-h-[45%] overflow-y-auto panel p-2 text-xs space-y-1" data-te-ui data-testid="te-issues">
           <div className="flex justify-between"><span className={issues.errors.length ? 'text-rose-300 font-bold' : 'text-emerald-300 font-bold'} data-testid="te-valid">{issues.errors.length ? `${issues.errors.length} error${issues.errors.length > 1 ? 's' : ''}` : 'Valid'}{issues.warnings.length ? `, ${issues.warnings.length} to research` : ''}</span><button type="button" onClick={() => setIssues(undefined)}>close ×</button></div>
           {[...issues.errors.map((x) => ['e', x] as const), ...issues.warnings.map((x) => ['w', x] as const)].slice(0, 60).map(([k, x], i) => (
             <button key={i} type="button" className={`block w-full text-left ${k === 'e' ? 'text-rose-200' : 'text-amber-200'}`} onClick={() => setSel(recordOfPath(pkg, x.path))}>{k === 'e' ? '✕' : '!'} {x.message}</button>
