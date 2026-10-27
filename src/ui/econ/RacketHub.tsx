@@ -12,6 +12,8 @@ import { ActionCard, useOrders } from '../components/Orders';
 import { CharLink } from '../components/People';
 import { StartRacket } from './StartRacket';
 import { SteadyEarners } from './SteadyEarners';
+import { DirtyWork } from './DirtyWork';
+import { isInSeason } from '../../engine/calendar';
 
 /**
  * THE RACKETS: every racket on one page. What it is, what it takes to start,
@@ -20,41 +22,103 @@ import { SteadyEarners } from './SteadyEarners';
  * Locked rackets say exactly how to unlock them; "Which racket should I
  * start?" ranks the ones you can start for the situation right now.
  */
-export function RacketHub({ s }: { s: GameState }) {
+export type HubTab = 'ops' | 'start' | 'earners' | 'jobs';
+const HUB_TABS: [HubTab, string][] = [['ops', 'My Operations'], ['start', 'Start a Racket'], ['earners', 'Assign Earners'], ['jobs', 'One-Time Jobs']];
+
+export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
   const cards = hubCards(s);
-  const [filter, setFilter] = useState<'all' | 'running' | 'ready' | 'locked'>('all');
   const running = cards.filter((c) => c.owned.length || (c.madam && (s.ears?.madam.cut ?? 0) > 0));
-  const shown = cards.filter((c) => filter === 'all' || (filter === 'running' ? running.includes(c) : filter === 'ready' ? !c.locks.length && !running.includes(c) && !c.madam : c.locks.length > 0));
+  const [tab, setTab] = useState<HubTab>(initial ?? (running.length ? 'ops' : 'start'));
+  const [filter, setFilter] = useState<'all' | 'ready' | 'locked'>('all');
+  const shown = cards.filter((c) => filter === 'all' || (filter === 'ready' ? !c.locks.length && !running.includes(c) && !c.madam : c.locks.length > 0));
   const costs = dialCosts(s).reduce((a, x) => a + (x.o.weekly ?? 0), 0);
+  const ownedBiz = running.flatMap((c) => c.owned);
   return (
     <div className="space-y-4" data-testid="racket-hub">
-      <StartRacket s={s} />
-
-      <section className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        <Stat label="Rackets you run" value={`${running.length}`} sub={`of ${cards.length} on the island`} />
-        <Stat label="Their take" value={`~${fmt$(racketTake(s))}/wk`} sub="this week, expected" />
-        <Stat label="Pads & arrangements" value={`${fmt$(costs)}/wk`} sub={costs ? 'paid every week' : 'nobody on the pad'} />
-        <Stat label="Heat" value={`${Math.round(s.heat.local)} / ${Math.round(s.heat.federal)}`} sub="local / federal" />
-      </section>
-
-      <SteadyEarners s={s} />
-
-      <WhichRacket s={s} />
-
-      <div className="flex flex-wrap gap-1 text-[11px]" role="radiogroup" aria-label="Show">
-        {(['all', 'running', 'ready', 'locked'] as const).map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={filter === k} onClick={() => setFilter(k)}
-            className={`rounded border px-2 py-0.5 ${filter === k ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
-            {k === 'all' ? `All (${cards.length})` : k === 'running' ? `Running (${running.length})` : k === 'ready' ? 'Ready to start' : 'Locked'}
+      <div className="flex flex-wrap gap-1" role="tablist" aria-label="Rackets">
+        {HUB_TABS.map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} data-testid={`hub-tab-${id}`}
+            className={`rounded border px-2.5 py-1 text-xs font-semibold ${tab === id ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+            {label}{id === 'ops' ? ` (${ownedBiz.length})` : ''}
           </button>
         ))}
       </div>
+      <EstimateNote s={s} />
 
-      {!shown.length && <p className="text-xs text-stone-500">{filter === 'locked' ? 'Nothing is locked: every racket on the island is open to you.' : filter === 'running' ? 'You run no rackets yet. "Which racket should I start?" above picks one.' : 'Nothing to start right now.'}</p>}
-      <div className="grid gap-3 lg:grid-cols-2">
-        {shown.map((c) => (c.madam ? <MadamCard key={c.kind} s={s} c={c} /> : <RacketCard key={c.kind} s={s} c={c} />))}
-      </div>
+      {tab === 'ops' && (
+        <div className="space-y-3" data-testid="hub-ops">
+          <section className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <Stat label="Rackets you run" value={`${running.length}`} sub={`of ${cards.length} on the island`} />
+            <Stat label="Their take" value={`~${fmt$(racketTake(s))}/wk`} sub="this week, expected" />
+            <Stat label="Pads & arrangements" value={`${fmt$(costs)}/wk`} sub={costs ? 'paid every week' : 'nobody on the pad'} />
+            <Stat label="Heat" value={`${Math.round(s.heat.local)} / ${Math.round(s.heat.federal)}`} sub="local / federal" />
+          </section>
+          {!ownedBiz.length && !running.some((c) => c.madam) && (
+            <div className="rounded-md border border-noir-700 p-3 text-[12px] text-stone-400">You run no rackets yet. <button type="button" className="text-gold-300 underline" onClick={() => setTab('start')}>Start a racket ▸</button></div>
+          )}
+          <div className="grid gap-2 lg:grid-cols-2">
+            {ownedBiz.map((b) => <OpCard key={b.id} s={s} b={b} />)}
+            {running.filter((c) => c.madam).map((c) => <MadamCard key={c.kind} s={s} c={c} />)}
+          </div>
+        </div>
+      )}
+
+      {tab === 'start' && (
+        <div className="space-y-4" data-testid="hub-start">
+          <StartRacket s={s} />
+          <WhichRacket s={s} />
+          <div className="flex flex-wrap gap-1 text-[11px]" role="radiogroup" aria-label="Show">
+            {(['all', 'ready', 'locked'] as const).map((k) => (
+              <button key={k} type="button" role="radio" aria-checked={filter === k} onClick={() => setFilter(k)}
+                className={`rounded border px-2 py-0.5 ${filter === k ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+                {k === 'all' ? `All (${cards.length})` : k === 'ready' ? 'Ready to start' : 'Locked'}
+              </button>
+            ))}
+          </div>
+          {!shown.length && <p className="text-xs text-stone-500">{filter === 'locked' ? 'Nothing is locked: every racket on the island is open to you.' : 'Nothing to start right now.'}</p>}
+          <div className="grid gap-3 lg:grid-cols-2">
+            {shown.map((c) => (c.madam ? <MadamCard key={c.kind} s={s} c={c} /> : <RacketCard key={c.kind} s={s} c={c} />))}
+          </div>
+        </div>
+      )}
+
+      {tab === 'earners' && <div data-testid="hub-earners"><SteadyEarners s={s} /></div>}
+      {tab === 'jobs' && <div data-testid="hub-jobs"><DirtyWork s={s} /></div>}
     </div>
+  );
+}
+
+/** Where the numbers come from, and the season. */
+function EstimateNote({ s }: { s: GameState }) {
+  const inS = isInSeason(s.date);
+  return (
+    <p className="text-[11px] text-stone-500" data-testid="estimate-note">
+      Takes are estimates: what a racket is expected to bring this week from your hold on its district, the man who runs it, his capo and the season. Real weeks swing. {inS ? 'It is the Season now (Memorial Day to Labor Day): the boardwalk money is at its peak; most rackets pay far less once the summer people go home.' : 'It is the off-season: most rackets pay far less until Memorial Day brings the summer people back; the numbers rackets and the book hold up best.'}
+    </p>
+  );
+}
+
+/** One racket you run, compact: the take, who runs it, his capo, the heat; Manage opens the policies and the next step. */
+function OpCard({ s, b }: { s: GameState; b: Business }) {
+  const [open, setOpen] = useState(false);
+  const r = runningLine(s, b);
+  const def = CATALOG[b.kind];
+  const g = PROP_GROUP_BY_ID[groupOfBiz(b.kind)];
+  return (
+    <article className="rounded-md border border-noir-700 bg-noir-800/60 p-2.5" data-testid="op-card" data-kind={b.kind}>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-2">
+        <div className="font-semibold text-stone-100 text-sm">{g?.icon} {b.name}</div>
+        <div className={isOpen(s, b) ? 'text-gold-300 tabular-nums text-sm' : 'text-red-400 text-sm'}>{isOpen(s, b) ? `~${fmt$(r.take)}/wk` : `padlocked to wk ${b.closedUntil}`}</div>
+      </div>
+      <div className="mt-0.5 grid grid-cols-2 gap-x-2 text-[11px] text-stone-400">
+        <div>Operator: {r.runner ? <CharLink s={s} id={r.runner.id} /> : <span className="text-amber-300">nobody (40%)</span>}</div>
+        <div>Capo: {r.capo ? <CharLink s={s} id={r.capo.id} /> : <span className="text-stone-500">none in {r.district || 'its district'}</span>}</div>
+        <div>{r.district || '—'}</div>
+        <div>Heat: <span className={def.heat >= 0.25 ? 'text-red-300' : 'text-stone-300'}>{heatWord(def.heat)}</span>{def.fedHeat > 0 ? ` · federal ${def.fedHeat >= 0.1 ? 'some' : 'low'}` : ''}</div>
+      </div>
+      <button type="button" className="mt-1 text-[11px] text-gold-300 underline" onClick={() => setOpen((o) => !o)} aria-expanded={open} data-testid="op-manage">{open ? 'Close ▴' : 'Manage: policies & upgrades ▾'}</button>
+      {open && <Running s={s} b={b} />}
+    </article>
   );
 }
 

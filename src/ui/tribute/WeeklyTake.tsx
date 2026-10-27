@@ -4,7 +4,7 @@ import { Guard } from '../components/Guard';
 import { agreementHistoryLine, agreementName } from '../../engine/agreements';
 import { getSettings } from '../settings';
 import { capos, crew, isFree } from '../../engine/characters';
-import { accountsView, latestReport, memberTerms, obligations, pendingReport, UB_TYPE_LABEL } from '../../engine/tribute';
+import { accountsView, latestReport, memberTerms, obligations, pendingReport, UB_TYPE_LABEL, weeklyCosts } from '../../engine/tribute';
 import { rivalBooksView } from '../../engine/rivalBooks';
 import { REASON_LABEL, splitText, type TributeReport } from '../../engine/tributeState';
 import type { GameState } from '../../engine/types';
@@ -23,7 +23,17 @@ const TABS = [
   ['accounts', 'Accounts'], ['agreements', 'Agreements'], ['investments', 'Investments'], ['disputes', 'Disputes'], ['ledger', 'Historical Ledger'], ['rivals', 'Other Families'],
 ] as const;
 export type TakeTab = (typeof TABS)[number][0];
-type Tab = TakeTab;
+
+/** The five pages of the envelope; each old page lives in one of them (so links to the old pages still land). */
+export type TakeGroup = 'week' | 'paid' | 'owed' | 'accounts' | 'books';
+const GROUPS: { id: TakeGroup; label: string; tabs: TakeTab[] }[] = [
+  { id: 'week', label: 'This Week', tabs: ['audience', 'envelope'] },
+  { id: 'paid', label: 'Who Paid', tabs: ['crews', 'earnings'] },
+  { id: 'owed', label: 'What Is Owed', tabs: ['obligations', 'disputes', 'investments'] },
+  { id: 'accounts', label: 'Accounts', tabs: ['accounts', 'agreements'] },
+  { id: 'books', label: 'The Books', tabs: ['ledger', 'rivals'] },
+];
+const groupOf = (t: TakeTab | TakeGroup): TakeGroup => (GROUPS.some((g) => g.id === t) ? (t as TakeGroup) : GROUPS.find((g) => g.tabs.includes(t as TakeTab))!.id);
 
 function Box({ title, note, children, id }: { title: string; note?: string; children: ReactNode; id?: string }) {
   return (
@@ -48,8 +58,10 @@ const acctName = (s: GameState, id: string) => {
 };
 
 /** THE WEEKLY TAKE: every section of the money that comes up through the underboss. */
-export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) {
-  const [tab, setTab] = useState<Tab>(initial ?? 'audience');
+export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | TakeGroup }) {
+  const [group, setGroup] = useState<TakeGroup>(groupOf(initial ?? 'week'));
+  const tabs = GROUPS.find((g) => g.id === group)!.tabs;
+  const show = (x: TakeTab) => tabs.includes(x);
   const t = s.tribute;
   const ui = useTributeUi();
   const { queue } = useOrders();
@@ -60,21 +72,22 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
   const a = accountsView(s);
   return (
     <div className="space-y-3" data-testid="weekly-take">
-      <div className="flex flex-wrap gap-1">
-        {TABS.map(([id, label]) => (
-          <button key={id} type="button" onClick={() => setTab(id)} data-testid={`take-tab-${id}`}
-            className={`rounded border px-2 py-0.5 text-[11px] ${tab === id ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>{label}</button>
+      <div className="flex flex-wrap gap-1" role="tablist" aria-label="The envelope">
+        {GROUPS.map((g) => (
+          <button key={g.id} type="button" role="tab" aria-selected={group === g.id} onClick={() => setGroup(g.id)} data-testid={`take-group-${g.id}`}
+            className={`rounded border px-2.5 py-1 text-xs font-semibold ${group === g.id ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>{g.label}</button>
         ))}
       </div>
-      <Guard label="This page of the envelope" resetKey={`${tab}:${s.week}`}>
-      {(tab === 'audience' || tab === 'crews' || tab === 'envelope') && !rep && <FirstSettlement what={tab === 'audience' ? 'The underboss\'s audience' : tab === 'crews' ? 'What each crew sent up' : 'The envelope history'} week={s.week} />}
-      {tab === 'audience' && rep && (
+      <Guard label="This page of the envelope" resetKey={`${group}:${s.week}`}>
+      {group === 'week' && rep && <ThisWeekBox s={s} rep={rep} />}
+      {(show('audience') || show('crews') || show('envelope')) && !rep && <FirstSettlement what={group === 'week' ? 'The underboss\'s audience' : 'What each crew sent up'} week={s.week} />}
+      {show('audience') && rep && (
         <Box title="The Underboss Audience" note="Every Monday the underboss brings the take. Quiet weeks go by your standing split; he asks to see you when something needs you." id="take-audience">
           <AudienceSummary s={s} rep={rep} pending={!!pend} />
           <button type="button" className="btn-gold mt-2 text-xs" onClick={() => ui.openAudience(rep.id)} data-testid="open-office">{pend ? 'He is waiting: open the office' : 'Open the office (this week\'s report)'}</button>
         </Box>
       )}
-      {tab === 'envelope' && rep && (
+      {show('envelope') && rep && (
         <Box title="The Envelope" note="What reached you each week and where it went." id="take-envelope">
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[440px]">
             <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Week</th><th className="text-right">Presented</th><th className="text-right">You</th><th className="text-right">Family</th><th className="text-right">Reserve</th><th>How</th></tr></thead>
@@ -88,12 +101,12 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
             <button type="button" className="ml-2 btn-ghost text-[11px]" onClick={() => queue({ kind: 'tribute', op: { op: 'policy', auto: !t.policy.auto } })}>{t.policy.auto ? 'Hold it every week' : 'Only when it matters'}</button></div>
         </Box>
       )}
-      {tab === 'earnings' && (
+      {show('earnings') && (
         <Box title="The Family's Earnings" note="Everyone in the family: what each man earned this week, kicked up and kept, his trend, and his own money. Click a name for his sheet." id="take-earnings">
           <EarningsBoard s={s} />
         </Box>
       )}
-      {tab === 'crews' && rep && (
+      {show('crews') && rep && (
         <Box title="Crew Contributions" note={`Week ${rep.week}. Click a crew for its accounts: every man's agreement, what was due and paid, and why anybody came up short — what he said, what the underboss believes, and the truth once it is known.`} id="take-crews">
           <CrewView s={s} rep={rep} />
           <div className="mt-2 flex flex-wrap gap-1">
@@ -102,7 +115,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
           </div>
         </Box>
       )}
-      {tab === 'obligations' && (
+      {show('obligations') && (
         <Box title="Outstanding Obligations" note="What the family owes, what is owed to it, and what comes due." id="take-obligations">
           <ul className="text-[12px] space-y-0.5">{obligations(s).map((o, i) => <li key={i} className="flex justify-between gap-2 border-t border-noir-800 py-0.5"><span className={o.kind === 'receivable' ? 'text-emerald-300' : 'text-stone-300'}>{o.what}</span><span className="tabular-nums text-stone-400">{fmt$(o.amount)}{o.weekly ? '/wk' : o.due !== undefined ? ` in ${o.due} wk` : ''}</span></li>)}</ul>
           <div className="mt-2 text-[10px] uppercase tracking-widest text-stone-500">Who owes the family (arrears)</div>
@@ -114,7 +127,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
           ))}</ul>
         </Box>
       )}
-      {tab === 'accounts' && (
+      {show('accounts') && (
         <Box title="Accounts" note="Family money runs the business; your pocket pays for your house, cars, fun and family. Moving money between them is never income." id="take-accounts">
           <BigPots s={s} compact />
           {a.envelope > 0 && <div className="mt-1 text-[11px] text-amber-300" data-testid="acct-envelope">{ACCT_LABEL.envelope}: {fmt$(a.envelope)} (split at your cut when you advance)</div>}
@@ -129,15 +142,15 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
           {Object.keys(t.allowances).length > 0 && <div className="mt-2 text-[11px] text-stone-400">Allowances from your own money: {Object.entries(t.allowances).map(([id, w]) => `${s.characters[id]?.firstName ?? '?'} ${fmt$(w)}/wk`).join(' · ')}</div>}
         </Box>
       )}
-      {tab === 'agreements' && <Agreements s={s} />}
-      {tab === 'investments' && (
+      {show('agreements') && <Agreements s={s} />}
+      {show('investments') && (
         <Box title="Investments" note="Pitched by the capos in the audience, paid from Family money. Their returns come up with the envelope." id="take-investments">
           {t.investments.length === 0 ? <p className="text-[12px] text-stone-500">No investments yet. A capo with a head for business will pitch one.</p> : (
             <ul className="text-[12px]">{t.investments.slice().reverse().map((i) => <li key={i.id} className="flex justify-between gap-2 border-t border-noir-800 py-0.5"><span><CharLink s={s} id={i.byId} />: {i.what}</span><span className="tabular-nums text-stone-400">{fmt$(i.amount)} · {i.status === 'funded' ? `${fmt$(i.weekly)}/wk till wk ${i.until}` : i.status}</span></li>)}</ul>
           )}
         </Box>
       )}
-      {tab === 'disputes' && (
+      {show('disputes') && (
         <Box title="Financial Disputes" id="take-disputes">
           {t.disputes.length === 0 ? <p className="text-[12px] text-stone-500">Nobody has disputed his number.</p> : (
             <ul className="text-[12px]">{t.disputes.slice().reverse().map((d) => <li key={d.id} className="border-t border-noir-800 py-1"><CharLink s={s} id={d.capoId} /> (wk {d.week}) — {fmt$(d.amount)}: <i className="text-stone-400">"{d.claim}"</i> <span className={d.status === 'open' ? 'text-amber-300' : 'text-stone-500'}>{d.status}</span></li>)}</ul>
@@ -146,8 +159,8 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
           <ul className="text-[11px] text-stone-400">{t.favors.filter((f) => f.tell.knownBy.includes(s.playerId) || f.byId === s.playerId).slice(-12).reverse().map((f) => <li key={f.id}>wk {f.week}: {s.characters[f.byId]?.firstName ?? '?'} → {s.characters[f.toId]?.firstName ?? '?'}: {f.tell.truth}{f.amount ? ` (${fmt$(f.amount)})` : ''}{f.authority !== 'don' ? ` · on ${f.authority === 'delegated' ? 'his own routine authority' : 'nobody\'s authority'}` : ''}</li>)}</ul>
         </Box>
       )}
-      {tab === 'ledger' && <Ledger s={s} />}
-      {tab === 'rivals' && (
+      {show('ledger') && <Ledger s={s} />}
+      {show('rivals') && (
         <Box title="The Other Families' Books" note="They run the same way: capos keep their end, the boss takes his, a reserve for the bad week. A family can run dry, or split." id="take-rivals">
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[480px]">
             <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Family</th><th className="text-right">Family money</th><th className="text-right">Kept for emergencies</th><th className="text-right">Boss's pocket</th><th className="text-right">Last week up</th><th>Capos</th></tr></thead>
@@ -161,6 +174,28 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab }) 
       )}
       </Guard>
     </div>
+  );
+}
+
+/** This week in five numbers: the count, the expenses, what is available, your cut, the Family's share. */
+function ThisWeekBox({ s, rep }: { s: GameState; rep: TributeReport }) {
+  const cells: [string, string, string?][] = [
+    ['The count', fmt$(rep.collected), `came up from the crews, week ${rep.week}`],
+    ['Expenses', `${fmt$(weeklyCosts(s))}/wk`, 'payroll, upkeep, the pad (average)'],
+    ['Available', fmt$(Math.round(s.money)), 'Family money now'],
+    ['Your cut', rep.alloc ? fmt$(rep.alloc.personal) : '—', rep.alloc ? 'into your pocket' : 'waiting for your split'],
+    ['Family share', rep.alloc ? fmt$(rep.alloc.treasury + rep.alloc.reserve) : '—', rep.alloc ? `incl. ${fmt$(rep.alloc.reserve)} kept for emergencies` : 'waiting for your split'],
+  ];
+  return (
+    <section className="grid grid-cols-2 sm:grid-cols-5 gap-1.5" data-testid="take-this-week">
+      {cells.map(([a, b, c]) => (
+        <div key={a} className="rounded border border-noir-700 bg-noir-800/60 px-2 py-1.5">
+          <div className="text-[10px] uppercase tracking-wider text-stone-500">{a}</div>
+          <div className="text-base font-semibold tabular-nums text-gold-300">{b}</div>
+          {c && <div className="text-[10px] text-stone-500">{c}</div>}
+        </div>
+      ))}
+    </section>
   );
 }
 
