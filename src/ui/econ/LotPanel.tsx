@@ -2,6 +2,7 @@ import { expectedTake } from '../../engine/business';
 import { managerOf, rankManagers, SOURCE_LABEL } from '../../engine/managers';
 import { lotName, propertyNet, STAGE_LABEL, USES_BY_ID, ZONES_BY_ID } from '../../engine/property';
 import { rivalName } from '../../engine/construction';
+import { placeAction, placeRunByLabel } from '../../engine/placeEligibility';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { lotProgress, lotSvg } from '../map/lotIcons';
@@ -41,7 +42,7 @@ export function LotPanel({ s, id, noDesigner }: { s: GameState; id: string; noDe
         <div className="text-[10px] uppercase tracking-widest text-stone-500">Who runs it</div>
         {mine ? (m ? <div>{m.charId ? <CharLink s={s} id={m.charId} /> : m.name} <span className="text-xs text-stone-500">{SOURCE_LABEL[m.source].toLowerCase()} · skill {m.skill} · {fmt$(m.salary)}/wk</span></div>
           : <div className="text-stone-400">Nobody in charge — the crew and the counter staff.</div>)
-          : <div className="text-stone-300">{l.tenant ?? (l.use ? rivalName(l.owner) : 'Nobody: empty ground')}</div>}
+          : <div className="text-stone-300" data-testid="lot-runs">{placeRunByLabel(s, l)}</div>}
         {mine && take > 0 && <div className="text-xs text-stone-500">~{fmt$(take)}/wk now</div>}
       </div>
       {best && (
@@ -56,7 +57,7 @@ export function LotPanel({ s, id, noDesigner }: { s: GameState; id: string; noDe
         </div>
       )}
       {l.status === 'sale' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id } }} compact />}
-      {l.status === 'sale' && l.tenant && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id, going: true } }} compact />}
+      {l.status === 'sale' && l.use && (placeAction(s, l, 'buyBusiness')?.why ? <div className="text-[11px] text-stone-500" data-testid="lot-no-going">Buy the business with it: {placeAction(s, l, 'buyBusiness')!.why}.</div> : <ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id, going: true } }} compact />)}
       {l.status === 'lease' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'leaseLot', lotId: l.id } }} compact />}
       {l.status === 'rival' && l.stage && l.stage !== 'open' && l.stage !== 'purchase' && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'slowRival', lotId: l.id } }} compact />}
     </div>

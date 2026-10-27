@@ -1,3 +1,4 @@
+import { placeActions } from '../../engine/placeEligibility';
 import { AdviceButton } from '../advice/AdviceButton';
 import { useMemo, useState } from 'react';
 import { previewAction, queuedMoney } from '../../engine/actions';
@@ -360,7 +361,17 @@ function Summary({ s, job, who, target, pocket, setPocket, orders, onGo, onRacke
 export function DirtyHere({ s, lot, biz, onGo }: { s: GameState; lot?: Lot; biz?: Business; onGo: () => void }) {
   const { orders } = useOrders();
   const jobs = jobsForPlace(s, lot, biz);
-  if (!jobs.length || s.gameOver) return null;
+  // The jobs that do not fit this place now stay on the card, greyed, with the reason (placeEligibility).
+  const blocked = placeActions(s, lot, biz).filter((a) => (a.id === 'shakedown' || a.id === 'cardgame') && a.why);
+  if (s.gameOver) return null;
+  if (!jobs.length) {
+    if (!blocked.length) return null;
+    return (
+      <div className="flex flex-wrap items-center gap-1.5 rounded border border-noir-700 px-2 py-1.5" data-testid="dirty-here-blocked">
+        {blocked.map((a) => <button key={a.id} type="button" disabled className="btn-ghost text-xs py-1 opacity-60" title={a.why} data-testid={`dirty-blocked-${a.id}`}>{a.label} — {a.why}</button>)}
+      </div>
+    );
+  }
   const main = jobs[0];
   // The best man not already sent on something this week.
   const sent = queuedMen(orders);

@@ -7,6 +7,7 @@ import { STYLES, SIGN_HEX, type BuildStyle, type SignColor } from '../../engine/
 import { lookOf, restyleCost } from '../../engine/hood';
 import { HOODS_BY_ID, hoodOfZone } from '../../engine/hoodData';
 import { rivalName } from '../../engine/construction';
+import { placeOwnerLabel, placeRunByLabel } from '../../engine/placeEligibility';
 import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { BizPanel } from '../econ/BizPanel';
@@ -105,10 +106,7 @@ function CardActions({ s, it, onBusiness, onOwner, onShow, onActions }: { s: Gam
 
 function ownerText(s: GameState, it: Item): string {
   if (it.mine) return `House of ${s.houseName}`;
-  const l = it.lot;
-  if (!l) return '';
-  if (l.owner === 'private') return l.status === 'sale' ? 'On the market' : 'An independent owner';
-  return rivalName(l.owner);
+  return it.lot ? placeOwnerLabel(s, it.lot) : '';
 }
 
 const SIGNS: SignColor[] = ['pink', 'turquoise', 'red', 'gold', 'green', 'blue', 'white'];
@@ -174,7 +172,7 @@ export function StreetCard({ s, it, mood, onClose, onShow }: { s: GameState; it:
         <div className="text-stone-500">Held by</div>
         <div className="text-stone-200 flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: OWNER_COLOR[it.owner] ?? OWNER_COLOR.private }} />{ownerText(s, it)}</div>
         <div className="text-stone-500">Runs it</div>
-        <div className="text-stone-200" data-testid="sv-runs">{it.mine ? (s.econ?.managers[l?.bizId ?? (l ? `lot:${l.id}` : it.biz?.id ?? '')]?.name ?? 'Your people') : l?.tenant ?? (it.vacant ? 'Nobody — empty ground' : it.closed ? 'Nobody — it closed' : 'The owner')}</div>
+        <div className="text-stone-200" data-testid="sv-runs">{l ? placeRunByLabel(s, l) : it.mine ? (s.econ?.managers[it.biz?.id ?? '']?.name ?? 'Your people') : 'The owner'}</div>
         {l && <><div className="text-stone-500">Status</div><div className="text-stone-200">{STATUS_LABEL[l.status]}{l.status === 'sale' && l.price ? ` · ${fmt$(l.price)}` : ''}{l.status === 'lease' ? ` · ${fmt$(l.rent)}/wk` : ''}</div></>}
         {!it.vacant && <><div className="text-stone-500">Look</div><div className="text-stone-200">{STYLES[it.style].name} · <span style={{ color: it.sign }}>neon</span></div></>}
         {l?.builtYear && <><div className="text-stone-500">Built</div><div className="text-stone-200">{l.builtYear}{l.renovated ? ` · fixed up ${l.renovated}` : ''}</div></>}

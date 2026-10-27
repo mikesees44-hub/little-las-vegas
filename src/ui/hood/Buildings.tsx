@@ -3,6 +3,7 @@ import { CATALOG } from '../../engine/catalog';
 import { designOf, SIGN_HEX, type BuildStyle } from '../../engine/design';
 import type { Lot } from '../../engine/econState';
 import { lookOf } from '../../engine/hood';
+import { placeCondition } from '../../engine/placeEligibility';
 import { footprint, iconOf, type Footprint, type Parcel } from '../../engine/hoodGeo';
 import { USES, USES_BY_ID, useIcon, type UseIcon } from '../../engine/property';
 import type { Business, GameState } from '../../engine/types';
@@ -77,7 +78,7 @@ export function itemsOf(s: GameState, parcels: Map<string, Parcel>, pr: Proj): I
     const name = l.name ?? biz?.name ?? (l.use ? USES_BY_ID[l.use]?.name : l.status === 'lease' ? 'Storefront for rent' : 'Empty lot');
     out.push({
       key, lot: l, biz, parcel: p, fp: footprint(p, icon), icon, useId: l.use, name, style: look.style, sign: SIGN_HEX[look.sign],
-      owner: mine ? 'player' : l.owner, mine, open, closed: open && !mine && !l.tenant && !l.bizId && l.status !== 'public', building, progress: lotProgress(l),
+      owner: mine ? 'player' : l.owner, mine, open, closed: open && placeCondition(l) === 'closed', building, progress: lotProgress(l),
       vacant: !l.use && l.status !== 'lease', forSale: l.status === 'sale', forLease: l.status === 'lease', condition: l.condition, depth: 0,
     });
   }
