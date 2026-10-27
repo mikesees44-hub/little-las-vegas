@@ -50,7 +50,7 @@ function FactRow({ s, f, onPerson }: { s: GameState; f: KnownFact; onPerson: (id
 
 function StoryCard({ s, v, onPerson }: { s: GameState; v: StoryView; onPerson: (id: string) => void }) {
   const L = s.living!;
-  const ans: Record<string, string> = { pay: 'you paid it off', take: 'you took the debt over', lean: 'you had him get more time', decline: 'you stayed out of it', lend: 'you lent the money', find: 'you had the thief found', make_good: 'you made it good', give: 'you helped', job: 'you gave a job', capo: 'nobody answered; the capo handled it' };
+  const ans: Record<string, string> = { pay: 'you paid it off', take: 'you took the debt over', lean: 'you had him get more time', decline: 'you stayed out of it', lend: 'you lent the money', find: 'you had the thief found', make_good: 'you made it good', give: 'you helped', job: 'you gave a job', capo: 'nobody answered; the capo handled it', moot: 'it sorted itself out before you answered' };
   return (
     <article className={`rounded-md border px-3 py-2 ${v.open ? 'border-noir-600 bg-noir-800/70' : 'border-noir-800 bg-noir-900/50'}`} data-testid="living-story">
       <header className="flex flex-wrap items-baseline justify-between gap-2">

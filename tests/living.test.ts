@@ -283,14 +283,16 @@ describe('requests come from real situations (B14)', () => {
     expect(ev.text.split('\n\n').length).toBeGreaterThanOrEqual(3);
     // Answer: pay it off.
     const d = found!.s.living!.debts.find((x) => x.st === 'open' && st.f.includes(x.fid))!;
-    const before = found!.s.money;
     const pending = { ...found!.s, pendingEvents: [ev] } as GameState;
-    const after = advanceWeek(pending, { choices: { [ev.iid]: 'pay' } }).state;
+    const res = advanceWeek(pending, { choices: { [ev.iid]: 'pay' } });
+    const after = res.state;
+    // The payment is a line in the one ledger: Family money out, exactly what was owed.
+    const line = res.report.lines.find((l) => l.stat === 'money' && /^The Family pays /.test(l.label));
+    expect(line?.amount).toBe(-d.out);
     const d2 = after.living!.debts.find((x) => x.id === d.id)!;
     expect(d2.st).toBe('paid');
     expect(after.living!.stories.find((x) => x.id === st.id)!.ask!.ans).toBe('pay');
     expect(after.living!.facts.some((f) => f.k === 'boss_helped')).toBe(true);
-    expect(before - after.money).toBeGreaterThan(0);
   });
 });
 

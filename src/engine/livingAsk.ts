@@ -121,8 +121,9 @@ export function livingRequest(s: GameState, st: Ts): EventInstance | undefined {
   choices.push(mk('decline', `Leave it to ${cn}`, `You stay out of it. ${cn} will tell ${him(asker)} there is nothing to be done.`, `stayed out of ${who}'s trouble`));
   const text = [`${capo.firstName} ${capo.lastName} has something from the Boardwalk.`, ...lines.map((x) => `• ${x}`), ask].join('\n\n');
   return {
-    iid: `living:${st.id}`, defId: 'living_request', title, text, week: s.week, choices, defaultChoiceId: 'decline', mandatory: false, priority: 44,
-    meta: { story: st.id, charId: capo.id }, actors: [capo.id],
+    iid: `living:${st.id}`, defId: 'living_request', title, text, week: s.week, choices, defaultChoiceId: 'decline', mandatory: true, priority: 44,
+    // A real situation waiting on an answer (and the capo brings one at most every four weeks): not held back as "the same story again".
+    meta: { story: st.id, charId: capo.id, due: 1 }, actors: [capo.id],
   };
 }
 
@@ -143,7 +144,10 @@ export function livingEventSource(s: GameState): EventInstance | undefined {
 export function expireRequests(ctx: Ctx, L: LivingState): void {
   const s = ctx.s;
   for (const st of L.stories) {
-    if (!st.open || !st.ask || st.ask.ans || s.week - st.ask.w <= 4) continue;
+    if (!st.ask || st.ask.ans) continue;
+    // It sorted itself out before the boss answered.
+    if (!st.open) { st.ask.ans = 'moot'; st.ask.aw = s.week; continue; }
+    if (s.week - st.ask.w <= 4) continue;
     st.ask.ans = 'capo';
     st.ask.aw = s.week;
     const capo = s.characters[st.ask.via];
