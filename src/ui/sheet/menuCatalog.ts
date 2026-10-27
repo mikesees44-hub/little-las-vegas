@@ -125,7 +125,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
       if (keep < 0.45) add('business', { key: 'k+', action: { kind: 'contract', charId: c.id, keep: Math.round((keep + 0.05) * 100) / 100 } });
     }
     if (c.rank !== 'associate' && !c.specialty) {
-      for (const st of SEATS) if (holder(s, st)?.id !== c.id) add('business', { key: `seat:${st}`, action: { kind: 'appoint', seat: st, charId: c.id }, label: `Seat him as ${SEAT_INFO[st].name.toLowerCase()}` });
+      for (const st of SEATS) if (holder(s, st)?.id !== c.id) add('business', { key: `seat:${st}`, action: { kind: 'appoint', seat: st, charId: c.id }, label: `Seat him as ${SEAT_INFO[st].name.toLowerCase()}${holder(s, st) ? ` (in ${holder(s, st)!.firstName}'s place)` : ''}` });
     }
     add('business', { key: 'bg', action: { kind: 'background', charId: c.id } });
   }

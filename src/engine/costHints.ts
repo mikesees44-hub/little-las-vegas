@@ -32,7 +32,7 @@ export function costHint(s: GameState, cost: number, pot?: 'pocket'): string | u
     if (cost <= pk) return cost >= COSTLY_MIN && cost >= pk * COSTLY_SHARE ? `${MARK} ${usd(cost)}, ${Math.round((100 * cost) / Math.max(1, pk))}% of your pocket.` : undefined;
     const short = cost - pk;
     if (short > s.money) return `${MARK} ${usd(cost)} is more than your pocket (${usd(pk)}) and Family money (${usd(Math.max(0, s.money))}) together.`;
-    return `${MARK} your pocket covers ${usd(pk)}; the other ${usd(short)} comes out of Family money (${Math.round((100 * short) / Math.max(1, s.money))}% of it).`;
+    return `${MARK} your pocket covers ${usd(pk)}; the other ${usd(short)} would come out of Family money (${Math.round((100 * short) / Math.max(1, s.money))}% of it), only if you approve it.`;
   }
   if (cost < COSTLY_MIN || (cost < s.money * COSTLY_SHARE && cost <= s.money)) return undefined;
   if (cost > s.money) return `${MARK} ${usd(cost)} is more than Family money holds (${usd(Math.max(0, s.money))}); this puts the Family in the red.`;

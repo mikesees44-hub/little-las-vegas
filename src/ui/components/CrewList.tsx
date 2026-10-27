@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ownMoney } from '../../engine/wealth';
 import { ageOn } from '../../engine/calendar';
 import { capos, crew, displayName, isFree } from '../../engine/characters';
 import { holder, SEAT_INFO, SEATS, seatOf, seatPower, TASKS } from '../../engine/council';
@@ -113,7 +114,7 @@ function Vassals({ s }: { s: GameState }) {
               <Face s={s} c={c} size={40} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
-                <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · skims ~{Math.round(skimRate(s, c) * 100)}% · his own money {fmt$(c.wealth)} · {regime(s, c.id).length} men</div>
+                <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · skims ~{Math.round(skimRate(s, c) * 100)}% · his own money {fmt$(ownMoney(s, c))} · {regime(s, c.id).length} men</div>
                 <TraitIcons c={c} />
               </div>
               <div className="text-right">
@@ -163,7 +164,7 @@ function ManRow({ s, c }: { s: GameState; c: Character }) {
           </div>
           <div className="text-[11px] text-stone-400">
             <span className="capitalize">{c.specialty ? SPECIALTY_INFO[c.specialty].name : c.rank}</span>
-            {seat && <> · {SEAT_INFO[seat as Seat].name}</>} · {ageOn(c.birth, s.date)} yrs · own money {fmt$(c.wealth)}
+            {seat && <> · {SEAT_INFO[seat as Seat].name}</>} · {ageOn(c.birth, s.date)} yrs · own money {fmt$(ownMoney(s, c))}
             {!isFree(s, c) && <span className="text-red-400"> · jailed to wk {c.imprisonedUntil}</span>}
             {(c.neglect ?? 0) >= 8 && <span className="text-amber-400"> · ignored {c.neglect} wks</span>}
           </div>

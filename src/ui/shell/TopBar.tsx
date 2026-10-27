@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEscape } from '../keys';
 import { formatDate, seasonInfo } from '../../engine/calendar';
 import { formatDay } from '../../engine/days';
 import { displayName, player } from '../../engine/characters';
@@ -27,11 +28,10 @@ function MoneyChips({ s }: { s: GameState }) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+    return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
+  useEscape(open, () => setOpen(false));
   return (
     <div ref={ref} className="flex items-center gap-1" data-testid="topbar-money">
       <button type="button" data-tour="treasury" className="flex items-center gap-1" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Family money ${fmt$(m.family)}, your pocket ${fmt$(m.pocket)}: open the money`} title={statHelp('money')} data-testid="topbar-family">
@@ -89,11 +89,10 @@ export function Popover({ button, children, align = 'right', testid }: { button:
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+    return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
+  useEscape(open, () => setOpen(false));
   return (
     <div className="relative" ref={ref}>
       {button(open, () => setOpen((o) => !o))}

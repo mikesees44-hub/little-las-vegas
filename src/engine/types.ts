@@ -793,6 +793,8 @@ export interface GameOver {
 
 export interface GameState {
   version: 2;
+  /** Save migrations applied (trustMigrations.ts SCHEMA); absent in older saves. */
+  schema?: number;
   seed: string;
   rng: number;
   nextId: number;
@@ -935,7 +937,15 @@ export interface PlayerChoices {
   skipDays?: number[];
 }
 
-export type PlayerAction =
+/**
+ * How an order may be paid. A boss's-own-things order is paid from his Pocket;
+ * `fund: 'family'` is the player's explicit consent (given on the button that
+ * names the amount) for the Family to pay what the Pocket can't. Without it a
+ * pocket order that comes up short at settlement is not carried out.
+ */
+export interface ActionFunding { fund?: 'family' }
+
+export type PlayerAction = ActionFunding & (
   | { kind: 'buyBusiness'; biz: BusinessKind; district: string }
   | { kind: 'sellBusiness'; businessId: string }
   | { kind: 'lend'; amount: number }
@@ -980,7 +990,8 @@ export type PlayerAction =
   | { kind: 'tribute'; op: import('./tributeOps').TributeAction }
   | { kind: 'ears'; op: EarsAction }
   /** Dirty work: a one-off job (dirtyWork.ts). */
-  | { kind: 'dirty'; op: import('./dirtyWork').DirtyAction };
+  | { kind: 'dirty'; op: import('./dirtyWork').DirtyAction }
+);
 
 export type InteractionId =
   | 'gift_small' | 'gift_large' | 'demand' | 'threaten' | 'recruit' | 'favor' | 'dinner'

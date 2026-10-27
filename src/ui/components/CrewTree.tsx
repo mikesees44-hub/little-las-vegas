@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ownMoney } from '../../engine/wealth';
 import { ORDER_TITLES, previewAction, VIA_INFO } from '../../engine/actions';
 import { ageOn } from '../../engine/calendar';
 import { capos, crew, displayName, hasTrait, isFree, player } from '../../engine/characters';
@@ -138,7 +139,7 @@ function RegimeColumn({ s, k }: { s: GameState; k: Character }) {
     <div className="relative min-w-0 rounded-md border border-noir-700 bg-noir-800/60 p-2.5 lg:before:absolute lg:before:-top-4 lg:before:left-1/2 lg:before:h-4 lg:before:w-px lg:before:bg-gold-600/50 lg:before:content-['']" data-testid="regime">
       <TreeNode s={s} c={k} size={50} sub={`${d ? d.name : 'no district'} · kicks up ${Math.round((1 - keep) * 100)}%`} />
       <div className="mt-2 text-[11px] text-stone-400">
-        his own money {fmt$(k.wealth)} · {men.length} m{men.length === 1 ? 'an' : 'en'}{fac ? <span className="text-red-300"> · {fac.name}</span> : null}
+        his own money {fmt$(ownMoney(s, k))} · {men.length} m{men.length === 1 ? 'an' : 'en'}{fac ? <span className="text-red-300"> · {fac.name}</span> : null}
       </div>
       <ul className="mt-1.5 ml-3 space-y-2 border-l border-noir-600 py-1">
         {made.map((m) => <MemberRow key={m.id} s={s} c={m} />)}

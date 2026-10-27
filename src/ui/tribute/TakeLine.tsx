@@ -1,4 +1,5 @@
 import type { GameState } from '../../engine/types';
+import { pocketCash } from '../../engine/tributeState';
 import { fmt$ } from '../format';
 import { useTributeUi } from './context';
 import { useShell } from '../shell/context';
@@ -31,7 +32,7 @@ export function TakeLine({ s }: { s: GameState }) {
           })}
         </div>
       )}
-      <button type="button" className="text-[10px] text-gold-300 hover:underline" onClick={() => go('holdings.money')} data-testid="take-money-link">The money: your pocket {fmt$(t.acct.personal)} ▸</button>
+      <button type="button" className="text-[10px] text-gold-300 hover:underline" onClick={() => go('holdings.money')} data-testid="take-money-link">The money: your pocket {fmt$(pocketCash(s))} ▸</button>
     </div>
   );
 }

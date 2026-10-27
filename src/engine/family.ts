@@ -1,4 +1,5 @@
 import { pocketPrice } from './pocket';
+import { repairGoals } from './goalRules';
 import { ACTIVITIES, activityBlock, activityCost, finishActivity, honoreeOptions, startActivity, suggestGuests, ACTIVITY_KINDS } from './activities';
 import { ageOn } from './calendar';
 import { ALL_TRAITS, capos, crew, displayName, hasTrait, isFree, player, relationLabel } from './characters';
@@ -595,6 +596,8 @@ export function dynastyWeek(ctx: Ctx): void {
   const s = ctx.s;
   const d = ensureDynState(s);
   if (!d.houses.length) initDynasty(s);
+  // A rank change last week can close a goal ("make his bones" for a man now made).
+  repairGoals(s);
   const boss = player(s);
 
   // Succession happened this week (death or abdication)?

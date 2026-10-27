@@ -32,6 +32,7 @@ import { BonesFacts } from '../books/BonesFacts';
 import { PurseSection } from '../tribute/PurseSection';
 import { DirtyOnPerson } from '../econ/DirtyWork';
 import { useShell } from '../shell/context';
+import { wealthOf } from '../../engine/wealth';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -111,7 +112,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
             <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Particulars</div>
             <div className="text-xs text-stone-300 mt-1 space-y-0.5">
               {!c.goal && <div>Ambition: <span className="text-stone-100">{c.ambition}</span></div>}
-              <div>Own money: <span className="text-stone-100">{fmt$(c.wealth)}</span></div>
+              <OwnMoneyLines s={s} c={c} />
               {canHold(s, c) && <div className="pt-1"><div className="text-[10px] uppercase tracking-wider text-stone-500">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
               {c.imprisonedUntil && c.imprisonedUntil > s.week && <div className="text-red-300">In jail until week {c.imprisonedUntil}</div>}
               {!showsLife && (c.record ?? 0) > 0 && <div>Record: {c.record} arrest{c.record! > 1 ? 's' : ''}</div>}
@@ -142,7 +143,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
           ) : (
             <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
               <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">The house</div>
-              <div className="text-xs text-stone-300 mt-1">Respect {s.respect} · Family money {fmt$(s.money)} · your pocket {fmt$(s.tribute?.acct.personal ?? 0)} · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
+              <div className="text-xs text-stone-300 mt-1">Respect {s.respect} · Family money {fmt$(s.money)} (the Family's, not yours) · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
             </section>
           )}
         </div>
@@ -172,6 +173,25 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
         <InteractionMenu s={s} c={c} />
       </div>
     </SheetFrame>
+  );
+}
+
+/**
+ * A man's own money, from the one selector (engine/wealth.ts): the boss's
+ * spendable money is his Pocket (the same figure as the top bar); his savings
+ * from before the chair and what his things would fetch are shown apart, and
+ * add up to his net worth. Family money is never in it.
+ */
+function OwnMoneyLines({ s, c }: { s: GameState; c: Character }) {
+  const w = wealthOf(s, c);
+  if (!w.isPocket) return <div>Own money: <span className="text-stone-100" data-testid="sheet-own-money">{fmt$(w.own)}</span></div>;
+  return (
+    <>
+      <div>Your pocket (spendable): <span className="text-stone-100" data-testid="sheet-own-money">{fmt$(w.own)}</span></div>
+      {w.savings > 0 && <div className="text-stone-400">Savings put away: <span className="text-stone-200" data-testid="sheet-savings">{fmt$(w.savings)}</span> <span className="text-stone-500">(not in the pocket; passes to your heir)</span></div>}
+      {w.possessions > 0 && <div className="text-stone-400">Homes, cars & things: <span className="text-stone-200">{fmt$(w.possessions)}</span> <span className="text-stone-500">(if sold)</span></div>}
+      <div className="text-stone-400">Net worth: <span className="text-stone-200" data-testid="sheet-net-worth">{fmt$(w.net)}</span> <span className="text-stone-500">(Family money not included)</span></div>
+    </>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { pocketCash } from '../../engine/tributeState';
 import { forfeitureLaw, LUX, LUX_BY_ID, LUX_CAT_LABEL, luxPrice, owned, resaleValue, weeklyUpkeep, type LuxCat } from '../../engine/goodlife';
 import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
@@ -14,7 +15,7 @@ export function GoodLifePanel({ s }: { s: GameState }) {
   return (
     <div className="space-y-5" data-testid="good-life">
       <section className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-        <Stat label="Your pocket" value={fmt$(s.tribute?.acct.personal ?? 0)} sub="Pays for all of this; short, the Family covers the rest" />
+        <Stat label="Your pocket" value={fmt$(pocketCash(s))} sub="Pays for all of this. If it runs short, you are asked first before any Family money is used" />
         <Stat label="Things you own" value={`${mine.length}`} />
         <Stat label="Worth today" value={fmt$(worth)} />
         <Stat label="Upkeep" value={`${fmt$(weeklyUpkeep(s))}/wk`} sub="From your pocket" />

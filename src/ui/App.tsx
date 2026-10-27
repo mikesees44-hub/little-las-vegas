@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { acceptSettlement, mayCommit, type SettledMark } from '../engine/settle';
+import { sameOrder } from './verbs';
+import { clockSpaceAllowed, shortcutBlocked } from './keys';
+import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
 import { HousesNavContext } from './houses/nav';
 import { alerts as computeAlerts } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
+import { previewAction, queuedMoney } from '../engine/actions';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
@@ -73,9 +78,9 @@ import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 export type Tab = string;
 type Mode = 'week' | 'month';
 
-/** The opening scene: the old boss's funeral at St. Ann's (plays for every new game). */
-function openingCue(week: number): CutsceneCue {
-  return { key: 'opening', title: "St. Ann's, Wildwood · May 1960", text: 'The church smells of lilies and floor wax. The old man lies in a bronze casket that cost more than most of the mourners make in a year. In nine days the boardwalk opens. By then somebody has to be running things. You stand in the front pew, and behind you the capos are counting.', week };
+/** The opening title card: the scenario's own premise and the real date (engine/scenes.ts openingCard). */
+function openingCue(s: GameState): CutsceneCue {
+  return { ...openingCard(s), week: s.week };
 }
 
 function freshSeed(): string {
@@ -116,10 +121,24 @@ export function App({ startOn = 'title' }: AppProps) {
   const [briefSkip, setBriefSkip] = useState<string[]>([]);
   const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
   const [sitSeen, setSitSeen] = useState<string | undefined>();
+  const lastQueued = useRef<{ a: PlayerAction; at: number } | undefined>(undefined);
   const ordersApi = useMemo(() => ({
     orders,
-    queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
+    queue: (a: PlayerAction) => {
+      // A double click is one order: the same order again within a moment is ignored.
+      const now = Date.now();
+      if (lastQueued.current && now - lastQueued.current.at < 600 && sameOrder(lastQueued.current.a, a)) return;
+      lastQueued.current = { a, at: now };
+      // A pocket order the pocket can't cover (after this week's orders) needs the player's word for Family money:
+      // the toast asks, and the order tray keeps asking, before the week turns.
+      const p = previewAction(s, a);
+      const left = queuedMoney(s, orders).pocketLeft;
+      const short = p.pot === 'pocket' && a.fund !== 'family' ? Math.max(0, p.cost - Math.max(0, left)) : 0;
+      setToast({ action: a, index: orders.length, at: now, short });
+      setOrders((o) => [...o, a]);
+    },
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
+    replace: (i: number, a: PlayerAction) => setOrders((o) => o.map((x, j) => (j === i ? a : x))),
   }), [orders]);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
@@ -187,15 +206,21 @@ export function App({ startOn = 'title' }: AppProps) {
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
+  const settledRef = useRef<SettledMark | undefined>(undefined);
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
     // The one place a week's choices are built (the clock and Advance Week alike): the days plan supplies the evenings and the mornings.
     const choices: PlayerChoices = weekChoices(s, { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) });
     // A ceremony the player sat through replaces the old single card.
     const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
     const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
+    // Exactly once (engine/settle.ts): a week already committed is never settled again (a double
+    // click, or the clock's Sunday night meeting a click on Advance Week), and a result only lands
+    // on the state it was computed from.
+    if (!mayCommit(settledRef.current, s)) return;
     if (m === 'week') {
       const r = advanceWeek(s, choices);
-      setS(r.state);
+      settledRef.current = { seed: s.seed, week: s.week };
+      setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, r.report].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
@@ -213,7 +238,8 @@ export function App({ startOn = 'title' }: AppProps) {
       }
     } else {
       const r = advanceMonth(s, choices);
-      setS(r.state);
+      settledRef.current = { seed: s.seed, week: s.week };
+      setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, ...r.reports].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
@@ -295,12 +321,13 @@ export function App({ startOn = 'title' }: AppProps) {
 
   /** A new game from the creator (or a quick restart): always opens on the funeral. */
   function beginGame(next: GameState, n: number) {
+    settledRef.current = undefined;
     setCurrentSlot(n);
     setSlot(n);
     setS(next);
     resetUi();
     setMenu(undefined);
-    setCues([openingCue(next.week)]);
+    setCues([openingCue(next)]);
     try { sessionStorage.setItem('llv-opening-' + next.seed, '1'); } catch { /* storage unavailable */ }
   }
 
@@ -311,6 +338,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function continueSlot(n: number) {
     const loaded = loadSlot(n);
     if (!loaded) return;
+    settledRef.current = undefined;
     setCurrentSlot(n);
     setSlot(n);
     setS(loaded);
@@ -319,7 +347,7 @@ export function App({ startOn = 'title' }: AppProps) {
     try {
       if (loaded.week <= 1 && !sessionStorage.getItem('llv-opening-' + loaded.seed)) {
         sessionStorage.setItem('llv-opening-' + loaded.seed, '1');
-        setCues([openingCue(loaded.week)]);
+        setCues([openingCue(loaded)]);
       }
     } catch { /* storage unavailable */ }
   }
@@ -422,17 +450,15 @@ export function App({ startOn = 'title' }: AppProps) {
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+      // The keyboard rules (keys.ts): typing wins, a focused control keeps Space/Enter, a held key is one press.
       if (e.code === 'Space') {
-        if (timeMode() !== 'clock') return;
+        if (timeMode() !== 'clock' || !clockSpaceAllowed(e)) return;
         e.preventDefault();
-        // A focused button would click on the key's release and undo the toggle.
-        (document.activeElement as HTMLElement | null)?.blur?.();
         setSpeed((v) => (v === 0 ? 2 : 0));
         setClockNote(undefined);
         return;
       }
+      if (shortcutBlocked(e)) return;
       if (menu || overlayOpen) return;
       if (e.key === '?') { e.preventDefault(); setHelpMenu(true); return; }
       const h = homeForKey(e.key);
@@ -646,7 +672,8 @@ export function App({ startOn = 'title' }: AppProps) {
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
-      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
+      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }}
+        onApprove={() => { setOrders((o) => o.map((x, j) => (j === toast.index ? { ...x, fund: 'family' } : x))); setToast({ ...toast, action: { ...toast.action, fund: 'family' }, short: 0, at: Date.now() }); }} />}
       </EmpireHost>
     </Providers>
     </TributeUiContext.Provider>

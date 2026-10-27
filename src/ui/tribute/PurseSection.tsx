@@ -1,4 +1,5 @@
 import { FLAG_LABEL, lifeOf, purseFlags, purseOf } from '../../engine/crewPurse';
+import { ownMoney } from '../../engine/wealth';
 import { UB_GOAL_LABEL, ubProfile } from '../../engine/underboss';
 import type { Character, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -22,7 +23,7 @@ export function PurseSection({ s, c }: { s: GameState; c: Character }) {
         <div className="space-y-0.5">
           {last && <div className="tabular-nums">Week {last.w}: earned {fmt$(last.earned)} · kicked up <span className="text-gold-300">{fmt$(last.up)}</span>{last.short ? <span className="text-red-300"> (short {fmt$(last.short)})</span> : ''} · kept {fmt$(last.kept)}{prev ? <span className={last.up >= prev.up ? 'text-emerald-400' : 'text-red-300'}> ({last.up >= prev.up ? '+' : '−'}{fmt$(Math.abs(last.up - prev.up))} vs last week)</span> : ''}</div>}
           <div className="flex items-center gap-2">Kicked up, 8 weeks: <Sparkline values={rows.map((r) => r.up)} w={90} h={20} /></div>
-          <div>Own money: <span className="text-stone-100 tabular-nums">{fmt$(c.wealth)}</span>{life?.debt ? <span className="text-amber-300"> · owes {fmt$(life.debt)} outside the family</span> : ''}</div>
+          <div>Own money: <span className="text-stone-100 tabular-nums">{fmt$(ownMoney(s, c))}</span>{life?.debt ? <span className="text-amber-300"> · owes {fmt$(life.debt)} outside the family</span> : ''}</div>
           {flags.length > 0 && <div>{flags.map((f) => <span key={f} className="mr-1 rounded border border-noir-600 px-1 text-[10px] text-stone-300">{FLAG_LABEL[f]}</span>)}</div>}
         </div>
         <div className="space-y-0.5">

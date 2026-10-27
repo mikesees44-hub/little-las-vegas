@@ -3,7 +3,7 @@ import { crew, displayName, hasTrait, player } from './characters';
 import { madamOf } from './ears';
 import { fam } from './familyState';
 import { heatBand } from './heat';
-import { convictionOdds, LAWYER, OPEN_FILE, stageLabel } from './longgame';
+import { convictionOdds, LAWYER, OPEN_FILE, RETAINER_CAP, RETAINER_EARLY_CAP, stageLabel } from './longgame';
 import { opinion } from './relations';
 import type { Character, Effect, GameState, PlayerAction } from './types';
 
@@ -95,7 +95,8 @@ export function lawyerReading(s: GameState): LawyerReading {
   if ((s.flags.informant ?? 0) > 0) lines.push('And they know things they shouldn\'t. Somebody close is talking. I can\'t tell you who.');
   const moves: LawyerMove[] = [];
   if (open) moves.push({ label: 'Lie low a while', why: 'No meetings, no photographs. The case starves.', action: { kind: 'legal', op: 'lielow' } });
-  if (open && l && l.defense < 50) moves.push({ label: `Put ${LAWYER.split(',')[0]} on retainer`, why: 'A defense built early is worth twice one built late.', action: { kind: 'legal', op: 'retainer' } });
+  if (open && l && l.defense < RETAINER_CAP) moves.push({ label: `Put ${LAWYER.split(',')[0]} on retainer`, why: 'A defense built early is worth twice one built late.', action: { kind: 'legal', op: 'retainer' } });
+  else if (!open && (!l || l.stage === 'quiet') && (l?.defense ?? 0) < RETAINER_EARLY_CAP && evidence >= OPEN_FILE * 0.6) moves.push({ label: `Put ${LAWYER.split(',')[0]} on retainer now`, why: 'No charge yet, but a defense started before one is worth more. It keeps for when they open a case.', action: { kind: 'legal', op: 'retainer' } });
   if (s.unwashed > 8000) moves.push({ label: 'Clean the cash through a front', why: `${Math.round(s.unwashed / 1000)}k nobody can explain is evidence waiting to happen.`, tab: 'books' });
   if (heat.local >= 35) moves.push({ label: 'Take care of the sergeant', why: 'An envelope at the precinct buys a quiet month.', tab: 'cityhall' });
   if (flips.length) moves.push({ label: `Keep ${flips[0].name.split(' ')[0]} close`, why: 'A man who feels looked after doesn\'t look for a deal.', tab: 'capos' });

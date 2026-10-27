@@ -390,7 +390,7 @@ export function paintPortrait(L: Look): ReactElement {
   if (adult) for (const s of [-1, 1]) dab(cx + s * (g.cheekW - 3.2), g.cheekY + 5, 2.6, 5.5, (male ? 0.18 : 0.1) * (1 - heavy * 0.5), 's', s * -12);
   for (const s of [-1, 1]) dab(cx + s * (g.cheekW - 5.8), g.cheekY + 1, 4.5, 3.4, (male ? 0.1 : 0.26) + kid * 0.2 + (L.ethnicity === 'Irish' ? 0.08 : 0), 'w');
   // beard shadow
-  if (male && age >= 18) dab(cx + 1, mouthY + 3.5, g.jawW + 0.5, chinY - noseY, 0.12 + G.heavy * 0.1 + (L.ethnicity === 'Irish' ? -0.06 : 0.04), 'b');
+  if (male && age >= 18) dab(cx + 1, mouthY + 3.5, g.jawW + 0.5, chinY - noseY, 0.12 + (G.beard ?? G.heavy) * 0.1 + (L.ethnicity === 'Irish' ? -0.06 : 0.04), 'b');
   // light: forehead, nose bridge, cheek, chin
   dab(cx - 3.5, g.templeY - 3, 8, 4.8, 0.32 + (style === 'bald' || style === 'thin' ? 0.12 : 0), 'l');
   dab(cx - 0.7, eyeY + 5, 1.2, 4.6, 0.32, 'l');

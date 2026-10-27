@@ -2,13 +2,14 @@ import { pocketPrice } from './pocket';
 import { bonesBlock } from './bones';
 import { perkMod } from './lifestyle';
 import { ageOn } from './calendar';
-import { capos, displayName, hasTrait, isFree, player, relationLabel } from './characters';
+import { displayName, hasTrait, isFree, player, relationLabel } from './characters';
 import { fmtMoney } from './effects';
 import { getRelation, opinion } from './relations';
 import { FACTION_NAMES } from './world';
 import { bribeReasons } from './polIntegrity';
 import type { Character, Effect, GameState, Hook, InteractionId } from './types';
 import { previewRomance } from './romance';
+import { seatPreview } from './eligibility';
 
 /**
  * Character interactions (the CK-style right-click menu). Each interaction
@@ -40,6 +41,8 @@ export interface InteractionPreview {
   pot?: 'pocket';
   because: string;
   disabledReason?: string;
+  /** Extra consequence shown in red under the card. */
+  warning?: string;
 }
 
 export type Relationship = 'self' | 'crew' | 'family' | 'rival' | 'civilian';
@@ -353,17 +356,10 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
           disabledReason: d ? free(s, c) : 'Every district you hold already has a capo',
         };
       }
-      const hasUb = capos(s).length >= 0 && Object.values(s.characters).some((x) => x.alive && x.faction === 'player' && x.rank === 'underboss');
-      const label = `Promoted ${first} to underboss`;
-      return {
-        id, title: `Make ${first} underboss`, detail: 'Second in command. Takes the chair under the "underboss" succession law.', cost: 0,
-        effects: [
-          { type: 'rank', charId: c.id, rank: 'underboss', label },
-          { type: 'opinion', from: c.id, to: boss.id, amount: 20, reason: 'Made me underboss', decay: 1, label },
-        ],
-        because: `made ${nm} underboss`,
-        disabledReason: hasUb ? 'You already have an underboss' : free(s, c),
-      };
+      // A capo made underboss is the underboss SEAT (rank and seat together): the same preview,
+      // permission and effect as the council's Appoint and the sheet's "Seat him as underboss".
+      const sp = seatPreview(s, 'underboss', c.id);
+      return { id, title: sp.title, detail: sp.detail, cost: 0, effects: sp.effects, because: sp.because, disabledReason: sp.disabledReason, warning: sp.warning };
     }
     case 'demote': {
       if (rel !== 'crew' || (c.rank !== 'capo' && c.rank !== 'underboss' && c.rank !== 'consigliere')) return undefined;

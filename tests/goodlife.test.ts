@@ -10,7 +10,7 @@ describe('The Good Life', () => {
     const s = newGame('lux1');
     s.money = 100000;
     s.businesses = s.businesses.filter((b) => b.owner !== 'player');
-    const a = { kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' } } as const;
+    const a = { kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' }, fund: 'family' } as const; // the player approves Family money for what the pocket can't cover
     const p = previewAction(s, a);
     expect(p.disabledReason).toBeUndefined();
     expect(p.effects.some((e) => e.type === 'heat' && e.bar === 'federal')).toBe(true);
@@ -26,7 +26,7 @@ describe('The Good Life', () => {
   it('a car loses value, a house holds it; a color TV waits for color', () => {
     const s = newGame('lux2');
     s.money = 200000;
-    const r = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' } }, { kind: 'econ', op: { type: 'luxBuy', item: 'cresthouse' } }] });
+    const r = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' }, fund: 'family' }, { kind: 'econ', op: { type: 'luxBuy', item: 'cresthouse' }, fund: 'family' }] });
     const st = r.state;
     st.date = { ...st.date, y: st.date.y + 5 };
     const car = owned(st).find((o) => o.id === 'cadillac')!;

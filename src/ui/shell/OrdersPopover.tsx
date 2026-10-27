@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useEscape } from '../keys';
 import { queuedMoney } from '../../engine/actions';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -12,11 +13,10 @@ export function OrdersButton({ s }: { s: GameState }) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     window.addEventListener('mousedown', onDown);
-    window.addEventListener('keydown', onKey);
-    return () => { window.removeEventListener('mousedown', onDown); window.removeEventListener('keydown', onKey); };
+    return () => window.removeEventListener('mousedown', onDown);
   }, [open]);
+  useEscape(open, () => setOpen(false));
   const cost = queuedMoney(s, orders).family;
   return (
     <div className="relative" ref={ref}>
@@ -24,7 +24,7 @@ export function OrdersButton({ s }: { s: GameState }) {
         ☰ {orders.length}<span className="hidden sm:inline"> order{orders.length === 1 ? '' : 's'}</span>{orders.length > 0 && cost > 0 && <span className="hidden lg:inline text-stone-400 font-normal"> · {fmt$(cost)}</span>}
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-[1200] w-[min(440px,94vw)] max-h-[70vh] overflow-y-auto" data-testid="orders-popover">
+        <div className="fixed left-2 right-2 top-[7.5rem] sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-1 z-[1200] sm:w-[min(440px,94vw)] max-h-[70vh] overflow-y-auto" data-testid="orders-popover">
           {orders.length ? <OrdersTray s={s} /> : (
             <div className="panel p-3 text-xs text-stone-400">No orders this week. Every "Order" button on a sheet, a card or a drawer adds one here; they are carried out when you advance.</div>
           )}

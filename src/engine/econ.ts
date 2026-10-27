@@ -763,7 +763,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       if (cost) effects.push({ type: 'money', amount: -cost, label: title });
       if (c.heat) effects.push({ type: 'heat', bar: 'local', amount: c.heat, label: title });
       effects.push(note(c.text));
-      return { title, detail: c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event' };
+      return { title, detail: c.detail ?? c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event', verb: c.verb };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
     case 'racket': return previewRacket(s, a.cmd);

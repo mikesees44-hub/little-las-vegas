@@ -120,14 +120,48 @@ export function listSlots(kv: KV | undefined = store()): (SlotMeta | undefined)[
   });
 }
 
+/**
+ * One backup copy (saves run to a megabyte or two and the browser allows
+ * about five): the stored save as it was before a load migrated it, or a save
+ * that could not be read at all. `{ slot, why, at, raw }`.
+ */
+const BACKUP = 'little-las-vegas:backup';
+export interface SaveBackup { slot: number; why: 'migration' | 'corrupt'; at: number; raw: string }
+
+export function readBackup(kv: KV | undefined = store()): SaveBackup | undefined {
+  try {
+    const raw = get(kv, BACKUP);
+    return raw ? (JSON.parse(raw) as SaveBackup) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function keepBackup(kv: KV | undefined, b: SaveBackup): void {
+  set(kv, BACKUP, JSON.stringify(b));
+}
+
 export function loadSlot(n: number, kv: KV | undefined = store()): GameState | undefined {
   migrateLegacy(kv);
+  const raw = get(kv, SLOT(n));
+  if (!raw) return undefined;
+  let s: GameState;
   try {
-    const raw = get(kv, SLOT(n));
-    if (!raw) return undefined;
-    const s = JSON.parse(raw) as GameState;
-    return s && s.version === 2 ? upgradeSave(s) : undefined;
+    s = JSON.parse(raw) as GameState;
   } catch {
+    // Unreadable: keep the bytes (the slot may be overwritten next) and report no game.
+    keepBackup(kv, { slot: n, why: 'corrupt', at: Date.now(), raw });
+    return undefined;
+  }
+  if (!s || s.version !== 2) return undefined;
+  const before = s.schema ?? 0;
+  try {
+    const up = upgradeSave(s);
+    // A save from an older build: keep the stored copy before the migrated one is saved over it.
+    if ((up.schema ?? 0) !== before) keepBackup(kv, { slot: n, why: 'migration', at: Date.now(), raw });
+    return up;
+  } catch {
+    keepBackup(kv, { slot: n, why: 'corrupt', at: Date.now(), raw });
     return undefined;
   }
 }
@@ -139,7 +173,11 @@ export function saveSlot(n: number, s: GameState, kv: KV | undefined = store()):
   } catch {
     return false;
   }
-  if (!set(kv, SLOT(n), raw)) return false;
+  if (!set(kv, SLOT(n), raw)) {
+    // Out of room: the backup goes first, never the game.
+    del(kv, BACKUP);
+    if (!set(kv, SLOT(n), raw)) return false;
+  }
   set(kv, META(n), JSON.stringify(metaOf(s, n)));
   return true;
 }

@@ -190,7 +190,7 @@ describe("the boss's pocket", () => {
   it('the Good Life is paid from the pocket; short, the rest comes from the Family and the capos notice repeat dips', () => {
     let s = play(newGame('pocket-buy'), 2);
     s.tribute!.acct.personal = 0;
-    const buy = { kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' } } as const;
+    const buy = { kind: 'econ', op: { type: 'luxBuy', item: 'cadillac' }, fund: 'family' } as const; // explicitly approved (A13)
     const p = previewAction(s, buy);
     expect(p.pot).toBe('pocket');
     expect(p.disabledReason).toBeUndefined();
@@ -210,7 +210,7 @@ describe("the boss's pocket", () => {
     const id = capoOps(s)[0];
     const dipMods = (x: GameState) => Object.values(x.relations).filter((r) => r.from === id && r.to === x.playerId).flatMap((r) => r.modifiers).filter((m) => /keeps dipping/.test(m.reason));
     expect(dipMods(s)).toEqual([]);
-    const r2 = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'luxBuy', item: 'jukebox' } }, { kind: 'econ', op: { type: 'luxBuy', item: 'cruiser' } }] });
+    const r2 = advanceWeek(s, { actions: [{ kind: 'econ', op: { type: 'luxBuy', item: 'jukebox' }, fund: 'family' }, { kind: 'econ', op: { type: 'luxBuy', item: 'cruiser' }, fund: 'family' }] });
     expect(dipMods(r2.state).length).toBe(1);
     expect(dipMods(r2.state)[0].value).toBeLessThan(0);
   });

@@ -191,7 +191,8 @@ export function CharacterCreator({ seed, start, startName, slot: slot0, slots, o
                       {STACHES.map((st) => <option key={st} value={st}>{STACHE_LABEL[st]}</option>)}
                     </select>
                   </Field>
-                  <Slider label="Beard shadow / heavy build" v={gene('heavy')} on={(v) => setGene('heavy', v)} />
+                  <Slider label="Beard shadow" v={gene('beard')} on={(v) => setGene('beard', v)} />
+                  <Slider label="Build (heavy)" v={gene('heavy')} on={(v) => setGene('heavy', v)} />
                   <Slider label="Hairline (receding)" v={gene('bald')} on={(v) => setGene('bald', v)} />
                 </>
               ) : (
@@ -224,7 +225,8 @@ export function CharacterCreator({ seed, start, startName, slot: slot0, slots, o
 
           {sec === 'traits' && (
             <div>
-              <p className="text-xs text-stone-500 mb-2">Pick up to {MAX_TRAITS}. Good traits cost points; flaws give them back. Opposites can't be held together.</p>
+              <p className="text-xs text-stone-500 mb-1">Pick up to {MAX_TRAITS}. Good traits cost points; flaws give them back. Opposites can't be held together.</p>
+              <TraitCap traits={o.traits ?? []} />
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" data-testid="traits">
                 {ALL_TRAITS.map((t) => {
                   const on = (o.traits ?? []).includes(t);
@@ -232,7 +234,8 @@ export function CharacterCreator({ seed, start, startName, slot: slot0, slots, o
                   const full = !on && (o.traits ?? []).length >= MAX_TRAITS;
                   const cost = TRAIT_COST[t];
                   return (
-                    <button key={t} data-trait={t} disabled={clash || full} onClick={() => toggleTrait(t)}
+                    <button key={t} data-trait={t} disabled={clash || full} onClick={() => toggleTrait(t)} aria-pressed={on}
+                      title={full ? `${MAX_TRAITS} of ${MAX_TRAITS} traits chosen: remove one to pick ${t}` : clash ? `Opposite of a trait you have` : undefined}
                       className={`panel p-2 text-left border ${on ? 'border-gold-400' : 'border-noir-700'} ${clash || full ? 'opacity-40 cursor-not-allowed' : 'hover:border-gold-600'}`}>
                       <div className="flex justify-between gap-2"><span className={on ? 'text-gold-300' : 'text-stone-200'}>{t}</span><span className={`text-xs ${cost > 0 ? 'text-orange-300' : 'text-emerald-300'}`}>{cost > 0 ? `−${cost}` : `+${-cost}`} pts</span></div>
                       <div className="text-[11px] text-stone-400">{TRAIT_INFO[t]}</div>
@@ -428,5 +431,21 @@ function Choice({ on, onClick, title, text }: { on: boolean; onClick: () => void
       <div className={on ? 'text-gold-300' : 'text-stone-200'}>{title}</div>
       <div className="text-[11px] text-stone-400">{text}</div>
     </button>
+  );
+}
+
+/**
+ * The trait cap, said plainly (A11): how many are chosen, what happens at the
+ * cap, and the points the chosen traits cost or give back.
+ */
+export function TraitCap({ traits }: { traits: readonly Trait[] }) {
+  const cost = traits.reduce((a, t) => a + Math.max(0, TRAIT_COST[t]), 0);
+  const refund = traits.reduce((a, t) => a + Math.max(0, -TRAIT_COST[t]), 0);
+  const full = traits.length >= MAX_TRAITS;
+  return (
+    <div className={`mb-2 rounded border px-2 py-1 text-xs ${full ? 'border-gold-600 text-gold-300' : 'border-noir-700 text-stone-400'}`} data-testid="trait-cap" role="status">
+      <b>{`${traits.length} of ${MAX_TRAITS} selected.`}</b> {full ? 'Remove one to choose another.' : `You can pick ${MAX_TRAITS - traits.length} more.`}
+      <span className="ml-2 text-stone-500">{`Good traits cost ${cost} pts · flaws give back ${refund} pts`}</span>
+    </div>
   );
 }

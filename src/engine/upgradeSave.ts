@@ -16,6 +16,7 @@ import { ensureRomance, ensureStory } from './storyState';
 import { ensureTravel } from './travelState';
 import { ensureTribute } from './tributeState';
 import { ensureShadow } from './shadowState';
+import { migrateTrust } from './trustMigrations';
 import type { GameState } from './types';
 
 /**
@@ -44,5 +45,7 @@ export function upgradeSave(s: GameState): GameState {
   if (s.days && s.days.week !== s.week) delete s.days;
   // The old player-run call service goes back to the Madam's network.
   try { migrateVice(s); } catch { /* nothing to move */ }
+  // The trust pass: stale goals, the split beard/build gene, the schema stamp.
+  migrateTrust(s);
   return s;
 }

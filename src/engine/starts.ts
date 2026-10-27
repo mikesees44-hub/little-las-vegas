@@ -1,4 +1,5 @@
 import { startPocket } from './tributeState';
+import { repairGoals } from './goalRules';
 import { ageOn } from './calendar';
 import { birthForAge, displayName, makeCharacter } from './characters';
 import { emptyCouncil, fillCouncil } from './council';
@@ -40,6 +41,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
   // The houses are built once the start (and the creator) has shaped the family.
   const s = newGame(seed, { skipHouses: start !== 'classic' || !!charOptions });
   if (start === 'classic' && !charOptions) {
+    repairGoals(s);
     addOpeningScene(s, start);
     return s;
   }
@@ -56,6 +58,7 @@ function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameSt
   if (charOptions) applyCharOptions(s, start, charOptions);
   startPocket(s);
   refreshDynastyAfterStart(s);
+  repairGoals(s);
   setupHouses(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};

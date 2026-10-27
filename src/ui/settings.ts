@@ -25,6 +25,8 @@ export interface Settings {
   pauseOnCapo?: boolean;
   /** Stop the clock after each of your evenings (the report scene). */
   pauseOnEvening?: boolean;
+  /** Developer inspector: show the engine's internal ids (agreements) next to their names. */
+  devIds?: boolean;
 }
 export type TimeMode = 'clock' | 'turns';
 

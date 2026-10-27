@@ -162,7 +162,8 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
   }
-  if (!s.gameOver && choices.actions?.length) resolveActions(ctx, choices.actions);
+  // The player's own orders: a pocket order is only paid by the Family when he said so (A13).
+  if (!s.gameOver && choices.actions?.length) resolveActions(ctx, choices.actions, { strictFunding: true });
   if (!s.gameOver) ctx.log.push(...autoStaff(s));
 }
 
@@ -295,7 +296,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   s.cutscenes = [];
   const resolving = s.pendingEvents;
   noteAnswers(s, resolving, choices);
-  resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => d.action)] } : choices);
+  // A trusted advisor acting on his own has the boss's standing permission to use Family money.
+  resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => ({ ...d.action, fund: 'family' as const }))] } : choices);
   if (!s.gameOver) recordDelegation(s, weekOf, delegated);
   const roundLines = !s.gameOver && picked ? roundsWeek(ctx, picked, roundOpts) : [];
   if (!s.gameOver && mornings) roundLines.push(...checkinsWeek(ctx, mornings.list, choices.checkins ?? {}, mornings.missed));

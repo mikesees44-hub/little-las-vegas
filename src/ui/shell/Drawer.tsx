@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { useEscape } from '../keys';
 import type { GameState } from '../../engine/types';
 import type { SectionCtx } from './panels';
 import { Guard } from '../components/Guard';
@@ -98,12 +99,8 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   const cur = item && items.includes(item) ? item : undefined;
   const key = cur ? (cur.keys.includes(sel!) ? sel! : cur.keys[0]) : undefined;
   const body = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!escEnabled) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [escEnabled, onClose]);
+  // Escape closes the drawer only when nothing nearer (a popover, a sheet, a menu) is open.
+  useEscape(!!escEnabled, onClose);
   useEffect(() => { body.current?.scrollTo?.({ top: 0 }); }, [home, key]);
   const isFresh = (it: NavItem) => it.keys.some((k) => fresh?.has(k));
   // The places to switch between: the whole home when it is short, else the open place's group.
