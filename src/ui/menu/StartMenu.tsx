@@ -215,6 +215,7 @@ export function SettingsPanel() {
         ))}
         <p className="text-[11px] text-stone-500">With decisions unpaused, unanswered cards take their default answer when the week turns. The clock also stops when you switch tabs.</p>
       </div>
+      <label className={row}><span>Show internal ids <span className="block text-xs text-stone-500">Developer inspector: the engine's ids next to agreements. Off for normal play.</span></span><input type="checkbox" checked={!!st.devIds} onChange={(e) => upd({ devIds: e.target.checked })} data-testid="setting-dev-ids" /></label>
     </div>
   );
 }

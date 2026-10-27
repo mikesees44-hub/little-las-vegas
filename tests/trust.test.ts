@@ -16,6 +16,8 @@ import { fam } from '../src/engine/familyState';
 import { famGoalBlock, personalGoalBlock } from '../src/engine/goalRules';
 import { upgradeSave } from '../src/engine/upgradeSave';
 import { roundOptions } from '../src/engine/rounds';
+import { agreementHistoryLine, agreementName } from '../src/engine/agreements';
+import { WeeklyTake } from '../src/ui/tribute/WeeklyTake';
 import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
@@ -189,5 +191,20 @@ describe('A05: an evening is booked on the day it happens', () => {
     // The planner can't move it: setEvening refuses a wrong day.
     expect(weekPlan(setEvening(s, 0, 'fun:fights'))[0]).not.toBe('fun:fights');
     expect(formatDay(s, 4)).toMatch(/^Fri /);
+  });
+});
+
+describe('A06: agreements have human titles, not internal ids', () => {
+  it('the Agreements page shows names and counterparties; the ids stay out of sight', () => {
+    let s = newGameWith('trust-a06', 'sees');
+    s = advanceWeek(s, {}).state;
+    const html = renderToString(createElement(WeeklyTake, { s, initial: 'agreements' }));
+    expect(html).toContain('data-testid="take-agreements"');
+    const visible = html.replace(/data-agreement="[^"]*"/g, '');
+    expect(visible).not.toMatch(/agr:(capo|member|ent|inv):/);
+    const k = Object.values(s.characters).find((c) => c.alive && c.rank === 'capo')!;
+    expect(agreementName(s, `agr:capo:${k.id}`).title).toMatch(/district contract/);
+    expect(agreementName(s, `agr:capo:${k.id}`).party).toMatch(/capo/);
+    expect(agreementHistoryLine(s, { week: 3, id: `agr:capo:${k.id}`, text: 'keeps 35%' })).not.toMatch(/agr:/);
   });
 });

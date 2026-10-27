@@ -1,4 +1,6 @@
 import { useState, type ReactNode } from 'react';
+import { agreementHistoryLine, agreementName } from '../../engine/agreements';
+import { getSettings } from '../settings';
 import { capos, crew, isFree } from '../../engine/characters';
 import { accountsView, latestReport, memberTerms, obligations, pendingReport, UB_TYPE_LABEL } from '../../engine/tribute';
 import { rivalBooksView } from '../../engine/rivalBooks';
@@ -178,15 +180,20 @@ function Agreements({ s }: { s: GameState }) {
   const t = s.tribute!;
   const ks = capos(s);
   const men = crew(s).filter((c) => c.rank === 'soldier' || c.rank === 'associate');
+  // Human titles and counterparties; the stable internal id only in the developer inspector (A06).
+  const dev = !!getSettings().devIds;
+  const Title = ({ id }: { id: string }) => (
+    <td className="text-stone-200 pr-2" data-agreement={id}>{agreementName(s, id).title}{dev && <span className="ml-1 text-stone-600 text-[10px]" data-testid="dev-id">{id}</span>}</td>
+  );
   return (
-    <Box title="Financial Agreements" note="Every agreement has a stable id. Capos: revenue share of their district (the contract). Men: a share of their hustle (or a flat figure, an exemption, an extension). Enterprises: the family's own businesses pay their profit (after upkeep) into Family money. Investments: a weekly return into the take." id="take-agreements">
+    <Box title="Financial Agreements" note="Every standing deal the family has. Capos: their share of their district (the contract). Men: a share of their hustle (or a flat figure, an exemption, an extension). The family's own businesses pay their profit (after upkeep) into Family money. Investments: a weekly return into the take." id="take-agreements">
       <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[460px]"><tbody>
-        {ks.map((k) => <tr key={k.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:capo:{k.id}</td><td><CharLink s={s} id={k.id} /></td><td className="text-stone-300">revenue share: keeps {Math.round((k.keep ?? 0.3) * 100)}%, remits {100 - Math.round((k.keep ?? 0.3) * 100)}%</td></tr>)}
-        {men.slice(0, 40).map((c) => <tr key={c.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:member:{c.id}</td><td><CharLink s={s} id={c.id} /></td><td className="text-stone-300">{memberTerms(s, c).text}{c.capoId ? ` · through ${s.characters[c.capoId]?.firstName ?? '?'}` : ' · direct to the underboss'}</td></tr>)}
-        {owned(s).slice(0, 20).map((b) => <tr key={b.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:ent:{b.id}</td><td>{b.name}</td><td className="text-stone-300">profit share: 100% of the week after upkeep ({fmt$(b.upkeep)}/wk) to Family money</td></tr>)}
-        {t.investments.filter((i) => i.status === 'funded').map((i) => <tr key={i.id} className="border-t border-noir-800"><td className="text-stone-500 text-[10px]">agr:inv:{i.id}</td><td>{i.what}</td><td className="text-stone-300">investment return: {fmt$(i.weekly)}/wk till wk {i.until}</td></tr>)}
+        {ks.map((k) => <tr key={k.id} className="border-t border-noir-800"><Title id={`agr:capo:${k.id}`} /><td><CharLink s={s} id={k.id} /></td><td className="text-stone-300">keeps {Math.round((k.keep ?? 0.3) * 100)}% of his district, sends up {100 - Math.round((k.keep ?? 0.3) * 100)}%</td></tr>)}
+        {men.slice(0, 40).map((c) => <tr key={c.id} className="border-t border-noir-800"><Title id={`agr:member:${c.id}`} /><td><CharLink s={s} id={c.id} /></td><td className="text-stone-300">{memberTerms(s, c).text}{c.capoId ? ` · through ${s.characters[c.capoId]?.firstName ?? '?'}` : ' · direct to the underboss'}</td></tr>)}
+        {owned(s).slice(0, 20).map((b) => <tr key={b.id} className="border-t border-noir-800"><Title id={`agr:ent:${b.id}`} /><td>{b.name}</td><td className="text-stone-300">all of the week's profit after upkeep ({fmt$(b.upkeep)}/wk) to Family money</td></tr>)}
+        {t.investments.filter((i) => i.status === 'funded').map((i) => <tr key={i.id} className="border-t border-noir-800"><Title id={`agr:inv:${i.id}`} /><td>{i.what}</td><td className="text-stone-300">returns {fmt$(i.weekly)}/wk till wk {i.until}</td></tr>)}
       </tbody></table></div>
-      {t.agHist.length > 0 && <><div className="mt-2 text-[10px] uppercase tracking-widest text-stone-500">History</div><ul className="text-[11px] text-stone-400">{t.agHist.slice(-12).reverse().map((h, i) => <li key={i}>wk {h.week} · {h.id}: {h.text}</li>)}</ul></>}
+      {t.agHist.length > 0 && <><div className="mt-2 text-[10px] uppercase tracking-widest text-stone-500">History</div><ul className="text-[11px] text-stone-400">{t.agHist.slice(-12).reverse().map((h, i) => <li key={i}>{agreementHistoryLine(s, h)}{dev && <span className="ml-1 text-stone-600">({h.id})</span>}</li>)}</ul></>}
     </Box>
   );
 }
