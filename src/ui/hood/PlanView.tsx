@@ -10,6 +10,7 @@ import type { Item } from './Buildings';
 import { useSprite } from './cutout';
 import { storefrontArt } from './storefrontArt';
 import { Turnaround } from './Turnaround';
+import { TownEditor } from '../editor/TownEditor';
 
 /**
  * The block map: the business-location layer, drawn to scale in meters in the
@@ -212,7 +213,7 @@ function PlaceCard({ p, s, onOpenLot, onClose }: { p: Placed; s: GameState; onOp
         {f.public && <><div className="text-stone-500">Status</div><div className="text-stone-200">A public landmark: it is never for sale.</div></>}
         {f.establishment && <><div className="text-stone-500">Status</div><div className="text-stone-200">An establishment: visit it, book an act; it is never for sale.</div></>}
         <div className="text-stone-500">Location</div>
-        <div><span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${f.located === 'verified' ? 'bg-emerald-700/60 text-emerald-100' : 'bg-amber-700/50 text-amber-100'}`} data-testid="place-located">{f.located === 'verified' ? 'VERIFIED' : 'APPROXIMATE'}</span> <span className="text-stone-500 tabular-nums">{lat.toFixed(5)}, {lng.toFixed(5)}</span></div>
+        <div><span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${f.located === 'verified' ? 'bg-emerald-700/60 text-emerald-100' : 'bg-amber-700/50 text-amber-100'}`} data-testid="place-located">{f.located === 'verified' ? 'VERIFIED' : 'APPROXIMATE'}</span>{f.invented && <span className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold bg-purple-700/50 text-purple-100" title="A fictional place on a real street" data-testid="place-invented">INVENTED</span>} <span className="text-stone-500 tabular-nums">{lat.toFixed(5)}, {lng.toFixed(5)}</span></div>
         <div className="text-stone-500">Footprint</div><div className="text-stone-300">{Math.round(f.footprint.w)} × {Math.round(f.footprint.d)} m · turned {Math.round(f.rotation)}°</div>
       </div>
       <p className="text-[11px] text-stone-400 leading-snug">{f.source}</p>
@@ -229,6 +230,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
   const [peek, setPeek] = useState<number | undefined>();
   const [exportText, setExportText] = useState<string | undefined>();
   const [A, setA] = useState<PlanArea>(loadArea);
+  const [towns, setTowns] = useState(false);
   const year = peek ?? s.date.y;
   const svg = useRef<SVGSVGElement>(null);
   // A phone starts on Hunt's Pier and the blocks round it; a big screen sees the whole first area.
@@ -395,6 +397,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
         <button type="button" className="hv-btn" onClick={() => zoom(1 / 1.4)} aria-label="Zoom in">+</button>
         <button type="button" className="hv-btn" onClick={() => zoom(1.4)} aria-label="Zoom out">−</button>
         <button type="button" className={`hv-btn ${edit ? 'hv-on' : ''}`} onClick={() => setEdit((x) => !x)} data-testid="plan-edit">{edit ? 'Editing map' : 'Edit map'}</button>
+        <button type="button" className="hv-btn" onClick={() => setTowns(true)} title="Make or correct a town package: districts, parcels, years, evidence, art; validate and copy it out" data-testid="plan-town-editor">Town editor</button>
         {edit && <>
           <button type="button" className="hv-btn" onClick={() => setSaved(saveEdits(edits) ? 'saved' : 'failed')} data-testid="plan-save">Save corrections{nEdits ? ` (${nEdits})` : ''}</button>
           <button type="button" className="hv-btn" onClick={doExport} data-testid="plan-export">Copy corrections</button>
@@ -438,6 +441,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
           <div className="text-stone-500 tabular-nums">{selP.f.geometry.coordinates[1].toFixed(6)}, {selP.f.geometry.coordinates[0].toFixed(6)} · {selP.f.properties.located}</div>
         </div>
       )}
+      {towns && <TownEditor year={s.date.y} onClose={() => setTowns(false)} />}
       {selP && !edit && !exportText && (
         <div className="absolute z-20 panel overflow-y-auto p-3 inset-x-0 bottom-0 max-h-[60%] rounded-b-none md:inset-x-auto md:right-2 md:top-12 md:bottom-12 md:max-h-none md:w-[360px] md:rounded-b-lg" data-plan-ui>
           <PlaceCard p={selP} s={s} onClose={() => setSel(undefined)} onOpenLot={selP.it && !selP.f.properties.establishment ? () => onPick(selP.it!.key) : undefined} />

@@ -7,6 +7,8 @@ import { getGeo } from '../map/geoData';
 import { COUNTY_HOLDERS, TOWN_OWNERS } from '../map/places';
 import { GROUP_COLOR } from '../map/WorldMap';
 import { CityPanel } from '../map/MapView';
+import { awayPackage } from '../../engine/towns';
+import { TownView } from '../towns/TownView';
 import { lit, mix, type Mood } from '../hood/iso';
 import { usePanZoom, type View } from '../hood/usePanZoom';
 import {
@@ -306,6 +308,7 @@ export function RegionView({ s, onStreet, onSurvey, onEnvoy }: { s: GameState; o
   const [err, setErr] = useState(false);
   const [sel, setSel] = useState<string | undefined>();
   const [leaving, setLeaving] = useState(false);
+  const [upClose, setUpClose] = useState<string | undefined>();
   const [moodSet, setMoodSet] = useState<'auto' | Mood>(() => pref().mood ?? 'auto');
   const mood: Mood = moodSet === 'auto' ? moodFor(s) : moodSet;
   const p = pal(mood);
@@ -514,10 +517,12 @@ export function RegionView({ s, onStreet, onSurvey, onEnvoy }: { s: GameState; o
             <button type="button" className="text-xs text-stone-400 hover:text-gold-300 shrink-0" onClick={() => setSel(undefined)} aria-label="Close">close ×</button>
           </div>
           {selTown.street && <button type="button" className="btn-gold w-full mt-2" data-testid="rv-street" onClick={() => goStreet(selTown)}>Down to street level ›</button>}
+          {selTown.city && awayPackage(selTown.city) && <button type="button" className="btn-gold w-full mt-2" data-testid="rv-town-view" onClick={() => setUpClose(selTown.city)}>{selTown.name} up close ›{s.towns?.[selTown.city] ? '' : ' (from the papers)'}</button>}
           {selTown.blurb && !selCity && <p className="text-sm text-stone-300 italic mt-2">{selTown.blurb}</p>}
           {selCity && <div className="mt-2"><CityPanel s={s} id={selCity.id} onEnvoy={onEnvoy} /></div>}
         </div>
       )}
+      {upClose && awayPackage(upClose) && <TownView s={s} pkg={awayPackage(upClose)!} onClose={() => setUpClose(undefined)} />}
     </div>
   );
 }
