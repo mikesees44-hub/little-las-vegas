@@ -419,7 +419,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
       {plan && !scene && <div className="absolute inset-0 z-[998]"><PlanView s={s} items={items} onPick={(k) => { setSel(k); setMenu(false); }} onClose={() => setPlan(false)} /></div>}
       {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setDistricts(false); setMenu(false); }} onScene={(sc) => { setScene(sc); setDistricts(false); }} onMap={() => setScene(undefined)} onDistricts={() => { setSel(undefined); setDistricts(true); }} /></div>}
       {/* Controls: View · Show · Find, and the zoom (always). Selection survives a change of view. */}
-      <div data-hv-ui className={`absolute right-2 top-2 z-[1001] flex flex-col items-end gap-1.5 max-w-[70%] ${plan && !scene ? 'hidden' : ''}`} data-testid="map-controls">
+      <div data-hv-ui className={`absolute right-2 top-[4.75rem] md:top-2 z-[1003] flex flex-col items-end gap-1.5 max-w-[70%] ${(plan && !scene) || walking ? 'hidden' : ''}`} data-testid="map-controls">
         <div className="flex flex-wrap justify-end gap-1">
           <MapMenu label={`View: ${walking ? 'Walk' : scene ? 'Street' : plan ? 'Block map' : districts ? 'Districts' : projMode === 'plan' ? 'Island plan' : 'Island'}`} testid="map-view">
             {(close) => <>
