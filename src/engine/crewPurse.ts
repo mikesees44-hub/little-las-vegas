@@ -3,6 +3,7 @@ import { crew, hasTrait, isFree } from './characters';
 import type { Ctx } from './ledger';
 import { rand } from './rng';
 import { xfer } from './tribute';
+import { boughtCar, boughtHome, closeEstate, financeWeek, lostAtTrack } from './crewFinance';
 import { ensureTribute, type TributeReport, type TributeState } from './tributeState';
 import type { Character, GameState } from './types';
 
@@ -144,10 +145,18 @@ export function purseWeek(ctx: Ctx, rep: TributeReport): void {
     life.up += l.up;
     life.kept += k;
     life.spent += spent;
+    // His own financial life: savings, the mortgage, loans between the men, a stake in a business (crewFinance.ts).
+    if (c.alive) financeWeek(ctx, c, life, k, spent);
   }
   // The dead and the departed: their purses close (the heir's inheritance is the dynasty's business).
   for (const id of Object.keys(t.purse)) if (!alive.has(id)) delete t.purse[id];
-  for (const id of Object.keys(t.life)) if (!alive.has(id) && !s.characters[id]?.alive) delete t.life[id];
+  // A dead man's books stay: his estate (assets, debts, history) is kept on the record.
+  for (const id of Object.keys(t.life)) {
+    if (alive.has(id)) continue;
+    const c = s.characters[id];
+    if (c && !c.alive && (t.life[id] as PurseLife & { fin?: unknown }).fin) closeEstate(s, c);
+    else if (!c?.alive) delete t.life[id];
+  }
 }
 
 /** He lives on what he has: the house, the debts, and now and then something bigger. */
@@ -172,17 +181,17 @@ function live(ctx: Ctx, t: TributeState, c: Character, life: PurseLife, kept: nu
   // A gambler's week at the track.
   if (hasTrait(c, 'Gambler') && kept > 0 && rand(t) < 0.3) {
     const lost = spend(ctx, c, Math.round(kept * (0.2 + rand(t) * 0.4)), 'the track', 'track');
-    if (lost) life.last = `lost ${'$' + lost.toLocaleString('en-US')} at the track`;
+    if (lost) { life.last = `lost ${'$' + lost.toLocaleString('en-US')} at the track`; lostAtTrack(s, c, life, lost); }
     spent += lost;
   }
   if (hasTrait(c, 'Drinker') && kept > 0 && rand(t) < 0.25) spent += spend(ctx, c, Math.round(kept * 0.1), 'the bar tab', 'bar');
   // Something bigger, when he has it.
   if (!life.car && c.wealth > CAR_PRICE * 2 && rand(t) < 0.03) {
     const got = spend(ctx, c, CAR_PRICE, 'a new car', 'car');
-    if (got) { life.car = s.week; life.last = 'bought a new Buick'; spent += got; }
+    if (got) { life.car = s.week; life.last = 'bought a new Buick'; spent += got; boughtCar(s, c, life, got); }
   } else if (!life.house && c.wealth > HOUSE_DOWN * 2 && rand(t) < 0.02) {
     const got = spend(ctx, c, HOUSE_DOWN, 'a house', 'home');
-    if (got) { life.house = s.week; life.last = 'put money down on a house'; spent += got; }
+    if (got) { life.house = s.week; life.last = 'put money down on a house'; spent += got; boughtHome(s, c, life, got); }
   } else if (c.wealth > 300 && rand(t) < 0.02) {
     const got = spend(ctx, c, 50 + Math.round(rand(t) * 150), 'a wedding envelope', 'gift');
     if (got) { life.last = 'gave at a wedding'; spent += got; }

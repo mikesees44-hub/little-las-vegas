@@ -159,6 +159,8 @@ export interface Tb {
   offered?: number;
   /** The name on the lot when the layer last saw it (another system renaming it is a sale). */
   tn?: string;
+  /** Silent partners from the family's crews: a share of the owner's draw (crewFinance.ts). */
+  stk?: { c: string; pct: number; w: number; paid: number }[];
 }
 
 export type DebtSt = 'open' | 'paid' | 'default' | 'forgiven' | 'skipped';
@@ -195,7 +197,7 @@ export type FactKind =
   | 'courting' | 'engaged' | 'married' | 'parted' | 'affair' | 'affair_out' | 'separated' | 'expecting' | 'born'
   | 'came_of_age' | 'went_away' | 'came_back' | 'moved_in' | 'moved_out' | 'died'
   | 'skim' | 'skim_caught' | 'theft' | 'thief' | 'grudge' | 'revenge_prep' | 'revenge' | 'settled' | 'talked_cops'
-  | 'asked_help' | 'helped' | 'refused_help' | 'patron' | 'boss_helped' | 'boss_refused' | 'capo_settled' | 'mediated';
+  | 'stake' | 'asked_help' | 'helped' | 'refused_help' | 'patron' | 'boss_helped' | 'boss_refused' | 'capo_settled' | 'mediated';
 
 export interface Tf {
   id: string;

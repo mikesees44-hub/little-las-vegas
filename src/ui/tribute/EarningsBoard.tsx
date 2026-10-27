@@ -1,3 +1,5 @@
+import { seenWealth } from '../../engine/crewFinance';
+import { getSettings } from '../settings';
 import { earnerLines } from '../../engine/earners';
 import { useMemo, useState } from 'react';
 import { earningsBoard, FLAG_LABEL, upToCollected, type BoardRow, type PurseFlag } from '../../engine/crewPurse';
@@ -120,7 +122,7 @@ export function EarningsBoard({ s }: { s: GameState }) {
                   <td className="pr-2 text-right tabular-nums text-gold-300">{r.up ? fmt$(r.up) : '—'}{r.short ? <div className="text-[10px] text-red-300">short {fmt$(r.short)}</div> : null}</td>
                   <td className="pr-2 text-right tabular-nums">{r.earned ? fmt$(r.earned) : '—'}</td>
                   <td className="pr-2 text-right tabular-nums">{r.kept ? fmt$(r.kept) : '—'}</td>
-                  <td className="pr-2 text-right tabular-nums">{fmt$(r.wealth)}{r.debt ? <div className="text-[10px] text-amber-300">owes {fmt$(r.debt)}</div> : null}</td>
+                  <td className="pr-2 text-right tabular-nums">{s.characters[r.id] ? seenWealth(s, s.characters[r.id], !!getSettings().devIds) : '—'}{r.debt ? <div className="text-[10px] text-amber-300">owes {fmt$(r.debt)}</div> : null}</td>
                   <td className="pl-2"><Sparkline values={r.trend} label={`${name(r.id)}: kicked up over 8 weeks`} /></td>
                   <td className="pl-2 pr-2 capitalize text-stone-400">{r.rank}</td>
                   <td className="pr-2 text-stone-400">{crewName(r)}</td>
@@ -135,7 +137,7 @@ export function EarningsBoard({ s }: { s: GameState }) {
               <td className="pr-2 text-right tabular-nums text-gold-300">{fmt$(tot.up)}</td>
               <td className="pr-2 text-right tabular-nums">{fmt$(tot.earned)}</td>
               <td className="pr-2 text-right tabular-nums">{fmt$(tot.kept)}</td>
-              <td className="pr-2 text-right tabular-nums">{fmt$(tot.wealth)}</td>
+              <td className="pr-2 text-right tabular-nums">{getSettings().devIds ? fmt$(tot.wealth) : '—'}</td>
               <td colSpan={4} />
             </tr>
           </tfoot>

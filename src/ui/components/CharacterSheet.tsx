@@ -33,6 +33,9 @@ import { PurseSection } from '../tribute/PurseSection';
 import { DirtyOnPerson } from '../econ/DirtyWork';
 import { useShell } from '../shell/context';
 import { wealthOf } from '../../engine/wealth';
+import { getSettings } from '../settings';
+import { seenWealth } from '../../engine/crewFinance';
+import { FinancialLife } from '../sheet/FinancialLife';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -153,6 +156,7 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
         <BonesFacts s={s} c={c} />
         <PurseSection s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} />}
+        {showsLife && c.faction === 'player' && c.id !== s.playerId && <div className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5"><FinancialLife s={s} c={c} /></div>}
 
         <FamilySection s={s} id={c.id} />
 
@@ -184,7 +188,8 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
  */
 function OwnMoneyLines({ s, c }: { s: GameState; c: Character }) {
   const w = wealthOf(s, c);
-  if (!w.isPocket) return <div>Own money: <span className="text-stone-100" data-testid="sheet-own-money">{fmt$(w.own)}</span></div>;
+  // A09: another man's money is his private business; the sheet shows what his books explain.
+  if (!w.isPocket) return <div>Own money: <span className="text-stone-100" data-testid="sheet-own-money">{seenWealth(s, c, !!getSettings().devIds)}</span></div>;
   return (
     <>
       <div>Your pocket (spendable): <span className="text-stone-100" data-testid="sheet-own-money">{fmt$(w.own)}</span></div>
@@ -249,14 +254,14 @@ function HisLife({ s, c }: { s: GameState; c: Character }) {
       <div className="mt-1 grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 text-xs text-stone-300">
           {c.rank === 'capo' ? (
-            <div>Runs a crew of {men.length}{outside.length ? ` and ${outside.length} outside guy${outside.length > 1 ? 's' : ''}` : ''} · kicks up {Math.round((1 - (c.keep ?? 0.3)) * 100)}% · his own money {fmt$(c.wealth)}</div>
+            <div>Runs a crew of {men.length}{outside.length ? ` and ${outside.length} outside guy${outside.length > 1 ? 's' : ''}` : ''} · kicks up {Math.round((1 - (c.keep ?? 0.3)) * 100)}% · his own money {seenWealth(s, c, !!getSettings().devIds)}</div>
           ) : c.outside ? (
             <div>{OUTSIDE_INFO[c.outside]}{k ? <> for <CharLink s={s} id={k.id} />'s crew</> : ''} · not a member</div>
           ) : (
             <div>{k ? <>In <CharLink s={s} id={k.id} />'s crew</> : 'Reports straight to you'}{c.craft ? ` · ${CRAFT_INFO[c.craft].name}` : ''}</div>
           )}
           {c.goal && !(c.dynasty && fam(s, c.id).goal) && <div>Wants to: <span className="text-stone-100">{GOAL_INFO[c.goal].toLowerCase()}</span></div>}
-          {c.lastEarn !== undefined && <div>Brought in {fmt$(c.lastEarn)} last week · stash {fmt$(c.wealth)}</div>}
+          {c.lastEarn !== undefined && <div>Brought in {fmt$(c.lastEarn)} last week · his money {seenWealth(s, c, !!getSettings().devIds)}</div>}
           <div>Record: {c.record ?? 0} arrest{(c.record ?? 0) === 1 ? '' : 's'}</div>
           <EvidenceLine s={s} c={c} />
           {c.household?.wife && <div>Wife: {c.household.wife}{kids.length ? ` · ${kids.map((x) => `${x.name} (${Math.max(0, s.date.y - x.born)})`).join(', ')}` : ''}</div>}

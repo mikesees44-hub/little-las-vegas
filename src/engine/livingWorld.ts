@@ -7,6 +7,7 @@ import { marketValue } from './econ';
 import type { Lot } from './econState';
 import { inflation, USES, USES_BY_ID, ZONES_BY_ID } from './property';
 import { CATALOG } from './catalog';
+import { stakeEnded, stakeShare } from './crewFinance';
 import { FACTION_NAMES } from './world';
 import { expireRequests, queueRequest } from './livingAsk';
 import { capoBriefs, channelsWeek, districtCapo, fact, factById, gossipMonth, knows, pruneFacts, remember } from './livingKnow';
@@ -254,9 +255,15 @@ function unemploy(L: LivingState, p: Tp, week?: number): void {
 
 /** Owner of a lot sells or loses it: the business record ends, the help keeps or loses its jobs. */
 function endBusiness(ctx: Ctx, L: LivingState, b: Tb, keepStaff: boolean): void {
-  // What is in the till goes home with the owner (or to his estate).
+  // What is in the till goes home with the owner (or to his estate); a partner gets his share of it.
   const own = L.people[b.owner];
   const home = own && L.hh[own.hh] && L.hh[own.hh].gone === undefined ? `h:${own.hh}` : 'x:estate';
+  const l0 = ctx.s.econ?.lots.find((x) => x.id === b.lot);
+  for (const st of b.stk ?? []) {
+    const c = ctx.s.characters[st.c];
+    const got = c?.alive && b.cash > 0 ? pay(ctx, L, `b:${b.lot}`, `wealth:${c.id}`, Math.round(b.cash * st.pct), `${c.firstName} ${c.lastName}'s share of what was left`) : 0;
+    if (c) stakeEnded(ctx.s, c.id, b.lot, got, `${l0?.name ?? 'the place'} ${keepStaff ? 'was sold' : 'closed'}`);
+  }
   if (b.cash > 0) pay(ctx, L, `b:${b.lot}`, home, b.cash, 'what was left in the till');
   for (const id of b.staff) {
     const p = L.people[id];
@@ -479,7 +486,19 @@ function businessesWeek(ctx: Ctx, L: LivingState, x: Idx): void {
       }
     }
     const cushion = Math.round(u.exp * 6 * x.infl);
-    if (b.cash > cushion) pay(ctx, L, `b:${lotId}`, `h:${owner.hh}`, Math.round((b.cash - cushion) * 0.6), `${pname(owner)}'s draw from ${lotName(l)}`);
+    if (b.cash > cushion) {
+      const draw = Math.round((b.cash - cushion) * 0.6);
+      // A silent partner from the crews takes his share of the draw first.
+      for (const st of b.stk ?? []) {
+        const c = s.characters[st.c];
+        const share = Math.round(draw * st.pct);
+        if (!c || share <= 0) continue;
+        const got = pay(ctx, L, `b:${lotId}`, c.alive ? `wealth:${c.id}` : 'x:estate', share, `${c.firstName} ${c.lastName}'s share of ${lotName(l)}`);
+        st.paid += got;
+        if (c.alive) stakeShare(s, c.id, lotId, got);
+      }
+      pay(ctx, L, `b:${lotId}`, `h:${owner.hh}`, Math.round(draw * (1 - (b.stk ?? []).reduce((a, x) => a + x.pct, 0))), `${pname(owner)}'s draw from ${lotName(l)}`);
+    }
   }
 }
 
@@ -1747,7 +1766,6 @@ export function livingWeek(ctx: Ctx): void {
     tiesMonth(L, xm);
     migrationMonth(ctx, L, xm);
     gossipMonth(s, L);
-    syncHoods(s, L);
     pruneFacts(s, L);
     pruneStories(s, L);
     pruneDebts(L, s);
@@ -1755,6 +1773,7 @@ export function livingWeek(ctx: Ctx): void {
   }
   channelsWeek(ctx, L);
   expireRequests(ctx, L);
+  syncHoods(s, L);
   const errs = reconcileLiving(L);
   if (errs.length) throw new Error(`The district's books do not reconcile in week ${s.week}: ${errs.slice(0, 3).join('; ')}`);
   closeLivingBooks(L);
