@@ -1,4 +1,4 @@
-import { frameFns, occupantIn, yearsCover, type CityPackage, type Confidence, type UV } from '../../engine/cityPackage';
+import { frameFns, occupantIn, profileAt, yearsCover, type CityPackage, type Confidence, type UV } from '../../engine/cityPackage';
 import { seedSlotRect } from '../../engine/hoodGeo';
 
 /**
@@ -102,6 +102,12 @@ export function TownLayers({ pkg, year, sel, items, fill, onDown, scale }: {
       <rect x={b.u0 - 2000} y={-b.v1 - 2000} width={b.u1 - b.u0 + 4000} height={b.v1 - b.v0 + 4000} fill="#ddd5c0" />
       {/* The sea (v < 0). */}
       <rect x={b.u0 - 2000} y={0} width={b.u1 - b.u0 + 4000} height={2400} fill="#2c6f8f" />
+      {pkg.geography.profiles?.beach && (() => {
+        // The sand, out to the waterline (the beach profile along u).
+        const pr = pkg.geography.profiles.beach;
+        const xs = Array.from({ length: 41 }, (_, i) => b.u0 + ((b.u1 - b.u0) * i) / 40);
+        return <path d={`M${b.u0 - 2000} 0H${b.u1 + 2000}V${profileAt(pr, b.u1)}${xs.reverse().map((u) => `L${u} ${profileAt(pr, u)}`).join('')}L${b.u0 - 2000} ${profileAt(pr, b.u0)}Z`} fill="#ecd9a6" pointerEvents="none" />;
+      })()}
       {pkg.districts.map((d) => d.polygon.length >= 3 && (
         <g key={d.id} data-testid="town-district" data-id={d.id} onPointerDown={onDown ? (e) => onDown(e, { id: d.id, kind: 'district', u: d.polygon[0][0], v: d.polygon[0][1], w: 0, d: 0, rot: 0, label: d.name, conf: d.evidence?.confidence ?? 'approximate', dim: false, movable: false }) : undefined}>
           <path d={`M${d.polygon.map(([u, v]) => `${u} ${-v}`).join('L')}Z`} fill={sel === d.id ? '#ffe28a' : '#8a7a5a'} fillOpacity={sel === d.id ? 0.25 : 0.12} stroke={sel === d.id ? '#ffe28a' : '#6b5a3a'} strokeWidth={sw} strokeDasharray={`${sw * 4} ${sw * 2}`} />
