@@ -173,7 +173,7 @@ export const HOTSPOTS: WalkHotspot[] = [
     blurb: 'Bathing suits, sunglasses and rubber rafts. The owner has been trying to sell all summer.',
   },
   {
-    id: 'next-pier', label: 'The next pier', kind: 'pier', lots: ['pr02'],
+    id: 'next-pier', label: 'The next pier', kind: 'pier', lots: ['pr02'], art: ['cutout_ferris_wheel', 'cutout_ferris_white'],
     poly: [[1090, 400], [1470, 390], [1505, 470], [1090, 455]], door: [1180, 470],
     blurb: 'The next amusement pier up the boards: its own coaster, its own carousel, the Giant Wheel turning over the water.',
   },

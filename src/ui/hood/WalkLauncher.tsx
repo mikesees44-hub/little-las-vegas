@@ -5,6 +5,7 @@ import { whoIsAround } from '../../engine/walk';
 import type { GameState } from '../../engine/types';
 import { useShell } from '../shell/context';
 import { useTravel } from '../travel/context';
+import { Backdrop } from './art/sceneArt';
 
 /**
  * The You drawer's way down to the street: the boss walks the Boardwalk at
@@ -17,6 +18,10 @@ export function WalkLauncher({ s }: { s: GameState }) {
   const go = (at: string | true = true) => { shell.go({}); shell.focus({ walk: at }); };
   return (
     <div className="space-y-3" data-testid="walk-launcher">
+      <div className="relative isolate overflow-hidden rounded-md">
+        <Backdrop k="scene_island_aerial" opacity={0.85} className="-z-10" />
+        <div className="h-24 bg-gradient-to-t from-noir-950/90 to-transparent" />
+      </div>
       <p className="text-sm text-stone-300">{displayName(player(s))} on foot: the boards from Hunt's Pier up to the next pier, the beach, and Ocean Avenue behind. {HOTSPOTS.length} places to walk up to.</p>
       <div className="flex flex-wrap gap-2">
         <button type="button" className="btn-gold" onClick={() => go()} data-testid="walk-launch">Walk the Boardwalk</button>

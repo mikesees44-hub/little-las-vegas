@@ -173,6 +173,17 @@ export const ASSET_URLS = {
   scene_ac_boardwalk: undefined,
   /** South Jersey from the air (the shore towns pinned): the trip planner's header. */
   scene_region_map: undefined,
+  // Batch 5b: the pier wheels (transparent), two Crest motels under near-miss names, and the
+  // island from the air. (c94-c96 and c98 are the same pictures as 109, 110, 112 and 113.)
+  /** The next pier's wheels (the Giant Wheel, white or lit). */
+  cutout_ferris_wheel: undefined,
+  cutout_ferris_white: undefined,
+  /** PANORAMIC -> PANORAMA (the last tile a star). */
+  cutout_panorama_motel: undefined,
+  /** RIO -> RIO GRANDE on the pole sign. */
+  cutout_rio_grande_motel: undefined,
+  /** Photoreal: the island from the air looking north (the title, the walk launcher). */
+  scene_island_aerial: undefined,
 } satisfies Record<string, string | undefined>;
 
 export type AssetKey = keyof typeof ASSET_URLS;
@@ -233,6 +244,7 @@ export const ASSET_SIZE: Partial<Record<AssetKey, [number, number]>> = {
   scene_capemay_harbor: [335, 250],
   scene_ac_boardwalk: [335, 250],
   scene_region_map: [336, 250],
+  scene_island_aerial: [1536, 1024],
 };
 
 /**

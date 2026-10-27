@@ -12,13 +12,13 @@ import type { AssetKey } from './assetUrls';
 
 /** A painted still for a cutscene, under the noir treatment (the drawn still is the fallback; a video still wins). */
 export const CUTSCENE_ART: Partial<Record<string, AssetKey[]>> = {
-  title: ['scene_doowop_neighborhood', 'neighborhood_twilight_1958'],
+  title: ['scene_island_aerial', 'scene_doowop_neighborhood', 'neighborhood_twilight_1958'],
   made_man: ['scene_boss_office'],
   hit_success: ['street_taylor_rockclub', 'street_7sees'],
   hit_botched: ['street_crablegs'],
   hit_witness: ['street_taylor_offshore'],
   wedding: ['scene_club_stage'],
-  heir_rises: ['boardwalk_blue_hour_1958'],
+  heir_rises: ['scene_island_aerial', 'boardwalk_blue_hour_1958'],
   arrest_interrogation: ['street_docks_day2'],
 };
 

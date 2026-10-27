@@ -61,7 +61,7 @@ export const STRETCHES: WalkStretch[] = [
   },
   {
     id: 'boards-north', label: 'The North End boards', where: 'The Boardwalk in North Wildwood, 26th Avenue down to 16th',
-    backdrop: ['boardwalk_blue_hour_1958'], zone: 'north', district: 'north', zoneLots: 2,
+    backdrop: ['boardwalk_blue_hour_1958', 'scene_island_aerial'], zone: 'north', district: 'north', zoneLots: 2,
     blurb: 'The quieter end of the boards: fries in paper cones, a pancake house, ice cream at the Sea Shell. North Wildwood is Kessler country, and his people watch who walks it.',
     places: ['sb01', 'bw-gateway-25', 'bw-lil-nickys', 'bw-fudge-kitchenette', 'bw-curlys', 'bw-sea-shell', 'bw-route-69', 'bw-bobby-ds', 'bw-octopus-golf', 'bw-boat-tag', 'bw-sammys', 'bw-skippers'],
     lines: {
@@ -122,12 +122,14 @@ export const STRETCHES: WalkStretch[] = [
     id: 'crest', label: 'The Crest motel strip', where: 'Wildwood Crest: Ocean and Atlantic Avenues',
     backdrop: ['scene_doowop_neighborhood', 'district_crest_doowop', 'blue_comet_motel'], zone: 'crest', district: 'crest', zoneLots: 3,
     blurb: 'New motels every season: boomerang roofs, kidney pools, pink doors. The builders need permits, concrete and labor, and every one of those can be sold to them.',
-    places: ['sb05', 'sb06', 'oc-beach-haus', 'at-shore-motel', 'at-ebb-tyde', 'at-satellite', 'at-schumanns', 'oc-star-lux'],
+    places: ['sb05', 'sb06', 'oc-beach-haus', 'at-shore-motel', 'at-panorama', 'at-rio-grande-motel', 'at-ebb-tyde', 'at-satellite', 'at-schumanns', 'oc-star-lux'],
     lines: {
       sb05: 'An oceanfront resort with palm trees in neon. Families from Philadelphia book the same week every year.',
       sb06: 'A motel built around its pool. Weekly rates, a manager who asks no questions.',
       'oc-beach-haus': 'Two stories around the pool, a beach ball on the sign.',
       'at-shore-motel': 'A small motel, clean and quiet. The owner wants to build a second floor.',
+      'at-panorama': 'Motel apartments by the week, a sign in a row of colored tiles. Summer help packs four to a room.',
+      'at-rio-grande-motel': 'Efficiency apartments in turquoise stucco. Cash for the season, no names in the book.',
       'at-ebb-tyde': 'A blue-hour motel with a blade sign over Atlantic Avenue.',
       'at-satellite': 'A boomerang roof and a rocket on the sign: the newest thing in the Crest.',
       'at-schumanns': 'A family restaurant: the motel guests eat breakfast here.',
