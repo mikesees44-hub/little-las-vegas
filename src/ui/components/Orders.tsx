@@ -1,4 +1,5 @@
 import { createContext, useContext, useState } from 'react';
+import { pocketCash } from '../../engine/tributeState';
 import { sameTarget, targetOf } from '../../engine/deals';
 import { DealWindow } from '../econ/DealWindow';
 import { previewAction, queuedMoney } from '../../engine/actions';
@@ -41,7 +42,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
   const pocket = p.pot === 'pocket';
   const short = pocket ? Math.max(0, p.cost - Math.max(0, q.pocketLeft)) : 0;
   // The preview's "Costly:" note reads the pots as they are; with other orders queued the dip note below is the truth.
-  const detail = pocket && others.length && q.pocketLeft !== Math.max(0, s.tribute?.acct.personal ?? 0) ? p.detail?.replace(/\s*Costly:.*$/, '') : p.detail;
+  const detail = pocket && others.length && q.pocketLeft !== Math.max(0, pocketCash(s)) ? p.detail?.replace(/\s*Costly:.*$/, '') : p.detail;
   // A purchase opens the Deal window instead of queueing at the asking price.
   const deal = action.kind === 'econ' && action.op.type === 'deal' ? undefined : targetOf(action);
   const [dealing, setDealing] = useState(false);
