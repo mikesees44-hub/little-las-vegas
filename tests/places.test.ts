@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { applyPlaceEdits, lngLatToUv, placeOpenIn, placesGeoJson, placesIn, uvToLngLat, PLACES } from '../src/engine/placesGeo';
 import { ASSET_URLS } from '../src/ui/hood/art/assetUrls';
 import { newGame } from '../src/engine/newGame';
-import { CROSS_BY_NAME, AVE_V } from '../src/engine/hoodData';
+import { CROSS_BY_NAME, AVE_V, RES_SEED } from '../src/engine/hoodData';
+import { extraSlots } from '../src/engine/hoodGeo';
 import { PLAN_AREAS } from '../src/ui/hood/PlanView';
 
 describe('the business-location layer', () => {
@@ -92,7 +93,9 @@ describe('the business-location layer', () => {
   it('every feature stands in one of the block-map areas, and each area has its places', () => {
     const inA = (a: (typeof PLAN_AREAS)[number], [u, v]: [number, number]) => u >= a.u0 - 50 && u <= a.u1 + 50 && v >= a.v0 - 50 && v <= a.v1 + 50;
     for (const f of PLACES) expect(PLAN_AREAS.some((a) => inA(a, lngLatToUv(f.geometry.coordinates))), f.id).toBe(true);
-    for (const a of PLAN_AREAS) expect(PLACES.filter((f) => inA(a, lngLatToUv(f.geometry.coordinates))).length, a.id).toBeGreaterThanOrEqual(2);
+    // An area of houses (the Crest's empty south end) shows its house lots instead of businesses.
+    const homes = [...extraSlots({}).entries()].filter(([id]) => RES_SEED.some((r) => r.id === id)).map(([, sl]) => [(sl.u0 + sl.u1) / 2, (sl.v0 + sl.v1) / 2] as [number, number]);
+    for (const a of PLAN_AREAS) expect(PLACES.filter((f) => inA(a, lngLatToUv(f.geometry.coordinates))).length + homes.filter((uv) => inA(a, uv)).length, a.id).toBeGreaterThanOrEqual(2);
   });
 
   it('still-operating businesses carry near-miss names; defunct places and landmarks keep theirs; years follow the notes', () => {
