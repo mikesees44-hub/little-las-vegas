@@ -44,7 +44,7 @@ export function build1975(seed: string): GameState {
   boss.birth = birthForAge(s, s.date, 65);
   boss.health = 72;
   // The crew to spec.
-  const men = crew(s).filter((c) => !c.dynasty);
+  const men = crew(s);
   const ub = men.find((c) => c.rank === 'underboss') ?? makeCharacter(s, { rank: 'underboss', faction: 'player' });
   set(ub, s, 'underboss', 58);
   ub.wealth = 30000;
@@ -55,11 +55,11 @@ export function build1975(seed: string): GameState {
   while (caps.length < 3) caps.push(makeCharacter(s, { rank: 'capo', faction: 'player' }));
   caps.forEach((c, i) => set(c, s, 'capo', capoAges[i]));
   for (const c of men) if (c.rank === 'capo' && !caps.includes(c)) c.rank = 'soldier';
-  const sold = crew(s).filter((c) => c.rank === 'soldier' && !c.dynasty);
+  const sold = crew(s).filter((c) => c.rank === 'soldier');
   while (sold.length < 12) sold.push(makeCharacter(s, { rank: 'soldier', faction: 'player' }));
   sold.slice(12).forEach((c) => { c.rank = 'associate'; });
   sold.slice(0, 12).forEach((c, i) => { set(c, s, 'soldier', 26 + ((i * 7) % 24)); c.capoId = caps[i % 3].id; });
-  const assoc = crew(s).filter((c) => c.rank === 'associate' && !c.dynasty);
+  const assoc = crew(s).filter((c) => c.rank === 'associate');
   while (assoc.length < 8) assoc.push(makeCharacter(s, { rank: 'associate', faction: 'player' }));
   assoc.slice(8).forEach((c) => { c.faction = 'none'; c.rank = 'civilian'; });
   assoc.slice(0, 8).forEach((c, i) => { set(c, s, 'associate', 20 + i); c.capoId = caps[i % 3].id; });
