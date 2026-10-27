@@ -74,7 +74,7 @@ export function TownView({ s, pkg, onClose }: { s: GameState; pkg: CityPackage; 
       <div className="absolute left-2 top-11 right-2 z-10 space-y-1.5" data-tv-ui>
         <div className="flex flex-wrap items-center gap-1.5">
           <button type="button" className="hv-btn" onClick={onClose} data-testid="tv-close">← South Jersey</button>
-          <span className="font-display text-lg text-gold-300 drop-shadow">{pkg.displayName}, {year}</span>
+          <span className="font-display text-lg text-gold-300 rounded bg-noir-900/90 border border-gold-600/40 px-2 leading-tight">{pkg.displayName}, {year}</span>
           <button type="button" className="hv-btn" onClick={() => zoom(1 / 1.4)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoom(1.4)} aria-label="Zoom out">−</button>
         </div>
