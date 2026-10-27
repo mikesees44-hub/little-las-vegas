@@ -7,6 +7,7 @@ import { OrderToast, type ToastItem } from './components/OrderToast';
 import { HousesNavContext } from './houses/nav';
 import { alerts as computeAlerts } from '../engine/alerts';
 import { advanceMonth, advanceWeek } from '../engine/engine';
+import { previewAction, queuedMoney } from '../engine/actions';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
 import { MapView } from './map/MapView';
@@ -128,7 +129,12 @@ export function App({ startOn = 'title' }: AppProps) {
       const now = Date.now();
       if (lastQueued.current && now - lastQueued.current.at < 600 && sameOrder(lastQueued.current.a, a)) return;
       lastQueued.current = { a, at: now };
-      setToast({ action: a, index: orders.length, at: now });
+      // A pocket order the pocket can't cover (after this week's orders) needs the player's word for Family money:
+      // the toast asks, and the order tray keeps asking, before the week turns.
+      const p = previewAction(s, a);
+      const left = queuedMoney(s, orders).pocketLeft;
+      const short = p.pot === 'pocket' && a.fund !== 'family' ? Math.max(0, p.cost - Math.max(0, left)) : 0;
+      setToast({ action: a, index: orders.length, at: now, short });
       setOrders((o) => [...o, a]);
     },
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
@@ -666,7 +672,8 @@ export function App({ startOn = 'title' }: AppProps) {
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
-      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }} />}
+      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }}
+        onApprove={() => { setOrders((o) => o.map((x, j) => (j === toast.index ? { ...x, fund: 'family' } : x))); setToast({ ...toast, action: { ...toast.action, fund: 'family' }, short: 0, at: Date.now() }); }} />}
       </EmpireHost>
     </Providers>
     </TributeUiContext.Provider>

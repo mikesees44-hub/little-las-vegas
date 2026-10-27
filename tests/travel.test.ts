@@ -21,7 +21,8 @@ function rich(seed = 'travel'): GameState {
 }
 
 function trip(plan: TripPlan): PlayerAction {
-  return { kind: 'travel', op: { type: 'trip', plan } };
+  // A trip is paid from the pocket; these tests approve Family money for what it can't cover (A13).
+  return { kind: 'travel', op: { type: 'trip', plan }, fund: 'family' };
 }
 
 function lover(s: GameState): string {

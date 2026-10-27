@@ -21,7 +21,7 @@ describe('travel UI', () => {
   it('travellers, the flight planner and the fugitive panel render', () => {
     let s = newGame('ui-lam');
     s.money = 100000;
-    s = advanceWeek(s, { actions: [{ kind: 'travel', op: { type: 'trip', plan: { ...suggestPlan(s, s.playerId, 'oldcountry'), mode: 'ship' } } }] }).state;
+    s = advanceWeek(s, { actions: [{ kind: 'travel', op: { type: 'trip', plan: { ...suggestPlan(s, s.playerId, 'oldcountry'), mode: 'ship' } }, fund: 'family' }] }).state; // pocket short: Family money approved (A13)
     expect(renderToString(createElement(TravellersPanel, { s }))).toContain('Rome');
     let f = newGame('ui-lam2');
     f.money = 100000;

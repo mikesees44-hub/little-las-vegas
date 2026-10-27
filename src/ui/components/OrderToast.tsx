@@ -4,17 +4,18 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { verbOf } from '../verbs';
 
-export interface ToastItem { action: PlayerAction; index: number; at: number }
+export interface ToastItem { action: PlayerAction; index: number; at: number; /** What the pocket can't cover without the player's approval. */ short?: number }
 
 /**
  * Pops up the moment the player clicks an action: what it is, what it costs,
  * and when it happens (when the week advances). Undo takes it back.
  */
-export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: ToastItem; onUndo: () => void; onClose: () => void }) {
+export function OrderToast({ s, item, onUndo, onClose, onApprove }: { s: GameState; item: ToastItem; onUndo: () => void; onClose: () => void; onApprove?: () => void }) {
   useEffect(() => {
-    const t = window.setTimeout(onClose, 6000);
+    // An order that still needs the player's word stays up longer.
+    const t = window.setTimeout(onClose, item.short ? 14000 : 6000);
     return () => window.clearTimeout(t);
-  }, [item.at, onClose]);
+  }, [item.at, item.short, onClose]);
   const p = previewAction(s, item.action);
   const { verb } = verbOf(item.action, p);
   const chips = (p.effects ?? []).slice(0, 4).map((e) => (e as { label?: string }).label).filter(Boolean) as string[];
@@ -31,8 +32,14 @@ export function OrderToast({ s, item, onUndo, onClose }: { s: GameState; item: T
             {chips.length > 0 && <span className="text-stone-400">{chips.join(' · ')}. </span>}
             It happens when you hit <span className="text-gold-300">Advance Week</span>.
           </div>
+          {(item.short ?? 0) > 0 && (
+            <div className="mt-1 text-xs text-amber-300" data-testid="toast-unfunded">
+              Your pocket is {fmt$(item.short!)} short. It won't be carried out unless you approve Family money for the rest.
+            </div>
+          )}
         </div>
         <div className="flex flex-col gap-1 shrink-0 pointer-events-auto">
+          {(item.short ?? 0) > 0 && onApprove && <button className="btn-gold text-[11px] py-0.5 px-2" onClick={onApprove} data-testid="toast-approve">Take {fmt$(item.short!)} from the Family</button>}
           <button className="btn-ghost text-[11px] py-0.5 px-2" onClick={onUndo}>Undo</button>
           <button className="text-stone-500 text-[11px]" onClick={onClose} aria-label="Close">✕</button>
         </div>
