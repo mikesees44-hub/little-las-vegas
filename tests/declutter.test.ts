@@ -225,3 +225,29 @@ describe('declutter: This place offers what the old place cards did', () => {
     expect(sale + lease + dirty).toBeGreaterThan(3);
   });
 });
+
+describe('declutter: Find… reaches screens, people, places and things to do', () => {
+  it('finds by what you want to do, by screen, by name, by place', async () => {
+    const { newGame } = await import('../src/engine/newGame');
+    const { findAll } = await import('../src/ui/shell/find');
+    const { displayName } = await import('../src/engine/characters');
+    const s = newGame('declutter-find');
+    const lend = findAll(s, 'lend');
+    expect(lend.some((r) => r.kind === 'do' && r.go.to === 'route')).toBe(true);
+    // A match in the words people would use counts, not only in the title (lend → the shylock book).
+    expect(lend.filter((r) => r.kind === 'do').length).toBeGreaterThanOrEqual(2);
+    const council = findAll(s, 'council');
+    expect(council.some((r) => r.kind === 'screen' && r.go.to === 'route' && r.go.key === 'borgata.council')).toBe(true);
+    const ub = Object.values(s.characters).find((c) => c.alive && c.rank === 'underboss')!;
+    expect(findAll(s, ub.lastName).some((r) => r.kind === 'person' && r.go.to === 'sheet' && r.go.id === ub.id)).toBe(true);
+    expect(findAll(s, displayName(ub)).some((r) => r.kind === 'person')).toBe(true);
+    const d = s.districts[0];
+    expect(findAll(s, d.name).some((r) => r.kind === 'place')).toBe(true);
+    // Every registered screen and every view can be found by its own name.
+    const { NAV_ITEMS } = await import('../src/ui/shell/nav');
+    for (const it of NAV_ITEMS) expect(findAll(s, it.label, { limit: 50 }).some((r) => r.kind === 'screen' && r.go.to === 'route' && it.keys.includes(r.go.key)), it.label).toBe(true);
+    // Every thing to do lands somewhere real.
+    for (const r of findAll(s, 'a', { limit: 500 }).filter((x) => x.kind === 'do')) expect(r.go.to).toBeDefined();
+    expect(findAll(s, 'x')).toEqual([]);
+  });
+});
