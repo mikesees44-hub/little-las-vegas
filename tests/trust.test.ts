@@ -15,6 +15,8 @@ import type { GameState, PlayerAction } from '../src/engine/types';
 import { fam } from '../src/engine/familyState';
 import { famGoalBlock, personalGoalBlock } from '../src/engine/goalRules';
 import { upgradeSave } from '../src/engine/upgradeSave';
+import { roundOptions } from '../src/engine/rounds';
+import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
 function byTestId(html: string, id: string): string | undefined {
@@ -170,5 +172,22 @@ describe('A03: goals have prerequisites and are invalidated by rank changes', ()
     // And the weekly update repairs it too.
     const next = advanceWeek(s, {}).state;
     expect(next.dyn!.people[donato.id].goal).not.toBe('make_bones');
+  });
+});
+
+describe('A05: an evening is booked on the day it happens', () => {
+  it('the Friday fights go on Friday, Sunday dinner on Sunday, and no other day accepts them', () => {
+    const s = newGameWith('trust-a05', 'sees');
+    const fights = roundOptions(s).find((r) => r.id === 'fun:fights')!;
+    expect(fights.text).toMatch(/Friday/);
+    expect(fights.day).toBe(4);
+    const plan = layoutWeek(s, ['fun:fights', 'fam:sunday', 'fun:fights']);
+    expect(plan[4]).toBe('fun:fights');
+    expect(plan[6]).toBe('fam:sunday');
+    for (const d of [0, 1, 2, 3, 5, 6]) expect(dayBlock(s, d, 'fun:fights')).toBe('Only on Friday');
+    expect(dayBlock(s, 4, 'fun:fights')).toBeUndefined();
+    // The planner can't move it: setEvening refuses a wrong day.
+    expect(weekPlan(setEvening(s, 0, 'fun:fights'))[0]).not.toBe('fun:fights');
+    expect(formatDay(s, 4)).toMatch(/^Fri /);
   });
 });

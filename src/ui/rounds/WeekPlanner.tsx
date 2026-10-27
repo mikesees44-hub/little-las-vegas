@@ -170,7 +170,7 @@ export function WeekPlanner({ s, update, initialDay, onSitDown }: { s: GameState
   return (
     <div className="space-y-2" data-testid="week-planner">
       <div className="flex items-center justify-between gap-2">
-        <div className="text-[11px] text-stone-400"><span className="text-stone-200">{used} of {slots}</span> evenings planned · the capos every morning</div>
+        <div className="text-[11px] text-stone-400"><span className="text-stone-200">{used} of {slots}</span> evenings planned <span className="text-stone-500">(you have {slots} evenings out a week; the other nights you're home)</span> · the capos every morning</div>
         <div className="flex gap-1">
           <button type="button" className="text-[11px] text-stone-500 hover:text-gold-300" onClick={() => update((x) => setWeekRounds(x, undefined))} data-testid="planner-usual">usual week</button>
           {onSitDown && <button type="button" className="text-[11px] text-stone-500 hover:text-gold-300" onClick={onSitDown}>· who you trust ▸</button>}

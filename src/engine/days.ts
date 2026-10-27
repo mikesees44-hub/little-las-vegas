@@ -92,13 +92,21 @@ export function eveningOpen(s: GameState, day: number): boolean {
 /** The order the usual week fills the evenings: the weeknights, then the weekend. */
 const FILL = [1, 3, 4, 2, 5, 0, 6];
 
-/** Lay a list of rounds onto the week's free evenings (Sunday dinner on Sunday). */
+/** The day an evening is fixed to (Friday fights, Sunday dinner), from the one calendar record: the round itself. */
+export function fixedDay(s: GameState, id: string, opts?: readonly { id: string; day?: number }[]): number | undefined {
+  if (id === 'fam:sunday') return 6;
+  return (opts ?? roundOptions(s)).find((x) => x.id === id)?.day;
+}
+
+/** Lay a list of rounds onto the week's free evenings. A round fixed to a day goes on that day or not at all. */
 export function layoutWeek(s: GameState, ids: string[], from = 0): (string | null)[] {
   const out: (string | null)[] = Array(7).fill(null);
   const open = (d: number) => d >= from && eveningOpen(s, d) && out[d] === null;
   const rest: string[] = [];
+  const opts = ids.length ? roundOptions(s) : [];
   for (const id of ids) {
-    if (id === 'fam:sunday' && open(6)) out[6] = id;
+    const fixed = fixedDay(s, id, opts);
+    if (fixed !== undefined) { if (open(fixed)) out[fixed] = id; }
     else rest.push(id);
   }
   for (const id of rest) {
@@ -126,6 +134,8 @@ export function dayBlock(s: GameState, day: number, id: string | null): string |
   if (!eveningOpen(s, day)) return awayReason(s, day) ?? 'Not this evening';
   const r = roundOptions(s).find((x) => x.id === id);
   if (!r) return 'Not this week';
+  const fixed = r.day;
+  if (fixed !== undefined && fixed !== day) return `Only on ${DAY_NAMES[fixed]}`;
   const plan = weekPlan(s);
   const others = plan.filter((x, i) => x && i !== day && x !== id).length;
   if (others + 1 > roundSlots(s).slots) return 'No evenings left this week';
