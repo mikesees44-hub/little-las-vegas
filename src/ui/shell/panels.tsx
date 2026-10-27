@@ -15,6 +15,7 @@ import { HQPanel } from '../econ/HQPanel';
 import { Holdings } from '../econ/Holdings';
 import { RacketHub } from '../econ/RacketHub';
 import { DirtyWork } from '../econ/DirtyWork';
+import { GearPanel, TechPanel } from '../econ/FamilyDevelopment';
 import { RealEstate } from '../econ/RealEstate';
 import { TheBooks } from '../books/TheBooks';
 import { ActivitiesPanel } from '../family/ActivitiesPanel';
@@ -143,6 +144,8 @@ export const PANELS: PanelDef[] = [
       { id: 'money', label: 'Money', wide: true, blurb: 'Family money and your pocket, moving money between them, and last week in plain words: what came in, your cut, what went out. Everything is collected on its own.', render: (s) => <MoneyView s={s} /> },
       { id: 'hub', label: 'The Rackets', wide: true, blurb: 'Every racket on the island: what it pays, what it takes, how you run it. Start one, set how it runs, take the next step.', render: (s) => <RacketHub s={s} /> },
       { id: 'dirty', label: 'Dirty Work', wide: true, blurb: 'One-off jobs: a score, muscle, a fix, a load to move. Pick the job, the man, the target; one button.', render: (s) => <DirtyWork s={s} /> },
+      { id: 'tech', label: 'Technology & connections', wide: true, blurb: 'Family development: new ways of doing business as the years go by. Every step, what it does for you, what it costs, and what unlocks it.', render: (s) => <TechPanel s={s} /> },
+      { id: 'gear', label: 'Crew equipment', wide: true, blurb: 'How tough your crews are and why, against the other families; each crew\'s equipment, and buying more.', render: (s) => <GearPanel s={s} /> },
       { id: 'rackets', label: 'What you own', wide: true, blurb: 'What you own: upgrades, managers, the take. Open a new place below, or from a district on the map.', render: (s) => stack(<Holdings key="h" s={s} />, <Businesses key="b" s={s} />) },
       { id: 'property', label: 'Property', render: (s) => <RealEstate s={s} /> },
       { id: 'designer', label: 'Empire Designer', wide: true, blurb: 'Your motels and hotels, set up and run your way: the look, the staff, the supplies, the projects. Click one to open its Designer.', render: (s) => <EmpireSection s={s} /> },

@@ -8,7 +8,7 @@ import {
   eraPrice, GEAR, GEAR_BY_ID, MANDATES, PATHS, PATHS_BY_ID, TIERS, tiersOf,
   type GearCat, type PathId, type Prereq, type TierDef,
 } from './devData';
-import { devWearMult, ensureDev, pathEff, respFor, tierOf, type DevState, type GearStack, type RivalDev } from './devState';
+import { devWearMult, ensureDev, viewDev, pathEff, respFor, tierOf, type DevState, type GearStack, type RivalDev } from './devState';
 import { crewStrength, gearHolders, holderName } from './strength';
 import type { Ctx } from './ledger';
 import type { ActionPreview } from './actions';
@@ -182,7 +182,8 @@ export function validateGear(s: GameState): string[] {
 
 const P = (title: string, o: Partial<ActionPreview>): ActionPreview => ({ title, effects: [], cost: 0, because: '', category: 'cost', ...o });
 
-export function previewDev(s: GameState, a: DevAction): ActionPreview {
+export function previewDev(s0: GameState, a: DevAction): ActionPreview {
+  const s = viewDev(s0);
   const label = 'Family development';
   switch (a.t) {
     case 'adopt': {
@@ -597,3 +598,51 @@ export function devBriefLines(s: GameState, a: DevAction): { does: string[]; nee
   return { does, needs, catches };
 }
 
+
+/** A plain reason this step is worth taking now (the "Recommended" tag), or undefined. */
+export function recommendTier(s: GameState, v: TierView): string | undefined {
+  if (v.status !== 'available' || v.cost > Math.max(0, s.money) * 0.3) return undefined;
+  const t = v.def;
+  if (t.path === 'legit') {
+    const before = legitIncome(s);
+    const after = legitIncome({ ...s, dev: { ...(s.dev ?? ensureDev(s)), tiers: { ...(s.dev?.tiers ?? {}), legit: t.tier } } } as GameState);
+    return after - before > t.upkeep * 1.5 ? `pays about ${fmtMoney(after - before - t.upkeep)} a week more than it costs to keep` : undefined;
+  }
+  if (t.path === 'books' && s.ledgerBook?.discrepancies.some((d) => !d.settled)) return 'the books already show money missing';
+  if (t.path === 'gear' && t.tier === 1 && (s.dev?.gear.length ?? 0) > 0) return 'cheap, and your equipment lasts longer';
+  if (t.path === 'info' && t.tier === 1) return 'cheap, and you see the other families more clearly';
+  if (t.path === 'info' && s.heat.federal >= 30) return `federal heat is ${Math.round(s.heat.federal)}`;
+  if ((t.path === 'wheels' || t.path === 'comm') && s.wars.length) return 'you are at war: speed and coordination count';
+  if (t.path === 'comm' && t.tier === 1) return 'cheap, and your orders are carried out as given more often';
+  return undefined;
+}
+
+/** How many pieces a crew is short (men without equipment). */
+export function shortage(s: GameState, holder: string): number {
+  const c = crewStrength(s).crews.find((x) => x.holder === holder);
+  return c ? Math.max(0, c.men - c.gear.armed) : 0;
+}
+
+/** What an order is worth to the family, in the advisers' money terms (advice.ts derivedValue), and its weekly upkeep. */
+export function devValue(s: GameState, a: DevAction): { value: number; upkeep: number } {
+  if (a.t === 'buy') {
+    const def = GEAR_BY_ID[a.cat];
+    const before = crewStrength(s).total;
+    const d = viewDev(s).dev!;
+    const after = crewStrength({ ...s, dev: { ...d, gear: [...d.gear, { id: 'probe', cat: a.cat, n: a.n, cond: 1, holder: a.holder, since: s.week }] } }).total;
+    const war = s.wars.length ? 2 : 1;
+    return { value: (after - before) * 450 * war - def.heat * a.n * 150, upkeep: Math.round(def.upkeep * a.n) };
+  }
+  if (a.t === 'adopt') {
+    const next = tiersOf(a.path).find((t) => t.tier === tierOf(s, a.path) + 1);
+    if (!next) return { value: 0, upkeep: 0 };
+    let v = 2200 * pathEff(s, a.path);
+    if (a.path === 'legit') {
+      const gain = legitIncome({ ...s, dev: { ...(s.dev ?? ({} as DevState)), tiers: { ...(s.dev?.tiers ?? {}), legit: next.tier } } } as GameState) - legitIncome(s);
+      v = gain * 30;
+    }
+    if (next.catch) v -= 800;
+    return { value: v, upkeep: next.upkeep };
+  }
+  return { value: 0, upkeep: 0 };
+}

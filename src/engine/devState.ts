@@ -1,6 +1,7 @@
 import { crew, isFree } from './characters';
 import { holder } from './council';
 import { hashSeed } from './rng';
+import { crewsOf } from './strength';
 import { PATHS_BY_ID, TIERS, type DevEventId, type GearCat, type PathId } from './devData';
 import type { Character, GameState, RivalId } from './types';
 
@@ -74,10 +75,21 @@ export function initRivalDev(s: GameState, id: RivalId): RivalDev {
 
 /** The starting stock in the club's back room: a few pieces for the boss's own men. */
 function startingGear(s: GameState): GearStack[] {
+  // With the crew that has the most men (the boss's own men when they are as many).
+  const crews = crewsOf(s).sort((a, b) => b.members.length - a.members.length || (a.holder === 'family' ? -1 : b.holder === 'family' ? 1 : 0));
+  const holder = crews[0]?.members.length ? crews[0].holder : 'family';
   return [
-    { id: 'g1', cat: 'handguns', n: 6, cond: 0.7, holder: 'family', since: s.week },
-    { id: 'g2', cat: 'shotguns', n: 2, cond: 0.6, holder: 'family', since: s.week },
+    { id: 'g1', cat: 'handguns', n: 6, cond: 0.7, holder, since: s.week },
+    { id: 'g2', cat: 'shotguns', n: 2, cond: 0.6, holder, since: s.week },
   ];
+}
+
+/** The state as the development screens see it: before the first week has run, with the layer it will start with (the state itself is untouched). */
+export function viewDev(s: GameState): GameState {
+  if (s.dev) return s;
+  const v = { ...s };
+  ensureDev(v);
+  return v;
 }
 
 export function ensureDev(s: GameState): DevState {

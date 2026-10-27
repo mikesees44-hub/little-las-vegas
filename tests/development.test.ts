@@ -104,14 +104,15 @@ describe('crew equipment', () => {
   it('a piece of equipment is in one crew only', () => {
     let s = fresh('dev-assign');
     const [a, b] = capos(s);
-    s = week(s, [dev({ t: 'buy', cat: 'handguns', n: 4, holder: a.id })]).state;
+    s = week(s, [dev({ t: 'buy', cat: 'cars', n: 4, holder: a.id })]).state;
     const total = gearCount(s);
-    const st = s.dev!.gear.find((g) => g.holder === a.id)!;
+    const a0 = gearCount(s, a.id, 'cars');
+    const b0 = gearCount(s, b.id, 'cars');
+    const st = s.dev!.gear.find((g) => g.holder === a.id && g.cat === 'cars')!;
     s = week(s, [dev({ t: 'assign', stack: st.id, holder: b.id, n: 3 })]).state;
-    expect(gearCount(s, a.id, 'handguns')).toBe(1);
-    expect(gearCount(s, b.id, 'handguns')).toBe(3);
-    const st2 = s.dev!.gear.find((g) => g.holder === b.id)!;
-    s = week(s, [dev({ t: 'assign', stack: st2.id, holder: 'family' })]).state;
+    expect(gearCount(s, a.id, 'cars')).toBe(a0 - 3);
+    expect(gearCount(s, b.id, 'cars')).toBe(b0 + 3);
+    for (const g of s.dev!.gear.filter((x) => x.holder === b.id)) s = week(s, [dev({ t: 'assign', stack: g.id, holder: 'family' })]).state;
     expect(gearCount(s, b.id)).toBe(0);
     expect(gearCount(s)).toBe(total);
     expect(validateGear(s)).toEqual([]);
