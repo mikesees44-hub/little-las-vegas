@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { acceptSettlement, mayCommit, type SettledMark } from '../engine/settle';
+import { sameOrder } from './verbs';
 import { clockSpaceAllowed, shortcutBlocked } from './keys';
 import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
@@ -118,9 +120,17 @@ export function App({ startOn = 'title' }: AppProps) {
   const [briefSkip, setBriefSkip] = useState<string[]>([]);
   const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
   const [sitSeen, setSitSeen] = useState<string | undefined>();
+  const lastQueued = useRef<{ a: PlayerAction; at: number } | undefined>(undefined);
   const ordersApi = useMemo(() => ({
     orders,
-    queue: (a: PlayerAction) => { setToast({ action: a, index: orders.length, at: Date.now() }); setOrders((o) => [...o, a]); },
+    queue: (a: PlayerAction) => {
+      // A double click is one order: the same order again within a moment is ignored.
+      const now = Date.now();
+      if (lastQueued.current && now - lastQueued.current.at < 600 && sameOrder(lastQueued.current.a, a)) return;
+      lastQueued.current = { a, at: now };
+      setToast({ action: a, index: orders.length, at: now });
+      setOrders((o) => [...o, a]);
+    },
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
     replace: (i: number, a: PlayerAction) => setOrders((o) => o.map((x, j) => (j === i ? a : x))),
   }), [orders]);
@@ -190,15 +200,21 @@ export function App({ startOn = 'title' }: AppProps) {
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
+  const settledRef = useRef<SettledMark | undefined>(undefined);
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
     // The one place a week's choices are built (the clock and Advance Week alike): the days plan supplies the evenings and the mornings.
     const choices: PlayerChoices = weekChoices(s, { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) });
     // A ceremony the player sat through replaces the old single card.
     const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
     const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
+    // Exactly once (engine/settle.ts): a week already committed is never settled again (a double
+    // click, or the clock's Sunday night meeting a click on Advance Week), and a result only lands
+    // on the state it was computed from.
+    if (!mayCommit(settledRef.current, s)) return;
     if (m === 'week') {
       const r = advanceWeek(s, choices);
-      setS(r.state);
+      settledRef.current = { seed: s.seed, week: s.week };
+      setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, r.report].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
@@ -216,7 +232,8 @@ export function App({ startOn = 'title' }: AppProps) {
       }
     } else {
       const r = advanceMonth(s, choices);
-      setS(r.state);
+      settledRef.current = { seed: s.seed, week: s.week };
+      setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, ...r.reports].slice(-26));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
@@ -298,6 +315,7 @@ export function App({ startOn = 'title' }: AppProps) {
 
   /** A new game from the creator (or a quick restart): always opens on the funeral. */
   function beginGame(next: GameState, n: number) {
+    settledRef.current = undefined;
     setCurrentSlot(n);
     setSlot(n);
     setS(next);
@@ -314,6 +332,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function continueSlot(n: number) {
     const loaded = loadSlot(n);
     if (!loaded) return;
+    settledRef.current = undefined;
     setCurrentSlot(n);
     setSlot(n);
     setS(loaded);
