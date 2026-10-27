@@ -72,7 +72,7 @@ describe('balance', () => {
     // The boss's own things: his pocket pays first, and the hint says what the Family covers.
     s.tribute!.acct.personal = 3000;
     expect(costHint(s, 2500, 'pocket')).toMatch(/83% of your pocket/);
-    expect(costHint(s, 5000, 'pocket')).toMatch(/your pocket covers \$3,000; the other \$2,000 comes out of Family money/);
+    expect(costHint(s, 5000, 'pocket')).toMatch(/your pocket covers \$3,000; the other \$2,000 would come out of Family money/);
     s.pendingEvents = [{ iid: 'x', defId: 'test', week: s.week, title: '', text: '', mandatory: false, priority: 1, defaultChoiceId: 'a', choices: [
       { id: 'a', label: 'Pay', because: 'paid', effects: [{ type: 'money', amount: -12000 }] },
       { id: 'b', label: 'Do not', because: 'did not', effects: [] },
