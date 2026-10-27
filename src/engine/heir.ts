@@ -1,3 +1,4 @@
+import { candidateMods, successionBar } from './aging';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, player } from './characters';
 import { attr, addSuccess, groupScore, growAttr, viewAttrs } from './attrs';
@@ -62,6 +63,7 @@ export function capability(s: GameState, c: Character): Score {
   if (hasTrait(c, 'Cowardly')) add('Cowardly', -10);
   if (hasTrait(c, 'Drinker')) add('Drinker', -5);
   if (c.rank === 'underboss') add('Already the underboss', 6);
+  for (const m of candidateMods(s, c)) add(m.label, m.value);
   return { score: clamp(reasons.reduce((a, x) => a + x.value, 0)), reasons };
 }
 
@@ -219,7 +221,11 @@ export const GROOM_PATHS: Record<GroomPath, { name: string; text: string; keys: 
 export function publicHeir(s: GameState): Character | undefined {
   const d = pwView(s).designation;
   if (d.mode === 'underboss' || d.mode === 'private') return crew(s).find((c) => c.rank === 'underboss');
-  if (d.mode === 'named' && d.publicId) return s.characters[d.publicId];
+  if (d.mode === 'named' && d.publicId) {
+    const c = s.characters[d.publicId];
+    // A named heir who has since been put out of the line (disinherited, incapable) is no longer the heir.
+    return c && !successionBar(s, c) ? c : undefined;
+  }
   return undefined;
 }
 

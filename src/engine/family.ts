@@ -1,3 +1,4 @@
+import { applyAgingOp, describeAgingOp } from './aging';
 import { pocketPrice } from './pocket';
 import { repairGoals } from './goalRules';
 import { ACTIVITIES, activityBlock, activityCost, finishActivity, honoreeOptions, startActivity, suggestGuests, ACTIVITY_KINDS } from './activities';
@@ -254,6 +255,9 @@ export function applyDynOp(ctx: Ctx, op: DynOp, label: string): void {
     case 'decision':
       takeDecision(ctx, op.id, op.option);
       break;
+    case 'aging':
+      applyAgingOp(ctx, op.a);
+      break;
   }
   void label;
 }
@@ -327,6 +331,7 @@ export function describeDynOp(s: GameState, op: DynOp): string | undefined {
     case 'evidence': return `Law's file on ${nm(op.charId)} ${op.amount > 0 ? '+' : '−'}${Math.abs(op.amount)}`;
     case 'away': return `${nm(op.charId)} away for ${op.weeks} weeks`;
     case 'secret': return op.kind === 'affair' ? 'A secret: the other woman' : 'A secret: a child';
+    case 'aging': return describeAgingOp(s, op.a);
   }
 }
 
@@ -414,6 +419,22 @@ export function previewDynasty(s: GameState, a: DynAction): ActionPreview {
         title: `Legacy: ${perk.name}`, detail: `${info.name} legacy, perk ${have + 1} of 4 — ${perk.text} Costs ${cost} renown.`, effects, cost: 0,
         because: `took up the ${info.name} legacy: ${perk.name}`,
         disabledReason: (d?.renown ?? 0) < cost ? `Needs ${cost} renown (you have ${Math.round(d?.renown ?? 0)})` : undefined, category: 'event',
+      };
+    }
+    case 'standing': {
+      const c = s.characters[a.charId];
+      if (!c) return noop('Family standing', 'No such person');
+      const has = s.aging?.tags[c.id]?.includes(a.tag) ?? false;
+      const word = a.tag === 'disinherited' ? 'Disinherit' : 'Shame';
+      const title = a.remove ? `${a.tag === 'disinherited' ? 'Restore' : 'Forgive'} ${c.firstName}` : `${word} ${c.firstName}`;
+      const detail = a.tag === 'disinherited'
+        ? (a.remove ? `${c.firstName} goes back into the line of succession.` : `${c.firstName} is put out of the line of succession. He will not forget it.`)
+        : (a.remove ? `The family takes ${c.firstName} back into its good graces.` : `You denounce ${c.firstName} in front of the family. He counts for less as a candidate, and he will remember.`);
+      return {
+        title, detail, cost: 0, category: 'event',
+        effects: [{ type: 'dyn', op: { op: 'aging', a: { k: 'tag', charId: c.id, tag: a.tag, remove: a.remove } }, label: title }],
+        because: a.remove ? `took ${c.firstName} back` : `${a.tag === 'disinherited' ? 'disinherited' : 'shamed'} ${c.firstName}`,
+        disabledReason: !c.alive ? 'He is gone' : !c.dynasty || c.id === s.playerId ? 'Only for members of your house' : a.remove ? (has ? undefined : 'Nothing to take back') : has ? 'Already so' : undefined,
       };
     }
   }

@@ -1,3 +1,4 @@
+import { frailtyAgainst } from './aging';
 import { perkMod } from './lifestyle';
 import { bonesFromScheme } from './bones';
 import { roll01 } from './bonesState';
@@ -95,6 +96,8 @@ function targetDefense(s: GameState, t: Character): { label: string; value: numb
   out.push({ label: isBoss ? 'He is a boss: bodyguards' : t.rank === 'capo' || t.rank === 'underboss' ? 'A capo: careful habits' : 'An ordinary man', value: -(isBoss ? 40 : t.rank === 'capo' || t.rank === 'underboss' ? 20 : 5) });
   out.push({ label: 'His wits', value: -Math.round(t.attributes.intrigue / 5) });
   if (hasTrait(t, 'Paranoid')) out.push({ label: 'Paranoid', value: -10 });
+  const frail = frailtyAgainst(s, t);
+  if (frail) out.push(frail);
   if (t.id === s.playerId) {
     const g = activeTask(s, 'ub_guard');
     if (g) out.push({ label: 'Your underboss guards you', value: -Math.round(25 * g) });

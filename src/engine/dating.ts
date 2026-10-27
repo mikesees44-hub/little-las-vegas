@@ -1,3 +1,4 @@
+import { fertility } from './aging';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { earOf, madamOf } from './ears';
@@ -688,7 +689,7 @@ export function conceptionOdds(s: GameState, c: Character): number {
   const a = ageOfChar(s, woman);
   if (a < ADULT || a > 42 || !isAdult(s, man)) return 0;
   if ((s.romance?.pregnancies ?? []).some((p) => p.motherId === woman.id)) return 0;
-  return odds;
+  return odds * fertility(s, man) * fertility(s, woman);
 }
 
 /** An evening together inside a relationship: the only way a pregnancy begins here. */

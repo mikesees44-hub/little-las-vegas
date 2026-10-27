@@ -1,3 +1,4 @@
+import { fearFade } from './aging';
 import { hasTrait } from './characters';
 import type { GameState, OpinionModifier, Relation } from './types';
 
@@ -125,7 +126,7 @@ export function decayAllRelations(s: GameState): void {
     r.modifiers = decayModifiers(r.modifiers);
     const vengeful = from && hasTrait(from, 'Vengeful');
     if (r.grievance > 0) r.grievance = Math.max(0, r.grievance - (vengeful ? 0 : hasTrait(from, 'Patient') ? 4 : 2));
-    if (r.fear > 0) r.fear = Math.max(0, r.fear - 1);
+    if (r.fear > 0) r.fear = Math.max(0, r.fear - 1 - fearFade(s, r.to));
   }
 }
 

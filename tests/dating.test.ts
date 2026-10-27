@@ -65,7 +65,10 @@ describe('1. she accepts or declines from her own state', () => {
     expect(herDecision(s, fond, 'date', 'dinner').chance).toBeGreaterThan(herDecision(s, a, 'date', 'dinner').chance);
     const notDrawn = woman(s, 30, { orientation: 'gay' });
     expect(herDecision(s, notDrawn, 'date', 'dinner').chance).toBe(0);
+    // A baseline above the 5% floor, so the marriage and the faith can show.
+    ensureDating(s).bonds[a.id] = { id: a.id, aff: 50, rung: 'friends', dates: 1, since: 0, gifts: [], via: 'test' };
     const before = herDecision(s, a, 'date', 'dinner').chance;
+    expect(before).toBeGreaterThan(0.05);
     const hub = makeCharacter(s, { gender: 'M', age: 33, rank: 'civilian', faction: 'none' });
     a.spouseId = hub.id; hub.spouseId = a.id; a.traits = ['Pious'];
     expect(herDecision(s, a, 'date', 'dinner').chance).toBeLessThan(before);

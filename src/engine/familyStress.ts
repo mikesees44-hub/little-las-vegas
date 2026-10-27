@@ -1,3 +1,4 @@
+import { stressMult } from './aging';
 import { displayName, hasTrait } from './characters';
 import { fam, famMut, type Coping, type StressSource } from './familyState';
 import type { Character, Choice, Effect, EventInstance, GameState, PlayerAction } from './types';
@@ -36,7 +37,7 @@ export function addStress(s: GameState, charId: string, amount: number, source: 
   if (!c?.alive || !amount) return 0;
   const p = famMut(s, charId);
   const before = p.stress;
-  p.stress = Math.max(0, Math.min(100, Math.round(p.stress + amount)));
+  p.stress = Math.max(0, Math.min(100, Math.round(p.stress + amount * stressMult(s, charId, amount))));
   const applied = p.stress - before;
   if (applied > 0) p.stressSrc[source] = (p.stressSrc[source] ?? 0) + applied;
   if (applied < 0) {

@@ -1,3 +1,4 @@
+import { agingOf, isBlind, lvl } from './aging';
 import { briefing } from './briefing';
 import { datingPhone } from './dating';
 import { capos, displayName, isFree, player } from './characters';
@@ -314,8 +315,8 @@ export function officeRoom(s: GameState): OfficeRoom {
     photos: Math.min(8, living.length),
     family: living.slice(0, 8).map((c) => ({ id: c.id, name: displayName(c) })),
     memorial: dead ? { id: dead.id, name: displayName(dead), week: dead.death!.week } : undefined,
-    cane: !!boss && boss.health < 45,
-    medicine: !!boss && (boss.conditions.length > 0 || boss.health < 60),
+    cane: !!boss && (boss.health < 45 || lvl(s, boss.id, 'infirm') >= 2 || lvl(s, boss.id, 'bones') >= 2 || isBlind(s, boss.id)),
+    medicine: !!boss && (boss.conditions.length > 0 || boss.health < 60 || (agingOf(s, boss.id).dx?.length ?? 0) > 0),
     health: boss?.health ?? 100,
     headline: news ? { paper: news.paper, text: news.headline, week: news.week } : undefined,
     absence: officeAbsence(s),
