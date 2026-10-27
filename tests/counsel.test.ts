@@ -28,7 +28,7 @@ function withDecision(s: GameState): { s: GameState; ev: EventInstance } {
   const choices: Choice[] = [
     { id: 'pay', label: 'Pay him off', because: 'paid', effects: [{ type: 'money', amount: -1500 }, { type: 'heat', bar: 'federal', amount: 4 }] },
     { id: 'raise', label: 'Give him 35%', because: 'gave more', effects: [{ type: 'contract', charId: k.id, keep: 0.35 }, { type: 'opinion', from: k.id, to: s.playerId, amount: 8, reason: 'a raise' }] },
-    { id: 'refuse', label: 'Refuse', because: 'refused', effects: [{ type: 'respect', amount: 2 }, { type: 'rivalOpinion', rival: rival.id, amount: -12 }] },
+    { id: 'refuse', label: 'Refuse', because: 'refused', effects: [{ type: 'respect', amount: 2 }, { type: 'rivalOpinion', rival: rival.id, amount: -12, reason: 'refused' }] },
   ];
   const ev: EventInstance = { iid: 'test-ev-1', defId: 'test_decision', title: 'A test decision', text: 'Something needs deciding.', week: s.week, choices, defaultChoiceId: 'pay', actors: [k.id], meta: { charId: k.id }, priority: 5, mandatory: false } as unknown as EventInstance;
   s.pendingEvents = [...s.pendingEvents, ev];

@@ -71,7 +71,6 @@ function VoiceCard({ s, v, open, onToggle }: { s: GameState; v: Voice; open: boo
       </div>
       <p className="mt-1.5 text-[12.5px] italic leading-snug text-stone-200" data-testid="table-says">{v.says}</p>
       {v.backsLabel && <p className="mt-0.5 text-[11px] text-stone-400">Backs: <span className="text-gold-300">{v.backsLabel}</span></p>}
-      {v.but && v.verdict === 'doBut' && <p className="mt-0.5 text-[11px] text-lime-200/90" data-testid="table-but">…{v.but}.</p>}
       {v.instead && (v.verdict === 'wait' || v.verdict === 'dont') && <p className="mt-0.5 text-[11px] text-amber-200" data-testid="table-instead">Instead: {v.instead}</p>}
       {v.bias && <p className="mt-1 rounded border border-amber-700/60 bg-amber-900/20 px-1.5 py-0.5 text-[11px] text-amber-200" data-testid="table-bias">Possible bias: {v.bias}.</p>}
       {open && (

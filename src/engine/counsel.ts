@@ -1,6 +1,6 @@
 import { previewAction } from './actions';
 import { explainAction, explainChoice, preSeason, type ActionExplanation } from './advice';
-import { adviceBrief, advisersFor, moneyRead, readSubject, type AdviceBrief, type AdviceSubject, type AdviserRef, type Certainty, type Reaction, type Stance } from './adviceBrief';
+import { adviceBrief, advisersFor, biasLabel, moneyRead, readSubject, type AdviceBrief, type AdviceSubject, type AdviserRef, type Certainty, type Reaction, type Stance } from './adviceBrief';
 import { briefing, type BriefItem, type BriefOption } from './briefing';
 import { idleMen } from './business';
 import { isInSeason } from './calendar';
@@ -494,7 +494,7 @@ function weigh(ctx: Ctx, adv: Character, ref: AdviserRef, e: Eval, interest = 0)
   let verdict: CounselVerdict;
   if (e.blocked) verdict = 'wait';
   else if (score >= 3) verdict = topCon && topCon.w >= 3 ? 'doBut' : 'do';
-  else if (score >= 0.5) verdict = 'doBut';
+  else if (score >= 0.5) verdict = topCon && topCon.w >= 1 ? 'doBut' : 'do';
   else if (score >= -2.5) verdict = 'wait';
   else verdict = 'dont';
   const skill = e.skill;
@@ -714,12 +714,47 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
         bias = bias ?? `It would be on his own ground (${d.name}): his crew earns from it`;
       }
       const about = ctx.aboutId ? s.characters[ctx.aboutId] : undefined;
-      if (about && about.id !== adv.id && sub.kind === 'event' && (about.capoId === adv.id)) bias = bias ?? `${about.firstName} is one of his own men`;
+      if (about && about.id !== adv.id && sub.kind === 'event') bias = bias ?? biasLabel(s, adv.id, about.id);
       const op = weigh(ctx, adv, ref, e, interest);
       (op as CounselOpinion & { bias?: string }).bias = bias;
       return { ref, adv, op, e };
     }),
   }));
+
+  // ---- one choice among several: a man ranks the options against each other ----
+  // The option he backs keeps its verdict; one clearly behind it is "Wait" (not this one), far behind "Don't".
+  if (opts.length > 1) {
+    men.forEach((_m, i) => {
+      const live = grid.filter((g) => !g.opt.disabled);
+      if (!live.length) return;
+      const best = [...live].sort((a, b) => b.ops[i].op.score - a.ops[i].op.score || opts.indexOf(a.opt) - opts.indexOf(b.opt))[0];
+      for (const g of grid) {
+        if (g === best) continue;
+        const op = g.ops[i].op;
+        const gap = best.ops[i].op.score - op.score;
+        if ((op.verdict === 'do' || op.verdict === 'doBut') && gap >= 1.5) {
+          op.verdict = gap >= 5 ? 'dont' : 'wait';
+          op.label = VERDICT_LABEL[op.verdict];
+          op.but = undefined;
+        }
+        if (op.verdict === 'wait' || op.verdict === 'dont') op.instead = `“${best.opt.label}” instead.`;
+      }
+    });
+  }
+
+  // ---- a decision has to be made: the option a man backs is never just "wait" ----
+  if (sub.kind === 'event' && opts.length > 1) {
+    men.forEach((_m, i) => {
+      const live = grid.filter((g) => !g.opt.disabled);
+      const best = [...live].sort((a, b) => b.ops[i].op.score - a.ops[i].op.score || opts.indexOf(a.opt) - opts.indexOf(b.opt))[0];
+      const op = best?.ops[i].op;
+      if (!op || (op.verdict !== 'wait' && op.verdict !== 'dont')) return;
+      op.but = op.verdict === 'dont' ? 'but only because the others are worse' : 'but it is a close call';
+      op.verdict = 'doBut';
+      op.label = VERDICT_LABEL.doBut;
+      op.instead = undefined;
+    });
+  }
 
   // ---- voices ----
   const multi = opts.length > 1;
@@ -742,8 +777,8 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
   const options: CounselOption[] | undefined = multi ? grid.map((g) => {
     const vs: Voice[] = g.ops.map((x, i) => {
       const v = voices[i];
-      const insteadOf = v.backs && v.backs !== g.opt.id && (x.op.verdict === 'wait' || x.op.verdict === 'dont') ? `“${v.backsLabel}” instead.` : x.op.instead;
-      return { ...x.op, instead: insteadOf, adviser: x.ref, says: says(x.adv, x.ref, x.op, `${key}|${g.opt.id}`), bias: (x.op as CounselOpinion & { bias?: string }).bias, blind: blindOf(x.ref, x.adv, x.e.brief) };
+      void v;
+      return { ...x.op, adviser: x.ref, says: says(x.adv, x.ref, x.op, `${key}|${g.opt.id}`), bias: (x.op as CounselOpinion & { bias?: string }).bias, blind: blindOf(x.ref, x.adv, x.e.brief) };
     });
     return { id: g.opt.id, label: g.opt.label, disabled: g.opt.disabled, action: g.opt.action, choiceId: g.opt.choice?.id, voices: vs, tally: tallyOf(vs), backers: voices.filter((v) => v.backs === g.opt.id).length };
   }) : undefined;
