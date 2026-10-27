@@ -251,3 +251,24 @@ describe('declutter: Find… reaches screens, people, places and things to do', 
     expect(findAll(s, 'x')).toEqual([]);
   });
 });
+
+describe('declutter: a calm frame', () => {
+  it('the top bar has one loop button, Office, orders and Find; the map has one dock', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { App } = await import('../src/ui/App');
+    const html = renderToString(createElement(App, { startOn: 'game' }));
+    expect(html).toContain('data-testid="waiting-button"');
+    expect(html).toContain('data-testid="office-button"');
+    expect(html).toContain('data-testid="orders-button"');
+    expect(html).toContain('data-testid="find-button"');
+    // The four old loop buttons are lines in the Waiting menu now, not buttons on the bar.
+    const bar = html.slice(html.indexOf('data-testid="topbar"'), html.indexOf('data-testid="map-area"'));
+    for (const id of ['decisions-button', 'sitdown-button', 'desk-button']) expect(bar, id).not.toContain(`data-testid="${id}"`);
+    // Today, the club and (on phones) the next goal share one dock.
+    const dock = html.slice(html.indexOf('data-testid="map-dock"'));
+    expect(html).toContain('data-testid="map-dock"');
+    expect(dock).toContain('data-testid="club-on-map"');
+    expect(html.split('data-testid="club-on-map"').length).toBe(2);
+  });
+});

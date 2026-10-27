@@ -67,8 +67,16 @@ export function SocialClub({ s, onUpstairs, onHq, onMap }: { s: GameState; onUps
 }
 
 /** On the map: the club as a building you can walk into (the transparent 3/4 sprite). */
-export function ClubOnMap({ s, onOpen }: { s: GameState; onOpen: () => void }) {
+export function ClubOnMap({ s, onOpen, compact }: { s: GameState; onOpen: () => void; /** A pill in the map's dock instead of the picture card. */ compact?: boolean }) {
   const room = officeRoom(s);
+  if (compact) {
+    return (
+      <button type="button" onClick={onOpen} data-testid="club-on-map" title={`The Shore Social Club: ${room.hq.club ? 'your headquarters' : 'not your headquarters'} · go in`}
+        className="pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-[11px] font-semibold text-gold-300 shadow-lg shadow-black/70 hover:border-gold-400 whitespace-nowrap">
+        ⌂ <span className="hidden sm:inline">The Shore Social </span>Club
+      </button>
+    );
+  }
   return (
     <button type="button" onClick={onOpen} data-testid="club-on-map" title="The Shore Social Club: go in"
       className="pointer-events-auto flex items-center gap-1.5 rounded-md border border-gold-600/60 bg-noir-900/90 p-1 pr-2 text-left shadow-lg shadow-black/70 hover:border-gold-400">

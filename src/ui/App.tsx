@@ -664,13 +664,20 @@ export function App({ startOn = 'title' }: AppProps) {
         overlay={(
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
-            {!s.gameOver && !home && !officeView && (
-              <div className="pointer-events-none absolute left-2 bottom-[92px] md:left-auto md:bottom-3 md:right-3 z-[1001]"><ClubOnMap s={s} onOpen={() => setOfficeView('club')} /></div>
-            )}
             {officeScreen}
-            {clockMode && !s.gameOver && !home && (
-              <div className="pointer-events-none absolute left-2 right-[120px] bottom-12 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex md:max-w-[calc(100%-330px)]">
-                <TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} />
+            {/* The map's one dock: today (the clock), the club, and on phones the next goal — one stack, beside the Alerts button, never under a card. */}
+            {!s.gameOver && !home && !officeView && (
+              <div className="llv-dock pointer-events-none absolute left-2 right-[112px] bottom-2 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex flex-col items-start gap-1.5 md:max-w-[calc(100%-330px)]" data-testid="map-dock">
+                {goalIdx >= 0 && helpLevel() !== 'experienced' && (
+                  <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
+                    className="md:hidden pointer-events-auto max-w-full truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
+                    ➚ {goals[goalIdx].title}
+                  </button>
+                )}
+                <div className="flex max-w-full items-center gap-1.5">
+                  {clockMode && <div className="flex min-w-0"><TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} /></div>}
+                  <ClubOnMap s={s} compact onOpen={() => setOfficeView('club')} />
+                </div>
               </div>
             )}
             {evenings.length > 0 && (
@@ -680,12 +687,6 @@ export function App({ startOn = 'title' }: AppProps) {
                     onMore={() => { setEvenings([]); setRoute({ home: 'week' }); }} />
                 ))}
               </div>
-            )}
-            {!s.gameOver && goalIdx >= 0 && !home && helpLevel() !== 'experienced' && (
-              <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
-                className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
-                ➚ {goals[goalIdx].title}
-              </button>
             )}
             {s.gameOver && (
               <div className="absolute inset-0 z-[1090] flex items-center justify-center bg-black/60 p-4">
