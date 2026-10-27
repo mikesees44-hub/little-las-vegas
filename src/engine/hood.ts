@@ -99,8 +99,14 @@ function ownerLabel(o: FactionId | 'private' | 'city', by?: string): string {
 
 function logEvent(s: GameState, h: HoodState, hood: HoodId, kind: HoodEventKind, text: string, lotId?: string): void {
   h.log.push({ y: s.date.y, m: s.date.m, hood, kind, text, lotId });
-  if (h.log.length > 160) h.log.splice(0, h.log.length - 160);
+  // Each neighborhood keeps its own last 40 (a busy one, like the house lots, cannot crowd out a quiet one's history).
+  let n = 0;
+  for (const x of h.log) if (x.hood === hood) n++;
+  if (n > HOOD_LOG) h.log.splice(h.log.findIndex((x) => x.hood === hood), 1);
 }
+
+/** Entries kept per neighborhood in the island's log (the view shows the last 30). */
+export const HOOD_LOG = 40;
 
 function pushHistory(s: GameState, l: Lot, how: 'bought' | 'sold' | 'built' | 'seized' | 'inherited', by?: string, price?: number): void {
   const hist = (l.history ??= []);
