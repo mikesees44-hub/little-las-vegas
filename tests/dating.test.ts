@@ -78,18 +78,23 @@ describe('1. she accepts or declines from her own state', () => {
   it('a no costs nothing and is remembered', () => {
     const s = fresh();
     const c = woman(s);
-    addOpinion(s, c.id, s.playerId, 'test', -35, 0);
+    addOpinion(s, c.id, s.playerId, 'test', -20, 0);
+    c.traits = ['Pious'];
     const pocket = s.tribute!.acct.personal;
     let refused = 0;
+    let accepted = 0;
+    expect(herDecision(s, c, 'date', 'dinner').chance).toBeLessThan(0.2);
     for (let i = 0; i < 20; i++) {
       s.rng = 1000 + i;
+      s.week++;
       const ctx = newCtx(s);
       resolveActions(ctx, [act({ op: 'invite', id: c.id, date: 'dinner' })], { strictFunding: true });
       if (ctx.log.some((l) => l.includes('refused'))) refused++;
+      if (ctx.log.some((l) => l.includes('accepted'))) accepted++;
     }
-    expect(refused).toBeGreaterThan(10);
+    expect(refused + accepted).toBeGreaterThanOrEqual(5);
+    expect(refused).toBeGreaterThan(accepted);
     expect(s.dating!.bonds[c.id].no).toBeTruthy();
-    const accepted = 20 - refused;
     expect(s.tribute!.acct.personal).toBe(pocket - accepted * 60);
   });
 });

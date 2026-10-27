@@ -181,7 +181,7 @@ export function peopleYouKnow(s: GameState): Character[] {
   const boss = player(s);
   return Object.values(s.characters).filter((c) => {
     if (datingBlock(s, c) || c.dynasty || c.id === boss.spouseId) return false;
-    if (!drawnTo(s, boss, c)) return false;
+    if (!drawnTo(s, boss, c) || !drawnTo(s, c, boss)) return false;
     if (isProviderOnly(s, c)) return false;
     return !!knownVia(s, c);
   });
@@ -464,7 +464,22 @@ function base(title: string, because: string): ActionPreview {
   return { title, effects: [], cost: 0, because, category: 'event' };
 }
 
+/** The button's own words: what you do, to whom, and the price. */
 export function previewDating(s: GameState, a: DatingAction): ActionPreview {
+  const p0 = previewDating0(s, a);
+  const zero = p0.acceptance && p0.acceptance.chance === 0 ? p0.acceptance.reasons.find((r) => r.value <= -100)?.label : undefined;
+  const p = zero && !p0.disabledReason ? { ...p0, disabledReason: zero } : p0;
+  const c = a.op === 'meet' ? undefined : s.characters[a.id];
+  const n = c?.firstName ?? 'her';
+  const cost = p.cost ? ` — ${$(p.cost)}` : '';
+  const words: Record<DatingAction['op'], string> = {
+    talk: `Talk to ${n}`, invite: a.op === 'invite' ? `Ask ${n} to ${a.date === 'coffee' ? 'coffee' : a.date === 'dinner' ? 'dinner' : 'a night out'}` : '', gift: `Send the gift`, steady: `Ask ${n}`, commit: `Ask ${n}`,
+    reconcile: `Ask ${n} to come home`, meet: 'Arrange the introduction', paid: `Ask ${n} for the evening`, askOut: `Ask ${n} out`,
+  };
+  return { ...p, verb: `${words[a.op]}${cost}` };
+}
+
+function previewDating0(s: GameState, a: DatingAction): ActionPreview {
   const D = s.dating;
   if (a.op === 'meet') return previewMeet(s, a.tp);
   const c = s.characters[a.id];
@@ -592,7 +607,7 @@ function previewPaid(s: GameState, c: Character): ActionPreview {
   const evenings = eveningsLeft(s);
   const reach = p ? providerReach(s, p) : undefined;
   return {
-    ...base(`An evening with ${first} (${kind}): ${$(price)}`, `paid for an evening's company`), cost: price, pot: 'pocket',
+    ...base(`An evening with ${first}: ${$(price)}`, `paid for an evening's company`), cost: price, pot: 'pocket',
     detail: `${displayName(c)}, ${p ? ageOfChar(s, c) : '?'}, ${kind}. ${reach?.reach ?? ''}. Her price is ${$(price)} for the evening, paid from your pocket${price ? '' : ''}; it is an agreed transaction between adults and nothing more: no feelings, no relationship, no standing arrangement. She can say no, and then you pay nothing. Takes one of your evenings this week (${Math.max(0, evenings)} left before it). The report ends at the door.`,
     effects: [{ type: 'money', pot: 'pocket', amount: -price, label: `An evening's company (${first})` }, X({ op: 'paid', id: c.id, price }, `An evening's company (${first})`)],
     acceptance: p ? paidAcceptance(s, c, p) : undefined,
@@ -1022,7 +1037,7 @@ function nextActions(s: GameState, c: Character, st: Stage): PlayerAction[] {
     case 'attracted': return [d({ op: 'steady', id }), d({ op: 'invite', id, date: 'dinner' }), d({ op: 'invite', id, date: 'night' }), d({ op: 'gift', id, tier: 'flowers' }), d({ op: 'gift', id, tier: 'jewelry' })];
     case 'dating': return [d({ op: 'invite', id, date: 'night' }), d({ op: 'commit', id }), d({ op: 'invite', id, date: 'dinner' }), d({ op: 'gift', id, tier: 'jewelry' }), d({ op: 'gift', id, tier: 'flowers' }), i('proposeMarriage'), i('endRomance')];
     case 'committed': return [i('proposeMarriage'), d({ op: 'invite', id, date: 'night' }), d({ op: 'invite', id, date: 'dinner' }), d({ op: 'gift', id, tier: 'jewelry' }), i('endRomance')];
-    case 'married': return [i('separate')];
+    case 'married': return [d({ op: 'gift', id, tier: 'flowers' }), d({ op: 'gift', id, tier: 'jewelry' }), i('separate')];
     case 'separated': return [d({ op: 'reconcile', id })];
     case 'ended': return [d({ op: 'talk', id }), d({ op: 'invite', id, date: 'coffee' })];
   }

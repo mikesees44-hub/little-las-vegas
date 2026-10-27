@@ -177,8 +177,14 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
     <div className="space-y-3" data-testid="dating-panel">
       <div className="rounded-md border border-noir-700 bg-noir-900/60 p-2.5" data-testid="dating-summary">
         <div className="text-sm text-stone-200">
-          {v.relationships.length ? <>You are seeing <b>{v.relationships.filter((r) => r.stage === 'dating' || r.stage === 'committed').length}</b>{v.relationships.some((r) => r.stage === 'married' || r.stage === 'separated') ? ' and you have a wife' : ''}. </> : 'Nobody serious right now. '}
-          You know <b>{v.people.length}</b> {v.people.length === 1 ? 'woman' : 'women'} who could be more. <b>{left}</b> evening{left === 1 ? '' : 's'} left this week{v.evenings.used ? ` (${v.evenings.used} taken by dates)` : ''}.
+          {(() => {
+            const seeing = v.relationships.filter((r) => r.stage === 'dating' || r.stage === 'committed');
+            const wife = v.relationships.find((r) => r.stage === 'married' || r.stage === 'separated');
+            const w = wife ? `You are ${wife.stage === 'separated' ? 'separated from' : 'married to'} ${wife.name.split(' ')[0]}` : '';
+            if (!seeing.length) return <>{w ? `${w}. ` : 'Nobody serious right now. '}</>;
+            return <>{w ? `${w}, and you are seeing ` : 'You are seeing '}<b>{seeing.map((r) => r.name.split(' ')[0]).join(', ')}</b>. </>;
+          })()}
+          You know <b>{v.people.length}</b> {v.people.length === 1 ? 'person' : 'people'} who could be more. <b>{left}</b> evening{left === 1 ? '' : 's'} left this week{v.evenings.used ? ` (${v.evenings.used} taken by dates)` : ''}.
         </div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-stone-400">
           <span>Mature content: <b className="text-stone-200" data-testid="dating-mature">{MATURE_LABEL[v.settings.mature]}</b></span>

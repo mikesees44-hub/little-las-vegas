@@ -1,4 +1,6 @@
 import { startPocket } from './tributeState';
+import { ensureProviders } from './dating';
+import { ensureDating } from './datingState';
 import { SCHEMA } from './trustMigrations';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
@@ -343,5 +345,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   initEars(s);
   if (!opts.skipHouses) setupHouses(s);
   startPocket(s);
+  // Relationships & Dating: the settings and the night's roster, ready on the first screen (its own dice).
+  ensureProviders(s, ensureDating(s));
   return s;
 }
