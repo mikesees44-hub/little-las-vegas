@@ -422,7 +422,7 @@ export function App({ startOn = 'title' }: AppProps) {
 
   const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports, houseSel, onHouseSel: setHouseSel };
   const housesApi = { openHouse: (id: string) => { setSheet(undefined); setHouseSel(id); openRoute({ panel: 'house', section: 'houses' }); } };
-  const shellApi: ShellApi = { go, focus: focusMap };
+  const shellApi: ShellApi = { go, focus: focusMap, update: setS };
   const tributeApi: TributeUiApi = {
     envelope, setEnvelope,
     openAudience: (id) => {

@@ -8,6 +8,8 @@ import type { GameState } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { FACTION_TINT, useSheet } from '../components/People';
 import { useOffice } from '../desk/officeApi';
+import { useShell } from '../shell/context';
+import { useOpenDating } from '../dating/DatingPanel';
 import { fmt$ } from '../format';
 import { AssetImg } from '../hood/AssetImg';
 import { Portrait } from '../portrait/Portrait';
@@ -264,6 +266,8 @@ function PhonePanel({ s }: { s: GameState }) {
   const sheet = useSheet();
   const orders = useOrders();
   const book = useMemo(() => officePhone(s), [s]);
+  const shell = useShell();
+  const openDating = useOpenDating();
   const [lawyer, setLawyer] = useState(false);
   const reading = lawyer ? lawyerReading(s) : undefined;
   return (
@@ -278,7 +282,7 @@ function PhonePanel({ s }: { s: GameState }) {
                 <div className="text-[11px] text-stone-400">{p.role}{p.blocked ? ` · ${p.blocked}` : ''}</div>
               </div>
               <button type="button" className="btn-ghost shrink-0 px-2 py-0.5 text-[11px]" disabled={!!p.blocked}
-                onClick={(e) => { if (p.kind === 'lawyer') setLawyer((x) => !x); else if (p.charId) sheet.menu?.(p.charId, p.kind === 'rival' ? 'diplomacy' : 'talk', { x: Math.max(8, e.clientX - 260), y: e.clientY }); }}
+                onClick={(e) => { if (p.kind === 'lawyer') setLawyer((x) => !x); else if (p.kind === 'dating' || p.kind === 'company') openDating({ tab: p.kind === 'company' ? 'adult' : 'together' }); else if (p.charId) sheet.menu?.(p.charId, p.kind === 'rival' ? 'diplomacy' : 'talk', { x: Math.max(8, e.clientX - 260), y: e.clientY }); }}
                 data-testid={p.kind === 'lawyer' ? 'office-call-lawyer-btn' : undefined}>☏ Call</button>
             </div>
             {p.kind === 'lawyer' && reading && (
@@ -297,6 +301,7 @@ function PhonePanel({ s }: { s: GameState }) {
           </li>
         ))}
       </ul>
+      <button type="button" className="btn-ghost mt-1.5 w-full px-2 py-1 text-[11px]" onClick={() => shell.go('you.dating')} data-testid="office-call-dating-open">♥ Relationships & Dating ▸</button>
     </div>
   );
 }

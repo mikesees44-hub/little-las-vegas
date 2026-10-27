@@ -142,7 +142,7 @@ function Evening({ s, day, update, locked }: { s: GameState; day: number; update
         <>
           {r ? <RoundButton s={s} r={r} on onPick={() => !locked && update((x) => setEvening(x, day, null))} showReading block={locked ? 'Done' : undefined} />
             : <p className="text-[11px] text-stone-500">A free evening. Home by nine, or pick something.</p>}
-          {r && !locked && <p className="text-[10px] text-stone-500" data-testid="evening-pays">{r.cost ? `${fmt$(r.cost)} from your pocket on ${DAY_NAMES[day]} night (the Family covers what the pocket can't). ` : 'Costs nothing. '}Cancelling costs nothing until then: tap it to clear the evening.</p>}
+          {r && !locked && <p className="text-[10px] text-stone-500" data-testid="evening-pays">{r.cost ? (r.pocketOnly ? `${fmt$(r.cost)} from your pocket only on ${DAY_NAMES[day]} night (never Family money: if the pocket is short, the evening does not happen). ` : `${fmt$(r.cost)} from your pocket on ${DAY_NAMES[day]} night (the Family covers what the pocket can't). `) : 'Costs nothing. '}Cancelling costs nothing until then: tap it to clear the evening.</p>}
           {confirm && r && (
             <div className="rounded border border-gold-500/70 bg-gold-500/10 p-2 text-[12px]" role="alertdialog" aria-label="Replace the evening" data-testid="evening-replace">
               <div className="text-stone-200"><b>{DAY_NAMES[day]} is booked:</b> {r.label}.</div>

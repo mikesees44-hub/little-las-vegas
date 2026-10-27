@@ -139,6 +139,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   you: [
     { title: 'The boss', items: [
       { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
+      { keys: ['you.dating'], icon: '♥', label: 'Relationships & Dating', sub: 'People you know, dates and relationships, adult services (with prices), pregnancies and children. She always decides.' },
       { keys: ['you.lifestyle'], icon: '♠', label: 'How you rule', sub: 'Your style as boss and its perks. Experience builds every week.' },
       { keys: ['you.possessions'], icon: '♦', label: 'The good life', sub: 'Homes, cars, the boat and the toys. Each one costs upkeep.' },
       { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
