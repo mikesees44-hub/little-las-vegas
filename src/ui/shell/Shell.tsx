@@ -21,6 +21,9 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
 }) {
   const [wide, setWide] = useState(false);
   const [sheet, setSheet] = useState(false);
+  // Wide screens: the right column folds to its icons for more map (remembered in this browser).
+  const [folded, setFolded] = useState(() => { try { return localStorage.getItem('llv-right-folded') === '1'; } catch { return false; } });
+  const fold = (v: boolean) => { setFolded(v); try { localStorage.setItem('llv-right-folded', v ? '1' : '0'); } catch { /* storage unavailable */ } };
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden" data-testid="shell">
       {top}
@@ -31,15 +34,21 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
           {overlay}
           {drawer}
         </div>
-        {/* Wide screens: the full column. */}
-        <aside className="hidden xl:flex w-[300px] 2xl:w-[340px] shrink-0 flex-col gap-2 overflow-y-auto border-l border-noir-700 bg-noir-900/90 p-2" data-testid="right-column">{right}</aside>
-        {/* Tablets and small laptops: icons, unfolding over the map. */}
-        <aside className="hidden md:flex xl:hidden w-14 shrink-0 flex-col items-center gap-2 overflow-y-auto border-l border-noir-700 bg-noir-900/90 py-2" data-testid="right-icons">
+        {/* Wide screens: the full column (it folds to icons on request). */}
+        {!folded && (
+          <aside className="hidden xl:flex w-[300px] 2xl:w-[340px] shrink-0 flex-col gap-2 overflow-y-auto border-l border-noir-700 bg-noir-900/90 p-2" data-testid="right-column">
+            <button type="button" className="self-end -mb-1 text-[10px] text-stone-500 hover:text-gold-300" onClick={() => fold(true)} data-testid="right-fold" title="Fold this column to icons for more room">fold ›</button>
+            {right}
+          </aside>
+        )}
+        {/* Tablets and small laptops (and a folded column): icons, unfolding over the map. */}
+        <aside className={`hidden md:flex ${folded ? '' : 'xl:hidden'} w-14 shrink-0 flex-col items-center gap-2 overflow-y-auto border-l border-noir-700 bg-noir-900/90 py-2`} data-testid="right-icons">
           <button type="button" className="h-9 w-9 rounded border border-noir-600 text-stone-300 hover:border-gold-500" onClick={() => setWide((w) => !w)} aria-expanded={wide} title="This week, goals and the street">☰</button>
+          {folded && <button type="button" className="hidden xl:block text-[10px] text-stone-500 hover:text-gold-300" onClick={() => { fold(false); setWide(false); }} data-testid="right-unfold" title="Show the column again">‹ open</button>}
           {rightIcons}
         </aside>
         {wide && (
-          <div className="hidden md:block xl:hidden absolute right-14 inset-y-0 z-[1120] w-[320px] overflow-y-auto border-l border-noir-700 bg-noir-900/[0.97] p-2 space-y-2 shadow-2xl llv-slide-right">
+          <div className={`hidden md:block ${folded ? '' : 'xl:hidden'} absolute right-14 inset-y-0 z-[1120] w-[320px] overflow-y-auto border-l border-noir-700 bg-noir-900/[0.97] p-2 space-y-2 shadow-2xl llv-slide-right`}>
             <button type="button" className="float-right text-xs text-stone-400 hover:text-gold-300" onClick={() => setWide(false)}>close ×</button>
             {right}
           </div>
