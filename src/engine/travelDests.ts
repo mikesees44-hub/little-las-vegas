@@ -1,4 +1,5 @@
 import { CITIES_BY_ID, CITY_LIST } from './cities';
+import { packageForTown } from '../worldpack/cities';
 import type { GameDate, RivalId } from './types';
 import type { BudgetTier, Entertainer, FugitiveDest, TravelMode } from './travelState';
 
@@ -281,6 +282,14 @@ function cityDest(id: string): Dest | undefined {
   if (!c || id === 'wildwood') return undefined;
   const miles = greatCircle(WW, c);
   const modes: TravelMode[] = id === 'havana' ? ['plane', 'ship'] : miles < 150 ? ['bus', 'cars', 'train'] : ['plane', 'train', 'bus', 'cars'];
+  // A town with a package says where you stay and what there is to do (its hotels, landmarks, back rooms).
+  const visit = packageForTown(id)?.visit;
+  if (visit) {
+    return {
+      id, name: c.name, lat: c.lat, lon: c.lon, region: c.region, blurb: c.flavor, cityId: id, modes, resort: true, peak: visit.peak, miles,
+      hotels: visit.hotels, price: 1, activities: visit.activities.map((a) => ({ id: a.id, name: a.name, text: a.text, tags: a.tags as ActTag[], cost: a.cost, months: a.months })),
+    };
+  }
   return {
     id, name: c.name, lat: c.lat, lon: c.lon, region: c.region, blurb: c.flavor, cityId: id, modes, resort: false, peak: [], miles,
     hotels: ['a commercial hotel', 'the best hotel downtown', 'a suite at the best hotel in town'], price: 1, activities: BIZ(c.name), abroad: id === 'havana', noRoad: id === 'havana',

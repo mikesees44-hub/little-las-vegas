@@ -1,3 +1,4 @@
+import { WILDWOOD_PACKAGE as PKG } from '../worldpack/cities';
 import { displayName } from './characters';
 import type { Lot } from './econState';
 import { PLACES, placesIn, type PlaceFeature } from './placesGeo';
@@ -38,124 +39,8 @@ export interface WalkStretch {
   zoneLots: number;
 }
 
-export const STRETCHES: WalkStretch[] = [
-  {
-    id: 'boards-arcades', label: 'The arcade boards', where: 'The Boardwalk, Rio Grande Avenue up to Andrews',
-    backdrop: ['scene_boardwalk_tram', 'boardwalk_blue_hour_1958'], zone: 'boardwalk', district: 'boardwalk', zoneLots: 2,
-    blurb: 'The tram car rattles past arcade after arcade. Every one of these places takes in quarters all night, and every one of them pays somebody.',
-    places: ['bw-sportsland', 'bw-nutty-hut', 'bw-old-macks', 'bw-bazaar', 'bw-olympia', 'bw-taffy-tides', 'bw-eds-fun-arcade', 'bw-flashback', 'bw-casino-arcadia', 'bw-surfside', 'sb03', 'bw-chapel'],
-    lines: {
-      'bw-sportsland': 'Surreys and bikes by the hour. The kid at the counter knows every cop who rides the boards in the morning.',
-      'bw-nutty-hut': 'Roasted peanuts and cashews by the scoop. The smell carries half a block.',
-      'bw-old-macks': 'Thin crust, a line out the door, and the same three pizza men since the war.',
-      'bw-bazaar': 'Shells, ashtrays, and WILDWOOD on everything. Cash only.',
-      'bw-olympia': 'Pokerino, skee-ball and a prize wall. The machines in the back pay out in cash, if you know to ask.',
-      'bw-taffy-tides': 'Salt water taffy pulled in the window. The tourists stand and watch.',
-      'bw-eds-fun-arcade': 'Pinball, the claw, and a change girl who sees everything.',
-      'bw-flashback': 'Dress up like a gangster, have your picture taken. The irony is not lost on anybody.',
-      'bw-casino-arcadia': 'The biggest arcade on the boards. Bingo in the back, and the bingo is where the money is.',
-      'bw-surfside': 'Bathing suits and beach towels. The owner pays his envelope on time.',
-      sb03: 'A family restaurant on the boards since anybody can remember. Chicken pot pie and a view of the ocean.',
-      'bw-chapel': 'Hymns at night on the Boardwalk. A landmark: nobody shakes down a chapel.',
-    },
-  },
-  {
-    id: 'boards-north', label: 'The North End boards', where: 'The Boardwalk in North Wildwood, 26th Avenue down to 16th',
-    backdrop: ['boardwalk_blue_hour_1958', 'scene_island_aerial'], zone: 'north', district: 'north', zoneLots: 2,
-    blurb: 'The quieter end of the boards: fries in paper cones, a pancake house, ice cream at the Sea Shell. North Wildwood is Kessler country, and his people watch who walks it.',
-    places: ['sb01', 'bw-gateway-25', 'bw-lil-nickys', 'bw-fudge-kitchenette', 'bw-curlys', 'bw-sea-shell', 'bw-route-69', 'bw-bobby-ds', 'bw-octopus-golf', 'bw-boat-tag', 'bw-sammys', 'bw-skippers'],
-    lines: {
-      sb01: 'A seafood house on the boards with a big neon sign. The owner is getting old and thinking about selling.',
-      'bw-gateway-25': 'An arcade at the 25th Avenue ramp, frozen custard at the window.',
-      'bw-lil-nickys': 'Slices through a window, the boards\' late-night pizza.',
-      'bw-fudge-kitchenette': 'Fudge made in copper kettles while you watch. Boxes for the trip home.',
-      'bw-curlys': 'Fresh-cut fries in a paper cone, vinegar on the counter.',
-      'bw-sea-shell': 'Ice cream in a gingerbread cottage. The picnic tables fill up after dark.',
-      'bw-route-69': 'A diner with a car on the roof. Coffee all night.',
-      'bw-bobby-ds': 'A family fun center: skee-ball, the claw, a prize counter.',
-      'bw-octopus-golf': 'Indoor mini golf under a giant octopus.',
-      'bw-boat-tag': 'Little motor boats in a pool, kids bumping each other for a dime.',
-      'bw-sammys': 'Pancakes from six in the morning. The cops eat here, which is worth knowing.',
-      'bw-skippers': 'Fried fish in a paper boat, a nautical rooftop, a line at lunch.',
-    },
-  },
-  {
-    id: 'pacific', label: 'Pacific Avenue after dark', where: 'Pacific Avenue, the club strip, Spicer Avenue to Burk',
-    backdrop: ['street_pacific_neon', 'street_7sees', 'neighborhood_twilight_1958'], zone: 'pacific', district: 'pacific', zoneLots: 3,
-    blurb: 'Neon from one end to the other: the clubs, the lounges, the saloons. The acts come down from Philadelphia and New York; so does the money. This is where a family shows it runs the town.',
-    places: ['sa05', 'sa20', 'pa05', 'pa03', 'pa01', 'pa02', 'sa08', 'sa09', 'pa-rainbow', 'pa-quo-vadis', 'pa-oasis', 'pa-riptide', 'pa-stardust', 'pa-starburst', 'sb02', 'pa-fairview', 'pa-shore-comedy', 'pa-uncle-vinnys', 'pa-wildwood-high'],
-    lines: {
-      sa05: 'A Victorian corner bar older than the town\'s charter. The back room has seen every deal on the island.',
-      sa20: 'Banjos, straw hats and beer by the pitcher. Packed every night in July.',
-      pa05: 'The supper club: a floor show, a dance band, and tables down front for the people who matter.',
-      pa03: 'A club with a cigarette girl and a back door onto the alley.',
-      pa01: 'A small, dark lounge. The bartender keeps a book.',
-      pa02: 'The velvet rope is real: the doorman decides who gets in.',
-      sa08: 'Red sauce, candles in Chianti bottles, a private room upstairs.',
-      sa09: 'Hoagies, cold cuts and a phone the bookies use.',
-      'pa-rainbow': 'Rock and roll at the corner: the kids line up around the block.',
-      'pa-quo-vadis': 'A cocktail lounge in turquoise and chrome.',
-      'pa-oasis': 'A corner nightclub with palm trees in neon.',
-      'pa-riptide': 'Twin bands, a long bar, sailors on leave.',
-      'pa-stardust': 'A turquoise nightclub with a stage and a curtain.',
-      'pa-starburst': 'Pizza at the window, the Neon arcade inside, the Starburst lounge on the corner and rooms upstairs.',
-      sb02: 'A marquee nightclub with headliners all summer.',
-      'pa-fairview': 'A neighborhood corner bar, the regulars on their own stools.',
-      'pa-shore-comedy': 'A comedy club: two shows a night, a two-drink minimum.',
-      'pa-uncle-vinnys': 'The comics who come down from New York play here.',
-      'pa-wildwood-high': 'The high school. A public building: never for sale.',
-    },
-  },
-  {
-    id: 'docks', label: 'Otten\'s Harbor', where: 'The bay docks, Park Boulevard and the harbor',
-    backdrop: ['street_docks_day', 'street_docks_day2', 'district_docks_bayside'], zone: 'docks', district: 'docks', zoneLots: 3,
-    blurb: 'Fishing boats, ice houses, bait and fuel. Whatever comes onto the island by water comes in here, and the dock boss knows what is in every crate.',
-    places: ['sb04', 'pk-ricks', 'pk-ship-shore', 'bay-urys'],
-    lines: {
-      sb04: 'A restaurant on pilings over the bay: the boats tie up at the back door.',
-      'pk-ricks': 'Crabs, clams and shrimp to take out, benches out front. The fishermen eat here.',
-      'pk-ship-shore': 'A bar on its own dock. The captains drink here, and so do the men who unload their boats.',
-      'bay-urys': 'A waterfront restaurant at the foot of the causeway, boats at the rail.',
-    },
-  },
-  {
-    id: 'crest', label: 'The Crest motel strip', where: 'Wildwood Crest: Ocean and Atlantic Avenues',
-    backdrop: ['scene_doowop_neighborhood', 'district_crest_doowop', 'blue_comet_motel'], zone: 'crest', district: 'crest', zoneLots: 3,
-    blurb: 'New motels every season: boomerang roofs, kidney pools, pink doors. The builders need permits, concrete and labor, and every one of those can be sold to them.',
-    places: ['sb05', 'sb06', 'oc-beach-haus', 'at-shore-motel', 'at-panorama', 'at-rio-grande-motel', 'at-ebb-tyde', 'at-satellite', 'at-schumanns', 'oc-star-lux'],
-    lines: {
-      sb05: 'An oceanfront resort with palm trees in neon. Families from Philadelphia book the same week every year.',
-      sb06: 'A motel built around its pool. Weekly rates, a manager who asks no questions.',
-      'oc-beach-haus': 'Two stories around the pool, a beach ball on the sign.',
-      'at-shore-motel': 'A small motel, clean and quiet. The owner wants to build a second floor.',
-      'at-panorama': 'Motel apartments by the week, a sign in a row of colored tiles. Summer help packs four to a room.',
-      'at-rio-grande-motel': 'Efficiency apartments in turquoise stucco. Cash for the season, no names in the book.',
-      'at-ebb-tyde': 'A blue-hour motel with a blade sign over Atlantic Avenue.',
-      'at-satellite': 'A boomerang roof and a rocket on the sign: the newest thing in the Crest.',
-      'at-schumanns': 'A family restaurant: the motel guests eat breakfast here.',
-      'oc-star-lux': 'A modern motel with a pool pavilion and a starburst sign.',
-    },
-  },
-  {
-    id: 'north', label: 'North Wildwood', where: 'Atlantic Avenue in North Wildwood, up to the Hereford Inlet',
-    backdrop: ['neighborhood_twilight_1958', 'street_crablegs'], zone: 'north', district: 'north', zoneLots: 2,
-    blurb: 'Corner delis, churches, City Hall and the old lighthouse at the inlet. The year-round people live up here; so do the men who run the North End.',
-    places: ['nw-lollypop', 'at-bils', 'at-al-pizza', 'at-corner-inn', 'at-romeos', 'nw-city-hall', 'nj-st-anselms', 'nj-holy-redeemer', 'nj-wesley', 'hereford-light', 'club-avalon'],
-    lines: {
-      'nw-lollypop': 'A motel with a lollipop on the sign. Kids pick it from the car window.',
-      'at-bils': 'Pizza, steaks, hoagies, wings: the corner deli for the whole neighborhood.',
-      'at-al-pizza': 'A corner pizza and deli. Delivery, which means a car that goes everywhere.',
-      'at-corner-inn': 'A corner hotel with a bar on the ground floor.',
-      'at-romeos': 'A pizzeria at Taylor Avenue, new in town.',
-      'nw-city-hall': 'North Wildwood City Hall. The permits and the police are both here. Public: never for sale.',
-      'nj-st-anselms': 'The parish church. Sunday mass is where the whole town sees who is with who.',
-      'nj-holy-redeemer': 'A stone church on New Jersey Avenue.',
-      'nj-wesley': 'A brick Methodist church.',
-      'hereford-light': 'The Hereford Inlet Light, 1874. A public landmark.',
-      'club-avalon': 'The landmark nightclub of the North End. A place to be seen; never anybody\'s to own.',
-    },
-  },
-];
+/** The stretches, from the Wildwood town package (`walkStretches` there; the order is the walk order). */
+export const STRETCHES: WalkStretch[] = PKG.walkStretches as WalkStretch[];
 
 export const STRETCHES_BY_ID: Record<string, WalkStretch> = Object.fromEntries(STRETCHES.map((x) => [x.id, x]));
 

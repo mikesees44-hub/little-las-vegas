@@ -1,0 +1,2322 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": "2026-10-27.capemay-1",
+  "id": "city:cape-may",
+  "townId": "capemay",
+  "displayName": "Cape May",
+  "regionId": "region:south-jersey",
+  "status": "production",
+  "detail": "aggregate",
+  "era": {
+    "from": 1955,
+    "to": 1990
+  },
+  "businesses": [
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w01",
+      "name": "Hollis Dry Goods",
+      "namePolicy": "fictional",
+      "operator": "Edna Hollis",
+      "parcelId": "cm-w01",
+      "take": 310,
+      "use": "storefront",
+      "years": {
+        "from": 1902
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w02",
+      "name": "Kearney's Pharmacy",
+      "namePolicy": "fictional",
+      "operator": "Walt Kearney",
+      "parcelId": "cm-w02",
+      "take": 280,
+      "use": "pharmacy",
+      "years": {
+        "from": 1921
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w03",
+      "name": "The Lyric Theatre",
+      "namePolicy": "fictional",
+      "operator": "the Brandeis family",
+      "parcelId": "cm-w03",
+      "take": 420,
+      "use": "cinema",
+      "years": {
+        "from": 1912,
+        "to": 1974
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w03b",
+      "name": "Lyric Antiques Arcade",
+      "namePolicy": "fictional",
+      "operator": "a dealers' co-op",
+      "parcelId": "cm-w03",
+      "take": 200,
+      "use": "giftshop",
+      "years": {
+        "from": 1976
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w04",
+      "name": "Brandt's Bakery",
+      "namePolicy": "fictional",
+      "operator": "Otto Brandt",
+      "parcelId": "cm-w04",
+      "take": 190,
+      "use": "bakery",
+      "years": {
+        "from": 1928
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w05",
+      "name": "Cape Island Hardware",
+      "namePolicy": "fictional",
+      "operator": "Sid Mulford",
+      "parcelId": "cm-w05",
+      "take": 230,
+      "use": "hardware",
+      "years": {
+        "from": 1934
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w06",
+      "name": "The Sea Breeze Luncheonette",
+      "namePolicy": "fictional",
+      "operator": "Connie Pappas",
+      "parcelId": "cm-w06",
+      "take": 260,
+      "use": "diner",
+      "years": {
+        "from": 1946
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w07",
+      "name": "Merriam's Books & Stationery",
+      "namePolicy": "fictional",
+      "operator": "Ida Merriam",
+      "parcelId": "cm-w07",
+      "take": 150,
+      "use": "bookstore",
+      "years": {
+        "from": 1931
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w08",
+      "name": "Dellaventura's Barber Shop",
+      "namePolicy": "fictional",
+      "operator": "Sal Dellaventura",
+      "parcelId": "cm-w08",
+      "take": 120,
+      "use": "barber",
+      "years": {
+        "from": 1938
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w09",
+      "name": "Seaside Florist",
+      "namePolicy": "fictional",
+      "operator": "Marge Coyle",
+      "parcelId": "cm-w09",
+      "take": 110,
+      "use": "florist",
+      "years": {
+        "from": 1950
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-w11",
+      "name": "Giordano's Trattoria",
+      "namePolicy": "fictional",
+      "operator": "Lou Giordano",
+      "parcelId": "cm-w11",
+      "take": 240,
+      "use": "trattoria",
+      "years": {
+        "from": 1952
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "A near-miss name: its real namesake still serves dinner on Washington Street. Location and years approximate."
+      },
+      "id": "b:cm-w12",
+      "name": "The Jefferson Inn",
+      "namePolicy": "near-miss",
+      "nearMissOf": "The Washington Inn (still operating)",
+      "operator": "the Craig family",
+      "parcelId": "cm-w12",
+      "take": 380,
+      "use": "supper",
+      "years": {
+        "from": 1940
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "A near-miss name for the big brick hotel on Congress Place, still operating. Its real name and presidents' visits are history; this one is the game's."
+      },
+      "id": "b:cm-b01",
+      "name": "Capitol Hall Hotel",
+      "namePolicy": "near-miss",
+      "nearMissOf": "Congress Hall (still operating)",
+      "operator": "the Mercer estate",
+      "parcelId": "cm-b01",
+      "take": 900,
+      "use": "hotel",
+      "years": {
+        "from": 1879
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "verified",
+        "scope": [
+          "dates",
+          "identity"
+        ],
+        "source": "Wikipedia, \"Cape May Historic District\": the Windsor Hotel was built in 1879 after the 1878 fire and destroyed by fire May 18, 1979. Its spot on Beach Avenue here is approximate; its operators are the game's."
+      },
+      "id": "b:cm-b02",
+      "name": "The Windsor Hotel",
+      "namePolicy": "historical",
+      "operator": "the Tull family",
+      "parcelId": "cm-b02",
+      "take": 650,
+      "use": "hotel",
+      "years": {
+        "from": 1879,
+        "to": 1979
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-b03",
+      "name": "Beach Avenue Arcade",
+      "namePolicy": "fictional",
+      "operator": "Harry Voss",
+      "parcelId": "cm-b03",
+      "take": 210,
+      "use": "arcade",
+      "years": {
+        "approx": true,
+        "from": 1925,
+        "to": 1962
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-b03b",
+      "name": "Promenade Surf Shop",
+      "namePolicy": "fictional",
+      "operator": "the Voss boys",
+      "parcelId": "cm-b03",
+      "take": 160,
+      "use": "surf",
+      "years": {
+        "from": 1966
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-b04",
+      "name": "Ocean Breeze Taffy",
+      "namePolicy": "fictional",
+      "operator": "the Ridgway sisters",
+      "parcelId": "cm-b04",
+      "take": 150,
+      "use": "giftshop",
+      "years": {
+        "from": 1930
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-b05",
+      "name": "The Marlborough Hotel",
+      "namePolicy": "fictional",
+      "operator": "Augusta Pell",
+      "parcelId": "cm-b05",
+      "take": 520,
+      "use": "hotel",
+      "years": {
+        "from": 1890,
+        "to": 1969
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-b05b",
+      "name": "Marlborough Towers",
+      "namePolicy": "fictional",
+      "operator": "a Philadelphia developer",
+      "parcelId": "cm-b05",
+      "take": 300,
+      "use": "condo",
+      "years": {
+        "from": 1973
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-b06",
+      "name": "Shelton's Bathing Pavilion",
+      "namePolicy": "fictional",
+      "operator": "Gus Shelton",
+      "parcelId": "cm-b06",
+      "take": 180,
+      "use": "pavilion",
+      "years": {
+        "from": 1948
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The big hotel at the east end of Beach Avenue (built as the Hotel Cape May), demolished in the nineties; years from memory, not sourced. Its card room is the game's."
+      },
+      "id": "b:cm-b07",
+      "name": "The Admiral Hotel",
+      "namePolicy": "historical",
+      "operator": "a Philadelphia syndicate",
+      "parcelId": "cm-b07",
+      "take": 700,
+      "use": "hotel",
+      "years": {
+        "approx": true,
+        "from": 1908,
+        "to": 1996
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "A near-miss name for the old wooden hotel on Howard Street, still operating. Years approximate."
+      },
+      "id": "b:cm-c01",
+      "name": "The Chalfont Arms",
+      "namePolicy": "near-miss",
+      "nearMissOf": "The Chalfonte (still operating)",
+      "operator": "the Satterfield sisters",
+      "parcelId": "cm-c01",
+      "take": 420,
+      "use": "hotel",
+      "years": {
+        "approx": true,
+        "from": 1876
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-c02",
+      "name": "Mrs. Albright's Guest House",
+      "namePolicy": "fictional",
+      "operator": "Bea Albright",
+      "parcelId": "cm-c02",
+      "take": 90,
+      "use": "boarding",
+      "years": {
+        "from": 1931
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-c03",
+      "name": "Seward Cottage Rooms",
+      "namePolicy": "fictional",
+      "operator": "Frank Seward",
+      "parcelId": "cm-c03",
+      "take": 80,
+      "use": "boarding",
+      "years": {
+        "from": 1947
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-c05",
+      "name": "The Gingerbread House (rooms)",
+      "namePolicy": "fictional",
+      "operator": "Dot Ware",
+      "parcelId": "cm-c05",
+      "take": 70,
+      "use": "boarding",
+      "years": {
+        "from": 1955
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-h01",
+      "name": "Cape Island Fish Co.",
+      "namePolicy": "fictional",
+      "operator": "Nils Lindqvist",
+      "parcelId": "cm-h01",
+      "take": 340,
+      "use": "dockwh",
+      "years": {
+        "from": 1938
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-h02",
+      "name": "Hartman's Marina",
+      "namePolicy": "fictional",
+      "operator": "Ray Hartman",
+      "parcelId": "cm-h02",
+      "take": 220,
+      "use": "marina",
+      "years": {
+        "from": 1950
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "A near-miss name for the fish house restaurant on the landing, still operating. Years approximate."
+      },
+      "id": "b:cm-h03",
+      "name": "The Lobster Shanty",
+      "namePolicy": "near-miss",
+      "nearMissOf": "The Lobster House (still operating)",
+      "operator": "the Laudeman family",
+      "parcelId": "cm-h03",
+      "take": 300,
+      "use": "diner",
+      "years": {
+        "from": 1954
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional 1960 business on a real street."
+      },
+      "id": "b:cm-h04",
+      "name": "Bayside Bait & Tackle",
+      "namePolicy": "fictional",
+      "operator": "Eddie Brewer",
+      "parcelId": "cm-h04",
+      "take": 90,
+      "use": "storefront",
+      "years": {
+        "from": 1949
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "A near-miss name for the gift shop by the concrete ship, still operating. Years approximate."
+      },
+      "id": "b:cm-p01",
+      "name": "Sundown Beach Gifts",
+      "namePolicy": "near-miss",
+      "nearMissOf": "Sunset Beach Gift Shops (still operating)",
+      "operator": "the Rutherford family",
+      "parcelId": "cm-p01",
+      "take": 120,
+      "use": "giftshop",
+      "years": {
+        "from": 1937
+      }
+    }
+  ],
+  "districts": [
+    {
+      "blurb": "The year-round town: the drugstore, the dry goods, the movie house, and everybody's business in the luncheonette window.",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Outline drawn around the Washington Street blocks, Perry to Ocean and a little past."
+      },
+      "id": "d:cm-washington",
+      "name": "Washington Street",
+      "polygon": [
+        [
+          -360,
+          240
+        ],
+        [
+          160,
+          240
+        ],
+        [
+          160,
+          380
+        ],
+        [
+          -360,
+          380
+        ]
+      ],
+      "pop": 900,
+      "zones": [
+        "capemay"
+      ]
+    },
+    {
+      "blurb": "Big wooden hotels facing the ocean, rocking chairs on the porches, and the card games in rooms the desk clerk does not list.",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The hotel front along Beach Avenue; outline approximate."
+      },
+      "id": "d:cm-beachfront",
+      "name": "Beach Avenue",
+      "polygon": [
+        [
+          -700,
+          -60
+        ],
+        [
+          1300,
+          -60
+        ],
+        [
+          1300,
+          120
+        ],
+        [
+          -700,
+          120
+        ]
+      ],
+      "pop": 600,
+      "zones": [
+        "capemay"
+      ]
+    },
+    {
+      "blurb": "Gingerbread cottages, guest houses and the old hotels on the side streets. Quiet money, long memories.",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Columbia Avenue, Hughes Street and the side streets east of Ocean Street; outline approximate."
+      },
+      "id": "d:cm-cottages",
+      "name": "The Victorian streets",
+      "polygon": [
+        [
+          160,
+          120
+        ],
+        [
+          1000,
+          120
+        ],
+        [
+          1000,
+          380
+        ],
+        [
+          160,
+          380
+        ]
+      ],
+      "pop": 1400,
+      "zones": [
+        "capemay"
+      ]
+    },
+    {
+      "blurb": "Fishing boats at Schellenger's Landing, the fish houses, and the Coast Guard across the water.",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cape May Harbor north of town; outline sketched."
+      },
+      "id": "d:cm-harbor",
+      "name": "The Harbor",
+      "polygon": [
+        [
+          200,
+          1600
+        ],
+        [
+          1500,
+          1600
+        ],
+        [
+          1500,
+          2200
+        ],
+        [
+          200,
+          2200
+        ]
+      ],
+      "pop": 700,
+      "zones": [
+        "capemay"
+      ]
+    },
+    {
+      "blurb": "The lighthouse, Sunset Beach and the concrete ship. Summer cottages and not much else.",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The separate borough at the tip of the cape; outline sketched."
+      },
+      "id": "d:cm-point",
+      "name": "Cape May Point",
+      "polygon": [
+        [
+          -4400,
+          -250
+        ],
+        [
+          -3200,
+          -250
+        ],
+        [
+          -3200,
+          650
+        ],
+        [
+          -4400,
+          650
+        ]
+      ],
+      "pop": 250,
+      "zones": [
+        "capemay"
+      ]
+    }
+  ],
+  "economyProfile": {
+    "baseWeekly": 9000,
+    "note": "Aggregate until someone of yours goes there. Tuning proposals, not history.",
+    "seasonalDemand": {
+      "summer": 2.3,
+      "winter": 0.45
+    },
+    "template": "shore-resort"
+  },
+  "eraRules": [
+    {
+      "from": 1978,
+      "id": "era:casino",
+      "note": "New Jersey casinos are legal only from 1978, and only in Atlantic City.",
+      "uses": [
+        "casino"
+      ]
+    },
+    {
+      "from": 1962,
+      "id": "era:surf",
+      "note": "Surf shops arrive with the early-sixties surf craze.",
+      "uses": [
+        "surf"
+      ]
+    },
+    {
+      "from": 1970,
+      "id": "era:condo",
+      "note": "Condominium buildings come to the shore around 1970.",
+      "uses": [
+        "condo"
+      ]
+    },
+    {
+      "from": 1962,
+      "id": "era:mall",
+      "note": "Shopping centers from the early sixties.",
+      "uses": [
+        "mall"
+      ]
+    }
+  ],
+  "geography": {
+    "bounds": {
+      "u0": -4500,
+      "u1": 1600,
+      "v0": -300,
+      "v1": 2300
+    },
+    "crs": "local-meters",
+    "frame": {
+      "anchor": {
+        "lat": 38.94,
+        "lng": -74.91278
+      },
+      "anchorUV": [
+        200,
+        260
+      ],
+      "bearing": 62
+    },
+    "profiles": {
+      "beach": {
+        "beyond": 40,
+        "pts": [
+          [
+            -4500,
+            90
+          ],
+          [
+            -2000,
+            70
+          ],
+          [
+            0,
+            60
+          ],
+          [
+            1500,
+            45
+          ]
+        ]
+      }
+    },
+    "subTowns": [
+      {
+        "id": "point",
+        "name": "Cape May Point",
+        "uMax": -2000
+      },
+      {
+        "id": "capemay",
+        "name": "Cape May",
+        "uMax": 1000000000
+      }
+    ],
+    "verified": false
+  },
+  "institutions": [
+    {
+      "blurb": "Council chambers upstairs, the tax office, and the police desk on the ground floor.",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The city's offices on Washington Street; the building and its years here are approximate."
+      },
+      "id": "inst:cm-city-hall",
+      "kind": "city-hall",
+      "name": "Cape May City Hall",
+      "ownable": false,
+      "parcelId": "cm-w13"
+    },
+    {
+      "blurb": "A chief, a dozen patrolmen, and twice that in summer.",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Housed with City Hall in the game; size approximate."
+      },
+      "id": "inst:cm-police",
+      "kind": "police",
+      "name": "Cape May Police",
+      "ownable": false,
+      "pos": {
+        "u": -330,
+        "v": 330
+      }
+    },
+    {
+      "blurb": "Volunteers with long memories of 1878.",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "A volunteer company; its house here is placed by the game."
+      },
+      "id": "inst:cm-fire",
+      "kind": "fire",
+      "name": "Cape May Fire Company",
+      "ownable": false,
+      "pos": {
+        "u": -380,
+        "v": 410
+      }
+    },
+    {
+      "blurb": "The Catholic parish on the beachfront. The summer Masses are standing room.",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional parish name (the game's); no real parish is meant."
+      },
+      "id": "inst:cm-st-brendan",
+      "kind": "church",
+      "name": "St. Brendan the Navigator",
+      "ownable": false,
+      "pos": {
+        "u": 240,
+        "v": 90
+      }
+    },
+    {
+      "blurb": "White clapboard, a bell, and the temperance pledge on the vestry wall.",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional congregation (the game's)."
+      },
+      "id": "inst:cm-harbor-methodist",
+      "kind": "church",
+      "name": "Harbor Street Methodist",
+      "ownable": false,
+      "pos": {
+        "u": -60,
+        "v": 400
+      }
+    },
+    {
+      "blurb": "Philadelphia families in the pews every August.",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "invented",
+        "source": "A fictional parish name (the game's)."
+      },
+      "id": "inst:cm-trinity",
+      "kind": "church",
+      "name": "Trinity-by-the-Cape (Episcopal)",
+      "ownable": false,
+      "pos": {
+        "u": 720,
+        "v": 260
+      }
+    },
+    {
+      "blurb": "Recruits by the hundred across the harbor. The Feds' boats tie up here too.",
+      "districtId": "d:cm-harbor",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The Coast Guard's recruit center on Cape May Harbor; opening year from memory."
+      },
+      "id": "inst:cm-coast-guard",
+      "kind": "military",
+      "name": "U.S. Coast Guard Receiving Center",
+      "ownable": false,
+      "pos": {
+        "u": 1350,
+        "v": 1750
+      },
+      "years": {
+        "approx": true,
+        "from": 1948
+      }
+    }
+  ],
+  "landmarks": [
+    {
+      "blurb": "The light at the tip of the cape. Two hundred steps; the whole bay from the top.",
+      "districtId": "d:cm-point",
+      "evidence": {
+        "confidence": "verified",
+        "scope": [
+          "coordinates",
+          "dates",
+          "identity"
+        ],
+        "source": "Wikipedia, \"Cape May Lighthouse\": 38.933000 N, 74.960417 W; the present tower first lit in 1859."
+      },
+      "geo": [
+        -74.960417,
+        38.933
+      ],
+      "id": "lm:cm-lighthouse",
+      "kind": "lighthouse",
+      "name": "Cape May Lighthouse",
+      "ownable": false,
+      "years": {
+        "from": 1859
+      }
+    },
+    {
+      "blurb": "A First World War concrete freighter aground off Sunset Beach. The kids hunt Cape May diamonds at the waterline.",
+      "districtId": "d:cm-point",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The SS Atlantus off Sunset Beach; the year it ran aground is from memory, the spot approximate."
+      },
+      "id": "lm:cm-concrete-ship",
+      "kind": "wreck",
+      "name": "The concrete ship",
+      "ownable": false,
+      "pos": {
+        "u": -3900,
+        "v": -120
+      },
+      "years": {
+        "approx": true,
+        "from": 1926
+      }
+    },
+    {
+      "blurb": "The Stick-style mansion at 1048 Washington Street. In 1960 still a private house; saved from the wrecking ball in 1970.",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "verified",
+        "scope": [
+          "address",
+          "dates",
+          "identity"
+        ],
+        "source": "Wikipedia, \"Emlen Physick Estate\": 1048 Washington Street, built 1879; the Mid-Atlantic Center for the Arts formed in 1970 to save it. Its spot here is approximate."
+      },
+      "id": "lm:cm-physick",
+      "kind": "house",
+      "name": "The Physick house",
+      "ownable": false,
+      "pos": {
+        "u": 900,
+        "v": 330
+      },
+      "years": {
+        "from": 1879
+      }
+    },
+    {
+      "blurb": "The city's hall on the beachfront: dances, the band concerts, the Fourth of July.",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The city-owned hall on Beach Avenue; position and years not sourced."
+      },
+      "id": "lm:cm-convention-hall",
+      "kind": "hall",
+      "name": "Convention Hall",
+      "ownable": false,
+      "pos": {
+        "u": -40,
+        "v": -20
+      }
+    },
+    {
+      "blurb": "The working harbor: draggers, scallopers, ice and diesel.",
+      "districtId": "d:cm-harbor",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The landing on Cape May Harbor; spot sketched."
+      },
+      "id": "lm:cm-schellengers",
+      "kind": "harbor",
+      "name": "Schellenger's Landing",
+      "ownable": false,
+      "pos": {
+        "u": 620,
+        "v": 1950
+      }
+    }
+  ],
+  "parcels": [
+    {
+      "address": "Washington St at Perry St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w01",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -270,
+        "v": 280
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1880
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Jackson St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w02",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -215,
+        "v": 280
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1885
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Jackson St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 34,
+        "w": 22
+      },
+      "id": "cm-w03",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -150,
+        "v": 280
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1912
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Decatur St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w04",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -95,
+        "v": 280
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1890
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Decatur St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w05",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -35,
+        "v": 280
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1895
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Ocean St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w06",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 30,
+        "v": 280
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1900
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Perry St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w07",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -250,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1884
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Jackson St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w08",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -185,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1884
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Decatur St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w09",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -115,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1890
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Decatur St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w10",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": -45,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1888
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Ocean St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-w11",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 40,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1905
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St east of Ocean St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 30,
+        "w": 26
+      },
+      "id": "cm-w12",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 120,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1856
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Washington St at Perry St",
+      "districtId": "d:cm-washington",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 30,
+        "w": 24
+      },
+      "id": "cm-w13",
+      "market": {
+        "owner": "city",
+        "status": "public"
+      },
+      "pos": {
+        "u": -320,
+        "v": 320
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1915
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Congress Pl",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 60,
+        "w": 70
+      },
+      "id": "cm-b01",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -420,
+        "v": 60
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1879
+      },
+      "value": 3,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Ocean St",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 40,
+        "w": 48
+      },
+      "id": "cm-b02",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 80,
+        "v": 50
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1879
+      },
+      "value": 2,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Gurney St",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 20,
+        "w": 18
+      },
+      "id": "cm-b03",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 190,
+        "v": 40
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1925
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Howard St",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 18,
+        "w": 16
+      },
+      "id": "cm-b04",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 310,
+        "v": 40
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1930
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Grant St",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 44,
+        "w": 56
+      },
+      "id": "cm-b05",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 430,
+        "v": 50
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1890
+      },
+      "value": 2,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Stockton Ave",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 20,
+        "w": 24
+      },
+      "id": "cm-b06",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 580,
+        "v": 40
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1948
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Philadelphia Ave",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 60,
+        "w": 80
+      },
+      "id": "cm-b07",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 1100,
+        "v": 60
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1908
+      },
+      "value": 3,
+      "zone": "capemay"
+    },
+    {
+      "address": "Beach Ave at Madison Ave",
+      "districtId": "d:cm-beachfront",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 24,
+        "w": 16
+      },
+      "id": "cm-b08",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": 800,
+        "v": 40
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1910
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Howard St at Sewell Ave",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 36,
+        "w": 40
+      },
+      "id": "cm-c01",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 330,
+        "v": 250
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1876
+      },
+      "value": 2,
+      "zone": "capemay"
+    },
+    {
+      "address": "Hughes St at Ocean St",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 22,
+        "w": 14
+      },
+      "id": "cm-c02",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 200,
+        "v": 210
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1872
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Columbia Ave at Gurney St",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 22,
+        "w": 16
+      },
+      "id": "cm-c03",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 230,
+        "v": 140
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1880
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Columbia Ave at Stockton Ave",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 22,
+        "w": 16
+      },
+      "id": "cm-c04",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": 600,
+        "v": 140
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1882
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Hughes St at Howard St",
+      "districtId": "d:cm-cottages",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 20,
+        "w": 14
+      },
+      "id": "cm-c05",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 330,
+        "v": 210
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1878
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Schellenger's Landing",
+      "districtId": "d:cm-harbor",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 26,
+        "w": 40
+      },
+      "id": "cm-h01",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 600,
+        "v": 1850
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1938
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Schellenger's Landing",
+      "districtId": "d:cm-harbor",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 30,
+        "w": 30
+      },
+      "id": "cm-h02",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 680,
+        "v": 1900
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1950
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Schellenger's Landing",
+      "districtId": "d:cm-harbor",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 20,
+        "w": 28
+      },
+      "id": "cm-h03",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 540,
+        "v": 1800
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1954
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Lafayette St by the harbor",
+      "districtId": "d:cm-harbor",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 14,
+        "w": 14
+      },
+      "id": "cm-h04",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": 520,
+        "v": 1720
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1949
+      },
+      "value": 1,
+      "zone": "capemay"
+    },
+    {
+      "address": "Sunset Blvd at the beach",
+      "districtId": "d:cm-point",
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Placed on the package's street frame by block, from memory; not a surveyed lot."
+      },
+      "footprint": {
+        "d": 16,
+        "w": 20
+      },
+      "id": "cm-p01",
+      "market": {
+        "owner": "private",
+        "status": "private"
+      },
+      "pos": {
+        "u": -3700,
+        "v": 150
+      },
+      "rotation": 0,
+      "structure": {
+        "built": 1937
+      },
+      "value": 1,
+      "zone": "capemay"
+    }
+  ],
+  "placements": [],
+  "provenance": [
+    {
+      "confidence": "approximate",
+      "source": "Street frame authored from memory around the Cape May Historic District point (Wikipedia: 38.94000 N, 74.91278 W); not surveyed."
+    },
+    {
+      "confidence": "verified",
+      "scope": [
+        "dates"
+      ],
+      "source": "Wikipedia, \"Cape May Historic District\": National Register 1970, National Historic Landmark District 1976."
+    },
+    {
+      "confidence": "invented",
+      "source": "Businesses of 1960 are fictional on real streets; places still operating carry near-miss names; defunct ones may keep their real names."
+    }
+  ],
+  "routes": [
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The toll road up the islands to the Wildwoods; years from memory."
+      },
+      "id": "route:cm-ocean-drive",
+      "kind": "road",
+      "miles": 9,
+      "name": "Ocean Drive",
+      "to": "wildwood",
+      "years": {
+        "approx": true,
+        "from": 1940
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The Parkway's southern end at Cape May; miles approximate."
+      },
+      "id": "route:cm-parkway",
+      "kind": "road",
+      "miles": 45,
+      "name": "The Garden State Parkway",
+      "to": "ac",
+      "years": {
+        "approx": true,
+        "from": 1955
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Across the Delaware Bay to Lewes (the map has no Lewes; the route points the way south). Opening year as the region map has it."
+      },
+      "id": "route:cm-ferry",
+      "kind": "ferry",
+      "miles": 17,
+      "name": "Cape May-Lewes Ferry",
+      "to": "lewes",
+      "years": {
+        "from": 1964
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Passenger trains to Philadelphia; the last years of service are not sourced."
+      },
+      "id": "route:cm-rail",
+      "kind": "rail",
+      "miles": 82,
+      "name": "The shore line (Pennsylvania-Reading)",
+      "to": "philadelphia"
+    }
+  ],
+  "streets": [
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:broadway",
+      "kind": "cross",
+      "name": "Broadway",
+      "sub": "capemay",
+      "u": -900
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:congress-pl",
+      "kind": "cross",
+      "name": "Congress Pl",
+      "sub": "capemay",
+      "u": -420
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:perry-st",
+      "kind": "cross",
+      "name": "Perry St",
+      "sub": "capemay",
+      "u": -300
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:jackson-st",
+      "kind": "cross",
+      "name": "Jackson St",
+      "sub": "capemay",
+      "u": -180
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:decatur-st",
+      "kind": "cross",
+      "name": "Decatur St",
+      "sub": "capemay",
+      "u": -60
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:ocean-st",
+      "kind": "cross",
+      "name": "Ocean St",
+      "sub": "capemay",
+      "u": 60
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:gurney-st",
+      "kind": "cross",
+      "name": "Gurney St",
+      "sub": "capemay",
+      "u": 180
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:howard-st",
+      "kind": "cross",
+      "name": "Howard St",
+      "sub": "capemay",
+      "u": 300
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:grant-st",
+      "kind": "cross",
+      "name": "Grant St",
+      "sub": "capemay",
+      "u": 420
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:stockton-ave",
+      "kind": "cross",
+      "name": "Stockton Ave",
+      "sub": "capemay",
+      "u": 560
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:madison-ave",
+      "kind": "cross",
+      "name": "Madison Ave",
+      "sub": "capemay",
+      "u": 800
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Cross street order along the beachfront from memory; spacing approximate."
+      },
+      "id": "st:philadelphia-ave",
+      "kind": "cross",
+      "name": "Philadelphia Ave",
+      "sub": "capemay",
+      "u": 1100
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Streets running along the shore, in order inland from Beach Avenue; distances approximate."
+      },
+      "from": -1000,
+      "id": "ave:beach",
+      "kind": "avenue",
+      "name": "Beach Ave",
+      "names": {
+        "capemay": "Beach Ave"
+      },
+      "to": 1300,
+      "v": 20
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Streets running along the shore, in order inland from Beach Avenue; distances approximate."
+      },
+      "from": -60,
+      "id": "ave:columbia",
+      "kind": "avenue",
+      "name": "Columbia Ave",
+      "names": {
+        "capemay": "Columbia Ave"
+      },
+      "to": 1000,
+      "v": 140
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Streets running along the shore, in order inland from Beach Avenue; distances approximate."
+      },
+      "from": -300,
+      "id": "ave:hughes",
+      "kind": "avenue",
+      "name": "Hughes St",
+      "names": {
+        "capemay": "Hughes St"
+      },
+      "to": 600,
+      "v": 210
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Streets running along the shore, in order inland from Beach Avenue; distances approximate."
+      },
+      "from": -1000,
+      "id": "ave:washington",
+      "kind": "avenue",
+      "name": "Washington St",
+      "names": {
+        "capemay": "Washington St"
+      },
+      "to": 1300,
+      "v": 300
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "Streets running along the shore, in order inland from Beach Avenue; distances approximate."
+      },
+      "from": -900,
+      "id": "ave:lafayette",
+      "kind": "avenue",
+      "name": "Lafayette St",
+      "names": {
+        "capemay": "Lafayette St"
+      },
+      "to": 900,
+      "v": 420
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The wooden boardwalk along Beach Avenue, wrecked by the March 1962 storm (from memory; date approximate)."
+      },
+      "id": "path:boardwalk",
+      "kind": "path",
+      "name": "The Boardwalk",
+      "path": [
+        [
+          -700,
+          -10
+        ],
+        [
+          1200,
+          -10
+        ]
+      ],
+      "width": 10,
+      "years": {
+        "approx": true,
+        "to": 1962
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The paved promenade that replaced the boardwalk after the 1962 storm (years approximate)."
+      },
+      "id": "path:promenade",
+      "kind": "path",
+      "name": "The Promenade",
+      "path": [
+        [
+          -700,
+          -10
+        ],
+        [
+          1200,
+          -10
+        ]
+      ],
+      "width": 10,
+      "years": {
+        "approx": true,
+        "from": 1962
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "verified",
+        "scope": [
+          "dates",
+          "identity"
+        ],
+        "source": "Wikipedia, \"Washington Street Mall\": opened June 24, 1971, between Ocean Street and Perry Street."
+      },
+      "id": "path:washington-mall",
+      "kind": "path",
+      "name": "Washington Street Mall",
+      "path": [
+        [
+          -300,
+          300
+        ],
+        [
+          60,
+          300
+        ]
+      ],
+      "width": 14,
+      "years": {
+        "from": 1971
+      }
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "The road out of town past the harbor toward the Parkway; path sketched, not traced."
+      },
+      "id": "road:route-109",
+      "kind": "road",
+      "name": "Lafayette St to the harbor (Route 109)",
+      "path": [
+        [
+          300,
+          420
+        ],
+        [
+          500,
+          1100
+        ],
+        [
+          700,
+          1900
+        ]
+      ]
+    },
+    {
+      "evidence": {
+        "confidence": "approximate",
+        "source": "West out of town to Cape May Point and Sunset Beach; path sketched."
+      },
+      "id": "road:sunset-blvd",
+      "kind": "road",
+      "name": "Sunset Blvd to the Point",
+      "path": [
+        [
+          -900,
+          300
+        ],
+        [
+          -2400,
+          250
+        ],
+        [
+          -3800,
+          200
+        ]
+      ]
+    }
+  ],
+  "visit": {
+    "activities": [
+      {
+        "at": "b:cm-b07",
+        "cost": 20,
+        "id": "cm-cards",
+        "name": "The card room at the Admiral",
+        "tags": [
+          "gamble",
+          "business"
+        ],
+        "text": "Up the back stairs past a desk clerk who does not look up. Philadelphia doctors losing their summer money."
+      },
+      {
+        "at": "d:cm-cottages",
+        "cost": 6,
+        "id": "cm-porch",
+        "name": "A porch on Hughes Street",
+        "tags": [
+          "relax",
+          "romance"
+        ],
+        "text": "Rocking chairs, iced tea, and the whole afternoon to say nothing at all."
+      },
+      {
+        "at": "lm:cm-lighthouse",
+        "cost": 3,
+        "id": "cm-light",
+        "name": "Up the lighthouse",
+        "tags": [
+          "family",
+          "relax"
+        ],
+        "text": "The kids count the steps out loud. From the top you can see Delaware."
+      },
+      {
+        "at": "lm:cm-concrete-ship",
+        "cost": 3,
+        "id": "cm-sunset",
+        "name": "Sunset Beach and the concrete ship",
+        "tags": [
+          "romance",
+          "family"
+        ],
+        "text": "Cape May diamonds at the waterline and the sun going down behind the wreck."
+      },
+      {
+        "at": "d:cm-harbor",
+        "cost": 8,
+        "id": "cm-harbor",
+        "name": "The fish houses at the landing",
+        "tags": [
+          "business",
+          "private"
+        ],
+        "text": "Coffee with the men who own the boats. Boats go places at night that nobody writes down."
+      },
+      {
+        "at": "inst:cm-st-brendan",
+        "cost": 2,
+        "id": "cm-mass",
+        "name": "Mass at St. Brendan's",
+        "tags": [
+          "pious",
+          "family"
+        ],
+        "text": "The summer Mass, the windows open to the ocean."
+      },
+      {
+        "at": "d:cm-beachfront",
+        "cost": 20,
+        "id": "invest",
+        "name": "Look at investments",
+        "tags": [
+          "business",
+          "moneymen"
+        ],
+        "text": "A tired hotel that needs a partner; a lot on Beach Avenue with a sign on it."
+      }
+    ],
+    "hotels": [
+      "a guest house on Hughes Street",
+      "a room at the Chalfont Arms",
+      "the ocean suite at the Capitol Hall"
+    ],
+    "peak": [
+      6,
+      7,
+      8
+    ]
+  },
+  "walkStretches": []
+}

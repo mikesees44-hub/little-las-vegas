@@ -229,3 +229,9 @@ export function hoodBounds(s: GameState, id: HoodId): { u0: number; u1: number; 
   }
   return b && { u0: b.u0 - 25, u1: b.u1 + 25, v0: b.v0 - 12, v1: b.v1 + 12 };
 }
+
+/** Where an authored 1960 record stands (its grid slot), for the town editor; undefined if it is not one. */
+export function seedSlotRect(id: string): { u0: number; u1: number; v0: number; v1: number } | undefined {
+  const sl = SEED_SLOT[id];
+  return sl && { u0: sl.u0, u1: sl.u1, v0: sl.v0, v1: sl.v1 };
+}
