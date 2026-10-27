@@ -111,6 +111,7 @@ export function peopleRows(s: GameState): PersonRow[] {
 export interface PersonView {
   id: string;
   name: string;
+  g: 'M' | 'F';
   age: number;
   role: string;
   home: string;
@@ -178,8 +179,8 @@ export function personView(s: GameState, pid: string, dev = false): PersonView |
   // He told the boss what he wants when they dealt with each other; otherwise it shows in what the boss has heard.
   const goal = p.goal && (tb || plan) ? GOAL_WORDS[p.goal] : undefined;
   return {
-    id: pid, name: pname(p), age: ageOf(p, s.date.y, s.date.m), role: publicRole(s, L, p), home: hh?.home ?? '', household, goal, plan, ties, facts,
-    ...(tb ? { toBoss: tb.a >= 30 ? 'grateful to you' : tb.a <= -10 ? 'bitter: you turned him away' : 'knows you' } : {}),
+    id: pid, name: pname(p), g: p.g, age: ageOf(p, s.date.y, s.date.m), role: publicRole(s, L, p), home: hh?.home ?? '', household, goal, plan, ties, facts,
+    ...(tb ? { toBoss: tb.a >= 30 ? 'grateful to you' : tb.a <= -10 ? `bitter: you turned ${p.g === 'F' ? 'her' : 'him'} away` : 'knows you' } : {}),
     ...(dev ? { dev: { cash: hh?.cash ?? 0, stash: p.stash, goal: p.goal, plan: p.plan ? `${p.plan.k} (stage ${p.plan.stage}): ${p.plan.why}` : undefined, traits: [...p.t], mem: p.mem.map((m) => memText(L, m) ?? '').filter(Boolean) } } : {}),
   };
 }

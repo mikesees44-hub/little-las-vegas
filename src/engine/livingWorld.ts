@@ -276,27 +276,40 @@ function endBusiness(ctx: Ctx, L: LivingState, b: Tb, keepStaff: boolean): void 
 }
 
 /** Buy a lot that is for sale and open a business on it. Returns the new business. */
+/** What a vacant lot would become: a small place a family can put up (chosen by the lot, so its cost is known ahead). */
+function plannedUse(L: LivingState, s: GameState, l: Lot) {
+  if (l.use && l.stage === 'open') return undefined;
+  const pool = USES.filter((u) => !u.npcOnly && !u.biz && u.cost <= 4500 && (u.minYear ?? 0) <= s.date.y && (u.zones ? u.zones.includes(l.zone) : ZONES_BY_ID[l.zone].cats.includes(u.cat)));
+  return pool.length ? pick(stream(L, 0, `use:${l.id}`), pool) : USES_BY_ID.souvenir;
+}
+
+/** The whole cost of starting on a lot: the asking price, and the builders on a vacant one. */
+export function startCost(L: LivingState, s: GameState, l: Lot): number {
+  const u = plannedUse(L, s, l);
+  return l.price + (u ? Math.round(u.cost * 0.5 * inflation(s)) : 0);
+}
+
 function openBusiness(ctx: Ctx, L: LivingState, owner: Tp, l: Lot, x: Idx, from: string[], cause?: string): Tb | undefined {
   const s = ctx.s;
   const price = l.price;
+  const u0 = plannedUse(L, s, l);
+  const build = u0 ? Math.round(u0.cost * 0.5 * x.infl) : 0;
+  const have = from.reduce((a, acct) => a + Math.max(0, acct.startsWith('h:') ? L.hh[acct.slice(2)]?.cash ?? 0 : acct.startsWith('p:') ? L.people[acct.slice(2)]?.stash ?? 0 : Number.MAX_SAFE_INTEGER), 0);
+  if (have < price + build) return undefined;
   let paid = 0;
   const seller = L.sellers?.[l.id];
   const to = seller && L.hh[seller] && L.hh[seller].gone === undefined ? `h:${seller}` : 'x:land';
   for (const acct of from) paid += pay(ctx, L, acct, to, price - paid, `${pname(owner)} buys ${l.address}`);
-  if (paid < price) {
-    // Not enough after all: the money goes back where it came from.
-    if (paid > 0) pay(ctx, L, to, from[0], paid, 'the deal fell through');
-    return undefined;
-  }
+  let built = 0;
+  for (const acct of from) built += pay(ctx, L, acct, 'x:supply', build - built, `the builders put up ${owner.f}'s place`);
   if (L.sellers) delete L.sellers[l.id];
-  if (!l.use || l.stage !== 'open') {
-    const pool = USES.filter((u) => !u.npcOnly && !u.biz && (u.minYear ?? 0) <= s.date.y && (u.zones ? u.zones.includes(l.zone) : ZONES_BY_ID[l.zone].cats.includes(u.cat)));
-    const u = pool.length ? pick(stream(L, s.week, `use:${l.id}`), pool) : USES_BY_ID.souvenir;
-    l.use = u.id;
+  if (u0) {
+    l.use = u0.id;
     l.stage = 'open';
-    l.condition = Math.max(l.condition, 60);
+    l.condition = Math.max(l.condition, 80);
+    l.builtYear = s.date.y;
   }
-  const name = l.name ?? `${owner.l}'s ${USES_BY_ID[l.use]?.name.split(' ').slice(-1)[0] ?? 'Shop'}`;
+  const name = l.name ?? `${owner.l}'s ${USES_BY_ID[l.use ?? 'souvenir']?.name.split(' ').slice(-1)[0] ?? 'Shop'}`;
   l.name = name;
   l.status = 'private';
   l.owner = 'private';
@@ -313,7 +326,8 @@ function openBusiness(ctx: Ctx, L: LivingState, owner: Tp, l: Lot, x: Idx, from:
   const fid = fact(s, L, 'opened', [owner.id], `${pname(owner)} opened ${name} at ${l.address}.`, 0, { at: l.id, c: [cause], amt: price });
   L.stats.opened++;
   const st = openStoryOf(L, 'newbiz', owner.id);
-  if (st) { link(L, st, fid); closeStory(s, st, `${owner.f} opened ${name}.`); }
+  // The story goes on while the money he borrowed for it is owed.
+  if (st) { link(L, st, fid); if (!L.debts.some((d) => d.st === 'open' && st.f.includes(d.fid))) closeStory(s, st, `${owner.f} opened ${name}.`); }
   return b;
 }
 
@@ -1290,14 +1304,15 @@ function openBusinessStage(ctx: Ctx, L: LivingState, p: Tp, x: Idx): boolean {
   }
   const hh = L.hh[p.hh];
   const own = hh.cash - upkeepOf(L, hh, x) * 6 + p.stash;
+  const cost = startCost(L, s, l);
   plan.next = x.week + 4;
   if (x.week - plan.since > 78) { giveUp('He never got the money together.'); return false; }
   if (plan.stage === 0) {
-    if (own >= l.price * 0.4) { plan.stage = 1; plan.next = x.week + 1; }
+    if (own >= cost * 0.4) { plan.stage = 1; plan.next = x.week + 1; }
     return false;
   }
   if (plan.stage === 1) {
-    const short = l.price - own;
+    const short = cost - own;
     if (short > 0) {
       const d = borrow(ctx, L, p, x, short, `to buy ${l.address}`, plan.fid);
       if (!d) { plan.next = x.week + 8; return true; }

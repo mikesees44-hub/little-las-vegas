@@ -87,6 +87,8 @@ function PersonCard({ s, id, onClose, onPerson }: { s: GameState; id: string; on
   if (!v) return null;
   const p = L.people[id];
   const hh = p ? L.hh[p.hh] : undefined;
+  const he = v.g === 'F' ? 'she' : 'he';
+  const his = v.g === 'F' ? 'her' : 'his';
   const gift = Math.max(50, Math.round(((hh?.members.length ?? 2) * 10 + 15) * 4 / 10) * 10);
   return (
     <section className="rounded-md border border-gold-500/40 bg-noir-800 px-3 py-2 space-y-2" data-testid="living-person">
@@ -107,15 +109,15 @@ function PersonCard({ s, id, onClose, onPerson }: { s: GameState; id: string; on
         </div>
       )}
       <div>
-        <div className="text-[10px] uppercase tracking-widest text-stone-500">What he wants, as far as you know</div>
+        <div className="text-[10px] uppercase tracking-widest text-stone-500">What {he} wants, as far as you know</div>
         <div className="text-xs text-stone-300">
-          {v.goal ? <>Wants {v.goal}.</> : <span className="text-stone-500">He keeps that to himself.</span>}
+          {v.goal ? <>Wants {v.goal}.</> : <span className="text-stone-500">{he === 'she' ? 'She keeps that to herself.' : 'He keeps that to himself.'}</span>}
           {v.plan && <div className="mt-0.5">{v.plan.seen.lvl === 'rumor' ? <span className="italic">“{v.plan.text}”</span> : v.plan.text} <SeenChip seen={v.plan.seen} /></div>}
         </div>
       </div>
       {v.ties.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-stone-500">People in his life (that you know of)</div>
+          <div className="text-[10px] uppercase tracking-widest text-stone-500">People in {his} life (that you know of)</div>
           <ul className="text-xs text-stone-300">
             {v.ties.slice(0, 10).map((t, i) => (
               <li key={`${t.id}:${i}`}>{t.what} {L.people[t.id] ? <button type="button" className="underline decoration-dotted underline-offset-2 hover:text-gold-300" onClick={() => onPerson(t.id)}>{t.name}</button> : s.characters[t.id] ? <CharLink s={s} id={t.id} /> : t.name}{t.how !== 'public' && <span className="text-stone-500"> ({t.how === 'rumor' ? 'talk' : 'confirmed'})</span>}</li>
