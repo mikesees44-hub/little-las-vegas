@@ -72,6 +72,18 @@ function esc(t: string): string {
   return t.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]!);
 }
 
+/**
+ * The accessible name of a lot marker (A08): what it is, where, and whose.
+ * "Wave Crest Hotel · Hotel · Yours". Plain text, for screen readers and the
+ * keyboard (Tab to a lot, Enter opens it).
+ */
+export function lotAccessibleName(l: Lot): string {
+  const status = { sale: `for sale ${fmt$(l.price)}`, lease: `for lease ${fmt$(l.rent)} a week`, private: 'privately held', owned: 'yours', leased: 'yours (leased)', rival: 'rival-owned', public: 'the city\'s' }[l.status];
+  const what = l.use ? USES_BY_ID[l.use].name : 'Vacant lot';
+  const name = lotName(l);
+  return `${name}${name !== what ? ` · ${what}` : ''} · ${status}${l.stage && l.stage !== 'open' ? ` · ${STAGE_LABEL[l.stage]}` : ''}`;
+}
+
 export function lotTooltip(l: Lot): string {
   const status = { sale: `For sale ${fmt$(l.price)}`, lease: `For lease ${fmt$(l.rent)}/wk`, private: 'Privately held', owned: 'Yours', leased: 'Yours (leased)', rival: 'Rival-owned', public: 'The city' }[l.status];
   const stage = l.stage ? ` · ${STAGE_LABEL[l.stage]}${l.stage !== 'open' && l.stage !== 'purchase' ? ` ${Math.round(lotProgress(l) * 100)}%` : ''}` : '';
@@ -121,9 +133,13 @@ export function drawLots(L: typeof Leaflet, layer: Leaflet.LayerGroup, s: GameSt
     const look = bld?.style ? { style: bld.style, sign: bld.sign ? SIGN_HEX[bld.sign] : undefined } : undefined;
     const svg = lotSvg(l, { size: 22, glow: isNew, dim, look });
     const html = (lab?.sign && !dim ? `<span style="display:block;filter:drop-shadow(0 0 3px ${lab.color}) drop-shadow(0 0 1px ${lab.color})">${svg}</span>` : svg) + (lab && !dim ? `<span class="llv-blabel ${lab.tier}" style="color:${lab.color}">${esc(lab.text)}</span>` : '');
-    L.marker(at, { pane: 'pins', icon: L.divIcon({ className: 'llv-lotico', html, iconSize: [22, 22], iconAnchor: [11, 11] }) })
+    // A named button for screen readers and the keyboard (Tab, then Enter); the drawing itself is decoration.
+    const name = lotAccessibleName(l);
+    const m = L.marker(at, { pane: 'pins', title: name, keyboard: !!onClick, icon: L.divIcon({ className: 'llv-lotico', html: html.replace('<svg', '<svg aria-hidden="true" focusable="false"'), iconSize: [22, 22], iconAnchor: [11, 11] }) })
       .bindTooltip(lotTooltip(l), { className: 'llv-tip' })
       .on('click', () => onClick?.(raw.id))
       .addTo(layer);
+    const el = m.getElement();
+    if (el) { el.setAttribute('aria-label', name); el.setAttribute('data-lot', raw.id); if (!onClick) el.removeAttribute('role'); }
   }
 }

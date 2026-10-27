@@ -18,6 +18,7 @@ import { upgradeSave } from '../src/engine/upgradeSave';
 import { roundOptions } from '../src/engine/rounds';
 import { agreementHistoryLine, agreementName } from '../src/engine/agreements';
 import { WeeklyTake } from '../src/ui/tribute/WeeklyTake';
+import { lotAccessibleName } from '../src/ui/map/lotPins';
 import { dayBlock, formatDay, layoutWeek, setEvening, weekPlan } from '../src/engine/days';
 
 /** The text of the first element carrying this test id. */
@@ -206,5 +207,18 @@ describe('A06: agreements have human titles, not internal ids', () => {
     expect(agreementName(s, `agr:capo:${k.id}`).title).toMatch(/district contract/);
     expect(agreementName(s, `agr:capo:${k.id}`).party).toMatch(/capo/);
     expect(agreementHistoryLine(s, { week: 3, id: `agr:capo:${k.id}`, text: 'keeps 35%' })).not.toMatch(/agr:/);
+  });
+});
+
+describe('A08: every map lot is a named button', () => {
+  it('each lot has an accessible name: its name, what it is, whose', () => {
+    const s = newGameWith('trust-a08', 'classic');
+    const lots = s.econ?.lots ?? [];
+    expect(lots.length).toBeGreaterThan(20);
+    for (const l of lots) {
+      const n = lotAccessibleName(l);
+      expect(n.length).toBeGreaterThan(3);
+      expect(n).toMatch(/yours|for sale|for lease|privately held|rival-owned|the city's/);
+    }
   });
 });
