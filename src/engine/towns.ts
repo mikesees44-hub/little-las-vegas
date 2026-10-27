@@ -103,7 +103,7 @@ function freshLot(pkg: CityPackage, seed: string, parcelId: string, year: number
   const built = pc.structure?.built ?? pkg.era.from;
   return {
     id: pc.id, status, owner, price, debt, condition: 45 + Math.floor(50 * h01(`${k}:cond`)),
-    history: [{ year: built, week: 0, owner, how: 'built', by: occ?.operator }],
+    history: [{ year: built, week: 0, owner, how: 'built' }],
     occupant: occ?.id,
   };
 }

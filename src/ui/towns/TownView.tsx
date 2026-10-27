@@ -130,7 +130,7 @@ function PlaceCard({ pkg, d, year, lot, known, onClose }: { pkg: CityPackage; d:
             <div className="text-stone-500">Held by</div><div className="text-stone-200">{ownerName(lot.owner)}{lot.status === 'sale' ? ' (for sale)' : ''}</div>
             {lot.price > 0 && <><div className="text-stone-500">Worth</div><div className="text-stone-200">{money(lot.price)}</div></>}
             <div className="text-stone-500">Owes</div><div className="text-stone-200">{lot.debt ? `${money(lot.debt)} to a bank on Washington Street` : 'Nothing anybody knows of'}</div>
-            <div className="text-stone-500">History</div><div className="text-stone-300">{lot.history.map((h) => `${h.year}: ${h.how}${h.by ? ` (${h.by})` : ''}`).join('; ')}</div>
+            <div className="text-stone-500">History</div><div className="text-stone-300">{lot.history.map((h) => `${h.year}: ${h.how}${h.by ? ` (${h.by})` : ''}`).join('; ')}{occ?.operator ? `; run by ${occ.operator} since ${occ.years.from ?? '?'}` : ''}</div>
           </div>
         : <div className="text-stone-500" data-testid="tv-unknown">{known ? 'Not on the books.' : 'Who holds it and what it owes: unknown until someone of yours goes there.'}</div>)}
       {later.length > 0 && <div className="text-stone-500">Over the years: {later.map((b) => `${b.name} (${yrs(b.years)})`).join(', ')}.</div>}
