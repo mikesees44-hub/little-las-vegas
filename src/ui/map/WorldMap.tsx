@@ -317,8 +317,27 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       </div></div>`;
   }
 
+  // City labels: at the national zoom, crowded ones fold into their neighbour ("New York +3"); zoom in to see each.
+  let cityMarks: { id: string; name: string; prio: number; m: Leaflet.CircleMarker }[] = [];
+  function declutterCities() {
+    const z = map.getZoom();
+    const shown: { x: number; y: number; mk: (typeof cityMarks)[number]; n: number }[] = [];
+    for (const mk of [...cityMarks].sort((a, b) => b.prio - a.prio)) {
+      const tip = mk.m.getTooltip();
+      if (!tip) continue;
+      if (z >= 6.5) { mk.m.setTooltipContent(mk.name); mk.m.openTooltip(); continue; }
+      const pt = map.latLngToContainerPoint(mk.m.getLatLng());
+      const near = shown.find((x) => Math.abs(x.x - pt.x) < 70 && Math.abs(x.y - pt.y) < 16);
+      if (near) { near.n++; mk.m.closeTooltip(); continue; }
+      shown.push({ x: pt.x, y: pt.y, mk, n: 0 });
+      mk.m.openTooltip();
+    }
+    for (const x of shown) x.mk.m.setTooltipContent(x.n ? `${x.mk.name} <span class="opacity-70">+${x.n}</span>` : x.mk.name);
+  }
+
   function drawCities(s: GameState) {
     cityLayer.clearLayers();
+    cityMarks = [];
     for (const c of CITY_LIST) {
       const out = s.outposts.find((o) => o.city === c.id);
       const col = out ? GROUP_COLOR.player : GROUP_COLOR[c.group];
@@ -328,7 +347,9 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       m.getTooltip()?.on('click', () => m.openPopup());
       m.bindPopup(() => cityPopup(latest.current.s, c.id), { className: 'llv-popup', maxWidth: 280, minWidth: 230 });
       m.addTo(cityLayer);
+      cityMarks.push({ id: c.id, name: c.name, prio: c.id === 'wildwood' ? 1000 : (out ? 500 : 0) + c.difficulty, m });
     }
+    declutterCities();
   }
 
   function drawTowns() {
@@ -480,6 +501,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       if (on && !map.hasLayer(l.m)) l.m.addTo(map);
       if (!on && map.hasLayer(l.m)) map.removeLayer(l.m);
     }
+    declutterCities();
     el.dataset.level = levelFor(z);
     // Building labels declutter by zoom: yours first, rivals' at the normal view, the rest up close.
     el.dataset.labels = z >= 15 ? 'all' : z >= 14.5 ? 'rivals' : 'mine';

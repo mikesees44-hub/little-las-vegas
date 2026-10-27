@@ -10,6 +10,8 @@ import { fmt$ } from '../format';
 import { Chips } from './Chips';
 import { WhyPanel } from '../clarity/WhyPanel';
 import { sameOrder, verbOf } from '../verbs';
+import { actionFacts } from '../actionFacts';
+import { AdviceButton } from '../advice/AdviceButton';
 
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
@@ -54,6 +56,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
     : p.cost > budget ? `Only ${fmt$(budget)} of Family money left after this week's orders` : undefined;
   // At the table the price can come down: only a hard block stops the offer.
   const why = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
+  const facts = actionFacts(s, action, p);
   return (
     <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -68,7 +71,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
           onClick={() => (deal ? setDealing(true) : queue(short > 0 ? { ...action, fund: 'family' } : action))}
           data-testid={deal ? 'make-offer' : undefined}
         >
-          {queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${verb.verb.charAt(0).toLowerCase()}${verb.verb.slice(1)}` : verb.verb}
+          {queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${facts.button.charAt(0).toLowerCase()}${facts.button.slice(1)}` : facts.button}
         </button>
       </div>
       {short > 0 && !why && !queued && (
@@ -83,7 +86,15 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       {p.refuseEffects && p.refuseEffects.length > 0 && (
         <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
-      {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
+      {why && <div className="text-[11px] text-red-400 mt-1" data-testid="unavailable">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
+      {!compact && !why && (
+        <div className="mt-1 text-[11px] text-stone-500 leading-snug" data-testid="action-facts">
+          <span className="text-stone-400">Who:</span> {facts.actor}{facts.target ? <> · <span className="text-stone-400">On:</span> {facts.target}</> : null} · <span className="text-stone-400">When:</span> {facts.timing}
+        </div>
+      )}
+      <div className="mt-1 flex flex-wrap items-center gap-2">
+        <AdviceButton s={s} subject={{ kind: 'action', action }} />
+      </div>
       <WhyPanel s={s} action={action} compact={compact} />
       {dealing && deal && <DealWindow s={s} target={deal} onClose={() => setDealing(false)} />}
     </div>

@@ -1,3 +1,4 @@
+import { AdviceButton } from '../advice/AdviceButton';
 import { useMemo, useState } from 'react';
 import { previewAction, queuedCost } from '../../engine/actions';
 import { CATALOG } from '../../engine/catalog';
@@ -246,9 +247,10 @@ function Summary({ s, k, runner, district, earner, budget, queued, onStart }: { 
       {sum.locks.map((l, i) => <div key={i} className="mt-1 text-[11px]"><span className="text-red-300">✗ {l.why}</span> <span className="text-stone-500">— {l.how}</span></div>)}
       {p?.detail && !sum.locks.length && <div className="mt-1.5 text-[10px] text-stone-500">{p.effects.filter((e) => e.type === 'econ' && e.op.op === 'note').map((e) => (e.type === 'econ' && e.op.op === 'note' ? e.op.text : '')).join(' · ')}</div>}
       <button type="button" className="btn-gold mt-3 w-full sm:w-auto" disabled={!sum.action || !!why || already} onClick={() => sum.action && onStart(sum.action)} data-testid="sr-start">
-        {already ? 'Ordered ✓' : k === 'madam' ? 'Agree the cut' : 'Start it'}
+        {already ? 'Ordered ✓' : k === 'madam' ? 'Agree the cut' : `Start it — ${fmt$(sum.cost)}`}
       </button>
-      {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
+      {why && <div className="text-[11px] text-red-400 mt-1">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
+      {sum.action && sum.action.kind === 'econ' && <div className="mt-2 flex flex-wrap items-baseline gap-2" data-testid="sr-advice"><AdviceButton s={s} subject={{ kind: 'action', action: sum.action }} label="Ask your underboss about it" /></div>}
     </div>
   );
 }

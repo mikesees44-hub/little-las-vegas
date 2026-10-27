@@ -1,3 +1,4 @@
+import { AdviceButton } from '../advice/AdviceButton';
 import { useMemo, useState } from 'react';
 import { previewAction, queuedMoney } from '../../engine/actions';
 import {
@@ -341,7 +342,8 @@ function Summary({ s, job, who, target, pocket, setPocket, orders, onGo, onRacke
         </button>
         {onRacket && <button type="button" className="btn-ghost text-xs py-1" onClick={onRacket} data-testid="dw-racket">Or run it every week as a racket →</button>}
       </div>
-      {why && <div className="text-[11px] text-red-400 mt-1">{why}</div>}
+      {why && <div className="text-[11px] text-red-400 mt-1">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
+      {sum.action && <div className="mt-2 flex flex-wrap items-baseline gap-2" data-testid="dw-advice"><AdviceButton s={s} subject={{ kind: 'action', action: sum.action }} label="Ask your underboss about the job" /></div>}
     </div>
   );
 }

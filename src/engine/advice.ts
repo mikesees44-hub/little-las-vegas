@@ -16,6 +16,8 @@ import { OPEN_FILE } from './longgame';
 import { opinion } from './relations';
 import { CITIES, HEISTS, needsSanction, sanctioned, SCHEME_INFO, schemeOdds } from './schemes';
 import { forecast, newDispute } from './table';
+import { recurringOf, recurringOfAll, recurringValue } from './recurring';
+import { CAPO_CUT } from './economy';
 import type { Choice, CouncilTask, Dispute, Effect, GameState, HeatBar, PlayerAction, Seat } from './types';
 
 /**
@@ -147,6 +149,12 @@ export function effectValue(s: GameState, e: Effect): number {
     case 'warStart': return -2500;
     case 'recruit': return 1200;
     case 'frontMan': return 2500;
+    case 'contract': {
+      // Every week from now: what the Family gets less (or more), plus what he thinks of you for it.
+      const c = s.characters[e.charId];
+      const loyal = c ? (e.keep - (c.keep ?? CAPO_CUT)) * 200 * 45 : 0;
+      return Math.round(recurringValue(s, e) + loyal);
+    }
     default: return 0;
   }
 }
@@ -633,6 +641,8 @@ function build(s: GameState, title: string, purpose: string, p: ActionPreview, e
     // Money paid up front is a cost now even when the rest depends on a yes.
     const w: When = e.type === 'schedule' ? 'later' : e.type === 'money' && e.amount < 0 && p.cost > 0 ? 'now' : when;
     put(named(s, e, w, title));
+    const r = recurringOf(s, e);
+    if (r && r.weekly) put({ label: e.label ?? title, text: `${r.weekly > 0 ? '+' : '−'}${fmtMoney(Math.abs(r.weekly))}/wk to the Family${r.weeks ? ` for ${r.weeks} wks` : ', every week'} (estimate)`, tone: r.weekly > 0 ? 'good' : 'bad', when: 'per week', stat: 'money', min: r.weekly, max: r.weekly });
   }
   for (const n of extra) put(n);
   const sv = p.effects.reduce((x, e) => x + effectValue(s, e), 0);
@@ -675,7 +685,16 @@ export function whyPick(s: GameState, ch: Choice, ex: ActionExplanation): string
   const ranked = ch.effects.map((e) => ({ e, v: effectValue(s, e) })).filter((x) => x.v !== 0).sort((a, b) => Math.abs(b.v) - Math.abs(a.v));
   const best = ranked.find((x) => x.v > 0);
   const cheap = !ranked.some((x) => x.v < -300);
-  if (!ranked.length) return ch.detail ?? 'Nothing much changes either way.';
+  // A standing change (a contract, a loan) is explained by what it does every week, never as "nothing changes".
+  const rec = recurringOfAll(s, ch.effects);
+  if (rec.length) {
+    const lead = best && best.e.type !== 'contract' ? `It buys ${describeEffect(s, best.e) ?? 'goodwill'}. ` : '';
+    return `${lead}${rec.map((r) => r.text).join(' ')}`;
+  }
+  if (!ranked.length) {
+    const named = ch.effects.map((e) => describeEffect(s, e)).filter((x): x is string => !!x);
+    return ch.detail ?? (named.length ? `What it does: ${named.slice(0, 3).join('; ')}. No money, respect or heat moves with it.` : 'No money, respect or heat moves with it; what follows is in the story it starts.');
+  }
   if (best) {
     const d = describeEffect(s, best.e) ?? '';
     const why = best.e.type === 'evidence' ? 'you want the law off his back' : best.e.type === 'schedule' ? 'you want something back later' : best.e.type === 'hook' ? 'you want leverage on him' : best.e.type === 'kill' ? 'you want him gone' : best.e.type === 'money' ? 'you need the money' : best.e.type === 'heat' ? `you want ${best.e.bar} heat down` : best.e.type === 'respect' ? 'your name matters more than the cost' : best.e.type === 'opinion' || best.e.type === 'crewOpinion' || best.e.type === 'meter' ? 'you need him (or them) on your side' : best.e.type === 'rivalOpinion' ? 'you want peace with them' : best.e.type === 'influence' ? 'you want ground on the island' : best.e.type === 'favor' ? 'you want a favor in the bank' : 'it suits your plans';
@@ -703,8 +722,46 @@ export interface ChoiceAdvice {
   tags: string[];
 }
 
-/** Every option of a decision explained, with the stand-out ones tagged against each other. */
-export function compareChoices(s: GameState, choices: readonly Choice[]): ChoiceAdvice[] {
+/** What the player says matters most right now. Advice is weighed by it; it is never "the right answer". */
+export type Priority = 'money' | 'heat' | 'loyalty' | 'family';
+export const PRIORITIES: Priority[] = ['money', 'heat', 'loyalty', 'family'];
+export const PRIORITY_LABEL: Record<Priority, string> = { money: 'Money', heat: 'Keep the heat down', loyalty: 'Loyalty of the men', family: 'Protect the family' };
+
+/** How well a set of effects serves one priority (higher is better). Pure. */
+export function priorityScore(s: GameState, effects: readonly Effect[], prio: Priority): number {
+  let v = 0;
+  for (const e of effects) {
+    switch (prio) {
+      case 'money':
+        if (e.type === 'money') v += e.amount;
+        v += recurringValue(s, e);
+        break;
+      case 'heat':
+        if (e.type === 'heat') v -= e.amount * 100;
+        if (e.type === 'evidence') v -= e.amount * 60;
+        if (e.type === 'schedule' && !GOOD_LATER.has(e.key)) v -= e.chance * 400;
+        break;
+      case 'loyalty':
+        if (e.type === 'opinion' && e.to === s.playerId && s.characters[e.from]?.faction === 'player') v += e.amount * 30;
+        if (e.type === 'crewOpinion') v += e.amount * 120;
+        if (e.type === 'meter' && e.to === s.playerId) v += e.meter === 'grievance' ? -e.amount * 20 : e.amount * 10;
+        if (e.type === 'contract') { const c = s.characters[e.charId]; v += c ? (e.keep - (c.keep ?? CAPO_CUT)) * 4000 : 0; }
+        break;
+      case 'family':
+        if (e.type === 'familyOpinion') v += e.amount * 120;
+        if (e.type === 'kill') v += s.characters[e.charId]?.dynasty ? -5000 : -300;
+        if (e.type === 'evidence' && e.charId === s.playerId) v -= e.amount * 80;
+        if (e.type === 'heat' && e.bar === 'federal') v -= e.amount * 60;
+        if (e.type === 'warStart' || e.type === 'feud') v -= 2000;
+        if (e.type === 'schedule' && e.key === 'retaliation') v -= e.chance * 1500;
+        break;
+    }
+  }
+  return v;
+}
+
+/** Every option of a decision explained, with the stand-out ones tagged against each other (and against the player's priority, if he set one). */
+export function compareChoices(s: GameState, choices: readonly Choice[], priority?: Priority): ChoiceAdvice[] {
   const rows = choices.map((ch) => ({ id: ch.id, ex: explainChoice(s, ch), cost: ch.effects.reduce((x, e) => x + (e.type === 'money' && e.amount < 0 ? -e.amount : 0), 0), off: !!ch.disabledReason }));
   const live = rows.filter((r) => !r.off);
   const tags: Record<string, string[]> = Object.fromEntries(rows.map((r) => [r.id, []]));
@@ -716,6 +773,10 @@ export function compareChoices(s: GameState, choices: readonly Choice[]): Choice
   uniqueBest((r) => r.ex.value, 'Best value');
   uniqueBest((r) => -r.cost, 'Cheapest');
   uniqueBest((r) => -r.ex.risks.reduce((x, k) => x + k.chance * (k.severity === 'high' ? 3 : k.severity === 'mid' ? 2 : 1), 0), 'Safest');
+  if (priority) {
+    const byId = Object.fromEntries(choices.map((c) => [c.id, c]));
+    uniqueBest((r) => priorityScore(s, byId[r.id].effects, priority), `Best for: ${PRIORITY_LABEL[priority].toLowerCase()}`);
+  }
   return rows.map((r) => ({ id: r.id, ex: r.ex, tags: tags[r.id] }));
 }
 

@@ -1,7 +1,8 @@
+import { useSheet } from '../components/People';
 import { StartHereButton } from '../econ/StartRacket';
 import { DirtyHere } from '../econ/DirtyWork';
 import { useShell } from '../shell/context';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { STYLES, SIGN_HEX, type BuildStyle, type SignColor } from '../../engine/design';
 import { lookOf, restyleCost } from '../../engine/hood';
 import { HOODS_BY_ID, hoodOfZone } from '../../engine/hoodData';
@@ -79,6 +80,29 @@ export function facadeOf(s: GameState, it: Item, mood: Mood): FacadeSpec {
   };
 }
 
+/** Who to open for "View owner": you, the rival family's boss, or nobody we have a file on. */
+export function ownerOf(s: GameState, it: Item): { id?: string; why?: string } {
+  if (it.mine) return { id: s.playerId };
+  const o = it.lot?.owner;
+  if (!o || o === 'private') return { why: 'an independent owner: no file on him' };
+  if (o === 'city') return { why: 'the city owns it' };
+  const r = s.rivals.find((x) => x.id === o);
+  return r && s.characters[r.leaderId]?.alive ? { id: r.leaderId } : { why: 'nobody we know by name' };
+}
+
+/** The four things a selected building always offers. */
+function CardActions({ s, it, onBusiness, onOwner, onShow, onActions }: { s: GameState; it: Item; onBusiness: () => void; onOwner: (id: string) => void; onShow?: () => void; onActions: () => void }) {
+  const own = ownerOf(s, it);
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-1" data-testid="sv-actions">
+      <button type="button" className="btn-ghost text-[11px] py-1" onClick={onBusiness} data-testid="sv-view-business">View business</button>
+      <button type="button" className="btn-ghost text-[11px] py-1" disabled={!own.id} title={own.why ? `Unavailable: ${own.why}` : undefined} onClick={() => own.id && onOwner(own.id)} data-testid="sv-view-owner">View owner</button>
+      <button type="button" className="btn-ghost text-[11px] py-1" disabled={!onShow} onClick={() => onShow?.()} data-testid="sv-show-map">Show on map</button>
+      <button type="button" className="btn-gold text-[11px] py-1" onClick={onActions} data-testid="sv-card-actions">Actions</button>
+    </div>
+  );
+}
+
 function ownerText(s: GameState, it: Item): string {
   if (it.mine) return `House of ${s.houseName}`;
   const l = it.lot;
@@ -119,9 +143,12 @@ function Restyle({ s, lotId }: { s: GameState; lotId: string }) {
  * (LotPanel: buy through the Deal window, lease, managers; BizPanel for a
  * place of yours without a lot). The Empire Designer opens from here.
  */
-export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; mood: Mood; onClose: () => void }) {
+export function StreetCard({ s, it, mood, onClose, onShow }: { s: GameState; it: Item; mood: Mood; onClose: () => void; onShow?: () => void }) {
   const empire = useEmpire();
   const shell = useShell();
+  const sheet = useSheet();
+  const papers = useRef<HTMLDivElement>(null);
+  const acts = useRef<HTMLDivElement>(null);
   const l = it.lot;
   // The Empire Designer: your hotel, motel, restaurant, bar or club opens in it;
   // an empty lot of yours is developed through it.
@@ -140,6 +167,8 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
         </div>
         <button type="button" onClick={onClose} className="text-xs text-stone-400 hover:text-gold-300 shrink-0" aria-label="Close">close ×</button>
       </div>
+      <CardActions s={s} it={it} onBusiness={() => papers.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })} onActions={() => acts.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })}
+        onOwner={(id) => sheet.open(id)} onShow={onShow} />
       <Storefront it={it} f={f} />
       <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <div className="text-stone-500">Held by</div>
@@ -159,6 +188,7 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
           </ul>
         </div>
       )}
+      <div ref={acts} />
       <StartHereButton s={s} place={l?.zone ?? (it.biz?.districtId as string | undefined)} onGo={() => shell.go('holdings.hub')} />
       <DirtyHere s={s} lot={l} biz={it.mine ? it.biz : undefined} onGo={() => shell.go('holdings.dirty')} />
       {ven && <button type="button" className="btn-gold w-full" data-testid="open-designer" onClick={() => empire.open({ venueId: ven.id })}>Open the Empire Designer</button>}
@@ -169,7 +199,7 @@ export function StreetCard({ s, it, mood, onClose }: { s: GameState; it: Item; m
           <Restyle s={s} lotId={l.id} />
         </div>
       )}
-      <div className="border-t border-noir-700 pt-2">
+      <div ref={papers} className="border-t border-noir-700 pt-2" data-testid="sv-papers">
         {l ? <LotPanel s={s} id={l.id} noDesigner /> : it.biz ? <BizPanel s={s} id={it.biz.id} noDesigner /> : null}
       </div>
     </div>

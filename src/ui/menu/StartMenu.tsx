@@ -6,7 +6,7 @@ import { NoirStill } from '../cutscene/NoirStill';
 import { AssetImg } from '../hood/AssetImg';
 import { CUTSCENE_ART, NOIR_GRADE } from '../hood/art/sceneArt';
 import { deleteSlot, freeSlot, listSlots, type SlotMeta } from '../save';
-import { AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode } from '../settings';
+import { HELP_LEVELS, type AutoBriefings, AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode } from '../settings';
 import { CharacterCreator } from './CharacterCreator';
 
 /**
@@ -111,7 +111,8 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <label className="text-xs text-stone-500">Seed <input value={seed} onChange={(e) => setSeed(e.target.value)} className="ml-1 rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-32" /></label>
             <button className="btn-ghost text-xs py-1" onClick={() => setSeed(freshSeed())}>Reroll</button>
-            <button className="btn-gold ml-auto" data-testid="start-next" onClick={() => setScreen('create')}>Create your character →</button>
+            <button className="btn-ghost ml-auto" data-testid="start-as-written" title="Start with the character the story was written for: no choices, straight to Memorial Day" onClick={() => onStart(newGameWith(seed || 'llv', start), freeSlot())}>Play as written ▸</button>
+            <button className="btn-gold" data-testid="start-next" onClick={() => setScreen('create')}>Create your character →</button>
           </div>
         </div>
       )}
@@ -199,6 +200,21 @@ export function SettingsPanel() {
   return (
     <div className="space-y-2 text-sm" data-testid="settings">
       <div className={row}><span>Music (doo-wop, 1960)</span><button className={music ? 'btn-gold text-xs py-1' : 'btn-ghost text-xs py-1'} onClick={toggleMusic}>{music ? 'On' : 'Off'}</button></div>
+      <div className="panel p-3 space-y-1.5" data-testid="setting-help-level">
+        <div className="text-stone-300">Help</div>
+        <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Help level">
+          {HELP_LEVELS.map((h) => (
+            <button key={h.id} type="button" role="radio" aria-checked={(st.helpLevel ?? 'guided') === h.id} onClick={() => upd({ helpLevel: h.id })} data-testid={`help-${h.id}`}
+              className={`rounded border px-2 py-1 text-xs ${(st.helpLevel ?? 'guided') === h.id ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300'}`}>{h.label}</button>
+          ))}
+        </div>
+        <p className="text-xs text-stone-500">{HELP_LEVELS.find((h) => h.id === (st.helpLevel ?? 'guided'))!.blurb}</p>
+        <label className="flex items-center justify-between gap-2"><span className="text-stone-400">Adviser briefings that speak up by themselves</span>
+          <select value={st.autoBriefings ?? ''} onChange={(e) => upd({ autoBriefings: (e.target.value || undefined) as AutoBriefings | undefined })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 text-xs" data-testid="setting-auto-briefings">
+            <option value="">As the help level says</option><option value="major">On big moves</option><option value="all">On every order</option><option value="off">Only when I ask</option>
+          </select>
+        </label>
+      </div>
       <label className={row}><span>Reduced motion <span className="block text-xs text-stone-500">No pans, rain or flicker; cutscene text appears at once.</span></span><input type="checkbox" checked={st.reducedMotion} onChange={(e) => upd({ reducedMotion: e.target.checked })} /></label>
       <label className={row}><span>Text speed</span>
         <select value={st.textSpeed} onChange={(e) => upd({ textSpeed: e.target.value as TextSpeed })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200">

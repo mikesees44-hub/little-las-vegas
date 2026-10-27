@@ -35,13 +35,29 @@ export function CharLink({ s, id, children, className }: { s: GameState; id?: st
   );
 }
 
-/** A clickable portrait. */
+/** The visible "Actions" handle on a portrait: everything you can do to him (right-click does the same). */
+export function ActionsHandle({ c, size = 48 }: { c: Character; size?: number }) {
+  const { menu } = useSheet();
+  if (!menu || !c.alive) return null;
+  return (
+    <button type="button" aria-label={`Actions for ${displayName(c)}`} title="Actions" data-testid="portrait-actions"
+      onClick={(e) => { e.stopPropagation(); const r = (e.currentTarget as HTMLElement).getBoundingClientRect?.(); menu(c.id, undefined, r ? { x: r.left, y: r.bottom + 4 } : undefined); }}
+      className={`pointer-events-auto absolute -bottom-1 -right-1 z-[1] flex items-center justify-center rounded-full border border-gold-600/80 bg-noir-950/95 text-gold-300 shadow hover:bg-gold-500 hover:text-noir-950 ${size >= 40 ? 'h-5 min-w-5 px-1 text-[11px]' : 'h-4 min-w-4 px-0.5 text-[9px]'}`}>
+      ⋯
+    </button>
+  );
+}
+
+/** A clickable portrait, with its Actions handle. */
 export function Face({ s, c, size = 48, className }: { s: GameState; c: Character; size?: number; className?: string }) {
   const { open, menu } = useSheet();
   return (
-    <button type="button" className={`shrink-0 rounded-md hover:ring-2 hover:ring-gold-400 ${className ?? ''}`} onClick={(e) => { e.stopPropagation(); open(c.id); }} onContextMenu={menu ? (e) => { e.preventDefault(); e.stopPropagation(); menu(c.id, undefined, { x: e.clientX, y: e.clientY }); } : undefined} title={`${displayName(c)} — right-click for everything you can do`}>
-      <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined} />
-    </button>
+    <span className={`relative inline-block shrink-0 ${className ?? ''}`}>
+      <button type="button" className="shrink-0 rounded-md hover:ring-2 hover:ring-gold-400" onClick={(e) => { e.stopPropagation(); open(c.id); }} onContextMenu={menu ? (e) => { e.preventDefault(); e.stopPropagation(); menu(c.id, undefined, { x: e.clientX, y: e.clientY }); } : undefined} title={`${displayName(c)} — ⋯ or right-click for everything you can do`}>
+        <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined} />
+      </button>
+      <ActionsHandle c={c} size={size} />
+    </span>
   );
 }
 

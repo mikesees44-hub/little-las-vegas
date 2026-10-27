@@ -113,6 +113,7 @@ const OTHER_PURPOSE: Record<string, string> = {
   officeHours: 'Hear the island\'s problems: goodwill, favors owed, sometimes a lead.',
 };
 
+
 /** Purposes for romance interactions (merged into advice.ts's interaction table). */
 export const ROMANCE_PURPOSE: Record<string, string> = {
   court: 'A courtship in the open: if it goes well, a marriage and an alliance of houses. Only if the other adult wants it too.',
@@ -140,7 +141,7 @@ function opOf(a: PlayerAction): string | undefined {
 export function pillarPurpose(a: PlayerAction): string | undefined {
   const op = opOf(a);
   switch (a.kind) {
-    case 'power': return a.op.op === 'shadow' ? SHADOW_PURPOSE[a.op.a.op] : op ? POWER_PURPOSE[op] : undefined;
+    case 'power': return a.op.op === 'shadow' ? SHADOW_PURPOSE[a.op.a.op] ?? 'Work the succession court: who backs whom, and what he promised.' : op ? POWER_PURPOSE[op] : undefined;
     case 'pol': return op ? POL_PURPOSE[op] : undefined;
     case 'travel': return op ? TRAVEL_PURPOSE[op] : undefined;
     case 'ledger': return op ? LEDGER_PURPOSE[op] : undefined;

@@ -33,6 +33,12 @@ import { PurseSection } from '../tribute/PurseSection';
 import { DirtyOnPerson } from '../econ/DirtyWork';
 import { useShell } from '../shell/context';
 import { wealthOf } from '../../engine/wealth';
+import { useState } from 'react';
+import { QuickActions } from '../sheet/QuickActions';
+
+/** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
+export type SheetTab = 'overview' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
+const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['actions', 'Actions'], ['history', 'History']];
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -45,7 +51,8 @@ const SKILL_HELP: Record<string, string> = {
 };
 const SKILL_LABEL: Record<string, string> = { leadership: 'Leadership', business: 'Business', diplomacy: 'Diplomacy', intrigue: 'Intrigue', force: 'Muscle', discipline: 'Discipline' };
 
-export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id: string; onClose: () => void; embedded?: boolean }) {
+export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: GameState; id: string; onClose: () => void; embedded?: boolean; initialTab?: SheetTab }) {
+  const [tab, setTab] = useState<SheetTab>(initialTab ?? 'overview');
   const c = s.characters[id];
   // Off-screen people of the house trees have their own sheet.
   if (!c) return <LineageSheet s={s} id={id} onClose={onClose} />;
@@ -91,22 +98,47 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
                 </div>
               )}
               <div className="mt-1.5"><TraitIcons c={c} labels /></div>
-              {c.alive && !s.gameOver && <div className="mt-1.5"><TravelButton s={s} charId={c.id} /></div>}
-              {c.alive && !s.gameOver && !isBoss && <div className="mt-1.5"><DirtyOnPerson s={s} charId={c.id} onGo={() => { onClose(); shell.go('holdings.dirty'); }} /></div>}
             </div>
           </div>
           {!embedded && <button className="btn-ghost text-xs" onClick={onClose}>Close</button>}
         </div>
 
-        <div className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs">
+        {c.alive && !s.gameOver && <QuickActions s={s} c={c} onAll={() => setTab('actions')} />}
+
+        <nav className="mt-3 flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label={`${c.firstName}'s sheet`} data-testid="sheet-tabs">
+          {SHEET_TABS.map(([k, label]) => (
+            <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`sheet-tab-${k}`}
+              className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{label}</button>
+          ))}
+        </nav>
+
+        {tab === 'skills' && (
+          <section className="mt-3 space-y-1.5" data-testid="sheet-skills">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs">
+              {SKILLS.map((k) => (
+                <div key={k} className="rounded bg-noir-800 border border-noir-700 px-2 py-1" title={SKILL_HELP[k]}>
+                  <div className="text-stone-500">{SKILL_LABEL[k]}</div>
+                  <div className="tabular-nums text-stone-100 text-base font-semibold">{c.attributes[k]}</div>
+                </div>
+              ))}
+            </div>
+            <ul className="text-[11px] text-stone-400 space-y-0.5">{SKILLS.map((k) => <li key={k}><span className="text-stone-200">{SKILL_LABEL[k]} {c.attributes[k]}:</span> {SKILL_HELP[k]}</li>)}</ul>
+            <div className="mt-1.5"><TraitIcons c={c} labels /></div>
+            <ul className="text-[11px] text-stone-500">{c.traits.map((t) => <li key={t}><span className="text-stone-300">{t}:</span> {TRAIT_INFO[t]}</li>)}</ul>
+          </section>
+        )}
+
+        {tab === 'overview' && (
+        <div className="mt-3 grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs" data-testid="sheet-skill-strip">
           {SKILLS.map((k) => (
-            <div key={k} className="rounded bg-noir-800 border border-noir-700 px-2 py-1" title={SKILL_HELP[k]}>
-              <div className="text-stone-500">{SKILL_LABEL[k]}</div>
-              <div className="tabular-nums text-stone-100 text-base font-semibold">{c.attributes[k]}</div>
+            <div key={k} className="rounded bg-noir-800/60 border border-noir-700 px-2 py-0.5" title={SKILL_HELP[k]}>
+              <span className="text-stone-500">{SKILL_LABEL[k]}</span> <span className="tabular-nums text-stone-100 font-semibold">{c.attributes[k]}</span>
             </div>
           ))}
         </div>
+        )}
 
+        {tab === 'overview' && (
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
             <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Particulars</div>
@@ -147,13 +179,27 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
             </section>
           )}
         </div>
+        )}
 
+        {tab === 'overview' && <>
         <DynastyFacts s={s} c={c} />
         <PowerFacts s={s} c={c} />
+        {showsLife && <HisLife s={s} c={c} part="life" />}
+        </>}
+
+        {tab === 'work' && <>
+        <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5 text-xs text-stone-300 space-y-0.5" data-testid="sheet-money">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Money</div>
+          <OwnMoneyLines s={s} c={c} />
+          {canHold(s, c) && <div className="pt-1"><div className="text-[10px] uppercase tracking-wider text-stone-500">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
+        </section>
         <BonesFacts s={s} c={c} />
         <PurseSection s={s} c={c} />
-        {showsLife && <HisLife s={s} c={c} />}
+        {showsLife && <HisLife s={s} c={c} part="work" />}
+        <PoliticsSection s={s} c={c} />
+        </>}
 
+        {tab === 'relationships' && <>
         <FamilySection s={s} id={c.id} />
 
         <Relationships s={s} c={c} />
@@ -167,10 +213,16 @@ export function CharacterSheet({ s, id, onClose, embedded }: { s: GameState; id:
           </ul>
         </section>
 
-        <PoliticsSection s={s} c={c} />
         <ConnectionsSection s={s} id={c.id} />
+        </>}
 
+        {tab === 'history' && <HisHistory s={s} c={c} />}
+
+        {tab === 'actions' && <>
+        {c.alive && !s.gameOver && <div className="mt-3 flex flex-wrap gap-2"><TravelButton s={s} charId={c.id} /></div>}
+        {c.alive && !s.gameOver && !isBoss && <div className="mt-1.5"><DirtyOnPerson s={s} charId={c.id} onGo={() => { onClose(); shell.go('holdings.dirty'); }} /></div>}
         <InteractionMenu s={s} c={c} />
+        </>}
       </div>
     </SheetFrame>
   );
@@ -234,18 +286,19 @@ function LoyaltyBar({ label, v }: { label: string; v: number }) {
 }
 
 /** Who the man is: his crew, his loyalties, his trade, his family, his weaknesses, his story. */
-function HisLife({ s, c }: { s: GameState; c: Character }) {
+function HisLife({ s, c, part }: { s: GameState; c: Character; part: 'life' | 'work' }) {
   const k = capoOf(s, c);
   const capoLoy = capoLoyalty(s, c);
   const bossLoy = opinion(s, c.id, s.playerId);
   const men = c.rank === 'capo' ? regime(s, c.id) : [];
   const outside = c.rank === 'capo' ? outsideGuys(s, c.id) : [];
   const kids = c.household?.kids ?? [];
-  const story = (c.story ?? []).slice().reverse();
   const warns = warningsFor(s, c);
+  const life = part === 'life';
+  const work = part === 'work';
   return (
     <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="his-life">
-      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">His life</div>
+      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{life ? 'His life' : 'His work'}</div>
       <div className="mt-1 grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 text-xs text-stone-300">
           {c.rank === 'capo' ? (
@@ -255,20 +308,20 @@ function HisLife({ s, c }: { s: GameState; c: Character }) {
           ) : (
             <div>{k ? <>In <CharLink s={s} id={k.id} />'s crew</> : 'Reports straight to you'}{c.craft ? ` · ${CRAFT_INFO[c.craft].name}` : ''}</div>
           )}
-          {c.goal && !(c.dynasty && fam(s, c.id).goal) && <div>Wants to: <span className="text-stone-100">{GOAL_INFO[c.goal].toLowerCase()}</span></div>}
-          {c.lastEarn !== undefined && <div>Brought in {fmt$(c.lastEarn)} last week · stash {fmt$(c.wealth)}</div>}
-          <div>Record: {c.record ?? 0} arrest{(c.record ?? 0) === 1 ? '' : 's'}</div>
-          <EvidenceLine s={s} c={c} />
-          {c.household?.wife && <div>Wife: {c.household.wife}{kids.length ? ` · ${kids.map((x) => `${x.name} (${Math.max(0, s.date.y - x.born)})`).join(', ')}` : ''}</div>}
-          {!c.household?.wife && kids.length > 0 && <div>Kids: {kids.map((x) => x.name).join(', ')}</div>}
-          {(c.vices ?? []).length > 0 && <div className="text-amber-200">{(c.vices ?? []).map((v) => VICE_INFO[v]).join('. ')}.</div>}
-          {(c.arrears ?? 0) > 0 && <div className="text-amber-200">Owes {fmt$(c.arrears ?? 0)} in kick-ups he held back over the winter. He says he'll make it up in the season.</div>}
-          {c.debtTo && <div className="text-red-300">Owes {fmt$(c.debtTo.amount)} to a {FACTION_NAMES[c.debtTo.rival]} shylock.</div>}
-          {c.courtedBy && <div className="text-red-300">{FACTION_NAMES[c.courtedBy.rival]} has been courting him since week {c.courtedBy.week}.</div>}
-          {c.proposedWeek !== undefined && <div className="text-gold-300">Proposed for membership (week {c.proposedWeek}){c.vouchedBy ? <>, vouched for by <CharLink s={s} id={c.vouchedBy} /></> : ''}.</div>}
-          {c.madeWeek !== undefined && <div className="text-gold-300">Made in week {c.madeWeek}{c.vouchedBy ? <>; <CharLink s={s} id={c.vouchedBy} /> stood for him</> : ''}.</div>}
+          {life && c.goal && !(c.dynasty && fam(s, c.id).goal) && <div>Wants to: <span className="text-stone-100">{GOAL_INFO[c.goal].toLowerCase()}</span></div>}
+          {work && c.lastEarn !== undefined && <div>Brought in {fmt$(c.lastEarn)} last week · stash {fmt$(c.wealth)}</div>}
+          {work && <div>Record: {c.record ?? 0} arrest{(c.record ?? 0) === 1 ? '' : 's'}</div>}
+          {work && <EvidenceLine s={s} c={c} />}
+          {life && c.household?.wife && <div>Wife: {c.household.wife}{kids.length ? ` · ${kids.map((x) => `${x.name} (${Math.max(0, s.date.y - x.born)})`).join(', ')}` : ''}</div>}
+          {life && !c.household?.wife && kids.length > 0 && <div>Kids: {kids.map((x) => x.name).join(', ')}</div>}
+          {life && (c.vices ?? []).length > 0 && <div className="text-amber-200">{(c.vices ?? []).map((v) => VICE_INFO[v]).join('. ')}.</div>}
+          {work && (c.arrears ?? 0) > 0 && <div className="text-amber-200">Owes {fmt$(c.arrears ?? 0)} in kick-ups he held back over the winter. He says he'll make it up in the season.</div>}
+          {work && c.debtTo && <div className="text-red-300">Owes {fmt$(c.debtTo.amount)} to a {FACTION_NAMES[c.debtTo.rival]} shylock.</div>}
+          {life && c.courtedBy && <div className="text-red-300">{FACTION_NAMES[c.courtedBy.rival]} has been courting him since week {c.courtedBy.week}.</div>}
+          {life && c.proposedWeek !== undefined && <div className="text-gold-300">Proposed for membership (week {c.proposedWeek}){c.vouchedBy ? <>, vouched for by <CharLink s={s} id={c.vouchedBy} /></> : ''}.</div>}
+          {life && c.madeWeek !== undefined && <div className="text-gold-300">Made in week {c.madeWeek}{c.vouchedBy ? <>; <CharLink s={s} id={c.vouchedBy} /> stood for him</> : ''}.</div>}
         </div>
-        <div className="space-y-1.5">
+        {life && <div className="space-y-1.5">
           {c.faction === 'player' && <LoyaltyBar label="Loyalty to you" v={bossLoy} />}
           {capoLoy !== undefined && k && <LoyaltyBar label={`Loyalty to ${k.firstName}`} v={capoLoy} />}
           {capoLoy !== undefined && capoLoy > bossLoy + 10 && <div className="text-[11px] text-amber-300">His capo's man first. If {k?.firstName} walks, he follows.</div>}
@@ -276,21 +329,30 @@ function HisLife({ s, c }: { s: GameState; c: Character }) {
           {men.length > 0 && (
             <div className="flex flex-wrap gap-1 pt-1">{men.map((m) => <Face key={m.id} s={s} c={m} size={28} />)}</div>
           )}
-        </div>
+        </div>}
       </div>
-      {story.length > 0 && (
-        <div className="mt-2">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">His chronicle</div>
-          <ul className="mt-1 space-y-0.5 text-xs">
-            {story.map((e, i) => <li key={i} className="text-stone-300"><span className="text-stone-500 tabular-nums">{formatDate(dateOfWeek(Math.max(1, e.week)))}</span> — {e.text}</li>)}
-          </ul>
-        </div>
-      )}
-      {c.alive && c.faction === 'player' && !s.gameOver && (c.rank === 'soldier' || c.rank === 'associate') && !c.specialty && (
+      {work && c.alive && c.faction === 'player' && !s.gameOver && (c.rank === 'soldier' || c.rank === 'associate') && !c.specialty && (
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {capos(s).filter((x) => x.id !== c.capoId).slice(0, 4).map((x) => <ActionCard key={x.id} s={s} action={{ kind: 'reassign', charId: c.id, capoId: x.id }} compact />)}
           {c.rank === 'associate' && <ActionCard s={s} action={{ kind: 'background', charId: c.id }} compact />}
         </div>
+      )}
+    </section>
+  );
+}
+
+/** His story: what happened to him, week by week (the History tab). */
+function HisHistory({ s, c }: { s: GameState; c: Character }) {
+  const story = (c.story ?? []).slice().reverse();
+  return (
+    <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="sheet-history">
+      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{c.id === s.playerId ? 'Your chronicle' : 'His chronicle'}</div>
+      {c.madeWeek !== undefined && <div className="mt-1 text-xs text-gold-300">Made in week {c.madeWeek}.</div>}
+      {!c.alive && c.death && <div className="mt-1 text-xs text-stone-300">Died {formatDate(c.death.date)}: {c.death.cause}.</div>}
+      {story.length === 0 ? <p className="mt-1 text-xs text-stone-500">Nothing on record yet. What he does from here is written down here.</p> : (
+        <ul className="mt-1 space-y-0.5 text-xs">
+          {story.map((e, i) => <li key={i} className="text-stone-300"><span className="text-stone-500 tabular-nums">{formatDate(dateOfWeek(Math.max(1, e.week)))}</span> — {e.text}</li>)}
+        </ul>
       )}
     </section>
   );

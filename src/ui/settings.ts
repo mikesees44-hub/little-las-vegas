@@ -27,6 +27,35 @@ export interface Settings {
   pauseOnEvening?: boolean;
   /** Developer inspector: show the engine's internal ids (agreements) next to their names. */
   devIds?: boolean;
+  /** How much the game explains: Guided (every tip, briefings on big moves), Standard, Experienced (quiet). */
+  helpLevel?: HelpLevel;
+  /** Adviser briefings that open by themselves: on big moves (default), on everything, or only when asked. */
+  autoBriefings?: AutoBriefings;
+  /** What matters most to you right now: decision advice is weighed by it. */
+  priority?: 'money' | 'heat' | 'loyalty' | 'family';
+  /** Map: the lighting of the illustrated island (time of day). */
+  mapLighting?: 'day' | 'dusk' | 'night' | 'auto';
+}
+export type HelpLevel = 'guided' | 'standard' | 'experienced';
+export type AutoBriefings = 'major' | 'all' | 'off';
+
+export const HELP_LEVELS: { id: HelpLevel; label: string; blurb: string }[] = [
+  { id: 'guided', label: 'Guided', blurb: 'Every tip and lesson, who-what-when on every order, and your underboss speaks up on big moves.' },
+  { id: 'standard', label: 'Standard', blurb: 'No lessons or who-what-when lines; a short word from your underboss on big moves.' },
+  { id: 'experienced', label: 'Experienced', blurb: 'Quiet: no tips, no automatic briefings. "Ask for advice" is still on every order.' },
+];
+
+/** The help level (new players: Guided). */
+export function helpLevel(): HelpLevel {
+  return getSettings().helpLevel ?? 'guided';
+}
+
+/** When briefings open by themselves: the setting, else what the help level implies. */
+export function autoBriefings(): AutoBriefings {
+  const v = getSettings().autoBriefings;
+  if (v) return v;
+  const h = helpLevel();
+  return h === 'experienced' ? 'off' : 'major';
 }
 export type TimeMode = 'clock' | 'turns';
 
