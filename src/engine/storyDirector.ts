@@ -260,6 +260,28 @@ export function themeFull(e: EventInstance, chosen: readonly EventInstance[]): b
   return chosen.filter((x) => !x.mandatory && themeOf(x) === th).length >= MAX_PER_THEME;
 }
 
+/**
+ * A storylet reached the boss (or was settled quietly): only now are its parts
+ * (body, setting, complication) marked used and its opening beat let go, so one
+ * crowded out of a busy week burns neither (like the kin hooks' cooldowns).
+ * `meta.letUse` is "key=index/memory" joined by "|" (storylets.ts).
+ */
+export function markLetShown(s: GameState, e: EventInstance): void {
+  if (!e.meta?.let) return;
+  const d = director(s);
+  for (const part of String(e.meta.letUse ?? '').split('|')) {
+    const m = /^(.+)=(\d+)\/(\d+)$/.exec(part);
+    if (!m) continue;
+    const used = ((d.lets ??= {})[m[1]] ??= []);
+    used.push(Number(m[2]));
+    if (used.length > Number(m[3])) used.splice(0, used.length - Number(m[3]));
+  }
+  if (e.meta.opening && d.opening) {
+    const i = d.opening.beats.findIndex(([w, id]) => id === e.meta!.let && s.week >= w);
+    if (i >= 0) d.opening.beats.splice(i, 1);
+  }
+}
+
 /** Record what was shown this week. */
 export function recordShown(s: GameState, shown: readonly EventInstance[]): void {
   const d = director(s);

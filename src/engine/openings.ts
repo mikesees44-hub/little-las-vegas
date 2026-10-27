@@ -81,12 +81,21 @@ export function ensureOpening(s: GameState): OpeningPlan {
 export function dueBeat(s: GameState): string | undefined {
   const p = s.director?.opening;
   if (!p) return undefined;
-  const i = p.beats.findIndex(([w]) => s.week >= w);
-  if (i < 0) return undefined;
-  const [, id] = p.beats[i];
-  p.beats.splice(i, 1);
-  return id;
+  // A beat crowded out of a busy week waits (it is let go when it reaches the boss,
+  // via markLetShown); one that cannot reach him for BEAT_GRACE weeks is let go.
+  if (p.beats.some(([w]) => s.week - w > BEAT_GRACE)) p.beats = p.beats.filter(([w]) => s.week - w <= BEAT_GRACE);
+  return p.beats.find(([w]) => s.week >= w)?.[1];
 }
+
+/** Let an opening beat go (it reached the boss, or it cannot be told). */
+export function dropBeat(s: GameState, id: string): void {
+  const p = s.director?.opening;
+  const i = p ? p.beats.findIndex(([, b]) => b === id) : -1;
+  if (i >= 0) p!.beats.splice(i, 1);
+}
+
+/** How many weeks an opening beat may wait for room on the boss's desk. */
+export const BEAT_GRACE = 4;
 
 /** The rival who moves first, while the opening lasts. */
 export function openingRival(s: GameState): RivalId | undefined {

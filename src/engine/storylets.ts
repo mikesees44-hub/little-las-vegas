@@ -1,8 +1,8 @@
 import { displayName } from './characters';
 import { registerEventSource } from './events';
 import { hashSeed, rand, type RngHolder } from './rng';
-import { director, freshness, themeFactor, type Theme } from './storyDirector';
-import { dueBeat, ensureOpening } from './openings';
+import { freshness, themeFactor, type Theme } from './storyDirector';
+import { dropBeat, dueBeat, ensureOpening } from './openings';
 import { situationById, SITUATIONS, type Cast, type LetChoice, type Situation, type Tone } from './storyletData';
 import type { Choice, Effect, EventInstance, GameState } from './types';
 import './sceneFamilies';
@@ -137,20 +137,18 @@ export const COMPLICATIONS: Complication[] = [
 /* Building one                                                        */
 /* ------------------------------------------------------------------ */
 
-function usedOf(s: GameState, key: string): number[] {
-  const d = director(s);
-  return ((d.lets ??= {})[key] ??= []);
-}
-
-/** Pick an index this game has not used lately for this part (settings / complications / bodies). */
-function freshIdx(s: GameState, h: RngHolder, key: string, n: number, ok: (i: number) => boolean, memory: number): number | undefined {
-  const used = usedOf(s, key);
+/**
+ * Pick an index this game has not used lately for this part (settings / complications / bodies).
+ * It is marked used only when the storylet reaches the boss (`markLetShown`, storyDirector.ts):
+ * the pick is recorded in `uses` as "key=index/memory".
+ */
+function freshIdx(s: GameState, h: RngHolder, key: string, n: number, ok: (i: number) => boolean, memory: number, uses: string[]): number | undefined {
+  const used = s.director?.lets?.[key] ?? [];
   const all = Array.from({ length: n }, (_, i) => i).filter(ok);
   if (!all.length) return undefined;
   const fresh = all.filter((i) => !used.includes(i));
   const i = pickOf(h, fresh.length ? fresh : all);
-  used.push(i);
-  if (used.length > memory) used.splice(0, used.length - memory);
+  uses.push(`${key}=${i}/${memory}`);
   return i;
 }
 
@@ -159,9 +157,10 @@ export function buildStorylet(s: GameState, sit: Situation, h: RngHolder, opts: 
   if (!k) return undefined;
   const bodies = sit.body(s, k);
   const titles = sit.title(s, k);
-  const bi = freshIdx(s, h, `b:${sit.id}`, bodies.length, () => true, Math.max(1, bodies.length - 1)) ?? 0;
-  const si = sit.placed ? undefined : freshIdx(s, h, 'set', LET_SETTINGS.length, (i) => !LET_SETTINGS[i].when || LET_SETTINGS[i].when!(s), 30);
-  const ci = freshIdx(s, h, 'cx', COMPLICATIONS.length, (i) => !COMPLICATIONS[i].when || COMPLICATIONS[i].when!(s, k), 18);
+  const uses: string[] = [];
+  const bi = freshIdx(s, h, `b:${sit.id}`, bodies.length, () => true, Math.max(1, bodies.length - 1), uses) ?? 0;
+  const si = sit.placed ? undefined : freshIdx(s, h, 'set', LET_SETTINGS.length, (i) => !LET_SETTINGS[i].when || LET_SETTINGS[i].when!(s), 30, uses);
+  const ci = freshIdx(s, h, 'cx', COMPLICATIONS.length, (i) => !COMPLICATIONS[i].when || COMPLICATIONS[i].when!(s, k), 18, uses);
   const cx = ci === undefined ? undefined : COMPLICATIONS[ci];
   const setting = si === undefined ? '' : `${LET_SETTINGS[si].t} `;
   const label = titles[bi % titles.length];
@@ -171,12 +170,12 @@ export function buildStorylet(s: GameState, sit: Situation, h: RngHolder, opts: 
     return { ...ch, effects: [...ch.effects.map((e) => ({ ...e, label: e.label ?? label }) as Effect), ...extra] };
   });
   return {
-    iid: `ev${s.nextId++}`, defId: `let_${sit.id}`, week: s.week, mandatory: false, priority: opts.priority ?? 37,
+    iid: `ev${s.nextId++}`, defId: `let_${sit.id}`, week: s.week, mandatory: false, priority: opts.priority ?? 39, // 39: just under the packs and deals (40); at 37 the kin hooks, now shown, crowded them out
     title: label,
     text: `${setting}${bodies[bi]}${cx ? ` ${cx.t(s, k)}` : ''}`,
     defaultChoiceId: choices[0].id, choices,
     actors: k.actors?.slice(0, 3),
-    meta: { theme: sit.theme, let: sit.id, ...(k.charId ? { charId: k.charId } : {}), ...(opts.opening ? { opening: 1 } : {}), sv: `let:${sit.id}:${bi}:${si ?? '-'}:${ci ?? '-'}` },
+    meta: { theme: sit.theme, let: sit.id, ...(k.charId ? { charId: k.charId } : {}), ...(opts.opening ? { opening: 1 } : {}), sv: `let:${sit.id}:${bi}:${si ?? '-'}:${ci ?? '-'}`, letUse: uses.join('|') },
   };
 }
 
@@ -188,9 +187,11 @@ export function storyletSource(s: GameState): EventInstance | undefined {
   // The opening's beats (openings.ts) come first, in their weeks.
   const beat = dueBeat(s);
   const bs = beat ? situationById(beat) : undefined;
-  if (bs && (!bs.when || bs.when(s))) {
-    const ev = buildStorylet(s, bs, h, { priority: 52, opening: true });
+  if (beat) {
+    const ev = bs && (!bs.when || bs.when(s)) ? buildStorylet(s, bs, h, { priority: 52, opening: true }) : undefined;
     if (ev) return ev;
+    // A beat that cannot be told (nobody to cast, out of season) is let go, as before.
+    dropBeat(s, beat);
   }
   if (rand(h) > 0.6) return undefined;
   const elig = SITUATIONS.filter((x) => (!x.when || x.when(s)) && freshness(s, `let_${x.id}`) > 0);
