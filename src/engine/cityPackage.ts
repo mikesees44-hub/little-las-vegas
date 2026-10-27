@@ -132,8 +132,17 @@ export interface Parcel {
   /** Land value multiplier for an aggregate town. */
   value?: number;
   art?: string[];
+  /**
+   * A house lot (Wildwood): the house standing on it (`use`: bungalow, cottage,
+   * house, duplex, shorehouse, rooming) or, with no use, an empty lot. Who lives
+   * there is game state (housing.ts), never the package's.
+   */
+  residential?: { use?: string };
   evidence: Evidence;
 }
+
+/** The kinds of house a residential parcel can hold. */
+export const RESIDENTIAL_USES = ['bungalow', 'cottage', 'house', 'duplex', 'shorehouse', 'rooming'];
 
 /** How a business is named: invented; a near-miss of a real one still operating; or its real (defunct) name. */
 export type NamePolicy = 'fictional' | 'near-miss' | 'historical';
@@ -467,6 +476,8 @@ export function validateCityPackage(raw: unknown, opts: ValidateOpts = {}): City
     if (x.footprint && (!isNum(x.footprint.w) || !isNum(x.footprint.d) || x.footprint.w <= 0 || x.footprint.d <= 0)) err(`${path}.footprint`, `${what}: footprint must be positive width and depth (m).`);
     if (x.structure?.built !== undefined) yearsOk(`${path}.structure`, { from: x.structure.built }, `${what} structure`);
     yearsOk(`${path}.structure.years`, x.structure?.years, `${what} structure`);
+    if (x.residential?.use !== undefined && !RESIDENTIAL_USES.includes(x.residential.use)) err(`${path}.residential.use`, `${what}: "${x.residential.use}" is not a kind of house (${RESIDENTIAL_USES.join(', ')}).`);
+    if (x.residential && !x.market) err(`${path}.market`, `${what}: a house lot needs a market (who holds it at the start).`);
     if (x.market && x.ownable === false && x.market.status !== 'public') err(`${path}.market`, `${what}: marked never ownable but listed as "${x.market.status}".`);
     evidenceOk(path, x.evidence, what);
   });

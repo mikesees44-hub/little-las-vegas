@@ -2,6 +2,8 @@ import { econEventSource, econWeek } from './econ';
 import { hoodWeek } from './hood';
 import { livingWeek } from './livingWorld';
 import { livingEventSource } from './livingAsk';
+import { housingWeek } from './housing';
+import { fbankEventSource, fbankWeek } from './familyBank';
 import { talksWeek } from './talks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
@@ -77,6 +79,7 @@ registerEventSource(bonesEventSource);
 registerEventSource(kinEventSource);
 registerEventSource(racketEventSource);
 registerEventSource(livingEventSource);
+registerEventSource(fbankEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -317,6 +320,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     econWeek(ctx);
     hoodWeek(ctx);
     livingWeek(ctx);
+    housingWeek(ctx);
+    fbankWeek(ctx);
     talksWeek(ctx);
     missionsWeek(ctx);
     runCouncil(ctx);

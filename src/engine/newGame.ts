@@ -2,6 +2,7 @@ import { startPocket } from './tributeState';
 import { SCHEMA } from './trustMigrations';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
+import { ensureHousing } from './housing';
 import { ageOn, START_DATE } from './calendar';
 import { displayName, makeCharacter, rollTraits } from './characters';
 import { autoStaff, newBusiness } from './business';
@@ -343,5 +344,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   initEars(s);
   if (!opts.skipHouses) setupHouses(s);
   startPocket(s);
+  // The town's house lots and houses (the families move in with the first week).
+  ensureHousing(s);
   return s;
 }

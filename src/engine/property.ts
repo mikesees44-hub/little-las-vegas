@@ -127,6 +127,8 @@ export const USES: PropertyUse[] = [
   U('warehouse', 'Warehouse', 'realestate', 9000, 14, 160, 60, false, 300),
   U('marina', 'Marina', 'realestate', 25000, 30, 900, 560, true, 400, { zones: ['docks', 'westww', 'north', 'crest'] }),
   U('cottage', 'Vacation rental cottage', 'realestate', 8000, 13, 190, 70, true, 80),
+  U('bungalow', 'Bungalow', 'realestate', 7000, 14, 65, 22, false, 40),
+  U('shorehouse', 'Victorian shore house', 'realestate', 14000, 22, 120, 45, true, 60),
   U('mall', 'Shopping center', 'realestate', 90000, 60, 1600, 900, false, 900, { minYear: 1962 }),
   // Industrial
   B('truckyard', 'industrial', 'trucking', 14),
@@ -161,7 +163,7 @@ export function useIcon(u: PropertyUse): UseIcon {
   const id = u.id;
   if (id === 'hotel' || id === 'condo' || id === 'office' || id === 'mall') return 'hotel';
   if (id === 'motel' || id === 'boarding' || id === 'boardinghouse' || id === 'rooming' || id === 'flophouse') return 'motel';
-  if (id === 'house' || id === 'duplex' || id === 'cottage') return 'house';
+  if (id === 'house' || id === 'duplex' || id === 'cottage' || id === 'bungalow' || id === 'shorehouse') return 'house';
   if (id === 'apartments' || id === 'storefront') return 'apartment';
   if (id === 'pizza' || id === 'deli' || id === 'trattoria' || id === 'diner' || id === 'bakery' || id === 'icecream') return 'pizza';
   if (u.cat === 'music') return 'club';

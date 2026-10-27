@@ -36,6 +36,8 @@ import { chance, pick, randInt } from './rng';
 import { bigScoresWeek, buildShortEvent, capoBooksMonth, capoBooksWeek } from './scores';
 import type { Business, Effect, EventInstance, GameState, PlayerAction, RivalId } from './types';
 import { FACTION_NAMES } from './world';
+import { commitBank, decideApp, fbankWash, previewBank } from './familyBank';
+import { commitHome, previewHome } from './housing';
 
 /**
  * The economy & property pillar's hub: the hooks the old economy calls
@@ -109,7 +111,7 @@ export function econBusiness(ctx: Ctx, b: Business, amt: number, label: string):
 
 /** Dirty money the buildings you run can wash this week. */
 export function econWash(s: GameState): number {
-  return propertyWash(s);
+  return propertyWash(s) + fbankWash(s);
 }
 
 /** Extra shylock loans from the book's upgrades. */
@@ -186,6 +188,11 @@ export function openLot(ctx: Ctx, l: Lot): void {
   l.condition = 100;
   delete l.permit;
   delete l.contractor;
+  if (!mine && l.home) {
+    // A house the town's people built for themselves (housing.ts moves the family in).
+    e.stats.npcBuilt++;
+    return;
+  }
   if (!mine) {
     // Someone else's building opens: it joins the town.
     e.stats.npcBuilt++;
@@ -220,6 +227,7 @@ function propertyWeek(ctx: Ctx): void {
       continue;
     }
     if (l.bizId) continue; // runs through the business pipeline
+    if (l.hh) continue; // a family rents it: their rent comes out of their own money (livingWorld householdsWeek)
     if (l.tenant && !l.operating) {
       money(ctx, l.rent, `Rent: ${l.tenant} at ${l.address}`, 'business');
       continue;
@@ -686,6 +694,9 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
       }
       break;
     }
+    case 'loanApp':
+      decideApp(ctx, op.id, op.verdict, op.amt ? { amt: op.amt } : {});
+      break;
     case 'outbid': {
       const l = e.lots.find((x) => x.id === op.lotId);
       if (!l || !l.bidder) break;
@@ -720,6 +731,7 @@ export function describeEconOp(s: GameState, op: EconOp): string | undefined {
     case 'clearStop': return 'Work resumes';
     case 'bribeStop': return 'If he takes it, work resumes';
     case 'outbid': return 'The rival gets the lot';
+    case 'loanApp': return op.verdict === 'deny' ? 'He is turned down' : `$${(op.amt ?? 0).toLocaleString('en-US')} of Family money lent; paid back weekly`;
   }
 }
 
@@ -766,6 +778,8 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
       return { title, detail: c.detail ?? c.text, effects, cost, because: c.text.charAt(0).toLowerCase() + c.text.slice(1), disabledReason: c.why, category: 'event', verb: c.verb };
     }
     case 'deal': return previewDeal(s, a.target, a.terms);
+    case 'bank': return previewBank(s, a.cmd);
+    case 'home': return previewHome(s, a.cmd);
     case 'racket': return previewRacket(s, a.cmd);
     case 'empire': return previewEmpire(s, a.cmd);
     case 'luxBuy': case 'luxSell': return previewLux(s, a);
@@ -1092,6 +1106,8 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       if (b && !lot) { const l2 = e.lots.find((l) => l.bizId === b.id); if (l2) l2.name = nm; }
       break;
     }
+    case 'bank': commitBank(ctx, a.cmd); break;
+    case 'home': commitHome(ctx, a.cmd); break;
     case 'buyLot': {
       const l = e.lots.find((x) => x.id === a.lotId);
       if (!l) break;

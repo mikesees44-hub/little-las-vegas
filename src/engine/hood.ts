@@ -197,6 +197,8 @@ export function hoodMonth(ctx: Ctx): void {
   const rivals = s.rivals.filter((r) => r.kind === 'mob' && s.characters[r.leaderId]?.alive);
   for (const l of lots) {
     if (isMine(l) || l.status === 'public') continue;
+    // The town's houses and house lots belong to its families (housing.ts): no dice here.
+    if (l.home) continue;
     // The living district's people run their own places (livingWorld.ts): no dice here.
     if (livingRunsLot(s, l) || (s.living && livingHoodOfLot(s.living, l) && l.status !== 'rival')) continue;
     const hood = drawnHood(l)!;

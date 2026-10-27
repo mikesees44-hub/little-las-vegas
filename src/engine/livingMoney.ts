@@ -69,7 +69,7 @@ export function available(s: GameState, L: LivingState, id: LAcct): number {
  * Move money. Returns what actually moved (never more than the payer has).
  * `why` is plain words for the journal ("Sal's wages", "Gus repays Abe").
  */
-export function pay(ctx: Ctx, L: LivingState, from: LAcct, to: LAcct, amount: number, why: string): number {
+export function pay(ctx: Ctx, L: LivingState, from: LAcct, to: LAcct, amount: number, why: string, cat: 'debt' | 'business' = 'debt'): number {
   const s = ctx.s;
   let a = Math.floor(amount);
   if (!(a > 0) || from === to) return 0;
@@ -95,7 +95,7 @@ export function pay(ctx: Ctx, L: LivingState, from: LAcct, to: LAcct, amount: nu
   else if (to.startsWith('rival:')) {
     const r = s.rivals.find((x) => x.id === (to.slice(6) as RivalId));
     if (r) r.money += a;
-  } else if (to === 'family') money(ctx, a, why, 'debt');
+  } else if (to === 'family') money(ctx, a, why, cat);
   L.j.push([from, to, a, why]);
   if (!internal(from)) L.flow[from] = (L.flow[from] ?? 0) - a;
   if (!internal(to)) L.flow[to] = (L.flow[to] ?? 0) + a;

@@ -19,6 +19,7 @@ import { ensureTravel } from './travelState';
 import { ensureTribute } from './tributeState';
 import { ensureShadow } from './shadowState';
 import { ensureLiving } from './livingState';
+import { ensureHousing } from './housing';
 import { migrateTrust } from './trustMigrations';
 import type { GameState } from './types';
 
@@ -44,6 +45,8 @@ export function upgradeSave(s: GameState): GameState {
   if (s.hood === undefined || (s.econ?.lots.length && SEED.some((r) => !s.econ!.lots.some((l) => l.id === r[0])))) for (const step of [ensureHood, ensureTalks, ensureMissions]) {
     try { step(s); } catch { /* the weekly update will try again */ }
   }
+  // The town's house lots (by id: a save from before them gets them on the market; who lives there comes with the next week).
+  if (s.econ?.lots.length) try { ensureHousing(s); } catch { /* the weekly update will try again */ }
   // A days plan left from another week (the clock stopped mid-week in an older build) is dropped.
   if (s.days && s.days.week !== s.week) delete s.days;
   // The old player-run call service goes back to the Madam's network.

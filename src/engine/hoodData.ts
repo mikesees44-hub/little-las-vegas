@@ -176,3 +176,22 @@ export const FIRSTNAMES = GEN.names!.firstnames;
 export const ADJ = GEN.names!.adj;
 export const NOUN: Record<string, string[]> = GEN.names!.noun;
 export const MOTEL_NAMES = GEN.names!.motels;
+
+/**
+ * The town's house lots (the package's residential parcels): a house of the
+ * town's people (its kind, when it went up, its look) or empty ground for one.
+ * Placed by a point (`hoodGeo.extraSlots`); who lives there is game state
+ * (housing.ts). Invented and approximately placed (the package says so).
+ */
+export interface ResSeed { id: string; zone: ZoneId; address: string; use?: string; built?: number; cond?: number; style?: BuildStyle; status: 'private' | 'sale'; art?: string }
+export const RES_SEED: ResSeed[] = PKG.parcels.filter((x) => x.residential && x.zone && x.market && x.pos).map((x) => {
+  const r: ResSeed = { id: x.id, zone: x.zone as ZoneId, address: x.address ?? x.id, status: x.market!.status === 'sale' ? 'sale' : 'private' };
+  if (x.residential!.use) {
+    r.use = x.residential!.use;
+    r.built = x.structure?.built ?? 1925;
+    r.cond = x.structure?.condition ?? 70;
+    r.style = (x.structure?.style ?? 'colonial') as BuildStyle;
+  }
+  if (x.art?.[0]) r.art = x.art[0];
+  return r;
+});
