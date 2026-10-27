@@ -74,6 +74,7 @@ import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './ro
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance } from './desk/BossDesk';
 import { readyReview } from '../engine/desk';
+import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
@@ -531,6 +532,18 @@ export function App({ startOn = 'title' }: AppProps) {
     onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
     onChar: (id: string) => setSheet(id),
   };
+  const officeApi: OfficeApi = {
+    openDesk: () => setRoute({ home: 'week' }),
+    openEnvelope: () => tributeApi.openAudience(),
+    openVisitors: () => setSitdown('council'),
+    openLedger: () => openRoute({ panel: 'holdings', section: 'take' }),
+    openCalendar: (day) => { setSpeed(0); setDayWin(day ?? daysOf(s).day); },
+    openDecisions: openDecisions,
+    openMap: () => setRoute({}),
+    openFamily: () => openRoute({ panel: 'house', section: 'tree' }),
+    openNews: () => openRoute({ panel: 'chronicle', section: 'papers' }),
+    openAdvance: () => startAdvance('week'),
+  };
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
@@ -571,6 +584,7 @@ export function App({ startOn = 'title' }: AppProps) {
   );
 
   return (
+    <OfficeContext.Provider value={officeApi}>
     <HousesNavContext.Provider value={housesApi}>
     <TributeUiContext.Provider value={tributeApi}>
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
@@ -707,6 +721,7 @@ export function App({ startOn = 'title' }: AppProps) {
     </Providers>
     </TributeUiContext.Provider>
     </HousesNavContext.Provider>
+    </OfficeContext.Provider>
   );
 }
 
