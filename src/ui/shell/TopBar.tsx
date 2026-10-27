@@ -116,11 +116,44 @@ function GameMenuLinks({ close }: { close: () => void }) {
 export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-stone-300 hover:bg-noir-700 hover:text-gold-300 disabled:opacity-40';
 
 /**
+ * "Waiting on you": the week's loop in one button instead of four. The count is
+ * what still wants the boss (decisions unanswered, the sit-down's items, the
+ * morning's problems, the envelope); the list opens each one, or the whole desk.
+ */
+function WaitingButton({ pending, answered, sitCount, mornings, envelope, onReview, onSitDown, onRounds, onEnvelope, onDesk }: {
+  pending: number; answered: number; sitCount: number; mornings: number; envelope: boolean;
+  onReview: () => void; onSitDown?: () => void; onRounds?: () => void; onEnvelope?: () => void; onDesk?: () => void;
+}) {
+  const open = pending - answered;
+  const n = open + sitCount + mornings + (envelope ? 1 : 0);
+  return (
+    <Popover align="left" testid="waiting-menu" button={(o, t) => (
+      <button type="button" onClick={t} aria-expanded={o} data-testid="waiting-button" title="Everything waiting on you this week: decisions, the sit-down, the morning, the envelope"
+        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
+        ▤<span className="hidden sm:inline"> Waiting on you</span>{n ? <span className="ml-1 rounded-full bg-gold-500 px-1.5 text-[10px] text-noir-950">{n}</span> : <span className="ml-1 text-stone-500">✓</span>} ▾
+      </button>
+    )}>
+      {(close) => (
+        <div className="w-64 space-y-0.5 text-xs">
+          <button type="button" className={menuItem} disabled={!pending} onClick={() => { close(); onReview(); }} data-testid="decisions-button">
+            ✉ Decisions <span className="float-right tabular-nums text-stone-400">{answered}/{pending}</span>
+          </button>
+          {onSitDown && <button type="button" className={menuItem} onClick={() => { close(); onSitDown(); }} data-testid="sitdown-button">♜ The sit-down <span className="float-right tabular-nums text-stone-400">{sitCount || '—'}</span></button>}
+          {onRounds && <button type="button" className={menuItem} onClick={() => { close(); onRounds(); }} data-testid="rounds-button">☕ Your rounds: mornings & evenings <span className="float-right tabular-nums text-stone-400">{mornings ? `${mornings} waiting` : ''}</span></button>}
+          {onEnvelope && envelope && <button type="button" className={menuItem} onClick={() => { close(); onEnvelope(); }} data-testid="envelope-button">✉ The envelope is on your desk</button>}
+          {onDesk && <><div className="my-1 h-px bg-noir-700" /><button type="button" className={`${menuItem} text-gold-300`} onClick={() => { close(); onDesk(); }} data-testid="desk-button">▤ The whole desk ▸</button></>}
+        </div>
+      )}
+    </Popover>
+  );
+}
+
+/**
  * The slim CK top bar: house, resources with week deltas and their ledger
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen }: {
+export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind }: {
   s: GameState;
   /** Running clock (days tick by) rather than turn-based (settings). */
   clockMode?: boolean;
@@ -146,6 +179,14 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
   onOffice?: () => void;
   officeOpen?: boolean;
   sitCount?: number;
+  /** Morning problems still waiting on an answer today. */
+  mornings?: number;
+  /** The envelope is on the desk, waiting for the boss's split. */
+  envelope?: boolean;
+  onRounds?: () => void;
+  onEnvelope?: () => void;
+  /** Find… (people, places, screens, things to do). */
+  onFind?: () => void;
 }) {
   const info = seasonInfo(s.date);
   const boss = player(s);
@@ -186,26 +227,17 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>
             </div>
-            <button type="button" onClick={onReview} disabled={!pending} data-testid="decisions-button" title={pending ? 'Review this week\'s decisions' : 'Nothing on the table this week'}
-              className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${pending > answered ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
-              ✉ {answered}/{pending}<span className="hidden sm:inline"> decisions</span>
-            </button>
-            {onSitDown && (
-              <button type="button" onClick={onSitDown} data-testid="sitdown-button" title="Your people, and your rounds this week"
-                className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${sitCount ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
-                ♜ <span className="hidden sm:inline">Sit-down </span>{sitCount ? `(${sitCount})` : ''}
-              </button>
-            )}
+            <WaitingButton pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope}
+              onReview={onReview} onSitDown={onSitDown} onRounds={onRounds} onEnvelope={onEnvelope} onDesk={onDesk} />
             {onOffice && (
               <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>
             )}
-            {onDesk && (
-              <button type="button" onClick={onDesk} data-testid="desk-button" title="The Boss's Desk: everything waiting on you this week"
-                className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">▤<span className="hidden sm:inline"> Desk</span></button>
-            )}
             <OrdersButton s={s} />
-            <span className="hidden sm:inline-flex"><MusicToggle /></span>
+            {onFind && (
+              <button type="button" onClick={onFind} data-testid="find-button" title="Find a person, a place, a screen or something to do (Ctrl+K or /)"
+                className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Find</span></button>
+            )}
             {note && <span className="text-[11px] text-amber-300 truncate max-w-[40vw]">{note}</span>}
             {ticker && speed > 0 && <span className="hidden xl:inline text-[11px] text-stone-500 truncate max-w-[24rem]">{ticker}</span>}
             <div className="ml-auto">
@@ -213,6 +245,8 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
                 {(close) => (
                   <div className="space-y-1 text-xs">
                     <GameMenuLinks close={close} />
+                    <div className="flex items-center justify-between px-2 py-1 text-sm text-stone-300">Music <MusicToggle /></div>
+                    <div className="my-1 h-px bg-noir-700" />
                     <div className="px-2 pt-1 text-stone-500">Seed <span className="text-stone-300">{s.seed}</span> · slot {slot}{s.flags.ironman ? ' · ironman' : ''}</div>
                     <input value={seedInput} onChange={(e) => setSeedInput(e.target.value)} placeholder="seed for a new game (optional)" className="inp text-xs" />
                     <button className={menuItem} data-testid="footer-new" onClick={onNewGame}>New Game…</button>

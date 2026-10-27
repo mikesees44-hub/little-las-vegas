@@ -16,7 +16,6 @@ import { SheetFrame } from '../shell/SheetFrame';
 import { InteractionMenu } from '../sheet/InteractionMenu';
 import { PoliticsSection } from '../sheet/PoliticsSection';
 import { ConnectionsSection } from '../ears/Connections';
-import { TravelButton } from '../travel/context';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
 import { DynastyFacts } from '../family/bits';
@@ -31,15 +30,14 @@ import { Relationships } from './Relationships';
 import { DatingSection } from '../dating/DatingPanel';
 import { BonesFacts } from '../books/BonesFacts';
 import { PurseSection } from '../tribute/PurseSection';
-import { DirtyOnPerson } from '../econ/DirtyWork';
-import { useShell } from '../shell/context';
 import { wealthOf } from '../../engine/wealth';
 import { useState } from 'react';
 import { QuickActions } from '../sheet/QuickActions';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
 export type SheetTab = 'overview' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
-const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['actions', 'Actions'], ['history', 'History']];
+/** "Deal with him" sits next to Overview: what you can do to a man is the second thing you look for. */
+const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['actions', 'Deal with'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['history', 'History']];
 import { getSettings } from '../settings';
 import { seenWealth } from '../../engine/crewFinance';
 import { FinancialLife } from '../sheet/FinancialLife';
@@ -71,7 +69,6 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
   const secrets = knownSecrets(s, c.id);
   const hooks = s.hooks.filter((h) => h.holder === 'player' && h.targetId === c.id);
   const showsLife = (c.faction === 'player' || !!c.outside) && !isBoss;
-  const shell = useShell();
 
   return (
     <SheetFrame onClose={onClose} embedded={embedded}>
@@ -112,7 +109,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         <nav className="mt-3 flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label={`${c.firstName}'s sheet`} data-testid="sheet-tabs">
           {SHEET_TABS.map(([k, label]) => (
             <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`sheet-tab-${k}`}
-              className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{label}</button>
+              className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{k === 'actions' ? (isBoss ? 'Your own business' : `Deal with ${c.firstName}`) : label}</button>
           ))}
         </nav>
 
@@ -224,11 +221,8 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
 
         {tab === 'history' && <HisHistory s={s} c={c} />}
 
-        {tab === 'actions' && <>
-        {c.alive && !s.gameOver && <div className="mt-3 flex flex-wrap gap-2"><TravelButton s={s} charId={c.id} /></div>}
-        {c.alive && !s.gameOver && !isBoss && <div className="mt-1.5"><DirtyOnPerson s={s} charId={c.id} onGo={() => { onClose(); shell.go('holdings.dirty'); }} /></div>}
-        <InteractionMenu s={s} c={c} />
-        </>}
+        {/* Deal with him: one panel (talk, favors, business, heirs, romance & dating, intrigue, dirty work, the Table, trips). */}
+        {tab === 'actions' && <InteractionMenu s={s} c={c} onDone={onClose} />}
       </div>
     </SheetFrame>
   );

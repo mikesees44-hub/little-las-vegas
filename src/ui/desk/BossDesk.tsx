@@ -3,6 +3,7 @@ import { bossDesk, readyReview, type DeskItem, type DeskKind, type DeskUi } from
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
+import { useState } from 'react';
 
 /**
  * THE BOSS'S DESK: one weekly place for everything that wants the boss —
@@ -45,6 +46,23 @@ function Row({ it, api }: { it: DeskItem; api: DeskApi }) {
   );
 }
 
+/** A group's rows: the first three (unanswered first), then "show all" — the rest are a tap away, never gone. */
+function DeskGroupList({ g, api }: { g: ReturnType<typeof bossDesk>[number]; api: DeskApi }) {
+  const [all, setAll] = useState(false);
+  const rows = [...g.items.filter((x) => !x.done), ...g.items.filter((x) => x.done)];
+  const shown = all ? rows : rows.slice(0, 3);
+  return (
+    <>
+      <ul className="mt-1 space-y-1">{shown.map((it) => <Row key={it.key} it={it} api={api} />)}</ul>
+      {rows.length > 3 && (
+        <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setAll((x) => !x)} data-testid={`desk-more-${g.kind}`}>
+          {all ? 'show fewer' : `show all ${rows.length} ▾`}
+        </button>
+      )}
+    </>
+  );
+}
+
 export function BossDesk({ s, ui, api }: { s: GameState; ui: DeskUi; api: DeskApi }) {
   const groups = bossDesk(s, ui);
   const waiting = groups.reduce((a, g) => a + g.items.filter((x) => (g.kind === 'decision' || g.kind === 'morning') && !x.done).length, 0);
@@ -59,7 +77,7 @@ export function BossDesk({ s, ui, api }: { s: GameState; ui: DeskUi; api: DeskAp
         {groups.map((g) => (
           <div key={g.kind} data-testid={`desk-group-${g.kind}`}>
             <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{ICON[g.kind]} {g.title} ({g.items.length})</div>
-            <ul className="mt-1 space-y-1">{g.items.slice(0, g.kind === 'bill' || g.kind === 'upcoming' ? 4 : 8).map((it) => <Row key={it.key} it={it} api={api} />)}</ul>
+            <DeskGroupList g={g} api={api} />
           </div>
         ))}
       </div>
