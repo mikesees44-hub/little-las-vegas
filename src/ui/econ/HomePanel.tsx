@@ -1,5 +1,5 @@
 import type { Lot } from '../../engine/econState';
-import { famName, homeHousehold, housingCounts, HOME_USES, homeRent, isHomeUse, ZONE_TOWN } from '../../engine/housing';
+import { famName, houseWord, homeHousehold, housingCounts, HOME_USES, homeRent, isHomeUse, ZONE_TOWN } from '../../engine/housing';
 import { ageOf, present } from '../../engine/livingState';
 import { buildCost, USES_BY_ID } from '../../engine/property';
 import { scheduleWeeks } from '../../engine/construction';
@@ -33,7 +33,7 @@ export function HomePanel({ s, l }: { s: GameState; l: Lot }) {
       )}
       {build && hh && (
         <div className="text-xs text-amber-300" data-testid="home-build">
-          Going up: {famName(hh)}' {USES_BY_ID[build.use]?.name.toLowerCase()}, built by {build.bname}{build.acct === 'family' ? ' (your company: the Family earns from the job)' : ''}. They have paid {fmt$(build.paid)} of {fmt$(build.cost)}, out of their own money{build.short ? ` — stopped, they are short (${build.short} wk)` : ''}.
+          Going up: {famName(hh)}' {houseWord(build.use)}, built by {build.bname}{build.acct === 'family' ? ' (your company: the Family earns from the job)' : ''}. They have paid {fmt$(build.paid)} of {fmt$(build.cost)}, out of their own money{build.short ? ` — stopped, they are short (${build.short} wk)` : ''}.
         </div>
       )}
       {isHouse && (
@@ -88,7 +88,7 @@ export function HousesSummary({ s }: { s: GameState }) {
         <details className="text-xs">
           <summary className="cursor-pointer text-stone-400">More… the houses going up ({builds.length})</summary>
           <ul className="mt-1 space-y-0.5 text-stone-300">
-            {builds.map((b) => { const l = lots.get(b.lot); const hh = L.hh[b.hh]; return <li key={b.lot}>{hh ? famName(hh) : 'A family'}: {USES_BY_ID[b.use]?.name.toLowerCase()} at {l?.address} — {b.bname}{b.acct === 'family' ? ' (yours)' : ''}, {fmt$(b.paid)} of {fmt$(b.cost)} paid{b.short ? ', stalled' : ''}</li>; })}
+            {builds.map((b) => { const l = lots.get(b.lot); const hh = L.hh[b.hh]; return <li key={b.lot}>{hh ? famName(hh) : 'A family'}: {houseWord(b.use)} at {l?.address} — {b.bname}{b.acct === 'family' ? ' (yours)' : ''}, {fmt$(b.paid)} of {fmt$(b.cost)} paid{b.short ? ', stalled' : ''}</li>; })}
           </ul>
         </details>
       )}

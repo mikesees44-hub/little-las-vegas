@@ -97,12 +97,17 @@ export function famName(hh: Th): string {
   const m = /^the (.+?) (family|household)$/.exec(hh.name);
   if (!m) return hh.name;
   const sur = m[1];
-  return `the ${/s$/.test(sur) ? `${sur}es` : `${sur}s`}`;
+  return `the ${/(s|z|x|ch|sh)$/.test(sur) ? `${sur}es` : `${sur}s`}`;
 }
 
 /** Where a lot is, for the chronicle ("on 24th Ave", "on Atlantic Ave"). */
 export function streetOf(l: Lot): string {
   return l.address.replace(/^\d+\s+/, '');
+}
+
+/** What a family calls the kind of house ("a bungalow", "a Victorian shore house"). */
+export function houseWord(use: string | undefined): string {
+  return ({ bungalow: 'bungalow', cottage: 'cottage', house: 'house', duplex: 'duplex', shorehouse: 'Victorian shore house', rooming: 'rooming house' } as Record<string, string>)[use ?? ''] ?? (use ? USES_BY_ID[use]?.name.toLowerCase() ?? 'house' : 'house');
 }
 
 function homeName(sur: string, use: string): string {
@@ -204,7 +209,7 @@ function familyFor(ctx: Ctx, L: LivingState, l: Lot, owns: boolean, cashMul = 1)
   const infl = inflation(s);
   const r = roll(L, 0, `home$:${l.id}`);
   const cash = Math.round((owns ? 300 + r * 2600 : 150 + r * 2200) * infl * cashMul);
-  const hh = addHousehold(L, s, `the ${sur} family`, `${owns ? 'their' : 'a rented'} ${USES_BY_ID[l.use!]?.name.toLowerCase() ?? 'house'} at ${l.address}`, hoodOf(l), 0, owns ? 0 : 11 + Math.round(r * 7));
+  const hh = addHousehold(L, s, `the ${sur} family`, `${owns ? 'their' : 'a rented'} ${houseWord(l.use)} at ${l.address}`, hoodOf(l), 0, owns ? 0 : 11 + Math.round(r * 7));
   // What they have put by (journaled, so the district's books reconcile).
   if (cash > 0) pay(ctx, L, 'x:arrive', `h:${hh.id}`, cash, `${hh.name}: what they had put by`);
   const age = owns ? 30 + Math.floor(roll(L, 0, `age:${l.id}`) * 42) : 23 + Math.floor(roll(L, 0, `age:${l.id}`) * 30);
@@ -367,7 +372,7 @@ function breakGround(ctx: Ctx, L: LivingState, H: HousingState, hh: Th, plan: Ho
   // The building money stays in the house (no new car while the builder is owed).
   hh.save = 1;
   const fn = famName(hh);
-  const txt = `${fn.charAt(0).toUpperCase()}${fn.slice(1)} broke ground on ${streetOf(l)}: a ${USES_BY_ID[plan.use].name.toLowerCase()} going up at ${l.address}, built by ${b.name}${b.mine ? ' (yours)' : ''}, ${how}.`;
+  const txt = `${fn.charAt(0).toUpperCase()}${fn.slice(1)} broke ground on ${streetOf(l)}: a ${houseWord(plan.use)} going up at ${l.address}, built by ${b.name}${b.mine ? ' (yours)' : ''}, ${how}.`;
   const fid = fact(s, L, 'broke_ground', head ? [head.id] : [], txt, 0, { at: l.id, amt: plan.total });
   openStory(s, L, 'family', `${fn}' new house`, head ? [head.id] : [], [fid]);
   chron(s, txt);
@@ -417,7 +422,7 @@ export function tryToBuild(ctx: Ctx, hhId: string, lotId?: string, o: { builder?
   fact(s, L, 'bank_no', [head.id], `Chemical Bank turned ${pname(head)} down for $${plan.need.toLocaleString('en-US')} to build at ${l.address}: ${v.why.join('; ')}.`, 1, { at: l.id, amt: plan.need });
   // Turned down: the Family's loan desk, if the boss runs one and lends to families.
   if (deskOpen(s) && s.fbank?.policy.lendTo !== 'businesses') {
-    const app = deskApply(s, L, { kind: 'home', hh: hh.id, by: head.id, lot: l.id, amt: plan.need, why: `to build a ${USES_BY_ID[plan.use].name.toLowerCase()} at ${l.address}`, denied: v.why });
+    const app = deskApply(s, L, { kind: 'home', hh: hh.id, by: head.id, lot: l.id, amt: plan.need, why: `to build a ${houseWord(plan.use)} at ${l.address}`, denied: v.why });
     if (app) { H.wait[hh.id] = { lot: l.id, use: plan.use, app: app.id, w: s.week }; H.stats.deskApps++; hh.save = 1; return 'desk'; }
   }
   // A relative, a friend, the street.
@@ -467,7 +472,7 @@ function buildsWeek(ctx: Ctx, L: LivingState, H: HousingState): void {
     for (let k = 0; k <= i; k++) due += STAGE_COST[BUILD_STAGES[k]];
     const owe = Math.round(b.cost * due) - b.paid;
     if (owe <= 0) { b.short = 0; continue; }
-    const label = `${famName(hh)}' ${USES_BY_ID[b.use].name.toLowerCase()} at ${l.address}`;
+    const label = `${famName(hh)}' ${houseWord(b.use)} at ${l.address}`;
     const got = pay(ctx, L, `h:${hh.id}`, b.acct, owe, b.acct === 'family' ? `Contract: ${b.bname} building ${label}` : `${hh.name} pay ${b.bname}`, 'business');
     b.paid += got;
     if (got >= owe) { b.short = 0; continue; }
@@ -530,7 +535,7 @@ function moveIn(ctx: Ctx, L: LivingState, H: HousingState, b: HBuild, l: Lot, hh
   vacate(s, L, hh);
   hh.lot = l.id;
   hh.rent = 0;
-  hh.home = `their ${USES_BY_ID[l.use!].name.toLowerCase()} at ${l.address}`;
+  hh.home = `their ${houseWord(l.use)} at ${l.address}`;
   delete hh.save;
   l.hh = hh.id;
   l.hhOwns = 1;
@@ -541,7 +546,7 @@ function moveIn(ctx: Ctx, L: LivingState, H: HousingState, b: HBuild, l: Lot, hh
   H.stats.built++;
   H.stats.movedIn++;
   const head = headOf(L, hh, s.week);
-  const txt = `${famName(hh).replace(/^t/, 'T')} moved into their new ${USES_BY_ID[b.use].name.toLowerCase()} at ${l.address}${b.acct === 'family' ? `, built by ${b.bname}` : ''}.`;
+  const txt = `${famName(hh).replace(/^t/, 'T')} moved into their new ${houseWord(b.use)} at ${l.address}${b.acct === 'family' ? `, built by ${b.bname}` : ''}.`;
   const fid = fact(s, L, 'house_built', head ? hh.members.filter((id) => present(L.people[id], s.week)).slice(0, 3) : [], txt, 0, { at: l.id });
   const st = head ? openStoryOf(L, 'family', head.id) : undefined;
   link(L, st, fid);
@@ -624,7 +629,7 @@ export function buyHouse(ctx: Ctx, L: LivingState, H: HousingState, hh: Th, l: L
   delete l.operating;
   hh.lot = l.id;
   hh.rent = 0;
-  hh.home = `their ${USES_BY_ID[l.use!]?.name.toLowerCase() ?? 'house'} at ${l.address}`;
+  hh.home = `their ${houseWord(l.use)} at ${l.address}`;
   delete hh.save;
   l.name = homeName(surOf(hh), l.use!);
   (l.history ??= []).push({ year: s.date.y, week: s.week, owner: 'private', how: 'bought', by: hh.name, price: got });
@@ -799,7 +804,7 @@ export function rentHomeTo(ctx: Ctx, lotId: string): boolean {
   vacate(s, L, hh);
   hh.lot = l.id;
   hh.rent = Math.max(1, Math.round(homeRent(s, l) / inflation(s)));
-  hh.home = `a ${USES_BY_ID[l.use]?.name.toLowerCase() ?? 'house'} they rent from the House of ${s.houseName}, ${l.address}`;
+  hh.home = `a ${houseWord(l.use)} they rent from the House of ${s.houseName}, ${l.address}`;
   l.hh = hh.id;
   delete l.hhOwns;
   H.stats.rented++;
