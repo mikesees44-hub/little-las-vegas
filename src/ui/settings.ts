@@ -25,6 +25,10 @@ export interface Settings {
   pauseOnCapo?: boolean;
   /** Stop the clock after each of your evenings (the report scene). */
   pauseOnEvening?: boolean;
+  /** Stop the clock on an alarm (live alerts): a rival strikes, a plot or a blown scheme, an arrest, the heat boiling over. */
+  pauseOnAlarm?: boolean;
+  /** Live alerts: keep the small news out of the strip and the good news out of the pop-ups. */
+  quietLowAlerts?: boolean;
   /** Developer inspector: show the engine's internal ids (agreements) next to their names. */
   devIds?: boolean;
   /** Ask "Are you sure?" before an order is given (default on). */
@@ -80,6 +84,7 @@ export const AUTO_PAUSE: { key: keyof Settings; label: string }[] = [
   { key: 'pauseOnArrest', label: 'When one of yours is arrested' },
   { key: 'pauseOnLife', label: 'On a birth or a death in your house' },
   { key: 'pauseOnWarning', label: 'On a new warning or a cutscene' },
+  { key: 'pauseOnAlarm', label: 'On an alarm: a rival strikes, a plot, an arrest, the heat boils over' },
   { key: 'pauseOnEvening', label: 'After each of your evenings' },
 ];
 

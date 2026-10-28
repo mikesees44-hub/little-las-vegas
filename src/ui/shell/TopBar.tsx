@@ -14,6 +14,7 @@ import { Num, type Reason } from './Num';
 import { moneyTop } from '../../engine/money';
 import { useShell } from './context';
 import { OrdersButton } from './OrdersPopover';
+import { PlansButton } from '../plans/PlansPanel';
 import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
 
 /**
@@ -121,17 +122,20 @@ export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-
  * what still wants the boss (decisions unanswered, the sit-down's items, the
  * morning's problems, the envelope); the list opens each one, or the whole desk.
  */
-function WaitingButton({ pending, answered, sitCount, mornings, envelope, urgent = 0, onReview, onSitDown, onRounds, onEnvelope, onDesk, onUrgent }: {
+function WaitingButton({ count, tone, pending, answered, sitCount, mornings, envelope, urgent = 0, onReview, onSitDown, onRounds, onEnvelope, onDesk, onUrgent }: {
+  /** The one count (engine/inbox.ts), the same as the desk and the door. */
+  count?: number; tone?: 'red' | 'amber' | 'gold';
   pending: number; answered: number; sitCount: number; mornings: number; envelope: boolean; urgent?: number;
   onReview: () => void; onSitDown?: () => void; onRounds?: () => void; onEnvelope?: () => void; onDesk?: () => void; onUrgent?: () => void;
 }) {
   const open = pending - answered;
-  const n = open + sitCount + mornings + (envelope ? 1 : 0) + urgent;
+  const n = count ?? open + sitCount + mornings + (envelope ? 1 : 0) + urgent;
+  const red = tone ? tone === 'red' : urgent > 0;
   return (
     <Popover align="left" testid="waiting-menu" button={(o, t) => (
       <button type="button" onClick={t} aria-expanded={o} data-testid="waiting-button" title="Everything waiting on you this week: decisions, the sit-down, the morning, the envelope"
-        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${urgent ? 'border-red-500 text-red-300 bg-red-500/10' : n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
-        ▤<span className="hidden sm:inline"> Waiting on you</span>{n ? <span className="ml-1 rounded-full bg-gold-500 px-1.5 text-[10px] text-noir-950">{n}</span> : <span className="ml-1 text-stone-500">✓</span>} ▾
+        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${red ? 'border-red-500 text-red-300 bg-red-500/10' : n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
+        ▤<span className="hidden sm:inline"> Waiting on you</span>{n ? <span className={`ml-1 rounded-full px-1.5 text-[10px] ${red ? 'bg-red-500 text-white' : 'bg-gold-500 text-noir-950'}`} data-testid="waiting-count">{n}</span> : <span className="ml-1 text-stone-500">✓</span>} ▾
       </button>
     )}>
       {(close) => (
@@ -146,6 +150,7 @@ function WaitingButton({ pending, answered, sitCount, mornings, envelope, urgent
           {onRounds && <button type="button" className={menuItem} onClick={() => { close(); onRounds(); }} data-testid="rounds-button">☕ Your rounds: mornings & evenings <span className="float-right tabular-nums text-stone-400">{mornings ? `${mornings} waiting` : ''}</span></button>}
           {onEnvelope && envelope && <button type="button" className={menuItem} onClick={() => { close(); onEnvelope(); }} data-testid="envelope-button">✉ The envelope is on your desk</button>}
           {onDesk && <><div className="my-1 h-px bg-noir-700" /><button type="button" className={`${menuItem} text-gold-300`} onClick={() => { close(); onDesk(); }} data-testid="desk-button">▤ The whole desk ▸</button></>}
+          <button type="button" className={`${menuItem} text-gold-300`} onClick={() => { close(); (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(); }} data-testid="waiting-all">◐ All of it, and everything in motion ▸</button>
         </div>
       )}
     </Popover>
@@ -157,8 +162,11 @@ function WaitingButton({ pending, answered, sitCount, mornings, envelope, urgent
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay }: {
   s: GameState;
+  /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
+  inboxN?: number;
+  inboxTone?: 'red' | 'amber' | 'gold';
   /** End the boss's day now (the hours left go unused): the day ticks, or on Sunday the week turns. */
   onEndDay?: () => void;
   /** Running clock (days tick by) rather than turn-based (settings). */
@@ -240,13 +248,14 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>
             </div>
-            <WaitingButton pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope} urgent={urgent} onUrgent={onUrgent}
+            <WaitingButton count={inboxN} tone={inboxTone} pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope} urgent={urgent} onUrgent={onUrgent}
               onReview={onReview} onSitDown={onSitDown} onRounds={onRounds} onEnvelope={onEnvelope} onDesk={onDesk} />
             {onOffice && (
               <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>
             )}
             <OrdersButton s={s} />
+            <PlansButton s={s} />
             {onFind && (
               <button type="button" onClick={onFind} data-testid="find-button" title="Find a person, a place, a screen or something to do (Ctrl+K or /)"
                 className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Find</span></button>
