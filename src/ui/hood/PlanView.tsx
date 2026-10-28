@@ -7,7 +7,8 @@ import { OWNER_COLOR } from '../map/lotIcons';
 import type { AssetKey } from './art/assetUrls';
 import { AssetImg } from './AssetImg';
 import type { Item } from './Buildings';
-import { useSprite } from './cutout';
+import { spriteOf } from './cutout';
+import { layoutLabels, layoutSprites, type Box } from './planLayout';
 import { storefrontArt } from './storefrontArt';
 import { Turnaround } from './Turnaround';
 import { TownEditor } from '../editor/TownEditor';
@@ -90,40 +91,63 @@ function viewOf(p: Placed): { key?: AssetKey; quarter?: number } {
   return {};
 }
 
-function Building({ p, sel, edit, color, label, hs, onDown }: { p: Placed; sel: boolean; edit: boolean; color: string; label: string; hs: number; onDown: (e: React.PointerEvent, mode: 'move' | 'rot' | 'size') => void }) {
+/** The photo for every building in view, with its aspect (height / width), loaded once and cached. */
+const aspectCache = new Map<string, number>();
+function usePlanSprites(placed: Placed[]): Record<string, { src: string; ar: number }> {
+  const [got, setGot] = useState<Record<string, { src: string; ar: number }>>({});
+  const want = useMemo(() => placed.map((p) => ({ id: p.f.id, ...viewOf(p) })).filter((x) => x.key), [placed]);
+  const sig = want.map((x) => `${x.id}=${x.key}:${x.quarter ?? ''}`).join('|');
+  useEffect(() => {
+    let live = true;
+    const next: Record<string, { src: string; ar: number }> = {};
+    let left = want.length;
+    const done = () => { if (--left <= 0 && live) setGot({ ...next }); };
+    if (!want.length) setGot({});
+    for (const x of want) {
+      spriteOf(x.key!, x.quarter).then((src) => {
+        if (!src) { done(); return; }
+        const known = aspectCache.get(src);
+        if (known) { next[x.id] = { src, ar: known }; done(); return; }
+        const im = new Image();
+        im.onload = () => { const ar = im.naturalHeight / Math.max(1, im.naturalWidth); aspectCache.set(src, ar); next[x.id] = { src, ar }; done(); };
+        im.onerror = () => done();
+        im.src = src;
+      });
+    }
+    return () => { live = false; };
+  }, [sig]); // eslint-disable-line react-hooks/exhaustive-deps
+  return got;
+}
+
+/**
+ * Where the photo stands (screen: x = u, y = -v; the camera looks in from the ocean): the middle
+ * of the footprint's lowest edge on the screen. A building that faces away (inland) stands just
+ * inside its facing edge instead, so a long pier keeps its entrance at the Boardwalk. Either way
+ * the photo stands on its own lot, never on the block behind it.
+ */
+function frontOf(p: Placed): { ax: number; ay: number; top?: boolean; ext: number } {
+  const { w, d } = p.f.properties.footprint;
+  const a = (p.f.properties.rotation * Math.PI) / 180;
+  const ext = Math.abs(Math.sin(a)) * w + Math.abs(Math.cos(a)) * d;
+  if (Math.cos(a) < -0.5) return { ax: p.u, ay: -p.v - ext / 2, top: true, ext };
+  return { ax: p.u, ay: -p.v + ext / 2, ext };
+}
+
+/** The lot on the ground: the footprint, its front edge in the owner's color, and (in edit) the handles. */
+function Footprint({ p, sel, edit, color, label, photo, dot, dotR, hs, onDown }: { p: Placed; sel: boolean; edit: boolean; color: string; label: string; photo: boolean; dot: boolean; dotR: number; hs: number; onDown: (e: React.PointerEvent, mode: 'move' | 'rot' | 'size') => void }) {
   const { w, d } = p.f.properties.footprint;
   const rot = p.f.properties.rotation;
-  const v = viewOf(p);
-  const src = useSprite(v.key, v.quarter);
-  const [ar, setAr] = useState(0.62);
-  useEffect(() => {
-    if (!src) return;
-    const im = new Image();
-    im.onload = () => setAr(im.naturalHeight / Math.max(1, im.naturalWidth));
-    im.src = src;
-  }, [src]);
-  // Screen: x = u, y = -v. The front edge (the facing side) is at local +y before turning.
-  const a = (rot * Math.PI) / 180;
-  const fdx = -Math.sin(a) * (d / 2);
-  const fdy = Math.cos(a) * (d / 2);
-  const ax = p.u + fdx;
-  const ay = -p.v + fdy;
-  const sw = p.f.properties.kind === 'sign' ? 9 : Math.min(w, 70) * 1.05;
-  const sh = sw * ar;
   const kindFill = KIND_FILL[p.f.properties.kind] ?? '#8a8f9a';
   return (
-    <g data-testid="plan-bldg" data-id={p.f.id} data-lot={p.f.properties.lotId ?? ''} data-authored={p.authored ? '1' : '0'} style={{ cursor: edit ? 'move' : 'pointer' }}
+    <g data-testid="plan-bldg" data-id={p.f.id} data-lot={p.f.properties.lotId ?? ''} data-authored={p.authored ? '1' : '0'} data-mode={photo ? 'photo' : dot ? 'dot' : 'plain'} style={{ cursor: edit ? 'move' : 'pointer' }}
       onPointerDown={(e) => onDown(e, 'move')}>
+      <title>{label}</title>
       <g transform={`translate(${p.u} ${-p.v}) rotate(${rot})`}>
-        <rect x={-w / 2} y={-d / 2} width={w} height={d} rx="1.5" fill={src ? '#000' : kindFill} fillOpacity={src ? 0.22 : 0.85} stroke={sel ? '#ffe28a' : color} strokeWidth={sel ? 2 : 1.2} strokeDasharray={p.f.properties.located === 'approximate' && edit ? '4 2' : undefined} />
-        {!src && <path d={`M${-w / 2 + 3} ${-d / 2 + 3}L${w / 2 - 3} ${d / 2 - 3}M${w / 2 - 3} ${-d / 2 + 3}L${-w / 2 + 3} ${d / 2 - 3}`} stroke="#ffffff" strokeOpacity="0.18" strokeWidth="1" />}
+        <rect x={-w / 2} y={-d / 2} width={w} height={d} rx="1.5" fill={photo ? '#000' : kindFill} fillOpacity={photo ? 0.22 : 0.85} stroke={sel ? '#ffe28a' : color} strokeWidth={sel ? 2 : 1.2} strokeDasharray={p.f.properties.located === 'approximate' && edit ? '4 2' : undefined} />
+        {!photo && <path d={`M${-w / 2 + 3} ${-d / 2 + 3}L${w / 2 - 3} ${d / 2 - 3}M${w / 2 - 3} ${-d / 2 + 3}L${-w / 2 + 3} ${d / 2 - 3}`} stroke="#ffffff" strokeOpacity="0.18" strokeWidth="1" />}
         <line x1={-w / 2} y1={d / 2} x2={w / 2} y2={d / 2} stroke={color} strokeWidth="2.4" />
       </g>
-      {src && <image href={src} x={ax - sw / 2} y={ay - sh} width={sw} height={sh} preserveAspectRatio="xMidYMax meet" style={{ filter: sel ? 'drop-shadow(0 0 3px #ffe28a)' : 'drop-shadow(0 2px 2px rgba(0,0,0,0.6))' }} data-testid="plan-sprite" />}
-      <g transform={`translate(${ax} ${ay - (src ? sh : d / 2) - 3})`} pointerEvents="none">
-        <rect x={-label.length * 1.55 - 4} y="-5.5" width={label.length * 3.1 + 8} height="7.5" rx="3.7" fill="#1b1030" fillOpacity="0.85" stroke={color} strokeWidth="0.6" />
-        <text y="0" textAnchor="middle" fontSize="5" fontWeight="700" fill="#fff3dc" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{label}</text>
-      </g>
+      {dot && <circle cx={p.u} cy={-p.v} r={dotR} fill={color} stroke="#1b1030" strokeWidth={dotR * 0.35} data-testid="plan-dot" />}
       {edit && sel && (
         <g transform={`translate(${p.u} ${-p.v}) rotate(${rot})`}>
           <line x1="0" y1={-d / 2} x2="0" y2={-d / 2 - 3 * hs} stroke="#ffe28a" strokeWidth="1" />
@@ -248,6 +272,19 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
   };
   const drag = useRef<{ mode: 'pan' | 'move' | 'rot' | 'size'; id?: string; sx: number; sy: number; vb: typeof vb; start?: PlaceEdit & { u: number; v: number }; moved: boolean } | undefined>();
 
+  // The screen size of the map, for zoom-aware sizes (photos vs dots, name tags in screen pixels).
+  const [box, setBox] = useState({ w: 1000, h: 700 });
+  useEffect(() => {
+    const el = svg.current;
+    if (!el) return;
+    const size = () => setBox({ w: el.clientWidth || 1000, h: el.clientHeight || 700 });
+    size();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(size) : undefined;
+    ro?.observe(el);
+    return () => ro?.disconnect();
+  }, []);
+  const pxPerM = Math.min(box.w / vb.w, box.h / vb.h);
+
   const byLot = useMemo(() => new Map(items.filter((x) => x.lot).map((x) => [x.lot!.id, x])), [items]);
   const placed: Placed[] = useMemo(() => {
     const feats = placesIn(year, applyPlaceEdits(edits));
@@ -270,7 +307,18 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       const v = (pc.v0 + pc.v1) / 2;
       if (!inArea(A, u, v, 0)) continue;
       // A researched building stands here: the game's generated record gives way on the map.
-      if (out.some((q) => q.authored && Math.abs(q.u - u) < q.f.properties.footprint.w / 2 && Math.abs(q.v - v) < q.f.properties.footprint.d / 2)) continue;
+      // (Its middle inside the researched footprint, or most of its lot under it.)
+      const pw = pc.u1 - pc.u0;
+      const pd = pc.v1 - pc.v0;
+      if (out.some((q) => {
+        if (!q.authored) return false;
+        const fw = q.f.properties.footprint.w;
+        const fd = q.f.properties.footprint.d;
+        if (Math.abs(q.u - u) < fw / 2 && Math.abs(q.v - v) < fd / 2) return true;
+        const ou = Math.max(0, Math.min(q.u + fw / 2, pc.u1) - Math.max(q.u - fw / 2, pc.u0));
+        const ov = Math.max(0, Math.min(q.v + fd / 2, pc.v1) - Math.max(q.v - fd / 2, pc.v0));
+        return ou * ov > 0.4 * pw * pd;
+      })) continue;
       const id = `lot:${l.id}`;
       const e = edits[id];
       const base: PlaceFeature = {
@@ -282,9 +330,25 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       out.push({ f, u: uu, v: vv, it, authored: false });
     }
     // Draw from the back (inland) to the front (the ocean), so nearer buildings stand in front.
-    return out.sort((a, b) => b.v - a.v);
+    return out.sort((a, b) => -a.v - -b.v);
   }, [year, edits, items, byLot, A]);
   const selP = placed.find((p) => p.f.id === sel);
+  const sprites = usePlanSprites(placed);
+  const colorOf = (p: Placed) => { const it = p.it; return it ? (it.mine ? OWNER_COLOR.player : it.forSale ? OWNER_COLOR.sale : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private) : p.f.properties.establishment || p.f.properties.public ? '#c7a64a' : '#e8dfcb'; };
+  const labelOf = (p: Placed) => { const it = p.it; const l = it?.vacant && it.lot ? `Lot for sale $${it.lot.price.toLocaleString('en-US')}` : (it?.name ?? p.f.properties.name).replace(/^The /, ''); return l.length > 26 ? `${l.slice(0, 25)}…` : l; };
+  // Photos sized to their lots and kept off each other; then the name tags round them.
+  const layout = useMemo(() => {
+    const sp = layoutSprites(placed.map((p) => {
+      const { ax, ay, top, ext } = frontOf(p);
+      return { id: p.f.id, ax, ay, top, ext, w: p.f.properties.footprint.w, d: p.f.properties.footprint.d, ar: sprites[p.f.id]?.ar, sign: p.f.properties.kind === 'sign', keep: p.f.id === sel };
+    }), pxPerM);
+    const foot = (p: Placed): Box => { const { w, d } = p.f.properties.footprint; const r = Math.abs(Math.sin((p.f.properties.rotation * Math.PI) / 180)); const bw = w * (1 - r) + d * r; const bd = d * (1 - r) + w * r; return { x: p.u - bw / 2, y: -p.v - bd / 2, w: bw, h: bd }; };
+    const around = (p: Placed): Box => { const b = sp.get(p.f.id); return b && b.mode === 'photo' ? b : foot(p); };
+    const prio = (p: Placed) => (p.f.id === sel ? 100 : p.it?.mine ? 50 : 0) + (p.authored ? 20 : 0) + (p.it?.vacant ? 4 : p.f.properties.kind === 'house' ? 2 : 10) + Math.min(5, p.f.properties.footprint.w / 15);
+    const labels = layoutLabels(placed.map((p) => ({ id: p.f.id, text: labelOf(p), prio: prio(p), around: around(p) })),
+      placed.map((p) => ({ id: p.f.id, b: around(p) })), pxPerM);
+    return { sp, labels };
+  }, [placed, sprites, pxPerM, sel]); // eslint-disable-line react-hooks/exhaustive-deps
   const elsewhere = useMemo(() => placesIn(year, applyPlaceEdits(edits)).filter((f) => !inArea(A, ...lngLatToUv(f.geometry.coordinates))), [year, edits, A]);
 
   const toSvg = (cx: number, cy: number): [number, number] => {
@@ -382,12 +446,35 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       <svg ref={svg} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full select-none" style={{ touchAction: 'none' }}
         onPointerDown={(e) => onDown(e, 'pan')}>
         <Ground year={year} A={A} />
+        {/* The lots on the ground, then the photos from the back to the front, then the name tags over everything. */}
         {placed.map((p) => {
-          const it = p.it;
-          const color = it ? (it.mine ? OWNER_COLOR.player : it.forSale ? OWNER_COLOR.sale : OWNER_COLOR[it.owner] ?? OWNER_COLOR.private) : p.f.properties.establishment || p.f.properties.public ? '#c7a64a' : '#e8dfcb';
-          const label = it?.vacant && it.lot ? `Lot for sale $${it.lot.price.toLocaleString('en-US')}` : (it?.name ?? p.f.properties.name).replace(/^The /, '');
-          return <Building key={p.f.id} p={p} sel={sel === p.f.id} edit={edit} color={color} label={label.length > 26 ? `${label.slice(0, 25)}…` : label} hs={Math.max(3, vb.w / 90)} onDown={(e, mode) => onDown(e, mode, p)} />;
+          const L = layout.sp.get(p.f.id);
+          const photo = !!sprites[p.f.id] && L?.mode === 'photo';
+          return <Footprint key={p.f.id} p={p} sel={sel === p.f.id} edit={edit} color={colorOf(p)} label={labelOf(p)} photo={photo} dot={!photo && !!sprites[p.f.id]} dotR={3.2 / pxPerM} hs={Math.max(3, vb.w / 90)} onDown={(e, mode) => onDown(e, mode, p)} />;
         })}
+        <g data-testid="plan-sprites">
+          {/* Depth: the photo standing lower on the screen is nearer, and drawn over. */}
+          {[...placed].sort((a, b) => { const A = layout.sp.get(a.f.id); const B = layout.sp.get(b.f.id); return (A ? A.y + A.h : 0) - (B ? B.y + B.h : 0); }).map((p) => {
+            const L = layout.sp.get(p.f.id);
+            const sp = sprites[p.f.id];
+            if (!sp || !L || L.mode !== 'photo') return null;
+            const isSel = sel === p.f.id;
+            return <image key={p.f.id} href={sp.src} x={L.x} y={L.y} width={L.w} height={L.h} preserveAspectRatio="xMidYMax meet" data-testid="plan-sprite" data-id={p.f.id} style={{ cursor: edit ? 'move' : 'pointer', filter: isSel ? 'drop-shadow(0 0 3px #ffe28a)' : 'drop-shadow(0 2px 2px rgba(0,0,0,0.6))' }} onPointerDown={(e) => onDown(e, 'move', p)} />;
+          })}
+        </g>
+        <g data-testid="plan-labels" pointerEvents="none" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
+          {placed.map((p) => {
+            const t = layout.labels.get(p.f.id);
+            if (!t) return null;
+            const c = colorOf(p);
+            return (
+              <g key={p.f.id} data-testid="plan-label" data-id={p.f.id}>
+                <rect x={t.x} y={t.y} width={t.w} height={t.h} rx={t.h / 2} fill="#1b1030" fillOpacity="0.85" stroke={sel === p.f.id ? '#ffe28a' : c} strokeWidth={t.fs * 0.1} />
+                <text x={t.x + t.w / 2} y={t.y + t.h * 0.72} textAnchor="middle" fontSize={t.fs} fontWeight="700" fill="#fff3dc">{labelOf(p)}</text>
+              </g>
+            );
+          })}
+        </g>
       </svg>
       {/* Toolbar. */}
       <div className="absolute left-2 top-11 z-10 flex flex-wrap items-center gap-1.5 max-w-[calc(100%-1rem)]" data-plan-ui data-hv-ui>
