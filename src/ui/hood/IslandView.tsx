@@ -16,7 +16,9 @@ import { DistrictCards } from './DistrictCards';
 import { PlanView } from './PlanView';
 import { useShell } from '../shell/context';
 import { WalkView } from './WalkView';
-import { MapFind, MapMenu } from './MapControls';
+import { MapFind, MapMenu, MapModeToggle, type MapMode } from './MapControls';
+import { PoliticalOverlay } from '../realm/PoliticalOverlay';
+import { REGION_HOOD, wildwoodDetails, wildwoodHeat, wildwoodRackets, wildwoodRegions, wildwoodStyles } from './wildwoodRealm';
 import { layoutLabels } from './planLayout';
 
 /**
@@ -72,10 +74,10 @@ function moodFor(s: GameState): Mood {
 }
 
 const LS = 'llv:island';
-function pref(): { proj?: 'iso' | 'plan'; mood?: 'auto' | Mood } {
+function pref(): { proj?: 'iso' | 'plan'; mood?: 'auto' | Mood; mapMode?: MapMode } {
   try { return JSON.parse(localStorage.getItem(LS) ?? '{}'); } catch { return {}; }
 }
-function savePref(p: { proj?: 'iso' | 'plan'; mood?: 'auto' | Mood }): void {
+function savePref(p: { proj?: 'iso' | 'plan'; mood?: 'auto' | Mood; mapMode?: MapMode }): void {
   try { localStorage.setItem(LS, JSON.stringify({ ...pref(), ...p })); } catch { /* private window */ }
 }
 
@@ -97,9 +99,13 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   const marginRef = useRef(400);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [tier, setTier] = useState(1);
+  // The settled zoom in ~15% steps, for the political overlay's names (sized in screen pixels).
+  const [zoomStep, setZoomStep] = useState(0);
   const [projMode, setProjMode] = useState<'iso' | 'plan'>(() => (typeof localStorage !== 'undefined' ? pref().proj : undefined) ?? 'iso');
   const [moodSet, setMoodSet] = useState<'auto' | Mood>(() => (typeof localStorage !== 'undefined' ? pref().mood : undefined) ?? 'auto');
   const [overlay, setOverlay] = useState<HoodOverlay>('none');
+  // Map mode (Paradox style): Political by default — strongest zoomed out, easing to the plain map up close.
+  const [mapMode, setMapMode] = useState<MapMode>(() => (typeof localStorage !== 'undefined' ? pref().mapMode : undefined) ?? 'political');
   const [sel, setSel] = useState<string | undefined>();
   const [districts, setDistricts] = useState(false);
   const [plan, setPlan] = useState(false);
@@ -126,6 +132,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
     g.current?.setAttribute('transform', `translate(${(t.tx + m).toFixed(1)} ${(t.ty + m).toFixed(1)}) scale(${t.sc.toFixed(4)})`);
     const nt = tierOf(t.sc);
     setTier((old) => (old === nt ? old : nt));
+    setZoomStep(Math.round(Math.log(t.sc) / Math.log(1.15)));
   }, []);
   const applyLive = useCallback(() => {
     const l = live.current;
@@ -386,6 +393,16 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
     );
   }), [s, pr, tier, mood, goHood]);
 
+  const realmRegions = useMemo(() => (mapMode === 'terrain' ? [] : wildwoodRegions(s, pr)), [s, pr, mapMode]);
+  const realmStyles = useMemo(() => wildwoodStyles(s), [s]);
+  const realmValues = useMemo(() => (mapMode === 'heat' ? wildwoodHeat(s) : mapMode === 'rackets' ? wildwoodRackets(s) : undefined), [s, mapMode]);
+  const realm = (layer: 'fill' | 'ink' | 'all') => mapMode === 'terrain' ? null : (
+    <PoliticalOverlay regions={realmRegions} styles={realmStyles} scale={1.15 ** zoomStep} layer={layer} idPrefix="hv-realm"
+      fillOpacity={[0.62, 0.48, 0.24, 0.1][tier]} values={realmValues} ramp={mapMode === 'rackets' ? ['#efe6cf', '#1f8a4c'] : ['#f4e3b0', '#b3261e']}
+      onPick={tier === 0 ? (id) => { if (!wasDrag() && REGION_HOOD[id]) goHood(REGION_HOOD[id]); } : undefined}
+      details={(r) => wildwoodDetails(s, r)} />
+  );
+
   const tram = useMemo(() => {
     const a = P(pr, crossU('Cresse Ave') + 30, -8);
     const b = P(pr, crossU('16th Ave') - 30, -8);
@@ -399,11 +416,14 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
     : overlay === 'economy' ? [['Losing', 'rgb(226,86,61)'], ['Earning', 'rgb(46,204,113)']]
     : overlay === 'reputation' ? [['Seedy', 'rgb(190,70,70)'], ['Postcard', 'rgb(255,120,190)']]
     : overlay === 'police' ? [['Quiet', 'rgb(120,170,220)'], ['Crawling with cops', 'rgb(20,60,200)']]
-    : overlay === 'rival' ? [['Rival-held', OWNER_COLOR.manno], ['Rival pull (area)', 'rgb(200,30,40)']] : [];
+    : overlay === 'rival' ? [['Rival-held', OWNER_COLOR.manno], ['Rival pull (area)', 'rgb(200,30,40)']]
+    : mapMode === 'political' ? [...[...new Set(realmRegions.map((r) => r.holder).filter((h): h is string => !!h && !!realmStyles[h]))].map((h) => [realmStyles[h].label ?? realmStyles[h].name, realmStyles[h].color]), ...(realmRegions.some((r) => r.contested) ? [['Contested (striped)', 'repeating-linear-gradient(45deg,#d4a62a 0 3px,#c0392b 3px 6px)']] : []), ['Nobody holds it', '#e9dcbc']]
+    : mapMode === 'heat' ? [['Quiet', '#f4e3b0'], ['Hot', '#b3261e']]
+    : mapMode === 'rackets' ? [['Nothing of yours', '#efe6cf'], ['Your best earner', '#1f8a4c']] : [];
 
   const panelOpen = !!selItem || !!hood || districts;
   return (
-    <div className="absolute inset-0 overflow-hidden select-none" data-testid="island-view" data-mood={mood} data-overlay={overlay} data-tier={tier} style={{ background: pal.bay, touchAction: 'none' }}>
+    <div className="absolute inset-0 overflow-hidden select-none" data-testid="island-view" data-mood={mood} data-overlay={overlay} data-tier={tier} data-map-mode={mapMode} style={{ background: pal.bay, touchAction: 'none' }}>
       <div ref={host} className="absolute inset-0" onClick={() => { if (!wasDrag()) { setSel(undefined); } }}>
         <div ref={layer} className="absolute" style={{ left: -margin, top: -margin, width: `calc(100% + ${margin * 2}px)`, height: `calc(100% + ${margin * 2}px)`, transformOrigin: `${margin}px ${margin}px`, willChange: 'transform' }}>
           <svg width="100%" height="100%" className="block" style={{ fontFamily: "'Trebuchet MS', system-ui, sans-serif" }}>
@@ -411,6 +431,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
             <g ref={g}>
               {ground}
               {areas}
+              {tier >= 1 && realm('fill')}
               {buildings}
               <PierArches pr={pr} mood={mood} tier={tier} sc={scB} />
               {tier >= 1 && (
@@ -425,12 +446,14 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
                 </g>
               )}
               {labels}
-              {hoodPills}
+              {tier === 0 && realm('fill')}
+              {realm('ink')}
+              {mapMode === 'terrain' && hoodPills}
             </g>
           </svg>
         </div>
       </div>
-      {plan && !scene && <div className="absolute inset-0 z-[998]"><PlanView s={s} items={items} onPick={(k) => { setSel(k); setMenu(false); }} onClose={() => setPlan(false)} /></div>}
+      {plan && !scene && <div className="absolute inset-0 z-[998]"><PlanView s={s} items={items} mapMode={mapMode} onPick={(k) => { setSel(k); setMenu(false); }} onClose={() => setPlan(false)} /></div>}
       {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setDistricts(false); setMenu(false); }} onScene={(sc) => { setScene(sc); setDistricts(false); }} onMap={() => setScene(undefined)} onDistricts={() => { setSel(undefined); setDistricts(true); }} /></div>}
       {/* Controls: View · Show · Find, and the zoom (always). Selection survives a change of view. */}
       <div data-hv-ui className={`absolute right-2 top-[4.75rem] md:top-2 z-[1003] flex flex-col items-end gap-1.5 max-w-[70%] ${(plan && !scene) || walking ? 'hidden' : ''}`} data-testid="map-controls">
@@ -459,6 +482,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
           </MapMenu>
           <MapFind s={s} items={items} onHood={(id) => { setScene(undefined); setPlan(false); goHood(id); }} onItem={showItem} />
         </div>
+        <MapModeToggle mode={mapMode} onMode={(m) => { setMapMode(m); savePref({ mapMode: m }); }} />
         <div className="flex gap-1">
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
           <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
