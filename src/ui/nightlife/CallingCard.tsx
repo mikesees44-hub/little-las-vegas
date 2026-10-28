@@ -7,6 +7,7 @@ import { FACTION_TINT } from '../components/People';
 import { Portrait } from '../portrait/Portrait';
 import { eveningKindOf } from '../../engine/evening';
 import { adultOn } from '../../engine/datingState';
+import { boldEligible } from '../../engine/quickies';
 import { BoldFlow, CarFlow, EveningFlow } from './EveningFlow';
 
 /**
@@ -69,11 +70,11 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
         </dl>
       </div>
 
-      {actions && (eveningKindOf(s, id) || (adultOn(s) && s.nightlife?.people[id])) && (
+      {actions && (eveningKindOf(s, id) || boldEligible(s, id)) && (
         <div className="flex flex-wrap gap-1.5" data-testid="calling-card-flows">
           {eveningKindOf(s, id) && <button type="button" className="btn-gold text-xs py-1" onClick={() => setFlow('evening')} data-testid="open-evening">Plan an evening with {c.firstName}…</button>}
           {adultOn(s) && eveningKindOf(s, id) && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('car')} data-testid="open-car">"Step outside to my car"…</button>}
-          {adultOn(s) && s.nightlife?.people[id] && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('bold')} data-testid="open-bold">A bold offer…</button>}
+          {boldEligible(s, id) && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('bold')} data-testid="open-bold">A bold offer…</button>}
         </div>
       )}
       {flow === 'evening' && <EveningFlow s={s} id={id} onClose={() => setFlow(undefined)} />}

@@ -145,6 +145,11 @@ export function pocketOf(s: GameState): number {
   return Math.max(0, Math.round(s.tribute?.acct.personal ?? 0));
 }
 
+/** She is someone a bold offer could even be made to (at the club, or a woman you have been seeing). */
+export function boldEligible(s: GameState, id: string): boolean {
+  return !baseBlock(s, s.characters[id]) && (atClub(s, id) || courting(s, id));
+}
+
 export function boldBlock(s: GameState, id: string, amount: number): string | undefined {
   const c = s.characters[id];
   const b = baseBlock(s, c);

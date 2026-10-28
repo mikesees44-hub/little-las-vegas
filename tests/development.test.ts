@@ -91,6 +91,8 @@ describe('crew equipment', () => {
     const k = capos(s)[0];
     expect(previewAction(s, dev({ t: 'mandate', capo: k.id, level: 1 })).disabledReason).toBeUndefined();
     s = week(s, [dev({ t: 'mandate', capo: k.id, level: 1 })]).state;
+    // His men need arming (not left to the luck of a new recruit joining his crew): his gear goes back to the Family.
+    for (const g of s.dev!.gear.filter((x) => x.holder === k.id)) g.holder = 'family';
     const before = gearCount(s, k.id);
     for (let i = 0; i < 8; i++) s = week(s).state;
     expect(gearCount(s, k.id)).toBeGreaterThan(before);

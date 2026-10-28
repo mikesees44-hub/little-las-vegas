@@ -1,5 +1,5 @@
 import { ageOn, isInSeason } from './calendar';
-import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
+import { displayName, hasTrait, isFree, makeCharacter, OPPOSED, player, rollTraits } from './characters';
 import { ensureDating, adultOn, type Provider, type ProviderKind } from './datingState';
 import { applyEffects } from './effects';
 import { heat, money, type Ctx } from './ledger';
@@ -17,11 +17,11 @@ import {
 } from './nightlifeState';
 import { goomarBlock, goomarWeek, previewEndGoomar, previewGoomar, applyGoomarOp, isGoomar } from './goomar';
 import { applyInvite, askingPrice, defaultPlan, eveningKindOf, previewInvite, KIND_INFO, type EveningPlan } from './evening';
-import { applyBold, applyCar, previewBold, previewCar, type BoldAfter } from './quickies';
+import { applyBold, applyCar, boldEligible, previewBold, previewCar, type BoldAfter } from './quickies';
 import { applyAskMan, applyPartner, partnersWeek, previewAskMan, previewPartner, type PartnerHow } from './nightPartners';
 import type { ActionPreview } from './actions';
 import type { Acceptance, Reason } from './interactions';
-import type { Character, Effect, FactionId, GameState, PlayerAction, RivalId } from './types';
+import type { Character, Effect, FactionId, GameState, PlayerAction, RivalId, Trait } from './types';
 
 /**
  * NIGHTLIFE: the island's night as people and as an organized-crime economy.
@@ -250,10 +250,23 @@ const GOALS_BY_ROLE: Record<string, NightGoal[]> = {
   dancer: ['act', 'sing', 'club', 'marry', 'shop'], singer: ['sing'], barfly: ['marry', 'club', 'family'], date: ['marry', 'home', 'shop', 'act'], madam: ['shop', 'home'],
 };
 
+/** 2-3 personality traits like everyone else: hers first, then rolled ones that don't contradict them. */
+function fullTraits(N: NightlifeState, given?: Trait[]): Trait[] | undefined {
+  if (!given) return undefined;
+  const out = [...new Set(given)].slice(0, 3);
+  const want = out.length >= 2 ? out.length : 2 + (rand(N) < 0.5 ? 1 : 0);
+  for (const t of rollTraits(N, 6)) {
+    if (out.length >= want) break;
+    if (out.includes(t) || OPPOSED.some(([a, b]) => (a === t && out.includes(b)) || (b === t && out.includes(a)))) continue;
+    out.push(t);
+  }
+  return out;
+}
+
 function makePerson(s: GameState, N: NightlifeState, o: MakeOpts): NightPerson {
   const c = withRng(s, N, () => makeCharacter(s, {
     gender: 'F', age: o.age, firstName: o.f, lastName: o.l, ethnicity: o.eth, rank: 'civilian', faction: 'none', nickname: false,
-    traits: o.traits, wealth: o.role === 'madam' ? 40000 + Math.floor(rand(N) * 60000) : o.role === 'escort' ? 3000 : 400,
+    traits: fullTraits(N, o.traits), wealth: o.role === 'madam' ? 40000 + Math.floor(rand(N) * 60000) : o.role === 'escort' ? 3000 : 400,
   }));
   fixAdult(s, c);
   if (o.nick) c.nickname = o.nick;
@@ -1371,7 +1384,7 @@ export function nightActionsFor(s: GameState, id: string): PlayerAction[] {
   if (adultOn(s)) {
     if (eveningKindOf(s, id) === 'paid') out.push(a({ op: 'car', id, price: askingPrice(s, id, 'car').price }));
     else if (eveningKindOf(s, id)) out.push(a({ op: 'car', id }));
-    out.push(a({ op: 'bold', id, amount: 250, raises: 0 }));
+    if (boldEligible(s, id)) out.push(a({ op: 'bold', id, amount: 250, raises: 0 }));
   }
   if (p.fam.partnerId) out.push(a(p.fam.temperKnown ? { op: 'partner', id, how: 'warn' } : { op: 'askMan', id }));
   if (isGoomar(s, id)) out.unshift(a({ op: 'endGoomar', id }));
