@@ -3,7 +3,10 @@ import { useMemo, useState } from 'react';
 import { previewAction, queuedCost } from '../../engine/actions';
 import { CATALOG } from '../../engine/catalog';
 import { placeStart, MENU_BY_KEY, MENU_GROUPS, menuRows, runnersFor, defaultRunner, startSummary, whereFor, type MenuGroup, type MenuKey, type MenuRow, type RunnerChoice } from '../../engine/racketMenu';
-import type { GameState } from '../../engine/types';
+import type { Business, GameState } from '../../engine/types';
+import type { Lot } from '../../engine/econState';
+import { workPlace } from '../../engine/bizRacket';
+import { WorkPlaceSheet } from './WorkPlace';
 import { fmt$ } from '../format';
 import { useOrders } from '../components/Orders';
 
@@ -255,14 +258,25 @@ function Summary({ s, k, runner, district, earner, budget, queued, onStart }: { 
   );
 }
 
-/** "Start a racket here" on a Walk or Street card: the cheapest kinds that fit this district now, one tap to the flow. */
-export function StartHereButton({ s, place, onGo }: { s: GameState; place?: string; onGo: () => void }) {
+/**
+ * "Start a racket here" on a Walk or Street card. On a particular business it
+ * opens Work this place (WorkPlace.tsx): the rackets for THAT business, its
+ * owner and who protects him. Anywhere else (a stretch of the boards, a lot
+ * with no business) it opens the generic flow with this district picked.
+ */
+export function StartHereButton({ s, place, lot, biz, onGo }: { s: GameState; place?: string; lot?: Lot; biz?: Business; onGo: () => void }) {
+  const [open, setOpen] = useState(false);
   const p = placeStart(s, place);
-  if (!p || s.gameOver) return null;
+  const wp = workPlace(s, lot, biz);
+  if ((!p && !wp) || s.gameOver) return null;
+  const go = () => { if (p) hintStart(p.district, p.name); onGo(); };
   return (
     <div className="rounded border border-gold-600/40 bg-gold-500/5 px-2 py-1.5" data-testid="start-here">
-      <button type="button" className="btn-gold text-xs py-1" onClick={() => { hintStart(p.district, p.name); onGo(); }} data-testid="start-here-btn">♣ Start a racket here</button>
-      <span className="ml-2 text-[11px] text-stone-400">{p.name} fits {p.picks.map((r) => r.title.toLowerCase()).join(', ')}{p.picks.length >= 3 ? ', and more' : ''}.</span>
+      <button type="button" className="btn-gold text-xs py-1" onClick={() => (wp ? setOpen(true) : go())} data-testid="start-here-btn">♣ Start a racket here</button>
+      <span className="ml-2 text-[11px] text-stone-400">
+        {wp ? <>Work {wp.name}: {wp.mine ? 'what you can run through your own place' : 'protection, a skim, the back door, the owner himself'}.</> : <>{p!.name} fits {p!.picks.map((r) => r.title.toLowerCase()).join(', ')}{p!.picks.length >= 3 ? ', and more' : ''}.</>}
+      </span>
+      {open && wp && <WorkPlaceSheet s={s} place={wp.id} onClose={() => setOpen(false)} onHub={p ? go : undefined} />}
     </div>
   );
 }

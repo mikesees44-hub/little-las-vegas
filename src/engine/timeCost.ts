@@ -4,6 +4,7 @@ import { departureHours, resolveTransport } from './transport';
 import { DESTS } from './travelDests';
 import { addOpinion } from './relations';
 import { spendHours } from './spendData';
+import { workHours } from './bizRacketData';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -69,6 +70,8 @@ export const TIME_TABLE: Record<string, number> = {
   'econ:gift': 1, 'econ:invite': 3, 'econ:leverage': 1, 'econ:project': 2, 'econ:luxBuy': 2, 'econ:luxSell': 1,
   'hood:restyle': 0.5,
   dirty: 0.25,
+  // Work this place: a visit with an offer is an hour or so; an order to the crew less (workHours).
+  'work:pitch': 1, 'work:scheme': 1, 'work:press': 0.5, 'work:drop': 0.25,
   'dev:adopt': 1, 'dev:drop': 0.25, 'dev:resp': 0.25, 'dev:mandate': 0.25,
   'dev:buy': 1, 'dev:assign': 0.25, 'dev:repair': 0.25, 'dev:scrap': 0.25,
   // Money
@@ -173,6 +176,7 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
     if (d && p.transport) return departureHours(resolveTransport(p.mode, p.tier, d, p.transport), d, TRAVEL_DAY);
   }
   if (a.kind === 'spend' && a.op.op === 'buy') return spendHours(a.op.item);
+  if (a.kind === 'work') return workHours(a.op, s?.playerId);
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];
   if (a.kind in TIME_TABLE) return TIME_TABLE[a.kind];
   return DEFAULT_COST;

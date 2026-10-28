@@ -74,6 +74,7 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   spend: ['spendState.ts', 'SpendAction', 'op'],
   nyc: ['nyc.ts', 'NycAction', 'op'],
   paper: ['paper.ts', 'PaperAction', 'op'],
+  work: ['bizRacket.ts', 'WorkAction', 'op'],
 };
 
 const SPECIAL_AT = new Set(['person', 'place', 'map', 'office', 'event']);
