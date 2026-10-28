@@ -80,6 +80,7 @@ import { chosenRounds, roundOptions, roundsWeek } from './rounds';
 import { hoursWeek } from './timeCost';
 import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
+import { intrigueResolve, intrigueWeek } from './intrigue';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
@@ -334,6 +335,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
   if (!s.gameOver) arcsResolve(ctx, resolving, choices);
+  if (!s.gameOver) intrigueResolve(ctx, resolving, choices);
   if (!s.gameOver) fireConsequences(ctx);
   if (!s.gameOver) arcsWeek(ctx);
   if (!s.gameOver) {
@@ -382,6 +384,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     rivalDisputes(ctx);
     tableWeek(ctx);
     threatsWeek(ctx);
+    // The dynamics layer reads the week's real events: eras, spies, lies, plots (intrigue.ts).
+    intrigueWeek(ctx);
   }
   if (!s.gameOver) {
     operationalHeat(ctx);

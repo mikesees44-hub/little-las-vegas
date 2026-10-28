@@ -126,6 +126,9 @@ export const TIME_TABLE: Record<string, number> = {
   'nightlife:goomar': 4, 'nightlife:endGoomar': 2, 'nightlife:deal': 2, 'nightlife:back': 0.5,
   // The papers: a word with the editor is an hour; buying the paper is a meeting with lawyers.
   'paper:plant': 1, 'paper:kill': 1, 'paper:ad': 0.5, 'paper:buy': 3, 'paper:sue': 2,
+  // Intrigue: a word in the right ear is an hour; a sit-down is an evening; questioning a man takes the afternoon.
+  'intrigue:plant': 1, 'intrigue:turn': 2, 'intrigue:recall': 0.5, 'intrigue:canary': 1, 'intrigue:question': 2, 'intrigue:moleFate': 1,
+  'intrigue:rumor': 1, 'intrigue:forge': 1, 'intrigue:sabotage': 0.5, 'intrigue:proxy': 1, 'intrigue:sitdown': 3, 'intrigue:front': 0.5,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
   // Your People (bonds.ts): an evening with your wife, an afternoon with a kid, a day fishing.
   'bond:date': 4, 'bond:anniversary': 4, 'bond:apologize': 1, 'bond:confess': 1, 'bond:deny': 0.5, 'bond:vacation': TRAVEL_DAY,

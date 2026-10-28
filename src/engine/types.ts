@@ -963,6 +963,8 @@ export interface GameState {
   paper?: import('./paper').PaperState;
   /** Work this place (bizRacket.ts): the businesses you work, their owners' fear and stance, what you run there. */
   work?: import('./bizRacket').WorkState;
+  /** The dynamics layer: eras between the families, spies both ways, lies and rumors, plots, war ledgers (intrigue.ts; optional, made by the weekly update from week 2). */
+  intrigue?: import('./intrigueState').IntrigueState;
 }
 
 export interface PlayerChoices {
@@ -1058,6 +1060,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'paper'; op: import('./paper').PaperAction }
   /** Work this place (bizRacket.ts): protection, a skim, the back door, the owner's debts; putting him out of business. */
   | { kind: 'work'; op: import('./bizRacket').WorkAction }
+  /** Intrigue (intrigueOps.ts): plant or turn a spy, hunt a mole, spread a rumor, forge a false flag, sabotage, a sit-down, the war's front. */
+  | { kind: 'intrigue'; op: import('./intrigueState').IntrigueAction }
 );
 
 export type InteractionId =

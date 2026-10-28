@@ -43,6 +43,7 @@ import { earsActions, previewEars } from './ears';
 import { commitDirty, previewDirty } from './dirtyWork';
 import { commitWork, previewWork } from './bizRacket';
 import { commitPaper, previewPaper } from './paper';
+import { commitIntrigue, previewIntrigue } from './intrigueOps';
 import { commitDev, previewDev } from './develop';
 import { commitSpend, previewSpend } from './spend';
 
@@ -139,6 +140,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
   work: { preview: (s, a) => previewWork(s, a.op), commit: (ctx, a) => commitWork(ctx, a.op) },
   paper: { preview: (s, a) => previewPaper(s, a.op), commit: (ctx, a) => commitPaper(ctx, a.op) },
+  intrigue: { preview: (s, a) => previewIntrigue(s, a.op), commit: (ctx, a) => commitIntrigue(ctx, a.op) },
   dev: { preview: (s, a) => previewDev(s, a.op), commit: (ctx, a) => commitDev(ctx, a.op) },
   /** Spend (spend.ts): the catalog; the Pocket or the Family pays, the IRS counts. */
   spend: { preview: (s, a) => previewSpend(s, a.op), commit: (ctx, a) => commitSpend(ctx, a.op) },
