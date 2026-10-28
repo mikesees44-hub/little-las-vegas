@@ -97,7 +97,7 @@ export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; pla
             <dl className="grid flex-1 grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-xs">
               <Stat k={p.mine ? 'Owner' : 'The owner'} v={<span data-testid="work-owner">{p.mine ? `You (${o.name})` : o.name}{o.answers ? <span className="text-stone-500"> · answers to {o.answers}</span> : null}</span>} />
               {!p.mine && o.traits.length > 0 && (
-                <Stat k="His nature" v={<span className="flex flex-wrap gap-1">{o.traits.map((tr) => <span key={tr} title={TRAIT_NOTE[tr]} className="rounded border border-noir-600 bg-noir-800 px-1 py-px text-[10px] text-stone-300">{tr}</span>)}</span>} />
+                <Stat k={o.he === 'she' ? 'Her nature' : 'His nature'} v={<span className="flex flex-wrap gap-1">{o.traits.map((tr) => <span key={tr} title={TRAIT_NOTE[tr]} className="rounded border border-noir-600 bg-noir-800 px-1 py-px text-[10px] text-stone-300">{tr}</span>)}</span>} />
               )}
               {!p.mine && <Stat k="Fear" v={<Meter v={o.fear} tone="#e0b84a" />} />}
               {!p.mine && <Stat k="Pride" v={<Meter v={o.pride} tone="#5b8bc4" />} />}

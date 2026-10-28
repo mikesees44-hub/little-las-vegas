@@ -578,7 +578,7 @@ export function pressView(s: GameState, p: WorkPlace, step: PressStep, who: stri
 const fmt = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const noop = (title: string, why: string): ActionPreview => ({ title, effects: [], cost: 0, because: '', disabledReason: why, category: 'street' });
-const note = (text: string, label: string): Effect => ({ type: 'econ', op: { op: 'note', text }, label });
+const note = (text: string, _label?: string): Effect => ({ type: 'econ', op: { op: 'note', text } });
 
 export function previewWork(s: GameState, a: WorkAction): ActionPreview {
   const p = placeById(s, a.place);
