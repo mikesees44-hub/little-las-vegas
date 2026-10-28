@@ -167,9 +167,64 @@ export interface TravelStats {
   sightings: number;
 }
 
+/* ---------------------------------------------------------------- */
+/* Going yourself (visit.ts): the boss in another city, day by day   */
+/* ---------------------------------------------------------------- */
+
+/** What the boss can do in a city (visit.ts). */
+export type CityVerb = 'sitdown' | 'deal' | 'launder' | 'shop' | 'recruit' | 'hideout' | 'night';
+export type VisitSlot = 'day' | 'night';
+export type VisitMode = 'cars' | 'train' | 'bus';
+
+/** One thing on the boss's agenda in the city (a plan: resolved by the weekly tick). */
+export interface VisitItem {
+  /** Absolute day. */
+  day: number;
+  slot: VisitSlot;
+  placeId: string;
+  verb: CityVerb;
+  /** Resolved (the weekly tick wrote what happened into the journal). */
+  done?: boolean;
+  /** What happened, in a line. */
+  outcome?: string;
+  tone?: 'good' | 'bad' | 'neutral';
+}
+
+/**
+ * The boss gone to another city himself (not a planned trip): he leaves
+ * today, a day on the road, then he is THERE until he comes home — his
+ * agenda in the city is a plan the week resolves, like the evenings.
+ */
+export interface Visit {
+  id: string;
+  cityId: string;
+  mode: VisitMode;
+  /** Bodyguards from the crew who came along. */
+  party: string[];
+  /** Absolute days. */
+  departDay: number;
+  arriveDay: number;
+  /** Set by "Come home". */
+  leaveDay?: number;
+  homeDay?: number;
+  agenda: VisitItem[];
+  journal: JournalLine[];
+  /** Leg rolls made ('out' / 'back'). */
+  legs: string[];
+  /** Weeks whose stay was already rolled and paid for. */
+  weeksDone: number[];
+  tailed?: boolean;
+  /** Lying low at the end of the stay (the road home is quieter). */
+  hid?: boolean;
+  spent: number;
+  over?: boolean;
+}
+
 export interface TravelState {
   rng: number;
   trips: Trip[];
+  /** The boss's own visits to other cities (visit.ts); absent in older saves. */
+  visits?: Visit[];
   history: TripRecord[];
   fugitives: Fugitive[];
   acting?: ActingBoss;
@@ -207,7 +262,9 @@ export type TravelOp =
   | { op: 'comeHome'; personId: string }
   | { op: 'surrender'; personId: string }
   | { op: 'exile'; personId: string }
-  | { op: 'actingReward'; charId: string; amount: number };
+  | { op: 'actingReward'; charId: string; amount: number }
+  /** Cut the boss's visit short (visit.ts): he packs and goes home. */
+  | { op: 'visitHome' };
 
 /* ---------------------------------------------------------------- */
 /* Access                                                            */
@@ -245,9 +302,37 @@ export function tripOf(s: GameState, charId: string): Trip | undefined {
   return undefined;
 }
 
+/** The day the clock has reached (absolute: week * 7 + the day of the week). */
+export function nowDay(s: GameState): number {
+  return s.week * 7 + (s.days && s.days.week === s.week ? s.days.day : 0);
+}
+
+/** The boss's visit that is not over yet (booked to come home or not). */
+export function currentVisit(s: GameState): Visit | undefined {
+  return s.travel?.visits?.find((v) => !v.over && (v.homeDay === undefined || v.homeDay > nowDay(s)));
+}
+
+/** Is the visit keeping him out of Wildwood on this absolute day? */
+export function visitCovers(v: Visit, day: number): boolean {
+  return !v.over && v.departDay <= day && (v.homeDay === undefined || day < v.homeDay);
+}
+
+/** The visit that has the boss (or a bodyguard) out of town on this absolute day. */
+export function visitOn(s: GameState, day: number, charId = s.playerId): Visit | undefined {
+  return s.travel?.visits?.find((v) => visitCovers(v, day) && (charId === s.playerId || v.party.includes(charId)));
+}
+
+/** Away on a visit from today to the end of this week. */
+function visitAway(s: GameState, charId: string): boolean {
+  const n = nowDay(s);
+  const end = s.week * 7 + 7;
+  return !!s.travel?.visits?.some((v) => !v.over && (charId === s.playerId || v.party.includes(charId)) && v.departDay < end && (v.homeDay === undefined || v.homeDay > n));
+}
+
 /** Is this character physically away from Wildwood during the current week? */
 export function isAway(s: GameState, charId: string): boolean {
   if (!s.travel) return false;
+  if (s.travel.visits?.length && visitAway(s, charId)) return true;
   const mid = today(s) + 3;
   for (const t of s.travel.trips) {
     if (t.over || (t.leaderId !== charId && !t.party.includes(charId))) continue;

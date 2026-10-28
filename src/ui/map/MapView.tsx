@@ -14,6 +14,8 @@ import { LotPanel } from '../econ/LotPanel';
 import { BizPanel } from '../econ/BizPanel';
 import { useTravel } from '../travel/context';
 import { TravellersPanel } from '../travel/Panels';
+import { departBlock } from '../../engine/visit';
+import { currentVisit } from '../../engine/travelState';
 import type { MapFocus } from '../shell/context';
 import { IslandView } from '../hood/IslandView';
 import { RegionView } from '../region/RegionView';
@@ -82,6 +84,7 @@ export function MapView({ s, alerts, onAlert, onOpenBusiness, onEnvoy, shell, fo
             onCity={(id) => { setCity(id); setDistrict(undefined); }}
             onEnvoy={onEnvoy}
             onTrip={(id) => travel.plan(s.playerId, id)}
+            onGo={(id) => (currentVisit(s)?.cityId === id ? travel.city?.() : travel.go?.(id))}
             onLevel={setLevel}
             flyTo={fly}
             lots={{ year: asOf, since1960: since }}
@@ -178,7 +181,8 @@ export function CityPanel({ s, id, onEnvoy }: { s: GameState; id: string; onEnvo
           )}
           {needsPermission(c) && !hasPermission(s, id) && <ActionCard s={s} action={{ kind: 'askPermission', city: id }} compact />}
           {running ? <div className="text-xs text-gold-300">An envoy is on the way ({running.progress}%).</div> : <button className="btn-gold w-full" onClick={() => onEnvoy(id)}>Send an envoy…</button>}
-          {!s.gameOver && <button className="btn-ghost w-full" onClick={() => travelApi.plan(s.playerId, id)}>Travel here…</button>}
+          {!s.gameOver && travelApi.go && <button className="btn-gold w-full" data-testid="city-go-there" title={departBlock(s, { cityId: id, mode: 'cars' }) ?? 'Get in the car: you leave today and play there'} onClick={() => (currentVisit(s)?.cityId === id ? travelApi.city?.() : travelApi.go?.(id))}>{currentVisit(s)?.cityId === id ? 'You are here' : 'Go there yourself…'}</button>}
+          {!s.gameOver && <button className="btn-ghost w-full" onClick={() => travelApi.plan(s.playerId, id)}>Plan a trip here…</button>}
         </>
       )}
     </div>

@@ -1,7 +1,8 @@
 import { addDays, formatDate } from './calendar';
 import { player } from './characters';
 import { roundOptions, roundSlots, usualWeek } from './rounds';
-import { tripOf } from './travelState';
+import { tripOf, visitOn } from './travelState';
+import { shortName } from './visitData';
 import type { GameDate, GameState, PlayerChoices } from './types';
 
 /**
@@ -77,6 +78,9 @@ export function awayReason(s: GameState, day: number): string | undefined {
   if (s.travel?.fugitives.some((f) => !f.end && f.personId === b.id)) return 'In hiding';
   const t = tripOf(s, b.id);
   const abs = s.week * 7 + day;
+  // Gone somewhere himself (visit.ts): on the road, or in the city.
+  const v = s.travel?.visits?.length ? visitOn(s, abs) : undefined;
+  if (v) return abs < v.arriveDay || (v.leaveDay !== undefined && abs >= v.leaveDay) ? 'On the road' : `In ${shortName(v.cityId)}`;
   if (t && t.departDay <= abs && abs < t.homeDay) return 'Out of town';
   if (b.health < 25) return 'In the hospital';
   return undefined;

@@ -13,6 +13,7 @@ import { previewDating } from './dating';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
+import { homeOnlyBlock } from './visitAway';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
@@ -849,6 +850,17 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
 };
 
 export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
+  const p = previewCore(s, a);
+  // The boss is in another city (visit.ts): what needs him in Wildwood stays on screen, disabled, with the reason.
+  const away = homeOnlyBlock(s, a);
+  return away ? { ...p, disabledReason: away } : p;
+}
+
+/**
+ * The preview without the boss's whereabouts. The week's orders resolve on
+ * this: an order queued at home before he left was given before he left.
+ */
+function previewCore(s: GameState, a: PlayerAction): ActionPreview {
   const def = DEFS[a.kind] as Def<typeof a.kind>;
   const p = def.preview(s, a as never);
   const detail = p.disabledReason ? p.detail : withCostHint(p.detail, p.pot === 'pocket' ? costHint(s, p.cost, 'pocket') : costHint(s, Math.max(p.cost, moneyCost(p.effects))));
@@ -909,7 +921,7 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     if (s.gameOver) break;
     const def = DEFS[a.kind] as Def<typeof a.kind>;
     if (!def) continue;
-    const p = previewAction(s, a);
+    const p = previewCore(s, a);
     if (p.disabledReason) {
       ctx.log.push(`Order not carried out — ${p.title}: ${p.disabledReason}.`);
       continue;

@@ -49,6 +49,8 @@ export interface WorldMapProps {
   onEnvoy: (cityId: string) => void;
   /** Plan a trip to a destination (travel layer). */
   onTrip?: (destId: string) => void;
+  /** "Go there yourself" (the boss leaves today: engine/visit.ts). */
+  onGo?: (cityId: string) => void;
   onLevel?: (l: Level) => void;
   /** Imperative fly-to requests from breadcrumbs (bump the nonce to repeat). */
   flyTo?: { level: Level; nonce: number };
@@ -299,6 +301,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
     else if (b.dataset.act === 'envoy') latest.current.onEnvoy(id);
     else if (b.dataset.act === 'enter') fly('wildwood');
     else if (b.dataset.act === 'trip') latest.current.onTrip?.(id);
+    else if (b.dataset.act === 'go') latest.current.onGo?.(id);
   };
   el.addEventListener('click', onPopupClick, true);
 
@@ -313,7 +316,7 @@ function buildMap(L: typeof Leaflet, el: HTMLDivElement, base: import('./geoData
       <div class="l"><span class="k">Rackets:</span> ${esc(c.rackets.join(', '))}</div>
       <div class="f">${esc(c.flavor)}</div>
       <div class="b">
-        ${id === 'wildwood' ? `<button data-act="enter" data-city="${id}">Enter Wildwood</button>` : `<button data-act="view" data-city="${id}">View city</button><button data-act="envoy" data-city="${id}" ${run ? 'disabled' : ''}>${run ? 'Envoy on the way' : 'Send an envoy'}</button><button data-act="trip" data-city="${id}">Travel here</button>`}
+        ${id === 'wildwood' ? `<button data-act="enter" data-city="${id}">Enter Wildwood</button>` : `<button data-act="view" data-city="${id}">View city</button><button data-act="envoy" data-city="${id}" ${run ? 'disabled' : ''}>${run ? 'Envoy on the way' : 'Send an envoy'}</button><button data-act="go" data-city="${id}">Go there yourself</button><button data-act="trip" data-city="${id}">Plan a trip</button>`}
       </div></div>`;
   }
 

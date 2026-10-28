@@ -20,11 +20,13 @@ import {
   DESTS, ENTERTAINERS, fare, havanaOpen, legDays, MODE_IDS, MODES, modeBlock, RESORT_IDS, roadMiles, TIER_INFO, type Dest,
 } from './travelDests';
 import {
-  bossAway, bossFugitive, ensureTravel, messengerDelay, messengerPenalty, fugitiveOf, isAway, liveTrips, loversOf, today, tripOf,
+  bossAway, bossFugitive, currentVisit, ensureTravel, messengerDelay, messengerPenalty, fugitiveOf, isAway, liveTrips, loversOf, today, tripOf,
   type TravelAction, type TravelOp, type Trip, type TripPlan,
 } from './travelState';
 import { commitFugitive, describeFugitiveOp, fugitiveWeek, onLamLeg, previewFugitive, applyFugitiveOp } from './fugitive';
 import type { Character, Effect, EventInstance, GameState, PlayerAction } from './types';
+import { cutVisitShort, visitWeek } from './visit';
+import { shortName } from './visitData';
 
 /**
  * Travel and trips: planning (destination, mode, budget, dates, guests,
@@ -54,6 +56,8 @@ export function leaderBlock(s: GameState, id: string): string | undefined {
   if (ageOn(c.birth, s.date) < 16) return 'Too young to travel alone';
   if (fugitiveOf(s, id)) return 'On the lam';
   if (tripOf(s, id)) return 'Already travelling';
+  const v = currentVisit(s);
+  if (v && (id === s.playerId || v.party.includes(id))) return id === s.playerId ? `Away in ${shortName(v.cityId)} (come home first)` : 'Away with the boss';
   if (id === s.playerId) {
     const l = s.legal;
     if (l && l.personId === id && (l.stage === 'indicted' || (l.stage === 'trial' && l.bail))) return 'The court has his passport (leaving now means jumping bail — see The Law)';
@@ -561,6 +565,8 @@ export function travelWeek(ctx: Ctx): void {
     if (t.over) continue;
     queued.push(...tripWeek(ctx, t));
   }
+  // The boss gone somewhere himself (visit.ts): the road, the agenda, home without him.
+  queued.push(...visitWeek(ctx));
   // At most two travel popups a week; the rest resolve on their defaults.
   for (const ev of queued.slice(0, 2)) s.eventQueue.push(ev);
   for (const ev of queued.slice(2)) {
@@ -783,6 +789,9 @@ export function applyTravelOp(ctx: Ctx, op: TravelOp, label: string): void {
     case 'actingReward':
       addOpinion(s, op.charId, s.playerId, 'Rewarded for minding the store', op.amount, 1);
       break;
+    case 'visitHome':
+      cutVisitShort(s);
+      break;
     default:
       applyFugitiveOp(ctx, op, label);
   }
@@ -807,6 +816,7 @@ export function describeTravelOp(s: GameState, op: TravelOp): string | undefined
     case 'tail': return op.outcome === 'lose' ? 'Try to lose him' : op.outcome === 'wave' ? 'The tail knows you know' : 'He follows you all the way';
     case 'endAffair': return `The affair with ${s.characters[op.loverId]?.firstName ?? '?'} is over`;
     case 'actingReward': return `${s.characters[op.charId]?.firstName ?? '?'} opinion +${op.amount}`;
+    case 'visitHome': return 'You pack and go home';
     default: return describeFugitiveOp(s, op);
   }
 }

@@ -6,6 +6,10 @@ import type { GameState } from '../../engine/types';
 export interface TravelApi {
   plan: (leaderId: string, destId?: string) => void;
   flee: (personId: string) => void;
+  /** "Go there yourself" (visit.ts): the departure card, for a city or to pick one. */
+  go?: (cityId?: string) => void;
+  /** The city screen, while the boss is away. */
+  city?: () => void;
 }
 
 export const TravelContext = createContext<TravelApi>({ plan: () => {}, flee: () => {} });
