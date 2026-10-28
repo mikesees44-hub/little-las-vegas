@@ -31,6 +31,7 @@ import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, O
 import { GoThere } from './travel/GoThere';
 import { CityScreen, VisitPill } from './travel/CityScreen';
 import { VacationPill, VacationScreen } from './travel/VacationScreen';
+import { ReturnHome } from './travel/ReturnHome';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { minigameOf, opensScene } from '../engine/minigames';
@@ -767,6 +768,11 @@ export function App({ startOn = 'title' }: AppProps) {
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
             {officeScreen}
+            {!s.gameOver && !home && !officeView && (
+              <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-16 md:top-3 z-[1005] flex justify-center" data-testid="return-home-dock">
+                <ReturnHome s={s} update={setS} />
+              </div>
+            )}
             {/* The map's one dock: today (the clock), the club, and on phones the next goal — one stack, beside the Alerts button, never under a card. */}
             {!s.gameOver && !home && !officeView && (
               <div className="llv-dock pointer-events-none absolute left-2 right-[112px] bottom-2 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex flex-col items-start gap-1.5 md:max-w-[calc(100%-330px)]" data-testid="map-dock">
