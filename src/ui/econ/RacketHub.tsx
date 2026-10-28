@@ -12,6 +12,7 @@ import { ActionCard, useOrders } from '../components/Orders';
 import { CharLink } from '../components/People';
 import { StartRacket } from './StartRacket';
 import { SteadyEarners } from './SteadyEarners';
+import { QuickRacket, SetUpAllSuggested, SetUpsPanel } from './SetUps';
 import { DirtyWork } from './DirtyWork';
 import { isInSeason } from '../../engine/calendar';
 
@@ -22,8 +23,8 @@ import { isInSeason } from '../../engine/calendar';
  * Locked rackets say exactly how to unlock them; "Which racket should I
  * start?" ranks the ones you can start for the situation right now.
  */
-export type HubTab = 'ops' | 'start' | 'earners' | 'jobs';
-const HUB_TABS: [HubTab, string][] = [['ops', 'My Operations'], ['start', 'Start a Racket'], ['earners', 'Assign Earners'], ['jobs', 'One-Time Jobs']];
+export type HubTab = 'ops' | 'start' | 'earners' | 'setups' | 'jobs';
+const HUB_TABS: [HubTab, string][] = [['ops', 'My Operations'], ['start', 'Start a Racket'], ['earners', 'Assign Earners'], ['setups', 'Set-ups & Kick-ups'], ['jobs', 'One-Time Jobs']];
 
 export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
   const cards = hubCards(s);
@@ -56,6 +57,7 @@ export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
           {!ownedBiz.length && !running.some((c) => c.madam) && (
             <div className="rounded-md border border-noir-700 p-3 text-[12px] text-stone-400">You run no rackets yet. <button type="button" className="text-gold-300 underline" onClick={() => setTab('start')}>Start a racket ▸</button></div>
           )}
+          <SetUpAllSuggested s={s} />
           <div className="grid gap-2 lg:grid-cols-2">
             {ownedBiz.map((b) => <OpCard key={b.id} s={s} b={b} />)}
             {running.filter((c) => c.madam).map((c) => <MadamCard key={c.kind} s={s} c={c} />)}
@@ -83,6 +85,7 @@ export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
       )}
 
       {tab === 'earners' && <div data-testid="hub-earners"><SteadyEarners s={s} /></div>}
+      {tab === 'setups' && <div data-testid="hub-setups"><SetUpsPanel s={s} /></div>}
       {tab === 'jobs' && <div data-testid="hub-jobs"><DirtyWork s={s} /></div>}
     </div>
   );
@@ -116,6 +119,7 @@ function OpCard({ s, b }: { s: GameState; b: Business }) {
         <div>{r.district || '—'}</div>
         <div>Heat: <span className={def.heat >= 0.25 ? 'text-red-300' : 'text-stone-300'}>{heatWord(def.heat)}</span>{def.fedHeat > 0 ? ` · federal ${def.fedHeat >= 0.1 ? 'some' : 'low'}` : ''}</div>
       </div>
+      <QuickRacket s={s} placeId={s.econ?.lots.find((l) => l.bizId === b.id)?.id ?? `biz:${b.id}`} />
       <button type="button" className="mt-1 text-[11px] text-gold-300 underline" onClick={() => setOpen((o) => !o)} aria-expanded={open} data-testid="op-manage">{open ? 'Close ▴' : 'Manage: policies & upgrades ▾'}</button>
       {open && <Running s={s} b={b} />}
     </article>

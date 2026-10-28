@@ -1,4 +1,5 @@
 import { hasTrait } from './characters';
+import { rivalSpotsUp } from './kickup';
 import type { Ctx } from './ledger';
 import { rand } from './rng';
 import { ensureTribute, type RivalBooks, type RivalCapo } from './tributeState';
@@ -41,7 +42,8 @@ export function rivalTake(ctx: Ctx, r: Rival, owned: number): number {
     b.greedBp = 800 + (L && hasTrait(L, 'Greedy') ? 1500 : 0) + Math.floor(rand(t) * 700);
     for (const c of b.capos) c.grievance = Math.max(0, c.grievance - 20);
   }
-  const base = r.kind === 'mob' ? owned * 0.5 + 300 : 500;
+  // The districts, and every man's own spot kicked up to his boss (kickup.ts): lose an earner, lose his money.
+  const base = r.kind === 'mob' ? owned * 0.5 + rivalSpotsUp(s, r) : 500;
   const avgKeep = b.capos.reduce((a, c) => a + c.keepBp, 0) / Math.max(1, b.capos.length) / 10000;
   const reserveBp = 1000;
   const expected = 0.85 * (1 - avgKeep) * 0.97 * (1 - (b.greedBp + reserveBp) / 10000);

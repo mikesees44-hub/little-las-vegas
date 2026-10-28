@@ -10,6 +10,7 @@ import { bribeReasons } from './polIntegrity';
 import type { Character, Effect, GameState, Hook, InteractionId } from './types';
 import { previewRomance } from './romance';
 import { seatPreview } from './eligibility';
+import { spotRecruitReasons } from './kickup';
 
 /**
  * Character interactions (the CK-style right-click menu). Each interaction
@@ -293,6 +294,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
         respectReason(s),
         { label: 'Signing money', value: 15 },
         ...(rel === 'rival' ? [{ label: `Loyal to ${FACTION_NAMES[c.faction]}`, value: -25 }] : []),
+        ...(rel === 'rival' ? spotRecruitReasons(s, c) : []),
         ...traitReasons(c, { Ambitious: 10, Greedy: 10, 'Loyal-to-a-fault': -40, Cowardly: -10, Paranoid: -10 }),
       ]);
       return {

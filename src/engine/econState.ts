@@ -4,6 +4,7 @@ import type { Design } from './design';
 import type { LuxAction, Owned as LuxOwned } from './goodlife';
 import { hashSeed } from './rng';
 import type { Character, FactionId, GameState } from './types';
+import type { KickupAction } from './kickup';
 
 /**
  * The economy & property layer's state: racket books, upgrade tiers, lots and
@@ -281,6 +282,13 @@ export interface EconState {
   lastMonth?: string;
   /** Steady earners (earners.ts): character id (the boss or a capo) -> business id. */
   earners?: Record<string, string>;
+  /** Every man's own spot (kickup.ts), the player's men and the rival families': character id -> spot. */
+  spots?: Record<string, import('./kickup').Spot>;
+  /** Men with nothing of their own: character id -> the week it started (kickup.ts). */
+  spotless?: Record<string, number>;
+  /** Men asking to run their racket out of one of your places, and the outsiders who do (placeAsks.ts). */
+  asks?: import('./placeAsks').PlaceAsk[];
+  tenants?: Record<string, import('./placeAsks').Tenant>;
 }
 
 /* ---------------- ops and actions ---------------- */
@@ -348,7 +356,9 @@ export type EconAction =
   | { type: 'leverage'; mode: LeverageMode; to: string; withId?: string }
   | { type: 'invite'; team: TeamId; to: string }
   /** The living rackets (racketLife.ts): start one, set how it runs, take the advice. */
-  | { type: 'racket'; cmd: RacketCmd };
+  | { type: 'racket'; cmd: RacketCmd }
+  /** The kick-up chain (kickup.ts): set a man up with a spot, answer a short envelope or a big earner, a request at your place. */
+  | KickupAction;
 
 export type LeverageMode = 'cash' | 'car' | 'property' | 'job' | 'invite' | 'introduce';
 

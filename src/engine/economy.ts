@@ -20,6 +20,8 @@ import { chance, randInt } from './rng';
 import type { Character, GameState } from './types';
 import { hasEarner, routeEarner } from './earners';
 import { ensureEcon } from './econState';
+import { kickupMonth } from './kickup';
+import { placeAsksWeek } from './placeAsks';
 
 /**
  * The weekly economy. ONE ledger, applied once per week, in a fixed order:
@@ -186,6 +188,10 @@ export function runEconomy(ctx: Ctx): void {
   const take = collectTake(ctx, mult);
   gross += take;
   dirty += take;
+  // The month's reckoning of the men's own spots: nothing of his own, low earners, shorts, big earners (kickup.ts).
+  kickupMonth(ctx);
+  // Men who want to run their thing out of your places; the outsiders who do pay their cut (placeAsks.ts).
+  placeAsksWeek(ctx);
 
   // Outposts in other cities.
   const out = outpostIncome(ctx);

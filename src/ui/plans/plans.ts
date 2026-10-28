@@ -22,6 +22,7 @@ import type { MapFocus } from '../shell/context';
 import { inMotion } from '../shell/inMotion';
 import type { Route } from '../shell/routes';
 import { orderMark } from './orderMarks';
+import { askAction } from '../../engine/placeAsks';
 
 /**
  * PLANS IN MOTION: everything the boss has going, and everything going on
@@ -112,6 +113,15 @@ function inboxRow(it: InboxItem): PlanRow {
       { id: 'veto', label: 'Veto', do: { to: 'lt', id, verdict: 'veto' } },
     ];
     return { key: `in:${it.key}`, group: 'inbox', glyph: '♞', what: it.title, who: undefined, whoId: it.charId, when: it.tone === 'red' ? 'Today' : 'This week', status: it.why, tone: TONE_OF[it.tone], acts };
+  }
+  if (it.ref.ask) {
+    const id = it.ref.ask;
+    const acts: PlanAct[] = [
+      { id: 'approve', label: 'Let him in', do: { to: 'queue', action: askAction(id, 'accept') } },
+      { id: 'open', label: 'Counter…', do: { to: 'route', route: { panel: 'holdings', section: 'hub' } } },
+      { id: 'veto', label: 'Turn him down', do: { to: 'queue', action: askAction(id, 'refuse') } },
+    ];
+    return { key: `in:${it.key}`, group: 'inbox', glyph: '✉', what: it.title, whoId: it.charId, when: 'This week', status: it.why, tone: TONE_OF[it.tone], acts };
   }
   const open: PlanDo = it.ref.tip ? { to: 'urgent', id: it.ref.tip }
     : it.ref.event ? { to: 'event', iid: it.ref.event }
