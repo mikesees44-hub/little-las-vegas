@@ -9,6 +9,7 @@ import { opinion } from './relations';
 import { rand, randInt } from './rng';
 import { actingBoss, leaderBlock } from './travel';
 import { DESTS, fare, legDays, MODES } from './travelDests';
+import { gunFactor, optFare, resolveTransport, transportBlock, TRANSPORT, type TransportId } from './transport';
 import {
   currentVisit, ensureTravel, fugitiveOf, nowDay, tripOf,
   type CityVerb, type JournalLine, type Visit, type VisitItem, type VisitMode, type VisitSlot,
@@ -62,9 +63,13 @@ export function visitModes(cityId: string): VisitMode[] {
 }
 
 /** The round trip (cars: gas and the driver; train/bus: a ticket each). */
-export function visitFare(cityId: string, mode: VisitMode, guards: number): number {
+export function visitFare(cityId: string, mode: VisitMode, guards: number, transport?: string): number {
   const d = DESTS[cityId];
   if (!d) return 0;
+  if (transport) {
+    const o = resolveTransport(mode, 'modest', d, transport);
+    return mode === 'cars' ? 2 * optFare(o, d, 'modest') : 2 * (1 + guards) * optFare(o, d, 'modest');
+  }
   return mode === 'cars' ? 2 * fare('cars', d.miles, 'modest') : 2 * (1 + guards) * fare(mode, d.miles, 'modest');
 }
 
@@ -73,12 +78,12 @@ export function guardPool(s: GameState): Character[] {
   return crew(s).filter((c) => c.alive && isFree(s, c) && (c.rank === 'soldier' || c.rank === 'associate') && !tripOf(s, c.id) && !fugitiveOf(s, c.id) && (c.busyUntil ?? 0) <= s.week && !currentVisit(s)?.party.includes(c.id));
 }
 
-export interface DepartPlan { cityId: string; mode: VisitMode; guards: string[] }
+export interface DepartPlan { cityId: string; mode: VisitMode; guards: string[]; /** How exactly (transport.ts): the Caddy, a hired driver, the club car… */ transport?: TransportId }
 
 export interface VisitRisks { tail: number; stop: number; ambush: number }
 
 /** Why the boss can't go there now (undefined: he can). */
-export function departBlock(s: GameState, plan: Pick<DepartPlan, 'cityId' | 'mode'> & { guards?: string[] }): string | undefined {
+export function departBlock(s: GameState, plan: Pick<DepartPlan, 'cityId' | 'mode'> & { guards?: string[]; transport?: TransportId }): string | undefined {
   if (s.gameOver) return 'The game is over';
   const sc = sceneOf(plan.cityId);
   if (!sc) return plan.cityId === 'wildwood' ? 'You are home' : 'No such city';
@@ -92,7 +97,16 @@ export function departBlock(s: GameState, plan: Pick<DepartPlan, 'cityId' | 'mod
   if (guards.length > MAX_GUARDS) return `At most ${MAX_GUARDS} bodyguards`;
   const pool = new Set(guardPool(s).map((c) => c.id));
   if (guards.some((g) => !pool.has(g))) return 'A bodyguard can\'t come';
-  const cost = visitFare(plan.cityId, plan.mode, guards.length);
+  if (plan.transport) {
+    const o = TRANSPORT[plan.transport];
+    const d = DESTS[plan.cityId];
+    if (!o || o.mode !== plan.mode) return 'Pick how you go';
+    const tb = d ? transportBlock(o.id, d, s.date) : undefined;
+    if (tb) return tb;
+    if (guards.length > o.guards) return `${o.name}: at most ${o.guards} bodyguard${o.guards === 1 ? '' : 's'}`;
+    if (o.seats && guards.length + 1 > o.seats) return `${o.name}: ${o.seats} seats`;
+  }
+  const cost = visitFare(plan.cityId, plan.mode, guards.length, plan.transport);
   if (s.money < cost + sc.nightly * 2) return `Needs ${fmtMoney(cost + sc.nightly * 2)} for the road and a couple of nights`;
   return undefined;
 }
@@ -113,12 +127,13 @@ function cityRival(sc: CityScene): RivalId | undefined {
 }
 
 /** The odds of trouble on this visit (per leg for the road, per week for an ambush). */
-export function visitRisks(s: GameState, cityId: string, mode: VisitMode, guards: number, hid = false): VisitRisks {
+export function visitRisks(s: GameState, cityId: string, mode: VisitMode, guards: number, hid = false, transport?: string): VisitRisks {
   const sc = sceneOf(cityId);
   const fed = s.heat.federal;
   const ev = player(s)?.evidence ?? 0;
-  const tail = Math.min(0.6, MODES[mode].tail * (0.4 + fed / 60) * (ev >= 40 ? 1.5 : 1) * (hid ? 0.5 : 1) + (mode === 'cars' ? 0.02 : 0));
-  const stop = mode === 'cars' ? Math.min(0.4, 0.04 + s.heat.local / 500 + guards * 0.015) : 0;
+  const o = transport && DESTS[cityId] ? resolveTransport(mode, 'modest', DESTS[cityId], transport) : undefined;
+  const tail = Math.min(0.6, MODES[mode].tail * (o?.tailMult ?? 1) * (0.4 + fed / 60) * (ev >= 40 ? 1.5 : 1) * (hid ? 0.5 : 1) + (mode === 'cars' ? 0.02 : 0));
+  const stop = mode === 'cars' ? Math.min(0.4, (o ? o.stop : 0.04) + s.heat.local / 500 + guards * 0.015) : 0;
   const rv = sc ? cityRival(sc) : undefined;
   const r = rv ? s.rivals.find((x) => x.id === rv) : undefined;
   let ambush = 0.02;
@@ -127,7 +142,7 @@ export function visitRisks(s: GameState, cityId: string, mode: VisitMode, guards
   if (r?.war) ambush += 0.15;
   if (r?.feud) ambush += 0.08;
   if (standing(s, cityId) < -10) ambush += 0.04;
-  ambush *= 1 - 0.25 * Math.min(MAX_GUARDS, guards);
+  ambush *= 1 - 0.25 * Math.min(MAX_GUARDS, guards) * (o ? gunFactor(o) : 1);
   if (hid) ambush *= 0.5;
   return { tail, stop, ambush: Math.min(0.5, ambush) };
 }
@@ -140,9 +155,9 @@ export function departQuote(s: GameState, plan: DepartPlan): DepartQuote {
   const now = nowDay(s);
   return {
     legDays: leg,
-    fare: visitFare(plan.cityId, plan.mode, plan.guards.length),
+    fare: visitFare(plan.cityId, plan.mode, plan.guards.length, plan.transport),
     nightly: sc?.nightly ?? 25,
-    risks: visitRisks(s, plan.cityId, plan.mode, plan.guards.length),
+    risks: visitRisks(s, plan.cityId, plan.mode, plan.guards.length, false, plan.transport),
     arrive: absLabel(s, now + leg),
     block: departBlock(s, plan),
   };
@@ -173,11 +188,11 @@ export function departFor(s: GameState, plan: DepartPlan): GameState {
   const leg = visitLegDays(plan.cityId, plan.mode);
   const sc = sceneOf(plan.cityId)!;
   const v: Visit = {
-    id: `visit${s.nextId}`, cityId: plan.cityId, mode: plan.mode, party: [...plan.guards],
+    id: `visit${s.nextId}`, cityId: plan.cityId, mode: plan.mode, party: [...plan.guards], ...(plan.transport ? { transport: plan.transport } : {}),
     departDay: now, arriveDay: now + leg, agenda: [], journal: [], legs: [], weeksDone: [], spent: 0,
   };
   const guards = plan.guards.map((id) => s.characters[id]?.firstName).filter(Boolean);
-  note(v, now, `Left Wildwood for ${sc.name} by ${MODES[plan.mode].name.toLowerCase()}${guards.length ? ` with ${guards.join(' and ')}` : ''}.`);
+  note(v, now, `Left Wildwood for ${sc.name} by ${plan.transport ? TRANSPORT[plan.transport].name.replace(/^Your /, 'your ').replace(/^A /, 'a ') : MODES[plan.mode].name.toLowerCase()}${guards.length ? ` with ${guards.join(' and ')}` : ''}.`);
   let n = withTravel({ ...s, nextId: s.nextId + 1 }, (vs) => [...vs.filter((x) => !x.over || x.homeDay === undefined || x.homeDay > now - 28), v]);
   // The evenings he will miss come off this week's plan (the days layer already skips the mornings).
   const d = daysOf(n);
@@ -569,7 +584,7 @@ function legRoll(ctx: Ctx, v: Visit, which: 'out' | 'back'): EventInstance | und
   const sc = sceneOf(v.cityId)!;
   v.legs.push(which);
   const day = which === 'out' ? v.departDay : v.leaveDay ?? v.departDay;
-  const rk = visitRisks(s, v.cityId, v.mode, v.party.length, which === 'back' && v.hid);
+  const rk = visitRisks(s, v.cityId, v.mode, v.party.length, which === 'back' && v.hid, v.transport);
   const label = `${sc.short}: the road ${which === 'out' ? 'up' : 'home'}`;
   const drv = v.party.map((id) => s.characters[id]).find((c) => c?.alive);
   if (rand(tr) < rk.tail) {
@@ -679,7 +694,7 @@ export function visitWeek(ctx: Ctx): EventInstance[] {
     const sc = sceneOf(v.cityId);
     if (!sc) { v.over = true; continue; }
     if (!v.legs.includes('out')) {
-      const cost = visitFare(v.cityId, v.mode, v.party.length);
+      const cost = visitFare(v.cityId, v.mode, v.party.length, v.transport);
       money(ctx, -cost, `${sc.short}: the road (${MODES[v.mode].name.toLowerCase()}, round trip)`, 'event');
       v.spent += cost;
       const ev = legRoll(ctx, v, 'out');
@@ -702,7 +717,7 @@ export function visitWeek(ctx: Ctx): EventInstance[] {
         const bill = nights * sc.nightly * (1 + v.party.length * 0.5);
         money(ctx, -Math.round(bill), `${sc.short}: ${sc.hotel}, ${nights} night${nights > 1 ? 's' : ''}`, 'event');
         v.spent += Math.round(bill);
-        const rk = visitRisks(s, v.cityId, v.mode, v.party.length, v.hid);
+        const rk = visitRisks(s, v.cityId, v.mode, v.party.length, v.hid, v.transport);
         if (rand(tr) < rk.ambush * Math.min(1, nights / 3)) out.unshift(ambush(ctx, v, from + Math.floor(rand(tr) * nights)));
       }
       homeExposed(ctx, v);

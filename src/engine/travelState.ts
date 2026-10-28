@@ -45,6 +45,16 @@ export interface TripPlan {
   days: string[];
   /** Leave this many weeks from now (0 = this week). Season matters. */
   departIn?: number;
+  /** How exactly (transport.ts: the Caddy, the club car, Idlewild, a charter boat…); absent = the mode's usual way. */
+  transport?: string;
+}
+
+/** The boss's vacation, played day by day (vacation.ts): extra things to do on each day of the stay. */
+export interface VacPlan {
+  /** Per day of the stay: the extra activities planned (vacation.ts ids). */
+  plan: string[][];
+  /** What happened, per resolved activity (for the vacation screen). */
+  done?: { day: number; act: string; text: string; tone?: 'good' | 'bad' | 'neutral' }[];
 }
 
 export interface JournalLine {
@@ -88,6 +98,10 @@ export interface Trip {
   over?: boolean;
   /** Who refused the invitation. */
   declined?: string[];
+  /** How exactly they went (transport.ts); absent in older saves. */
+  transport?: string;
+  /** The vacation played day by day (vacation.ts); absent until something is planned. */
+  vac?: VacPlan;
 }
 
 export interface TripRecord {
@@ -218,6 +232,8 @@ export interface Visit {
   hid?: boolean;
   spent: number;
   over?: boolean;
+  /** How exactly (transport.ts: the Caddy, a hired driver, the club car…); absent in older saves. */
+  transport?: string;
 }
 
 export interface TravelState {
@@ -263,6 +279,8 @@ export type TravelOp =
   | { op: 'surrender'; personId: string }
   | { op: 'exile'; personId: string }
   | { op: 'actingReward'; charId: string; amount: number }
+  /** Somebody from home saw the boss with the wrong woman: word may get back (a reckoning). */
+  | { op: 'gossip'; tripId: string }
   /** Cut the boss's visit short (visit.ts): he packs and goes home. */
   | { op: 'visitHome' };
 
