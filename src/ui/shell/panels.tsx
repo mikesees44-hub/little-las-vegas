@@ -35,6 +35,7 @@ import { Succession } from '../house/Succession';
 import { ShadowCourt } from '../power/ShadowCourt';
 import { CouncilSeats } from '../borgata/CouncilSeats';
 import { CaposSection, MenRoster } from '../borgata/Capos';
+import { Protection } from '../borgata/Protection';
 import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Happening } from '../town/Happening';
@@ -144,6 +145,7 @@ export const PANELS: PanelDef[] = [
       { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
       { id: 'grievances', label: 'Grievances & Factions', render: (s) => stack(<PowerPart key="g" s={s} part="grievances" />, <FactionsPanel key="f" s={s} />) },
+      { id: 'protect', label: 'Guards & inquiries', blurb: 'Who guards whom and on what schedule, the inquiries running and the reports you may read. Assign a guard to anyone, or have someone looked into.', render: (s) => <Protection s={s} /> },
       { id: 'orders', label: 'Orders & Edicts', render: (s) => stack(<GeneralOrders key="g" s={s} />, <CrewListPart key="e" s={s} part="edicts" />) },
     ],
   },

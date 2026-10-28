@@ -565,7 +565,9 @@ export type Effect =
   /** Nightlife: payroll, promises, the goomar, houses (nightlife.ts). */
   | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase)
   /** Your People: the deep relationships (bonds.ts). */
-  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase);
+  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase)
+  /** Protection & intelligence (protect.ts): answers to the guards' and inquiries' events. */
+  | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -963,6 +965,8 @@ export interface GameState {
   paper?: import('./paper').PaperState;
   /** Work this place (bizRacket.ts): the businesses you work, their owners' fear and stance, what you run there. */
   work?: import('./bizRacket').WorkState;
+  /** Protection & intelligence (protect.ts): guards, inquiries, their reports and who may read them. */
+  protect?: import('./protect').ProtectState;
 }
 
 export interface PlayerChoices {
@@ -1058,6 +1062,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'paper'; op: import('./paper').PaperAction }
   /** Work this place (bizRacket.ts): protection, a skim, the back door, the owner's debts; putting him out of business. */
   | { kind: 'work'; op: import('./bizRacket').WorkAction }
+  /** Protection & intelligence (protect.ts): put a guard on someone, look into someone, renew or end it. */
+  | { kind: 'protect'; op: import('./protect').ProtectAction }
 );
 
 export type InteractionId =

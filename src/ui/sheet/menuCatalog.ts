@@ -21,6 +21,7 @@ import { jobsForPerson } from '../../engine/dirtyWork';
 import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
 import { nightActionsFor } from '../../engine/nightlife';
+import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
 /**
@@ -102,6 +103,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
     add('self', { key: 'night', open: { type: 'go', to: 'town.night', label: 'The Night…' }, text: 'The Madam, the Ears, who is attached to whom.' });
     const p = pwView(s);
     if (p.station !== 'boss') { add('self', { key: 'climb', action: { kind: 'power', op: { op: 'climb' } } }); add('self', { key: 'takeover', action: { kind: 'power', op: { op: 'takeover' } } }); }
+    addProtect(s, c, add);
     add('travel', { key: 'trip', open: { type: 'trip' }, label: 'Plan a trip…', text: 'A vacation, or business in another city.' });
     if (wantedFor(s, c.id)) add('travel', { key: 'flee', open: { type: 'flee' }, label: 'Run for it…', text: 'Leave town before they come for you.', hostile: true });
     return order(cats);
@@ -164,6 +166,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   ];
   for (const k of kinds) add('intrigue', { key: `plan:${k}`, open: { type: 'plan', kind: k }, label: `${SCHEME_INFO[k].name}…`, text: SCHEME_INFO[k].text, hostile: SCHEME_INFO[k].hostile });
   addEarsItems(s, c, add);
+  addProtect(s, c, add);
   if (!c.office && c.faction !== 'law') add('hostile', { key: 'plan:murder', open: { type: 'plan', kind: 'murder' }, label: 'Plan a hit…', text: SCHEME_INFO.murder.text, hostile: true });
 
   // Dirty work aimed at him: the same jobs as the old row on his sheet, now in the menu everywhere.
@@ -212,6 +215,24 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   const p = Object.values(s.pol?.people ?? {}).find((x) => x.charId === c.id);
   if (p && p.alive) addPol(s, p.id, add);
   return order(cats);
+}
+
+/** Protection & intelligence (engine/protect.ts): Assign protection, and have him looked into. */
+function addProtect(s: GameState, c: Character, add: (id: MenuCategoryId, item: MenuItem) => void): void {
+  const boss = s.characters[s.playerId];
+  const isBoss = c.id === s.playerId;
+  const close = isBoss || c.dynasty || boss?.spouseId === c.id || boss?.childrenIds.includes(c.id) || !!s.nightlife?.goomars[c.id] || c.faction === 'player';
+  const cat: MenuCategoryId = isBoss ? 'self' : 'intrigue';
+  if (close) {
+    const rec = recommendGuards(s, c.id, 'day', 1)[0];
+    if (rec) add(cat, { key: 'protect', action: { kind: 'protect', op: { op: 'guard', subject: c.id, who: [rec.guard.id], kind: isBoss ? 'bodyguard' : isMinor(s, c) ? 'family' : 'driver', shift: 'day', weeks: 8, reportsTo: isBoss ? 'me' : 'both' } }, label: `Assign protection: ${rec.guard.firstName} on ${isBoss ? 'you' : c.firstName}` });
+    add(cat, { key: 'protect-open', open: { type: 'go', to: 'borgata.protect', label: 'Assign protection…' }, text: 'Pick the guard or team, the schedule, how long, who gets the reports, the spending limit.' });
+  }
+  if (isBoss || isMinor(s, c)) return;
+  const man = candidatesFor(s, c.id, 'day').filter((m) => m.rank !== 'capo').sort((a, b) => sleuth(s, b) - sleuth(s, a) || a.id.localeCompare(b.id))[0];
+  if (!man) return;
+  const purpose = c.faction === 'player' && c.rank !== 'civilian' ? (c.rank === 'capo' ? 'money' : 'loyalty') : 'personal';
+  add('intrigue', { key: 'inquiry', action: { kind: 'protect', op: { op: 'investigate', subject: c.id, purpose, who: man.id, weeks: 6 } }, label: `Have ${man.firstName} look into ${c.firstName}`, hostile: true });
 }
 
 /** City Hall verbs for a person of the political world (by pol id). */

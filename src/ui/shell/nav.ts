@@ -91,7 +91,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   ],
   family: [
     { title: 'Your crew', items: [
-      { keys: ['borgata.chart', 'borgata.capos'], icon: '⚑', label: 'Your men', sub: 'The whole family on one chart, and who runs each district with every man under him.', views: ['Who\'s who', 'Capos & soldiers'] },
+      { keys: ['borgata.chart', 'borgata.capos', 'borgata.protect'], icon: '⚑', label: 'Your men', sub: 'The whole family on one chart, who runs each district with every man under him, and who guards whom.', views: ['Who\'s who', 'Capos & soldiers', 'Guards & inquiries'] },
       { keys: ['borgata.council'], icon: '♜', label: 'The council', sub: 'Five seats, one job each a week. Fill a seat, give it a job.' },
       { keys: ['borgata.membership'], icon: '✋', label: 'Getting made', sub: 'Philadelphia\'s books, and the young men who want in.' },
       { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },

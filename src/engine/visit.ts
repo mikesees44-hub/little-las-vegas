@@ -16,6 +16,7 @@ import {
 } from './travelState';
 import { sceneOf, shortName, type CityPlace, type CityScene } from './visitData';
 import { whereAway } from './visitAway';
+import { travelCover } from './protect';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -144,6 +145,8 @@ export function visitRisks(s: GameState, cityId: string, mode: VisitMode, guards
   if (standing(s, cityId) < -10) ambush += 0.04;
   ambush *= 1 - 0.25 * Math.min(MAX_GUARDS, guards) * (o ? gunFactor(o) : 1);
   if (hid) ambush *= 0.5;
+  // The boss's own assigned bodyguard or escort (protect.ts) goes along: a share off, never all.
+  ambush *= 1 - travelCover(s);
   return { tail, stop, ambush: Math.min(0.5, ambush) };
 }
 

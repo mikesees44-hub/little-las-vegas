@@ -15,6 +15,7 @@ import { chance, pick, randInt } from './rng';
 import { FACTION_NAMES } from './world';
 import { CITIES_BY_ID, CITY_LIST, hasPermission, needsPermission, standing } from './cities';
 import { resolveEnvoy } from './envoys';
+import { protectionFor } from './protect';
 export { outpostIncome } from './envoys';
 import type { Character, Effect, EventInstance, FactionId, GameState, HeistKind, HitLocation, RivalId, Scheme, SchemeDepth, SchemeKind, SchemeOptions } from './types';
 
@@ -105,6 +106,9 @@ function targetDefense(s: GameState, t: Character): { label: string; value: numb
     const g2 = perkMod(s, 'guard');
     if (g2) out.push({ label: 'Your perks: hard to reach', value: -g2 });
   }
+  // Men assigned to guard him (protect.ts): harder, never impossible.
+  const pc = protectionFor(s, t.id);
+  if (pc.cut > 0) out.push({ label: `Guarded by ${pc.names}`, value: -Math.round(pc.cut * 40) });
   const r = s.rivals.find((x) => x.id === t.faction);
   if (r) out.push({ label: `${r.shortName}'s muscle`, value: -Math.round(r.muscle / 6) });
   if (t.faction === 'player') {

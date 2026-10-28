@@ -46,6 +46,7 @@ const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['card', 'Ca
 import { getSettings } from '../settings';
 import { seenWealth } from '../../engine/crewFinance';
 import { FinancialLife } from '../sheet/FinancialLife';
+import { ProtectSection } from '../borgata/Protection';
 
 const SKILLS: (keyof Character['attributes'])[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 const SKILL_HELP: Record<string, string> = {
@@ -211,6 +212,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         </section>
         <BonesFacts s={s} c={c} />
         <PurseSection s={s} c={c} />
+        <ProtectSection s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} part="work" />}
         {showsLife && c.faction === 'player' && c.id !== s.playerId && <div className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5"><FinancialLife s={s} c={c} /></div>}
         <PoliticsSection s={s} c={c} />
