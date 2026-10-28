@@ -90,6 +90,7 @@ import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
 import { inboxBadge } from '../engine/inbox';
+import { MorningReports, WhoHandlesWhat } from './lieutenants/Lieutenants';
 import { markOrder, setRecentSeed } from './plans/orderMarks';
 import { PlansContext, type PlansApi } from './plans/context';
 import { LiveAlerts } from './plans/LiveAlerts';
@@ -196,6 +197,8 @@ export function App({ startOn = 'title' }: AppProps) {
   // The day's hours are used up: the day ends and the world marches on (the clock's own day step;
   // on Sunday night the week turns through the "Ready to advance?" review).
   const [endDayDue, setEndDayDue] = useState(false);
+  // "Who handles what" (the lieutenants' settings, ui/lieutenants).
+  const [ltOpen, setLtOpen] = useState(false);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
   const [confirm, setConfirm] = useState<PlayerAction | undefined>();
@@ -535,8 +538,8 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab === 'map') setRoute({});
     else if (l.tab) go(l.tab);
   }
-  const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = cityOpen || vacOpen || goTo !== undefined || dayWin !== undefined || !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = cityOpen || vacOpen || goTo !== undefined || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
     const d = daysOf(s).day;
@@ -673,6 +676,7 @@ export function App({ startOn = 'title' }: AppProps) {
     urgent: (id) => setUrgent(id), event: deskApi.onEvent, decisions: openDecisions, day: deskApi.onDay,
     sitdown: () => setSitdown('council'), envelope: () => tributeApi.openAudience(),
     pause: (why) => { setSpeed(0); setClockNote(`Paused: ${why}`); },
+    lieutenants: () => setLtOpen(true),
   };
   // The one count (engine/inbox.ts): Waiting on you, the desk and the door all say this number.
   const box = inboxBadge(s, { answers, briefSkip });
@@ -700,6 +704,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
+      <div className="mb-3"><MorningReports s={s} update={setS} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('rounds')} data-testid="week-rounds">☕ Your rounds</button>
@@ -817,6 +822,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
       {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen || mondayCard} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
+      {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={setS} onClose={() => setLtOpen(false)} />}
       {sitdown && !current && !scene && (
         <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => setS((x) => setWeekRounds(x, ids))} skip={briefSkip} setSkip={setBriefSkip}
           onTrust={(k, on) => setS((x) => setTrust(x, k, on))} onLink={followLink} onClose={() => setSitdown(undefined)}

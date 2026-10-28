@@ -794,6 +794,8 @@ export interface WeeklyReport {
   motion?: string[];
   /** Your Rounds and the trusted advisors' work, as short lines. */
   rounds?: string[];
+  /** What the underboss and the consigliere did, stopped or let go this week, and what came out (lieutenants.ts). */
+  lieutenants?: string[];
 }
 
 export interface GameOver {

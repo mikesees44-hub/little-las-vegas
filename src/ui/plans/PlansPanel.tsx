@@ -37,7 +37,7 @@ function Row({ s, r, onDone }: { s: GameState; r: PlanRow; onDone: () => void })
         <div className="flex shrink-0 flex-wrap justify-end gap-1">
           {r.acts.map((a) => (
             <button key={`${a.id}:${a.label}`} type="button" disabled={!!a.disabled} title={a.disabled}
-              className={`rounded border px-1.5 py-0.5 text-[10px] whitespace-nowrap disabled:opacity-40 ${a.id === 'cancel' ? 'border-red-800/70 text-red-300 hover:border-red-500' : a.id === 'open' || a.id === 'speed' ? 'border-gold-600 text-gold-300 hover:bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}
+              className={`rounded border px-1.5 py-0.5 text-[10px] whitespace-nowrap disabled:opacity-40 ${a.id === 'cancel' || a.id === 'veto' ? 'border-red-800/70 text-red-300 hover:border-red-500' : a.id === 'approve' ? 'border-emerald-700 text-emerald-200 hover:bg-emerald-500/10' : a.id === 'open' || a.id === 'speed' ? 'border-gold-600 text-gold-300 hover:bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}
               onClick={() => run(a.do, onDone)} data-testid={`plan-act-${a.id}`}>{a.label}</button>
           ))}
         </div>

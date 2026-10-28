@@ -80,6 +80,7 @@ import { chosenRounds, roundOptions, roundsWeek } from './rounds';
 import { hoursWeek } from './timeCost';
 import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
+import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -300,6 +301,9 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const picked = chosenRounds(input, choices);
   const roundOpts = picked ? roundOptions(input) : [];
   const mornings = checkinPlan(input, choices.checkins, choices.skipDays);
+  // The lieutenants' week (lieutenants.ts): the docket and the boss's word on it, as he saw them.
+  const ltDocket = docketOf(input);
+  const ltCalls = ltView(input).calls;
   const s = cloneState(input);
   // The days plan is only the week's choices (sent in `choices`): the new week starts on a Monday with none.
   delete s.days;
@@ -318,6 +322,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   // A trusted advisor acting on his own has the boss's standing permission to use Family money.
   resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => ({ ...d.action, fund: 'family' as const }))] } : choices);
   if (!s.gameOver) recordDelegation(s, weekOf, delegated);
+  // The underboss and the consigliere do their side of the business (their own hours, the Family's money within budget).
+  const ltLines = !s.gameOver ? lieutenantsWeek(ctx, ltDocket, ltCalls, [...(choices.actions ?? []), ...delegated.map((d) => d.action)]) : [];
   // The answers given at this week's urgent meetings are carried out before anything lands.
   if (!s.gameOver) threatsAnswer(ctx);
   const roundLines = !s.gameOver && picked ? roundsWeek(ctx, picked, roundOpts) : [];
@@ -412,6 +418,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     attachMinigames(s);
     markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
+    planNextWeek(s);
   } else {
     s.pendingEvents = [];
   }
@@ -419,6 +426,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const report: WeeklyReport = {
     ...(motion.length ? { motion } : {}),
     ...(delegated.length || roundLines.length ? { rounds: [...delegated.map((d) => d.text + '.'), ...roundLines] } : {}),
+    ...(ltLines.length ? { lieutenants: ltLines } : {}),
     week: weekOf,
     date: dateOf,
     seasonLabel: info.label,

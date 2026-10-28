@@ -1,5 +1,6 @@
 import { todaysHeadline } from './paper';
 import { agingOf, isBlind, lvl } from './aging';
+import { pendingAsks } from './lieutenants';
 import { briefing } from './briefing';
 import { datingPhone } from './dating';
 import { capos, displayName, isFree, player } from './characters';
@@ -196,8 +197,11 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
     });
   }
   const b = briefing(s);
+  // A subject the underboss or the consigliere has already put to the boss as a proposal (lieutenants.ts) is said once: the proposal.
+  let proposed = new Set<string>();
+  try { proposed = new Set(pendingAsks(s).map((a) => a.id.slice(a.id.indexOf(':') + 1))); } catch { /* nobody seated yet */ }
   for (const it of b.items) {
-    if (ui.briefSkip?.includes(it.id)) continue;
+    if (ui.briefSkip?.includes(it.id) || proposed.has(it.id)) continue;
     const rec = it.options.find((o) => o.id === it.recommended);
     const who = it.charId ? s.characters[it.charId] : it.role === 'underboss' || it.role === 'consigliere' ? holder(s, it.role) : undefined;
     out.push({

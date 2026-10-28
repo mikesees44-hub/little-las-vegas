@@ -1,6 +1,8 @@
 import { officeVisitors, type OfficeVisitor } from './bossOffice';
 import { latestReport } from './tribute';
 import { urgentMeetings } from './threats';
+import { actTitle, ifSilent, pendingAsks } from './lieutenants';
+import { today } from './days';
 import type { GameState } from './types';
 
 /**
@@ -14,11 +16,12 @@ import type { GameState } from './types';
  * Built on the door (bossOffice.officeVisitors, with nothing put off) so the
  * door and the inbox can never disagree; plus what the door never showed:
  * decisions with nobody at the door, the urgent meetings, the envelope.
+ * The lieutenants' proposals waiting on his word are here too (lieutenants.ts).
  * Items put off "for later" stay in the inbox (they still want him): the door
  * only hides them from its own list. Pure.
  */
 export type InboxTone = 'red' | 'amber' | 'gold';
-export type InboxKind = 'urgent' | 'decision' | 'petition' | 'morning' | 'sitdown' | 'envelope' | 'lawyer';
+export type InboxKind = 'urgent' | 'decision' | 'petition' | 'morning' | 'sitdown' | 'envelope' | 'lawyer' | 'lieutenant';
 
 export interface InboxItem {
   /** Stable for the subject; the door's keys ("ev:<iid>", "am:<key>", "sd:<id>", "lawyer") plus "tip:<id>", "envelope". */
@@ -29,7 +32,7 @@ export interface InboxItem {
   /** One line: why it is here. */
   why: string;
   charId?: string;
-  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string };
+  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string };
 }
 
 export interface InboxUi {
@@ -52,6 +55,8 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
     if (u.status !== 'waiting' && u.response) continue;
     out.push({ key: `tip:${u.id}`, kind: 'urgent', tone: 'red', title: u.status === 'waiting' ? `${u.who} wants to see you` : `${u.who}: what do we do?`, why: `${u.when}: "${u.hint}"`, charId: u.charId, ref: { tip: u.id } });
   }
+  let asks: ReturnType<typeof pendingAsks> = [];
+  try { asks = pendingAsks(s); } catch { /* nobody seated yet */ }
   const door = officeVisitors(s, { answers, briefSkip: ui.briefSkip });
   out.push(...door.map(fromVisitor));
   const atDoor = new Set(door.map((v) => v.key));
@@ -60,6 +65,11 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
     if (answers[ev.iid] || atDoor.has(`ev:${ev.iid}`)) continue;
     if (ev.defId === 'tribute_audience') { envelope = true; continue; }
     out.push({ key: `ev:${ev.iid}`, kind: 'decision', tone: ev.mandatory ? 'red' : 'amber', title: ev.title, why: ev.text.length > 110 ? `${ev.text.slice(0, 109)}…` : ev.text, ref: { event: ev.iid } });
+  }
+  // The underboss's and the consigliere's proposals (Ask me first): red on the day he acts.
+  {
+    const d = today(s);
+    for (const a of asks) out.push({ key: `lt:${a.id}`, kind: 'lieutenant', tone: a.day <= d ? 'red' : 'amber', title: actTitle(s, a), why: `"${a.line}" ${ifSilent(a)}`, charId: a.byId, ref: { lt: a.id } });
   }
   const rep = latestReport(s);
   if (envelope || rep?.status === 'presented') out.push({ key: 'envelope', kind: 'envelope', tone: 'gold', title: 'The envelope is on your desk', why: 'Your cut of the week\'s take: the split is yours to make.', ref: { envelope: rep?.id } });
