@@ -186,3 +186,21 @@ describe('saves', () => {
     expect(JSON.stringify(upgradeSave(JSON.parse(raw)))).toBe(raw);
   });
 });
+
+describe('urgent meeting card', () => {
+  it('renders the ask, then the detail and the answers after the meeting', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { UrgentMeeting } = await import('../src/ui/components/UrgentMeeting');
+    const { s } = plant(newGame('urgent-ui'));
+    const props = { s, id: 'tipX', onMeet: () => {}, onIgnore: () => {}, onRespond: () => {}, onPick: () => {}, onClose: () => {} };
+    const before = renderToString(createElement(UrgentMeeting, props));
+    expect(before).toContain('Test Capo wants to see you');
+    expect(before).toContain('data-testid="urgent-meet"');
+    expect(before).toContain('data-testid="urgent-ignore"');
+    expect(before).not.toContain('data-testid="urgent-detail"');
+    const after = renderToString(createElement(UrgentMeeting, { ...props, s: meetTip(s, 'tipX', 'boss') }));
+    expect(after).toContain('data-testid="urgent-detail"');
+    expect(after).toContain('data-testid="urgent-resp-warn"');
+  });
+});
