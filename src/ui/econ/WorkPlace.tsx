@@ -3,7 +3,7 @@ import {
   defaultWho, holdsAt, hoodHeat, ownerOf, pitchView, placeBlock, placeById, placeTrade, pressOpen, pressView, protectorLabel, REACTION_LABEL,
   schemesFor, schemeView, STANCE_LABEL, STEPS, workCrew, type Protector, type Reaction, type WorkPlace,
 } from '../../engine/bizRacket';
-import { ASK_LABEL, GROUP_LABEL, TRAIT_NOTE, type AskLevel, type WorkGroup } from '../../engine/bizRacketData';
+import { ASK_LABEL, GROUP_LABEL, pr, TRAIT_NOTE, type AskLevel, type Pron, type WorkGroup } from '../../engine/bizRacketData';
 import { SIDE_STYLE, type Side } from '../../engine/sides';
 import { hoursShort, timeCost } from '../../engine/timeCost';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -22,7 +22,7 @@ import { fmt$ } from '../format';
  * no, "Put him out of business" lists the steps, worst last.
  */
 
-type Tab = 'protect' | WorkGroup | 'press';
+export type Tab = 'protect' | WorkGroup | 'press';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -51,11 +51,12 @@ function Hours({ s, a }: { s: GameState; a: PlayerAction }) {
   return <>{hoursShort(timeCost(a, s))}</>;
 }
 
-export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; place: string; onClose: () => void; onHub?: () => void }) {
+export function WorkPlaceSheet({ s, place, onClose, onHub, initialTab }: { s: GameState; place: string; onClose: () => void; onHub?: () => void; initialTab?: Tab }) {
   const p = placeById(s, place);
   const [who, setWho] = useState<string | undefined>(() => defaultWho(s));
   const [ask, setAsk] = useState<AskLevel>('fair');
   const [tab, setTab] = useState<Tab>(() => {
+    if (initialTab) return initialTab;
     if (!p) return 'protect';
     if (p.mine) return 'extra';
     return pressOpen(s, p) ? 'press' : 'protect';
@@ -64,6 +65,7 @@ export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; pla
   if (!p) return null;
   const man = who ?? s.playerId;
   const o = ownerOf(s, p);
+  const g = (x: string) => pr(x, o.he);
   const t = placeTrade(s, p);
   const hh = hoodHeat(s, p);
   const holds = holdsAt(s, p.id);
@@ -72,8 +74,8 @@ export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; pla
   const groups = (['skim', 'backdoor', 'exploit', 'extra'] as WorkGroup[]).filter((g) => schemes.some((d) => d.group === g));
   const tabs: { id: Tab; label: string }[] = [
     ...(p.mine ? [] : [{ id: 'protect' as Tab, label: 'Offer protection' }]),
-    ...groups.map((g) => ({ id: g as Tab, label: GROUP_LABEL[g].title })),
-    ...(p.mine ? [] : [{ id: 'press' as Tab, label: 'Put him out of business' }]),
+    ...groups.map((gr) => ({ id: gr as Tab, label: pr(GROUP_LABEL[gr].title, o.he) })),
+    ...(p.mine ? [] : [{ id: 'press' as Tab, label: g('Put {him} out of business') }]),
   ];
   const owner = o.charId ? s.characters[o.charId] : undefined;
   const heatTone = hh.band === 'boiling' ? 'text-red-300' : hh.band === 'hot' ? 'text-amber-300' : 'text-stone-200';
@@ -97,7 +99,7 @@ export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; pla
             <dl className="grid flex-1 grid-cols-[6.5rem_1fr] gap-x-2 gap-y-1 text-xs">
               <Stat k={p.mine ? 'Owner' : 'The owner'} v={<span data-testid="work-owner">{p.mine ? `You (${o.name})` : o.name}{o.answers ? <span className="text-stone-500"> · answers to {o.answers}</span> : null}</span>} />
               {!p.mine && o.traits.length > 0 && (
-                <Stat k={o.he === 'she' ? 'Her nature' : 'His nature'} v={<span className="flex flex-wrap gap-1">{o.traits.map((tr) => <span key={tr} title={TRAIT_NOTE[tr]} className="rounded border border-noir-600 bg-noir-800 px-1 py-px text-[10px] text-stone-300">{tr}</span>)}</span>} />
+                <Stat k={g('{His} nature')} v={<span className="flex flex-wrap gap-1">{o.traits.map((tr) => <span key={tr} title={g(TRAIT_NOTE[tr])} className="rounded border border-noir-600 bg-noir-800 px-1 py-px text-[10px] text-stone-300">{tr}</span>)}</span>} />
               )}
               {!p.mine && <Stat k="Fear" v={<Meter v={o.fear} tone="#e0b84a" />} />}
               {!p.mine && <Stat k="Pride" v={<Meter v={o.pride} tone="#5b8bc4" />} />}
@@ -130,9 +132,9 @@ export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; pla
           ))}
         </nav>
 
-        {tab === 'protect' && !p.mine && <Protect s={s} p={p} who={man} ask={ask} setAsk={setAsk} />}
-        {groups.includes(tab as WorkGroup) && <Schemes s={s} p={p} who={man} group={tab as WorkGroup} />}
-        {tab === 'press' && !p.mine && <Press s={s} p={p} who={man} />}
+        {tab === 'protect' && !p.mine && <Protect s={s} p={p} who={man} ask={ask} setAsk={setAsk} he={o.he} />}
+        {groups.includes(tab as WorkGroup) && <Schemes s={s} p={p} who={man} group={tab as WorkGroup} he={o.he} />}
+        {tab === 'press' && !p.mine && <Press s={s} p={p} who={man} he={o.he} />}
 
         {onHub && (
           <div className="border-t border-noir-700 pt-2 text-[11px] text-stone-500">
@@ -144,53 +146,55 @@ export function WorkPlaceSheet({ s, place, onClose, onHub }: { s: GameState; pla
   );
 }
 
-function Protect({ s, p, who, ask, setAsk }: { s: GameState; p: WorkPlace; who: string; ask: AskLevel; setAsk: (a: AskLevel) => void }) {
+function Protect({ s, p, who, ask, setAsk, he }: { s: GameState; p: WorkPlace; who: string; ask: AskLevel; setAsk: (a: AskLevel) => void; he: Pron }) {
+  const g = (x: string) => pr(x, he);
   const v = pitchView(s, p, who, ask);
   const action: PlayerAction = { kind: 'work', op: { op: 'pitch', place: p.id, who, ask } };
   return (
     <section className="space-y-2" data-testid="work-protect">
-      <p className="text-xs text-stone-400">A weekly envelope, and nothing bad happens to the place. He can say yes, haggle, or say no.</p>
+      <p className="text-xs text-stone-400">A weekly envelope, and nothing bad happens to the place. {g('{He} can say yes, haggle, or say no.')}</p>
       <div className="flex flex-wrap gap-1">
         {(['light', 'fair', 'heavy'] as AskLevel[]).map((k) => {
           const r = pitchView(s, p, who, k).rate;
-          return <button key={k} type="button" onClick={() => setAsk(k)} data-testid={`work-ask-${k}`} className={`rounded border px-2 py-1 text-[11px] ${ask === k ? 'border-gold-400 bg-gold-500/10 text-gold-200' : 'border-noir-600 text-stone-300'}`}>{ASK_LABEL[k]} · {fmt$(r)}/wk</button>;
+          return <button key={k} type="button" onClick={() => setAsk(k)} data-testid={`work-ask-${k}`} className={`rounded border px-2 py-1 text-[11px] ${ask === k ? 'border-gold-400 bg-gold-500/10 text-gold-200' : 'border-noir-600 text-stone-300'}`}>{g(ASK_LABEL[k])} · {fmt$(r)}/wk</button>;
         })}
       </div>
-      <div className="flex h-2 overflow-hidden rounded" aria-label="What he says" data-testid="work-pitch-odds">
+      <div className="flex h-2 overflow-hidden rounded" aria-label={g('What {he} says')} data-testid="work-pitch-odds">
         <span style={{ width: pct(v.accept), background: '#5fae7f' }} />
         <span style={{ width: pct(v.haggle), background: '#e0b84a' }} />
         <span style={{ width: pct(v.decline), background: '#e2563d' }} />
       </div>
       <div className="text-[11px] text-stone-400">Yes {pct(v.accept)} · haggles to {fmt$(v.haggled)} {pct(v.haggle)} · no {pct(v.decline)} · <Hours s={s} a={action} /></div>
-      <div className="rounded border border-noir-700 bg-noir-900/50 px-2 py-1 text-[11px] italic text-stone-300" data-testid="work-thinks">What he thinks: {v.thinks}</div>
+      <div className="rounded border border-noir-700 bg-noir-900/50 px-2 py-1 text-[11px] italic text-stone-300" data-testid="work-thinks">{g('What {he} thinks')}: {v.thinks}</div>
       <ActionCard s={s} action={action} compact label={`Offer protection: ${fmt$(v.rate)} a week`} />
     </section>
   );
 }
 
-function Schemes({ s, p, who, group }: { s: GameState; p: WorkPlace; who: string; group: WorkGroup }) {
+function Schemes({ s, p, who, group, he }: { s: GameState; p: WorkPlace; who: string; group: WorkGroup; he: Pron }) {
+  const g = (x: string) => pr(x, he);
   const list = schemesFor(p).filter((d) => d.group === group);
   return (
     <section className="space-y-2" data-testid={`work-group-${group}`}>
-      <p className="text-xs text-stone-400">{GROUP_LABEL[group].blurb}</p>
+      <p className="text-xs text-stone-400">{g(GROUP_LABEL[group].blurb)}</p>
       {list.map((d) => {
         const v = schemeView(s, p, d.id, who);
         const action: PlayerAction = { kind: 'work', op: { op: 'scheme', place: p.id, scheme: d.id, who } };
         const runner = s.characters[who];
         return (
           <article key={d.id} className="rounded-md border border-noir-700 bg-noir-900/40 p-2" data-testid={`work-option-${d.id}`}>
-            <div className="text-sm font-semibold text-stone-100">{d.icon} {d.title}</div>
+            <div className="text-sm font-semibold text-stone-100">{d.icon} {v.title}</div>
             <p className="mt-0.5 text-[11px] text-stone-400">{v.line}</p>
             <dl className="mt-1.5 grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-0.5 text-[11px]">
               <Stat k="Setup" v={fmt$(v.cost)} />
               <Stat k={d.kind === 'loan' ? 'The vig' : 'Weekly take'} v={`~${fmt$(v.take)} a week`} cls="text-emerald-300" />
               <Stat k="Hours" v={<Hours s={s} a={action} />} />
               <Stat k="Heat" v={v.heat} />
-              {!p.mine && <Stat k="He goes along" v={pct(v.odds)} cls={v.odds >= 0.6 ? 'text-emerald-300' : v.odds >= 0.35 ? 'text-amber-300' : 'text-red-300'} />}
+              {!p.mine && <Stat k={g('{He} goes along')} v={pct(v.odds)} cls={v.odds >= 0.6 ? 'text-emerald-300' : v.odds >= 0.35 ? 'text-amber-300' : 'text-red-300'} />}
               <Stat k="Runs it" v={runner ? (runner.id === s.playerId ? 'You (a free man takes the street)' : `${runner.firstName} ${runner.lastName}`) : '—'} />
             </dl>
-            <div className="mt-1 text-[11px] italic text-stone-300">What he thinks: {v.thinks}</div>
-            <div className="mt-1.5"><ActionCard s={s} action={action} compact label={`${d.title}: set it up`} /></div>
+            <div className="mt-1 text-[11px] italic text-stone-300">{g('What {he} thinks')}: {v.thinks}</div>
+            <div className="mt-1.5"><ActionCard s={s} action={action} compact label={`${v.title}: set it up`} /></div>
           </article>
         );
       })}
@@ -200,44 +204,45 @@ function Schemes({ s, p, who, group }: { s: GameState; p: WorkPlace; who: string
 
 const REACT_TONE: Record<Reaction, string> = { pays: '#5fae7f', sells: '#5b8bc4', folds: '#9b6bc9', informant: '#e2563d', fights: '#e0703a', holds: '#6b6560' };
 
-function Press({ s, p, who }: { s: GameState; p: WorkPlace; who: string }) {
+function Press({ s, p, who, he }: { s: GameState; p: WorkPlace; who: string; he: Pron }) {
+  const g = (x: string) => pr(x, he);
   if (!pressOpen(s, p)) {
     return (
       <section className="rounded-md border border-noir-700 bg-noir-900/40 p-2 text-xs text-stone-400" data-testid="work-press-closed">
-        Ask him first. Offer protection or a racket; if he says no or shows your man the door, the ways to put him out of business open here.
+        {g('Ask {him} first. Offer protection or a racket; if {he} says no or shows your man the door, the ways to put {him} out of business open here.')}
       </section>
     );
   }
   const drop: PlayerAction = { kind: 'work', op: { op: 'drop', place: p.id } };
   return (
     <section className="space-y-2" data-testid="work-press">
-      <p className="text-xs text-stone-400">{p.rival ? 'A family\'s own place: every step is a move against them.' : 'He said no. One step at a time, worst last. After each one he may give in, sell, fold, fight back, or go to the police.'} Nothing on the page is shown; the town hears what it hears.</p>
+      <p className="text-xs text-stone-400">{p.rival ? 'A family\'s own place: every step is a move against them.' : g('{He} said no. One step at a time, worst last. After each one {he} may give in, sell, fold, fight back, or go to the police.')} Nothing on the page is shown; the town hears what it hears.</p>
       {STEPS.map((st) => {
         const v = pressView(s, p, st, who);
         const action: PlayerAction = { kind: 'work', op: { op: 'press', place: p.id, step: st, who } };
         const r = v.react;
         return (
           <article key={st} className={`rounded-md border p-2 ${st === 'fire' ? 'border-blood-500/60 bg-blood-500/5' : 'border-noir-700 bg-noir-900/40'}`} data-testid={`work-step-${st}`}>
-            <div className="text-sm font-semibold text-stone-100">{v.def.icon} {v.def.title}</div>
-            <p className="mt-0.5 text-[11px] text-stone-400">{v.def.line}</p>
+            <div className="text-sm font-semibold text-stone-100">{v.def.icon} {v.title}</div>
+            <p className="mt-0.5 text-[11px] text-stone-400">{v.line}</p>
             <dl className="mt-1.5 grid grid-cols-[6.5rem_1fr] gap-x-2 gap-y-0.5 text-[11px]">
-              <Stat k={st === 'buyout' ? 'His price' : 'Cost'} v={fmt$(v.cost)} />
+              <Stat k={st === 'buyout' ? g('{His} price') : 'Cost'} v={fmt$(v.cost)} />
               {st !== 'buyout' && <Stat k="Goes off clean" v={`${v.odds}%`} />}
               <Stat k="Heat" v={[v.def.heat.local ? `+${v.def.heat.local} local` : '', v.def.heat.federal ? `+${v.def.heat.federal} federal` : ''].filter(Boolean).join(' · ') || 'none'} />
               <Stat k="Hours" v={<Hours s={s} a={action} />} />
               <Stat k="The paper" v={v.paperNote} />
-              <Stat k="The town" v={v.def.town} />
+              <Stat k="The town" v={v.town} />
               {v.innocents > 0 && <Stat k="Innocents" v={`${pct(v.innocents)} somebody is hurt: the town and the parish turn on you`} cls="text-red-300" />}
             </dl>
             {st !== 'buyout' && (
               <div className="mt-1.5">
-                <div className="flex h-1.5 overflow-hidden rounded" aria-label="What he does after">
+                <div className="flex h-1.5 overflow-hidden rounded" aria-label={g('What {he} does after')}>
                   {(Object.keys(r) as Reaction[]).map((k) => <span key={k} style={{ width: pct(r[k]), background: REACT_TONE[k] }} title={`${REACTION_LABEL[k]} ${pct(r[k])}`} />)}
                 </div>
                 <div className="mt-0.5 text-[10px] text-stone-500">{(Object.keys(r) as Reaction[]).filter((k) => r[k] >= 0.01).map((k) => `${REACTION_LABEL[k]} ${pct(r[k])}`).join(' · ')}</div>
               </div>
             )}
-            <div className="mt-1.5"><ActionCard s={s} action={action} compact label={`${v.def.title}${st === 'buyout' ? ` for ${fmt$(v.cost)}` : ''}`} /></div>
+            <div className="mt-1.5"><ActionCard s={s} action={action} compact label={`${v.title}${st === 'buyout' ? ` for ${fmt$(v.cost)}` : ''}`} /></div>
           </article>
         );
       })}

@@ -355,3 +355,61 @@ describe('work this place: the sheet on screen', () => {
     for (const f of ['src/ui/hood/WalkCard.tsx', 'src/ui/hood/StreetCard.tsx']) expect(readFileSync(f, 'utf8')).toMatch(/StartHereButton[^\n]*lot=\{/);
   });
 });
+
+describe('work this place: the owner\'s pronouns', () => {
+  /** Lines that are about someone else (your man, the underboss), not the owner. */
+  const NOT_OWNER = [/The (underboss|consigliere|capo)\s*:\s*he [^.]*\./g, /Your man[^.]*/g];
+  const masc = (text: string) => {
+    let x = text.replace(/<!-- -->/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').replace(/ ([:.,])/g, '$1').replace(/&#x27;|&#39;/g, '\'').replace(/&quot;/g, '"');
+    for (const re of NOT_OWNER) x = x.replace(re, ' ');
+    return [...x.matchAll(/\b(he|him|his|himself|He|Him|His|Himself)\b/g)].map((m) => x.slice(Math.max(0, m.index! - 40), m.index! + 20));
+  };
+  function woman(s: GameState): WorkPlace {
+    const l = s.econ!.lots.find((x) => x.owner === 'private' && /^Mrs\. /.test(x.tenant ?? '') && workPlace(s, x));
+    return workPlace(s, l)!;
+  }
+
+  it('a woman\'s sheet says she and her, on every tab', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { WorkPlaceSheet } = await import('../src/ui/econ/WorkPlace');
+    const s = clone(base);
+    const p = woman(s);
+    expect(ownerOf(s, p).he).toBe('she');
+    const tabs = ['protect', 'skim', 'backdoor', 'exploit', 'extra', 'press'] as const;
+    const render = () => tabs.map((t) => renderToString(createElement(WorkPlaceSheet, { s, place: p.id, onClose: () => {}, initialTab: t }))).join('\n');
+    const closed = render();
+    expect(closed).toContain('Put her out of business');
+    expect(closed).toContain('Ask her first');
+    expect(masc(closed)).toEqual([]);
+    ensureWork(s).places[p.id] = { fear: 10, hurt: 20, pride: 0, steps: 1, holds: [], stance: 'refused' };
+    const open = render();
+    expect(open).toContain('a word about her husband, her windows');
+    expect(open).toContain('Buy her out cheap');
+    expect(masc(open)).toEqual([]);
+  });
+
+  it('her report lines and the paper say she and her', () => {
+    const lines: string[] = [];
+    for (let i = 0; i < 60; i++) {
+      const s = clone(base);
+      const p = woman(s);
+      const W = ensureWork(s);
+      W.rng = 13 + i * 7919;
+      W.places[p.id] = { fear: 0, hurt: 50, pride: 0, steps: 2, holds: [], stance: 'refused' };
+      const ctx = newCtx(s);
+      commitWork(ctx, { op: 'press', place: p.id, step: (['supplies', 'brick', 'loiter', 'stink'] as const)[i % 4], who: soldier(s) });
+      if (s.work!.places[p.id].stance === 'refused' || s.work!.places[p.id].stance === 'fighting') commitWork(ctx, { op: 'drop', place: p.id });
+      const s2 = clone(base);
+      const W2 = ensureWork(s2);
+      W2.rng = 3 + i;
+      const ctx2 = newCtx(s2);
+      commitWork(ctx2, { op: 'pitch', place: p.id, who: soldier(s2), ask: 'fair' });
+      lines.push(...ctx.log, ...ctx2.log, ...(s.paper?.wire ?? []).map((w) => `${w.h ?? ''} ${w.b}`));
+    }
+    const mine = lines.filter((l) => !/^(Order|Dirty)/.test(l));
+    expect(mine.length).toBeGreaterThan(20);
+    const bad = mine.flatMap((l) => masc(l.replace(/(Felix|You|you) (was|were) seen\./g, '')));
+    expect(bad).toEqual([]);
+  });
+});

@@ -192,7 +192,7 @@ export function actionVerb(a: PlayerAction): Verb {
     }
     case 'hood': return v('Restyle it', 'Restyling');
     case 'paper': return a.op.op === 'kill' ? v('Spike it', 'Spiking') : a.op.op === 'ad' ? v('Run the ad', 'Ad running') : a.op.op === 'buy' ? v('Buy the paper', 'Buying') : a.op.op === 'sue' ? v('Sue', 'Suing') : v('Plant it', 'Planted');
-    case 'work': return a.op.op === 'pitch' ? v('Make the offer', 'Offer made') : a.op.op === 'press' ? (a.op.step === 'buyout' ? v('Make him an offer', 'Offer made') : v('Do it', 'Ordered')) : a.op.op === 'drop' ? v('Let it go', 'Letting go') : v('Set it up', 'Setting up');
+    case 'work': return a.op.op === 'pitch' ? v('Make the offer', 'Offer made') : a.op.op === 'press' ? (a.op.step === 'buyout' ? v('Make the offer', 'Offer made') : v('Do it', 'Ordered')) : a.op.op === 'drop' ? v('Let it go', 'Letting go') : v('Set it up', 'Setting up');
     case 'dirty': return a.op.job === 'shakedown' ? v('Shake them down', 'Shakedown on') : v('Do it', 'Job on');
     case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v(TALKS[a.op.talk]?.label ?? 'Talk to him', 'Asked');
     case 'mission': return v('Do it', 'Decided');

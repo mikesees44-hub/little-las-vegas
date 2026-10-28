@@ -274,7 +274,7 @@ export function StartHereButton({ s, place, lot, biz, onGo }: { s: GameState; pl
     <div className="rounded border border-gold-600/40 bg-gold-500/5 px-2 py-1.5" data-testid="start-here">
       <button type="button" className="btn-gold text-xs py-1" onClick={() => (wp ? setOpen(true) : go())} data-testid="start-here-btn">♣ Start a racket here</button>
       <span className="ml-2 text-[11px] text-stone-400">
-        {wp ? <>Work {wp.name}: {wp.mine ? 'what you can run through your own place' : 'protection, a skim, the back door, the owner himself'}.</> : <>{p!.name} fits {p!.picks.map((r) => r.title.toLowerCase()).join(', ')}{p!.picks.length >= 3 ? ', and more' : ''}.</>}
+        {wp ? <>Work {wp.name}: {wp.mine ? 'what you can run through your own place' : 'protection, a skim, the back door, the owner'}.</> : <>{p!.name} fits {p!.picks.map((r) => r.title.toLowerCase()).join(', ')}{p!.picks.length >= 3 ? ', and more' : ''}.</>}
       </span>
       {open && wp && <WorkPlaceSheet s={s} place={wp.id} onClose={() => setOpen(false)} onHub={p ? go : undefined} />}
     </div>

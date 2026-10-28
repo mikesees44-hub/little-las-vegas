@@ -15,7 +15,7 @@ import { FACTION_NAMES } from './world';
 import type { ActionPreview } from './actions';
 import type { Business, BusinessKind, Character, Effect, GameState, PlayerAction, RivalId, Trait } from './types';
 import {
-  ASK_LABEL, ASK_PENALTY, ASK_SHARE, BACKDOOR_GOODS, FAMILY_FRONT, FAMILY_LABEL, familyOfKind, familyOfUse, OWNER_TRAITS, PRESS_BY_ID, PRESS_STEPS,
+  pr, ASK_LABEL, ASK_PENALTY, ASK_SHARE, BACKDOOR_GOODS, FAMILY_FRONT, FAMILY_LABEL, familyOfKind, familyOfUse, OWNER_TRAITS, PRESS_BY_ID, PRESS_STEPS,
   WORK_BY_ID, WORK_SCHEMES, type AskLevel, type BizFamily, type OwnerTrait, type PressDef, type PressStep, type WorkSchemeDef, type WorkSchemeId,
 } from './bizRacketData';
 
@@ -164,7 +164,7 @@ export function placeBlock(s: GameState, p: WorkPlace | undefined): string | und
   if (p.biz && p.mine && (p.biz.closedUntil ?? 0) > s.week) return 'It is padlocked';
   const st = recOf(s, p.id)?.stance;
   if (st === 'burned') return 'It burned down';
-  if (st === 'folded') return 'He closed up';
+  if (st === 'folded') return pr('{He} closed up', ownerOf(s, p).he);
   return undefined;
 }
 
@@ -217,7 +217,7 @@ const TRAIT_FROM: Partial<Record<Trait, OwnerTrait>> = { Cowardly: 'Scared', 'Ho
 function ownerName(p: WorkPlace, h: number): { name: string; he: 'he' | 'she' } {
   const t = p.lot?.tenant;
   const who = t?.split('\'s ')[0];
-  if (who && /^[A-Z]/.test(who) && !/^the /i.test(who)) return { name: who, he: /^(Mrs\.|Miss|Mme)/.test(who) ? 'she' : 'he' };
+  if (who && /^[A-Z]/.test(who) && !/^the /i.test(who)) return { name: who, he: /^(Mrs\.|Miss|Mme|Mrs )/.test(who) ? 'she' : 'he' };
   const fam = who ? /the ([A-Z][\w'-]+) (family|brothers|estate|sisters)/.exec(who) : undefined;
   const last = fam?.[1] ?? LAST[(h >>> 3) % LAST.length];
   return { name: `${FIRST[(h >>> 7) % FIRST.length]} ${last}`, he: 'he' };
@@ -255,8 +255,9 @@ export function ownerOf(s: GameState, p: WorkPlace): Owner {
   const rec = recOf(s, p.id);
   const protector = protectorOf(s, p);
   if (p.mine) return { name: s.characters[s.playerId] ? displayName(s.characters[s.playerId]) : 'You', he: 'he', charId: s.playerId, traits: [], fear: 0, pride: 0, protector };
-  const { name, he } = ownerName(p, h);
+  const { name, he: he0 } = ownerName(p, h);
   const c = Object.values(s.characters).find((x) => x.alive && `${x.firstName} ${x.lastName}` === name);
+  const he: 'he' | 'she' = c ? (c.gender === 'F' ? 'she' : 'he') : he0;
   let traits: OwnerTrait[];
   if (c) traits = [...new Set(c.traits.map((t) => TRAIT_FROM[t]).filter((t): t is OwnerTrait => !!t))].slice(0, 3);
   else {
@@ -269,7 +270,7 @@ export function ownerOf(s: GameState, p: WorkPlace): Owner {
   let fear = 12 + (h % 30) + (c ? Math.round((50 - c.attributes.force) / 4) : 0);
   let pride = 30 + ((h >>> 5) % 45);
   if (traits.includes('Scared')) fear += 20;
-  if (traits.includes('Family man')) fear += 8;
+  if (traits.includes('Family first')) fear += 8;
   if (traits.includes('Proud')) pride += 15;
   if (traits.includes('Stubborn')) pride += 10;
   if (traits.includes('Hothead')) pride += 5;
@@ -347,30 +348,31 @@ export function pitchView(s: GameState, p: WorkPlace, who: string, ask: AskLevel
   const rec = recOf(s, p.id);
   const reasons: Reason[] = [{ label: 'Base', value: 40 }];
   const add = (label: string, v: number) => { if (v) reasons.push({ label, value: Math.round(v) }); };
-  add(`His fear (${o.fear})`, (o.fear - 40) * 0.6);
-  add(`His pride (${o.pride})`, -(o.pride - 50) * 0.5);
+  const g = (x: string) => pr(x, o.he);
+  add(g(`{His} fear (${o.fear})`), (o.fear - 40) * 0.6);
+  add(g(`{His} pride (${o.pride})`), -(o.pride - 50) * 0.5);
   add(`Your name on the street (respect ${Math.round(s.respect)})`, (s.respect - 40) * 0.3);
   if (c) add(`${c.id === s.playerId ? 'You' : c.firstName}: force ${c.attributes.force}`, (c.attributes.force - 50) * 0.2);
   if (who === s.playerId) add('The boss comes himself', 8);
-  add(ASK_LABEL[ask], -ASK_PENALTY[ask]);
-  if (o.protector.kind === 'rival') add(`${FACTION_NAMES[o.protector.rival]} protects him`, -30);
-  if (o.protector.kind === 'police') add('He pays the beat cop', -12);
-  const T: Partial<Record<OwnerTrait, number>> = { Scared: 10, 'Family man': 6, Stubborn: -10, Connected: -8, Hothead: -6, Honest: -8, Proud: -4 };
+  add(g(ASK_LABEL[ask]), -ASK_PENALTY[ask]);
+  if (o.protector.kind === 'rival') add(g(`${FACTION_NAMES[o.protector.rival]} protects {him}`), -30);
+  if (o.protector.kind === 'police') add(g('{He} pays the beat cop'), -12);
+  const T: Partial<Record<OwnerTrait, number>> = { Scared: 10, 'Family first': 6, Stubborn: -10, Connected: -8, Hothead: -6, Honest: -8, Proud: -4 };
   for (const tr of o.traits) if (T[tr]) add(tr, T[tr]!);
-  if (rec?.hurt) add(`What his trade has lost (${Math.round(rec.hurt)})`, rec.hurt * 0.3);
+  if (rec?.hurt) add(g(`What {his} trade has lost (${Math.round(rec.hurt)})`), rec.hurt * 0.3);
   const sum = reasons.reduce((a, r) => a + r.value, 0);
   let accept = clampP(sum / 100, 0.03, 0.9);
   let haggle = ask === 'light' ? 0 : Math.min(0.25, (1 - accept) * 0.4);
   if (p.rival) { accept = 0.02; haggle = 0; reasons.push({ label: `It is ${FACTION_NAMES[p.rival]}'s own place`, value: -60 }); }
-  const lock = p.mine ? 'It is yours' : rec?.stance === 'pays' ? `He already pays you ${fmt(rec.rate ?? rate)} a week` : rec?.stance === 'informant' ? 'He went to the police: a visit now is a pinch' : placeBlock(s, p) ?? whoBlock(s, who);
-  const thinks = p.rival ? `"Tell your boss to talk to my boss." ${o.answers} runs this place.`
-    : accept >= 0.6 ? `${cap1(o.he)} has been waiting for somebody to come. ${o.he === 'she' ? 'She' : 'He'} will pay, and be glad nothing happens.`
-      : accept >= 0.35 ? `${cap1(o.he)} will haggle. ${o.traits.includes('Greedy') ? 'He counts every nickel.' : 'He wants to know what he gets for it.'}`
-        : o.protector.kind === 'rival' ? `${cap1(o.he)} already pays ${FACTION_NAMES[o.protector.rival]}. Paying you too is paying twice.`
-          : `${cap1(o.he)} thinks ${o.he} does not need protecting. ${o.traits.includes('Hothead') ? 'There is a bat under the counter.' : ''}`.trim();
+  const lock = p.mine ? 'It is yours' : rec?.stance === 'pays' ? g(`{He} already pays you ${fmt(rec.rate ?? rate)} a week`) : rec?.stance === 'informant' ? g('{He} went to the police: a visit now is a pinch') : placeBlock(s, p) ?? whoBlock(s, who);
+  const thinks = g(p.rival ? `"Tell your boss to talk to my boss." ${o.answers} runs this place.`
+    : accept >= 0.6 ? '{He} has been waiting for somebody to come. {He} will pay, and be glad nothing happens.'
+      : accept >= 0.35 ? `{He} will haggle. ${o.traits.includes('Greedy') ? '{He} counts every nickel.' : '{He} wants to know what {he} gets for it.'}`
+        : o.protector.kind === 'rival' ? `{He} already pays ${FACTION_NAMES[o.protector.rival]}. Paying you too is paying twice.`
+          : `{He} thinks {he} does not need protecting. ${o.traits.includes('Hothead') ? 'There is a bat under the counter.' : ''}`.trim());
   return {
     rate, accept, haggle, decline: Math.max(0, 1 - accept - haggle), reasons, lock, thinks, haggled: r5(rate * 0.65),
-    rivalNote: o.protector.kind === 'rival' ? `${FACTION_NAMES[o.protector.rival]} protects him: taking his envelope is a move against them (they may hit back).` : undefined,
+    rivalNote: o.protector.kind === 'rival' ? g(`${FACTION_NAMES[o.protector.rival]} protects {him}: taking {his} envelope is a move against them (they may hit back).`) : undefined,
   };
 }
 
@@ -380,6 +382,8 @@ export function pitchView(s: GameState, p: WorkPlace, who: string, ask: AskLevel
 
 export interface SchemeView {
   def: WorkSchemeDef;
+  /** The title, with the owner's pronouns. */
+  title: string;
   line: string;
   cost: number;
   take: number;
@@ -434,6 +438,7 @@ export function schemeView(s: GameState, p: WorkPlace, id: WorkSchemeId, who: st
   const t = placeTrade(s, p);
   const rec = recOf(s, p.id);
   const kind = schemeKind(p, d);
+  const g = (x: string) => pr(x, o.he);
   const cost = Math.round((d.cost + (d.costShare ? t.gross * d.costShare : 0)) / 50) * 50;
   let take = Math.round((t.gross * d.share + (d.flat ?? 0)) / 5) * 5;
   if (d.kind === 'loan') take = Math.round(cost * 0.05);
@@ -441,33 +446,33 @@ export function schemeView(s: GameState, p: WorkPlace, id: WorkSchemeId, who: st
   const reasons: Reason[] = [];
   let odds = 1;
   if (!p.mine) {
-    reasons.push({ label: 'Base', value: 45 }, { label: d.title, value: d.coop });
+    reasons.push({ label: 'Base', value: 45 }, { label: g(d.title), value: d.coop });
     const add = (label: string, v: number) => { if (v) reasons.push({ label, value: Math.round(v) }); };
-    add(`His fear (${o.fear})`, (o.fear - 40) * 0.5);
-    add(`His pride (${o.pride})`, -(o.pride - 50) * 0.4);
-    if (rec?.stance === 'pays') add('He already pays you', 15);
-    if (rec?.holds.some((h) => h.id === 'noshow')) add('Your man is on his payroll', 10);
-    if (o.traits.includes('Greedy') && ['backdoor', 'front', 'fence', 'machines', 'payouts', 'cardgame'].includes(id)) add('Greedy: there is money in it for him', 12);
-    if (o.traits.includes('Gambler') && id === 'vig') add('Gambler: he needs the money', 25);
+    add(g(`{His} fear (${o.fear})`), (o.fear - 40) * 0.5);
+    add(g(`{His} pride (${o.pride})`), -(o.pride - 50) * 0.4);
+    if (rec?.stance === 'pays') add(g('{He} already pays you'), 15);
+    if (rec?.holds.some((h) => h.id === 'noshow')) add(g('Your man is on {his} payroll'), 10);
+    if (o.traits.includes('Greedy') && ['backdoor', 'front', 'fence', 'machines', 'payouts', 'cardgame'].includes(id)) add(g('Greedy: there is money in it for {him}'), 12);
+    if (o.traits.includes('Gambler') && id === 'vig') add(g('Gambler: {he} needs the money'), 25);
     if (id === 'vig' && !isInSeason(s.date)) add('Winter: the register is empty', 10);
     if (o.traits.includes('Honest')) add('Honest', -15);
-    if (o.traits.includes('Churchgoer') && (id === 'hourly' || id === 'phone' || id === 'numbers' || id === 'payouts')) add('Churchgoer: not under his roof', -20);
-    if (o.protector.kind === 'rival') add(`${FACTION_NAMES[o.protector.rival]} protects him`, -20);
+    if (o.traits.includes('Churchgoer') && (id === 'hourly' || id === 'phone' || id === 'numbers' || id === 'payouts')) add(g('Churchgoer: not under {his} roof'), -20);
+    if (o.protector.kind === 'rival') add(g(`${FACTION_NAMES[o.protector.rival]} protects {him}`), -20);
     odds = clampP(reasons.reduce((a, r) => a + r.value, 0) / 100, 0.03, 0.92);
   }
   const lock = placeBlock(s, p)
     ?? (p.rival ? `${FACTION_NAMES[p.rival]} runs it: nobody inside will deal with you` : undefined)
-    ?? (rec?.stance === 'informant' ? 'He went to the police: anything you start here is evidence' : undefined)
+    ?? (rec?.stance === 'informant' ? g('{He} went to the police: anything you start here is evidence') : undefined)
     ?? (rec?.holds.some((h) => h.id === id) ? 'Already running here' : undefined)
-    ?? (d.needsIn && !hasIn(s, p) ? 'You need an in first: he pays you protection, he owes you, or your man is on his payroll' : undefined)
-    ?? (id === 'vig' && rec?.holds.some((h) => h.id === 'piece') ? 'You already own a piece of him' : undefined)
+    ?? (d.needsIn && !hasIn(s, p) ? g('You need an in first: {he} pays you protection, {he} owes you, or your man is on {his} payroll') : undefined)
+    ?? (id === 'vig' && rec?.holds.some((h) => h.id === 'piece') ? g('You already own a piece of {him}') : undefined)
     ?? whoBlock(s, who);
-  const line = d.id === 'backdoor' ? `${cap1(BACKDOOR_GOODS[p.family])}.` : d.id === 'front' && p.family === 'laundromat' ? `${d.line} A laundry counts in quarters: nobody can tell.` : d.line;
-  const thinks = p.mine ? 'Your place: nobody to ask.'
-    : odds >= 0.6 ? `${cap1(o.he)} will go along${o.traits.includes('Greedy') ? ' and ask for a bigger end' : ''}.`
-      : odds >= 0.35 ? `${cap1(o.he)} might, if your man puts it right.`
-        : `${cap1(o.he)} will say no${o.traits.includes('Hothead') ? ', loudly' : ''}${rec?.stance === 'pays' ? '' : ', and may show your man the door'}.`;
-  return { def: d, line, cost, take, odds, reasons, heat: heatText(d.heat, d.weekly), lock, thinks, kind };
+  const line = g(d.id === 'backdoor' ? `${cap1(BACKDOOR_GOODS[p.family])}.` : d.id === 'front' && p.family === 'laundromat' ? `${d.line} A laundry counts in quarters: nobody can tell.` : d.line);
+  const thinks = p.mine ? 'Your place: nobody to ask.' : g(
+    odds >= 0.6 ? `{He} will go along${o.traits.includes('Greedy') ? ' and ask for a bigger end' : ''}.`
+      : odds >= 0.35 ? '{He} might, if your man puts it right.'
+        : `{He} will say no${o.traits.includes('Hothead') ? ', loudly' : ''}${rec?.stance === 'pays' ? '' : ', and may show your man the door'}.`);
+  return { def: d, title: g(d.title), line, cost, take, odds, reasons, heat: heatText(d.heat, d.weekly), lock, thinks, kind };
 }
 
 /* ------------------------------------------------------------------ */
@@ -481,6 +486,10 @@ export const REACTION_LABEL: Record<Reaction, string> = {
 
 export interface PressView {
   def: PressDef;
+  /** Title, line and the town's take, with the owner's pronouns. */
+  title: string;
+  line: string;
+  town: string;
   /** Odds it goes off clean, %. */
   odds: number;
   cost: number;
@@ -551,24 +560,25 @@ export function pressView(s: GameState, p: WorkPlace, step: PressStep, who: stri
   if (step === 'supplies' && s.businesses.some((b) => b.owner === 'player' && (b.kind === 'trucking' || b.kind === 'waste' || b.kind === 'labor'))) odds += 10;
   if (step === 'inspector' && (s.favors > 0 || s.businesses.some((b) => b.owner === 'player' && b.kind === 'payoff'))) odds += 10;
   odds = Math.max(10, Math.min(step === 'buyout' ? 100 : 95, odds));
+  const g = (x: string) => pr(x, o.he);
   const price = step === 'buyout' ? buyoutPrice(s, p) : undefined;
   let innocents = d.innocents ?? 0;
   if (innocents && (p.family === 'motel' || p.family === 'club')) innocents += 0.1;
   if (innocents && isInSeason(s.date)) innocents += 0.03;
   const lock = placeBlock(s, p) && !(step === 'buyout' && rec?.stance === 'selling')
     ? placeBlock(s, p)
-    : !pressOpen(s, p) ? (p.mine ? 'It is yours' : rec?.stance === 'pays' ? 'He pays you: leave him be' : 'Ask him first: he has not said no')
+    : !pressOpen(s, p) ? (p.mine ? 'It is yours' : g(rec?.stance === 'pays' ? '{He} pays you: leave {him} be' : 'Ask {him} first: {he} has not said no'))
       : step === 'buyout' && p.rival ? `${FACTION_NAMES[p.rival]} will not sell to you`
-        : step === 'buyout' && rec?.stance !== 'selling' && (rec?.hurt ?? 0) < 40 ? 'He is not ready to sell: his trade has to hurt first (or he offers)'
+        : step === 'buyout' && rec?.stance !== 'selling' && (rec?.hurt ?? 0) < 40 ? g('{He} is not ready to sell: {his} trade has to hurt first (or {he} offers)')
           : step === 'buyout' && price !== undefined && s.money < price ? `Needs ${fmt(price)}`
             : step === 'lean' && !!p.rival ? 'Nobody to lean on: the family\'s manager laughs at a warning'
               : step === 'inspector' && p.rival && s.favors <= 0 ? 'The family has its own man at City Hall: you need a political favor'
                 : whoBlock(s, who);
   const rivalNote = o.protector.kind === 'rival' && d.rival
-    ? `${FACTION_NAMES[o.protector.rival]} protects him: a move against them (opinion ${d.rival}, ${Math.round(d.retaliate * 100)}% they hit back).`
+    ? g(`${FACTION_NAMES[o.protector.rival]} protects {him}: a move against them (opinion ${d.rival}, ${Math.round(d.retaliate * 100)}% they hit back).`)
     : undefined;
   const paperNote = d.press >= 1 ? `The paper prints it (${d.sec === 'front' ? 'front page' : d.sec}).` : d.press > 0 ? `${Math.round(d.press * 100)}% the paper prints it (${d.sec === 'spout' ? 'Spout Off' : d.sec}).` : 'Nothing in the paper.';
-  return { def: d, odds, cost: price ?? d.cost, react: reactionOdds(s, p, step), lock, rivalNote, paperNote, innocents, price };
+  return { def: d, title: g(d.title), line: g(d.line), town: g(d.town), odds, cost: price ?? d.cost, react: reactionOdds(s, p, step), lock, rivalNote, paperNote, innocents, price };
 }
 
 /* ------------------------------------------------------------------ */
@@ -585,6 +595,7 @@ export function previewWork(s: GameState, a: WorkAction): ActionPreview {
   if (!p) return noop('Work this place', 'No such place');
   const who = 'who' in a ? s.characters[a.who] : undefined;
   const whoName = who ? (who.id === s.playerId ? 'you' : `${who.firstName} ${who.lastName}`) : '';
+  const g = (x: string) => pr(x, ownerOf(s, p).he);
   switch (a.op) {
     case 'pitch': {
       const v = pitchView(s, p, a.who, a.ask);
@@ -599,31 +610,31 @@ export function previewWork(s: GameState, a: WorkAction): ActionPreview {
     }
     case 'scheme': {
       const v = schemeView(s, p, a.scheme, a.who);
-      const title = `${v.def.title}: ${p.name}`;
+      const title = `${v.title}: ${p.name}`;
       const fx: Effect[] = [note(v.def.kind === 'loan' ? `${fmt(v.cost)} out at five points: ${fmt(v.take)}/wk vig` : `~${fmt(v.take)}/wk · ${v.heat}`, title)];
       return {
         title,
-        detail: `${v.line} Setup ${fmt(v.cost)} (paid only if ${p.mine ? 'it goes ahead' : 'he goes along'}); about ${fmt(v.take)} a week.${p.mine ? '' : ` He goes along ${pct(v.odds)}.`}`,
+        detail: `${v.line} Setup ${fmt(v.cost)} (paid only if ${p.mine ? 'it goes ahead' : g('{he} goes along')}); about ${fmt(v.take)} a week.${p.mine ? '' : g(` {He} goes along ${pct(v.odds)}.`)}`,
         effects: fx, ...(p.mine ? {} : { odds: { chance: v.odds, reasons: v.reasons } }),
-        cost: v.cost, because: `${v.def.title.toLowerCase()} at ${p.name}`, disabledReason: v.lock ?? (s.money < v.cost ? `Needs ${fmt(v.cost)}` : undefined), category: 'street',
+        cost: v.cost, because: `${v.title.toLowerCase()} at ${p.name}`, disabledReason: v.lock ?? (s.money < v.cost ? `Needs ${fmt(v.cost)}` : undefined), category: 'street',
       };
     }
     case 'press': {
       const v = pressView(s, p, a.step, a.who);
-      const title = `${v.def.title}: ${p.name}`;
+      const title = `${v.title}: ${p.name}`;
       const r = v.react;
       return {
         title,
-        detail: `${v.def.line} ${v.odds}% it goes off clean. ${v.paperNote}${v.innocents ? ` ${pct(v.innocents)} somebody innocent is hurt.` : ''}`,
+        detail: `${v.line} ${v.odds}% it goes off clean. ${v.paperNote}${v.innocents ? ` ${pct(v.innocents)} somebody innocent is hurt.` : ''}`,
         effects: [note(`After: pays ${pct(r.pays)} · sells ${pct(r.sells)} · folds ${pct(r.folds)} · talks ${pct(r.informant)} · fights ${pct(r.fights)}`, title)],
-        odds: { chance: v.odds / 100, reasons: [{ label: v.def.title, value: v.odds }] },
+        odds: { chance: v.odds / 100, reasons: [{ label: v.title, value: v.odds }] },
         warning: v.rivalNote, cost: v.cost, because: `${a.step === 'buyout' ? 'bought out' : 'went after'} ${p.name}`, disabledReason: v.lock ?? (s.money < v.cost ? `Needs ${fmt(v.cost)}` : undefined), category: 'street',
       };
     }
     case 'drop': {
       const rec = recOf(s, p.id);
       return {
-        title: `Let ${p.name} go`, detail: 'Leave him alone. The street sees you back off, a little.',
+        title: `Let ${p.name} go`, detail: g('Leave {him} alone. The street sees you back off, a little.'),
         effects: rec?.steps ? [{ type: 'respect', amount: -1, label: `Backed off ${p.name}` }] : [], cost: 0, because: `let ${p.name} go`,
         disabledReason: !rec || !(rec.stance === 'refused' || rec.stance === 'fighting' || rec.stance === 'selling') ? 'Nothing to let go' : undefined, category: 'street',
       };
@@ -692,6 +703,7 @@ export function commitWork(ctx: Ctx, a: WorkAction): void {
   const ap = (fx: Effect[]) => { if (fx.length) applyEffects(ctx, fx.map((e) => ({ ...e, label: e.label ?? label })), { label, because: label, category: 'street' }); };
   const who = 'who' in a ? s.characters[a.who] : undefined;
   const whoName = who ? (who.id === s.playerId ? 'You' : who.firstName) : 'Your man';
+  const g = (x: string) => pr(x, o.he);
   switch (a.op) {
     case 'pitch': {
       const v = pitchView(s, p, a.who, a.ask);
@@ -723,7 +735,7 @@ export function commitWork(ctx: Ctx, a: WorkAction): void {
       if (!yes) {
         rec.pride += 2;
         if (rec.stance !== 'pays') { rec.stance = 'refused'; rec.since = s.week; W.stats.refused++; }
-        log(ctx, p, 'refused', `${o.name} would not go along with ${v.def.title.toLowerCase()}${rec.stance === 'refused' ? ', and showed your man the door' : ''}.`);
+        log(ctx, p, 'refused', `${o.name} would not go along with ${v.title.toLowerCase()}${rec.stance === 'refused' ? ', and showed your man the door' : ''}.`);
         break;
       }
       const fx: Effect[] = [];
@@ -738,13 +750,13 @@ export function commitWork(ctx: Ctx, a: WorkAction): void {
         ap([{ type: 'money', amount: -v.cost, category: 'street' }]);
         s.loans.push({ id, borrower: `${o.name}, ${p.what.toLowerCase()}`, collateral: FAMILY_FRONT[p.family], collateralName: p.name, principal: v.cost, vig: v.take, risk: o.traits.includes('Gambler') ? 0.06 : 0.03, weeksLate: 0, dueWeek: s.week + 16, week: s.week });
         rec.holds.push({ id: 'vig', loanId: id, week: s.week });
-        log(ctx, p, 'vig', `${o.name} took ${fmt(v.cost)} at five points. If he cannot pay, a piece of the place is yours.`);
+        log(ctx, p, 'vig', `${o.name} took ${fmt(v.cost)} at five points. ${g('If {he} cannot pay')}, a piece of the place is yours.`);
       } else if (v.def.kind === 'stash') {
         rec.holds.push({ id: 'stash', week: s.week });
         log(ctx, p, 'stash', `A locked room at ${p.name} is yours now.`);
       } else if (v.kind) {
-        addHold(ctx, p, a.scheme, holdBusiness(s, p, v.kind, `${v.def.title}: ${p.name}`, v.take, v.cost, v.def.weekly, a.who), label);
-        log(ctx, p, a.scheme, p.mine ? `${v.def.title} is set up at ${p.name}.` : `${o.name} went along: ${v.def.title.toLowerCase()}. About ${fmt(v.take)} a week.`);
+        addHold(ctx, p, a.scheme, holdBusiness(s, p, v.kind, `${v.title}: ${p.name}`, v.take, v.cost, v.def.weekly, a.who), label);
+        log(ctx, p, a.scheme, p.mine ? `${v.title} is set up at ${p.name}.` : `${o.name} went along: ${v.title.toLowerCase()}. About ${fmt(v.take)} a week.`);
       }
       break;
     }
@@ -799,7 +811,7 @@ export function commitWork(ctx: Ctx, a: WorkAction): void {
           log(ctx, p, 'pays', `${how}${o.name} came around: ${fmt(rate)} a week from now on.${extra}`);
           break;
         }
-        case 'sells': rec.stance = 'selling'; rec.since = s.week; log(ctx, p, 'selling', `${how}${o.name} has had enough: he will sell you the place, cheap.${extra}`); break;
+        case 'sells': rec.stance = 'selling'; rec.since = s.week; log(ctx, p, 'selling', `${how}${o.name} has had enough: ${g('{he}')} will sell you the place, cheap.${extra}`); break;
         case 'folds': fold(ctx, p, o); log(ctx, p, 'folded', `${how}${o.name} closed ${p.name} for good.${extra}`); break;
         case 'informant': informant(ctx, p, o, who); break;
         case 'fights': fights(ctx, p, o, a.step); log(ctx, p, 'fighting', `${how}${o.name} is fighting back.${extra}`); break;
@@ -867,8 +879,8 @@ function fights(ctx: Ctx, p: WorkPlace, o: Owner, step: PressStep): void {
   const fx: Effect[] = [];
   if (o.protector.kind === 'rival') fx.push(...rivalFx(o, p, -6, 0.5, `${o.name} came to us about you`));
   else fx.push({ type: 'heat', bar: 'local', amount: 1 });
-  if (fx.length) applyEffects(ctx, fx.map((e) => ({ ...e, label: `${p.name}: he fights back` })), { label: `${p.name}: he fights back`, because: `pressed ${p.name}`, category: 'street' });
-  if (o.protector.kind !== 'rival' && !p.rival) pressItem(s, { s: 'spout', b: `To the men who think they can scare a businessman on this island: I was here before you and I will be here after. — ${o.name}, ${p.name}`, p: 30, a: 'town' });
+  if (fx.length) applyEffects(ctx, fx.map((e) => ({ ...e, label: pr(`${p.name}: {he} fights back`, o.he) })), { label: pr(`${p.name}: {he} fights back`, o.he), because: `pressed ${p.name}`, category: 'street' });
+  if (o.protector.kind !== 'rival' && !p.rival) pressItem(s, { s: 'spout', b: `To the men who think they can scare a ${o.he === 'she' ? 'businesswoman' : 'businessman'} on this island: I was here before you and I will be here after. — ${o.name}, ${p.name}`, p: 30, a: 'town' });
   void step;
 }
 
@@ -917,6 +929,7 @@ export function workWeek(ctx: Ctx): void {
   for (const id of Object.keys(W.places).sort()) {
     const rec = W.places[id];
     const p = placeById(s, id);
+    const he = p ? ownerOf(s, p).he : 'he';
     rec.fear = Math.max(0, rec.fear - 2);
     rec.hurt = Math.max(0, rec.hurt - (rec.stance === 'refused' || rec.stance === 'fighting' ? 3 : 6));
     // Rackets you closed or sold yourself drop off the record.
@@ -939,14 +952,14 @@ export function workWeek(ctx: Ctx): void {
       }
       if (h.id === 'vig' && h.loanId) {
         const loan = s.loans.find((l) => l.id === h.loanId);
-        if (!loan) { rec.holds = rec.holds.filter((x) => x !== h); log(ctx, p, 'paid', 'He paid off the loan.'); continue; }
+        if (!loan) { rec.holds = rec.holds.filter((x) => x !== h); log(ctx, p, 'paid', pr('{He} paid off the loan.', he)); continue; }
         if (loan.weeksLate >= 3) {
           s.loans = s.loans.filter((l) => l !== loan);
           rec.holds = rec.holds.filter((x) => x !== h);
           const take = Math.round(placeTrade(s, p).gross * 0.25 / 5) * 5;
           addHold(ctx, p, 'piece', holdBusiness(s, p, FAMILY_FRONT[p.family], `A piece of ${p.name}`, take, loan.principal, 0.05), `${p.name}: a piece of the place`);
           rec.fear += 10;
-          log(ctx, p, 'piece', `He could not pay. A quarter of ${p.name} is yours now: about ${fmt(take)} a week.`);
+          log(ctx, p, 'piece', `${pr('{He}', he)} could not pay. A quarter of ${p.name} is yours now: about ${fmt(take)} a week.`);
         }
       }
       if (h.id === 'stash') {
@@ -961,10 +974,12 @@ export function workWeek(ctx: Ctx): void {
 /** What you run at a place, in words. */
 export function holdsAt(s: GameState, id: string): { id: string; title: string; take?: number }[] {
   const rec = recOf(s, id);
-  if (!rec) return [];
+  const p = placeById(s, id);
+  if (!rec || !p) return [];
+  const he = ownerOf(s, p).he;
   return rec.holds.map((h) => {
     const b = h.bizId ? s.businesses.find((x) => x.id === h.bizId) : undefined;
-    const title = h.id === 'protection' ? `Protection: ${fmt(rec.rate ?? 0)} a week` : h.id === 'piece' ? 'A piece of the place' : h.id === 'vig' ? 'He owes you money' : WORK_BY_ID[h.id as WorkSchemeId]?.title ?? h.id;
+    const title = h.id === 'protection' ? `Protection: ${fmt(rec.rate ?? 0)} a week` : h.id === 'piece' ? 'A piece of the place' : h.id === 'vig' ? pr('{He} owes you money', he) : pr(WORK_BY_ID[h.id as WorkSchemeId]?.title ?? h.id, he);
     return { id: h.id, title, take: b ? Math.round(b.weeklyBase * yearMult(b.kind)) : undefined };
   });
 }
