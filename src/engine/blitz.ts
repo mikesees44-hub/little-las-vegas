@@ -163,6 +163,15 @@ export function launchBlitz(ctx: Ctx, attacker: FactionId, defender: FactionId, 
   return b;
 }
 
+/** Weeks of quiet after a blitz on the family ends (the attacker waits twice as long). */
+export const BLITZ_COOLDOWN = 26;
+
+/** The boss or his blood (`strict`: only the blood a blitz already took counts). */
+function isBlood(s: GameState, c: Character | undefined, strict = false): boolean {
+  if (!c) return false;
+  return !!c.dynasty || (!strict && c.id === s.playerId) || (strict && c.rank === 'boss');
+}
+
 /** Defense against a hit on `target` this week (0-0.7). */
 function defense(s: GameState, b: Blitz, target: Character): number {
   const p = s.power;
@@ -174,6 +183,8 @@ function defense(s: GameState, b: Blitz, target: Character): number {
     if (activeTask(s, 'enf_protect')) d += 0.05;
     if ((p?.warned[b.attacker] ?? 0) >= s.week) d += 0.1;
     if ((b.shield ?? 0) >= s.week) d += 0.3;
+    // The blood is moved somewhere safe the moment a blitz starts (playtest #4): heirs are hard to find.
+    if (target.dynasty && target.id !== s.playerId) d += 0.2;
   } else {
     // A rival family that sees it coming digs in.
     if (!b.surprise) d += 0.15;
@@ -195,6 +206,14 @@ export function blitzStep(ctx: Ctx, b: Blitz): void {
     return;
   }
   const t = s.characters[b.targets[b.idx]];
+  // At most one of the blood per blitz on your family: once one has fallen, the rest are in hiding.
+  if (b.defender === 'player' && isBlood(s, t) && b.kills.some((id) => isBlood(s, s.characters[id], true))) {
+    b.misses.push(t.id);
+    ctx.log.push(`Blitz, hit ${b.idx + 1} of ${b.targets.length}: ${displayName(t)} is in hiding; they cannot find him.`);
+    b.idx++;
+    if (b.idx >= b.targets.length) { b.stopped = 'The list ran out: the family went to ground.'; finish(ctx, b); }
+    return;
+  }
   const base = b.attacker === 'player' ? 0.35 + (b.odds ?? 0.4) * 0.5 : 0.5;
   const pHit = Math.max(0.08, Math.min(0.9, base + b.momentum / 250 + (b.surprise && b.idx === 0 ? 0.15 : 0) - defense(s, b, t)));
   const p = pw(s);
@@ -206,9 +225,13 @@ export function blitzStep(ctx: Ctx, b: Blitz): void {
     b.kills.push(t.id);
     b.momentum = Math.min(100, b.momentum + 10);
     ctx.log.push(`Blitz, hit ${b.idx + 1} of ${b.targets.length}: ${displayName(t)} is dead (${an}).`);
-    if (wasBoss && !s.gameOver) {
-      // The next name is the new boss: the heir can die in the same wave.
-      b.targets.push(s.playerId);
+    if (wasBoss && !s.gameOver && b.defender === 'player') {
+      // They took the head. The family closes ranks around the new boss: to the mattresses, the heir
+      // hidden. A blitz never wipes the dynasty in one wave (playtest #4: seven bosses in a row).
+      p.mattresses = p.mattresses ?? s.week;
+      b.stopped = 'They took the boss. The family went to the mattresses around the new one.';
+      finish(ctx, b);
+      return;
     }
     if (b.attacker === 'player' && b.defender !== 'player') {
       const r = s.rivals.find((x) => x.id === b.defender);
@@ -254,6 +277,9 @@ function finish(ctx: Ctx, b: Blitz): void {
     }
   } else if (b.defender === 'player') {
     if (!won) respect(ctx, 4, `You survived the ${FACTION_NAMES[b.attacker]} blitz`, 'event');
+    // After a blitz on the family, the other families wait before trying again (and this one longer).
+    s.flags.blitzQuietUntil = s.week + BLITZ_COOLDOWN;
+    s.flags[`blitzAgain_${b.attacker}`] = s.week + BLITZ_COOLDOWN * 2;
   }
   ctx.log.push(`The blitz is over: ${b.stopped}`);
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `The blitz ended (${b.kills.length} dead): ${b.stopped}`, kind: 'rival' });
@@ -289,10 +315,12 @@ export function rivalBlitzMonth(ctx: Ctx): void {
   const s = ctx.s;
   const p = pw(s);
   if (activeBlitz(s)) return;
+  if ((s.flags.blitzQuietUntil ?? 0) > s.week) return;
   const me = playerMuscle(s);
   for (const r of s.rivals.filter((x) => x.kind === 'mob')) {
     const leader = s.characters[r.leaderId];
     if (!leader?.alive) continue;
+    if ((s.flags[`blitzAgain_${r.id}`] ?? 0) > s.week) continue;
     const legit = (p.legit[r.id] ?? 0) >= s.week;
     if (s.week < 40 && !legit) continue;
     let score = 0;

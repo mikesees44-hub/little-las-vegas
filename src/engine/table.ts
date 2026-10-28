@@ -146,10 +146,13 @@ export function rivalDisputes(ctx: Ctx): void {
     const op = opinion(s, r.leaderId, boss.id);
     if (op > -25 || !chance(s, r.feud ? 0.08 : 0.025)) continue;
     let d: Dispute;
-    if (r.feud) {
+    // At most one sanction against your men a season, from anybody (playtest #3: up to 8 a year).
+    const sanctionOk = s.week - (s.flags.lastSanctionVsPlayer ?? -99) >= SANCTION_COOLDOWN;
+    if (r.feud && sanctionOk) {
       const capo = crew(s).filter((c) => c.rank === 'capo' && isFree(s, c))[0] ?? crew(s).filter((c) => isFree(s, c))[0];
       if (!capo) continue;
       d = openDispute(s, newDispute(s, 'sanction', r.id, 'player', { targetId: capo.id }));
+      s.flags.lastSanctionVsPlayer = s.week;
     } else {
       const contested = s.districts.filter((x) => (x.influence.player ?? 0) > 0 && (x.influence[r.id] ?? 0) > 0).sort((a, b) => (b.influence[r.id] ?? 0) - (a.influence[r.id] ?? 0))[0];
       d = contested && chance(s, 0.6)
@@ -169,10 +172,12 @@ export function buildDisputeRaised(s: GameState, d: Dispute): EventInstance {
     : d.kind === 'district' && d.district
       ? [{ type: 'influence', district: d.district, faction: 'player', amount: -6, label: `${label}: settled privately` }, { type: 'influence', district: d.district, faction: d.plaintiff, amount: 6, label: `${label}: settled privately` }]
       : [{ type: 'respect', amount: -4, label: `${label}: settled privately` }, { type: 'money', amount: -3000, label: `${label}: settled privately` }];
+  const leans = forecast(s, d);
+  const leanYes = leans.filter((l) => l.value > 0).length;
   return {
     iid: `ev${s.nextId++}`, defId: 'dispute_raised', week: s.week, mandatory: false, priority: 60,
     title: 'A dispute is brought to the Table',
-    text: `${d.claim} ${d.defense} Sal Moretti will hear it in ${HEARING_DELAY} weeks. Until then, the members can be talked to.`,
+    text: `${d.claim} ${d.defense} Sal Moretti will hear it in ${HEARING_DELAY} weeks. Today ${leanYes} of ${leans.length} votes lean your way${d.kind === 'sanction' && d.targetId ? `; lose, and they will ask for ${s.characters[d.targetId]?.firstName ?? 'him'} (or ${fmtMoney(bloodPrice(s, s.characters[d.targetId]))} in blood money)` : ''}. Until then, the members can be talked to.`,
     defaultChoiceId: 'answer', meta: { dispute: d.id }, actors: [opp.id, ...(chair(s) ? [chair(s)!.id] : [])],
     choices: [
       { id: 'answer', label: 'We will answer at the Table', detail: 'Lobby the members before the hearing (the Table tab).', because: `chose to answer ${FACTION_NAMES[d.plaintiff]} at the Table`, effects: [{ type: 'respect', amount: 1, label }] },
@@ -293,7 +298,27 @@ function winEffects(s: GameState, d: Dispute, forPlayer: boolean): Effect[] {
   return [];
 }
 
-/** You lost a dispute someone brought against you: comply or defy. */
+/** A season: rivals may raise at most one sanction against your men in this many weeks. */
+export const SANCTION_COOLDOWN = 13;
+
+/** Blood money: what buys a sanctioned man's life from the side that asked for it (scales with his rank and your treasury). */
+export function bloodPrice(s: GameState, t: Character | undefined): number {
+  const w = !t ? 1 : t.rank === 'underboss' ? 1.6 : t.rank === 'consigliere' ? 1.4 : t.rank === 'capo' ? 1.2 : 0.8;
+  const raw = 6000 * w + Math.max(0, s.money) * 0.08;
+  return Math.max(4000, Math.min(60000, Math.round(raw / 500) * 500));
+}
+
+/** Handing over your own man: everyone in the crew remembers it, and his own men most of all. */
+export function sacrificeCost(s: GameState, t: Character, label: string): Effect[] {
+  const out: Effect[] = [{ type: 'crewOpinion', amount: -8, reason: `Gave ${t.firstName} to Philadelphia`, label }, { type: 'respect', amount: -3, label }];
+  for (const c of crew(s)) {
+    if (c.id === t.id || !c.alive) continue;
+    if (c.capoId === t.id || hasTrait(c, 'Loyal-to-a-fault')) out.push({ type: 'opinion', from: c.id, to: s.playerId, amount: -20, reason: `Handed ${t.firstName} over to be killed`, decay: 0, label });
+  }
+  return out;
+}
+
+/** You lost a dispute someone brought against you: comply, pay, negotiate, or defy. */
 export function buildRulingAgainst(s: GameState, d: Dispute): EventInstance {
   const label = 'The Table\'s ruling';
   const opp = opponent(d);
@@ -310,22 +335,35 @@ export function buildRulingAgainst(s: GameState, d: Dispute): EventInstance {
       what = `pay ${FACTION_NAMES[opp]} ${fmtMoney(d.amount ?? 0)}`;
       break;
     case 'sanction':
-      comply = t ? [{ type: 'kill', charId: t.id, cause: 'given up to the Table\'s sanctioned hit', killer: opp as FactionId, label }] : [];
+      comply = t ? [{ type: 'kill', charId: t.id, cause: 'given up to the Table\'s sanctioned hit', killer: opp as FactionId, label }, ...sacrificeCost(s, t, label)] : [];
       what = t ? `give up ${displayName(t)} — the Table sanctions his death` : 'accept their sanction';
       break;
     default:
       comply = [{ type: 'respect', amount: -3, label }];
       what = 'accept the ruling';
   }
+  const defy: Choice = { id: 'defy', label: 'Defy the Table', detail: 'Nobody defies Philadelphia twice.', because: 'defied the Table', effects: [{ type: 'ruling', disputeId: d.id, comply: false, label }, { type: 'heat', bar: 'family', amount: 25, label }, { type: 'rivalOpinion', rival: 'philly', amount: -30, reason: 'Defied the Table', label }, { type: 'respect', amount: 2, label }, { type: 'schedule', key: 'table_enforce', minWeeks: 2, maxWeeks: 6, chance: 0.6, hint: 'Philadelphia may enforce it themselves', label, ...(t ? { params: { charId: t.id } } : {}) }] };
+  const obey: Choice = { id: 'comply', label: t && d.kind === 'sanction' ? `Give up ${t.firstName}` : 'Do as the Table says', ...(t && d.kind === 'sanction' ? { detail: `${t.firstName} dies. Your crew will remember who handed him over${crew(s).some((c) => c.capoId === t.id) ? ', and his own men will never forgive it' : ''}.` } : {}), because: 'complied with the Table\'s ruling', effects: [...comply, { type: 'ruling', disputeId: d.id, comply: true, label }, { type: 'heat', bar: 'family', amount: -5, label }] };
+  const choices: Choice[] = [obey];
+  let defaultChoiceId = 'comply';
+  // A sanction against one of your own (playtest #3): the Table's default must never quietly hand him over.
+  // Pay blood money, send someone to bargain, or defy; giving him up is a choice, with its price.
+  if (d.kind === 'sanction' && t) {
+    const price = bloodPrice(s, t);
+    const cons = crew(s).find((c) => c.rank === 'consigliere' && isFree(s, c));
+    const short = s.money < price ? `Needs ${fmtMoney(price)} in the Family's money` : undefined;
+    choices.push({ id: 'pay', label: `Pay blood money for ${t.firstName} (${fmtMoney(price)})`, detail: `${FACTION_NAMES[opp]} takes the money instead of the man. Philadelphia approves of business.`, because: `paid blood money for ${t.firstName}`, disabledReason: short, effects: [{ type: 'money', amount: -price, label: `${label}: blood money to ${FACTION_NAMES[opp]}` }, { type: 'ruling', disputeId: d.id, comply: true, label }, { type: 'rivalOpinion', rival: opp as RivalId, amount: 10, reason: 'Paid for his man', label }, { type: 'respect', amount: -1, label }, { type: 'opinion', from: t.id, to: s.playerId, amount: 25, reason: 'Paid for my life', decay: 0, label }] });
+    const half = Math.round(price / 1000) * 500;
+    choices.push({ id: 'negotiate', label: cons ? `Send ${cons.firstName} to bargain` : 'Send someone to bargain', detail: `Half the price (${fmtMoney(half)}) and a plea to Sal Moretti. It may hold; if it does not, Philadelphia comes for ${t.firstName} anyway.`, because: `sent ${cons ? cons.firstName : 'a man'} to bargain for ${t.firstName}`, disabledReason: s.money < half ? `Needs ${fmtMoney(half)}` : undefined, effects: [{ type: 'money', amount: -half, label: `${label}: a bargain for ${t.firstName}` }, { type: 'ruling', disputeId: d.id, comply: true, label }, { type: 'rivalOpinion', rival: 'philly', amount: -5, reason: 'Haggled over a ruling', label }, { type: 'schedule', key: 'table_enforce', minWeeks: 2, maxWeeks: 6, chance: cons ? 0.25 : 0.45, hint: `The bargain may not hold: ${t.firstName} could still be taken`, label, params: { charId: t.id } }] });
+    defaultChoiceId = !short ? 'pay' : s.money >= half ? 'negotiate' : 'defy';
+  }
+  choices.push(defy);
   return {
     iid: `ev${s.nextId++}`, defId: 'ruling_against', week: s.week, mandatory: true, priority: 87,
     title: 'The ruling went against you',
-    text: `The Table has spoken: you are to ${what}. Philadelphia expects it done.`,
-    defaultChoiceId: 'comply', meta: { dispute: d.id, ...(t ? { charId: t.id } : {}) }, actors: [chair(s)?.id, t?.id].filter((x): x is string => !!x),
-    choices: [
-      { id: 'comply', label: 'Do as the Table says', because: 'complied with the Table\'s ruling', effects: [...comply, { type: 'ruling', disputeId: d.id, comply: true, label }, { type: 'heat', bar: 'family', amount: -5, label }] },
-      { id: 'defy', label: 'Defy the Table', detail: 'Nobody defies Philadelphia twice.', because: 'defied the Table', effects: [{ type: 'ruling', disputeId: d.id, comply: false, label }, { type: 'heat', bar: 'family', amount: 25, label }, { type: 'rivalOpinion', rival: 'philly', amount: -30, reason: 'Defied the Table', label }, { type: 'respect', amount: 2, label }, { type: 'schedule', key: 'table_enforce', minWeeks: 2, maxWeeks: 6, chance: 0.6, hint: 'Philadelphia may enforce it themselves', label }] },
-    ],
+    text: `The Table has spoken: you are to ${what}. Philadelphia expects it done.${d.kind === 'sanction' && t ? ` Unless something else changes hands.` : ''}`,
+    defaultChoiceId, meta: { dispute: d.id, ...(t ? { charId: t.id } : {}) }, actors: [chair(s)?.id, t?.id].filter((x): x is string => !!x),
+    choices,
   };
 }
 

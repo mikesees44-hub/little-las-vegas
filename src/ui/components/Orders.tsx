@@ -17,7 +17,8 @@ import { hoursLabel, timeBlock, timeCost } from '../../engine/timeCost';
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
   orders: PlayerAction[];
-  queue: (a: PlayerAction) => void;
+  /** `confirmed`: the player already said yes (a signed contract): no "Are you sure?" on top. */
+  queue: (a: PlayerAction, confirmed?: boolean) => void;
   remove: (i: number) => void;
   /** "Do it tomorrow": give the order now, its hours come out of the next day (engine/timeCost.ts). */
   later?: (a: PlayerAction) => void;

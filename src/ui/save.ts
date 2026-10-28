@@ -1,6 +1,6 @@
 import { displayName } from '../engine/characters';
 import { upgradeSave } from '../engine/upgradeSave';
-import type { GameState } from '../engine/types';
+import type { GameState, PlayerAction } from '../engine/types';
 import LZ from 'lz-string';
 
 /** Saves are stored compressed (about a tenth the size); old plain-JSON saves still load. */
@@ -197,6 +197,49 @@ export function saveSlot(n: number, s: GameState, kv: KV | undefined = store()):
 export function deleteSlot(n: number, kv: KV | undefined = store()): void {
   del(kv, SLOT(n));
   del(kv, META(n));
+  del(kv, DESK(n));
+}
+
+/**
+ * The week in progress on the boss's desk: orders queued, popups answered, mini-game moves, and the
+ * scripted scenes that already opened by themselves. It lives beside the slot (not in the game state)
+ * and belongs to one week of one game: a reload or Continue gets it back, a new week starts clean.
+ * (Playtest #7: a reload lost a $9,000 order and replayed "Made the boss" from page 1.)
+ */
+export interface DeskState {
+  seed: string;
+  week: number;
+  orders: PlayerAction[];
+  answers: Record<string, string>;
+  moves: Record<string, string[]>;
+  /** Scenes left half-way: the moves so far (the scene resumes after them). */
+  partial?: Record<string, string[]>;
+  /** Event iids whose scene already opened by itself (Made the boss): never again on Continue. */
+  auto: string[];
+}
+const DESK = (n: number) => `little-las-vegas:slotdesk:${n}`;
+
+export function saveDesk(n: number, d: DeskState, kv: KV | undefined = store()): boolean {
+  const empty = !d.orders.length && !Object.keys(d.answers).length && !Object.keys(d.moves).length && !Object.keys(d.partial ?? {}).length && !d.auto.length;
+  if (empty) { del(kv, DESK(n)); return true; }
+  try {
+    return set(kv, DESK(n), JSON.stringify(d));
+  } catch {
+    return false;
+  }
+}
+
+/** The desk saved for this game and this week, else undefined (another game, or the week has turned). */
+export function loadDesk(n: number, s: Pick<GameState, 'seed' | 'week'>, kv: KV | undefined = store()): DeskState | undefined {
+  const raw = get(kv, DESK(n));
+  if (!raw) return undefined;
+  try {
+    const d = JSON.parse(raw) as DeskState;
+    if (!d || d.seed !== s.seed || d.week !== s.week) return undefined;
+    return { seed: d.seed, week: d.week, orders: Array.isArray(d.orders) ? d.orders : [], answers: d.answers ?? {}, moves: d.moves ?? {}, partial: d.partial ?? {}, auto: Array.isArray(d.auto) ? d.auto : [] };
+  } catch {
+    return undefined;
+  }
 }
 
 /** The first empty slot, else the current one. */

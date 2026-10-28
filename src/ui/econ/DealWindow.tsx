@@ -10,6 +10,7 @@ import { Chips } from '../components/Chips';
 import { Modal } from '../components/Modal';
 import { AcceptanceLine, useOrders } from '../components/Orders';
 import { fmt$ } from '../format';
+import { timeBlock } from '../../engine/timeCost';
 import { useEmpire } from '../empire/context';
 import { BIZ_CONCEPT, USE_CONCEPT } from '../../engine/empire';
 
@@ -71,10 +72,17 @@ function ApplicantCard({ a, picked, onPick }: { a: Applicant; picked: boolean; o
   );
 }
 
+/** The signature queues the purchase, already confirmed (playtest bug #6: a hidden confirm dropped it). */
+export function signDeal(s: GameState, action: PlayerAction, api: { queue: (a: PlayerAction, confirmed?: boolean) => void; later?: (a: PlayerAction) => void }): 'queued' | 'tomorrow' {
+  if (api.later && timeBlock(s, action)) { api.later(action); return 'tomorrow'; }
+  api.queue(action, true);
+  return 'queued';
+}
+
 const mgrId = (m: DealManager | undefined): string | undefined => (!m ? undefined : 'keep' in m ? 'keep' : m.source === 'pro' ? `pro:${m.pro ?? 0}` : m.charId);
 
 export function DealWindow({ s, target, onClose }: { s: GameState; target: DealTarget; onClose: () => void }) {
-  const { queue } = useOrders();
+  const { queue, later } = useOrders();
   const empire = useEmpire();
   const [step, setStep] = useState<Step>('terms');
   const [terms, setTerms] = useState<DealTerms>({ haggles: 0, cash: 0 });
@@ -95,7 +103,9 @@ export function DealWindow({ s, target, onClose }: { s: GameState; target: DealT
   };
   const sign = () => {
     if (p.disabledReason) return;
-    queue(action);
+    // Signing is the confirmation: the order goes straight into the tray (no second "Are you sure?"
+    // hiding behind the congratulations). Not enough hours left today: the deal closes tomorrow.
+    signDeal(s, action, { queue, later });
     setSigned(true);
   };
   const mgrName = !terms.mgr ? undefined : 'keep' in terms.mgr ? v.oldOwner : p.effects.find((e) => e.type === 'econ' && e.op.op === 'note' && e.op.text.endsWith(' runs it'));

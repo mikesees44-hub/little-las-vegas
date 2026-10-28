@@ -52,7 +52,12 @@ export function bloodLine(s: GameState, from: Character): Character[] {
     if (adult) return 1;
     return 2;
   };
+  // A boss who retired to Florida is the last resort, never the next in line (a family bot handed the
+  // chair back and forth between two retired Dominics twenty-one times in a year).
+  const retired = (c: Character) => (s.dyn?.people[c.id]?.retired !== undefined ? 1 : 0);
   return all.sort((a, b) => {
+    const r = retired(a) - retired(b);
+    if (r) return r;
     const t = tier(a) - tier(b);
     if (t) return t;
     const cl = closeness(a) - closeness(b);

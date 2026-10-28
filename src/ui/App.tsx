@@ -24,10 +24,10 @@ import { PickerModal } from './clarity/CandidatePicker';
 import { GlossaryOverlay } from './clarity/Glossary';
 import { WhatToDoModal } from './clarity/WhatToDo';
 import type { Candidate, Role } from '../engine/candidates';
-import { currentSlot, loadSlot, saveSlot, setCurrentSlot } from './save';
+import { currentSlot, loadDesk, loadSlot, saveDesk, saveSlot, setCurrentSlot, type DeskState } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, pausesOn, timeMode, weekStart } from './settings';
+import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, OPENING_SEEN_FLAG, pausesOn, timeMode, weekStart } from './settings';
 import { GoThere } from './travel/GoThere';
 import { CityScreen, VisitPill } from './travel/CityScreen';
 import { TripPlanner } from './travel/TripPlanner';
@@ -111,13 +111,17 @@ function freshSeed(): string {
 export interface AppProps { startOn?: 'title' | 'game' }
 export function App({ startOn = 'title' }: AppProps) {
   const [slot, setSlot] = useState(() => currentSlot());
-  const [s, setS] = useState<GameState>(() => loadSlot(currentSlot()) ?? newGameWith(freshSeed()));
+  // The saved game and the week in progress on its desk (orders, answers, scenes already opened: save.ts).
+  const [boot] = useState(() => { const st = loadSlot(currentSlot()) ?? newGameWith(freshSeed()); return { st, desk: loadDesk(currentSlot(), st) }; });
+  const [s, setS] = useState<GameState>(() => boot.st);
   /** The title screen / new-game flow (shown on first load). */
   const [menu, setMenu] = useState<MenuScreen | undefined>(startOn === 'title' ? 'title' : undefined);
   useEffect(() => applySettings(), []);
   registerAppearances(s.seed, s.characters);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [mgMoves, setMgMoves] = useState<Record<string, string[]>>({});
+  const [answers, setAnswers] = useState<Record<string, string>>(() => boot.desk?.answers ?? {});
+  const [mgMoves, setMgMoves] = useState<Record<string, string[]>>(() => boot.desk?.moves ?? {});
+  /** A scene left half-way (a reload, Back to the decision): its moves so far, so it resumes there. */
+  const [mgPartial, setMgPartial] = useState<Record<string, string[]>>(() => boot.desk?.partial ?? {});
   const [scene, setScene] = useState<{ iid: string; choiceId: string; m: NonNullable<ReturnType<typeof minigameOf>> } | null>(null);
   const [eventIdx, setEventIdx] = useState<number | null>(null);
   const [mode, setMode] = useState<Mode>('week');
@@ -130,7 +134,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
   const [pendingHeir, setPendingHeir] = useState<string | undefined>();
   const [seedInput, setSeedInput] = useState('');
-  const [orders, setOrders] = useState<PlayerAction[]>([]);
+  const [orders, setOrders] = useState<PlayerAction[]>(() => boot.desk?.orders ?? []);
   // The weekly take: the split chosen in the office (a ref so an answer in the same click reaches the week), and the office opened for review.
   const envelopeRef = useRef<EnvelopeChoice | undefined>(undefined);
   const [envelope, setEnvelopeState] = useState<EnvelopeChoice | undefined>();
@@ -244,7 +248,20 @@ export function App({ startOn = 'title' }: AppProps) {
   const [reels, setReels] = useState<Reel[]>([]);
 
   // The scripted scenes (Made the boss) open by themselves, once.
-  const [autoOpened, setAutoOpened] = useState<Record<string, boolean>>({});
+  const [autoOpened, setAutoOpened] = useState<Record<string, boolean>>(() => Object.fromEntries((boot.desk?.auto ?? []).map((k) => [k, true])));
+  // The desk is saved as it changes, so a reload or Continue keeps this week's orders and answers.
+  useEffect(() => {
+    if (menu) return;
+    saveDesk(slot, { seed: s.seed, week: s.week, orders, answers, moves: mgMoves, partial: mgPartial, auto: Object.keys(autoOpened).filter((k) => autoOpened[k]) });
+  }, [menu, slot, s.seed, s.week, orders, answers, mgMoves, mgPartial, autoOpened]);
+  function restoreDesk(d: DeskState | undefined) {
+    if (!d) return;
+    setOrders(d.orders);
+    setAnswers(d.answers);
+    setMgMoves(d.moves);
+    setMgPartial(d.partial ?? {});
+    setAutoOpened(Object.fromEntries(d.auto.map((k) => [k, true])));
+  }
   useEffect(() => {
     if (menu || scene || cues.length || reports) return;
     const i = s.pendingEvents.findIndex((e) => e.defId === 'made_boss' && !answers[e.iid] && !autoOpened[e.iid]);
@@ -315,6 +332,7 @@ export function App({ startOn = 'title' }: AppProps) {
     }
     setAnswers({});
     setMgMoves({});
+    setMgPartial({});
     setOrders([]);
     setBriefSkip([]);
     setSitdown(undefined);
@@ -381,6 +399,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function resetUi() {
     setAnswers({});
     setMgMoves({});
+    setMgPartial({});
     setScene(null);
     setOrders([]);
     setBriefSkip([]);
@@ -416,7 +435,8 @@ export function App({ startOn = 'title' }: AppProps) {
     resetUi();
     setMenu(undefined);
     setCues([openingCue(next)]);
-    try { sessionStorage.setItem('llv-opening-' + next.seed, '1'); } catch { /* storage unavailable */ }
+    // Seen: the opening is marked in the save itself, so Continue never plays it again (playtest #7).
+    next.flags[OPENING_SEEN_FLAG] = 1;
   }
 
   function restart(seed?: string, start: StartId = 'classic') {
@@ -429,15 +449,13 @@ export function App({ startOn = 'title' }: AppProps) {
     settledRef.current = undefined;
     setCurrentSlot(n);
     setSlot(n);
+    const opening = loaded.week <= 1 && !loaded.flags[OPENING_SEEN_FLAG];
+    if (opening) loaded.flags[OPENING_SEEN_FLAG] = 1;
     setS(loaded);
     resetUi();
+    restoreDesk(loadDesk(n, loaded));
     setMenu(undefined);
-    try {
-      if (loaded.week <= 1 && !sessionStorage.getItem('llv-opening-' + loaded.seed)) {
-        sessionStorage.setItem('llv-opening-' + loaded.seed, '1');
-        setCues([openingCue(loaded)]);
-      }
-    } catch { /* storage unavailable */ }
+    if (opening) setCues([openingCue(loaded)]);
   }
 
   const shellUi = useShellState(s, orders, sheet);
@@ -808,7 +826,9 @@ export function App({ startOn = 'title' }: AppProps) {
           params={scene.m.params}
           parts={scene.m.parts}
           onCancel={() => setScene(null)}
-          onDone={(moves) => { const c = scene.choiceId; setScene(null); commit(c, moves); }}
+          resume={mgPartial[scene.iid]}
+          onProgress={(mv) => setMgPartial((x) => ({ ...x, [scene.iid]: mv }))}
+          onDone={(moves) => { const c = scene.choiceId; const iid = scene.iid; setScene(null); setMgPartial((x) => { const { [iid]: _, ...rest } = x; void _; return rest; }); commit(c, moves); }}
         />
       )}
       {current && !scene && current.defId === 'tribute_audience' && s.tribute?.reports.find((r) => r.id === current.meta?.report) && (

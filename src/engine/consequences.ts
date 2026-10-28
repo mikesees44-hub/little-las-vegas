@@ -112,10 +112,12 @@ const HANDLERS: Record<string, Handler> = {
   promise_abdicate: () => {
     return { text: 'the capos came back for the boss\'s promise to step aside — and he is still in the chair', effects: [{ type: 'crewOpinion', amount: -10, reason: 'Broke his promise to step aside' }, { type: 'respect', amount: -4 }] };
   },
-  table_enforce: (ctx) => {
+  table_enforce: (ctx, sc) => {
     const s = ctx.s;
-    const men = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank === 'capo');
-    const v = men[0];
+    // The man the ruling named, if he is still around; else a capo.
+    const named = sc.params?.charId ? s.characters[String(sc.params.charId)] : undefined;
+    const men = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank === 'capo' && c.id !== s.playerId);
+    const v = named?.alive && named.faction === 'player' && named.id !== s.playerId ? named : men[0];
     if (!v) return { text: 'Philadelphia enforced the ruling: your places in Downtown were burned', effects: [{ type: 'respect', amount: -5 }, { type: 'heat', bar: 'local', amount: 6 }] };
     return { text: `Philadelphia enforced the Table's ruling: ${v.firstName} ${v.lastName} was found in the Delaware`, effects: [{ type: 'kill', charId: v.id, cause: 'killed on the Table\'s orders for your defiance', killer: 'philly' }, { type: 'respect', amount: -4 }] };
   },

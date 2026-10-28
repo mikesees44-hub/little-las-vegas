@@ -455,10 +455,10 @@ const rivalDebt: CrewEventDef = {
     return make(s, 'crew_debt', c, `${callName(c)} owes ${r.shortName}'s shylock`,
       `${displayName(c)} owes ${fmt(amt)} to a ${r.shortName} shylock on the Causeway, and it grows every week. They have stopped asking for money and started asking for favors.`,
       [
-        { id: 'pay', label: `Pay it off (${fmt(amt)})`, because: `paid off ${c.firstName}'s debt to ${r.shortName}`, effects: [{ type: 'money', amount: -amt, label }, { type: 'debtTo', charId: c.id, clear: true, label }, { type: 'courted', charId: c.id, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: `Paid off my debt to ${r.shortName}`, decay: 1, label }] },
+        { id: 'pay', label: `Pay it off (${fmt(amt)})`, because: `paid off ${c.firstName}'s debt to ${r.shortName}`, disabledReason: s.money < amt ? `Needs ${fmt(amt)}` : undefined, effects: [{ type: 'money', amount: -amt, label }, { type: 'debtTo', charId: c.id, clear: true, label }, { type: 'courted', charId: c.id, label }, { type: 'opinion', from: c.id, to: s.playerId, amount: 12, reason: `Paid off my debt to ${r.shortName}`, decay: 1, label }] },
         { id: 'lean', label: 'Lean on the shylock instead', detail: 'The debt is forgiven, one way or another.', because: `leaned on ${r.shortName}'s shylock over ${c.firstName}'s debt`, effects: [{ type: 'debtTo', charId: c.id, clear: true, label }, { type: 'courted', charId: c.id, label }, { type: 'respect', amount: 1, label }, { type: 'rivalOpinion', rival: r.id, amount: -15, reason: 'Muscled our shylock', label }, { type: 'heat', bar: 'local', amount: 2, label }, { type: 'schedule', key: 'retaliation', minWeeks: 1, maxWeeks: 5, chance: 0.4, hint: `${r.shortName} may hit back`, params: { rival: r.id }, label }] },
         { id: 'his', label: 'His debt, his problem', because: `left ${c.firstName} to his debt`, effects: [{ type: 'opinion', from: c.id, to: s.playerId, amount: -8, reason: 'Left me to the shylocks', decay: 1, label }, { type: 'courted', charId: c.id, rival: r.id, label }] },
-      ], 'pay', [r.leaderId]);
+      ], s.money >= amt ? 'pay' : 'his', [r.leaderId]);
   },
 };
 

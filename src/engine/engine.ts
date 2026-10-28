@@ -49,7 +49,8 @@ import './livingStoryData';
 import './storylets';
 import { noteAnswers, takeQuiet } from './storyPace';
 import { romanceMonth } from './romance';
-import { operationalHeat, runEconomy } from './economy';
+import { operationalHeat, recordEarnings, runEconomy } from './economy';
+import { attended, neglectWeek } from './neglect';
 import { heatConsequences, heatDecay } from './heat';
 import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
 import { addOpinion, decayAllRelations, opinion } from './relations';
@@ -326,6 +327,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) arcsWeek(ctx);
   if (!s.gameOver) {
     runEconomy(ctx);
+    // An absent boss (neglect.ts): a week nobody runs the family costs something.
+    neglectWeek(ctx, attended(resolving, choices, delegated.length));
     econWeek(ctx);
     hoodWeek(ctx);
     livingWeek(ctx);
@@ -376,6 +379,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     politicsWeek(ctx);
     newsWeek(ctx);
     reelsWeek(ctx, input);
+    recordEarnings(ctx);
     tributeWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));

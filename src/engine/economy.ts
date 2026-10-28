@@ -125,6 +125,33 @@ export function skimRate(s: GameState, c: Character): number {
   return Math.min(0.3, r);
 }
 
+/** Weekly income past which the pad grows, and the share of every dollar beyond it. */
+export const PAD_FREE = 5000;
+export const PAD_RATE = 0.05;
+
+/** The family's recent weekly income (all of it: streets, kick-ups, businesses, property). */
+export function recentIncome(s: GameState): number {
+  const h = s.incomeHistory.slice(-4);
+  return h.length ? h.reduce((a, b) => a + b, 0) / h.length : 0;
+}
+
+/** The extra pad a big earner keeps (none for a small outfit). */
+export function padForSize(s: GameState): number {
+  return Math.round(Math.max(0, recentIncome(s) - PAD_FREE) * PAD_RATE);
+}
+
+/**
+ * The week's income as Philadelphia sees it: every street, kick-up and business dollar posted this
+ * week, not just what the streets brought (the hotels and the property used to go uncounted, and the
+ * envelope stayed small while the empire grew). Called once the week's money is in.
+ */
+export function recordEarnings(ctx: Ctx): void {
+  const s = ctx.s;
+  const earned = ctx.lines.reduce((a, l) => a + (l.stat === 'money' && l.amount > 0 && (l.category === 'street' || l.category === 'business' || l.category === 'kickup') ? l.amount : 0), 0);
+  const h = s.incomeHistory;
+  if (h.length) h[h.length - 1] = Math.max(h[h.length - 1], Math.round(earned));
+}
+
 export function districtTake(s: GameState, districtId: string): number {
   const d = s.districts.find((x) => x.id === districtId)!;
   return d.streetBase * ((d.influence.player ?? 0) / 100) * seasonMultiplier(s.date);
@@ -184,6 +211,9 @@ export function runEconomy(ctx: Ctx): void {
   const thrift = Math.round(upkeep * perkMod(s, 'upkeep') / 100);
   if (thrift > 0) money(ctx, thrift, `Perks: thin margins on upkeep (−${perkMod(s, 'upkeep')}%)`, 'cost');
   money(ctx, -COP_PAYOFF, 'Envelopes for the beat cops', 'cost');
+  // A bigger outfit keeps more people sweet: the pad grows with what the family earns (MAKE_IT_GREAT #2).
+  const pad = padForSize(s);
+  if (pad > 0) money(ctx, -pad, 'The pad for a bigger outfit: precinct captains, inspectors, clerks at City Hall', 'cost');
   if (!isInSeason(s.date)) {
     // The off-season bites: heating oil, idle payroll, the boardwalk boarded up.
     const n = owned(s).length;

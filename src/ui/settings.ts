@@ -48,6 +48,8 @@ export type WeekStart = 'office' | 'desk' | 'map';
 
 /** The flag a new game carries (set when it is created) so the Office is its default home. */
 export const OFFICE_HOME_FLAG = 'officeHome';
+/** Set in the save once the opening card has played (a Continue in week 1 never replays it). */
+export const OPENING_SEEN_FLAG = 'openingSeen';
 
 /** Where this game starts each week: the setting, else Office for games begun with the Office, Desk for older saves. */
 export function weekStart(s: { flags: Record<string, number> }): WeekStart {
