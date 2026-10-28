@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useEscape } from '../keys';
 import { formatDate, seasonInfo } from '../../engine/calendar';
 import { formatDay } from '../../engine/days';
+import { clockHour, formatClock, hoursLabel, hoursLeft } from '../../engine/timeCost';
 import { displayName, player } from '../../engine/characters';
 import { heatBand } from '../../engine/heat';
 import { statHelp } from '../../engine/glossary';
@@ -153,8 +154,10 @@ function WaitingButton({ pending, answered, sitCount, mornings, envelope, onRevi
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind }: {
+export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay }: {
   s: GameState;
+  /** End the boss's day now (the hours left go unused): the day ticks, or on Sunday the week turns. */
+  onEndDay?: () => void;
   /** Running clock (days tick by) rather than turn-based (settings). */
   clockMode?: boolean;
   speed: Speed;
@@ -216,6 +219,10 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
         </div>
         <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
           <div className="text-[11px] sm:text-xs text-stone-300 whitespace-nowrap" data-testid="topbar-date">{clockMode ? formatDay(s) : formatDate(s.date)} · Wk {s.week}</div>
+          <div className="text-[10px] sm:text-[11px] text-sky-300 whitespace-nowrap" data-testid="topbar-hour" title={`The boss's day runs 8 AM to 2 AM. ${hoursLabel(hoursLeft(s))} left today.`}>
+            {formatDay(s).split(' ')[0]} {formatClock(clockHour(s))} · {hoursLabel(hoursLeft(s))} left
+            {onEndDay && !s.gameOver && <button type="button" className="ml-1 underline text-stone-400 hover:text-gold-300" onClick={onEndDay} data-testid="end-day" title="Call it a day: the world moves on to tomorrow">end day ▸</button>}
+          </div>
           <div className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden sm:inline"> · {info.countdownLabel}</span></div>
         </div>
         {!s.gameOver && (

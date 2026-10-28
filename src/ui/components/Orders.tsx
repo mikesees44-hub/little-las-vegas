@@ -12,12 +12,15 @@ import { WhyPanel } from '../clarity/WhyPanel';
 import { sameOrder, verbOf } from '../verbs';
 import { actionFacts } from '../actionFacts';
 import { AdviceButton } from '../advice/AdviceButton';
+import { hoursLabel, timeBlock, timeCost } from '../../engine/timeCost';
 
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
   orders: PlayerAction[];
   queue: (a: PlayerAction) => void;
   remove: (i: number) => void;
+  /** "Do it tomorrow": give the order now, its hours come out of the next day (engine/timeCost.ts). */
+  later?: (a: PlayerAction) => void;
   /** Replace one queued order in place (e.g. to approve Family money for it). */
   replace?: (i: number, a: PlayerAction) => void;
 }
@@ -35,11 +38,14 @@ const same = sameOrder;
  * button that queues it for this week. Disabled orders show why.
  */
 export function ActionCard({ s, action, compact, label }: { s: GameState; action: PlayerAction; compact?: boolean; label?: string }) {
-  const { orders, queue } = useOrders();
+  const { orders, queue, later } = useOrders();
   const p = previewAction(s, action);
   const others = orders.filter((o) => !same(o, action));
   const q = queuedMoney(s, others);
   const budget = q.familyLeft;
+  // The boss's hours (engine/timeCost.ts): what it takes out of his day; not enough left greys it out with the reason.
+  const hours = timeCost(action, s);
+  const noTime = timeBlock(s, action);
   // The boss's own things: his pocket pays. If it is short, the button names the Family money it takes,
   // and only that tap approves it (the order carries `fund: 'family'`; without it the week won't dip).
   const pocket = p.pot === 'pocket';
@@ -55,7 +61,8 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
     : pocket ? (short > budget ? `Not enough: your pocket has ${fmt$(Math.max(0, q.pocketLeft))} and the Family ${fmt$(Math.max(0, budget))} after this week's orders` : undefined)
     : p.cost > budget ? `Only ${fmt$(budget)} of Family money left after this week's orders` : undefined;
   // At the table the price can come down: only a hard block stops the offer.
-  const why = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
+  const hard = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
+  const why = hard ?? noTime;
   const facts = actionFacts(s, action, p);
   return (
     <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`}>
@@ -64,6 +71,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
           <div className="font-semibold text-stone-100 text-sm">{label ?? p.title}</div>
           {(!compact || action.kind === 'talk') && detail && <div className="text-xs text-stone-400 mt-0.5">{detail}</div>}
           {p.cost > 0 && <div className={`text-[11px] mt-0.5 tabular-nums ${pocket ? 'text-amber-300' : 'text-gold-400'}`} data-testid="price-pot">{fmt$(p.cost)} {pocket ? 'from your pocket' : 'from Family money'}</div>}
+          <div className="text-[11px] mt-0.5 text-sky-300" data-testid="time-cost">Takes {hoursLabel(hours)}</div>
         </div>
         <button
           className={queued ? 'btn-ghost text-xs py-1 shrink-0 max-w-full' : 'btn-gold text-xs py-1 shrink-0 max-w-full'}
@@ -87,6 +95,9 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
       {why && <div className="text-[11px] text-red-400 mt-1" data-testid="unavailable">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
+      {!hard && noTime && !queued && later && (
+        <button className="btn-gold text-xs py-1 mt-1" onClick={() => later(short > 0 ? { ...action, fund: 'family' } : action)} data-testid="do-tomorrow">Do it tomorrow</button>
+      )}
       {!compact && !why && (
         <div className="mt-1 text-[11px] text-stone-500 leading-snug" data-testid="action-facts">
           <span className="text-stone-400">Who:</span> {facts.actor}{facts.target ? <> · <span className="text-stone-400">On:</span> {facts.target}</> : null} · <span className="text-stone-400">When:</span> {facts.timing}

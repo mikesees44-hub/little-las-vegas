@@ -165,3 +165,26 @@ describe('time costs', () => {
     expect(hoursUsed(r.state)).toBe(0);
   });
 });
+
+describe('time costs in the UI', () => {
+  it('the confirm window says what it takes; with no time left it offers "Do it tomorrow"', async () => {
+    const { createElement } = await import('react');
+    const { renderToStaticMarkup } = await import('react-dom/server');
+    const { ConfirmOrder } = await import('../src/ui/components/ConfirmOrder');
+    const { timeLine } = await import('../src/ui/components/OrderToast');
+    const s = newGame('tc-ui');
+    const props = { s, action: date, onYes: () => {}, onNo: () => {}, onNeverAsk: () => {}, onTomorrow: () => {} };
+    const html = renderToStaticMarkup(createElement(ConfirmOrder, props));
+    expect(html).toContain('Takes: 4 hours');
+    expect(html).toContain('OK, do it');
+    expect(html).not.toContain('Do it tomorrow');
+    const late = renderToStaticMarkup(createElement(ConfirmOrder, { ...props, s: withHours(s, DAY_HOURS - 1) }));
+    expect(late).toContain('Not enough time today');
+    expect(late).toContain('Do it tomorrow');
+    // The OK button is still there, disabled, with the reason.
+    expect(late).toMatch(/disabled=""[^>]*data-testid="confirm-yes"|data-testid="confirm-yes"[^>]*disabled=""/);
+    expect(timeLine({ hours: 2, to: 21, late: 0, missedDinner: false })).toBe('2 hours pass — now 9 PM.');
+    expect(timeLine({ hours: 1, to: 9, late: 0, missedDinner: false })).toBe('1 hour passes — now 9 AM.');
+    expect(timeLine({ hours: 3, to: 0, late: 0, missedDinner: false, bookedDay: 1 })).toMatch(/^Booked for Tuesday/);
+  });
+});

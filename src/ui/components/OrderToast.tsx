@@ -5,8 +5,22 @@ import { fmt$ } from '../format';
 import { verbOf } from '../verbs';
 import { actionFacts } from '../actionFacts';
 import { CharacterDisplayName } from './yesBoss';
+import { DAY_NAMES } from '../../engine/days';
+import { formatClock, hoursLabel } from '../../engine/timeCost';
 
-export interface ToastItem { action: PlayerAction; index: number; at: number; /** What the pocket can't cover without the player's approval. */ short?: number }
+export interface ToastItem {
+  action: PlayerAction; index: number; at: number;
+  /** What the pocket can't cover without the player's approval. */ short?: number;
+  /** The hours it took (engine/timeCost.ts): the clock after it, late hours, a missed dinner; or the day it was booked for. */
+  time?: { hours: number; to: number; late: number; missedDinner: boolean; bookedDay?: number };
+}
+
+/** "2 hours pass — now 9 PM" (or "Booked for Tuesday: 3 hours"). */
+export function timeLine(t: NonNullable<ToastItem['time']>): string {
+  if (t.bookedDay !== undefined) return `Booked for ${DAY_NAMES[t.bookedDay]}: ${hoursLabel(t.hours)} of that day.`;
+  const pass = hoursLabel(t.hours);
+  return `${pass.charAt(0).toUpperCase()}${pass.slice(1)} pass${t.hours === 1 ? 'es' : ''} — now ${formatClock(t.to)}.`;
+}
 
 /**
  * Pops up the moment the player clicks an action: what it is, what it costs,
@@ -35,6 +49,13 @@ export function OrderToast({ s, item, onUndo, onClose, onApprove }: { s: GameSta
             {chips.length > 0 && <span className="text-stone-400">{chips.join(' · ')}. </span>}
             It happens when you hit <span className="text-gold-300">Advance Week</span>.
           </div>
+          {item.time && (
+            <div className="mt-1 text-xs text-sky-200" data-testid="toast-time">
+              {timeLine(item.time)}
+              {item.time.late > 0 && <span className="text-amber-300"> A late night: it costs you sleep.</span>}
+              {item.time.missedDinner && <span className="text-amber-300"> You missed dinner at home.</span>}
+            </div>
+          )}
           {(item.short ?? 0) > 0 && (
             <div className="mt-1 text-xs text-amber-300" data-testid="toast-unfunded">
               Your pocket is {fmt$(item.short!)} short. It won't be carried out unless you approve Family money for the rest.
