@@ -6,6 +6,7 @@ import { killCharacter } from './dynasty';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
 import { alliedWithFaction } from './familyHouses';
 import { respect, rivalMoneyHit, type Ctx } from './ledger';
+import { rivalCaps } from './rivals';
 import { awayReason, today } from './days';
 import { defectTo } from './regimes';
 import { addOpinion, opinion } from './relations';
@@ -668,7 +669,7 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
       const b = s.businesses.find((x) => x.id === t.bizId && x.owner === 'player');
       if (!b) return;
       eff([{ type: 'closeBusiness', businessId: b.id, weeks: randInt(T, 1, 3) }, { type: 'heat', bar: 'local', amount: 2 }], `${by} hit ${b.name}`);
-      const lost = rivalMoneyHit(ctx, randInt(T, 8, 25) * 100, L, 0.3);
+      const lost = rivalMoneyHit(ctx, randInt(T, 8, 25) * 100, L, rivalCaps(s).moneyFrac);
       note(ctx, T, `${by} hit ${b.name}${lost ? ` (${fmtMoney(lost)} gone)` : ''}. It's shut while the glass gets swept up.${tag}`);
       return;
     }

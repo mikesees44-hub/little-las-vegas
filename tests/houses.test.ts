@@ -87,8 +87,13 @@ describe('the houses at the start', () => {
     const plain = newGame('houses-a', { skipHouses: true });
     // The dating roster is made after the houses' history (its own dice), so its women get other ids: same count, both ways.
     const roster = new Set(Object.keys(plain.dating?.providers ?? {}));
-    expect(Object.keys(s.dating?.providers ?? {}).length).toBe(roster.size);
-    for (const c of Object.values(plain.characters).filter((x) => !roster.has(x.id))) {
+    // (The nightlife cast rolls its own dice, so the count can differ by a woman or two.)
+    expect(Math.abs(Object.keys(s.dating?.providers ?? {}).length - roster.size)).toBeLessThanOrEqual(3);
+    // The nightlife cast (and their households) roll their own dice after the houses too.
+    const night = new Set<string>(Object.keys(plain.nightlife?.people ?? {}));
+    for (const id of [...night]) { const w = plain.characters[id]; const fam = plain.nightlife?.people[id]?.fam; if (fam?.partnerId) night.add(fam.partnerId); if (w?.spouseId) night.add(w.spouseId); for (const k of w?.childrenIds ?? []) night.add(k); }
+    for (const c of Object.values(plain.characters)) if (c.childrenIds?.some((k) => night.has(k)) || (c.spouseId && night.has(c.spouseId))) night.add(c.id);
+    for (const c of Object.values(plain.characters).filter((x) => !roster.has(x.id) && !night.has(x.id))) {
       const now = s.characters[c.id];
       expect(now, c.firstName).toBeTruthy();
       expect(`${now.firstName} ${now.lastName} ${now.birth.y}`).toBe(`${c.firstName} ${c.lastName} ${c.birth.y}`);

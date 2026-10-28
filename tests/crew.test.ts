@@ -158,9 +158,9 @@ describe('loyalty and defection', () => {
     };
     expect(run(70).faction, seed).toBe('player');
     const unloved = run(-35);
-    // He either went to the rival who courted him, or is still yours (the courtship lapsed): never anywhere else.
-    expect(['kessler', 'player'], seed).toContain(unloved.faction);
-    if (unloved.faction === 'kessler') went++;
+    // He either went to a rival (the one who courted him, or another poaching him while he was unhappy), or is still yours.
+    expect(['player', ...base.rivals.map((r) => r.id)], seed).toContain(unloved.faction);
+    if (unloved.faction !== 'player') went++;
     }
     expect(went).toBeGreaterThanOrEqual(1);
   });
