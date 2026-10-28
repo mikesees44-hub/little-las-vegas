@@ -3,7 +3,12 @@ import { CITY_LIST, standing } from '../../engine/cities';
 import { displayName } from '../../engine/characters';
 import { departBlock, departFor, departQuote, guardPool, MAX_GUARDS, visitModes, type DepartPlan } from '../../engine/visit';
 import { FEATURED_CITIES, sceneOf } from '../../engine/visitData';
-import { MODES } from '../../engine/travelDests';
+import { DESTS, MODES } from '../../engine/travelDests';
+import { transportBlock, type TransportId } from '../../engine/transport';
+import { TransportPicker } from './TransportPicker';
+
+/** The ways the boss can just leave today, by mode (no planes or boats: that is a planned trip). */
+const VISIT_WAYS: Record<VisitMode, TransportId[]> = { cars: ['caddy', 'chauffeur', 'crewcar'], train: ['prr_club', 'prr_coach', 'cnj'], bus: ['greyhound', 'shortline'] };
 import type { VisitMode } from '../../engine/travelState';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -18,10 +23,13 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
  * the trip planner; this is the boss getting in the car.)
  */
 export function GoThere({ s, cityId, update, onClose, onArrive }: { s: GameState; cityId?: string; update: (f: (s: GameState) => GameState) => void; onClose: () => void; onArrive: () => void }) {
-  const [plan, setPlan] = useState<DepartPlan>(() => ({ cityId: cityId && sceneOf(cityId) ? cityId : 'philadelphia', mode: 'cars', guards: [] }));
+  const [plan, setPlan] = useState<DepartPlan>(() => ({ cityId: cityId && sceneOf(cityId) ? cityId : 'philadelphia', mode: 'cars', guards: [], transport: 'caddy' }));
   const modes = visitModes(plan.cityId);
   const mode: VisitMode = modes.includes(plan.mode) ? plan.mode : modes[0] ?? 'cars';
-  const p = { ...plan, mode };
+  const dest = DESTS[plan.cityId];
+  // The way chosen, if it goes there; else the first that does.
+  const way = dest ? [plan.transport, ...VISIT_WAYS[mode]].find((id): id is TransportId => !!id && VISIT_WAYS[mode].includes(id) && !transportBlock(id, dest, s.date)) : undefined;
+  const p: DepartPlan = { ...plan, mode, transport: way };
   const q = departQuote(s, p);
   const sc = sceneOf(p.cityId);
   const pool = guardPool(s);
@@ -61,13 +69,13 @@ export function GoThere({ s, cityId, update, onClose, onArrive }: { s: GameState
             <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">How</div>
             <div className="flex flex-wrap gap-1.5">
               {(['cars', 'train', 'bus'] as VisitMode[]).map((m) => (
-                <button key={m} type="button" disabled={!modes.includes(m)} onClick={() => setPlan((x) => ({ ...x, mode: m }))}
+                <button key={m} type="button" disabled={!modes.includes(m)} onClick={() => setPlan((x) => ({ ...x, mode: m, transport: VISIT_WAYS[m][0] }))}
                   className={`flex items-center gap-1 rounded border px-2 py-1 text-xs disabled:opacity-40 ${mode === m ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300'}`}>
                   <ModeIcon mode={m} size={12} /> {m === 'cars' ? 'Your car' : MODES[m].name}
                 </button>
               ))}
             </div>
-            <p className="text-[11px] text-stone-500">{MODES[mode].blurb}</p>
+            {dest ? <TransportPicker dest={dest} mode={mode} tier="modest" date={s.date} value={way} only={VISIT_WAYS[mode]} onPick={(id) => setPlan((x) => ({ ...x, transport: id }))} /> : <p className="text-[11px] text-stone-500">{MODES[mode].blurb}</p>}
           </div>
           <div className="space-y-1">
             <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Bodyguards (up to {MAX_GUARDS})</div>
