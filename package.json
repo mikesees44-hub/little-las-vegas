@@ -30,6 +30,7 @@
     "@types/topojson-simplify": "^3.0.3",
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "mapshaper": "^0.6.102",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "topojson-client": "^3.1.0",
