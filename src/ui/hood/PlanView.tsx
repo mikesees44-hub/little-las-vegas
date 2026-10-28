@@ -12,6 +12,9 @@ import { layoutLabels, layoutSprites, type Box } from './planLayout';
 import { storefrontArt } from './storefrontArt';
 import { Turnaround } from './Turnaround';
 import { TownEditor } from '../editor/TownEditor';
+import { PoliticalOverlay } from '../realm/PoliticalOverlay';
+import type { MapMode } from './MapControls';
+import { wildwoodDetails, wildwoodHeat, wildwoodRackets, wildwoodRegions, wildwoodStyles } from './wildwoodRealm';
 
 /**
  * The block map: the business-location layer, drawn to scale in meters in the
@@ -249,7 +252,7 @@ function PlaceCard({ p, s, onOpenLot, onClose }: { p: Placed; s: GameState; onOp
   );
 }
 
-export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: Item[]; onPick: (key: string) => void; onClose: () => void }) {
+export function PlanView({ s, items, onPick, onClose, mapMode = 'terrain' }: { s: GameState; items: Item[]; onPick: (key: string) => void; onClose: () => void; /** The island's map mode: a faint political (or heat, rackets) wash under the blocks. */ mapMode?: MapMode }) {
   const [edits, setEdits] = useState<Record<string, PlaceEdit>>(loadEdits);
   const [saved, setSaved] = useState<'saved' | 'failed' | undefined>();
   const [edit, setEdit] = useState(false);
@@ -284,6 +287,13 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
     return () => ro?.disconnect();
   }, []);
   const pxPerM = Math.min(box.w / vb.w, box.h / vb.h);
+  const realmRegions = useMemo(() => (mapMode === 'terrain' ? [] : wildwoodRegions(s, 'uv')), [s, mapMode]);
+  const realmStyles = useMemo(() => wildwoodStyles(s), [s]);
+  const realmValues = useMemo(() => (mapMode === 'heat' ? wildwoodHeat(s) : mapMode === 'rackets' ? wildwoodRackets(s) : undefined), [s, mapMode]);
+  const realm = (layer: 'fill' | 'ink') => mapMode === 'terrain' ? null : (
+    <PoliticalOverlay regions={realmRegions} styles={realmStyles} scale={pxPerM} layer={layer} idPrefix="plan-realm" fillOpacity={0.22} tooltips={layer === 'fill' && !edit}
+      values={realmValues} ramp={mapMode === 'rackets' ? ['#efe6cf', '#1f8a4c'] : ['#f4e3b0', '#b3261e']} details={(r) => wildwoodDetails(s, r)} />
+  );
 
   const byLot = useMemo(() => new Map(items.filter((x) => x.lot).map((x) => [x.lot!.id, x])), [items]);
   const placed: Placed[] = useMemo(() => {
@@ -446,6 +456,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
       <svg ref={svg} viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full select-none" style={{ touchAction: 'none' }}
         onPointerDown={(e) => onDown(e, 'pan')}>
         <Ground year={year} A={A} />
+        <g pointerEvents={edit ? 'none' : undefined}>{realm('fill')}</g>
         {/* The lots on the ground, then the photos from the back to the front, then the name tags over everything. */}
         {placed.map((p) => {
           const L = layout.sp.get(p.f.id);
@@ -475,6 +486,7 @@ export function PlanView({ s, items, onPick, onClose }: { s: GameState; items: I
             );
           })}
         </g>
+        {realm('ink')}
       </svg>
       {/* Toolbar. */}
       <div className="absolute left-2 top-11 z-10 flex flex-wrap items-center gap-1.5 max-w-[calc(100%-1rem)]" data-plan-ui data-hv-ui>

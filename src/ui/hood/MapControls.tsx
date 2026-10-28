@@ -85,3 +85,26 @@ export function MapFind({ s, items, onHood, onItem }: { s: GameState; items: Ite
     </div>
   );
 }
+
+/** The map modes, Paradox style: whose ground it is, the plain map, the heat, your rackets. */
+export type MapMode = 'political' | 'terrain' | 'heat' | 'rackets';
+export const MAP_MODES: { id: MapMode; label: string; icon: string; hint: string }[] = [
+  { id: 'political', label: 'Political', icon: '⚑', hint: 'Who holds each district: the families\' colours and names' },
+  { id: 'terrain', label: 'Terrain', icon: '◩', hint: 'The island as it is: streets, buildings and photos' },
+  { id: 'heat', label: 'Heat', icon: '♨', hint: 'Police attention and the heat your places draw' },
+  { id: 'rackets', label: 'Rackets', icon: '$', hint: 'What your places gross a week, district by district' },
+];
+
+/** The map-mode switch (a row of toggle buttons, the way a strategy map does it). */
+export function MapModeToggle({ mode, onMode }: { mode: MapMode; onMode: (m: MapMode) => void }) {
+  return (
+    <div className="flex gap-0.5 rounded bg-noir-900/80 p-0.5" role="radiogroup" aria-label="Map mode" data-testid="map-modes">
+      {MAP_MODES.map((m) => (
+        <button key={m.id} type="button" role="radio" aria-checked={mode === m.id} title={m.hint} data-testid={`map-mode-${m.id}`}
+          className={`hv-btn ${mode === m.id ? 'hv-on' : ''}`} onClick={() => onMode(m.id)}>
+          <span aria-hidden="true">{m.icon}</span> {m.label}
+        </button>
+      ))}
+    </div>
+  );
+}
