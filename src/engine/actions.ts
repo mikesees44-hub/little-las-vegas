@@ -1,3 +1,4 @@
+import { noteOrder, previewMen } from './myMen';
 import { isIncapable } from './aging';
 import { previewUnderbelly } from './underbelly';
 import { costHint, moneyCost, withCostHint } from './costHints';
@@ -311,6 +312,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** Your People (bonds.ts): the wife, the goomars, the kids, friends and enemies. They decide. */
   bond: {
     preview: (s, a) => previewBond(s, a.op),
+  },
+  /** My Men (myMen.ts): money, protection, his back, discipline. */
+  mymen: {
+    preview: (s, a) => previewMen(s, a.op),
   },
   /** Travel, trips and flight (travel.ts, fugitive.ts). */
   travel: {
@@ -959,6 +964,7 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
     def.commit?.(ctx, a as never);
     noteAttention(s, a);
+    noteOrder(s, a);
     if (a.kind === 'interact') {
       const t = s.characters[a.target];
       if (t) {

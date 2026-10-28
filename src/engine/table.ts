@@ -367,6 +367,31 @@ export function buildRulingAgainst(s: GameState, d: Dispute): EventInstance {
   };
 }
 
+/**
+ * Philadelphia comes to collect a man the Table named (after a defiance, or a bargain that did not hold).
+ * They do not just take him: the boss is told, and the boss decides. Hiding him or standing with him costs;
+ * giving him up is a choice he makes out loud (handover.ts), never what silence does.
+ */
+export function buildPhillyComes(s: GameState, v: Character): EventInstance {
+  const label = 'Philadelphia comes for him';
+  const price = Math.round(bloodPrice(s, v) * 1.25 / 500) * 500;
+  const hideCost = 1500;
+  const choices: Choice[] = [
+    { id: 'hide', label: `Hide ${v.firstName} until it cools ($${hideCost.toLocaleString('en-US')})`, detail: 'A farmhouse in Cumberland County, a month out of sight. Philadelphia will look, and not find him.', because: `hid ${v.firstName} from Philadelphia`, disabledReason: s.money < hideCost ? `Needs $${hideCost.toLocaleString('en-US')}` : undefined, effects: [{ type: 'money', amount: -hideCost, label }, { type: 'mymen', op: { op: 'protect', id: v.id, how: 'hide' }, label }, { type: 'rivalOpinion', rival: 'philly', amount: -6, reason: 'Hid the man we asked for', label }, { type: 'opinion', from: v.id, to: s.playerId, amount: 15, reason: 'Hid me from Philadelphia', decay: 0, label }] },
+    { id: 'stand', label: `Stand with ${v.firstName}`, detail: 'Two of your guys on him day and night. Philadelphia sees you mean it, and does not like it.', because: `stood with ${v.firstName} against Philadelphia`, effects: [{ type: 'mymen', op: { op: 'protect', id: v.id, how: 'guard' }, label }, { type: 'heat', bar: 'family', amount: 8, label }, { type: 'rivalOpinion', rival: 'philly', amount: -12, reason: 'Stood in our way', label }, { type: 'respect', amount: 2, label }, { type: 'crewOpinion', amount: 3, reason: `The boss stood with ${v.firstName}`, label }, { type: 'opinion', from: v.id, to: s.playerId, amount: 20, reason: 'Stood with me against Philadelphia', decay: 0, label }] },
+    { id: 'pay', label: `Pay for him after all (${fmtMoney(price)})`, detail: 'Late money costs more. They take it.', because: `paid Philadelphia for ${v.firstName} late`, disabledReason: s.money < price ? `Needs ${fmtMoney(price)}` : undefined, effects: [{ type: 'money', amount: -price, label: `${label}: blood money` }, { type: 'rivalOpinion', rival: 'philly', amount: 6, reason: 'Paid in the end', label }, { type: 'opinion', from: v.id, to: s.playerId, amount: 20, reason: 'Paid for my life', decay: 0, label }] },
+    { id: 'giveup', label: `Give ${v.firstName} up`, detail: `${v.firstName} dies. Every man in the family will know you let them take him.`, because: `gave ${v.firstName} up to Philadelphia`, effects: [{ type: 'kill', charId: v.id, cause: 'given up to Philadelphia after the Table\'s ruling', killer: 'philly', label }, ...sacrificeCost(s, v, label), { type: 'mymen', op: { op: 'note', text: `gave ${v.firstName} up to Philadelphia`, amount: -25 }, label }] },
+  ];
+  const def = choices.find((c) => c.id === 'hide' && !c.disabledReason) ? 'hide' : 'stand';
+  return {
+    iid: `ev${s.nextId++}`, defId: 'philly_comes', week: s.week, mandatory: true, priority: 88,
+    title: `Philadelphia comes for ${v.firstName}`,
+    text: `Two cars with Pennsylvania plates have been parked on ${v.firstName}'s street since Sunday. The Table's ruling still stands, and Philadelphia means to enforce it. ${displayName(v)} is waiting to hear what you will do.`,
+    defaultChoiceId: def, meta: { charId: v.id }, actors: [v.id, ...(chair(s) ? [chair(s)!.id] : [])],
+    choices,
+  };
+}
+
 export function disputeById(s: GameState, id: string): Dispute | undefined {
   return s.disputes.find((d) => d.id === id);
 }

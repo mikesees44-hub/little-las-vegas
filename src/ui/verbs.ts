@@ -196,6 +196,13 @@ export function actionVerb(a: PlayerAction): Verb {
     case 'dirty': return a.op.job === 'shakedown' ? v('Shake them down', 'Shakedown on') : v('Do it', 'Job on');
     case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v(TALKS[a.op.talk]?.label ?? 'Talk to him', 'Asked');
     case 'mission': return v('Do it', 'Decided');
+    case 'mymen': {
+      const o = a.op;
+      if (o.op === 'answer') return o.how === 'war' ? v('Go to war', 'War ordered') : o.how === 'payback' ? v('Pay them back', 'Ordered') : o.how === 'drop' ? v('Let it go', 'Letting go') : v('Call the sit-down', 'Sit-down called');
+      if (o.op === 'kill') return v('Give the order', 'Ordered');
+      if (o.op === 'warn' || o.op === 'fine' || o.op === 'demote' || o.op === 'shelf') return v('Do it', 'Done');
+      return v('Take care of it', 'Taken care of');
+    }
     case 'power': {
       const t = op(a);
       if (t === 'designate') return v('Name the heir', 'Heir named');

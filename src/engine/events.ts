@@ -13,6 +13,7 @@ import { familyEventSource } from './familyDrama';
 import { bagmanInPerson, directCandidates, director, freshness, recordShown, recordTribute, themeFull, themeShares } from './storyDirector';
 import { FACTION_NAMES } from './world';
 import { quietRule, settleQuietly, weekBudget } from './storyPace';
+import { guardDefaults } from './handover';
 import { dressScenes } from './sceneVariants';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
 
@@ -891,6 +892,8 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
     }
   }
   candidates.push(...extra);
+  // Silence never gives a man up (handover.ts): a default that would is rewritten to pay, bargain, defy or stall.
+  guardDefaults(s, candidates);
   // The story director orders everything (novelty, the theme mix) and holds back templates seen too recently.
   const directed = directCandidates(s, candidates);
   for (const ev of candidates) {
@@ -928,6 +931,7 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   }
   // Each recurring popup is told as a scene not shown yet this game (sceneVariants.ts).
   dressScenes(s, out);
+  guardDefaults(s, out);
   recordShown(s, out);
   return out;
 }

@@ -134,6 +134,10 @@ export const TIME_TABLE: Record<string, number> = {
   'bond:godfather': 3, 'bond:lend': 0.5, 'bond:settle': 2, 'bond:test': 1, 'bond:confide': 1, 'bond:peace': 2,
   // Spend: buying a thing is an hour; an occasion is an evening and a trip a day (spendHours, with the state).
   'spend:buy': 1, 'spend:sell': 0.5,
+  // My Men (myMen.ts): an envelope is a quarter of an hour; a sit-down is an afternoon; a jail visit, the drive to Cape May county.
+  'mymen:bonus': 0.25, 'mymen:raise': 0.5, 'mymen:debt': 1, 'mymen:bills': 0.5, 'mymen:brother': 1, 'mymen:noshow': 1, 'mymen:tuition': 0.5, 'mymen:hospital': 1,
+  'mymen:christmas': 2, 'mymen:guard': 0.25, 'mymen:safety': 1, 'mymen:lawyer': 1, 'mymen:inside': 0.5, 'mymen:visit': 3, 'mymen:hide': 1,
+  'mymen:answer': 2, 'mymen:warn': 0.5, 'mymen:fine': 0.5, 'mymen:demote': 0.5, 'mymen:shelf': 0.5, 'mymen:kill': 1,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */

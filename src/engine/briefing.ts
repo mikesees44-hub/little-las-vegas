@@ -1,3 +1,4 @@
+import { actionSurrenders } from './handover';
 import { previewAction } from './actions';
 import { shadowDrafts } from './shadowBrief';
 import { explainAction } from './advice';
@@ -942,6 +943,8 @@ export function recommendedActions(s: GameState, b: Briefing = briefing(s), queu
     if (skip.includes(it.id)) continue;
     const o = it.options.find((x) => x.id === it.recommended);
     if (!o?.action) continue;
+    // "Do what they recommend" never gives a man up: that is picked by hand or not at all (handover.ts).
+    if (actionSurrenders(s, o.action)) continue;
     const k = JSON.stringify(o.action);
     if (seen.has(k) || o.cost > money) continue;
     seen.add(k);
@@ -956,6 +959,7 @@ export function isRoutine(s: GameState, it: BriefItem, o: BriefOption | undefine
   if (!it.routine || !o?.action) return false;
   const a = o.action;
   if (a.kind === 'interact' && ['threaten', 'whack', 'exile', 'demote', 'demand'].includes(a.id)) return false;
+  if (actionSurrenders(s, a)) return false;
   return o.cost <= Math.max(500, Math.min(2500, s.money * 0.05));
 }
 

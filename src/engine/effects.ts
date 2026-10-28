@@ -1,3 +1,4 @@
+import { applyMenOp, describeMenOp } from './myMen';
 import { applyLivingOp, describeLivingOp } from './livingAsk';
 import { earnPocket, spendPocket } from './pocket';
 import { applyPowerOp, describePowerOp } from './power';
@@ -235,6 +236,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeNightOp(s, e.op);
     case 'bond':
       return describeBondOp(s, e.op);
+    case 'mymen':
+      return describeMenOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -884,6 +887,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'bond':
       applyBondOp(ctx, e.op);
+      break;
+    case 'mymen':
+      applyMenOp(ctx, e.op, label);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);
