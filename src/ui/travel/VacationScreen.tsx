@@ -14,6 +14,7 @@ import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
 import { CharLink, Face } from '../components/People';
 import { ModeIcon } from './icons';
+import { ActionCard } from '../components/Orders';
 
 const PHASE: Record<string, string> = { booked: 'Booked', out: 'On the way', there: 'On vacation', back: 'On the way home' };
 
@@ -207,6 +208,7 @@ export function VacationScreen({ s, update, onClose }: { s: GameState; update: (
         <div className="flex flex-wrap items-center gap-2 text-xs text-stone-400">
           <ModeIcon mode={t.mode} className="text-gold-300" /> {o.name} <span className="text-stone-500">({o.carrier})</span>
         </div>
+        {(pos?.phase === 'there' || pos?.phase === 'out') && <div data-testid="vacation-come-home"><ActionCard s={s} action={{ kind: 'travel', op: { type: 'recall', tripId: t.id } }} /></div>}
 
         <section className="grid gap-3 sm:grid-cols-2 rounded border border-noir-700 p-3" data-testid="vacation-party">
           <Who s={s} label="The boss" people={[s.characters[t.leaderId]].filter((c): c is Character => !!c)} />
