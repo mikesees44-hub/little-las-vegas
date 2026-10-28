@@ -79,6 +79,8 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   lifestyle: { panel: 'you', section: 'lifestyle' },
   goodlife: { panel: 'you', section: 'possessions' },
   possessions: { panel: 'you', section: 'possessions' },
+  spend: { panel: 'you', section: 'spend' },
+  shop: { panel: 'you', section: 'spend' },
   office: { panel: 'you', section: 'court' },
   audience: { panel: 'you', section: 'court' },
   you: { panel: 'you', section: 'character' },

@@ -4,6 +4,7 @@ import { ageOn } from './calendar';
 import { heat, type Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { chance, pick } from './rng';
+import { spendPerk } from './spendState';
 import type { Attributes, Character, GameState, LifestyleId } from './types';
 export type { LifestyleId };
 
@@ -99,8 +100,9 @@ export function findPerk(id: string) {
 /** Sum of a modifier across the boss's perks. */
 export function perkMod(s: GameState, key: PerkKey): number {
   const b = s.characters[s.playerId];
-  if (!b?.lifestyle) return 0;
-  let v = 0;
+  // What he owns and keeps on retainer counts too (spendState.ts): bodyguards guard, a captain on the pad cools the heat.
+  let v = s.spend ? spendPerk(s, key) : 0;
+  if (!b?.lifestyle) return v;
   for (const id of b.lifestyle.perks) v += findPerkCached(id)?.mods[key] ?? 0;
   return v;
 }

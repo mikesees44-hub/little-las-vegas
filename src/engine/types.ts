@@ -933,6 +933,8 @@ export interface GameState {
   nightlife?: import('./nightlifeState').NightlifeState;
   /** Your People: axes, memories and stages of the boss's closest ties (bondsState.ts; optional for old saves). */
   bonds?: import('./bondsState').BondsState;
+  /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */
+  spend?: import('./spendState').SpendState;
   /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
   aging?: import('./aging').AgingState;
   /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */
@@ -1036,6 +1038,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'nightlife'; op: import('./nightlife').NightAction }
   /** Your People (bonds.ts): your wife, your goomars, your kids, your friends, your enemies. They decide. */
   | { kind: 'bond'; op: import('./bonds').BondAction }
+  /** Spend (spend.ts): buy from the catalog, or sell / let go what you have. */
+  | { kind: 'spend'; op: import('./spendState').SpendAction }
 );
 
 export type InteractionId =

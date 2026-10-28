@@ -1,4 +1,5 @@
 import { owned as ownedLux, resaleValue } from './goodlife';
+import { spendPossessions } from './spend';
 import { pocketCash } from './tributeState';
 import type { Character, GameState } from './types';
 
@@ -48,7 +49,7 @@ export function ownMoney(s: GameState, c: Pick<Character, 'id' | 'wealth'>): num
 export function possessionsValue(s: GameState, c: Pick<Character, 'id'>): number {
   if (!isPocketHolder(s, c)) return 0;
   try {
-    return r(ownedLux(s).reduce((a, o) => a + resaleValue(s, o), 0));
+    return r(ownedLux(s).reduce((a, o) => a + resaleValue(s, o), 0) + (s.spend ? spendPossessions(s) : 0));
   } catch {
     return 0;
   }

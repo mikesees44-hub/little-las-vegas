@@ -17,10 +17,11 @@ import { upgradeSave } from '../src/engine/upgradeSave';
 import { packSave, unpackSave } from '../src/ui/save';
 import {
   annivWeek, applyBondOp, bondGroups, bondsWeek, computeStage, gesturesFor, godchildFor, kidsOf, previewBond, recallLine,
-  registerGiftables, DEFAULT_GIFTABLES, voiceOf, wantNow, wantsMore, wifeDecides, wifeLeaning, wifeOf, type BondOp,
+  registerGiftables, DEFAULT_GIFTABLES, giftablesFor, voiceOf, wantNow, wantsMore, wifeDecides, wifeLeaning, wifeOf, type BondOp,
 } from '../src/engine/bonds';
 import type { Tie } from '../src/engine/bondsState';
 import type { Character, GameState, PlayerAction } from '../src/engine/types';
+import { giftableItems } from '../src/engine/spend';
 import { YourPeople } from '../src/ui/bonds/YourPeople';
 import { playWeeks } from './helpers';
 
@@ -414,6 +415,13 @@ describe('your people: orders, time, determinism, saves, the screen', () => {
       act(s, { op: 'gift', id: wife.id, item: 'hat' });
       expect(tie(s, wife.id).mem.some((m) => m.k === 'gift')).toBe(true);
     } finally { registerGiftables(DEFAULT_GIFTABLES); }
+    // Without an override the presents come from the shop catalog (spend.ts), priced for today.
+    const cat = new Set(giftableItems(s, 'wife').map((x) => x.id));
+    const mine = giftablesFor(s, wife.id);
+    expect(mine.length).toBeGreaterThan(0);
+    for (const g of mine) expect(cat.has(g.id), g.id).toBe(true);
+    const g0 = mine[0];
+    expect(previewBond(s, { op: 'gift', id: wife.id, item: g0.id }).cost).toBe(g0.cost);
   });
 
   it('is deterministic', () => {

@@ -5,6 +5,8 @@ import { daysOf } from './days';
 import { applyEffects } from './effects';
 import { activeGoomars, goomarLeaves, goomarOf } from './goomar';
 import { earnPocket } from './pocket';
+import { giftableItems } from './spend';
+import type { GiftFor } from './spendData';
 import { activeRomances, partnerOf } from './romance';
 import { getRelation, opinion, setModifier } from './relations';
 import { hashSeed } from './rng';
@@ -86,10 +88,10 @@ export type BondAction =
 export type BondOp = BondAction | { op: 'refused'; id: string; what: string };
 
 /* ------------------------------------------------------------------ */
-/* Gifts: a small hook the shop catalog can replace                    */
+/* Gifts: the shop catalog's presents (spend.ts giftableItems)         */
 /* ------------------------------------------------------------------ */
 
-export interface Giftable { id: string; label: string; cost: number; for: 'her' | 'him' | 'kid' | 'any'; warmth: number }
+export interface Giftable { id: string; label: string; cost: number; for: 'her' | 'him' | 'kid' | 'any'; warmth: number; /** How visible (0-10), from the catalog. */ flash?: number }
 
 export const DEFAULT_GIFTABLES: Giftable[] = [
   { id: 'flowers', label: 'Roses from the florist on Pacific', cost: 25, for: 'her', warmth: 4 },
@@ -103,19 +105,36 @@ export const DEFAULT_GIFTABLES: Giftable[] = [
   { id: 'tickets', label: 'Phillies tickets behind first base', cost: 20, for: 'any', warmth: 4 },
 ];
 
-let GIFTABLES: Giftable[] = DEFAULT_GIFTABLES;
+let OVERRIDE: Giftable[] | undefined;
 
-/** The shop catalog can hand its giftable things here (an empty list keeps the defaults). */
+/** Hand in a different list (tests, mods); an empty list goes back to the shop catalog. */
 export function registerGiftables(list: readonly Giftable[]): void {
-  GIFTABLES = list.length ? [...list] : DEFAULT_GIFTABLES;
+  OVERRIDE = list.length && list !== DEFAULT_GIFTABLES ? [...list] : undefined;
 }
 
+/** Who a present is for, in the catalog's words. */
+function giftWho(s: GameState, id: string): GiftFor {
+  const boss = s.characters[s.playerId];
+  const c = s.characters[id];
+  if (!boss || !c) return 'anyone';
+  if (boss.spouseId === id) return 'wife';
+  if (goomarOf(s, id) || activeRomances(s, boss.id).some((r) => partnerOf(r, boss.id) === id)) return 'goomar';
+  if (boss.childrenIds.includes(id)) return c.gender === 'F' ? 'daughter' : 'son';
+  if (boss.motherId === id) return 'mother';
+  return 'anyone';
+}
+
+/** What can be given to this person: the shop catalog's presents (spend.ts), or the small defaults. */
 export function giftablesFor(s: GameState, id: string): Giftable[] {
   const c = s.characters[id];
   if (!c) return [];
   const kid = ageOn(c.birth, s.date) < 16;
   const who: Giftable['for'] = kid ? 'kid' : c.gender === 'F' ? 'her' : 'him';
-  return GIFTABLES.filter((g) => g.for === who || (g.for === 'any' && !kid));
+  if (OVERRIDE) return OVERRIDE.filter((g) => g.for === who || (g.for === 'any' && !kid));
+  const cat = giftableItems(s, giftWho(s, id))
+    .map((g) => ({ id: g.id, label: g.name, cost: g.price, for: who, warmth: Math.max(1, Math.min(20, Math.round(g.opinion))), flash: g.flash }))
+    .sort((a, b) => a.cost - b.cost);
+  return cat.length ? cat : DEFAULT_GIFTABLES.filter((g) => g.for === who || (g.for === 'any' && !kid));
 }
 
 /* ------------------------------------------------------------------ */
@@ -743,7 +762,7 @@ export function previewBond(s: GameState, a: BondAction): ActionPreview {
       p.cost = g.cost; p.pot = 'pocket';
       p.title = `${g.label} for ${first}`;
       p.effects = [{ type: 'money', pot: 'pocket', amount: -g.cost, label: `${g.label} for ${first}` }, X(a, p.title)];
-      p.detail = `${g.label}. Warms ${her(c)} a little${recent ? ` (less each time: ${recent} in the last 8 weeks)` : ''}; it never decides anything for ${her(c)}.${t.ax.resent >= 50 ? ` After everything, ${she(c)} may take it as an insult.` : ''}`;
+      p.detail = `${g.label}. Warms ${her(c)} a little${recent ? ` (less each time: ${recent} in the last 8 weeks)` : ''}; it never decides anything for ${her(c)}.${(g.flash ?? 0) >= 6 ? ' People will notice it, and so will the IRS.' : ''}${t.ax.resent >= 50 ? ` After everything, ${she(c)} may take it as an insult.` : ''}`;
       return p;
     }
     case 'kids': {
