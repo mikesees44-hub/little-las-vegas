@@ -563,7 +563,9 @@ export type Effect =
   /** Relationships & Dating: dates, gifts, paid company, introductions (dating.ts). */
   | ({ type: 'dating'; op: import('./dating').DatingOp } & EffectBase)
   /** Nightlife: payroll, promises, the goomar, houses (nightlife.ts). */
-  | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase);
+  | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase)
+  /** Your People: the deep relationships (bonds.ts). */
+  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -933,6 +935,8 @@ export interface GameState {
   dating?: import('./datingState').DatingState;
   /** Nightlife: the cast of the night, the madams' houses, promises, goomars, stored looks (nightlifeState.ts; optional for old saves). */
   nightlife?: import('./nightlifeState').NightlifeState;
+  /** Your People: axes, memories and stages of the boss's closest ties (bondsState.ts; optional for old saves). */
+  bonds?: import('./bondsState').BondsState;
   /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */
   spend?: import('./spendState').SpendState;
   /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
@@ -1036,6 +1040,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'dating'; op: import('./dating').DatingAction }
   /** Nightlife (nightlife.ts): payroll, promises, the goomar, the madams' protection. She decides. */
   | { kind: 'nightlife'; op: import('./nightlife').NightAction }
+  /** Your People (bonds.ts): your wife, your goomars, your kids, your friends, your enemies. They decide. */
+  | { kind: 'bond'; op: import('./bonds').BondAction }
   /** Spend (spend.ts): buy from the catalog, or sell / let go what you have. */
   | { kind: 'spend'; op: import('./spendState').SpendAction }
   /** New York (nyc.ts): open a crew, buy into a racket, the families' blessing, tribute, the Commission. */

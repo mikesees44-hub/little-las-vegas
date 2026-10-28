@@ -203,6 +203,15 @@ function endGoomar(s: GameState, N: NightlifeState, g: Goomar, c: Character, why
   nlog(N, s, `${c.firstName} ${c.lastName} is no longer your goomar: ${why.toLowerCase()}.`);
 }
 
+/** She ends it herself (Your People, bonds.ts: an ultimatum that ran out). */
+export function goomarLeaves(s: GameState, id: string, why: string): void {
+  const N = s.nightlife;
+  const g = N?.goomars[id];
+  const c = s.characters[id];
+  if (!N || !g || g.ended || !c) return;
+  endGoomar(s, N, g, c, `She left: ${why}`, -12);
+}
+
 /** Weekly: the money, her place, the risks, whether she stays. */
 export function goomarWeek(ctx: Ctx, N: NightlifeState): void {
   const s = ctx.s;

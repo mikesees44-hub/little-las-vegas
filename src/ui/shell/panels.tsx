@@ -52,6 +52,7 @@ import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
 import { NightlifePanel } from '../nightlife/NightlifePanel';
 import { DatingPanel } from '../dating/DatingPanel';
+import { YourPeople } from '../bonds/YourPeople';
 import { AttachmentBoard } from '../ears/Connections';
 import type { PanelId, Route } from './routes';
 
@@ -109,6 +110,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'The boss himself: his sheet, how he rules, who comes to see him.',
     sections: [
       { id: 'character', label: 'Character', render: (s) => stack(<PowerPart key="st" s={s} part="station" />, <CharacterSheet key="cs" s={s} id={s.playerId} onClose={() => {}} embedded />) },
+      { id: 'people', label: 'Your people', blurb: 'Your wife, your goomars, your kids, your friends, your crew and your enemies: how they feel about you, what they remember, what they want right now.', render: (s) => <YourPeople s={s} /> },
       { id: 'dating', label: 'Relationships & Dating', blurb: 'People you know, dates and relationships, adult services with their prices, and family & consequences. She always decides.', render: (s) => <DatingPanel s={s} /> },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
       { id: 'spend', label: 'Spend', blurb: 'Everything money buys in 1960: cars, boats, clothes, jewelry, the house, staff, society, the children\'s occasions, vice, the pad and the crew. Your pocket and the Family\'s money, side by side; the IRS counts what your books cannot explain.', render: (s) => <SpendPanel s={s} /> },

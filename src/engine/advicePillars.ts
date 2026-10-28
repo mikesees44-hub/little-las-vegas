@@ -135,6 +135,33 @@ const DATING_PURPOSE: Record<string, string> = {
   askOut: 'Ask a woman who works nights out as yourself, off the clock. She can say no, keep it professional, or take it personally.',
 };
 
+const BOND_PURPOSE: Record<string, string> = {
+  date: 'An evening for your wife alone: affection back, resentment down. Neglect is remembered.',
+  anniversary: 'Remember the date. Forgetting it is brought up for years.',
+  apologize: 'Take the edge off the last fight. Works less if you do it every week.',
+  confess: 'Tell her the truth yourself. It hurts; a lie found out hurts more. Then she decides.',
+  deny: 'Deny it. If she only suspects, she may believe you; the lie is remembered.',
+  vacation: 'A weekend away with the family: the wife and the kids both remember it.',
+  gift: 'A gift warms them a little, less each time. It never decides anything for them.',
+  kids: 'Settle what the kids\' future is. Agree with her and she respects you; disagree and it is a fight.',
+  ambition: 'Back or refuse what she wants for herself. Either way she remembers who said it.',
+  kidTime: 'Time with your child. Kids remember the afternoons, and the ones you missed.',
+  attention: 'An evening at her place: she wants your time, not only your money.',
+  reassure: 'Tell her where she stands, when she knows she is not the only one.',
+  ultimatum: 'Answer her ultimatum: leave your wife, ask for time, or end it.',
+  baby: 'She decided to have the baby. Say where you stand.',
+  herFamily: 'Help her family quietly. Trust and respect.',
+  drink: 'A drink: the cheapest way to keep a friend a friend.',
+  fishing: 'A day on the water: friendships are made out there.',
+  cards: 'A card game: a friend, a pot, maybe a little money.',
+  godfather: 'Make a best friend your compare: family in every way that counts.',
+  lend: 'Lend a friend money from your pocket. He may pay it back.',
+  settle: 'Settle a beef between two of your men before it becomes a war.',
+  test: 'Test his loyalty. A rat may be caught; an honest man may resent it.',
+  confide: 'Confide in a friend: closer, and dangerous if it ever goes bad.',
+  peace: 'Clear the air with an enemy before the grudge becomes a war.',
+};
+
 function opOf(a: PlayerAction): string | undefined {
   switch (a.kind) {
     case 'power': return a.op.op;
@@ -144,6 +171,7 @@ function opOf(a: PlayerAction): string | undefined {
     case 'bones': return a.op.op;
     case 'ears': return a.op.op;
     case 'dating': return a.op.op;
+    case 'bond': return a.op.op;
     case 'legal':
     case 'underbelly': return a.op;
     default: return undefined;
@@ -160,6 +188,7 @@ export function pillarPurpose(a: PlayerAction): string | undefined {
     case 'ledger': return op ? LEDGER_PURPOSE[op] : undefined;
     case 'ears': return op ? EARS_PURPOSE[op] : undefined;
     case 'dating': return op ? DATING_PURPOSE[op] : undefined;
+    case 'bond': return op ? BOND_PURPOSE[op] : undefined;
     case 'bones':
     case 'legal':
     case 'underbelly': return OTHER_PURPOSE[`${a.kind}:${op}`];

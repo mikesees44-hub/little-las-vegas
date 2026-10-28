@@ -11,6 +11,7 @@ import { commitHood, hoodActions, previewHood } from './hood';
 import { previewLiving } from './livingAsk';
 import { previewDating } from './dating';
 import { previewNight } from './nightlife';
+import { noteAttention, previewBond } from './bonds';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
@@ -302,6 +303,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** Nightlife (nightlife.ts, goomar.ts): payroll, promises, goomars, the madams' houses. She decides. */
   nightlife: {
     preview: (s, a) => previewNight(s, a.op),
+  },
+  /** Your People (bonds.ts): the wife, the goomars, the kids, friends and enemies. They decide. */
+  bond: {
+    preview: (s, a) => previewBond(s, a.op),
   },
   /** Travel, trips and flight (travel.ts, fugitive.ts). */
   travel: {
@@ -949,6 +954,7 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     }
     applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
     def.commit?.(ctx, a as never);
+    noteAttention(s, a);
     if (a.kind === 'interact') {
       const t = s.characters[a.target];
       if (t) {

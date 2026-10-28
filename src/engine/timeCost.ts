@@ -122,12 +122,17 @@ export const TIME_TABLE: Record<string, number> = {
   'nightlife:payroll': 1, 'nightlife:release': 0.5, 'nightlife:promise': 1, 'nightlife:keep': 3,
   'nightlife:goomar': 4, 'nightlife:endGoomar': 2, 'nightlife:deal': 2, 'nightlife:back': 0.5,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
+  // Your People (bonds.ts): an evening with your wife, an afternoon with a kid, a day fishing.
+  'bond:date': 4, 'bond:anniversary': 4, 'bond:apologize': 1, 'bond:confess': 1, 'bond:deny': 0.5, 'bond:vacation': TRAVEL_DAY,
+  'bond:gift': 1, 'bond:kids': 1, 'bond:ambition': 1, 'bond:kidTime': 3, 'bond:attention': 4, 'bond:reassure': 1,
+  'bond:ultimatum': 2, 'bond:baby': 2, 'bond:herFamily': 1, 'bond:drink': 1.5, 'bond:fishing': 5, 'bond:cards': 3,
+  'bond:godfather': 3, 'bond:lend': 0.5, 'bond:settle': 2, 'bond:test': 1, 'bond:confide': 1, 'bond:peace': 2,
   // Spend: buying a thing is an hour; an occasion is an evening and a trip a day (spendHours, with the state).
   'spend:buy': 1, 'spend:sell': 0.5,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */
-const FAMILY_TIME = new Set(['dynasty:host', 'dynasty:marry']);
+const FAMILY_TIME = new Set(['dynasty:host', 'dynasty:marry', 'bond:date', 'bond:anniversary', 'bond:vacation', 'bond:kidTime', 'bond:kids']);
 
 /** The op name of an order (`type` / `op` / `t`, the interaction id, the scheme kind), if it has one. */
 export function opName(a: PlayerAction): string | undefined {

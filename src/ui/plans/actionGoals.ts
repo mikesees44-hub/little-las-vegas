@@ -25,7 +25,7 @@ const BY_KIND: Partial<Record<PlayerAction['kind'], GoalId>> = {
   askPermission: 'power', pushDistrict: 'power', appoint: 'power', councilTask: 'power', policy: 'power', contract: 'money', edict: 'power',
   hire: 'power', dynasty: 'family', power: 'power', lifestyle: 'family', legal: 'protect', underbelly: 'threat', officeHours: 'power', perk: 'family',
   reassign: 'power', propose: 'power', background: 'protect', order: 'money', living: 'power', talk: 'power', mission: 'power', travel: 'power',
-  pol: 'power', bones: 'power', ears: 'protect', dev: 'power', dating: 'family', nightlife: 'family', interact: 'power',
+  pol: 'power', bones: 'power', ears: 'protect', dev: 'power', dating: 'family', nightlife: 'family', bond: 'family', interact: 'power',
 } as Partial<Record<PlayerAction['kind'], GoalId>>;
 
 /** Some ops sit better under another goal than their kind. */
