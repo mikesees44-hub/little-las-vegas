@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from 'react';
+import { inboxBadge } from '../../engine/inbox';
 import { officeBriefing, officePhone, officeRoom, officeVisitors, type DelegateOp, type OfficeUi, type OfficeVisitor } from '../../engine/bossOffice';
 import { displayName } from '../../engine/characters';
 import { formatDay } from '../../engine/days';
@@ -65,6 +66,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const [panel, setPanel] = useState<OfficePanel | undefined>(initialPanel);
   const brief = useMemo(() => officeBriefing(s, ui), [s, ui]);
   const visitors = useMemo(() => officeVisitors(s, ui), [s, ui]);
+  // The one count (engine/inbox.ts): the door's badge says what the top bar and the desk say; the door lists the people at it.
+  const box = useMemo(() => inboxBadge(s, ui), [s, ui]);
   const room = useMemo(() => officeRoom(s), [s]);
   const rep = latestReport(s);
   const envelopeWaiting = rep?.status === 'presented';
@@ -81,7 +84,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const act = (h: Hotspot) => openHotspot(h, api, { hasReport: !!rep, panel: setPanel });
   const badge = (id: Hotspot['id']): ReactNode => {
     if (id === 'envelope' && envelopeWaiting) return <span className="text-emerald-300">{fmt$(rep!.reported)}</span>;
-    if (id === 'door' && visitors.length) return <span className={`rounded-full px-1 font-bold text-white ${visitors.some((v) => v.urgent) ? 'bg-red-600' : 'bg-blood-500'}`}>{visitors.length}</span>;
+    if (id === 'door' && box.n) return <span className={`rounded-full px-1 font-bold text-white ${box.tone === 'red' ? 'bg-red-600' : 'bg-blood-500'}`} data-testid="door-count">{box.n}</span>;
     if (id === 'photos') return <span className="text-stone-300">{room.photos}</span>;
     return null;
   };
@@ -89,7 +92,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const status: Record<Hotspot['id'], string> = {
     chair: brief.seat.role === 'none' ? 'Nobody in the chair' : `${brief.seat.name} · ${brief.seat.title.toLowerCase()}`,
     envelope: envelopeWaiting ? `${fmt$(rep!.reported)} on the desk: hear the count` : rep ? `Counted: ${fmt$(rep.reported)} · go over it again` : 'No count yet · the weekly envelope page',
-    door: visitors.length ? `${visitors.length} waiting${visitors.some((v) => v.urgent) ? ' · urgent' : ''}` : 'Nobody waiting',
+    door: box.n ? `${box.n} waiting on you${box.tone === 'red' ? ' · urgent' : ''}${box.n > visitors.length ? ` · ${visitors.length} at the door` : ''}` : 'Nobody waiting',
     ledger: 'The money, the accounts, the agreements',
     phone: room.absence?.kind === 'prison' ? 'From inside: only your lawyer' : 'Your lawyer, your people, the other bosses',
     calendar: formatDay(s),

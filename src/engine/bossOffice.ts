@@ -7,6 +7,7 @@ import { holder } from './council';
 import { DAY_NAMES, daysOf } from './days';
 import { fmtMoney } from './effects';
 import { HQ_INFO } from './hq';
+import { inboxCount } from './inbox';
 import { bossInside, LAWYER } from './longgame';
 import { pwView } from './powerState';
 import { personalRounds } from './roundsPersonal';
@@ -102,8 +103,8 @@ export function officeBriefing(s: GameState, ui: OfficeUi = {}): OfficeBriefing 
   const answers = ui.answers ?? {};
   const rep = latestReport(s);
   const fresh = rep && rep.week >= s.week - 1 ? rep : undefined;
-  const decisions = s.pendingEvents.filter((e) => !answers[e.iid] && e.defId !== 'tribute_audience').length;
-  const needs = decisions + openMornings(s).length;
+  // The one count (engine/inbox.ts): the same number the top bar, the desk and the door show.
+  const needs = inboxCount(s, { answers, briefSkip: ui.briefSkip });
   const lines: string[] = [];
   const abs = officeAbsence(s);
   if (abs) {
