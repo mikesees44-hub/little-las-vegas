@@ -93,7 +93,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
     { title: 'Your crew', items: [
       { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen'], icon: '⚑', label: 'Your men', sub: 'The family chart, the capos and their men, and taking care of each one: money, safety, his back.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them'] },
       { keys: ['borgata.council'], icon: '♜', label: 'The council', sub: 'Five seats, one job each a week. Fill a seat, give it a job.' },
-      { keys: ['borgata.membership'], icon: '✋', label: 'Getting made', sub: 'Philadelphia\'s books, and the young men who want in.' },
+      { keys: ['borgata.membership', 'borgata.progress'], icon: '✋', label: 'Getting made & coming up', sub: 'Philadelphia\'s books, the young men who want in, and every man\'s level and specialty: who is ready for more.', views: ['Getting made', 'Coming up'] },
       { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
       { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
     ] },

@@ -568,6 +568,8 @@ export type Effect =
   | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase)
   /** My Men (myMen.ts): taking care of the crew, and the crew watching how. */
   | ({ type: 'mymen'; op: import('./myMen').MenOp } & EffectBase);
+  /** Crew XP (crewXp.ts): a specialty picked, a word of recognition. */
+  | ({ type: 'crewxp'; op: import('./crewXp').XpOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -969,6 +971,8 @@ export interface GameState {
   work?: import('./bizRacket').WorkState;
   /** The dynamics layer: eras between the families, spies both ways, lies and rumors, plots, war ledgers (intrigue.ts; optional, made by the weekly update from week 2). */
   intrigue?: import('./intrigueState').IntrigueState;
+  /** Your men come up (crewXp.ts): XP, levels, specialties. Optional; made by the weekly update. */
+  xp?: import('./crewXp').XpState;
 }
 
 export interface PlayerChoices {

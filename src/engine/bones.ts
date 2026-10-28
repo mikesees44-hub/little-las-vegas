@@ -1,3 +1,4 @@
+import { bonesXp, schemeXp } from './crewXp';
 import type { ActionPreview } from './actions';
 import { attr } from './attrs';
 import { dateOfWeek } from './calendar';
@@ -327,6 +328,7 @@ function resolvePlayerJob(ctx: Ctx, j: BonesJob): void {
     recordBones(s, c, j.name, j.kind, JOB_INFO[j.kind].role, `${c.firstName} ${claimed === 'froze' ? OUTCOME_TEXT.froze : OUTCOME_TEXT[claimed]}.`, out !== 'froze');
   } else addStory(s, c, `Froze on the ${j.name}.`);
   bumpOutcome(b, out, out !== 'froze' || claimed !== 'froze');
+  bonesXp(s, c.id, j.name, out);
   b.history.push({ week: s.week, owner: 'player', prospectId: c.id, kind: j.kind, name: j.name, outcome: out });
   fileReceipt(s, { byId: c.id, job: `the ${j.name}`, kind: j.kind, actual, reported, outcome: out, claimed, bonesOf: c.id, jobId: j.id });
   ctx.log.push(`The ${j.name}: ${displayName(c)} ${OUTCOME_TEXT[claimed]}${lie ? ' — so he says' : ''}.`);
@@ -348,6 +350,8 @@ function bumpOutcome(b: BonesState, out: BonesOutcome, made: boolean): void {
 export function bonesFromScheme(ctx: Ctx, sc: Scheme, agents: Character[], success: boolean): void {
   const s = ctx.s;
   if (sc.owner !== 'player' || (sc.kind !== 'murder' && sc.kind !== 'heist')) return;
+  // Everyone on it learns something (crewXp.ts).
+  schemeXp(s, sc.kind, agents.map((a) => a.id), success);
   const b = ensureBones(s);
   const prospects = agents.filter((a) => a.alive && a.faction === 'player' && a.rank === 'associate' && !a.specialty && !hasBones(a));
   if (!prospects.length) {

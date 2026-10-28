@@ -1,3 +1,4 @@
+import { missionXp } from './crewXp';
 import type { ActionPreview } from './actions';
 import { displayName } from './characters';
 import { applyEffects, fmtMoney } from './effects';
@@ -498,6 +499,7 @@ export function commitMission(ctx: Ctx, op: MissionOp): void {
   const o = d.odds?.(s, m, agent);
   const ok = o ? rand(ms) < o.chance : true;
   d.resolve(ctx, m, ok, agent);
+  if (agent) missionXp(s, agent.id, d.label, ok);
 }
 
 /** What the sim's random player can decide this week. */

@@ -84,6 +84,7 @@ import { threatsAnswer, threatsWeek } from './threats';
 import { intrigueResolve, intrigueWeek } from './intrigue';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
+import { xpEventSource, xpWeek } from './crewXp';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -95,6 +96,7 @@ registerEventSource(kinEventSource);
 registerEventSource(racketEventSource);
 registerEventSource(livingEventSource);
 registerEventSource(fbankEventSource);
+registerEventSource(xpEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -407,6 +409,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     reelsWeek(ctx, input);
     recordEarnings(ctx);
     tributeWeek(ctx);
+    // Your men come up (crewXp.ts): what each man did this week, seen against the week as it began.
+    xpWeek(ctx, input);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

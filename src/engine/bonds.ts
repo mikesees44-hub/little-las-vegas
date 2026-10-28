@@ -1,3 +1,4 @@
+import { xpWants } from './crewXp';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, player } from './characters';
 import { stageOf as datingStage } from './dating';
@@ -454,6 +455,8 @@ export function wantsOf(s: GameState, t: Tie): Want[] {
         const keep = c.keep;
         out.push({ key: 'money', text: keep !== undefined && keep < 0.25 ? `Money: he keeps ${Math.round(keep * 100)}% of his district` : 'Money: a fair cut', met: keep === undefined || keep >= 0.25 });
         out.push({ key: 'recognition', text: 'Recognition: a word from you in front of the others', met: apart <= thr });
+        // A man who has come up wants more (crewXp.ts).
+        out.push(...xpWants(s, c));
       } else out.push(time);
       if (t.loan) out.push({ key: 'loan', text: `Time to pay back the ${$(t.loan.amount)} (week ${t.loan.due})`, met: true });
       return out;

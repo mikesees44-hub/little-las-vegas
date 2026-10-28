@@ -1,3 +1,4 @@
+import { xpPoachBonus } from './crewXp';
 import { bonesLine, mayPropose } from './bones';
 import { ageOn, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, makeCharacter } from './characters';
@@ -845,5 +846,7 @@ export function poachScore(s: GameState, c: Character): number {
   if (c.goal === 'get_rich' && c.policy === 'squeeze') v += 20;
   if (c.debtTo) v += 25;
   v += (getRelation(s, c.id, s.playerId)?.grievance ?? 0) / 2;
+  // The best men are worth more to a rival, unless the boss looks after them (crewXp.ts).
+  v += xpPoachBonus(s, c);
   return Math.max(0, v);
 }

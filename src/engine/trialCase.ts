@@ -1,3 +1,4 @@
+import { xpFlipReasons } from './crewXp';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree } from './characters';
 import { FEMALE_FIRST, MALE_FIRST, SURNAMES } from './names';
@@ -347,6 +348,7 @@ export function npcFlipReasons(s: GameState, c: Character, evidence: number, ric
   if (fear) out.push({ label: 'Fear of the boss', value: -fear / 420 });
   if (c.informantFor === 'law') out.push({ label: 'Already talking to them', value: 0.4 });
   if (c.dynasty) out.push({ label: 'Blood', value: -0.15 });
+  out.push(...xpFlipReasons(s, c));
   return out;
 }
 

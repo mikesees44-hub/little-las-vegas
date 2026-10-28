@@ -36,6 +36,7 @@ import { applyEarsOp, describeEarsOp } from './ears';
 import { applyDatingOp, describeDatingOp } from './dating';
 import { applyNightOp, describeNightOp } from './nightlife';
 import { applyBondOp, describeBondOp } from './bonds';
+import { applyXpOp, describeXpOp } from './crewXp';
 import { applyMinigameEffect, describeMinigame } from './minigame';
 import { onArrest } from './trial';
 
@@ -238,6 +239,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeBondOp(s, e.op);
     case 'mymen':
       return describeMenOp(s, e.op);
+    case 'crewxp':
+      return describeXpOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -890,6 +893,8 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'mymen':
       applyMenOp(ctx, e.op, label);
+    case 'crewxp':
+      applyXpOp(ctx, e.op);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);
