@@ -109,7 +109,7 @@ export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onCl
   const resetPrice = () => { setPrice(undefined); setTip(undefined); setWalked(false); setHaggleKey((k) => k + 1); };
   return (
     <Modal onClose={onClose} wide>
-      <div className="p-3 sm:p-4 space-y-2.5" data-testid="evening-flow">
+      <div className="p-3 pb-24 sm:p-4 space-y-2.5" data-testid="evening-flow">
         <div className="flex items-center justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">An evening with</div>
@@ -183,7 +183,7 @@ export function CarFlow({ s, id, onClose }: { s: GameState; id: string; onClose:
   if (!c) return null;
   return (
     <Modal onClose={onClose}>
-      <div className="p-3 sm:p-4 space-y-2.5" data-testid="car-flow">
+      <div className="p-3 pb-24 sm:p-4 space-y-2.5" data-testid="car-flow">
         <div className="flex items-center justify-between"><h3 className="font-display text-lg text-gold-300">"Step outside to my car"</h3><button type="button" className="btn-ghost text-xs px-2 py-0.5" onClick={onClose}>Close</button></div>
         {paid && (walked ? <p className="text-[12px] text-stone-400">No deal.</p> : <Haggle s={s} id={id} kind="car" onDeal={(p) => (p === undefined ? setWalked(true) : setPrice(p))} />)}
         {(!paid || price !== undefined) && <ActionCard s={s} action={{ kind: 'nightlife', op: { op: 'car', id, price } }} />}
@@ -209,7 +209,7 @@ export function BoldFlow({ s, id, onClose }: { s: GameState; id: string; onClose
   const next = BOLD_AMOUNTS.filter((n) => n > (last ?? 0) && n <= pocket);
   return (
     <Modal onClose={onClose}>
-      <div className="p-3 sm:p-4 space-y-2.5" data-testid="bold-flow">
+      <div className="p-3 pb-24 sm:p-4 space-y-2.5" data-testid="bold-flow">
         <div className="flex items-center justify-between"><h3 className="font-display text-lg text-gold-300">A bold offer to {c.firstName}</h3><button type="button" className="btn-ghost text-xs px-2 py-0.5" onClick={onClose}>Close</button></div>
         <p className="text-[11px] text-stone-500">Money only ever offers. She can take it, up it, laugh, or tell you where to go. Your pocket ({fmt$(pocket)}) pays only if she takes it. Every no in public puts more eyes on you.</p>
         <ul className="space-y-1 text-[12px]">

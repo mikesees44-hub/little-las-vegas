@@ -220,7 +220,6 @@ export function previewBold(s: GameState, id: string, amount: number, raises = 0
     title: `A bold offer to ${c?.firstName ?? 'her'}: ${$(amount)}${raises ? ` (raised ${raises}×)` : ''}`, cost: amount, pot: 'pocket', because: `made ${c?.firstName ?? 'her'} a bold offer`, category: 'event',
     effects: c ? [NX({ op: 'bold', id, amount, raises, after }, `A bold offer to ${c.firstName}`)] : [],
     detail: `Lean over and make her a bold offer: "${$(amount)}, right here. Nobody'll see." Money only ever offers: she takes it, ups it, laughs it off, or is insulted and walks (a drink in your face is possible), more so if she isn't a working girl or you've been rude. Some women have a line no amount crosses. Your pocket pays only if she takes it. Each raise after a no puts more eyes on you. About ${BOLD_HOURS * 60} minutes.${final ? ` Her answer at this figure: ${final.result === 'yes' ? 'yes' : 'no'}.` : ''}`,
-    odds: block || !c ? undefined : boldAcceptance(s, c, amount, raises),
     warning: `What can go wrong: the manager or the bouncer; one of your men or a rival's sees (the old-school men think less of you); gossip; a vice cop in the room${courting(s, id) ? '; you were courting her, and this tells her what you think of her' : ''}.`,
     disabledReason: block, verb: `Make the offer — ${$(amount)}`,
   };
