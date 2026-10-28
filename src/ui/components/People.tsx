@@ -3,6 +3,8 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { displayName, TRAIT_INFO } from '../../engine/characters';
 import type { Character, FactionId, GameState, Trait } from '../../engine/types';
 import { Portrait } from '../portrait/Portrait';
+import { sideOf } from '../../engine/sides';
+import { SideBadge } from './Side';
 
 /** Opening a character sheet from anywhere. */
 export const SheetContext = createContext<{ open: (id: string) => void; menu?: (id: string, category?: string, at?: { x: number; y: number }) => void }>({ open: () => {} });
@@ -49,13 +51,15 @@ export function ActionsHandle({ c, size = 48 }: { c: Character; size?: number })
 }
 
 /** A clickable portrait, with its Actions handle. */
-export function Face({ s, c, size = 48, className }: { s: GameState; c: Character; size?: number; className?: string }) {
+export function Face({ s, c, size = 48, className, noSide }: { s: GameState; c: Character; size?: number; className?: string; noSide?: boolean }) {
   const { open, menu } = useSheet();
+  const side = noSide ? undefined : sideOf(s, c.id);
   return (
-    <span className={`relative inline-block shrink-0 ${className ?? ''}`}>
-      <button type="button" className="shrink-0 rounded-md hover:ring-2 hover:ring-gold-400" onClick={(e) => { e.stopPropagation(); open(c.id); }} onContextMenu={menu ? (e) => { e.preventDefault(); e.stopPropagation(); menu(c.id, undefined, { x: e.clientX, y: e.clientY }); } : undefined} title={`${displayName(c)} — ⋯ or right-click for everything you can do`}>
+    <span className={`relative inline-block shrink-0 ${className ?? ''}`} data-side={side?.kind}>
+      <button type="button" className="shrink-0 rounded-md hover:ring-2 hover:ring-gold-400" style={side ? { outline: `2px solid ${side.color}`, outlineOffset: '-1px' } : undefined} onClick={(e) => { e.stopPropagation(); open(c.id); }} onContextMenu={menu ? (e) => { e.preventDefault(); e.stopPropagation(); menu(c.id, undefined, { x: e.clientX, y: e.clientY }); } : undefined} title={`${displayName(c)}${side ? ` (${side.full})` : ""} — ⋯ or right-click for everything you can do`}>
         <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined} />
       </button>
+      {side && size >= 28 && <SideBadge side={side} size={size} />}
       <ActionsHandle c={c} size={size} />
     </span>
   );

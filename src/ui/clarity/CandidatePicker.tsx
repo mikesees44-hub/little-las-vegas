@@ -5,6 +5,7 @@ import { signed } from '../format';
 import { Modal } from '../components/Modal';
 import { useOrders } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
+import { SideChip } from '../components/Side';
 import { AdvisorQuotes } from './AdvisorQuote';
 import { specificButton } from '../actionFacts';
 import { Tip } from './Tip';
@@ -69,6 +70,7 @@ export function CandidateCard({ s, c, ranking, picked, onPick, pickLabel }: {
             {alt && <span className="rounded border border-sky-600 px-1.5 py-px text-[10px] font-bold uppercase tracking-wider text-sky-300" data-testid="badge-alternative">{ranking.alternativeWhy ?? 'Alternative'}</span>}
           </div>
           <div className="text-sm font-semibold leading-tight text-stone-100 break-words">{ch ? <CharLink s={s} id={ch.id}>{c.name}</CharLink> : c.name}</div>
+          {ch && <SideChip s={s} id={ch.id} className="mt-0.5" />}
           <div className="text-[11px] leading-snug text-gold-300">{c.outcome}</div>
         </div>
       </div>

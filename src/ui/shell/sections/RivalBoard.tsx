@@ -4,6 +4,8 @@ import type { GameState } from '../../../engine/types';
 import { fmt$ } from '../../format';
 import { OpinionBadge } from '../../components/CrewList';
 import { CharLink, Face } from '../../components/People';
+import { RelationChip, SideChip } from '../../components/Side';
+import { sideOf } from '../../../engine/sides';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
@@ -31,6 +33,7 @@ export function RivalBoard({ s }: { s: GameState }) {
                   <div className="text-sm font-semibold text-stone-100 truncate">{r.name}</div>
                   <OpinionBadge v={opinion(s, r.leaderId, s.playerId)} />
                 </div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-1"><SideChip s={s} id={leader.id} full /><RelationChip relation={sideOf(s, leader.id).relation} /></div>
                 <div className="text-xs text-stone-400 truncate"><CharLink s={s} id={leader.id}>{displayName(leader)}</CharLink></div>
                 <div className="text-[11px] text-stone-500">Wants to <span className="text-stone-300">{r.goal}</span> · muscle {r.muscle}{r.kind === 'mob' ? ` · ${fmt$(r.money)}` : ''}</div>
                 {war && <div className="text-[11px] text-red-300">At war · score {war.score}</div>}

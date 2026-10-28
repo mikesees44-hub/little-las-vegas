@@ -10,6 +10,8 @@ import { Modal } from './Modal';
 import { ActionCard } from './Orders';
 import { CharLink, Face } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
+import { plotTargets, plotWarnings, sideOf, TARGETED_SCHEMES, type SideFilter, type TargetedScheme } from '../../engine/sides';
+import { RelationChip, SideChip, SideFilterBar } from './Side';
 
 /** Opening the scheme planner from anywhere. */
 export const PlannerContext = createContext<{ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => void }>({ plan: () => {} });
@@ -44,18 +46,25 @@ export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: Game
             <div>
               <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Plan a scheme</div>
               <h2 className="font-display text-2xl text-gold-400">{info.name}{t ? `: ${displayName(t)}` : ''}</h2>
+              {t && (
+                <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="plot-target-side">
+                  <SideChip s={s} id={t.id} full />
+                  <RelationChip relation={sideOf(s, t.id).relation} />
+                </div>
+              )}
               <p className="text-xs text-stone-400">{info.text}</p>
             </div>
           </div>
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
+        <PlotWarnings s={s} hostile={info.hostile} targetId={targetId} agents={agents} />
 
         <Section title={`${kind === 'envoy' ? 'The envoy' : kind === 'murder' ? 'The hit team' : 'Agents'} (${agents.length}/4)`}>
           {agents.length > 0 && (
             <div className="mb-1.5 flex flex-wrap gap-1.5">
               {agents.map((id) => s.characters[id]).filter(Boolean).map((c) => (
                 <button key={c.id} onClick={() => toggle(c.id)} className="flex items-center gap-1 rounded border border-gold-400 bg-gold-500/15 px-1.5 py-0.5 text-xs text-gold-200" title="Remove from the team">
-                  {c.id === s.playerId ? 'You' : `${c.firstName} ${c.lastName}`} ✕
+                  {c.id === s.playerId ? 'You' : `${c.firstName} ${c.lastName}`} {c.id !== s.playerId && <SideChip s={s} id={c.id} />} ✕
                 </button>
               ))}
             </div>
@@ -158,6 +167,7 @@ export function SchemesPanel({ s }: { s: GameState }) {
           <button className="btn-ghost text-xs" onClick={() => plan('envoy')}>Send an envoy</button>
           <button className="btn-ghost text-xs" onClick={() => plan('claim')}>Fabricate a claim</button>
         </div>
+        <TargetPicker s={s} />
         <div className="mt-3 space-y-2">
           {mine.length === 0 && <div className="text-xs text-stone-500">Nothing in motion.</div>}
           {mine.map((sc) => {
@@ -167,7 +177,7 @@ export function SchemesPanel({ s }: { s: GameState }) {
               <div key={sc.id} className="rounded-md border border-noir-700 bg-noir-800/60 p-2.5 flex gap-2">
                 {t && <Face s={s} c={t} size={44} />}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-stone-100">{SCHEME_INFO[sc.kind].name}{t ? <>: <CharLink s={s} id={t.id} /></> : sc.opts.heist ? `: ${HEISTS[sc.opts.heist].name}` : sc.opts.city ? `: ${CITIES[sc.opts.city]?.name}` : ''}{sc.discovered && <span className="ml-1 text-red-400 text-xs">discovered</span>}</div>
+                  <div className="text-sm font-semibold text-stone-100">{SCHEME_INFO[sc.kind].name}{t ? <>: <CharLink s={s} id={t.id} /> <SideChip s={s} id={t.id} /></> : sc.opts.heist ? `: ${HEISTS[sc.opts.heist].name}` : sc.opts.city ? `: ${CITIES[sc.opts.city]?.name}` : ''}{sc.discovered && <span className="ml-1 text-red-400 text-xs">discovered</span>}</div>
                   <div className="mt-1 h-1.5 rounded bg-noir-700 overflow-hidden"><div className="h-full bg-gold-500" style={{ width: `${sc.progress}%` }} /></div>
                   <div className="text-[11px] text-stone-400 mt-0.5">{sc.progress}% · success {Math.round(o.chance * 100)}% · secrecy {o.secrecy} · agents {sc.agents.map((id) => s.characters[id]?.firstName).filter(Boolean).join(', ')}</div>
                   <div className="mt-1 w-56"><ActionCard s={s} action={{ kind: 'cancelScheme', schemeId: sc.id }} compact /></div>
@@ -206,6 +216,82 @@ export function SchemesPanel({ s }: { s: GameState }) {
           <ul className="text-xs space-y-0.5">{s.outposts.map((o) => <li key={o.city}>{o.city}: {fmt$(o.income)}/wk</li>)}</ul>
         </div>
       </section>
+    </div>
+  );
+}
+
+/** The warning banner: plotting against your own, or trusting another family's man. */
+export function PlotWarnings({ s, hostile, targetId, agents }: { s: GameState; hostile: boolean; targetId?: string; agents: readonly string[] }) {
+  const ws = plotWarnings(s, hostile, targetId, agents);
+  if (!ws.length) return null;
+  return (
+    <div className="space-y-1" data-testid="plot-warnings">
+      {ws.map((w, i) => (
+        <div key={i} role="alert" data-testid="plot-warning" data-tone={w.tone}
+          className={`flex items-start gap-2 rounded-md border px-2.5 py-1.5 text-xs ${w.tone === 'bad' ? 'border-blood-500/70 bg-blood-500/20 text-red-100' : 'border-amber-600/70 bg-amber-900/30 text-amber-100'}`}>
+          <span aria-hidden className="font-bold">{w.tone === 'bad' ? '⚠' : '!'}</span>
+          <span>{w.text}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+const PER_GROUP = 8;
+
+/** Pick whom to plot against: grouped by side, with headers, Mine / Theirs / Everyone. */
+export function TargetPicker({ s }: { s: GameState }) {
+  const { plan } = usePlanner();
+  const [kind, setKind] = useState<TargetedScheme>('murder');
+  const [filter, setFilter] = useState<SideFilter>('theirs');
+  const [q, setQ] = useState('');
+  const [more, setMore] = useState<Record<string, boolean>>({});
+  const query = q.trim().toLowerCase();
+  const groups = plotTargets(s, kind, filter)
+    .map((g) => ({ ...g, ids: query ? g.ids.filter((id) => displayName(s.characters[id]).toLowerCase().includes(query)) : g.ids }))
+    .filter((g) => g.ids.length);
+  return (
+    <div className="mt-3 rounded-md border border-noir-700 bg-noir-900/50 p-2.5" data-testid="target-picker">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Plot against someone</span>
+        <select className="rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={kind} onChange={(e) => setKind(e.target.value as TargetedScheme)} aria-label="Scheme">
+          {TARGETED_SCHEMES.map((k) => <option key={k} value={k}>{SCHEME_INFO[k].name}</option>)}
+        </select>
+        <SideFilterBar value={filter} onChange={setFilter} />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name…" aria-label="Filter by name" className="w-28 rounded border border-noir-600 bg-noir-900 px-1.5 py-0.5 text-xs text-stone-200" />
+      </div>
+      {!groups.length && <p className="mt-2 text-xs text-stone-500">{kind === 'blackmail' ? 'You know no secret about anyone here.' : 'Nobody here.'}</p>}
+      <div className="mt-2 space-y-2">
+        {groups.map((g) => {
+          const shown = more[g.key] ? g.ids : g.ids.slice(0, PER_GROUP);
+          return (
+            <div key={g.key} data-testid="target-group" data-side={g.side.kind} data-group={g.key}>
+              <div className="mb-1 flex items-center gap-1.5 border-b pb-0.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: g.side.color, borderColor: `${g.side.color}55` }} data-testid="target-group-header">
+                <span aria-hidden>{g.side.emblem}</span>{g.label}<span className="font-normal text-stone-500">({g.ids.length})</span>
+                <RelationChip relation={g.side.relation} className="normal-case tracking-normal" />
+              </div>
+              <div className="grid gap-1 sm:grid-cols-2">
+                {shown.map((id) => {
+                  const c = s.characters[id];
+                  const sd = sideOf(s, id);
+                  return (
+                    <div key={id} role="button" tabIndex={0} onClick={() => plan(kind, id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); plan(kind, id); } }} data-testid="target-row" data-side={sd.kind}
+                      className="flex min-w-0 cursor-pointer items-center gap-2 rounded border border-noir-700 bg-noir-800/60 px-1.5 py-1 text-left hover:border-gold-600">
+                      <Face s={s} c={c} size={28} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs text-stone-100">{displayName(c)}</span>
+                        <span className="block truncate text-[10px] text-stone-500">{c.office ?? (c.rank !== 'civilian' ? c.rank : c.outside ?? 'civilian')}</span>
+                      </span>
+                      <SideChip side={sd} />
+                    </div>
+                  );
+                })}
+              </div>
+              {g.ids.length > PER_GROUP && <button type="button" className="mt-0.5 text-[11px] text-stone-400 hover:text-gold-300" onClick={() => setMore((m) => ({ ...m, [g.key]: !m[g.key] }))}>{more[g.key] ? 'Fewer' : `All ${g.ids.length}`}</button>}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

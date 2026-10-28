@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { sideMatches, sideOf, type SideFilter } from '../../engine/sides';
+import { SideChip, SideFilterBar } from '../components/Side';
 import { attachmentBoard, connectionsOf, sideName } from '../../engine/earsWeb';
 import type { GameState } from '../../engine/types';
 import { CharLink, Face } from '../components/People';
@@ -9,11 +12,16 @@ const TYPE_TONE: Record<string, string> = {
 
 /** Whom this person is attached to (what the boss knows; the Ears reveal the rest). */
 export function ConnectionsList({ s, id, compact }: { s: GameState; id: string; compact?: boolean }) {
-  const list = connectionsOf(s, id);
-  if (!list.length) {
+  const [filter, setFilter] = useState<SideFilter>('all');
+  const all = connectionsOf(s, id);
+  if (!all.length) {
     return compact ? <p className="text-[11px] text-stone-500" data-testid="connections-empty">Nobody you know of. The Ears may know better.</p> : null;
   }
+  const mixed = !compact && new Set(all.map((x) => sideOf(s, x.otherId).kind === 'yours')).size > 1;
+  const list = mixed ? all.filter((x) => sideMatches(sideOf(s, x.otherId), filter)) : all;
   return (
+    <>
+    {mixed && <div className="mb-1"><SideFilterBar value={filter} onChange={setFilter} /></div>}
     <ul className="space-y-1" data-testid="connections">
       {list.slice(0, compact ? 6 : 12).map((x) => (
         <li key={`${x.otherId}:${x.type}`} className="flex items-center gap-2 text-sm min-w-0">
@@ -24,10 +32,12 @@ export function ConnectionsList({ s, id, compact }: { s: GameState; id: string; 
               <span className={`ml-1.5 ${TYPE_TONE[x.type] ?? 'text-stone-300'} ${x.ended !== undefined ? 'line-through decoration-stone-600' : ''}`}>{x.short}</span>
             </span>
           </Tip>
+          {!compact && s.characters[x.otherId] && <SideChip s={s} id={x.otherId} />}
           {x.type !== 'ex' && x.ended === undefined && <span className="ml-auto shrink-0 h-1 w-10 rounded bg-noir-700 overflow-hidden inline-block"><span className="block h-full bg-rose-400/70" style={{ width: `${x.strength}%` }} /></span>}
         </li>
       ))}
     </ul>
+    </>
   );
 }
 
