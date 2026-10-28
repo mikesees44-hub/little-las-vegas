@@ -5,6 +5,9 @@ import type { GameState } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
 import { FACTION_TINT } from '../components/People';
 import { Portrait } from '../portrait/Portrait';
+import { eveningKindOf } from '../../engine/evening';
+import { adultOn } from '../../engine/datingState';
+import { BoldFlow, CarFlow, EveningFlow } from './EveningFlow';
 
 /**
  * THE CALLING CARD (engine/callingCard.ts): a person at a glance. The
@@ -35,6 +38,7 @@ function Sec({ title, children, testid }: { title: string; children: ReactNode; 
 
 export function CallingCard({ s, id, actions = true, startOpen = false }: { s: GameState; id: string; actions?: boolean; startOpen?: boolean }) {
   const [more, setMore] = useState(startOpen);
+  const [flow, setFlow] = useState<'evening' | 'car' | 'bold' | undefined>();
   const v = callingCard(s, id);
   const c = s.characters[id];
   if (!v || !c) return <p className="text-xs text-stone-500" data-testid="calling-card-none">No calling card: adults only.</p>;
@@ -64,6 +68,17 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
           {v.summary.map((l) => <Tone key={l.label} l={l} />)}
         </dl>
       </div>
+
+      {actions && (eveningKindOf(s, id) || (adultOn(s) && s.nightlife?.people[id])) && (
+        <div className="flex flex-wrap gap-1.5" data-testid="calling-card-flows">
+          {eveningKindOf(s, id) && <button type="button" className="btn-gold text-xs py-1" onClick={() => setFlow('evening')} data-testid="open-evening">Plan an evening with {c.firstName}…</button>}
+          {adultOn(s) && eveningKindOf(s, id) && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('car')} data-testid="open-car">"Step outside to my car"…</button>}
+          {adultOn(s) && s.nightlife?.people[id] && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('bold')} data-testid="open-bold">A bold offer…</button>}
+        </div>
+      )}
+      {flow === 'evening' && <EveningFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
+      {flow === 'car' && <CarFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
+      {flow === 'bold' && <BoldFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
 
       {acts.length > 0 && (
         <div className="space-y-1.5" data-testid="calling-card-actions">

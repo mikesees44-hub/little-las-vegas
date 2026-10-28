@@ -16,6 +16,9 @@ import {
   type NightlifeState, type NightPerson, type NightRole, type PartnerKnows, type PromiseKind,
 } from './nightlifeState';
 import { goomarBlock, goomarWeek, previewEndGoomar, previewGoomar, applyGoomarOp, isGoomar } from './goomar';
+import { applyInvite, askingPrice, defaultPlan, eveningKindOf, previewInvite, KIND_INFO, type EveningPlan } from './evening';
+import { applyBold, applyCar, previewBold, previewCar, type BoldAfter } from './quickies';
+import { applyAskMan, applyPartner, partnersWeek, previewAskMan, previewPartner, type PartnerHow } from './nightPartners';
 import type { ActionPreview } from './actions';
 import type { Acceptance, Reason } from './interactions';
 import type { Character, Effect, FactionId, GameState, PlayerAction, RivalId } from './types';
@@ -63,7 +66,22 @@ export type NightAction =
   | { op: 'goomar'; id: string }
   | { op: 'endGoomar'; id: string }
   | { op: 'deal'; house: string; deal: HouseDeal }
-  | { op: 'back'; house: string };
+  | { op: 'back'; house: string }
+  /** An evening with her: the whole plan from the evening flow (evening.ts). */
+  | { op: 'invite'; plan: EveningPlan }
+  /** "Step outside to my car" (quickies.ts). */
+  | { op: 'car'; id: string; price?: number }
+  /** A bold offer at the club, and how many times you raised it (quickies.ts). */
+  | { op: 'bold'; id: string; amount: number; raises: number; after?: BoldAfter }
+  /** Deal with her husband or fella (nightPartners.ts). */
+  | { op: 'partner'; id: string; how: PartnerHow }
+  /** Ask around about her man (nightPartners.ts). */
+  | { op: 'askMan'; id: string };
+
+/** Hours each order takes on the day clock (merged into the time-cost table as 'nightlife:<op>'). */
+export const NIGHT_HOURS: Record<NightAction['op'], number> = {
+  payroll: 1, release: 0.5, promise: 1, keep: 3, goomar: 4, endGoomar: 2, deal: 2, back: 0.5, invite: 4, car: 0.75, bold: 0.5, partner: 2, askMan: 0.5,
+};
 
 export type NightOp =
   | { op: 'payroll'; id: string }
@@ -74,6 +92,11 @@ export type NightOp =
   | { op: 'endGoomar'; id: string; gift: number }
   | { op: 'deal'; house: string; deal: HouseDeal }
   | { op: 'back'; house: string }
+  | { op: 'invite'; plan: EveningPlan }
+  | { op: 'car'; id: string; price?: number }
+  | { op: 'bold'; id: string; amount: number; raises: number; after?: BoldAfter }
+  | { op: 'partner'; id: string; how: PartnerHow }
+  | { op: 'askMan'; id: string }
   | { op: 'refused'; id: string; what: string };
 
 export const NX = (op: NightOp, label: string): Effect => ({ type: 'nightlife', op, label }) as Effect;
@@ -599,6 +622,11 @@ export function previewNight(s: GameState, a: NightAction): ActionPreview {
     case 'endGoomar': return previewEndGoomar(s, a.id);
     case 'deal': return previewDeal(s, a.house, a.deal);
     case 'back': return previewBack(s, a.house);
+    case 'invite': return previewInvite(s, a.plan);
+    case 'car': return previewCar(s, a.id, a.price);
+    case 'bold': return previewBold(s, a.id, a.amount, a.raises, a.after);
+    case 'partner': return previewPartner(s, a.id, a.how);
+    case 'askMan': return previewAskMan(s, a.id);
   }
 }
 
@@ -630,6 +658,11 @@ export function applyNightOp(ctx: Ctx, o: NightOp): void {
     return;
   }
   if (o.op === 'keep') { keepPromise(ctx, N, o.pid); return; }
+  if (o.op === 'invite') { applyInvite(ctx, N, o.plan); return; }
+  if (o.op === 'car') { applyCar(ctx, N, o.id, o.price); return; }
+  if (o.op === 'bold') { applyBold(ctx, N, o.id, o.amount, o.raises, o.after); return; }
+  if (o.op === 'partner') { applyPartner(ctx, N, o.id, o.how); return; }
+  if (o.op === 'askMan') { applyAskMan(ctx, N, o.id); return; }
   const c = s.characters[o.id];
   const p = N.people[o.id];
   // Adults only, re-checked when the week runs.
@@ -717,7 +750,7 @@ function keepPromise(ctx: Ctx, N: NightlifeState, pid: string): void {
 }
 
 export function describeNightOp(s: GameState, o: NightOp): string | undefined {
-  const c = 'id' in o ? s.characters[o.id] : undefined;
+  const c = 'id' in o ? s.characters[o.id] : o.op === 'invite' ? s.characters[o.plan.id] : undefined;
   const first = c?.firstName ?? 'her';
   switch (o.op) {
     case 'payroll': return `${first} kicks back a share every week (10-25%, by what she makes)`;
@@ -728,6 +761,11 @@ export function describeNightOp(s: GameState, o: NightOp): string | undefined {
     case 'endGoomar': return `It ends${o.gift ? `, with ${$(o.gift)} to see her right` : ''}`;
     case 'deal': return o.deal === 'none' ? 'Her house goes its own way' : `Her house ${o.deal === 'protect' ? 'pays for protection' : 'partners with the family'}`;
     case 'back': return 'The squeeze on her house ends';
+    case 'invite': return `${KIND_INFO[o.plan.kind].label} with ${first}`;
+    case 'car': return `A few minutes in your car with ${first}`;
+    case 'bold': return `${$(o.amount)} offered to ${first}; your pocket pays only if she takes it`;
+    case 'partner': return `Her man: ${o.how === 'pay' ? 'paid to stay calm' : o.how === 'warn' ? 'warned off' : 'handled by your crew'}`;
+    case 'askMan': return `What you know about ${first}'s man`;
     case 'refused': return undefined;
   }
 }
@@ -857,6 +895,7 @@ export function nightlifeWeek(ctx: Ctx): void {
   }
   for (const p of Object.values(N.people)) if (p.seeking !== undefined && p.seeking < s.week) p.seeking = undefined;
   goomarWeek(ctx, N);
+  partnersWeek(ctx, N);
   // Yearly lives (spread over the year), monthly world.
   for (const p of Object.values(N.people)) if (p.status === 'active' && (s.week + (hashSeed(p.id) % 52)) % 52 === 0) yearOf(ctx, N, p);
   if (s.week % 4 === 0) monthOf(ctx, N);
@@ -1327,6 +1366,14 @@ export function nightActionsFor(s: GameState, id: string): PlayerAction[] {
     if (p.adultOk && adultOn(s) && !kinds.includes('adult')) kinds.push('adult');
     for (const k of kinds) if (k !== 'adult' || adultOn(s)) out.push(a({ op: 'promise', id, kind: k }));
   }
+  // An evening (the flow offers every choice; this is the one-tap default), the car, a bold offer, her man.
+  if (eveningKindOf(s, id)) out.unshift(a({ op: 'invite', plan: defaultPlan(s, id) }));
+  if (adultOn(s)) {
+    if (eveningKindOf(s, id) === 'paid') out.push(a({ op: 'car', id, price: askingPrice(s, id, 'car').price }));
+    else if (eveningKindOf(s, id)) out.push(a({ op: 'car', id }));
+    out.push(a({ op: 'bold', id, amount: 250, raises: 0 }));
+  }
+  if (p.fam.partnerId) out.push(a(p.fam.temperKnown ? { op: 'partner', id, how: 'warn' } : { op: 'askMan', id }));
   if (isGoomar(s, id)) out.unshift(a({ op: 'endGoomar', id }));
   else if (!goomarBlock(s, id, true)) out.unshift(a({ op: 'goomar', id }));
   else out.push(a({ op: 'goomar', id }));

@@ -8,6 +8,7 @@ import { CRAFT_INFO, GOAL_INFO, OUTSIDE_INFO, VICE_INFO } from './hierarchy';
 import { appeal, impressionWord, looksOf, type Looks } from './looks';
 import { familyLine, kickbackRate, personOf, roleShown, roleText, sideName } from './nightlife';
 import { goomarOf, goomarTerms } from './goomar';
+import { partnerKnown } from './nightPartners';
 import { KNOWS_LABEL, MARITAL_LABEL, NBOUND_TEXT, NGOAL_TEXT } from './nightlifeState';
 import { opinion } from './relations';
 import { romanceBetween } from './romance';
@@ -96,6 +97,8 @@ export function callingCard(s: GameState, id: string): CallingCardView | undefin
     family.push(familyLine(s, p));
     const pt = p.fam.partnerId ? s.characters[p.fam.partnerId] : undefined;
     if (pt) family.push(`${p.fam.st === 'steady' ? 'Her fella' : 'Her husband'}: ${displayName(pt)}, ${ageOn(pt.birth, s.date)}, ${pt.ambition.toLowerCase()}${p.fam.knows && shown ? `; he ${KNOWS_LABEL[p.fam.knows]}` : ''}.`);
+    const pk = partnerKnown(s, p);
+    if (pt) family.push(pk ? `What you know about him: ${pk}` : 'What kind of man he is about her life: you don\'t know (ask around).');
     for (const k of p.fam.kids) { const a = s.date.y - k.y; family.push(`${k.m ? 'Son' : 'Daughter'} ${k.n}, ${a <= 0 ? 'a baby' : a}`); }
   } else {
     family.push(sp ? `${sp.alive ? 'Married to' : 'Widowed: was married to'} ${displayName(sp)}` : 'Not married');

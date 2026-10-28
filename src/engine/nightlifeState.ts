@@ -85,6 +85,12 @@ export interface NightFamily {
   mother?: 'ailing' | 'well';
   /** Whether the boss has learned this much (the card says "as far as you know"). */
   known?: boolean;
+  /** What kind of man he is about it (hidden until the boss learns it). */
+  temper?: 'jealous' | 'volatile' | 'fine' | 'manager';
+  /** The boss has learned what kind of man he is (asking around, gossip, or the hard way). */
+  temperKnown?: boolean;
+  /** Week he last came at the boss (cooldown). */
+  lastClash?: number;
 }
 
 export interface NightPerson {
@@ -129,6 +135,18 @@ export interface NightPerson {
   met?: boolean;
   /** Week of the last scene she made (cooldown). */
   scene?: number;
+  /** You told her you want it to be something: her hopes are up until this week. */
+  expects?: number;
+  /** She is testing whether you meant "you" (until this week). */
+  tests?: number;
+  /** Week you were cold or insulting to her (she remembers). */
+  scorned?: number;
+  /** She holds a grudge against the boss (since week): she may talk to the other side. */
+  grudge?: number;
+  /** Thrown out of the club (week). */
+  barred?: number;
+  /** She said yes out of fear (week): she keeps away from him. */
+  afraid?: number;
 }
 
 export type HouseDeal = 'none' | 'protect' | 'partner';
@@ -210,6 +228,10 @@ export interface NightlifeState {
   promises: NightPromise[];
   goomars: Record<string, Goomar>;
   npc: NpcGoomar[];
+  /** Tip-offs: women with a grudge who talked to a rival family or the law (the threats layer reads these). */
+  leaks?: { week: number; from: string; to: string; what: string; warned?: boolean }[];
+  /** Women who said they would come along on the boss's next trip (id -> until week). */
+  companions?: Record<string, number>;
   /** Stored appearance changes (looks.ts). */
   looks: Record<string, LookOverride>;
   log: [number, string][];
