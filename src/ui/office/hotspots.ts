@@ -7,7 +7,7 @@ import type { OfficeApi } from '../desk/officeApi';
  * office's own panels (the door's visitors, the phone, the chair's briefing),
  * whose buttons in turn open existing flows.
  */
-export type OfficePanel = 'door' | 'phone' | 'brief';
+export type OfficePanel = 'door' | 'phone' | 'brief' | 'week';
 export type HotspotEntry = { api: Exclude<keyof OfficeApi, 'openAdvance' | 'openDesk' | 'openVisitors' | 'openDecisions'> } | { panel: OfficePanel };
 
 export interface Hotspot {
