@@ -929,6 +929,8 @@ export interface GameState {
   dating?: import('./datingState').DatingState;
   /** Nightlife: the cast of the night, the madams' houses, promises, goomars, stored looks (nightlifeState.ts; optional for old saves). */
   nightlife?: import('./nightlifeState').NightlifeState;
+  /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */
+  spend?: import('./spendState').SpendState;
   /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
   aging?: import('./aging').AgingState;
   /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */
@@ -1030,6 +1032,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'dating'; op: import('./dating').DatingAction }
   /** Nightlife (nightlife.ts): payroll, promises, the goomar, the madams' protection. She decides. */
   | { kind: 'nightlife'; op: import('./nightlife').NightAction }
+  /** Spend (spend.ts): buy from the catalog, or sell / let go what you have. */
+  | { kind: 'spend'; op: import('./spendState').SpendAction }
 );
 
 export type InteractionId =

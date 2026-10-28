@@ -1,6 +1,7 @@
 import { daysOf, DAY_NAMES } from './days';
 import { addStress } from './familyStress';
 import { addOpinion } from './relations';
+import { spendHours } from './spendData';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -117,6 +118,8 @@ export const TIME_TABLE: Record<string, number> = {
   'nightlife:payroll': 1, 'nightlife:release': 0.5, 'nightlife:promise': 1, 'nightlife:keep': 3,
   'nightlife:goomar': 4, 'nightlife:endGoomar': 2, 'nightlife:deal': 2, 'nightlife:back': 0.5,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
+  // Spend: buying a thing is an hour; an occasion is an evening and a trip a day (spendHours, with the state).
+  'spend:buy': 1, 'spend:sell': 0.5,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */
@@ -155,6 +158,7 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
     const p = a.op.plan;
     if (p.leaderId !== s.playerId && !p.guests.includes(s.playerId) && p.companionId !== s.playerId) return 0.5;
   }
+  if (a.kind === 'spend' && a.op.op === 'buy') return spendHours(a.op.item);
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];
   if (a.kind in TIME_TABLE) return TIME_TABLE[a.kind];
   return DEFAULT_COST;
