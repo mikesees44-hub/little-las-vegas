@@ -23,7 +23,7 @@ function week(s: GameState, actions: PlayerAction[] = []): GameState {
   return advanceWeek(s, { actions }).state;
 }
 /** A crew order with the first free capo and two of his men. */
-function crewOrder(s: GameState, district: string): NycAction {
+function crewOrder(s: GameState, district: string): Extract<NycAction, { op: 'crew' }> {
   const capo = capoPool(s)[0];
   expect(capo, 'a free capo').toBeDefined();
   const men = soldierPool(s, capo.id).slice(0, 2).map((c) => c.id);
