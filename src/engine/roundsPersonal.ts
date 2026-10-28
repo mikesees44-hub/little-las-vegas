@@ -1,3 +1,4 @@
+import { agingOf, OLD_TRAITS, traitLabel, undiagnosed, type OldTrait } from './aging';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, player } from './characters';
 import { madamOf } from './ears';
@@ -117,6 +118,18 @@ const ADVICE: Record<string, string> = {
   'Sugar diabetes': 'Sugar diabetes. Watch the pastry. I will check you every month.',
 };
 
+const OLD_ADVICE: Record<OldTrait, string> = {
+  infirm: 'You are slowing down. Walk every day, rest every afternoon, and let younger men carry things.',
+  eyes: 'Your eyes are going. Glasses will help for a while. No more driving at night.',
+  bones: 'Your bones are thin. A fall now would be serious: a rail on the stairs, and no ladders.',
+  mind: 'Your memory is slipping. Keep a book of names. Keep your mind busy. Come back every few months.',
+  heart: 'Your heart is tired. Less salt, fewer cigars, less aggravation. I mean the aggravation most of all.',
+  incapable: 'He talks to your wife in the hallway, not to you.',
+};
+function drinkingWorsens(b: Character): boolean {
+  return hasTrait(b, 'Drinker') || b.conditions.includes("Drinker's liver");
+}
+
 export function doctorReading(s: GameState): DoctorReading {
   const b = player(s);
   const age = ageOn(b.birth, s.date);
@@ -125,8 +138,18 @@ export function doctorReading(s: GameState): DoctorReading {
   for (const c of b.conditions) lines.push(ADVICE[c] ?? `${c}: he writes you a prescription.`);
   if (!b.conditions.length) lines.push(age >= 45 ? 'Blood pressure a little high. Nothing yet he can name. Come back in the fall.' : 'Nothing he can find. Go home.');
   if (hasTrait(b, 'Drinker') && !b.conditions.includes("Drinker's liver")) lines.push('He smells the anisette and says nothing. Then he says something.');
+  // Old age: he names what is there (a visit also slows it down for half a year).
+  const old = agingOf(s, b.id);
+  const named: string[] = [];
+  for (const t of OLD_TRAITS) {
+    const L = old.t[t];
+    if (!L) continue;
+    named.push(traitLabel(t, L));
+    lines.push(`${traitLabel(t, L)}: ${OLD_ADVICE[t]}`);
+  }
+  if (drinkingWorsens(b) && named.length) lines.push('The drinking makes all of it come on faster. He says it twice.');
   const boost = Math.min(8, 3 + b.conditions.length * 2);
-  return { lines, health: b.health, conditions: [...b.conditions], boost };
+  return { lines, health: b.health, conditions: [...b.conditions, ...named], boost };
 }
 
 /* ------------------------------------------------------------------ */
@@ -202,10 +225,10 @@ export function personalRounds(s: GameState, wife: Character | undefined): Perso
   out.push({
     id: 'self:doctor', lane: 'self', label: 'See the doctor', slots: 1, reading: 'doctor',
     text: 'A checkup in Cape May: the heart, the pressure, the drinking. He catches things early, if you let him.',
-    effects: [{ type: 'health', charId: B, amount: dr.boost, label: 'A checkup, and doing what the doctor says' }, ...stressFx(s, -2, 'A clean bill, more or less')],
+    effects: [{ type: 'health', charId: B, amount: dr.boost, label: 'A checkup, and doing what the doctor says' }, ...stressFx(s, -2, 'A clean bill, more or less'), { type: 'dyn', op: { op: 'aging', a: { k: 'checkup', charId: B } }, label: 'The doctor looks you over' }],
     result: ['The doctor listened to your chest for a long time, then wrote something down.', 'A checkup in Cape May. You promised him things you might even do.'],
     cost: 120,
-    suggestedBy: (boss.health < 60 || boss.conditions.length > 0) && weeksSince(s, 'self:doctor') >= 10 ? (wife?.alive ? `${wife.firstName} made you an appointment` : 'Your chest has been tight') : undefined,
+    suggestedBy: (boss.health < 60 || boss.conditions.length > 0 || undiagnosed(s).length > 0) && weeksSince(s, 'self:doctor') >= 10 ? (wife?.alive ? `${wife.firstName} made you an appointment` : 'Your chest has been tight') : undefined,
   });
 
   // The head doctor, quietly.

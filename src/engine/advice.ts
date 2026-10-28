@@ -251,6 +251,7 @@ const DYN_PURPOSE: Record<string, string> = {
   host: 'A gathering: opinion, renown and a chance for things to happen.',
   decision: 'A big decision for the house.',
   legacy: 'Spend renown on a perk the dynasty keeps forever.',
+  standing: 'Who is in the line of succession, and who the family stands behind.',
 };
 
 function purposeOf(a: PlayerAction, p: ActionPreview): string {

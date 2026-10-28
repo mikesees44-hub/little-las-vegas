@@ -1,3 +1,4 @@
+import { agingOf } from './aging';
 import { previewAction } from './actions';
 import { compareChoices, explainAction, type ActionExplanation } from './advice';
 import { selfInterest, tieTo } from './advisors';
@@ -612,6 +613,7 @@ function finish(s: GameState, adv: Character, me: AdviserRef, b: Omit<AdviceBrie
   b.reactions.sort((x, y) => LIKE.indexOf(y.likelihood) - LIKE.indexOf(x.likelihood) || (x.who < y.who ? -1 : 1));
   // Only what he could know is in it: always say there is more he can't see.
   if (!b.unknowns.length) b.unknowns.push({ text: 'What the other side plans to do about it', k: 'unknown' });
+  if (agingOf(s, adv.id).heard?.mind) b.unknowns.push({ text: `${adv.firstName}'s memory isn't what it was: weigh his numbers`, k: 'unknown' });
   if (me.role !== 'consigliere' && adv.attributes.intrigue < 40) b.unknowns.push({ text: `${adv.firstName} hears less than he lets on: his reads of other families are guesses`, k: 'unknown' });
   const m = mandateSource?.(s, adv.id);
   const cost = b.plan ? previewAction(s, b.plan).cost : 0;

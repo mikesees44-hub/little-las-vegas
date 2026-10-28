@@ -1,3 +1,4 @@
+import { xpMult } from './aging';
 import { crew, livingDynasty, player } from './characters';
 import { ageOn } from './calendar';
 import { heat, type Ctx } from './ledger';
@@ -130,7 +131,7 @@ export function lifestyleWeek(ctx: Ctx): void {
   const b = player(s);
   const ls = b.lifestyle;
   if (!ls) return;
-  ls.xp += 6 + Math.round(b.attributes[LIFESTYLES[ls.focus].skill] / 12);
+  ls.xp += Math.round((6 + Math.round(b.attributes[LIFESTYLES[ls.focus].skill] / 12)) * xpMult(s, b));
   while (ls.xp >= XP_PER_POINT) {
     ls.xp -= XP_PER_POINT;
     ls.points += 1;

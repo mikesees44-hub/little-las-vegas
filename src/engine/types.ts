@@ -923,6 +923,8 @@ export interface GameState {
   ears?: EarsState;
   /** Relationships & Dating: bonds, providers, rumors, content settings (datingState.ts; optional for old saves). */
   dating?: import('./datingState').DatingState;
+  /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
+  aging?: import('./aging').AgingState;
   /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */
   briefing?: import('./briefing').BriefingState;
   /** Your Rounds: the boss's evenings, the lanes' neglect, the advisors' free hand (rounds.ts; optional, starts when used). */

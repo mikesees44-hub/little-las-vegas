@@ -33,6 +33,8 @@ import { PurseSection } from '../tribute/PurseSection';
 import { wealthOf } from '../../engine/wealth';
 import { useState } from 'react';
 import { QuickActions } from '../sheet/QuickActions';
+import { AgingSection } from '../sheet/AgingSection';
+import { knownOld } from '../../engine/aging';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
 export type SheetTab = 'overview' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
@@ -95,7 +97,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
                   <span className="text-stone-500">Health</span>
                   <div className="h-1.5 w-24 rounded bg-noir-700 overflow-hidden"><div className={`h-full ${c.health >= 60 ? 'bg-emerald-600' : c.health >= 35 ? 'bg-amber-600' : 'bg-blood-400'}`} style={{ width: `${c.health}%` }} /></div>
                   <span className="tabular-nums text-stone-300">{c.health}</span>
-                  {c.conditions.length > 0 && <span className="text-red-300">{c.conditions.join(', ')}</span>}
+                  {(c.conditions.length > 0 || knownOld(s, c).length > 0) && <span className="text-red-300">{[...c.conditions, ...knownOld(s, c).map((k) => (k.sure ? k.label : `${k.label}?`))].join(', ')}</span>}
                 </div>
               )}
               <div className="mt-1.5"><TraitIcons c={c} labels /></div>
@@ -126,6 +128,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
             <ul className="text-[11px] text-stone-400 space-y-0.5">{SKILLS.map((k) => <li key={k}><span className="text-stone-200">{SKILL_LABEL[k]} {c.attributes[k]}:</span> {SKILL_HELP[k]}</li>)}</ul>
             <div className="mt-1.5"><TraitIcons c={c} labels /></div>
             <ul className="text-[11px] text-stone-500">{c.traits.map((t) => <li key={t}><span className="text-stone-300">{t}:</span> {TRAIT_INFO[t]}</li>)}</ul>
+            <AgingSection s={s} c={c} />
           </section>
         )}
 

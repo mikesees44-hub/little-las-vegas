@@ -1,3 +1,4 @@
+import { agingFor, agingMonth, deathMult, ensureAging, fertility, lineOrder, successionBar } from './aging';
 import { ageOn, formatDate } from './calendar';
 import {
   age,
@@ -27,7 +28,7 @@ export const SUCCESSION_LAWS: Record<SuccessionLaw, { name: string; text: string
 };
 
 export function isEligible(s: GameState, c: Character | undefined): c is Character {
-  return !!c && c.alive && c.dynasty && (c.imprisonedUntil === undefined || c.imprisonedUntil <= s.week);
+  return !!c && c.alive && c.dynasty && (c.imprisonedUntil === undefined || c.imprisonedUntil <= s.week) && !successionBar(s, c);
 }
 
 /**
@@ -56,6 +57,8 @@ export function bloodLine(s: GameState, from: Character): Character[] {
     if (t) return t;
     const cl = closeness(a) - closeness(b);
     if (cl) return cl;
+    const dis = lineOrder(s, a) - lineOrder(s, b);
+    if (dis) return dis;
     return toOrd(a) - toOrd(b); // older first
   });
 }
@@ -323,8 +326,14 @@ export function monthlyLife(ctx: Ctx): MonthlyResult {
     const added = monthlyHealth(s, c);
     const tracked = c.dynasty || c.faction === 'player';
     if (added && tracked) ctx.log.push(`${displayName(c)} has been diagnosed with ${added.toLowerCase()}.`);
+    // Old age (its own dice): the slow traits, and a heart that gives out.
+    const old = agingFor(ctx, c);
+    if (old.kill) {
+      killCharacter(ctx, c.id, old.kill);
+      continue;
+    }
     const a = ageOn(c.birth, s.date);
-    const p = monthlyDeathChance(a, c.health);
+    const p = Math.min(0.6, monthlyDeathChance(a, c.health) * deathMult(s, c));
     if (!chance(s, p)) continue;
     // Roll hit. A first hit is only a warning; a later hit (>= 4 weeks after a warning) kills.
     if (c.warnedWeek === undefined || s.week - c.warnedWeek < 4) {
@@ -355,6 +364,7 @@ export function monthlyLife(ctx: Ctx): MonthlyResult {
   // Recovery clears warnings for people who got better.
   for (const c of living) if (c.alive && c.warnedWeek !== undefined && c.health >= 60 && s.week - c.warnedWeek > 26) c.warnedWeek = undefined;
 
+  agingMonth(ctx);
   births(ctx);
   marriages(ctx);
   return { warnings };
@@ -369,32 +379,36 @@ function births(ctx: Ctx): void {
     const a = ageOn(mother.birth, s.date);
     if (a < 18 || a > 42) continue;
     const kids = mother.childrenIds.length;
-    const p = 0.022 * (kids >= 4 ? 0.3 : 1) * (a > 36 ? 0.5 : 1);
+    const p = 0.022 * (kids >= 4 ? 0.3 : 1) * (a > 36 ? 0.5 : 1) * fertility(s, father) * fertility(s, mother);
     if (!chance(s, p)) continue;
-    const gender = rand(s) < 0.51 ? 'M' : 'F';
-    const child = makeCharacter(s, {
-      gender,
-      ethnicity: father.ethnicity,
-      lastName: father.lastName,
-      age: 0,
-      rank: 'civilian',
-      faction: father.faction === 'player' ? 'player' : 'none',
-      dynasty: true,
-      nickname: false,
-      wealth: 0,
-    });
-    child.birth = { ...s.date };
-    child.health = 95;
-    child.conditions = [];
-    child.ambition = gender === 'M' ? 'Grow up' : 'Grow up';
-    child.fatherId = father.id;
-    child.motherId = mother.id;
-    father.childrenIds.push(child.id);
-    mother.childrenIds.push(child.id);
-    addOpinion(s, child.id, father.id, 'My father', 30, 0);
-    const text = `${child.firstName} ${child.lastName} was born to ${father.firstName} and ${mother.firstName}.`;
-    s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text });
-    ctx.log.push(text);
+    // Twins, now and then (their own dice, so a family without twins rolls the same as before).
+    const n = chance(ensureAging(s), 0.012) ? 2 : 1;
+    for (let twin = 0; twin < n; twin++) {
+      const gender = rand(s) < 0.51 ? 'M' : 'F';
+      const child = makeCharacter(s, {
+        gender,
+        ethnicity: father.ethnicity,
+        lastName: father.lastName,
+        age: 0,
+        rank: 'civilian',
+        faction: father.faction === 'player' ? 'player' : 'none',
+        dynasty: true,
+        nickname: false,
+        wealth: 0,
+      });
+      child.birth = { ...s.date };
+      child.health = 95;
+      child.conditions = [];
+      child.ambition = gender === 'M' ? 'Grow up' : 'Grow up';
+      child.fatherId = father.id;
+      child.motherId = mother.id;
+      father.childrenIds.push(child.id);
+      mother.childrenIds.push(child.id);
+      addOpinion(s, child.id, father.id, 'My father', 30, 0);
+      const text = `${child.firstName} ${child.lastName} was born to ${father.firstName} and ${mother.firstName}.`;
+      s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text });
+      ctx.log.push(text);
+    }
   }
 }
 

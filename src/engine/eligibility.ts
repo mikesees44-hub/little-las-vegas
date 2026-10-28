@@ -1,3 +1,4 @@
+import { isIncapable } from './aging';
 import { isFree } from './characters';
 import { holder, SEAT_INFO } from './council';
 import { isMade } from './hierarchy';
@@ -31,6 +32,7 @@ export function seatEligibility(s: GameState, seat: Seat, charId: string): Eligi
   const c = s.characters[charId];
   if (!c || !c.alive || c.faction !== 'player' || c.id === s.playerId || c.rank === 'civilian') return { why: 'Not one of your men' };
   if (!isFree(s, c)) return { why: 'He is in jail' };
+  if (isIncapable(s, c.id)) return { why: 'He can no longer look after his own affairs (Incapable)' };
   if (s.council?.[seat]?.holderId === c.id) return { why: `He is already the ${SEAT_INFO[seat].name.toLowerCase()}` };
   if (RANK_SEATS.includes(seat) && !isMade(c)) return { why: `Only a made man can be ${SEAT_INFO[seat].name.toLowerCase()}` };
   const prev = holder(s, seat);

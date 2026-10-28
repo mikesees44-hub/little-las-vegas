@@ -1,3 +1,4 @@
+import { successionBar } from './aging';
 import { ageOn } from './calendar';
 import { capos, crew, displayName, hasTrait, isFree, player } from './characters';
 import { ALL_ATTRS, ATTR_LABEL, POSTS, addSuccess, growthMonth, trackedPeople, viewAttrs } from './attrs';
@@ -618,7 +619,7 @@ export function previewPower(s: GameState, a: PowerAction): ActionPreview {
       if (a.mode === 'private') effects.push(note('Secret: grievances wait until it comes out'));
       return {
         ...base, title: `Name the heir: ${info.name}${c ? ` (${c.firstName})` : ''}`, detail: info.text, effects, because: `named the heir (${info.name.toLowerCase()})`,
-        disabledReason: info.needsHeir && !c ? 'Choose who' : c && (!c.alive || c.id === boss.id) ? 'Not available' : (a.mode === 'named' || a.mode === 'private' || a.mode === 'unwritten') && c && !c.dynasty ? 'The heir must be of the house (adopt him first)' : a.mode === 'underboss' && !ub ? 'There is no underboss' : a.mode === 'private' && !ub ? 'A secret heir needs an underboss to stand in front of him' : undefined,
+        disabledReason: info.needsHeir && !c ? 'Choose who' : c && (!c.alive || c.id === boss.id) ? 'Not available' : (a.mode === 'named' || a.mode === 'private' || a.mode === 'unwritten') && c && !c.dynasty ? 'The heir must be of the house (adopt him first)' : (a.mode === 'named' || a.mode === 'private' || a.mode === 'unwritten') && c && successionBar(s, c) ? `Not in the line: ${successionBar(s, c)!.toLowerCase()}` : a.mode === 'underboss' && !ub ? 'There is no underboss' : a.mode === 'private' && !ub ? 'A secret heir needs an underboss to stand in front of him' : undefined,
       };
     }
     case 'groom': {

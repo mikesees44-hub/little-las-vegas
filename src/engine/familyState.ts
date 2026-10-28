@@ -146,7 +146,9 @@ export type DynAction =
   | { type: 'guardian'; childId: string; kind: EducationKind; guardianId?: string }
   | { type: 'host'; activity: ActivityKind; guests: string[]; honoreeId?: string }
   | { type: 'decision'; id: DecisionId; option?: string }
-  | { type: 'legacy'; track: LegacyTrack };
+  | { type: 'legacy'; track: LegacyTrack }
+  /** The head of the family puts someone out of the line, shames him, or takes it back (aging.ts life traits). */
+  | { type: 'standing'; charId: string; tag: 'disinherited' | 'shamed'; remove?: boolean };
 
 export type DynOp =
   | { op: 'stress'; charId: string; amount: number; source: StressSource }
@@ -167,7 +169,8 @@ export type DynOp =
   | { op: 'evidence'; charId: string; amount: number }
   | { op: 'away'; charId: string; weeks: number }
   | { op: 'comeOfAge'; charId: string; path: LifePath }
-  | { op: 'secret'; charId: string; kind: 'affair' | 'bastard' };
+  | { op: 'secret'; charId: string; kind: 'affair' | 'bastard' }
+  | { op: 'aging'; a: import('./aging').AgingOp };
 
 /* ---------------------------------------------------------------- */
 /* Access helpers                                                    */

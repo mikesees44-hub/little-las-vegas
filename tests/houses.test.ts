@@ -85,7 +85,10 @@ describe('the houses at the start', () => {
 
   it('history is attached above and around the living characters, never replacing them', () => {
     const plain = newGame('houses-a', { skipHouses: true });
-    for (const c of Object.values(plain.characters)) {
+    // The dating roster is made after the houses' history (its own dice), so its women get other ids: same count, both ways.
+    const roster = new Set(Object.keys(plain.dating?.providers ?? {}));
+    expect(Object.keys(s.dating?.providers ?? {}).length).toBe(roster.size);
+    for (const c of Object.values(plain.characters).filter((x) => !roster.has(x.id))) {
       const now = s.characters[c.id];
       expect(now, c.firstName).toBeTruthy();
       expect(`${now.firstName} ${now.lastName} ${now.birth.y}`).toBe(`${c.firstName} ${c.lastName} ${c.birth.y}`);

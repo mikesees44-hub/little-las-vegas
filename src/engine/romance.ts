@@ -1,3 +1,4 @@
+import { attractionMods } from './aging';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { FEMALE_FIRST, SURNAMES } from './names';
@@ -93,6 +94,7 @@ export function attraction(s: GameState, a: Character, b: Character): { value: n
   const lk = looks(s, b);
   if (lk) reasons.push({ label: lk > 0 ? 'Handsome' : 'Homely', value: lk });
   if (hasTrait(b, 'Charming')) reasons.push({ label: 'Charming', value: 10 });
+  reasons.push(...attractionMods(s, b));
   if (hasTrait(a, 'Womanizer')) reasons.push({ label: 'Has a roving eye', value: 10 });
   if (hasTrait(a, 'Pious')) reasons.push({ label: 'Pious', value: -10 });
   const op = opinion(s, a.id, b.id);

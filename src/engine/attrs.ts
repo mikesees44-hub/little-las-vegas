@@ -1,3 +1,4 @@
+import { skillBase } from './aging';
 import { ageOn } from './calendar';
 import { hasTrait } from './characters';
 import { fam } from './familyState';
@@ -177,11 +178,13 @@ export function growAttr(s: GameState, c: Character, k: AttrKey, amount: number)
 /** Keep the six base skills in step with their expanded values (one point a month). */
 export function syncSkills(s: GameState, c: Character): void {
   const x = ensureAttrs(s, c);
+  // Old age takes from what he can do, not from what he learned: grow the learned skills.
+  const base = skillBase(s, c);
   for (const sk of SKILLS) {
     const target = mean(x.v, SKILL_FROM[sk]) + (x.off[sk] ?? 0);
-    const d = target - c.attributes[sk];
-    if (d >= 3) c.attributes[sk] = clamp(c.attributes[sk] + 1);
-    else if (d <= -3) c.attributes[sk] = clamp(c.attributes[sk] - 1);
+    const d = target - base[sk];
+    if (d >= 3) base[sk] = clamp(base[sk] + 1);
+    else if (d <= -3) base[sk] = clamp(base[sk] - 1);
   }
 }
 

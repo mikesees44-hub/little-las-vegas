@@ -1,3 +1,4 @@
+import { isIncapable } from './aging';
 import { previewUnderbelly } from './underbelly';
 import { costHint, moneyCost, withCostHint } from './costHints';
 import { LAWYER, RETAINER, RETAINER_CAP, RETAINER_EARLY_CAP } from './longgame';
@@ -429,6 +430,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       const busy = a.agents.find((id) => s.schemes.some((x) => x.owner === 'player' && x.agents.includes(id)));
       let why = o.disabledReason;
       why = need(!busy, `${s.characters[busy ?? '']?.firstName ?? 'An agent'} is already on another scheme`, why);
+      why = need(!isIncapable(s, s.playerId), 'You cannot plan anything now (Incapable): whoever acts for you runs things', why);
+      why = need(!a.agents.some((id) => isIncapable(s, id)), 'An agent who can no longer look after his own affairs (Incapable)', why);
       why = need(s.money >= o.cost, `Needs ${fmtMoney(o.cost)}`, why);
       why = need(!(t && s.schemes.some((x) => x.owner === 'player' && x.targetId === t.id && x.kind === a.scheme)), 'Already scheming that', why);
       const unsanctioned = a.scheme === 'murder' && t && needsSanction(s, t) && !sanctioned(s, t.id);

@@ -344,11 +344,10 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   // The neighborhoods and the Ears come first so ids match with or without the houses' history.
   ensureHood(s);
   initEars(s);
-  // Relationships & Dating: the settings and the night's roster, ready on the first screen (its own dice).
-  // Made before the houses' history, like the Ears, so its people have the same ids with or without it.
-  ensureProviders(s, ensureDating(s));
   if (!opts.skipHouses) setupHouses(s);
   startPocket(s);
+  // Relationships & Dating: the settings and the night's roster, ready on the first screen (its own dice).
+  ensureProviders(s, ensureDating(s));
   // The town's house lots and houses (the families move in with the first week).
   ensureHousing(s);
   return s;
