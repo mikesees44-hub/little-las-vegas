@@ -15,6 +15,7 @@ import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
 import { homeOnlyBlock } from './visitAway';
+import { commitNyc, previewNyc } from './nyc';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
@@ -133,6 +134,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   pol: { preview: (s, a) => previewPol(s, a.op) },
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
   dev: { preview: (s, a) => previewDev(s, a.op), commit: (ctx, a) => commitDev(ctx, a.op) },
+  nyc: { preview: (s, a) => previewNyc(s, a.op), commit: (ctx, a) => commitNyc(ctx, a.op) },
   askPermission: {
     preview: (s, a) => {
       const c = CITIES_BY_ID[a.city];

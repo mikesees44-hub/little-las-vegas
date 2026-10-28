@@ -3,6 +3,7 @@ import { earnPocket, spendPocket } from './pocket';
 import { applyPowerOp, describePowerOp } from './power';
 import { applyEconOp, describeEconOp } from './econ';
 import { applyTravelOp, describeTravelOp } from './travel';
+import { applyNycOp, describeNycOp } from './nyc';
 import { applyUnderbelly } from './underbelly';
 import { TRIAL_WEEKS, applyLegal } from './longgame';
 import { LIFESTYLES, findPerk, perkBlocked } from './lifestyle';
@@ -217,6 +218,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeLivingOp(s, e.op);
     case 'travel':
       return describeTravelOp(s, e.op);
+    case 'nyc':
+      return describeNycOp(e.op);
     case 'bones':
       return describeBonesOp(s, e.op);
     case 'ledger':
@@ -854,6 +857,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'travel':
       applyTravelOp(ctx, e.op, label);
+      break;
+    case 'nyc':
+      applyNycOp(ctx, e.op);
       break;
     case 'bones':
       applyBonesOp(ctx, e.op, label);
