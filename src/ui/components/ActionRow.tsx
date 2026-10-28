@@ -6,6 +6,7 @@ import { fmt$ } from '../format';
 import { sameOrder, verbOf } from '../verbs';
 import { ActionCard, useOrders } from './Orders';
 import { DealWindow } from '../econ/DealWindow';
+import { hoursShort, timeBlock, timeCost } from '../../engine/timeCost';
 
 /**
  * The universal action row: one order folded to a line — what it is, what it
@@ -15,7 +16,7 @@ import { DealWindow } from '../econ/DealWindow';
  * through the same "Are you sure?" → "Yes, boss." as everywhere else.
  */
 export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: GameState; action: PlayerAction; label?: string; hostile?: boolean; open?: boolean }) {
-  const { orders, queue } = useOrders();
+  const { orders, queue, later } = useOrders();
   const [open, setOpen] = useState(!!startOpen);
   const [dealing, setDealing] = useState(false);
   const p = previewAction(s, action);
@@ -28,7 +29,11 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
     : p.cost > q.familyLeft ? 'Not enough Family money after this week\'s orders' : undefined;
   const deal = action.kind === 'econ' && action.op.type === 'deal' ? undefined : targetOf(action);
   // At the table the price can come down: only a hard block stops an offer (as on the full card).
-  const why = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
+  const hard = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
+  // The boss's hours (engine/timeCost.ts): the row says what it takes; not enough left today greys it out, with "Tomorrow".
+  const hours = timeCost(action, s);
+  const noTime = timeBlock(s, action);
+  const why = hard ?? noTime;
   const queued = orders.some((o) => sameOrder(o, action) || (!!deal && o.kind === 'econ' && o.op.type === 'deal' && sameTarget(o.op.target, deal)));
   // A pocket that needs Family money: the full card asks for it.
   const needsCard = !deal && short > 0;
@@ -47,6 +52,7 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
       <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setOpen(true)} title="Everything about this order" aria-expanded={false}>
         <span className={`block truncate text-[13px] font-semibold ${why ? 'text-stone-400' : hostile ? 'text-red-200' : 'text-stone-100'}`}>{label ?? p.title}</span>
         <span className="block truncate text-[11px] text-stone-500">
+          <span className="text-sky-300" data-testid="action-row-time">{hoursShort(hours)}</span>{' · '}
           {why ? <span className="text-red-300/90" data-testid="action-row-why">{why}</span> : <>
             {p.cost > 0 && <span className={pocket ? 'text-amber-300' : 'text-gold-400'}>{fmt$(p.cost)} {pocket ? 'pocket' : 'Family'}</span>}
             {p.cost > 0 && pct !== undefined && ' · '}
@@ -60,6 +66,9 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
         onClick={() => (deal ? setDealing(true) : needsCard ? setOpen(true) : queue(action))} data-testid={deal ? 'make-offer' : 'action-row-go'}>
         {queued ? (deal ? 'Signed ✓' : verbOf(action, p).done) : deal ? 'Make an offer' : needsCard ? 'More ▸' : verbOf(action, p).verb}
       </button>
+      {!hard && noTime && !queued && later && (
+        <button type="button" className="shrink-0 btn-gold text-xs py-1" onClick={() => later(action)} title="Give the order now; it takes the hours out of tomorrow" data-testid="action-row-tomorrow">Tomorrow</button>
+      )}
       {dealing && deal && <DealWindow s={s} target={deal} onClose={() => setDealing(false)} />}
     </div>
   );

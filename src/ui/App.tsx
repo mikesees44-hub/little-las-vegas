@@ -73,6 +73,7 @@ import { EmpireHost } from './empire/context';
 import { briefing as buildBriefing, setTrust, type BriefLink } from '../engine/briefing';
 import { dayCheckIns } from '../engine/checkins';
 import { daysOf, plannedRounds, setWeekRounds, tickDay, weekChoices, weekPlan } from '../engine/days';
+import { bookLater, refundTime, spendTime, timeBlock, unbook } from '../engine/timeCost';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
@@ -143,6 +144,12 @@ export function App({ startOn = 'title' }: AppProps) {
   const ordersApi = useMemo(() => ({
     orders,
     queue: (a: PlayerAction, confirmed?: boolean) => {
+      // Not enough hours left today (engine/timeCost.ts): the window says why and offers "Do it tomorrow"
+      // (tests, which never see the window, book it for tomorrow).
+      if (!confirmed && timeBlock(s, a)) {
+        if (import.meta.env.MODE === 'test') { queueLater(a); return; }
+        setConfirm(a); return;
+      }
       // "Are you sure?" first (Settings › Confirm orders); tests and the double-click guard skip it.
       if (!confirmed && getSettings().confirmOrders !== false && import.meta.env.MODE !== 'test') { setConfirm(a); return; }
       // A double click is one order: the same order again within a moment is ignored.
@@ -154,12 +161,27 @@ export function App({ startOn = 'title' }: AppProps) {
       const p = previewAction(s, a);
       const left = queuedMoney(s, orders).pocketLeft;
       const short = p.pot === 'pocket' && a.fund !== 'family' ? Math.max(0, p.cost - Math.max(0, left)) : 0;
-      setToast({ action: a, index: orders.length, at: now, short });
+      // The boss does it today: the hours come off the day (when they run out, the day ends: see below).
+      const spent = spendTime(s, a);
+      setS((cur) => spendTime(cur, a).state);
+      if (spent.dayOver) setEndDayDue(true);
+      setToast({ action: a, index: orders.length, at: now, short, time: { hours: spent.hours, to: spent.to, late: spent.late, missedDinner: spent.missedDinner } });
       setOrders((o) => [...o, a]);
     },
+    /** "Do it tomorrow": the order is given, its hours are booked for the next day with room. */
+    later: (a: PlayerAction) => queueLater(a),
     remove: (i: number) => setOrders((o) => o.filter((_, j) => j !== i)),
     replace: (i: number, a: PlayerAction) => setOrders((o) => o.map((x, j) => (j === i ? a : x))),
-  }), [orders]);
+  }), [orders, s]);
+  function queueLater(a: PlayerAction) {
+    const b = bookLater(s, a);
+    setS((cur) => bookLater(cur, a).state);
+    setToast({ action: a, index: orders.length, at: Date.now(), time: { hours: b.hours, to: 0, late: 0, missedDinner: false, bookedDay: b.day } });
+    setOrders((o) => [...o, a]);
+  }
+  // The day's hours are used up: the day ends and the world marches on (the clock's own day step;
+  // on Sunday night the week turns through the "Ready to advance?" review).
+  const [endDayDue, setEndDayDue] = useState(false);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
   const [confirm, setConfirm] = useState<PlayerAction | undefined>();
@@ -499,6 +521,16 @@ export function App({ startOn = 'title' }: AppProps) {
     const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
     if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
   }
+  function endDay() {
+    setEndDayDue(false);
+    if (daysOf(s).day >= 6) { startAdvance('week'); return; }
+    stepDay();
+  }
+  useEffect(() => {
+    if (!endDayDue || confirm || s.gameOver) return;
+    endDay();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endDayDue, s, confirm]);
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
     step: stepDay,
@@ -669,7 +701,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <EmpireHost s={s} setS={setS}>
       <Shell
         top={(
-          <TopBar s={s} clockMode={clockMode} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+          <TopBar s={s} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
             urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
@@ -811,8 +843,14 @@ export function App({ startOn = 'title' }: AppProps) {
       {goTo !== undefined && !current && !sheet && <GoThere s={s} cityId={goTo || undefined} update={setS} onClose={() => setGoTo(undefined)} onArrive={() => { setGoTo(undefined); setCityOpen(true); }} />}
       {cityOpen && !current && !sheet && goTo === undefined && <CityScreen s={s} update={setS} onClose={() => setCityOpen(false)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
-      {confirm && <ConfirmOrder s={s} action={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} onNeverAsk={() => { setSettings({ confirmOrders: false }); const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} />}
-      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => { setOrders((o) => o.filter((_, j) => j !== toast.index)); setToast(undefined); }}
+      {confirm && <ConfirmOrder s={s} action={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} onTomorrow={() => { const a = confirm; setConfirm(undefined); queueLater(a); }} onNeverAsk={() => { setSettings({ confirmOrders: false }); const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} />}
+      {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => {
+        setOrders((o) => o.filter((_, j) => j !== toast.index));
+        const tm = toast.time;
+        if (tm) setS((cur) => (tm.bookedDay !== undefined ? unbook(cur, tm.bookedDay, tm.hours) : refundTime(cur, tm.hours, tm.late, tm.missedDinner)));
+        setEndDayDue(false);
+        setToast(undefined);
+      }}
         onApprove={() => { setOrders((o) => o.map((x, j) => (j === toast.index ? { ...x, fund: 'family' } : x))); setToast({ ...toast, action: { ...toast.action, fund: 'family' }, short: 0, at: Date.now() }); }} />}
       </EmpireHost>
     </Providers>

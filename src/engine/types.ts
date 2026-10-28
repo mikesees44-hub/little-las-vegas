@@ -937,6 +937,8 @@ export interface GameState {
   days?: import('./days').DaysState;
   /** Planned moves against the boss and the urgent meetings that warn of them (threats.ts; optional for old saves). */
   threats?: import('./threats').ThreatsState;
+  /** The boss's hours today: what his orders have spent, what is booked ahead, late nights and missed dinners (timeCost.ts; optional, starts when used). */
+  hours?: import('./timeCost').HoursState;
   /** Dirty work: one-off jobs, their cooldowns and results (dirtyWork.ts; optional, starts when used). */
   dirty?: import('./dirtyWork').DirtyState;
   /** Family development: technology, connections, crew equipment, the other families' progress (devState.ts; optional for old saves). */

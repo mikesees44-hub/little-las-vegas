@@ -70,6 +70,7 @@ import { nightlifeWeek } from './nightlife';
 import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
+import { hoursWeek } from './timeCost';
 import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
 
@@ -314,6 +315,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) threatsAnswer(ctx);
   const roundLines = !s.gameOver && picked ? roundsWeek(ctx, picked, roundOpts) : [];
   if (!s.gameOver && mornings) roundLines.push(...checkinsWeek(ctx, mornings.list, choices.checkins ?? {}, mornings.missed));
+  // The boss's hours (timeCost.ts): the late nights and the missed dinners are felt.
+  if (!s.gameOver) roundLines.push(...hoursWeek(s));
   if (!s.gameOver) tributeBegin(ctx, resolving, choices);
   if (!s.gameOver) dynastyChoices(ctx, resolving, choices);
   if (!s.gameOver) storyResolve(ctx, resolving);
