@@ -84,6 +84,8 @@ export const TIME_TABLE: Record<string, number> = {
   'tribute:policy': 0.5, 'tribute:squeeze': 0.5, 'tribute:move': 0.25,
   'tribute:audit': 2, 'tribute:auditUb': 2, 'tribute:terms': 1, 'tribute:forgive': 1,
   'tribute:ubRate': 0.5, 'tribute:allowance': 0.5,
+  // Sit and talk with one of your people (minds/talk.ts): about an hour.
+  'mind:talk': 1,
   'ledger:mode': 0.5, 'ledger:keeper': 1, 'ledger:check': 2, 'ledger:confront': 1, 'ledger:forgive': 1,
   'bones:assign': 0.5, 'bones:favor': 1,
   // The Family

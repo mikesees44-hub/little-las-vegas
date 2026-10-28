@@ -18,6 +18,7 @@ import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Spe
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
+import { SettledToast } from './minds/settled';
 import { ReportModal } from './components/ReportModal';
 import type { ClarityApi } from './clarity/context';
 import { PickerModal } from './clarity/CandidatePicker';
@@ -894,6 +895,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
+      <SettledToast />
       {urgent && !current && !scene && (
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
           onMeet={(id, via) => act((x) => meetTip(x, id, via), 'You agreed to the meeting')} onIgnore={(id) => { act((x) => ignoreTip(x, id), 'You let the warning go'); setUrgent(undefined); }}

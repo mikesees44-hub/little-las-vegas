@@ -2,11 +2,11 @@ import { LoggedCard } from '../book/TheBook';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   ANSWER_INFO, APPROACH_LABEL, APPROACH_TEXT, BEAT_INFO, COVER_INFO, DEST_INFO, KIND_INFO,
-  askingPrice, asksQuestion, beatFor, eveningCost, eveningKindOf, haggle, stayOdds,
-  type Answer, type Approach, type Cover, type Dest, type EveningKind, type EveningPlan, type HaggleMove,
+  askingPrice, asksQuestion, beatFor, eveningCost, eveningKindOf, stayOdds,
+  type Answer, type Approach, type Cover, type Dest, type EveningKind, type EveningPlan,
 } from '../../engine/evening';
 import {
-  AFTER_INFO, BOLD_AMOUNTS, SCENE_LINE, askAgainOdds, boldAfters, boldReply, boldScene, bouncerLine, pocketOf, yourClub,
+  AFTER_INFO, BOLD_AMOUNTS, askAgainOdds, boldAfters, boldReply, boldScene, bouncerLine, pocketOf, yourClub,
   type BoldAfter,
 } from '../../engine/quickies';
 import { adultOn } from '../../engine/datingState';
@@ -14,6 +14,10 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { Modal } from '../components/Modal';
 import { fmt$ } from '../format';
+import { logDialogue, startDialogue, type Dialogue, type Tone } from '../../engine/minds/dialogue';
+import { useShell } from '../shell/context';
+import { boldTurn, nightOrder, startBold, startHaggle, haggleTurn } from '../../engine/minds/nightDialogue';
+import { DialogueWindow, type BeatOption } from '../minds/DialogueWindow';
 
 /**
  * THE EVENING, as a short choice flow (engine/evening.ts, quickies.ts):
@@ -41,40 +45,53 @@ function Choice({ on, title, text, onPick, testid, disabled }: { on: boolean; ti
   );
 }
 
-/** Her price and the haggle (professionals). */
+/** Her price and the haggle (professionals), in the two-way window (minds/nightDialogue.ts over evening.ts `haggle`). */
 function Haggle({ s, id, kind, onDeal }: { s: GameState; id: string; kind: EveningKind | 'car'; onDeal: (price: number | undefined, tip?: number) => void }) {
   const first = s.characters[id]?.firstName ?? 'She';
+  const { update } = useShell();
   const ask0 = askingPrice(s, id, kind);
-  const [ask, setAsk] = useState(ask0.price);
-  const [round, setRound] = useState(0);
-  const [log, setLog] = useState<string[]>([]);
-  const [done, setDone] = useState<'deal' | 'walk' | undefined>();
-  const move = (m: HaggleMove, offer: number, tip?: number) => {
-    const r = haggle(s, id, kind, m, offer, round, ask);
-    const said = m === 'counter' ? `You: "${fmt$(offer)}."` : m === 'line' ? 'You try a line.' : m === 'sweeten' ? `You: "${fmt$(ask)}, and ${fmt$(tip ?? 0)} on top if it's a good night."` : `You: "${fmt$(ask)}. Deal."`;
-    setLog((x) => [...x, said, `${first}: ${r.line}`]);
-    setRound((x) => x + 1);
-    if (r.result === 'deal') { setDone('deal'); setAsk(r.price); onDeal(r.price, tip); }
-    else if (r.result === 'walk') { setDone('walk'); onDeal(undefined); }
-    else setAsk(r.price);
+  const [d, setD] = useState<Dialogue>(() => startHaggle(s, id, kind));
+  const [open, setOpen] = useState(false);
+  const [tip, setTip] = useState<number | undefined>();
+  const onTone = (tone: Tone, offer?: number) => {
+    const r = haggleTurn(s, d, kind, tone, offer);
+    const t = r.tip ?? tip;
+    if (r.tip) setTip(r.tip);
+    setD(r.d);
+    if (r.d.end) update?.((x) => logDialogue(x, r.d, `${first}'s price`));
+    if (r.d.end === 'deal') onDeal(r.d.deal, t);
+    else if (r.d.end) onDeal(undefined);
   };
   return (
     <div data-testid="haggle">
-      <div className="text-[13px] text-stone-100">{first} names her price: <b className="text-amber-300" data-testid="haggle-price">{fmt$(ask)}</b> <span className="text-[11px] text-stone-500">({ask0.why.join(', ') || 'her usual'})</span></div>
-      <ul className="mt-1 space-y-0.5 text-[12px] text-stone-300">{log.map((l, i) => <li key={i} className={l.startsWith('You') ? 'text-stone-400' : 'text-stone-100'}>{l}</li>)}</ul>
-      {!done && (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          <button type="button" className="btn-gold text-xs py-1" onClick={() => move('accept', ask)} data-testid="haggle-accept">Accept {fmt$(ask)}</button>
-          {[0.9, 0.8, 0.7].map((f) => { const o = Math.max(10, Math.round((ask * f) / 10) * 10); return <button key={f} type="button" className="btn-ghost text-xs py-1" onClick={() => move('counter', o)} data-testid={`haggle-counter-${Math.round(f * 100)}`}>Counter {fmt$(o)}</button>; })}
-          <button type="button" className="btn-ghost text-xs py-1" onClick={() => move('sweeten', ask, Math.max(20, Math.round(ask / 50) * 10))}>Sweeten it: a tip</button>
-          <button type="button" className="btn-ghost text-xs py-1" onClick={() => move('line', ask)}>Try a line</button>
-          <button type="button" className="btn-ghost text-xs py-1 text-red-300" onClick={() => { setDone('walk'); onDeal(undefined); }}>Walk away</button>
-        </div>
-      )}
-      {done === 'deal' && <div className="mt-1 text-[12px] text-emerald-300" data-testid="haggle-deal">Agreed: {fmt$(ask)}.</div>}
-      {done === 'walk' && <div className="mt-1 text-[12px] text-red-300">No deal. Nothing paid.</div>}
+      <div className="text-[13px] text-stone-100">{first} names her price: <b className="text-amber-300" data-testid="haggle-price">{fmt$(d.stake?.pos ?? ask0.price)}</b> <span className="text-[11px] text-stone-500">({ask0.why.join(', ') || 'her usual'})</span></div>
+      {!d.end && <button type="button" className="btn-gold mt-1.5 text-xs py-1" onClick={() => setOpen(true)} data-testid="haggle-open">Talk price with her, face to face</button>}
+      {d.end === 'deal' && <div className="mt-1 text-[12px] text-emerald-300" data-testid="haggle-deal">Agreed: {fmt$(d.deal ?? 0)}{tip ? ` and a ${fmt$(tip)} tip` : ''}.</div>}
+      {d.end && d.end !== 'deal' && <div className="mt-1 text-[12px] text-red-300">No deal. Nothing paid.</div>}
+      {open && <DialogueWindow s={s} d={d} title={`${first}'s price`} onTone={onTone} offerLabel="Your counter" onClose={() => setOpen(false)}
+        result={d.end === 'deal' ? `Done: ${fmt$(d.deal ?? 0)}. Close the window and give the order.` : d.end ? 'She won\'t deal tonight.' : undefined} />}
     </div>
   );
+}
+
+/** The evening's moment (the beat, "do you want me or just my body?") played face to face. */
+function MomentWindow({ s, id, plan, onPick, onAnswer, onClose }: { s: GameState; id: string; plan: EveningPlan; onPick: (p: string) => void; onAnswer: (a: Answer) => void; onClose: () => void }) {
+  const beat = plan.beat;
+  const [d, setD] = useState<Dialogue>(() => {
+    const d0 = startDialogue(s, id, 'romance', undefined, 3);
+    if (beat) d0.log.push({ who: 'narrator', text: `${BEAT_INFO[beat].title}. ${BEAT_INFO[beat].text}` });
+    else if (plan.answer) d0.log.push({ who: 'them', text: 'But do you want me, or just my body?' });
+    return d0;
+  });
+  const say = (who: 'boss' | 'them' | 'narrator', text: string, tone?: Tone) => setD((x) => ({ ...x, round: x.round + (who === 'boss' ? 1 : 0), log: [...x.log, { who, text, ...(tone ? { tone } : {}) }] }));
+  const [stage, setStage] = useState<'beat' | 'question' | 'done'>(beat ? 'beat' : plan.answer ? 'question' : 'done');
+  const options: BeatOption[] = stage === 'beat' && beat
+    ? BEAT_INFO[beat].picks.map((pk) => ({ key: pk.id, label: pk.label, hint: pk.text, onPick: () => { onPick(pk.id); say('boss', pk.label); setStage(plan.answer ? 'question' : 'done'); if (plan.answer) say('them', 'But do you want me, or just my body?'); } }))
+    : stage === 'question'
+      ? (Object.keys(ANSWER_INFO) as Answer[]).map((a) => ({ key: a, label: ANSWER_INFO[a].label, hint: ANSWER_INFO[a].text, onPick: () => { onAnswer(a); say('boss', ANSWER_INFO[a].label); setStage('done'); } }))
+      : [];
+  return <DialogueWindow s={s} d={stage === 'done' ? { ...d, end: 'done' } : d} title="Tonight" options={options} onClose={onClose}
+    result={stage === 'done' ? 'Your answers are set. She still decides when you give the order.' : undefined} />;
 }
 
 export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onClose: () => void }) {
@@ -93,6 +110,7 @@ export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onCl
   const [answer, setAnswer] = useState<Answer | undefined>();
   const [stay, setStay] = useState(false);
   const [haggleKey, setHaggleKey] = useState(0);
+  const [moment, setMoment] = useState(false);
   const plan: EveningPlan = useMemo(() => {
     const p: EveningPlan = { id, kind, approach, stay, price: paid ? price : undefined, tip };
     if (kind === 'release') p.at = at;
@@ -146,6 +164,8 @@ export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onCl
         )}
 
         <Step n={paid ? 3 : 2} title="Tonight">
+          {(beat || plan.answer) && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setMoment(true)} data-testid="flow-moment">Play the moment face to face</button>}
+          {moment && <MomentWindow s={s} id={id} plan={plan} onPick={setPick} onAnswer={setAnswer} onClose={() => setMoment(false)} />}
           {beat && (
             <div data-testid="flow-beat">
               <div className="text-[13px] font-semibold text-stone-100">{BEAT_INFO[beat].title}</div>
@@ -196,52 +216,43 @@ export function CarFlow({ s, id, onClose }: { s: GameState; id: string; onClose:
 export function BoldFlow({ s, id, onClose }: { s: GameState; id: string; onClose: () => void }) {
   const c = s.characters[id];
   const pocket = pocketOf(s);
-  const [amounts, setAmounts] = useState<number[]>([]);
-  const [custom, setCustom] = useState('');
+  const [d, setD] = useState<Dialogue>(() => startBold(s, id));
   const [after, setAfter] = useState<BoldAfter | undefined>();
+  const [custom, setCustom] = useState('');
   if (!c) return null;
-  const raises = Math.max(0, amounts.length - 1);
-  const last = amounts[amounts.length - 1];
-  const reply = last !== undefined ? boldReply(s, id, last, raises) : undefined;
-  const over = reply && (reply.result === 'yes' || reply.result === 'out' || reply.result === 'line');
-  const scene = last !== undefined ? boldScene(s, id, last, raises) : 'none';
-  const afters = last !== undefined ? boldAfters(s, id, last, raises) : [];
-  const offer = (n: number) => { setAmounts((x) => [...x, n]); setAfter(undefined); };
+  const last = d.stake?.off;
+  const raises = Math.max(0, d.log.filter((l) => l.tone === 'raise').length - 1);
+  const reply = last ? boldReply(s, id, last, raises) : undefined;
+  const over = !!reply && (reply.result === 'yes' || reply.result === 'out' || reply.result === 'line');
+  const afters = last ? boldAfters(s, id, last, raises) : [];
+  const scene = last ? boldScene(s, id, last, raises) : 'none';
+  const offer = (n: number) => { setD((x) => boldTurn(s, x, n).d); setAfter(undefined); };
   const next = BOLD_AMOUNTS.filter((n) => n > (last ?? 0) && n <= pocket);
+  const options: BeatOption[] = !over && !d.end
+    ? [...next.slice(0, 4).map((n) => ({ key: `o${n}`, label: last ? `Raise the offer: ${fmt$(n)}` : `Lean over: ${fmt$(n)}`, hint: 'money only ever offers; she decides', onPick: () => offer(n) })),
+      ...(last ? [{ key: 'back', label: 'Back off', hint: 'leave it there', onPick: () => setD((x) => ({ ...x, end: 'left' as const, log: [...x.log, { who: 'boss' as const, text: 'Forget it.' }] })) }] : [])]
+    : afters.map((a) => ({ key: a, label: AFTER_INFO[a].label, hint: a === 'askAgain' ? `${AFTER_INFO[a].text} (about ${Math.round(askAgainOdds(s, id, last!) * 100)}%)` : AFTER_INFO[a].text, onPick: () => setAfter(a) }));
+  const ended = over || !!d.end;
+  const order = last ? nightOrder('bold', id, d, after ?? afters[0]) : undefined;
   return (
-    <Modal onClose={onClose}>
-      <div className="p-3 pb-24 sm:p-4 space-y-2.5" data-testid="bold-flow">
-        <div className="flex items-center justify-between"><h3 className="font-display text-lg text-gold-300">A bold offer to {c.firstName}</h3><button type="button" className="btn-ghost text-xs px-2 py-0.5" onClick={onClose}>Close</button></div>
-        <p className="text-[11px] text-stone-500">Money only ever offers. She can take it, up it, laugh, or tell you where to go. Your pocket ({fmt$(pocket)}) pays only if she takes it. Every no in public puts more eyes on you.</p>
-        <ul className="space-y-1 text-[12px]">
-          {amounts.map((a, i) => {
-            const r = boldReply(s, id, a, i);
-            return <li key={i}><span className="text-stone-400">You: "{fmt$(a)}, right here. Nobody'll see."</span><br /><span className="text-stone-100" data-testid="bold-reply">{r.line}</span></li>;
-          })}
-        </ul>
-        {!over && (
-          <div className="flex flex-wrap gap-1.5" data-testid="bold-amounts">
-            {next.slice(0, 4).map((n) => <button key={n} type="button" className="btn-ghost text-xs py-1" onClick={() => offer(n)}>{amounts.length ? `Make it ${fmt$(n)}` : `Lean over: ${fmt$(n)}`}</button>)}
-            <input value={custom} onChange={(e) => setCustom(e.target.value.replace(/[^0-9]/g, ''))} placeholder="Your figure" className="w-24 rounded bg-noir-800 border border-noir-600 px-2 py-1 text-xs text-stone-200" />
-            <button type="button" className="btn-ghost text-xs py-1" disabled={!custom || +custom <= (last ?? 99) || +custom > pocket} onClick={() => { offer(+custom); setCustom(''); }}>Offer it</button>
-          </div>
-        )}
-        {last !== undefined && scene !== 'none' && (
-          <div className="rounded border border-red-400/40 bg-noir-900/60 p-2 text-[12px] text-red-200" data-testid="bold-scene">
-            {SCENE_LINE[scene]}{scene !== 'bouncer' && yourClub(s, id) && <div className="mt-1 text-stone-200">{bouncerLine(s, id)}</div>}
-          </div>
-        )}
-        {last !== undefined && (
-          <div className="space-y-1.5">
-            <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Then</div>
-            {afters.map((a) => <Choice key={a} on={(after ?? afters[0]) === a} title={AFTER_INFO[a].label} text={a === 'askAgain' ? `${AFTER_INFO[a].text} (She says yes about ${Math.round(askAgainOdds(s, id, last) * 100)}% of the time.)` : AFTER_INFO[a].text} onPick={() => setAfter(a)} testid={`bold-after-${a}`} />)}
-            <ActionCard s={s} action={{ kind: 'nightlife', op: { op: 'bold', id, amount: last, raises, after: after ?? afters[0] } }} />
-            <LoggedCard s={s} person={id} action={{ kind: 'nightlife', op: { op: 'bold', id, amount: last, raises, after: after ?? afters[0] } }}
-              title={`A bold offer to ${c.firstName}: ${fmt$(last)}${raises ? ` (raised ${raises}×)` : ''}`}
-              lines={[`Her answer: ${reply?.line ?? ''}`, scene !== 'none' ? SCENE_LINE[scene] : '', `Then: ${AFTER_INFO[after ?? afters[0]].label}`, reply?.result === 'yes' ? `${fmt$(last)} from your pocket.` : 'Nothing paid.']} />
-          </div>
-        )}
-      </div>
-    </Modal>
+    <DialogueWindow s={s} d={ended && !d.end ? { ...d, end: 'done' } : d} title={`A bold offer to ${c.firstName}`} onClose={onClose}
+      options={options} note={`Money only ever offers. Your pocket (${fmt$(pocket)}) pays only if she takes it. Every no in public puts more eyes on you.`}
+      result={after ? `Then: ${AFTER_INFO[after].label}` : undefined}
+      footer={(
+        <div className="space-y-1.5" data-testid="bold-flow">
+          {!ended && (
+            <div className="flex gap-1.5">
+              <input value={custom} onChange={(e) => setCustom(e.target.value.replace(/[^0-9]/g, ''))} placeholder="Your figure" className="w-24 rounded border border-noir-600 bg-noir-800 px-2 py-1 text-xs text-stone-200" aria-label="Your figure" />
+              <button type="button" className="btn-ghost py-1 text-xs" disabled={!custom || +custom <= (last ?? 99) || +custom > pocket} onClick={() => { offer(+custom); setCustom(''); }}>Offer it</button>
+            </div>
+          )}
+          {ended && scene !== 'none' && scene !== 'bouncer' && yourClub(s, id) && <div className="text-[12px] text-stone-300">{bouncerLine(s, id)}</div>}
+          {ended && afters.length > 0 && (
+            <div className="grid gap-1">{afters.map((a) => <Choice key={a} on={(after ?? afters[0]) === a} title={AFTER_INFO[a].label} text={AFTER_INFO[a].text} onPick={() => setAfter(a)} testid={`bold-after-${a}`} />)}</div>
+          )}
+          {order && <ActionCard s={s} action={order} />}
+          {order && last !== undefined && <LoggedCard s={s} person={id} action={order} title={`A bold offer to ${c.firstName}: ${fmt$(last)}${raises ? ` (raised ${raises}×)` : ''}`} lines={[after ? `Then: ${AFTER_INFO[after].label}` : ''].filter(Boolean)} />}
+        </div>
+      )} />
   );
 }

@@ -985,6 +985,8 @@ export interface GameState {
   women?: import('./womenState').WomenState;
   /** The Book (journal.ts): every order and what came of it, and everything else that happened, by person, place and money. Bounded; optional (made by the first week that turns). */
   journal?: import('./journal').JournalState;
+  /** NPC minds: needs, moods, ambitions, beliefs, memories and plans of the people who matter (minds/; optional: made by the weekly update). */
+  minds?: import('./minds/types').MindsState;
 }
 
 export interface PlayerChoices {

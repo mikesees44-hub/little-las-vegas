@@ -15,6 +15,7 @@ import { activeTask } from './council';
 import { changeScore } from './war';
 import { chance, pick, rand, randInt, weightedPick } from './rng';
 import { FACTION_NAMES, RIVALS } from './world';
+import { noteRivalMove, rivalLean } from './minds/planner';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalGoal, RivalId, RivalMove } from './types';
 
 /**
@@ -166,6 +167,8 @@ export function rivalWeek(ctx: Ctx): void {
     r.exposure = Math.max(0, r.exposure - 1);
 
     const cands = scoreMoves(s, r);
+    // His mind weighs them (minds/planner.ts): needs, goals, his read of the target, his grudges, his plan.
+    rivalLean(s, r, cands);
     // Rivals act most weeks, but not every week.
     // An Incapable or failing boss moves less (aging.ts).
     if (!chance(s, (r.kind === 'philly' ? 0.35 : r.kind === 'law' ? 0.45 * lawZeal(s) : 0.6) * (r.kind === 'law' ? 1 : ableness(s, r.leaderId)))) continue;
@@ -173,6 +176,7 @@ export function rivalWeek(ctx: Ctx): void {
     const choice = weightedPick(s, cands, (c) => Math.pow(c.score, gamble));
     if (!choice) continue;
     executeMove(ctx, r, choice);
+    noteRivalMove(s, r, choice.move, choice.target);
     r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? 3 : choice.move === 'offer_deal' ? (r.kind === 'philly' ? 12 : 8) : 1);
   }
 }

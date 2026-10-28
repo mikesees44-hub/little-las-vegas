@@ -89,6 +89,7 @@ import { intrigueResolve, intrigueWeek } from './intrigue';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
+import { mindsWeek } from './minds';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -377,6 +378,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     minigamesWeek(ctx);
     underbellyWeek(ctx);
     officeWeek(s);
+    // The minds think before the capos and the rivals act (minds/): their choices read fresh minds.
+    mindsWeek(ctx);
     regimesWeek(ctx);
     bonesWeek(ctx);
     ledgerWeek(ctx);

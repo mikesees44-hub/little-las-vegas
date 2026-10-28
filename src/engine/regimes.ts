@@ -13,6 +13,7 @@ import { rivalCaps } from './rivals';
 import type { Character, GameState, RivalId } from './types';
 import { awayActMult, awayCapoBias } from './travel';
 import { finOf, note } from './crewFinance';
+import { capoLean, noteCapoMove } from './minds/planner';
 
 
 /**
@@ -58,8 +59,11 @@ export function capoActs(ctx: Ctx, k: Character): string | undefined {
   const s = ctx.s;
   const w = capoMoveWeights(s, k);
   awayCapoBias(s, k, w);
+  // His mind weighs the moves (minds/planner.ts): what he needs, wants and is working toward.
+  const lean = capoLean(s, k, w);
   const moves = (Object.keys(w) as CapoMove[]).filter((m) => w[m] > 0);
   const m = weightedPick(s, moves, (x) => w[x]);
+  if (m) noteCapoMove(s, k, m, lean);
   const nm = displayName(k);
   switch (m) {
     case 'expand': {
