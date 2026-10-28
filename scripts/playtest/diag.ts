@@ -28,7 +28,7 @@ for (let w = 0; w < years * 52 && !s.gameOver; w++) {
   const d = familyCash(s) - before;
   if (Math.abs(d) >= big) console.log(`wk${s.week} family cash ${before} -> ${familyCash(s)} (${d})`);
   if (w % 52 === 51) {
-    const top = Object.entries(byLabel).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 14);
+    const top = Object.entries(byLabel).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, Number(arg("top", "14")));
     console.log(`== ${bot}/${seed} year ${Math.floor(w / 52) + 1}: family ${familyCash(s)} pocket ${s.tribute?.acct.personal ?? 0}`);
     for (const [k, v] of top) console.log(`   ${v > 0 ? '+' : ''}${Math.round(v)}  ${k}`);
     byLabel = {};
