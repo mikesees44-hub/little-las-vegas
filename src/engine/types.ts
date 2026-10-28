@@ -979,6 +979,8 @@ export interface GameState {
   xp?: import('./crewXp').XpState;
   /** Protection & intelligence (protect.ts): guards, inquiries, their reports and who may read them. */
   protect?: import('./protect').ProtectState;
+  /** The Book (journal.ts): every order and what came of it, and everything else that happened, by person, place and money. Bounded; optional (made by the first week that turns). */
+  journal?: import('./journal').JournalState;
 }
 
 export interface PlayerChoices {

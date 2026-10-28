@@ -59,7 +59,7 @@ function Seg<T extends string>({ value, options, labels, onPick, testid }: { val
 export function DatingSettings({ s }: { s: GameState }) {
   const shell = useShell();
   const v = datingView(s).settings;
-  const set = (patch: { mature?: MatureSetting; pregnancy?: PregnancySetting }) => shell.update?.((x) => setDatingSettings(x, patch));
+  const set = (patch: { mature?: MatureSetting; pregnancy?: PregnancySetting }) => (shell.act ?? shell.update)?.((x) => setDatingSettings(x, patch), 'Changed the content settings');
   return (
     <div className="rounded-md border border-noir-700 bg-noir-900/60 p-2.5 space-y-2" data-testid="dating-settings">
       <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Content settings</div>

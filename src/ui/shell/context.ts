@@ -21,6 +21,8 @@ export interface ShellApi {
   focus: (f: Omit<MapFocus, 'nonce'>) => void;
   /** Change the game now (settings that take effect at once, e.g. the content settings). Absent in isolated renders. */
   update?: (f: (s: GameState) => GameState) => void;
+  /** The boss does something that takes effect at once: the click's feedback ("✓ Done — …") and an entry in Your File. */
+  act?: (f: (s: GameState) => GameState, what?: string) => void;
 }
 
 export const ShellContext = createContext<ShellApi>({ go: () => {}, focus: () => {} });

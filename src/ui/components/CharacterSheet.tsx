@@ -1,3 +1,4 @@
+import { BookAbout } from '../book/TheBook';
 import { CallingCard } from '../nightlife/CallingCard';
 import { canHold } from '../../engine/earners';
 import { EarnerRow } from '../econ/SteadyEarners';
@@ -41,9 +42,9 @@ import { knownOld } from '../../engine/aging';
 import { XpBadge, XpSection } from '../borgata/CrewXp';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
-export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
+export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history' | 'book';
 /** "Deal with him" sits next to Overview: what you can do to a man is the second thing you look for. */
-const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['card', 'Calling card'], ['actions', 'Deal with'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['history', 'History']];
+const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['card', 'Calling card'], ['actions', 'Deal with'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['history', 'History'], ['book', 'Between you']];
 import { getSettings } from '../settings';
 import { seenWealth } from '../../engine/crewFinance';
 import { FinancialLife } from '../sheet/FinancialLife';
@@ -123,9 +124,9 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         {c.alive && !s.gameOver && <QuickActions s={s} c={c} onAll={() => setTab('actions')} />}
 
         <nav className="mt-3 flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label={`${c.firstName}'s sheet`} data-testid="sheet-tabs">
-          {SHEET_TABS.filter(([k]) => k !== 'card' || age >= 18).map(([k, label]) => (
+          {SHEET_TABS.filter(([k]) => (k !== 'card' || age >= 18) && (k !== 'book' || !isBoss)).map(([k, label]) => (
             <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`sheet-tab-${k}`}
-              className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{k === 'actions' ? (isBoss ? 'Your own business' : `Deal with ${c.firstName}`) : label}</button>
+              className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{k === 'actions' ? (isBoss ? 'Your own business' : `Deal with ${c.firstName}`) : k === 'book' ? `Between you & ${c.gender === 'F' ? 'her' : 'him'}` : label}</button>
           ))}
         </nav>
 
@@ -240,6 +241,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         </>}
 
         {tab === 'history' && <HisHistory s={s} c={c} />}
+        {tab === 'book' && <div className="mt-3"><BookAbout s={s} person={c.id} /></div>}
 
         {/* The calling card: who they are at a glance, summary first (adults only). */}
         {tab === 'card' && age >= 18 && <div className="mt-3"><CallingCard s={s} id={c.id} /></div>}

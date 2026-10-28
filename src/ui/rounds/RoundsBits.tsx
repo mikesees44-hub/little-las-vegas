@@ -91,7 +91,7 @@ export function PersonalActions({ s, update, onWeek }: { s: GameState; update: U
           return (
             <div key={r.id}>
               <RoundButton s={s} r={r} on={on >= 0} showReading block={on < 0 && free === undefined ? 'No free evening left this week' : undefined}
-                onPick={() => update((x) => (on >= 0 ? (on >= d.day ? setEvening(x, on, null) : x) : free !== undefined ? setEvening(x, free, r.id) : x))} />
+                onPick={() => update((x) => (on >= 0 ? (on >= d.day ? setEvening(x, on, null) : x) : free !== undefined ? setEvening(x, free, r.id) : x), on >= 0 ? `${r.label}: cancelled` : free !== undefined ? `${DAY_NAMES[free]} evening: ${r.label}` : undefined)} />
               <div className="px-1 text-[10px] text-stone-500" data-testid={`booked-${r.id}`}>{on >= 0 ? `Booked: ${DAY_NAMES[on]} evening${on >= d.day ? ' (tap to cancel)' : ''}` : free !== undefined ? `Tap to book ${DAY_NAMES[free]} evening${instead ? ` instead of ${instead}` : ''}` : ''}</div>
             </div>
           );

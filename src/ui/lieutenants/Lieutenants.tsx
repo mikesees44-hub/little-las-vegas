@@ -15,7 +15,7 @@ import { Modal } from '../components/Modal';
  * is done when the week turns.
  */
 
-type Update = (f: (s: GameState) => GameState) => void;
+type Update = (f: (s: GameState) => GameState, what?: string) => void;
 
 const LEVELS: LtLevel[] = ['handle', 'ask', 'self'];
 
@@ -24,7 +24,7 @@ function ActLine({ s, a, update, onChar, kind }: { s: GameState; a: LtAct; updat
   const call = callOf(s, a.id);
   const locked = actLocked(s, a);
   const others = a.options.filter((x) => x.id !== o?.id);
-  const decide = (v: 'approve' | 'veto' | 'change' | undefined, opt?: string) => update((cur) => ltDecide(cur, a.id, v, opt));
+  const decide = (v: 'approve' | 'veto' | 'change' | undefined, opt?: string) => update((cur) => ltDecide(cur, a.id, v, opt), `${v === 'approve' ? 'Approved' : v === 'veto' ? 'Stopped' : v === 'change' ? 'Changed' : 'Left to him'}: ${a.topic}`);
   return (
     <li className={`rounded border px-2 py-1 ${kind === 'needs' ? (a.day <= today(s) ? 'border-red-500/60 bg-blood-500/10' : 'border-amber-600/50 bg-amber-500/5') : 'border-noir-700'}`} data-testid={`lt-act-${kind}`} data-act={a.id}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-2">

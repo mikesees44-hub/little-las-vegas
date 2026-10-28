@@ -16,7 +16,8 @@ import { fmt$ } from '../format';
 
 export const LANE_GLYPH: Record<Lane, string> = { people: '☕', fun: '♠', family: '♥', self: '§' };
 
-export type Update = (f: (s: GameState) => GameState) => void;
+/** A change that takes effect at once; `what` is what the boss did, in words (the click's feedback and Your File). */
+export type Update = (f: (s: GameState) => GameState, what?: string) => void;
 
 function Reading({ s, r }: { s: GameState; r: Round }) {
   if (r.reading === 'lawyer') {
@@ -101,7 +102,7 @@ function Morning({ s, day, list, update, locked }: { s: GameState; day: number; 
                       <div className="mt-1 flex flex-wrap gap-1">
                         {c.problem.answers.map((a) => (
                           <button key={a.id} type="button" disabled={locked} title={a.hint} data-testid={`answer-${a.id}`}
-                            onClick={() => update((x) => answerCheckIn(x, c.key, ans === a.id ? undefined : a.id))}
+                            onClick={() => update((x) => answerCheckIn(x, c.key, ans === a.id ? undefined : a.id), ans === a.id ? `Took back your answer to ${c.name}` : `Told ${c.name}: ${a.label}`)}
                             className={`rounded border px-2 py-1 text-[11px] disabled:opacity-60 ${ans === a.id ? 'border-gold-400 bg-gold-500/20 text-gold-200' : 'border-noir-600 text-stone-200 hover:border-gold-500'}`}>
                             {a.label}<span className="ml-1 text-[9px] text-stone-500">{a.hint}</span>
                           </button>
@@ -130,9 +131,9 @@ function Evening({ s, day, update, locked }: { s: GameState; day: number; update
   const elsewhere = (o: Round) => plan.findIndex((x, i) => x === o.id && i !== day);
   /** Picking an evening: straight in on a free night; on a booked one, ask first (what it replaces, what it costs, who pays). */
   const choose = (o: Round) => {
-    if (o.id === pick) { update((x) => setEvening(x, day, null)); setChoosing(false); return; }
+    if (o.id === pick) { update((x) => setEvening(x, day, null), `${DAY_NAMES[day]} evening cleared`); setChoosing(false); return; }
     if (r) { setConfirm(o); return; }
-    update((x) => setEvening(x, day, o.id));
+    update((x) => setEvening(x, day, o.id), `${DAY_NAMES[day]} evening: ${o.label}`);
     setChoosing(false);
   };
   return (
@@ -148,7 +149,7 @@ function Evening({ s, day, update, locked }: { s: GameState; day: number; update
               <div className="text-stone-200"><b>{DAY_NAMES[day]} is booked:</b> {r.label}.</div>
               <div className="mt-0.5 text-stone-300">Replace it with <b>{confirm.label}</b>{confirm.cost ? ` — ${fmt$(confirm.cost)} from your pocket on ${DAY_NAMES[day]} night` : ' — costs nothing'}?{r.cost ? ` ${r.label} (${fmt$(r.cost)}) is not charged.` : ''}{elsewhere(confirm) >= 0 ? ` It moves from ${DAY_NAMES[elsewhere(confirm)]}, which becomes free.` : ''}</div>
               <div className="mt-1.5 flex gap-1.5">
-                <button type="button" className="btn-gold text-xs py-1" onClick={() => { update((x) => setEvening(x, day, confirm.id)); setConfirm(undefined); setChoosing(false); }} data-testid="evening-replace-yes">Replace with {confirm.label}{confirm.cost ? ` — ${fmt$(confirm.cost)}` : ''}</button>
+                <button type="button" className="btn-gold text-xs py-1" onClick={() => { update((x) => setEvening(x, day, confirm.id), `${DAY_NAMES[day]} evening: ${confirm.label}`); setConfirm(undefined); setChoosing(false); }} data-testid="evening-replace-yes">Replace with {confirm.label}{confirm.cost ? ` — ${fmt$(confirm.cost)}` : ''}</button>
                 <button type="button" className="btn-ghost text-xs py-1" onClick={() => setConfirm(undefined)} data-testid="evening-replace-no">Keep {r.label}</button>
               </div>
             </div>

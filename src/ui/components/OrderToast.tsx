@@ -1,3 +1,4 @@
+import { useOpenBook } from '../book/TheBook';
 import { useEffect } from 'react';
 import { previewAction } from '../../engine/actions';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -41,13 +42,13 @@ export function OrderToast({ s, item, onUndo, onClose, onApprove }: { s: GameSta
         <div className="text-gold-300 text-lg leading-none mt-0.5">✓</div>
         <div className="min-w-0 flex-1">
           <div className="text-sm italic text-gold-200" data-testid="yes-boss">“Yes, boss.” <span className="not-italic text-stone-400 text-xs">— <CharacterDisplayName s={s} action={item.action} actor={actionFacts(s, item.action, p).actor} /></span></div>
-          <div className="text-[11px] uppercase tracking-widest text-gold-400 mt-1">Confirmed · {verb}</div>
+          <div className="text-[11px] uppercase tracking-widest text-gold-400 mt-1" data-testid="ordered-line">✓ Ordered · {verb} · happens {whenOf(item)}</div>
           <div className="text-sm font-semibold text-stone-100">{p.title}</div>
           {p.detail && <div className="text-xs text-stone-400 mt-0.5 line-clamp-2">{p.detail}</div>}
           <div className="text-xs text-stone-300 mt-1">
             {p.toPocket ? <span className="text-sky-300">Moves {fmt$(Math.abs(p.toPocket))} {p.toPocket > 0 ? 'from Family money into your pocket' : 'from your pocket into Family money'}. </span> : p.cost > 0 ? <span className="text-red-300">Costs {fmt$(p.cost)} {p.pot === 'pocket' ? (item.action.fund === 'family' ? 'from your pocket, the rest from Family money (you approved it)' : 'from your pocket') : 'from Family money'}. </span> : null}
             {chips.length > 0 && <span className="text-stone-400">{chips.join(' · ')}. </span>}
-            It happens when you hit <span className="text-gold-300">Advance Week</span>.
+            It happens when you hit <span className="text-gold-300">Advance Week</span>; what comes of it lands in Your File.
           </div>
           {item.time && (
             <div className="mt-1 text-xs text-sky-200" data-testid="toast-time">
@@ -64,10 +65,22 @@ export function OrderToast({ s, item, onUndo, onClose, onApprove }: { s: GameSta
         </div>
         <div className="flex flex-col gap-1 shrink-0 pointer-events-auto">
           {(item.short ?? 0) > 0 && onApprove && <button className="btn-gold text-[11px] py-0.5 px-2" onClick={onApprove} data-testid="toast-approve">Take {fmt$(item.short!)} from the Family</button>}
+          <FileButton onClose={onClose} />
           <button className="btn-ghost text-[11px] py-0.5 px-2" onClick={onUndo}>Undo</button>
           <button className="text-stone-500 text-[11px]" onClick={onClose} aria-label="Close">✕</button>
         </div>
       </div>
     </div>
   );
+}
+
+/** When a given order happens, in words. */
+export function whenOf(item: Pick<ToastItem, 'time'>): string {
+  const d = item.time?.bookedDay;
+  return d !== undefined ? `on ${DAY_NAMES[d]}` : 'when the week turns';
+}
+
+function FileButton({ onClose }: { onClose: () => void }) {
+  const open = useOpenBook();
+  return <button type="button" className="btn-gold text-[11px] py-0.5 px-2" onClick={() => { onClose(); open(); }} data-testid="toast-file">See it in Your File →</button>;
 }

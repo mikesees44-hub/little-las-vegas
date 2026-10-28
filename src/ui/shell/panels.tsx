@@ -42,6 +42,7 @@ import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Happening } from '../town/Happening';
 import { Feed } from './Feed';
+import { TheBook } from '../book/TheBook';
 import { WalkLauncher } from '../hood/WalkLauncher';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { SpendPanel } from '../econ/SpendPanel';
@@ -224,6 +225,7 @@ export const PANELS: PanelDef[] = [
       { id: 'papers', label: 'Papers', render: (s) => <Feed s={s} filter="papers" /> },
       { id: 'stories', label: 'Storylines', render: (s) => <Feed s={s} filter="stories" /> },
       { id: 'reports', label: 'Reports', render: (s, c) => <Feed s={s} filter="reports" reports={c.reports} onReport={c.openReports} /> },
+      { id: 'book', label: 'Your File', wide: true, blurb: 'Everything in one place: every order and what came of it, by person, place and money. Search it, filter it, click through.', render: (s) => <TheBook s={s} /> },
     ],
   },
 ];

@@ -175,7 +175,7 @@ function WaitingButton({ count, tone, pending, answered, sitCount, mornings, env
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay, paperUnread = 0, onPaper }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile }: {
   s: GameState;
   /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
   inboxN?: number;
@@ -220,6 +220,9 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   /** The morning paper on the desk (engine/paper.ts): editions not read yet, and the opener. */
   paperUnread?: number;
   onPaper?: () => void;
+  /** Your File (the Book, engine/journal.ts): new entries since the boss last looked, and the opener. */
+  fileNew?: number;
+  onFile?: () => void;
 }) {
   const info = seasonInfo(s.date);
   const boss = player(s);
@@ -273,6 +276,12 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             {onOffice && (
               <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>
+            )}
+            {onFile && (
+              <button type="button" onClick={onFile} data-testid="file-button" title={fileNew ? `Your File: ${fileNew} new` : 'Your File: everything you did and what came of it'}
+                className="relative h-8 rounded border border-gold-600/70 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-gold-300 hover:border-gold-400">❡<span className="hidden sm:inline"> Your File</span>
+                {fileNew > 0 && <span className="absolute -right-1.5 -top-1.5 min-w-[1.1rem] rounded-full bg-blood-500 px-1 text-center text-[10px] leading-4 text-white ring-2 ring-noir-900" data-testid="file-badge">{fileNew > 99 ? '99+' : fileNew}</span>}
+              </button>
             )}
             {onPaper && (
               <button type="button" onClick={onPaper} data-testid="paper-button" title={paperUnread ? `The paper is on the desk (${paperUnread} unread)` : 'The Daily Tide and the Weekly Leader'}

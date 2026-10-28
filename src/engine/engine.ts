@@ -81,6 +81,7 @@ import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
 import { hoursWeek } from './timeCost';
+import { bookMark, bookOrder, bookWeek, classify } from './journal';
 import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
 import { intrigueResolve, intrigueWeek } from './intrigue';
@@ -131,7 +132,7 @@ function deepCopy(v: unknown): unknown {
 }
 
 export function cloneState(s: GameState): GameState {
-  const { chronicle, dynastyHistory, lastReport, news, pol, ledgerBook, lineage, ...rest } = s;
+  const { chronicle, dynastyHistory, lastReport, news, pol, ledgerBook, lineage, journal, ...rest } = s;
   const c = deepCopy(rest) as GameState;
   if (lineage) c.lineage = lineage; // copy-on-write (houses.ts linMut)
   // The books' archived weeks are immutable once written (see ledgerbookState.ts).
@@ -142,6 +143,8 @@ export function cloneState(s: GameState): GameState {
   c.dynastyHistory = dynastyHistory.slice();
   c.news = news ? news.slice() : [];
   if (lastReport) c.lastReport = lastReport;
+  // The Book's entries are never changed in place (journal.ts replaces one to change it).
+  if (journal) c.journal = { ...journal, e: journal.e.slice(), old: journal.old.slice() };
   return c;
 }
 
@@ -165,7 +168,8 @@ function snapshot(s: GameState) {
   return { money: s.money, respect: s.respect, heat: { ...s.heat } };
 }
 
-function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
+/** `own`: how many of the orders are the boss's own (the rest are his trusted advisors'). */
+function resolveChoices(ctx: Ctx, choices: PlayerChoices, own = choices.actions?.length ?? 0): void {
   const s = ctx.s;
   if (choices.successionLaw && choices.successionLaw !== s.successionLaw) {
     s.successionLaw = choices.successionLaw;
@@ -188,11 +192,13 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     if (charId === s.playerId && ev.defId !== 'health_warning') continue;
     if (s.gameOver) break;
     noteChoice(s, ev, ch);
+    const mark = bookMark(ctx);
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
+    bookOrder(ctx, mark, undefined, { title: `${ev.title}: ${ch.label}`, outcome: 'done', decision: true, p: [...(ev.actors ?? []), ...(charId ? [charId] : [])], cat: classify(s, `${ev.title} ${ch.because}`, 'town') });
   }
   // The player's own orders: a pocket order is only paid by the Family when he said so (A13).
-  if (!s.gameOver && choices.actions?.length) resolveActions(ctx, choices.actions, { strictFunding: true });
+  if (!s.gameOver && choices.actions?.length) resolveActions(ctx, choices.actions, { strictFunding: true, own });
   if (!s.gameOver) ctx.log.push(...autoStaff(s));
 }
 
@@ -330,7 +336,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   const resolving = s.pendingEvents;
   noteAnswers(s, resolving, choices);
   // A trusted advisor acting on his own has the boss's standing permission to use Family money.
-  resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => ({ ...d.action, fund: 'family' as const }))] } : choices);
+  resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => ({ ...d.action, fund: 'family' as const }))] } : choices, choices.actions?.length ?? 0);
   if (!s.gameOver) recordDelegation(s, weekOf, delegated);
   // The underboss and the consigliere do their side of the business (their own hours, the Family's money within budget).
   const ltLines = !s.gameOver ? lieutenantsWeek(ctx, ltDocket, ltCalls, [...(choices.actions ?? []), ...delegated.map((d) => d.action)]) : [];
@@ -461,6 +467,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (acctErrs.length) throw new Error(`Accounts do not reconcile in week ${weekOf}: ${acctErrs.join('; ')}`);
   archiveAccounts(s);
   if (!s.gameOver) archiveWeek(s, report);
+  // The Book: everything the week wrote that no order claimed, once (journal.ts).
+  bookWeek(input, s, ctx, report);
   s.lastReport = report;
   if (!s.gameOver) recordMoneyWeek(s);
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
