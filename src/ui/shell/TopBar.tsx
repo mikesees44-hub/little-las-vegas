@@ -16,6 +16,19 @@ import { useShell } from './context';
 import { OrdersButton } from './OrdersPopover';
 import { PlansButton } from '../plans/PlansPanel';
 import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
+import { eraHeadline } from '../../engine/intrigue';
+import { ERA_TONE } from '../intrigue/IntrigueBoard';
+
+/** The era with the families, worst first ("Era: Cold war with the Kessler family"): a tap opens the Intrigue board. */
+function EraChip({ s }: { s: GameState }) {
+  const { go } = useShell();
+  const h = eraHeadline(s);
+  return (
+    <button type="button" onClick={() => go('diplomacy.intrigue')} className={`whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] sm:text-[11px] ${ERA_TONE[h.era]}`} title={h.cause ? `${h.text}: ${h.cause}` : h.text} data-testid="topbar-era">
+      Era: {h.text}
+    </button>
+  );
+}
 
 /**
  * The two pots in the top bar ("Family money", "Your pocket"), each with last week's change.
@@ -233,6 +246,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             );
           })}
           <Num v={s.favors} reasons={[]} term="favors"><Chip label="Favors" value={`${s.favors}`} /></Num>
+          <EraChip s={s} />
         </div>
         <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
           <div className="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="topbar-date">

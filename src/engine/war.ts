@@ -3,6 +3,7 @@ import { crew, displayName, isFree } from './characters';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
 import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
+import { noteWarEnd } from './intrigue';
 import { chance, randInt } from './rng';
 import { FACTION_NAMES } from './world';
 import { rivalStrength, strengthTotal } from './strength';
@@ -109,6 +110,8 @@ export function endWar(ctx: Ctx, w: War, outcome: 'won' | 'lost' | 'white', term
     effects.push({ type: 'respect', amount: -6, label }, { type: 'money', amount: -Math.min(Math.max(0, s.money), 5000), label: `${label}: reparations` });
   }
   if (effects.length) applyEffects(ctx, effects, { label, because: `made peace with ${r?.shortName ?? 'a rival'}` });
+  // The settlement and the war ledger (intrigue.ts).
+  noteWarEnd(ctx, w, outcome);
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `The war with ${r?.name ?? 'a rival'} ended: ${outcome === 'won' ? 'they gave in' : outcome === 'lost' ? 'you gave in' : 'a white peace'}.`, kind: 'rival' });
 }
 

@@ -14,6 +14,9 @@ import { StressBar } from '../family/bits';
 import { TravelButton } from '../travel/context';
 import { useShell } from '../shell/context';
 import { DistrictProperty } from '../econ/DistrictProperty';
+import { eraWith } from '../../engine/intrigue';
+import { ERA_LABEL } from '../../engine/intrigueState';
+import { EraBadge } from '../intrigue/IntrigueBoard';
 
 export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: string; onOpenBusiness: () => void }) {
   const d = s.districts.find((x) => x.id === id);
@@ -35,6 +38,17 @@ export function DistrictPanel({ s, id, onOpenBusiness }: { s: GameState; id: str
       <div className="text-[11px] text-stone-400 flex flex-wrap gap-x-2">
         {entries.map(([f, v]) => <span key={f}><span className="inline-block w-2 h-2 rounded-sm mr-0.5" style={{ background: FACTION_FILL[f] }} />{FACTION_NAMES[f]} {v}%</span>)}
       </div>
+      {s.intrigue && (
+        <div className="flex flex-wrap gap-1 text-[11px]" data-testid="district-eras">
+          {s.rivals.filter((r) => r.kind === 'mob' && (d.influence[r.id] ?? 0) > 0).map((r) => {
+            const era = eraWith(s, r.id);
+            const t = s.intrigue!.eras[`player|${r.id}`];
+            const front = s.wars.some((w) => w.rival === r.id && w.district === id);
+            const border = t?.settlement && t.settlement.until > s.week && t.settlement.border === id;
+            return <EraBadge key={r.id} era={era}>{ERA_LABEL[era]} with {r.shortName}{front ? ' · the front' : border ? ' · the border' : ''}</EraBadge>;
+          })}
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-1.5 text-xs">
         <div className="rounded bg-noir-800 px-2 py-1"><div className="text-stone-500">Your take</div><div className="text-gold-300 tabular-nums">{fmt$(districtIncome(s, id))}/wk</div></div>
         <div className="rounded bg-noir-800 px-2 py-1"><div className="text-stone-500">Heat</div><div className="tabular-nums">{districtHeat(s, id)}</div></div>

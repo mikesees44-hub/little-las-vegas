@@ -54,6 +54,8 @@ import { NightlifePanel } from '../nightlife/NightlifePanel';
 import { DatingPanel } from '../dating/DatingPanel';
 import { YourPeople } from '../bonds/YourPeople';
 import { AttachmentBoard } from '../ears/Connections';
+import { IntrigueBoard } from '../intrigue/IntrigueBoard';
+import { WarRoom } from '../intrigue/WarRoom';
 import type { PanelId, Route } from './routes';
 
 /**
@@ -184,6 +186,8 @@ export const PANELS: PanelDef[] = [
       { id: 'table', label: 'The Table & Wars', render: (s) => <TablePanel s={s} /> },
       { id: 'balance', label: 'Balance of Power', render: (s) => <PowerPart s={s} part="blitz" /> },
       { id: 'front', label: 'The Front', render: (s) => <PowerPart s={s} part="front" /> },
+      { id: 'intrigue', label: 'Intrigue', blurb: 'The era with each family, who spies on whom as far as you know, the men you suspect, the lies and rumors in play, and what you were told against what you later learned.', render: (s) => <IntrigueBoard s={s} /> },
+      { id: 'warroom', label: 'The War Room', blurb: 'During a war: the fronts, your men, the war ledger, peace terms. After it: what the violence bought.', render: (s) => <WarRoom s={s} /> },
     ],
   },
   {
