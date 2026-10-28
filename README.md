@@ -364,3 +364,14 @@ old saves, ten years of visible and economic change) and `tests/talks.test.ts`.
 - **Names**: defunct places and public landmarks keep their real names (the Shamrock, the Red Garter, Hunt's Pier, Quo Vadis, the Rainbow Club, the Hurricane Club, the Riptide, the Satellite Motel, Schumann's, North Wildwood City Hall, the Hereford Inlet Light). Still-operating businesses get near-miss names, painted onto their signs (Old Mack's Pizza, Gateway 25 / Kohl Bros., Olympia Fascination, Ed's Fun Arcade, Casino Arcadia, the Nutty Hut, the Lollypop Motel, Pompei's, Sportsland, Lil' Nicky's, Uncle Vinny's, the Ebb Tyde, the Fudge Kitchenette). Club Avalon is a landmark establishment only: never owned, never in a crime story.
 - **Location layer** (`src/engine/placesGeo.ts`): each property is a GeoJSON Feature with a permanent building id, name, address, operating years, rotation, footprint, image keys, and `located: 'verified' | 'approximate'` plus its source. Two points are verified: Hunt's Pier and the Hereford Inlet Light. The game draws the island longer than the real one, so the frame is pinned at both points and stretched between them. Batch 2 and 3 places stand block by block from Hunt's Pier. They are layer-only, with no lot, so nothing new is ownable.
 - **Block map** (`src/ui/hood/PlanView.tsx`): has five areas: the Boardwalk around Hunt's Pier, the Pacific Ave clubs around Taylor Ave, the Boardwalk north to 23rd Ave, North Wildwood from City Hall to Hereford Inlet, and the Crest motels on Atlantic Ave. Ground (roads, sidewalks, the Boardwalk, piers) is drawn beneath the buildings, and only the occupants open in the game year are shown. Click a property for its card, with exterior, interior and the four-angle viewer. The editor moves, turns and resizes a property. You can peek at other years, save corrections in this browser, and use "Copy corrections" to put the GeoJSON on the clipboard (no download links).
+
+### Imported blocks (beta): the city importer
+
+Real geography for the island, imported at development time by `scripts/cityimport/` (OpenStreetMap streets and
+building outlines, NJGIN parcels with MOD-IV attributes, the LOC Sanborn sheet index; see its README). The first pack
+is a few Wildwood blocks (Lincoln Ave to 26th Ave, Park Blvd to Pacific Ave): `citydata/wildwood/packs/test-blocks/`.
+In the game: Wildwood map → *View* → **Imported blocks (beta)** (`src/ui/hood/ImportedView.tsx`, data
+`public/geo/imported-wildwood-test-blocks.json`, logic `src/engine/importedCity.ts`): island → area → block →
+building → entrance in one frame with the same building ids; "Eligible for 1960" vs "All imported"; unknown history
+shown as unresolved tasks; a map editor that exports `historical-overrides.json`. A fictional occupant set on an
+imported building is saved with the game (`GameState.importedOccupants`, optional). Tests: `tests/cityimport.test.ts`.

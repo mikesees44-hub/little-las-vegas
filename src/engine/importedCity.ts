@@ -290,3 +290,83 @@ export function nearestNode(g: NavGraph, u: number, v: number): number {
   for (let i = 0; i < g.n; i++) { const [x, y] = g.xy(i); const d = (x - u) ** 2 + (y - v) ** 2; if (d < bd) { bd = d; best = i; } }
   return best;
 }
+
+/* ---------------- fictional occupants (in the save) ---------------- */
+
+/**
+ * A fictional business the player places in an imported building. It is
+ * game state (saved), keyed by the building's stable id; it never changes the
+ * imported data or claims anything about who really occupied the building.
+ */
+export interface ImportedOccupant { buildingId: string; name: string; kind: string; since: number; fictional: true }
+
+type WithOccupants = { importedOccupants?: Record<string, ImportedOccupant>; date: { y: number } };
+
+/** A new state with the occupant set (or cleared with an empty name). The input is not changed. */
+export function assignImportedOccupant<S extends WithOccupants>(s: S, buildingId: string, name: string, kind: string): S {
+  const all = { ...(s.importedOccupants ?? {}) };
+  const n = name.trim().slice(0, 60);
+  if (!n) delete all[buildingId];
+  else all[buildingId] = { buildingId, name: n, kind, since: s.date.y, fictional: true };
+  const out = { ...s };
+  if (Object.keys(all).length) out.importedOccupants = all; else delete out.importedOccupants;
+  return out;
+}
+
+/* ---------------- what the map shows ---------------- */
+
+export type ShowMode = 'all' | 'eligible';
+/** How a building is drawn: verified (period evidence checked), provisional (assessor year only), task (unknown or unverified: an open research task), ghost (did not stand in the year), hidden. */
+export type DrawClass = 'verified' | 'provisional' | 'task' | 'ghost' | 'hidden';
+
+/**
+ * "All imported geometry" shows everything (what did not stand in the year as a
+ * ghost); "eligible for <year>" shows what stood, keeps every building whose
+ * history is unknown visible as an unresolved task, and hides only what the
+ * evidence says was not there yet.
+ */
+export function drawClass(b: Pick<ViewBuilding, 'shown' | 'status'>, mode: ShowMode): DrawClass {
+  if (!b.shown) return mode === 'all' ? 'ghost' : 'hidden';
+  if (b.status === 'verified') return 'verified';
+  if (b.status === 'likely-existed') return 'provisional';
+  return 'task';
+}
+
+/** The centre of a flat outline. */
+export function centerOf(pts: Flat): [number, number] {
+  let u = 0, v = 0;
+  const n = pts.length / 2;
+  for (let i = 0; i < pts.length; i += 2) { u += pts[i]; v += pts[i + 1]; }
+  return [u / n, v / n];
+}
+
+/** The box of a flat outline: [u0, v0, u1, v1]. */
+export function boxOf(pts: Flat): [number, number, number, number] {
+  let u0 = Infinity, v0 = Infinity, u1 = -Infinity, v1 = -Infinity;
+  for (let i = 0; i < pts.length; i += 2) { u0 = Math.min(u0, pts[i]); u1 = Math.max(u1, pts[i]); v0 = Math.min(v0, pts[i + 1]); v1 = Math.max(v1, pts[i + 1]); }
+  return [u0, v0, u1, v1];
+}
+
+/** Whether a point is inside a flat outline. */
+export function insideFlat(u: number, v: number, pts: Flat): boolean {
+  let inside = false;
+  const n = pts.length / 2;
+  for (let i = 0, j = n - 1; i < n; j = i++) {
+    const xi = pts[2 * i], yi = pts[2 * i + 1], xj = pts[2 * j], yj = pts[2 * j + 1];
+    if ((yi > v) !== (yj > v) && u < ((xj - xi) * (v - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * The walk to a building's entrance: from the street node nearest the
+ * block's corner `from` (or any node) along the graph. Undefined when the
+ * entrance is not connected.
+ */
+export function walkToEntrance(layer: Pick<ImportedLayer, 'nav'>, entranceNode: number, from: [number, number]): { path: [number, number][]; length: number } | undefined {
+  if (entranceNode < 0) return undefined;
+  const g = navGraph(layer.nav);
+  const start = nearestNode(g, from[0], from[1]);
+  const r = shortestPath(g, start, entranceNode);
+  return r && { path: r.path.map((i) => g.xy(i)), length: r.length };
+}

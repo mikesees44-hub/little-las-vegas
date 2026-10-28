@@ -14,6 +14,7 @@ import { StreetCard } from './StreetCard';
 import { PaintedView, sceneForHood, type Scene } from './PaintedView';
 import { DistrictCards } from './DistrictCards';
 import { PlanView } from './PlanView';
+import { ImportedView } from './ImportedView';
 import { useShell } from '../shell/context';
 import { WalkView } from './WalkView';
 import { MapFind, MapMenu } from './MapControls';
@@ -103,6 +104,8 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   const [sel, setSel] = useState<string | undefined>();
   const [districts, setDistricts] = useState(false);
   const [plan, setPlan] = useState(false);
+  // Imported blocks (beta): real geometry from the city importer.
+  const [imported, setImported] = useState(false);
   const [hood, setHood] = useState<HoodId | undefined>();
   const [, setMenu] = useState(false);
   // Street level: the painted block and Pacific Avenue (live hotspots over the user's art).
@@ -323,7 +326,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   /** Center on one building, keeping it selected (Find, "Show on map"). */
   const showItem = (key: string) => {
     const it = items.find((x) => x.key === key);
-    setScene(undefined); setPlan(false); setDistricts(false); setWalking(false);
+    setScene(undefined); setPlan(false); setDistricts(false); setWalking(false); setImported(false);
     setSel(key);
     if (it) fitUV(it.parcel.u0 - 90, it.parcel.u1 + 90, it.parcel.v0 - 90, it.parcel.v1 + 90, 0.9);
   };
@@ -430,6 +433,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
           </svg>
         </div>
       </div>
+      {imported && <div className="absolute inset-0 z-[1004]"><ImportedView s={s} onClose={() => setImported(false)} /></div>}
       {plan && !scene && <div className="absolute inset-0 z-[998]"><PlanView s={s} items={items} onPick={(k) => { setSel(k); setMenu(false); }} onClose={() => setPlan(false)} /></div>}
       {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setDistricts(false); setMenu(false); }} onScene={(sc) => { setScene(sc); setDistricts(false); }} onMap={() => setScene(undefined)} onDistricts={() => { setSel(undefined); setDistricts(true); }} /></div>}
       {/* Controls: View · Show · Find, and the zoom (always). Selection survives a change of view. */}
@@ -440,6 +444,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
               <button type="button" role="menuitem" className="hv-mi" data-testid="hv-view-island" onClick={() => { close(); setScene(undefined); setPlan(false); setDistricts(false); setProjMode('iso'); savePref({ proj: 'iso' }); }}>Island (2.5D)</button>
               <button type="button" role="menuitem" className="hv-mi" onClick={() => { close(); setScene(undefined); setPlan(false); setProjMode('plan'); savePref({ proj: 'plan' }); }}>Island plan</button>
               <button type="button" role="menuitem" className="hv-mi" data-testid="hv-plan" onClick={() => { close(); setDistricts(false); setPlan(true); }}>Block map (to scale)</button>
+              <button type="button" role="menuitem" className="hv-mi" data-testid="hv-imported" onClick={() => { close(); setDistricts(false); setImported(true); }}>Imported blocks (beta)</button>
               <button type="button" role="menuitem" className="hv-mi" data-testid="hv-street" onClick={() => { close(); setScene(sceneForHood(hood)); setHood(undefined); onHood?.(undefined); }}>Street level</button>
               <button type="button" role="menuitem" className="hv-mi" data-testid="hv-walk" onClick={() => { close(); setWalking(true); }}>Walk the boardwalk</button>
               <button type="button" role="menuitem" className="hv-mi" data-testid="hv-districts" onClick={() => { close(); setHood(undefined); onHood?.(undefined); setDistricts(true); }}>The six districts</button>
