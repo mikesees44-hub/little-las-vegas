@@ -33,7 +33,7 @@ const ADULT_FILTERS: RosterFilter[] = ['young', 'mature', 'callgirl', 'street'];
 export function CardModal({ s, id, onClose }: { s: GameState; id: string; onClose: () => void }) {
   return (
     <Modal onClose={onClose} wide>
-      <div className="p-3 sm:p-4" data-testid="calling-card-modal">
+      <div className="p-3 pb-24 sm:p-4" data-testid="calling-card-modal">
         <div className="flex justify-between items-center mb-2">
           <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Calling card</div>
           <button type="button" className="btn-ghost text-xs px-2 py-0.5" onClick={onClose} data-testid="calling-card-close">Close</button>

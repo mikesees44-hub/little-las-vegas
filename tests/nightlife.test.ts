@@ -292,3 +292,138 @@ describe('nightlife: calling cards, the mature setting, saves', () => {
     allAdult(s);
   }, 60_000);
 });
+
+describe('nightlife: the evening, the car, the bold offer', () => {
+  const pro = (s: GameState) => nightRoster(s, 'callgirl').concat(nightRoster(s, 'young')).map((r) => r.id).find((id) => !s.nightlife!.people[id].bounds.includes('no_married'))!;
+
+  it('a professional names her price; the haggle is deterministic; below her floor she walks or says no', async () => {
+    const { askingPrice, haggle, previewInvite, eveningKindOf, floorPrice } = await import('../src/engine/evening');
+    const s = newGame('nl-haggle');
+    const id = pro(s);
+    expect(eveningKindOf(s, id)).toBe('paid');
+    const ask = askingPrice(s, id, 'town').price;
+    expect(ask).toBeGreaterThan(0);
+    expect(haggle(s, id, 'town', 'accept', ask, 0)).toEqual(haggle(s, id, 'town', 'accept', ask, 0));
+    expect(haggle(s, id, 'town', 'accept', ask, 0).price).toBe(ask);
+    expect(haggle(s, id, 'town', 'counter', Math.round(ask * 0.3), 2).result).not.toBe('deal');
+    expect(haggle(s, id, 'town', 'line', ask, 0).line.length).toBeGreaterThan(5);
+    // No price agreed: no order; under her floor: she says no outright.
+    const plan = { id, kind: 'town' as const, approach: 'night' as const, stay: false };
+    expect(previewInvite(s, plan).disabledReason).toBe('Agree her price first');
+    expect(previewInvite(s, { ...plan, price: floorPrice(s, id, 'town') - 50 }).acceptance!.chance).toBe(0);
+    const ok = previewInvite(s, { ...plan, price: ask });
+    expect(ok.disabledReason).toBeUndefined();
+    expect(ok.acceptance!.chance).toBeGreaterThan(0.3);
+    expect(ok.acceptance!.chance).toBeLessThan(1);
+    expect(ok.pot).toBe('pocket');
+  });
+
+  it('the approach and the kind of evening matter; staying is hers to decide and never offered with mature content Off', async () => {
+    const { askingPrice, applyInvite, stayOdds, beatFor, asksQuestion } = await import('../src/engine/evening');
+    const s = newGame('nl-evening');
+    const a = pro(s);
+    const b = nightRoster(s, 'dancer').map((r) => r.id).find((id) => id !== a && s.nightlife!.people[id].price > 0) ?? nightRoster(s, 'street')[0].id;
+    const N = s.nightlife!;
+    const before = [N.people[a].attach, N.people[b].attach];
+    applyInvite(newCtx(s), N, { id: a, kind: 'town', approach: 'queen', price: askingPrice(s, a, 'town').price, stay: false, answer: 'dunno' });
+    applyInvite(newCtx(s), N, { id: b, kind: 'release', at: 'hotel', approach: 'night', price: askingPrice(s, b, 'release').price, stay: false });
+    expect(N.people[a].attach - before[0]).toBeGreaterThan(N.people[b].attach - before[1]);
+    expect(beatFor(s, { id: a, kind: 'release' })).toBeUndefined();
+    expect(beatFor(s, { id: a, kind: 'town' })).toBeDefined();
+    expect(asksQuestion(s, { id: a, kind: 'town', approach: 'queen' })).toBe(true);
+    expect(asksQuestion(s, { id: a, kind: 'town', approach: 'night' })).toBe(false);
+    const c = s.characters[a];
+    expect(stayOdds(s, c, { id: a, kind: 'release', approach: 'queen' })).toBeGreaterThan(0);
+    expect(stayOdds(s, c, { id: a, kind: 'release', approach: 'queen' })).toBeLessThan(1);
+    // "Does it matter? You're getting paid." ends the road past one night.
+    applyInvite(newCtx(s), N, { id: a, kind: 'town', approach: 'something', price: askingPrice(s, a, 'town').price, stay: false, answer: 'paid' });
+    expect(s.dating!.bonds[a].pro).toBeGreaterThan(s.week);
+    const off = setDatingSettings(s, { mature: 'off' });
+    expect(stayOdds(off, off.characters[a], { id: a, kind: 'release', approach: 'queen' })).toBe(0);
+    // Every line of the evening is a one-line report.
+    for (const l of nightLog(s, 10)) expect(l.text.split('\n').length).toBe(1);
+  });
+
+  it('a getaway puts her on the trip planner\'s companion list; a minor can never be invited', async () => {
+    const { askingPrice, applyInvite, previewInvite } = await import('../src/engine/evening');
+    const { loversOf } = await import('../src/engine/travelState');
+    const s = newGame('nl-getaway');
+    const id = pro(s);
+    applyInvite(newCtx(s), s.nightlife!, { id, kind: 'getaway', dest: 'capemay', cover: 'fishing', approach: 'queen', price: askingPrice(s, id, 'getaway').price, stay: false, answer: 'you' });
+    expect(loversOf(s, s.playerId)).toContain(id);
+    const kid = makeCharacter(s, { gender: 'F', age: 17, faction: 'none' });
+    expect(previewInvite(s, { id: kid.id, kind: 'town', approach: 'night', stay: false }).disabledReason).toBe('Adults only');
+  });
+
+  it('the car: a cheaper price, mature content respected; the bold offer escalates, has lines no money crosses, and pays only on a yes', async () => {
+    const { previewCar, previewBold, boldReply, boldLine, applyBold, boldAfters, boldScene, askAgainOdds, yourClub } = await import('../src/engine/quickies');
+    const { askingPrice } = await import('../src/engine/evening');
+    const s = newGame('nl-bold');
+    const id = pro(s);
+    expect(askingPrice(s, id, 'car').price).toBeLessThan(askingPrice(s, id, 'release').price);
+    expect(previewCar(s, id).disabledReason).toBeUndefined();
+    expect(previewCar(setDatingSettings(s, { mature: 'off' }), id).disabledReason).toMatch(/Mature/);
+    expect(previewBold(setDatingSettings(s, { mature: 'off' }), id, 250).disabledReason).toMatch(/Mature/);
+    s.tribute!.acct.personal = 5000;
+    // Deterministic replies; raising moves her odds; the pocket caps it.
+    expect(boldReply(s, id, 250, 0)).toEqual(boldReply(s, id, 250, 0));
+    expect(previewBold(s, id, 6000).disabledReason).toMatch(/pocket/);
+    // A woman with a line: no amount crosses it, and pressing on gets you shown the door.
+    const lined = Object.values(s.nightlife!.people).map((p) => s.characters[p.id]).find((c) => boldLine(s, c))!;
+    expect(boldReply(s, lined.id, 1000, 0).result).toBe('line');
+    expect(boldReply(s, lined.id, 1000, 1).result).toBe('out');
+    // Money only on a yes.
+    let yesAt: number | undefined;
+    for (const amt of [100, 250, 500, 750, 1000, 1500, 2000]) if (boldReply(s, id, amt, 0).result === 'yes') { yesAt = amt; break; }
+    const pocket0 = s.tribute!.acct.personal;
+    const noAt = [100, 250, 500].find((amt) => boldReply(s, id, amt, 0).result !== 'yes');
+    if (noAt !== undefined) { applyBold(newCtx(s), s.nightlife!, id, noAt, 0, 'none'); expect(s.tribute!.acct.personal).toBe(pocket0); }
+    if (yesAt !== undefined) { applyBold(newCtx(s), s.nightlife!, id, yesAt, 0, 'none'); expect(s.tribute!.acct.personal).toBe(pocket0 - yesAt); }
+    // A scene in a club of yours: the bouncer, and three answers; asking again is still her choice.
+    let found = false;
+    for (const p of Object.values(s.nightlife!.people)) {
+      if (!yourClub(s, p.id) || boldLine(s, s.characters[p.id])) continue;
+      for (const amt of [100, 250, 500]) for (const r of [0, 1, 2]) {
+        const sc = boldScene(s, p.id, amt, r);
+        if (sc !== 'none' && sc !== 'bouncer' && !found) {
+          found = true;
+          expect(boldAfters(s, p.id, amt, r)).toEqual(['sorry', 'askAgain', 'getLost']);
+          const odds = askAgainOdds(s, p.id, amt);
+          expect(odds).toBeGreaterThan(0);
+          expect(odds).toBeLessThan(1);
+          applyBold(newCtx(s), s.nightlife!, p.id, amt, r, 'getLost');
+          expect(s.nightlife!.people[p.id].grudge).toBe(s.week);
+        }
+      }
+    }
+    expect(found).toBe(true);
+  });
+});
+
+describe('nightlife: her man, and her grudge', () => {
+  it('what kind of man he is stays hidden until you ask; dealing with him changes what she thinks', async () => {
+    const { previewPartner, previewAskMan, applyAskMan, applyPartner, temperOf, partnerKnown } = await import('../src/engine/nightPartners');
+    const s = newGame('nl-partner');
+    const p = Object.values(s.nightlife!.people).find((x) => x.fam.partnerId && ['jealous', 'volatile'].includes(temperOf(s, x) ?? ''))!;
+    expect(p).toBeDefined();
+    expect(partnerKnown(s, p)).toBeUndefined();
+    expect(callingCard(s, p.id)!.family.join(' ')).toMatch(/you don't know/);
+    expect(previewPartner(s, p.id, 'warn').disabledReason).toMatch(/ask around/);
+    expect(previewAskMan(s, p.id).disabledReason).toBeUndefined();
+    applyAskMan(newCtx(s), s.nightlife!, p.id);
+    expect(partnerKnown(s, p)).toBeDefined();
+    expect(previewPartner(s, p.id, 'crew').disabledReason).toBeUndefined();
+    const op0 = s.characters[p.id] ? (await import('../src/engine/relations')).opinion(s, p.id, s.playerId) : 0;
+    applyPartner(newCtx(s), s.nightlife!, p.id, 'crew');
+    expect((await import('../src/engine/relations')).opinion(s, p.id, s.playerId)).not.toBe(op0);
+    expect(s.characters[p.fam.partnerId!].alive).toBe(true);
+  });
+
+  it('a grudge talks: leaks to a rival family or the law are recorded; your people may warn you', () => {
+    let s = newGame('nl-grudge');
+    for (const p of Object.values(s.nightlife!.people).slice(0, 12)) p.grudge = s.week;
+    s = weeks(s, 40);
+    expect((s.nightlife!.leaks ?? []).length).toBeGreaterThan(0);
+    for (const l of s.nightlife!.leaks!) expect(age(s, s.characters[l.from])).toBeGreaterThanOrEqual(18);
+  }, 60_000);
+});

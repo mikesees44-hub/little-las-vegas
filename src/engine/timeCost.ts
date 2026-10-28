@@ -116,6 +116,7 @@ export const TIME_TABLE: Record<string, number> = {
   // Nightlife: a night with her is an evening; business with the houses is a meeting.
   'nightlife:payroll': 1, 'nightlife:release': 0.5, 'nightlife:promise': 1, 'nightlife:keep': 3,
   'nightlife:goomar': 4, 'nightlife:endGoomar': 2, 'nightlife:deal': 2, 'nightlife:back': 0.5,
+  'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */
