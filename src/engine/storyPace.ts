@@ -1,3 +1,4 @@
+import { isSurrender, safeDefault } from './handover';
 import { hashSeed, rand, type RngHolder } from './rng';
 import { director } from './storyDirector';
 import type { Choice, Effect, EventInstance, GameState, PlayerChoices } from './types';
@@ -130,8 +131,10 @@ export function quietRule(s: GameState, ev: EventInstance): QuietRule | undefine
 
 /** Settle a popup quietly: the usual answer goes on the books next to the week's ledger. */
 export function settleQuietly(s: GameState, ev: EventInstance, rule: QuietRule): void {
-  const ch = ev.choices.find((c) => c.id === (rule.choice || ev.defaultChoiceId)) ?? ev.choices.find((c) => c.id === ev.defaultChoiceId);
-  if (!ch) return;
+  let ch = ev.choices.find((c) => c.id === (rule.choice || ev.defaultChoiceId)) ?? ev.choices.find((c) => c.id === ev.defaultChoiceId);
+  // Routine never gives a man up (handover.ts).
+  if (isSurrender(s, ch)) ch = safeDefault(s, ev);
+  if (!ch || isSurrender(s, ch)) return;
   const d = director(s);
   const effects = rule.keep ? ch.effects.filter(rule.keep) : ch.effects;
   (d.quiet ??= []).push({ title: ev.title, because: ch.because, note: rule.note(ev, ch), effects, category: ev.defId === 'econ_bigscore' ? 'kickup' : 'event' });

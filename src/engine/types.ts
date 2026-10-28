@@ -565,7 +565,9 @@ export type Effect =
   /** Nightlife: payroll, promises, the goomar, houses (nightlife.ts). */
   | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase)
   /** Your People: the deep relationships (bonds.ts). */
-  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase);
+  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase)
+  /** My Men (myMen.ts): taking care of the crew, and the crew watching how. */
+  | ({ type: 'mymen'; op: import('./myMen').MenOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -939,6 +941,8 @@ export interface GameState {
   nightlife?: import('./nightlifeState').NightlifeState;
   /** Your People: axes, memories and stages of the boss's closest ties (bondsState.ts; optional for old saves). */
   bonds?: import('./bondsState').BondsState;
+  /** My Men (myMen.ts): the "Does the boss have our back?" meter, the wrongs done to the men, protection (optional for old saves). */
+  mymen?: import('./myMen').MenState;
   /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */
   spend?: import('./spendState').SpendState;
   /** Fictional occupants the player put in imported (real-geometry) buildings, by building id (importedCity.ts). Absent until the first one. */
@@ -1052,6 +1056,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'nightlife'; op: import('./nightlife').NightAction }
   /** Your People (bonds.ts): your wife, your goomars, your kids, your friends, your enemies. They decide. */
   | { kind: 'bond'; op: import('./bonds').BondAction }
+  /** My Men (myMen.ts): money, protection, his back, discipline, for one man or all of them. */
+  | { kind: 'mymen'; op: import('./myMen').MenAction }
   /** Spend (spend.ts): buy from the catalog, or sell / let go what you have. */
   | { kind: 'spend'; op: import('./spendState').SpendAction }
   /** New York (nyc.ts): open a crew, buy into a racket, the families' blessing, tribute, the Commission. */

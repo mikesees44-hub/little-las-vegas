@@ -1,3 +1,4 @@
+import { backReasons } from './myMen';
 import { pocketPrice } from './pocket';
 import { bonesBlock } from './bones';
 import { perkMod } from './lifestyle';
@@ -292,6 +293,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
         opinionReason(s, c),
         respectReason(s),
         { label: 'Signing money', value: 15 },
+        ...backReasons(s),
         ...(rel === 'rival' ? [{ label: `Loyal to ${FACTION_NAMES[c.faction]}`, value: -25 }] : []),
         ...traitReasons(c, { Ambitious: 10, Greedy: 10, 'Loyal-to-a-fault': -40, Cowardly: -10, Paranoid: -10 }),
       ]);

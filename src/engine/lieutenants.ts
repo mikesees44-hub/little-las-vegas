@@ -1,3 +1,4 @@
+import { actionSurrenders } from './handover';
 import { previewAction, resolveActions } from './actions';
 import { explainAction } from './advice';
 import { attr } from './attrs';
@@ -574,7 +575,9 @@ function plan(s: GameState): LtAct[] {
       if (hours + hrs > WEEK_HOURS) continue;
       hours += hrs;
       const level = levelOf(s, c.domain);
-      const over = spend + ch.pick.cost > budget;
+      // Giving up one of the boss's men is never his to do: he proposes it and waits for the boss (handover.ts).
+      const surrender = actionSurrenders(s, ch.pick.action);
+      const over = surrender || spend + ch.pick.cost > budget;
       if (!over) spend += ch.pick.cost;
       const mode: LtAct['mode'] = level === 'handle' && !over ? 'handle' : 'ask';
       const day = mode === 'handle' ? Math.min(5, nHandle++) : Math.min(5, 2 + nAsk++);
@@ -711,6 +714,8 @@ export function lieutenantsWeek(ctx: Ctx, docket: readonly LtAct[], calls: Recor
     if (a.needsOk && !approved) { lt.log.push({ week: s.week, day: a.day, seat: a.seat, byId: a.byId, actId: a.id, domain: a.domain, text: `${who} let "${a.topic}" go: over his budget, and you never said yes.`, result: 'skipped', cost: 0 }); continue; }
     const o = chosenOpt(s, a);
     if (!o) continue;
+    // Never on his own word: a man is given up only on the boss's explicit yes, whatever the domain's level.
+    if (actionSurrenders(s, o.action) && !approved) { lt.log.push({ week: s.week, day: a.day, seat: a.seat, byId: a.byId, actId: a.id, domain: a.domain, text: `${who} did not ${lc(o.label)}: a man's life waits for your word.`, result: 'skipped', cost: 0 }); continue; }
     if (queued.some((q) => sameAction(q, o.action))) { log('skipped', `${who} stood down on "${a.topic}": you had already given the order.`); continue; }
     if (!approved && spent[a.seat] + o.cost > budgetOf(s, a.seat)) { log('skipped', `${who} let "${a.topic}" go: the week's budget was spent.`); continue; }
     if (o.cost > Math.max(0, s.money)) { log('skipped', `${who} couldn't ${lc(o.label)}: the Family is short.`); continue; }

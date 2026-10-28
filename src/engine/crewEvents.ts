@@ -827,7 +827,7 @@ export function buildPlantFound(s: GameState, c: Character): EventInstance {
       { id: 'marsh', label: 'He goes in the marsh', because: `had the plant ${c.firstName} killed`, effects: [{ type: 'kill', charId: c.id, cause: 'killed as a plant', killer: 'player', label }, { type: 'heat', bar: c.informantFor === 'law' ? 'federal' : 'local', amount: 6, label }, { type: 'respect', amount: 2, label }] },
       { id: 'feed', label: 'Feed him lies', because: `fed lies through the plant ${c.firstName}`, effects: [{ type: 'flag', key: `fed_${c.id}`, value: 1, label }, ...(c.informantFor === 'law' ? [{ type: 'heat', bar: 'federal', amount: -8, label } as Effect] : [{ type: 'rivalResource', rival: c.informantFor as RivalId, money: -3000, muscle: -4, label } as Effect])] },
       { id: 'exile', label: 'Run him off the island', because: `ran the plant ${c.firstName} off the island`, effects: [{ type: 'exile', charId: c.id, label }] },
-    ], 'marsh', v ? [v.id] : [], 76);
+    ], 'feed', v ? [v.id] : [], 76);
   ev.mandatory = true;
   return ev;
 }

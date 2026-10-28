@@ -1,3 +1,4 @@
+import { desertMult, myMenWeek, noteChoice } from './myMen';
 import { econEventSource, econWeek } from './econ';
 import { hoodWeek } from './hood';
 import { livingWeek } from './livingWorld';
@@ -82,6 +83,7 @@ import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
 import { intrigueResolve, intrigueWeek } from './intrigue';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
+import { guardDefaults, safeDefault } from './handover';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -172,7 +174,8 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
   for (const ev of pending) {
     const wanted = choices.choices?.[ev.iid];
     let ch = ev.choices.find((c) => c.id === wanted && !c.disabledReason);
-    if (!ch) ch = ev.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev.choices[0];
+    // Unanswered: the default, which never gives a man up when there is another way (handover.ts).
+    if (!ch) ch = safeDefault(s, ev);
     if (!ch) continue;
     // Skip choices referencing characters that died since the event was raised.
     const charId = ev.meta?.charId ? String(ev.meta.charId) : undefined;
@@ -180,6 +183,7 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices): void {
     // An event about a crew member who has since become the boss (succession) is moot.
     if (charId === s.playerId && ev.defId !== 'health_warning') continue;
     if (s.gameOver) break;
+    noteChoice(s, ev, ch);
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
   }
@@ -207,7 +211,8 @@ function monthlyTick(ctx: Ctx): void {
   for (const m of crew(s)) {
     if (!m.alive || m.faction !== 'player' || !isFree(s, m) || m.dynasty || hasTrait(m, 'Loyal-to-a-fault')) continue;
     const op = opinion(s, m.id, boss.id);
-    if (op <= -45 && chance(s, 0.25)) {
+    // A crew that knows the boss has its back walks out less (myMen.ts).
+    if (op <= -45 && chance(s, 0.25 * desertMult(s))) {
       const wasCapo = m.rank === 'capo' || m.rank === 'underboss';
       defect(ctx, m, 'desert');
       if (wasCapo) {
@@ -368,6 +373,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     datingWeek(ctx);
     nightlifeWeek(ctx);
     bondsWeek(ctx);
+    myMenWeek(ctx);
     spendWeek(ctx);
     workWeek(ctx);
     factionsWeek(ctx);
@@ -466,6 +472,7 @@ export function forceDeath(input: GameState, charId: string, cause: string): { s
   if (!s.gameOver) {
     // Surface the funeral right away.
     s.pendingEvents = [...s.pendingEvents, ...s.eventQueue.splice(0)].slice(0, MAX_POPUPS);
+    guardDefaults(s, s.pendingEvents);
   }
   return { state: s, lines: ctx.lines, log: ctx.log };
 }

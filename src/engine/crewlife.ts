@@ -410,7 +410,8 @@ export function revealIntel(ctx: Ctx): EventInstance | undefined {
       iid: `ev${s.nextId++}`, defId: 'rat_found', week: s.week, mandatory: true, priority: 75,
       title: 'The rat',
       text: `${cons ? displayName(cons) : 'Your consigliere'} lays it out: phone records, a car seen outside the federal building in Camden. It is ${displayName(rat)}.`,
-      defaultChoiceId: 'whack', meta: { charId: rat.id }, actors: [rat.id],
+      // Killing one of your own is the boss's explicit order, never what silence does (handover.ts).
+      defaultChoiceId: 'feed', meta: { charId: rat.id }, actors: [rat.id],
       choices: [
         { id: 'whack', label: 'He goes in the marsh', because: `had the informant ${rat.firstName} killed`, effects: [{ type: 'kill', charId: rat.id, cause: 'killed as an informant', killer: 'player', label: 'The rat' }, { type: 'flag', key: 'informant', value: -(s.flags.informant ?? 0), label: 'The rat' }, { type: 'heat', bar: 'federal', amount: 6, label: 'The rat' }, { type: 'respect', amount: 3, label: 'The rat' }] },
         { id: 'feed', label: 'Feed him lies', detail: 'Let the FBI chase ghosts.', because: `fed false information through ${rat.firstName}`, effects: [{ type: 'heat', bar: 'federal', amount: -12, label: 'Feeding the rat' }, { type: 'flag', key: 'informant', value: -(s.flags.informant ?? 0), label: 'Feeding the rat' }, { type: 'schedule', key: 'rat_burned', minWeeks: 4, maxWeeks: 12, chance: 0.35, hint: 'the FBI may realise', params: { charId: rat.id }, label: 'Feeding the rat' }] },

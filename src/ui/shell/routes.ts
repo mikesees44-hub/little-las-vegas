@@ -50,6 +50,7 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   admin: { panel: 'borgata', section: 'council' },
   council: { panel: 'borgata', section: 'council' },
   capos: { panel: 'borgata', section: 'capos' },
+  mymen: { panel: 'borgata', section: 'mymen' },
   membership: { panel: 'borgata', section: 'membership' },
   grievances: { panel: 'borgata', section: 'grievances' },
   factions: { panel: 'borgata', section: 'grievances' },

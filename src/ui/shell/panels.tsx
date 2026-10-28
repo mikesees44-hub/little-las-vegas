@@ -35,6 +35,7 @@ import { Succession } from '../house/Succession';
 import { ShadowCourt } from '../power/ShadowCourt';
 import { CouncilSeats } from '../borgata/CouncilSeats';
 import { CaposSection, MenRoster } from '../borgata/Capos';
+import { MyMen } from '../borgata/MyMen';
 import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Happening } from '../town/Happening';
@@ -144,6 +145,7 @@ export const PANELS: PanelDef[] = [
       { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
       { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
+      { id: 'mymen', label: 'My Men', wide: true, blurb: 'Take care of your men: their money, their safety, their back. The whole crew watches how you treat each one.', render: (s) => <MyMen s={s} /> },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
       { id: 'grievances', label: 'Grievances & Factions', render: (s) => stack(<PowerPart key="g" s={s} part="grievances" />, <FactionsPanel key="f" s={s} />) },
       { id: 'orders', label: 'Orders & Edicts', render: (s) => stack(<GeneralOrders key="g" s={s} />, <CrewListPart key="e" s={s} part="edicts" />) },

@@ -1,3 +1,4 @@
+import { buildPhillyComes } from './table';
 import { displayName, makeCharacter } from './characters';
 import { buildNarcoticsReckoning } from './events';
 import { frontManClean } from './goals';
@@ -119,7 +120,9 @@ const HANDLERS: Record<string, Handler> = {
     const men = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank === 'capo' && c.id !== s.playerId);
     const v = named?.alive && named.faction === 'player' && named.id !== s.playerId ? named : men[0];
     if (!v) return { text: 'Philadelphia enforced the ruling: your places in Downtown were burned', effects: [{ type: 'respect', amount: -5 }, { type: 'heat', bar: 'local', amount: 6 }] };
-    return { text: `Philadelphia enforced the Table's ruling: ${v.firstName} ${v.lastName} was found in the Delaware`, effects: [{ type: 'kill', charId: v.id, cause: 'killed on the Table\'s orders for your defiance', killer: 'philly' }, { type: 'respect', amount: -4 }] };
+    // They come for him, and the boss decides (handover.ts): nobody is taken on silence.
+    s.eventQueue.push(buildPhillyComes(s, v));
+    return { text: `Philadelphia sent men to enforce the Table's ruling: they are looking for ${v.firstName} ${v.lastName}`, effects: [{ type: 'respect', amount: -2 }] };
   },
   rat_burned: (ctx, sc) => {
     const c = ctx.s.characters[String(sc.params.charId)];
