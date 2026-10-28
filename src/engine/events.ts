@@ -61,7 +61,24 @@ export const TRIBUTE_RATE = 0.09;
 export function envelopeSize(s: GameState): number {
   const recent = s.incomeHistory.slice(-4);
   const avg = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 2000;
-  return Math.max(600, rnd100(s, avg * 4.33 * TRIBUTE_RATE * (1 - perkMod(s, 'tribute') / 100)));
+  return Math.max(600, rnd100(s, tributeOnWeekly(avg) * 4.33 * (1 - perkMod(s, 'tribute') / 100)));
+}
+
+/**
+ * Philadelphia's points by brackets of the family's weekly income (MAKE_IT_GREAT #2): the old nine
+ * points on a small outfit, more on every dollar past $8,000 a week, and a big piece of a big earner.
+ * A bigger empire sends more up the turnpike; money keeps a cost all the way up.
+ */
+export const TRIBUTE_BRACKETS: readonly [upTo: number, rate: number][] = [[8000, TRIBUTE_RATE], [20000, 0.15], [Infinity, 0.22]];
+export function tributeOnWeekly(weekly: number): number {
+  let out = 0;
+  let from = 0;
+  for (const [upTo, rate] of TRIBUTE_BRACKETS) {
+    if (weekly <= from) break;
+    out += (Math.min(weekly, upTo) - from) * rate;
+    from = upTo;
+  }
+  return out;
 }
 
 /**

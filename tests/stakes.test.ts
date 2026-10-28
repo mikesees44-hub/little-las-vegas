@@ -11,6 +11,10 @@ import { addOpinion, opinion } from '../src/engine/relations';
 import { BLITZ_COOLDOWN, blitzStep, launchBlitz, rivalBlitzMonth } from '../src/engine/blitz';
 import { pw } from '../src/engine/powerState';
 import { bloodPrice, buildRulingAgainst, newDispute, openDispute, rivalDisputes, SANCTION_COOLDOWN } from '../src/engine/table';
+import { attended, IDLE_GRACE, idleWeeks, neglectLevel, neglectWeek } from '../src/engine/neglect';
+import { tributeOnWeekly } from '../src/engine/events';
+import { padForSize, recordEarnings } from '../src/engine/economy';
+import { SHYLOCK_DEBT_CAP } from '../src/engine/regimes';
 import type { GameState } from '../src/engine/types';
 
 const clone = (s: GameState): GameState => JSON.parse(JSON.stringify(s));
@@ -109,5 +113,72 @@ describe('#4 a blitz cannot wipe the dynasty in one wave', () => {
     const n = pw(s).blitzes.length;
     for (let i = 0; i < 50; i++) rivalBlitzMonth(ctx);
     expect(pw(s).blitzes.length).toBe(n);
+  });
+});
+
+describe('#1 an absent boss pays for it', () => {
+  it('a week with an order, an envelope or a real answer counts as attended; defaults alone do not', () => {
+    const s = newGame('stake-attend');
+    const ev = s.pendingEvents.find((e) => e.choices.filter((c) => !c.disabledReason).length > 1)!;
+    expect(attended(s.pendingEvents, {})).toBe(false);
+    expect(attended(s.pendingEvents, { choices: { [ev.iid]: ev.defaultChoiceId } })).toBe(false);
+    const other = ev.choices.find((c) => c.id !== ev.defaultChoiceId && !c.disabledReason)!;
+    expect(attended(s.pendingEvents, { choices: { [ev.iid]: other.id } })).toBe(true);
+    expect(attended(s.pendingEvents, { actions: [{ kind: 'order', key: 'cops', via: 'direct' } as never] })).toBe(true);
+  });
+  it('the bite starts after the grace weeks and grows', () => {
+    expect(neglectLevel(IDLE_GRACE - 1)).toBe(0);
+    expect(neglectLevel(IDLE_GRACE)).toBeGreaterThan(0);
+    expect(neglectLevel(IDLE_GRACE + 20)).toBe(1);
+  });
+  it('weeks of nothing cost money, loyalty and corners; an order stops it', () => {
+    let s = newGame('stake-idle');
+    const capo = crew(s).find((c) => c.rank === 'capo')!;
+    const op0 = opinion(s, capo.id, s.playerId);
+    let skim = 0;
+    for (let i = 0; i < IDLE_GRACE + 6; i++) {
+      const r = advanceWeek(s, {});
+      skim += r.report.lines.filter((l) => /Nobody is watching the count/.test(l.label)).reduce((a, l) => a - l.amount, 0);
+      s = r.state;
+    }
+    expect(idleWeeks(s)).toBeGreaterThanOrEqual(IDLE_GRACE + 6);
+    expect(skim).toBeGreaterThan(0);
+    expect(opinion(s, capo.id, s.playerId)).toBeLessThan(op0 + 30);
+    const ctx = newCtx(s);
+    neglectWeek(ctx, true);
+    expect(idleWeeks(s)).toBe(0);
+  });
+});
+
+describe('#2 money keeps a cost all the way up', () => {
+  it('Philadelphia takes nine points from a small outfit and more from a big earner', () => {
+    expect(tributeOnWeekly(5000)).toBeCloseTo(450);
+    expect(tributeOnWeekly(8000)).toBeCloseTo(720);
+    expect(tributeOnWeekly(20000)).toBeCloseTo(720 + 12000 * 0.15);
+    expect(tributeOnWeekly(40000) / 40000).toBeGreaterThan(0.15);
+  });
+  it('the pad grows with the family\'s income and is nothing for a small outfit', () => {
+    const s = newGame('stake-pad');
+    s.incomeHistory = [3000, 3000, 3000, 3000];
+    expect(padForSize(s)).toBe(0);
+    s.incomeHistory = [25000, 25000, 25000, 25000];
+    expect(padForSize(s)).toBe(1000);
+  });
+  it('the envelope counts every dollar the week earned, businesses and property included', () => {
+    const s = newGame('stake-earn');
+    s.incomeHistory = [100];
+    const ctx = newCtx(s);
+    ctx.lines.push({ stat: 'money', amount: 5000, label: 'Property: a hotel', category: 'business' }, { stat: 'money', amount: 700, label: 'Kick-up', category: 'kickup' }, { stat: 'money', amount: -900, label: 'Upkeep', category: 'cost' });
+    recordEarnings(ctx);
+    expect(s.incomeHistory[0]).toBe(5700);
+  });
+  it('a crew member\'s shylock debt stops growing at a ceiling (the playtest saw $1.77M)', () => {
+    let s = newGame('stake-debt');
+    const man = crew(s).find((c) => c.rank === 'soldier')!;
+    const rival = s.rivals.find((r) => r.kind === 'mob')!;
+    man.debtTo = { rival: rival.id, amount: SHYLOCK_DEBT_CAP - 100, week: s.week };
+    for (let i = 0; i < 6; i++) s = advanceWeek(s, {}).state;
+    const d = s.characters[man.id].debtTo;
+    if (d) expect(d.amount).toBeLessThanOrEqual(SHYLOCK_DEBT_CAP);
   });
 });

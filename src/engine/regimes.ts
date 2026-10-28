@@ -248,13 +248,17 @@ export function regimesWeek(ctx: Ctx): void {
     }
     // Debts to rival shylocks grow; at some point the rival offers to forget it.
     if (c.debtTo) {
-      c.debtTo.amount = Math.round(c.debtTo.amount * 1.03);
+      // ... up to a ceiling: a shylock's book is not a sovereign debt (the playtest saw $1.77M at 3% a week for years).
+      c.debtTo.amount = Math.min(SHYLOCK_DEBT_CAP, Math.round(c.debtTo.amount * 1.03));
       if (c.debtTo.amount >= 4000 && !c.courtedBy && s.week - c.debtTo.week >= 6) c.courtedBy = { rival: c.debtTo.rival, week: s.week };
     }
   }
   fillVacantDistricts(ctx);
   booksWeek(ctx);
 }
+
+/** The most a man's debt to a rival shylock grows to. */
+export const SHYLOCK_DEBT_CAP = 12000;
 
 /**
  * A district you hold with nobody running it leaks money. After a few weeks
