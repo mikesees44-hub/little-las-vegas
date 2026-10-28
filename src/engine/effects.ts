@@ -893,6 +893,7 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'mymen':
       applyMenOp(ctx, e.op, label);
+      break;
     case 'crewxp':
       applyXpOp(ctx, e.op);
       break;

@@ -567,7 +567,7 @@ export type Effect =
   /** Your People: the deep relationships (bonds.ts). */
   | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase)
   /** My Men (myMen.ts): taking care of the crew, and the crew watching how. */
-  | ({ type: 'mymen'; op: import('./myMen').MenOp } & EffectBase);
+  | ({ type: 'mymen'; op: import('./myMen').MenOp } & EffectBase)
   /** Crew XP (crewXp.ts): a specialty picked, a word of recognition. */
   | ({ type: 'crewxp'; op: import('./crewXp').XpOp } & EffectBase);
 
