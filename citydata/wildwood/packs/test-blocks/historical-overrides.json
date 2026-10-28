@@ -1,0 +1,7202 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/test-blocks",
+ "targetYear": 1960,
+ "overrides": [
+  {
+   "id": "yr-osm-way-266249642",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/266249642"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2002
+   },
+   "evidence": {
+    "year": 2003,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2003 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-266249643",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/266249643"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-266249645",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/266249645"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1970
+   },
+   "evidence": {
+    "year": 1971,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1971 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-266249646",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/266249646"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1968
+   },
+   "evidence": {
+    "year": 1969,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1969 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-266249648",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/266249648"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1968
+   },
+   "evidence": {
+    "year": 1969,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1969 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-504877170",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/504877170"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-504877171",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/504877171"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-504877183",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/504877183"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1998
+   },
+   "evidence": {
+    "year": 1999,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1999 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-504877184",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/504877184"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2002
+   },
+   "evidence": {
+    "year": 2003,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2003 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-571669910",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/571669910"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-571669917",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/571669917"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1979
+   },
+   "evidence": {
+    "year": 1980,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1980 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375886",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375886"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375888",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375888"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2007
+   },
+   "evidence": {
+    "year": 2008,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2008 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375889",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375889"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375890",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375890"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1963
+   },
+   "evidence": {
+    "year": 1964,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1964 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375899",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375899"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375900",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375900"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375901",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375901"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1945,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1945 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375902",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375902"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375903",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375903"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1960,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1960 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375904",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375904"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375920",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375920"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1936,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1936 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375922",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375922"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375925",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375925"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375928",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375928"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375931",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375931"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375933",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375933"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2023
+   },
+   "evidence": {
+    "year": 2024,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2024 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375949",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375949"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-597375953",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375953"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1986
+   },
+   "evidence": {
+    "year": 1987,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1987 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-760064926",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/760064926"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-760064927",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/760064927"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1964
+   },
+   "evidence": {
+    "year": 1965,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1965 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287900",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287900"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2007
+   },
+   "evidence": {
+    "year": 2008,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2008 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287901",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287901"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1974
+   },
+   "evidence": {
+    "year": 1975,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1975 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287902",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287902"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287903",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287903"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287921",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287921"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1960,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1960 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287922",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287922"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1904,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1904 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287923",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287923"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1904,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1904 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287924",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287924"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287925",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287925"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1359287926",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1359287926"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1378814010",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1378814010"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1975
+   },
+   "evidence": {
+    "year": 1976,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1976 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847272",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847272"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847275",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847275"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847276",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847276"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1904,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1904 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847277",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847277"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847280",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847280"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847281",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847281"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847288",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847288"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847289",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847289"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1411847290",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1411847290"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-osm-way-1423062888",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/1423062888"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0507-164-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0507_164_18"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0507-164-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0507_164_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0507-164-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0507_164_20"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2014
+   },
+   "evidence": {
+    "year": 2015,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2015 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0507-164-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0507_164_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0507-164-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0507_164_22"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-154-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-154-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_22"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1957,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1957 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-154-24",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_24"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1952,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1952 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-154-25",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_25"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1948,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1948 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-154-26",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_26"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-163-2",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_163_2"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1954,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1954 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-163-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_163_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1954,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1954 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-163-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_163_9"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1974
+   },
+   "evidence": {
+    "year": 1975,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1975 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-164-18-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_164_18.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-164-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_164_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-170-6-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_170_6.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-170-9-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_170_9.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-171-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_171_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-171-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_171_5"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1960,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1960 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-171-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_171_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1890,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1890 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-172-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_172_16"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-172-18-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_172_18.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-185-1-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_185_1.02"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2017
+   },
+   "evidence": {
+    "year": 2018,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2018 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-190-40-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_190_40.01"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2003
+   },
+   "evidence": {
+    "year": 2004,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2004 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-190-40-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_190_40.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-190-40-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_190_40.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1958,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1958 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-16-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_16.01"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-18-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_18.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1918,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1918 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-18-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_18.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-18-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_18.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-18-04",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_18.04"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_8"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-191-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_191_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1908,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1908 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_1"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-10-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_10.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1921,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1921 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-10-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_10.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_11"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_15"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2023
+   },
+   "evidence": {
+    "year": 2024,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2024 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_19"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1970
+   },
+   "evidence": {
+    "year": 1971,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1971 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-8-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_8.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-8-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_8.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1921,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1921 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-192-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_192_9"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1986
+   },
+   "evidence": {
+    "year": 1987,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1987 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.01"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.02"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.03"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-04",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.04"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-05",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.05"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-06",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.06"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-07",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.07"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-08",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.08"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-09",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.09"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.11"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.12"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.13"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.14"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.15"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.16"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-17",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.17"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.18"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-2-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_2.19"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1977
+   },
+   "evidence": {
+    "year": 1978,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1978 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_3"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1966
+   },
+   "evidence": {
+    "year": 1967,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1967 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-4",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_4"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1963
+   },
+   "evidence": {
+    "year": 1964,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1964 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_5"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1962
+   },
+   "evidence": {
+    "year": 1963,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1963 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_6"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1961
+   },
+   "evidence": {
+    "year": 1962,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1962 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_7"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1961
+   },
+   "evidence": {
+    "year": 1962,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1962 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-193-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_8"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1961
+   },
+   "evidence": {
+    "year": 1962,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1962 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-18-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_18.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-23",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_23"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-24",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_24"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-28-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_28.01"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1969
+   },
+   "evidence": {
+    "year": 1970,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1970 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-28-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_28.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-28-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_28.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-30",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_30"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-31",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_31"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-37",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_37"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-38",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_38"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-53",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_53"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-57",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_57"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1936,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1936 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-197-61",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_197_61"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-1-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_1.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-1-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_1.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1949,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1949 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_16"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1949,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1949 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-17",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_17"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_18"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_20"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_22"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-24-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_24.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1915,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1915 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-4-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_4.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1955,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1955 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-198-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_198_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-23",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_23"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-24-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_24.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-24-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_24.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1931,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1931 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-26-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_26.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1931,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1931 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-27",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_27"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1957,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1957 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-28",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_28"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-30",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_30"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-31",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_31"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1945,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1945 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-32",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_32"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1931,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1931 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-33",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_33"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-34",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_34"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1934,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1934 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-35",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_35"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1957,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1957 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-37",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_37"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1954,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1954 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-38-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_38.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-38-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_38.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-38-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_38.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-38-04",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_38.04"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-01-39",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.01_39"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_1"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2002
+   },
+   "evidence": {
+    "year": 2003,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2003 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_11"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1946,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1946 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1915,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1915 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1923,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1923 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1945,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1945 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1931,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1931 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_16"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1924,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1924 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-17",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_17"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1931,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1931 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_18"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1945,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1945 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1932,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1932 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_20"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1979
+   },
+   "evidence": {
+    "year": 1980,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1980 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-199-02-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_199.02_22"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-200-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_200_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1956,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1956 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-200-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_200_8"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1945,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1945 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-200-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_200_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-12-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_12.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-13-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_13.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-14-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_14.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_16"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_18"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-4",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_4"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_5"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1913,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1913 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-208-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1923,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1923 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_11"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1924,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1924 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_18"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1929,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1929 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1960,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1960 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_20"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1941,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1941 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_22"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1964
+   },
+   "evidence": {
+    "year": 1965,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1965 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-24-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_24.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-214-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_214_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-1-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_1.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-1-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_1.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-11-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_11.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1902,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1902 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-11-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_11.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1902,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1902 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-12-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_12.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1902,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1902 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_16"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2015
+   },
+   "evidence": {
+    "year": 2016,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2016 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-17-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_17.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-17-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_17.02"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2007
+   },
+   "evidence": {
+    "year": 2008,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2008 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_20"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1929,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1929 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_22"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-23",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_23"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-24",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_24"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-26",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_26"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-27",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_27"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-28",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_28"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-29",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_29"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-30",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_30"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-31",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_31"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1915,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1915 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-32",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_32"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-33",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_33"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-34-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_34.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-34-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_34.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-34-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_34.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_5"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1941,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1941 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-215-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_215_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_11"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_16"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-17",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_17"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-18",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_18"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_19"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_20"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-21-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_21.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-22-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_22.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_8"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1922,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1922 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-216-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_216_9"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2023
+   },
+   "evidence": {
+    "year": 2024,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2024 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-1-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_1.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_11"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-17-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_17.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-17-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_17.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1945,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1945 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1955,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1955 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-20",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_20"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-26",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_26"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_5"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1923,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1923 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-217-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_217_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-218-29",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_218_29"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-218-3-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_218_3.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-218-6-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_218_6.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-218-9-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_218_9.02"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-1-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_1.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-1-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_1.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-15-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_15.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-15-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_15.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-15-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_15.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-17-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_17.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-23",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_23"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-25",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_25"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-26",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_26"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-27",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_27"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1950,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1950 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_8"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-224-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_9"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2023
+   },
+   "evidence": {
+    "year": 2024,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2024 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_11"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1957,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1957 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-13-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_13.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-13-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_13.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-16-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_16.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-4",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_4"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-5-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_5.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-6-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_6.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-7-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_7.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-225-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_225_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1902,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1902 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_1"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-2",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_2"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_3"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-4",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_4"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_5"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_6"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_7"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-226-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_8"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2022
+   },
+   "evidence": {
+    "year": 2023,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2023 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-227-1-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_227_1.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-227-1-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_227_1.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1915,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1915 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-11-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_11.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-12-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_12.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1890,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1890 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-14-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_14.01"
+   },
+   "action": "remove",
+   "years": {
+    "to": 2013
+   },
+   "evidence": {
+    "year": 2014,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 2014 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-17-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_17.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-23-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_23.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-25",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_25"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-27",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_27"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-29",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_29"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-30",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_30"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-31",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_31"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-32-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_32.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-34-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_34.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-35-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_35.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-233-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_233_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-15",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_15"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1957,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1957 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-17-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_17.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1905,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1905 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-17-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_17.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1905,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1905 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_19"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-2",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_2"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-23",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_23"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-24",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_24"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-26",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_26"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-28",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_28"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-29-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_29.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-31",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_31"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1907,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1907 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_5"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_8"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-234-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_234_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1903,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1903 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_16"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1972
+   },
+   "evidence": {
+    "year": 1973,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1973 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-17-C000B",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_17_C000B"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1987
+   },
+   "evidence": {
+    "year": 1988,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1988 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-19",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_19"
+   },
+   "action": "remove",
+   "years": {
+    "to": 1975
+   },
+   "evidence": {
+    "year": 1976,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1976 > 1960: built after 1960"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-2",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_2"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-235-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_235_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1897,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1897 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-242-32",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_242_32"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-242-33",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_242_33"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-10",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_10"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-11",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_11"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-14-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_14.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-16",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_16"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-17-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_17.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-17-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_17.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-17-03",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_17.03"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-19-04",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_19.04"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-2",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_2"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-21",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_21"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1957,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1957 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-22",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_22"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-23",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_23"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-24",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_24"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1938,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1938 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-26",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_26"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-27",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_27"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1921,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1921 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-29",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_29"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1900,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1900 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-30-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_30.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1910,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1910 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-31-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_31.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-5",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_5"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-6",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_6"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-7",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_7"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-243-8-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_243_8.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1915,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1915 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-244-1",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_244_1"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1941,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1941 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-244-14",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_244_14"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1930,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1930 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-11-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_11.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-11-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_11.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-12",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_12"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1926,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1926 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-13",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_13"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1936,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1936 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-14-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_14.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-14-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_14.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-15-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_15.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-15-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_15.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1925,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1925 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-3",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_3"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-4",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_4"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1940,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1940 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-5-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_5.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1928,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1928 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-5-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_5.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1920,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1920 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-6-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_6.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1922,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1922 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-6-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_6.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1922,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1922 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-7-01",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_7.01"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1890,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1890 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-7-02",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_7.02"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1922,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1922 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-8",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_8"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  },
+  {
+   "id": "yr-gen-njgin-0514-253-9",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_9"
+   },
+   "action": "keep",
+   "evidence": {
+    "year": 1935,
+    "source": "NJ MOD-IV tax list via NJOGIS parcels: YR_CONSTR (assessor's year built)",
+    "confidence": "medium",
+    "note": "assessor year built 1935 ≤ 1960: likely existed"
+   },
+   "origin": "pipeline",
+   "status": "proposed",
+   "createdAt": "2026-10-28T17:40:32.119Z"
+  }
+ ]
+}

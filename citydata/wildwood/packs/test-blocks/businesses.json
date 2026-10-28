@@ -1,0 +1,1760 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/test-blocks",
+ "targetYear": 1960,
+ "note": "Occupants, kept separate from the buildings they stand in (buildingId). Modern (OSM) records are unverified for the target year; directory candidates (OCR) are added here only when their address matches one parcel. occupancies: buildingId, businessId, name, validFrom, validTo (exclusive), evidence.",
+ "businesses": [
+  {
+   "id": "biz:osm-node-12135965513",
+   "name": "Anglesea Aleworks",
+   "category": "brewery",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/12135965513"
+   ],
+   "lonLat": [
+    -74.8150582,
+    38.990311
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3401",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "New Jersey Avenue",
+    "craft": "brewery",
+    "name": "Anglesea Aleworks"
+   },
+   "buildingId": "osm:way/597375961",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_185_101",
+   "address": "3401 New Jersey Avenue",
+   "addressSource": "osm",
+   "addressCheck": "no-parcel-address",
+   "local": [
+    -48.36,
+    -209.71
+   ],
+   "game": [
+    3130.2,
+    547.2
+   ],
+   "sharesBuildingWith": 5,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-12135965514",
+   "name": "Sharp Cleaners & Laundromat",
+   "category": "shop: dry cleaning",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/12135965514"
+   ],
+   "lonLat": [
+    -74.8152006,
+    38.9902229
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3401",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "New Jersey Avenue",
+    "name": "Sharp Cleaners & Laundromat",
+    "shop": "dry_cleaning"
+   },
+   "buildingId": "osm:way/597375961",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_185_101",
+   "address": "3401 New Jersey Avenue",
+   "addressSource": "osm",
+   "addressCheck": "no-parcel-address",
+   "local": [
+    -60.7,
+    -219.49
+   ],
+   "game": [
+    3114.5,
+    547.8
+   ],
+   "sharesBuildingWith": 5,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-12135965515",
+   "name": "Island International Unisex Salon",
+   "category": "shop: hairdresser",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/12135965515"
+   ],
+   "lonLat": [
+    -74.8152702,
+    38.9902751
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3401",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "New Jersey Avenue",
+    "name": "Island International Unisex Salon",
+    "shop": "hairdresser"
+   },
+   "buildingId": "osm:way/597375961",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_185_101",
+   "address": "3401 New Jersey Avenue",
+   "addressSource": "osm",
+   "addressCheck": "no-parcel-address",
+   "local": [
+    -66.73,
+    -213.69
+   ],
+   "game": [
+    3113.7,
+    556.1
+   ],
+   "sharesBuildingWith": 5,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-357747692",
+   "name": "Glenwood Avenue Elementary School",
+   "category": "school",
+   "kind": "institution",
+   "sourceIds": [
+    "osm:node/357747692"
+   ],
+   "lonLat": [
+    -74.8135764,
+    38.9942793
+   ],
+   "tags": {
+    "amenity": "school",
+    "name": "Glenwood Avenue Elementary School"
+   },
+   "buildingId": "osm:way/571669910",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_224_14",
+   "address": "2900 NEW YORK AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    80.01,
+    230.83
+   ],
+   "game": [
+    3516,
+    797.8
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern institution (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687995969",
+   "name": "Alumni Grill",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687995969"
+   ],
+   "lonLat": [
+    -74.8134372,
+    38.9901123
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Alumni Grill"
+   },
+   "buildingId": "osm:way/597375887",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_193.01_1",
+   "addressCheck": "no-osm-address",
+   "local": [
+    92.08,
+    -231.77
+   ],
+   "game": [
+    3222,
+    438.8
+   ],
+   "sharesBuildingWith": 3,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687995970",
+   "name": "Greater Wildwood Chamber of Commerce",
+   "category": "association",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687995970"
+   ],
+   "lonLat": [
+    -74.8133181,
+    38.9902198
+   ],
+   "tags": {
+    "name": "Greater Wildwood Chamber of Commerce",
+    "office": "association"
+   },
+   "buildingId": "osm:way/597375887",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_193.01_1",
+   "addressCheck": "no-osm-address",
+   "local": [
+    102.4,
+    -219.83
+   ],
+   "game": [
+    3237.6,
+    441.1
+   ],
+   "sharesBuildingWith": 3,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687995971",
+   "name": "M.S. Brown Jewelers",
+   "category": "shop: jewelry",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687995971"
+   ],
+   "lonLat": [
+    -74.8131702,
+    38.9903452
+   ],
+   "tags": {
+    "name": "M.S. Brown Jewelers",
+    "shop": "jewelry"
+   },
+   "buildingId": "osm:way/597375887",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_193.01_1",
+   "addressCheck": "no-osm-address",
+   "local": [
+    115.21,
+    -205.91
+   ],
+   "game": [
+    3256.4,
+    443.3
+   ],
+   "sharesBuildingWith": 3,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687995972",
+   "name": "Weichert Realtors",
+   "category": "estate agent",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687995972"
+   ],
+   "lonLat": [
+    -74.8130819,
+    38.9904452
+   ],
+   "tags": {
+    "brand": "Weichert, Realtors",
+    "name": "Weichert Realtors",
+    "office": "estate_agent"
+   },
+   "buildingId": "osm:way/597375887",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_193.01_1",
+   "addressCheck": "no-osm-address",
+   "local": [
+    122.86,
+    -194.81
+   ],
+   "game": [
+    3269.5,
+    446.7
+   ],
+   "sharesBuildingWith": 3,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687996207",
+   "name": "Center City Video Outlet",
+   "category": "shop: video",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687996207"
+   ],
+   "lonLat": [
+    -74.8118772,
+    38.9908917
+   ],
+   "tags": {
+    "name": "Center City Video Outlet",
+    "shop": "video"
+   },
+   "buildingId": "osm:way/597375920",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_209_27",
+   "address": "3109-15 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    227.23,
+    -145.24
+   ],
+   "game": [
+    3380.8,
+    416.3
+   ],
+   "sharesBuildingWith": 1,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687996209",
+   "name": "JB Jr's Southern BBQ",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687996209"
+   ],
+   "lonLat": [
+    -74.8117304,
+    38.991021
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "JB Jr's Southern BBQ"
+   },
+   "buildingId": "osm:way/597375920",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_209_27",
+   "address": "3109-15 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    239.95,
+    -130.88
+   ],
+   "game": [
+    3399.9,
+    418.8
+   ],
+   "sharesBuildingWith": 1,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687996376",
+   "name": "Hankin's Fudge",
+   "category": "confectionery",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687996376"
+   ],
+   "lonLat": [
+    -74.8114838,
+    38.991683
+   ],
+   "tags": {
+    "craft": "confectionery",
+    "name": "Hankin's Fudge"
+   },
+   "buildingId": "osm:way/597375938",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_217_30",
+   "address": "3018 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    261.31,
+    -57.39
+   ],
+   "game": [
+    3464.2,
+    460.7
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687996414",
+   "name": "Island Bowl",
+   "category": "bowling alley",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687996414"
+   ],
+   "lonLat": [
+    -74.815121,
+    38.9904774
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3401",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "New Jersey Avenue",
+    "leisure": "bowling_alley",
+    "name": "Island Bowl"
+   },
+   "buildingId": "osm:way/597375961",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_185_101",
+   "address": "3401 New Jersey Avenue",
+   "addressSource": "osm",
+   "addressCheck": "no-parcel-address",
+   "local": [
+    -53.8,
+    -191.23
+   ],
+   "game": [
+    3138.2,
+    564.7
+   ],
+   "sharesBuildingWith": 5,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687996415",
+   "name": "Breakers Billiard Club & Bar",
+   "category": "bar",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687996415"
+   ],
+   "lonLat": [
+    -74.8153384,
+    38.9905242
+   ],
+   "tags": {
+    "amenity": "bar",
+    "name": "Breakers Billiard Club & Bar"
+   },
+   "buildingId": "osm:way/597375961",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_185_101",
+   "addressCheck": "no-osm-address",
+   "local": [
+    -72.64,
+    -186.04
+   ],
+   "game": [
+    3127.4,
+    581
+   ],
+   "sharesBuildingWith": 5,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-5687996416",
+   "name": "Alfe's",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/5687996416"
+   ],
+   "lonLat": [
+    -74.8151433,
+    38.9907086
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Alfe's"
+   },
+   "buildingId": "osm:way/597375961",
+   "buildingVia": "point-in-outline",
+   "parcelId": "njgin:0514_185_101",
+   "addressCheck": "no-osm-address",
+   "local": [
+    -55.73,
+    -165.57
+   ],
+   "game": [
+    3153.6,
+    585.5
+   ],
+   "sharesBuildingWith": 5,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-node-7100240258",
+   "name": "Crest Savings Bank",
+   "category": "bank",
+   "kind": "business",
+   "sourceIds": [
+    "osm:node/7100240258"
+   ],
+   "lonLat": [
+    -74.8128719,
+    38.9900343
+   ],
+   "tags": {
+    "amenity": "bank",
+    "name": "Crest Savings Bank"
+   },
+   "parcelId": "njgin:0514_194_4.02",
+   "address": "3301 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    141.06,
+    -240.42
+   ],
+   "game": [
+    3253.3,
+    400.2
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-1359287921",
+   "name": "Schellenger House",
+   "category": "guest house",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/1359287921"
+   ],
+   "lonLat": [
+    -74.815546,
+    38.9897648
+   ],
+   "tags": {
+    "addr:housenumber": "120",
+    "addr:street": "East Schellenger Avenue",
+    "name": "Schellenger House",
+    "tourism": "guest_house"
+   },
+   "buildingId": "osm:way/1359287921",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_172_21",
+   "address": "120 East Schellenger Avenue",
+   "addressSource": "osm",
+   "addressCheck": "match",
+   "local": [
+    -90.63,
+    -270.34
+   ],
+   "game": [
+    3058.6,
+    528.7
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-1411847273",
+   "name": "Sunrise Inn",
+   "category": "hotel",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/1411847273"
+   ],
+   "lonLat": [
+    -74.8163266,
+    38.9899378
+   ],
+   "tags": {
+    "name": "Sunrise Inn",
+    "tourism": "hotel"
+   },
+   "parcelId": "njgin:0514_172_1",
+   "address": "107 E LINCOLN AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    -155.93,
+    -251.26
+   ],
+   "game": [
+    3021.7,
+    585.8
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-266249646",
+   "name": "Isle of Palms",
+   "category": "motel",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/266249646"
+   ],
+   "lonLat": [
+    -74.8108492,
+    38.989822
+   ],
+   "tags": {
+    "name": "Isle of Palms",
+    "tourism": "motel"
+   },
+   "buildingId": "osm:way/266249646",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_201_2",
+   "address": "3200 ATLANTIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    316.3,
+    -263.99
+   ],
+   "game": [
+    3370.4,
+    268
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-266249647",
+   "name": "Diplomat Suites",
+   "category": "hotel",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/266249647"
+   ],
+   "lonLat": [
+    -74.8117913,
+    38.9901753
+   ],
+   "tags": {
+    "name": "Diplomat Suites",
+    "tourism": "hotel"
+   },
+   "buildingId": "osm:way/266249647",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_201.01_1.01",
+   "addressCheck": "no-osm-address",
+   "local": [
+    238.81,
+    -226.32
+   ],
+   "game": [
+    3336.5,
+    347.2
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-266249648",
+   "name": "The Alton",
+   "category": "motel",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/266249648"
+   ],
+   "lonLat": [
+    -74.8113362,
+    38.9897145
+   ],
+   "tags": {
+    "name": "The Alton",
+    "tourism": "motel"
+   },
+   "buildingId": "osm:way/266249648",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_201_3",
+   "address": "235 E WILDWOOD AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    275.61,
+    -274.61
+   ],
+   "game": [
+    3332.6,
+    286.5
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-504877183",
+   "name": "Rite Aid",
+   "category": "pharmacy",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/504877183"
+   ],
+   "lonLat": [
+    -74.8158216,
+    38.9911585
+   ],
+   "tags": {
+    "amenity": "pharmacy",
+    "brand": "Rite Aid",
+    "healthcare": "pharmacy",
+    "name": "Rite Aid"
+   },
+   "buildingId": "osm:way/504877183",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_184_6.02",
+   "address": "3400 NEW JERSEY AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    -123.55,
+    -121.88
+   ],
+   "game": [
+    3130.9,
+    662.9
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-504877184",
+   "name": "Wawa",
+   "category": "shop: convenience",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/504877184"
+   ],
+   "lonLat": [
+    -74.8145649,
+    38.9921811
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3200",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "New Jersey Avenue",
+    "brand": "Wawa",
+    "name": "Wawa",
+    "opening_hours": "24/7",
+    "shop": "convenience"
+   },
+   "buildingId": "osm:way/504877184",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_199.02_1",
+   "address": "3200 New Jersey Avenue",
+   "addressSource": "osm",
+   "addressCheck": "match",
+   "local": [
+    -5.62,
+    -2.1
+   ],
+   "game": [
+    3298.6,
+    676.9
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-571669917",
+   "name": "Wildwood Volunteer Fire Company Number 1",
+   "category": "fire station",
+   "kind": "institution",
+   "sourceIds": [
+    "osm:way/571669917"
+   ],
+   "lonLat": [
+    -74.8131054,
+    38.9918174
+   ],
+   "tags": {
+    "amenity": "fire_station",
+    "name": "Wildwood Volunteer Fire Company Number 1"
+   },
+   "buildingId": "osm:way/571669917",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_208_20",
+   "address": "111 E PINE AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    123.97,
+    -36.5
+   ],
+   "game": [
+    3374,
+    566.2
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern institution (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375888",
+   "name": "The Deck at Holly Beach",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375888"
+   ],
+   "lonLat": [
+    -74.8133357,
+    38.9896853
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "The Deck at Holly Beach"
+   },
+   "buildingId": "osm:way/597375888",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_186_7.02",
+   "address": "3401 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    102.99,
+    -282.15
+   ],
+   "game": [
+    3197.2,
+    393.4
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375889",
+   "name": "Hooked on Books",
+   "category": "shop: books",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375889"
+   ],
+   "lonLat": [
+    -74.813427,
+    38.9895456
+   ],
+   "tags": {
+    "name": "Hooked on Books",
+    "shop": "books"
+   },
+   "buildingId": "osm:way/597375889",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_186_7.01",
+   "address": "3405-07 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    95.38,
+    -294.56
+   ],
+   "game": [
+    3183.3,
+    389
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375922",
+   "name": "Panda Chinese Restaurant",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375922"
+   ],
+   "lonLat": [
+    -74.8119896,
+    38.9913039
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Panda Chinese Restaurant"
+   },
+   "buildingId": "osm:way/597375922",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_208_16.01",
+   "address": "3108 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    217.5,
+    -99.48
+   ],
+   "game": [
+    3403.5,
+    457.3
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375925",
+   "name": "Italian Kitchen Express",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375925"
+   ],
+   "lonLat": [
+    -74.8119581,
+    38.9913682
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Italian Kitchen Express"
+   },
+   "buildingId": "osm:way/597375925",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_208_16.02",
+   "address": "3106 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    222.56,
+    -92.98
+   ],
+   "game": [
+    3411.5,
+    459
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375928",
+   "name": "Michelle's Island Cuts",
+   "category": "shop: hairdresser",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375928"
+   ],
+   "lonLat": [
+    -74.8118641,
+    38.9914184
+   ],
+   "tags": {
+    "name": "Michelle's Island Cuts",
+    "shop": "hairdresser"
+   },
+   "buildingId": "osm:way/597375928",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_208_16.04",
+   "address": "3102 PACIFIC AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    228.5,
+    -86.91
+   ],
+   "game": [
+    3420,
+    459.7
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375935",
+   "name": "Atilis Gym",
+   "category": "fitness centre",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375935"
+   ],
+   "lonLat": [
+    -74.8111643,
+    38.9913774
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3015",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "Pacific Avenue",
+    "leisure": "fitness_centre",
+    "name": "Atilis Gym",
+    "opening_hours": "Mo-Fr 05:00-21:00; Sa 05:00-18:00; Su 05:00-16:00"
+   },
+   "buildingId": "osm:way/597375935",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_218_18.01",
+   "address": "3015 Pacific Avenue",
+   "addressSource": "osm",
+   "addressCheck": "match",
+   "local": [
+    292.74,
+    -97.14
+   ],
+   "game": [
+    3461.9,
+    410
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375949",
+   "name": "Mia Mia Raw Bar and Ristorante",
+   "category": "restaurant",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375949"
+   ],
+   "lonLat": [
+    -74.8108969,
+    38.991592
+   ],
+   "tags": {
+    "amenity": "restaurant",
+    "name": "Mia Mia Raw Bar and Ristorante"
+   },
+   "buildingId": "osm:way/597375949",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_218_1.02",
+   "address": "200 E GLENWOOD AVE",
+   "addressSource": "parcel",
+   "addressCheck": "no-osm-address",
+   "local": [
+    306.48,
+    -64.83
+   ],
+   "game": [
+    3493.4,
+    425.6
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375953",
+   "name": "OceanFirst Bank",
+   "category": "bank",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375953"
+   ],
+   "lonLat": [
+    -74.8130839,
+    38.9921901
+   ],
+   "tags": {
+    "addr:city": "Wildwood",
+    "addr:housenumber": "3101",
+    "addr:postcode": "08260",
+    "addr:state": "NJ",
+    "addr:street": "New Jersey Avenue",
+    "amenity": "bank",
+    "name": "OceanFirst Bank",
+    "opening_hours": "Mo-Th 09:00-17:00; Fr 09:00-18:00; Sa 09:00-13:00; Su off"
+   },
+   "buildingId": "osm:way/597375953",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_208_26",
+   "address": "3101 New Jersey Avenue",
+   "addressSource": "osm",
+   "addressCheck": "match",
+   "local": [
+    119.68,
+    0.32
+   ],
+   "game": [
+    3394.9,
+    596.9
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  },
+  {
+   "id": "biz:osm-way-597375956",
+   "name": "Wildwood Water Utility",
+   "category": "government",
+   "kind": "business",
+   "sourceIds": [
+    "osm:way/597375956"
+   ],
+   "lonLat": [
+    -74.8138546,
+    38.9923697
+   ],
+   "tags": {
+    "name": "Wildwood Water Utility",
+    "office": "government"
+   },
+   "buildingId": "osm:way/597375956",
+   "buildingVia": "same-osm-feature",
+   "parcelId": "njgin:0514_207.01_1",
+   "addressCheck": "no-osm-address",
+   "local": [
+    55.98,
+    18.97
+   ],
+   "game": [
+    3359,
+    652.7
+   ],
+   "sharesBuildingWith": 0,
+   "historical": {
+    "status": "unverified",
+    "evidence": [],
+    "note": "modern business (OSM); not shown for 1960 until verified"
+   }
+  }
+ ],
+ "occupancies": [
+  {
+   "occupancyId": "occ:biz:osm-node-12135965513:osm:way/597375961",
+   "businessId": "biz:osm-node-12135965513",
+   "buildingId": "osm:way/597375961",
+   "name": "Anglesea Aleworks",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-12135965514:osm:way/597375961",
+   "businessId": "biz:osm-node-12135965514",
+   "buildingId": "osm:way/597375961",
+   "name": "Sharp Cleaners & Laundromat",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-12135965515:osm:way/597375961",
+   "businessId": "biz:osm-node-12135965515",
+   "buildingId": "osm:way/597375961",
+   "name": "Island International Unisex Salon",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-357747692:osm:way/571669910",
+   "businessId": "biz:osm-node-357747692",
+   "buildingId": "osm:way/571669910",
+   "name": "Glenwood Avenue Elementary School",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687995969:osm:way/597375887",
+   "businessId": "biz:osm-node-5687995969",
+   "buildingId": "osm:way/597375887",
+   "name": "Alumni Grill",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687995970:osm:way/597375887",
+   "businessId": "biz:osm-node-5687995970",
+   "buildingId": "osm:way/597375887",
+   "name": "Greater Wildwood Chamber of Commerce",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687995971:osm:way/597375887",
+   "businessId": "biz:osm-node-5687995971",
+   "buildingId": "osm:way/597375887",
+   "name": "M.S. Brown Jewelers",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687995972:osm:way/597375887",
+   "businessId": "biz:osm-node-5687995972",
+   "buildingId": "osm:way/597375887",
+   "name": "Weichert Realtors",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687996207:osm:way/597375920",
+   "businessId": "biz:osm-node-5687996207",
+   "buildingId": "osm:way/597375920",
+   "name": "Center City Video Outlet",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687996209:osm:way/597375920",
+   "businessId": "biz:osm-node-5687996209",
+   "buildingId": "osm:way/597375920",
+   "name": "JB Jr's Southern BBQ",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687996376:osm:way/597375938",
+   "businessId": "biz:osm-node-5687996376",
+   "buildingId": "osm:way/597375938",
+   "name": "Hankin's Fudge",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687996414:osm:way/597375961",
+   "businessId": "biz:osm-node-5687996414",
+   "buildingId": "osm:way/597375961",
+   "name": "Island Bowl",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687996415:osm:way/597375961",
+   "businessId": "biz:osm-node-5687996415",
+   "buildingId": "osm:way/597375961",
+   "name": "Breakers Billiard Club & Bar",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-node-5687996416:osm:way/597375961",
+   "businessId": "biz:osm-node-5687996416",
+   "buildingId": "osm:way/597375961",
+   "name": "Alfe's",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-1359287921:osm:way/1359287921",
+   "businessId": "biz:osm-way-1359287921",
+   "buildingId": "osm:way/1359287921",
+   "name": "Schellenger House",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-266249646:osm:way/266249646",
+   "businessId": "biz:osm-way-266249646",
+   "buildingId": "osm:way/266249646",
+   "name": "Isle of Palms",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-266249647:osm:way/266249647",
+   "businessId": "biz:osm-way-266249647",
+   "buildingId": "osm:way/266249647",
+   "name": "Diplomat Suites",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-266249648:osm:way/266249648",
+   "businessId": "biz:osm-way-266249648",
+   "buildingId": "osm:way/266249648",
+   "name": "The Alton",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-504877183:osm:way/504877183",
+   "businessId": "biz:osm-way-504877183",
+   "buildingId": "osm:way/504877183",
+   "name": "Rite Aid",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-504877184:osm:way/504877184",
+   "businessId": "biz:osm-way-504877184",
+   "buildingId": "osm:way/504877184",
+   "name": "Wawa",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-571669917:osm:way/571669917",
+   "businessId": "biz:osm-way-571669917",
+   "buildingId": "osm:way/571669917",
+   "name": "Wildwood Volunteer Fire Company Number 1",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375888:osm:way/597375888",
+   "businessId": "biz:osm-way-597375888",
+   "buildingId": "osm:way/597375888",
+   "name": "The Deck at Holly Beach",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375889:osm:way/597375889",
+   "businessId": "biz:osm-way-597375889",
+   "buildingId": "osm:way/597375889",
+   "name": "Hooked on Books",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375922:osm:way/597375922",
+   "businessId": "biz:osm-way-597375922",
+   "buildingId": "osm:way/597375922",
+   "name": "Panda Chinese Restaurant",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375925:osm:way/597375925",
+   "businessId": "biz:osm-way-597375925",
+   "buildingId": "osm:way/597375925",
+   "name": "Italian Kitchen Express",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375928:osm:way/597375928",
+   "businessId": "biz:osm-way-597375928",
+   "buildingId": "osm:way/597375928",
+   "name": "Michelle's Island Cuts",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375935:osm:way/597375935",
+   "businessId": "biz:osm-way-597375935",
+   "buildingId": "osm:way/597375935",
+   "name": "Atilis Gym",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375949:osm:way/597375949",
+   "businessId": "biz:osm-way-597375949",
+   "buildingId": "osm:way/597375949",
+   "name": "Mia Mia Raw Bar and Ristorante",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375953:osm:way/597375953",
+   "businessId": "biz:osm-way-597375953",
+   "buildingId": "osm:way/597375953",
+   "name": "OceanFirst Bank",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  },
+  {
+   "occupancyId": "occ:biz:osm-way-597375956:osm:way/597375956",
+   "businessId": "biz:osm-way-597375956",
+   "buildingId": "osm:way/597375956",
+   "name": "Wildwood Water Utility",
+   "validFrom": null,
+   "validTo": null,
+   "observed": "2026-10-28",
+   "fictional": false,
+   "evidence": [
+    {
+     "sourceId": "osm",
+     "year": 2026,
+     "confidence": "medium",
+     "note": "mapped in OSM at download (today's tenant)"
+    }
+   ]
+  }
+ ],
+ "directoryCandidates": [],
+ "merged": []
+}

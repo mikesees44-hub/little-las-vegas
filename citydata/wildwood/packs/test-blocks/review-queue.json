@@ -1,0 +1,943 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/test-blocks",
+ "generatedAt": "2026-10-28T17:40:32.119Z",
+ "items": [
+  {
+   "id": "rq-sanborn-sheets",
+   "kind": "sanborn-sheets-needed",
+   "priority": "high",
+   "detail": "No Sanborn sheet for these blocks is cached. The transcribed index covers 0 of 454 parcel addresses here. Fetch: ind3 (scan seq 4, 05568_04_1950-ind3), 27, 34, 56, 57, 58, 59, 60, 63A, 63B.",
+   "suggestion": "Download the sheets (IIIF, pct:50 or full) via the browser hand-off, then compare buildings block by block and mark them verified or removed in the map editor. Note: the 1958 volume (sanborn05568_027) is in the catalog but not scanned.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-549906",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/549906"
+   },
+   "detail": "route=road: not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "No action unless the relation carries geometry the game needs.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-611078",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/611078"
+   },
+   "detail": "route=road: not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "No action unless the relation carries geometry the game needs.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-1384133",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/1384133"
+   },
+   "detail": "route=railway \"Wildwood Branch\" (OSM note: ended at Lotus Road in 1920): not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "Historical rail line: date it (when it ran, when it closed) before drawing it for 1960.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-1385484",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/1385484"
+   },
+   "detail": "route=railway \"Wildwood and Delaware Bay Short Line Railroad\": not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "Historical rail line: date it (when it ran, when it closed) before drawing it for 1960.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-3522874",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/3522874"
+   },
+   "detail": "route=bus \"NJTB - 319\": not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "No action unless the relation carries geometry the game needs.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-8252234",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/8252234"
+   },
+   "detail": "route=bus \"NJTB - 315\": not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "No action unless the relation carries geometry the game needs.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-8252235",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/8252235"
+   },
+   "detail": "route=bus \"NJTB - 313\": not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "No action unless the relation carries geometry the game needs.",
+   "status": "open"
+  },
+  {
+   "id": "rq-osm-relation-8269727",
+   "kind": "osm-relation-not-imported",
+   "priority": "low",
+   "target": {
+    "layer": "osm",
+    "id": "osm:relation/8269727"
+   },
+   "detail": "route=bus \"NJTB - 552\": not imported (its member ways are imported on their own where they are roads or rail)",
+   "suggestion": "No action unless the relation carries geometry the game needs.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_209.02_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_209.02_1"
+   },
+   "detail": "3 features, 3 distinct outlines under one PIN (kept as one parcel with 3 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_209.014_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_209.014_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_209.011_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_209.011_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_200.05_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_200.05_1"
+   },
+   "detail": "3 features, 3 distinct outlines under one PIN (kept as one parcel with 3 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_199.011_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_199.011_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_192.03_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_192.03_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_205.011_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_205.011_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_200.02_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_200.02_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_218.06_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_218.06_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_218.07_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_218.07_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_216.01_2",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_216.01_2"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_217.02_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_217.02_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_217.01_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_217.01_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_235.03_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_235.03_1"
+   },
+   "detail": "3 features, 3 distinct outlines under one PIN (kept as one parcel with 3 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_218.05_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_218.05_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_218.02_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_218.02_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_218.04_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_218.04_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_244.01_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_244.01_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_216.01_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_216.01_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_209.015_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_209.015_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_209.012_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_209.012_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_193.01_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_193.01_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_192.01_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_192.01_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_200.01_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_200.01_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_201.01_1.01",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_201.01_1.01"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_192.02_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_192.02_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_206.021_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_206.021_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_154.02_1",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_154.02_1"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_185_101",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_185_101"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-multipart-0514_185_103",
+   "kind": "parcel-multipart",
+   "priority": "low",
+   "target": {
+    "layer": "parcels",
+    "id": "njgin:0514_185_103"
+   },
+   "detail": "2 features, 2 distinct outlines under one PIN (kept as one parcel with 2 parts)",
+   "suggestion": "Check the outlines against the tax map: separate lots that share a PIN (often unattributed slivers or condominium pieces) or one lot drawn in pieces.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-osm:way/597375922",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375922"
+   },
+   "detail": "parcel njgin:0514_208_2.01 (41% of the building) says built after 1960: remove for 1960 (assessor year built 2024, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-match-osm:way/597375922",
+   "kind": "building-parcel-ambiguous",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375922"
+   },
+   "detail": "straddles parcels: njgin:0514_208_16.01 59%, njgin:0514_208_2.01 41%",
+   "suggestion": "Decide which parcel's assessor record describes this building (or split the outline).",
+   "status": "open"
+  },
+  {
+   "id": "rq-match-osm:way/597375925",
+   "kind": "building-parcel-ambiguous",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/597375925"
+   },
+   "detail": "straddles parcels: njgin:0514_208_16.02 49%, njgin:0514_208_16.03 35%, njgin:0514_208_16.01 16%",
+   "suggestion": "Decide which parcel's assessor record describes this building (or split the outline).",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10_C000A",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10_C000A"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10_C000A says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10_C000B",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10_C000B"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10_C000B says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10_C000C",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10_C000C"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10_C000C says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10_C000D",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10_C000D"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10_C000D says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10.01_C0135",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10.01_C0135"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10.01_C0135 says built after 1960: remove for 1960 (assessor year built 2023, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10.01_C0137",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10.01_C0137"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10.01_C0137 says built after 1960: remove for 1960 (assessor year built 2023, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_10.01_C0139",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10.01_C0139"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_10.01_C0139 says built after 1960: remove for 1960 (assessor year built 2023, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_6.03_C0141",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_6.03_C0141"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_6.03_C0141 says built after 1960: remove for 1960 (assessor year built 2023, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_6.03_C0143",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_6.03_C0143"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_6.03_C0143 says built after 1960: remove for 1960 (assessor year built 2023, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_6.03_C0145",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_6.03_C0145"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_6.03_C0145 says built after 1960: remove for 1960 (assessor year built 2023, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_8_C000A",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_8_C000A"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_8_C000A says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_8_C000B",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_8_C000B"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_8_C000B says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_8_C000C",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_8_C000C"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_8_C000C says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-year-gen:njgin:0514_208_8_C000D",
+   "kind": "historical-year-conflict",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_8_C000D"
+   },
+   "detail": "primary parcel has no year; njgin:0514_208_8_C000D says built after 1960: remove for 1960 (assessor year built 2004, confidence medium)",
+   "suggestion": "Check the Sanborn sheet for this block.",
+   "status": "open"
+  },
+  {
+   "id": "rq-match-gen:njgin:0514_224_15.02",
+   "kind": "building-parcel-ambiguous",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_224_15.02"
+   },
+   "detail": "straddles parcels: njgin:0514_224_15.02 56%, njgin:0514_224_15.01 44%",
+   "suggestion": "Decide which parcel's assessor record describes this building (or split the outline).",
+   "status": "open"
+  },
+  {
+   "id": "rq-match-gen:njgin:0514_226_1",
+   "kind": "building-parcel-ambiguous",
+   "priority": "medium",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_1"
+   },
+   "detail": "straddles parcels: njgin:0514_226_8 40%, njgin:0514_226_1 35%, njgin:0514_226_7 25%",
+   "suggestion": "Decide which parcel's assessor record describes this building (or split the outline).",
+   "status": "open"
+  },
+  {
+   "id": "rq-biz-nobldg-biz:osm-node-7100240258",
+   "kind": "business-no-building",
+   "priority": "low",
+   "target": {
+    "layer": "businesses",
+    "id": "biz:osm-node-7100240258"
+   },
+   "detail": "Crest Savings Bank: its point stands in no building outline (surveyed or generated)",
+   "suggestion": "Move the point onto its building in the map editor, or draw the outline.",
+   "status": "open"
+  },
+  {
+   "id": "rq-biz-nobldg-biz:osm-way-1411847273",
+   "kind": "business-no-building",
+   "priority": "low",
+   "target": {
+    "layer": "businesses",
+    "id": "biz:osm-way-1411847273"
+   },
+   "detail": "Sunrise Inn: its point stands in no building outline (surveyed or generated)",
+   "suggestion": "Move the point onto its building in the map editor, or draw the outline.",
+   "status": "open"
+  },
+  {
+   "id": "rq-modern-businesses",
+   "kind": "historical-verification",
+   "priority": "medium",
+   "detail": "32 businesses/institutions are today's (OSM 2026-10-28): none is shown for 1960 until period evidence (a directory, a Sanborn label, a photo) is attached.",
+   "suggestion": "OCR the 1959-61 city directory pages for these blocks; accept matches in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-osm:way/504877184#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "osm:way/504877184"
+   },
+   "detail": "osm:way/504877184#e1: every walkable segment within 80 m is behind a building or water (nearest 12 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_154_11#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_11"
+   },
+   "detail": "gen:njgin:0514_154_11#e1: every walkable segment within 80 m is behind a building or water (nearest 31 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_154_12#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_154_12"
+   },
+   "detail": "gen:njgin:0514_154_12#e1: every walkable segment within 80 m is behind a building or water (nearest 31 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_193_5#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_193_5"
+   },
+   "detail": "gen:njgin:0514_193_5#e1: every walkable segment within 80 m is behind a building or water (nearest 10 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_10_C000C#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10_C000C"
+   },
+   "detail": "gen:njgin:0514_208_10_C000C#e1: every walkable segment within 80 m is behind a building or water (nearest 10 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_10_C000D#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10_C000D"
+   },
+   "detail": "gen:njgin:0514_208_10_C000D#e1: every walkable segment within 80 m is behind a building or water (nearest 10 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_10.01_C0135#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10.01_C0135"
+   },
+   "detail": "gen:njgin:0514_208_10.01_C0135#e1: every walkable segment within 80 m is behind a building or water (nearest 28 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_10.01_C0137#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_10.01_C0137"
+   },
+   "detail": "gen:njgin:0514_208_10.01_C0137#e1: every walkable segment within 80 m is behind a building or water (nearest 20 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_6.03_C0141#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_6.03_C0141"
+   },
+   "detail": "gen:njgin:0514_208_6.03_C0141#e1: every walkable segment within 80 m is behind a building or water (nearest 23 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_6.03_C0143#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_6.03_C0143"
+   },
+   "detail": "gen:njgin:0514_208_6.03_C0143#e1: every walkable segment within 80 m is behind a building or water (nearest 18 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_208_8_C000C#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_208_8_C000C"
+   },
+   "detail": "gen:njgin:0514_208_8_C000C#e1: every walkable segment within 80 m is behind a building or water (nearest 10 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_226_1#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_226_1"
+   },
+   "detail": "gen:njgin:0514_226_1#e1: every walkable segment within 80 m is behind a building or water (nearest 11 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_253_11.02#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_11.02"
+   },
+   "detail": "gen:njgin:0514_253_11.02#e1: every walkable segment within 80 m is behind a building or water (nearest 19 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_253_14.02#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_14.02"
+   },
+   "detail": "gen:njgin:0514_253_14.02#e1: every walkable segment within 80 m is behind a building or water (nearest 15 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_253_5.02#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_5.02"
+   },
+   "detail": "gen:njgin:0514_253_5.02#e1: every walkable segment within 80 m is behind a building or water (nearest 16 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_253_6.02#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_6.02"
+   },
+   "detail": "gen:njgin:0514_253_6.02#e1: every walkable segment within 80 m is behind a building or water (nearest 16 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-entrance-gen:njgin:0514_253_7.02#e1",
+   "kind": "entrance-unreachable",
+   "priority": "high",
+   "target": {
+    "layer": "buildings",
+    "id": "gen:njgin:0514_253_7.02"
+   },
+   "detail": "gen:njgin:0514_253_7.02#e1: every walkable segment within 80 m is behind a building or water (nearest 16 m)",
+   "suggestion": "Add the path or move the entrance.",
+   "status": "open"
+  },
+  {
+   "id": "rq-unknown-year",
+   "kind": "historical-unknown",
+   "priority": "medium",
+   "detail": "48 buildings have no assessor year built: osm:way/266249647, osm:way/504877177, osm:way/597375887, osm:way/597375905, osm:way/597375935, osm:way/597375938, osm:way/597375941, osm:way/597375943, osm:way/597375945, osm:way/597375947, osm:way/597375956, osm:way/597375958 …",
+   "suggestion": "Check them on the Sanborn sheets.",
+   "status": "open"
+  }
+ ]
+}

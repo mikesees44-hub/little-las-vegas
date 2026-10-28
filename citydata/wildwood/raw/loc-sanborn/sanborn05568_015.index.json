@@ -1,0 +1,2745 @@
+{
+ "source": "Library of Congress, Geography and Map Division, Sanborn Maps Collection",
+ "item": "http://www.loc.gov/item/sanborn05568_015/",
+ "title": "Sanborn Fire Insurance Map from New Jersey Coast, New Jersey Coast, New Jersey.",
+ "date": "1950",
+ "notes": [
+  "Vol. 4, 1909 - Nov 1950.",
+  "71 sheet(s).",
+  "043. Other places as they appear on original: Cape May, Cape May Point, Five Mile Beach, Grassy Sound, Lower Township, Middle Township, North Wildwood, South Cape May, West Cape May, West Wildwood Borough, Wildwood, Wildwood Crest."
+ ],
+ "rights": "Public domain (LOC Sanborn Maps Collection rights statement)",
+ "retrieved": "2026-10-28T17:08:53.549Z",
+ "sheets": [
+  {
+   "seq": 1,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-covr/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 842,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-covr/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1684,
+     "h": 1949
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-covr.jp2",
+     "mimetype": "image/jp2",
+     "w": 6738,
+     "h": 7796
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-covr.gif",
+     "mimetype": "image/gif",
+     "w": 130,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-covr.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 2,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-titl/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 834,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-titl/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1669,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-titl.jp2",
+     "mimetype": "image/jp2",
+     "w": 6676,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-titl.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-titl.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 3,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-ind2/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 834,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-ind2/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1668,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-ind2.jp2",
+     "mimetype": "image/jp2",
+     "w": 6672,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-ind2.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-ind2.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 4,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-ind3/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 821,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-ind3/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1642,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-ind3.jp2",
+     "mimetype": "image/jp2",
+     "w": 6570,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-ind3.gif",
+     "mimetype": "image/gif",
+     "w": 126,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-ind3.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 5,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0000/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0000/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0000.jp2",
+     "mimetype": "image/jp2",
+     "w": 6656,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0000.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0000.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 6,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0001/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 836,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0001/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1673,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0001.jp2",
+     "mimetype": "image/jp2",
+     "w": 6693,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0001.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0001.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 7,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0002/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0002/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0002.jp2",
+     "mimetype": "image/jp2",
+     "w": 6656,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0002.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0002.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 8,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0003/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0003/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0003.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0003.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0003.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 9,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0004/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0004/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0004.jp2",
+     "mimetype": "image/jp2",
+     "w": 6656,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0004.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0004.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 10,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0005/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0005/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0005.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0005.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0005.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 11,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0006/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0006/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0006.jp2",
+     "mimetype": "image/jp2",
+     "w": 6656,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0006.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0006.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 12,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0007/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0007/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0007.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0007.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0007.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 13,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0008/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0008/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0008.jp2",
+     "mimetype": "image/jp2",
+     "w": 6628,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0008.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0008.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 14,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0009/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0009/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0009.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0009.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0009.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 15,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0010/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 830,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0010/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1661,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0010.jp2",
+     "mimetype": "image/jp2",
+     "w": 6645,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0010.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0010.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 16,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0011/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0011/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0011.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0011.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0011.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 17,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0012/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 830,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0012/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1661,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0012.jp2",
+     "mimetype": "image/jp2",
+     "w": 6645,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0012.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0012.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 18,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0013/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0013/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0013.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0013.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0013.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 19,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0014/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 825,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0014/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1650,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0014.jp2",
+     "mimetype": "image/jp2",
+     "w": 6603,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0014.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0014.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 20,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0015/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 840,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0015/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1680,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0015.jp2",
+     "mimetype": "image/jp2",
+     "w": 6722,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0015.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0015.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 21,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0016/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 825,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0016/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1650,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0016.jp2",
+     "mimetype": "image/jp2",
+     "w": 6603,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0016.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0016.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 22,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0017/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 824,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0017/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1648,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0017.jp2",
+     "mimetype": "image/jp2",
+     "w": 6593,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0017.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0017.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 23,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0018/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0018/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0018.jp2",
+     "mimetype": "image/jp2",
+     "w": 6658,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0018.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0018.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 24,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0019/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 839,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0019/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1678,
+     "h": 1949
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0019.jp2",
+     "mimetype": "image/jp2",
+     "w": 6715,
+     "h": 7796
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0019.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0019.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 25,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0020/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0020/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0020.jp2",
+     "mimetype": "image/jp2",
+     "w": 6658,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0020.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0020.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 26,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0021/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 839,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0021/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1678,
+     "h": 1949
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0021.jp2",
+     "mimetype": "image/jp2",
+     "w": 6715,
+     "h": 7796
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0021.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0021.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 27,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0022/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0022/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0022.jp2",
+     "mimetype": "image/jp2",
+     "w": 6658,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0022.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0022.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 28,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0023/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 839,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0023/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1678,
+     "h": 1949
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0023.jp2",
+     "mimetype": "image/jp2",
+     "w": 6715,
+     "h": 7796
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0023.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0023.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 29,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0024/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0024/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0024.jp2",
+     "mimetype": "image/jp2",
+     "w": 6658,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0024.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0024.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 30,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0025/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0025/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1665,
+     "h": 1949
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0025.jp2",
+     "mimetype": "image/jp2",
+     "w": 6663,
+     "h": 7796
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0025.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0025.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 31,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0026/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 824,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0026/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1649,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0026.jp2",
+     "mimetype": "image/jp2",
+     "w": 6599,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0026.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0026.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 32,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0027/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 841,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0027/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1682,
+     "h": 1949
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0027.jp2",
+     "mimetype": "image/jp2",
+     "w": 6729,
+     "h": 7796
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0027.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0027.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 33,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0028/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 824,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0028/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1649,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0028.jp2",
+     "mimetype": "image/jp2",
+     "w": 6599,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0028.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0028.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 34,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0029/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 836,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0029/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1672,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0029.jp2",
+     "mimetype": "image/jp2",
+     "w": 6691,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0029.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0029.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 35,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0030/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0030/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1659,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0030.jp2",
+     "mimetype": "image/jp2",
+     "w": 6637,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0030.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0030.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 36,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0031/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0031/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0031.jp2",
+     "mimetype": "image/jp2",
+     "w": 6630,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0031.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0031.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 37,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0032/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0032/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1659,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0032.jp2",
+     "mimetype": "image/jp2",
+     "w": 6637,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0032.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0032.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 38,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0033/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0033/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0033.jp2",
+     "mimetype": "image/jp2",
+     "w": 6630,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0033.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0033.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 39,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0034/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0034/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1659,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0034.jp2",
+     "mimetype": "image/jp2",
+     "w": 6637,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0034.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0034.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 40,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0035/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0035/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0035.jp2",
+     "mimetype": "image/jp2",
+     "w": 6630,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0035.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0035.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 41,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0036/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 830,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0036/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1660,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0036.jp2",
+     "mimetype": "image/jp2",
+     "w": 6642,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0036.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0036.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 42,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0037/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0037/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0037.jp2",
+     "mimetype": "image/jp2",
+     "w": 6630,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0037.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0037.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 43,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0038/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 827,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0038/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1655,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0038.jp2",
+     "mimetype": "image/jp2",
+     "w": 6622,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0038.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0038.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 44,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0039/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0039/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1658,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0039.jp2",
+     "mimetype": "image/jp2",
+     "w": 6634,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0039.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0039.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 45,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0040/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 827,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0040/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1655,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0040.jp2",
+     "mimetype": "image/jp2",
+     "w": 6622,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0040.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0040.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 46,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0041/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0041/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1658,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0041.jp2",
+     "mimetype": "image/jp2",
+     "w": 6634,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0041.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0041.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 47,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0042/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 827,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0042/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1655,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0042.jp2",
+     "mimetype": "image/jp2",
+     "w": 6622,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0042.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0042.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 48,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0043/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0043/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1658,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0043.jp2",
+     "mimetype": "image/jp2",
+     "w": 6634,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0043.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0043.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 49,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0044/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0044/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1658,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0044.jp2",
+     "mimetype": "image/jp2",
+     "w": 6635,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0044.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0044.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 50,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0045/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 825,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0045/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1650,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0045.jp2",
+     "mimetype": "image/jp2",
+     "w": 6602,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0045.gif",
+     "mimetype": "image/gif",
+     "w": 127,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0045.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 51,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0046/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0046/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1658,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0046.jp2",
+     "mimetype": "image/jp2",
+     "w": 6635,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0046.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0046.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 52,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0047/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0047/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0047.jp2",
+     "mimetype": "image/jp2",
+     "w": 6629,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0047.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0047.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 53,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0048/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 829,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0048/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1658,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0048.jp2",
+     "mimetype": "image/jp2",
+     "w": 6635,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0048.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0048.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 54,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0049/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0049/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0049.jp2",
+     "mimetype": "image/jp2",
+     "w": 6629,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0049.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0049.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 55,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0050/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0050/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1667,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0050.jp2",
+     "mimetype": "image/jp2",
+     "w": 6668,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0050.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0050.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 56,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0051/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0051/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0051.jp2",
+     "mimetype": "image/jp2",
+     "w": 6629,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0051.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0051.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 57,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0052/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0052/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1667,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0052.jp2",
+     "mimetype": "image/jp2",
+     "w": 6668,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0052.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0052.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 58,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0053/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 828,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0053/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1657,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0053.jp2",
+     "mimetype": "image/jp2",
+     "w": 6629,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0053.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0053.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 59,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0054/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0054/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1667,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0054.jp2",
+     "mimetype": "image/jp2",
+     "w": 6668,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0054.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0054.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 60,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0055/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0055/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0055.jp2",
+     "mimetype": "image/jp2",
+     "w": 6659,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0055.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0055.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 61,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0056/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0056/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1666,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0056.jp2",
+     "mimetype": "image/jp2",
+     "w": 6665,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0056.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0056.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 62,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0057/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0057/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0057.jp2",
+     "mimetype": "image/jp2",
+     "w": 6659,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0057.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0057.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 63,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0058/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0058/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1666,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0058.jp2",
+     "mimetype": "image/jp2",
+     "w": 6665,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0058.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0058.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 64,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0059/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0059/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0059.jp2",
+     "mimetype": "image/jp2",
+     "w": 6659,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0059.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0059.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 65,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0060/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0060/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1666,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0060.jp2",
+     "mimetype": "image/jp2",
+     "w": 6665,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0060.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0060.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 66,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0061/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 832,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0061/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1664,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0061.jp2",
+     "mimetype": "image/jp2",
+     "w": 6659,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0061.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0061.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 67,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0062/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 833,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0062/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1666,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0062.jp2",
+     "mimetype": "image/jp2",
+     "w": 6665,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0062.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0062.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 68,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0063/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 834,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0063/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1668,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063.jp2",
+     "mimetype": "image/jp2",
+     "w": 6673,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 69,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0063A/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 837,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0063A/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1674,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063A.jp2",
+     "mimetype": "image/jp2",
+     "w": 6697,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063A.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063A.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 70,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0063B/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 834,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0063B/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1668,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063B.jp2",
+     "mimetype": "image/jp2",
+     "w": 6673,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063B.gif",
+     "mimetype": "image/gif",
+     "w": 128,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0063B.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 71,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0076/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 837,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0076/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1674,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0076.jp2",
+     "mimetype": "image/jp2",
+     "w": 6697,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0076.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0076.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 72,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0077/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 838,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0077/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1677,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0077.jp2",
+     "mimetype": "image/jp2",
+     "w": 6709,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0077.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0077.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 73,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0080/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 839,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0080/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1678,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0080.jp2",
+     "mimetype": "image/jp2",
+     "w": 6714,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0080.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0080.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 74,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0081/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 838,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0081/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1677,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0081.jp2",
+     "mimetype": "image/jp2",
+     "w": 6709,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0081.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0081.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 75,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0104/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 839,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0104/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1678,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0104.jp2",
+     "mimetype": "image/jp2",
+     "w": 6714,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0104.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0104.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 76,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0105/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 838,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0105/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1677,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0105.jp2",
+     "mimetype": "image/jp2",
+     "w": 6709,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0105.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0105.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 77,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0108/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 839,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0108/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1678,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0108.jp2",
+     "mimetype": "image/jp2",
+     "w": 6714,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0108.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0108.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  },
+  {
+   "seq": 78,
+   "variants": [
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0109/full/pct:12.5/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 835,
+     "h": 974
+    },
+    {
+     "url": "https://tile.loc.gov/image-services/iiif/service:gmd:gmd381m:g3814m:g3814nm:g3814nm_g05568195004:05568_04_1950-0109/full/pct:25/0/default.jpg",
+     "mimetype": "image/jpeg",
+     "w": 1670,
+     "h": 1948
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0109.jp2",
+     "mimetype": "image/jp2",
+     "w": 6681,
+     "h": 7795
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/service/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0109.gif",
+     "mimetype": "image/gif",
+     "w": 129,
+     "h": 150
+    },
+    {
+     "url": "https://tile.loc.gov/storage-services/master/gmd/gmd381m/g3814m/g3814nm/g3814nm_g05568195004/05568_04_1950-0109.tif",
+     "mimetype": "image/tiff",
+     "w": null,
+     "h": null
+    }
+   ]
+  }
+ ]
+}
