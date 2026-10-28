@@ -131,6 +131,9 @@ describe('the market in a real game', () => {
     expect(recent.length).toBeGreaterThan(0);
     for (const x of recent) expect(kindOf(x.lot)).toBeDefined();
     for (const k of KINDS) expect(listingCounts(s)[k], k).toBeGreaterThan(0);
+    // The lots already listed at the start are not all dumped at the tax sale when the month turns.
+    expect(M.made.auction ?? 0).toBeLessThan(6);
+    expect(Object.entries(M.made).filter(([k]) => k !== 'cut').reduce((a, [, n]) => a + (n ?? 0), 0)).toBeLessThan(30 * 4);
   });
 
   it('the living layer\'s books still reconcile with the market moving families', () => {

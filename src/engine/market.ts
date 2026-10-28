@@ -27,6 +27,7 @@ import { FACTION_NAMES } from './world';
  *   rival      a rival Family lets a building go
  *   bank       Chemical Bank's foreclosure, sold as it stands
  *   closed / fire / owner  (listings the rest of the game makes: a closing, a fire, an owner selling)
+ *   (a winter price cut lowers a listing quietly; it is not a new listing)
  *
  * Spring brings the listings and the prices up; winter is thin and cheap, and a
  * listing that sits through it gets its price cut. The rolls are hashes of
@@ -42,6 +43,8 @@ export interface Listing {
   why: ListWhy;
   /** The first asking price (to show a cut). */
   ask?: number;
+  /** Already on the market when the record began (never "new"). */
+  old?: 1;
 }
 
 export interface MarketState {
@@ -102,7 +105,7 @@ export function ensureMarket(s: GameState): MarketState | undefined {
   if (!s.econ?.lots.length) return undefined;
   if (!s.market) {
     const listed: Record<string, Listing> = {};
-    for (const l of s.econ.lots) if (l.status === 'sale') listed[l.id] = { w: s.week - 99, why: 'owner', ask: l.price };
+    for (const l of s.econ.lots) if (l.status === 'sale') listed[l.id] = { w: s.week, why: 'owner', ask: l.price, old: 1 };
     s.market = { v: 1, listed, spec: {}, made: {} };
   }
   return s.market;
@@ -345,8 +348,9 @@ function monthly(s: GameState, M: MarketState): void {
     if (!on || l.status !== 'sale') continue;
     const age = s.week - on.w;
     if ((m >= 11 || m <= 2) && age >= 10 && rnd(s, `cut:${l.id}`) < 0.5) {
+      // A quiet cut: the listing keeps its week (the first ask shows struck through).
       l.price = Math.max(200, Math.round(l.price * 0.95 / 50) * 50);
-      if (on.why !== 'cut' && age >= 16) { M.listed[l.id] = { w: s.week, why: 'cut', ask: on.ask }; M.made.cut = (M.made.cut ?? 0) + 1; }
+      M.made.cut = (M.made.cut ?? 0) + 1;
     } else if (!l.use && age >= 52 && rnd(s, `tax:${l.id}`) < 0.25) {
       l.price = Math.max(200, Math.round(l.price * 0.8 / 50) * 50);
       M.listed[l.id] = { w: s.week, why: 'auction', ask: on.ask };
@@ -394,7 +398,7 @@ export function newListings(s: GameState, weeks = 1): { lot: Lot; l: Listing }[]
   if (!M) return [];
   const byId = new Map((s.econ?.lots ?? []).map((l) => [l.id, l]));
   return Object.entries(M.listed)
-    .filter(([, l]) => l.w >= s.week - weeks)
+    .filter(([, l]) => !l.old && l.w >= s.week - weeks)
     .map(([id, l]) => ({ lot: byId.get(id)!, l }))
     .filter((x) => x.lot && x.lot.status === 'sale')
     .sort((a, b) => b.l.w - a.l.w || a.lot.price - b.lot.price);

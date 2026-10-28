@@ -137,7 +137,7 @@ export function NewListings({ s, onZone }: { s: GameState; onZone?: (z: ZoneId) 
   const shown = all ? recent : recent.slice(0, 6);
   const c = listingCounts(s);
   const m = s.date.m;
-  const mood = seasonPrice(m) >= 1.05 ? 'Spring market: plenty listed, and dear.' : seasonPrice(m) <= 0.9 ? 'Winter: few listings, and the prices are soft.' : 'An ordinary month on the market.';
+  const mood = m >= 3 && m <= 6 ? 'The spring market: plenty listed, and dear.' : seasonPrice(m) <= 0.9 ? 'Winter: few listings, and the prices are soft.' : m <= 8 ? 'High summer: the prices hold.' : 'The fall: the market slows.';
   return (
     <section className="rounded-md border border-emerald-800/60 bg-emerald-950/20 p-3 text-xs" data-testid="new-listings">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -153,7 +153,7 @@ export function NewListings({ s, onZone }: { s: GameState; onZone?: (z: ZoneId) 
                 <div className="min-w-0">
                   <span className="mr-1 rounded bg-emerald-800/60 px-1 py-0.5 text-[10px] font-bold text-emerald-100">{WHY_LABEL[why.why]}</span>
                   <span className="text-stone-100 font-semibold">{lotName(l)}</span>
-                  <div className="text-stone-500">{KIND_WORD[kindOf(l)]} · <button type="button" className="underline decoration-dotted hover:text-gold-300" onClick={() => onZone?.(l.zone)}>{ZONES_BY_ID[l.zone]?.name ?? l.zone}</button>{l.address !== lotName(l) ? ` · ${l.address}` : ''}</div>
+                  <div className="text-stone-500">{KIND_WORD[kindOf(l)]} · <button type="button" className="underline decoration-dotted hover:text-gold-300" onClick={() => onZone?.(l.zone)}>{ZONES_BY_ID[l.zone]?.name ?? l.zone}</button>{lotName(l).includes(l.address) ? '' : ` · ${l.address}`}</div>
                 </div>
                 <div className="text-right tabular-nums shrink-0">
                   <div className="text-stone-200">{fmt$(l.price)}</div>
