@@ -1,3 +1,4 @@
+import { adLift } from './paperAds';
 import { isInSeason, laborDay, memorialDay, monthKey, toDays } from './calendar';
 import { CATS, CAT_IDS, ITEMS_BY_ID, itemQ, type ItemCat } from './empireCatalog';
 import { catApplies, deptOf, durableUnits, roomCount, roomsByType, seatsOf, venueBuilding, venueSpaces } from './empireBuild';
@@ -393,10 +394,12 @@ export function runVenueWeek(s: GameState, e: EmpireState, v: Venue, bid: Bid, o
   const refCheck = 2.75 * infl * (v.concept === 'luxury_resort' ? 2 : v.concept === 'boutique' ? 1.5 : 1);
   const foodU = -1.5 * Math.log(menu / refCheck) + 0.9 * (fq - 55) / 25 + 0.3 * (v.reputation - 50) / 25;
   const walkCurve = c.kind === 'lodging' ? curve : 0.35 + 0.65 * curve;
+  // An ad in the town papers (paperAds.ts) brings in more walk-ins.
+  const ad = v.owner === 'player' ? adLift(s, `venue:${v.id}`, v.opKey ? `biz:${v.opKey}` : undefined) : 1;
   let covers = 0;
   if (dineSeats) {
     const inhouse = SEGMENT_IDS.reduce((a, seg) => a + (bid.got[seg] * SEGMENTS[seg].perRoom * SEGMENTS[seg].dine), 0) * Math.min(1.3, Math.exp(foodU * 0.6));
-    const walk = dineSeats * 7 * (c.kind === 'food' ? 1.95 : 0.8) * walkCurve * 0.55 * Math.exp(foodU);
+    const walk = dineSeats * 7 * (c.kind === 'food' ? 1.95 : 0.8) * walkCurve * 0.55 * Math.exp(foodU) * ad;
     covers = Math.min(dineSeats * 7 * 2.2, inhouse + walk);
   }
   const drinkU = -1.4 * Math.log((v.policy.drinkPrice ?? 0.6 * infl) / (0.6 * infl)) + 0.6 * (qOf(v, 'liquor', y) - 55) / 25 + 0.3 * (v.reputation - 50) / 25;
@@ -407,7 +410,7 @@ export function runVenueWeek(s: GameState, e: EmpireState, v: Venue, bid: Bid, o
     const entU = 0.45 * Math.log(Math.max(0.3, (ent + (v.policy.act?.draw ?? 0) * 100 * infl) / (300 * infl))) + 0.15 * actTier(e, v);
     const clubU = -1.4 * Math.log((v.policy.coverCharge ?? 1.5 * infl) / (1.5 * infl)) + entU + 0.7 * (cq - 55) / 25 + 0.3 * (v.reputation - 50) / 25;
     const inhouse = SEGMENT_IDS.reduce((a, seg) => a + bid.got[seg] * SEGMENTS[seg].perRoom * SEGMENTS[seg].club, 0);
-    const walk = clubSeats * 4 * 1.3 * (0.3 + 0.7 * curve) * 0.85 * Math.exp(clubU);
+    const walk = clubSeats * 4 * 1.3 * (0.3 + 0.7 * curve) * 0.85 * Math.exp(clubU) * ad;
     clubGuests = Math.min(clubSeats * 4 * 1.6, inhouse + walk);
   }
   let drinks = 0;

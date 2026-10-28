@@ -39,6 +39,7 @@ import { ledgerActions, previewLedger } from './ledgerbook';
 import { previewTribute } from './tributeOps';
 import { earsActions, previewEars } from './ears';
 import { commitDirty, previewDirty } from './dirtyWork';
+import { commitPaper, previewPaper } from './paper';
 import { commitDev, previewDev } from './develop';
 
 /** A capo's willingness to accept a worse contract. */
@@ -132,6 +133,7 @@ export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, h
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   pol: { preview: (s, a) => previewPol(s, a.op) },
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
+  paper: { preview: (s, a) => previewPaper(s, a.op), commit: (ctx, a) => commitPaper(ctx, a.op) },
   dev: { preview: (s, a) => previewDev(s, a.op), commit: (ctx, a) => commitDev(ctx, a.op) },
   askPermission: {
     preview: (s, a) => {

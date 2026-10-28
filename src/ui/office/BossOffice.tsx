@@ -1,3 +1,4 @@
+import { unreadCount } from '../../engine/paper';
 import { useMemo, useState, type ReactNode } from 'react';
 import { inboxBadge } from '../../engine/inbox';
 import { officeBriefing, officePhone, officeRoom, officeVisitors, type DelegateOp, type OfficeUi, type OfficeVisitor } from '../../engine/bossOffice';
@@ -87,6 +88,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     if (id === 'envelope' && envelopeWaiting) return <span className="text-emerald-300">{fmt$(rep!.reported)}</span>;
     if (id === 'door' && box.n) return <span className={`rounded-full px-1 font-bold text-white ${box.tone === 'red' ? 'bg-red-600' : 'bg-blood-500'}`} data-testid="door-count">{box.n}</span>;
     if (id === 'photos') return <span className="text-stone-300">{room.photos}</span>;
+    if (id === 'newspaper' && unreadCount(s)) return <span className="inline-block h-2 w-2 rounded-full bg-blood-500" data-testid="paper-unread-dot" aria-label="New paper" />;
     return null;
   };
 

@@ -191,6 +191,7 @@ export function actionVerb(a: PlayerAction): Verb {
       return v('Do it', 'Set');
     }
     case 'hood': return v('Restyle it', 'Restyling');
+    case 'paper': return a.op.op === 'kill' ? v('Spike it', 'Spiking') : a.op.op === 'ad' ? v('Run the ad', 'Ad running') : a.op.op === 'buy' ? v('Buy the paper', 'Buying') : a.op.op === 'sue' ? v('Sue', 'Suing') : v('Plant it', 'Planted');
     case 'dirty': return a.op.job === 'shakedown' ? v('Shake them down', 'Shakedown on') : v('Do it', 'Job on');
     case 'talk': return a.op.t === 'answer' ? (a.op.yes ? v('Take it', 'Taking it') : v('Turn it down', 'Turning down')) : v(TALKS[a.op.talk]?.label ?? 'Talk to him', 'Asked');
     case 'mission': return v('Do it', 'Decided');

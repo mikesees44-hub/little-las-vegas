@@ -162,7 +162,7 @@ function WaitingButton({ count, tone, pending, answered, sitCount, mornings, env
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay, paperUnread = 0, onPaper }: {
   s: GameState;
   /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
   inboxN?: number;
@@ -204,6 +204,9 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   onEnvelope?: () => void;
   /** Find… (people, places, screens, things to do). */
   onFind?: () => void;
+  /** The morning paper on the desk (engine/paper.ts): editions not read yet, and the opener. */
+  paperUnread?: number;
+  onPaper?: () => void;
 }) {
   const info = seasonInfo(s.date);
   const boss = player(s);
@@ -256,6 +259,12 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             {onOffice && (
               <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>
+            )}
+            {onPaper && (
+              <button type="button" onClick={onPaper} data-testid="paper-button" title={paperUnread ? `The paper is on the desk (${paperUnread} unread)` : 'The Daily Tide and the Weekly Leader'}
+                className="relative h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">▤<span className="hidden sm:inline"> Paper</span>
+                {paperUnread > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blood-500 ring-2 ring-noir-900" data-testid="paper-dot" aria-label={`${paperUnread} unread`} />}
+              </button>
             )}
             <OrdersButton s={s} />
             <PlansButton s={s} />

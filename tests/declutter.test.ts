@@ -70,6 +70,7 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   living: ['livingAsk.ts', 'LivingAction', 'op'],
   talk: ['talks.ts', 'TalkOp', 't'],
   hood: ['hood.ts', 'HoodAction', 'type'],
+  paper: ['paper.ts', 'PaperAction', 'op'],
 };
 
 const SPECIAL_AT = new Set(['person', 'place', 'map', 'office', 'event']);

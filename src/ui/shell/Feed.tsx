@@ -1,7 +1,7 @@
 import { formatDate } from '../../engine/calendar';
 import type { ChronicleEntry, GameState, WeeklyReport } from '../../engine/types';
 import { fmt$ } from '../format';
-import { Newspapers } from '../components/Newspaper';
+import { PaperReader } from '../paper/PaperReader';
 import { Storylines } from '../components/Storylines';
 
 export type FeedFilter = 'all' | 'mine' | 'street' | 'family' | 'papers' | 'stories' | 'reports';
@@ -21,7 +21,7 @@ const KINDS: Record<'mine' | 'street' | 'family', ChronicleEntry['kind'][]> = {
  * front pages, the living storylines and the weekly reports.
  */
 export function Feed({ s, filter, reports = [], onReport }: { s: GameState; filter: FeedFilter; reports?: WeeklyReport[]; onReport?: (r: WeeklyReport[]) => void }) {
-  if (filter === 'papers') return <Newspapers s={s} />;
+  if (filter === 'papers') return <PaperReader s={s} />;
   if (filter === 'stories') return <Storylines s={s} />;
   if (filter === 'reports') {
     const list = reports.length ? reports : s.lastReport ? [s.lastReport] : [];
