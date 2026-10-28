@@ -10,6 +10,8 @@ import { Chips } from './Chips';
 import { Face } from './People';
 import { Modal } from './Modal';
 import { useNumberKeys } from '../keys';
+import { negotiable } from '../../engine/minds/dialogue';
+import { NegotiationWindow } from '../minds/NegotiationWindow';
 
 export function EventModal({ s, ev, index, total, selected, onChoose, onClose }: {
   s: GameState;
@@ -23,11 +25,14 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
   const ids = ev.actors ?? (ev.meta?.charId ? [String(ev.meta.charId)] : []);
   const actors = ids.map((id) => s.characters[id]).filter((c): c is NonNullable<typeof c> => !!c).slice(0, 3);
   const [prio, setPrio] = useState<Priority | undefined>(() => getSettings().priority);
+  // A decision with someone on the other side can be talked out in the two-way window (minds/dialogue.ts).
+  const [talk, setTalk] = useState(false);
+  const nego = negotiable(s, ev);
   const advice = compareChoices(s, ev.choices, prio);
   const dflt = ev.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev.choices[0];
   const pickPrio = (p: Priority | undefined) => { setPrio(p); setSettings({ priority: p }); };
   // Number keys pick a choice (1 = the first card).
-  useNumberKeys(true, ev.choices.length, (i) => { const c = ev.choices[i]; if (c && !c.disabledReason) onChoose(c.id); });
+  useNumberKeys(!talk, ev.choices.length, (i) => { const c = ev.choices[i]; if (c && !c.disabledReason) onChoose(c.id); });
   return (
     <Modal onClose={onClose}>
       <div className="p-4 sm:p-6">
@@ -53,6 +58,12 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
           </div>
         </div>
         <p className="mt-2 text-stone-300 leading-relaxed">{ev.text}</p>
+        {nego && (
+          <button type="button" className="btn-ghost mt-2 px-2 py-1 text-xs" onClick={() => setTalk(true)} data-testid="event-negotiate">
+            Talk it out with {s.characters[nego.counterpart]?.firstName ?? 'him'}: bargain over the terms, settled right now
+          </button>
+        )}
+        {talk && <NegotiationWindow s={s} ev={ev} onClose={() => setTalk(false)} />}
         {dflt && <p className="mt-1 text-[11px] text-stone-500" data-testid="event-default">If you don't decide before the week turns: <span className="text-stone-300">{dflt.label}</span>.</p>}
         <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]" role="radiogroup" aria-label="What matters most right now" data-testid="priority-picker">
           <span className="text-stone-500 mr-1">What matters most right now?</span>

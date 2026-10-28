@@ -12,6 +12,7 @@ import { proofs } from './paper';
 import { addOpinion, opinion } from './relations';
 import { hashSeed } from './rng';
 import { timeCost } from './timeCost';
+import { ltLean } from './minds/planner';
 import { ensureTribute, noteFavor } from './tributeState';
 import type { Character, GameState, PlayerAction, RivalId } from './types';
 
@@ -279,7 +280,9 @@ export function ltProfile(s: GameState, seat: LtSeat): LtProfile | undefined {
   const cautious = hasTrait(c, 'Patient') || hasTrait(c, 'Paranoid') || hasTrait(c, 'Cowardly') || (seat === 'consigliere' && !hasTrait(c, 'Hot-headed'));
   const temper = hasTrait(c, 'Hot-headed') || hasTrait(c, 'Cruel');
   const disloyal = !hasTrait(c, 'Loyal-to-a-fault') && (loyalty <= -15 || !!c.courtedBy);
-  return { seat, c, competence, loyalty, honesty: hon, greedy, ambitious, cautious, temper, rival: c.courtedBy?.rival, disloyal };
+  // What is on his mind right now (minds/planner.ts) adds its strong leanings.
+  const lean = ltLean(s, c);
+  return { seat, c, competence, loyalty, honesty: hon, greedy: greedy || !!lean.greedy, ambitious: ambitious || !!lean.ambitious, cautious: cautious || !!lean.cautious, temper: temper || !!lean.temper, rival: c.courtedBy?.rival, disloyal };
 }
 
 export function competenceWord(q: number): string {

@@ -13,6 +13,7 @@ import { addOpinion, opinion } from './relations';
 import { chance, hashSeed, pick, rand, randInt, type RngHolder } from './rng';
 import { strengthTotal } from './strength';
 import { pactWith } from './talks';
+import { noteThreatPlan, threatLean } from './minds/planner';
 import type { Character, Effect, GameState, Rival, RivalId } from './types';
 
 /**
@@ -261,6 +262,9 @@ export function aggression(s: GameState, r: Rival): { chance: number; reasons: {
   if (r.war || r.feud) mul(r.war ? 'At war with you' : 'A feud', 1.5);
   if (r.money < 1500) mul('His treasury is thin', 0.4);
   mul(isIncapable(s, r.leaderId) ? 'His boss is Incapable' : 'His boss\'s health', rivalCapacity(s, r));
+  // What is on his mind (minds/planner.ts): a grudge, a plan against you, his read of your strength.
+  const lean = threatLean(s, r);
+  if (lean) mul(lean.label, lean.mult);
   if (s.week < GRACE_WEEKS) { p = 0; reasons.push({ label: 'Too early: they are still sizing you up', value: -100 }); }
   return { chance: Math.max(0, Math.min(0.4, p)), reasons };
 }
@@ -295,13 +299,14 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
   const biz = ourBusinesses(s);
   const cruel = hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed') ? 1.6 : 1;
   const hate = op <= -50 ? 1.6 : op <= -20 ? 1.2 : 0.6;
+  const mk = threatLean(s, r)?.kinds ?? {};
   const kind = weighted<ThreatKind>(T, [
-    ['move', ground.length ? 3 : 0],
-    ['racket', biz.length ? 2 : 0],
-    ['poach', soldiers.length ? 1.5 : 0],
-    ['bribe', men.length ? 1.2 * (hasTrait(leader, 'Greedy') || hasTrait(leader, 'Charming') ? 1.4 : 1) : 0],
-    ['setup', biz.length ? 1 + s.heat.local / 60 : 0],
-    ['hit', (caps.length + soldiers.length ? 0.9 : 0) * cruel * hate],
+    ['move', (ground.length ? 3 : 0) * (mk.move ?? 1)],
+    ['racket', (biz.length ? 2 : 0) * (mk.racket ?? 1)],
+    ['poach', (soldiers.length ? 1.5 : 0) * (mk.poach ?? 1)],
+    ['bribe', (men.length ? 1.2 * (hasTrait(leader, 'Greedy') || hasTrait(leader, 'Charming') ? 1.4 : 1) : 0) * (mk.bribe ?? 1)],
+    ['setup', (biz.length ? 1 + s.heat.local / 60 : 0) * (mk.setup ?? 1)],
+    ['hit', (caps.length + soldiers.length ? 0.9 : 0) * cruel * hate * (mk.hit ?? 1)],
   ]);
   if (!kind) return undefined;
   const t: Threat = { id: nid(T, 'th'), kind, by: r.id, start: s.week, due: s.week + randInt(T, 1, 3), blunt: 0 };
@@ -792,7 +797,7 @@ export function threatsWeek(ctx: Ctx): void {
     if (r.kind !== 'mob' || T.threats.some((x) => x.by === r.id && !x.schemeId)) continue;
     if (!chance(T, aggression(s, r).chance)) continue;
     const t = planRival(s, T, r);
-    if (t) planned.push(t);
+    if (t) { planned.push(t); noteThreatPlan(s, r, t.kind, t.targetId); }
   }
   if (s.week >= GRACE_WEEKS && room() > 0) { const t = planPolice(s, T); if (t) planned.push(t); }
   if (room() > 0) { const t = planFeds(s, T); if (t) planned.push(t); }

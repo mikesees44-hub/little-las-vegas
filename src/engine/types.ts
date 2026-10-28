@@ -963,6 +963,8 @@ export interface GameState {
   paper?: import('./paper').PaperState;
   /** Work this place (bizRacket.ts): the businesses you work, their owners' fear and stance, what you run there. */
   work?: import('./bizRacket').WorkState;
+  /** NPC minds: needs, moods, ambitions, beliefs, memories and plans of the people who matter (minds/; optional: made by the weekly update). */
+  minds?: import('./minds/types').MindsState;
 }
 
 export interface PlayerChoices {

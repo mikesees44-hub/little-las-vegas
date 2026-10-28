@@ -38,6 +38,7 @@ import { useState } from 'react';
 import { QuickActions } from '../sheet/QuickActions';
 import { AgingSection } from '../sheet/AgingSection';
 import { knownOld } from '../../engine/aging';
+import { MindSection } from '../minds/MindSection';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
 export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
@@ -200,6 +201,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         {age >= 18 && <button type="button" className="btn-ghost mt-3 px-2 py-1 text-[11px]" onClick={() => setTab('card')} data-testid="sheet-open-card">{c.firstName}'s calling card ▸ <span className="text-stone-500">looks, family, money as known, you, rumors</span></button>}
         <DynastyFacts s={s} c={c} />
         <PowerFacts s={s} c={c} />
+        <MindSection s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} part="life" />}
         </>}
 

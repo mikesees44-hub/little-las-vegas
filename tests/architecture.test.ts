@@ -9,7 +9,9 @@ const ENGINE = join(__dirname, '..', 'src', 'engine');
 
 describe('architecture', () => {
   it('the engine has no React (or UI) imports', () => {
-    for (const f of readdirSync(ENGINE)) {
+    // Recursive: the engine has sub-folders (minds/).
+    for (const f of readdirSync(ENGINE, { recursive: true }) as string[]) {
+      if (!/\.tsx?$/.test(f)) continue;
       const src = readFileSync(join(ENGINE, f), 'utf8');
       expect(src, f).not.toMatch(/from ['"]react/);
       expect(src, f).not.toMatch(/from ['"]\.\.\/ui/);
