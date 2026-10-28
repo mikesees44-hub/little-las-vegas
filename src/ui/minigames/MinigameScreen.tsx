@@ -41,7 +41,17 @@ const PHASE_LABEL: Record<string, string> = {
   case: "The government's case", cross: 'Cross-examination', deal: 'The offer', defense: 'The defense', closing: 'Closing arguments', verdict: 'The verdict', sentence: 'Sentencing', knock: '6:10 a.m.',
 };
 
-export function MinigameScreen({ s, game, iid, params, parts, onDone, onCancel }: {
+/** A session with the moves already made replayed onto it (a reload resumes the scene where it was left). */
+export function resumeSession(s: GameState, first: MgSession, moves: string[] | undefined): MgSession {
+  let x = first;
+  for (const m of moves ?? []) {
+    if (x.done) break;
+    try { x = stepSession(s, x, m); } catch { break; }
+  }
+  return x;
+}
+
+export function MinigameScreen({ s, game, iid, params, parts, onDone, onCancel, resume, onProgress }: {
   s: GameState;
   game: MinigameId;
   iid: string;
@@ -49,10 +59,18 @@ export function MinigameScreen({ s, game, iid, params, parts, onDone, onCancel }
   parts?: Record<string, Effect[]>;
   onDone: (moves: string[]) => void;
   onCancel: () => void;
+  /** Moves made before a reload: the scene picks up after them instead of replaying page 1. */
+  resume?: string[];
+  /** Every move, so the App can keep the scene's place in the save. */
+  onProgress?: (moves: string[]) => void;
 }) {
   const first = useMemo(() => startSession(s, game, iid, params, parts ?? {}), [s, game, iid, params, parts]);
-  const [ses, setSes] = useState<MgSession>(first);
-  const [stage, setStage] = useState<'intro' | 'play' | 'reel' | 'epilogue' | 'end'>('intro');
+  const [ses, setSes] = useState<MgSession>(() => resumeSession(s, first, resume));
+  const [stage, setStage] = useState<'intro' | 'play' | 'reel' | 'epilogue' | 'end'>(() => (resume?.length ? 'play' : 'intro'));
+  useEffect(() => {
+    if (!ses.done && ses.moves.length) onProgress?.(ses.moves);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ses.moves.length]);
   const [epi, setEpi] = useState(0);
   const reduced = prefersReducedMotion();
   const [introText, introDone, finishIntro] = useTypewriter(stage === 'intro' ? ses.intro.text : '', 42, reduced);

@@ -156,7 +156,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
               ))}
             </div>
             {((monday && !panel) || panel) && (
-              <div className="mt-2 space-y-2 md:absolute md:right-2 md:top-2 md:z-10 md:mt-0 md:max-h-[calc(100%-16px)] md:w-[min(400px,46%)] md:overflow-y-auto" data-testid="office-card">
+              <div className={`mt-2 space-y-2 md:absolute md:right-2 md:z-10 md:mt-0 md:overflow-y-auto ${panel ? 'md:top-2 md:max-h-[calc(100%-16px)] md:w-[min(400px,46%)]' : OFFICE_CARD_CLEAR}`} data-testid="office-card">
                 {monday && !panel && (
                   <BriefCard s={s} brief={brief} monday onEnvelope={() => { onMondayDone(); openEnvelope(); }} onDoor={() => { onMondayDone(); setPanel('door'); }} onDesk={() => { onMondayDone(); api.openDesk(); }} onDone={onMondayDone} table={table} />
                 )}
@@ -199,6 +199,12 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     </div>
   );
 }
+
+/** Monday's card sits in the bottom-right corner, below the chair and the door: it never covers a hotspot
+ * (playtest #11: at the top right it hid the door). */
+export const OFFICE_CARD_CLEAR = 'md:bottom-2 md:top-auto md:max-h-[37%] md:w-[min(400px,41%)]';
+/** The corner it keeps to, in the scene's percent units (tests check no hotspot reaches into it). */
+export const OFFICE_CARD_RECT = { x: 58, y: 63, w: 41, h: 37 };
 
 /** The man across the desk and his one or two lines. Monday's arrival has the four ways to start. */
 function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table }: {

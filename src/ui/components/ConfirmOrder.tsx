@@ -7,10 +7,22 @@ import { formatClock, hoursLabel, hoursLeft, clockHour, timeBlock, timeCost, DIN
 
 const VERDICT_COLOR: Record<string, string> = { do: 'text-emerald-300', doBut: 'text-amber-200', wait: 'text-amber-300', dont: 'text-red-300' };
 
-/** Underboss and consigliere first, then whoever else sits at the table on this (at most three). */
-function pickVoices(vs: Voice[]): Voice[] {
+/** A line of counsel without the quote marks it may already carry (the card adds its own). */
+export function bareQuote(x: string): string {
+  return x.trim().replace(/^["“”']+|["“”']+$/g, '').trim();
+}
+
+/** Underboss and consigliere first, then whoever else sits at the table on this (at most three);
+ * two people saying the same words is one voice (the playtest saw three identical "Don't"s). */
+export function pickVoices(vs: Voice[]): Voice[] {
   const order = (v: Voice) => (v.adviser.role === 'underboss' ? 0 : v.adviser.role === 'consigliere' ? 1 : 2);
-  return [...vs].sort((a, b) => order(a) - order(b)).slice(0, 3);
+  const seen = new Set<string>();
+  return [...vs].sort((a, b) => order(a) - order(b)).filter((v) => {
+    const k = bareQuote(v.says).toLowerCase();
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  }).slice(0, 3);
 }
 
 /**
@@ -64,7 +76,7 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
                   <span className="text-stone-200 font-semibold">{v.adviser.name} <span className="font-normal text-stone-500">· {v.adviser.title}</span></span>
                   <span className={`shrink-0 ${VERDICT_COLOR[v.verdict] ?? 'text-stone-300'}`}>{v.label}</span>
                 </div>
-                <div className="mt-1 text-xs italic text-stone-300">“{v.says}”</div>
+                <div className="mt-1 text-xs italic text-stone-300">“{bareQuote(v.says)}”</div>
                 {(v.pros[0] || v.cons[0]) && (
                   <ul className="mt-1 text-[11px] space-y-0.5">
                     {v.pros.slice(0, 2).map((x, i) => <li key={`p${i}`} className="text-emerald-200/90">+ {x.text}</li>)}
