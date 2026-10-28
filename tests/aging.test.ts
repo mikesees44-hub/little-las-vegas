@@ -120,6 +120,9 @@ describe('old-age traits come on, each man on his own schedule', () => {
         const s = newGame(seed);
         const men = Array.from({ length: 8 }, () => oldMan(s, 84, drinker ? { traits: ['Drinker'] } : { traits: [] }));
         for (let m = 0; m < 48; m++) {
+          // Kept alive and equally well, so the tally measures how fast it comes on, not who died first
+          // (a drinker's heart goes faster, and a dead man's stages stop counting).
+          for (const c of men) { c.health = 85; c.warnedWeek = undefined; }
           if (care) for (const c of men) if (c.alive) applyAgingOp(newCtx(s), { k: 'checkup', charId: c.id });
           months(s, 1);
         }

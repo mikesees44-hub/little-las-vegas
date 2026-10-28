@@ -692,9 +692,9 @@ export function conceptionOdds(s: GameState, c: Character): number {
   return odds * fertility(s, man) * fertility(s, woman);
 }
 
-/** An evening together inside a relationship: the only way a pregnancy begins here. */
-function maybeConceive(s: GameState, D: DatingState, c: Character, key: string): void {
-  const odds = conceptionOdds(s, c);
+/** An evening together inside a relationship: the only way a pregnancy begins here (`mult` < 1: she is careful). */
+export function maybeConceive(s: GameState, D: DatingState, c: Character, key: string, mult = 1): void {
+  const odds = conceptionOdds(s, c) * mult;
   if (!odds || roll(`${s.seed}|${s.week}|conceive|${key}|${c.id}`) >= odds) return;
   const boss = player(s);
   const woman = c.gender === 'F' ? c : boss;
@@ -972,7 +972,8 @@ export function datingWeek(ctx: Ctx): void {
 function providersMonth(ctx: Ctx, D: DatingState): void {
   const s = ctx.s;
   for (const p of Object.values(D.providers)) {
-    if (p.ear || p.status !== 'working') continue;
+    // The Ears' women and the nightlife cast live their own lives elsewhere (ears.ts, nightlife.ts).
+    if (p.ear || p.nl || p.status !== 'working') continue;
     const c = s.characters[p.id];
     if (!c?.alive) { p.status = 'left'; p.left = { week: s.week, why: 'died' }; continue; }
     if (roll(`${s.seed}|${s.week}|leave|${p.id}`) < 0.03) {
@@ -986,6 +987,7 @@ function providersMonth(ctx: Ctx, D: DatingState): void {
     }
   }
   const working = (k: ProviderKind) => Object.values(D.providers).filter((p) => p.kind === k && p.status === 'working').length;
+  if (s.nightlife) return;
   if (working('street') < 2) newProvider(s, D, 'street');
   if (working('escort') < 1) newProvider(s, D, 'escort');
 }

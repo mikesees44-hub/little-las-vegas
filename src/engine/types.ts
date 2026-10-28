@@ -559,7 +559,9 @@ export type Effect =
   /** The living district: requests from its people, asking around, help (livingAsk.ts). */
   | ({ type: 'living'; op: import('./livingAsk').LivingOp } & EffectBase)
   /** Relationships & Dating: dates, gifts, paid company, introductions (dating.ts). */
-  | ({ type: 'dating'; op: import('./dating').DatingOp } & EffectBase);
+  | ({ type: 'dating'; op: import('./dating').DatingOp } & EffectBase)
+  /** Nightlife: payroll, promises, the goomar, houses (nightlife.ts). */
+  | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -923,6 +925,8 @@ export interface GameState {
   ears?: EarsState;
   /** Relationships & Dating: bonds, providers, rumors, content settings (datingState.ts; optional for old saves). */
   dating?: import('./datingState').DatingState;
+  /** Nightlife: the cast of the night, the madams' houses, promises, goomars, stored looks (nightlifeState.ts; optional for old saves). */
+  nightlife?: import('./nightlifeState').NightlifeState;
   /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
   aging?: import('./aging').AgingState;
   /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */
@@ -1020,6 +1024,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'dev'; op: import('./develop').DevAction }
   /** Relationships & Dating (dating.ts): invite, gifts, going steady, paid company, introductions. */
   | { kind: 'dating'; op: import('./dating').DatingAction }
+  /** Nightlife (nightlife.ts): payroll, promises, the goomar, the madams' protection. She decides. */
+  | { kind: 'nightlife'; op: import('./nightlife').NightAction }
 );
 
 export type InteractionId =

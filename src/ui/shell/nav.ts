@@ -110,7 +110,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['town.happening', 'town.attached'], icon: '☷', label: 'The street', sub: 'The Boardwalk\'s people on their own: stories, the talk, and who\'s with whom.', views: ['What\'s happening', 'Who\'s with whom'] },
       { keys: ['you.walk'], icon: '⇢', label: 'Walk the boardwalk', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.' },
       { keys: ['town.hoods'], icon: '⌂', label: 'Neighborhoods', sub: 'Each neighborhood: who lives and works there, who owns what, the police.' },
-      { keys: ['town.night'], icon: '☾', label: 'The Night & the Ears', sub: 'The Madam and the girls who hear everything. She always decides.' },
+      { keys: ['town.nightlife', 'town.night'], icon: '☾', label: 'Nightlife & the Ears', sub: 'The people of the night, the madams\' houses, payroll, promises and goomars; the Madam and the girls who hear everything. Adults only; she always decides.', views: ['Nightlife', 'The Ears & the Madam'] },
       { keys: ['town.underbelly'], icon: '⚓', label: 'The underbelly', sub: 'Outfits that prey on people, and what you do about them.' },
     ] },
     { title: 'The other families & City Hall', items: [

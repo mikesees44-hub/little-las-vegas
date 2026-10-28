@@ -1,9 +1,10 @@
+import { appeal } from './looks';
 import { attractionMods } from './aging';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { FEMALE_FIRST, SURNAMES } from './names';
 import { applyEffects } from './effects';
-import { fam, famMut } from './familyState';
+import { famMut } from './familyState';
 import { performMarriage } from './familyMarriage';
 import type { Acceptance, InteractionPreview, Reason } from './interactions';
 import type { Ctx } from './ledger';
@@ -78,10 +79,6 @@ export function isMarried(s: GameState, c: Character): boolean {
   return !!spouseOf(s, c);
 }
 
-function looks(s: GameState, c: Character): number {
-  const g = fam(s, c.id).congenital;
-  return g.includes('Handsome') ? 15 : g.includes('Homely') ? -15 : 0;
-}
 
 /** How much `a` is attracted to `b`, with reasons (−100 if `a` is not drawn to `b` at all). */
 export function attraction(s: GameState, a: Character, b: Character): { value: number; reasons: Reason[] } {
@@ -91,8 +88,8 @@ export function attraction(s: GameState, a: Character, b: Character): { value: n
   if (chem) reasons.push({ label: chem > 0 ? 'Chemistry' : 'No spark', value: chem });
   const gap = Math.abs(age(s, a) - age(s, b));
   if (gap > 8) reasons.push({ label: `${gap} years apart`, value: -Math.min(40, (gap - 8) * 3) });
-  const lk = looks(s, b);
-  if (lk) reasons.push({ label: lk > 0 ? 'Handsome' : 'Homely', value: lk });
+  // Looks, as `a` sees them (appearance traits: his or her own type, how much looks matter to them).
+  for (const r of appeal(s, a, b).reasons) reasons.push(r);
   if (hasTrait(b, 'Charming')) reasons.push({ label: 'Charming', value: 10 });
   reasons.push(...attractionMods(s, b));
   if (hasTrait(a, 'Womanizer')) reasons.push({ label: 'Has a roving eye', value: 10 });

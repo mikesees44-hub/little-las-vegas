@@ -103,6 +103,8 @@ export interface Provider {
   visits: number[];
   /** An Ear's record lives in ears.ts; this provider is that woman. */
   ear?: boolean;
+  /** One of the nightlife cast (nightlife.ts keeps her price and her life). */
+  nl?: boolean;
 }
 
 /** A rumor: labeled as one, true or not. */

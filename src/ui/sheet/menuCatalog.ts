@@ -20,6 +20,7 @@ import { wantedFor } from '../../engine/fugitive';
 import { jobsForPerson } from '../../engine/dirtyWork';
 import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
+import { nightActionsFor } from '../../engine/nightlife';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
 /**
@@ -41,7 +42,9 @@ export type Opener =
   /** Dirty work aimed at him (lean on him, pay him off, buy him): opens Dirty work with him chosen. */
   | { type: 'dirty' }
   /** You and her: dating, going steady, company (Relationships & Dating). */
-  | { type: 'dating' };
+  | { type: 'dating' }
+  /** Their calling card (who they are at a glance). */
+  | { type: 'card' };
 
 export interface MenuItem {
   key: string;
@@ -62,7 +65,7 @@ export interface MenuCategory {
 
 export const CATEGORY_LABEL: Record<MenuCategoryId, string> = {
   best: 'Best now', talk: 'Talk', diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
-  travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The Ears',
+  travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The night & the Ears',
 };
 
 const INTERACT_CAT: Record<InteractionId, MenuCategoryId> = {
@@ -168,6 +171,11 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
 
   // You and her (adults only; never your own kin unless she is your wife): dating, going steady, company.
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id)) add('romance', { key: 'dating', open: { type: 'dating' }, label: `You and ${c.firstName}…`, text: 'Dating, going steady, gifts, company. She always decides.' });
+
+  // Their calling card (adults), the goomar (CK's concubine: only someone you are already seeing, and she decides), the night's orders.
+  if (isAdult(s, c)) add('talk', { key: 'card', open: { type: 'card' }, label: `${c.firstName}'s calling card…`, text: 'Who they are at a glance: looks, personality, skills, family, money as known, you, rumors.' });
+  if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id) && s.characters[s.playerId]?.spouseId !== c.id) add('romance', { key: 'goomar', action: { kind: 'nightlife', op: { op: 'goomar', id: c.id } }, label: `Make ${c.firstName} your goomar` });
+  for (const a of nightActionsFor(s, c.id)) if (a.kind === 'nightlife' && a.op.op !== 'goomar') add(a.op.op === 'endGoomar' ? 'romance' : 'nightlife', { key: `nl:${JSON.stringify(a.op)}`, action: a });
 
   // Romance and marriage of the house's people.
   if (c.dynasty && c.faction === 'player' && !c.spouseId && ageOn(c.birth, s.date) >= 16) add('romance', { key: 'match', open: { type: 'marriage' }, label: `Arrange a match for ${c.firstName}…`, text: 'Compare the families\' sons and daughters; the match is theirs to accept.' });
