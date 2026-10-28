@@ -466,6 +466,17 @@ export const BOSS_START_POCKET = 100_000;
 export function startPocket(s: GameState): void {
   const notBoss = s.flags?.start_associate || s.flags?.start_soldier || s.flags?.start_capo;
   ensureTribute(s).acct.personal = notBoss ? Math.min(3000, Math.round((Math.max(0, s.money) * 0.12) / 100) * 100) : BOSS_START_POCKET;
+  s.flags[POCKET_TOPUP_FLAG] = 1;
+}
+
+/** A save from before the $100,000 boss start gets it once (the user's call, 2026-10-27): the boss's pocket is raised to at least $100,000. */
+export const POCKET_TOPUP_FLAG = 'pocket_topup_100k';
+export function topUpOldPocket(s: GameState): void {
+  if (s.flags?.[POCKET_TOPUP_FLAG] || !s.tribute) return;
+  s.flags[POCKET_TOPUP_FLAG] = 1;
+  const boss = s.characters[s.playerId];
+  if (!boss || boss.rank !== 'boss') return;
+  s.tribute.acct.personal = Math.max(s.tribute.acct.personal ?? 0, BOSS_START_POCKET);
 }
 
 /** All balances, the treasury included (for the books and the reconciliation). */

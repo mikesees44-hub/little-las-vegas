@@ -17,7 +17,7 @@ import { ensurePol } from './politics';
 import { migrateVice } from './racketLife';
 import { ensureRomance, ensureStory } from './storyState';
 import { ensureTravel } from './travelState';
-import { ensureTribute } from './tributeState';
+import { ensureTribute, topUpOldPocket } from './tributeState';
 import { ensureShadow } from './shadowState';
 import { ensureLiving } from './livingState';
 import { ensureHousing } from './housing';
@@ -56,5 +56,6 @@ export function upgradeSave(s: GameState): GameState {
   if (s.towns) try { migrateTowns(s); } catch { /* the weekly update will try again */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
+  try { topUpOldPocket(s); } catch { /* nothing to top up */ }
   return s;
 }

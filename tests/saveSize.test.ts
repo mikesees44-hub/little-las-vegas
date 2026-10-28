@@ -27,3 +27,21 @@ describe('compressed saves', () => {
     expect(loadSlot(1, kv)?.seed).toBe(s.seed);
   });
 });
+
+describe('old saves get the $100,000 boss pocket once', () => {
+  it('a boss save from before the change is topped up on load, once; new games are untouched', async () => {
+    const { topUpOldPocket, POCKET_TOPUP_FLAG } = await import('../src/engine/tributeState');
+    const s = newGame('pocket-old');
+    expect(s.flags[POCKET_TOPUP_FLAG]).toBe(1);
+    const before = s.tribute!.acct.personal;
+    topUpOldPocket(s);
+    expect(s.tribute!.acct.personal).toBe(before);
+    delete s.flags[POCKET_TOPUP_FLAG];
+    s.tribute!.acct.personal = 0;
+    topUpOldPocket(s);
+    expect(s.tribute!.acct.personal).toBe(100_000);
+    s.tribute!.acct.personal = 5;
+    topUpOldPocket(s);
+    expect(s.tribute!.acct.personal).toBe(5);
+  });
+});
