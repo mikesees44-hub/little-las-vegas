@@ -1,6 +1,7 @@
 import { HOODS, U_NORTH, WEST_WILDWOOD, bayEdge, beachWidth, type HoodId } from '../../engine/hoodData';
 import { placeAll, type Parcel } from '../../engine/hoodGeo';
 import { SIDE_STYLE } from '../../engine/sides';
+import { frontsOf, warNotes } from '../../engine/army';
 import type { GameState } from '../../engine/types';
 import { regionsFromGrid } from '../realm/gridRegions';
 import type { HolderStyle } from '../realm/PoliticalOverlay';
@@ -95,12 +96,17 @@ export function wildwoodStyles(s: GameState): Record<string, HolderStyle> {
 /** The island's regions with their holders, for the overlay. */
 export function wildwoodRegions(s: GameState, pr: RealmFrame): RealmRegion[] {
   const shapes = wildwoodShapes(s, pr);
+  // The war fronts (army.ts): districts held by force or with a battle massing, striped in both colours.
+  const foe: Record<string, string> = {};
+  for (const w of s.wars) for (const f of frontsOf(s, w)) if (f.occupied || f.massing) foe[f.district] = w.rival;
   const out: RealmRegion[] = [];
   for (const [id, polygons] of shapes) {
     const d = s.districts.find((x) => x.id === id);
     const name = d?.name ?? HOODS.find((h) => h.id === id)?.name ?? id;
     const h = d ? holderFromShares(d.influence) : { holder: null, share: 0 };
-    out.push({ id, name, polygons, holder: h.holder, share: h.share, contested: h.contested, hideName: id === 'westww' });
+    // A war front or a district held by force is striped (army.ts).
+    const front: [string, string] | undefined = foe[id] ? [h.holder && h.holder !== foe[id] ? h.holder : 'player', foe[id]] : undefined;
+    out.push({ id, name, polygons, holder: h.holder, share: h.share, contested: h.contested ?? front, hideName: id === 'westww' });
   }
   const order = ['boardwalk', 'piers', 'pacific', 'downtown', 'docks', 'crest', 'north', 'causeway', 'westww'];
   return out.sort((a, b) => (order.indexOf(a.id) + 99) % 99 - (order.indexOf(b.id) + 99) % 99);
@@ -141,6 +147,7 @@ export function wildwoodDetails(s: GameState, r: RealmRegion): [string, string][
   const hid = REGION_HOOD[r.id];
   const st = hid ? s.hood?.stats[hid] : undefined;
   if (st) rows.push(['Heat', `Police ${Math.round(st.police)} · reputation ${Math.round(st.rep)}`]);
+  for (const t of s.wars.length ? warNotes(s)[r.id] ?? [] : []) rows.push(['War', t]);
   const d = s.districts.find((x) => x.id === r.id);
   if (d) {
     const others = Object.entries(d.influence).filter(([k, v]) => k !== 'none' && (v ?? 0) > 0).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))

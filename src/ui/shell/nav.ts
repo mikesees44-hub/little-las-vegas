@@ -114,7 +114,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['town.underbelly'], icon: '⚓', label: 'The underbelly', sub: 'Outfits that prey on people, and what you do about them.' },
     ] },
     { title: 'The other families & City Hall', items: [
-      { keys: ['diplomacy.board', 'diplomacy.intrigue', 'diplomacy.warroom', 'diplomacy.balance'], icon: '♞', label: 'The other families & intrigue', sub: 'Every family: the era with each, spies and moles, lies and rumors, the war room, who is strongest.', views: ['The board', 'Intrigue', 'The war room', 'Who\'s strongest'] },
+      { keys: ['diplomacy.board', 'diplomacy.intrigue', 'diplomacy.army', 'diplomacy.warroom', 'diplomacy.balance'], icon: '♞', label: 'The other families & intrigue', sub: 'Every family: the era with each, spies and moles, lies, your army and allies, the war room.', views: ['The board', 'Intrigue', 'The army', 'The war room', 'Who\'s strongest'] },
       { keys: ['diplomacy.pacts', 'diplomacy.table'], icon: '⚖', label: 'The Table', sub: 'Truces and partnerships, and Philadelphia\'s sit-down: disputes, rulings, wars.', views: ['Pacts & truces', 'Disputes & wars'] },
       { keys: ['town.cityhall', 'town.patronage'], icon: '⌸', label: 'City Hall', sub: 'Who holds every seat that matters, and buying goodwill: tickets, projects, no-show jobs.', views: ['Who holds what', 'Gifts & patronage'] },
     ] },

@@ -86,6 +86,7 @@ import { bookMark, bookOrder, bookWeek, classify } from './journal';
 import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
 import { intrigueResolve, intrigueWeek } from './intrigue';
+import { armyResolve, armyWeek } from './army';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
@@ -353,6 +354,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver) storyResolve(ctx, resolving);
   if (!s.gameOver) arcsResolve(ctx, resolving, choices);
   if (!s.gameOver) intrigueResolve(ctx, resolving, choices);
+  // The battles the boss answered last week are fought (army.ts).
+  if (!s.gameOver) armyResolve(ctx, resolving, choices);
   if (!s.gameOver) fireConsequences(ctx);
   if (!s.gameOver) arcsWeek(ctx);
   if (!s.gameOver) {
@@ -404,6 +407,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     rivalSchemes(ctx);
     runSchemes(ctx);
     warWeek(ctx);
+    // The army: the bill for the men under arms, the campaigns, the battles massing, Philadelphia's lean (army.ts).
+    armyWeek(ctx);
     rivalDisputes(ctx);
     tableWeek(ctx);
     threatsWeek(ctx);

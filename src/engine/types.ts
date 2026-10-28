@@ -690,6 +690,8 @@ export interface War {
   /** −100 (they are winning) .. +100 (you are winning). */
   score: number;
   startWeek: number;
+  /** Who started it (army.ts): the player, or the family that came at you. Old saves: the player. */
+  by?: FactionId;
 }
 
 export type DisputeKind = 'district' | 'sanction' | 'reparations' | 'peace' | 'war';
@@ -929,6 +931,8 @@ export interface GameState {
   travel?: TravelState;
   /** New York (nyc.ts): crews, rackets and the five families. Optional: made by the first New York order. */
   nyc?: import('./nyc').NycState;
+  /** The army: men under arms, hired muscle, allies, pacts, campaigns and battles (army.ts). Optional for old saves. */
+  army?: import('./armyState').ArmyState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
   bones?: BonesState;
   /** The boss's private ledger (optional for old saves). */
@@ -1088,6 +1092,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'intrigue'; op: import('./intrigueState').IntrigueAction }
   /** Protection & intelligence (protect.ts): put a guard on someone, look into someone, renew or end it. */
   | { kind: 'protect'; op: import('./protect').ProtectAction }
+  /** The army (army.ts): raise the troops, hire muscle, the mattresses, a call to arms, a pact, take the fight to them. */
+  | { kind: 'army'; op: import('./armyState').ArmyAction }
   /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
   | { kind: 'women'; op: import('./women').WomenAction }
 );

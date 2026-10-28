@@ -1076,7 +1076,7 @@ function rivalDeclares(ctx: Ctx, r: Rival, t: EraTrack): void {
   const s = ctx.s;
   const contested = s.districts.filter((d) => (d.influence[r.id] ?? 0) >= 5 && (d.influence.player ?? 0) >= 5).sort((a, b) => (b.influence[r.id] ?? 0) - (a.influence[r.id] ?? 0));
   const d = contested[0] ?? s.districts.find((x) => x.id === r.homeDistrict) ?? s.districts[0];
-  const w: War = { id: `w${s.nextId++}`, rival: r.id, district: d.id, cb: 'feud', sanctioned: false, score: 0, startWeek: s.week };
+  const w: War = { id: `w${s.nextId++}`, rival: r.id, district: d.id, cb: 'feud', sanctioned: false, score: 0, startWeek: s.week, by: r.id };
   s.wars.push(w);
   r.war = true;
   ensureLedger(s, w);

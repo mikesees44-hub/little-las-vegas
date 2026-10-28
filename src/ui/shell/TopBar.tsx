@@ -18,6 +18,21 @@ import { PlansButton } from '../plans/PlansPanel';
 import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
 import { eraHeadline } from '../../engine/intrigue';
 import { ERA_TONE } from '../intrigue/IntrigueBoard';
+import { armyMeter } from '../../engine/army';
+
+/** The army meter in tension or war (army.ts): Raised / Available / Allies / Enemy (a guess without spies). A tap opens the Army. */
+function ArmyChip({ s }: { s: GameState }) {
+  const { go } = useShell();
+  const m = armyMeter(s);
+  if (!m.show) return null;
+  const enemy = m.enemy ? `${m.enemy.lo === m.enemy.hi ? m.enemy.lo : `${m.enemy.lo}–${m.enemy.hi}`}${m.enemy.fogged ? '?' : ''}` : '—';
+  const title = `Men under arms ${m.raised} of ${m.available} free · hired ${m.hired} · allies ${m.allies} · ${m.enemy ? `${m.enemy.name} about ${enemy}${m.enemy.fogged ? ' (a guess: nobody inside)' : ''}` : 'no enemy in the field'} · morale ${m.morale} · ${m.bill ? `$${m.bill.toLocaleString('en-US')} a week` : 'nothing a week'}`;
+  return (
+    <button type="button" onClick={() => go('diplomacy.army')} className={`whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] sm:text-[11px] tabular-nums ${s.wars.length ? 'text-red-200 border-red-500/60' : 'text-amber-200 border-amber-500/40'}`} title={title} data-testid="topbar-army">
+      ⚔ {m.raised}/{m.available}{m.hired ? `+${m.hired}` : ''}{m.allies ? ` · allies ${m.allies}` : ''} · vs {enemy}
+    </button>
+  );
+}
 
 /** The era with the families, worst first ("Era: Cold war with the Kessler family"): a tap opens the Intrigue board. */
 function EraChip({ s }: { s: GameState }) {
@@ -250,6 +265,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           })}
           <Num v={s.favors} reasons={[]} term="favors"><Chip label="Favors" value={`${s.favors}`} /></Num>
           <EraChip s={s} />
+          <ArmyChip s={s} />
         </div>
         <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
           <div className="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="topbar-date">

@@ -77,6 +77,7 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   paper: ['paper.ts', 'PaperAction', 'op'],
   work: ['bizRacket.ts', 'WorkAction', 'op'],
   intrigue: ['intrigueState.ts', 'IntrigueAction', 'op'],
+  army: ['armyState.ts', 'ArmyAction', 'op'],
   protect: ['protect.ts', 'ProtectAction', 'op'],
   women: ['women.ts', 'WomenAction', 'op'],
 };
