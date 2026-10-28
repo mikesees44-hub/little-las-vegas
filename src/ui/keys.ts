@@ -102,3 +102,32 @@ export function useEscape(active: boolean, fn: () => void): void {
   ref.current = fn;
   useEffect(() => (active ? onEscape(() => ref.current()) : undefined), [active]);
 }
+
+/* ---- Number keys on choice cards ---- */
+
+/**
+ * Hook: while `active`, the number keys 1…9 pick the n-th choice (`pick(i)`, 0-based) when
+ * there is one. Typing wins (no digits taken from a field), a held key is one press.
+ * Only the surface on top should be active (a modal's choices).
+ */
+export function useNumberKeys(active: boolean, count: number, pick: (i: number) => void): void {
+  const ref = useRef(pick);
+  ref.current = pick;
+  useEffect(() => {
+    if (!active || count <= 0 || typeof window === 'undefined') return;
+    const onKey = (e: KeyboardEvent) => {
+      if (shortcutBlocked(e)) return;
+      const n = numberKey(e.key);
+      if (n === undefined || n >= count) return;
+      e.preventDefault();
+      ref.current(n);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [active, count]);
+}
+
+/** "1" … "9" → 0 … 8 (anything else: undefined). */
+export function numberKey(key: string): number | undefined {
+  return /^[1-9]$/.test(key) ? Number(key) - 1 : undefined;
+}

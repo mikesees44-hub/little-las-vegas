@@ -9,6 +9,7 @@ import type { EventInstance, GameState } from '../../engine/types';
 import { Chips } from './Chips';
 import { Face } from './People';
 import { Modal } from './Modal';
+import { useNumberKeys } from '../keys';
 
 export function EventModal({ s, ev, index, total, selected, onChoose, onClose }: {
   s: GameState;
@@ -25,6 +26,8 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
   const advice = compareChoices(s, ev.choices, prio);
   const dflt = ev.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev.choices[0];
   const pickPrio = (p: Priority | undefined) => { setPrio(p); setSettings({ priority: p }); };
+  // Number keys pick a choice (1 = the first card).
+  useNumberKeys(true, ev.choices.length, (i) => { const c = ev.choices[i]; if (c && !c.disabledReason) onChoose(c.id); });
   return (
     <Modal onClose={onClose}>
       <div className="p-4 sm:p-6">
@@ -71,7 +74,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
                 data-testid="event-choice"
               >
                 <button type="button" disabled={!!c.disabledReason} onClick={() => onChoose(c.id)} className="w-full text-left px-3 pt-2.5 pb-1 disabled:cursor-not-allowed">
-                  <div className="font-semibold text-stone-100">{c.label}</div>
+                  <div className="font-semibold text-stone-100">{i < 9 && <kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] font-normal text-stone-400" title={`Press ${i + 1}`} data-testid="choice-key">{i + 1}</kbd>}{c.label}</div>
                   {c.detail && <div className="text-xs text-stone-400 mt-0.5">{c.detail}</div>}
                   <Chips s={s} effects={c.effects} />
                   {recurringOfAll(s, c.effects).map((r, j) => <div key={j} className="text-[11px] text-amber-200 mt-1" data-testid="recurring-note">↻ {r.text}</div>)}

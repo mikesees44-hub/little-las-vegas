@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameState } from '../../engine/types';
+import { GoalMenu } from '../plans/GoalMenu';
 import { FIND_KIND_LABEL, findAll, type FindResult } from './find';
 
 const ICON = { do: '✦', screen: '▤', person: '☺', place: '⌖' } as const;
@@ -34,7 +35,7 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-1.5" role="listbox">
           {q.trim().length < 2 ? (
-            <p className="px-2 py-3 text-xs text-stone-400">Try <span className="text-stone-200">“lend”</span>, <span className="text-stone-200">“gift”</span>, <span className="text-stone-200">“council”</span>, a name, or a street. Ctrl+K or / opens this anywhere.</p>
+            <GoalMenu s={s} open={open} onPick={onPick} />
           ) : !hits.length ? (
             <p className="px-2 py-3 text-xs text-stone-400">Nothing by that name. Try another word.</p>
           ) : hits.map((r, i) => {

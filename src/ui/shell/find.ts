@@ -53,10 +53,7 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
   for (const [i, e] of ACTION_ENTRIES.entries()) {
     const sc = score(words, e.label, e.words);
     if (!sc) continue;
-    const at = e.at.find((a) => !AT_LABEL[a] && open(a)) ?? e.at[0];
-    const where = AT_LABEL[at] ? AT_LABEL[at] : placeLabel(at);
-    const go: FindGo = at === 'person' ? { to: 'person-hint' } : at === 'office' || at === 'event' ? { to: 'office' } : at === 'map' ? { to: 'map' } : at === 'place' ? { to: 'route', key: 'you.walk' } : { to: 'route', key: at };
-    out.push({ kind: 'do', id: `do:${i}`, title: e.label, sub: `Where: ${where}${e.at.length > 1 ? ` · also ${e.at.filter((a) => a !== at).map((a) => AT_LABEL[a] ?? placeLabel(a)).join(', ')}` : ''}`, go, score: sc + 1 });
+    out.push(entryResult(i, open, sc + 1));
   }
 
   // Screens: every place and every view.
@@ -107,6 +104,15 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
   // Best first within each kind, a few of each kind.
   const kinds: FindKind[] = ['do', 'screen', 'person', 'place'];
   return kinds.flatMap((k) => out.filter((r) => r.kind === k).sort((a, b) => b.score - a.score).slice(0, limit));
+}
+
+/** A thing to do (the registry's i-th entry) as a Find result: where it is done, and the way there. */
+export function entryResult(i: number, open: (key: string) => boolean = () => true, sc = 1): FindResult {
+  const e = ACTION_ENTRIES[i];
+  const at = e.at.find((a) => !AT_LABEL[a] && open(a)) ?? e.at[0];
+  const where = AT_LABEL[at] ? AT_LABEL[at] : placeLabel(at);
+  const go: FindGo = at === 'person' ? { to: 'person-hint' } : at === 'office' || at === 'event' ? { to: 'office' } : at === 'map' ? { to: 'map' } : at === 'place' ? { to: 'route', key: 'you.walk' } : { to: 'route', key: at };
+  return { kind: 'do', id: `do:${i}`, title: e.label, sub: `Where: ${where}${e.at.length > 1 ? ` · also ${e.at.filter((a) => a !== at).map((a) => AT_LABEL[a] ?? placeLabel(a)).join(', ')}` : ''}`, go, score: sc };
 }
 
 /** "What you own › Real estate (Rackets & Businesses)" for a registry key. */
