@@ -73,6 +73,7 @@ import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
 import { bondsWeek } from './bonds';
 import { spendWeek } from './spend';
+import { workWeek } from './bizRacket';
 import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
@@ -360,6 +361,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     nightlifeWeek(ctx);
     bondsWeek(ctx);
     spendWeek(ctx);
+    workWeek(ctx);
     factionsWeek(ctx);
     const intel = revealIntel(ctx);
     if (intel) s.eventQueue.push(intel);

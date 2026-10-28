@@ -154,7 +154,7 @@ export function WalkSpotCard({ s, h, it, mood, here, onClose, onNpc, onTram, zon
           </ul>
         </div>
       )}
-      <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? zone} onGo={() => shell.go('holdings.hub')} />
+      <StartHereButton s={s} place={lot?.zone ?? (it?.biz?.districtId as string | undefined) ?? zone} lot={lot} biz={mine ? it?.biz : undefined} onGo={() => shell.go('holdings.hub')} />
       {/* This place: every verb it offers, the same on every card (PlaceVerbs). */}
       <PlaceVerbs s={s} lot={lot} biz={mine ? it?.biz : undefined}
         on={{ goIn: it ? () => setInside(true) : undefined, meeting: () => setMeet((x) => !x) }}

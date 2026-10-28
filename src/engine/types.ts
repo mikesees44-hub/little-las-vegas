@@ -957,6 +957,8 @@ export interface GameState {
   dev?: import('./devState').DevState;
   /** The town papers: the Daily Tide and the Weekly Leader, their archive, the boss's ads, plants and suits (paper.ts; optional, made by the weekly update). */
   paper?: import('./paper').PaperState;
+  /** Work this place (bizRacket.ts): the businesses you work, their owners' fear and stance, what you run there. */
+  work?: import('./bizRacket').WorkState;
 }
 
 export interface PlayerChoices {
@@ -1050,6 +1052,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'nyc'; op: import('./nyc').NycAction }
   /** The town papers (paper.ts): plant or spike a story, run an ad, buy the paper, sue it. */
   | { kind: 'paper'; op: import('./paper').PaperAction }
+  /** Work this place (bizRacket.ts): protection, a skim, the back door, the owner's debts; putting him out of business. */
+  | { kind: 'work'; op: import('./bizRacket').WorkAction }
 );
 
 export type InteractionId =

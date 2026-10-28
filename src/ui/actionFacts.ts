@@ -1,3 +1,4 @@
+import { placeById } from '../engine/bizRacket';
 import { previewAction, VIA_INFO, type ActionPreview } from '../engine/actions';
 import { explainAction } from '../engine/advice';
 import { CATALOG } from '../engine/catalog';
@@ -94,6 +95,7 @@ function actorOf(s: GameState, a: PlayerAction): string {
   switch (a.kind) {
     case 'scheme': return a.agents.map((id) => first(s, id) ?? '?').join(' and ').replace(/^yourself$/, 'You');
     case 'dirty': return a.op.who === s.playerId ? 'You, personally' : first(s, a.op.who) ?? 'One of your men';
+    case 'work': return a.op.op === 'drop' ? 'You' : a.op.who === s.playerId ? 'You, personally' : first(s, a.op.who) ?? 'One of your men';
     case 'order': return a.via === 'direct' ? 'You, personally' : VIA_INFO[a.via].name.replace(/^Through /, 'Your ').replace(/^Your the /, 'The ');
     case 'econ':
       if (a.op.type === 'racket' && a.op.cmd.c === 'start') return a.op.cmd.runner ? `${first(s, a.op.cmd.runner)} runs it` : 'The best free man runs it';
@@ -114,6 +116,7 @@ function targetOfAction(s: GameState, a: PlayerAction): string | undefined {
     case 'buyBusiness': return `${CATALOG[a.biz].name} in ${s.districts.find((d) => d.id === a.district)?.name ?? a.district}`;
     case 'pushDistrict': return s.districts.find((d) => d.id === a.district)?.name;
     case 'dirty': return targetName(s, a.op.job, a.op.target) ?? JOBS_BY_ID[a.op.job]?.title;
+    case 'work': return placeById(s, a.op.place)?.name;
     case 'econ':
       if (a.op.type === 'racket' && a.op.cmd.c === 'start') { const cmd = a.op.cmd; return `${CATALOG[cmd.kind].name}${cmd.district ? ` in ${s.districts.find((d) => d.id === cmd.district)?.name}` : ''}`; }
       return undefined;
