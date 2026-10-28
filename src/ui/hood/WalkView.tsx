@@ -1,3 +1,4 @@
+import { sideOf } from '../../engine/sides';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { player } from '../../engine/characters';
 import { placeAll } from '../../engine/hoodGeo';
@@ -69,7 +70,6 @@ const BossToken = memo(function BossToken({ s }: { s: GameState }) {
   );
 });
 
-const ROLE_COLOR: Record<WalkNpc['role'], string> = { capo: '#ecd38f', manager: '#ecd38f', crew: '#c49a3a', rival: '#e2563d', ear: '#ff9ec7' };
 
 /**
  * Walking the town: the Boardwalk at Hunt's Pier (walkable, over the aerial)
@@ -328,15 +328,15 @@ function HuntsWalk({ s, onClose, onStretch }: { s: GameState; onClose: () => voi
               })}
             </div>
             {/* 3. Who's around. */}
-            {npcs.map((n) => (
-              <button key={n.charId} type="button" data-testid="walk-npc" data-char={n.charId} className="absolute" title={`${n.name}: ${n.doing}`}
+            {npcs.map((n) => { const sd = sideOf(s, n.charId); return (
+              <button key={n.charId} type="button" data-testid="walk-npc" data-char={n.charId} data-side={sd.kind} className="absolute" title={`${n.name} (${sd.full}): ${n.doing}`}
                 style={{ left: n.pos[0], top: n.pos[1], transform: `translate(-50%, -100%) scale(${k * 0.8})`, transformOrigin: '50% 100%' }}
                 onClick={(e) => { e.stopPropagation(); if (pz.wasDrag()) return; openNpc(n); }}>
-                <span className="block h-4 w-4 rounded-full border-2 shadow" style={{ borderColor: ROLE_COLOR[n.role], background: FACTION_TINT[n.faction as never] ?? '#2e2a26' }} />
+                <span className="flex h-4 w-4 items-center justify-center rounded-full border-2 text-[8px] font-bold leading-none shadow" style={{ borderColor: sd.color, background: FACTION_TINT[n.faction as never] ?? '#2e2a26', color: sd.color }} aria-label={sd.label}>{sd.emblem}</span>
                 <span className="mx-auto block h-1.5 w-1 bg-black/50" />
-                {(names || nearNpc?.charId === n.charId) && <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded bg-[#1b1030]/90 px-1.5 text-[9px] font-semibold text-[#ffd1e6]">{n.name}</span>}
+                {(names || nearNpc?.charId === n.charId) && <span className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded bg-[#1b1030]/90 px-1.5 text-[9px] font-semibold text-[#ffd1e6]">{n.name} <span style={{ color: sd.color }}>{sd.emblem} {sd.short}</span></span>}
               </button>
-            ))}
+            ); })}
             {/* 4. The boss. */}
             <div ref={token} className="pointer-events-none absolute left-0 top-0" data-testid="walk-boss" style={{ transform: `translate(${SPAWN[0]}px, ${SPAWN[1]}px)` }}>
               <div style={{ transform: `translate(-50%, -100%) scale(${k}) scaleX(${face})`, transformOrigin: '50% 100%' }} className={walking ? 'hv-bounce' : undefined}>

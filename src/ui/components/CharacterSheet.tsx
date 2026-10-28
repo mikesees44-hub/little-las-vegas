@@ -19,6 +19,8 @@ import { PoliticsSection } from '../sheet/PoliticsSection';
 import { ConnectionsSection } from '../ears/Connections';
 import { ActionCard } from './Orders';
 import { CharLink, Face, FACTION_TINT, TraitIcons } from './People';
+import { RelationChip, SideBadge, SideChip } from './Side';
+import { sideOf } from '../../engine/sides';
 import { DynastyFacts } from '../family/bits';
 import { FamilySection } from '../houses/FamilySection';
 import { HouseLine } from '../houses/HouseLine';
@@ -72,15 +74,23 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
   const secrets = knownSecrets(s, c.id);
   const hooks = s.hooks.filter((h) => h.holder === 'player' && h.targetId === c.id);
   const showsLife = (c.faction === 'player' || !!c.outside) && !isBoss;
+  const side = sideOf(s, c.id);
 
   return (
     <SheetFrame onClose={onClose} embedded={embedded}>
       <div className="p-4 sm:p-5" data-testid="character-sheet">
         <div className="flex justify-between items-start gap-3">
           <div className="flex gap-3 min-w-0">
-            <Portrait c={c} seed={s.seed} date={s.date} size={104} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && !isBoss ? total : undefined} />
+            <span className="relative shrink-0 self-start rounded-md" style={{ outline: `3px solid ${side.color}`, outlineOffset: '-1px' }}>
+              <Portrait c={c} seed={s.seed} date={s.date} size={104} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && !isBoss ? total : undefined} />
+              <SideBadge side={side} size={104} />
+            </span>
             <div className="min-w-0">
               <h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2>
+              <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="sheet-side">
+                <SideChip side={side} full />
+                {!isBoss && <RelationChip relation={side.relation} />}
+              </div>
               {c.maidenName && <div className="text-xs text-stone-500">née {c.maidenName}</div>}
               <HouseLine s={s} id={c.id} />
               <div className="text-sm text-stone-300">

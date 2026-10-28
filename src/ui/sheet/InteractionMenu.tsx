@@ -19,6 +19,8 @@ import { DatingSection } from '../dating/DatingPanel';
 import { DirtyOnPerson } from '../econ/DirtyWork';
 import { quickActionsFor } from './QuickActions';
 import { ConnectionsList } from '../ears/Connections';
+import { RelationChip, SideChip } from '../components/Side';
+import { sideOf } from '../../engine/sides';
 
 /** What you can do now first; what is blocked (with its reason) after. */
 function sortItems(s: GameState, items: MenuItem[]): MenuItem[] {
@@ -132,7 +134,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
   return (
     <section className="mt-4" data-testid="interaction-menu">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="panel-title text-base">{c.id === s.playerId ? 'Your own business' : `Deal with ${c.firstName}`}</div>
+        <div className="panel-title text-base flex flex-wrap items-center gap-1.5">{c.id === s.playerId ? 'Your own business' : `Deal with ${c.firstName}`}{c.id !== s.playerId && <><SideChip s={s} id={c.id} /><RelationChip relation={sideOf(s, c.id).relation} /></>}</div>
         <span className="text-[11px] text-stone-500">{total} things you can do · carried out when the week turns</span>
       </div>
       {total > 6 && (
@@ -180,7 +182,10 @@ export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; 
     <div className="fixed inset-0 z-[1180] bg-black/40 sm:bg-transparent" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} data-testid="context-menu-backdrop">
       <div ref={ref} className="absolute panel border-gold-600/60 p-3 overflow-y-auto shadow-2xl shadow-black/80" style={{ left, top, width, maxHeight: h - top - 8 }} onClick={(e) => e.stopPropagation()} data-testid="context-menu">
         <div className="flex items-baseline justify-between gap-2">
-          <div className="font-display text-lg text-gold-400 truncate">{displayName(c)}</div>
+          <div className="min-w-0">
+            <div className="font-display text-lg text-gold-400 truncate">{displayName(c)}</div>
+            {c.id !== s.playerId && <SideChip s={s} id={c.id} full />}
+          </div>
           <div className="flex gap-1 shrink-0">
             <button type="button" className="btn-ghost text-xs py-0.5" onClick={() => { onClose(); open(c.id); }}>Open sheet</button>
             <button type="button" className="btn-ghost text-xs py-0.5" onClick={onClose} aria-label="Close">×</button>

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameState } from '../../engine/types';
+import { SideChip, SideFilterBar } from '../components/Side';
+import { sideMatches, type SideFilter } from '../../engine/sides';
 import { GoalMenu } from '../plans/GoalMenu';
 import { FIND_KIND_LABEL, findAll, type FindResult } from './find';
 
@@ -13,7 +15,8 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
   const [q, setQ] = useState('');
   const [sel, setSel] = useState(0);
   const input = useRef<HTMLInputElement>(null);
-  const hits = useMemo(() => findAll(s, q, { open }), [s, q, open]);
+  const [who, setWho] = useState<SideFilter>('all');
+  const hits = useMemo(() => findAll(s, q, { open }).filter((r) => r.kind !== 'person' || !r.side || sideMatches(r.side, who)), [s, q, open, who]);
   useEffect(() => { input.current?.focus(); }, []);
   useEffect(() => setSel(0), [q]);
   const pick = (r?: FindResult) => { if (r) onPick(r); };
@@ -31,6 +34,7 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
           <span className="text-gold-400" aria-hidden>⌕</span>
           <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} placeholder="Find a person, a place, a screen, or what you want to do…"
             className="min-w-0 flex-1 bg-transparent text-sm text-stone-100 outline-none placeholder:text-stone-500" aria-label="Find" data-testid="find-input" />
+          {q.trim().length >= 2 && <SideFilterBar value={who} onChange={setWho} />}
           <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={onClose}>Esc</button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-1.5" role="listbox">
@@ -48,7 +52,7 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
                   className={`flex w-full items-start gap-2 rounded px-2 py-1.5 text-left ${i === sel ? 'bg-gold-500/15' : 'hover:bg-noir-800'}`}>
                   <span className="mt-0.5 w-4 shrink-0 text-center text-gold-500" aria-hidden>{ICON[r.kind]}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm text-stone-100">{r.title}</span>
+                    <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-sm text-stone-100">{r.title}</span>{r.side && <SideChip side={r.side} />}</span>
                     <span className="block truncate text-[11px] text-stone-500">{r.sub}</span>
                   </span>
                 </button>

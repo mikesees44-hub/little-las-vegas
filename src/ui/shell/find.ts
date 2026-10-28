@@ -1,3 +1,4 @@
+import { sideOf, type Side } from '../../engine/sides';
 import { displayName } from '../../engine/characters';
 import { lotName } from '../../engine/property';
 import { FACTION_NAMES } from '../../engine/world';
@@ -27,6 +28,8 @@ export interface FindResult {
   sub: string;
   go: FindGo;
   score: number;
+  /** A person result: whose side he is on (sides.ts). */
+  side?: Side;
 }
 
 export const FIND_KIND_LABEL: Record<FindKind, string> = { do: 'Things to do', screen: 'Screens', person: 'People', place: 'Places' };
@@ -76,8 +79,9 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
     const sc = score(words, name, `${c.firstName} ${c.lastName} ${c.nickname ?? ''}`);
     if (!sc) continue;
     people++;
-    const who = c.id === s.playerId ? 'You' : `${c.rank !== 'civilian' ? c.rank[0].toUpperCase() + c.rank.slice(1) : c.office ?? 'Townsperson'} · ${FACTION_NAMES[c.faction] ?? ''}`;
-    out.push({ kind: 'person', id: `person:${c.id}`, title: name, sub: who, go: { to: 'sheet', id: c.id }, score: sc + (c.faction === 'player' ? 1 : 0) });
+    const side = sideOf(s, c.id);
+    const who = c.id === s.playerId ? 'You' : `${c.rank !== 'civilian' ? c.rank[0].toUpperCase() + c.rank.slice(1) : c.office ?? 'Townsperson'} · ${side.full}`;
+    out.push({ kind: 'person', id: `person:${c.id}`, title: name, sub: who, go: { to: 'sheet', id: c.id }, score: sc + (side.kind === 'yours' ? 1 : 0), side: c.id === s.playerId ? undefined : side });
   }
 
   // Places: districts, businesses, lots.

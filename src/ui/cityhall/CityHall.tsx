@@ -1,3 +1,5 @@
+import { SideBadge } from '../components/Side';
+import { sideOfPol } from '../../engine/sides';
 import { useMemo, useState } from 'react';
 import { PEOPLE_BY_ID } from '../../worldpack';
 import { controlBand, controlBreakdown, controlIndex } from '../../engine/polIntegrity';
@@ -30,9 +32,11 @@ export function sitter(s: GameState, p: PolPerson): Character {
 function Face({ s, p, size = 40, onOpen }: { s: GameState; p?: PolPerson; size?: number; onOpen?: (id: string) => void }) {
   if (!p) return <div className="shrink-0 rounded-md border border-dashed border-noir-600 bg-noir-800/50" style={{ width: size, height: size * 1.25 }} />;
   const c = sitter(s, p);
+  const side = sideOfPol(s, p.id);
   return (
-    <button type="button" className="shrink-0 rounded-md hover:ring-2 hover:ring-gold-400" title={nameOf(s, p)} onClick={() => onOpen?.(p.id)}>
+    <button type="button" className="relative shrink-0 rounded-md hover:ring-2 hover:ring-gold-400" title={`${nameOf(s, p)} (${side.full})`} onClick={() => onOpen?.(p.id)} style={{ outline: `2px solid ${side.color}`, outlineOffset: '-1px' }}>
       <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} />
+      {size >= 28 && <SideBadge side={side} size={size} />}
     </button>
   );
 }

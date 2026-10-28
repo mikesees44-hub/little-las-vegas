@@ -5,6 +5,8 @@ import type { GameState } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
 import { FACTION_TINT } from '../components/People';
 import { Portrait } from '../portrait/Portrait';
+import { RelationChip, SideBadge, SideChip } from '../components/Side';
+import { sideOf } from '../../engine/sides';
 import { eveningKindOf } from '../../engine/evening';
 import { adultOn } from '../../engine/datingState';
 import { boldEligible } from '../../engine/quickies';
@@ -44,18 +46,21 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
   const c = s.characters[id];
   if (!v || !c) return <p className="text-xs text-stone-500" data-testid="calling-card-none">No calling card: adults only.</p>;
   const acts = actions ? nightActionsFor(s, id) : [];
+  const side = sideOf(s, id);
   return (
     <article className="space-y-2.5" data-testid="calling-card" data-id={id}>
       {/* The card itself: an engraved little rectangle, gold rule, the face. */}
       <div className="relative rounded-lg border border-gold-600/50 bg-gradient-to-br from-noir-800 via-noir-900 to-noir-950 p-3 shadow-[inset_0_0_0_3px_rgba(0,0,0,0.35)]">
         <div className="pointer-events-none absolute inset-1.5 rounded-md border border-gold-500/20" />
         <div className="relative flex gap-3">
-          <div className="shrink-0 rounded-md ring-1 ring-gold-500/40">
+          <div className="relative shrink-0 self-start rounded-md" style={{ outline: `2px solid ${side.color}`, outlineOffset: '-1px' }}>
             <Portrait c={c} seed={s.seed} date={s.date} size={96} tint={FACTION_TINT[c.faction]} />
+            <SideBadge side={side} size={96} />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="font-display text-xl leading-tight text-gold-300 break-words" data-testid="calling-card-name">{v.name}</h3>
             <div className="text-[12px] text-stone-300">{v.age} · {v.role}</div>
+            {c.id !== s.playerId && <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="calling-card-side"><SideChip side={side} full /><RelationChip relation={side.relation} /></div>}
             {v.place && <div className="text-[11px] text-stone-500 truncate">{v.place}</div>}
             <div className="mt-1.5 flex flex-wrap gap-1" data-testid="calling-card-looks">
               {v.looks.chips.map((ch) => (
