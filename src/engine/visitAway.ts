@@ -17,7 +17,7 @@ import type { GameState, PlayerAction } from './types';
 
 const HOME_ONLY: ReadonlySet<PlayerAction['kind']> = new Set<PlayerAction['kind']>([
   'buyBusiness', 'sellBusiness', 'lend', 'findFrontMan', 'charterBank', 'casino', 'interact', 'pushDistrict', 'hire',
-  'dynasty', 'officeHours', 'econ', 'hood', 'living', 'talk', 'pol', 'ears', 'dating',
+  'dynasty', 'officeHours', 'econ', 'hood', 'living', 'talk', 'pol', 'ears', 'dating', 'bond',
 ]);
 
 /** Is this kind of order given in person at home? (Direct orders are; orders through the chain are not.) */

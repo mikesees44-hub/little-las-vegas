@@ -51,6 +51,7 @@ import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
 import { NightlifePanel } from '../nightlife/NightlifePanel';
 import { DatingPanel } from '../dating/DatingPanel';
+import { YourPeople } from '../bonds/YourPeople';
 import { AttachmentBoard } from '../ears/Connections';
 import type { PanelId, Route } from './routes';
 
@@ -108,6 +109,7 @@ export const PANELS: PanelDef[] = [
     blurb: 'The boss himself: his sheet, how he rules, who comes to see him.',
     sections: [
       { id: 'character', label: 'Character', render: (s) => stack(<PowerPart key="st" s={s} part="station" />, <CharacterSheet key="cs" s={s} id={s.playerId} onClose={() => {}} embedded />) },
+      { id: 'people', label: 'Your people', blurb: 'Your wife, your goomars, your kids, your friends, your crew and your enemies: how they feel about you, what they remember, what they want right now.', render: (s) => <YourPeople s={s} /> },
       { id: 'dating', label: 'Relationships & Dating', blurb: 'People you know, dates and relationships, adult services with their prices, and family & consequences. She always decides.', render: (s) => <DatingPanel s={s} /> },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
       { id: 'possessions', label: 'The Good Life', blurb: 'Homes, cars, the boat and the toys, paid from your pocket. Every one costs upkeep, and the feds count what the books cannot explain.', render: (s) => <GoodLifePanel s={s} /> },

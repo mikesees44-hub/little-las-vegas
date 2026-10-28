@@ -122,7 +122,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   you: [
     { title: 'The boss', items: [
       { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
-      { keys: ['you.dating'], icon: '♥', label: 'Relationships & Dating', sub: 'People you know, dates and relationships, adult services (with prices), pregnancies and children. She always decides.' },
+      { keys: ['you.people', 'you.dating'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel, remember, want. Dates and adult services.', views: ['Your people', 'Relationships & Dating'] },
       { keys: ['you.lifestyle', 'you.possessions'], icon: '♠', label: 'How you live', sub: 'Your style as boss and its perks, and the good life: homes, cars, the boat.', views: ['How you rule', 'The good life'] },
       { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
       { keys: ['ops.travel'], icon: '✈', label: 'Trips & envoys', sub: 'Your trips, and the men you sent to other cities.' },
