@@ -9,6 +9,7 @@ import { ActionCard } from '../components/Orders';
 import { StageBar } from './Holdings';
 import { PROP_GROUPS, groupOfLot, type PropGroup } from '../../engine/propertyGroups';
 import { lotProgress, lotSvg } from '../map/lotIcons';
+import { kindOf, listingCounts, newListings, seasonPrice, WHY_LABEL, type MarketKind } from '../../engine/market';
 
 /** One glyph per construction stage (the same marks the map uses). */
 export const STAGE_GLYPH: Record<StageId, string> = {
@@ -31,6 +32,7 @@ export function RealEstate({ s, zone: initial }: { s: GameState; zone?: ZoneId }
   const rep = zoneRep(s, zone);
   return (
     <div className="space-y-4" data-testid="real-estate">
+      <NewListings s={s} onZone={setZone} />
       <div className="flex flex-wrap gap-1">
         {ZONES.map((x) => {
           const sale = lotsIn(s, x.id).filter((l) => l.status === 'sale' || l.status === 'lease').length;
@@ -124,3 +126,46 @@ function LotCard({ s, l }: { s: GameState; l: Lot }) {
   );
 }
 
+
+const KIND_WORD: Record<MarketKind, string> = { homeLand: 'House lot', house: 'House', land: 'Lot', building: 'Building' };
+
+/** What came on the market in the week just played (or, when nothing did, the last month), and how much is for sale. */
+export function NewListings({ s, onZone }: { s: GameState; onZone?: (z: ZoneId) => void }) {
+  const [all, setAll] = useState(false);
+  const week = newListings(s, 1);
+  const recent = week.length ? week : newListings(s, 4);
+  const shown = all ? recent : recent.slice(0, 6);
+  const c = listingCounts(s);
+  const m = s.date.m;
+  const mood = seasonPrice(m) >= 1.05 ? 'Spring market: plenty listed, and dear.' : seasonPrice(m) <= 0.9 ? 'Winter: few listings, and the prices are soft.' : 'An ordinary month on the market.';
+  return (
+    <section className="rounded-md border border-emerald-800/60 bg-emerald-950/20 p-3 text-xs" data-testid="new-listings">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div className="font-display text-base text-emerald-200">{week.length ? `New listings this week (${week.length})` : 'Nothing new this week'}</div>
+        <div className="text-stone-400" data-testid="listing-counts">For sale: {c.homeLand} house lots · {c.house} houses · {c.land} lots · {c.building} buildings</div>
+      </div>
+      <div className="text-stone-500">{mood}{!week.length && recent.length ? ' Listed in the last month:' : ''}</div>
+      {shown.length > 0 && (
+        <ul className="mt-2 grid gap-1.5 md:grid-cols-2">
+          {shown.map(({ lot: l, l: why }) => (
+            <li key={l.id} className="rounded border border-noir-700 bg-noir-900/50 p-2" data-testid="new-listing">
+              <div className="flex justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="mr-1 rounded bg-emerald-800/60 px-1 py-0.5 text-[10px] font-bold text-emerald-100">{WHY_LABEL[why.why]}</span>
+                  <span className="text-stone-100 font-semibold">{lotName(l)}</span>
+                  <div className="text-stone-500">{KIND_WORD[kindOf(l)]} · <button type="button" className="underline decoration-dotted hover:text-gold-300" onClick={() => onZone?.(l.zone)}>{ZONES_BY_ID[l.zone]?.name ?? l.zone}</button>{l.address !== lotName(l) ? ` · ${l.address}` : ''}</div>
+                </div>
+                <div className="text-right tabular-nums shrink-0">
+                  <div className="text-stone-200">{fmt$(l.price)}</div>
+                  {why.ask && why.ask > l.price && <div className="text-stone-500 line-through">{fmt$(why.ask)}</div>}
+                </div>
+              </div>
+              <div className="mt-1"><ActionCard s={s} action={{ kind: 'econ', op: { type: 'buyLot', lotId: l.id } }} compact /></div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {recent.length > 6 && <button type="button" className="mt-1 text-emerald-300 hover:text-gold-300" onClick={() => setAll((x) => !x)}>{all ? 'Fewer' : `All ${recent.length}`}</button>}
+    </section>
+  );
+}

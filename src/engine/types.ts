@@ -901,6 +901,8 @@ export interface GameState {
   living?: import('./livingState').LivingState;
   /** The town's houses: families saving, buying lots, building, moving in (housing.ts; optional for old saves). */
   housing?: import('./housing').HousingState;
+  /** The real-estate market's listings (market.ts): when each came up and why. Made on first use. */
+  market?: import('./market').MarketState;
   /** The Family's loan desk: the bank's or the book's lending policy, applicants, defaults (familyBank.ts; optional for old saves). */
   fbank?: import('./familyBank').FbState;
   /** Talks with people, pacts with families, the families' own diplomacy (talks.ts; optional for old saves). */

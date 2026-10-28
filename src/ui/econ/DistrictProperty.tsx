@@ -5,6 +5,7 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
 import { StreetStrip } from './RealEstate';
+import { newListings } from '../../engine/market';
 
 /** The district panel's slice of the property market: the street, and what is for sale here right now. */
 export function DistrictProperty({ s, district }: { s: GameState; district: string }) {
@@ -16,6 +17,7 @@ export function DistrictProperty({ s, district }: { s: GameState; district: stri
     <div data-testid="district-property">
       <div className="text-[10px] uppercase tracking-widest text-stone-500">Property on these streets</div>
       <StreetStrip s={s} lots={lots} />
+      {(() => { const n = newListings(s, 1).filter((x) => x.lot.zone === z.id).length; return n ? <div className="text-xs text-emerald-300" data-testid="district-new-listings">{n} new listing{n > 1 ? 's' : ''} here this week (Holdings › Property).</div> : null; })()}
       {open.length === 0 && <div className="text-xs text-stone-500">Nothing on the market here this month.</div>}
       <div className="grid gap-1.5">
         {open.map((l) => (
