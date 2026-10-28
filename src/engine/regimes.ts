@@ -12,6 +12,7 @@ import { chance, pick, randInt, weightedPick } from './rng';
 import { rivalCaps } from './rivals';
 import type { Character, GameState, RivalId } from './types';
 import { awayActMult, awayCapoBias } from './travel';
+import { finOf, note } from './crewFinance';
 
 
 /**
@@ -69,7 +70,9 @@ export function capoActs(ctx: Ctx, k: Character): string | undefined {
       const got = shiftInfluence(s, d.id, 'player', randInt(s, 2, 3));
       if (got <= 0) return undefined;
       // shiftInfluence takes from the rival proportionally; the capo pays his own men.
-      k.wealth = Math.max(0, k.wealth - 400);
+      const paid = Math.min(400, Math.max(0, k.wealth));
+      k.wealth -= paid;
+      { const f = finOf(s, k.id); if (f && paid > 0) note(f, s.week, `paid his crew to push into ${d.name}`, -paid, 1); }
       addOpinion(s, r.leaderId, s.playerId, `Your capo ${k.firstName} pushed into ${d.name}`, -3, 1);
       const text = `${nm} pushed his crew onto ${r.shortName}'s corners in ${d.name} on his own (+${got}%).`;
       addStory(s, k, `Pushed onto ${r.shortName}'s corners in ${d.name} without being asked.`);

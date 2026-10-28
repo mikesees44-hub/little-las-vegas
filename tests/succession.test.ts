@@ -221,7 +221,7 @@ describe('the Succession screen', () => {
     expect(html).toContain('data-testid="crew-support"');
     const sh = s.shadow!;
     // A decision the Don has not confirmed is never printed.
-    const hidden = sh.sessions.flatMap((x) => (donKnows(s, x.id) === 'confirmed' ? [] : x.petitions.map((p) => p.decision ?? ''))).filter((d) => d && !sh.sessions.some((y) => donKnows(s, y.id) === 'confirmed' && y.petitions.some((p) => p.decision === d)));
+    const hidden = sh.sessions.flatMap((x) => (donKnows(s, x.id) === 'confirmed' ? [] : x.petitions.map((p) => p.decision ?? ''))).filter((d) => d && !sh.sessions.some((y) => donKnows(s, y.id) === 'confirmed' && y.petitions.some((p) => p.decision?.includes(d))));
     expect(hidden.length).toBeGreaterThan(0);
     const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     for (const d of hidden) expect(html).not.toContain(esc(d));
