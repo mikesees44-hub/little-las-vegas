@@ -181,7 +181,8 @@ export function syncSkills(s: GameState, c: Character): void {
   // Old age takes from what he can do, not from what he learned: grow the learned skills.
   const base = skillBase(s, c);
   for (const sk of SKILLS) {
-    const target = mean(x.v, SKILL_FROM[sk]) + (x.off[sk] ?? 0);
+    // Skill points a man put in as he came up (crewXp.ts) stay put.
+    const target = mean(x.v, SKILL_FROM[sk]) + (x.off[sk] ?? 0) + 2 * (s.xp?.men[c.id]?.sk?.[sk] ?? 0);
     const d = target - base[sk];
     if (d >= 3) base[sk] = clamp(base[sk] + 1);
     else if (d <= -3) base[sk] = clamp(base[sk] - 1);

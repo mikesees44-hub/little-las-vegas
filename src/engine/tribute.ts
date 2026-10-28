@@ -1,3 +1,4 @@
+import { xpCornersMult, xpHustleMult } from './crewXp';
 import { steadyMult } from './earners';
 import { idleMen } from './business';
 import { isInSeason } from './calendar';
@@ -436,7 +437,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
   const hustleBy: Record<string, { n: number; paid: number }> = {};
   for (const c of idleMen(s)) {
     const craft = c.craft === 'earner' || c.craft === 'bookmaker' ? 1.2 : c.craft === 'collector' ? 1.1 : 1;
-    const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft * incomeBoost(s, 'hustle') * reach;
+    const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft * incomeBoost(s, 'hustle') * reach * xpHustleMult(s, c);
     c.lastEarn = Math.round(earned);
     const terms = memberTerms(s, c);
     const pol = c.policy ?? 'tax';
@@ -471,7 +472,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
     if (infl <= 0) continue;
     const skill = 0.85 + capo.attributes.business / 400;
     const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo) * steadyMult(s, capo.id));
-    const take = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach;
+    const take = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach * xpCornersMult(s, capo);
     const keep = capo.keep ?? 0.3;
     const owedTotal = take - take * keep;
     const cl = crewOf(capo.id);

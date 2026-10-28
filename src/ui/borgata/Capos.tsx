@@ -12,6 +12,7 @@ import { opinion } from '../../engine/relations';
 import { ageOn } from '../../engine/calendar';
 import type { Character, GameState, PlayerAction, Rank, Seat } from '../../engine/types';
 import { OpinionBadge } from '../components/CrewList';
+import { XpBadge } from './CrewXp';
 import { useOrders } from '../components/Orders';
 import { CharLink, Face, TraitIcons } from '../components/People';
 import { useClarity } from '../clarity/context';
@@ -85,6 +86,7 @@ export function CaposSection({ s }: { s: GameState }) {
               <TraitIcons c={c} />
             </div>
             <ContractStepper s={s} c={c} />
+            <XpBadge s={s} c={c} />
             <OpinionBadge v={opinion(s, c.id, s.playerId)} />
             <MoreButton id={c.id} category="business" />
           </div>
@@ -120,6 +122,7 @@ export function MenRoster({ s }: { s: GameState }) {
                   {(c.neglect ?? 0) >= 8 && <span className="text-amber-400"> · ignored {c.neglect} wks</span>}
                 </div>
               </div>
+              <XpBadge s={s} c={c} compact />
               <OpinionBadge v={opinion(s, c.id, s.playerId)} />
               <MoreButton id={c.id} category="business" />
             </li>

@@ -565,7 +565,9 @@ export type Effect =
   /** Nightlife: payroll, promises, the goomar, houses (nightlife.ts). */
   | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase)
   /** Your People: the deep relationships (bonds.ts). */
-  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase);
+  | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase)
+  /** Crew XP (crewXp.ts): a specialty picked, a word of recognition. */
+  | ({ type: 'crewxp'; op: import('./crewXp').XpOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -963,6 +965,8 @@ export interface GameState {
   paper?: import('./paper').PaperState;
   /** Work this place (bizRacket.ts): the businesses you work, their owners' fear and stance, what you run there. */
   work?: import('./bizRacket').WorkState;
+  /** Your men come up (crewXp.ts): XP, levels, specialties. Optional; made by the weekly update. */
+  xp?: import('./crewXp').XpState;
 }
 
 export interface PlayerChoices {

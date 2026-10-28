@@ -1,4 +1,5 @@
 import { perkMod } from './lifestyle';
+import { xpHustleMult } from './crewXp';
 import { idleMen } from './business';
 import { ageOn } from './calendar';
 import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player, rollTraits } from './characters';
@@ -56,7 +57,7 @@ export function crewHustle(ctx: Ctx, mult: number): number {
   const groups: Record<CrewPolicy, { n: number; take: number }> = { tax: { n: 0, take: 0 }, earn: { n: 0, take: 0 }, squeeze: { n: 0, take: 0 } };
   for (const c of men) {
     const craft = c.craft === 'earner' || c.craft === 'bookmaker' ? 1.2 : c.craft === 'collector' ? 1.1 : 1;
-    const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft;
+    const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft * xpHustleMult(s, c);
     c.lastEarn = Math.round(earned);
     const pol = c.policy ?? 'tax';
     const boss = earned * POLICY_TAKE[pol];

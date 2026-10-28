@@ -38,6 +38,7 @@ import { useState } from 'react';
 import { QuickActions } from '../sheet/QuickActions';
 import { AgingSection } from '../sheet/AgingSection';
 import { knownOld } from '../../engine/aging';
+import { XpBadge, XpSection } from '../borgata/CrewXp';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
 export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
@@ -112,6 +113,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
                 </div>
               )}
               <div className="mt-1.5"><TraitIcons c={c} labels /></div>
+              {c.alive && <div className="mt-1"><XpBadge s={s} c={c} /></div>}
             </div>
           </div>
           {!embedded && <button className="btn-ghost text-xs" onClick={onClose}>Close</button>}
@@ -139,6 +141,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
             <ul className="text-[11px] text-stone-400 space-y-0.5">{SKILLS.map((k) => <li key={k}><span className="text-stone-200">{SKILL_LABEL[k]} {c.attributes[k]}:</span> {SKILL_HELP[k]}</li>)}</ul>
             <div className="mt-1.5"><TraitIcons c={c} labels /></div>
             <ul className="text-[11px] text-stone-500">{c.traits.map((t) => <li key={t}><span className="text-stone-300">{t}:</span> {TRAIT_INFO[t]}</li>)}</ul>
+            <XpSection s={s} c={c} />
             <AgingSection s={s} c={c} />
           </section>
         )}

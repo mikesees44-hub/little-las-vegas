@@ -1,6 +1,7 @@
 import { isOperating } from './placeEligibility';
 import { isInSeason } from './calendar';
 import { devJobBonus } from './devState';
+import { dirtyXp, xpEvidenceMult, xpJobOdds, xpRatMult, xpTakeMult } from './crewXp';
 import { crewStrength } from './strength';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, isFree } from './characters';
@@ -380,6 +381,8 @@ export function jobOdds(s: GameState, job: DirtyJobId, whoId: string, target?: s
     reasons.push({ label: `His nerve (${nerveOf(c)})`, value: Math.round((nerveOf(c) - 50) * 0.15) });
     if (j.spec && c.specialty === j.spec) reasons.push({ label: `A ${j.spec}`, value: 12 });
     if (c.id === s.playerId) reasons.push({ label: 'You do it yourself', value: 5 });
+    // His level and his specialty (crewXp.ts).
+    reasons.push(...xpJobOdds(s, c, job, j.tile));
   }
   // Family development: cars for scores and loads, the crews' equipment for muscle.
   const wheels = j.tile === 'scores' || j.tile === 'goods' ? devJobBonus(s) : 0;
@@ -512,7 +515,8 @@ function ratChance(s: GameState, c: Character | undefined): number {
   if (hasTrait(c, 'Loyal-to-a-fault')) p = 0.02;
   if (hasTrait(c, 'Cowardly')) p += 0.1;
   if (s.edicts.omerta) p *= 0.6;
-  return Math.max(0.02, Math.min(0.6, p));
+  const jaw = xpRatMult(s, c);
+  return jaw < 1 ? Math.max(0.005, Math.min(0.6, p) * jaw) : Math.max(0.02, Math.min(0.6, p));
 }
 
 function heatWords(j: JobDef): string {
@@ -655,7 +659,7 @@ export function commitDirty(ctx: Ctx, a: DirtyAction): void {
   const pinched = !ok && rand(r) < j.arrest;
   const outcome: DirtyResult['outcome'] = ok ? (messy ? 'messy' : 'clean') : pinched ? 'pinched' : 'bust';
   const [lo, hi] = sum.take;
-  let take = ok && hi > 0 ? Math.round((lo + (hi - lo) * rand(r)) * (messy ? 0.7 : 1) / 10) * 10 : 0;
+  let take = ok && hi > 0 ? Math.round((lo + (hi - lo) * rand(r)) * (messy ? 0.7 : 1) * xpTakeMult(s, c) / 10) * 10 : 0;
   const fx: Effect[] = [];
   const heatMul = outcome === 'clean' ? 1 : outcome === 'messy' ? 1.6 : outcome === 'bust' ? 1.2 : 2;
   if (j.heat.local) fx.push({ type: 'heat', bar: 'local', amount: Math.round(j.heat.local * heatMul) });
@@ -681,7 +685,7 @@ export function commitDirty(ctx: Ctx, a: DirtyAction): void {
     if (outcome === 'clean') fx.push({ type: 'opinion', from: c.id, to: s.playerId, amount: 3, reason: 'Put me on a good score', decay: 1 });
     if (outcome === 'pinched') fx.push({ type: 'opinion', from: c.id, to: s.playerId, amount: -6, reason: 'Left holding the bag', decay: 1 });
   } else if (outcome === 'clean' && j.tile !== 'fixes') fx.push({ type: 'respect', amount: 1 });
-  if (outcome === 'messy' || outcome === 'pinched') fx.push({ type: 'evidence', charId: c.id, amount: outcome === 'pinched' ? Math.round(j.evidence * 1.5) : j.evidence });
+  if (outcome === 'messy' || outcome === 'pinched') fx.push({ type: 'evidence', charId: c.id, amount: Math.round((outcome === 'pinched' ? j.evidence * 1.5 : j.evidence) * xpEvidenceMult(s, c)) });
   if (boss && outcome === 'clean' && j.evidence) fx.push({ type: 'evidence', charId: c.id, amount: Math.round(j.evidence / 3) });
   if (outcome === 'pinched' && !boss) {
     const weeks = Math.round(4 + rand(r) * (j.heat.federal ? 14 : 8));
@@ -762,6 +766,8 @@ export function commitDirty(ctx: Ctx, a: DirtyAction): void {
   d.log.push({ week: s.week, job: a.job, who: c.id, ...(a.target ? { target: a.target } : {}), outcome, take, text, ...(rat ? { rat } : {}) });
   if (d.log.length > 12) d.log = d.log.slice(-12);
   d.stats.jobs++; d.stats[outcome]++; d.stats.take += take; if (rat) d.stats.rats++;
+  // He learns from it, whichever way it went (crewXp.ts).
+  dirtyXp(s, c.id, j.title, outcome, rat, j.tile === 'scores' && hi >= 5000);
 }
 
 /** The jobs whose results came in with the last week (for the panel). */
