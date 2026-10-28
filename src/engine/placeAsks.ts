@@ -260,7 +260,7 @@ function tenantsWeek(ctx: Ctx): void {
       }
     }
   }
-  s.flags.spotHeat = (s.flags.spotHeat ?? 0) + h;
+  s.flags.spotHeat = (s.flags.spotHeat ?? 0) + h / 3;
 }
 
 /** A month of a tenant: trouble comes (more with a claim on the place or a man with a bad name), and trouble left alone gets worse. */
