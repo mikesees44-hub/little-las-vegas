@@ -1,7 +1,7 @@
-import { todaysHeadline } from '../src/engine/paper';
 import { describe, expect, it } from 'vitest';
 import { previewAction } from '../src/engine/actions';
 import { advanceWeek } from '../src/engine/engine';
+import { todaysHeadline } from '../src/engine/paper';
 import { reconcile } from '../src/engine/ledger';
 import { newGame } from '../src/engine/newGame';
 import { PETITION_IDS, buildPetition } from '../src/engine/office';

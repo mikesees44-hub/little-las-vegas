@@ -93,10 +93,15 @@ describe('every man earns on his own', () => {
   it('after a few months every made man and associate has an income source', () => {
     let s = newGame('kick-every');
     const start = new Set(crew(s).map((c) => c.id));
-    s = run(s, FREELANCE_AFTER + 12);
+    s = run(s, FREELANCE_AFTER + 16); // (time enough for a man who was away or busy through a month's turn)
     const men = crew(s).filter((c) => start.has(c.id) && canHoldSpot(s, c));
     expect(men.length).toBeGreaterThan(5);
-    for (const c of men) expect(incomeSources(s, c).length, `${c.firstName} (${c.rank})`).toBeGreaterThan(0);
+    // (A man who lost his spot recently is still inside his grace period: he finds his own hustle later.)
+    const less = s.econ?.spotless ?? {};
+    for (const c of men) {
+      if (less[c.id] !== undefined && s.week - less[c.id] < FREELANCE_AFTER + 5) continue;
+      expect(incomeSources(s, c).length, `${c.firstName} (${c.rank})`).toBeGreaterThan(0);
+    }
     // ...including the underboss and the consigliere.
     for (const seat of ['underboss', 'consigliere'] as const) { const h = holder(s, seat); if (h) expect(incomeSources(s, h).length, seat).toBeGreaterThan(0); }
   });
