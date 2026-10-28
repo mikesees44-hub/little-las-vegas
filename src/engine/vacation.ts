@@ -10,6 +10,7 @@ import { TIER_INFO, type ActTag, type Dest } from './travelDests';
 import { liveTrips, type Trip } from './travelState';
 import { resolveTransport } from './transport';
 import { destOf, guestKind, journal, partyOf, T, tripEvent, tripLabel } from './trips';
+import { wildDay } from './vacPlanner';
 import type { Character, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -480,6 +481,9 @@ export function resolveVacDay(ctx: Ctx, t: Trip, day: number): EventInstance[] {
   const s = ctx.s;
   if (t.purpose !== 'vacation' || t.leaderId !== s.playerId || t.over) return [];
   for (const id of t.vac?.plan[day] ?? []) if (VAC[id as VacKind]) runAct(ctx, t, day, id as VacKind);
+  // The wife and the goomar on the same trip: a beat every day (vacPlanner.ts; off unless both came).
+  const w = wildDay(ctx, t, day);
+  if (w) note(t, day, `wild:${w.id}`, w.text, w.tone);
   const ev = awayBeat(ctx, t, day);
   return ev ? [ev] : [];
 }

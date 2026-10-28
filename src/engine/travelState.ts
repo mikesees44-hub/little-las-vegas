@@ -47,6 +47,8 @@ export interface TripPlan {
   departIn?: number;
   /** How exactly (transport.ts: the Caddy, the club car, Idlewild, a charter boat…); absent = the mode's usual way. */
   transport?: string;
+  /** The whole mob family along (vacPlanner.ts): up to MAX_ENTOURAGE guests, the crew come as guests not bodyguards. */
+  entourage?: boolean;
 }
 
 /** The boss's vacation, played day by day (vacation.ts): extra things to do on each day of the stay. */
@@ -55,6 +57,8 @@ export interface VacPlan {
   plan: string[][];
   /** What happened, per resolved activity (for the vacation screen). */
   done?: { day: number; act: string; text: string; tone?: 'good' | 'bad' | 'neutral' }[];
+  /** The wife and the goomar on the same vacation (vacPlanner.ts): the beats so far. */
+  wild?: number;
 }
 
 export interface JournalLine {
@@ -102,6 +106,8 @@ export interface Trip {
   transport?: string;
   /** The vacation played day by day (vacation.ts); absent until something is planned. */
   vac?: VacPlan;
+  /** Booked through the easy planner with the whole family along (vacPlanner.ts). */
+  entourage?: boolean;
 }
 
 export interface TripRecord {

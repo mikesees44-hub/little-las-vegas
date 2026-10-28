@@ -1,4 +1,5 @@
 import type { PerkKey } from './lifestyle';
+import { STORE_ITEMS, type StoreFields } from './storeData';
 import type { Attributes } from './types';
 
 /**
@@ -23,7 +24,9 @@ import type { Attributes } from './types';
  * Franklin Field), and no real person is a character.
  */
 
-export type SpendCat = 'cars' | 'boats' | 'style' | 'jewelry' | 'home' | 'staff' | 'society' | 'family' | 'vice' | 'power' | 'crew';
+export type SpendCat = 'cars' | 'boats' | 'style' | 'jewelry' | 'home' | 'staff' | 'society' | 'family' | 'vice' | 'power' | 'crew'
+  // The Store's own (storeData.ts).
+  | 'property' | 'biz' | 'racing' | 'equip' | 'armory' | 'invest' | 'services' | 'gifts';
 export type SpendGroup = 'church' | 'town' | 'society' | 'pols' | 'cops' | 'press' | 'philly' | 'labor';
 export type SpendKind = 'own' | 'svc' | 'once';
 /** Perk-style modifiers (read through lifestyle.perkMod) plus two of Spend's own: explainable income and an IRS shield (%). */
@@ -32,7 +35,7 @@ export type SpendMod = PerkKey | 'declared' | 'irsShield';
 export type SpendReq = 'spouse' | 'goomar' | 'daughter' | 'son16' | 'kid' | 'baby' | 'communion' | 'confirmation' | 'sixteen' | 'adultChild' | 'marriedChild' | 'parent' | 'fallen';
 export type GiftFor = 'wife' | 'goomar' | 'daughter' | 'son' | 'mother' | 'anyone';
 
-export interface SpendItem {
+export interface SpendItem extends StoreFields {
   id: string;
   name: string;
   cat: SpendCat;
@@ -99,6 +102,7 @@ export interface SpendItem {
 export const SPEND_CAT_LABEL: Record<SpendCat, string> = {
   cars: 'Cars & drivers', boats: 'Boats & the plane', style: 'Clothes & style', jewelry: 'Jewelry & furs', home: 'The house', staff: 'Staff',
   society: 'Status & society', family: 'Family occasions', vice: 'Vice & leisure', power: 'Business & power', crew: 'The crew',
+  property: 'Homes & buildings', biz: 'Legitimate businesses', racing: 'Racing', equip: 'Equipment', armory: 'Armory', invest: 'Investments', services: 'Crew & services', gifts: 'Gifts',
 };
 export const SPEND_CATS = Object.keys(SPEND_CAT_LABEL) as SpendCat[];
 
@@ -108,7 +112,10 @@ export const GROUP_LABEL: Record<SpendGroup, string> = {
 
 type Opt = Partial<Omit<SpendItem, 'id' | 'name' | 'cat' | 'price' | 'up' | 'blurb'>>;
 
-const KIND: Record<SpendCat, SpendKind> = { cars: 'own', boats: 'own', style: 'own', jewelry: 'own', home: 'own', staff: 'svc', society: 'once', family: 'once', vice: 'once', power: 'once', crew: 'once' };
+const KIND: Record<SpendCat, SpendKind> = {
+  cars: 'own', boats: 'own', style: 'own', jewelry: 'own', home: 'own', staff: 'svc', society: 'once', family: 'once', vice: 'once', power: 'once', crew: 'once',
+  property: 'own', biz: 'own', racing: 'own', equip: 'own', armory: 'own', invest: 'own', services: 'svc', gifts: 'once',
+};
 const RESALE: Partial<Record<SpendCat, [number, number]>> = { cars: [0.6, -0.1], boats: [0.6, -0.05], style: [0.1, -0.2], jewelry: [0.5, 0], home: [0.5, -0.03] };
 
 function I(cat: SpendCat, id: string, name: string, price: number, up: number, blurb: string, o: Opt = {}): SpendItem {
@@ -343,12 +350,14 @@ export const SPEND: SpendItem[] = [
   I('crew', 'sp_sundaydinner', 'Sunday dinner for the crew at your house', 300, 0, "Macaroni, meatballs, your wife's best dishes, the capos at your table.", { crew: 2, fam: -1, flash: 0, cd: 2 }),
   I('crew', 'sp_picnic', 'A picnic for the crew\'s families', 800, 0, "Clams, bocce, a softball game the wives win.", { crew: 3, fam: 1, flash: 1, months: SUMMER, cd: 52, g: { town: 1 } }),
   I('crew', 'sp_clambake', 'A clambake on the beach for the men', 500, 0, "Steamers, corn, beer in a rowboat full of ice.", { crew: 2, relief: 1, flash: 1, months: [5, 6, 7, 8, 9], cd: 8 }),
+  // ---- The Store (storeData.ts): property, businesses, vehicles, racing, services, equipment, armory, gifts, investments, legacy.
+  ...STORE_ITEMS,
 ];
 
 export const SPEND_BY_ID: Record<string, SpendItem> = Object.fromEntries(SPEND.map((x) => [x.id, x]));
 
 /** Trips that take the boss out of town for days. */
-const TRIPS = new Set(['sp_nassau', 'sp_vegas', 'sp_saratoga', 'sp_havana', 'sp_miami', 'sp_pinehurst', 'sp_italy', 'sp_rome', 'sp_mayo', 'sp_tuna']);
+const TRIPS = new Set(['st_bermuda', 'st_acapulco', 'sp_nassau', 'sp_vegas', 'sp_saratoga', 'sp_havana', 'sp_miami', 'sp_pinehurst', 'sp_italy', 'sp_rome', 'sp_mayo', 'sp_tuna']);
 
 /**
  * Hours the boss spends on a purchase (timeCost.ts): a trip is a day (10 h), an
@@ -359,6 +368,10 @@ export function spendHours(id: string): number {
   const it = SPEND_BY_ID[id];
   if (!it) return 1;
   if (TRIPS.has(id)) return 10;
+  // The store: a business or a building is an afternoon with the seller; a horse is a morning at the barn.
+  if (it.cat === 'biz' || (it.cat === 'property' && it.kind === 'own' && it.price >= 10000)) return 2;
+  if (it.horse) return 2;
+  if (it.kind === 'once' && it.cat === 'gifts') return it.id === 'st_time_together' ? 8 : 0.5;
   if (it.kind === 'once' && (it.cat === 'family' || it.cat === 'vice' || it.cat === 'crew') && it.price >= 300) return 4;
   if (it.kind === 'once' && (it.cat === 'society' || it.cat === 'boats')) return 3;
   if (it.cat === 'power' && it.kind !== 'own') return 0.5;

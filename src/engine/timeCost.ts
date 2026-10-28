@@ -134,6 +134,8 @@ export const TIME_TABLE: Record<string, number> = {
   'bond:godfather': 3, 'bond:lend': 0.5, 'bond:settle': 2, 'bond:test': 1, 'bond:confide': 1, 'bond:peace': 2,
   // Spend: buying a thing is an hour; an occasion is an evening and a trip a day (spendHours, with the state).
   'spend:buy': 1, 'spend:sell': 0.5,
+  // The Store: a day at the track (an afternoon), sharing the wealth (an hour of envelopes and phone calls).
+  'spend:race': 4, 'spend:share': 1,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */

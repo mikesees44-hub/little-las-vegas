@@ -42,6 +42,7 @@ import { Feed } from './Feed';
 import { WalkLauncher } from '../hood/WalkLauncher';
 import { GoodLifePanel } from '../econ/GoodLife';
 import { SpendPanel } from '../econ/SpendPanel';
+import { StorePanel } from '../store/StorePanel';
 import { HousesPanel } from '../houses/HousesPanel';
 import { WeeklyTake } from '../tribute/WeeklyTake';
 import { MoneyView } from '../money/MoneyView';
@@ -113,6 +114,7 @@ export const PANELS: PanelDef[] = [
       { id: 'people', label: 'Your people', blurb: 'Your wife, your goomars, your kids, your friends, your crew and your enemies: how they feel about you, what they remember, what they want right now.', render: (s) => <YourPeople s={s} /> },
       { id: 'dating', label: 'Relationships & Dating', blurb: 'People you know, dates and relationships, adult services with their prices, and family & consequences. She always decides.', render: (s) => <DatingPanel s={s} /> },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
+      { id: 'store', label: 'The Store', wide: true, blurb: 'Everything money buys, in eight tabs: property and legitimate businesses, vehicles and race cars, crew & services, equipment, the armory, lifestyle (watches, jewelry, racehorses, vacations), investments, family & legacy. Inspect, ask your adviser, negotiate, buy or finance. Share the wealth, and plan a vacation for the whole family.', render: (s) => <StorePanel s={s} /> },
       { id: 'spend', label: 'Spend', blurb: 'Everything money buys in 1960: cars, boats, clothes, jewelry, the house, staff, society, the children\'s occasions, vice, the pad and the crew. Your pocket and the Family\'s money, side by side; the IRS counts what your books cannot explain.', render: (s) => <SpendPanel s={s} /> },
       { id: 'possessions', label: 'The Good Life', blurb: 'Homes, cars, the boat and the toys, paid from your pocket. Every one costs upkeep, and the feds count what the books cannot explain.', render: (s) => <GoodLifePanel s={s} /> },
       { id: 'walk', label: 'Walk the town', blurb: 'Out on the Boardwalk as yourself: walk up to a place to go in, buy it or run it; call a meeting; plan a trip.', render: (s) => <WalkLauncher s={s} /> },
