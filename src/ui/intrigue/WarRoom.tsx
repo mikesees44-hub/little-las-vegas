@@ -1,6 +1,6 @@
 import { warRoom } from '../../engine/intrigue';
 import { raidOdds } from '../../engine/war';
-import { ADJ, allyMen, battlePlan, frontsOf, GOAL_LABEL, rivalLabel, type FrontView } from '../../engine/army';
+import { ADJ, allyMen, attackable, battlePlan, frontsOf, GOAL_LABEL, rivalLabel, type FrontView } from '../../engine/army';
 import { SIDE_STYLE } from '../../engine/sides';
 import { fmt$ } from '../format';
 import type { GameState, War } from '../../engine/types';
@@ -137,7 +137,7 @@ function WarCampaign({ s, w }: { s: GameState; w: War }) {
   const fronts = frontsOf(s, w);
   const pending = s.army?.pending.filter((b) => b.warId === w.id) ?? [];
   const history = (s.army?.history ?? []).filter((h) => h.warId === w.id).slice(-5).reverse();
-  const targets = fronts.filter((f) => f.occupied === w.rival || (f.theirs >= 15 && f.occupied !== 'player'));
+  const targets = fronts.filter((f) => attackable(s, w, f.district));
   const pctScore = (w.score + 100) / 2;
   return (
     <div className="mt-2" data-testid="war-campaign">

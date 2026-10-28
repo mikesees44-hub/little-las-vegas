@@ -111,9 +111,9 @@ export const PACT_WEEKS = 52;
 export const COMMIT_WEEKS = 16;
 
 export const BANDS: Record<BandId, { name: string; men: number; q: number; weekly: number; heat: number; blurb: string }> = {
-  toughs: { name: 'Boardwalk toughs', men: 6, q: 2.2, weekly: 600, heat: 1, blurb: 'Bouncers, longshoremen, a couple of ex-boxers. Cheap, loud, not much good when it gets serious.' },
-  irish: { name: 'The Kensington Irish', men: 7, q: 3.1, weekly: 1500, heat: 2, blurb: 'A Philadelphia Irish crew with no love for Sal Moretti. Hard men; they drink on your tab.' },
-  shooters: { name: 'Out-of-town shooters', men: 4, q: 4.2, weekly: 1700, heat: 2, blurb: 'Four men from Youngstown nobody on the island has seen. The best money can rent.' },
+  toughs: { name: 'Boardwalk toughs', men: 6, q: 2.2, weekly: 450, heat: 1, blurb: 'Bouncers, longshoremen, a couple of ex-boxers. Cheap, loud, not much good when it gets serious.' },
+  irish: { name: 'The Kensington Irish', men: 7, q: 3.1, weekly: 1100, heat: 2, blurb: 'A Philadelphia Irish crew with no love for Sal Moretti. Hard men; they drink on your tab.' },
+  shooters: { name: 'Out-of-town shooters', men: 4, q: 4.2, weekly: 1200, heat: 2, blurb: 'Four men from Youngstown nobody on the island has seen. The best money can rent.' },
 };
 export const BAND_IDS = Object.keys(BANDS) as BandId[];
 
@@ -1029,8 +1029,11 @@ function campaignWeek(ctx: Ctx, A: ArmyState, w: War): void {
   }
   if (!pendingEv && (c.offered ?? -99) <= s.week - 6) {
     if (w.score <= -60) { s.eventQueue.push(buildEnemyDemands(s, w, c)); c.offered = s.week; }
-    else if (w.score >= 60 || c.enemyMen <= c.enemyStart * 0.3 || (c.enemyTired >= 75 && w.score >= -10)) { s.eventQueue.push(buildEnemyOffer(s, w, c)); c.offered = s.week; }
+    else if (w.score >= 60 || c.enemyMen <= c.enemyStart * 0.3 || (c.enemyTired >= 60 && w.score >= -10)) { s.eventQueue.push(buildEnemyOffer(s, w, c)); c.offered = s.week; }
   }
+  // A battle whose decision never reached the desk is fought anyway: your men meet them.
+  for (const b of A.pending.filter((x) => x.warId === w.id && x.due < s.week)) resolveBattle(ctx, b, 'meet');
+  if (!s.wars.includes(w)) return;
   // Their move: mass men at the next district on the road.
   if (A.pending.some((b) => b.warId === w.id) || s.week < c.nextMove) return;
   const target = nextTarget(s, c);
@@ -1044,8 +1047,13 @@ function campaignWeek(ctx: Ctx, A: ArmyState, w: War): void {
   const lev = levyView(s);
   const seen = lev.reduce((a, x) => a + (x.raised + (x.available - x.raised) * UNRAISED_SHARE) * x.perMan, 0) + hiredPower(s) + allyPower(s, w.id);
   const ratio = (men * c.enemyQ) / Math.max(1, seen);
-  if (ratio < 1.25 - rt * 0.6 && c.by !== w.rival) { c.nextMove = s.week + 2; return; }
-  if (ratio < 0.9 - rt * 0.4) { c.nextMove = s.week + 2; return; }
+  if ((ratio < 1.25 - rt * 0.6 && c.by !== w.rival) || ratio < 0.9 - rt * 0.4) {
+    // Held off by your strength: they wait, and the waiting wears on them.
+    c.nextMove = s.week + 2;
+    c.enemyTired = clamp(c.enemyTired + 4, 0, 100);
+    if ((A.cd[`held:${w.id}`] ?? 0) <= s.week) { note(A, s.week, `${rivalLabel(s, w.rival)} is holding back: your men are too many to take on right now.`); A.cd[`held:${w.id}`] = s.week + 8; }
+    return;
+  }
   const b: PendingBattle = { id: `bt${A.nextId++}`, warId: w.id, district: target, attacker: w.rival, enemyMen: men, week: s.week, due: s.week + 1 };
   A.pending.push(b);
   const ev = buildBattleEvent(s, b);
@@ -1287,8 +1295,8 @@ export function previewArmy(s: GameState, a: ArmyAction): ActionPreview {
       const label = `Take the fight to ${w ? rivalLabel(s, w.rival) : 'them'} at ${d?.name ?? '?'}`;
       let why: string | undefined;
       if (!w || !c || !d) why = 'No such war or district';
-      else if (!(c.occupied[a.district] === w.rival || (d.influence[w.rival] ?? 0) >= 15)) why = 'They hold nothing there worth taking';
       else if (c.occupied[a.district] === 'player') why = 'Your men already hold it';
+      else if (!attackable(s, w, a.district)) why = 'They hold nothing there worth taking';
       else if ((A?.cd[`attack:${a.warId}`] ?? 0) > s.week) why = 'The men need a week between fights';
       else if (raisedMen(s) + hiredMen(s) + allyMen(s, a.warId) <= 0) why = 'Nobody under arms: raise the troops first';
       else if (s.money < ATTACK_COST) why = `Needs ${fmtMoney(ATTACK_COST)}`;
@@ -1367,10 +1375,23 @@ export function armyActions(s: GameState): ArmyAction[] {
   for (const b of BAND_IDS) out.push(s.army?.hired.some((h) => h.band === b) ? { op: 'dismiss', band: b } : { op: 'hire', band: b });
   for (const w of s.wars) {
     for (const ally of allyIds(s, w.rival)) out.push({ op: 'ask', ally, warId: w.id, offer: 'money' });
-    for (const f of frontsOf(s, w)) if (f.theirs >= 15 || f.occupied === w.rival) out.push({ op: 'attack', warId: w.id, district: f.district });
+    for (const f of frontsOf(s, w)) if (attackable(s, w, f.district)) out.push({ op: 'attack', warId: w.id, district: f.district });
   }
   if (!s.wars.length) for (const ally of allyIds(s)) out.push({ op: 'pact', ally });
   return out;
+}
+
+/**
+ * Where you can take the fight to them: a district they took by force, ground of theirs on the
+ * island, or — when they came at you — their camp where the road comes onto the island.
+ */
+export function attackable(s: GameState, w: War, district: string): boolean {
+  const c = s.army?.camps[w.id];
+  const d = s.districts.find((x) => x.id === district);
+  if (!d || c?.occupied[district] === 'player') return false;
+  if (c?.occupied[district] === w.rival) return true;
+  if ((d.influence[w.rival] ?? 0) >= 15) return true;
+  return !!c && c.by === w.rival && c.path[0] === district;
 }
 
 /** The envelope multiplier while Philadelphia's man sits over you (a lost war). */
