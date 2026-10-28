@@ -4,7 +4,9 @@ import { captureChance, EXILE_WEEKS, sightingChance, wantedFor, wantedPeople } f
 import { actingBoss, dayDate, travellers } from '../../engine/travel';
 import { FLEE_DESTS, MODES } from '../../engine/travelDests';
 import { destOf, partyOf } from '../../engine/trips';
-import { bossAway, type Fugitive } from '../../engine/travelState';
+import { bossAway, currentVisit, type Fugitive } from '../../engine/travelState';
+import { absLabel } from '../../engine/visit';
+import { whereAway } from '../../engine/visitAway';
 import { formatDate } from '../../engine/calendar';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -19,17 +21,26 @@ const PHASE: Record<string, string> = { booked: 'Booked', out: 'On the way', the
 export function TravellersPanel({ s }: { s: GameState }) {
   const list = travellers(s).filter((x) => x.trip.purpose !== 'lam');
   const [open, setOpen] = useState<string | undefined>();
-  const { plan } = useTravel();
+  const { plan, go, city } = useTravel();
+  const visit = currentVisit(s);
   const acting = s.travel?.acting ? s.characters[s.travel.acting.id] : undefined;
   const hist = s.travel?.history.slice(-3).reverse() ?? [];
   return (
     <section className="panel p-3" data-testid="travellers">
       <div className="flex items-center justify-between gap-2">
         <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Travellers</div>
-        {!s.gameOver && <button className="btn-ghost text-xs py-0.5" onClick={() => plan(s.playerId)}>Plan a trip…</button>}
+        <div className="flex gap-1">
+          {!s.gameOver && !visit && go && <button className="btn-ghost text-xs py-0.5" data-testid="go-somewhere" onClick={() => go()}>Go somewhere yourself…</button>}
+          {!s.gameOver && <button className="btn-ghost text-xs py-0.5" onClick={() => plan(s.playerId)}>Plan a trip…</button>}
+        </div>
       </div>
+      {visit && (
+        <button type="button" onClick={() => city?.()} className="mt-1 w-full rounded border border-amber-700/70 bg-amber-500/5 px-2 py-1.5 text-left text-xs text-amber-200" data-testid="visit-row">
+          {whereAway(s, visit)} · {visit.agenda.filter((i) => !i.done).length} on the agenda{visit.homeDay !== undefined ? ` · home ${absLabel(s, visit.homeDay)}` : ''} — open the city
+        </button>
+      )}
       {bossAway(s) && acting && <div className="mt-1 text-xs text-amber-300">The boss is away. <CharLink s={s} id={acting.id} /> is running things{s.travel?.acting ? ` (${s.travel.acting.weeks} wk)` : ''}.</div>}
-      {list.length === 0 && <p className="text-sm text-stone-400 mt-1">Everybody is home. The Catskills in July, Miami in February, the old country in the spring — pick a destination on the map or plan a trip.</p>}
+      {list.length === 0 && !visit && <p className="text-sm text-stone-400 mt-1">Everybody is home. The Catskills in July, Miami in February, the old country in the spring — pick a destination on the map or plan a trip.</p>}
       <ul className="mt-1 space-y-1.5">
         {list.map(({ trip: t, phase }) => {
           const L = s.characters[t.leaderId];
