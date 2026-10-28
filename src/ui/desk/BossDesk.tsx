@@ -5,6 +5,7 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
 import { useState } from 'react';
+import { DeskClock } from '../components/DeskClock';
 
 /**
  * THE BOSS'S DESK: one weekly place for everything that wants the boss —
@@ -70,9 +71,12 @@ export function BossDesk({ s, ui, api }: { s: GameState; ui: DeskUi; api: DeskAp
   const waiting = inboxCount(s, ui);
   return (
     <section className="rounded-md border border-gold-600/50 bg-noir-800/50 p-2.5" data-testid="boss-desk">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="panel-title text-base">The Boss's Desk</div>
-        <div className="text-[11px] text-stone-400">{waiting ? `${waiting} waiting on you` : 'Nothing waiting on you'} · week {s.week}</div>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <div className="panel-title text-base">The Boss's Desk</div>
+          <div className="text-[11px] text-stone-400">{waiting ? `${waiting} waiting on you` : 'Nothing waiting on you'} · week {s.week}</div>
+        </div>
+        <DeskClock s={s} className="text-[11px] sm:text-[13px]" />
       </div>
       {!groups.length && <p className="mt-1 text-[12px] text-stone-500">A clean desk. Plan an evening, start something, or advance the week.</p>}
       <div className="mt-1.5 grid gap-2 lg:grid-cols-2">

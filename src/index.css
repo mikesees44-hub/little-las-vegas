@@ -227,3 +227,30 @@ body {
 @media (prefers-reduced-motion: reduce) { .llv-turn { animation: none; } }
 /* The map's dock (App.tsx) steps aside while a card is open on the map: a place, a person on the walk, a district panel. */
 body:has([data-testid="walk-card"], [data-testid="walk-npc-card"], [data-testid="hv-panel"], [data-testid="street-card"]) .llv-dock { display: none; }
+/* The 1960 desk flip clock (ui/components/FlipClock.tsx): printed number cards on a drum, split across the middle. */
+.llv-flipcard { position: relative; display: inline-flex; align-items: center; justify-content: center; perspective: 12em; border-radius: 2px; color: #f4ecd8; font-variant-numeric: tabular-nums; line-height: 1; background: linear-gradient(180deg, #2a241c 0%, #1a1611 49%, #0b0907 50%, #15120e 51%, #221d16 100%); box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.08), 0 1px 1px rgba(0, 0, 0, 0.6); overflow: hidden; }
+.llv-flipcard::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, 0.75); pointer-events: none; }
+.llv-flipcard-sm { min-width: 0.85em; height: 1.5em; padding: 0 0.16em; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+@media (min-width: 640px) { .llv-flipcard-sm { font-size: 11px; padding: 0 0.2em; } }
+.llv-flipcard-desk { min-width: 0.78em; height: 1.25em; padding: 0 0.08em; font-size: 2.1em; font-weight: 700; font-family: Georgia, 'Times New Roman', serif; }
+.llv-flipcard-ampm { font-size: 0.9em; min-width: 1.6em; letter-spacing: 0.04em; font-family: ui-sans-serif, system-ui, sans-serif; }
+.llv-flip-colon { color: #c9a24a; font-weight: 700; padding: 0 0.04em; }
+.llv-flip, .llv-flip-still { display: inline-block; backface-visibility: hidden; }
+.llv-flip { animation: llv-flip 0.25s cubic-bezier(0.3, 0.7, 0.4, 1) both; transform-origin: 50% 50%; }
+@keyframes llv-flip { from { transform: rotateX(92deg); filter: brightness(0.55); } to { transform: rotateX(0); filter: none; } }
+/* The walnut and brass stand with the tear-off calendar (ui/components/DeskClock.tsx). Sized in em: the caller sets the font-size. */
+.llv-deskclock { display: inline-flex; align-items: flex-end; gap: 0.5em; padding: 0.45em 0.55em 0.5em; border-radius: 0.45em; border: 0.12em solid #b08d3c; background: linear-gradient(180deg, #6b3f22 0%, #4e2c16 45%, #3a200f 100%); box-shadow: inset 0 0.08em 0 rgba(255, 215, 150, 0.25), inset 0 -0.15em 0.3em rgba(0, 0, 0, 0.45), 0 0.3em 0.6em rgba(0, 0, 0, 0.6); cursor: pointer; text-align: center; }
+.llv-deskclock:hover, .llv-deskclock:focus-visible { border-color: #e2c071; outline: none; box-shadow: 0 0 0 0.15em rgba(226, 192, 113, 0.55), 0 0.3em 0.6em rgba(0, 0, 0, 0.6); }
+.llv-deskclock-clock { display: inline-flex; flex-direction: column; align-items: center; gap: 0.25em; }
+.llv-deskclock-window { display: inline-flex; padding: 0.2em 0.25em; border-radius: 0.3em; background: #0d0b08; border: 0.1em solid #c9a24a; box-shadow: inset 0 0.1em 0.25em rgba(0, 0, 0, 0.9); font-size: 0.7em; }
+.llv-deskclock-plate { font-size: 0.55em; letter-spacing: 0.18em; text-transform: uppercase; color: #3a2410; background: linear-gradient(180deg, #e9cf86, #b8913e); padding: 0.1em 0.5em; border-radius: 0.2em; font-weight: 700; white-space: nowrap; }
+.llv-cal { position: relative; display: inline-block; width: 4.2em; height: 4.9em; }
+.llv-cal-rings { position: absolute; left: 0.6em; right: 0.6em; top: -0.18em; height: 0.35em; z-index: 3; background: radial-gradient(circle, #d9b866 0.12em, transparent 0.14em) 0 0 / 0.75em 0.35em repeat-x; }
+.llv-cal-page { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; overflow: hidden; border-radius: 0.15em; background: #f6f0e1; box-shadow: 0 0.06em 0 #d8cfba, 0 0.12em 0 #c9bfa8, 0 0.2em 0.3em rgba(0, 0, 0, 0.5); color: #1b1712; font-family: Georgia, 'Times New Roman', serif; }
+.llv-cal-month { width: 100%; background: #9e1b1b; color: #fbefd8; font-size: 0.62em; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.35em 0 0.2em; font-family: ui-sans-serif, system-ui, sans-serif; }
+.llv-cal-day { font-size: 2.3em; font-weight: 700; line-height: 1; margin-top: 0.06em; }
+.llv-cal-dow { font-size: 0.55em; letter-spacing: 0.1em; text-transform: uppercase; color: #4a3a26; }
+.llv-cal-year { font-size: 0.5em; color: #9e1b1b; font-weight: 700; letter-spacing: 0.1em; }
+.llv-cal-torn { z-index: 2; animation: llv-tear 0.7s cubic-bezier(0.5, 0, 0.75, 0.4) forwards; transform-origin: 15% 0; }
+@keyframes llv-tear { 0% { transform: none; opacity: 1; } 25% { transform: rotate(-9deg); } 100% { transform: translate(-40%, 110%) rotate(-42deg); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .llv-flip { animation: none; } .llv-cal-torn { display: none; } }

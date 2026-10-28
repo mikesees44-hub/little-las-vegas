@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useEscape } from '../keys';
-import { formatDate, seasonInfo } from '../../engine/calendar';
-import { formatDay } from '../../engine/days';
-import { clockHour, formatClock, hoursLabel, hoursLeft } from '../../engine/timeCost';
+import { seasonInfo } from '../../engine/calendar';
+import { hoursLabel, hoursLeft, nowLabel } from '../../engine/timeCost';
+import { FlipClock } from '../components/FlipClock';
 import { displayName, player } from '../../engine/characters';
 import { heatBand } from '../../engine/heat';
 import { statHelp } from '../../engine/glossary';
@@ -232,9 +232,12 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           <Num v={s.favors} reasons={[]} term="favors"><Chip label="Favors" value={`${s.favors}`} /></Num>
         </div>
         <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
-          <div className="text-[11px] sm:text-xs text-stone-300 whitespace-nowrap" data-testid="topbar-date">{clockMode ? formatDay(s) : formatDate(s.date)} · Wk {s.week}</div>
-          <div className="text-[10px] sm:text-[11px] text-sky-300 whitespace-nowrap" data-testid="topbar-hour" title={`The boss's day runs 8 AM to 2 AM. ${hoursLabel(hoursLeft(s))} left today.`}>
-            {formatDay(s).split(' ')[0]} {formatClock(clockHour(s))} · {hoursLabel(hoursLeft(s))} left
+          <div className="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="topbar-date">
+            <FlipClock s={s} testid="topbar-clock" />
+            <span className="text-[10px] sm:text-[11px] text-stone-400">Wk {s.week}</span>
+          </div>
+          <div className="mt-0.5 text-[10px] sm:text-[11px] text-sky-300 whitespace-nowrap" data-testid="topbar-hour" title={`The boss's day runs 8 AM to 2 AM. It is ${nowLabel(s)}; ${hoursLabel(hoursLeft(s))} left today.`}>
+            {hoursLabel(hoursLeft(s))} left
             {onEndDay && !s.gameOver && <button type="button" className="ml-1 underline text-stone-400 hover:text-gold-300" onClick={onEndDay} data-testid="end-day" title="Call it a day: the world moves on to tomorrow">end day ▸</button>}
           </div>
           <div className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden sm:inline"> · {info.countdownLabel}</span></div>

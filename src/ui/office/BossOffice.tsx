@@ -19,6 +19,7 @@ import { holder } from '../../engine/council';
 import { briefing } from '../../engine/briefing';
 import type { CounselSubject } from '../../engine/counsel';
 import { TableButton, TableModal } from '../advice/CounselTable';
+import { DeskClock, WeekSchedule } from '../components/DeskClock';
 
 /**
  * THE BOSS'S OFFICE: upstairs at the Shore Social Club. The painted room
@@ -103,6 +104,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
 
   const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} />
     : panel === 'phone' ? <PhonePanel s={s} />
+    : panel === 'week' ? <WeekSchedule s={s} />
     : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={api.openDesk} onDone={() => setPanel(undefined)} table={table} />
     : undefined;
 
@@ -146,6 +148,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                   <span className="block rounded-sm border border-stone-400/60 bg-stone-100/90 px-1.5 py-0.5 font-serif text-[10px] font-bold uppercase leading-tight text-noir-950 shadow">{room.headline.text}</span>
                 </div>
               )}
+              <DeskClock s={s} onOpen={() => setPanel('week')} className="absolute hidden sm:flex items-end justify-center"
+                style={{ left: `${DESK_CLOCK_RECT.x}%`, top: `${DESK_CLOCK_RECT.y}%`, width: `${DESK_CLOCK_RECT.w}%`, height: `${DESK_CLOCK_RECT.h}%`, fontSize: 'clamp(6px, 0.95vw, 14px)' }} />
               {HOTSPOTS.map((h) => (
                 <button key={h.id} type="button" onClick={() => act(h)} data-testid={`office-spot-${h.id}`} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${status[h.id]}`}
                   className="group absolute rounded-md border border-transparent transition-colors hover:border-gold-400/80 hover:bg-gold-300/10 focus-visible:border-gold-300 focus-visible:bg-gold-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300"
@@ -172,6 +176,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
               </div>
             )}
         </div>
+        <div className="mt-2 flex justify-center sm:hidden" style={{ fontSize: '11px' }}><DeskClock s={s} onOpen={() => setPanel('week')} /></div>
         <ul className="mt-2 grid gap-1 sm:grid-cols-2 xl:grid-cols-3" data-testid="office-list" aria-label="What is in the office">
           {(['chair', 'envelope', 'door', 'ledger', 'phone', 'calendar', 'newspaper', 'photos', 'map'] as Hotspot['id'][]).map((id) => {
             const h = HOTSPOTS.find((x) => x.id === id)!;
@@ -208,6 +213,10 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
 export const OFFICE_CARD_CLEAR = 'md:bottom-2 md:top-auto md:max-h-[37%] md:w-[min(400px,41%)]';
 /** The corner it keeps to, in the scene's percent units (tests check no hotspot reaches into it). */
 export const OFFICE_CARD_RECT = { x: 58, y: 63, w: 41, h: 37 };
+
+/** The flip clock and tear-off calendar on the desk, between the appointment book and the chair, above Monday's card
+ * (scene percent units; tests check it touches no hotspot and stays clear of the card). */
+export const DESK_CLOCK_RECT = { x: 70, y: 44, w: 14.5, h: 17.5 };
 
 /** The man across the desk and his one or two lines. Monday's arrival has the four ways to start. */
 function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table }: {
