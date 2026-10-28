@@ -1,4 +1,5 @@
 import { CallingCard } from '../nightlife/CallingCard';
+import { openProtectionFor } from '../borgata/Protection';
 import { previewAction } from '../../engine/actions';
 import { useEscape } from '../keys';
 import { useMemo, useRef, useState } from 'react';
@@ -70,7 +71,7 @@ function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; 
     else if (o.type === 'trip') { onDone?.(); travel.plan(c.id); }
     else if (o.type === 'flee') { onDone?.(); travel.flee(c.id); }
     else if (o.type === 'marriage') { onDone?.(); openPicker({ kind: 'marriage', memberId: c.id }); }
-    else if (o.type === 'go') { onDone?.(); shell.go(o.to); }
+    else if (o.type === 'go') { onDone?.(); if (o.to === 'borgata.protect') openProtectionFor(c.id); shell.go(o.to); }
     else if (o.type === 'gifts' || o.type === 'ears' || o.type === 'dating' || o.type === 'dirty' || o.type === 'card') setGifts(true);
   };
   return (

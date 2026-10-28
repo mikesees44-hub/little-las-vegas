@@ -5,6 +5,7 @@ import { DESTS } from './travelDests';
 import { addOpinion } from './relations';
 import { spendHours } from './spendData';
 import { workHours } from './bizRacketData';
+import { PROTECT_HOURS } from './protectData';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -72,6 +73,8 @@ export const TIME_TABLE: Record<string, number> = {
   dirty: 0.25,
   // Work this place: a visit with an offer is an hour or so; an order to the crew less (workHours).
   'work:pitch': 1, 'work:scheme': 1, 'work:press': 0.5, 'work:drop': 0.25,
+  // Protection & intelligence: a word with the man, a word with the family (protectData.ts).
+  ...Object.fromEntries(Object.entries(PROTECT_HOURS).map(([k, v]) => [`protect:${k}`, v])),
   'dev:adopt': 1, 'dev:drop': 0.25, 'dev:resp': 0.25, 'dev:mandate': 0.25,
   'dev:buy': 1, 'dev:assign': 0.25, 'dev:repair': 0.25, 'dev:scrap': 0.25,
   // Money

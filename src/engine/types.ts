@@ -569,7 +569,9 @@ export type Effect =
   /** My Men (myMen.ts): taking care of the crew, and the crew watching how. */
   | ({ type: 'mymen'; op: import('./myMen').MenOp } & EffectBase)
   /** Crew XP (crewXp.ts): a specialty picked, a word of recognition. */
-  | ({ type: 'crewxp'; op: import('./crewXp').XpOp } & EffectBase);
+  | ({ type: 'crewxp'; op: import('./crewXp').XpOp } & EffectBase)
+  /** Protection & intelligence (protect.ts): answers to the guards' and inquiries' events. */
+  | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -973,6 +975,8 @@ export interface GameState {
   intrigue?: import('./intrigueState').IntrigueState;
   /** Your men come up (crewXp.ts): XP, levels, specialties. Optional; made by the weekly update. */
   xp?: import('./crewXp').XpState;
+  /** Protection & intelligence (protect.ts): guards, inquiries, their reports and who may read them. */
+  protect?: import('./protect').ProtectState;
 }
 
 export interface PlayerChoices {
@@ -1072,6 +1076,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'work'; op: import('./bizRacket').WorkAction }
   /** Intrigue (intrigueOps.ts): plant or turn a spy, hunt a mole, spread a rumor, forge a false flag, sabotage, a sit-down, the war's front. */
   | { kind: 'intrigue'; op: import('./intrigueState').IntrigueAction }
+  /** Protection & intelligence (protect.ts): put a guard on someone, look into someone, renew or end it. */
+  | { kind: 'protect'; op: import('./protect').ProtectAction }
 );
 
 export type InteractionId =

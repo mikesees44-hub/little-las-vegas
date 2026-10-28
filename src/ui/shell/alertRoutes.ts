@@ -34,6 +34,7 @@ const KIND_ROUTE: Partial<Record<AlertKind, Route>> = {
   underbelly: { panel: 'town', section: 'underbelly' },
   lifestyle: { panel: 'you', section: 'lifestyle' },
   family: { panel: 'house', section: 'tree' },
+  protect: { panel: 'borgata', section: 'protect' },
 };
 
 const KIND_FOCUS: Partial<Record<AlertKind, Omit<MapFocus, 'nonce'>>> = {

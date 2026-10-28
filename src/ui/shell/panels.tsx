@@ -37,6 +37,7 @@ import { CouncilSeats } from '../borgata/CouncilSeats';
 import { CaposSection, MenRoster } from '../borgata/Capos';
 import { MyMen } from '../borgata/MyMen';
 import { ProgressBoard } from '../borgata/CrewXp';
+import { Protection } from '../borgata/Protection';
 import { PlanNew } from './sections/PlanNew';
 import { PatronagePanel } from '../town/Patronage';
 import { Happening } from '../town/Happening';
@@ -150,6 +151,7 @@ export const PANELS: PanelDef[] = [
       { id: 'progress', label: 'Coming up', blurb: 'Every man\'s level, title and specialty: who is ready to be made or to run a crew, who is waiting on your word, who feels slighted.', render: (s) => <ProgressBoard s={s} /> },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
       { id: 'grievances', label: 'Grievances & Factions', render: (s) => stack(<PowerPart key="g" s={s} part="grievances" />, <FactionsPanel key="f" s={s} />) },
+      { id: 'protect', label: 'Guards & inquiries', blurb: 'Who guards whom and on what schedule, the inquiries running and the reports you may read. Assign a guard to anyone, or have someone looked into.', render: (s) => <Protection s={s} /> },
       { id: 'orders', label: 'Orders & Edicts', render: (s) => stack(<GeneralOrders key="g" s={s} />, <CrewListPart key="e" s={s} part="edicts" />) },
     ],
   },

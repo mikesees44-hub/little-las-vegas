@@ -6,6 +6,7 @@ import { goomarOf } from './goomar';
 import { addOpinion, opinion } from './relations';
 import { hashSeed } from './rng';
 import { addSecret } from './secrets';
+import { protectionFor } from './protect';
 import { spendPocket } from './pocket';
 import type { NightlifeState, NightPerson } from './nightlifeState';
 import type { ActionPreview } from './actions';
@@ -184,7 +185,8 @@ export function partnersWeek(ctx: Ctx, N: NightlifeState): void {
     if (p.fam.knows === 'unaware' || (p.fam.lastClash !== undefined && s.week - p.fam.lastClash < 20)) continue;
     const last = Math.max(D?.bonds[p.id]?.last ?? -99, ...(D?.providers[p.id]?.visits ?? [-99]));
     if (s.week - last > 6 && !goomarOf(s, p.id)) continue;
-    if (roll(`${s.seed}|${s.week}|clash|${p.id}`) >= (t === 'volatile' ? 0.05 : 0.03)) continue;
+    // A man on the boss at night (protect.ts) heads some of it off, never all.
+    if (roll(`${s.seed}|${s.week}|clash|${p.id}`) >= (t === 'volatile' ? 0.05 : 0.03) * (1 - protectionFor(s, boss.id, 'night').cut)) continue;
     p.fam.lastClash = s.week;
     p.fam.temper = t;
     p.fam.temperKnown = true;

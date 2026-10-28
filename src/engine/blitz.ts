@@ -10,6 +10,7 @@ import { money, respect, heat, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { chance } from './rng';
 import { pw, type Blitz } from './powerState';
+import { protectionFor } from './protect';
 import { playerMuscle } from './war';
 import { FACTION_NAMES } from './world';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalId } from './types';
@@ -190,6 +191,8 @@ function defense(s: GameState, b: Blitz, target: Character): number {
     if (!b.surprise) d += 0.15;
   }
   d += Math.max(0, attr(s, target, 'survival') - 50) / 200;
+  // Assigned guards (protect.ts), on either side: a share, never immunity.
+  d += protectionFor(s, target.id).cut * 0.5;
   return Math.min(0.7, d);
 }
 

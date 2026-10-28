@@ -95,6 +95,7 @@ function actorOf(s: GameState, a: PlayerAction): string {
   switch (a.kind) {
     case 'scheme': return a.agents.map((id) => first(s, id) ?? '?').join(' and ').replace(/^yourself$/, 'You');
     case 'dirty': return a.op.who === s.playerId ? 'You, personally' : first(s, a.op.who) ?? 'One of your men';
+    case 'protect': return a.op.op === 'guard' ? a.op.who.map((id) => first(s, id) ?? '?').join(' and ') : a.op.op === 'investigate' ? first(s, a.op.who) ?? 'One of your men' : 'You';
     case 'work': return a.op.op === 'drop' ? 'You' : a.op.who === s.playerId ? 'You, personally' : first(s, a.op.who) ?? 'One of your men';
     case 'order': return a.via === 'direct' ? 'You, personally' : VIA_INFO[a.via].name.replace(/^Through /, 'Your ').replace(/^Your the /, 'The ');
     case 'econ':
@@ -117,6 +118,7 @@ function targetOfAction(s: GameState, a: PlayerAction): string | undefined {
     case 'pushDistrict': return s.districts.find((d) => d.id === a.district)?.name;
     case 'dirty': return targetName(s, a.op.job, a.op.target) ?? JOBS_BY_ID[a.op.job]?.title;
     case 'work': return placeById(s, a.op.place)?.name;
+    case 'protect': return a.op.op === 'guard' || a.op.op === 'investigate' ? (a.op.subject === s.playerId ? 'You' : who(a.op.subject)) : undefined;
     case 'econ':
       if (a.op.type === 'racket' && a.op.cmd.c === 'start') { const cmd = a.op.cmd; return `${CATALOG[cmd.kind].name}${cmd.district ? ` in ${s.districts.find((d) => d.id === cmd.district)?.name}` : ''}`; }
       return undefined;

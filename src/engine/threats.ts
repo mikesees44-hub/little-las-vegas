@@ -13,6 +13,7 @@ import { addOpinion, opinion } from './relations';
 import { chance, hashSeed, pick, rand, randInt, type RngHolder } from './rng';
 import { strengthTotal } from './strength';
 import { pactWith } from './talks';
+import { protectFoiled, protectionFor } from './protect';
 import type { Character, Effect, GameState, Rival, RivalId } from './types';
 
 /**
@@ -622,9 +623,13 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
   const by = rivalName(s, t.by);
   const r = s.rivals.find((x) => x.id === t.by);
   const tgt = t.targetId ? s.characters[t.targetId] : undefined;
-  if (t.blunt > 0 && chance(T, t.blunt)) {
+  // Guards on the target take a share off a hit (protect.ts): never all of it.
+  const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id).cut : 0;
+  const blunt = guard > 0 ? 1 - (1 - t.blunt) * (1 - guard) : t.blunt;
+  if (blunt > 0 && chance(T, blunt)) {
     T.stats.foiled++;
     credit(ctx, T, t);
+    if (guard > 0 && tgt) protectFoiled(ctx, tgt.id, by);
     note(ctx, T, `${KIND_LABEL[t.kind]} by ${by} came to nothing: you were ready for it.`);
     if (r && r.kind === 'mob') r.money = Math.max(0, r.money - 800);
     if (t.by === 'fbi') T.fed.tries++;
