@@ -1,3 +1,4 @@
+import { ableness } from './aging';
 import { strengthTotal } from './strength';
 import { rivalTake } from './rivalBooks';
 import { alliedWithFaction } from './familyHouses';
@@ -166,7 +167,8 @@ export function rivalWeek(ctx: Ctx): void {
 
     const cands = scoreMoves(s, r);
     // Rivals act most weeks, but not every week.
-    if (!chance(s, r.kind === 'philly' ? 0.35 : r.kind === 'law' ? 0.45 * lawZeal(s) : 0.6)) continue;
+    // An Incapable or failing boss moves less (aging.ts).
+    if (!chance(s, (r.kind === 'philly' ? 0.35 : r.kind === 'law' ? 0.45 * lawZeal(s) : 0.6) * (r.kind === 'law' ? 1 : ableness(s, r.leaderId)))) continue;
     const gamble = hasTrait(leader, 'Gambler') ? 1 : 2; // gamblers pick more randomly
     const choice = weightedPick(s, cands, (c) => Math.pow(c.score, gamble));
     if (!choice) continue;

@@ -70,6 +70,7 @@ import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
 import { checkinPlan, checkinsWeek } from './checkins';
+import { threatsAnswer, threatsWeek } from './threats';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -308,6 +309,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   // A trusted advisor acting on his own has the boss's standing permission to use Family money.
   resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => ({ ...d.action, fund: 'family' as const }))] } : choices);
   if (!s.gameOver) recordDelegation(s, weekOf, delegated);
+  // The answers given at this week's urgent meetings are carried out before anything lands.
+  if (!s.gameOver) threatsAnswer(ctx);
   const roundLines = !s.gameOver && picked ? roundsWeek(ctx, picked, roundOpts) : [];
   if (!s.gameOver && mornings) roundLines.push(...checkinsWeek(ctx, mornings.list, choices.checkins ?? {}, mornings.missed));
   if (!s.gameOver) tributeBegin(ctx, resolving, choices);
@@ -353,6 +356,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     warWeek(ctx);
     rivalDisputes(ctx);
     tableWeek(ctx);
+    threatsWeek(ctx);
   }
   if (!s.gameOver) {
     operationalHeat(ctx);

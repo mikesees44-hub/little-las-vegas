@@ -1,4 +1,4 @@
-import { frailtyAgainst } from './aging';
+import { ableness, frailtyAgainst } from './aging';
 import { perkMod } from './lifestyle';
 import { bonesFromScheme } from './bones';
 import { roll01 } from './bonesState';
@@ -524,7 +524,7 @@ export function rivalSchemes(ctx: Ctx): void {
     const op = opinion(s, r.leaderId, boss.id);
     const g = s.relations[`${r.leaderId}>${boss.id}`]?.grievance ?? 0;
     if (op > -30 && g < 40 && !r.feud && !r.war) continue;
-    if (!chance(s, r.feud || r.war ? 0.12 : 0.05)) continue;
+    if (!chance(s, (r.feud || r.war ? 0.12 : 0.05) * ableness(s, r.leaderId))) continue;
     const lts = Object.values(s.characters).filter((c) => c.alive && c.faction === r.id && c.id !== leader.id);
     const agents = (lts.length ? lts : [leader]).slice(0, 2).map((c) => c.id);
     let kind: Scheme['kind'];

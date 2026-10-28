@@ -1,3 +1,4 @@
+import { urgentMeetings } from './threats';
 import { previewAction, queuedMoney } from './actions';
 import { briefing } from './briefing';
 import { weekCheckIns, type CheckProblem } from './checkins';
@@ -126,6 +127,8 @@ export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
   const bills = obligations(s).filter((o) => o.weekly && o.kind !== 'receivable').reduce((a, o) => a + o.amount, 0);
   const warnings: string[] = [];
   if (q.familyLeft < 0) warnings.push(`This week's orders need ${fmtMoney(-q.familyLeft)} more Family money than there is: some won't be carried out.`);
+  const urgent = urgentMeetings(s).filter((u) => u.status === 'waiting');
+  if (urgent.length) warnings.push(`${urgent.length === 1 ? `${urgent[0].who} is` : `${urgent.length} people are`} still waiting on an urgent meeting: what they heard lands whether you listen or not.`);
   if (q.pocketLeft - evenings < 0) warnings.push('Your evenings and pocket orders cost more than your pocket holds: the Family covers the evenings; pocket orders without your approval are skipped.');
   return {
     unanswered, mornings, orders: os,

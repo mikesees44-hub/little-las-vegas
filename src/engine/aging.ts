@@ -149,6 +149,15 @@ export function lvl(s: GameState, id: string, t: OldTrait): number {
 export function isIncapable(s: GameState, id: string): boolean {
   return lvl(s, id, 'incapable') > 0;
 }
+/**
+ * How able a man still is to run his people (1 fully; 0.2 Incapable): an
+ * infirm or clouded rival boss moves slower and less often (rivals.ts, threats.ts).
+ */
+export function ableness(s: GameState, id: string): number {
+  if (isIncapable(s, id)) return 0.2;
+  const n = lvl(s, id, 'infirm') + lvl(s, id, 'mind');
+  return n ? Math.max(0.35, 1 - 0.15 * n) : 1;
+}
 export function isBlind(s: GameState, id: string): boolean {
   return lvl(s, id, 'eyes') >= 4;
 }

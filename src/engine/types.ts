@@ -931,6 +931,8 @@ export interface GameState {
   rounds?: import('./rounds').RoundsState;
   /** The week as days: the clock's day, the evenings and the check-in answers (days.ts; optional, dropped when the week turns). */
   days?: import('./days').DaysState;
+  /** Planned moves against the boss and the urgent meetings that warn of them (threats.ts; optional for old saves). */
+  threats?: import('./threats').ThreatsState;
   /** Dirty work: one-off jobs, their cooldowns and results (dirtyWork.ts; optional, starts when used). */
   dirty?: import('./dirtyWork').DirtyState;
   /** Family development: technology, connections, crew equipment, the other families' progress (devState.ts; optional for old saves). */
