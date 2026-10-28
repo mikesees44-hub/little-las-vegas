@@ -38,7 +38,7 @@ import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
-import { homeForKey, resolveRoute, type NavRoute } from './shell/nav';
+import { homeForKey, itemOf, resolveRoute, type NavRoute } from './shell/nav';
 import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
@@ -50,6 +50,8 @@ import { Shell } from './shell/Shell';
 import { TopBar } from './shell/TopBar';
 import { LeftRail } from './shell/LeftRail';
 import { Drawer } from './shell/Drawer';
+import { FindPalette } from './shell/Find';
+import type { FindResult } from './shell/find';
 import { AlertsPanel, GoalsCard, StreetFeedCard, ThisWeekCard } from './shell/RightRail';
 import { InMotionStrip } from './shell/InMotionStrip';
 import { inMotion, type MotionChip } from './shell/inMotion';
@@ -390,8 +392,21 @@ export function App({ startOn = 'title' }: AppProps) {
 
   const shellUi = useShellState(s, orders, sheet);
   const [mapFocus, setMapFocus] = useState<MapFocus | undefined>();
-  const focusMap = (f: Omit<MapFocus, 'nonce'>) => setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 }));
+  // Showing something on the map (a walk, a district, an alert's place) leaves the Office for the map.
+  const focusMap = (f: Omit<MapFocus, 'nonce'>) => { setOfficeView(undefined); setMapFocus((x) => ({ ...f, nonce: (x?.nonce ?? 0) + 1 })); };
   const [helpMenu, setHelpMenu] = useState(false);
+  /** Find… (Ctrl+K, /, the top bar): people, places, screens, things to do. */
+  const [finding, setFinding] = useState(false);
+  function onFind(r: FindResult) {
+    setFinding(false);
+    const g = r.go;
+    if (g.to === 'route') { const it = itemOf(g.key); openRoute(it ? { home: it.home, key: g.key } : g.key); }
+    else if (g.to === 'sheet') setSheet(g.id);
+    else if (g.to === 'map') { setRoute({}); focusMap({ level: 'wildwood', ...(g.district ? { district: g.district } : {}) }); }
+    else if (g.to === 'office') { setRoute({}); setOfficeView('office'); }
+    // Done to a person: the family's chart, where every face opens "Deal with…".
+    else openRoute({ panel: 'borgata', section: 'chart' });
+  }
   /** Open a home or one of its sections, from any route the game uses (an alert can reveal one that is still hidden). */
   function openRoute(r: Route | string) {
     const n = resolveRoute(r);
@@ -448,7 +463,7 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab === 'map') setRoute({});
     else if (l.tab) go(l.tab);
   }
-  const overlayOpen = !!ready || dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const overlayOpen = finding || !!ready || dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   const busy = dayWin !== undefined || !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
@@ -499,9 +514,11 @@ export function App({ startOn = 'title' }: AppProps) {
         setClockNote(undefined);
         return;
       }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !menu) { e.preventDefault(); setFinding(true); return; }
       if (shortcutBlocked(e)) return;
       if (menu || overlayOpen) return;
       if (e.key === '?') { e.preventDefault(); setHelpMenu(true); return; }
+      if (e.key === '/') { e.preventDefault(); setFinding(true); return; }
       const h = homeForKey(e.key);
       if (h) {
         e.preventDefault();
@@ -639,7 +656,7 @@ export function App({ startOn = 'title' }: AppProps) {
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
             onSitDown={() => setSitdown('council')} sitCount={brief.items.length} onDesk={() => setRoute({ home: 'week' })}
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
-            onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()}
+            onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'} />
         )}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
@@ -647,13 +664,20 @@ export function App({ startOn = 'title' }: AppProps) {
         overlay={(
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
-            {!s.gameOver && !home && !officeView && (
-              <div className="pointer-events-none absolute left-2 bottom-[92px] md:left-auto md:bottom-3 md:right-3 z-[1001]"><ClubOnMap s={s} onOpen={() => setOfficeView('club')} /></div>
-            )}
             {officeScreen}
-            {clockMode && !s.gameOver && !home && (
-              <div className="pointer-events-none absolute left-2 right-[120px] bottom-12 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex md:max-w-[calc(100%-330px)]">
-                <TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} />
+            {/* The map's one dock: today (the clock), the club, and on phones the next goal — one stack, beside the Alerts button, never under a card. */}
+            {!s.gameOver && !home && !officeView && (
+              <div className="llv-dock pointer-events-none absolute left-2 right-[112px] bottom-2 md:right-auto md:bottom-3 md:left-[310px] 2xl:left-[680px] z-[1001] flex flex-col items-start gap-1.5 md:max-w-[calc(100%-330px)]" data-testid="map-dock">
+                {goalIdx >= 0 && helpLevel() !== 'experienced' && (
+                  <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
+                    className="md:hidden pointer-events-auto max-w-full truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
+                    ➚ {goals[goalIdx].title}
+                  </button>
+                )}
+                <div className="flex max-w-full items-center gap-1.5">
+                  {clockMode && <div className="flex min-w-0"><TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} /></div>}
+                  <ClubOnMap s={s} compact onOpen={() => setOfficeView('club')} />
+                </div>
               </div>
             )}
             {evenings.length > 0 && (
@@ -663,12 +687,6 @@ export function App({ startOn = 'title' }: AppProps) {
                     onMore={() => { setEvenings([]); setRoute({ home: 'week' }); }} />
                 ))}
               </div>
-            )}
-            {!s.gameOver && goalIdx >= 0 && !home && helpLevel() !== 'experienced' && (
-              <button type="button" onClick={() => showGoal(goals[goalIdx])} data-testid="goal-pill"
-                className="md:hidden absolute bottom-2 left-2 right-[120px] z-[1000] truncate rounded-full border border-gold-600/70 bg-noir-900/95 px-3 py-1.5 text-left text-[11px] text-gold-300 shadow-lg shadow-black/70">
-                ➚ {goals[goalIdx].title}
-              </button>
             )}
             {s.gameOver && (
               <div className="absolute inset-0 z-[1090] flex items-center justify-center bg-black/60 p-4">
@@ -759,6 +777,7 @@ export function App({ startOn = 'title' }: AppProps) {
           </div>
         </div>
       )}
+      {finding && <FindPalette s={s} open={shellUi.open} onPick={onFind} onClose={() => setFinding(false)} />}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}

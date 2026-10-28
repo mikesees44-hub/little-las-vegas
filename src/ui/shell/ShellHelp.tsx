@@ -15,7 +15,8 @@ export function KeysList() {
         <li className="flex items-center gap-2"><span className={kbd}>Space</span><span>Pause / play the clock</span></li>
         <li className="flex items-center gap-2"><span className={kbd}>Esc</span><span>Close what is open</span></li>
         <li className="flex items-center gap-2"><span className={kbd}>?</span><span>This list</span></li>
-        <li className="flex items-center gap-2"><span className="text-stone-500">Right-click a face:</span><span>everything you can do to him</span></li>
+        <li className="flex items-center gap-2"><span className={kbd}>Ctrl K</span><span className={kbd}>/</span><span>Find a person, a place, a screen, or what to do</span></li>
+        <li className="flex items-center gap-2"><span className="text-stone-500">Right-click a face:</span><span>Deal with him (everything you can do)</span></li>
       </ul>
       <p className="text-[11px] text-stone-500">The old letters still work: {old.map(([k, h], i) => <span key={k}>{i ? ', ' : ''}<span className={kbd}>{k.toUpperCase()}</span> {HOMES_BY_ID[h].short}</span>)}.</p>
     </div>

@@ -194,3 +194,81 @@ describe('declutter: Deal with [person] offers everything the old entry points d
     expect(html).toContain('data-testid="action-row"');
   });
 });
+
+describe('declutter: This place offers what the old place cards did', () => {
+  it('every lot: buy, buy the business, lease, dirty work, go in and a meeting — or the reason why not', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { playWeeks } = await import('./helpers');
+    const { PlaceVerbs } = await import('../src/ui/hood/PlaceVerbs');
+    const { jobsForPlace } = await import('../src/engine/dirtyWork');
+    const { placeActions } = await import('../src/engine/placeEligibility');
+    const s = playWeeks('declutter-place', 6);
+    const lots = (s.econ?.lots ?? []).slice(0, 60);
+    expect(lots.length).toBeGreaterThan(20);
+    let sale = 0, lease = 0, dirty = 0;
+    for (const l of lots) {
+      const mine = l.status === 'owned' || l.status === 'leased';
+      const biz = mine && l.bizId ? s.businesses.find((b) => b.id === l.bizId) : undefined;
+      const html = renderToString(createElement(PlaceVerbs, { s, lot: l, biz, on: { goIn: () => {}, meeting: () => {} } }));
+      // The old walk card: go in, a meeting here.
+      expect(html, l.id).toContain('data-testid="walk-call-meeting"');
+      if (placeActions(s, l, biz).some((a) => a.id === 'goIn')) expect(html, l.id).toContain('data-testid="walk-go-in"');
+      // The old walk card and lot panel: an offer when it is for sale, a lease when it is for rent.
+      if (l.status === 'sale') { sale++; expect(html, l.id).toContain('data-testid="make-offer"'); }
+      if (l.status === 'lease') { lease++; expect(html, l.id).toContain('Lease the storefront'); }
+      // The old dirty-here row.
+      if (jobsForPlace(s, l, biz).length) { dirty++; expect(html, l.id).toContain('data-testid="dirty-here"'); }
+      // Whatever does not fit says why.
+      if (placeActions(s, l, biz).some((a) => a.why && ['offer', 'buyBusiness', 'lease', 'renovate'].includes(a.id))) expect(html, l.id).toContain('data-testid="place-not-now"');
+    }
+    expect(sale + lease + dirty).toBeGreaterThan(3);
+  });
+});
+
+describe('declutter: Find… reaches screens, people, places and things to do', () => {
+  it('finds by what you want to do, by screen, by name, by place', async () => {
+    const { newGame } = await import('../src/engine/newGame');
+    const { findAll } = await import('../src/ui/shell/find');
+    const { displayName } = await import('../src/engine/characters');
+    const s = newGame('declutter-find');
+    const lend = findAll(s, 'lend');
+    expect(lend.some((r) => r.kind === 'do' && r.go.to === 'route')).toBe(true);
+    // A match in the words people would use counts, not only in the title (lend → the shylock book).
+    expect(lend.filter((r) => r.kind === 'do').length).toBeGreaterThanOrEqual(2);
+    const council = findAll(s, 'council');
+    expect(council.some((r) => r.kind === 'screen' && r.go.to === 'route' && r.go.key === 'borgata.council')).toBe(true);
+    const ub = Object.values(s.characters).find((c) => c.alive && c.rank === 'underboss')!;
+    expect(findAll(s, ub.lastName).some((r) => r.kind === 'person' && r.go.to === 'sheet' && r.go.id === ub.id)).toBe(true);
+    expect(findAll(s, displayName(ub)).some((r) => r.kind === 'person')).toBe(true);
+    const d = s.districts[0];
+    expect(findAll(s, d.name).some((r) => r.kind === 'place')).toBe(true);
+    // Every registered screen and every view can be found by its own name.
+    const { NAV_ITEMS } = await import('../src/ui/shell/nav');
+    for (const it of NAV_ITEMS) expect(findAll(s, it.label, { limit: 50 }).some((r) => r.kind === 'screen' && r.go.to === 'route' && it.keys.includes(r.go.key)), it.label).toBe(true);
+    // Every thing to do lands somewhere real.
+    for (const r of findAll(s, 'a', { limit: 500 }).filter((x) => x.kind === 'do')) expect(r.go.to).toBeDefined();
+    expect(findAll(s, 'x')).toEqual([]);
+  });
+});
+
+describe('declutter: a calm frame', () => {
+  it('the top bar has one loop button, Office, orders and Find; the map has one dock', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { App } = await import('../src/ui/App');
+    const html = renderToString(createElement(App, { startOn: 'game' }));
+    expect(html).toContain('data-testid="waiting-button"');
+    expect(html).toContain('data-testid="office-button"');
+    expect(html).toContain('data-testid="orders-button"');
+    expect(html).toContain('data-testid="find-button"');
+    // The four old loop buttons are lines in the Waiting menu now, not buttons on the bar.
+    const bar = html.slice(html.indexOf('data-testid="topbar"'), html.indexOf('data-testid="map-area"'));
+    for (const id of ['decisions-button', 'sitdown-button', 'desk-button']) expect(bar, id).not.toContain(`data-testid="${id}"`);
+    // Today, the club and (on phones) the next goal share one dock.
+    const dock = html.slice(html.indexOf('data-testid="map-dock"'));
+    expect(html).toContain('data-testid="map-dock"');
+    expect(dock).toContain('data-testid="club-on-map"');
+    expect(html.split('data-testid="club-on-map"').length).toBe(2);
+  });
+});
