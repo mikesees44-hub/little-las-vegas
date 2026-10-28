@@ -34,8 +34,9 @@ describe('sideOf', () => {
     expect(sideOf(s, irs.id).kind).toBe('law');
     const pol = Object.values(s.characters).find((c) => c.office === 'City councilman')!;
     expect(sideOf(s, pol.id)).toMatchObject({ kind: 'official', label: 'City Hall' });
-    const civ = Object.values(s.characters).find((c) => c.faction === 'none' && !c.office && !c.outside && !s.nightlife?.people[c.id])!;
-    expect(sideOf(s, civ.id)).toMatchObject({ kind: 'civilian', label: 'Civilian' });
+    const civs = Object.values(s.characters).filter((c) => c.faction === 'none' && !c.office && !c.outside && !s.nightlife?.people[c.id] && !c.dynasty);
+    expect(civs.every((c) => sideOf(s, c.id).kind === 'civilian')).toBe(true);
+    expect(civs.some((c) => sideOf(s, c.id).label === 'Civilian')).toBe(true);
     const night = Object.keys(s.nightlife?.people ?? {}).find((id) => s.characters[id]);
     if (night) expect(sideOf(s, night).kind).toBe('nightlife');
     expect(sideOf(s, 'nobody').kind).toBe('civilian');
@@ -141,5 +142,15 @@ describe('plotting by side', () => {
     const chip = renderToString(createElement(SideChip, { s, id: a.id }));
     expect(chip).toContain('YOURS');
     expect(chip).toContain('★');
+  });
+});
+
+describe('kin', () => {
+  it('a civilian married into a family wears its colours but stays a civilian', () => {
+    const s = newGame('sides-kin');
+    const wife = Object.values(s.characters).find((c) => c.faction === 'none' && !c.office && !c.outside && !s.nightlife?.people[c.id] && c.spouseId && s.characters[c.spouseId]?.faction === 'manno');
+    expect(wife).toBeDefined();
+    expect(sideOf(s, wife!.id)).toMatchObject({ kind: 'civilian', label: 'Kin of the Manno family', short: 'MANNO KIN', emblem: '◆' });
+    expect(sideMatches(sideOf(s, wife!.id), 'theirs')).toBe(true);
   });
 });

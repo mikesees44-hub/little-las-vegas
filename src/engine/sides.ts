@@ -97,6 +97,15 @@ function polCtlOf(s: GameState, charId: string) {
   return undefined;
 }
 
+/** The family a civilian belongs to by blood or marriage (spouse, parent, child in a family). */
+function kinFaction(s: GameState, c: Character): Exclude<FactionId, 'none' | 'law'> | undefined {
+  for (const id of [c.spouseId, c.fatherId, c.motherId, ...c.childrenIds]) {
+    const k = id ? s.characters[id] : undefined;
+    if (k && isFamily(k.faction)) return k.faction;
+  }
+  return undefined;
+}
+
 /** Is this an organisation member (rather than a civilian, official or nightlife person)? */
 function isFamily(f: FactionId): f is Exclude<FactionId, 'none' | 'law'> {
   return f !== 'none' && f !== 'law';
@@ -143,6 +152,13 @@ export function sideOf(s: GameState, charId: string): Side {
   if (c.outside === 'politician' || OFFICIAL.test(off) || ctl) return make(SIDE_STYLE.official, 'official', 'none', padNote);
   const p = s.nightlife?.people[c.id];
   if (p) return make(SIDE_STYLE.nightlife, 'nightlife', 'none', p.payroll ? payroll('on your payroll') : undefined);
+  // A civilian married or born into a family: still a civilian, but his family's colours.
+  const kin = kinFaction(s, c);
+  if (kin) {
+    const st = kin === 'player' ? SIDE_STYLE.player : familyStyle(s, kin);
+    const fam = st.label.replace(/^The | family$/g, '');
+    return mk({ ...st, label: kin === 'player' ? 'Kin of your family' : `Kin of the ${fam} family`.replace('the Philadelphia family', 'Philadelphia'), short: kin === 'player' ? 'YOUR KIN' : `${st.short} KIN` }, 'civilian', 'none');
+  }
   return make(SIDE_STYLE.none, 'civilian', 'none');
 }
 

@@ -280,9 +280,8 @@ export function TargetPicker({ s }: { s: GameState }) {
                       <Face s={s} c={c} size={28} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-xs text-stone-100">{displayName(c)}</span>
-                        <span className="block truncate text-[10px] text-stone-500">{c.office ?? (c.rank !== 'civilian' ? c.rank : c.outside ?? 'civilian')}</span>
+                        <span className="flex min-w-0 flex-wrap items-center gap-1 text-[10px] text-stone-500"><span className="truncate">{c.office ?? (c.rank !== 'civilian' ? c.rank : c.outside ?? 'civilian')}</span><SideChip side={sd} /></span>
                       </span>
-                      <SideChip side={sd} />
                     </div>
                   );
                 })}
