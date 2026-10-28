@@ -1,0 +1,1756 @@
+{
+ "schemaVersion": 1,
+ "source": {
+  "title": "Sanborn Fire Insurance Map from New Jersey Coast, Vol. 4 (1909, corrected to Nov 1950)",
+  "item": "https://www.loc.gov/item/sanborn05568_015/",
+  "scan": "05568_04_1950-ind2 (scan seq 3), IIIF pct:25 (1668 px wide)",
+  "rights": "Public domain",
+  "file": "raw/loc-sanborn/images/sanborn1950_index.jpg"
+ },
+ "method": "Transcribed by eye from the 1668-px scan (Five Mile Beach street lists of the Oct 1949 Additional Index and the Nov 1950 Addenda). Tesseract on the same scan misreads the numbers (e.g. 500-655 as 600-665), so this is a manual transcription; check against the full-resolution scan before relying on a range. Specials (named buildings) and the Cape May City lists are not transcribed. \"Twentieth\" etc. are written as 20th.",
+ "transcribedAt": "2026-10-28",
+ "transcribedBy": "cityimport (Claude), from the cached scan",
+ "whatItIs": "These pasted-on lists cover only the sheets added or re-issued after 1940 (sheets 27-63B). The 1909 base sheets of the volume are listed on the main index, which is under the pasted lists on this scan or on scan seq 4 (05568_04_1950-ind3); it is not transcribed here.",
+ "entries": [
+  {
+   "street": "Andrew Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Arion Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Asbury Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Aster Road",
+   "dir": "W",
+   "range": [
+    100,
+    145
+   ],
+   "sheets": [
+    "31"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Atlantic Ave",
+   "dir": null,
+   "range": [
+    800,
+    1113
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Atlantic Ave",
+   "dir": null,
+   "range": [
+    4501,
+    5315
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue H",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue I",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue J",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue K",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue N",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue O",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue P",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue Q",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue R",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Avenue S",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Bennett Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Boardwalk",
+   "dir": null,
+   "range": [
+    300,
+    1114
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Boardwalk",
+   "dir": null,
+   "range": [
+    1600,
+    2519
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Boardwalk",
+   "dir": null,
+   "range": [
+    4500,
+    5314
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Burk Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Center Drive",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Central Ave",
+   "dir": null,
+   "range": [
+    900,
+    1111
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Central Ave",
+   "dir": "N",
+   "range": [
+    201,
+    213
+   ],
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Cornell Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Cresse Ave",
+   "dir": "E",
+   "range": [
+    301,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Davis Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Delaware Ave",
+   "dir": null,
+   "range": [
+    1900,
+    2511
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Delaware Ave",
+   "dir": "N",
+   "range": null,
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Dock",
+   "dir": "W",
+   "range": null,
+   "sheets": [
+    "45"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "East Drive",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Edgemere Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "18th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "8th Ave",
+   "dir": "E",
+   "range": [
+    100,
+    334
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "8th Ave",
+   "dir": "E",
+   "range": [
+    101,
+    335
+   ],
+   "sheets": [
+    "57"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "8th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    539
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "8th Ave",
+   "dir": "W",
+   "range": [
+    100,
+    134
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "8th Ave",
+   "dir": "W",
+   "range": [
+    101,
+    115
+   ],
+   "sheets": [
+    "57"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "8th Ave",
+   "dir": "W",
+   "range": [
+    200,
+    231
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "11th Ave",
+   "dir": "E",
+   "range": [
+    100,
+    339
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "11th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    539
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "11th Ave",
+   "dir": "W",
+   "range": [
+    100,
+    131
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "11th Ave",
+   "dir": "W",
+   "range": [
+    201,
+    309
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Evergreen Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "15th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "5th Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "5th Ave",
+   "dir": "W",
+   "range": null,
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "1st Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "14th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "4th Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "4th Ave",
+   "dir": "W",
+   "range": null,
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Garrigues Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "50"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Glenwood Ave",
+   "dir": "W",
+   "range": [
+    500,
+    655
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Hand Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Harvard Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Hildreth Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Lacys Lane",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Lake Rd",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Leaming Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Magnolia Ave",
+   "dir": "W",
+   "range": [
+    500,
+    619
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Maple Ave",
+   "dir": "W",
+   "range": [
+    500,
+    655
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Maryland Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Maryland Ave",
+   "dir": "N",
+   "range": null,
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Muller Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Neptune Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New Jersey Ave",
+   "dir": null,
+   "range": [
+    800,
+    1111
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New Jersey Ave",
+   "dir": "N",
+   "range": [
+    100,
+    415
+   ],
+   "sheets": [
+    "59"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": null,
+   "range": [
+    100,
+    114
+   ],
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": null,
+   "range": [
+    101,
+    711
+   ],
+   "sheets": [
+    "57"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": null,
+   "range": [
+    200,
+    710
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": null,
+   "range": [
+    800,
+    1013
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": null,
+   "range": [
+    1101,
+    1113
+   ],
+   "sheets": [
+    "56"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": null,
+   "range": [
+    1900,
+    2514
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": "N",
+   "range": [
+    100,
+    550
+   ],
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "New York Ave",
+   "dir": "N",
+   "range": [
+    101,
+    415
+   ],
+   "sheets": [
+    "59"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "19th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "19th Ave",
+   "dir": "W",
+   "range": [
+    200,
+    540
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "9th Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "58",
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "9th Ave",
+   "dir": "W",
+   "range": null,
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "North Drive",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29",
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "North View Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Ocean Ave",
+   "dir": null,
+   "range": [
+    300,
+    1115
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Ocean Ave",
+   "dir": null,
+   "range": [
+    1200,
+    1805
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Ocean Ave",
+   "dir": null,
+   "range": [
+    4500,
+    5315
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Ohio Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Ohio Ave",
+   "dir": "N",
+   "range": null,
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Pine Ave",
+   "dir": "W",
+   "range": [
+    500,
+    655
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Poplar Ave",
+   "dir": "W",
+   "range": [
+    500,
+    655
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Rio Grande Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Rittenhouse Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Ritz Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "29",
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Seaview Court",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "32"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "2nd Ave",
+   "dir": "W",
+   "range": [
+    200,
+    228
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "17th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "7th Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "7th Ave",
+   "dir": "W",
+   "range": null,
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "16th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "6th Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "6th Ave",
+   "dir": "W",
+   "range": null,
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Surf Ave",
+   "dir": null,
+   "range": [
+    301,
+    1115
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Surf Ave",
+   "dir": null,
+   "range": [
+    800,
+    1112
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Surf Ave",
+   "dir": null,
+   "range": [
+    1201,
+    2515
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Swarthmore Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Taylor Ave",
+   "dir": "E",
+   "range": [
+    300,
+    325
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "10th Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "58",
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "10th Ave",
+   "dir": "W",
+   "range": [
+    100,
+    235
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "3rd Ave",
+   "dir": "E",
+   "range": null,
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "3rd Ave",
+   "dir": "W",
+   "range": [
+    200,
+    239
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "13th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "12th Ave",
+   "dir": "E",
+   "range": [
+    100,
+    334
+   ],
+   "sheets": [
+    "54"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "12th Ave",
+   "dir": "E",
+   "range": [
+    101,
+    335
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "12th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    514
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "12th Ave",
+   "dir": "E",
+   "range": [
+    401,
+    539
+   ],
+   "sheets": [
+    "63A"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "12th Ave",
+   "dir": "W",
+   "range": [
+    100,
+    130
+   ],
+   "sheets": [
+    "54"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "12th Ave",
+   "dir": "W",
+   "range": [
+    101,
+    131
+   ],
+   "sheets": [
+    "58"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "20th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    525
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "20th Ave",
+   "dir": "W",
+   "range": [
+    200,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "21st Ave",
+   "dir": "E",
+   "range": [
+    400,
+    439
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "21st Ave",
+   "dir": "W",
+   "range": [
+    200,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "22nd Ave",
+   "dir": "E",
+   "range": [
+    400,
+    439
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "22nd Ave",
+   "dir": "W",
+   "range": [
+    200,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "23rd Ave",
+   "dir": "E",
+   "range": [
+    400,
+    445
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "23rd Ave",
+   "dir": "W",
+   "range": [
+    200,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "24th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    449
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "24th Ave",
+   "dir": "W",
+   "range": [
+    200,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "25th Ave",
+   "dir": "E",
+   "range": [
+    400,
+    439
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "25th Ave",
+   "dir": "W",
+   "range": [
+    200,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "26th Ave",
+   "dir": "E",
+   "range": [
+    401,
+    441
+   ],
+   "sheets": [
+    "28"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "26th Ave",
+   "dir": "W",
+   "range": [
+    201,
+    545
+   ],
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "26th Ave",
+   "dir": "W",
+   "range": [
+    600,
+    698
+   ],
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": true,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Venice Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "63B"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Virginia Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "27"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Virginia Ave",
+   "dir": "N",
+   "range": null,
+   "sheets": [
+    "60"
+   ],
+   "oneSideOnly": false,
+   "list": "Additional Index, Oct 1949 (Five Mile Beach)"
+  },
+  {
+   "street": "Andrews Ave",
+   "dir": "W",
+   "range": [
+    200,
+    615
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": true,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Andrews Ave",
+   "dir": "W",
+   "range": [
+    201,
+    614
+   ],
+   "sheets": [
+    "45"
+   ],
+   "oneSideOnly": true,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Arctic Ave",
+   "dir": null,
+   "range": [
+    4700,
+    5314
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": true,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Bennett Ave",
+   "dir": "W",
+   "range": [
+    200,
+    515
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Cresse Ave",
+   "dir": "W",
+   "range": [
+    100,
+    504
+   ],
+   "sheets": [
+    "31"
+   ],
+   "oneSideOnly": true,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Cresse Ave",
+   "dir": "W",
+   "range": [
+    201,
+    421
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": true,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Hildreth Ave",
+   "dir": "W",
+   "range": [
+    200,
+    505
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Hudson Ave",
+   "dir": null,
+   "range": [
+    4700,
+    5315
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Lake Rd",
+   "dir": null,
+   "range": [
+    5200,
+    5315
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Leaming Ave",
+   "dir": "W",
+   "range": [
+    200,
+    515
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Mediterranean Ave",
+   "dir": null,
+   "range": null,
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Park Blvd",
+   "dir": null,
+   "range": [
+    4700,
+    5319
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  },
+  {
+   "street": "Susquehanna Ave",
+   "dir": null,
+   "range": [
+    4700,
+    5205
+   ],
+   "sheets": [
+    "34"
+   ],
+   "oneSideOnly": false,
+   "list": "Addenda, Nov 1950, to Additional Index of Oct 1949"
+  }
+ ]
+}

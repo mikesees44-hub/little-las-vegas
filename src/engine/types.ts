@@ -939,6 +939,8 @@ export interface GameState {
   bonds?: import('./bondsState').BondsState;
   /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */
   spend?: import('./spendState').SpendState;
+  /** Fictional occupants the player put in imported (real-geometry) buildings, by building id (importedCity.ts). Absent until the first one. */
+  importedOccupants?: Record<string, import('./importedCity').ImportedOccupant>;
   /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
   aging?: import('./aging').AgingState;
   /** The Sit-Down: advisors trusted with their small stuff, and what they did (briefing.ts; optional for old saves). */

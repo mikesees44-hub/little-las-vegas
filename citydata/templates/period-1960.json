@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "era": "1960 Jersey Shore",
+  "note": "Period architectural templates for buildings the importer draws from footprints. First matching rule wins. Everything a template supplies (roof, height from stories, colours) is generated, not evidence. Edit this file to change the look; re-run the build.",
+  "storyHeight": 3.0,
+  "groundExtra": 1.0,
+  "templates": [
+    {
+      "id": "church",
+      "label": "Church (masonry or frame, steep roof)",
+      "match": {
+        "osm": {
+          "amenity": [
+            "place_of_worship"
+          ]
+        },
+        "classes": [
+          "15D"
+        ]
+      },
+      "roof": "gable-steep",
+      "defaultLevels": 2,
+      "palette": [
+        "#d8d0c0",
+        "#c9bfae"
+      ]
+    },
+    {
+      "id": "school",
+      "label": "School (brick, flat roof)",
+      "match": {
+        "osm": {
+          "amenity": [
+            "school"
+          ],
+          "building": [
+            "school"
+          ]
+        },
+        "classes": [
+          "15A",
+          "15B"
+        ]
+      },
+      "roof": "flat",
+      "defaultLevels": 2,
+      "palette": [
+        "#b5643c",
+        "#a85a36"
+      ]
+    },
+    {
+      "id": "civic-masonry",
+      "label": "Civic building (firehouse, city property)",
+      "match": {
+        "osm": {
+          "amenity": [
+            "fire_station",
+            "police",
+            "townhall",
+            "post_office"
+          ]
+        },
+        "classes": [
+          "15C"
+        ]
+      },
+      "roof": "flat",
+      "defaultLevels": 2,
+      "palette": [
+        "#b5643c",
+        "#c98b5a"
+      ]
+    },
+    {
+      "id": "modern-infill",
+      "label": "Built after 1960 (not drawn for 1960)",
+      "match": {
+        "yearFrom": 1961
+      },
+      "roof": "flat",
+      "defaultLevels": 2,
+      "palette": [
+        "#9aa3ad"
+      ]
+    },
+    {
+      "id": "outbuilding",
+      "label": "Garage or shed",
+      "match": {
+        "maxArea": 45
+      },
+      "roof": "gable",
+      "defaultLevels": 1,
+      "palette": [
+        "#cfc4b0"
+      ]
+    },
+    {
+      "id": "motel-1950s",
+      "label": "1950s motel (Doo Wop, flat roof)",
+      "match": {
+        "osm": {
+          "tourism": [
+            "motel",
+            "hotel"
+          ]
+        },
+        "yearFrom": 1950
+      },
+      "roof": "flat",
+      "defaultLevels": 2,
+      "palette": [
+        "#f2a7c3",
+        "#8fd3e8",
+        "#f7e08a"
+      ]
+    },
+    {
+      "id": "shore-hotel",
+      "label": "Shore hotel / rooming house (frame, hip roof)",
+      "match": {
+        "osm": {
+          "tourism": [
+            "hotel",
+            "guest_house",
+            "motel"
+          ]
+        }
+      },
+      "roof": "hip",
+      "defaultLevels": 3,
+      "palette": [
+        "#efe6d2",
+        "#d9e4ea"
+      ]
+    },
+    {
+      "id": "apartment-block",
+      "label": "Apartment house",
+      "match": {
+        "classes": [
+          "4C"
+        ]
+      },
+      "roof": "flat",
+      "defaultLevels": 3,
+      "palette": [
+        "#e2d3b5",
+        "#cdb79a"
+      ]
+    },
+    {
+      "id": "commercial-storefront",
+      "label": "Storefront block (flat roof, parapet)",
+      "match": {
+        "classes": [
+          "4A",
+          "4B"
+        ]
+      },
+      "roof": "flat",
+      "defaultLevels": 2,
+      "palette": [
+        "#d9c48f",
+        "#c7b07a",
+        "#e0d2b0"
+      ]
+    },
+    {
+      "id": "shore-cottage-masonry",
+      "label": "Masonry or block house",
+      "match": {
+        "classes": [
+          "2"
+        ],
+        "materials": [
+          "brick",
+          "concrete-block",
+          "masonry",
+          "stucco",
+          "brick-frame",
+          "frame-brick"
+        ]
+      },
+      "roof": "hip",
+      "defaultLevels": 2,
+      "palette": [
+        "#e6d7c3",
+        "#d7c6ad"
+      ]
+    },
+    {
+      "id": "shore-cottage-frame",
+      "label": "Frame shore house (gable roof, porch)",
+      "match": {
+        "classes": [
+          "2"
+        ]
+      },
+      "roof": "gable",
+      "defaultLevels": 2,
+      "palette": [
+        "#f0e6d2",
+        "#dbe7ee",
+        "#efe0c9",
+        "#e7efe3"
+      ]
+    },
+    {
+      "id": "generic",
+      "label": "Building (no other information)",
+      "match": {},
+      "roof": "gable",
+      "defaultLevels": 2,
+      "palette": [
+        "#e8dfcb"
+      ]
+    }
+  ]
+}

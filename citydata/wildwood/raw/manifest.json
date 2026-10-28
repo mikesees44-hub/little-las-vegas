@@ -1,0 +1,102 @@
+{
+  "city": "wildwood",
+  "updatedAt": "2026-10-28T17:34:27.667Z",
+  "files": [
+    {
+      "sourceId": "loc-sanborn",
+      "areaId": "*",
+      "title": "Sanborn NJ Coast Vol. 4 (1950): sanborn1950_index.jpg",
+      "url": "https://www.loc.gov/item/sanborn05568_015/",
+      "license": "Public domain",
+      "attribution": "Sanborn Map Company; Library of Congress, Geography and Map Division",
+      "downloadedAt": "2026-10-28T17:14:21.566Z",
+      "coverage": {
+        "note": "image of one scan, IIIF pct:25"
+      },
+      "file": "loc-sanborn/images/sanborn1950_index.jpg",
+      "bytes": 544977,
+      "sha256": "9be737684f1fec08c25b6895624f9e113327ad464a604e5fb33c08ab1db559b6",
+      "retrievedBy": "browser-handoff"
+    },
+    {
+      "sourceId": "loc-sanborn",
+      "areaId": "*",
+      "title": "Sanborn Fire Insurance Map from New Jersey Coast, New Jersey Coast, New Jersey.",
+      "url": "http://www.loc.gov/item/sanborn05568_015/",
+      "license": "Public domain (LOC Sanborn Maps Collection rights statement)",
+      "attribution": "Sanborn Map Company; Library of Congress, Geography and Map Division",
+      "downloadedAt": "2026-10-28T17:08:53.549Z",
+      "coverage": {
+        "note": "78 scans (cover, title, 2 index pages, sheets); Vol. 4, 1909 - Nov 1950. 71 sheet(s). 043. Other places as they appear on original: Cape May, Cape May Point, Five Mile Beach, Grassy Sound, Lower Township, Middle Township, North Wildwood, South Cape May, West Cape May, West Wildwood Borough, Wildwood, Wildwood Crest."
+      },
+      "file": "loc-sanborn/sanborn05568_015.index.json",
+      "bytes": 88359,
+      "sha256": "3f95e6f244bcd42e489825f11727165f1c87f1a392820c02c3ba91dbe9344baa",
+      "retrievedBy": "browser-handoff"
+    },
+    {
+      "sourceId": "njgin-parcels",
+      "areaId": "test-blocks",
+      "title": "NJGIN / NJOGIS Parcels Composite (with MOD-IV attributes), Wildwood: Lincoln Ave to 26th Ave, Park Blvd to Pacific Ave (test area)",
+      "url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
+      "request": {
+        "bbox": [
+          -74.8185,
+          38.9895,
+          -74.8105,
+          38.995
+        ],
+        "outFields": "OBJECTID,PAMS_PIN,GIS_PIN,PCL_MUN,PCLBLOCK,PCLLOT,PCLQCODE,PCLLASTUPD,COUNTY,MUN_NAME,PROP_LOC,PROP_CLASS,BLDG_DESC,LAND_DESC,CALC_ACRE,FAC_NAME,PROP_USE,BLDG_CLASS,YR_CONSTR,DWELL,COMM_DWELL,PCL_PBDATE,PCL_GUID",
+        "source": "NJOGIS Parcels_Composite_NJ_WM layer 0"
+      },
+      "license": "NJ public data (NJOGIS terms of use; attribution requested)",
+      "attribution": "Parcels: NJ Office of GIS (NJOGIS), Cape May County; MOD-IV tax-list attributes via NJ Division of Taxation",
+      "downloadedAt": "2026-10-28T17:07:27.797Z",
+      "coverage": {
+        "bbox": [
+          -74.8185,
+          38.9895,
+          -74.8105,
+          38.995
+        ]
+      },
+      "notes": [
+        "Hand-off file wildwood_test_parcels.geojson; 738 features.",
+        "Fields: allowlist only (no owner, mailing or sale data)."
+      ],
+      "file": "njgin-parcels/test-blocks.geojson",
+      "bytes": 589340,
+      "sha256": "a4f678b54b2bd0a59c6c4d9d1c39c20844274149600d28875b003bb60e60bf1b",
+      "retrievedBy": "browser-handoff"
+    },
+    {
+      "sourceId": "osm",
+      "areaId": "test-blocks",
+      "title": "OpenStreetMap API 0.6 map call, Wildwood: Lincoln Ave to 26th Ave, Park Blvd to Pacific Ave (test area)",
+      "url": "https://api.openstreetmap.org/api/0.6/map.json?bbox=-74.8185,38.9895,-74.8105,38.995",
+      "request": {
+        "generator": "openstreetmap-cgimap 2.1.0 (1283832 spike-07.openstreetmap.org)",
+        "version": "0.6"
+      },
+      "license": "ODbL 1.0",
+      "attribution": "© OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+      "downloadedAt": "2026-10-28T17:14:21.566Z",
+      "coverage": {
+        "bbox": [
+          -74.8185,
+          38.9895,
+          -74.8105,
+          38.995
+        ]
+      },
+      "notes": [
+        "Hand-off file wildwood_test_bbox.osm.json. Download date taken from the hand-off file's timestamp.",
+        "The map call returns every node of every way touching the box, so ways run past its edges."
+      ],
+      "file": "osm/test-blocks.osm.json",
+      "bytes": 449172,
+      "sha256": "ac1d14c135af602d25694d9af07c395ef8e7694cf495033891862542d4f22068",
+      "retrievedBy": "browser-handoff"
+    }
+  ]
+}

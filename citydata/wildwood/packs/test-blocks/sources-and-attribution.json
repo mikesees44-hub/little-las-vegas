@@ -1,0 +1,182 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/test-blocks",
+ "sources": [
+  {
+   "id": "osm",
+   "priority": 1,
+   "name": "OpenStreetMap",
+   "endpoint": "https://overpass-api.de/api/interpreter (fallback for small boxes: https://api.openstreetmap.org/api/0.6/map.json)",
+   "license": "ODbL 1.0",
+   "attribution": "© OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+   "usedFor": [
+    "roads",
+    "water",
+    "rail",
+    "buildings",
+    "businesses"
+   ],
+   "notes": [
+    "Modern data: every feature is unverified for the target year until checked against historical evidence."
+   ],
+   "lastFetch": {
+    "sourceId": "osm",
+    "status": "cached",
+    "detail": "Overpass: offline mode and not in the cache; OSM API: offline mode and not in the cache. Using the cached copy: osm/test-blocks.osm.json (browser-handoff, 2026-10-28)",
+    "url": "https://overpass-api.de/api/interpreter | https://api.openstreetmap.org/api/0.6/map.json"
+   },
+   "files": [
+    {
+     "file": "raw/osm/test-blocks.osm.json",
+     "title": "OpenStreetMap API 0.6 map call, Wildwood: Lincoln Ave to 26th Ave, Park Blvd to Pacific Ave (test area)",
+     "url": "https://api.openstreetmap.org/api/0.6/map.json?bbox=-74.8185,38.9895,-74.8105,38.995",
+     "downloadedAt": "2026-10-28T17:14:21.566Z",
+     "retrievedBy": "browser-handoff",
+     "bytes": 449172,
+     "sha256": "ac1d14c135af602d25694d9af07c395ef8e7694cf495033891862542d4f22068",
+     "coverage": {
+      "bbox": [
+       -74.8185,
+       38.9895,
+       -74.8105,
+       38.995
+      ]
+     }
+    }
+   ],
+   "status": "cached"
+  },
+  {
+   "id": "njgin-parcels",
+   "priority": 2,
+   "name": "NJGIN / NJOGIS Parcels Composite (with MOD-IV attributes)",
+   "endpoint": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
+   "license": "NJ public data (NJOGIS terms of use; attribution requested)",
+   "attribution": "Parcels: NJ Office of GIS (NJOGIS), Cape May County; MOD-IV tax-list attributes via NJ Division of Taxation",
+   "usedFor": [
+    "parcels"
+   ],
+   "notes": [
+    "Owner names, mailing addresses and sale data are never requested (outFields allowlist).",
+    "YR_CONSTR is the assessor's year built: used as medium-confidence evidence only."
+   ],
+   "lastFetch": {
+    "sourceId": "njgin-parcels",
+    "status": "cached",
+    "detail": "offline mode and not in the cache. Using the cached copy: njgin-parcels/test-blocks.geojson (browser-handoff, 2026-10-28)",
+    "url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0/query?where=PCL_MUN+IN+%28%270514%27%2C%270507%27%29&geometry=-74.8185%2C38.9895%2C-74.8105%2C38.995&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&returnCountOnly=true&f=json"
+   },
+   "files": [
+    {
+     "file": "raw/njgin-parcels/test-blocks.geojson",
+     "title": "NJGIN / NJOGIS Parcels Composite (with MOD-IV attributes), Wildwood: Lincoln Ave to 26th Ave, Park Blvd to Pacific Ave (test area)",
+     "url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
+     "downloadedAt": "2026-10-28T17:07:27.797Z",
+     "retrievedBy": "browser-handoff",
+     "bytes": 589340,
+     "sha256": "a4f678b54b2bd0a59c6c4d9d1c39c20844274149600d28875b003bb60e60bf1b",
+     "coverage": {
+      "bbox": [
+       -74.8185,
+       38.9895,
+       -74.8105,
+       38.995
+      ]
+     }
+    }
+   ],
+   "status": "cached"
+  },
+  {
+   "id": "njgin-aerials-1930",
+   "priority": 2,
+   "name": "NJGIN historical aerial imagery (1930) — reference for manual verification",
+   "endpoint": "https://njgin.nj.gov/ (NJ 1930 aerial mosaic; image service, not vector data)",
+   "license": "NJ public data",
+   "attribution": "NJ Office of GIS (NJOGIS), historical aerial imagery",
+   "usedFor": [],
+   "notes": [
+    "Imagery is for a person to compare against; the importer does not trace buildings from it."
+   ],
+   "lastFetch": {
+    "sourceId": "njgin-aerials-1930",
+    "status": "skipped",
+    "detail": "manual source (see config/cities.ts)"
+   },
+   "files": [],
+   "status": "not-downloaded"
+  },
+  {
+   "id": "loc-sanborn",
+   "priority": 4,
+   "name": "Library of Congress — Sanborn Fire Insurance Maps",
+   "endpoint": "https://www.loc.gov/item/{item}/?fo=json (sheet images via IIIF: https://tile.loc.gov/image-services/iiif/...)",
+   "license": "Public domain (LOC Sanborn Maps Collection: no known restrictions)",
+   "attribution": "Sanborn Map Company; Library of Congress, Geography and Map Division",
+   "usedFor": [
+    "historical evidence"
+   ],
+   "notes": [],
+   "lastFetch": {
+    "sourceId": "loc-sanborn",
+    "status": "skipped",
+    "detail": "sanborn05568_027 (1958-05) is not scanned online"
+   },
+   "files": [
+    {
+     "file": "raw/loc-sanborn/images/sanborn1950_index.jpg",
+     "title": "Sanborn NJ Coast Vol. 4 (1950): sanborn1950_index.jpg",
+     "url": "https://www.loc.gov/item/sanborn05568_015/",
+     "downloadedAt": "2026-10-28T17:14:21.566Z",
+     "retrievedBy": "browser-handoff",
+     "bytes": 544977,
+     "sha256": "9be737684f1fec08c25b6895624f9e113327ad464a604e5fb33c08ab1db559b6",
+     "coverage": {
+      "note": "image of one scan, IIIF pct:25"
+     }
+    },
+    {
+     "file": "raw/loc-sanborn/sanborn05568_015.index.json",
+     "title": "Sanborn Fire Insurance Map from New Jersey Coast, New Jersey Coast, New Jersey.",
+     "url": "http://www.loc.gov/item/sanborn05568_015/",
+     "downloadedAt": "2026-10-28T17:08:53.549Z",
+     "retrievedBy": "browser-handoff",
+     "bytes": 88359,
+     "sha256": "3f95e6f244bcd42e489825f11727165f1c87f1a392820c02c3ba91dbe9344baa",
+     "coverage": {
+      "note": "78 scans (cover, title, 2 index pages, sheets); Vol. 4, 1909 - Nov 1950. 71 sheet(s). 043. Other places as they appear on original: Cape May, Cape May Point, Five Mile Beach, Grassy Sound, Lower Township, Middle Township, North Wildwood, South Cape May, West Cape May, West Wildwood Borough, Wildwood, Wildwood Crest."
+     }
+    }
+   ],
+   "status": "cached"
+  },
+  {
+   "id": "loc-directories",
+   "priority": 4,
+   "name": "City directories (LOC / other public-domain scans) — OCR into candidate businesses",
+   "endpoint": "https://www.loc.gov/ (directory scans; pages are added by hand to citydata/<city>/raw/directories/)",
+   "license": "Public domain scans only",
+   "attribution": "As listed per page in the directory manifest",
+   "usedFor": [
+    "business candidates"
+   ],
+   "notes": [],
+   "lastFetch": {
+    "sourceId": "loc-directories",
+    "status": "skipped",
+    "detail": "manual source (see config/cities.ts)"
+   },
+   "files": [],
+   "status": "not-downloaded"
+  }
+ ],
+ "attribution": [
+  "© OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+  "Parcels: NJ Office of GIS (NJOGIS), Cape May County; MOD-IV tax-list attributes via NJ Division of Taxation",
+  "Sanborn Map Company; Library of Congress, Geography and Map Division"
+ ],
+ "excludedOnPurpose": [
+  "Parcel owner names, mailing addresses and sale data (never requested; refused if present in a hand-off)."
+ ],
+ "notAccessibleFromBuildMachine": []
+}

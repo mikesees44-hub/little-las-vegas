@@ -1,0 +1,3339 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/test-blocks",
+ "templatesFile": "citydata/templates/period-1960.json",
+ "era": "1960 Jersey Shore",
+ "templates": [
+  {
+   "id": "church",
+   "label": "Church (masonry or frame, steep roof)",
+   "roof": "gable-steep",
+   "defaultLevels": 2,
+   "palette": [
+    "#d8d0c0",
+    "#c9bfae"
+   ]
+  },
+  {
+   "id": "school",
+   "label": "School (brick, flat roof)",
+   "roof": "flat",
+   "defaultLevels": 2,
+   "palette": [
+    "#b5643c",
+    "#a85a36"
+   ]
+  },
+  {
+   "id": "civic-masonry",
+   "label": "Civic building (firehouse, city property)",
+   "roof": "flat",
+   "defaultLevels": 2,
+   "palette": [
+    "#b5643c",
+    "#c98b5a"
+   ]
+  },
+  {
+   "id": "modern-infill",
+   "label": "Built after 1960 (not drawn for 1960)",
+   "roof": "flat",
+   "defaultLevels": 2,
+   "palette": [
+    "#9aa3ad"
+   ]
+  },
+  {
+   "id": "outbuilding",
+   "label": "Garage or shed",
+   "roof": "gable",
+   "defaultLevels": 1,
+   "palette": [
+    "#cfc4b0"
+   ]
+  },
+  {
+   "id": "motel-1950s",
+   "label": "1950s motel (Doo Wop, flat roof)",
+   "roof": "flat",
+   "defaultLevels": 2,
+   "palette": [
+    "#f2a7c3",
+    "#8fd3e8",
+    "#f7e08a"
+   ]
+  },
+  {
+   "id": "shore-hotel",
+   "label": "Shore hotel / rooming house (frame, hip roof)",
+   "roof": "hip",
+   "defaultLevels": 3,
+   "palette": [
+    "#efe6d2",
+    "#d9e4ea"
+   ]
+  },
+  {
+   "id": "apartment-block",
+   "label": "Apartment house",
+   "roof": "flat",
+   "defaultLevels": 3,
+   "palette": [
+    "#e2d3b5",
+    "#cdb79a"
+   ]
+  },
+  {
+   "id": "commercial-storefront",
+   "label": "Storefront block (flat roof, parapet)",
+   "roof": "flat",
+   "defaultLevels": 2,
+   "palette": [
+    "#d9c48f",
+    "#c7b07a",
+    "#e0d2b0"
+   ]
+  },
+  {
+   "id": "shore-cottage-masonry",
+   "label": "Masonry or block house",
+   "roof": "hip",
+   "defaultLevels": 2,
+   "palette": [
+    "#e6d7c3",
+    "#d7c6ad"
+   ]
+  },
+  {
+   "id": "shore-cottage-frame",
+   "label": "Frame shore house (gable roof, porch)",
+   "roof": "gable",
+   "defaultLevels": 2,
+   "palette": [
+    "#f0e6d2",
+    "#dbe7ee",
+    "#efe0c9",
+    "#e7efe3"
+   ]
+  },
+  {
+   "id": "generic",
+   "label": "Building (no other information)",
+   "roof": "gable",
+   "defaultLevels": 2,
+   "palette": [
+    "#e8dfcb"
+   ]
+  }
+ ],
+ "buildings": [
+  {
+   "buildingId": "osm:way/266249642",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/266249643",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/266249645",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/266249646",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/266249647",
+   "templateId": "shore-hotel",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/266249648",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/504877170",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/504877171",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/504877177",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/504877183",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/504877184",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/571669910",
+   "templateId": "school",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/571669917",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375886",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375887",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375888",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375889",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375890",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375899",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375900",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375901",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375902",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375903",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375904",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375905",
+   "templateId": "church",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375920",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375922",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375925",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375928",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375931",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375933",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375935",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375938",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375941",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375943",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375945",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375947",
+   "templateId": "church",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375949",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375953",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375956",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375958",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/597375961",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/760064926",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/760064927",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287900",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287901",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287902",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287903",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287904",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287905",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287921",
+   "templateId": "shore-hotel",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287922",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287923",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287924",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287925",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1359287926",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1378814010",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1383817755",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847272",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847275",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847276",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847277",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847278",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847279",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847280",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847281",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847288",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847289",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1411847290",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "osm:way/1423062888",
+   "templateId": "church",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0507_164_18",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0507_164_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0507_164_20",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0507_164_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0507_164_22",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_154_11",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_154_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_154_22",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_154_24",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_154_25",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_154_26",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_163_2",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_163_3",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_163_9",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_164_18.02",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_164_19",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_170_1",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_170_6.02",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_170_9.03",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_171_1",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_171_5",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_171_6",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_172_16",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_172_18.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_177_2",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_185_1.02",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_186_2.03",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_186_2.04",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_190_40.01",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_190_40.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_190_40.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_1",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_10",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_13",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_15",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_16.01",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_18.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_18.02",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_18.03",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_18.04",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_8",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_191_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_1",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_10.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_10.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_11",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_15",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_19",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_21",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_3",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_6",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_8.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_8.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_192_9",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.01",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.02",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.03",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.04",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.05",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.06",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.07",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.08",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.09",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.11",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.12",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.13",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.14",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.15",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.16",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.17",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.18",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_2.19",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_3",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_4",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_5",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_6",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_7",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_193_8",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_18.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_23",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_24",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_28.01",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_28.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_28.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_30",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_31",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_35",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_37",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_38",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_53",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_57",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_197_61",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_1.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_1.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_10",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_14",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_16",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_17",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_18",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_20",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_22",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_24.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_4.02",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_198_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_23",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_24.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_24.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_26.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_27",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_28",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_30",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_31",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_32",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_33",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_34",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_35",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_37",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_38.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_38.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_38.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_38.04",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.01_39",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_1",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_11",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_13",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_14",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_15",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_16",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_17",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_18",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_20",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_199.02_22",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_200_10",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_200_7",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_200_8",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_200_9",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10_C000A",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10_C000B",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10_C000C",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10_C000D",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10.01_C0135",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10.01_C0137",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_10.01_C0139",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_12.01",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_13.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_14.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_15",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_16",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_18",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_4",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_5",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_6",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_6.03_C0141",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_6.03_C0143",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_6.03_C0145",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_8_C000A",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_8_C000B",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_8_C000C",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_208_8_C000D",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_10",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_11",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_13",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_18",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_20",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_22",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_24.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_24.02",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_25.03",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_214_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_1.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_1.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_10",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_11.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_11.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_12.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_14",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_15",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_16",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_17.01",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_17.02",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_20",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_22",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_23",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_24",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_26",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_27",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_28",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_29",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_30",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_31",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_32",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_33",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_34.01",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_34.02",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_34.03",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_5",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_6",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_215_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_1",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_11",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_15",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_16",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_17",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_18",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_19",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_20",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_21.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_22.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_23",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_8",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_216_9",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_1.01",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_11",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_12",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_17.01",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_17.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_19",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_20",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_26",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_5",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_217_7",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_218_29",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_218_3.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_218_6.02",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_218_9.02",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_223_24",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_1.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_1.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_10",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_15.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_15.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_15.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_17.03",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_23",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_25",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_26",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_27",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_6",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_8",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_224_9",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_1",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_11",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_13.01",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_13.02",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_14",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_15",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_16.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_18",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_4",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_5.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_6.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_7.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_225_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_1",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_2",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_3",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_4",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_5",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_6",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_7",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_226_8",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_227_1.01",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_227_1.02",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_227_19",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_10",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_11.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_12.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_14.01",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_17.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_23.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_25",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_27",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_29",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_30",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_31",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_32.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_34.02",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_35.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_233_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_1",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_10",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_13",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_14",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_15",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_17.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_17.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_19",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_2",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_23",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_24",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_26",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_28",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_29.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_31",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_5",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_6",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_8",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_234_9",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_1",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_13",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_14",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_16",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_17_C000B",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_19",
+   "templateId": "modern-infill",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_2",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_23",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_235_9",
+   "templateId": "generic",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_242_16",
+   "templateId": "civic-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_242_32",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_242_33",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_1",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_10",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_11",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_13",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_14.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_16",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_17.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_17.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_17.03",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_19.04",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_2",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_21",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_22",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_23",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_24",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_26",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_27",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_29",
+   "templateId": "apartment-block",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_30.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_31.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_5",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_6",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_7",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_243_8.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_244_1",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_244_14",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_11.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_11.02",
+   "templateId": "outbuilding",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_12",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_13",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_14.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_14.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_15.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_15.02",
+   "templateId": "commercial-storefront",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_3",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_4",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_5.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_5.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_6.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_6.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_7.01",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_7.02",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_8",
+   "templateId": "shore-cottage-frame",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  },
+  {
+   "buildingId": "gen:njgin:0514_253_9",
+   "templateId": "shore-cottage-masonry",
+   "generated": true,
+   "assetId": null,
+   "replacesGenerated": false
+  }
+ ],
+ "landmarks": [],
+ "note": "Every building is drawn from its template (generated). A custom asset replaces the generated building when assigned: set assetId here or with the map editor (set-asset override), and list landmark art under landmarks."
+}

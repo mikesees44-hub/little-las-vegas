@@ -1,0 +1,39 @@
+{
+ "at": "2026-10-28T17:40:30.912Z",
+ "offline": true,
+ "sources": [
+  {
+   "sourceId": "osm",
+   "status": "cached",
+   "detail": "Overpass: offline mode and not in the cache; OSM API: offline mode and not in the cache. Using the cached copy: osm/test-blocks.osm.json (browser-handoff, 2026-10-28)",
+   "url": "https://overpass-api.de/api/interpreter | https://api.openstreetmap.org/api/0.6/map.json"
+  },
+  {
+   "sourceId": "njgin-parcels",
+   "status": "cached",
+   "detail": "offline mode and not in the cache. Using the cached copy: njgin-parcels/test-blocks.geojson (browser-handoff, 2026-10-28)",
+   "url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0/query?where=PCL_MUN+IN+%28%270514%27%2C%270507%27%29&geometry=-74.8185%2C38.9895%2C-74.8105%2C38.995&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&returnCountOnly=true&f=json"
+  },
+  {
+   "sourceId": "njgin-aerials-1930",
+   "status": "skipped",
+   "detail": "manual source (see config/cities.ts)"
+  },
+  {
+   "sourceId": "loc-sanborn",
+   "status": "cached",
+   "detail": "offline mode and not in the cache. Using the cached copy: loc-sanborn/images/sanborn1950_index.jpg (browser-handoff, 2026-10-28); loc-sanborn/sanborn05568_015.index.json (browser-handoff, 2026-10-28)",
+   "url": "https://www.loc.gov/item/sanborn05568_015/?fo=json"
+  },
+  {
+   "sourceId": "loc-sanborn",
+   "status": "skipped",
+   "detail": "sanborn05568_027 (1958-05) is not scanned online"
+  },
+  {
+   "sourceId": "loc-directories",
+   "status": "skipped",
+   "detail": "manual source (see config/cities.ts)"
+  }
+ ]
+}
