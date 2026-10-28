@@ -97,7 +97,7 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
               {v.skills.map((k) => (
                 <li key={k.label} className="flex items-center gap-2 text-[11px]" title={k.why.join('; ')}>
                   <span className="w-20 text-stone-400">{k.label}</span>
-                  <span className="h-1.5 flex-1 rounded bg-noir-700 overflow-hidden"><span className="block h-full bg-gold-500/80" style={{ width: `${Math.min(100, k.effective * 5)}%` }} /></span>
+                  <span className="h-1.5 flex-1 rounded bg-noir-700 overflow-hidden"><span className="block h-full bg-gold-500/80" style={{ width: `${Math.min(100, k.effective)}%` }} /></span>
                   <span className="w-12 text-right tabular-nums text-stone-200">{k.effective}{k.learned !== k.effective ? <span className="text-red-300/80">/{k.learned}</span> : null}</span>
                 </li>
               ))}
