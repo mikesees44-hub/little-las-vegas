@@ -194,7 +194,7 @@ describe('urgent meeting card', () => {
     const { UrgentMeeting } = await import('../src/ui/components/UrgentMeeting');
     const { s } = plant(newGame('urgent-ui'));
     const props = { s, id: 'tipX', onMeet: () => {}, onIgnore: () => {}, onRespond: () => {}, onPick: () => {}, onClose: () => {} };
-    const before = renderToString(createElement(UrgentMeeting, props));
+    const before = renderToString(createElement(UrgentMeeting, props)).replace(/<!-- -->/g, '');
     expect(before).toContain('Test Capo wants to see you');
     expect(before).toContain('data-testid="urgent-meet"');
     expect(before).toContain('data-testid="urgent-ignore"');
