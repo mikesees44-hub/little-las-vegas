@@ -120,21 +120,24 @@ export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-
  * what still wants the boss (decisions unanswered, the sit-down's items, the
  * morning's problems, the envelope); the list opens each one, or the whole desk.
  */
-function WaitingButton({ pending, answered, sitCount, mornings, envelope, onReview, onSitDown, onRounds, onEnvelope, onDesk }: {
-  pending: number; answered: number; sitCount: number; mornings: number; envelope: boolean;
-  onReview: () => void; onSitDown?: () => void; onRounds?: () => void; onEnvelope?: () => void; onDesk?: () => void;
+function WaitingButton({ pending, answered, sitCount, mornings, envelope, urgent = 0, onReview, onSitDown, onRounds, onEnvelope, onDesk, onUrgent }: {
+  pending: number; answered: number; sitCount: number; mornings: number; envelope: boolean; urgent?: number;
+  onReview: () => void; onSitDown?: () => void; onRounds?: () => void; onEnvelope?: () => void; onDesk?: () => void; onUrgent?: () => void;
 }) {
   const open = pending - answered;
-  const n = open + sitCount + mornings + (envelope ? 1 : 0);
+  const n = open + sitCount + mornings + (envelope ? 1 : 0) + urgent;
   return (
     <Popover align="left" testid="waiting-menu" button={(o, t) => (
       <button type="button" onClick={t} aria-expanded={o} data-testid="waiting-button" title="Everything waiting on you this week: decisions, the sit-down, the morning, the envelope"
-        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
+        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${urgent ? 'border-red-500 text-red-300 bg-red-500/10' : n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
         ▤<span className="hidden sm:inline"> Waiting on you</span>{n ? <span className="ml-1 rounded-full bg-gold-500 px-1.5 text-[10px] text-noir-950">{n}</span> : <span className="ml-1 text-stone-500">✓</span>} ▾
       </button>
     )}>
       {(close) => (
         <div className="w-64 space-y-0.5 text-xs">
+          {urgent > 0 && onUrgent && <button type="button" className={`${menuItem} border border-red-500/60 bg-red-500/10 text-red-200`} onClick={() => { close(); onUrgent(); }} data-testid="urgent-button">
+            ⚠ Urgent: {urgent === 1 ? 'someone wants' : `${urgent} people want`} a meeting <span className="float-right tabular-nums">{urgent}</span>
+          </button>}
           <button type="button" className={menuItem} disabled={!pending} onClick={() => { close(); onReview(); }} data-testid="decisions-button">
             ✉ Decisions <span className="float-right tabular-nums text-stone-400">{answered}/{pending}</span>
           </button>
@@ -153,7 +156,7 @@ function WaitingButton({ pending, answered, sitCount, mornings, envelope, onRevi
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind }: {
+export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind }: {
   s: GameState;
   /** Running clock (days tick by) rather than turn-based (settings). */
   clockMode?: boolean;
@@ -164,6 +167,9 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
   pending: number;
   answered: number;
   onReview: () => void;
+  /** Urgent meetings still waiting on the boss (threats.ts) and the opener. */
+  urgent?: number;
+  onUrgent?: () => void;
   ticker?: string;
   onNewGame: () => void;
   onMainMenu: () => void;
@@ -227,7 +233,7 @@ export function TopBar({ s, clockMode = false, speed, setSpeed, note, onAdvance,
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>
             </div>
-            <WaitingButton pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope}
+            <WaitingButton pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope} urgent={urgent} onUrgent={onUrgent}
               onReview={onReview} onSitDown={onSitDown} onRounds={onRounds} onEnvelope={onEnvelope} onDesk={onDesk} />
             {onOffice && (
               <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"

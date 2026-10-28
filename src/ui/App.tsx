@@ -76,6 +76,8 @@ import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './ro
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance } from './desk/BossDesk';
 import { readyReview } from '../engine/desk';
+import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
+import { UrgentMeeting } from './components/UrgentMeeting';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 import { BossOffice } from './office/BossOffice';
@@ -221,6 +223,17 @@ export function App({ startOn = 'title' }: AppProps) {
   }, [s, menu, scene, cues.length, reports, answers, autoOpened]);
 
   const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
+  // Urgent meetings (threats.ts): a popup when one arrives; the Waiting-on-you menu lists them first.
+  const [urgent, setUrgent] = useState<string | undefined>();
+  const urgentN = useMemo(() => urgentCount(s), [s]);
+  useEffect(() => {
+    if (menu || urgent) return;
+    const fresh = unseenUrgent(s);
+    if (!fresh.length) return;
+    setSpeed(0);
+    setUrgent(fresh[0]);
+    setS((x) => markTipsSeen(x, fresh));
+  }, [s, menu, urgent]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
 
   const settledRef = useRef<SettledMark | undefined>(undefined);
@@ -651,6 +664,7 @@ export function App({ startOn = 'title' }: AppProps) {
         top={(
           <TopBar s={s} clockMode={clockMode} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
+            urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
@@ -746,6 +760,11 @@ export function App({ startOn = 'title' }: AppProps) {
       )}
       {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
+      )}
+      {urgent && !current && !scene && (
+        <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
+          onMeet={(id, via) => setS((x) => meetTip(x, id, via))} onIgnore={(id) => { setS((x) => ignoreTip(x, id)); setUrgent(undefined); }}
+          onRespond={(id, r) => setS((x) => respondTip(x, id, r))} />
       )}
       {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => setAnswers((x) => ({ ...x, [iid]: c }))} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
