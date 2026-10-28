@@ -963,6 +963,8 @@ export interface GameState {
   paper?: import('./paper').PaperState;
   /** Work this place (bizRacket.ts): the businesses you work, their owners' fear and stance, what you run there. */
   work?: import('./bizRacket').WorkState;
+  /** The Book (journal.ts): every order and what came of it, and everything else that happened, by person, place and money. Bounded; optional (made by the first week that turns). */
+  journal?: import('./journal').JournalState;
 }
 
 export interface PlayerChoices {

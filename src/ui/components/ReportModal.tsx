@@ -1,3 +1,4 @@
+import { useOpenBook } from '../book/TheBook';
 import { formatDate } from '../../engine/calendar';
 import { sumLines } from '../../engine/ledger';
 import type { GameState, ReportLine, Stat, WeeklyReport } from '../../engine/types';
@@ -49,7 +50,10 @@ export function ReportModal({ s, reports, onClose }: { s?: GameState; reports: W
             </div>
             {pots && <div className="mt-1 text-sm text-stone-200 tabular-nums" data-testid="report-pots">{reports.length > 1 ? 'These weeks' : 'This week'}: <span className={pots.family >= 0 ? 'text-emerald-300' : 'text-red-300'}>{sg(pots.family)}</span> to the Family, <span className={pots.pocket >= 0 ? 'text-emerald-300' : 'text-red-300'}>{sg(pots.pocket)}</span> to your pocket</div>}
           </div>
-          <button className="btn-ghost" onClick={onClose}>Close</button>
+          <div className="flex shrink-0 flex-wrap justify-end gap-1.5">
+            <ReportBookLink onClose={onClose} />
+            <button className="btn-ghost" onClick={onClose}>Close</button>
+          </div>
         </div>
 
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -147,4 +151,10 @@ export function ReportModal({ s, reports, onClose }: { s?: GameState; reports: W
       </div>
     </Modal>
   );
+}
+
+/** Everything in this report, and the rest of the week, is in the Book. */
+function ReportBookLink({ onClose }: { onClose: () => void }) {
+  const open = useOpenBook();
+  return <button type="button" className="btn-ghost text-gold-300" onClick={() => { onClose(); open(); }} data-testid="report-book">See all in Your File →</button>;
 }

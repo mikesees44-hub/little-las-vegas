@@ -1,3 +1,4 @@
+import { bookMark, bookOrder } from './journal';
 import { isIncapable } from './aging';
 import { previewUnderbelly } from './underbelly';
 import { costHint, moneyCost, withCostHint } from './costHints';
@@ -934,26 +935,32 @@ export function fundingBlock(s: GameState, a: PlayerAction, p: ActionPreview = p
 }
 
 /** Resolve the week's orders in order, re-checking each against the live state. */
-export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts: { strictFunding?: boolean } = {}): void {
+export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts: { strictFunding?: boolean; own?: number } = {}): void {
   const s = ctx.s;
-  for (const a of actions) {
+  // The Book (journal.ts): each order, and what came of it, is one entry. `own`: the boss's own orders come first.
+  const by = (i: number) => (opts.own === undefined ? 'his people' : i < opts.own ? undefined : 'a trusted advisor');
+  for (const [i, a] of actions.entries()) {
     if (s.gameOver) break;
     const def = DEFS[a.kind] as Def<typeof a.kind>;
     if (!def) continue;
+    const mark = bookMark(ctx);
     const p = previewCore(s, a);
     if (p.disabledReason) {
       ctx.log.push(`Order not carried out — ${p.title}: ${p.disabledReason}.`);
+      bookOrder(ctx, mark, a, { title: p.title, outcome: 'blocked', why: p.disabledReason, by: by(i) });
       continue;
     }
     const unfunded = opts.strictFunding ? fundingBlock(s, a, p) : undefined;
     if (unfunded) {
       ctx.log.push(`Order not carried out — ${p.title}: ${unfunded}.`);
+      bookOrder(ctx, mark, a, { title: p.title, outcome: 'blocked', why: unfunded, by: by(i) });
       continue;
     }
     if (p.acceptance && !chance(s, p.acceptance.chance)) {
       if (p.refuseEffects?.length) applyEffects(ctx, p.refuseEffects, { label: `${p.title}: refused`, because: p.because, category: p.category });
       ctx.log.push(`${p.title} — refused.`);
       s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You tried: ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}. The answer was no.`, kind: 'decision' });
+      bookOrder(ctx, mark, a, { title: p.title, outcome: 'refused', by: by(i) });
       continue;
     }
     applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
@@ -968,6 +975,7 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     }
     if (p.acceptance) ctx.log.push(`${p.title} — accepted.`);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${p.because}.`, kind: 'decision' });
+    bookOrder(ctx, mark, a, { title: p.title, outcome: 'done', by: by(i) });
   }
 }
 

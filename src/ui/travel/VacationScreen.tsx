@@ -124,7 +124,7 @@ function Who({ s, label, people, note }: { s: GameState; label: string; people: 
 /* The screen                                                        */
 /* ---------------------------------------------------------------- */
 
-function DayCard({ s, t, i, update }: { s: GameState; t: Trip; i: number; update: (f: (s: GameState) => GameState) => void }) {
+function DayCard({ s, t, i, update }: { s: GameState; t: Trip; i: number; update: (f: (s: GameState) => GameState, what?: string) => void }) {
   const [adding, setAdding] = useState(false);
   const d = destOf(t);
   const head = d.activities.find((a) => a.id === t.days[i]);
@@ -180,7 +180,7 @@ function DayCard({ s, t, i, update }: { s: GameState; t: Trip; i: number; update
  * cost, what it does to whom), what happened, and back home who is running
  * things while he is gone.
  */
-export function VacationScreen({ s, update, onClose }: { s: GameState; update: (f: (s: GameState) => GameState) => void; onClose: () => void }) {
+export function VacationScreen({ s, update, onClose }: { s: GameState; update: (f: (s: GameState) => GameState, what?: string) => void; onClose: () => void }) {
   const t = bossVacation(s);
   if (!t) {
     return (

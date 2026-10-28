@@ -1,3 +1,4 @@
+import { BookNote } from '../book/TheBook';
 import { createContext, useContext, useState } from 'react';
 import { pocketCash } from '../../engine/tributeState';
 import { sameTarget, targetOf } from '../../engine/deals';
@@ -96,6 +97,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
       {why && <div className="text-[11px] text-red-400 mt-1" data-testid="unavailable">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
+      {queued && !compact && <BookNote />}
       {!hard && noTime && !queued && later && (
         <button className="btn-gold text-xs py-1 mt-1" onClick={() => later(short > 0 ? { ...action, fund: 'family' } : action)} data-testid="do-tomorrow">Do it tomorrow</button>
       )}

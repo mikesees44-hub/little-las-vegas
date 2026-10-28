@@ -1,3 +1,4 @@
+import { LoggedCard } from '../book/TheBook';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
   ANSWER_INFO, APPROACH_LABEL, APPROACH_TEXT, BEAT_INFO, COVER_INFO, DEST_INFO, KIND_INFO,
@@ -235,6 +236,9 @@ export function BoldFlow({ s, id, onClose }: { s: GameState; id: string; onClose
             <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Then</div>
             {afters.map((a) => <Choice key={a} on={(after ?? afters[0]) === a} title={AFTER_INFO[a].label} text={a === 'askAgain' ? `${AFTER_INFO[a].text} (She says yes about ${Math.round(askAgainOdds(s, id, last) * 100)}% of the time.)` : AFTER_INFO[a].text} onPick={() => setAfter(a)} testid={`bold-after-${a}`} />)}
             <ActionCard s={s} action={{ kind: 'nightlife', op: { op: 'bold', id, amount: last, raises, after: after ?? afters[0] } }} />
+            <LoggedCard s={s} person={id} action={{ kind: 'nightlife', op: { op: 'bold', id, amount: last, raises, after: after ?? afters[0] } }}
+              title={`A bold offer to ${c.firstName}: ${fmt$(last)}${raises ? ` (raised ${raises}×)` : ''}`}
+              lines={[`Her answer: ${reply?.line ?? ''}`, scene !== 'none' ? SCENE_LINE[scene] : '', `Then: ${AFTER_INFO[after ?? afters[0]].label}`, reply?.result === 'yes' ? `${fmt$(last)} from your pocket.` : 'Nothing paid.']} />
           </div>
         )}
       </div>

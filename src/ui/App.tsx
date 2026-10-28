@@ -96,6 +96,8 @@ import { PlansContext, type PlansApi } from './plans/context';
 import { LiveAlerts } from './plans/LiveAlerts';
 import { UnderbossSuggests } from './plans/Suggests';
 import { absDay } from '../engine/timeCost';
+import { FeedbackContext, FeedbackToast, type Feedback } from './components/Feedback';
+import { journalNow, seqOf } from '../engine/journal';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -203,6 +205,15 @@ export function App({ startOn = 'title' }: AppProps) {
   const [toast, setToast] = useState<ToastItem | undefined>();
   const [confirm, setConfirm] = useState<PlayerAction | undefined>();
   const closeToast = useCallback(() => setToast(undefined), []);
+  // Click feedback (components/Feedback.tsx): every decision, every change made at once, the week settling.
+  const [feedback, setFeedback] = useState<Feedback | undefined>();
+  const closeFeedback = useCallback(() => setFeedback(undefined), []);
+  const feedbackApi = useMemo(() => ({ notify: (f: Omit<Feedback, 'at'>) => { setToast(undefined); setFeedback({ ...f, at: Date.now() }); } }), []);
+  /** A change the boss makes that takes effect at once (an evening booked, a check-in answered, a trip): the click says so, and Your File keeps it. */
+  const act = useCallback((f: (x: GameState) => GameState, what?: string) => {
+    setS((cur) => { const n = f(cur); return what && n !== cur ? journalNow(n, { t: what }) : n; });
+    feedbackApi.notify({ kind: 'done', title: what ?? 'Done: it takes effect now.' });
+  }, [feedbackApi]);
   const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number; category?: string } | undefined>();
   const sheetApi = useMemo(() => ({
     open: (id: string) => { setCtxMenu(undefined); setSheet(id); },
@@ -308,8 +319,15 @@ export function App({ startOn = 'title' }: AppProps) {
     // click, or the clock's Sunday night meeting a click on Advance Week), and a result only lands
     // on the state it was computed from.
     if (!mayCommit(settledRef.current, s)) return;
+    const settled = (next: GameState) => {
+      const mine = (next.journal?.e ?? []).filter((e) => e.w >= s.week && e.mine && e.src !== 'now');
+      const orders = mine.filter((e) => e.src === 'order').length;
+      const dec = mine.filter((e) => e.src === 'decision').length;
+      if (!quiet || orders + dec) feedbackApi.notify({ kind: 'settled', title: `${orders} order${orders === 1 ? '' : 's'} and ${dec} decision${dec === 1 ? '' : 's'} came out.`, detail: 'What came of each one is in Your File, with everything else that happened.' });
+    };
     if (m === 'week') {
       const r = advanceWeek(s, choices);
+      settled(r.state);
       settledRef.current = { seed: s.seed, week: s.week };
       setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, r.report].slice(-26));
@@ -329,6 +347,7 @@ export function App({ startOn = 'title' }: AppProps) {
       }
     } else {
       const r = advanceMonth(s, choices);
+      settled(r.state);
       settledRef.current = { seed: s.seed, week: s.week };
       setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, ...r.reports].slice(-26));
@@ -387,9 +406,17 @@ export function App({ startOn = 'title' }: AppProps) {
     commit(choiceId);
   }
 
+  /** A decision answered (the decision window, the office, the review): the click says so; the outcome lands in Your File when the week turns. */
+  function noteAnswer(iid: string, choiceId: string) {
+    const ev = s.pendingEvents.find((e) => e.iid === iid);
+    const ch = ev?.choices.find((c) => c.id === choiceId);
+    if (ev && ch) feedbackApi.notify({ kind: 'decided', title: `${ev.title}: ${ch.label}`, when: 'when the week turns; the outcome lands in Your File' });
+  }
+
   function commit(choiceId: string, moves?: string[]) {
     if (eventIdx === null) return;
     const ev = s.pendingEvents[eventIdx];
+    noteAnswer(ev.iid, choiceId);
     const mv = moves ? { ...mgMoves, [ev.iid]: moves } : mgMoves;
     if (moves) setMgMoves(mv);
     const next = { ...answers, [ev.iid]: choiceId };
@@ -515,7 +542,13 @@ export function App({ startOn = 'title' }: AppProps) {
 
   const sectionCtx: SectionCtx = { pendingLaw, pendingHeir, onLaw: setPendingLaw, onHeir: setPendingHeir, go, reports: reportLog, openReports: setReports, houseSel, onHouseSel: setHouseSel };
   const housesApi = { openHouse: (id: string) => { setSheet(undefined); setHouseSel(id); openRoute({ panel: 'house', section: 'houses' }); } };
-  const shellApi: ShellApi = { go, focus: focusMap, update: setS };
+  // Your File's badge: entries written since the boss last opened it (per browser; never part of the save).
+  const fileKey = `llv.fileSeen.${s.seed}`;
+  const fileTop = s.journal?.seq ?? 0;
+  const [fileSeen, setFileSeen] = useState<number>(() => { try { return Number(localStorage.getItem(fileKey) ?? 0) || 0; } catch { return 0; } });
+  const markFileSeen = () => { setFileSeen(fileTop); try { localStorage.setItem(fileKey, String(fileTop)); } catch { /* private window */ } };
+  const fileNew = Math.max(0, (s.journal?.e ?? []).filter((e) => e.mine || e.src !== 'ledger').filter((e) => seqOf(e.id) > fileSeen).length);
+  const shellApi: ShellApi = { go, focus: focusMap, update: setS, act };
   const tributeApi: TributeUiApi = {
     envelope, setEnvelope,
     openAudience: (id) => {
@@ -683,8 +716,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const laterKeys = later.week === s.week ? later.keys : [];
   const officeUi = { answers, briefSkip, later: laterKeys };
   function officeDelegate(op: DelegateOp) {
-    if (op.kind === 'answer') setAnswers((a) => ({ ...a, [op.iid]: op.choiceId }));
-    else if (op.kind === 'checkin') setS((x) => answerCheckIn(x, op.key, op.answer));
+    if (op.kind === 'answer') { setAnswers((a) => ({ ...a, [op.iid]: op.choiceId })); noteAnswer(op.iid, op.choiceId); }
+    else if (op.kind === 'checkin') act((x) => answerCheckIn(x, op.key, op.answer), 'Answered a capo\'s check-in');
     else ordersApi.queue(op.action);
   }
   function officeInvite(v: OfficeVisitor) {
@@ -704,7 +737,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
-      <div className="mb-3"><MorningReports s={s} update={setS} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
+      <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('rounds')} data-testid="week-rounds">☕ Your rounds</button>
@@ -712,7 +745,7 @@ export function App({ startOn = 'title' }: AppProps) {
       </div>
       <details className="mt-3 group" data-testid="your-rounds">
         <summary className="cursor-pointer list-none text-[10px] uppercase tracking-[0.25em] text-stone-500 hover:text-gold-300">Your rounds · day by day <span className="normal-case tracking-normal text-gold-400 group-open:hidden">▸ open the week</span></summary>
-        <div className="mt-1.5"><WeekPlanner key={s.week} s={s} update={setS} onSitDown={() => setSitdown('rounds')} /></div>
+        <div className="mt-1.5"><WeekPlanner key={s.week} s={s} update={act} onSitDown={() => setSitdown('rounds')} /></div>
       </details>
     </section>
   ) : undefined;
@@ -727,7 +760,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
     </section>
   ) : undefined;
-  const youTop = home === 'you' && !s.gameOver ? <PersonalActions s={s} update={setS} onWeek={() => setRoute({ home: 'week' })} /> : undefined;
+  const youTop = home === 'you' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'week' })} /> : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
@@ -745,6 +778,7 @@ export function App({ startOn = 'title' }: AppProps) {
     <HousesNavContext.Provider value={housesApi}>
     <TributeUiContext.Provider value={tributeApi}>
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
+      <FeedbackContext.Provider value={feedbackApi}>
       <EmpireHost s={s} setS={setS}>
       <Shell
         top={(<>
@@ -758,7 +792,7 @@ export function App({ startOn = 'title' }: AppProps) {
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}
-            paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
+            fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
@@ -822,10 +856,10 @@ export function App({ startOn = 'title' }: AppProps) {
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
       {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen || mondayCard} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
-      {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={setS} onClose={() => setLtOpen(false)} />}
+      {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={act} onClose={() => setLtOpen(false)} />}
       {sitdown && !current && !scene && (
-        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => setS((x) => setWeekRounds(x, ids))} skip={briefSkip} setSkip={setBriefSkip}
-          onTrust={(k, on) => setS((x) => setTrust(x, k, on))} onLink={followLink} onClose={() => setSitdown(undefined)}
+        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => act((x) => setWeekRounds(x, ids), 'Your evenings for the week are set')} skip={briefSkip} setSkip={setBriefSkip}
+          onTrust={(k, on) => act((x) => setTrust(x, k, on), on ? 'Trusted him with it' : 'Took it back into your own hands')} onLink={followLink} onClose={() => setSitdown(undefined)}
           onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
           lesson={helpLevel() === 'guided' && s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
       )}
@@ -856,10 +890,10 @@ export function App({ startOn = 'title' }: AppProps) {
       )}
       {urgent && !current && !scene && (
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
-          onMeet={(id, via) => setS((x) => meetTip(x, id, via))} onIgnore={(id) => { setS((x) => ignoreTip(x, id)); setUrgent(undefined); }}
-          onRespond={(id, r) => setS((x) => respondTip(x, id, r))} />
+          onMeet={(id, via) => act((x) => meetTip(x, id, via), 'You agreed to the meeting')} onIgnore={(id) => { act((x) => ignoreTip(x, id), 'You let the warning go'); setUrgent(undefined); }}
+          onRespond={(id, r) => act((x) => respondTip(x, id, r), 'You gave your answer to the warning')} />
       )}
-      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => setAnswers((x) => ({ ...x, [iid]: c }))} />}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
@@ -885,7 +919,7 @@ export function App({ startOn = 'title' }: AppProps) {
               <div className="panel-title">Your day</div>
               <button type="button" className="btn-gold px-3 py-1 text-xs" onClick={() => setDayWin(undefined)} data-testid="day-window-close">Done</button>
             </div>
-            <WeekPlanner s={s} update={setS} initialDay={dayWin} onSitDown={() => { setDayWin(undefined); setSitdown('rounds'); }} />
+            <WeekPlanner s={s} update={act} initialDay={dayWin} onSitDown={() => { setDayWin(undefined); setSitdown('rounds'); }} />
           </div>
         </div>
       )}
@@ -893,9 +927,9 @@ export function App({ startOn = 'title' }: AppProps) {
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}
       {tripPlan && !current && !sheet && <TripPlanner key={`${tripPlan.leaderId}:${tripPlan.destId ?? ''}`} s={s} leaderId={tripPlan.leaderId} destId={tripPlan.destId} onClose={() => setTripPlan(undefined)} />}
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
-      {goTo !== undefined && !current && !sheet && <GoThere s={s} cityId={goTo || undefined} update={setS} onClose={() => setGoTo(undefined)} onArrive={() => { setGoTo(undefined); setCityOpen(true); }} />}
-      {cityOpen && !current && !sheet && goTo === undefined && <CityScreen s={s} update={setS} onClose={() => setCityOpen(false)} />}
-      {vacOpen && !current && !sheet && !cityOpen && <VacationScreen s={s} update={setS} onClose={() => setVacOpen(false)} />}
+      {goTo !== undefined && !current && !sheet && <GoThere s={s} cityId={goTo || undefined} update={act} onClose={() => setGoTo(undefined)} onArrive={() => { setGoTo(undefined); setCityOpen(true); }} />}
+      {cityOpen && !current && !sheet && goTo === undefined && <CityScreen s={s} update={act} onClose={() => setCityOpen(false)} />}
+      {vacOpen && !current && !sheet && !cityOpen && <VacationScreen s={s} update={act} onClose={() => setVacOpen(false)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
       {confirm && <ConfirmOrder s={s} action={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} onTomorrow={() => { const a = confirm; setConfirm(undefined); queueLater(a); }} onNeverAsk={() => { setSettings({ confirmOrders: false }); const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => {
@@ -906,7 +940,9 @@ export function App({ startOn = 'title' }: AppProps) {
         setToast(undefined);
       }}
         onApprove={() => { setOrders((o) => o.map((x, j) => (j === toast.index ? { ...x, fund: 'family' } : x))); setToast({ ...toast, action: { ...toast.action, fund: 'family' }, short: 0, at: Date.now() }); }} />}
+      {feedback && !toast && <FeedbackToast item={feedback} onClose={closeFeedback} />}
       </EmpireHost>
+      </FeedbackContext.Provider>
     </Providers>
     </TributeUiContext.Provider>
     </HousesNavContext.Provider>

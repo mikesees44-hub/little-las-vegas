@@ -104,6 +104,9 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   attached: { panel: 'town', section: 'attached' },
   // The feed
   chronicle: { panel: 'chronicle', section: 'all' },
+  book: { panel: 'chronicle', section: 'book' },
+  file: { panel: 'chronicle', section: 'book' },
+  journal: { panel: 'chronicle', section: 'book' },
   papers: { panel: 'chronicle', section: 'papers' },
   storylines: { panel: 'chronicle', section: 'stories' },
   reports: { panel: 'chronicle', section: 'reports' },

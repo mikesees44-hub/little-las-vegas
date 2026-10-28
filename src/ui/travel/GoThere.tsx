@@ -22,7 +22,7 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
  * the boss leaves today. (A planned trip with guests and an itinerary is
  * the trip planner; this is the boss getting in the car.)
  */
-export function GoThere({ s, cityId, update, onClose, onArrive }: { s: GameState; cityId?: string; update: (f: (s: GameState) => GameState) => void; onClose: () => void; onArrive: () => void }) {
+export function GoThere({ s, cityId, update, onClose, onArrive }: { s: GameState; cityId?: string; update: (f: (s: GameState) => GameState, what?: string) => void; onClose: () => void; onArrive: () => void }) {
   const [plan, setPlan] = useState<DepartPlan>(() => ({ cityId: cityId && sceneOf(cityId) ? cityId : 'philadelphia', mode: 'cars', guards: [], transport: 'caddy' }));
   const modes = visitModes(plan.cityId);
   const mode: VisitMode = modes.includes(plan.mode) ? plan.mode : modes[0] ?? 'cars';
@@ -100,7 +100,7 @@ export function GoThere({ s, cityId, update, onClose, onArrive }: { s: GameState
         <div className="flex flex-wrap items-center justify-end gap-2">
           {q.block && <span className="text-xs text-red-300">{q.block}</span>}
           <button className="btn-ghost" onClick={onClose}>Not now</button>
-          <button className="btn-gold" data-testid="go-leave" disabled={!!departBlock(s, p)} onClick={() => { update((x) => departFor(x, p)); onArrive(); }}>Leave today</button>
+          <button className="btn-gold" data-testid="go-leave" disabled={!!departBlock(s, p)} onClick={() => { update((x) => departFor(x, p), 'You left town'); onArrive(); }}>Leave today</button>
         </div>
       </div>
     </Modal>

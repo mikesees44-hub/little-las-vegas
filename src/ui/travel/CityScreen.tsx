@@ -24,7 +24,7 @@ function slotLabel(s: GameState, day: number, slot: 'day' | 'night'): string {
   return `${absLabel(s, day)} ${slot === 'day' ? 'afternoon' : 'night'}`;
 }
 
-function PlaceCard({ s, v, place, from, update, hl }: { s: GameState; v: Visit; place: CityPlace; from?: number; update: (f: (s: GameState) => GameState) => void; hl?: boolean }) {
+function PlaceCard({ s, v, place, from, update, hl }: { s: GameState; v: Visit; place: CityPlace; from?: number; update: (f: (s: GameState) => GameState, what?: string) => void; hl?: boolean }) {
   const who = contactOf(s, place);
   return (
     <li id={`city-place-${place.id}`} className={`rounded border p-2 space-y-1 ${hl ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/60'}`} data-testid={`city-place-${place.id}`}>
@@ -60,7 +60,7 @@ function PlaceCard({ s, v, place, from, update, hl }: { s: GameState; v: Visit; 
  * Where the boss is: the city's places and people, the agenda he is
  * keeping, what happened, the risks, and the way home.
  */
-export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (s: GameState) => GameState) => void; onClose: () => void }) {
+export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (s: GameState) => GameState, what?: string) => void; onClose: () => void }) {
   const v = currentVisit(s);
   const [day, setDay] = useState<number | undefined>();
   // New York has a second tab: the real map of the city, its neighborhoods and families (ui/nyc).
@@ -174,8 +174,8 @@ export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-noir-700 pt-3">
           {v.leaveDay === undefined && plan && <span className="text-xs text-stone-400">Leaving {absLabel(s, plan.leaveDay)}, home {absLabel(s, plan.homeDay)}.</span>}
-          {v.leaveDay !== undefined && phase !== 'back' && <button className="btn-ghost" onClick={() => update(stayOn)}>Stay on</button>}
-          {v.leaveDay === undefined && <button className="btn-gold" data-testid="city-come-home" onClick={() => update(comeHome)}>Come home</button>}
+          {v.leaveDay !== undefined && phase !== 'back' && <button className="btn-ghost" onClick={() => update(stayOn, 'You stayed on')}>Stay on</button>}
+          {v.leaveDay === undefined && <button className="btn-gold" data-testid="city-come-home" onClick={() => update(comeHome, 'You came home')}>Come home</button>}
           <button className="btn-ghost" onClick={onClose}>Close</button>
         </div>
       </div>

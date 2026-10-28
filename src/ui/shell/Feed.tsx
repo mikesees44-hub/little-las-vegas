@@ -1,3 +1,4 @@
+import { useOpenBook } from '../book/TheBook';
 import { formatDate } from '../../engine/calendar';
 import type { ChronicleEntry, GameState, WeeklyReport } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -37,7 +38,7 @@ export function Feed({ s, filter, reports = [], onReport }: { s: GameState; filt
             </button>
           );
         })}
-        <p className="text-[11px] text-stone-600">Reports from this sitting; the chronicle keeps the story for good.</p>
+        <p className="text-[11px] text-stone-600">Reports from this sitting; the chronicle keeps the story for good, and <FeedBookLink /> keeps all of it, order by order.</p>
       </div>
     );
   }
@@ -55,4 +56,9 @@ export function Feed({ s, filter, reports = [], onReport }: { s: GameState; filt
       ))}
     </ul>
   );
+}
+
+function FeedBookLink() {
+  const open = useOpenBook();
+  return <button type="button" className="text-gold-300 hover:underline" onClick={() => open()} data-testid="feed-book">Your File →</button>;
 }

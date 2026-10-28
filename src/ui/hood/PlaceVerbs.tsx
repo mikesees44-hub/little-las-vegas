@@ -1,3 +1,4 @@
+import { BookAbout } from '../book/TheBook';
 import { useState, type ReactNode } from 'react';
 import { placeActions, type PlaceAct, type PlaceActionId } from '../../engine/placeEligibility';
 import { lotName } from '../../engine/property';
@@ -92,6 +93,7 @@ export function PlaceVerbs({ s, lot, biz, on = {}, extra, title = 'This place', 
           {whyNot && <ul className="mt-0.5 space-y-0.5">{notNow.map((a) => <li key={a.id}><span className="text-stone-400">{a.label}</span> — {a.why}</li>)}</ul>}
         </div>
       )}
+      {(biz || lot) && <BookAbout s={s} place={biz ? `b:${biz.id}` : `l:${lot!.id}`} compact />}
     </section>
   );
 }

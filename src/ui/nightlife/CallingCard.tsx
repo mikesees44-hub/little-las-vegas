@@ -1,3 +1,4 @@
+import { BookAbout } from '../book/TheBook';
 import { useState, type ReactNode } from 'react';
 import { callingCard, type CardLine } from '../../engine/callingCard';
 import { nightActionsFor } from '../../engine/nightlife';
@@ -91,6 +92,8 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
           {acts.slice(0, more ? acts.length : 2).map((a, i) => <ActionRow key={i} s={s} action={a} />)}
         </div>
       )}
+
+      {c.id !== s.playerId && <BookAbout s={s} person={id} compact />}
 
       <button type="button" className="text-[12px] font-semibold text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more} data-testid="calling-card-more">
         {more ? 'Less ▴' : `More… (appearance, skills, family, money, you, rumors${acts.length > 2 ? `, ${acts.length - 2} more orders` : ''})`}

@@ -6,6 +6,7 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { useSheet } from '../components/People';
 import { useShell } from '../shell/context';
+import { useFeedback } from '../components/Feedback';
 import { useTravel } from '../travel/context';
 import { markOrder, orderMark } from './orderMarks';
 import type { PlanDo } from './plans';
@@ -45,6 +46,7 @@ export function usePlanDo(s: GameState): (d: PlanDo, after?: () => void) => void
   const sheet = useSheet();
   const travel = useTravel();
   const { orders, remove, queue } = useOrders();
+  const fb = useFeedback();
   return (d, after) => {
     const close = () => after?.();
     switch (d.to) {
@@ -55,6 +57,7 @@ export function usePlanDo(s: GameState): (d: PlanDo, after?: () => void) => void
         // The hours come back: a booked day is released; today's hours only if it is still the same day.
         if (m && shell.update) shell.update((cur) => (m.booked !== undefined ? unbook(cur, m.booked, m.hours) : m.abs === absDay(cur) ? refundTime(cur, m.hours, m.late ?? 0, !!m.missedDinner) : cur));
         remove(d.index);
+        fb.notify({ kind: 'done', title: 'Order cancelled: it will not be carried out.' });
         return;
       }
       case 'today': {
@@ -64,6 +67,7 @@ export function usePlanDo(s: GameState): (d: PlanDo, after?: () => void) => void
         const spent = spendTime(unbook(s, m.booked, m.hours), a);
         markOrder(a, { abs: absDay(s), hours: spent.hours, late: spent.late, missedDinner: spent.missedDinner });
         shell.update((cur) => spendTime(unbook(cur, m.booked!, m.hours), a).state);
+        fb.notify({ kind: 'ordered', title: 'Moved to today', when: 'today; the outcome lands in Your File when the week turns' });
         return;
       }
       case 'queue': queue(d.action as PlayerAction); return;

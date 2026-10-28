@@ -52,10 +52,10 @@ export function ImportedView({ s, onClose }: { s: GameState; onClose: () => void
   useEffect(() => { getGeo<ImportedLayer>(LAYER_FILE).then(setLayer, (e: unknown) => setErr(String(e))); }, []);
   if (err) return <div className="absolute inset-0 grid place-items-center bg-noir-950 text-sm text-stone-300" data-testid="imported-view">The imported blocks could not be loaded ({err}). <button type="button" className="ml-2 underline" onClick={onClose}>Back</button></div>;
   if (!layer) return <div className="absolute inset-0 grid place-items-center bg-noir-950 text-sm text-stone-400" data-testid="imported-view">Loading the imported blocks…</div>;
-  return <ImportedMap s={s} layer={layer} onClose={onClose} update={shell.update} />;
+  return <ImportedMap s={s} layer={layer} onClose={onClose} update={shell.act ?? shell.update} />;
 }
 
-function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: ImportedLayer; onClose: () => void; update?: (f: (s: GameState) => GameState) => void }) {
+function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: ImportedLayer; onClose: () => void; update?: (f: (s: GameState) => GameState, what?: string) => void }) {
   const year = s.date.y;
   const [mode, setMode] = useState<ShowMode>('eligible');
   const [showGame, setShowGame] = useState(true);
@@ -288,7 +288,7 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
           </div>
           {selB && <BuildingCard b={selB} layer={layer} biz={view.businesses.filter((x) => x.building === selB.id)} mode={mode} occupant={occupant} year={year}
             onEntrance={goEntrance} entrance={entrance} walkLen={walk?.length}
-            onOccupant={update ? (name, kind) => update((st) => assignImportedOccupant(st, selB.id, name, kind)) : undefined} />}
+            onOccupant={update ? (name, kind) => update((st) => assignImportedOccupant(st, selB.id, name, kind), `Put ${name} in a building`) : undefined} />}
           {selBiz && <BizCard b={selBiz} />}
           {edit && sel && <EditorPanel target={sel} b={selB} onOverride={addOverride} />}
         </div>

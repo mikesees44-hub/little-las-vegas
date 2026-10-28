@@ -69,6 +69,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   // The front page of This Week is the Boss's Desk (App.tsx): what needs you now. Below it, two places.
   week: [
     { items: [
+      { keys: ['chronicle.book'], icon: '❡', label: 'Your File', sub: 'Everything that happened, in one place: your orders and what came of them, by person, place and money.' },
       { keys: ['ops.progress', 'ops.missions', 'ops.plan'], icon: '⚙', label: 'Jobs', sub: 'What your people are working on, the big cases stage by stage, and planning a new job.', views: ['Under way', 'The big cases', 'Plan a job'] },
       { keys: ['chronicle.all', 'chronicle.mine', 'chronicle.street', 'chronicle.family', 'chronicle.papers', 'chronicle.stories', 'chronicle.reports'], icon: '✎', label: 'The news', sub: 'Your story, the street, the family, the papers, the storylines and each week\'s report.', views: ['Everything', 'Yours', 'The street', 'Family', 'The papers', 'Storylines', 'Weekly reports'] },
     ] },
