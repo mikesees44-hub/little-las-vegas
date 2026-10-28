@@ -62,7 +62,7 @@ export interface HoursState {
 export const TIME_TABLE: Record<string, number> = {
   // Rackets & places
   buyBusiness: 2, sellBusiness: 2, lend: 1, findFrontMan: 2, charterBank: 3, casino: 3,
-  'econ:racket': 1, 'econ:setup': 1, 'econ:spotCall': 0.5, 'econ:placeAsk': 0.5, 'econ:upgrade': 1, 'econ:collect': 1, 'econ:rename': 0.25,
+  'econ:racket': 1, 'econ:setup': 1, 'econ:spotCall': 0.5, 'econ:placeAsk': 0.5, 'econ:tenantCall': 0.5, 'econ:upgrade': 1, 'econ:collect': 1, 'econ:rename': 0.25,
   'econ:manager': 1, 'econ:oversight': 0.5, 'econ:audit': 2, 'econ:assistant': 1,
   'econ:buyLot': 2, 'econ:leaseLot': 1, 'econ:deal': 2, 'econ:sellLot': 2, 'econ:slowRival': 0.5, 'econ:bid': 1,
   'econ:build': 2, 'econ:renovate': 1, 'econ:permits': 1, 'econ:bribeInspector': 1, 'econ:puppetPermit': 1, 'econ:fixCode': 1, 'econ:home': 2,

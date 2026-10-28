@@ -5,7 +5,8 @@ import {
   canHoldSpot, fineOf, incomeSources, kickupChain, rivalChain, RISK_WORD, spotOf, spotOffers, sponsors, sponsorWord, SPOTS,
   type ChainRow, type SpotKind,
 } from '../../engine/kickup';
-import { askMeans, counterOdds, openAsks, quickRackets, repWord, suggestAll, tenantsOf, TRADES, type PlaceAsk } from '../../engine/placeAsks';
+import { askMeans, assessAsk, counterOdds, openAsks, quickRackets, repWord, suggestAll, TRADES, TROUBLE_WORD, type PlaceAsk } from '../../engine/placeAsks';
+import { memoriesOf } from '../../engine/kickup';
 import { previewAction } from '../../engine/actions';
 import type { Character, GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
@@ -53,6 +54,7 @@ export function SetUpPicker({ s, who }: { s: GameState; who: string }) {
               <span className="font-semibold text-stone-200">{SPOTS[o.k].what}</span>
               <span className="tabular-nums text-gold-300">~{fmt$(o.gross)}/wk <span className="text-stone-500">(season {fmt$(o.summer)}, winter {fmt$(o.winter)})</span></span>
             </div>
+            {(o.lock || o.objects) && <div className="text-[10px] text-red-300">{o.lock ?? `${o.objects}: push him and he holds it against you`}</div>}
             <div className="text-[10px] text-stone-400">He keeps {o.keep}% · kicks up {o.up}%{o.piece ? ` · ${o.piece}% to ${by === s.playerId ? 'your Pocket' : sponsorWord(s, by)}` : ''} · risk: {RISK_WORD[o.risk]} · stake {fmt$(o.stake)}</div>
             <div className="mt-1"><ActionCard s={s} action={build(who, o.k, by === s.playerId ? undefined : by)} compact /></div>
           </li>
@@ -92,6 +94,7 @@ export function SpotLine({ s, c }: { s: GameState; c: Character }) {
           {sp.want !== undefined && (['raise', 'hold'] as const).map((how) => <ActionCard key={how} s={s} action={{ kind: 'econ', op: { type: 'spotCall', who: c.id, how } }} compact />)}
         </div>
       )}
+      {memoriesOf(s, c.id).length > 0 && <div className="text-[10px] text-stone-500" data-testid="spot-memory">He remembers: {memoriesOf(s, c.id).slice(-2).map((m) => `${m.text} (wk ${m.w})`).join('; ')}</div>}
       {open && <SetUpPicker s={s} who={c.id} />}
     </div>
   );
@@ -201,6 +204,9 @@ function AskCard({ s, a }: { s: GameState; a: PlaceAsk }) {
       <div className="text-xs font-semibold text-stone-200">{a.who ? <CharLink s={s} id={a.who} /> : a.name} <span className="font-normal text-stone-400">({a.from === 'own' ? 'one of yours' : a.from === 'rival' ? 'another family\'s man' : T.man})</span> wants to run {T.what} at {a.placeName}</div>
       <div className="text-[11px] text-stone-400">~{fmt$(a.gross)} a week · offers you {a.cut}% (~{fmt$(a.gross * a.cut / 100)}) · heat {T.heat >= 0.06 ? 'steady' : T.heat >= 0.03 ? 'some' : 'little'} · his name: {repWord(a.rep)} · answer by week {a.until}</div>
       <div className="text-[11px] text-amber-200">{askMeans(s, a)}</div>
+      <ul className="mt-1 space-y-0.5 text-[11px]" data-testid="ask-assessment">
+        {assessAsk(s, a).map((v) => <li key={v.role} className={v.lean > 0 ? 'text-emerald-200' : v.lean < 0 ? 'text-red-300' : 'text-stone-300'}><span className="text-stone-500">{v.role}{v.who && s.characters[v.who] ? ` (${s.characters[v.who].firstName})` : ''}:</span> "{v.says}"</li>)}
+      </ul>
       <div className="mt-1 grid gap-1 sm:grid-cols-2">
         <ActionCard s={s} action={{ kind: 'econ', op: { type: 'placeAsk', id: a.id, how: 'accept' } }} compact />
         <div>
@@ -213,6 +219,7 @@ function AskCard({ s, a }: { s: GameState; a: PlaceAsk }) {
         </div>
         <ActionCard s={s} action={{ kind: 'econ', op: { type: 'placeAsk', id: a.id, how: 'refuse' } }} compact />
         <ActionCard s={s} action={{ kind: 'econ', op: { type: 'placeAsk', id: a.id, how: 'later' } }} compact />
+        <ActionCard s={s} action={{ kind: 'econ', op: { type: 'placeAsk', id: a.id, how: 'delegate' } }} compact />
       </div>
     </li>
   );
@@ -221,7 +228,7 @@ function AskCard({ s, a }: { s: GameState; a: PlaceAsk }) {
 /** Men asking to run their thing out of your places, and the outsiders who already do. */
 export function PlaceRequests({ s }: { s: GameState }) {
   const asks = openAsks(s);
-  const ten = tenantsOf(s);
+  const ten = Object.entries(s.econ?.tenants ?? {});
   return (
     <section data-testid="place-requests">
       <div className="panel-title">Requests to do business at your places</div>
@@ -230,7 +237,14 @@ export function PlaceRequests({ s }: { s: GameState }) {
       {ten.length > 0 && (
         <div className="mt-2 text-[11px] text-stone-400" data-testid="tenants">
           <div className="text-stone-300 font-semibold">Running at your places</div>
-          <ul>{ten.map((t) => <li key={`${t.place}:${t.name}`}>{t.name}: {TRADES[t.trade].what} at {t.placeName} · {t.cut}% to you{t.paid !== undefined ? ` · ${fmt$(t.paid)} last week` : ''}{t.rival ? ' · their man (a foothold)' : ''}{t.cop ? ' · the precinct\'s friend' : ''}</li>)}</ul>
+          <ul className="space-y-1">{ten.map(([id, t]) => (
+            <li key={id} data-testid="tenant">{t.name}: {TRADES[t.trade].what} at {t.placeName} · {t.cut}% to you{t.paid !== undefined ? ` · ${fmt$(t.paid)} last week` : ''}{t.rival ? ' · their man (a foothold)' : ''}{t.cop ? ' · the precinct\'s friend' : ''}
+              {t.trouble && <div className="text-red-300">Trouble since week {t.trouble.w}: {TROUBLE_WORD[t.trouble.k]}.</div>}
+              {t.trouble && <div className="mt-0.5 grid gap-1 sm:grid-cols-3" data-testid="tenant-calls">
+                {(['keep', 'replace', 'withdraw'] as const).map((how) => <ActionCard key={how} s={s} action={{ kind: 'econ', op: { type: 'tenantCall', id, how } }} compact />)}
+              </div>}
+            </li>
+          ))}</ul>
         </div>
       )}
     </section>

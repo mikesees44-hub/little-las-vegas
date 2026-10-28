@@ -3,13 +3,14 @@ import { crew, isFree } from './characters';
 import { holder } from './council';
 import { ensureEcon } from './econState';
 import { hasEarner } from './earners';
+import { ownsKind } from './business';
 import { heat, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { hashSeed } from './rng';
 import { noteFavor, type AcctId, type Issue, type MemberLine, type TributeReport } from './tributeState';
 import { xfer } from './tribute';
 import type { ActionPreview } from './actions';
-import { askAction, commitAsk, openAsks, previewAsk, TRADES, type PlaceAskAction } from './placeAsks';
+import { askAction, commitAsk, commitTenant, openAsks, previewAsk, previewTenant, replacementFor, tenantAction, troubled, TRADES, TROUBLE_WORD, type PlaceAskAction, type TenantCallAction } from './placeAsks';
 import type { Attributes, Character, Craft, Effect, FactionId, GameState, PlayerAction, Rival, Trait } from './types';
 
 /**
@@ -141,6 +142,21 @@ export interface Spot {
   want?: number;
 }
 
+/** What the participants remember (CATALOG_DEEP §8 Legacy): the last 30 turns of the family's rackets. */
+export interface RackMemory { w: number; text: string; who: string[] }
+
+export function remember(s: GameState, text: string, who: string[]): void {
+  const e = ensureEcon(s);
+  const log = (e.rackLog ??= []);
+  log.push({ w: s.week, text, who: who.filter(Boolean) });
+  if (log.length > 30) e.rackLog = log.slice(-30);
+}
+
+/** What a man remembers of the family's rackets (his sheet, the chain). */
+export function memoriesOf(s: GameState, id: string): RackMemory[] {
+  return (s.econ?.rackLog ?? []).filter((m) => m.who.includes(id));
+}
+
 /* ------------------------------------------------------------------ */
 /* Who, what, how much                                                  */
 /* ------------------------------------------------------------------ */
@@ -257,6 +273,25 @@ export function kickTo(s: GameState, c: Character): { acct: AcctId; whoId?: stri
   return { acct: 'clearing', whoId: ub?.id, word: ub && ub.id !== c.id ? `${ub.firstName} (the underboss's count)` : 'the count (your envelope)' };
 }
 
+/**
+ * Not every spot is open from the start (CATALOG_DEEP §7): the shylock book wants a family with
+ * standing or a loan business already, the fence a fence of your own or months on the street, the
+ * union no-show a family that matters or a labor racket.
+ */
+export function spotLock(s: GameState, k: SpotKind): string | undefined {
+  if (k === 'shylock' && s.respect < 35 && !ownsKind(s, 'loansharking')) return 'Not yet: the street lends through a family with standing (respect 35) or one already in the loan business';
+  if (k === 'fence' && s.week < 20 && !ownsKind(s, 'fencing')) return 'Not yet: you need a fence of your own first, or a few months on the street';
+  if (k === 'noshow' && s.respect < 45 && !ownsKind(s, 'labor')) return 'Not yet: the union locals deal with a family that matters (respect 45) or one with a labor racket';
+  return undefined;
+}
+
+/** Work a man refuses (his conscience): pushed into it anyway, he remembers, and so does the succession. */
+export function spotObjection(c: Character, k: SpotKind): string | undefined {
+  if (c.traits.includes('Pious') && (k === 'shylock' || k === 'cards')) return 'He is a churchgoer: he won\'t bleed people with a book or a card game';
+  if (c.traits.includes('Honest') && (k === 'fence' || k === 'shylock')) return 'He won\'t touch stolen goods or a loan book; he says so to your face';
+  return undefined;
+}
+
 export interface SpotOffer {
   k: SpotKind;
   what: string;
@@ -269,6 +304,10 @@ export interface SpotOffer {
   stake: number;
   risk: SpotDef['risk'];
   fit: number;
+  /** Not open to you yet, and why. */
+  lock?: string;
+  /** He would refuse it, and why. */
+  objects?: string;
 }
 
 /** What each kind of spot would pay him, best first (the fit, then the money, less the risk). */
@@ -278,8 +317,10 @@ export function spotOffers(s: GameState, c: Character, by?: string): SpotOffer[]
   return SPOT_KINDS.map((k) => {
     const D = SPOTS[k];
     const gross = spotGross(s, c, k);
-    return { k, what: D.what, gross, summer: Math.round(gross * D.sw[0]), winter: Math.round(gross * D.sw[1]), up: D.up, piece, keep: 100 - D.up - piece, stake: D.stake, risk: D.risk, fit: spotFit(c, k) };
-  }).sort((a, b) => b.gross * riskW[b.risk] - a.gross * riskW[a.risk] || (a.k < b.k ? -1 : 1));
+    const lock = spotLock(s, k);
+    const objects = spotObjection(c, k);
+    return { k, what: D.what, gross, summer: Math.round(gross * D.sw[0]), winter: Math.round(gross * D.sw[1]), up: D.up, piece, keep: 100 - D.up - piece, stake: D.stake, risk: D.risk, fit: spotFit(c, k), ...(lock ? { lock } : {}), ...(objects ? { objects } : {}) };
+  }).sort((a, b) => Number(!!a.lock || !!a.objects) - Number(!!b.lock || !!b.objects) || b.gross * riskW[b.risk] - a.gross * riskW[a.risk] || (a.k < b.k ? -1 : 1));
 }
 
 export const RISK_WORD: Record<SpotDef['risk'], string> = {
@@ -310,7 +351,9 @@ export type KickupAction =
   | { type: 'setup'; who: string; spot: SpotKind; by?: string }
   | { type: 'spotCall'; who: string; how: SpotCall }
   /** A man asks to run his racket out of one of your places (placeAsks.ts). */
-  | PlaceAskAction;
+  | PlaceAskAction
+  /** Trouble at a tenant's racket: keep him, put your own man in, or close it (placeAsks.ts). */
+  | TenantCallAction;
 
 export function setupAction(who: string, spot: SpotKind, by?: string): PlayerAction {
   return { kind: 'econ', op: { type: 'setup', who, spot, ...(by ? { by } : {}) } };
@@ -327,6 +370,7 @@ const $ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 export function previewKickup(s: GameState, a: KickupAction): ActionPreview {
   if (a.type === 'setup') return previewSetup(s, a);
   if (a.type === 'placeAsk') return previewAsk(s, a);
+  if (a.type === 'tenantCall') return previewTenant(s, a);
   return previewCall(s, a);
 }
 
@@ -348,14 +392,16 @@ function previewSetup(s: GameState, a: Extract<KickupAction, { type: 'setup' }>)
   const sw = `${$(gross * D.sw[0])} in the season, ${$(gross * D.sw[1])} off`;
   const detail = `${D.line} About ${$(gross)} a week for ${c.firstName} (${sw}). He keeps ${100 - D.up - piece}%, kicks up ${D.up}% to ${to.word}, and ${piece}% goes to ${by === s.playerId ? 'your Pocket' : sponsorWord(s, by)} for setting him up. Risk: ${RISK_WORD[D.risk]}. Stake: ${$(D.stake)} from the Family.${cur ? ` (Replaces ${cur.free ? 'the hustle he found himself' : cur.nm}.)` : ''}${CORNER_SHARE && (c.rank === 'soldier' || c.rank === 'associate' || c.rank === 'capo') && d && s.districts.find((x) => x.id === d)?.capoId ? ' He works the corners less while he works his spot.' : ''}`;
   const label = title;
+  const objects = spotObjection(c, a.spot);
   const effects: Effect[] = [
     { type: 'money', amount: -D.stake, label },
-    { type: 'opinion', from: c.id, to: by, amount: 10, reason: 'Set me up with a spot of my own', decay: 0.5, label },
+    ...(objects ? [{ type: 'opinion', from: c.id, to: by, amount: -12, reason: 'Pushed me into work I refused', decay: 0, label } as Effect]
+      : [{ type: 'opinion', from: c.id, to: by, amount: 10, reason: 'Set me up with a spot of my own', decay: 0.5, label } as Effect]),
     ...(by !== s.playerId ? [{ type: 'opinion', from: c.id, to: s.playerId, amount: 3, reason: 'The family looks after me', decay: 0.5, label } as Effect] : []),
     note(`${c.firstName}: ~${$(gross)}/wk from ${D.what}; ${D.up}% up, ${piece}% to the sponsor`),
   ];
-  const why = cur && cur.k === a.spot && !cur.free ? `He already runs ${cur.nm}` : s.money < D.stake ? `Needs ${$(D.stake)}` : undefined;
-  return { title, detail, effects, cost: D.stake, because: `set ${c.firstName} ${c.lastName} up with ${D.what}`, disabledReason: why, category: 'event', verb: `Set him up — ${$(D.stake)}` };
+  const why = cur && cur.k === a.spot && !cur.free ? `He already runs ${cur.nm}` : spotLock(s, a.spot) ?? (s.money < D.stake ? `Needs ${$(D.stake)}` : undefined);
+  return { title, detail, effects, cost: D.stake, because: `set ${c.firstName} ${c.lastName} up with ${D.what}`, disabledReason: why, category: 'event', verb: `Set him up — ${$(D.stake)}`, ...(objects ? { warning: `${objects}. Push him into it and he holds it against ${by === s.playerId ? 'you' : 'the man who did'} for good.` } : {}) };
 }
 
 /** What a fine takes from him: what he owes and a little more, out of his own pocket. */
@@ -407,6 +453,7 @@ function previewCall(s: GameState, a: Extract<KickupAction, { type: 'spotCall' }
 export function commitKickup(ctx: Ctx, a: KickupAction): void {
   const s = ctx.s;
   if (a.type === 'placeAsk') { commitAsk(ctx, a); return; }
+  if (a.type === 'tenantCall') { commitTenant(ctx, a); return; }
   const c = s.characters[a.who];
   if (!c) return;
   if (a.type === 'setup') {
@@ -418,6 +465,8 @@ export function commitKickup(ctx: Ctx, a: KickupAction): void {
     (e.spots ??= {})[c.id] = { k: a.spot, by, w: s.week, f: 'player', ...(d ? { d } : {}), up: D.up, nm: spotName(s, a.spot, d, c.id) };
     if (e.spotless) delete e.spotless[c.id];
     noteFavor(s, { byId: by, toId: c.id, kind: 'assistance', amount: D.stake, authority: by === s.playerId ? 'don' : 'delegated', truth: `set him up with ${D.what}` });
+    const obj = spotObjection(c, a.spot);
+    remember(s, obj ? `${c.firstName} ${c.lastName} was pushed into ${D.what} he said he would not run` : `${c.firstName} ${c.lastName} was set up with ${D.what} by ${by === s.playerId ? 'the boss' : sponsorWord(s, by)}`, [c.id, by]);
     ctx.log.push(`${c.firstName} ${c.lastName} is set up with ${e.spots[c.id].nm}; he owes ${by === s.playerId ? 'you' : sponsorWord(s, by)} for it.`);
     return;
   }
@@ -439,9 +488,10 @@ export function commitKickup(ctx: Ctx, a: KickupAction): void {
       (e.spotless ??= {})[c.id] = s.week;
       addOpinion(s, c.id, s.playerId, 'Nothing of his own', -2, 0);
       ctx.log.push(`${c.firstName} ${c.lastName} lost his spot. He has nothing of his own now.`);
+      remember(s, `${c.firstName} ${c.lastName}'s spot (${sp.nm}) was taken from him over his envelopes`, [c.id, s.playerId]);
       break;
     }
-    case 'raise': sp.up = Math.max(20, sp.up - 10); sp.want = undefined; break;
+    case 'raise': sp.up = Math.max(20, sp.up - 10); sp.want = undefined; remember(s, `${c.firstName} ${c.lastName} was given a bigger end of ${sp.nm}`, [c.id, s.playerId]); break;
     case 'hold': sp.want = undefined; break;
   }
 }
@@ -543,7 +593,7 @@ export function pocketedShort(line: MemberLine): number {
 
 function bestFree(s: GameState, c: Character): SpotKind {
   // A man on his own picks what he knows, never the shylock book (no capital).
-  return spotOffers(s, c).filter((o) => o.k !== 'shylock')[0]?.k ?? 'numbers';
+  return spotOffers(s, c).filter((o) => o.k !== 'shylock' && !o.objects)[0]?.k ?? 'numbers';
 }
 
 /** The strongest rival in his district (who courts a drifting man). */
@@ -665,7 +715,7 @@ export function rivalSpotsUp(s: GameState, r: Rival): number {
     if (!sp) {
       const since = less[c.id];
       if (since !== undefined && s.week - since < FREELANCE_AFTER) continue;
-      const k = spotOffers(s, c)[0].k;
+      const k = (spotOffers(s, c).find((o) => !o.objects) ?? spotOffers(s, c)[0]).k;
       const d = spotDistrict(s, c);
       sp = all[c.id] = { k, by: r.leaderId, w: s.week, f: r.id, ...(d ? { d } : {}), up: RIVAL_UP, nm: spotName(s, k, d, c.id) };
       delete less[c.id];
@@ -829,7 +879,7 @@ export function spotLtCands(s: GameState): SpotCand[] {
   const men = crew(s).filter((c) => canHoldSpot(s, c)).sort((a, b) => (a.id < b.id ? -1 : 1));
   const bare = men.filter((c) => !spotOf(s, c.id) && !incomeSources(s, c).length)
     .sort((a, b) => (less[a.id] ?? s.week) - (less[b.id] ?? s.week) || (a.id < b.id ? -1 : 1));
-  const offers = (c: Character, by: string) => spotOffers(s, c, by).filter((o) => o.stake <= Math.max(0, s.money)).slice(0, 2)
+  const offers = (c: Character, by: string) => spotOffers(s, c, by).filter((o) => !o.lock && !o.objects && o.stake <= Math.max(0, s.money)).slice(0, 2)
     .map((o, i) => ({ id: o.k, label: `Set ${c.firstName} up with ${o.what}`, action: setupAction(c.id, o.k, by), why: `~${$(o.gross)}/wk, ${o.up}% up`, bonus: 300 + o.gross * 6 - i * 50 }));
   // The underboss: men with nothing of their own (his crews' rackets).
   if (ub) {
@@ -882,6 +932,16 @@ export function spotLtCands(s: GameState): SpotCand[] {
         { id: 'refuse', label: `Turn ${a.name} down`, action: askAction(a.id, 'refuse'), why: risky ? 'nobody we don\'t trust under our roof' : 'we keep the place clean', bonus: risky ? 400 : 100 },
       ] });
   }
+  // Trouble at a tenant's racket: the underboss sees to the rackets.
+  if (ub) for (const [id, t] of troubled(s)) {
+    out.push({ id: `trouble:${id}`, seat: 'underboss', domain: 'rackets', topic: `Trouble at ${t.placeName}`, charId: t.who ?? '', priority: 340 + (s.week - t.trouble!.w) * 30,
+      says: [`${t.placeName}: ${TROUBLE_WORD[t.trouble!.k]}. We keep him, put one of ours in, or close it.`],
+      specs: [
+        { id: 'keep', label: `Keep ${t.name}`, action: tenantAction(id, 'keep'), why: 'the money keeps coming', bonus: t.trouble!.k === 'claim' ? 150 : 350 },
+        ...(replacementFor(s, t) ? [{ id: 'replace', label: 'Put one of ours in', action: tenantAction(id, 'replace'), why: 'our man, our count', bonus: t.rival || t.trouble!.k === 'short' ? 450 : 250 }] : []),
+        { id: 'withdraw', label: 'Close it', action: tenantAction(id, 'withdraw'), why: 'no more trouble from it', bonus: t.trouble!.k === 'law' ? 450 : 100 },
+      ] });
+  }
   // The consigliere: sore and drifting men (quarrels in the family): a spot settles a man down.
   if (cons) {
     const sore = men.filter((c) => c.id !== cons.id && (!spotOf(s, c.id) || spotOf(s, c.id)?.free) && (opinion(s, c.id, s.playerId) < 10 || c.courtedBy))
@@ -902,6 +962,6 @@ export function nextSetup(s: GameState): PlayerAction | undefined {
   const c = crew(s).filter((x) => canHoldSpot(s, x) && (!spotOf(s, x.id) || spotOf(s, x.id)?.free) && !(x.rank === 'capo' && incomeSources(s, x).length > 0 && !spotOf(s, x.id)))
     .sort((a, b) => (less[a.id] ?? s.week) - (less[b.id] ?? s.week) || (a.id < b.id ? -1 : 1))[0];
   if (!c) return undefined;
-  const o = spotOffers(s, c, s.playerId)[0];
+  const o = spotOffers(s, c, s.playerId).find((x) => !x.lock && !x.objects);
   return o ? setupAction(c.id, o.k) : undefined;
 }

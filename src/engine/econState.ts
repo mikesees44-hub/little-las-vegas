@@ -289,6 +289,8 @@ export interface EconState {
   /** Men asking to run their racket out of one of your places, and the outsiders who do (placeAsks.ts). */
   asks?: import('./placeAsks').PlaceAsk[];
   tenants?: Record<string, import('./placeAsks').Tenant>;
+  /** What the participants remember of the family's rackets (kickup.ts, the last 30). */
+  rackLog?: import('./kickup').RackMemory[];
 }
 
 /* ---------------- ops and actions ---------------- */

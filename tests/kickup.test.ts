@@ -14,7 +14,8 @@ import { timeCost } from '../src/engine/timeCost';
 import {
   canHoldSpot, incomeSources, kickupChain, kickupMonth, rivalSpotsUp, setupAction, spotLtCands, spotOf, spotOffers, SPOTS, FREELANCE_AFTER,
 } from '../src/engine/kickup';
-import { askAction, myPlaces, openAsks, quickRackets, suggestAll, tenantsOf, type PlaceAsk } from '../src/engine/placeAsks';
+import { askAction, assessAsk, myPlaces, openAsks, quickRackets, suggestAll, tenantAction, tenantsOf, troubled, type PlaceAsk } from '../src/engine/placeAsks';
+import { memoriesOf, spotLock } from '../src/engine/kickup';
 import { newCtx } from '../src/engine/ledger';
 import { OrdersContext } from '../src/ui/components/Orders';
 import { SetUpsPanel } from '../src/ui/econ/SetUps';
@@ -73,7 +74,7 @@ describe('set someone up: the boss, the underboss and the consigliere', () => {
     const ub = holder(s, 'underboss')!;
     expect(previewAction(s, setupAction(ub.id, 'numbers', ub.id)).disabledReason).toMatch(/himself/);
     s.money = 100;
-    expect(previewAction(s, setupAction(a.id, 'shylock')).disabledReason).toMatch(/Needs/);
+    expect(previewAction(s, setupAction(a.id, 'numbers')).disabledReason).toMatch(/Needs/);
   });
 
   it('the offers say what he would earn, his share, the risk; the sheet menu and the lieutenants offer set-ups', () => {
@@ -278,3 +279,48 @@ describe('determinism, save size, old saves, the screen', () => {
     expect(html).toContain('data-testid="place-requests"');
   });
 });
+
+describe('the racket lifecycle (CATALOG_DEEP §7-8)', () => {
+  it('not every spot is open at the start; a man of conscience objects, and it costs his loyalty for good', () => {
+    let s = rich('kick-gate');
+    s.respect = 20;
+    expect(spotLock(s, 'shylock')).toMatch(/Not yet/);
+    expect(spotLock(s, 'numbers')).toBeUndefined();
+    const [a] = bare(s);
+    expect(previewAction(s, setupAction(a.id, 'shylock')).disabledReason).toMatch(/Not yet/);
+    s.characters[a.id].traits = [...s.characters[a.id].traits.filter((t) => t !== 'Pious'), 'Pious'];
+    const p = previewAction(s, setupAction(a.id, 'cards'));
+    expect(p.warning).toMatch(/churchgoer/);
+    const before = opinion(s, a.id, s.playerId);
+    s = week(s, [setupAction(a.id, 'cards')]);
+    expect(opinion(s, a.id, s.playerId)).toBeLessThan(before);
+    expect(memoriesOf(s, a.id).some((m) => /pushed into/.test(m.text))).toBe(true);
+    // The lieutenants never propose what a man refuses.
+    expect(spotLtCands(s).every((c) => !c.specs.some((x) => x.action.kind === 'econ' && x.action.op.type === 'setup' && x.action.op.who === a.id && x.action.op.spot === 'cards'))).toBe(true);
+  });
+
+  it('a request is weighed by your people, can be delegated, gets into trouble, and is resolved; the men remember', () => {
+    let s = rich('kick-life');
+    let got: PlaceAsk | undefined;
+    for (let i = 0; i < 50 && !got; i++) { s = week(s); got = openAsks(s).find((a) => a.from !== 'own'); }
+    expect(got).toBeDefined();
+    const views = assessAsk(s, got!);
+    expect(views.map((v) => v.role)).toEqual(expect.arrayContaining(['The money', 'The underboss on the man', 'The lawyer']));
+    expect(previewAction(s, askAction(got!.id, 'delegate')).disabledReason).toBeUndefined();
+    s = week(s, [askAction(got!.id, 'delegate')]);
+    expect(openAsks(s).some((a) => a.id === got!.id)).toBe(false);
+    expect((s.econ!.rackLog ?? []).some((m) => m.text.includes(got!.name))).toBe(true);
+    // A tenant in trouble: it waits in the inbox, and keep / replace / close answer it.
+    if (!tenantsOf(s).length) s = week(s, []);
+    const id = Object.keys(s.econ!.tenants ?? {})[0];
+    if (!id) return; // the lieutenant turned him away: covered above
+    s.econ!.tenants![id].trouble = { k: 'short', w: s.week };
+    expect(troubled(s).length).toBe(1);
+    expect(inbox(s).some((x) => x.ref.trouble === id) || ltCandidates(s).some((c) => c.id === `trouble:${id}`)).toBe(true);
+    const u = week(s, [tenantAction(id, 'keep')]);
+    expect(u.econ!.tenants![id]?.trouble).toBeUndefined();
+    const v = week(s, [tenantAction(id, 'withdraw')]);
+    expect(v.econ!.tenants?.[id]).toBeUndefined();
+  });
+});
+

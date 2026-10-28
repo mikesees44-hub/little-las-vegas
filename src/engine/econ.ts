@@ -782,7 +782,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
     case 'bank': return previewBank(s, a.cmd);
     case 'home': return previewHome(s, a.cmd);
     case 'racket': return previewRacket(s, a.cmd);
-    case 'setup': case 'spotCall': case 'placeAsk': return previewKickup(s, a);
+    case 'setup': case 'spotCall': case 'placeAsk': case 'tenantCall': return previewKickup(s, a);
     case 'empire': return previewEmpire(s, a.cmd);
     case 'luxBuy': case 'luxSell': return previewLux(s, a);
     case 'rename': {
@@ -1097,7 +1097,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
     case 'racket': commitRacket(ctx, a.cmd); break;
-    case 'setup': case 'spotCall': case 'placeAsk': commitKickup(ctx, a); break;
+    case 'setup': case 'spotCall': case 'placeAsk': case 'tenantCall': commitKickup(ctx, a); break;
     case 'empire': commitEmpire(ctx, a.cmd); break;
     case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
     case 'rename': {

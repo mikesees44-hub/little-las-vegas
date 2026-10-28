@@ -2,7 +2,7 @@ import { officeVisitors, type OfficeVisitor } from './bossOffice';
 import { latestReport } from './tribute';
 import { urgentMeetings } from './threats';
 import { actTitle, docketOf, ifSilent, pendingAsks } from './lieutenants';
-import { openAsks, TRADES } from './placeAsks';
+import { openAsks, TRADES, TROUBLE_WORD, troubled } from './placeAsks';
 import { today } from './days';
 import type { GameState } from './types';
 
@@ -33,7 +33,7 @@ export interface InboxItem {
   /** One line: why it is here. */
   why: string;
   charId?: string;
-  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string };
+  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string; /** Trouble at a tenant's racket (placeAsks.ts). */ trouble?: string };
 }
 
 export interface InboxUi {
@@ -79,6 +79,10 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
     for (const a of openAsks(s)) {
       if (covered.has(`place:${a.id}`)) continue;
       out.push({ key: `ask:${a.id}`, kind: 'request', tone: 'gold', title: `${a.name} asks to run ${TRADES[a.trade].what} at ${a.placeName}`, why: `${a.cut}% of ~$${a.gross.toLocaleString('en-US')} a week to you. Answer by week ${a.until}.`, charId: a.who, ref: { ask: a.id } });
+    }
+    for (const [id, t] of troubled(s)) {
+      if (covered.has(`trouble:${id}`)) continue;
+      out.push({ key: `trouble:${id}`, kind: 'request', tone: s.week - t.trouble!.w >= 3 ? 'amber' : 'gold', title: `Trouble at ${t.placeName}`, why: `${t.name}'s ${TRADES[t.trade].what}: ${TROUBLE_WORD[t.trouble!.k]}. Left alone a month, it gets worse.`, charId: t.who, ref: { trouble: id } });
     }
   }
   const rep = latestReport(s);
