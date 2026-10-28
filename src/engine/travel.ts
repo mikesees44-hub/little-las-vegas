@@ -41,6 +41,8 @@ import { shortName } from './visitData';
  */
 
 export const MAX_GUESTS = 8;
+/** "Bring the whole family" (vacPlanner.ts): the capos, their wives, the soldiers, the kids. */
+export const MAX_ENTOURAGE = 30;
 export const FAR = 1e9;
 
 /* ---------------------------------------------------------------- */
@@ -86,6 +88,8 @@ export function guestPool(s: GameState, leaderId: string): Character[] {
     if (c.id === leaderId || !freeToGo(s, c) || lovers.has(c.id)) return false;
     if (c.dynasty) return true;
     if (c.faction === 'player' && c.rank !== 'civilian') return true;
+    // The wives of your men (the capos' wives on the family vacation).
+    if (c.spouseId && s.characters[c.spouseId]?.alive && s.characters[c.spouseId]?.faction === 'player' && s.characters[c.spouseId]?.rank !== 'civilian' && s.characters[c.spouseId]?.id !== leaderId) return true;
     if (c.faction === 'law' && !c.office) return false;
     if (ageOn(c.birth, s.date) < 18) return false;
     return !!guestGroup(s, c);
@@ -225,7 +229,7 @@ function planBlock(s: GameState, plan: TripPlan, q: TripQuote): string | undefin
   const tb = transportBlock(o.id, d, dayDate(q.departWeek * 7));
   if (tb) return tb;
   if (o.seats && q.people > o.seats) return `${o.name}: ${o.seats} seats, and the party is ${q.people}`;
-  if (!isConvoy(o) && crewGuests(s, plan.guests) > o.guards) return `${o.name}: at most ${o.guards} bodyguard${o.guards === 1 ? '' : 's'} along`;
+  if (!isConvoy(o) && !plan.entourage && crewGuests(s, plan.guests) > o.guards) return `${o.name}: at most ${o.guards} bodyguard${o.guards === 1 ? '' : 's'} along`;
   if (plan.purpose === 'vacation' && (plan.days.length < 3 || plan.days.length > 5)) return 'A vacation is 3 to 5 days: plan each day';
   if (plan.purpose === 'business' && (plan.days.length < 1 || plan.days.length > 3)) return 'A business trip is 1 to 3 days';
   const month = dayDate(q.departWeek * 7 + q.out).m;
@@ -234,7 +238,7 @@ function planBlock(s: GameState, plan: TripPlan, q: TripQuote): string | undefin
     if (!a) return 'Something on the itinerary is not offered there';
     if (a.months && !a.months.includes(month)) return `${a.name}: not in ${monthName(month)}`;
   }
-  if (plan.guests.length > MAX_GUESTS) return `At most ${MAX_GUESTS} guests`;
+  if (plan.guests.length > (plan.entourage ? MAX_ENTOURAGE : MAX_GUESTS)) return plan.entourage ? `At most ${MAX_ENTOURAGE} along, even for the whole family` : `At most ${MAX_GUESTS} guests (or bring the whole family from the Store's vacation planner)`;
   if (new Set(plan.guests).size !== plan.guests.length) return 'Someone is on the list twice';
   const pool = new Set(guestPool(s, plan.leaderId).map((c) => c.id));
   if (plan.guests.some((g) => !pool.has(g))) return 'Someone on the list can\'t come';
@@ -423,6 +427,7 @@ export function startTrip(ctx: Ctx, plan: TripPlan): Trip | undefined {
     guests, companionId, driverIds: drivers, destId: d.id, mode: plan.mode, tier: plan.tier, cars: plan.mode === 'cars' ? (convoy ? plan.cars ?? 1 : 1) : 0,
     ...(plan.transport ? { transport: plan.transport } : {}),
     discreet: plan.discreet, entertainer: plan.entertainer, days: [...plan.days],
+    ...(plan.entourage ? { entourage: true } : {}),
     departDay, arriveDay: departDay + q.out, leaveDay: departDay + q.out + q.stay, homeDay: departDay + q.out + q.stay + q.back,
     cost: q.cost, journal: [], done: 0, legs: [], declined,
   };

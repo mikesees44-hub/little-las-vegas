@@ -1,15 +1,11 @@
-import { useState } from 'react';
 import { pocketCash } from '../../engine/tributeState';
-import { forfeitureLaw, LUX, LUX_BY_ID, LUX_CAT_LABEL, luxPrice, owned, resaleValue, weeklyUpkeep, type LuxCat } from '../../engine/goodlife';
+import { forfeitureLaw, LUX_BY_ID, LUX_CAT_LABEL, owned, resaleValue, weeklyUpkeep } from '../../engine/goodlife';
 import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { fmt$ } from '../format';
 
-const CATS: LuxCat[] = ['home', 'car', 'truck', 'boat', 'toy'];
-
-/** The Good Life: what the house owns for itself, and the showroom (period prices). */
+/** The Good Life: what the house bought from the older catalog (the showroom itself is folded into The Store). */
 export function GoodLifePanel({ s }: { s: GameState }) {
-  const [cat, setCat] = useState<LuxCat>('home');
   const mine = owned(s);
   const worth = mine.reduce((a, o) => a + resaleValue(s, o), 0);
   return (
@@ -40,17 +36,10 @@ export function GoodLifePanel({ s }: { s: GameState }) {
           </ul>
         )}
       </section>
-      <section>
-        <div className="panel-title">The showroom, {s.date.y}</div>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {CATS.map((c) => <button key={c} className={`tab ${cat === c ? 'tab-active' : ''}`} onClick={() => setCat(c)}>{LUX_CAT_LABEL[c]}</button>)}
-        </div>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          {LUX.filter((x) => x.cat === cat && (x.maxYear ?? 9999) >= s.date.y).map((it) => (
-            <ActionCard key={it.id} s={s} action={{ kind: 'econ', op: { type: 'luxBuy', item: it.id } }} label={`${it.name} — ${fmt$(luxPrice(s, it))}`} />
-          ))}
-        </div>
-        <p className="mt-2 text-[11px] text-stone-500">Homes and the boat show on the map. A man with no business to explain it and a new Cadillac is exactly what the IRS looks for; after RICO (October 1970), the government can seize what it ties to the rackets.</p>
+      <section data-testid="good-life-moved">
+        <div className="panel-title">The showroom moved</div>
+        <p className="text-sm text-stone-400">Homes, cars, the boat and the toys are sold in <b>The Store</b> now (You → The Store), with everything else money buys. What you bought here is still yours: it counts in the Store, passes to the heir, and can be sold above.</p>
+        <p className="mt-2 text-[11px] text-stone-500">A man with no business to explain it and a new Cadillac is exactly what the IRS looks for; after RICO (October 1970), the government can seize what it ties to the rackets.</p>
       </section>
     </div>
   );

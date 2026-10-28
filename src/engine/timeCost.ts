@@ -144,6 +144,8 @@ export const TIME_TABLE: Record<string, number> = {
   'mymen:bonus': 0.25, 'mymen:raise': 0.5, 'mymen:debt': 1, 'mymen:bills': 0.5, 'mymen:brother': 1, 'mymen:noshow': 1, 'mymen:tuition': 0.5, 'mymen:hospital': 1,
   'mymen:christmas': 2, 'mymen:guard': 0.25, 'mymen:safety': 1, 'mymen:lawyer': 1, 'mymen:inside': 0.5, 'mymen:visit': 3, 'mymen:hide': 1,
   'mymen:answer': 2, 'mymen:warn': 0.5, 'mymen:fine': 0.5, 'mymen:demote': 0.5, 'mymen:shelf': 0.5, 'mymen:kill': 1,
+  // The Store: a day at the track (an afternoon), sharing the wealth (an hour of envelopes and phone calls).
+  'spend:race': 4, 'spend:share': 1,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */

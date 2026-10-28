@@ -121,9 +121,9 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   ],
   you: [
     { title: 'The boss', items: [
+      { keys: ['you.store', 'you.spend', 'you.possessions', 'you.lifestyle'], icon: '♠', label: 'The Store', sub: 'Everything money buys, from a flop house to a yacht. Share the wealth; take the whole family on vacation.', views: ['The Store', 'Everything, as a list', 'The good life (yours)', 'How you rule'] },
       { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
       { keys: ['you.people', 'you.dating'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel, remember, want. Dates and adult services.', views: ['Your people', 'Relationships & Dating'] },
-      { keys: ['you.lifestyle', 'you.spend', 'you.possessions'], icon: '♠', label: 'How you live & spend', sub: 'Your style and perks, and what money buys: cars, boats, furs, the house, the club, the pad.', views: ['How you rule', 'Spend', 'The good life'] },
       { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
       { keys: ['ops.travel'], icon: '✈', label: 'Trips & envoys', sub: 'Your trips, and the men you sent to other cities.' },
       { keys: ['town.case'], icon: '§', label: 'Your case', sub: 'The government\'s case against you, from a file to a trial.' },

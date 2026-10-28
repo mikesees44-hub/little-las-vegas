@@ -15,6 +15,8 @@ import { addOpinion } from './relations';
 import { rand } from './rng';
 import { GROUP_LABEL, SPEND, SPEND_BY_ID, type GiftFor, type SpendCat, type SpendGroup, type SpendItem, type SpendReq } from './spendData';
 import { ensureSpend, spendMod, type SpendAction, type SpendOwned } from './spendState';
+import { commitRace, counterOffer, financeTerms, giftFit, haggleFloor, luxCount, ownershipOf, previewRace, styleEffects } from './store';
+import { commitShare, previewShare } from './storeShare';
 import type { Character, Effect, GameState, RivalId } from './types';
 
 export type { SpendAction };
@@ -135,7 +137,8 @@ export function spendOwned(s: GameState): SpendOwned[] {
 }
 
 export function ownedCount(s: GameState, id: string): number {
-  return spendOwned(s).filter((o) => o.id === id).length;
+  // The older Good Life catalog is folded in: what was bought there still counts here.
+  return spendOwned(s).filter((o) => o.id === id).length + luxCount(s, id);
 }
 
 /** What it would fetch today (services fetch nothing). */
@@ -371,40 +374,65 @@ function verbFor(it: SpendItem): string {
 }
 
 export function previewSpend(s: GameState, a: SpendAction): ActionPreview {
-  if (a.op === 'buy') return previewBuy(s, a.item);
+  if (a.op === 'buy') return previewBuy(s, a);
+  if (a.op === 'race') return previewRace(s, a.uid, a.race);
+  if (a.op === 'share') return previewShare(s, a);
   return previewSell(s, a.uid);
 }
 
-function previewBuy(s: GameState, id: string): ActionPreview {
+/** The agreed price of a buy order: the asking price, or an offer the seller accepted (store.ts). */
+export function dealPrice(s: GameState, it: SpendItem, offer?: number): { price: number; why?: string } {
+  const list = spendPrice(s, it);
+  if (offer === undefined || offer >= list) return { price: list };
+  const c = counterOffer(s, it, offer);
+  if (c.ok) return { price: c.price };
+  return { price: list, why: `He won't take ${$(offer)}: his best is ${$(haggleFloor(s, it, list))}` };
+}
+
+function previewBuy(s: GameState, a: Extract<SpendAction, { op: 'buy' }>): ActionPreview {
+  const id = a.item;
   const it = SPEND_BY_ID[id];
   if (!it) return { title: 'Spend', effects: [], cost: 0, because: '', disabledReason: 'No such thing', category: 'event' };
-  const price = spendPrice(s, it);
+  const deal = dealPrice(s, it, a.offer);
+  const price = deal.price;
+  const fin = a.finance ? financeTerms(s, it, price) : undefined;
+  const pay = fin ? fin.down : price;
   const target = it.each ? nextTarget(s, it) : undefined;
   const forName = target ? ` (${target.firstName})` : '';
   const title = `${it.name}${forName}`;
   const effects: Effect[] = [];
-  let why = spendBlock(s, it);
+  let why = spendBlock(s, it) ?? deal.why;
+  if (a.finance && !fin) why ??= 'Nobody finances that';
+  const payTitle = fin ? `${title}: the down payment` : title;
   if (it.pot === 'pocket') {
-    const pp = pocketPrice(s, price, title);
+    const pp = pocketPrice(s, pay, payTitle);
     effects.push(...pp.effects);
     why ??= pp.why;
   } else {
-    effects.push({ type: 'money', amount: -price, label: title });
-    if (!why && s.money < price) why = `Needs ${$(price)} of Family money (the Family has ${$(Math.max(0, s.money))})`;
+    effects.push({ type: 'money', amount: -pay, label: payTitle });
+    if (!why && s.money < pay) why = `Needs ${$(pay)} of Family money (the Family has ${$(Math.max(0, s.money))})`;
   }
   if (it.respect) effects.push({ type: 'respect', amount: it.respect, label: title });
   if (it.fam) effects.push({ type: 'familyOpinion', amount: it.fam, reason: it.fam > 0 ? 'Provides for the family' : 'The house is full of his men again', label: title });
-  if (it.wife) for (const c of recipients(s, it, target)) effects.push({ type: 'opinion', from: c.id, to: s.playerId, amount: it.wife, reason: `${it.name.replace(/ for (your|the) .*$/, '')}`, label: title });
+  if (it.wife) for (const c of recipients(s, it, target)) {
+    // A present lands differently with different people (store.ts giftFit).
+    const fit = it.gift ? giftFit(s, it, c) : { mult: 1 };
+    const amt = Math.round(it.wife * fit.mult);
+    if (amt) effects.push({ type: 'opinion', from: c.id, to: s.playerId, amount: amt, reason: `${it.name.replace(/ for (your|the) .*$/, '')}`, label: title });
+  }
   if (it.crew) effects.push({ type: 'crewOpinion', amount: it.crew, reason: it.crew > 0 ? 'The boss takes care of his own' : 'The boss spends on himself', label: title });
   if (it.relief) effects.push({ type: 'dyn', op: { op: 'stress', charId: s.playerId, amount: -it.relief, source: 'paranoia' }, label: title });
   if (it.health) effects.push({ type: 'health', charId: s.playerId, amount: it.health, label: title });
   if (it.parentHealth) for (const p of reqTargets(s, 'parent').slice(0, 1)) effects.push({ type: 'health', charId: p.id, amount: it.parentHealth, label: title });
   if (it.kidAttr) for (const k of target ? [target] : reqTargets(s, it.req ?? 'kid')) effects.push({ type: 'dyn', op: { op: 'attr', charId: k.id, attr: it.kidAttr.attr, amount: it.kidAttr.amount }, label: title });
   if (it.g) effects.push(...groupEffects(s, it.g, title));
+  effects.push(...styleEffects(s, it, title));
   const irs = irsCost(s, it);
   if (irs.heat) effects.push({ type: 'heat', bar: 'federal', amount: irs.heat, label: `${title}: the IRS counts (${irs.why})` });
   if (spendPrice(s, it) >= 15000 && it.flash >= 5) for (const r of rivalsWhoNotice(s)) effects.push({ type: 'rivalOpinion', rival: r, amount: -2, reason: 'Flashing his money around', label: `${title}: the other families notice` });
   const notes: string[] = [];
+  if (fin) notes.push(`${$(fin.down)} down, then ${$(fin.pay)}/wk for ${fin.weeks} weeks (${fin.lender}, ${Math.round(fin.rate * 100)}%)`);
+  if (price < spendPrice(s, it)) notes.push(`Negotiated down from ${$(spendPrice(s, it))}`);
   const up = spendUpkeep(s, it);
   if (up) notes.push(it.kind === 'svc' ? `${$(up)}/wk until you let him go` : `Upkeep ${$(up)}/wk`);
   if (it.kind === 'own' && (it.resale ?? 0) > 0) notes.push(`Sells for about ${Math.round((it.resale ?? 0) * 100)}% later`);
@@ -417,9 +445,9 @@ function previewBuy(s: GameState, id: string): ActionPreview {
   if (notes.length) effects.push({ type: 'econ', op: { op: 'note', text: notes.join(' · ') }, label: title } as Effect);
   const pot = it.pot === 'pocket' ? 'pocket' as const : undefined;
   return {
-    title, detail: it.blurb, effects, cost: price, pot,
+    title, detail: it.blurb, effects, cost: pay, pot,
     because: `${verbFor(it) === 'Hire' ? 'hired' : verbFor(it) === 'Play' ? 'played' : verbFor(it) === 'Pay for' ? 'paid for' : 'bought'} ${lower(it.name.replace(/^An? /, 'a '))}${forName}`,
-    disabledReason: why, category: 'event', verb: `${verbFor(it)} — ${$(price)}`,
+    disabledReason: why, category: 'event', verb: fin ? `Finance — ${$(fin.down)} down` : `${verbFor(it)} — ${$(price)}`,
     warning: irs.heat >= 3 || (s.spend?.irs ?? 0) + irs.pressure >= 80 ? 'The IRS can count. Living past what your books explain ends in a net-worth audit.' : undefined,
   };
 }
@@ -430,6 +458,7 @@ function previewSell(s: GameState, uid: string): ActionPreview {
   if (!o || !it) return { title: 'Sell', effects: [], cost: 0, because: '', disabledReason: 'Not yours', category: 'event' };
   const svc = it.kind === 'svc';
   const v = spendResale(s, o);
+  const holder = o.holder ? s.characters[o.holder] : undefined;
   const title = svc ? `Let go: ${lower(it.name)}` : `Sell ${lower(it.name.replace(/^An? /, 'the '))}`;
   const effects: Effect[] = [];
   if (v > 0) effects.push(o.pot === 'pocket' ? { type: 'money', amount: v, pot: 'pocket', label: title } : { type: 'money', amount: v, category: 'event', label: title });
@@ -439,6 +468,7 @@ function previewSell(s: GameState, uid: string): ActionPreview {
   return {
     title, detail: svc ? `${$(spendUpkeep(s, it))}/wk saved.` : `Paid ${$(o.paid)} in ${o.year}; worth ${$(v)} today.`, effects, cost: 0,
     because: svc ? `let go ${lower(it.name)}` : `sold ${lower(it.name.replace(/^An? /, 'the '))}`, category: 'event', verb: svc ? 'Let go' : `Sell — ${$(v)}`,
+    disabledReason: holder?.alive ? `It's ${holder.firstName}'s, not yours to sell` : undefined,
   };
 }
 
@@ -453,21 +483,42 @@ export function commitSpend(ctx: Ctx, a: SpendAction): void {
   const sp = ensureSpend(s);
   if (a.op === 'sell') {
     sp.owned = sp.owned.filter((o) => o.uid !== a.uid);
+    if (sp.loans?.some((l) => l.uid === a.uid)) {
+      // Selling something bought on time: the buyer's money pays the bank first (the rest of the loan is settled).
+      const l = sp.loans.find((x) => x.uid === a.uid)!;
+      if (l.pot === 'pocket') spendPocket(ctx, l.left, `Paid off on the sale: ${SPEND_BY_ID[l.item]?.name ?? 'a purchase'}`, `loanoff${l.uid}`, true);
+      else money(ctx, -l.left, `Paid off on the sale: ${SPEND_BY_ID[l.item]?.name ?? 'a purchase'}`, 'debt');
+      sp.loans = sp.loans.filter((x) => x !== l);
+    }
     return;
   }
+  if (a.op === 'race') { commitRace(ctx, a.uid, a.race); return; }
+  if (a.op === 'share') { commitShare(ctx, a); return; }
   const it = SPEND_BY_ID[a.item];
   if (!it) return;
-  const price = spendPrice(s, it);
+  const price = dealPrice(s, it, a.offer).price;
+  const fin = a.finance ? financeTerms(s, it, price) : undefined;
   const target = it.each ? nextTarget(s, it) : undefined;
   const irs = irsCost(s, it);
-  if (it.kind !== 'once') sp.owned.push({ uid: `sp${sp.nextId++}`, id: it.id, paid: price, pot: it.pot, week: s.week, year: s.date.y });
+  if (it.kind !== 'once') {
+    const uid = `sp${sp.nextId++}`;
+    // A present that is hers stays hers (the wife's jewelry is not the boss's to sell).
+    const holder = ownershipOf(it) === 'recipient' ? (target ?? recipients(s, it, target)[0])?.id : undefined;
+    sp.owned.push({ uid, id: it.id, paid: price, pot: it.pot, week: s.week, year: s.date.y, ...(holder ? { holder } : {}) });
+    if (fin) (sp.loans ??= []).push({ uid, item: it.id, pot: it.pot, pay: fin.pay, left: fin.total, missed: 0, lender: fin.lender });
+  }
   sp.last[it.id] = s.week;
+  if (it.gift && it.wife) for (const c of recipients(s, it, target)) {
+    const g = ((sp.gifts ??= {})[c.id] ??= []);
+    g.push(s.week);
+    if (g.length > 10) g.splice(0, g.length - 10);
+  }
   if (it.stock !== undefined) sp.gone[it.id] = (sp.gone[it.id] ?? 0) + 1;
   if (target) sp.done[`${it.id}:${target.id}`] = s.week;
   const seen = seenOf(s, it);
   if (seen) sp.seen.push([s.week, seen]);
   sp.seen = sp.seen.filter(([w]) => s.week - w < 52);
-  sp.spent[it.pot] += price;
+  sp.spent[it.pot] += fin ? fin.down : price;
   for (const [k, v] of Object.entries(it.g ?? {}) as [SpendGroup, number][]) sp.standing[k] = (sp.standing[k] ?? 0) + v;
   sp.irs = Math.max(0, Math.min(100, sp.irs + irs.pressure - (it.irsRelief ?? 0)));
   if (sp.irs < 60) sp.warned = false;

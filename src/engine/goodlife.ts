@@ -6,6 +6,7 @@ import { fmtMoney } from './effects';
 import { heat, type Ctx } from './ledger';
 import { inflation } from './property';
 import { chance } from './rng';
+import { LUX_ALIAS } from './storeData';
 import type { Effect, GameState, RivalId } from './types';
 
 /**
@@ -144,7 +145,10 @@ export function previewLux(s: GameState, a: LuxAction): ActionPreview {
     if (price >= 15000) for (const r of rivalsWhoNotice(s)) effects.push({ type: 'rivalOpinion', rival: r, amount: -2, reason: 'Flashing his money around', label: `${title}: the rivals notice` });
     effects.push({ type: 'econ', op: { op: 'note', text: `Upkeep ${fmtMoney(Math.round(it.upkeep * inflation(s)))}/wk · passes to the heir` }, label: title });
     const have = owned(s).some((o) => o.id === it.id);
-    const why = (it.minYear ?? 0) > s.date.y ? `Not before ${it.minYear}` : it.unique && have ? 'You already have one' : pp.why;
+    // Folded into the Store: the same thing bought there counts (storeData.ts LUX_ALIAS).
+    const alias = LUX_ALIAS[it.id];
+    const inStore = !!alias && (s.spend?.owned ?? []).some((o) => o.id === alias);
+    const why = (it.minYear ?? 0) > s.date.y ? `Not before ${it.minYear}` : it.unique && (have || inStore) ? 'You already have one' : pp.why;
     return { title, detail: it.blurb, effects, cost: price, pot: 'pocket', because: `bought ${it.name.replace(/^An? /, 'a ').toLowerCase()}`, disabledReason: why, category: 'event', warning: forfeitureLaw(s) && c.heat >= 2 ? 'Under RICO, what the government can tie to the rackets it can seize.' : undefined };
   }
   const o = owned(s).find((x) => x.uid === a.uid);
@@ -194,13 +198,13 @@ export function truckBonus(s: GameState): number {
   return 1 + Math.min(0.2, n * 0.04);
 }
 
-/** For the sim: something affordable to buy now and then. */
+/**
+ * For the sim: the Good Life is folded into the Store (store.ts, storeData.ts LUX_ALIAS), so the sim buys
+ * there (spend.ts spendActions) and only sells here. A `type: 'luxBuy'` order (an old save's queue, a test)
+ * still works.
+ */
 export function luxActions(s: GameState): LuxAction[] {
   const out: LuxAction[] = [];
-  for (const it of LUX) {
-    const p = previewLux(s, { type: 'luxBuy', item: it.id });
-    if (!p.disabledReason && (luxPrice(s, it) <= (s.tribute?.acct.personal ?? 0) * 0.8 || luxPrice(s, it) * 6 <= s.money)) out.push({ type: 'luxBuy', item: it.id });
-  }
   if (s.money < 3000) for (const o of owned(s)) out.push({ type: 'luxSell', uid: o.uid });
   return out;
 }

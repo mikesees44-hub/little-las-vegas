@@ -949,6 +949,8 @@ export interface GameState {
   mymen?: import('./myMen').MenState;
   /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */
   spend?: import('./spendState').SpendState;
+  /** The Store's other buyers: capos' and rivals' own purchases (spendState.ts StoreNpcState; optional, bounded). */
+  store?: import('./spendState').StoreNpcState;
   /** Fictional occupants the player put in imported (real-geometry) buildings, by building id (importedCity.ts). Absent until the first one. */
   importedOccupants?: Record<string, import('./importedCity').ImportedOccupant>;
   /** Aging & life traits: old-age conditions, learned vs effective skills, family/earned traits (aging.ts; optional, made by the monthly update). */
