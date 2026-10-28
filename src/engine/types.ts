@@ -955,6 +955,8 @@ export interface GameState {
   dirty?: import('./dirtyWork').DirtyState;
   /** Family development: technology, connections, crew equipment, the other families' progress (devState.ts; optional for old saves). */
   dev?: import('./devState').DevState;
+  /** The town papers: the Daily Tide and the Weekly Leader, their archive, the boss's ads, plants and suits (paper.ts; optional, made by the weekly update). */
+  paper?: import('./paper').PaperState;
 }
 
 export interface PlayerChoices {
@@ -1046,6 +1048,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'spend'; op: import('./spendState').SpendAction }
   /** New York (nyc.ts): open a crew, buy into a racket, the families' blessing, tribute, the Commission. */
   | { kind: 'nyc'; op: import('./nyc').NycAction }
+  /** The town papers (paper.ts): plant or spike a story, run an ad, buy the paper, sue it. */
+  | { kind: 'paper'; op: import('./paper').PaperAction }
 );
 
 export type InteractionId =

@@ -1,3 +1,4 @@
+import { todaysHeadline } from './paper';
 import { agingOf, isBlind, lvl } from './aging';
 import { briefing } from './briefing';
 import { datingPhone } from './dating';
@@ -319,7 +320,7 @@ export function officeRoom(s: GameState): OfficeRoom {
     cane: !!boss && (boss.health < 45 || lvl(s, boss.id, 'infirm') >= 2 || lvl(s, boss.id, 'bones') >= 2 || isBlind(s, boss.id)),
     medicine: !!boss && (boss.conditions.length > 0 || boss.health < 60 || (agingOf(s, boss.id).dx?.length ?? 0) > 0),
     health: boss?.health ?? 100,
-    headline: news ? { paper: news.paper, text: news.headline, week: news.week } : undefined,
+    headline: todaysHeadline(s) ?? (news ? { paper: news.paper, text: news.headline, week: news.week } : undefined),
     absence: officeAbsence(s),
     hq: { kind, club: kind === 'social', name: kind === 'social' ? 'The Shore Social Club' : HQ_INFO[kind].name },
   };

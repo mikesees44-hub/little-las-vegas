@@ -121,6 +121,8 @@ export const TIME_TABLE: Record<string, number> = {
   // Nightlife: a night with her is an evening; business with the houses is a meeting.
   'nightlife:payroll': 1, 'nightlife:release': 0.5, 'nightlife:promise': 1, 'nightlife:keep': 3,
   'nightlife:goomar': 4, 'nightlife:endGoomar': 2, 'nightlife:deal': 2, 'nightlife:back': 0.5,
+  // The papers: a word with the editor is an hour; buying the paper is a meeting with lawyers.
+  'paper:plant': 1, 'paper:kill': 1, 'paper:ad': 0.5, 'paper:buy': 3, 'paper:sue': 2,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
   // Your People (bonds.ts): an evening with your wife, an afternoon with a kid, a day fishing.
   'bond:date': 4, 'bond:anniversary': 4, 'bond:apologize': 1, 'bond:confess': 1, 'bond:deny': 0.5, 'bond:vacation': TRAVEL_DAY,

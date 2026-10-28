@@ -19,6 +19,7 @@ import { attachMinigames, minigameFirst, minigamesWeek } from './minigames';
 import { trialWeek } from './trial';
 import { reelsWeek } from './reels';
 import { newsWeek } from './newspaper';
+import { paperWeek } from './paper';
 import { politicsWeek } from './politics';
 import { clonePol } from './polState';
 import { lifestyleMonth, lifestyleWeek } from './lifestyle';
@@ -384,6 +385,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     dynastyWeek(ctx);
     politicsWeek(ctx);
     newsWeek(ctx);
+    paperWeek(ctx);
     reelsWeek(ctx, input);
     recordEarnings(ctx);
     tributeWeek(ctx);

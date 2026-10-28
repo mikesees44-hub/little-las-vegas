@@ -1,3 +1,4 @@
+import { todaysHeadline } from '../src/engine/paper';
 import { describe, expect, it } from 'vitest';
 import { previewAction } from '../src/engine/actions';
 import { advanceWeek } from '../src/engine/engine';
@@ -173,7 +174,8 @@ describe("the Boss's Office room", () => {
     const r = officeRoom(s);
     const living = Object.values(s.characters).filter((c) => c.dynasty && c.alive && c.id !== s.playerId).length;
     expect(r.photos).toBe(Math.min(8, living));
-    expect(r.headline?.text).toBe(s.news[s.news.length - 1]?.headline);
+    // The morning's Daily Tide is on the desk (engine/paper.ts); before the first edition, the last front page.
+    expect(r.headline?.text).toBe(todaysHeadline(s)?.text ?? s.news[s.news.length - 1]?.headline);
     const kin = Object.values(s.characters).find((c) => c.dynasty && c.alive && c.id !== s.playerId)!;
     const t = structuredClone(s);
     t.characters[kin.id].alive = false;
