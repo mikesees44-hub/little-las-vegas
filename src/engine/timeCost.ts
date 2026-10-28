@@ -1,5 +1,7 @@
 import { daysOf, DAY_NAMES } from './days';
 import { addStress } from './familyStress';
+import { departureHours, resolveTransport } from './transport';
+import { DESTS } from './travelDests';
 import { addOpinion } from './relations';
 import { spendHours } from './spendData';
 import type { GameState, PlayerAction } from './types';
@@ -157,6 +159,9 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
   if (s && a.kind === 'travel' && a.op.type === 'trip') {
     const p = a.op.plan;
     if (p.leaderId !== s.playerId && !p.guests.includes(s.playerId) && p.companionId !== s.playerId) return 0.5;
+    // Going himself: the door-to-door hours of the way he chose (a ferry to Lewes is an afternoon; Miami is the day).
+    const d = DESTS[p.destId];
+    if (d && p.transport) return departureHours(resolveTransport(p.mode, p.tier, d, p.transport), d, TRAVEL_DAY);
   }
   if (a.kind === 'spend' && a.op.op === 'buy') return spendHours(a.op.item);
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];

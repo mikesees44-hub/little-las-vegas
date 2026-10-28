@@ -59,6 +59,11 @@ export interface Dest {
   miles: number;
   /** Not reachable by road. */
   noRoad?: boolean;
+  /** Road miles when the straight line lies (Delaware: around by the Memorial Bridge). */
+  roadMi?: number;
+  /** Across the water from Cape May (Delaware): the boat's miles, and the drive on the far side. */
+  waterMi?: number;
+  landMi?: number;
 }
 
 const WW = { lat: 38.9918, lon: -74.8149 };
@@ -241,6 +246,50 @@ const RESORTS: DestIn[] = [
       { id: 'cigars', name: 'The cigar factories', text: 'Partagás on Industria Street. The lector reads novels to the rollers.', tags: ['culture'], cost: 8 },
     ],
   },
+  {
+    id: 'rehoboth', name: 'Rehoboth Beach', lat: 38.7209, lon: -75.076, region: 'Delaware', resort: true,
+    blurb: 'The Nation\'s Summer Capital: Washington people, a quiet boardwalk, and no Manno, no Philadelphia — across the bay, two hours by boat or four around by the Memorial Bridge.', modes: ['cars', 'bus', 'ship'],
+    peak: [6, 7, 8], storms: [9], hotels: ['a guest house on Olive Avenue', 'the Henlopen Hotel', 'an oceanfront cottage'], price: 0.9, roadMi: 142, waterMi: 20, landMi: 7,
+    activities: [
+      { id: 'rbbeach', name: 'The beach and the boardwalk', text: 'A quiet boardwalk, taffy, and the kids digging to China.', tags: ['family', 'relax'], cost: 4 },
+      { id: 'senators', name: 'Cocktails with the Washington crowd', text: 'A congressman\'s cottage on the dunes. Everybody in Washington summers here; nobody in Washington knows you.', tags: ['business', 'moneymen'], cost: 15 },
+      { id: 'surfcast', name: 'Surf-casting at Cape Henlopen', text: 'Blues running in the surf, a thermos, and nobody for a mile.', tags: ['private', 'sport', 'relax'], cost: 5 },
+      { id: 'rbdance', name: 'Dancing at the Pink Pony', text: 'A little band, a little bar, a lot of sailors from the fort.', tags: ['nightlife', 'romance'], cost: 12 },
+    ],
+  },
+  {
+    id: 'lewes', name: 'Lewes', lat: 38.7746, lon: -75.1393, region: 'Delaware', resort: true,
+    blurb: 'Pilot town at the mouth of the bay: the menhaden fleet, the old Zwaanendael house, and Cape Henlopen\'s dunes. Seventeen miles of water from Cape May — and a hundred and thirty-five by road.', modes: ['cars', 'bus', 'ship'],
+    peak: [6, 7, 8], storms: [9], hotels: ['a room over the tackle shop', 'the Lewes inn on Second Street', 'a captain\'s house on the canal'], price: 0.75, roadMi: 135, waterMi: 20, landMi: 0,
+    activities: [
+      { id: 'pilots', name: 'The pilots\' station', text: 'The bay pilots who bring every ship up to Philadelphia. They know what is in every hold.', tags: ['business', 'private'], cost: 5 },
+      { id: 'drumfish', name: 'Drum fishing in the bay', text: 'A party boat, black drum the size of a boy, and the captain\'s bottle.', tags: ['sport', 'private', 'relax'], cost: 10 },
+      { id: 'henlopen', name: 'The dunes at Cape Henlopen', text: 'The old Army towers on the dunes and a picnic the kids remember.', tags: ['family', 'relax', 'romance'], cost: 3 },
+      { id: 'canal', name: 'Crabs on the canal', text: 'A bushel on newspaper and a pitcher of beer.', tags: ['family', 'relax'], cost: 6 },
+    ],
+  },
+  {
+    id: 'wilmington', name: 'Wilmington', lat: 39.7391, lon: -75.5398, region: 'Delaware', resort: true, rivals: ['philly'],
+    blurb: 'The company town: chemical money, Brandywine estates, and the old river ferries rusting since the Memorial Bridge opened in 1951.', modes: ['cars', 'bus', 'train'],
+    peak: [5, 6], hotels: ['a commercial hotel on Market Street', 'the company hotel on Rodney Square', 'a suite at the company hotel'], price: 1.0, roadMi: 80,
+    activities: [
+      { id: 'stanton', name: 'The track at Stanton', text: 'The summer meet: Philadelphia money and Brandywine money at the same windows.', tags: ['gamble', 'sport'], cost: 12, months: [5, 6, 7] },
+      { id: 'brandywine', name: 'The Brandywine estates', text: 'Gardens, a mill on the creek, and the quietest money in America.', tags: ['culture', 'family', 'relax'], cost: 6 },
+      { id: 'wilmrespects', name: 'Coffee with the Wilmington people', text: 'Philadelphia\'s men in Delaware, in a bakery on Union Street.', tags: ['business'], cost: 5 },
+      { id: 'wilmplay', name: 'A tryout at the Playhouse', text: 'Broadway shows try out here first. Orchestra seats.', tags: ['culture', 'romance', 'family'], cost: 10 },
+    ],
+  },
+  {
+    id: 'lakegeorge', name: 'Lake George', lat: 43.4262, lon: -73.7123, region: 'New York', resort: true,
+    blurb: 'The Queen of American Lakes: Adirondack camps, a lake steamer, and the old fort where the Mohicans fought.', modes: ['bus', 'cars', 'train'],
+    peak: [7, 8], hotels: ['a cabin colony on the east shore', 'the big hotel on the island', 'a great camp with its own boathouse'], price: 0.95,
+    activities: [
+      { id: 'steamer', name: 'The lake steamer', text: 'Up the lake past the islands, the kids at the rail.', tags: ['family', 'relax'], cost: 6 },
+      { id: 'fort', name: 'The old fort', text: 'Cannons, a stockade, and a guide in buckskin.', tags: ['family', 'culture'], cost: 4 },
+      { id: 'camp', name: 'A great camp on the lake', text: 'Guide boats, a stone fireplace, and men from Albany who like their privacy.', tags: ['private', 'business', 'relax'], cost: 15 },
+      { id: 'lgdance', name: 'Dancing at the casino pavilion', text: 'A band over the water on a summer night.', tags: ['nightlife', 'romance'], cost: 10 },
+    ],
+  },
 ];
 
 /** Hideouts (only reachable when on the lam). */
@@ -338,7 +387,7 @@ export const MODES: Record<TravelMode, ModeInfo> = {
   train: { name: 'Train', glyph: 'T', blurb: 'The Pennsylvania Railroad or the Reading out of Philadelphia, the shore line from Wildwood. A Pullman berth if you pay for it.', comfort: 0.7, accident: 0.002, conspicuous: 0.45, tail: 0.05, meeting: 0.2 },
   bus: { name: 'Bus', glyph: 'B', blurb: 'Greyhound or Trailways. Cheap, slow and anonymous.', comfort: 0.35, accident: 0.004, conspicuous: 0.1, tail: 0.02, meeting: 0.08 },
   cars: { name: 'Your own cars', glyph: 'C', blurb: 'A convoy of Cadillacs with crew at the wheel. Slow but private, bodyguards along — and it can be tailed.', comfort: 0.6, accident: 0.006, conspicuous: 0.5, tail: 0.12, meeting: 0.04 },
-  ship: { name: 'Ship', glyph: 'S', blurb: 'A liner from the West Side piers or a cruise ship out of Miami. Slow, grand, and the purser keeps a passenger list.', comfort: 0.95, accident: 0.001, conspicuous: 0.35, tail: 0, meeting: 0.25 },
+  ship: { name: 'Boat', glyph: 'S', blurb: 'A liner from the West Side piers or a cruise ship out of Miami — or, for Delaware, a boat across the bay. Slow, grand, and the purser keeps a passenger list.', comfort: 0.95, accident: 0.001, conspicuous: 0.35, tail: 0, meeting: 0.25 },
 };
 export const MODE_IDS = Object.keys(MODES) as TravelMode[];
 

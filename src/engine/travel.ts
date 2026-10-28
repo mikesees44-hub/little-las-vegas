@@ -17,15 +17,19 @@ import {
   buildAftermath, coverOdds, destOf, journal, partyOf, resolveDay, T, tripDiscoveryChance, tripEvent, tripLabel,
 } from './trips';
 import {
-  DESTS, ENTERTAINERS, fare, havanaOpen, legDays, MODE_IDS, MODES, modeBlock, RESORT_IDS, roadMiles, TIER_INFO, type Dest,
+  DESTS, ENTERTAINERS, havanaOpen, legDays, MODE_IDS, MODES, modeBlock, RESORT_IDS, TIER_INFO, type Dest,
 } from './travelDests';
 import {
   bossAway, bossFugitive, currentVisit, ensureTravel, messengerDelay, messengerPenalty, fugitiveOf, isAway, liveTrips, loversOf, today, tripOf,
   type TravelAction, type TravelOp, type Trip, type TripPlan,
 } from './travelState';
+import {
+  ferryOpen, legHours, manifestChance, optFare, optLegDays, resolveTransport, roadOf, transportBlock, transportRisks, type TransportOpt,
+} from './transport';
 import { commitFugitive, describeFugitiveOp, fugitiveWeek, onLamLeg, previewFugitive, applyFugitiveOp } from './fugitive';
 import type { Character, Effect, EventInstance, GameState, PlayerAction } from './types';
 import { cutVisitShort, visitWeek } from './visit';
+import { resolveVacDay } from './vacation';
 import { shortName } from './visitData';
 
 /**
@@ -117,10 +121,23 @@ export interface TripQuote {
   lines: CostLine[];
   cost: number;
   season: 'peak' | 'off' | 'none';
-  risks: { accident: number; tail: number; sighting: number; discovery: number };
+  risks: { accident: number; tail: number; sighting: number; discovery: number; stop: number; weather: number; manifest: number };
   comfort: number;
   relief: number;
+  /** The way they go (transport.ts) and its door-to-door hours one way. */
+  transport?: TransportOpt;
+  hours: number;
   block?: string;
+}
+
+/** Crew who come along as bodyguards (not family, not drivers). */
+function crewGuests(s: GameState, guests: string[]): number {
+  return guests.filter((id) => { const c = s.characters[id]; return c && !c.dynasty && c.faction === 'player' && c.rank !== 'civilian'; }).length;
+}
+
+/** A convoy of crew cars (each with a crew driver); the Caddy and the hired car are one car and need none. */
+export function isConvoy(o: TransportOpt): boolean {
+  return o.id === 'crewcar';
 }
 
 export function dayDate(day: number) {
@@ -135,27 +152,29 @@ function seasonOf(d: Dest, month: number): 'peak' | 'off' | 'none' {
 /** Cost, time and risk of a planned trip (pure). */
 export function quoteTrip(s: GameState, plan: TripPlan): TripQuote {
   const d = DESTS[plan.destId];
-  const empty: TripQuote = { out: 0, stay: 0, back: 0, totalDays: 0, weeks: 0, departWeek: s.week, arriveDate: '', people: 0, lines: [], cost: 0, season: 'none', risks: { accident: 0, tail: 0, sighting: 0, discovery: 0 }, comfort: 0, relief: 0 };
+  const empty: TripQuote = { out: 0, stay: 0, back: 0, totalDays: 0, weeks: 0, departWeek: s.week, arriveDate: '', people: 0, lines: [], cost: 0, season: 'none', risks: { accident: 0, tail: 0, sighting: 0, discovery: 0, stop: 0, weather: 0, manifest: 0 }, comfort: 0, relief: 0, hours: 0 };
   if (!d) return { ...empty, block: 'Pick a destination' };
-  const m = MODES[plan.mode];
+  const o = resolveTransport(plan.mode, plan.tier, d, plan.transport);
   const tier = TIER_INFO[plan.tier];
   const departWeek = s.week + Math.max(0, Math.min(26, plan.departIn ?? 0));
-  const out = legDays(plan.mode, d.miles);
+  const out = optLegDays(o, d);
   const stay = plan.days.length;
   const departDay = departWeek * 7;
   const arrive = dayDate(departDay + out);
   const season = seasonOf(d, arrive.m);
   const sMult = season === 'peak' ? 1.3 : season === 'off' ? 0.85 : 1;
-  const cars = plan.mode === 'cars' ? Math.max(1, Math.min(4, plan.cars ?? 1)) : 0;
+  const convoy = plan.mode === 'cars' && isConvoy(o);
+  const cars = plan.mode === 'cars' ? (convoy ? Math.max(1, Math.min(4, plan.cars ?? 1)) : 1) : 0;
   const travellers = 1 + plan.guests.length + (plan.companionId || plan.newCompanion ? 1 : 0);
-  const people = travellers + (plan.mode === 'cars' ? (plan.driverIds?.length ?? 0) : 0);
+  const people = travellers + (convoy ? (plan.driverIds?.length ?? 0) : 0);
   const lines: CostLine[] = [];
   if (plan.mode === 'cars') {
-    lines.push({ label: `${cars} car${cars > 1 ? 's' : ''}: gas, tires and the drivers' pay (${roadMiles(d.miles).toLocaleString('en-US')} road miles each way)`, amount: 2 * cars * fare('cars', d.miles, plan.tier) });
+    const what = o.id === 'caddy' ? 'gas and tolls, you at the wheel' : o.id === 'chauffeur' ? 'the livery: car, driver and his meals' : 'gas, tires and the drivers\' pay';
+    lines.push({ label: `${convoy ? `${cars} car${cars > 1 ? 's' : ''}` : o.name}: ${what} (${roadOf(d).toLocaleString('en-US')} road miles each way)`, amount: 2 * cars * optFare(o, d, plan.tier) });
     const roadNights = Math.max(0, out - 1) * 2;
     if (roadNights) lines.push({ label: `Motels on the road (${roadNights} nights)`, amount: Math.round(roadNights * people * tier.hotel * 0.5) });
   } else {
-    lines.push({ label: `${m.name} fares, round trip (${travellers} × ${fmtMoney(2 * fare(plan.mode, d.miles, plan.tier))})`, amount: travellers * 2 * fare(plan.mode, d.miles, plan.tier) });
+    lines.push({ label: `${o.mode === 'plane' || o.mode === 'ship' ? o.name : `${MODES[o.mode].name} (${o.name.toLowerCase()})`} fares, round trip (${travellers} × ${fmtMoney(2 * optFare(o, d, plan.tier))})`, amount: travellers * 2 * optFare(o, d, plan.tier) });
   }
   const rooms = travellers + (plan.discreet && (plan.companionId || plan.newCompanion) ? 1 : 0);
   if (stay) lines.push({ label: `${d.hotels[plan.tier === 'modest' ? 0 : plan.tier === 'first' ? 1 : 2]}, ${stay} night${stay > 1 ? 's' : ''}${season === 'peak' ? ' (high season)' : season === 'off' ? ' (off season)' : ''}`, amount: Math.round(stay * rooms * tier.hotel * d.price * sMult) });
@@ -166,13 +185,17 @@ export function quoteTrip(s: GameState, plan: TripPlan): TripQuote {
   const totalDays = out + stay + out;
   const fed = s.heat.federal;
   const legs = 2;
-  const acc = plan.mode === 'cars' ? 1 - (1 - m.accident) ** cars : m.accident;
   const leader = s.characters[plan.leaderId];
   const evid = leader?.evidence ?? 0;
+  const leg = transportRisks(o, d, arrive.m, fed, s.heat.local, evid, cars, crewGuests(s, plan.guests));
+  const both = (p: number) => 1 - (1 - p) ** legs;
   const risks = {
-    accident: 1 - (1 - acc) ** legs,
-    tail: 1 - (1 - m.tail * (0.4 + fed / 60) * (evid >= 40 ? 1.5 : 1)) ** legs,
-    sighting: 1 - (1 - m.conspicuous * (fed / 100) * 0.5) ** legs,
+    accident: both(leg.accident),
+    tail: both(leg.tail),
+    sighting: both(leg.seen),
+    stop: plan.transport ? both(leg.stop) : 0,
+    weather: plan.transport ? both(leg.weather) : 0,
+    manifest: plan.transport ? both(manifestChance(o, fed)) : 0,
     discovery: plan.companionId || plan.newCompanion ? tripDiscoveryChance(s, { leaderId: plan.leaderId, party: [...plan.guests, plan.companionId ?? 'new'], companionId: plan.companionId ?? (plan.newCompanion ? 'new' : undefined), discreet: plan.discreet, tier: plan.tier, discovered: false, days: plan.days, destId: plan.destId }) : 0,
   };
   if (plan.newCompanion && !plan.companionId) {
@@ -181,9 +204,11 @@ export function quoteTrip(s: GameState, plan: TripPlan): TripQuote {
     const spouseOn = !!L?.spouseId && plan.guests.includes(L.spouseId);
     risks.discovery = 1 - (1 - (spouseOn ? 0.2 : L?.spouseId ? 0.015 : 0) * (plan.discreet ? 0.5 : 1)) ** Math.max(1, stay);
   }
-  const relief = plan.purpose === 'vacation' ? Math.round((tier.relief + stay * 3) * (0.7 + 0.3 * m.comfort)) : Math.round(stay * 2 * m.comfort);
+  risks.discovery = Math.min(0.95, risks.discovery * o.discovery);
+  const relief = plan.purpose === 'vacation' ? Math.round((tier.relief + stay * 3) * (0.7 + 0.3 * o.comfort)) : Math.round(stay * 2 * o.comfort);
   const q: TripQuote = {
-    dest: d, out, stay, back: out, totalDays, weeks: Math.ceil(totalDays / 7), departWeek, arriveDate: formatDate(arrive), people, lines, cost, season, risks, comfort: m.comfort, relief,
+    dest: d, out, stay, back: out, totalDays, weeks: Math.ceil(totalDays / 7), departWeek, arriveDate: formatDate(arrive), people, lines, cost, season, risks, comfort: o.comfort, relief,
+    transport: o, hours: legHours(o, d),
   };
   q.block = planBlock(s, plan, q);
   return q;
@@ -196,6 +221,11 @@ function planBlock(s: GameState, plan: TripPlan, q: TripQuote): string | undefin
   if (d.id === 'havana' && !havanaOpen(dayDate(q.departWeek * 7))) return 'Havana is closed to Americans since January 1961';
   const mb = modeBlock(d, plan.mode);
   if (mb) return mb;
+  const o = q.transport ?? resolveTransport(plan.mode, plan.tier, d, plan.transport);
+  const tb = transportBlock(o.id, d, dayDate(q.departWeek * 7));
+  if (tb) return tb;
+  if (o.seats && q.people > o.seats) return `${o.name}: ${o.seats} seats, and the party is ${q.people}`;
+  if (!isConvoy(o) && crewGuests(s, plan.guests) > o.guards) return `${o.name}: at most ${o.guards} bodyguard${o.guards === 1 ? '' : 's'} along`;
   if (plan.purpose === 'vacation' && (plan.days.length < 3 || plan.days.length > 5)) return 'A vacation is 3 to 5 days: plan each day';
   if (plan.purpose === 'business' && (plan.days.length < 1 || plan.days.length > 3)) return 'A business trip is 1 to 3 days';
   const month = dayDate(q.departWeek * 7 + q.out).m;
@@ -209,7 +239,7 @@ function planBlock(s: GameState, plan: TripPlan, q: TripQuote): string | undefin
   const pool = new Set(guestPool(s, plan.leaderId).map((c) => c.id));
   if (plan.guests.some((g) => !pool.has(g))) return 'Someone on the list can\'t come';
   if (plan.companionId && !companionPool(s, plan.leaderId).some((c) => c.id === plan.companionId)) return 'The companion can\'t come';
-  if (plan.mode === 'cars') {
+  if (plan.mode === 'cars' && isConvoy(o)) {
     const cars = plan.cars ?? 1;
     if (cars < 1 || cars > 4) return 'A convoy is 1 to 4 cars';
     const drivers = plan.driverIds ?? [];
@@ -386,9 +416,12 @@ export function startTrip(ctx: Ctx, plan: TripPlan): Trip | undefined {
     if (c) ctx.log.push(`${displayName(c)} declined the invitation to ${d.name}.`);
   }
   const departDay = q.departWeek * 7;
+  const convoy = plan.mode === 'cars' && !!q.transport && isConvoy(q.transport);
+  const drivers = convoy ? plan.driverIds ?? [] : [];
   const t: Trip = {
-    id: `trip${s.nextId++}`, purpose: plan.purpose, leaderId: L.id, party: [...guests, ...(companionId ? [companionId] : []), ...(plan.mode === 'cars' ? plan.driverIds ?? [] : [])],
-    guests, companionId, driverIds: plan.mode === 'cars' ? plan.driverIds ?? [] : [], destId: d.id, mode: plan.mode, tier: plan.tier, cars: plan.mode === 'cars' ? plan.cars ?? 1 : 0,
+    id: `trip${s.nextId++}`, purpose: plan.purpose, leaderId: L.id, party: [...guests, ...(companionId ? [companionId] : []), ...drivers],
+    guests, companionId, driverIds: drivers, destId: d.id, mode: plan.mode, tier: plan.tier, cars: plan.mode === 'cars' ? (convoy ? plan.cars ?? 1 : 1) : 0,
+    ...(plan.transport ? { transport: plan.transport } : {}),
     discreet: plan.discreet, entertainer: plan.entertainer, days: [...plan.days],
     departDay, arriveDay: departDay + q.out, leaveDay: departDay + q.out + q.stay, homeDay: departDay + q.out + q.stay + q.back,
     cost: q.cost, journal: [], done: 0, legs: [], declined,
@@ -397,7 +430,7 @@ export function startTrip(ctx: Ctx, plan: TripPlan): Trip | undefined {
   tr.stats.trips++;
   if (plan.purpose === 'vacation') tr.stats.vacations++;
   else tr.stats.business++;
-  journal(s, t, `Booked: ${d.name} by ${MODES[t.mode].name.toLowerCase()}, ${TIER_INFO[t.tier].name.toLowerCase()}, leaving ${formatDate(dayDate(departDay))}.`, 'neutral', today(s));
+  journal(s, t, `Booked: ${d.name} by ${plan.transport && q.transport ? q.transport.name.replace(/^Your /, 'his ').replace(/^An? /, '').toLowerCase() : MODES[t.mode].name.toLowerCase()}, ${TIER_INFO[t.tier].name.toLowerCase()}, leaving ${formatDate(dayDate(departDay))}.`, 'neutral', today(s));
   return t;
 }
 
@@ -416,9 +449,10 @@ function legRoll(ctx: Ctx, t: Trip, which: 'out' | 'back'): EventInstance | unde
   const day = which === 'out' ? t.departDay : t.leaveDay;
   const lam = t.purpose === 'lam';
   const label = tripLabel(t);
+  const o = resolveTransport(t.mode, t.tier, destOf(t), t.transport);
   let ev: EventInstance | undefined;
   // Accidents.
-  const pAcc = (t.mode === 'cars' ? 1 - (1 - m.accident) ** t.cars : m.accident) * ACCIDENT_SCALE;
+  const pAcc = (t.mode === 'cars' ? 1 - (1 - m.accident) ** t.cars : m.accident) * o.accMult * ACCIDENT_SCALE;
   if (rand(tr) < pAcc) {
     const pool = partyOf(s, t).filter((c) => ageOn(c.birth, s.date) >= 16);
     const v = pool[Math.floor(rand(tr) * pool.length)];
@@ -433,7 +467,7 @@ function legRoll(ctx: Ctx, t: Trip, which: 'out' | 'back'): EventInstance | unde
     tr.stats.accidents++;
   }
   // The Feds watch the airports, the stations and the passenger lists.
-  const pSee = m.conspicuous * (s.heat.federal / 100) * 0.5;
+  const pSee = m.conspicuous * o.seenMult * (s.heat.federal / 100) * 0.5;
   if (rand(tr) < pSee) {
     tr.stats.sightings++;
     if (lam) onLamLeg(ctx, t, 'sighting');
@@ -444,19 +478,50 @@ function legRoll(ctx: Ctx, t: Trip, which: 'out' | 'back'): EventInstance | unde
     }
   }
   // Tails.
-  const pTail = m.tail * (0.4 + s.heat.federal / 60) * ((L?.evidence ?? 0) >= 40 ? 1.5 : 1);
+  const pTail = m.tail * o.tailMult * (0.4 + s.heat.federal / 60) * ((L?.evidence ?? 0) >= 40 ? 1.5 : 1);
   if (L && (L.rank !== 'civilian' || lam) && rand(tr) < pTail) {
     tr.stats.tails++;
     t.tailed = true;
     if (t.askedWeek !== s.week) ev = buildTail(s, t, which);
     else journal(s, t, 'A gray Ford stayed three cars back from Wilmington to Baltimore. Nobody said anything about it.', 'bad', day);
   }
+  // The way they chose (transport.ts): a trooper, the weather, a passenger list. Old trips (no choice) roll none of it.
+  if (t.transport && !lam) wayRoll(ctx, t, o, which, day);
   // Chance meetings.
   if (!ev && !lam && t.askedWeek !== s.week && rand(tr) < m.meeting) {
     tr.stats.meetings++;
     ev = buildMeeting(s, t);
   }
   return ev;
+}
+
+/** The risks of the particular way to go: troopers on the road, fog on the bay, a passenger list on a federal desk. */
+function wayRoll(ctx: Ctx, t: Trip, o: TransportOpt, which: 'out' | 'back', day: number): void {
+  const s = ctx.s;
+  const tr = T(s);
+  const L = s.characters[t.leaderId];
+  const d = destOf(t);
+  const label = `${tripLabel(t)}: ${o.name}`;
+  const crewAlong = t.party.filter((id) => { const c = s.characters[id]; return c && !c.dynasty && c.faction === 'player' && c.rank !== 'civilian'; }).length;
+  const r = transportRisks(o, d, dayDate(day).m, s.heat.federal, s.heat.local, L?.evidence ?? 0, t.cars, crewAlong);
+  if (r.stop && rand(tr) < r.stop) {
+    const armed = crewAlong > 0 && o.guns === 'yes';
+    if (armed) {
+      applyEffects(ctx, [{ type: 'money', amount: -150, label: `${label}: a trooper and a .38 under the seat` }, { type: 'heat', bar: 'local', amount: 2, label: `${label}: a trooper wrote down every name in the car` }], { label, because: 'got pulled over with a gun in the car', category: 'event' });
+      if (L && L.rank !== 'civilian') applyEffects(ctx, [{ type: 'evidence', charId: L.id, amount: 1, label: `${label}: the trooper's report` }], { label, because: 'got pulled over', category: 'event' });
+      journal(s, t, `A state trooper pulled the car over ${which === 'out' ? 'on the way down' : 'on the way home'} and found a .38 under the seat. A hundred and fifty dollars and a report with every name in it.`, 'bad', day);
+    } else journal(s, t, `A state trooper pulled the car over, read the license twice, looked at everybody in the back, and let it go with a ticket.`, 'neutral', day);
+  }
+  if (r.weather && rand(tr) < r.weather) {
+    const what = o.mode === 'plane' ? 'Weather over the field: the flight sat on the ground until the next morning' : o.id === 'charter' ? 'Fog on the bay: the captain would not take the boat out until it lifted the next day' : o.mode === 'ship' ? 'Heavy seas: a day lost' : 'Snow on the line: a day late';
+    journal(s, t, `${what}.`, 'bad', day);
+    if (which === 'out') { t.arriveDay++; t.leaveDay++; t.homeDay++; } else if (t.homeDay < FAR) t.homeDay++;
+    if (L?.alive) addStress(s, L.id, 2, 'domestic');
+  }
+  if (o.manifest && L && L.rank !== 'civilian' && rand(tr) < manifestChance(o, s.heat.federal)) {
+    applyEffects(ctx, [{ type: 'evidence', charId: L.id, amount: 1, label: `${label}: the passenger list reached the Federal Building` }], { label, because: 'travelled under his own name', category: 'event' });
+    journal(s, t, `The ${o.mode === 'plane' ? 'airline\'s passenger list' : o.mode === 'ship' ? 'purser\'s list' : 'Pullman reservation'} — ${L.firstName}'s name and everyone's with him — ended up on a desk in the Federal Building.`, 'bad', day);
+  }
 }
 
 function buildTail(s: GameState, t: Trip, which: 'out' | 'back'): EventInstance {
@@ -542,6 +607,11 @@ function tripWeek(ctx: Ctx, t: Trip): EventInstance[] {
       if (t.arriveDay + i >= d1) break;
       out.push(...resolveDay(ctx, t, i));
       if (t.over) return out;
+      // The boss's own plans for the day (vacation.ts): the show, the track, the sit-down…
+      if (t.purpose === 'vacation' && t.leaderId === s.playerId) {
+        const ev = resolveVacDay(ctx, t, i);
+        if (!out.length) out.push(...ev);
+      }
     }
   }
   if (t.leaveDay < d1 && !t.legs.includes('back') && t.leaveDay < FAR) {
@@ -583,10 +653,21 @@ export function travelWeek(ctx: Ctx): void {
       if (ev) s.eventQueue.push(ev);
     } else tr.aftermath.push({ ...a, due: s.week + 1 });
   }
+  ferryNews(ctx);
   fugitiveWeek(ctx);
   actingWeek(ctx);
   // Forget finished trips after a while.
   if (tr.trips.length > 6) tr.trips = tr.trips.filter((t) => !t.over || t.homeDay > today(s) - 21);
+}
+
+/** July 1964: the Cape May–Lewes Ferry sails, and the trip planner gets a new way across the bay. Told once. */
+export function ferryNews(ctx: Ctx): void {
+  const s = ctx.s;
+  if (!ferryOpen(s.date) || s.flags.capeMayLewesFerry) return;
+  s.flags.capeMayLewesFerry = 1;
+  const text = 'The Cape May–Lewes Ferry sailed for the first time: seventy minutes across the mouth of the bay, cars and all. Delaware is an afternoon away now — no more fishing captains, no more four hours around by the Memorial Bridge.';
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text, kind: 'misc' });
+  ctx.log.push(text);
 }
 
 /* ---------------------------------------------------------------- */
@@ -789,6 +870,16 @@ export function applyTravelOp(ctx: Ctx, op: TravelOp, label: string): void {
     case 'actingReward':
       addOpinion(s, op.charId, s.playerId, 'Rewarded for minding the store', op.amount, 1);
       break;
+    case 'gossip': {
+      if (!trip) break;
+      const L = s.characters[trip.leaderId];
+      if (!L?.spouseId || !trip.companionId) break;
+      if (rand(tr) < 0.5) {
+        tr.aftermath.push({ spouseId: L.spouseId, loverId: trip.companionId, due: s.week + randInt(tr, 1, 3), leaderId: L.id });
+        journal(s, trip, 'He talked. It will be home before you are.', 'bad');
+      } else journal(s, trip, 'He kept it to himself. For now.', 'neutral');
+      break;
+    }
     case 'visitHome':
       cutVisitShort(s);
       break;
@@ -816,6 +907,7 @@ export function describeTravelOp(s: GameState, op: TravelOp): string | undefined
     case 'tail': return op.outcome === 'lose' ? 'Try to lose him' : op.outcome === 'wave' ? 'The tail knows you know' : 'He follows you all the way';
     case 'endAffair': return `The affair with ${s.characters[op.loverId]?.firstName ?? '?'} is over`;
     case 'actingReward': return `${s.characters[op.charId]?.firstName ?? '?'} opinion +${op.amount}`;
+    case 'gossip': return 'Half a chance it gets back to the wife';
     case 'visitHome': return 'You pack and go home';
     default: return describeFugitiveOp(s, op);
   }

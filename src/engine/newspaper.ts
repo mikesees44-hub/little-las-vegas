@@ -53,6 +53,7 @@ export const BACKDROP: { date: GameDate; paper: string; headline: string; body: 
   { date: { y: 1963, m: 9, d: 27 }, paper: BULLETIN, headline: 'MOB TURNCOAT TELLS SENATE OF SECRET SOCIETY', body: 'A convicted soldier names "this thing of ours" before the cameras. Every family on the East Coast is watching.', heat: { bar: 'federal', amount: 6 } },
   { date: { y: 1963, m: 11, d: 23 }, paper: BULLETIN, headline: 'PRESIDENT SLAIN IN DALLAS', body: 'The nation mourns. Flags at half staff on the boardwalk.' },
   { date: { y: 1964, m: 8, d: 25 }, paper: LEADER, headline: 'DEMOCRATS CONVENE IN ATLANTIC CITY', body: 'Hotels full from the Inlet to Ventnor; shore merchants call it the best August in memory.' },
+  { date: { y: 1964, m: 7, d: 1 }, paper: LEADER, headline: 'CAPE MAY–LEWES FERRY SAILS AT LAST', body: 'Seventy minutes across the bay, cars and all. Delaware is an afternoon away; the fishing captains who ran people across for cash will miss the business.' },
   { date: { y: 1964, m: 7, d: 31 }, paper: LEADER, headline: 'NEW EXPRESSWAY OPENS TO THE SHORE', body: 'Philadelphia to the shore in about an hour — and the cops say that cuts both ways.' },
   { date: { y: 1968, m: 6, d: 20 }, paper: BULLETIN, headline: 'CRIME BILL LETS FEDS TAP PHONES WITH A WARRANT', body: 'Back rooms everywhere get quieter.', heat: { bar: 'federal', amount: 4 } },
   { date: { y: 1969, m: 7, d: 21 }, paper: BULLETIN, headline: 'MEN WALK ON THE MOON', body: 'Boardwalk crowds gather around television sets in shop windows.' },

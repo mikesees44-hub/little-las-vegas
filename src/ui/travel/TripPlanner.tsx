@@ -15,6 +15,17 @@ import { AcceptanceLine, useOrders } from '../components/Orders';
 import { Face } from '../components/People';
 import { ModeIcon } from './icons';
 import { TripWhy } from '../clarity/Pickers';
+import { defaultTransport, transportBlock, type TransportId } from '../../engine/transport';
+import { lostDest } from '../../engine/vacation';
+import { doorToDoor, TransportPicker } from './TransportPicker';
+
+/** A plan names its way to go (the mode's usual one) so the planner and the quote agree. */
+function withWay(s: GameState, p: TripPlan): TripPlan {
+  const d = DESTS[p.destId];
+  if (!d) return p;
+  const ok = p.transport && !transportBlock(p.transport as TransportId, d, dayDate((s.week + (p.departIn ?? 0)) * 7)) ? p.transport : undefined;
+  return { ...p, transport: ok ?? defaultTransport(p.mode, p.tier, d) };
+}
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
@@ -35,7 +46,7 @@ const GROUP_ORDER = ['Spouse', 'Children', 'Family', 'Capos', 'Crew', 'Rivals (b
 export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; leaderId: string; destId?: string; onClose: () => void }) {
   const { queue } = useOrders();
   const ours = useMemo(() => Object.values(s.characters).filter((c) => c.alive && isOurs(s, c) && ageOn(c.birth, s.date) >= 16), [s]);
-  const [plan, setPlan] = useState<TripPlan>(() => suggestPlan(s, leaderId, destId, destId && DESTS[destId] && !DESTS[destId].resort ? 'business' : 'vacation'));
+  const [plan, setPlan] = useState<TripPlan>(() => withWay(s, suggestPlan(s, leaderId, destId, destId && DESTS[destId] && !DESTS[destId].resort ? 'business' : 'vacation')));
   const set = (p: Partial<TripPlan>) => setPlan((x) => ({ ...x, ...p }));
   const leader = s.characters[plan.leaderId];
   const d = DESTS[plan.destId];
@@ -48,10 +59,14 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
   function reset(p: Partial<TripPlan>) {
     const next = { ...plan, ...p };
     const fresh = suggestPlan(s, next.leaderId, next.destId, next.purpose);
-    setPlan({ ...fresh, tier: next.tier, departIn: next.departIn, guests: p.leaderId ? fresh.guests : next.guests.filter((g) => g !== next.leaderId), mode: DESTS[next.destId].modes.includes(next.mode) ? next.mode : fresh.mode, companionId: undefined, newCompanion: false });
+    const mode = DESTS[next.destId].modes.includes(next.mode) ? next.mode : fresh.mode;
+    const way = mode === next.mode && next.transport && !transportBlock(next.transport as TransportId, DESTS[next.destId], dayDate((s.week + (next.departIn ?? 0)) * 7)) ? next.transport : defaultTransport(mode, next.tier, DESTS[next.destId]);
+    setPlan({ ...fresh, tier: next.tier, departIn: next.departIn, guests: p.leaderId ? fresh.guests : next.guests.filter((g) => g !== next.leaderId), mode, transport: way, companionId: undefined, newCompanion: false, ...(mode === 'cars' && way !== 'crewcar' ? { cars: 1, driverIds: [] } : {}) });
   }
 
-  const dests = Object.values(DESTS).filter((x) => (plan.purpose === 'vacation' ? x.resort : !!x.cityId) && (x.id !== 'havana' || havanaOpen(dayDate(q.departWeek * 7))));
+  // Havana stays on the list once it is gone — as what was lost.
+  const dests = Object.values(DESTS).filter((x) => (plan.purpose === 'vacation' ? x.resort : !!x.cityId));
+  const departDate = dayDate(q.departWeek * 7);
   dests.sort((a, b) => (RESORT_IDS.indexOf(a.id) + 1 || 99) - (RESORT_IDS.indexOf(b.id) + 1 || 99) || a.name.localeCompare(b.name));
   const nDays = plan.purpose === 'vacation' ? [3, 4, 5] : [1, 2, 3];
   const grouped = GROUP_ORDER.map((g) => ({ g, people: pool.filter((c) => leader && groupOf(s, leader, c) === g) })).filter((x) => x.people.length);
@@ -94,7 +109,7 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
           <label className="text-xs text-stone-400 space-y-1 block">
             <span className="block uppercase tracking-widest text-[10px] text-stone-500">Destination</span>
             <select className="w-full rounded bg-noir-800 border border-noir-600 px-2 py-1.5 text-sm text-stone-200" value={plan.destId} onChange={(e) => reset({ destId: e.target.value })} data-testid="trip-dest">
-              {dests.map((x) => <option key={x.id} value={x.id}>{x.name} — {x.region}{x.peak.includes(month) ? ' (high season)' : ''}</option>)}
+              {dests.map((x) => { const gone = x.id === 'havana' && !havanaOpen(departDate); return <option key={x.id} value={x.id} disabled={gone}>{x.name} — {gone ? lostDest(x.id, departDate) : x.region}{!gone && x.peak.includes(month) ? ' (high season)' : ''}</option>; })}
             </select>
           </label>
           <label className="text-xs text-stone-400 space-y-1 block">
@@ -111,7 +126,7 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
             {MODE_IDS.map((m) => {
               const ok = d?.modes.includes(m);
               return (
-                <button key={m} disabled={!ok} title={MODES[m].blurb} data-mode={m} onClick={() => set({ mode: m, ...(m === 'cars' ? { cars: plan.cars ?? 1, driverIds: plan.driverIds?.length ? plan.driverIds : drivers.slice(0, plan.cars ?? 1).map((c) => c.id) } : {}) })}
+                <button key={m} disabled={!ok} title={MODES[m].blurb} data-mode={m} onClick={() => set({ mode: m, transport: d ? defaultTransport(m, plan.tier, d) : undefined, ...(m === 'cars' ? { cars: plan.cars ?? 1, driverIds: plan.driverIds?.length ? plan.driverIds : drivers.slice(0, plan.cars ?? 1).map((c) => c.id) } : {}) })}
                   className={`rounded border px-2 py-1.5 text-left text-xs disabled:opacity-30 ${plan.mode === m ? 'border-gold-400 bg-gold-500/10 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-600'}`}>
                   <span className="flex items-center gap-1.5 font-semibold"><ModeIcon mode={m} size={14} />{MODES[m].name}</span>
                   <span className="block text-[10px] text-stone-500">comfort {Math.round(MODES[m].comfort * 10)}/10 · seen {Math.round(MODES[m].conspicuous * 10)}/10</span>
@@ -119,8 +134,9 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
               );
             })}
           </div>
-          <p className="text-[11px] text-stone-500 mt-1">{MODES[plan.mode].blurb}</p>
-          {plan.mode === 'cars' && (
+          {d && <TransportPicker dest={d} mode={plan.mode} tier={plan.tier} date={departDate} value={plan.transport as TransportId | undefined}
+            onPick={(id) => set({ transport: id, ...(plan.mode === 'cars' ? (id === 'crewcar' ? { cars: plan.cars ?? 1, driverIds: plan.driverIds?.length ? plan.driverIds : drivers.slice(0, plan.cars ?? 1).map((c) => c.id) } : { cars: 1, driverIds: [] }) : {}) })} />}
+          {plan.mode === 'cars' && (plan.transport ?? 'crewcar') === 'crewcar' && (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
               <span className="text-stone-400">Convoy:</span>
               {[1, 2, 3, 4].map((n) => <button key={n} className={`rounded border px-2 py-0.5 ${plan.cars === n ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-400'}`} onClick={() => setCars(n)}>{n} car{n > 1 ? 's' : ''}</button>)}
@@ -217,7 +233,7 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
 
         <section className="rounded border border-gold-600/40 bg-noir-900/60 p-3 space-y-2" data-testid="trip-quote">
           <div className="flex flex-wrap justify-between gap-2 text-sm">
-            <span className="text-stone-300">{q.out} day{q.out > 1 ? 's' : ''} there, {q.stay} at {d?.name}, {q.back} back · arrives {q.arriveDate} · <b>{q.weeks} week{q.weeks > 1 ? 's' : ''}</b> away</span>
+            <span className="text-stone-300">{q.out} day{q.out > 1 ? 's' : ''} there ({doorToDoor(q.hours)} door to door{q.transport ? `, ${q.transport.name.toLowerCase()}` : ''}), {q.stay} at {d?.name}, {q.back} back · arrives {q.arriveDate} · <b>{q.weeks} week{q.weeks > 1 ? 's' : ''}</b> away</span>
             <span className="text-gold-300 font-semibold tabular-nums">{fmt$(q.cost)}</span>
           </div>
           <ul className="text-[11px] text-stone-400 space-y-0.5">
@@ -230,6 +246,9 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
             {q.risks.tail >= 0.005 && <span className="chip-bad">{pct(q.risks.tail)} tailed</span>}
             {q.risks.accident >= 0.005 && <span className="chip-bad">{pct(q.risks.accident)} accident</span>}
             {q.risks.discovery >= 0.005 && <span className="chip-bad">{pct(q.risks.discovery)} the wife finds out</span>}
+            {q.risks.stop >= 0.005 && <span className="chip-bad">{pct(q.risks.stop)} a trooper pulls you over</span>}
+            {q.risks.weather >= 0.005 && <span className="chip-bad">{pct(q.risks.weather)} the weather costs a day</span>}
+            {q.risks.manifest >= 0.005 && <span className="chip-bad">{pct(q.risks.manifest)} the passenger list reaches the Bureau</span>}
             {plan.leaderId === s.playerId && <span className="chip-bad">The boss away: capos get ideas, orders go through the chain</span>}
           </div>
           {q.block && <div className="text-xs text-red-400">{q.block}</div>}

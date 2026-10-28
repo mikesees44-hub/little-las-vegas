@@ -21,7 +21,7 @@ const PHASE: Record<string, string> = { booked: 'Booked', out: 'On the way', the
 export function TravellersPanel({ s }: { s: GameState }) {
   const list = travellers(s).filter((x) => x.trip.purpose !== 'lam');
   const [open, setOpen] = useState<string | undefined>();
-  const { plan, go, city } = useTravel();
+  const { plan, go, city, vacation } = useTravel();
   const visit = currentVisit(s);
   const acting = s.travel?.acting ? s.characters[s.travel.acting.id] : undefined;
   const hist = s.travel?.history.slice(-3).reverse() ?? [];
@@ -54,7 +54,8 @@ export function TravellersPanel({ s }: { s: GameState }) {
                 <span className="text-[11px] rounded bg-noir-700 px-1.5 text-stone-300">{PHASE[phase]}</span>
                 <span className="text-[11px] text-stone-500">home {formatDate(dayDate(t.homeDay))}</span>
                 <span className="text-[11px] text-stone-500">{partyOf(s, t).length - 1} with him</span>
-                <button className="ml-auto text-[11px] underline text-gold-300" onClick={() => setOpen(open === t.id ? undefined : t.id)}>{open === t.id ? 'hide' : 'journal'}</button>
+                {vacation && t.purpose === 'vacation' && t.leaderId === s.playerId && <button className="ml-auto text-[11px] underline text-sky-300" data-testid="open-vacation" onClick={() => vacation()}>the vacation</button>}
+                <button className={`${vacation && t.purpose === 'vacation' && t.leaderId === s.playerId ? '' : 'ml-auto '}text-[11px] underline text-gold-300`} onClick={() => setOpen(open === t.id ? undefined : t.id)}>{open === t.id ? 'hide' : 'journal'}</button>
               </div>
               {open === t.id && (
                 <div className="mt-1 space-y-1">

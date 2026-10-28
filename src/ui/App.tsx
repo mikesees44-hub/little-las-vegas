@@ -30,6 +30,7 @@ import { registerAppearances } from './portrait/genes';
 import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, OPENING_SEEN_FLAG, pausesOn, timeMode, weekStart } from './settings';
 import { GoThere } from './travel/GoThere';
 import { CityScreen, VisitPill } from './travel/CityScreen';
+import { VacationPill, VacationScreen } from './travel/VacationScreen';
 import { TripPlanner } from './travel/TripPlanner';
 import { FleePlanner } from './travel/FleePlanner';
 import { minigameOf, opensScene } from '../engine/minigames';
@@ -221,11 +222,13 @@ export function App({ startOn = 'title' }: AppProps) {
   // Going somewhere himself (engine/visit.ts): the departure card (a city id, '' to pick) and the city screen.
   const [goTo, setGoTo] = useState<string | undefined>();
   const [cityOpen, setCityOpen] = useState(false);
+  const [vacOpen, setVacOpen] = useState(false);
   const travelApi = useMemo(() => ({
     plan: (leaderId: string, destId?: string) => { setSheet(undefined); setTripPlan({ leaderId, destId }); },
     flee: (personId: string) => { setSheet(undefined); setFleeFor(personId); },
     go: (cityId?: string) => { setSheet(undefined); setGoTo(cityId ?? ''); },
     city: () => { setSheet(undefined); setCityOpen(true); },
+    vacation: () => { setSheet(undefined); setVacOpen(true); },
   }), []);
   useEffect(() => {
     if (!menu) saveSlot(slot, s);
@@ -531,8 +534,8 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab === 'map') setRoute({});
     else if (l.tab) go(l.tab);
   }
-  const overlayOpen = cityOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = cityOpen || goTo !== undefined || dayWin !== undefined || !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = cityOpen || vacOpen || goTo !== undefined || dayWin !== undefined || !!sitdown || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
     const d = daysOf(s).day;
@@ -767,6 +770,7 @@ export function App({ startOn = 'title' }: AppProps) {
                   </button>
                 )}
                 <VisitPill s={s} onOpen={() => setCityOpen(true)} />
+                <VacationPill s={s} onOpen={() => setVacOpen(true)} />
                 <div className="flex max-w-full items-center gap-1.5">
                   {clockMode && <div className="flex min-w-0"><TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} /></div>}
                   <ClubOnMap s={s} compact onOpen={() => setOfficeView('club')} />
@@ -883,6 +887,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {fleeFor && !current && !sheet && <FleePlanner s={s} personId={fleeFor} onClose={() => setFleeFor(undefined)} />}
       {goTo !== undefined && !current && !sheet && <GoThere s={s} cityId={goTo || undefined} update={setS} onClose={() => setGoTo(undefined)} onArrive={() => { setGoTo(undefined); setCityOpen(true); }} />}
       {cityOpen && !current && !sheet && goTo === undefined && <CityScreen s={s} update={setS} onClose={() => setCityOpen(false)} />}
+      {vacOpen && !current && !sheet && !cityOpen && <VacationScreen s={s} update={setS} onClose={() => setVacOpen(false)} />}
       {planner && !current && !sheet && <SchemePlanner s={s} kind={planner.kind} targetId={planner.targetId} initial={planner.opts} onClose={() => setPlanner(undefined)} />}
       {confirm && <ConfirmOrder s={s} action={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} onTomorrow={() => { const a = confirm; setConfirm(undefined); queueLater(a); }} onNeverAsk={() => { setSettings({ confirmOrders: false }); const a = confirm; setConfirm(undefined); ordersApi.queue(a, true); }} />}
       {toast && <OrderToast s={s} item={toast} onClose={closeToast} onUndo={() => {

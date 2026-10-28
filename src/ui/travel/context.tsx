@@ -10,6 +10,8 @@ export interface TravelApi {
   go?: (cityId?: string) => void;
   /** The city screen, while the boss is away. */
   city?: () => void;
+  /** The vacation screen (vacation.ts), while the boss's vacation is booked or under way. */
+  vacation?: () => void;
 }
 
 export const TravelContext = createContext<TravelApi>({ plan: () => {}, flee: () => {} });
