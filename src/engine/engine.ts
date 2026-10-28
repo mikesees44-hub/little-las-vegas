@@ -77,6 +77,7 @@ import { spendWeek } from './spend';
 import { storeWeek } from './store';
 import { workWeek } from './bizRacket';
 import { protectWeek } from './protect';
+import { womenWeek } from './women';
 import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
@@ -382,6 +383,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     earsWeek(ctx);
     datingWeek(ctx);
     nightlifeWeek(ctx);
+    womenWeek(ctx);
     bondsWeek(ctx);
     myMenWeek(ctx);
     spendWeek(ctx);

@@ -12,6 +12,9 @@ import { eveningKindOf } from '../../engine/evening';
 import { adultOn } from '../../engine/datingState';
 import { boldEligible } from '../../engine/quickies';
 import { BoldFlow, CarFlow, EveningFlow } from './EveningFlow';
+import { LooksBadge } from '../components/LooksBadge';
+import { bodyOf } from '../../engine/body';
+import { DossierModal } from './Dossier';
 
 /**
  * THE CALLING CARD (engine/callingCard.ts): a person at a glance. The
@@ -43,6 +46,7 @@ function Sec({ title, children, testid }: { title: string; children: ReactNode; 
 export function CallingCard({ s, id, actions = true, startOpen = false }: { s: GameState; id: string; actions?: boolean; startOpen?: boolean }) {
   const [more, setMore] = useState(startOpen);
   const [flow, setFlow] = useState<'evening' | 'car' | 'bold' | undefined>();
+  const [dossier, setDossier] = useState(false);
   const v = callingCard(s, id);
   const c = s.characters[id];
   if (!v || !c) return <p className="text-xs text-stone-500" data-testid="calling-card-none">No calling card: adults only.</p>;
@@ -63,6 +67,7 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
             <div className="text-[12px] text-stone-300">{v.age} · {v.role}</div>
             {c.id !== s.playerId && <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="calling-card-side"><SideChip side={side} full /><RelationChip relation={side.relation} /></div>}
             {v.place && <div className="text-[11px] text-stone-500 truncate">{v.place}</div>}
+            <div className="mt-1"><LooksBadge s={s} id={id} /></div>
             <div className="mt-1.5 flex flex-wrap gap-1" data-testid="calling-card-looks">
               {v.looks.chips.map((ch) => (
                 <span key={ch.text} className={`rounded-full border px-1.5 py-0.5 text-[10px] ${ch.good === true ? 'border-gold-500/60 text-gold-200' : ch.good === false ? 'border-red-400/40 text-red-200/90' : 'border-noir-600 text-stone-300'}`}>{ch.text}</span>
@@ -75,6 +80,11 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
           {v.summary.map((l) => <Tone key={l.label} l={l} />)}
         </dl>
       </div>
+
+      {c.gender === 'F' && adultOn(s) && c.id !== s.playerId && (
+        <button type="button" className="btn-ghost text-xs py-1" onClick={() => setDossier(true)} data-testid="open-dossier">Dossier: the full picture ▸</button>
+      )}
+      {dossier && <DossierModal s={s} id={id} onClose={() => setDossier(false)} />}
 
       {actions && (eveningKindOf(s, id) || boldEligible(s, id)) && (
         <div className="flex flex-wrap gap-1.5" data-testid="calling-card-flows">
@@ -104,7 +114,7 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
           <Sec title="Appearance">
             <ul className="text-[12px] text-stone-200 space-y-0.5">
               {v.looks.tierLabel && <li>{v.looks.tierLabel}{v.looks.score !== undefined ? <span className="text-stone-500"> ({v.looks.score} of 100, as people see {v.gender === 'F' ? 'her' : 'him'} today)</span> : null}</li>}
-              <li>Build: {v.looks.physiqueLabel}</li>
+              {(() => { const b = bodyOf(s, c); return b ? <><li data-testid="calling-card-body">{b.height}; {b.buildLabel.toLowerCase()}, {b.figure.toLowerCase()}{b.bust ? `; bust ${b.bust.toLowerCase()}` : ''}; waist {b.waist.toLowerCase()}, hips {b.hips.toLowerCase()}; legs {b.legs.toLowerCase()}</li><li className="text-stone-400">{b.flavor}</li><li className="text-stone-400">{b.hair}; {b.face.eyes.toLowerCase()} eyes; {b.skin.toLowerCase()}. {b.posture}. {b.wardrobe}. {b.scent}.</li></> : <li>Build: {v.looks.physiqueLabel}</li>; })()}
               <li>People remember: {v.looks.feature.toLowerCase()}</li>
               <li>Dresses: {v.looks.style.toLowerCase()}</li>
               {v.agingLooks && <li className="text-stone-400">{v.agingLooks}</li>}

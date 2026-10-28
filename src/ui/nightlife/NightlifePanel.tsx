@@ -13,6 +13,8 @@ import { CharLink, Face } from '../components/People';
 import { fmt$ } from '../format';
 import { useShell } from '../shell/context';
 import { CallingCard } from './CallingCard';
+import { LooksBadge } from '../components/LooksBadge';
+import { WomenSection } from './WomenSection';
 
 /**
  * NIGHTLIFE: the hub for the island's night (engine/nightlife.ts). Summary
@@ -24,9 +26,9 @@ import { CallingCard } from './CallingCard';
  * ordinary order row (cost, who pays, her odds and why). She decides.
  */
 
-type Tab = 'people' | 'houses' | 'promises' | 'lately';
-const TABS: [Tab, string][] = [['people', 'People'], ['houses', 'Madams & houses'], ['promises', 'Promises & goomars'], ['lately', 'Lately']];
-const FILTERS: RosterFilter[] = ['all', 'young', 'mature', 'callgirl', 'street', 'dancer', 'singer', 'barfly', 'date', 'madam', 'payroll', 'rivals', 'careers'];
+type Tab = 'people' | 'houses' | 'promises' | 'women' | 'lately';
+const TABS: [Tab, string][] = [['people', 'People'], ['houses', 'Madams & houses'], ['promises', 'Promises & goomars'], ['women', 'Her side'], ['lately', 'Lately']];
+const FILTERS: RosterFilter[] = ['all', 'young', 'mature', 'callgirl', 'street', 'dancer', 'singer', 'barfly', 'date', 'madam', 'payroll', 'rivals', 'careers', 'hot'];
 const ADULT_FILTERS: RosterFilter[] = ['young', 'mature', 'callgirl', 'street'];
 
 /** Her calling card in a window (from the roster, the houses, anywhere). */
@@ -67,6 +69,7 @@ function PersonRow({ s, r, onCard }: { s: GameState; r: RosterRow; onCard: (id: 
             {r.seeking && <Badge tone="gold">Looking for work</Badge>}
             {r.payroll && <Badge tone="green">Your payroll</Badge>}
             {r.goomar && <Badge tone="rose">Your goomar</Badge>}
+            <LooksBadge s={s} id={r.id} compact />
           </div>
           <div className="text-[11px] text-stone-400 truncate">{[r.looks.join(', '), r.house ?? r.venue].filter(Boolean).join(' · ')}</div>
           <div className="text-[11px] text-stone-500 truncate">{r.family}</div>
@@ -121,11 +124,12 @@ export function NightlifePanel({ s }: { s: GameState }) {
   const [tab, setTab] = useState<Tab>('people');
   const [filter, setFilter] = useState<RosterFilter>('all');
   const [card, setCard] = useState<string | undefined>();
+  const [byLooks, setByLooks] = useState(false);
   if (!s.nightlife) return <p className="text-xs text-stone-400" data-testid="nightlife-empty">The night fills in when the week turns.</p>;
   const sum = nightSummary(s);
   const counts = filterCounts(s);
   const on = adultOn(s);
-  const roster = nightRoster(s, filter).slice(0, 40);
+  const roster = nightRoster(s, filter, byLooks ? 'looks' : 'default').slice(0, 40);
   const goomars = activeGoomars(s);
   return (
     <div className="space-y-3" data-testid="nightlife-panel">
@@ -154,6 +158,8 @@ export function NightlifePanel({ s }: { s: GameState }) {
                 {FILTER_LABEL[f]} <span className="opacity-70">{counts[f]}</span>
               </button>
             ))}
+            <button type="button" aria-pressed={byLooks} onClick={() => setByLooks((x) => !x)} data-testid="nightlife-sort-looks"
+              className={`rounded-full px-2 py-0.5 text-[11px] ${byLooks ? 'bg-rose-500/80 text-noir-950 font-semibold' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>Sort by looks</button>
           </div>
           {roster.length === 0 ? <p className="text-xs text-stone-500">Nobody on this list right now.</p> : <ul className="space-y-2">{roster.map((r) => <PersonRow key={r.id} s={s} r={r} onCard={setCard} />)}</ul>}
           {nightRoster(s, filter).length > 40 && <p className="text-[11px] text-stone-500">And {nightRoster(s, filter).length - 40} more; pick a list above.</p>}
@@ -217,6 +223,8 @@ export function NightlifePanel({ s }: { s: GameState }) {
           <p className="text-[11px] text-stone-500">Goomar terms are hers: for example {(() => { const r = nightRoster(s, 'all')[0]; if (!r) return 'an apartment and an allowance'; const t = goomarTerms(s, r.id); return `${t.where}, ${fmt$(t.rent + t.allowance)} a week`; })()}. You can keep more than one; each is her own arrangement, and they may not like sharing you.</p>
         </section>
       )}
+
+      {tab === 'women' && <WomenSection s={s} onCard={setCard} />}
 
       {tab === 'lately' && (
         <section data-testid="nightlife-lately">

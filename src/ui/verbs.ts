@@ -195,6 +195,7 @@ export function actionVerb(a: PlayerAction): Verb {
     }
     case 'hood': return v('Restyle it', 'Restyling');
     case 'paper': return a.op.op === 'kill' ? v('Spike it', 'Spiking') : a.op.op === 'ad' ? v('Run the ad', 'Ad running') : a.op.op === 'buy' ? v('Buy the paper', 'Buying') : a.op.op === 'sue' ? v('Sue', 'Suing') : v('Plant it', 'Planted');
+    case 'women': return a.op.op === 'askOut' ? v('Ask her', 'Asked') : a.op.op === 'night' ? v('Ask her', 'Asked') : a.op.op === 'gift' ? v('Send it', 'Sent') : a.op.op === 'end' ? v('End it', 'Ending') : a.op.op === 'hook' ? v('Use it', 'Used') : a.op.op === 'amends' ? v('Make amends', 'Amends') : v('Ask her', 'Asked');
     case 'protect': return a.op.op === 'guard' ? v('Put him on', 'Assigned') : a.op.op === 'investigate' ? v('Look into it', 'Looking into it') : a.op.op === 'renew' ? v('Keep him on', 'Renewed') : v('Take him off', 'Ending');
     case 'work': return a.op.op === 'pitch' ? v('Make the offer', 'Offer made') : a.op.op === 'press' ? (a.op.step === 'buyout' ? v('Make the offer', 'Offer made') : v('Do it', 'Ordered')) : a.op.op === 'drop' ? v('Let it go', 'Letting go') : v('Set it up', 'Setting up');
     case 'dirty': return a.op.job === 'shakedown' ? v('Shake them down', 'Shakedown on') : v('Do it', 'Job on');

@@ -4,6 +4,7 @@ import { ensureDating, adultOn, type Provider, type ProviderKind } from './datin
 import { applyEffects } from './effects';
 import { heat, money, type Ctx } from './ledger';
 import { looksEarnings, looksOf } from './looks';
+import { hotOrBetter, looksRating, type LooksRating } from './rating';
 import { addOpinion, opinion } from './relations';
 import { drawnTo, endRomance, kin, romanceBetween, activeRomances, startRomance } from './romance';
 import { addSecret } from './secrets';
@@ -130,7 +131,7 @@ export function nlog(N: NightlifeState, s: GameState, text: string): void {
   if (N.log.length > 60) N.log.splice(0, N.log.length - 60);
 }
 
-function hist(p: NightPerson, s: GameState, text: string): void {
+export function hist(p: NightPerson, s: GameState, text: string): void {
   p.hist.push([s.week, text]);
   if (p.hist.length > 10) p.hist.splice(0, p.hist.length - 10);
 }
@@ -314,7 +315,7 @@ function makePerson(s: GameState, N: NightlifeState, o: MakeOpts): NightPerson {
 const PROVIDER_KIND: Partial<Record<NightRole, ProviderKind>> = { escort: 'escort', callgirl: 'callgirl', street: 'street', dancer: 'dancer' };
 
 /** Keep the dating layer's booking record (paid company) in step with her life here. */
-function syncProvider(s: GameState, p: NightPerson): void {
+export function syncProvider(s: GameState, p: NightPerson): void {
   const D = ensureDating(s);
   const kind = PROVIDER_KIND[p.role];
   const c = s.characters[p.id];
@@ -919,7 +920,7 @@ export function nightlifeWeek(ctx: Ctx): void {
 /* A year of her life                                                  */
 /* ------------------------------------------------------------------ */
 
-function retire(s: GameState, N: NightlifeState, p: NightPerson, c: Character, why: string, role: NightRole = 'retired'): void {
+export function retire(s: GameState, N: NightlifeState, p: NightPerson, c: Character, why: string, role: NightRole = 'retired'): void {
   p.role = role;
   p.price = 0;
   p.payroll = undefined;
@@ -1004,7 +1005,7 @@ function yearOf(ctx: Ctx, N: NightlifeState, p: NightPerson): void {
   if (p.role === 'callgirl' && !p.house && p.venue === VENUES.street) p.venue = VENUES.phone;
 }
 
-function becomeMadam(s: GameState, N: NightlifeState, p: NightPerson, c: Character): void {
+export function becomeMadam(s: GameState, N: NightlifeState, p: NightPerson, c: Character): void {
   p.role = 'madam';
   p.price = 0;
   p.payroll = undefined;
@@ -1185,11 +1186,11 @@ function npcGoomars(s: GameState, N: NightlifeState, seeding: boolean): void {
 /* The views                                                           */
 /* ------------------------------------------------------------------ */
 
-export type RosterFilter = 'all' | 'young' | 'mature' | 'callgirl' | 'street' | 'dancer' | 'singer' | 'barfly' | 'date' | 'madam' | 'careers' | 'rivals' | 'payroll';
+export type RosterFilter = 'all' | 'young' | 'mature' | 'callgirl' | 'street' | 'dancer' | 'singer' | 'barfly' | 'date' | 'madam' | 'careers' | 'rivals' | 'payroll' | 'hot';
 
 export const FILTER_LABEL: Record<RosterFilter, string> = {
   all: 'Everyone', young: 'High-end, 18–25', mature: 'High-end, 26 and up', callgirl: 'Call girls', street: 'On the street', dancer: 'Dancers & burlesque', singer: 'Singers',
-  barfly: 'Bar regulars', date: 'Out at the clubs', madam: 'Madams', careers: 'Moved on', rivals: 'The other families\'', payroll: 'On your payroll',
+  barfly: 'Bar regulars', date: 'Out at the clubs', madam: 'Madams', careers: 'Moved on', rivals: 'The other families\'', payroll: 'On your payroll', hot: 'Hot or better',
 };
 
 export interface RosterRow {
@@ -1204,6 +1205,8 @@ export interface RosterRow {
   house?: string;
   side: string;
   looks: string[];
+  /** Hot or not at a glance (rating.ts): 1-10, a word, stars; and to the boss's eye. */
+  rating?: LooksRating;
   family: string;
   price: number;
   earn: number;
@@ -1235,7 +1238,7 @@ export function rosterRow(s: GameState, p: NightPerson): RosterRow | undefined {
   const h = houseOf(s, p);
   return {
     id: p.id, name: displayName(c), age: a, role: p.role, roleLabel: roleText(s, p), list: p.role === 'escort' ? (a <= 25 ? 'young' : 'mature') : undefined,
-    venue: p.venue, house: h && h.id !== p.id ? h.name : undefined, side: sideName(s, p.side), looks: [l.tierLabel ?? '', l.physiqueLabel].filter(Boolean),
+    venue: p.venue, house: h && h.id !== p.id ? h.name : undefined, side: sideName(s, p.side), looks: [l.tierLabel ?? '', l.physiqueLabel].filter(Boolean), rating: looksRating(s, c),
     family: familyLine(s, p), price: adultOn(s) ? p.price : 0, earn: p.earn, payroll: !!p.payroll, seeking: p.seeking !== undefined && p.seeking >= s.week, goomar: isGoomar(s, p.id),
     loyalty: p.loyalty, attach: p.attach, wants: NGOAL_TEXT[p.goal], promise: s.nightlife?.promises.find((x) => x.who === p.id && x.status === 'open')?.due,
   };
@@ -1248,6 +1251,7 @@ function matches(s: GameState, p: NightPerson, f: RosterFilter): boolean {
   if (f === 'rivals') return rival && p.status === 'active' && WORKING_ROLES.includes(p.role);
   if (f === 'careers') return p.status === 'active' && !WORKING_ROLES.includes(p.role);
   if (f === 'payroll') return !!p.payroll;
+  if (f === 'hot') return p.status === 'active' && WORKING_ROLES.includes(p.role) && !!c && hotOrBetter(s, c);
   if (p.status !== 'active' || !WORKING_ROLES.includes(p.role)) return false;
   if (rival && f !== 'all' && f !== 'madam') return false;
   switch (f) {
@@ -1259,7 +1263,7 @@ function matches(s: GameState, p: NightPerson, f: RosterFilter): boolean {
 }
 
 /** The roster: adults only, adult-service roles only when mature content is on. Waiting-to-see-you first. */
-export function nightRoster(s: GameState, f: RosterFilter = 'all'): RosterRow[] {
+export function nightRoster(s: GameState, f: RosterFilter = 'all', sort: 'default' | 'looks' = 'default'): RosterRow[] {
   const N = s.nightlife;
   if (!N) return [];
   const out: RosterRow[] = [];
@@ -1270,6 +1274,7 @@ export function nightRoster(s: GameState, f: RosterFilter = 'all'): RosterRow[] 
     if (r) out.push(r);
   }
   const order: NightRole[] = ['madam', 'escort', 'callgirl', 'dancer', 'singer', 'street', 'barfly', 'date', 'owner', 'recording', 'actress', 'adultfilm', 'retired'];
+  if (sort === 'looks') return out.sort((a, b) => (b.rating?.score ?? 0) - (a.rating?.score ?? 0) || (b.rating?.toYou ?? 0) - (a.rating?.toYou ?? 0) || a.age - b.age);
   return out.sort((a, b) => Number(b.seeking) - Number(a.seeking) || Number(b.goomar) - Number(a.goomar) || order.indexOf(a.role) - order.indexOf(b.role) || a.age - b.age);
 }
 

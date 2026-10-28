@@ -1,5 +1,6 @@
 import { sideOf, type Side } from '../../engine/sides';
 import { displayName } from '../../engine/characters';
+import { looksRating } from '../../engine/rating';
 import { lotName } from '../../engine/property';
 import { FACTION_NAMES } from '../../engine/world';
 import type { GameState } from '../../engine/types';
@@ -80,7 +81,8 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
     if (!sc) continue;
     people++;
     const side = sideOf(s, c.id);
-    const who = c.id === s.playerId ? 'You' : `${c.rank !== 'civilian' ? c.rank[0].toUpperCase() + c.rank.slice(1) : c.office ?? 'Townsperson'} · ${side.full}`;
+    const lr = c.id === s.playerId ? undefined : looksRating(s, c);
+    const who = c.id === s.playerId ? 'You' : `${c.rank !== 'civilian' ? c.rank[0].toUpperCase() + c.rank.slice(1) : c.office ?? 'Townsperson'} · ${side.full}${lr ? ` · ${lr.word} ${lr.score}/10${lr.toYou !== undefined && lr.toYou !== lr.score ? ` (to you ${lr.toYou})` : ''}` : ''}`;
     out.push({ kind: 'person', id: `person:${c.id}`, title: name, sub: who, go: { to: 'sheet', id: c.id }, score: sc + (side.kind === 'yours' ? 1 : 0), side: c.id === s.playerId ? undefined : side });
   }
 

@@ -2,6 +2,7 @@ import { ageOn } from './calendar';
 import { hasTrait } from './characters';
 import { fam } from './familyState';
 import { hashSeed } from './rng';
+import { figureTaste } from './body';
 import type { Character, GameState } from './types';
 
 /**
@@ -191,6 +192,8 @@ export function appeal(s: GameState, observer: Character, target: Character): { 
   const lv = Math.round((l.score - 50) * 0.4 * w);
   if (Math.abs(lv) >= 2) reasons.push({ label: l.tierLabel!, value: lv });
   if (typeOf(s, observer, target.gender) === l.physique) reasons.push({ label: `${l.physiqueLabel}: just ${observer.gender === 'F' ? 'her' : 'his'} type`, value: 8 });
+  const ft = figureTaste(s, observer, target);
+  if (ft) reasons.push(ft);
   if (l.style === 'A provocative dresser' && hasTrait(observer, 'Womanizer')) reasons.push({ label: 'The way she dresses', value: 5 });
   if (l.style === 'A provocative dresser' && hasTrait(observer, 'Pious')) reasons.push({ label: 'The way she dresses', value: -5 });
   const value = Math.max(-25, Math.min(30, reasons.reduce((a, r) => a + r.value, 0)));

@@ -571,7 +571,9 @@ export type Effect =
   /** Crew XP (crewXp.ts): a specialty picked, a word of recognition. */
   | ({ type: 'crewxp'; op: import('./crewXp').XpOp } & EffectBase)
   /** Protection & intelligence (protect.ts): answers to the guards' and inquiries' events. */
-  | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase);
+  | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase)
+  /** The women (women.ts): affairs, requests, hooks, talent; answers to her events. */
+  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -979,6 +981,8 @@ export interface GameState {
   xp?: import('./crewXp').XpState;
   /** Protection & intelligence (protect.ts): guards, inquiries, their reports and who may read them. */
   protect?: import('./protect').ProtectState;
+  /** The women (women.ts): careers and arcs, affairs, office requests, talent, hooks (adults only; mature content). */
+  women?: import('./womenState').WomenState;
   /** The Book (journal.ts): every order and what came of it, and everything else that happened, by person, place and money. Bounded; optional (made by the first week that turns). */
   journal?: import('./journal').JournalState;
 }
@@ -1082,6 +1086,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'intrigue'; op: import('./intrigueState').IntrigueAction }
   /** Protection & intelligence (protect.ts): put a guard on someone, look into someone, renew or end it. */
   | { kind: 'protect'; op: import('./protect').ProtectAction }
+  /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
+  | { kind: 'women'; op: import('./women').WomenAction }
 );
 
 export type InteractionId =

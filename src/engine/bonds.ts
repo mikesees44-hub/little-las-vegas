@@ -183,6 +183,8 @@ function otherWomen(s: GameState): string[] {
   const b = s.characters[s.playerId];
   if (!b) return [];
   const ids = new Set<string>(activeGoomars(s).map((g) => g.id));
+  // An affair from the women layer (women.ts) is another woman too.
+  for (const a of Object.values(s.women?.affairs ?? {})) if (a.with === b.id && a.stage === 'affair' && s.characters[a.id]?.alive) ids.add(a.id);
   for (const r of activeRomances(s, b.id)) {
     const o = partnerOf(r, b.id);
     if (o !== b.spouseId) ids.add(o);

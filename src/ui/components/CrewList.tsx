@@ -15,6 +15,7 @@ import type { Character, CouncilTask, CrewPolicy, EdictId, GameState, Rank, Seat
 import { fmt$, signed } from '../format';
 import { ActionCard, useOrders } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
+import { LooksBadge } from './LooksBadge';
 import { useClarity } from '../clarity/context';
 import { TaskAdvice } from '../clarity/TaskAdvice';
 import { capoDistrict } from '../../engine/candidates';
@@ -117,7 +118,7 @@ function Vassals({ s }: { s: GameState }) {
             <div key={c.id} className="rounded-md border border-noir-700 bg-noir-800/60 p-2 flex flex-wrap gap-2 items-center">
               <Face s={s} c={c} size={40} />
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
+                <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <LooksBadge s={s} id={c.id} compact /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
                 <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · {seenSkim(s, c, purseFlags(s, c), !!getSettings().devIds, skimRate(s, c))} · his own money {seenWealth(s, c, !!getSettings().devIds)} · {regime(s, c.id).length} men</div>
                 <TraitIcons c={c} />
                 <SpotLine s={s} c={c} />
@@ -166,6 +167,7 @@ function ManRow({ s, c }: { s: GameState; c: Character }) {
             <CharLink s={s} id={c.id} />
             {c.dynasty && <span className="ml-1 text-gold-400" title="Member of the house">♦</span>}
             {(c.defectStage ?? 0) > 0 && <span className="ml-1 text-red-400 text-xs" title="Seen with a rival crew">⚠ drifting</span>}
+            <span className="ml-1"><LooksBadge s={s} id={c.id} compact /></span>
           </div>
           <div className="text-[11px] text-stone-400">
             <span className="capitalize">{c.specialty ? SPECIALTY_INFO[c.specialty].name : c.rank}</span>

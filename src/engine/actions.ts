@@ -45,6 +45,7 @@ import { earsActions, previewEars } from './ears';
 import { commitDirty, previewDirty } from './dirtyWork';
 import { commitWork, previewWork } from './bizRacket';
 import { commitProtect, previewProtect } from './protect';
+import { previewWomen } from './women';
 import { commitPaper, previewPaper } from './paper';
 import { commitIntrigue, previewIntrigue } from './intrigueOps';
 import { commitDev, previewDev } from './develop';
@@ -143,6 +144,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
   work: { preview: (s, a) => previewWork(s, a.op), commit: (ctx, a) => commitWork(ctx, a.op) },
   protect: { preview: (s, a) => previewProtect(s, a.op), commit: (ctx, a) => commitProtect(ctx, a.op) },
+  /** The women (women.ts): her answer is rolled; the outcome lands through the 'women' effect. */
+  women: { preview: (s, a) => previewWomen(s, a.op) },
   paper: { preview: (s, a) => previewPaper(s, a.op), commit: (ctx, a) => commitPaper(ctx, a.op) },
   intrigue: { preview: (s, a) => previewIntrigue(s, a.op), commit: (ctx, a) => commitIntrigue(ctx, a.op) },
   dev: { preview: (s, a) => previewDev(s, a.op), commit: (ctx, a) => commitDev(ctx, a.op) },
