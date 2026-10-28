@@ -19,6 +19,8 @@ import { currentVisit } from '../../engine/travelState';
 import type { MapFocus } from '../shell/context';
 import { IslandView } from '../hood/IslandView';
 import { RegionView } from '../region/RegionView';
+import { Modal } from '../components/Modal';
+import { NycMapView } from '../nyc/NycPanel';
 import { HOODS_BY_ID, type HoodId } from '../../engine/hoodData';
 import { MapMenu } from '../hood/MapControls';
 
@@ -164,6 +166,7 @@ export function CityPanel({ s, id, onEnvoy }: { s: GameState; id: string; onEnvo
   if (!c) return null;
   const travelApi = useTravel();
   const running = s.schemes.find((x) => x.owner === 'player' && x.kind === 'envoy' && x.opts.city === id);
+  const [nycOpen, setNycOpen] = useState(false);
   return (
     <div className="space-y-2" data-testid="city-panel">
       <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{c.region}</div>
@@ -183,6 +186,15 @@ export function CityPanel({ s, id, onEnvoy }: { s: GameState; id: string; onEnvo
           {running ? <div className="text-xs text-gold-300">An envoy is on the way ({running.progress}%).</div> : <button className="btn-gold w-full" onClick={() => onEnvoy(id)}>Send an envoy…</button>}
           {!s.gameOver && travelApi.go && <button className="btn-gold w-full" data-testid="city-go-there" title={departBlock(s, { cityId: id, mode: 'cars' }) ?? 'Get in the car: you leave today and play there'} onClick={() => (currentVisit(s)?.cityId === id ? travelApi.city?.() : travelApi.go?.(id))}>{currentVisit(s)?.cityId === id ? 'You are here' : 'Go there yourself…'}</button>}
           {!s.gameOver && <button className="btn-ghost w-full" onClick={() => travelApi.plan(s.playerId, id)}>Plan a trip here…</button>}
+          {id === 'newyork' && <button className="btn-gold w-full" data-testid="city-nyc-map" onClick={() => setNycOpen(true)}>The New York map: neighborhoods, crews, families…</button>}
+          {nycOpen && (
+            <Modal xwide onClose={() => setNycOpen(false)}>
+              <div className="p-4 space-y-3">
+                <div className="flex items-start justify-between"><h2 className="font-display text-2xl text-gold-400">New York, 1960</h2><button className="text-xs text-stone-500 hover:text-gold-300" onClick={() => setNycOpen(false)}>Close ✕</button></div>
+                <NycMapView s={s} />
+              </div>
+            </Modal>
+          )}
         </>
       )}
     </div>

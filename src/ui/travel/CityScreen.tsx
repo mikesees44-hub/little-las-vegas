@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { standing } from '../../engine/cities';
 import { displayName } from '../../engine/characters';
 import { DAY_NAMES } from '../../engine/days';
@@ -13,6 +13,7 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
 import { CharLink } from '../components/People';
+import { NycMapView } from '../nyc/NycPanel';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const VERB_LABEL: Record<CityVerb, string> = {
@@ -23,10 +24,10 @@ function slotLabel(s: GameState, day: number, slot: 'day' | 'night'): string {
   return `${absLabel(s, day)} ${slot === 'day' ? 'afternoon' : 'night'}`;
 }
 
-function PlaceCard({ s, v, place, from, update }: { s: GameState; v: Visit; place: CityPlace; from?: number; update: (f: (s: GameState) => GameState) => void }) {
+function PlaceCard({ s, v, place, from, update, hl }: { s: GameState; v: Visit; place: CityPlace; from?: number; update: (f: (s: GameState) => GameState) => void; hl?: boolean }) {
   const who = contactOf(s, place);
   return (
-    <li className="rounded border border-noir-700 bg-noir-800/60 p-2 space-y-1" data-testid={`city-place-${place.id}`}>
+    <li id={`city-place-${place.id}`} className={`rounded border p-2 space-y-1 ${hl ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/60'}`} data-testid={`city-place-${place.id}`}>
       <div className="flex flex-wrap items-baseline gap-x-2">
         <span className="text-sm text-stone-100">{place.name}</span>
         <span className="text-[10px] uppercase tracking-widest text-stone-500">{KIND_LABEL[place.kind]}</span>
@@ -62,6 +63,12 @@ function PlaceCard({ s, v, place, from, update }: { s: GameState; v: Visit; plac
 export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (s: GameState) => GameState) => void; onClose: () => void }) {
   const v = currentVisit(s);
   const [day, setDay] = useState<number | undefined>();
+  // New York has a second tab: the real map of the city, its neighborhoods and families (ui/nyc).
+  const [tab, setTab] = useState<'places' | 'map'>('places');
+  const [hl, setHl] = useState<string | undefined>();
+  useEffect(() => {
+    if (tab === 'places' && hl && typeof document !== 'undefined') document.getElementById(`city-place-${hl}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, [tab, hl]);
   if (!v) {
     return (
       <Modal onClose={onClose}>
@@ -107,7 +114,20 @@ export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (
         {phase === 'out' && <p className="text-sm text-stone-300">On the road. You arrive {absLabel(s, v.arriveDay)}.</p>}
         {phase === 'back' && <p className="text-sm text-stone-300">On the road home. Home {v.homeDay !== undefined ? absLabel(s, v.homeDay) : 'soon'}.</p>}
 
-        {phase !== 'back' && (
+        {v.cityId === 'newyork' && (
+          <div className="flex gap-1 border-b border-noir-700" role="tablist">
+            {(['places', 'map'] as const).map((t) => (
+              <button key={t} type="button" role="tab" aria-selected={tab === t} data-testid={`city-tab-${t}`} onClick={() => setTab(t)}
+                className={`px-3 py-1.5 text-xs uppercase tracking-[0.2em] border-b-2 -mb-px ${tab === t ? 'border-gold-400 text-gold-300' : 'border-transparent text-stone-500 hover:text-stone-300'}`}>
+                {t === 'places' ? 'Places & people' : 'Map'}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {v.cityId === 'newyork' && tab === 'map' && <NycMapView s={s} onPlace={(id) => { setHl(id); setTab('places'); }} />}
+
+        {phase !== 'back' && tab === 'places' && (
           <section className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Places & people</div>
@@ -121,12 +141,12 @@ export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (
               <span className="ml-auto text-[11px] text-stone-500">This week's agenda costs {fmt$(bookedCost(s, v))}</span>
             </div>
             <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-              {sc.places.map((p) => <PlaceCard key={p.id} s={s} v={v} place={p} from={pickDay} update={update} />)}
+              {sc.places.map((p) => <PlaceCard key={p.id} s={s} v={v} place={p} from={pickDay} update={update} hl={hl === p.id} />)}
             </ul>
           </section>
         )}
 
-        <section className="grid gap-3 sm:grid-cols-2">
+        {tab === 'places' && <section className="grid gap-3 sm:grid-cols-2">
           <div>
             <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">The agenda</div>
             {week.length === 0 && <p className="text-xs text-stone-500 mt-1">Nothing booked. Pick a place: a sit-down in the afternoon, a club at night. It all happens as the week goes by.</p>}
@@ -150,7 +170,7 @@ export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (
               {past.map((j, i) => <li key={i} className={j.tone === 'good' ? 'text-emerald-300' : j.tone === 'bad' ? 'text-red-300' : 'text-stone-400'}>{absLabel(s, Math.min(j.day, now))} · {j.text}</li>)}
             </ul>
           </div>
-        </section>
+        </section>}
 
         <div className="flex flex-wrap items-center justify-end gap-2 border-t border-noir-700 pt-3">
           {v.leaveDay === undefined && plan && <span className="text-xs text-stone-400">Leaving {absLabel(s, plan.leaveDay)}, home {absLabel(s, plan.homeDay)}.</span>}

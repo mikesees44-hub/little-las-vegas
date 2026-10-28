@@ -548,6 +548,8 @@ export type Effect =
   | ({ type: 'econ'; op: EconOp } & EffectBase)
   /** Travel, trips and flight (travelState.ts / travel.ts / fugitive.ts). */
   | ({ type: 'travel'; op: TravelOp } & EffectBase)
+  /** New York (nyc.ts): the five families' opinion, grievance, a settlement. */
+  | ({ type: 'nyc'; op: import('./nyc').NycOp } & EffectBase)
   /** Making your bones (bones.ts). */
   | ({ type: 'bones'; op: BonesOp } & EffectBase)
   /** The boss's books and the receipts (ledgerbook.ts). */
@@ -913,6 +915,8 @@ export interface GameState {
   missions?: MissionState;
   /** Travel, trips and fugitives (optional for old saves). */
   travel?: TravelState;
+  /** New York (nyc.ts): crews, rackets and the five families. Optional: made by the first New York order. */
+  nyc?: import('./nyc').NycState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
   bones?: BonesState;
   /** The boss's private ledger (optional for old saves). */
@@ -1034,6 +1038,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'nightlife'; op: import('./nightlife').NightAction }
   /** Spend (spend.ts): buy from the catalog, or sell / let go what you have. */
   | { kind: 'spend'; op: import('./spendState').SpendAction }
+  /** New York (nyc.ts): open a crew, buy into a racket, the families' blessing, tribute, the Commission. */
+  | { kind: 'nyc'; op: import('./nyc').NycAction }
 );
 
 export type InteractionId =

@@ -14,6 +14,13 @@ The bundled basemap in `public/geo/` is built once, offline, and committed.
 4. `python3 4_wildwood_districts.py` lays the game's districts along the real Wildwood coastline
    (`wildwood.json`).
 5. States and counties come straight from `us-atlas` (`us.topo.json`), borders from `world-atlas`.
+6. New York City, 1960 (`data/nyc/nyc-1960.json`, bundled into the page, ~225 KB): download the sources
+   into `data/nyc/downloads/` (untracked; the commands are at the top of `5_nyc.ts`), then
+   `npx tsx scripts/geo/5_nyc.ts`. It simplifies with mapshaper, cuts the game's districts
+   (`src/engine/nycData.ts`) out of the Neighborhood Tabulation Areas, and projects everything to
+   SVG paths. Sources: NYC Department of City Planning borough boundaries and NTAs (public domain),
+   US Census TIGER/Line 2010 ZCTAs for the New Jersey / Westchester / Nassau shores (public domain);
+   bridges, tunnels, ferries, the 1960 highways and the Bronx el are traced by hand (approximate).
 
-Licences: OpenStreetMap data is ODbL (attribution shown on the map); US Census and Natural Earth
-data are public domain.
+Licences: OpenStreetMap data is ODbL (attribution shown on the map); US Census, NYC Department of
+City Planning and Natural Earth data are public domain.

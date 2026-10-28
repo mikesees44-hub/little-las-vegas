@@ -114,6 +114,8 @@ export const ACTION_ENTRIES: ActionEntry[] = [
   { kind: 'officeHours', label: 'Hold office hours', words: 'office hours court petitions', at: ['you.court', 'person'], files: ['ui/components/OfficePanel.tsx', 'ui/sheet/menuCatalog.ts'] },
   { kind: 'legal', label: 'Retain a lawyer, lie low', words: 'lawyer retainer lie low case trial fbi', at: ['town.case'], files: ['ui/components/LawPanel.tsx'] },
   { kind: 'travel', ops: ['trip', 'cancel', 'recall'], label: 'Plan a trip, call people home', words: 'trip travel vacation envoy city recall', at: ['ops.travel', 'person'], files: ['ui/travel/TripPlanner.tsx', 'ui/travel/Panels.tsx'] },
+  { kind: 'nyc', ops: ['crew', 'racket', 'recall'], label: 'New York: open a crew, buy into a racket, bring the men home', words: 'new york nyc crew expand racket docks garment fish market airport cargo idlewild brooklyn harlem bronx map', at: ['map'], files: ['ui/nyc/NycPanel.tsx'] },
+  { kind: 'nyc', ops: ['bless', 'tribute', 'sitdown'], label: 'New York: the families\' blessing, tribute, the Commission sit-down', words: 'new york nyc family blessing permission tribute commission sit-down reparations war', at: ['map'], files: ['ui/nyc/NycPanel.tsx'] },
   { kind: 'travel', ops: ['flee', 'surrender', 'comeHome', 'exile', 'hide'], label: 'Run for it, hide, come home, turn yourself in', words: 'flee run fugitive hide surrender come home exile', at: ['town.case', 'person', 'ops.travel'], files: ['ui/travel/FleePlanner.tsx', 'ui/travel/Panels.tsx', 'ui/sheet/menuCatalog.ts'] },
 
   // ---- The town ---------------------------------------------------------------------------------
