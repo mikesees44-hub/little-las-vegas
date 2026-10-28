@@ -32,6 +32,7 @@ import { applyLedgerOp, describeLedgerOp } from './ledgerbook';
 import { applyTributeOp, describeTributeOp } from './tributeOps';
 import { applyEarsOp, describeEarsOp } from './ears';
 import { applyDatingOp, describeDatingOp } from './dating';
+import { applyNightOp, describeNightOp } from './nightlife';
 import { applyMinigameEffect, describeMinigame } from './minigame';
 import { onArrest } from './trial';
 
@@ -226,6 +227,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeEarsOp(s, e.op);
     case 'dating':
       return describeDatingOp(s, e.op);
+    case 'nightlife':
+      return describeNightOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -863,6 +866,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'ears':
       applyEarsOp(ctx, e.op, label);
+      break;
+    case 'nightlife':
+      applyNightOp(ctx, e.op);
       break;
     case 'dating':
       applyDatingOp(ctx, e.op);

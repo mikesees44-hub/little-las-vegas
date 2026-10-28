@@ -10,6 +10,7 @@ import { commitEcon, econActions, previewEcon } from './econ';
 import { commitHood, hoodActions, previewHood } from './hood';
 import { previewLiving } from './livingAsk';
 import { previewDating } from './dating';
+import { previewNight } from './nightlife';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
 import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from './travel';
@@ -291,6 +292,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** Relationships & Dating (dating.ts): she decides; the Pocket pays. */
   dating: {
     preview: (s, a) => previewDating(s, a.op),
+  },
+  /** Nightlife (nightlife.ts, goomar.ts): payroll, promises, goomars, the madams' houses. She decides. */
+  nightlife: {
+    preview: (s, a) => previewNight(s, a.op),
   },
   /** Travel, trips and flight (travel.ts, fugitive.ts). */
   travel: {

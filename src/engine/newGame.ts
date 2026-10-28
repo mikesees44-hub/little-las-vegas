@@ -1,6 +1,7 @@
 import { startPocket } from './tributeState';
 import { ensureProviders } from './dating';
 import { ensureDating } from './datingState';
+import { ensureNightlife } from './nightlife';
 import { SCHEMA } from './trustMigrations';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
@@ -350,5 +351,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   ensureProviders(s, ensureDating(s));
   // The town's house lots and houses (the families move in with the first week).
   ensureHousing(s);
+  // Nightlife: the night's cast, the madams' houses (its own dice; after everything else so the other ids stay put).
+  ensureNightlife(s);
   return s;
 }
