@@ -87,6 +87,12 @@ import { BossOffice } from './office/BossOffice';
 import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
+import { inboxBadge } from '../engine/inbox';
+import { markOrder, setRecentSeed } from './plans/orderMarks';
+import { PlansContext, type PlansApi } from './plans/context';
+import { LiveAlerts } from './plans/LiveAlerts';
+import { UnderbossSuggests } from './plans/Suggests';
+import { absDay } from '../engine/timeCost';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -164,6 +170,7 @@ export function App({ startOn = 'title' }: AppProps) {
       // The boss does it today: the hours come off the day (when they run out, the day ends: see below).
       const spent = spendTime(s, a);
       setS((cur) => spendTime(cur, a).state);
+      markOrder(a, { abs: absDay(s), hours: spent.hours, late: spent.late, missedDinner: spent.missedDinner });
       if (spent.dayOver) setEndDayDue(true);
       setToast({ action: a, index: orders.length, at: now, short, time: { hours: spent.hours, to: spent.to, late: spent.late, missedDinner: spent.missedDinner } });
       setOrders((o) => [...o, a]);
@@ -176,6 +183,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function queueLater(a: PlayerAction) {
     const b = bookLater(s, a);
     setS((cur) => bookLater(cur, a).state);
+    markOrder(a, { booked: b.day, hours: b.hours });
     setToast({ action: a, index: orders.length, at: Date.now(), time: { hours: b.hours, to: 0, late: 0, missedDinner: false, bookedDay: b.day } });
     setOrders((o) => [...o, a]);
   }
@@ -636,6 +644,16 @@ export function App({ startOn = 'title' }: AppProps) {
     openNews: () => openRoute({ panel: 'chronicle', section: 'papers' }),
     openAdvance: () => startAdvance('week'),
   };
+  // Plans in motion, the live alerts, the underboss's picks (ui/plans): the windows only the App opens.
+  setRecentSeed(s.seed);
+  const plansApi: PlansApi = {
+    answers, briefSkip,
+    urgent: (id) => setUrgent(id), event: deskApi.onEvent, decisions: openDecisions, day: deskApi.onDay,
+    sitdown: () => setSitdown('council'), envelope: () => tributeApi.openAudience(),
+    pause: (why) => { setSpeed(0); setClockNote(`Paused: ${why}`); },
+  };
+  // The one count (engine/inbox.ts): Waiting on you, the desk and the door all say this number.
+  const box = inboxBadge(s, { answers, briefSkip });
   const laterKeys = later.week === s.week ? later.keys : [];
   const officeUi = { answers, briefSkip, later: laterKeys };
   function officeDelegate(op: DelegateOp) {
@@ -686,6 +704,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
+      {!s.gameOver && <UnderbossSuggests s={s} compact />}
       {!s.gameOver && <SitDownCard s={s} b={briefForRail} onOpen={() => setSitdown('council')} onRounds={() => setSitdown('rounds')} />}
       <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} hideAdvice />
       {!s.gameOver && <GoalsCard goals={goals} onShow={showGoal} />}
@@ -695,23 +714,25 @@ export function App({ startOn = 'title' }: AppProps) {
 
   return (
     <OfficeContext.Provider value={officeApi}>
+    <PlansContext.Provider value={plansApi}>
     <HousesNavContext.Provider value={housesApi}>
     <TributeUiContext.Provider value={tributeApi}>
     <Providers sheet={sheetApi} clarity={clarityApi} planner={plannerApi} orders={ordersApi} travel={travelApi} shell={shellApi}>
       <EmpireHost s={s} setS={setS}>
       <Shell
-        top={(
-          <TopBar s={s} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+        top={(<>
+          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
             urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
-            onSitDown={() => setSitdown('council')} sitCount={brief.items.length} onDesk={() => setRoute({ home: 'week' })}
+            onSitDown={() => setSitdown('council')} sitCount={brief.items.filter((it) => !briefSkip.includes(it.id)).length} onDesk={() => setRoute({ home: 'week' })}
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'} />
-        )}
+          {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
+        </>)}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
         overlay={(
@@ -856,6 +877,7 @@ export function App({ startOn = 'title' }: AppProps) {
     </Providers>
     </TributeUiContext.Provider>
     </HousesNavContext.Provider>
+    </PlansContext.Provider>
     </OfficeContext.Provider>
   );
 }

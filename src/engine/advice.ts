@@ -722,7 +722,7 @@ export function immediateTotal(ex: ActionExplanation, stat: NonNullable<NamedEff
 export interface ChoiceAdvice {
   id: string;
   ex: ActionExplanation;
-  /** "Best value", "Cheapest", "Safest" — only when one option stands out. */
+  /** "Cheapest", "Safest", "Best for: <the player's priority>" — only when one option stands out. */
   tags: string[];
 }
 
@@ -774,7 +774,7 @@ export function compareChoices(s: GameState, choices: readonly Choice[], priorit
     const sorted = [...live].sort((a, b) => score(b) - score(a));
     if (score(sorted[0]) > score(sorted[1])) tags[sorted[0].id].push(tag);
   };
-  uniqueBest((r) => r.ex.value, 'Best value');
+  // No "Best value": a decision with a printed answer is not a decision (playtest). The facts stay: cheapest, safest, and what serves the priority the player picked.
   uniqueBest((r) => -r.cost, 'Cheapest');
   uniqueBest((r) => -r.ex.risks.reduce((x, k) => x + k.chance * (k.severity === 'high' ? 3 : k.severity === 'mid' ? 2 : 1), 0), 'Safest');
   if (priority) {

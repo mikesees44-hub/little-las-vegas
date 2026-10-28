@@ -2,6 +2,7 @@ import { MEET_HOURS, urgentMeetings, type MeetVia, type ResponseId } from '../..
 import type { GameState } from '../../engine/types';
 import { Face } from './People';
 import { Modal } from './Modal';
+import { useNumberKeys } from '../keys';
 
 /**
  * An urgent meeting (threats.ts): somebody heard something and wants to see
@@ -22,6 +23,15 @@ export function UrgentMeeting({ s, id, onMeet, onIgnore, onRespond, onPick, onCl
 }) {
   const all = urgentMeetings(s);
   const u = all.find((x) => x.id === id);
+  // Number keys: 1 meet him, 2 the underboss, 3 the consigliere, 4 not now; at the meeting, the answers in order.
+  useNumberKeys(!!u, u ? (u.status === 'waiting' ? 4 : u.responses.length) : 0, (i) => {
+    if (!u) return;
+    if (u.status !== 'waiting') { const r = u.responses[i]; if (r) onRespond(u.id, r.id); return; }
+    if (i === 0 && !u.canMeet) onMeet(u.id, 'boss');
+    else if (i === 1 && u.underboss) onMeet(u.id, 'underboss');
+    else if (i === 2 && u.consigliere) onMeet(u.id, 'consigliere');
+    else if (i === 3) onIgnore(u.id);
+  });
   if (!u) return null;
   const c = u.charId ? s.characters[u.charId] : undefined;
   const i = all.indexOf(u);
@@ -45,19 +55,19 @@ export function UrgentMeeting({ s, id, onMeet, onIgnore, onRespond, onPick, onCl
         {u.status === 'waiting' && (
           <div className="mt-4 space-y-1.5">
             <button type="button" className="w-full text-left rounded border border-gold-600/60 bg-gold-500/10 px-3 py-2 hover:border-gold-400 disabled:opacity-40" disabled={!!u.canMeet} onClick={() => onMeet(u.id, 'boss')} data-testid="urgent-meet">
-              <div className="text-sm font-semibold text-gold-300">Meet him now</div>
+              <div className="text-sm font-semibold text-gold-300"><kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] font-normal text-stone-400">1</kbd>Meet him now</div>
               <div className="text-[11px] text-stone-400">{u.canMeet ?? `About ${MEET_HOURS} hours. He talks more freely to you, and only you can play the feds along.`}</div>
             </button>
             <button type="button" className="w-full text-left rounded border border-noir-600 px-3 py-2 hover:border-gold-500 disabled:opacity-40" disabled={!u.underboss} onClick={() => onMeet(u.id, 'underboss')} data-testid="urgent-underboss">
-              <div className="text-sm font-semibold text-stone-200">Send the underboss{u.underboss ? `: ${u.underboss}` : ''}</div>
+              <div className="text-sm font-semibold text-stone-200"><kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] font-normal text-stone-400">2</kbd>Send the underboss{u.underboss ? `: ${u.underboss}` : ''}</div>
               <div className="text-[11px] text-stone-400">{u.underboss ? 'Costs you nothing. Whatever you decide lands a little softer second-hand.' : 'No underboss in the seat.'}</div>
             </button>
             <button type="button" className="w-full text-left rounded border border-noir-600 px-3 py-2 hover:border-gold-500 disabled:opacity-40" disabled={!u.consigliere} onClick={() => onMeet(u.id, 'consigliere')} data-testid="urgent-consigliere">
-              <div className="text-sm font-semibold text-stone-200">Send the consigliere{u.consigliere ? `: ${u.consigliere}` : ''}</div>
+              <div className="text-sm font-semibold text-stone-200"><kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] font-normal text-stone-400">3</kbd>Send the consigliere{u.consigliere ? `: ${u.consigliere}` : ''}</div>
               <div className="text-[11px] text-stone-400">{u.consigliere ? 'The best nose for a story somebody planted.' : 'No consigliere in the seat.'}</div>
             </button>
             <button type="button" className="w-full text-left rounded border border-noir-700 px-3 py-2 hover:border-red-500" onClick={() => onIgnore(u.id)} data-testid="urgent-ignore">
-              <div className="text-sm font-semibold text-stone-300">Tell him not now</div>
+              <div className="text-sm font-semibold text-stone-300"><kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] font-normal text-stone-400">4</kbd>Tell him not now</div>
               <div className="text-[11px] text-stone-500">If it's real, it lands in full, and he'll remember he stuck his neck out for nothing.</div>
             </button>
           </div>
@@ -73,7 +83,7 @@ export function UrgentMeeting({ s, id, onMeet, onIgnore, onRespond, onPick, onCl
               {u.responses.map((r) => (
                 <button key={r.id} type="button" role="radio" aria-checked={u.response === r.id} onClick={() => onRespond(u.id, r.id)} data-testid={`urgent-resp-${r.id}`}
                   className={`text-left rounded border px-2.5 py-1.5 ${u.response === r.id ? 'border-gold-400 bg-gold-500/15' : 'border-noir-600 hover:border-gold-500'}`}>
-                  <div className="text-sm text-stone-100">{r.label}</div>
+                  <div className="text-sm text-stone-100"><kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] text-stone-400">{u.responses.indexOf(r) + 1}</kbd>{r.label}</div>
                   <div className="text-[11px] text-stone-400">{r.hint}</div>
                 </button>
               ))}

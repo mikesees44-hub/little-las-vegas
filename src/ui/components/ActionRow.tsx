@@ -7,6 +7,8 @@ import { sameOrder, verbOf } from '../verbs';
 import { ActionCard, useOrders } from './Orders';
 import { DealWindow } from '../econ/DealWindow';
 import { hoursShort, timeBlock, timeCost } from '../../engine/timeCost';
+import { mainRisk } from '../plans/actionGoals';
+import { isPinnedOrder, togglePinOrder, usePins } from '../plans/pins';
 
 /**
  * The universal action row: one order folded to a line — what it is, what it
@@ -39,6 +41,10 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
   const needsCard = !deal && short > 0;
   const odds = p.odds ?? p.acceptance;
   const pct = odds ? Math.round(odds.chance * 100) : undefined;
+  // The main risk, in a few words (heat, the odds, a soured man), and the favorites star.
+  const risk = mainRisk(p);
+  usePins();
+  const pinned = isPinnedOrder(s.seed, action);
   if (open) {
     return (
       <div className="sm:col-span-2" data-testid="action-row-open">
@@ -57,7 +63,8 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
             {p.cost > 0 && <span className={pocket ? 'text-amber-300' : 'text-gold-400'}>{fmt$(p.cost)} {pocket ? 'pocket' : 'Family'}</span>}
             {p.cost > 0 && pct !== undefined && ' · '}
             {pct !== undefined && <span className={pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}>{p.odds ? 'success' : 'yes'} {pct}%</span>}
-            {!(p.cost > 0) && pct === undefined && (p.detail ? p.detail.slice(0, 90) : 'details ▸')}
+            {!(p.cost > 0) && pct === undefined && !risk && (p.detail ? p.detail.slice(0, 90) : 'details ▸')}
+            {risk && <>{(p.cost > 0 || pct !== undefined) && ' · '}<span className="text-red-300/90" data-testid="action-row-risk">⚠ {risk}</span></>}
           </>}
         </span>
       </button>
@@ -66,6 +73,7 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
         onClick={() => (deal ? setDealing(true) : needsCard ? setOpen(true) : queue(action))} data-testid={deal ? 'make-offer' : 'action-row-go'}>
         {queued ? (deal ? 'Signed ✓' : verbOf(action, p).done) : deal ? 'Make an offer' : needsCard ? 'More ▸' : verbOf(action, p).verb}
       </button>
+      <button type="button" className={`shrink-0 px-0.5 text-sm ${pinned ? 'text-gold-400' : 'text-stone-600 hover:text-gold-300'}`} onClick={() => togglePinOrder(s.seed, action)} aria-pressed={pinned} title={pinned ? 'Unpin this order' : 'Pin it: it waits on Find\'s front page (Ctrl+K)'} data-testid="action-row-pin">{pinned ? '★' : '☆'}</button>
       {!hard && noTime && !queued && later && (
         <button type="button" className="shrink-0 btn-gold text-xs py-1" onClick={() => later(action)} title="Give the order now; it takes the hours out of tomorrow" data-testid="action-row-tomorrow">Tomorrow</button>
       )}

@@ -1,3 +1,4 @@
+import { inboxCount } from '../../engine/inbox';
 import { TableButton } from '../advice/CounselTable';
 import { bossDesk, readyReview, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
 import type { GameState } from '../../engine/types';
@@ -65,7 +66,8 @@ function DeskGroupList({ g, api }: { g: ReturnType<typeof bossDesk>[number]; api
 
 export function BossDesk({ s, ui, api }: { s: GameState; ui: DeskUi; api: DeskApi }) {
   const groups = bossDesk(s, ui);
-  const waiting = groups.reduce((a, g) => a + g.items.filter((x) => (g.kind === 'decision' || g.kind === 'morning') && !x.done).length, 0);
+  // The one count (engine/inbox.ts): the same number as the top bar and the Office door.
+  const waiting = inboxCount(s, ui);
   return (
     <section className="rounded-md border border-gold-600/50 bg-noir-800/50 p-2.5" data-testid="boss-desk">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
