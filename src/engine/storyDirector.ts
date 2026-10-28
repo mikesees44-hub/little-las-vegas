@@ -35,11 +35,28 @@ export const TEMPLATE_COOLDOWN = 10;
 /** Most times one template may be shown in any 52 weeks (the monthly bagman excepted). */
 export const YEAR_CAP = 5;
 /** Templates that recur on a fixed cadence and are exempt from the cap. */
-export const INSTITUTIONAL = new Set(['bagman', 'tribute_audience']);
+export const INSTITUTIONAL = new Set(['bagman']);
+/**
+ * Routine business that recurs by design (the Monday envelope): it may come back sooner than a story,
+ * but it is not a weekly face either. Weeks it is held back, it waits on the desk (tributeFlow.ts).
+ */
+export const ROUTINE: Record<string, { cooldown: number; cap: number }> = {
+  tribute_audience: { cooldown: 4, cap: 10 },
+};
 /** Most seats one theme may take in a week (mandatory events excepted). */
 export const MAX_PER_THEME = 2;
 /** The bagman comes in person at most once in this many weeks, about once a season (unless Philadelphia is unhappy). */
 export const BAGMAN_VISIT_GAP = 11;
+/**
+ * The fair share of one template GROUP (the envelope, the ears, the crew's decisions, the
+ * content packs by category...): over the last GROUP_WINDOW weeks no group takes more than
+ * GROUP_SHARE of the popups (never fewer than GROUP_MIN seats), mandatory beats excepted.
+ */
+export const GROUP_WINDOW = 12;
+export const GROUP_SHARE = 0.15;
+export const GROUP_MIN = 3;
+/** The family gets a seat: when no family popup has reached the boss in this many weeks, the best family candidate goes first. */
+export const FAMILY_SEAT_GAP = 4;
 /** How far back the history goes. */
 const HISTORY = 60;
 /** The window the theme mix is measured over. */
@@ -129,6 +146,20 @@ export function themeOf(e: EventInstance): Theme {
   return e.meta?.crew ? 'crew' : 'town';
 }
 
+/**
+ * The template GROUP of a template id: content-pack events by their pack category (a chain's
+ * later parts as one group), everything else by its prefix (tribute_, ears_, crew_, kin_, dyn_ ...).
+ */
+export function groupOfId(id: string): string {
+  if (id.startsWith('pack_')) {
+    const p = ALL_BY_ID[id.slice(5)];
+    if (!p) return 'pack';
+    return `pack:${p.chain && p.chain.part > 1 ? 'chain' : p.category}`;
+  }
+  const i = id.indexOf('_');
+  return i > 0 ? id.slice(0, i) : id;
+}
+
 /** The template a popup was made from (variants that share a defId share a template). */
 export function templateOf(e: EventInstance): string {
   return e.defId;
@@ -153,6 +184,35 @@ export function shownIn(s: GameState, id: string, weeks: number): number {
   return n;
 }
 
+/** The last week a popup of this template group was shown. */
+export function lastGroupShown(s: GameState, group: string): number | undefined {
+  const h = s.director?.hist;
+  if (!h) return undefined;
+  for (let i = h.length - 1; i >= 0; i--) if (groupOfId(h[i][1]) === group) return h[i][0];
+  return undefined;
+}
+
+/** Has this template's group had its fair share of the last GROUP_WINDOW weeks? */
+export function groupFull(s: GameState, id: string): boolean {
+  const h = s.director?.hist;
+  if (!h?.length) return false;
+  const g = groupOfId(id);
+  let n = 0;
+  let all = 0;
+  for (let i = h.length - 1; i >= 0 && s.week - h[i][0] < GROUP_WINDOW; i--) {
+    all++;
+    if (groupOfId(h[i][1]) === g) n++;
+  }
+  return n >= Math.max(GROUP_MIN, Math.floor(GROUP_SHARE * Math.max(all, 2 * GROUP_WINDOW)));
+}
+
+/** Weeks since a popup of this theme reached the boss (a large number if never, in the history). */
+export function weeksSinceTheme(s: GameState, th: Theme): number {
+  const h = s.director?.hist ?? [];
+  for (let i = h.length - 1; i >= 0; i--) if (h[i][2] === th) return s.week - h[i][0];
+  return 99;
+}
+
 /**
  * Warnings about one particular man (a rival is courting him, he is
  * drifting, he holds a grievance, he owes a rival's shylock) are the boss's
@@ -169,7 +229,7 @@ export const WARNINGS: Record<string, { cooldown: number; cap: number }> = {
 /** Is a template on the director's global cooldown or over its yearly cap? */
 export function templateBlocked(s: GameState, id: string, cooldown?: number): boolean {
   if (INSTITUTIONAL.has(id)) return false;
-  const rule = WARNINGS[id];
+  const rule = WARNINGS[id] ?? ROUTINE[id];
   const cd = cooldown ?? rule?.cooldown ?? TEMPLATE_COOLDOWN;
   const last = lastShown(s, id);
   if (last !== undefined && s.week - last < cd) return true;
@@ -179,7 +239,7 @@ export function templateBlocked(s: GameState, id: string, cooldown?: number): bo
 /** May this candidate be shown this week? Mandatory events and chain continuations always may. */
 export function allowed(s: GameState, e: EventInstance): boolean {
   if (e.mandatory || e.meta?.due) return true;
-  return !templateBlocked(s, templateOf(e));
+  return !templateBlocked(s, templateOf(e)) && !groupFull(s, templateOf(e));
 }
 
 /**
@@ -187,7 +247,7 @@ export function allowed(s: GameState, e: EventInstance): boolean {
  * seen in the last half-year less (divided by how often this year), and 0 while on cooldown or over the cap.
  */
 export function freshness(s: GameState, id: string): number {
-  if (templateBlocked(s, id)) return 0;
+  if (templateBlocked(s, id) || groupFull(s, id)) return 0;
   // A warning about one man is about a different man each time: it is not "the same story again".
   if (WARNINGS[id]) return 2.5;
   const last = lastShown(s, id);
@@ -223,9 +283,14 @@ export function directorScore(s: GameState, e: EventInstance, shares = themeShar
   const id = templateOf(e);
   const last = lastShown(s, id);
   const novelty = last === undefined ? 5 : Math.min(4, (s.week - last) / 8);
+  // A group the boss has not seen for a while goes ahead of one he saw last week.
+  const gl = lastGroupShown(s, groupOfId(id));
+  const groupNovelty = gl === undefined ? 8 : Math.min(8, s.week - gl);
   const th = themeOf(e);
   const mix = Math.max(-8, Math.min(6, (THEME_TARGET[th] - shares[th]) * 30));
-  return e.priority + novelty + mix;
+  // The family's seat: a month without the family at the desk and its best candidate goes first.
+  const seat = th === 'family' && weeksSinceTheme(s, 'family') >= FAMILY_SEAT_GAP ? 30 : 0;
+  return e.priority + novelty + groupNovelty + mix + seat;
 }
 
 /* ------------------------------------------------------------------ */

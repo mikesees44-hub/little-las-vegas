@@ -4,6 +4,7 @@ import { holder } from './council';
 import { registerEventSource } from './events';
 import { keeper } from './ledgerbook';
 import { opinion } from './relations';
+import { lastShown } from './storyDirector';
 import { latestReport, isQuietWeek } from './tribute';
 import { ensureTribute, pctOf, REASON_LABEL, splitText, type Beat, type TributeReport } from './tributeState';
 import type { Character, Choice, Effect, EventInstance, GameState } from './types';
@@ -31,12 +32,20 @@ export const AUDIENCE_ID = 'tribute_audience';
 
 /** Weeks between optional audiences (issues), unless asked or in a crisis. */
 const AUDIENCE_GAP = 3;
+/** Weeks between in-person audiences on quiet weeks when the Don holds them every week (the others wait on the desk). */
+const ASKED_GAP = 8;
 
 export function audienceWanted(s: GameState, rep: TributeReport): { want: boolean; mandatory: boolean; asked: boolean; why: string } {
   const t = ensureTribute(s);
   // Two pots (money.ts): no "first audience" any more. Your cut goes in on its own every week; he asks to
   // see you only when something is wrong (a shortfall that matters, a dispute, a petition), or a crisis.
-  if (!t.policy.auto) return { want: true, mandatory: false, asked: true, why: 'asked' };
+  // Held every week at his word: a quiet week's envelope waits on his desk (no popup); he is shown in
+  // person when something is off, the first time, and about every other month (the story director's cap).
+  if (!t.policy.auto) {
+    const last = lastShown(s, AUDIENCE_ID);
+    const want = !isQuietWeek(rep) || last === undefined || s.week - last >= ASKED_GAP;
+    return { want, mandatory: false, asked: want, why: want ? 'asked' : '' };
+  }
   if (t.ub.stage === 3) return { want: true, mandatory: true, asked: false, why: 'crisis' };
   const last = t.held[t.held.length - 1] ?? -99;
   if (!isQuietWeek(rep) && rep.week - last >= AUDIENCE_GAP) return { want: true, mandatory: false, asked: false, why: 'issues' };

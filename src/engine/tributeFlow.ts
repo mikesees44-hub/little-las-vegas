@@ -283,6 +283,10 @@ export function tributeEnd(ctx: Ctx): void {
     if (ev) {
       rep.status = 'presented';
       rep.iid = ev.iid;
+    } else if (!t.policy.auto) {
+      // He holds the audience himself: a week without a popup, the envelope waits on his desk (the inbox's
+      // envelope item); unanswered, it goes by the standing split next week (tributeBegin).
+      rep.status = 'presented';
     } else {
       allocate(ctx, rep, t.policy, 'quiet', []);
       t.stats.quiet++;
