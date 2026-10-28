@@ -1,4 +1,5 @@
 import { pactWith } from './talks';
+import type { NycFamilyId } from './nycData';
 import type { Character, FactionId, GameState, RivalId } from './types';
 
 /**
@@ -54,6 +55,19 @@ export const SIDE_STYLE: Record<'player' | RivalId | 'official' | 'nightlife' | 
   official: { label: 'City Hall', short: 'CITY HALL', color: '#c98a3e', emblem: '▣', initial: 'H' },
   nightlife: { label: 'Nightlife', short: 'NIGHTLIFE', color: '#d0679f', emblem: '✦', initial: 'N' },
   none: { label: 'Civilian', short: 'CIVILIAN', color: '#8f877c', emblem: '○', initial: 'C' },
+};
+
+/**
+ * The five New York families (nycData.ts, fictional): colours and emblems
+ * distinct from the home families' and from each other, for the New York
+ * map and its chips. Never colour alone: each has its own shape.
+ */
+export const NYC_SIDE_STYLE: Record<NycFamilyId, SideStyle> = {
+  marchetti: { label: 'The Marchetti family', short: 'MARCHETTI', color: '#1fa39b', emblem: '♣', initial: 'M' },
+  corvino: { label: 'The Corvino family', short: 'CORVINO', color: '#e0703a', emblem: '⬟', initial: 'C' },
+  saladino: { label: 'The Saladino family', short: 'SALADINO', color: '#a9c443', emblem: '✚', initial: 'S' },
+  lobianco: { label: 'The Lo Bianco family', short: 'LO BIANCO', color: '#b07a52', emblem: '♠', initial: 'L' },
+  abbadessa: { label: 'The Abbadessa family', short: 'ABBADESSA', color: '#4cc3e6', emblem: '●', initial: 'A' },
 };
 
 export const RELATION_LABEL: Record<SideRelation, string> = {

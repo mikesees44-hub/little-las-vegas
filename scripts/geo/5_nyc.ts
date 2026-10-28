@@ -134,6 +134,9 @@ function centroid(polys: Poly[]): [number, number] {
 /* Hand-traced lines and labels (lon, lat), as of 1960                  */
 /* ------------------------------------------------------------------ */
 
+/** Land that was still water in 1960: Battery Park City, west of West Street (lon, lat). */
+const LANDFILL_1960: [number, number][] = [[-74.0126, 40.7195], [-74.0136, 40.7120], [-74.0148, 40.7075], [-74.0162, 40.7062], [-74.0300, 40.7062], [-74.0300, 40.7195], [-74.0126, 40.7195]];
+
 type LineKind = 'bridge' | 'tunnel' | 'ferry' | 'road' | 'el' | 'planned';
 const LINES: { id: string; name: string; kind: LineKind; year?: number; pts: [number, number][] }[] = [
   { id: 'brooklynbr', name: 'Brooklyn Bridge', kind: 'bridge', year: 1883, pts: [[-74.0007, 40.7113], [-73.9905, 40.7006]] },
@@ -177,7 +180,7 @@ const LABELS: { name: string; kind: LabelKind; at: [number, number]; rot?: numbe
   { name: 'Hudson River', kind: 'water', at: [-74.017, 40.783], rot: -62 },
   { name: 'East River', kind: 'water', at: [-73.966, 40.731], rot: -78 },
   { name: 'Harlem River', kind: 'water', at: [-73.931, 40.833], rot: -70 },
-  { name: 'Upper New York Bay', kind: 'water', at: [-74.047, 40.665] },
+  { name: 'Upper New York Bay', kind: 'water', at: [-74.04, 40.657] },
   { name: 'Lower New York Bay', kind: 'water', at: [-74.04, 40.54] },
   { name: 'The Narrows', kind: 'water', at: [-74.046, 40.612], rot: -10 },
   { name: 'Jamaica Bay', kind: 'water', at: [-73.835, 40.618] },
@@ -197,7 +200,7 @@ const LABELS: { name: string; kind: LabelKind; at: [number, number]; rot?: numbe
   { name: 'Jersey City', kind: 'nj', at: [-74.068, 40.725] },
   { name: 'Hoboken', kind: 'nj', at: [-74.03, 40.746] },
   { name: 'Newark', kind: 'nj', at: [-74.18, 40.735] },
-  { name: 'Bayonne', kind: 'nj', at: [-74.115, 40.665] },
+  { name: 'Bayonne', kind: 'nj', at: [-74.122, 40.672] },
   { name: 'Elizabeth', kind: 'nj', at: [-74.215, 40.664] },
   { name: 'Fort Lee', kind: 'nj', at: [-73.975, 40.855] },
   { name: 'WESTCHESTER', kind: 'nj', at: [-73.84, 40.915] },
@@ -227,16 +230,19 @@ async function main() {
   const nyRaw = readFileSync(join(DL, 'ny_new_york_zip_codes_geo.min.json'), 'utf8');
   const bbox = `${META.lon0},${META.lat1},${META.lon1},${META.lat0}`;
 
+  // 1960: Battery Park City is still the Hudson (its landfill came in the 1970s).
+  const landfill = JSON.stringify({ type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [LANDFILL_1960] } }] });
+  const boroughs1960 = JSON.stringify(await run('-i b.json -erase f.json', { 'b.json': boroughsRaw, 'f.json': landfill }));
   // The five boroughs: the real shoreline, simplified to ~15 m.
-  const boroughs = await run('-i b.json -simplify interval=15 keep-shapes -filter-slivers min-area=2000m2', { 'b.json': boroughsRaw });
+  const boroughs = await run('-i b.json -simplify interval=15 keep-shapes -filter-slivers min-area=2000m2', { 'b.json': boroughs1960 });
   // New Jersey, Westchester, Nassau: the Census ZCTAs' land, clipped to the frame, the boroughs cut out.
   const outside = await run(`-i nj.json ny.json combine-files -merge-layers force -clip bbox=${bbox} -dissolve -erase b.json -simplify interval=20 -filter-slivers min-area=200000m2`, { 'nj.json': njRaw, 'ny.json': nyRaw, 'b.json': boroughsRaw });
   // Parks and cemeteries (the NTA "park-cemetery-etc" areas), on the land.
-  const parks = await run('-i n.json -filter "/^park-cemetery/.test(NTAName)" -clip b.json -filter-slivers min-area=5000m2', { 'n.json': ntaRaw, 'b.json': boroughsRaw });
+  const parks = await run('-i n.json -filter "/^park-cemetery/.test(NTAName)" -clip b.json -filter-slivers min-area=5000m2', { 'n.json': ntaRaw, 'b.json': boroughs1960 });
   // The neighborhood grid: shared NTA borders only, on the land.
-  const mesh = await run('-i n.json -clip b.json -innerlines', { 'n.json': ntaRaw, 'b.json': boroughsRaw });
+  const mesh = await run('-i n.json -clip b.json -innerlines', { 'n.json': ntaRaw, 'b.json': boroughs1960 });
   // Each NTA on its own, clipped to the land, for the districts.
-  const ntas = await run('-i n.json -clip b.json', { 'n.json': ntaRaw, 'b.json': boroughsRaw });
+  const ntas = await run('-i n.json -clip b.json', { 'n.json': ntaRaw, 'b.json': boroughs1960 });
 
   const boroughOut = boroughs.features.map((f) => ({ name: String(f.properties?.BoroName), code: Number(f.properties?.BoroCode), d: pathOf(polysOf(f.geometry)) }));
   const byNta = new Map<string, Poly[]>();

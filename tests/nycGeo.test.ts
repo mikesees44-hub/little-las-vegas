@@ -75,5 +75,25 @@ describe('the New York map data', () => {
     expect(NYC_GEO.lines.filter((l) => l.kind === 'bridge').length).toBeGreaterThanOrEqual(10);
     expect(NYC_GEO.lines.filter((l) => l.kind === 'tunnel').length).toBe(4);
     expect(NYC_GEO.lines.find((l) => l.kind === 'el')?.name).toMatch(/Bronx/);
+    // Battery Park City is still the Hudson in 1960.
+    const manhattan = NYC_GEO.boroughs.find((b) => b.name === 'Manhattan')!;
+    expect(pointInPath(manhattan.d, ...nycProject(-74.0165, 40.713))).toBe(false);
+    expect(pointInPath(manhattan.d, ...nycProject(-74.0105, 40.713))).toBe(true); // West Street
+  });
+});
+
+describe('the New York neighborhoods as overlay regions', () => {
+  it('one region per district, rings in map coordinates, holder and share', async () => {
+    const { nycRegions } = await import('../src/engine/nycRegions');
+    const { newGame } = await import('../src/engine/newGame');
+    const r = nycRegions(newGame('nyc-regions'));
+    expect(r.length).toBe(NYC_DISTRICTS.length);
+    for (const x of r) {
+      expect(x.polygons.length, x.id).toBeGreaterThan(0);
+      expect(x.polygons[0].length, x.id).toBeGreaterThanOrEqual(3);
+      expect(x.share).toBe(0);
+    }
+    expect(r.find((x) => x.id === 'lowereast')!.holder).toBe('none');
+    expect(r.find((x) => x.id === 'redhook')!.holder).toBe('corvino');
   });
 });
