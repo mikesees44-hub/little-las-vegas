@@ -17,6 +17,7 @@ import { PlanView } from './PlanView';
 import { useShell } from '../shell/context';
 import { WalkView } from './WalkView';
 import { MapFind, MapMenu } from './MapControls';
+import { layoutLabels } from './planLayout';
 
 /**
  * Wildwood up close: the illustrated 1960 island (the third map level).
@@ -335,16 +336,29 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   const ctx = useMemo(() => ({ pr, m: mood, pal, tier }), [pr, mood, tier]);
   const ground = useMemo(() => <Ground pr={pr} pal={pal} mood={mood} tier={tier} sc={scB} />, [pr, mood, tier]);
   const buildings = useMemo(() => items.map((it) => { const g = overlay === 'category' ? groupOfItem(s, it) : undefined; return <Building key={it.key} it={it} c={ctx} sel={it.key === sel} tint={tintOf(s, it, overlay)} badge={g && tier >= 1 ? PROP_GROUP_BY_ID[g].icon : undefined} onPick={pick} />; }), [items, ctx, sel, overlay, s, pick, tier]);
-  const labels = useMemo(() => (tier < 2 ? null : (
-    <g style={{ pointerEvents: 'none' }} fontWeight="700" textAnchor="middle">
-      {items.filter((it) => it.icon || (it.vacant && it.forSale && it.lot?.home)).map((it) => {
-        const c = P(pr, (it.fp.u0 + it.fp.u1) / 2, it.fp.v0);
-        const y = c[1] - (it.fp.h + (it.icon === 'pier' ? 36 : 6)) * pr.hz - 4;
-        const ls = 10.5 / scB;
-        return <text key={it.key} x={c[0]} y={y} fontSize={ls} fill={it.mine ? '#b8860b' : mood === 'day' ? '#2a1f2e' : '#fff3df'} stroke={mood === 'day' ? '#fffaf0' : '#1b1030'} strokeWidth={ls * 0.25} paintOrder="stroke">{it.name}</text>;
-      })}
-    </g>
-  )), [items, tier, pr, mood]);
+  const labels = useMemo(() => {
+    if (tier < 2) return null;
+    // Names over the buildings, kept off each other: yours first, then the bigger places; a name
+    // with no room is left off (it is on the building's card, and on the block map).
+    const named = items.filter((it) => it.icon || (it.vacant && it.forSale && it.lot?.home));
+    const tops = new Map(named.map((it) => {
+      const c = P(pr, (it.fp.u0 + it.fp.u1) / 2, it.fp.v0);
+      return [it.key, { x: c[0], y: c[1] - (it.fp.h + (it.icon === 'pier' ? 36 : 6)) * pr.hz - 4 }];
+    }));
+    const placed = layoutLabels(named.map((it) => {
+      const t = tops.get(it.key)!;
+      return { id: it.key, text: it.name, prio: (it.mine ? 100 : 0) + (it.vacant ? 0 : 10) + Math.min(20, (it.fp.u1 - it.fp.u0) / 4), around: { x: t.x - 2 / scB, y: t.y + 3 / scB, w: 4 / scB, h: 0 } };
+    }), [], scB);
+    return (
+      <g style={{ pointerEvents: 'none' }} fontWeight="700" textAnchor="middle" data-testid="hv-labels">
+        {named.map((it) => {
+          const b = placed.get(it.key);
+          if (!b) return null;
+          return <text key={it.key} x={b.x + b.w / 2} y={b.y + b.h * 0.78} fontSize={b.fs} fill={it.mine ? '#b8860b' : mood === 'day' ? '#2a1f2e' : '#fff3df'} stroke={mood === 'day' ? '#fffaf0' : '#1b1030'} strokeWidth={b.fs * 0.25} paintOrder="stroke">{it.name}</text>;
+        })}
+      </g>
+    );
+  }, [items, tier, pr, mood]); // eslint-disable-line react-hooks/exhaustive-deps
   const areas = useMemo(() => {
     if (overlay !== 'reputation' && overlay !== 'police' && overlay !== 'rival') return null;
     return HOODS.map((h) => {

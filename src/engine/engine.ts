@@ -3,6 +3,7 @@ import { hoodWeek } from './hood';
 import { livingWeek } from './livingWorld';
 import { livingEventSource } from './livingAsk';
 import { housingWeek } from './housing';
+import { marketWeek } from './market';
 import { fbankEventSource, fbankWeek } from './familyBank';
 import { talksWeek } from './talks';
 import { missionsWeek } from './missions';
@@ -329,6 +330,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     hoodWeek(ctx);
     livingWeek(ctx);
     housingWeek(ctx);
+    marketWeek(ctx);
     fbankWeek(ctx);
     talksWeek(ctx);
     missionsWeek(ctx);
