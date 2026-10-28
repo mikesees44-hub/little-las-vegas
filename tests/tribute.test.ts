@@ -78,7 +78,8 @@ describe('the weekly take: accounts and the journal', () => {
   it('the Don splits the envelope in the audience: his choice moves exactly that money', () => {
     let s = newGame('take-d');
     ensureTribute(s).policy.auto = false; // hold the audience every week
-    for (let i = 0; i < 3; i++) s = advanceWeek(s, randomChoices(s, i)).state;
+    // The quiet weeks' envelopes wait on his desk; the underboss comes in person every few weeks (storyDirector ROUTINE).
+    for (let i = 0; i < 3 || (i < 12 && !s.pendingEvents.some((e) => e.defId === 'tribute_audience')); i++) s = advanceWeek(s, randomChoices(s, i)).state;
     const ev = s.pendingEvents.find((e) => e.defId === 'tribute_audience')!;
     expect(ev).toBeTruthy();
     const rep = s.tribute!.reports.find((r) => r.id === ev.meta!.report)!;
