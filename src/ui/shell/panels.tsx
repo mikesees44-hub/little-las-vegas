@@ -49,6 +49,7 @@ import { HoodDashboard } from '../hood/HoodDashboard';
 import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
 import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
+import { NightlifePanel } from '../nightlife/NightlifePanel';
 import { DatingPanel } from '../dating/DatingPanel';
 import { AttachmentBoard } from '../ears/Connections';
 import type { PanelId, Route } from './routes';
@@ -191,6 +192,7 @@ export const PANELS: PanelDef[] = [
       { id: 'hoods', label: 'Neighborhoods', blurb: 'Each neighborhood from its records: who lives and works there, who owns what, the police, the policy, and what changed.', render: (s) => stack(<HousesSummary key="h" s={s} />, <HoodDashboard key="d" s={s} />) },
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'night', label: 'The Night', blurb: 'The Madam, the Ears who hear everything, and the men who exploit women. Set-ups and reports only; she always decides.', render: (s) => <NightPanel s={s} /> },
+      { id: 'nightlife', label: 'Nightlife', blurb: 'The people of the night (the young and mature high-end lists, call girls, the street, dancers, singers, bar regulars, the clubs), the madams\' houses, promises and goomars. Adults only; she always decides.', render: (s) => <NightlifePanel s={s} /> },
       { id: 'attached', label: 'Who\'s attached to whom', blurb: 'The connection web: who is sweet on whom, who is a regular, who keeps someone on the side. The Ears reveal the rest.', render: (s) => <AttachmentBoard s={s} /> },
       { id: 'patronage', label: 'Patronage', render: (s) => <PatronagePanel s={s} /> },
     ],

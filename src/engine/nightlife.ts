@@ -1340,7 +1340,9 @@ export function nightActions(s: GameState): PlayerAction[] {
 }
 
 export function nightLog(s: GameState, n = 8): { week: number; text: string }[] {
-  return (s.nightlife?.log ?? []).slice(-n).reverse().map(([week, text]) => ({ week, text }));
+  // Mature content Off: no line about the adult-service roles or adult pictures.
+  const hide = !adultOn(s) ? /escort|call girl|street worker|adult|on the avenue|takes calls/i : undefined;
+  return (s.nightlife?.log ?? []).filter(([, t]) => !hide || !hide.test(t)).slice(-n).reverse().map(([week, text]) => ({ week, text }));
 }
 
 export { APARTMENTS };

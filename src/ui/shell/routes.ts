@@ -97,6 +97,8 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   night: { panel: 'town', section: 'night' },
   ears: { panel: 'town', section: 'night' },
   madam: { panel: 'town', section: 'night' },
+  nightlife: { panel: 'town', section: 'nightlife' },
+  goomar: { panel: 'town', section: 'nightlife' },
   attached: { panel: 'town', section: 'attached' },
   // The feed
   chronicle: { panel: 'chronicle', section: 'all' },

@@ -1,3 +1,4 @@
+import { CallingCard } from '../nightlife/CallingCard';
 import { canHold } from '../../engine/earners';
 import { EarnerRow } from '../econ/SteadyEarners';
 import { ageOn, dateOfWeek, formatDate } from '../../engine/calendar';
@@ -37,9 +38,9 @@ import { AgingSection } from '../sheet/AgingSection';
 import { knownOld } from '../../engine/aging';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
-export type SheetTab = 'overview' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
+export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history';
 /** "Deal with him" sits next to Overview: what you can do to a man is the second thing you look for. */
-const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['actions', 'Deal with'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['history', 'History']];
+const SHEET_TABS: [SheetTab, string][] = [['overview', 'Overview'], ['card', 'Calling card'], ['actions', 'Deal with'], ['relationships', 'Relationships'], ['work', 'Work & Money'], ['skills', 'Skills'], ['history', 'History']];
 import { getSettings } from '../settings';
 import { seenWealth } from '../../engine/crewFinance';
 import { FinancialLife } from '../sheet/FinancialLife';
@@ -109,7 +110,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         {c.alive && !s.gameOver && <QuickActions s={s} c={c} onAll={() => setTab('actions')} />}
 
         <nav className="mt-3 flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label={`${c.firstName}'s sheet`} data-testid="sheet-tabs">
-          {SHEET_TABS.map(([k, label]) => (
+          {SHEET_TABS.filter(([k]) => k !== 'card' || age >= 18).map(([k, label]) => (
             <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`sheet-tab-${k}`}
               className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{k === 'actions' ? (isBoss ? 'Your own business' : `Deal with ${c.firstName}`) : label}</button>
           ))}
@@ -186,6 +187,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         )}
 
         {tab === 'overview' && <>
+        {age >= 18 && <button type="button" className="btn-ghost mt-3 px-2 py-1 text-[11px]" onClick={() => setTab('card')} data-testid="sheet-open-card">{c.firstName}'s calling card ▸ <span className="text-stone-500">looks, family, money as known, you, rumors</span></button>}
         <DynastyFacts s={s} c={c} />
         <PowerFacts s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} part="life" />}
@@ -223,6 +225,9 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         </>}
 
         {tab === 'history' && <HisHistory s={s} c={c} />}
+
+        {/* The calling card: who they are at a glance, summary first (adults only). */}
+        {tab === 'card' && age >= 18 && <div className="mt-3"><CallingCard s={s} id={c.id} /></div>}
 
         {/* Deal with him: one panel (talk, favors, business, heirs, romance & dating, intrigue, dirty work, the Table, trips). */}
         {tab === 'actions' && <InteractionMenu s={s} c={c} onDone={onClose} />}

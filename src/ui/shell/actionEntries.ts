@@ -121,6 +121,8 @@ export const ACTION_ENTRIES: ActionEntry[] = [
   { kind: 'underbelly', label: 'Deal with the outfits that prey on people', words: 'underbelly investigate expose run out ally', at: ['town.underbelly'], files: ['ui/components/UnderbellyPanel.tsx'] },
   { kind: 'living', ops: ['ask', 'give'], label: 'Ask around about someone; help a family', words: 'ask around neighbor help family give', at: ['town.happening'], files: ['ui/town/Happening.tsx'] },
   { kind: 'ears', ops: ['ask', 'retain', 'protect', 'madamCall', 'madamCut', 'madamIntel', 'madamVenture', 'madamFavor'], label: 'The Ears and the Madam', words: 'ears madam night girls listen intel', at: ['town.night', 'person'], files: ['ui/ears/EarsPanel.tsx', 'ui/ears/earsMenu.ts', 'ui/ears/EarsPicker.tsx'] },
+  { kind: 'nightlife', ops: ['payroll', 'release', 'promise', 'keep', 'deal', 'back'], label: 'Nightlife: payroll, promises of introductions, madams\' protection', words: 'nightlife escort call girl dancer stripper burlesque singer madam house payroll kickback promise introduction record producer film protection partner squeeze back', at: ['town.nightlife', 'person'], files: ['engine/nightlife.ts', 'ui/nightlife/NightlifePanel.tsx'] },
+  { kind: 'nightlife', ops: ['goomar', 'endGoomar'], label: 'Make her your goomar (mistress), or end it', words: 'goomar goomah mistress kept woman apartment allowance concubine', at: ['person', 'town.nightlife'], files: ['ui/sheet/menuCatalog.ts', 'engine/nightlife.ts'] },
   { kind: 'ears', ops: ['opDig', 'opRunoff', 'opExpose', 'opMadam'], label: 'Move on the men who exploit women', words: 'operator run off expose dig', at: ['town.night', 'person'], files: ['ui/ears/EarsPanel.tsx', 'ui/ears/earsMenu.ts'] },
 ];
 
