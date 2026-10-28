@@ -38,6 +38,7 @@ import type { Business, Effect, EventInstance, GameState, PlayerAction, RivalId 
 import { FACTION_NAMES } from './world';
 import { commitBank, decideApp, fbankWash, previewBank } from './familyBank';
 import { commitHome, previewHome } from './housing';
+import { commitKickup, nextSetup, previewKickup } from './kickup';
 
 /**
  * The economy & property pillar's hub: the hooks the old economy calls
@@ -781,6 +782,7 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
     case 'bank': return previewBank(s, a.cmd);
     case 'home': return previewHome(s, a.cmd);
     case 'racket': return previewRacket(s, a.cmd);
+    case 'setup': case 'spotCall': case 'placeAsk': case 'tenantCall': return previewKickup(s, a);
     case 'empire': return previewEmpire(s, a.cmd);
     case 'luxBuy': case 'luxSell': return previewLux(s, a);
     case 'rename': {
@@ -1095,6 +1097,7 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
     }
     case 'deal': commitDeal(ctx, a.target, a.terms); break;
     case 'racket': commitRacket(ctx, a.cmd); break;
+    case 'setup': case 'spotCall': case 'placeAsk': case 'tenantCall': commitKickup(ctx, a); break;
     case 'empire': commitEmpire(ctx, a.cmd); break;
     case 'luxBuy': case 'luxSell': commitLux(ctx, a); break;
     case 'rename': {
@@ -1320,6 +1323,9 @@ export function econActions(s: GameState): PlayerAction[] {
   }
   const lux = luxActions(s);
   if (lux.length && w % 9 === 0) out.push(op(lux[w % lux.length]));
+  // A man with nothing of his own: set him up (kickup.ts).
+  const su = nextSetup(s);
+  if (su) out.push(su);
   out.push(...empireActions(s));
   const lease = e.lots.find((l) => l.status === 'lease');
   if (lease && w % 3 === 0) out.push(op({ type: 'leaseLot', lotId: lease.id }));

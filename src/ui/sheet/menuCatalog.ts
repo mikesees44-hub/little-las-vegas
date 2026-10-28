@@ -22,6 +22,7 @@ import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
 import { nightActionsFor } from '../../engine/nightlife';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
+import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
 /**
@@ -139,6 +140,16 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
       for (const st of SEATS) if (holder(s, st)?.id !== c.id) add('business', { key: `seat:${st}`, action: { kind: 'appoint', seat: st, charId: c.id }, label: `Seat him as ${SEAT_INFO[st].name.toLowerCase()}${holder(s, st) ? ` (in ${holder(s, st)!.firstName}'s place)` : ''}` });
     }
     add('business', { key: 'bg', action: { kind: 'background', charId: c.id } });
+    // Set him up with a spot of his own (kickup.ts): his three best, by you; and the answers when he is short or wants more.
+    if (canHoldSpot(s, c)) {
+      const sp = spotOf(s, c.id);
+      for (const o of spotOffers(s, c, s.playerId).slice(0, 3)) if (!(sp && !sp.free && sp.k === o.k)) add('business', { key: `setup:${o.k}`, action: { kind: 'econ', op: { type: 'setup', who: c.id, spot: o.k } } });
+      if (sp && !sp.free) {
+        const short = (s.tribute?.shortHist[c.id] ?? []).filter((w) => s.week - w < 8).length;
+        if (short >= 1) for (const how of ['talk', 'fine', 'pull'] as const) add('business', { key: `spot:${how}`, action: { kind: 'econ', op: { type: 'spotCall', who: c.id, how } } });
+        if (sp.want !== undefined) for (const how of ['raise', 'hold'] as const) add('business', { key: `spot:${how}`, action: { kind: 'econ', op: { type: 'spotCall', who: c.id, how } } });
+      }
+    }
   }
 
   // Heirs & grooming.

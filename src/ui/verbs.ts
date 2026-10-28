@@ -162,6 +162,9 @@ export function actionVerb(a: PlayerAction): Verb {
     case 'background': return v('Check him out', 'Checking');
     case 'order': return ORDER[a.key] ?? v('Give the order', 'Ordered');
     case 'econ': {
+      if (a.op.type === 'setup') return v('Set him up', 'Set up');
+      if (a.op.type === 'placeAsk') return a.op.how === 'accept' ? v('Let him in', 'Let in') : a.op.how === 'counter' ? v('Counter', 'Countered') : a.op.how === 'refuse' ? v('Turn him down', 'Turned down') : a.op.how === 'delegate' ? v('Let him decide', 'Delegated') : v('Come back later', 'Told to wait');
+      if (a.op.type === 'tenantCall') return a.op.how === 'keep' ? v('Keep him', 'Kept') : a.op.how === 'replace' ? v('Put our man in', 'Replaced') : v('Close it', 'Closed');
       if (a.op.type === 'racket') return a.op.cmd.c === 'start' ? v('Start it', 'Starting') : a.op.cmd.c === 'earner' ? (a.op.cmd.bizId ? v('Give it to him', 'Given') : v('Take it back', 'Taken back')) : a.op.cmd.c === 'advice' ? v('Take the advice', 'Advice taken') : v('Set it', 'Set');
       return ECON[op(a)] ?? v('Do it', 'Set');
     }

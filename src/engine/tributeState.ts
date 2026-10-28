@@ -100,8 +100,8 @@ export interface MemberLine {
   revealed?: boolean;
   /** Agreement shorthand for the table ('40%', '$120 flat', 'exempt'). */
   terms: string;
-  /** Where his money comes from: the crew's corners, his own hustle, crew work. */
-  kind: 'corners' | 'hustle' | 'work' | 'capo';
+  /** Where his money comes from: the crew's corners, his own hustle, crew work, his own spot (kickup.ts). */
+  kind: 'corners' | 'hustle' | 'work' | 'capo' | 'spot';
 }
 
 /** One capo's crew this week. */

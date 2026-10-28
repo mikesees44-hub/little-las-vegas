@@ -1,5 +1,6 @@
 import { xpCornersMult, xpHustleMult } from './crewXp';
 import { steadyMult } from './earners';
+import { spotOf, spotShortOdds, spotsTake } from './kickup';
 import { idleMen } from './business';
 import { isInSeason } from './calendar';
 import { capos, crew, hasTrait, isFree, player, shortName } from './characters';
@@ -268,6 +269,8 @@ export function shortOdds(s: GameState, c: Character): { p: number; w: Partial<R
     investigation: ev >= 50 ? 4 : 0,
     lying: h < 45 ? 3 : h < 60 ? 0.6 : 0,
   };
+  // His own spot (kickup.ts): talked to, he is careful; a big earner kept waiting helps himself.
+  p = spotShortOdds(s, c, p, w);
   return { p: Math.min(0.25, p), w };
 }
 
@@ -365,7 +368,7 @@ function contribute(ctx: Ctx, t: TributeState, rep: TributeReport, m: Character,
   line.paid = line.due - short;
   if (!inExtension(s, m.id) && short > 0) t.arrears[m.id] = (t.arrears[m.id] ?? 0) + short;
   if (short > 0) t.why[m.id] = line.truth!;
-  xfer(ctx, `ext:${srcKey}`, to, line.paid, kind === 'hustle' ? 'crew_contribution' : kind === 'work' ? 'crew_contribution' : 'business_income', `w${s.week}:c:${kind}:${m.id}`, { note: `${m.firstName} ${m.lastName}: ${kind === 'hustle' ? 'his hustle' : kind === 'work' ? 'crew work' : 'the corners'}` });
+  xfer(ctx, `ext:${srcKey}`, to, line.paid, kind === 'hustle' || kind === 'work' || kind === 'spot' ? 'crew_contribution' : 'business_income', `w${s.week}:c:${kind}:${m.id}`, { note: `${m.firstName} ${m.lastName}: ${kind === 'hustle' ? 'his hustle' : kind === 'work' ? 'crew work' : kind === 'spot' ? 'his spot' : 'the corners'}` });
   return line;
 }
 
@@ -436,6 +439,8 @@ export function collectTake(ctx: Ctx, mult: number): number {
   const st = 1 + perkMod(s, 'street') / 100;
   const hustleBy: Record<string, { n: number; paid: number }> = {};
   for (const c of idleMen(s)) {
+    // A man with his own spot works it instead (below).
+    if (spotOf(s, c.id)) continue;
     const craft = c.craft === 'earner' || c.craft === 'bookmaker' ? 1.2 : c.craft === 'collector' ? 1.1 : 1;
     const earned = (c.rank === 'soldier' ? 32 : 18) * (0.7 + c.attributes.business / 200) * mult * blitz * craft * incomeBoost(s, 'hustle') * reach * xpHustleMult(s, c);
     c.lastEarn = Math.round(earned);
@@ -462,6 +467,14 @@ export function collectTake(ctx: Ctx, mult: number): number {
   if (hustleBy.fixed) addSrc('h:fixed', `Street hustle: ${hustleBy.fixed.n} men on a flat weekly figure`, hustleBy.fixed.paid);
   if (hustleBy.earn?.n) ctx.log.push(`${hustleBy.earn.n} men kept everything they hustled this week.`);
 
+  // 1b. Every man's own spot (kickup.ts): he keeps his end, the sponsor his piece, and the rest goes up.
+  const spot = spotsTake(ctx, (m, earned, due, terms, to, key) => contribute(ctx, t, rep, m, 'spot', earned, due, terms, to, key, h, ub));
+  for (const x of spot.lines) {
+    if (x.capoId && capoOk(x.capoId)) crewOf(x.capoId).members.push(x.line);
+    else rep.direct.push(x.line);
+  }
+  if (spot.n) addSrc('spots', `Kick-ups: the men's own spots (${spot.n} m${spot.n > 1 ? 'en' : 'an'})`, spot.paid);
+
   // 2. The corners of each capo's district (the old kick-up: same dice, same contract, same skim).
   // A boss whose cut is greedy (money.ts) gets every capo dragging his feet with the winter envelope.
   const slow = new Set(isInSeason(s.date) ? [] : greedSkim(s) > 0 ? capos(s).map((c) => c.id) : slowPayers(s).map((c) => c.id));
@@ -473,6 +486,9 @@ export function collectTake(ctx: Ctx, mult: number): number {
     const skill = 0.85 + capo.attributes.business / 400;
     const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo) * steadyMult(s, capo.id));
     const take = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach * xpCornersMult(s, capo);
+    const take0 = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach;
+    // His men (and he) working their own spots spend less time on the corners (kickup.ts).
+    const take = Math.max(take0 * 0.5, take0 - (spot.carve[capo.id] ?? 0));
     const keep = capo.keep ?? 0.3;
     const owedTotal = take - take * keep;
     const cl = crewOf(capo.id);
@@ -826,6 +842,7 @@ function grantPetition(ctx: Ctx, t: TributeState, rep: TributeReport, p: Petitio
     case 'extension':
       if (target) t.terms[target.id] = { kind: 'extension', until: s.week + 4, why: `${by.firstName} asked for time` };
       return true;
+     break;
     case 'advance': {
       if (!target) return false;
       const got = xfer(ctx, src, `wealth:${target.id}`, p.amount, 'assistance', k, { note: `An advance for ${target.firstName} (he owes it back)` });

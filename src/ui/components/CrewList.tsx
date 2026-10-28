@@ -18,6 +18,7 @@ import { CharLink, Face, TraitIcons } from './People';
 import { useClarity } from '../clarity/context';
 import { TaskAdvice } from '../clarity/TaskAdvice';
 import { capoDistrict } from '../../engine/candidates';
+import { SpotLine } from '../econ/SetUps';
 
 const RANK_ORDER: Rank[] = ['underboss', 'consigliere', 'capo', 'soldier', 'associate'];
 
@@ -119,6 +120,7 @@ function Vassals({ s }: { s: GameState }) {
                 <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
                 <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · {seenSkim(s, c, purseFlags(s, c), !!getSettings().devIds, skimRate(s, c))} · his own money {seenWealth(s, c, !!getSettings().devIds)} · {regime(s, c.id).length} men</div>
                 <TraitIcons c={c} />
+                <SpotLine s={s} c={c} />
               </div>
               <div className="text-right">
                 <div className="text-[10px] uppercase tracking-widest text-stone-500">Opinion</div>
@@ -185,6 +187,7 @@ function ManRow({ s, c }: { s: GameState; c: Character }) {
           <button className="ml-auto text-[11px] text-stone-500 underline" onClick={() => setOpen(!open)}>{open ? 'less' : 'traits'}</button>
         </div>
       )}
+      <SpotLine s={s} c={c} />
       {open && <div className="mt-1"><TraitIcons c={c} labels /></div>}
     </div>
   );

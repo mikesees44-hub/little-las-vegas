@@ -13,6 +13,7 @@ import { proofs } from './paper';
 import { addOpinion, opinion } from './relations';
 import { hashSeed } from './rng';
 import { timeCost } from './timeCost';
+import { spotLtCands } from './kickup';
 import { ensureTribute, noteFavor } from './tributeState';
 import type { Character, GameState, PlayerAction, RivalId } from './types';
 
@@ -476,6 +477,12 @@ export function ltCandidates(s: GameState): LtCand[] {
     out.push({ id: d.id, seat, domain, topic: d.topic, says: d.says, priority: d.priority, opts, self: Object.fromEntries(d.opts.map((o) => [o.id, o.self])), charId: d.charId });
   }
   out.push(...extraCands(s, ok));
+  // The men's own spots (kickup.ts): set-ups, short envelopes, a big earner who wants more.
+  for (const c of spotLtCands(s)) {
+    if (!ok(c.domain) || filled[c.seat]?.id === c.charId) continue;
+    const opts = c.specs.map((sp) => realizeOne(s, sp)).filter((o): o is LtOpt => !!o);
+    if (opts.length) out.push({ id: c.id, seat: c.seat, domain: c.domain, topic: c.topic, says: c.says, priority: c.priority, opts, self: {}, ...(c.charId ? { charId: c.charId } : {}) });
+  }
   return out;
 }
 
