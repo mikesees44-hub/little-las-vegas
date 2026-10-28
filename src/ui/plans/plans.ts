@@ -4,6 +4,7 @@ import { DAY_NAMES, DAY_SHORT, daysOf, weekPlan } from '../../engine/days';
 import { deskLoans } from '../../engine/familyBank';
 import { heatBand } from '../../engine/heat';
 import { inbox, type InboxItem } from '../../engine/inbox';
+import { actLocked, callOf, chosenOpt, docketOf, levelOf, lc, modeOf, type LtCall } from '../../engine/lieutenants';
 import { stageLabel } from '../../engine/longgame';
 import { BUILD_STAGES, STAGE_LABEL, lotName, underConstruction } from '../../engine/property';
 import { roundOptions } from '../../engine/rounds';
@@ -33,7 +34,7 @@ import { orderMark } from './orderMarks';
  * It is the same list, with the same count, as Waiting on you, the desk and
  * the door. The rest is what is under way.
  */
-export type PlanGroupId = 'inbox' | 'orders' | 'schemes' | 'trips' | 'evenings' | 'property' | 'loans' | 'threats' | 'rivals' | 'law' | 'other';
+export type PlanGroupId = 'inbox' | 'lieutenants' | 'orders' | 'schemes' | 'trips' | 'evenings' | 'property' | 'loans' | 'threats' | 'rivals' | 'law' | 'other';
 export type PlanTone = 'good' | 'warn' | 'bad' | 'neutral';
 
 export type PlanDo =
@@ -51,9 +52,12 @@ export type PlanDo =
   | { to: 'city' }
   | { to: 'comeHome' }
   | { to: 'focus'; focus: Omit<MapFocus, 'nonce'> }
-  | { to: 'orders' };
+  | { to: 'orders' }
+  /** The boss's word on a lieutenant's job (engine/lieutenants.ts). */
+  | { to: 'lt'; id: string; verdict: LtCall['verdict'] | undefined; option?: string }
+  | { to: 'ltSettings' };
 
-export type PlanActId = 'cancel' | 'speed' | 'check' | 'go' | 'open';
+export type PlanActId = 'cancel' | 'speed' | 'check' | 'go' | 'open' | 'approve' | 'veto' | 'change';
 export interface PlanAct { id: PlanActId; label: string; do: PlanDo; disabled?: string }
 
 export interface PlanRow {
@@ -78,6 +82,7 @@ export interface PlanGroup { id: PlanGroupId; title: string; blurb: string; rows
 
 export const GROUP_INFO: Record<PlanGroupId, { title: string; blurb: string; glyph: string }> = {
   inbox: { title: 'Waiting on you', blurb: 'Wants your word. The same list as the door and the desk.', glyph: '▤' },
+  lieutenants: { title: 'Your lieutenants this week', blurb: 'What the underboss and the consigliere will do. Stop any of it before his day.', glyph: '♞' },
   orders: { title: 'Your orders this week', blurb: 'Given; carried out when the week turns.', glyph: '☰' },
   schemes: { title: 'Schemes you are running', blurb: 'Your plots and jobs, how far along, the odds.', glyph: '◐' },
   trips: { title: 'Trips and visits', blurb: 'Who is on the road, and when they are back.', glyph: '✈' },
@@ -99,6 +104,15 @@ export interface PlansUi {
 const TONE_OF = { red: 'bad', amber: 'warn', gold: 'neutral' } as const;
 
 function inboxRow(it: InboxItem): PlanRow {
+  if (it.ref.lt) {
+    const id = it.ref.lt;
+    const acts: PlanAct[] = [
+      { id: 'approve', label: 'Approve', do: { to: 'lt', id, verdict: 'approve' } },
+      { id: 'change', label: 'Change', do: { to: 'route', route: { home: 'week' } } },
+      { id: 'veto', label: 'Veto', do: { to: 'lt', id, verdict: 'veto' } },
+    ];
+    return { key: `in:${it.key}`, group: 'inbox', glyph: '♞', what: it.title, who: undefined, whoId: it.charId, when: it.tone === 'red' ? 'Today' : 'This week', status: it.why, tone: TONE_OF[it.tone], acts };
+  }
   const open: PlanDo = it.ref.tip ? { to: 'urgent', id: it.ref.tip }
     : it.ref.event ? { to: 'event', iid: it.ref.event }
     : it.ref.day !== undefined ? { to: 'day', day: it.ref.day }
@@ -121,6 +135,23 @@ export function plansInMotion(s: GameState, ui: PlansUi = { orders: [] }): PlanG
 
   // ---- The inbox ----
   safe(() => rows.push(...inbox(s, ui).map(inboxRow)));
+
+  // ---- Your lieutenants this week (the jobs that run unless stopped) ----
+  safe(() => {
+    for (const a of docketOf(s)) {
+      const call = callOf(s, a.id);
+      if (actLocked(s, a) || call?.verdict === 'veto' || levelOf(s, a.domain) === 'self') continue;
+      if (modeOf(s, a) === 'ask' && !call) continue; // in the inbox
+      const o = chosenOpt(s, a);
+      rows.push({
+        key: `lt:${a.id}`, group: 'lieutenants', glyph: '♞', what: `${lc(o?.label ?? a.topic).replace(/^./, (x) => x.toUpperCase())} (${a.topic})`, who: name(s, a.byId) || undefined, whoId: a.byId,
+        when: a.day === today ? 'Today' : DAY_NAMES[a.day], eta: a.day - today,
+        status: `${a.seat === 'underboss' ? 'Underboss' : 'Consigliere'}${call ? (call.verdict === 'approve' ? ' · you approved' : ' · your way') : ' · on his own'}${o?.cost ? ` · ${fmt$(o.cost)} Family` : ''}`,
+        tone: 'neutral',
+        acts: [{ id: 'veto', label: 'Stop him', do: { to: 'lt', id: a.id, verdict: 'veto' } }, { id: 'check', label: 'Who handles what', do: { to: 'ltSettings' } }],
+      });
+    }
+  });
 
   // ---- Your orders this week ----
   ui.orders.forEach((a, i) => {
@@ -331,7 +362,7 @@ export function plansInMotion(s: GameState, ui: PlansUi = { orders: [] }): PlanG
     }
   });
 
-  const order: PlanGroupId[] = ['inbox', 'threats', 'orders', 'schemes', 'trips', 'evenings', 'property', 'loans', 'rivals', 'law', 'other'];
+  const order: PlanGroupId[] = ['inbox', 'lieutenants', 'threats', 'orders', 'schemes', 'trips', 'evenings', 'property', 'loans', 'rivals', 'law', 'other'];
   return order.map((id) => ({ id, title: GROUP_INFO[id].title, blurb: GROUP_INFO[id].blurb, rows: rows.filter((r) => r.group === id).sort((a, b) => (id === 'inbox' ? 0 : (a.eta ?? 999) - (b.eta ?? 999))) })).filter((g) => g.rows.length);
 }
 

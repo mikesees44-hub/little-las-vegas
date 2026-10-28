@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import { spendTime, timeBlock, unbook, refundTime, absDay } from '../../engine/timeCost';
 import { comeHome } from '../../engine/visit';
+import { ltDecide } from '../../engine/lieutenants';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { useSheet } from '../components/People';
@@ -26,6 +27,8 @@ export interface PlansApi {
   envelope: () => void;
   /** Stop the running clock. */
   pause: (why: string) => void;
+  /** "Who handles what" (the lieutenants' settings). */
+  lieutenants?: () => void;
 }
 
 const noop = () => {};
@@ -73,6 +76,8 @@ export function usePlanDo(s: GameState): (d: PlanDo, after?: () => void) => void
       case 'envelope': close(); api.envelope(); return;
       case 'city': close(); travel.city?.(); return;
       case 'comeHome': shell.update?.((cur) => comeHome(cur)); return;
+      case 'lt': shell.update?.((cur) => ltDecide(cur, d.id, d.verdict, d.option)); return;
+      case 'ltSettings': close(); api.lieutenants?.(); return;
       case 'focus': close(); shell.focus(d.focus); return;
       case 'orders': close(); (document.querySelector('[data-testid=orders-button]') as HTMLButtonElement | null)?.click(); return;
     }

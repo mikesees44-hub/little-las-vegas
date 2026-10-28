@@ -152,6 +152,8 @@ export interface BriefingState {
   /** Speaker key -> he handles his routine items himself. */
   trust: Record<string, boolean>;
   log: BriefLogEntry[];
+  /** The underboss and the consigliere at work: who handles what, this week's docket, their record (lieutenants.ts). */
+  lt?: import('./lieutenants').LtState;
 }
 
 export interface BriefLogEntry {
@@ -996,6 +998,43 @@ export function setTrust(s: GameState, key: string, on: boolean): GameState {
 /** What the trusted advisors did last week (for This Week). */
 export function delegationLog(s: GameState, week = s.week - 1): BriefLogEntry[] {
   return (s.briefing?.log ?? []).filter((e) => e.week === week);
+}
+
+/** One subject a seat could raise, uncapped and unranked by any advisor (lieutenants.ts works from these). */
+export interface SeatDraft {
+  id: string;
+  /** Whose items it came from ('capo' for a capo's district). */
+  from: 'underboss' | 'consigliere' | 'bagman' | 'capo';
+  charId?: string;
+  priority: number;
+  topic: string;
+  says: string[];
+  routine: boolean;
+  /** Realized options (real orders that preview clean and are affordable), 'wait' left out. */
+  opts: (BriefOption & { self: number })[];
+}
+
+/**
+ * Every subject the underboss, the consigliere, the bagman and the capos could raise this week, with no
+ * sitting's caps (two a man, six in all). The lieutenants' days are built from this one list, so what they
+ * do is what the sit-down would have put in front of the boss. Pure.
+ */
+export function seatDrafts(s: GameState): SeatDraft[] {
+  if (s.gameOver) return [];
+  const out: SeatDraft[] = [];
+  const add = (from: SeatDraft['from'], ds: Draft[]) => {
+    for (const d of ds) {
+      const opts = realize(s, d.opts).filter((o) => o.id !== 'wait' && !!o.action);
+      if (!opts.length) continue;
+      out.push({ id: d.id, from, charId: d.charId, priority: d.priority, topic: d.topic, says: d.says, routine: !!d.routine, opts });
+    }
+  };
+  try { add('underboss', underbossItems(s, holder(s, 'underboss'))); } catch { /* a pillar not initialised yet */ }
+  try { add('consigliere', consigliereItems(s, holder(s, 'consigliere'))); } catch { /* idem */ }
+  try { add('bagman', bagmanItems(s, holder(s, 'bagman') ?? holder(s, 'fixer'))); } catch { /* idem */ }
+  for (const k of capos(s)) if (isFree(s, k)) try { add('capo', capoItems(s, k)); } catch { /* idem */ }
+  const seen = new Set<string>();
+  return out.filter((d) => (seen.has(d.id) ? false : (seen.add(d.id), true)));
 }
 
 /** "Sal — Sharp" for an empty-seat or a trust label. */

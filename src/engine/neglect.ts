@@ -5,6 +5,7 @@ import { addOpinion } from './relations';
 import { chance } from './rng';
 import type { EventInstance, GameState, PlayerChoices } from './types';
 import { FACTION_NAMES } from './world';
+import { ltCover } from './lieutenants';
 
 /**
  * AN ABSENT BOSS (playtest MAKE_IT_GREAT #1: "doing nothing wins").
@@ -19,7 +20,9 @@ import { FACTION_NAMES } from './world';
  *   - the cops smell it: with nobody minding the pad, local heat creeps up.
  *
  * Any order, an envelope split, a trusted advisor acting, or one answer that is not the default resets
- * the count. Every dollar and point is a ledger line.
+ * the count. The underboss and the consigliere working their domains (lieutenants.ts) do NOT reset it:
+ * delegating is not running the family. A good one softens the bite in what he minds (the count, the
+ * men, the corners, the pad); a bad or disloyal one softens nothing. Every dollar and point is a ledger line.
  */
 
 /** Idle weeks before anything bites. */
@@ -58,16 +61,19 @@ export function neglectWeek(ctx: Ctx, wasAttended: boolean): void {
   s.flags.idleWeeks = idle;
   const k = neglectLevel(idle);
   if (k <= 0) return;
+  // A lieutenant minding a domain takes some of the bite out of it (never all: he is not the boss).
+  const cover = ltCover(s);
   // 1. The count goes soft.
   const take = Math.max(0, ctx.gross);
-  const skim = Math.round(take * (0.06 + (IDLE_SKIM_MAX - 0.06) * k));
-  if (skim > 0) money(ctx, -skim, `Nobody is watching the count: the crews help themselves (${idle} weeks without the boss)`, 'cost');
+  const skim = Math.round(take * (0.06 + (IDLE_SKIM_MAX - 0.06) * k) * (1 - 0.6 * cover.count));
+  if (skim > 0) money(ctx, -skim, `Nobody is watching the count: the crews help themselves (${idle} weeks without the boss)${cover.count >= 0.4 ? ' (the underboss keeps some of it honest)' : ''}`, 'cost');
   // 2. The men drift.
-  if (idle % 2 === 0) for (const c of crew(s)) if (isFree(s, c)) addOpinion(s, c.id, s.playerId, 'The boss is never around', -2, 0.5);
+  const drift = Math.round(2 * (1 - 0.6 * cover.men));
+  if (idle % 2 === 0 && drift > 0) for (const c of crew(s)) if (isFree(s, c)) addOpinion(s, c.id, s.playerId, 'The boss is never around', -drift, 0.5);
   // 3. The rivals move in on the thinnest district you hold.
   const mine = s.districts.filter((d) => (d.influence.player ?? 0) > 0).sort((a, b) => (a.influence.player ?? 0) - (b.influence.player ?? 0));
   const d = mine[0];
-  if (d && chance(s, 0.2 + 0.3 * k)) {
+  if (d && chance(s, (0.2 + 0.3 * k) * (1 - 0.6 * cover.corners))) {
     const rival = Object.entries(d.influence).filter(([f, v]) => f !== 'player' && s.rivals.some((r) => r.id === f && r.kind === 'mob') && (v ?? 0) >= 0).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0]
       ?? s.rivals.find((r) => r.kind === 'mob')?.id;
     if (rival) {
@@ -79,5 +85,5 @@ export function neglectWeek(ctx: Ctx, wasAttended: boolean): void {
     }
   }
   // 4. The cops smell it.
-  if (idle >= IDLE_GRACE + 2) heat(ctx, 'local', 1, 'Nobody minding the pad: the cops smell a boss who is not there', 'drift');
+  if (idle >= IDLE_GRACE + 2 && cover.cops < 0.5) heat(ctx, 'local', 1, 'Nobody minding the pad: the cops smell a boss who is not there', 'drift');
 }
