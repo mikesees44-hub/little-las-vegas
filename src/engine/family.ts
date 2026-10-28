@@ -237,7 +237,8 @@ export function applyDynOp(ctx: Ctx, op: DynOp, label: string): void {
     case 'abdicate': {
       const old = boss;
       const heir = chooseHeir(s, old).heir;
-      if (!heir) break;
+      // Nobody but a man who already retired: the old man stays in the chair.
+      if (!heir || fam(s, heir.id).retired !== undefined) break;
       succeed(ctx, old);
       if (s.playerId === old.id) break;
       old.rank = 'civilian';

@@ -15,6 +15,8 @@ import { attended, IDLE_GRACE, idleWeeks, neglectLevel, neglectWeek } from '../s
 import { tributeOnWeekly } from '../src/engine/events';
 import { padForSize, recordEarnings } from '../src/engine/economy';
 import { SHYLOCK_DEBT_CAP } from '../src/engine/regimes';
+import { bloodLine } from '../src/engine/dynasty';
+import { famMut } from '../src/engine/familyState';
 import type { GameState } from '../src/engine/types';
 
 const clone = (s: GameState): GameState => JSON.parse(JSON.stringify(s));
@@ -180,5 +182,17 @@ describe('#2 money keeps a cost all the way up', () => {
     for (let i = 0; i < 6; i++) s = advanceWeek(s, {}).state;
     const d = s.characters[man.id].debtTo;
     if (d) expect(d.amount).toBeLessThanOrEqual(SHYLOCK_DEBT_CAP);
+  });
+});
+
+describe('a retired boss is not the next in line', () => {
+  it('the blood line puts a man who retired to Florida last', () => {
+    const s = newGame('stake-retired');
+    const boss = s.characters[s.playerId];
+    const line = bloodLine(s, boss);
+    if (line.length < 2) return;
+    famMut(s, line[0].id).retired = s.week;
+    const again = bloodLine(s, boss);
+    expect(again[again.length - 1].id).toBe(line[0].id);
   });
 });

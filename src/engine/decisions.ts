@@ -102,7 +102,7 @@ export function decisionViews(s: GameState): DecisionView[] {
     {
       id: 'florida', name: 'Retire to Florida', shown: true,
       text: 'Hand the chair to your heir while you can still enjoy the sun in Hallandale. The house goes on; you stay alive to give advice nobody takes.',
-      reqs: [{ label: 'Aged 55+, or in poor health (under 50)', ok: ageOn(boss.birth, s.date) >= 55 || boss.health < 50 }, { label: `A grown heir${heir ? ` (${heir.firstName})` : ''}`, ok: !!heir && ageOn(heir.birth, s.date) >= 18 }],
+      reqs: [{ label: 'Aged 55+, or in poor health (under 50)', ok: ageOn(boss.birth, s.date) >= 55 || boss.health < 50 }, { label: `A grown heir${heir ? ` (${heir.firstName})` : ''}`, ok: !!heir && ageOn(heir.birth, s.date) >= 18 }, { label: 'Two years since the last boss retired', ok: taken(s, 'florida') === undefined || s.week - (taken(s, 'florida') ?? 0) >= 104 }],
       costText: 'Your chair',
       effects: [{ type: 'dyn', op: { op: 'abdicate' } }, { type: 'respect', amount: 4, label: 'A graceful exit' }],
     },
