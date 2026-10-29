@@ -138,3 +138,13 @@ describe('Playtest fixes: an evening with the goomar', () => {
     expect(eveningBlock(s, plan)).toMatch(/already had your evening/);
   });
 });
+
+describe('Playtest fixes: Ready to advance?', () => {
+  it('the Family total after the week subtracts the weekly bills listed above it', async () => {
+    const { readyReview } = await import('../src/engine/desk');
+    const s = newGameWith(SEED, 'olddon');
+    const r = readyReview(s, {});
+    expect(r.costs.bills).toBeGreaterThan(0);
+    expect(r.costs.familyAfter).toBe(Math.round(s.money - r.costs.orders - r.costs.bills));
+  });
+});

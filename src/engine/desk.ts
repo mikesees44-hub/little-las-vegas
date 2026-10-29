@@ -153,7 +153,7 @@ export interface ReadyReview {
   /** Morning problems not answered this week (still to come or today). */
   mornings: { key: string; title: string; becomes: string }[];
   orders: { title: string; cost: number; pot: 'family' | 'pocket' }[];
-  /** Known money out: orders, the evenings, the weekly bills. */
+  /** Known money out: orders, the evenings, the weekly bills. `familyAfter` is after all three (the bills come out of the Family). */
   costs: { orders: number; evenings: number; bills: number; familyAfter: number; pocketAfter: number };
   /** Short warnings (Family money below zero, an order the pocket can't pay). */
   warnings: string[];
@@ -177,13 +177,14 @@ export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
   const evenings = weekPlan(s).reduce((a, id, day) => a + (id && day >= d.day ? opts.find((x) => x.id === id)?.cost ?? 0 : 0), 0);
   const bills = obligations(s).filter((o) => o.weekly && o.kind !== 'receivable').reduce((a, o) => a + o.amount, 0);
   const warnings: string[] = [];
+  if (q.familyLeft >= 0 && q.familyLeft - bills < 0) warnings.push(`After this week's orders the weekly bills (${fmtMoney(bills)}) take the Family below zero: the men notice when payroll is late.`);
   if (q.familyLeft < 0) warnings.push(`This week's orders need ${fmtMoney(-q.familyLeft)} more Family money than there is: some won't be carried out.`);
   const urgent = urgentMeetings(s).filter((u) => u.status === 'waiting');
   if (urgent.length) warnings.push(`${urgent.length === 1 ? `${urgent[0].who} is` : `${urgent.length} people are`} still waiting on an urgent meeting: what they heard lands whether you listen or not.`);
   if (q.pocketLeft - evenings < 0) warnings.push('Your evenings and pocket orders cost more than your pocket holds: the Family covers the evenings; pocket orders without your approval are skipped.');
   return {
     unanswered, mornings, orders: os,
-    costs: { orders: os.reduce((a, o) => a + o.cost, 0), evenings, bills, familyAfter: Math.round(q.familyLeft), pocketAfter: Math.round(q.pocketLeft - evenings) },
+    costs: { orders: os.reduce((a, o) => a + o.cost, 0), evenings, bills, familyAfter: Math.round(q.familyLeft - bills), pocketAfter: Math.round(q.pocketLeft - evenings) },
     warnings,
     clear: !unanswered.length && !mornings.length && !warnings.length && !os.length,
   };

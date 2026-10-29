@@ -232,7 +232,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
           <div className="flex justify-between"><span className="text-stone-400">Orders</span><span>{fmt$(r.costs.orders)}</span></div>
           <div className="flex justify-between"><span className="text-stone-400">Your evenings (pocket)</span><span>{fmt$(r.costs.evenings)}</span></div>
           <div className="flex justify-between"><span className="text-stone-400">Weekly bills (payroll, upkeep, loans)</span><span>{fmt$(r.costs.bills)}</span></div>
-          <div className="mt-1 flex justify-between border-t border-noir-700 pt-1"><span className="text-stone-400">After the orders and evenings</span><span>Family {fmt$(r.costs.familyAfter)} · pocket {fmt$(r.costs.pocketAfter)}</span></div>
+          <div className="mt-1 flex justify-between border-t border-noir-700 pt-1"><span className="text-stone-400">After the orders, evenings and bills</span><span>Family {fmt$(r.costs.familyAfter)} · pocket {fmt$(r.costs.pocketAfter)}</span></div>
           <div className="text-[10px] text-stone-500">Known costs only. The week's take, the envelope and anything that happens come on top.</div>
         </div>
         {r.warnings.map((w, i) => <div key={i} className="text-[12px] text-red-300">⚠ {w}</div>)}
