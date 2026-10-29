@@ -93,7 +93,7 @@ export function riseChart(s: GameState): RiseChart {
     const d = s.districts.find((x) => x.capoId === k.id);
     const take = Math.round(last?.crews.find((x) => x.capoId === k.id)?.remitted ?? 0);
     const before = Math.round(prev?.crews.find((x) => x.capoId === k.id)?.remitted ?? take);
-    const rivals = d ? Object.entries(d.influence).filter(([r, v]) => r !== 'player' && (v ?? 0) >= 15).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0)) : [];
+    const rivals = d ? Object.entries(d.influence).filter(([r, v]) => r !== 'player' && s.rivals.some((x) => x.id === r) && (v ?? 0) >= 15).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0)) : [];
     const top = rivals[0];
     const want = xpWants(s, k).find((w) => !w.met)?.text;
     const node = riseNode(s, k);

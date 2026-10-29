@@ -27,7 +27,7 @@ function NodeLine({ n, small }: { n: RiseNode; small?: boolean }) {
       <span className="shrink-0 rounded border border-noir-600 px-1 text-[9px] uppercase tracking-wider text-stone-400" data-testid="rise-rank">{n.rank}</span>
       <span className={`shrink-0 rounded border px-1 text-[10px] tabular-nums ${n.lvl >= 7 ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-300'}`} title={n.title}>Lv {n.lvl}</span>
       <Bar frac={n.frac} className="w-8 shrink-0" />
-      <span className="shrink-0 text-gold-300" title={`${n.focus.name} focus`} aria-label={`${n.focus.name} focus`}>{n.focus.icon}</span>
+      {n.rank !== 'boss' && <span className="shrink-0 text-gold-300" title={`${n.focus.name} focus`} aria-label={`${n.focus.name} focus`}>{n.focus.icon}</span>}
       {n.perk && <span className="min-w-0 truncate text-[10px] text-stone-400" data-testid="rise-perk">{n.perk}</span>}
       {n.ticked && <span className="shrink-0 text-[10px] text-emerald-400" aria-label="a skill went up">▲</span>}
       {n.badges.map((b) => (
@@ -61,15 +61,15 @@ function CapoCard({ k }: { k: CapoNode }) {
 export function Ladder({ s, compact }: { s: GameState; compact?: boolean }) {
   const { at, next } = currentRung(s);
   return (
-    <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-7'}`} data-testid="rise-ladder">
+    <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-4 lg:grid-cols-7'}`} data-testid="rise-ladder">
       {LADDER.map((r) => {
         const done = r.done(s) && r.n <= at.n;
         const cur = next?.n === r.n;
         return (
           <li key={r.id} className={`rounded border px-1.5 py-1 ${done ? 'border-emerald-700/60 bg-emerald-900/10' : cur ? 'border-gold-500 bg-gold-500/10' : 'border-noir-700 opacity-70'}`} data-testid={`rise-rung-${r.n}`} title={`${r.milestone} Opens: ${r.opens}.`}>
             <div className="text-[10px] text-stone-500">{done ? '✓' : r.n}</div>
-            {!compact && <div className="text-[11px] font-semibold leading-tight text-stone-100">{r.title}</div>}
-            {!compact && <div className="text-[9px] leading-tight text-stone-500">Opens: {r.opens}</div>}
+            {!compact && <div className="text-[10px] font-semibold leading-tight text-stone-100 sm:text-[11px]">{r.title}</div>}
+            {!compact && <div className="hidden text-[9px] leading-tight text-stone-500 sm:block">Opens: {r.opens}</div>}
             {cur && <Bar frac={r.progress(s)} className="w-full" />}
           </li>
         );

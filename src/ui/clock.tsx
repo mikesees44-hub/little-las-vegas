@@ -80,6 +80,8 @@ export function useClock(opts: {
   ref.current = opts;
   useEffect(() => {
     if (opts.speed === 0) return;
+    // A decision card open holds the clock (it does not stop it): when the card closes, time moves on.
+    if (opts.busy && !opts.s.gameOver) return;
     const why = pauseReason(opts.s, opts.busy, opts.unanswered);
     if (why) {
       ref.current.onPause(why);
