@@ -402,3 +402,21 @@ describe('capos: the hard rule and the plumbing', () => {
     expect(isCapo(s, k.id)).toBeDefined();
   });
 });
+
+describe('capos: the card', () => {
+  it('Capos & soldiers shows each capo\'s desk: grip, take, noise, mood, read, this week, his requests and his orders', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { CaposSection } = await import('../src/ui/borgata/Capos');
+    const s = playWeeks('capo-card', 8);
+    const k = firstCapo(s);
+    const kid = makeCharacter(s, { rank: 'civilian', faction: 'none', age: 20 });
+    ensureCapos(s).req.push({ id: 'rqUI', capo: k.id, k: 'men', who: kid.id, y: 'I need one more guy on the Boardwalk', w: s.week });
+    const html = renderToString(createElement(CaposSection, { s }));
+    expect(html).toContain('data-testid="capo-desk"');
+    expect(html).toContain('Grip');
+    expect(html).toContain('This week:');
+    expect(html).toContain('data-testid="capo-request"');
+    expect(html).toContain('I need one more guy on the Boardwalk');
+  });
+});

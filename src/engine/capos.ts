@@ -1,5 +1,5 @@
 import type { ActionPreview } from './actions';
-import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
+import { capos, crew, displayName, hasTrait, isFree, makeCharacter, pickNickname, player, usedNicknames } from './characters';
 import { grantXp, level } from './crewXp';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
 import { ourMarriageable, performMarriage } from './familyMarriage';
@@ -372,12 +372,17 @@ function touchesHim(s: GameState, k: Character, i: Pick<CapoIntel, 'about'>): bo
   return !!o && (o.capoId === k.id || opinion(s, k.id, o.id) >= 40);
 }
 
+/** A man who bends what he passes up (a schemer, unless he is honest or loyal to a fault). */
+function slanter(k: Character): boolean {
+  return isSchemer(k) && !hasTrait(k, 'Honest') && !hasTrait(k, 'Loyal-to-a-fault');
+}
+
 /** Odds he tells it straight. */
 function honestOdds(s: GameState, k: Character, b: CapoBook, i: CapoIntel): number {
   let p = b.st === 'loyal' ? 0.92 : b.st === 'steady' ? 0.78 : b.st === 'hedging' ? 0.45 : 0.15;
   if (hasTrait(k, 'Honest')) p += 0.12;
   if (hasTrait(k, 'Loyal-to-a-fault')) p += 0.1;
-  if (isSchemer(k)) p -= 0.15;
+  if (slanter(k)) p -= 0.15;
   if (touchesHim(s, k, i)) p -= b.st === 'loyal' ? 0.1 : b.st === 'steady' ? 0.25 : 0.35;
   if ((b.watch ?? -1) >= s.week) p += 0.05;
   return clamp(p, 0.03, 0.98);
@@ -412,7 +417,7 @@ function report(ctx: Ctx, k: Character, i: CapoIntel, forceHonest = false): Capo
     rep = { id: nid(C, 'cr'), capo: k.id, w: s.week, k: i.k, told: i.truth, truth: i.truth, kind: 'honest', about: i.about };
     C.stats.honest++;
     tellTruth(ctx, k, i);
-  } else if (isSchemer(k) || b.st === 'turning' || (b.st === 'hedging' && r01(C) < 0.5)) {
+  } else if (slanter(k) || b.st === 'turning' || (b.st === 'hedging' && r01(C) < 0.5)) {
     const sl = slant(s, k, i);
     rep = { id: nid(C, 'cr'), capo: k.id, w: s.week, k: i.k, told: sl.told, truth: i.truth, kind: 'slant', about: i.about };
     C.stats.slants++;
@@ -626,7 +631,8 @@ function startPlot(ctx: Ctx, k: Character, b: CapoBook): void {
   const ub = crew(s).find((c) => c.rank === 'underboss' && isFree(s, c));
   const opts: { k: PlotKind; w: number }[] = [];
   if (r) opts.push({ k: 'defect', w: 3 + (k.courtedBy ? 3 : 0) });
-  if ((k.evidence ?? 0) >= 35 || hasTrait(k, 'Cowardly')) opts.push({ k: 'fbi', w: 1 + (k.evidence ?? 0) / 25 + (hasTrait(k, 'Cowardly') ? 2 : 0) });
+  // A man with a thick file (or a weak stomach) thinks about the deal the FBI offers.
+  if ((k.evidence ?? 0) >= 25 || hasTrait(k, 'Cowardly') || s.heat.federal >= 40) opts.push({ k: 'fbi', w: 1 + (k.evidence ?? 0) / 25 + (hasTrait(k, 'Cowardly') ? 2 : 0) + (s.heat.federal >= 40 ? 1 : 0) });
   if (hasTrait(k, 'Ambitious') && (s.factions.length > 0 || (ub && ub.id !== k.id && opinion(s, ub.id, s.playerId) < -10))) opts.push({ k: 'coup', w: 3 });
   if (!opts.length) return;
   const tot = opts.reduce((a, o) => a + o.w, 0);
@@ -979,6 +985,8 @@ function lapseRequests(ctx: Ctx): void {
 
 function bringIn(s: GameState, k: Character, m: Character, why: string): void {
   if (m.faction === 'none') {
+    // One name per crew: an outside guy's street name may already be taken in the family.
+    if (m.nickname && usedNicknames(s, 'player').has(m.nickname)) m.nickname = pickNickname(s, 'player');
     m.faction = 'player';
     m.rank = 'associate';
     m.outside = undefined;

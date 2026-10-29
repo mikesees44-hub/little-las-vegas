@@ -492,7 +492,8 @@ export type Effect =
   | ({ type: 'goal'; key: 'bank' | 'land' | 'sellLand' | 'license' } & EffectBase)
   | ({ type: 'unwashed'; amount: number } & EffectBase)
   | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase)
-  | ({ type: 'exile'; charId: string } & EffectBase)
+  /** `own`: he walked away on his own (a story's outcome), not sent away by anyone. */
+  | ({ type: 'exile'; charId: string; own?: true } & EffectBase)
   | ({ type: 'wealth'; charId: string; amount: number } & EffectBase)
   | ({ type: 'seat'; seat: Seat; charId?: string; task?: CouncilTask; target?: string } & EffectBase)
   | ({ type: 'policy'; charId: string; policy: CrewPolicy } & EffectBase)

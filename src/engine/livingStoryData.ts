@@ -614,7 +614,7 @@ const newCrew: ArcTemplate = {
       id: 'identity', title: 'What they became', wait: [16, 26],
       auto: (v) => (op(v.s, R(v, 'founder'), v.s.playerId) >= 5
         ? { note: `${v.f('founder')}'s young men became the hardest-working crew in the family. The old capos complain that they make them look slow.`, effects: [{ type: 'respect', amount: 2 }], finish: 'A crew became part of the family.' }
-        : { note: `${v.f('founder')} walked away from the family one night with four of the young men. They run a little dice game in the Crest now, and they do not kick up to anybody.`, effects: [{ type: 'exile', charId: R(v, 'founder') }, { type: 'respect', amount: -1 }], finish: 'A crew became a family of its own.' }),
+        : { note: `${v.f('founder')} walked away from the family one night with four of the young men. They run a little dice game in the Crest now, and they do not kick up to anybody.`, effects: [{ type: 'exile', charId: R(v, 'founder'), own: true }, { type: 'respect', amount: -1 }], finish: 'A crew became a family of its own.' }),
     },
   ],
 };
