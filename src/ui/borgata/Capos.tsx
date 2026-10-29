@@ -22,6 +22,7 @@ import { useState } from 'react';
 import { capoActionsFor, capoCard, crisisOf, type CapoCard } from '../../engine/capos';
 import { MOOD_TEXT, type Mood } from '../../engine/minds/types';
 import { ActionRow } from '../components/ActionRow';
+import { OrderChoice } from '../decide/OrderChoice';
 
 const same = (a: PlayerAction, b: PlayerAction) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -112,10 +113,8 @@ export function CapoDesk({ s, card }: { s: GameState; card: CapoCard }) {
           )}
           {card.requests.map((q) => (
             <div key={q.id} className="space-y-1 rounded border border-gold-700/40 bg-gold-500/5 p-1.5" data-testid="capo-request">
-              <div className="text-stone-200">"{q.y}"</div>
-              <div className="grid gap-1 sm:grid-cols-3">
-                {(['yes', 'redirect', 'no'] as const).map((a) => <ActionRow key={a} s={s} action={{ kind: 'capo', op: { op: 'answer', req: q.id, a } }} hostile={a === 'no'} />)}
-              </div>
+              <OrderChoice s={s} text={`"${q.y}"`} testid={`capo-req-${q.id}`}
+                options={(['yes', 'redirect', 'no'] as const).map((a) => ({ id: a, action: { kind: 'capo', op: { op: 'answer', req: q.id, a } }, hostile: a === 'no', rowTestId: `capo-ans-${a}` }))} />
             </div>
           ))}
           <div className="grid gap-1 sm:grid-cols-2">
