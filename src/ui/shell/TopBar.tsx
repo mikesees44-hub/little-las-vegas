@@ -208,7 +208,7 @@ export function Popover({ button, children, align = 'right', testid, initialOpen
   return (
     <div className="relative" ref={ref}>
       {button(open, () => setOpen((o) => !o))}
-      {open && <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-full mt-1 z-[1200] min-w-[220px] panel p-1.5`} data-testid={testid}>{children(() => setOpen(false))}</div>}
+      {open && <div className={`absolute ${align === 'right' ? 'right-0' : 'left-0'} top-full mt-1 z-[1200] min-w-[220px] panel bg-noir-900 p-1.5 shadow-xl shadow-black/70`} data-testid={testid}>{children(() => setOpen(false))}</div>}
     </div>
   );
 }
