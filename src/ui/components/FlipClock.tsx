@@ -148,16 +148,14 @@ export function FlipClock({ s, variant = 'compact', testid = 'flip-clock' }: { s
     );
   }
   const c = 'llv-flipcard-sm';
+  // One card per value (not per digit) on the small clock: it reads as "Mon May 30 '60 · 8:00 AM".
   return (
-    <span className="inline-flex items-center gap-[2px] align-middle" role="img" aria-label={truth.long} title={truth.long} data-testid={testid} data-date={truth.date} data-time={truth.time}>
+    <span className="inline-flex items-center gap-[3px] align-middle whitespace-nowrap" role="img" aria-label={truth.long} title={truth.long} data-testid={testid} data-date={truth.date} data-time={truth.time}>
       <FlipCard v={f.weekday} className={c} />
-      <FlipCard v={f.month} className={c} />
-      <Digits v={String(f.day)} className={c} />
+      <FlipCard v={`${f.month} ${f.day}`} className={c} />
       <FlipCard v={f.yy} className={c} />
-      <span className="mx-[1px] text-stone-500" aria-hidden>·</span>
-      <Digits v={f.hour} className={c} />
-      <span className="llv-flip-colon" aria-hidden>:</span>
-      <Digits v={f.minute} className={c} />
+      <span className="mx-[2px] text-stone-500" aria-hidden>·</span>
+      <FlipCard v={`${f.hour.trim()}:${f.minute}`} className={c} />
       <FlipCard v={f.ampm} className={c} />
     </span>
   );

@@ -230,7 +230,8 @@ body:has([data-testid="walk-card"], [data-testid="walk-npc-card"], [data-testid=
 /* The 1960 desk flip clock (ui/components/FlipClock.tsx): printed number cards on a drum, split across the middle. */
 .llv-flipcard { position: relative; display: inline-flex; align-items: center; justify-content: center; perspective: 12em; border-radius: 2px; color: #f4ecd8; font-variant-numeric: tabular-nums; line-height: 1; background: linear-gradient(180deg, #2a241c 0%, #1a1611 49%, #0b0907 50%, #15120e 51%, #221d16 100%); box-shadow: inset 0 1px 0 rgba(255, 240, 210, 0.08), 0 1px 1px rgba(0, 0, 0, 0.6); overflow: hidden; }
 .llv-flipcard::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: rgba(0, 0, 0, 0.75); pointer-events: none; }
-.llv-flipcard-sm { min-width: 0.85em; height: 1.5em; padding: 0 0.16em; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
+.llv-flipcard-sm::after { opacity: 0.35; }
+.llv-flipcard-sm { white-space: nowrap; min-width: 0.85em; height: 1.5em; padding: 0 0.16em; font-size: 10px; font-weight: 600; letter-spacing: 0.02em; }
 @media (min-width: 640px) { .llv-flipcard-sm { font-size: 11px; padding: 0 0.2em; } }
 .llv-flipcard-desk { min-width: 0.78em; height: 1.25em; padding: 0 0.08em; font-size: 2.1em; font-weight: 700; font-family: Georgia, 'Times New Roman', serif; }
 .llv-flipcard-ampm { font-size: 0.9em; min-width: 1.6em; letter-spacing: 0.04em; font-family: ui-sans-serif, system-ui, sans-serif; }

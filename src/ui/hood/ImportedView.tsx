@@ -164,12 +164,21 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
   const download = () => {
     const text = exportFile();
     setExportText(text);
-    try {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-      a.download = 'historical-overrides.json';
-      document.body.appendChild(a); a.click(); a.remove();
-    } catch { /* the text box below has it */ }
+    void (async () => {
+      // Inside claude.ai the page may only hand the viewer a file through the downloads capability.
+      try {
+        const cl = (window as unknown as { claude?: { use?: (n: string) => Promise<unknown> } }).claude;
+        const dl = (await cl?.use?.('downloads')) as { save?: (r: { filename: string; data: string }) => Promise<unknown> } | null | undefined;
+        if (dl?.save) { await dl.save({ filename: 'historical-overrides.json', data: text }); return; }
+      } catch { return; /* declined or unavailable: the text box below has it */ }
+      // Outside claude.ai (a plain web host): an ordinary download link.
+      try {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+        a.download = 'historical-overrides.json';
+        document.body.appendChild(a); a.click(); a.remove();
+      } catch { /* the text box below has it */ }
+    })();
   };
   const gameCross = CROSS.filter((c) => c.u > vb.x - 50 && c.u < vb.x + vb.w + 50);
   const occupant = selB ? s.importedOccupants?.[selB.id] : undefined;
