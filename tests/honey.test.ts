@@ -57,7 +57,7 @@ function agent(s: GameState, id: string, kind: Agent['kind'], master: Agent['mas
 }
 
 /** Find the first approach whose reply matches. */
-function firstWith(s: GameState, id: string, pred: (moves: DareMove[]) => boolean): DareMove[] | undefined {
+function firstWith(pred: (moves: DareMove[]) => boolean): DareMove[] | undefined {
   for (const a of ['flirt', 'dare', 'flatter', 'status', 'money'] as DareMove[]) if (pred([a])) return [a];
   return undefined;
 }
@@ -120,7 +120,7 @@ describe('honey: the bold dare script', () => {
       t.week += w;
       const c = lover(t);
       agent(t, c.id, 'setup');
-      const first = firstWith(t, c.id, (m) => runDare(t, c.id, 'club', m).replies[0] === 'turn');
+      const first = firstWith((m) => runDare(t, c.id, 'club', m).replies[0] === 'turn');
       if (!first) continue;
       const r = runDare(t, c.id, 'club', [...first, 'along']);
       expect(r.end).toBe('lure');
@@ -136,7 +136,7 @@ describe('honey: claimed wives, and the divide', () => {
     const s = newGame('h-claim');
     mindsWeek(newCtx(s));
     const man = crewMan(s, 0);
-    man.household = { wife: 'Rosemarie', kids: ['Joey'] };
+    man.household = { wife: 'Rosemarie', kids: [{ name: 'Joey', male: true, born: 1952 }] };
     man.spouseId = undefined;
     const wife = wifeFor(s, man)!;
     wife.orientation = 'straight';
