@@ -121,3 +121,20 @@ describe('Playtest fixes: dates', () => {
     expect(sinceWeek(-200, 3)).toMatch(/^For 3 years \(since /);
   });
 });
+
+describe('Playtest fixes: an evening with the goomar', () => {
+  it('her card does not offer the same evening again at new odds, and a goomar of years is likely to say yes', async () => {
+    const { defaultPlan, eveningBlock, inviteAcceptance, approachText } = await import('../src/engine/evening');
+    const { actNow } = await import('../src/engine/deeds/now');
+    let s = newGameWith(SEED, 'olddon');
+    const gid = Object.keys(s.nightlife!.goomars)[0];
+    const plan = { ...defaultPlan(s, gid), approach: 'queen' as const };
+    expect(eveningBlock(s, plan)).toBeUndefined();
+    expect(inviteAcceptance(s, s.characters[gid], plan).chance).toBeGreaterThanOrEqual(0.5);
+    expect(approachText(s, gid, 'something')).not.toMatch(/road to/);
+    const r = actNow(s, { kind: 'nightlife', op: { op: 'invite', plan } });
+    expect(r.result.ok).toBe(true);
+    s = r.state;
+    expect(eveningBlock(s, plan)).toMatch(/already had your evening/);
+  });
+});

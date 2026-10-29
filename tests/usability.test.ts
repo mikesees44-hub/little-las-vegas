@@ -23,6 +23,7 @@ import { autoBriefings, helpLevel } from '../src/ui/settings';
 import { AdvicePanel } from '../src/ui/advice/AdviceButton';
 import { quickActionsFor } from '../src/ui/sheet/QuickActions';
 import { recurringOf } from '../src/engine/recurring';
+import { settlesNow } from '../src/engine/deeds/now';
 
 const withSheet = (node: ReactNode) => createElement(SheetContext.Provider, { value: { open: () => {}, menu: () => {} } }, node);
 const html = (node: ReactNode) => renderToString(withSheet(node));
@@ -92,7 +93,7 @@ describe('4: specific buttons and the facts before the click', () => {
     expect(f.actor).toBe('You');
     expect(f.target).toContain(man.lastName);
     expect(f.cost).toMatch(/from your pocket|from Family money/);
-    expect(f.timing).toMatch(/advance the week/);
+    expect(f.timing).toMatch(settlesNow(s, { kind: 'interact', id: 'dinner', target: man.id }) ? /^Now/ : /advance the week/);
     const ub = crew(s).find((c) => c.rank === 'underboss')!;
     const blocked = actionFacts(s, { kind: 'appoint', seat: 'underboss', charId: ub.id });
     expect(blocked.unavailable).toMatch(/^Unavailable: /);

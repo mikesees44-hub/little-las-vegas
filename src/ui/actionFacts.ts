@@ -9,6 +9,7 @@ import { SCHEME_INFO } from '../engine/schemes';
 import { TALKS, type TalkId } from '../engine/talks';
 import type { GameState, PlayerAction } from '../engine/types';
 import { verbOf } from './verbs';
+import { settlesNow } from '../engine/deeds/now';
 
 /**
  * WHAT AN ORDER MEANS, before the click: who acts, on whom, what it costs and
@@ -127,7 +128,9 @@ function targetOfAction(s: GameState, a: PlayerAction): string | undefined {
   }
 }
 
-function timingOf(a: PlayerAction, p: ActionPreview): string {
+function timingOf(s: GameState, a: PlayerAction, p: ActionPreview): string {
+  // A person interaction is settled on the tap (deeds/now.ts): never "when you advance the week" on the same card.
+  if (settlesNow(s, a)) return 'Now: the dice roll when you do it';
   if (a.kind === 'scheme') return `Starts when you advance the week; ${SCHEME_INFO[a.scheme].name.toLowerCase()} takes several weeks (you can call it off)`;
   if (a.kind === 'order' && a.via !== 'direct') return 'Passed down this week, carried out next week';
   if (p.effects.some((e) => e.type === 'schedule' && e.key === 'delegated_order')) return 'Carried out next week';
@@ -151,7 +154,7 @@ export function actionFacts(s: GameState, a: PlayerAction, p: ActionPreview = pr
     actor: actorOf(s, a),
     target: targetOfAction(s, a),
     cost,
-    timing: timingOf(a, p),
+    timing: timingOf(s, a, p),
     consequences,
     unavailable: p.disabledReason ? `Unavailable: ${p.disabledReason.charAt(0).toLowerCase()}${p.disabledReason.slice(1)}` : undefined,
   };
