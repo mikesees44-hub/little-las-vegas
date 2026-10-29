@@ -995,6 +995,8 @@ export interface GameState {
   minds?: import('./minds/types').MindsState;
   /** Deeds: the CK-style interactions between anyone (cooldowns, ties, favors owed, NPC hooks, asks at the boss's door, authored scenes' memory) (deeds/; optional: made by the weekly update). */
   deeds?: import('./deeds/types').DeedsState;
+  /** The Old Don start's hidden hands, the fog over the coming move, and the verdict on the first year (oldDon.ts; only that start has it). */
+  oldDon?: import('./oldDon').OldDonState;
 }
 
 export interface PlayerChoices {

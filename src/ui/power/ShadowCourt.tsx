@@ -9,6 +9,7 @@ import {
 } from '../../engine/shadow';
 import { shadowView, type KnowLvl, type PlanGoal, type ShadowAction } from '../../engine/shadowState';
 import { storyName } from '../../engine/shadowStories';
+import { claimStrengths } from '../../engine/oldDon';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard, useOrders } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
@@ -90,6 +91,7 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
   const plantPick = plant || (ears[0] ? `ear:${ears[0].id}` : plantMen[0] ? `man:${plantMen[0].id}` : '');
   const heirKnown = heir ? known.shares[heir.id] ?? 0 : 0;
   const ubKnown = ub ? known.shares[ub.id] ?? 0 : 0;
+  const claims = claimStrengths(s);
   const pl = sh.plant && !sh.plant.blown && sh.plant.until >= s.week ? sh.plant : undefined;
   return (
     <div className="space-y-5" data-testid="shadow-court">
@@ -134,6 +136,37 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
         </div>
         <p className="text-[11px] text-stone-500">Where {known.unknown}% of the family stands, you don't know. Name or change the heir and groom him under <span className="text-stone-300">The heir & the law</span>.</p>
       </section>
+
+      {/* The claimants: who could sit in the chair, and how strong each claim is */}
+      {claims.length > 0 && (
+        <section className="space-y-1" data-testid="claimants">
+          <H sub="blood · the capos · Philadelphia · money · respect">The claimants</H>
+          <ul className="divide-y divide-noir-800">
+            {claims.map((c) => {
+              const ch = s.characters[c.id];
+              return (
+                <li key={c.id} className="flex flex-wrap items-center gap-x-2 gap-y-1 py-1.5 text-xs" data-testid="claimant">
+                  <Face s={live} c={ch} size={28} />
+                  <div className="min-w-[8rem] flex-1">
+                    <CharLink s={live} id={c.id} />
+                    <div className="text-[10px] text-stone-500">{ch.rank === 'civilian' ? (boss.childrenIds.includes(ch.id) ? 'your blood' : 'family') : ch.rank} · {ageOn(ch.birth, s.date)}{c.sidelined ? ' · put out to pasture' : ''}</div>
+                  </div>
+                  <div className="flex min-w-[9rem] flex-1 items-center gap-2" title={c.parts.map((p) => `${p.label}: ${p.value > 0 ? '+' : ''}${p.value}`).join('\n')}>
+                    <Meter v={c.total} tone={c.id === heir?.id ? 'bg-gold-500' : 'bg-stone-500'} />
+                    <span className="w-7 text-right tabular-nums text-stone-100">{c.total}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <OrderBtn s={live} a={{ op: 'reward', charId: c.id }} label="Buy support" />
+                    <OrderBtn s={live} a={{ op: 'sideline', charId: c.id }} label="Sideline" />
+                    {!ch.dynasty && <OrderBtn s={live} a={{ op: 'remove', charId: c.id }} label="Remove…" />}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="text-[11px] text-stone-500">Name and groom your heir under <span className="text-stone-300">The heir & the law</span>; declare him at a family council. If you die or step down, you play on as the heir — and the men who lost will decide what they do about it.</p>
+        </section>
+      )}
 
       {/* Who backs whom */}
       <section className="space-y-1" data-testid="crew-support">

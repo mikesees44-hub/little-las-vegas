@@ -23,9 +23,12 @@ export interface StartCard {
   difficulty: 'Easy' | 'Normal' | 'Hard' | 'Very hard';
   text: string;
   different: string[];
+  /** The start a first game should pick. */
+  recommended?: boolean;
 }
 
 export const START_CARDS: StartCard[] = [
+  { id: 'olddon', name: 'The Old Don', difficulty: 'Normal', recommended: true, text: 'Summer 1960. Don Vincenzo "the Old Man" Sees, sixty-six, ten years in the chair: rich, loved, a goomar and a cellar of Barolo. And everybody is posting up for what comes after him.', different: ['The succession is the game: claimants, backers, Philadelphia\'s favor', 'Hidden plots from week one: some real, some bluff', 'Survive the year and name your successor on your own terms', 'When the old man goes, you play on as his heir'] },
   { id: 'classic', name: 'The House', difficulty: 'Normal', text: 'Summer 1960. You already run Wildwood for Philadelphia: a full crew, five rackets, and one problem from the past.', different: ['$25,000 and a full crew of capos', 'A random starting problem: a debt, a rat, a skimmer, a grudge…', 'The classic game'] },
   { id: 'sees', name: 'The House of Sees', difficulty: 'Normal', text: 'Don Salvatore "The Shark" Sees, sixty years old, near the end of his reign. Three heirs want the chair: Vito, Donato and Francesca.', different: ['An old boss and a succession fight from week one', 'Three grown heirs with their own ambitions', '+$15,000, respect 55'] },
   { id: 'rise', name: 'Rise to Power', difficulty: 'Hard', text: 'A young man with a numbers bank, an arcade, a few guys and $6,000. Nobody in Philadelphia knows your name yet.', different: ['$6,000, two rackets, a skeleton crew', 'Respect 15: earn it', 'Win a seat at the Table'] },
@@ -93,7 +96,7 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
             {START_CARDS.map((c) => (
               <button key={c.id} data-start={c.id} onClick={() => setStart(c.id)} className={`panel p-4 text-left transition border ${start === c.id ? 'border-gold-400 ring-1 ring-gold-400' : 'border-noir-700 hover:border-gold-600'}`}>
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display text-xl text-gold-300">{c.name}</h3>
+                  <h3 className="font-display text-xl text-gold-300">{c.name}{c.recommended && <span className="ml-2 align-middle text-[10px] uppercase tracking-wider rounded bg-gold-500/20 text-gold-200 px-1.5 py-0.5" data-testid="start-recommended">Recommended</span>}</h3>
                   <span className={`text-[10px] uppercase tracking-wider border rounded px-1.5 py-0.5 whitespace-nowrap ${DIFF_CLS[c.difficulty]}`}>{c.difficulty}</span>
                 </div>
                 <p className="mt-1 text-sm text-stone-300">{c.text}</p>

@@ -46,6 +46,7 @@ import { applyEffects } from './effects';
 import { dynastyChoices, dynastyMonth, dynastyWeek } from './family';
 import { housesMonth } from './housesLife';
 import { buildHealthEvent, generateWeekEvents, MAX_POPUPS, registerEventSource } from './events';
+import { oldDonWeek } from './oldDon';
 import { storyEventSource, storyPoolSource, storyResolve } from './storyPack';
 import { arcEventSource, arcsResolve, arcsWeek } from './livingStories';
 import './livingStoryData';
@@ -421,6 +422,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     threatsWeek(ctx);
     // The dynamics layer reads the week's real events: eras, spies, lies, plots (intrigue.ts).
     intrigueWeek(ctx);
+    // The Old Don start: the hidden hands, the opening weeks, the first year's verdict (oldDon.ts).
+    oldDonWeek(ctx);
   }
   if (!s.gameOver) {
     operationalHeat(ctx);
@@ -527,6 +530,30 @@ export function advanceMonth(input: GameState, choices: PlayerChoices = {}): { s
     reports.push(r.report);
     log.push(...r.log);
     if (s.gameOver || monthKey(s.date) !== startMonth) break;
+  }
+  return { state: s, reports, log };
+}
+
+/** Weeks in a season (the "Advance a Season" button). */
+export const SEASON_WEEKS = 13;
+
+/**
+ * Advance a span of weeks with delegation: only the first week uses the
+ * supplied choices; later weeks take each event's default (silence never
+ * gives a man up: handover.ts). Stops early when the game ends or the chair
+ * changes hands, so the new boss sees his first week himself.
+ */
+export function advanceSpan(input: GameState, weeks: number, choices: PlayerChoices = {}): { state: GameState; reports: WeeklyReport[]; log: string[] } {
+  let s = input;
+  const reports: WeeklyReport[] = [];
+  const log: string[] = [];
+  const boss = input.playerId;
+  for (let i = 0; i < Math.max(1, weeks); i++) {
+    const r = advanceWeek(s, i === 0 ? choices : {});
+    s = r.state;
+    reports.push(r.report);
+    log.push(...r.log);
+    if (s.gameOver || s.playerId !== boss) break;
   }
   return { state: s, reports, log };
 }

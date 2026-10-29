@@ -65,7 +65,7 @@ const name = (c: Character | undefined, fallback = 'somebody') => (c ? displayNa
 /* ---------------------------------------------------------------- */
 
 /** How the game opens: the old boss buried, the old boss retired, the old boss is you (House of Sees), or a first day on a corner. */
-export type OpeningPremise = 'funeral' | 'retired' | 'sees' | 'rise';
+export type OpeningPremise = 'funeral' | 'retired' | 'sees' | 'rise' | 'olddon';
 
 /** The scene variant a start opens with: the climbing starts (associate, soldier, capo) open like Rise to Power. */
 export function openingVariant(start: string): string {
@@ -76,6 +76,7 @@ export function openingVariant(start: string): string {
 export function openingPremise(s: GameState, variant: string): OpeningPremise {
   if (variant === 'sees') return 'sees';
   if (variant === 'rise') return 'rise';
+  if (variant === 'olddon') return 'olddon';
   const p = player(s);
   const old = p.fatherId ? s.characters[p.fatherId] : undefined;
   return variant === 'succession' || !old || !old.alive ? 'funeral' : 'retired';
@@ -106,13 +107,14 @@ export function boardwalkLine(d: GameDate): string {
 /** The title card that opens a new game (App shows it before the first scene). Same premise as the scene. */
 export function openingCard(s: GameState): { title: string; text: string; key: 'opening' | 'sitdown' } {
   const ev = s.pendingEvents.find((e) => e.defId === 'made_boss');
-  const variant = String(ev?.meta?.variant ?? (s.flags.start_sees ? 'sees' : s.flags.start_rise ? 'rise' : 'classic'));
+  const variant = String(ev?.meta?.variant ?? (s.flags.start_olddon ? 'olddon' : s.flags.start_sees ? 'sees' : s.flags.start_rise ? 'rise' : 'classic'));
   const premise = openingPremise(s, variant);
   const p = player(s);
   const when = `${MONTHS[s.date.m - 1]} ${s.date.d}, ${s.date.y}`;
   const line = boardwalkLine(s.date);
   const kids = p.childrenIds.map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive && ageOn(c.birth, s.date) >= 18).map((c) => c.firstName);
   const list = kids.length ? kids.join(', ').replace(/, ([^,]*)$/, ' and $1') : '';
+  if (premise === 'olddon') return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `Ten summers. Ten summers since ${displayName(p)} sat down in the old chair, and in all that time not one body on the boardwalk, not one envelope to Philadelphia that came up light. The houses are paid for, the children are set up, the cellar on Glenwood Avenue is full of Barolo, and there is a girl on Pacific Avenue who still laughs at his stories. ${line} Tonight the whole island drinks to him. And under the toasts, he can hear it, the way his knees hear rain coming: everybody is posting up.` };
   if (premise === 'sees') return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `A retirement dinner nobody calls a retirement dinner. ${displayName(p)} has run Wildwood for thirty years, and tonight he tells the room he will choose an heir before the summer is out.${list ? ` ${list} sit at three different tables.` : ''} ${line} By Labor Day everyone will know who comes after him.` };
   if (premise === 'rise') return { key: 'sitdown', title: `Pacific and Schellenger · ${when}`, text: `A numbers bank, a few guys, and a corner. Nobody in Philadelphia knows your name yet. ${line} By Labor Day, a few men on this island will know it.` };
   if (premise === 'retired') return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `A retirement dinner. The old man hands you the keys to the back room and a list of names in his own handwriting. ${line} From tonight you are running things, and behind you the capos are counting.` };
@@ -152,6 +154,27 @@ function madeBossBeats(s: GameState, ses: SS): Beat[] {
     { id: 'round', label: 'Take a different chair. "We\'ll get a round table."', detail: 'Generosity: every capo +5; the old guard grumbles.' },
   ] : next();
   const beats: Beat[] = [];
+  if (variant === 'olddon') {
+    const kids = p.childrenIds.map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive);
+    const goom = s.nightlife ? Object.values(s.nightlife.goomars).find((g) => !g.ended) : undefined;
+    const her = goom ? s.characters[goom.id] : undefined;
+    beats.push({ card: { scene: 'sitdown', kicker: `The Bolero Supper Club. ${date}.`, text: `Ten years ago this week the old Don's heart gave out on a train platform and Philadelphia said yes to you. Since then: the numbers paid, the clubs full, the cops fed, and the Daily Tide calling you a Pacific Avenue businessman with a straight face.\n\nThe band plays "Volare" for the third time because you asked them to.`, actors: [p.id] }, options: next() });
+    beats.push({ card: { scene: 'street', kicker: 'What ten years bought', text: `${kids.length ? `${kids.map((k) => k.firstName).join(', ').replace(/, ([^,]*)$/, ' and $1')} are set up: a motor inn with clean books, a house in the Crest, a house for the one who still wants in. ` : ''}${wife ? `${wife.firstName} has her furs and her rosary and her Sundays. ` : ''}The cellar on Glenwood Avenue is full of Barolo you are saving for occasions that keep coming.${her ? `\n\nAnd ${her.firstName}, on ${goom!.where.replace(/^an? /, 'the ')}, who has never once asked you for anything you did not want to give.` : ''}`, actors: [p.id, ...(wife ? [wife.id] : []), ...(her ? [her.id] : [])] }, options: next() });
+    beats.push({ card: { scene: 'sitdown', kicker: 'Who stands, who sits', text: `The toasts start. ${kName(k3, 'An old friend')} is on his feet before the band stops. ${kName(k2, 'Another capo')} raises his glass a beat late. ${kName(k1, 'One of them')} stays in his chair, smiling, and checks his watch.\n\nEverybody is posting up. Not against you, maybe. Around you. Like men on a pier waiting to see which way the boat tips.`, actors: [p.id, ...[k1, k2, k3].filter((x): x is Character => !!x).map((x) => x.id)] }, options: [
+      { id: 'od_toast', label: 'Stand and toast them all: "Ten more years."', detail: 'The room roars: crew opinion +3, respect +2. The men waiting on you hear it too.' },
+      { id: 'od_watch', label: 'Say little. Watch who doesn\'t clap.', detail: 'You will know whose name to ask about.' },
+      { id: 'od_future', label: 'Tell them you are thinking about the future.', detail: 'The ambitious relax a little; the question is open now, out loud.' },
+    ] });
+    beats.push({ card: { scene: 'street', kicker: 'The boardwalk at midnight', text: `${wife ? `${wife.firstName} takes your arm on the boards. "They're all waiting for you to get old, ${p.firstName}."\n\n"I am old."\n\n"Then stop letting them watch you climb stairs."` : 'You walk the boards alone. A kid closing up a stand nods at you the way his father did.'}`, actors: wife ? [p.id, wife.id] : [p.id] }, options: next() });
+    beats.push({ card: { scene: 'sitdown', kicker: 'In the morning, to the family', text: 'The capos are gathered in the back of the Shamrock. The coffee is bad. Everyone waits to hear what the old man sounds like the morning after.', actors: [p.id, ...ring.slice(0, 3).map((x) => x.id)] }, options: [
+      { id: 'w_fear', label: '"Nothing moves on this island without my say. Still."', detail: 'Fear: +5 respect, crew opinion −3, rivals cautious.' },
+      { id: 'w_respect', label: '"Ten years of peace. We keep it. We keep each other."', detail: 'Respect: crew opinion +5, family heat −3.' },
+      { id: 'w_generous', label: '"Everybody eats this summer. Everybody."', detail: 'Generosity: crew opinion +8, −$1,500 in envelopes.' },
+    ] });
+    ses.d.fx = [];
+    (ses.d as SceneData & { chairFx?: typeof fx }).chairFx = fx;
+    return beats;
+  }
   if (variant === 'rise') {
     const k = k1;
     beats.push({ card: { scene: 'street', kicker: 'First day with the crew', text: `The corner of Pacific and Schellenger, outside the numbers bank, ${longDate(s.date).replace(/, \d{4}$/, '')}, ${s.date.y}. Runners go in with paper bags and come out with nothing. Nobody in Philadelphia knows your name. Today, a few men on this island will learn it.`, actors: [p.id] }, options: next() });
@@ -225,6 +248,15 @@ function madeBossStep(s: GameState, ses: SS, move: string): void {
     case 'philly_envelope':
       add([{ type: 'money', amount: -2000 }, { type: 'rivalOpinion', rival: 'philly', amount: 20, reason: 'An envelope on day one' }, { type: 'heat', bar: 'family', amount: -3 }]);
       break;
+    case 'od_toast':
+      add([{ type: 'crewOpinion', amount: 3, reason: 'Ten more years' }, { type: 'respect', amount: 2 }]);
+      break;
+    case 'od_watch':
+      add([{ type: 'flag', key: 'od_watch', value: 1 }]);
+      break;
+    case 'od_future':
+      add([{ type: 'flag', key: 'od_spoke_future', value: 1 }, { type: 'respect', amount: -1 }]);
+      break;
     case 'w_fear':
       add([{ type: 'respect', amount: 5 }, { type: 'crewOpinion', amount: -3, reason: 'Nothing moves without his say' }, ...s.rivals.filter((r) => r.kind === 'mob').map((r) => ({ type: 'rivalOpinion', rival: r.id, amount: -3, reason: 'A hard man in the chair' }) as Effect)]);
       break;
@@ -260,7 +292,7 @@ function sceneOptions(_s: GameState, ses: SS): MgOption[] {
 function sceneAuto(_s: GameState, ses: SS): string {
   const o = sceneOptions(_s, ses).filter((x) => !x.disabled);
   // The default play: the respectful middle road.
-  const pref = ['next', 'round', 'philly_same', 'w_respect', 'sp_sponsor', 'say_warm', 'crew_own'];
+  const pref = ['next', 'round', 'philly_same', 'od_toast', 'w_respect', 'sp_sponsor', 'say_warm', 'crew_own'];
   return o.find((x) => pref.includes(x.id))?.id ?? o.find((x) => x.id.startsWith('crew_'))?.id ?? o[0]?.id ?? 'next';
 }
 
@@ -275,7 +307,7 @@ export const MADE_BOSS: MinigameDef<SceneData> = {
     const v = String(ses.params.variant ?? '');
     const prem = openingPremise(s, v);
     const intro = madeBossWords(s, v);
-    return { d, phase: 'beat1', intro: { title: intro.title, kicker: `The House of ${s.houseName}`, text: v === 'succession' ? `The old man is gone, and the island looks at ${p.firstName}.` : prem === 'sees' ? 'The first five minutes of your last summer in the chair. Your answers set the tone for whoever comes after you.' : prem === 'rise' ? 'The first five minutes: a corner, a few guys, and men deciding what to make of you.' : `The first five minutes: ${prem === 'funeral' ? 'the old man is gone' : 'the old man has stepped aside'}, and the island looks at you. Your answers set the tone of your reign.`, scene: d.card.scene } };
+    return { d, phase: 'beat1', intro: { title: intro.title, kicker: `The House of ${s.houseName}`, text: v === 'succession' ? `The old man is gone, and the island looks at ${p.firstName}.` : prem === 'olddon' ? 'Ten years in the chair. Tonight they drink to you; tomorrow they start counting.' : prem === 'sees' ? 'The first five minutes of your last summer in the chair. Your answers set the tone for whoever comes after you.' : prem === 'rise' ? 'The first five minutes: a corner, a few guys, and men deciding what to make of you.' : `The first five minutes: ${prem === 'funeral' ? 'the old man is gone' : 'the old man has stepped aside'}, and the island looks at you. Your answers set the tone of your reign.`, scene: d.card.scene } };
   },
   options: sceneOptions,
   step: (s, ses, m) => {
@@ -430,6 +462,7 @@ export function madeBossWords(s: GameState, variant: string, old?: Character): {
   const p = player(s);
   if (variant === 'succession') return { title: 'Made the boss', text: `${old ? displayName(old) : 'The old boss'} is gone. ${p.firstName} takes the chair.`, play: 'Take the chair', playDetail: 'A short scene: three choices set the tone of your reign.' };
   const prem = openingPremise(s, variant);
+  if (prem === 'olddon') return { title: 'The Old Don', text: `${p.firstName} has ruled Wildwood for ten years. Tonight the island drinks to him, and everyone is posting up.`, play: 'Hold the room', playDetail: 'A short scene: how the old man takes his own party sets the tone of his last year.' };
   if (prem === 'sees') return { title: 'The Shark\'s last summer', text: `${p.firstName} has run Wildwood for thirty years. Tonight he tells the room he will name an heir before the summer is out.`, play: 'Hold the room', playDetail: 'A short scene: three choices set the tone of your last summer in the chair.' };
   if (prem === 'rise') return { title: 'First day with the crew', text: 'A corner, a few guys, and nobody in Philadelphia who knows your name.', play: 'Walk in', playDetail: 'A short scene: three choices set the tone with your crew.' };
   return { title: 'Made the boss', text: prem === 'funeral' ? 'The old man is gone, and the island looks at you.' : 'The old man has stepped aside, and the island looks at you.', play: 'Take the chair', playDetail: 'A short scene: three choices set the tone of your reign.' };

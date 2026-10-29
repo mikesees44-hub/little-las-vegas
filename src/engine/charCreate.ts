@@ -23,7 +23,7 @@ import type { Appearance, Attributes, Character, Ethnicity, GameState, Lifestyle
  * cost and flaws refund, a vice refunds 2.
  */
 
-export type StartKey = 'classic' | 'rise' | 'sees' | 'associate' | 'soldier' | 'capo';
+export type StartKey = 'classic' | 'olddon' | 'rise' | 'sees' | 'associate' | 'soldier' | 'capo';
 type Skill = keyof Attributes;
 export const SKILLS: Skill[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
 /** Groups you can buy into (personality comes from traits). */
@@ -101,7 +101,7 @@ export interface CharOptions {
 }
 
 export const AGE_RANGE: Record<StartKey, [number, number]> = {
-  classic: [30, 62], sees: [52, 68], rise: [20, 36], associate: [18, 30], soldier: [22, 42], capo: [28, 52],
+  classic: [30, 62], olddon: [58, 74], sees: [52, 68], rise: [20, 36], associate: [18, 30], soldier: [22, 42], capo: [28, 52],
 };
 export const MOTHER_MAX_AGE = 86;
 
@@ -160,7 +160,7 @@ export function creatorBase(s: GameState, start: StartKey): CreatorBase {
     traits: [...b.traits],
     skills: { ...b.attributes },
     ageRange: AGE_RANGE[start],
-    kidsRange: [start === 'sees' ? 3 : 0, 6],
+    kidsRange: [start === 'sees' || start === 'olddon' ? 3 : 0, 6],
     married: !!sp?.alive,
     spouseName: sp?.firstName ?? '',
     kids: kidsOf(s, b).length,
@@ -180,7 +180,7 @@ export function pointsSpent(base: Pick<CreatorBase, 'traits'>, o: CharOptions): 
 }
 
 export function maxKids(age: number, start: StartKey): number {
-  return age < 19 ? (start === 'sees' ? 3 : 0) : 6;
+  return age < 19 ? (start === 'sees' || start === 'olddon' ? 3 : 0) : 6;
 }
 
 /** Everything wrong with these options for this start (empty = fine). */

@@ -1,0 +1,271 @@
+{
+  "_about": "THE OLD DON (1960): the opening weeks of the recommended start. Each scene is put on the boss's desk by the start itself (src/engine/oldDon.ts scheduleOpening), cast with the people behind the hidden hands, so the `when` below never lets them come up at random (fresh scenes start at week 3). Flags od_k_<role> = a rumor with a name, od_p_<role> = proof, od_x_<role> = that hand is defused. Roles: capo, ub, young, rival, sal, rat, kman, cons, old, wife. Written from the owner's brief, 2026-10-28.",
+  "scenes": [
+    {
+      "id": "od_birthday",
+      "title": "Sixty-six candles",
+      "theme": "crew",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": {
+        "ub": { "pool": "crew" },
+        "capo": { "pool": "capo" },
+        "old": { "pool": "capo" },
+        "cons": { "pool": "crew" }
+      },
+      "text": "The back room of the Bolero, a cake shaped like the Ferris wheel on Hunt's Pier, and a cardboard crown somebody's grandson made. {old.call} is on his feet before the band finishes: \"Ten years, and not one widow on this island.\" {cons.call} toasts next, short and plain. {ub.call} toasts late. {capo.call} stays in his chair, smiling, and looks at his watch twice.",
+      "choices": [
+        {
+          "label": "Send down for the '47 Barolo. The whole room drinks from your cellar",
+          "hint": "Ten years of peace deserves the good wine.",
+          "effects": [ { "crew": { "by": 3, "why": "Opened his own cellar for us" } }, { "respect": 1 }, { "opinion": { "of": "old", "toward": "boss", "by": 4, "why": "Poured me the '47 himself" } } ],
+          "result": "Two cases came up from Glenwood Avenue. By midnight even the bartender was singing."
+        },
+        {
+          "label": "Watch who doesn't clap. Remember every face",
+          "hint": "You'll know whose names to ask about.",
+          "effects": [ { "flag": "od_k_capo" }, { "flag": "od_k_ub" } ],
+          "result": "You smiled all night and counted. Two men clapped with their hands and not their eyes."
+        },
+        {
+          "label": "Call {capo.first} over and have him make a toast",
+          "hint": "In front of everybody. He can't refuse, but he can do it badly.",
+          "odds": { "deed": "demandRespect", "actor": "boss", "target": "capo" },
+          "success": [ { "fear": { "of": "capo", "toward": "boss", "by": 10 } }, { "respect": 2 }, { "flag": "od_k_capo" } ],
+          "failure": [ { "respect": -3 }, { "opinion": { "of": "capo", "toward": "boss", "by": -6, "why": "Made me stand up like a waiter" } } ],
+          "result": "{capo.first} stood, raised his glass, and said \"to the Old Man\" like he meant it. His hand shook a little.",
+          "failText": "{capo.first} toasted \"the good old days\" and sat down to a laugh. Not everybody laughed with you."
+        },
+        {
+          "label": "Let it go. It's a party",
+          "effects": [ { "opinion": { "of": "old", "toward": "boss", "by": -2, "why": "He let the kid sit through the toast" } } ]
+        }
+      ]
+    },
+    {
+      "id": "od_consigliere_warning",
+      "title": "The consigliere's warning",
+      "theme": "crew",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": {
+        "cons": { "pool": "crew" },
+        "capo": { "pool": "capo" },
+        "ub": { "pool": "crew" }
+      },
+      "text": "{cons.call} waits until the waitress at the Admiral diner leaves the pot. \"Thirty years I've known you, so hear me. Everybody is posting up. Not against you, maybe. Around you. They want to be standing in the right place when the music stops. I can find out who has been to Philadelphia. It will cost you money, and it will cost me friends.\"",
+      "choices": [
+        {
+          "label": "Find out. Spend what it costs",
+          "hint": "Proof about {capo.first}, one way or the other.",
+          "requires": { "money": 1500 },
+          "effects": [ { "money": -1500 }, { "flag": "od_p_capo" }, { "flag": "od_k_sal" }, { "owes": { "who": "boss", "to": "cons" } } ],
+          "result": "Two weeks later {cons.first} slid a matchbook across the table with a Camden phone number on it, and told you exactly whose it was."
+        },
+        {
+          "label": "Ask him straight about {ub.first}",
+          "hint": "The man who runs your day-to-day.",
+          "odds": { "base": 55, "plus": [
+            { "if": { "role": "cons", "trait": "Paranoid" }, "add": 10, "why": "he already had a file on it" },
+            { "if": { "role": "ub", "trait": "Patient" }, "add": -10, "why": "a patient man leaves no tracks" }
+          ] },
+          "success": [ { "flag": "od_p_ub" } ],
+          "failure": [ { "flag": "od_k_ub" }, { "grievance": { "of": "ub", "toward": "boss", "by": 6 } } ],
+          "result": "{cons.first} came back with what {ub.first} does on his Tuesday nights, and with whom.",
+          "failText": "{cons.first} heard things, but nothing he would swear to. And {ub.first} heard you were asking."
+        },
+        {
+          "label": "Tell him he's getting old and nervous",
+          "effects": [ { "opinion": { "of": "cons", "toward": "boss", "by": -8, "why": "Waved me off like a waiter" } }, { "respect": 1 } ]
+        },
+        {
+          "label": "Thank him. Say nothing yet",
+          "effects": [ { "trust": { "of": "cons", "toward": "boss", "by": 5 } }, { "flag": "od_k_capo" } ]
+        }
+      ]
+    },
+    {
+      "id": "od_sal_envoy",
+      "title": "Philadelphia asks about your health",
+      "theme": "rivals",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": { "envoy": { "pool": "anyone" } },
+      "text": "{envoy.call} drove down from Camden in a new Imperial and won't take his hat off. He brings a box of cannoli and a question from Sal the Bag: how is the heart, how are the knees, does the Don still walk the boards every night? \"Sal worries. He loves you. He wants to know who he should be talking to. God forbid.\"",
+      "choices": [
+        {
+          "label": "Walk him the whole length of the boardwalk, and don't stop once",
+          "hint": "Let him go home and tell Sal what he saw.",
+          "odds": { "base": 60, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 10, "why": "you tell the stories the whole way" }, { "if": { "bossTrait": "Drinker" }, "add": -10, "why": "the wine is in your wind" } ] },
+          "success": [ { "flag": "od_sal_reassured" }, { "respect": 2 } ],
+          "failure": [ { "flag": "od_k_sal" }, { "heat": { "family": 3 } } ],
+          "result": "Two miles of boards, the Ferris wheel and back. {envoy.first} was the one breathing hard.",
+          "failText": "You stopped twice at the rail to look at the ocean. He saw why."
+        },
+        {
+          "label": "Send him back with an envelope for Sal's worry",
+          "hint": "$3,000. Worry is expensive.",
+          "requires": { "money": 3000 },
+          "effects": [ { "money": -3000 }, { "heat": { "family": -5 } }, { "flag": "od_sal_paid" } ],
+          "result": "The envelope went north in the Imperial's glove box. Sal's worry eased, for now."
+        },
+        {
+          "label": "Ask him who Sal would talk to, God forbid",
+          "hint": "Turn the question around and watch his face.",
+          "odds": { "base": 50, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 10, "why": "he likes you" } ] },
+          "success": [ { "flag": "od_p_sal" }, { "flag": "od_k_capo" } ],
+          "failure": [ { "opinion": { "of": "envoy", "toward": "boss", "by": -5, "why": "Put me on the spot" } }, { "flag": "od_k_sal" } ],
+          "result": "He looked at his cannoli for a long time, then told you which name Sal keeps saying at dinner.",
+          "failText": "\"Nobody, Don Vincenzo. Nobody.\" He said it too fast."
+        },
+        {
+          "label": "Thank him for the cannoli and send him home",
+          "effects": [ { "flag": "od_k_sal" } ]
+        }
+      ]
+    },
+    {
+      "id": "od_young_proposal",
+      "title": "The young crew's proposal",
+      "theme": "crew",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": {
+        "young": { "pool": "capo" },
+        "loud": { "pool": "crew" }
+      },
+      "text": "{young.call} brings {loud.call} and a paper bag to the back of the Shamrock. In the bag is more money than the arcade makes in a month. \"Not on the island. Never here. Chester, Trenton, the Philadelphia piers. The old rules were for the old days, with respect.\" {loud.first} has a new suit, a new Thunderbird outside, and he does not take his eyes off you.",
+      "choices": [
+        {
+          "label": "Look the other way. Never tell me about it",
+          "hint": "They make their money. Philadelphia must never hear.",
+          "effects": [ { "money": 2500 }, { "heat": { "federal": 4 } }, { "heat": { "family": 3 } }, { "flag": "od_x_young" }, { "opinion": { "of": "young", "toward": "boss", "by": 15, "why": "Let us make real money" } } ],
+          "result": "The bag stayed on the table. Nobody said the word out loud."
+        },
+        {
+          "label": "Take the bag to Philadelphia and let Sal decide",
+          "effects": [ { "heat": { "family": -4 } }, { "flag": "od_p_young" }, { "grievance": { "of": "young", "toward": "boss", "by": 15 } }, { "opinion": { "of": "loud", "toward": "boss", "by": -12, "why": "Ran to Philly like a schoolboy" } } ],
+          "result": "Sal kept the bag and sent his thanks. {young.first} hasn't looked you in the eye since."
+        },
+        {
+          "label": "Make an example of {loud.first}",
+          "hint": "Your order. The rest of the young crew will understand.",
+          "effects": [ { "whack": { "role": "loud", "why": "Found in his new Thunderbird behind the Rio Grande diner." } }, { "fear": { "of": "young", "toward": "boss", "by": 25 } }, { "respect": 3 }, { "flag": "od_k_young" } ],
+          "result": "{loud.first} never wore the new suit again. {young.first} came to the next sit-down early and stood until you told him to sit."
+        },
+        {
+          "label": "No. Not while I'm alive",
+          "effects": [ { "respect": 2 }, { "opinion": { "of": "young", "toward": "boss", "by": -10, "why": "The old man's rules" } }, { "opinion": { "of": "loud", "toward": "boss", "by": -10, "why": "The old man's rules" } }, { "flag": "od_k_young" } ],
+          "result": "\"Not while I'm alive.\" {loud.first} smiled at that, and you saw the smile."
+        }
+      ]
+    },
+    {
+      "id": "od_wife_heard",
+      "title": "Your wife has heard things",
+      "theme": "family",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": {
+        "wife": { "pool": "wife" },
+        "ub": { "pool": "crew" }
+      },
+      "text": "{wife.first} doesn't sit down. \"At the beauty parlor on Pacific, {ub.first}'s wife asked me if we picked out a place in Florida yet. Florida. Like it was decided.\" She folds the dish towel in half, then in half again. \"Who decided?\"",
+      "choices": [
+        {
+          "label": "Tell her the truth, all of it",
+          "effects": [ { "trust": { "of": "wife", "toward": "boss", "by": 10 } }, { "opinion": { "of": "wife", "toward": "boss", "by": 6, "why": "He told me the truth for once" } }, { "flag": "od_k_ub" } ],
+          "result": "She listened to all of it without a word, then made coffee, and told you which wives have stopped calling."
+        },
+        {
+          "label": "Ask her to keep her ears open at the beauty parlor",
+          "hint": "The wives hear everything the men won't say.",
+          "odds": { "base": 65, "plus": [ { "if": { "role": "wife", "trait": "Charming" }, "add": 10, "why": "everybody tells her things" }, { "if": { "role": "wife", "trait": "Pious" }, "add": -5, "why": "she hates gossip" } ] },
+          "success": [ { "flag": "od_p_ub" }, { "owes": { "who": "boss", "to": "wife" } } ],
+          "failure": [ { "opinion": { "of": "wife", "toward": "boss", "by": -3, "why": "Made me a spy among my friends" } }, { "flag": "od_k_ub" } ],
+          "result": "Three Saturdays under the dryers and she knew what {ub.first} has been promising, and to whom.",
+          "failText": "The wives went quiet when she sat down. Somebody had told them she was listening."
+        },
+        {
+          "label": "\"Nobody decides but me\"",
+          "effects": [ { "respect": 1 }, { "opinion": { "of": "wife", "toward": "boss", "by": -2, "why": "He still thinks he's thirty" } } ]
+        },
+        {
+          "label": "Say nothing and kiss her forehead",
+          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": -4, "why": "Shut me out again" } } ]
+        }
+      ]
+    },
+    {
+      "id": "od_goomar_brother",
+      "title": "Her sister's husband",
+      "theme": "romance",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": {
+        "her": { "pool": "anyone", "gender": "F" },
+        "kman": { "pool": "anyone", "gender": "M" }
+      },
+      "text": "{her.first} pours your drink with her back to you. \"My sister's husband, {kman.name}. He works for Kessler, up in North Wildwood. Last Sunday he asked me what time you usually come by. Just making conversation, he said.\" She turns around. \"I don't make conversation with him.\"",
+      "choices": [
+        {
+          "label": "Move her to a new apartment, tonight",
+          "effects": [ { "wealth": { "role": "boss", "by": -1200 } }, { "opinion": { "of": "her", "toward": "boss", "by": 8, "why": "He moved me somewhere safe that same night" } } ],
+          "result": "By morning she had a new key, a new view of the bay, and a phone number only you know."
+        },
+        {
+          "label": "Have a quiet word with {kman.first}",
+          "odds": { "deed": "threaten", "actor": "boss", "target": "kman" },
+          "success": [ { "fear": { "of": "kman", "toward": "boss", "by": 20 } }, { "flag": "od_p_kman" } ],
+          "failure": [ { "heat": { "local": 2 } }, { "flag": "od_k_kman" }, { "flag": "od_k_rival" } ],
+          "result": "{kman.first} told you everything Kessler asked him, and then asked you not to tell his wife.",
+          "failText": "{kman.first} took the word back to North Wildwood. Now Kessler knows you know."
+        },
+        {
+          "label": "Feed him something through her",
+          "hint": "A night you'll be somewhere you won't be.",
+          "odds": { "base": 50, "plus": [ { "if": { "role": "her", "trait": "Charming" }, "add": 10, "why": "she lies beautifully" } ] },
+          "success": [ { "flag": "od_feed_rival" }, { "flag": "od_p_kman" } ],
+          "failure": [ { "opinion": { "of": "her", "toward": "boss", "by": -10, "why": "Used me like bait" } }, { "flag": "od_k_rival" } ],
+          "result": "Kessler's men spent a Thursday night watching an empty restaurant. Now you know who sent them.",
+          "failText": "{her.first} couldn't do it. She told her sister everything, crying."
+        },
+        {
+          "label": "Stop going for a while",
+          "effects": [ { "opinion": { "of": "her", "toward": "boss", "by": -6, "why": "Left me alone with it" } } ]
+        }
+      ]
+    },
+    {
+      "id": "od_sunday_dinner",
+      "title": "Sunday dinner",
+      "theme": "family",
+      "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
+      "who": {
+        "quiet": { "pool": "family" },
+        "hot": { "pool": "family" },
+        "priest": { "pool": "anyone" }
+      },
+      "text": "The gravy has been on since six. Father {priest.last} says grace and stays for the braciole. Halfway through, {hot.first} puts down his fork: \"Everybody on Pacific Avenue says you're picking somebody. Everybody but us.\" {quiet.first} keeps eating. After the cannoli, the priest walks you to his car: \"You can tell me, you know. Not as a confession. As a friend.\"",
+      "choices": [
+        {
+          "label": "Tell the priest what you can't tell your sons",
+          "hint": "An old man's doubts, said out loud to somebody.",
+          "effects": [ { "memory": { "who": "priest", "about": "boss", "text": "he said he is afraid of who comes after him", "weight": 10 } }, { "family": { "by": 2, "why": "The old man seemed lighter after Sunday" } } ],
+          "result": "You talked in the priest's car until the windows fogged. Nothing changed, and you slept for the first time in a week."
+        },
+        {
+          "label": "Tell {hot.first} he'll never be in the life",
+          "effects": [ { "opinion": { "of": "hot", "toward": "boss", "by": -12, "why": "Shut the door on me at my own mother's table" } }, { "opinion": { "of": "quiet", "toward": "boss", "by": 5, "why": "He kept my brother out of it" } } ],
+          "result": "{hot.first} left before coffee and took the long way home, past the Shamrock."
+        },
+        {
+          "label": "Take {quiet.first} for a walk and ask him if he wants it",
+          "odds": { "base": 40, "plus": [ { "if": { "role": "quiet", "trait": "Patient" }, "add": 15, "why": "he has been thinking about it for years" }, { "if": { "role": "quiet", "trait": "Honest" }, "add": -10, "why": "he likes his clean books" } ] },
+          "success": [ { "opinion": { "of": "quiet", "toward": "boss", "by": 10, "why": "My father asked me, not told me" } }, { "flag": "od_quiet_willing" } ],
+          "failure": [ { "opinion": { "of": "hot", "toward": "quiet", "by": -12, "why": "Father walked with him, not me" } } ],
+          "result": "At the end of the block {quiet.first} said, \"If you need me, Pop.\" That was all, and it was enough.",
+          "failText": "{quiet.first} said he has a motel to run. {hot.first} watched the two of you come back from the window."
+        },
+        {
+          "label": "Change the subject to the Phillies",
+          "effects": [ { "family": { "by": -2, "why": "Nobody talks about anything at this table" } } ]
+        }
+      ]
+    }
+  ]
+}

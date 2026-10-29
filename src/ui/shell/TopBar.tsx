@@ -202,7 +202,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   speed: Speed;
   setSpeed: (v: Speed) => void;
   note?: string;
-  onAdvance: (m: 'week' | 'month') => void;
+  onAdvance: (m: 'week' | 'month' | 'season') => void;
   pending: number;
   answered: number;
   onReview: () => void;
@@ -284,7 +284,10 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             <div className="flex">
               <button className={`btn-gold h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-gold h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
-                {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
+                {(close) => <>
+                  <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>
+                  <button className={menuItem} onClick={() => { close(); onAdvance('season'); }} data-testid="advance-season" title="Thirteen weeks; your men handle what you leave unanswered. Stops if the chair changes hands.">Advance a Season (13 weeks)</button>
+                </>}
               </Popover>
             </div>
             <WaitingButton count={inboxN} tone={inboxTone} pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope} urgent={urgent} onUrgent={onUrgent}

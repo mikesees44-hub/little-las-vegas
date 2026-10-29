@@ -134,6 +134,10 @@ export interface ThreatsState {
 
 /** No planned moves on the player before this week (the first weeks are for learning the island). */
 export const GRACE_WEEKS = 8;
+/** The Old Don's island is already in motion: the grace is short (oldDon.ts). */
+export function graceWeeks(s: GameState): number {
+  return s.flags.start_olddon ? 4 : GRACE_WEEKS;
+}
 /** The FBI does not bother with a new boss before this week. */
 export const FED_GRACE = 14;
 /** At most this many planned threats against the player at once. */
@@ -266,7 +270,7 @@ export function aggression(s: GameState, r: Rival): { chance: number; reasons: {
   // What is on his mind (minds/planner.ts): a grudge, a plan against you, his read of your strength.
   const lean = threatLean(s, r);
   if (lean) mul(lean.label, lean.mult);
-  if (s.week < GRACE_WEEKS) { p = 0; reasons.push({ label: 'Too early: they are still sizing you up', value: -100 }); }
+  if (s.week < graceWeeks(s)) { p = 0; reasons.push({ label: 'Too early: they are still sizing you up', value: -100 }); }
   return { chance: Math.max(0, Math.min(0.4, p)), reasons };
 }
 
@@ -527,6 +531,30 @@ function makeTip(s: GameState, T: ThreatsState, src: Source, claim: Pick<Tip, 'k
     id: nid(T, 'tip'), threatId, ...claim, sourceId: src.id, sourceKind: src.kind, sourceName: src.name, sourceRole: src.role,
     week: s.week, deadline, truth, plantedBy, hint, detail: detailText(s, claim, Math.max(1, deadline - s.week)), status: 'waiting',
   };
+}
+
+/**
+ * A move already in motion when a game opens (the Old Don start), with the
+ * first word of it brought by one of the boss's own sources. `threat`
+ * undefined: there is nothing behind the word (a bluff, a planted tip).
+ */
+export function seedThreat(s: GameState, threat: Omit<Threat, 'id' | 'start' | 'blunt'> | undefined, claim: Pick<Tip, 'kind' | 'by' | 'targetId' | 'bizId' | 'district'>, sourceId: string, truth: TipTruth, deadline: number, plantedBy?: RivalId): Tip | undefined {
+  const T = ensureThreats(s);
+  let threatId: string | undefined;
+  if (threat) {
+    const t: Threat = { ...threat, id: nid(T, 'th'), start: s.week, blunt: 0 };
+    T.threats.push(t);
+    T.stats.planned++;
+    threatId = t.id;
+  }
+  const srcs = sourcesOf(s);
+  const src = srcs.find((x) => x.id === sourceId) ?? srcs.find((x) => x.kind === 'capo') ?? srcs[0];
+  if (!src) return undefined;
+  const tip = makeTip(s, T, src, claim, deadline, truth, threatId, plantedBy);
+  T.tips.push(tip);
+  T.stats.tips++;
+  if (truth === 'false') T.stats.falseTips++;
+  return tip;
 }
 
 /* ------------------------------------------------------------------ */

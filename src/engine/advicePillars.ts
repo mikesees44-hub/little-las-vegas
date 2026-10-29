@@ -57,6 +57,8 @@ const SHADOW_PURPOSE: Record<import('./shadowState').ShadowAction['op'], string>
   plant: 'Put eyes in the underboss\'s court: know who he meets before it becomes a faction.',
   confront: 'Show the underboss you know about his meetings, and watch what he admits.',
   council: 'See every capo at one table on the succession, and remind them whose family it is.',
+  sideline: 'Take a rival claimant out of the running without blood: his backers drift, and he remembers.',
+  remove: 'End a rival claim for good, by your own order: the men will be afraid, and some will remember.',
   honor: 'Stand behind a promise made in the family\'s name: the man it was made to remembers.',
   disown: 'Refuse a promise you never made. The man it was made to will not forget.',
   retire: 'Step down on your own terms and hand the chair to your heir, before someone takes it.',

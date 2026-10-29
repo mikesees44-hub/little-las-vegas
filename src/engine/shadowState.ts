@@ -291,7 +291,11 @@ export type ShadowAction =
   | { op: 'honor'; promiseId: string }
   | { op: 'disown'; promiseId: string }
   | { op: 'retire'; mode: 'florida' | 'consigliere' | 'emeritus' }
-  | { op: 'reunite'; splinterId: string };
+  | { op: 'reunite'; splinterId: string }
+  /** Put a claimant out to pasture: no say in the succession (his backers drift). */
+  | { op: 'sideline'; charId: string }
+  /** Remove a rival claimant. Only ever the Don's own explicit order. */
+  | { op: 'remove'; charId: string };
 
 /** State changes the shadow court's choices make (shown as named chips). */
 export type ShadowOp =

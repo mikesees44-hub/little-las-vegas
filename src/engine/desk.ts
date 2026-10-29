@@ -1,4 +1,5 @@
 import { urgentMeetings } from './threats';
+import { attackEstimate, pressurePoints } from './oldDon';
 import { previewAction, queuedMoney } from './actions';
 import { briefing } from './briefing';
 import { weekCheckIns, type CheckProblem } from './checkins';
@@ -90,6 +91,13 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     const r = opts.find((x) => x.id === id);
     if (r) groups.upcoming.push({ key: `eve:${day}`, kind: 'upcoming', title: `${DAY_NAMES[day]} evening: ${r.label}`, detail: r.cost ? `${fmtMoney(r.cost)} from your pocket that evening` : 'Costs nothing', cost: r.cost, ref: { day } });
   });
+  // The Old Don: the pressure points he knows of, with his own odds, and the fog over the coming move.
+  const pts = pressurePoints(s);
+  if (pts.length) {
+    const est = attackEstimate(s);
+    groups.upcoming.push({ key: 'od:move', kind: 'upcoming', title: `The coming move: ${est.lo}–${est.hi} men, by the talk`, detail: `How sure you are: ${est.intel}%. Rumors run hot; names and proof narrow it.`, urgent: true, ref: {} });
+    for (const p of pts.slice(0, 5)) groups.upcoming.push({ key: `od:${p.role}`, kind: 'upcoming', title: p.title, detail: p.detail, ref: {} });
+  }
   for (const sc of s.schemes.filter((x) => x.owner === 'player').slice(0, 4)) {
     groups.upcoming.push({ key: `sch:${sc.id}`, kind: 'upcoming', title: `${SCHEME_INFO[sc.kind].name} under way`, detail: `${sc.progress}% along`, ref: { charId: sc.targetId } });
   }

@@ -45,7 +45,7 @@ describe('starts', () => {
   });
 
   it('starts leave the dynasty layer consistent (records for every member, none for the removed)', () => {
-    for (const st of ['rise', 'sees'] as const) {
+    for (const st of ['olddon', 'rise', 'sees'] as const) {
       const s = newGameWith(`dyn-${st}`, st);
       const d = s.dyn!;
       for (const id of Object.keys(d.people)) expect(s.characters[id]).toBeDefined();
@@ -56,7 +56,7 @@ describe('starts', () => {
   });
 
   it('every start builds valid crew regimes: capos with men under them, nobody reporting to a ghost', () => {
-    for (const st of ['classic', 'rise', 'sees'] as const) {
+    for (const st of ['classic', 'olddon', 'rise', 'sees'] as const) {
       let s = newGameWith(`regimes-${st}`, st);
       expect(validateHierarchy(s), st).toEqual([]);
       const caps = capos(s);
@@ -74,7 +74,7 @@ describe('starts', () => {
   });
 
   it('every start is deterministic from its seed', () => {
-    for (const st of ['classic', 'rise', 'sees'] as const) {
+    for (const st of ['classic', 'olddon', 'rise', 'sees'] as const) {
       expect(JSON.stringify(newGameWith('det', st))).toBe(JSON.stringify(newGameWith('det', st)));
     }
   });

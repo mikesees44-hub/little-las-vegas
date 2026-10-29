@@ -7,7 +7,7 @@ import { OrderToast, type ToastItem } from './components/OrderToast';
 import { ConfirmOrder } from './components/ConfirmOrder';
 import { HousesNavContext } from './houses/nav';
 import { alerts as computeAlerts } from '../engine/alerts';
-import { advanceMonth, advanceWeek } from '../engine/engine';
+import { advanceMonth, advanceSpan, advanceWeek, SEASON_WEEKS } from '../engine/engine';
 import { previewAction, queuedMoney } from '../engine/actions';
 import { STARTS, newGameWith, type StartId } from '../engine/starts';
 import type { CutsceneCue, GameState, PlayerAction, PlayerChoices, SchemeKind, SchemeOptions, SuccessionLaw, WeeklyReport } from '../engine/types';
@@ -104,7 +104,7 @@ import { journalNow, seqOf } from '../engine/journal';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
-type Mode = 'week' | 'month';
+type Mode = 'week' | 'month' | 'season';
 
 /** The opening title card: the scenario's own premise and the real date (engine/scenes.ts openingCard). */
 function openingCue(s: GameState): CutsceneCue {
@@ -349,7 +349,7 @@ export function App({ startOn = 'title' }: AppProps) {
         } else if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
       }
     } else {
-      const r = advanceMonth(s, choices);
+      const r = m === 'season' ? advanceSpan(s, SEASON_WEEKS, choices) : advanceMonth(s, choices);
       settled(r.state);
       settledRef.current = { seed: s.seed, week: s.week };
       setS((cur) => acceptSettlement(cur, s, r.state));
@@ -903,7 +903,7 @@ export function App({ startOn = 'title' }: AppProps) {
           onMeet={(id, via) => act((x) => meetTip(x, id, via), 'You agreed to the meeting')} onIgnore={(id) => { act((x) => ignoreTip(x, id), 'You let the warning go'); setUrgent(undefined); }}
           onRespond={(id, r) => act((x) => respondTip(x, id, r), 'You gave your answer to the warning')} />
       )}
-      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready === 'month'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}

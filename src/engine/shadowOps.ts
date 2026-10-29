@@ -102,6 +102,14 @@ export function previewShadow(s: GameState, a: ShadowAction): ActionPreview {
       const det = a.mode === 'florida' ? 'Out of the life. Your heir takes the chair and you play on as him.' : a.mode === 'consigliere' ? 'Your heir takes the chair; you take the consigliere\'s seat. You play on as the heir.' : 'No title, every door still open. Your heir plays on; you may become the boss who would not retire.';
       return { ...base, title: label, detail: det, effects: [note(heir ? `${nameOf(s, heir.id)} takes the chair` : 'Nobody to take it'), note('Who backs whom decides how it goes')], warning: 'The chosen heir does not automatically keep the chair: the underboss and the capos decide how it goes.', because: `stepped down (${a.mode})`, disabledReason: !heir ? 'No heir: name one first' : s.power?.crisis ? 'Not in the middle of a crisis' : undefined };
     }
+    case 'sideline': {
+      const blood = !!c && boss.childrenIds.includes(c.id);
+      return { ...base, title: `Put ${c?.firstName ?? '?'} out to pasture`, detail: 'No seat when the family talks about tomorrow. His backers drift; he will not forget it.', effects: c ? [{ type: 'opinion', from: c.id, to: boss.id, amount: blood ? -10 : -15, reason: 'Pushed me aside', decay: 1 }, { type: 'meter', from: c.id, to: boss.id, meter: 'grievance', amount: 15 }, note('His claim weakens for a year')] : [], because: `sidelined ${c?.firstName ?? 'a claimant'}`, disabledReason: !c?.alive || c.id === boss.id ? 'Not available' : s.shadow?.cool[`side:${c.id}`] !== undefined && s.week - (s.shadow.cool[`side:${c.id}`] ?? 0) < 52 ? 'Already sidelined' : undefined };
+    }
+    case 'remove': {
+      const blood = !!c && (c.dynasty || boss.childrenIds.includes(c.id));
+      return { ...base, title: `Have ${c?.firstName ?? '?'} removed`, detail: 'Your order, nobody else\'s. The claim dies with him; the men will be afraid, and some will remember.', cost: 1500, effects: c ? [{ type: 'money', amount: -1500 }, { type: 'kill', charId: c.id, cause: 'disappeared after the Don decided the succession', killer: 'player' }, { type: 'heat', bar: 'local', amount: 6 }, ...members(s).filter((m) => m.id !== c.id).slice(0, 6).map((m) => ({ type: 'meter', from: m.id, to: boss.id, meter: 'fear', amount: 12 }) as Effect)] : [], warning: 'A man of your own family. There is no taking it back.', because: `ordered ${c?.firstName ?? 'a claimant'} removed`, disabledReason: !c?.alive || c.id === boss.id ? 'Not available' : blood ? 'Not your own blood' : c.faction !== 'player' ? 'Not one of yours' : s.money < 1500 ? 'Not enough money' : undefined };
+    }
     case 'reunite': {
       const sp = sh.splinters.find((x) => x.id === a.splinterId);
       return { ...base, title: `Take ${nameOf(s, sp?.leaderId)}'s men back`, effects: [note('They rejoin the family')], because: 'took back the men who walked out', disabledReason: !sp || sp.back ? 'Nobody to take back' : !s.characters[sp.leaderId]?.alive ? 'He is gone' : undefined };
@@ -209,6 +217,10 @@ export function commitShadow(ctx: Ctx, a: ShadowAction): void {
       break;
     case 'reunite':
       reunite(ctx, a.splinterId);
+      break;
+    case 'sideline':
+      sh.cool[`side:${a.charId}`] = s.week;
+      remember(s, a.charId, 'The Don put him out to pasture in the succession.');
       break;
   }
 }

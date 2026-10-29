@@ -261,6 +261,12 @@ function ubFavors(s: GameState, manId: string, ubId: string): { n: number; amoun
   return { n: fs.length, amount: fs.reduce((a, f) => a + f.amount, 0) };
 }
 
+/** The Don sidelined this claimant within the last year (shadowOps 'sideline'). */
+export function sidelined(s: GameState, id: string): boolean {
+  const w = s.shadow?.cool[`side:${id}`];
+  return w !== undefined && s.week - w < 52;
+}
+
 /** Score each possible next boss for one man (higher = he backs him). Pure. */
 export function weighCandidates(s: GameState, m: Character, cands: Character[]): { id: string; score: number; why: [string, number][] }[] {
   const sh = shadowView(s);
@@ -301,6 +307,7 @@ export function weighCandidates(s: GameState, m: Character, cands: Character[]):
     if (myCapo?.prefer === c.id && m.rank !== 'capo') why.push(['His capo backs him', 12]);
     if (m.courtedBy && sh.rivals[m.courtedBy.rival]?.favor === c.id) why.push(['The other family likes him', 8]);
     if (plan?.prefer === c.id) why.push(['Already committed', 8]);
+    if (sidelined(s, c.id)) why.push(['The Don put him out to pasture', -25]);
     out.push({ id: c.id, score: why.reduce((a, [, v]) => a + v, 0), why });
   }
   // Himself.
@@ -308,6 +315,7 @@ export function weighCandidates(s: GameState, m: Character, cands: Character[]):
     const amb = x.ambition;
     const self: [string, number][] = [['His own ambition', (amb - 58) * 0.9], ['Men who would follow him', (m.attrs?.followers ?? 0) * 2], ['Age', ageOn(m.birth, s.date) > 62 ? -15 : 0]];
     if (plan?.prefer === m.id) self.push(['Already committed', 8]);
+    if (sidelined(s, m.id)) self.push(['Put out to pasture by the Don', -25]);
     out.push({ id: m.id, score: self.reduce((a, [, v]) => a + v, 0), why: self });
   }
   return out.sort((a, b) => b.score - a.score);
