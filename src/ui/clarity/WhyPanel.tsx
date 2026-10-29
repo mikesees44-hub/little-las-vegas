@@ -102,15 +102,12 @@ export function WhyPanel({ s, action, ex: given, compact }: { s: GameState; acti
   );
 }
 
-const TAG_TONE: Record<string, string> = { 'Best value': 'border-gold-500 text-gold-300', Cheapest: 'border-sky-700 text-sky-300', Safest: 'border-emerald-700 text-emerald-300' };
-
-/** Under one option of a weekly decision: why you might pick it, how it compares, and the details. */
+/** Under one option of a weekly decision: why you might pick it, how it compares, and the details. No badges (no "Best value", no ranking): the decision card shows odds and stakes, the player decides. */
 export function ChoiceWhy({ a }: { a: ChoiceAdvice }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="mt-1" data-testid="choice-why">
       <div className="flex flex-wrap items-start gap-1.5 text-[11px]">
-        {a.tags.map((t) => <span key={t} className={`rounded border px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider ${TAG_TONE[t] ?? 'border-noir-600 text-stone-300'}`}>{t}</span>)}
         {(a.ex.verdict.tone === 'warn' || a.ex.verdict.tone === 'bad') && <VerdictTag v={a.ex.verdict} />}
         <span className="min-w-0 flex-1 leading-snug text-stone-300 italic">{a.ex.purpose}</span>
         <button type="button" className="shrink-0 text-gold-300 hover:underline" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? 'less' : 'why?'}</button>

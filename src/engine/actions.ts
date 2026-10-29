@@ -111,6 +111,8 @@ export interface ActionPreview {
   outcomes?: { tier: string; label: string; chance: number; text: string; effects: Effect[] }[];
   /** Weeks before it can be tried again on the same person. */
   cooldown?: number;
+  /** The engine rolls for it and the chance is on the card (acceptance, odds or tiers). Absent: certain, no roll (decide.ts). */
+  oddsKnown?: boolean;
 }
 
 type ActionOf<K extends PlayerAction['kind']> = Extract<PlayerAction, { kind: K }>;
@@ -897,7 +899,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
 };
 
 export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
-  const p = previewCore(s, a);
+  const core = previewCore(s, a);
+  const p = core.acceptance || core.odds || core.outcomes?.length ? { ...core, oddsKnown: true } : core;
   // The boss is in another city (visit.ts): what needs him in Wildwood stays on screen, disabled, with the reason.
   const away = homeOnlyBlock(s, a);
   return away ? { ...p, disabledReason: away } : p;

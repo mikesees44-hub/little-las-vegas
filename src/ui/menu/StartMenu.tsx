@@ -8,6 +8,7 @@ import { CUTSCENE_ART, NOIR_GRADE } from '../hood/art/sceneArt';
 import { deleteSlot, freeSlot, listSlots, type SlotMeta } from '../save';
 import { HELP_LEVELS, type AutoBriefings, AUTO_PAUSE, getSettings, setSettings, type Settings, type TextSpeed, type TimeMode, type WeekStart } from '../settings';
 import { CharacterCreator } from './CharacterCreator';
+import { PRIORITIES, PRIORITY_LABEL } from '../../engine/advice';
 
 /**
  * The title screen and the new-game flow: Title → Start → Create your
@@ -241,7 +242,14 @@ export function SettingsPanel() {
         ))}
         <p className="text-[11px] text-stone-500">With decisions unpaused, unanswered cards take their default answer when the week turns. The clock also stops when you switch tabs.</p>
       </div>
-      <label className={row}><span>Confirm orders <span className="block text-xs text-stone-500">Ask "Are you sure?" before an order is given; your man answers "Yes, boss."</span></span><input type="checkbox" checked={st.confirmOrders !== false} onChange={(e) => upd({ confirmOrders: e.target.checked })} data-testid="setting-confirm-orders" /></label>
+      <div className={row} data-testid="priority-picker">
+        <span>What matters most to you <span className="block text-xs text-stone-500">Your people weigh their advice by it (moved here from every decision card). None: they weigh everything.</span></span>
+        <select className="inp w-auto text-xs" value={st.priority ?? ''} onChange={(e) => upd({ priority: (e.target.value || undefined) as Settings['priority'] })} aria-label="What matters most">
+          <option value="">Everything</option>
+          {PRIORITIES.map((p) => <option key={p} value={p}>{PRIORITY_LABEL[p]}</option>)}
+        </select>
+      </div>
+      <label className={row}><span>Confirm heavy orders <span className="block text-xs text-stone-500">Ask "Are you sure?" before an order that cannot be taken back: a death, a war, disinheriting, selling a place, or a big share of the Family's money. Other orders are given on the card.</span></span><input type="checkbox" checked={st.confirmOrders !== false} onChange={(e) => upd({ confirmOrders: e.target.checked })} data-testid="setting-confirm-orders" /></label>
       <label className={row}><span>Show internal ids <span className="block text-xs text-stone-500">Developer inspector: the engine's ids next to agreements. Off for normal play.</span></span><input type="checkbox" checked={!!st.devIds} onChange={(e) => upd({ devIds: e.target.checked })} data-testid="setting-dev-ids" /></label>
     </div>
   );

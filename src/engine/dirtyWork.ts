@@ -630,6 +630,9 @@ export function previewDirty(s: GameState, a: DirtyAction): ActionPreview {
     effects, cost: sum.cost, ...(a.pay === 'pocket' ? { pot: 'pocket' as const } : {}),
     because: `sent ${who === 'you' ? 'yourself' : who} on a job: ${j.title.toLowerCase()}`,
     disabledReason: block, category: 'street',
+    // The odds were in the words; now they are on the card like every other roll (STREAMLINE S10).
+    odds: { chance: sum.odds / 100, reasons: sum.reasons }, oddsLabel: 'It goes clean',
+    warning: `If it goes messy: arrest risk ${sum.arrest}%, a witness ${sum.witness}%.`,
   };
 }
 

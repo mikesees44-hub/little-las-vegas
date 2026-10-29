@@ -489,6 +489,7 @@ export function previewPol(s: GameState, a: PolAction): ActionPreview {
         because: `had people dig into ${nm}`,
         disabledReason: peekCtl(s, p.id)?.dirt ? 'You already have something on him' : s.money < 1500 ? 'Needs $1,500' : undefined,
         category: 'event',
+        odds: { chance: odds, reasons: [{ label: odds ? 'There is something to find' : 'He looks clean', value: Math.round(odds * 100) }] }, oddsLabel: 'Finds something',
         ...(odds === 0 ? { warning: 'He looks clean. You may find nothing.' } : {}),
       };
     }

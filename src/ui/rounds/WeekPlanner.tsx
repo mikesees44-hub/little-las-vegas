@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { DecisionCard } from '../decide/DecisionCard';
 import { weekCheckIns, type CheckIn } from '../../engine/checkins';
 import { awayReason, DAY_NAMES, DAY_SHORT, dayBlock, daysOf, eveningOpen, formatDay, missedMornings, setEvening, setWeekRounds, skipMorning, answerCheckIn, weekPlan } from '../../engine/days';
 import { ALL_LANES, LANE_NAME, roundOptions, roundSlots, type Lane, type Round } from '../../engine/rounds';
@@ -99,15 +100,13 @@ function Morning({ s, day, list, update, locked }: { s: GameState; day: number; 
                   {c.problem && (
                     <div className="mt-1">
                       <div className="text-[11px] text-amber-200">{c.problem.urgent && <span className="mr-1 rounded bg-red-500/80 px-1 text-[9px] font-bold uppercase text-white">urgent</span>}“{c.problem.text}”</div>
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {c.problem.answers.map((a) => (
-                          <button key={a.id} type="button" disabled={locked} title={a.hint} data-testid={`answer-${a.id}`}
-                            onClick={() => update((x) => answerCheckIn(x, c.key, ans === a.id ? undefined : a.id), ans === a.id ? `Took back your answer to ${c.name}` : `Told ${c.name}: ${a.label}`)}
-                            className={`rounded border px-2 py-1 text-[11px] disabled:opacity-60 ${ans === a.id ? 'border-gold-400 bg-gold-500/20 text-gold-200' : 'border-noir-600 text-stone-200 hover:border-gold-500'}`}>
-                            {a.label}<span className="ml-1 text-[9px] text-stone-500">{a.hint}</span>
-                          </button>
-                        ))}
-                      </div>
+                      <DecisionCard s={s} compact selected={ans}
+                        options={c.problem.answers.map((a) => ({ id: a.id, label: a.label, detail: a.hint, effects: a.effects, odds: { known: false, label: a.effects.length ? 'certain' : 'no roll', reasons: [] }, done: ans === a.id, rowTestId: `answer-${a.id}`, disabled: locked ? 'The morning is over' : undefined }))}
+                        onDecide={(id) => update((x) => answerCheckIn(x, c.key, ans === id ? undefined : id), ans === id ? `Took back your answer to ${c.name}` : `Told ${c.name}: ${c.problem!.answers.find((a) => a.id === id)?.label ?? id}`)}
+                        primaryLabel={(o) => (o && ans === o.id ? 'Take it back' : o ? `Tell ${c.name.split(' ')[0]} ▸` : 'Pick one')}
+                        onHandOff={!locked && !ans ? () => update((x) => answerCheckIn(x, c.key, c.problem!.own), `${c.name} does it his way`) : undefined}
+                        handOffLabel={`His way: ${c.problem.answers.find((a) => a.id === c.problem!.own)?.label ?? 'leave it to him'}`}
+                        testid={`morning-${c.key}`} />
                       {!ans && <div className="mt-0.5 text-[10px] text-stone-500">No answer: he does it his way{locked ? '.' : ' (and notices you didn\'t answer).'}</div>}
                     </div>
                   )}

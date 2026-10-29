@@ -8,6 +8,9 @@ import { Chips } from '../components/Chips';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
 import { TableButton } from '../advice/CounselTable';
+import { previewAction } from '../../engine/actions';
+import { oddsOfPreview, worstOfPreview, type OddsView } from '../../engine/decide';
+import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
 
 /**
  * The week, as the boss lives it: the Sit-Down (his people come in, one card
@@ -68,6 +71,8 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
     if (o.link) onLink(o.link);
   }
 
+  const recCost = recs.reduce((n, r) => n + (previewAction(s, r.action).cost || 0), 0);
+
   function acceptAll() {
     for (const r of recs) queue(r.action);
   }
@@ -103,10 +108,10 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
             </div>
             <div className="flex justify-center gap-1 pb-1 sm:hidden" aria-hidden>{[...(lesson ? [0] : []), ...speakers].map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-noir-600" />)}</div>
             <footer className="flex flex-wrap items-center gap-2 border-t border-noir-700 px-3 py-2">
-              <button type="button" className="btn-primary text-xs sm:text-sm" disabled={!recs.length} onClick={acceptAll} data-testid="sitdown-accept-all">
-                Do what they recommend{recs.length ? ` (${recs.length})` : ''}
+              <button type="button" className="btn-secondary text-xs sm:text-sm" disabled={!recs.length} onClick={acceptAll} data-testid="sitdown-accept-all">
+                Let them handle the routine{recs.length ? ` (${recs.length})` : ''}{recCost ? ` · ${fmt$(recCost)}` : ''}
               </button>
-              <span className="text-[11px] text-stone-500 flex-1 min-w-[140px]">{recs.length ? 'Queues each advisor\'s pick as this week\'s orders. You can take any back.' : 'Nothing left to order.'}</span>
+              <span className="text-[11px] text-stone-500 flex-1 min-w-[140px]">{recs.length ? `Each one gives his own pick as this week's order${recCost ? `; together they cost ${fmt$(recCost)}` : ''}. You can take any back.` : 'Nothing left to order.'}</span>
               <button type="button" className="btn-secondary text-xs" onClick={() => setTab('rounds')} data-testid="sitdown-to-rounds">Your rounds ▸</button>
             </footer>
           </>
@@ -124,7 +129,7 @@ function LessonCard({ lesson }: { lesson: SitDownLesson }) {
       <div className="text-[10px] uppercase tracking-[0.25em] text-gold-400">Your first season</div>
       <div className="mt-1 font-semibold text-stone-100 leading-snug">{lesson.title}</div>
       <p className="mt-1 text-stone-400 leading-snug">{lesson.hint}</p>
-      <p className="mt-2 text-[11px] text-stone-500 leading-snug">Every week your people come in here. Each brings a thing or two, with options and what he would do. One click gives the order; "Do what they recommend" gives them all.</p>
+      <p className="mt-2 text-[11px] text-stone-500 leading-snug">Every week your people come in here. Each brings a thing or two, with options and what he would do. Pick an option and give the order; "Let them handle the routine" gives each his own pick.</p>
       {lesson.onShow && <button type="button" className="btn-secondary btn-sm mt-2" onClick={lesson.onShow} data-testid="sitdown-lesson-show">Show me</button>}
     </section>
   );
@@ -175,32 +180,32 @@ function ItemBlock({ s, it, skipped, orders, onChoose, onLink, who }: {
   onChoose: (it: BriefItem, o: BriefOption) => void; onLink: (l: BriefLink) => void;
 }) {
   const picked = it.options.find((o) => o.action && orders.some((x) => same(x, o.action!)));
+  const rec = it.options.find((o) => o.id === it.recommended);
+  // One decision standard (ui/decide): each option with its odds ("certain" / "no roll"), its worst way, one primary.
+  const opts: DecisionOption[] = it.options.map((o) => {
+    const p = o.action ? previewAction(s, o.action) : undefined;
+    const odds: OddsView = o.chance !== undefined ? { known: true, chance: o.chance, label: 'It goes through', reasons: p ? oddsOfPreview(p).reasons : [] } : p ? oddsOfPreview(p) : { known: false, label: o.id === 'wait' || !o.action ? 'no roll' : 'certain', reasons: [] };
+    return {
+      id: o.id, label: `${o.label}${o.link && !o.action ? ' ▸' : ''}`, chips: o.chips, odds, worst: p ? worstOfPreview(p) : undefined, cost: o.cost || undefined,
+      pickedBy: o.id === it.recommended ? `${who}'s pick` : undefined, rowTestId: `opt-${it.id}-${o.id}`, recommended: o.id === it.recommended, done: picked?.id === o.id || (o.id === 'wait' && skipped),
+    };
+  });
+  const wait = it.options.find((o) => o.id === 'wait');
   return (
     <div className={`rounded border px-2 py-1.5 ${picked ? 'border-emerald-700/60 bg-emerald-900/10' : skipped ? 'border-noir-800 opacity-60' : 'border-noir-700'}`} data-testid={`item-${it.id}`}>
       <div className="text-[10px] uppercase tracking-widest text-gold-400/80">{it.topic}</div>
       <p className="mt-0.5 leading-snug text-stone-200">"{it.line}"</p>
       {it.tell && <p className="mt-0.5 text-[11px] italic text-stone-500">{it.tell}</p>}
-      <div className="mt-1.5 flex flex-col gap-1">
-        {it.options.map((o) => {
-          const rec = o.id === it.recommended;
-          const on = picked?.id === o.id || (o.id === 'wait' && skipped);
-          return (
-            <button key={o.id} type="button" onClick={() => onChoose(it, o)} data-testid={`opt-${it.id}-${o.id}`} data-recommended={rec ? 'true' : undefined}
-              className={`rounded border px-2 py-1 text-left ${on ? 'border-emerald-500 bg-emerald-900/30' : rec ? 'border-gold-500 bg-gold-500/10' : 'border-noir-600 hover:border-gold-600'}`}>
-              <span className="flex items-baseline justify-between gap-2">
-                <span className={`font-semibold ${rec ? 'text-gold-300' : 'text-stone-200'}`}>{on ? '✓ ' : ''}{o.label}{o.link && !o.action ? ' ▸' : ''}</span>
-                <span className="shrink-0 text-[10px] text-stone-400 tabular-nums">{o.chance !== undefined ? `${Math.round(o.chance * 100)}%` : ''}{o.cost ? ` · ${fmt$(o.cost)}` : ''}</span>
-              </span>
-              {o.chips.length > 0 && <span className="mt-0.5 flex flex-wrap gap-1">{o.chips.map((ch, i) => <span key={i} className={ch.tone === 'good' ? 'chip-good' : ch.tone === 'bad' ? 'chip-bad' : 'chip-neutral'}>{ch.text}</span>)}</span>}
-            </button>
-          );
-        })}
-      </div>
-      <p className="mt-1 text-[11px] text-gold-300/90" data-testid="item-reason">{it.reason.replace(/^\S+ says/, `${who} says`)}</p>
-      <div className="mt-0.5 flex flex-wrap items-baseline gap-x-3">
-        {it.open && <button type="button" className="text-[10px] text-stone-400 hover:text-gold-300" onClick={() => onLink(it.open!.link)}>{it.open.label} ▸</button>}
-        {it.options.some((o) => o.action) && <TableButton s={s} subject={{ kind: 'brief', itemId: it.id }} onOption={(id) => { const o = it.options.find((x) => x.id === id); if (o) onChoose(it, o); }} label="Ask the table" testid={`table-${it.id}`} className="text-[10px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" />}
-      </div>
+      <DecisionCard s={s} compact options={opts.filter((o) => o.id !== 'wait')} selected={picked?.id ?? it.recommended}
+        voices={[{ who, says: it.reason.replace(/^\S+ says:?\s*/, ''), tone: 'do' }]}
+        onDecide={(id) => { const o = it.options.find((x) => x.id === id); if (o) onChoose(it, o); }}
+        primaryLabel={(o) => (o ? (it.options.find((x) => x.id === o.id)?.link && !it.options.find((x) => x.id === o.id)?.action ? 'Go ▸' : 'Give the order ▸') : 'Pick one')}
+        onLater={wait ? () => onChoose(it, wait) : undefined} laterLabel={wait?.label ?? 'Not now'}
+        onHandOff={rec?.action && rec.id !== 'wait' && !picked ? () => onChoose(it, rec) : undefined} handOffLabel={`Let ${who} handle it`}
+        advice={it.options.some((o) => o.action) ? <TableButton s={s} subject={{ kind: 'brief', itemId: it.id }} onOption={(id) => { const o = it.options.find((x) => x.id === id); if (o) onChoose(it, o); }} label="Ask the table" testid={`table-${it.id}`} className="btn-quiet text-[10px]" /> : undefined}
+        testid={`decide-${it.id}`}
+      />
+      {it.open && <button type="button" className="btn-quiet mt-0.5 text-[10px]" onClick={() => onLink(it.open!.link)}>{it.open.label} ▸</button>}
     </div>
   );
 }
