@@ -1133,6 +1133,16 @@ export interface ArmyMeter {
   pressure: number;
 }
 
+/**
+ * The enemy's men in the field AS THE BOSS KNOWS IT: the one estimate every screen shows (the top bar,
+ * the Army, the War room). The true count (`camps[w].enemyMen`) is never printed while it is fogged.
+ */
+export function enemyInField(s: GameState, rival: RivalId, warId?: string): { lo: number; hi: number; fogged: boolean; text: string } {
+  const real = s.army?.camps[warId ?? '']?.enemyMen ?? enemyArmy(s, rival).men;
+  const e = enemyEstimate(s, rival, real);
+  return { lo: e.lo, hi: e.hi, fogged: e.fogged, text: `${e.lo === e.hi ? e.lo : `${e.lo}–${e.hi}`}${e.fogged ? '?' : ''}` };
+}
+
 export function armyMeter(s: GameState): ArmyMeter {
   const A = s.army;
   const lev = levyView(s);
@@ -1145,8 +1155,7 @@ export function armyMeter(s: GameState): ArmyMeter {
   let enemy: ArmyMeter['enemy'];
   const foe = (w?.rival ?? (pressure >= 40 ? 'philly' : undefined)) as RivalId | undefined;
   if (foe) {
-    const real = A?.camps[w?.id ?? '']?.enemyMen ?? enemyArmy(s, foe).men;
-    const e = enemyEstimate(s, foe, real);
+    const e = enemyInField(s, foe, w?.rival === foe ? w.id : undefined);
     enemy = { rival: foe, name: rivalLabel(s, foe), lo: e.lo, hi: e.hi, fogged: e.fogged };
   }
   const power = lev.reduce((a, c) => a + c.raised * c.perMan, 0) + hiredPower(s) + allyPower(s);

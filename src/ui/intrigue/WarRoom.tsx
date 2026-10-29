@@ -1,6 +1,6 @@
 import { warRoom } from '../../engine/intrigue';
 import { raidOdds } from '../../engine/war';
-import { ADJ, allyMen, attackable, battlePlan, frontsOf, GOAL_LABEL, rivalLabel, type FrontView } from '../../engine/army';
+import { ADJ, allyMen, armyMeter, attackable, battlePlan, enemyInField, frontsOf, GOAL_LABEL, rivalLabel, type FrontView } from '../../engine/army';
 import { SIDE_STYLE } from '../../engine/sides';
 import { fmt$ } from '../format';
 import type { GameState, War } from '../../engine/types';
@@ -62,12 +62,13 @@ export function WarRoom({ s }: { s: GameState }) {
           <p className="text-xs text-stone-500">No war. The war room opens when the mattresses come out: yours (a casus belli and the Table, under The Table & Wars) or theirs (a cold war that boils over).</p>
         </section>
       )}
-      {rooms.map(({ war: w, rival: r, fronts, menAvailable, ours, theirs, ledger: l }) => {
+      {rooms.map(({ war: w, rival: r, fronts, ours, theirs, ledger: l }) => {
         const net = l ? l.gained - l.spent : 0;
+        const m = armyMeter(s);
         return (
           <section key={w.id} className="rounded-md border border-blood-500/50 bg-blood-500/10 p-3" data-testid="war-room-war">
             <div className="flex justify-between text-sm"><span className="text-stone-100 font-semibold">War with {r.name}</span><span className="text-xs text-stone-400">since week {w.startWeek} · score {w.score > 0 ? '+' : ''}{w.score}</span></div>
-            <div className="mt-1 text-[11px] text-stone-400">Your men in the field: {menAvailable} · your strength {Math.round(ours)} against their {Math.round(theirs)} · raids succeed {Math.round(raidOdds(s, w) * 100)}%</div>
+            <div className="mt-1 text-[11px] text-stone-400">Your men under arms: {m.raised} of {m.available} you could raise · your strength {Math.round(ours)} against their {Math.round(theirs)} · raids succeed {Math.round(raidOdds(s, w) * 100)}%</div>
             <WarCampaign s={s} w={w} />
 
             <div className="mt-2 text-[10px] uppercase tracking-[0.25em] text-stone-500">The fronts</div>
@@ -150,7 +151,7 @@ function WarCampaign({ s, w }: { s: GameState; w: War }) {
         </div>
       </div>
       <div className="mt-2"><ArmyMeterLine s={s} /></div>
-      {c && <div className="text-[11px] text-stone-400">{rivalLabel(s, w.rival)}: {c.enemyMen} of {c.enemyStart} men left as far as you know{c.enemyAllies.length ? ` (with ${c.enemyAllies.map((a) => `${a.men} of ${rivalLabel(s, a.from as never)}'s`).join(', ')})` : ''} · their weariness {Math.round(c.enemyTired)} · your allies in the field {allyMen(s, w.id)}</div>}
+      {c && <div className="text-[11px] text-stone-400">{rivalLabel(s, w.rival)}: about {enemyInField(s, w.rival, w.id).text} men in the field by your count{enemyInField(s, w.rival, w.id).fogged ? ' (a guess: nobody inside)' : ''}{c.enemyAllies.length ? ` (with ${c.enemyAllies.map((a) => `${a.men} of ${rivalLabel(s, a.from as never)}'s`).join(', ')})` : ''} · their weariness {Math.round(c.enemyTired)} · your allies in the field {allyMen(s, w.id)}</div>}
       <FrontMap s={s} w={w} fronts={fronts} />
       <div className="text-[10px] text-stone-500">Gold ring: their road in. Striped: held by force. ⚔: a battle massing. Numbers: your influence / theirs.</div>
       {pending.map((b) => {

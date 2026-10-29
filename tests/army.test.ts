@@ -301,4 +301,20 @@ describe('the screens', () => {
     expect(room).toContain('data-testid="war-score-bar"');
     if (s.army?.pending.length) expect(room).toContain('data-testid="pending-battle"');
   });
+
+  it('one count of men on every screen: under arms from the levies, the enemy from the one estimate (never the hidden truth)', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { WarRoom } = await import('../src/ui/intrigue/WarRoom');
+    const { armyMeter, enemyInField } = await import('../src/engine/army');
+    const { s } = phillyWar('army-count');
+    const w = s.wars[0];
+    const m = armyMeter(s);
+    const e = enemyInField(s, w.rival, w.id);
+    expect(m.enemy && `${m.enemy.lo === m.enemy.hi ? m.enemy.lo : `${m.enemy.lo}–${m.enemy.hi}`}${m.enemy.fogged ? '?' : ''}`).toBe(e.text);
+    const room = renderToString(createElement(WarRoom, { s })).replace(/<!-- -->/g, '');
+    expect(room).toContain(`Your men under arms: ${m.raised} of ${m.available}`);
+    expect(room).not.toContain('men left as far as you know');
+    if (s.army?.camps[w.id]) expect(room).toContain(`about ${e.text} men in the field`);
+  });
 });
