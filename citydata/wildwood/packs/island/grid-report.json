@@ -1,5 +1,5 @@
 {
- "at": "2026-10-29T14:29:47.555Z",
+ "at": "2026-10-29T15:16:42.231Z",
  "frame": {
   "njWays": 70,
   "njPoints": 339,
@@ -210,7 +210,7 @@
   "meanBefore": 1165.8,
   "maxBefore": 3182.8,
   "meanAfter": 1.2,
-  "maxAfter": 16,
+  "maxAfter": 16.9,
   "orderInversionsBefore": 235,
   "pairs": 2556,
   "rows": [
@@ -427,7 +427,7 @@
    {
     "name": "Cedar Ave",
     "before": 359.4,
-    "after": 16,
+    "after": 16.9,
     "oldOrder": 0,
     "newOrder": 0
    },
@@ -476,7 +476,7 @@
    {
     "name": "Schellenger Ave",
     "before": 1044.8,
-    "after": 11.1,
+    "after": 6.1,
     "oldOrder": 0,
     "newOrder": 0
    },
@@ -877,7 +877,7 @@
    "street-relative-block": 195,
    "street-relative": 168,
    "address": 1,
-   "nudged": 49
+   "nudged": 54
   },
   "queued": [
    "sa05",

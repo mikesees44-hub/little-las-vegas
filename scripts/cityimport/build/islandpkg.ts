@@ -180,7 +180,7 @@ export function buildIslandGrid(m: Measured, old: CityPackage, opts: { now: stri
       id: p.legacy?.id ?? `st:${slug(p.name)}`, name: p.name, kind: 'cross', u: r0(p.u), sub: p.town === 'other' ? 'crest' : p.town, idx: oldIdx.get(p.name)!,
       evidence: p.hidden
         ? { confidence: 'invented', source: `Not in OSM or the NJ tax list: a street of the old (memory) grid, kept hidden so its records keep their ground. See the review queue.` }
-        : { confidence: 'verified', source: `OpenStreetMap ${p.obs!.display} (${p.obs!.ways.length} ways, ${TOWN_NAME[p.town] ?? p.town}${p.town === 'other' ? ', Lower Township' : ''}): u where it crosses the middle of the island; modern course, the 1960 street is unverified.`, scope: ['address'] },
+        : { confidence: 'verified', source: `OpenStreetMap ${p.obs!.display} (${p.obs!.ways.length} ways, ${TOWN_NAME[p.town] ?? p.town}${p.town === 'other' ? ', Lower Township' : ''}): u where it crosses the middle of the island${p.obs!.measuredAt !== undefined ? ` (read at v ${p.obs!.measuredAt} m, where it and its converging neighbour are a block apart)` : ''}; modern course, the 1960 street is unverified.`, scope: ['address'] },
     };
     if (p.label !== p.name) st.label = p.label;
     if (p.vRange) st.vRange = p.vRange;

@@ -1368,16 +1368,8 @@
           525
         ],
         [
-          4990,
-          520
-        ],
-        [
-          4900,
-          515
-        ],
-        [
-          4900,
-          505
+          4525,
+          500
         ],
         [
           3460,
@@ -1432,40 +1424,40 @@
           295
         ],
         [
-          4860,
+          4845,
           300
         ],
         [
-          4940,
+          4920,
           295
         ],
         [
-          4940,
+          4920,
           285
         ],
         [
-          5020,
-          255
+          4980,
+          275
+        ],
+        [
+          5000,
+          245
         ],
         [
           5040,
-          225
+          235
         ],
         [
           5080,
-          215
+          185
         ],
         [
           5120,
-          165
+          175
         ],
         [
-          5160,
-          155
-        ],
-        [
-          5215,
-          100
+          5240,
+          55
         ]
       ],
       "pop": 900,
@@ -1508,7 +1500,7 @@
           500
         ],
         [
-          4540,
+          4525,
           500
         ],
         [
@@ -4947,7 +4939,7 @@
     },
     "crs": "local-meters",
     "derivedFrom": {
-      "at": "2026-10-29T14:29:47.555Z",
+      "at": "2026-10-29T15:16:42.231Z",
       "method": "scripts/cityimport/build/islandgrid.ts + islandpkg.ts (npx tsx scripts/cityimport/cli.ts grid --area island)",
       "report": "citydata/wildwood/packs/island/grid-report.json",
       "sources": [
@@ -7085,47 +7077,31 @@
             55
           ],
           [
-            5225,
-            60
-          ],
-          [
-            5215,
-            100
-          ],
-          [
-            5160,
-            155
-          ],
-          [
             5120,
-            165
+            175
           ],
           [
             5080,
-            215
+            185
           ],
           [
             5040,
-            225
+            235
           ],
           [
-            5020,
-            255
-          ],
-          [
-            4990,
-            260
+            5000,
+            245
           ],
           [
             4980,
             275
           ],
           [
-            4940,
-            285
+            4935,
+            280
           ],
           [
-            4940,
+            4920,
             295
           ],
           [
@@ -7183,7 +7159,7 @@
             500
           ],
           [
-            4540,
+            4525,
             500
           ],
           [
@@ -8111,16 +8087,8 @@
             525
           ],
           [
-            4990,
-            520
-          ],
-          [
-            4900,
-            515
-          ],
-          [
-            4900,
-            505
+            4525,
+            500
           ],
           [
             3460,
@@ -8175,40 +8143,40 @@
             295
           ],
           [
-            4860,
+            4845,
             300
           ],
           [
-            4940,
+            4920,
             295
           ],
           [
-            4940,
+            4920,
             285
           ],
           [
-            5020,
-            255
+            4980,
+            275
+          ],
+          [
+            5000,
+            245
           ],
           [
             5040,
-            225
+            235
           ],
           [
             5080,
-            215
+            185
           ],
           [
             5120,
-            165
+            175
           ],
           [
-            5160,
-            155
-          ],
-          [
-            5215,
-            100
+            5240,
+            55
           ]
         ]
       ],
@@ -18816,7 +18784,7 @@
       "name": "Marine Pier",
       "ownable": false,
       "pos": {
-        "u": 4900,
+        "u": 4886,
         "v": -24
       },
       "sign": "turquoise",
@@ -24020,8 +23988,8 @@
         "status": "private"
       },
       "pos": {
-        "u": 4905,
-        "v": 102
+        "u": 4897,
+        "v": 103
       },
       "residential": {
         "use": "bungalow"
@@ -24043,7 +24011,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m south along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 2 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24055,7 +24023,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4886,
+        "u": 4912,
         "v": 101
       },
       "residential": {
@@ -24078,7 +24046,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 6 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24090,8 +24058,8 @@
         "status": "private"
       },
       "pos": {
-        "u": 4943,
-        "v": 100
+        "u": 4927,
+        "v": 99
       },
       "residential": {
         "use": "bungalow"
@@ -24113,7 +24081,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 25 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24125,8 +24093,8 @@
         "status": "private"
       },
       "pos": {
-        "u": 4924,
-        "v": 98
+        "u": 4959,
+        "v": 96
       },
       "residential": {
         "use": "bungalow"
@@ -24285,7 +24253,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 14 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 17 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24297,8 +24265,8 @@
         "status": "sale"
       },
       "pos": {
-        "u": 4958,
-        "v": 179
+        "u": 4974,
+        "v": 180
       },
       "residential": {},
       "rotation": 0,
@@ -24309,7 +24277,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 13 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 19 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24321,8 +24289,8 @@
         "status": "sale"
       },
       "pos": {
-        "u": 4973,
-        "v": 180
+        "u": 4989,
+        "v": 181
       },
       "residential": {},
       "rotation": 0,
@@ -24333,37 +24301,13 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 12 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 39 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
         "w": 15
       },
       "id": "rs.ato.cedarave.2",
-      "market": {
-        "owner": "private",
-        "status": "sale"
-      },
-      "pos": {
-        "u": 4988,
-        "v": 181
-      },
-      "residential": {},
-      "rotation": 0,
-      "zone": "downtown"
-    },
-    {
-      "address": "838 Atlantic Ave",
-      "districtId": "d:downtown",
-      "evidence": {
-        "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 29 m north along its street to free ground (the real block is shorter).]"
-      },
-      "footprint": {
-        "d": 20,
-        "w": 15
-      },
-      "id": "rs.ato.cedarave.3",
       "market": {
         "owner": "private",
         "status": "sale"
@@ -24377,6 +24321,30 @@
       "zone": "downtown"
     },
     {
+      "address": "838 Atlantic Ave",
+      "districtId": "d:downtown",
+      "evidence": {
+        "confidence": "invented",
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 41 m north along its street to free ground (the real block is shorter).]"
+      },
+      "footprint": {
+        "d": 20,
+        "w": 15
+      },
+      "id": "rs.ato.cedarave.3",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": 5036,
+        "v": 183
+      },
+      "residential": {},
+      "rotation": 0,
+      "zone": "downtown"
+    },
+    {
       "address": "1102 Atlantic Ave",
       "art": [
         "cutout_white_shore_home"
@@ -24384,7 +24352,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 14 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 29 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24396,7 +24364,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5036,
+        "u": 5051,
         "v": 185
       },
       "residential": {
@@ -24419,7 +24387,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 12 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 27 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24431,7 +24399,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5051,
+        "u": 5066,
         "v": 186
       },
       "residential": {
@@ -24454,7 +24422,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 11 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 46 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24466,7 +24434,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5066,
+        "u": 5101,
         "v": 187
       },
       "residential": {
@@ -24489,7 +24457,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 29 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 44 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24501,7 +24469,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5101,
+        "u": 5116,
         "v": 189
       },
       "residential": {
@@ -24746,7 +24714,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4905,
+        "u": 4897,
         "v": 178
       },
       "residential": {
@@ -24769,7 +24737,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m south along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 2 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24781,7 +24749,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4886,
+        "u": 4912,
         "v": 178
       },
       "residential": {
@@ -24804,7 +24772,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m north along its street to free ground (the real block is shorter).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 6 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24816,7 +24784,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4943,
+        "u": 4927,
         "v": 178
       },
       "residential": {
@@ -24839,7 +24807,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 25 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24851,8 +24819,8 @@
         "status": "private"
       },
       "pos": {
-        "u": 4924,
-        "v": 178
+        "u": 4959,
+        "v": 179
       },
       "residential": {
         "use": "shorehouse"
@@ -24886,7 +24854,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4834,
+        "u": 4832,
         "v": 223
       },
       "residential": {
@@ -24909,7 +24877,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).] [Slid 1 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24921,7 +24889,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4851,
+        "u": 4847,
         "v": 223
       },
       "residential": {
@@ -24944,7 +24912,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).] [Slid 3 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24956,7 +24924,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4868,
+        "u": 4862,
         "v": 223
       },
       "residential": {
@@ -24979,7 +24947,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).] [Slid 27 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24991,8 +24959,8 @@
         "status": "private"
       },
       "pos": {
-        "u": 4885,
-        "v": 224
+        "u": 4900,
+        "v": 223
       },
       "residential": {
         "use": "cottage"
@@ -32895,8 +32863,8 @@
         "w": 37
       },
       "geo": [
-        -74.814115,
-        38.989711
+        -74.813984,
+        38.989819
       ],
       "id": "pa-fairview",
       "kind": "tavern",
@@ -33502,8 +33470,8 @@
         "w": 37
       },
       "geo": [
-        -74.812378,
-        38.988394
+        -74.812241,
+        38.988507
       ],
       "id": "at-al-pizza",
       "kind": "food",
@@ -33561,8 +33529,8 @@
         "w": 40
       },
       "geo": [
-        -74.811053,
-        38.985953
+        -74.811187,
+        38.985854
       ],
       "id": "pr02-wheel",
       "kind": "ride",
@@ -33642,8 +33610,8 @@
         "w": 30
       },
       "geo": [
-        -74.818727,
-        38.992395
+        -74.818817,
+        38.99233
       ],
       "id": "pk-ricks",
       "kind": "restaurant",
@@ -35077,14 +35045,14 @@
         "scope": [
           "address"
         ],
-        "source": "OpenStreetMap Schellenger Ave (5 ways, Wildwood): u where it crosses the middle of the island; modern course, the 1960 street is unverified."
+        "source": "OpenStreetMap Schellenger Ave (5 ways, Wildwood): u where it crosses the middle of the island (read at v 203 m, where it and its converging neighbour are a block apart); modern course, the 1960 street is unverified."
       },
       "id": "st:schellenger-ave",
       "idx": 38,
       "kind": "cross",
       "name": "Schellenger Ave",
       "sub": "wildwood",
-      "u": 4900,
+      "u": 4886,
       "vRange": [
         33,
         1046
@@ -35096,14 +35064,14 @@
         "scope": [
           "address"
         ],
-        "source": "OpenStreetMap Cedar Ave (2 ways, Wildwood): u where it crosses the middle of the island; modern course, the 1960 street is unverified."
+        "source": "OpenStreetMap Cedar Ave (2 ways, Wildwood): u where it crosses the middle of the island (read at v 203 m, where it and its converging neighbour are a block apart); modern course, the 1960 street is unverified."
       },
       "id": "st:cedar-ave",
       "idx": 31,
       "kind": "cross",
       "name": "Cedar Ave",
       "sub": "wildwood",
-      "u": 4929,
+      "u": 4945,
       "vRange": [
         203,
         1249

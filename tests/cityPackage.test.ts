@@ -112,7 +112,8 @@ describe('Wildwood through the package', () => {
   // If the Wildwood data is changed on purpose, re-capture these.
   // Re-captured 2026-10-29: the street grid, the avenues, the outline and the places were re-derived
   // from OpenStreetMap (scripts/cityimport `grid`); was { data: '42edaf0f', places: 'c725a01e' }.
-  const GOLDEN = { data: 'df05ffe3', places: '50108518', stretches: '64c18575' };
+  // Re-captured again the same day: Schellenger and Cedar read where they are a block apart (data was 'df05ffe3', places '50108518').
+  const GOLDEN = { data: 'a2423e35', places: '2fab54a8', stretches: '64c18575' };
 
   it('the adapters export exactly the old hand data', () => {
     const samples = Array.from({ length: 80 }, (_, i) => i * 100);

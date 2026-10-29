@@ -260,6 +260,8 @@ export interface CrossObs {
   key: string; display: string; town: string; muni: string; u: number; skewDeg: number; vMin: number; vMax: number; length: number; ways: string[]; n: number;
   /** u at the ocean and bay ends of its measured stretch (the street's own run across the island). */
   uEnds: [number, number];
+  /** Where u was read when not at the middle of the island (a converging pair: the v where they are furthest apart). */
+  measuredAt?: number;
 }
 export interface AveObs { key: string; display: string; town: string; muni: string; v: number; uMin: number; uMax: number; length: number; prof: UVp[]; ways: string[] }
 
@@ -305,6 +307,21 @@ export function measureStreets(osm: OsmLayers, toUv: (p: LL) => UVp, muniAt: (u:
     for (const p of pts) { const m = muniAt(p[0], p[1]); if (m) muniVotes.set(m, (muniVotes.get(m) ?? 0) + 1); }
     const muni = [...muniVotes.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? '';
     cross.push({ key: cl[0].key, display: streetDisplay(cl[0].name), town: MUNI_TOWN[muni] ?? 'other', muni, u, skewDeg: Math.atan(f.k) / RAD, vMin, vMax, length: cl.reduce((s, p) => s + p.len, 0), ways: cl.map((p) => p.way), n: pts.length, uEnds: [f.k * vMin + f.m, f.k * vMax + f.m] });
+  }
+  // Streets that converge (Schellenger and Cedar meet west of New Jersey Avenue) can come out a few metres apart
+  // at vRef, though along most of their run they are a block apart: such a pair is measured where they are
+  // furthest apart within the stretch both run (the ocean side of the town), so the grid keeps a real block between them.
+  const long = cross.filter((c) => c.vMax - c.vMin > 300).sort((a, b) => a.u - b.u);
+  const uAt = (c: CrossObs, v: number) => c.uEnds[0] + ((v - c.vMin) * (c.uEnds[1] - c.uEnds[0])) / Math.max(1, c.vMax - c.vMin);
+  for (let i = 0; i + 1 < long.length; i++) {
+    const a = long[i]; const b = long[i + 1];
+    if (b.u - a.u >= 45) continue;
+    const v0 = Math.max(a.vMin, b.vMin, 0); const v1 = Math.min(a.vMax, b.vMax, 700);
+    let best = { v: vRef, gap: b.u - a.u };
+    for (let v = v0; v <= v1; v += 10) { const g = uAt(b, v) - uAt(a, v); if (g > best.gap) best = { v, gap: g }; }
+    if (best.gap - (b.u - a.u) < 5) continue;
+    a.u = uAt(a, best.v); b.u = uAt(b, best.v);
+    a.measuredAt = b.measuredAt = Math.round(best.v);
   }
   const aves: AveObs[] = [];
   for (const cl of cluster(aveP, 1, 120)) {
