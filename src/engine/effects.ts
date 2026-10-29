@@ -29,6 +29,7 @@ import { addEvidence, addStory, assignTo, bumpStat, capoOf, giveBio, GOAL_INFO, 
 import { voucherBlame } from './regimes';
 import { maybePlant } from './rivalcrew';
 import { applyStoryOp, describeStoryOp } from './storyOps';
+import { applyDeedOp, describeDeedOp } from './deeds/ops';
 import { applyBonesOp, bonesBlock, describeBonesOp, mayPropose } from './bones';
 import { applyLedgerOp, describeLedgerOp } from './ledgerbook';
 import { applyTributeOp, describeTributeOp } from './tributeOps';
@@ -215,6 +216,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describePowerOp(s, e.op);
     case 'storyOp':
       return describeStoryOp(s, e.op);
+    case 'deed':
+      return describeDeedOp(s, e.op);
     case 'pol':
       return describePolOp(s, e.op);
     case 'econ':
@@ -857,6 +860,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'storyOp':
       applyStoryOp(ctx, e.op);
+      break;
+    case 'deed':
+      applyDeedOp(ctx, e.op);
       break;
     case 'pol':
       applyPolOp(ctx, e.op, label);

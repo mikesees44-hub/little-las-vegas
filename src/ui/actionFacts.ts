@@ -85,6 +85,7 @@ export function specificButton(s: GameState, a: PlayerAction, p: ActionPreview =
     const f = INTERACT_BUTTON[a.id];
     if (f) return withCost(f(n), p);
   }
+  if (a.kind === 'deed') return withCost(p.title, p);
   if (a.kind === 'appoint') return `Appoint ${first(s, a.charId) ?? 'him'} ${SEAT_INFO[a.seat].name.toLowerCase()}`;
   if (a.kind === 'reassign') return `Move ${first(s, a.charId) ?? 'him'} to ${first(s, a.capoId) ?? 'another'}'s crew`;
   if (a.kind === 'contract') return `Set ${first(s, a.charId) ?? 'his'}'s cut to ${Math.round(a.keep * 100)}%`;
@@ -109,7 +110,7 @@ function actorOf(s: GameState, a: PlayerAction): string {
 function targetOfAction(s: GameState, a: PlayerAction): string | undefined {
   const who = (id?: string) => { const c = id ? s.characters[id] : undefined; return c ? `${c.firstName} ${c.lastName}` : undefined; };
   switch (a.kind) {
-    case 'interact': return who(a.target);
+    case 'interact': case 'deed': return who(a.target);
     case 'scheme': return a.targetId ? who(a.targetId) : a.opts.city ? a.opts.city : a.opts.heist ? `a ${a.opts.heist} job` : undefined;
     case 'talk': return a.op.t === 'ask' ? who(a.op.target) : undefined;
     case 'appoint': return `${who(a.charId)} as ${SEAT_INFO[a.seat].name.toLowerCase()}`;

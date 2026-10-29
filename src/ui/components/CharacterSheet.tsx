@@ -41,6 +41,9 @@ import { AgingSection } from '../sheet/AgingSection';
 import { knownOld } from '../../engine/aging';
 import { XpBadge, XpSection } from '../borgata/CrewXp';
 import { MindSection } from '../minds/MindSection';
+import { LeansSection } from '../deeds/LeansSection';
+import { RelationsWeb } from '../deeds/RelationsWeb';
+import { DeedFeed } from '../deeds/DeedFeed';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
 export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history' | 'book';
@@ -207,6 +210,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         <DynastyFacts s={s} c={c} />
         <PowerFacts s={s} c={c} />
         <MindSection s={s} c={c} />
+        <LeansSection s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} part="life" />}
         </>}
 
@@ -240,6 +244,8 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         </section>
 
         <ConnectionsSection s={s} id={c.id} />
+        <RelationsWeb s={s} center={c.id === s.playerId ? undefined : c.id} title={c.id === s.playerId ? 'The web: who stands where with whom' : `${c.firstName}'s web`} />
+        {c.id === s.playerId && <section className="mt-3"><div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Between people lately</div><DeedFeed s={s} max={12} /></section>}
         </>}
 
         {tab === 'history' && <HisHistory s={s} c={c} />}

@@ -1,0 +1,83 @@
+{
+  "_about": "The boardwalk: summer money, the piers, the games of chance.",
+  "scenes": [
+    {
+      "id": "boardwalk_wheel_operator",
+      "title": "The wheel on Hunt's Pier",
+      "theme": "business",
+      "when": { "season": "summer", "location": "boardwalk", "cooldown": 26, "chance": 0.6 },
+      "who": { "man": { "pool": "crew", "traits": ["Greedy"], "rank": ["soldier", "associate"] } },
+      "text": "The big wheel at Hunt's Pier is rigged to stop on twelve, which is fine; it has always been rigged. {man.call}, who runs it for you, has been rigging it to stop on twelve a little more often than you agreed, and pocketing the difference. A sailor from Cape May lost his whole paycheck and is telling the boardwalk cop about it.",
+      "choices": [
+        {
+          "label": "Give the sailor his money back, and fine {man.first} double",
+          "effects": [ { "money": -120 }, { "wealth": { "role": "man", "by": -240 } }, { "heat": { "local": -2 } }, { "grievance": { "of": "man", "toward": "boss", "by": 8 } } ]
+        },
+        {
+          "label": "Let the cop handle the sailor",
+          "hint": "The cop is on the pad. Mostly.",
+          "odds": { "base": 70 },
+          "success": [ { "money": 200 } ],
+          "failure": [ { "heat": { "local": 5 } }, { "evidence": { "role": "man", "by": 6 } } ],
+          "result": "The sailor was put on the last bus to Cape May with a warning and a hot dog.",
+          "failText": "The cop's sergeant was on the boards that night. It went in a report."
+        },
+        {
+          "label": "Recognize {man.first} at the table: he earns",
+          "hint": "Greedy men work hardest when they're praised.",
+          "effects": [ { "deed": { "id": "recognize", "actor": "boss", "target": "man" } }, { "money": 300 } ]
+        }
+      ]
+    },
+    {
+      "id": "boardwalk_singer_owed",
+      "title": "The singer at the Riptide wants paying",
+      "theme": "business",
+      "when": { "season": "summer", "cooldown": 30, "chance": 0.5, "years": [1960, 1965] },
+      "who": { "capo": { "pool": "capo" } },
+      "text": "A crooner from Philadelphia, two records on the charts, played three weeks at the Riptide on {capo.first}'s word. {capo.first} paid him for one. Now the crooner's manager, a large man named Bruno, is at your door with a contract and a cousin.",
+      "choices": [
+        {
+          "label": "Pay the singer in full ($1,800)",
+          "requires": { "money": 1800 },
+          "effects": [ { "money": -1800 }, { "respect": 1 }, { "opinion": { "of": "capo", "toward": "boss", "by": -4, "why": "Paid my debt and made me look small" } } ]
+        },
+        {
+          "label": "Make {capo.first} pay it out of his end",
+          "odds": { "deed": "discipline", "actor": "boss", "target": "capo" },
+          "success": [ { "wealth": { "role": "capo", "by": -1800 } }, { "respect": 1 } ],
+          "failure": [ { "money": -1800 }, { "grievance": { "of": "capo", "toward": "boss", "by": 12 } } ],
+          "result": "{capo.first} paid. Bruno shook your hand. The singer is booked again next summer.",
+          "failText": "{capo.first} said he did not have it, and meant he would not. You paid, and he sulked."
+        },
+        {
+          "label": "Send Bruno and his cousin home",
+          "hint": "A singer can always sing somewhere else.",
+          "effects": [ { "heat": { "local": 2 } }, { "flag": "singer_stiffed" } ]
+        }
+      ]
+    },
+    {
+      "id": "boardwalk_hurricane_warning",
+      "title": "The Weather Bureau says Donna is coming",
+      "theme": "town",
+      "when": { "months": [8, 9], "years": [1960, 1960], "once": true },
+      "who": { "capo": { "pool": "capo" } },
+      "text": "The radio says a hurricane called Donna will come up the coast by Monday. The Boardwalk merchants are boarding windows. {capo.call} wants to know: do we keep the games open for the last weekend of tourists, or pull the cash and close?",
+      "choices": [
+        {
+          "label": "Pull the cash, close the games, sandbag the bars",
+          "effects": [ { "money": -400 }, { "opinion": { "of": "capo", "toward": "boss", "by": 4, "why": "The boss looked after us in the storm" } }, { "crew": { "by": 1, "why": "The boss looked after us in the storm" } } ]
+        },
+        {
+          "label": "Stay open: the last weekend is the best weekend",
+          "odds": { "base": 50 },
+          "success": [ { "money": 2500 } ],
+          "failure": [ { "money": -1500 }, { "opinion": { "of": "capo", "toward": "boss", "by": -6, "why": "Kept us out in a hurricane" } } ],
+          "result": "Donna turned out to sea at the last minute. The boardwalk had its best Saturday of the year.",
+          "failText": "Donna did not turn. The Ferris wheel on the pier is in the bay."
+        }
+      ]
+    }
+  ]
+}

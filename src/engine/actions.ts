@@ -51,6 +51,7 @@ import { commitIntrigue, previewIntrigue } from './intrigueOps';
 import { commitArmy, previewArmy } from './army';
 import { commitDev, previewDev } from './develop';
 import { commitSpend, previewSpend } from './spend';
+import { commitDeedAction, previewDeedAction } from './deeds/action';
 
 /** A capo's willingness to accept a worse contract. */
 export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
@@ -103,6 +104,12 @@ export interface ActionPreview {
   warning?: string;
   /** The button's words, when the action knows better than the generic verb ("Hire runners — $300"). */
   verb?: string;
+  /** What the odds line says ("He says yes", "It works"; default "Success"). */
+  oddsLabel?: string;
+  /** Every way it can go (deeds/): better than hoped, success, failure, disaster, with chances and effects. */
+  outcomes?: { tier: string; label: string; chance: number; text: string; effects: Effect[] }[];
+  /** Weeks before it can be tried again on the same person. */
+  cooldown?: number;
 }
 
 type ActionOf<K extends PlayerAction['kind']> = Extract<PlayerAction, { kind: K }>;
@@ -141,6 +148,8 @@ export const ORDER_TITLES: Record<string, string> = {
 export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, hitback: 6, kessler: 4, cops: 3, shylock: 3, launder: 2 };
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  /** Deeds (deeds/): the roll decides the outcome after the costs are paid. */
+  deed: { preview: (s, a) => previewDeedAction(s, a), commit: (ctx, a) => commitDeedAction(ctx, a) },
   pol: { preview: (s, a) => previewPol(s, a.op) },
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
   work: { preview: (s, a) => previewWork(s, a.op), commit: (ctx, a) => commitWork(ctx, a.op) },
@@ -982,7 +991,7 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     def.commit?.(ctx, a as never);
     noteAttention(s, a);
     noteOrder(s, a);
-    if (a.kind === 'interact') {
+    if (a.kind === 'interact' || a.kind === 'deed') {
       const t = s.characters[a.target];
       if (t) {
         t.neglect = 0;
@@ -993,6 +1002,36 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${p.because}.`, kind: 'decision' });
     bookOrder(ctx, mark, a, { title: p.title, outcome: 'done', by: by(i) });
   }
+}
+
+/**
+ * One order settled NOW, the answer already decided (deeds/now.ts rolls it on
+ * its own dice): the same effects, commit, chronicle and Book entry as at the
+ * week's turn, so it is never applied twice (it is not queued).
+ */
+export function settleOrderNow(ctx: Ctx, a: PlayerAction, accepted: boolean): ActionPreview {
+  const s = ctx.s;
+  const def = DEFS[a.kind] as Def<typeof a.kind>;
+  const mark = bookMark(ctx);
+  const p = previewCore(s, a);
+  if (!accepted) {
+    if (p.refuseEffects?.length) applyEffects(ctx, p.refuseEffects, { label: `${p.title}: refused`, because: p.because, category: p.category });
+    ctx.log.push(`${p.title} — refused.`);
+    s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You tried: ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}. The answer was no.`, kind: 'decision' });
+    bookOrder(ctx, mark, a, { title: p.title, outcome: 'refused' });
+    return p;
+  }
+  applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
+  def.commit?.(ctx, a as never);
+  noteAttention(s, a);
+  noteOrder(s, a);
+  if (a.kind === 'interact' || a.kind === 'deed') {
+    const t = s.characters[a.target];
+    if (t) { t.neglect = 0; t.defectStage = 0; }
+  }
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${p.because}.`, kind: 'decision' });
+  bookOrder(ctx, mark, a, { title: p.title, outcome: 'done' });
+  return p;
 }
 
 /**

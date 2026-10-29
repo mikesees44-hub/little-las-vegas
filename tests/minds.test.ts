@@ -254,7 +254,8 @@ describe('minds: in the week', () => {
       }
     }
     const M = a.s.minds!;
-    expect(JSON.stringify(M).length).toBeLessThan(60_000);
+    // The deeds (deeds/) give the minds more to remember and hear about: still every list within its per-mind cap.
+    expect(JSON.stringify(M).length).toBeLessThan(75_000);
     expect(M.stats.thinks).toBeGreaterThan(100);
     const motives = Object.values(M.minds).flatMap((m) => m.why);
     expect(motives.length).toBeGreaterThan(0);

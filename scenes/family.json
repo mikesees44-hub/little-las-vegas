@@ -1,0 +1,102 @@
+{
+  "_about": "Wives and the house: the people who wait up for you.",
+  "scenes": [
+    {
+      "id": "wife_late_dinner",
+      "title": "The roast went cold",
+      "theme": "family",
+      "when": { "cooldown": 26, "chance": 0.5 },
+      "who": { "wife": { "pool": "wife" } },
+      "text": "It is past eleven when you come in off the boulevard. The table is set for two. The candles have burned down to the brass. {wife.first} is in the kitchen with her back to you, drying a plate that is already dry. \"Your mother called,\" she says. \"Twice.\"",
+      "choices": [
+        {
+          "label": "Sit down and eat it cold, with her",
+          "hint": "It is not about the roast.",
+          "odds": { "base": 55, "plus": [ { "if": { "role": "wife", "opinionOfBoss": ">=30" }, "add": 20, "why": "she still likes you" }, { "if": { "bossTrait": "Womanizer" }, "add": -15, "why": "she has heard things" } ] },
+          "success": [ { "opinion": { "of": "wife", "toward": "boss", "by": 10, "why": "Sat down with me, for once" } }, { "memory": { "who": "wife", "about": "boss", "text": "he sat with her over a cold supper", "weight": 8 } } ],
+          "failure": [ { "opinion": { "of": "wife", "toward": "boss", "by": -4, "why": "Too little, too late" } } ],
+          "result": "You ate cold roast and talked about nothing until one in the morning. It was the best night in a month.",
+          "failText": "She let you eat. She did not sit down."
+        },
+        {
+          "label": "Tell her a man was shot on Atlantic Avenue tonight, and let her wonder",
+          "effects": [ { "fear": { "of": "wife", "toward": "boss", "by": 8 } }, { "opinion": { "of": "wife", "toward": "boss", "by": -8, "why": "Brings the street home" } } ]
+        },
+        {
+          "label": "Promise her Sunday, the whole day",
+          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": 4, "why": "Promised me Sunday" } }, { "flag": "promised_sunday" } ],
+          "next": { "scene": "wife_sunday_kept", "after": 1 }
+        }
+      ]
+    },
+    {
+      "id": "wife_sunday_kept",
+      "title": "Sunday, as promised",
+      "theme": "family",
+      "followup": true,
+      "when": { "flags": ["promised_sunday"] },
+      "who": { "wife": { "pool": "wife" }, "caller": { "pool": "capo" } },
+      "text": "Mass at St. Ann's, then the beach at the Crest with the umbrella and the cooler. At two o'clock a boy runs down the sand: {caller.first} is on the telephone at the snack stand. He says it cannot wait.",
+      "choices": [
+        {
+          "label": "Tell the boy you were not here",
+          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": 14, "why": "Kept his promise" } }, { "opinion": { "of": "caller", "toward": "boss", "by": -4, "why": "Would not take my call" } }, { "unflag": "promised_sunday" } ]
+        },
+        {
+          "label": "Take the call. Five minutes.",
+          "hint": "It is never five minutes.",
+          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": -12, "why": "Broke his promise on the beach" } }, { "money": 500 }, { "unflag": "promised_sunday" } ]
+        }
+      ]
+    },
+    {
+      "id": "wife_and_the_capo",
+      "title": "{wife.first} does not like {capo.first}",
+      "theme": "family",
+      "when": { "week": { "min": 8 }, "cooldown": 40 },
+      "who": {
+        "wife": { "pool": "wife", "notTraits": ["Cowardly"] },
+        "capo": { "pool": "capo", "traits": ["Cruel"] }
+      },
+      "text": "\"He kicked the Lombardi boy's dog,\" {wife.first} says, buttering toast she will not eat. \"In the street. In front of the children.\" She means {capo.call}. She has never asked you for anything about the business. She is asking now.",
+      "choices": [
+        {
+          "label": "Have a word with {capo.first}",
+          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": 10, "why": "Listened to me about that animal" } }, { "opinion": { "of": "capo", "toward": "boss", "by": -6, "why": "Lets his wife tell him about his men" } }, { "opinion": { "of": "capo", "toward": "wife", "by": -10, "why": "Went to her husband about me" } } ]
+        },
+        {
+          "label": "\"Stay out of the business.\"",
+          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": -10, "why": "Told me to stay out of it" } }, { "memory": { "who": "wife", "about": "boss", "text": "he chose that animal over her", "weight": -10 } } ]
+        },
+        {
+          "label": "Send the Lombardis a new puppy, and a check",
+          "requires": { "money": 200 },
+          "effects": [ { "money": -200 }, { "opinion": { "of": "wife", "toward": "boss", "by": 5, "why": "Made it right with the Lombardis" } } ]
+        }
+      ]
+    },
+    {
+      "id": "kid_report_card",
+      "title": "A note from the Sisters",
+      "theme": "family",
+      "when": { "months": [11, 12, 1, 2, 3, 4], "cooldown": 30, "chance": 0.5 },
+      "who": { "kid": { "pool": "family", "age": [8, 15] } },
+      "text": "Sister Mary Agnes writes in a hand like barbed wire: {kid.first} has been running a dice game behind the gymnasium at St. Ann's, and running it well. {kid.He} gives the other children credit at ten percent. She would like a word with the parents.",
+      "choices": [
+        {
+          "label": "Go see the Sister, hat in hand",
+          "effects": [ { "family": { "by": 2, "why": "The boss went to the school himself" } }, { "opinion": { "of": "kid", "toward": "boss", "by": 4, "why": "Came to the school for me" } } ]
+        },
+        {
+          "label": "Laugh, then take the dice away",
+          "effects": [ { "opinion": { "of": "kid", "toward": "boss", "by": 8, "why": "Laughed, then took my dice" } }, { "respect": 1 } ]
+        },
+        {
+          "label": "See to {kid.his} education properly",
+          "hint": "A tutor from among your people.",
+          "effects": [ { "deed": { "id": "educate", "actor": "boss", "target": "kid" } } ]
+        }
+      ]
+    }
+  ]
+}

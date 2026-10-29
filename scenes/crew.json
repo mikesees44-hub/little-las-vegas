@@ -1,0 +1,184 @@
+{
+  "_about": "Crew loyalty: the men under you, what they want, and what they owe.",
+  "scenes": [
+    {
+      "id": "crew_short_envelope",
+      "title": "{capo.first}'s envelope is light",
+      "theme": "crew",
+      "when": { "week": { "min": 6 }, "cooldown": 30, "chance": 0.6 },
+      "who": {
+        "capo": { "pool": "capo", "traits": ["Greedy"] }
+      },
+      "text": "Saturday night, the back room at the Shamrock. {capo.call} lays the envelope on the table and does not look at it. It is thin. \"Rain all week, boss. Nobody on the boards.\" It did not rain on Thursday. You were there.",
+      "choices": [
+        {
+          "label": "Count it in front of him",
+          "hint": "Slowly. Bill by bill.",
+          "odds": { "deed": "discipline", "actor": "boss", "target": "capo" },
+          "success": [
+            { "fear": { "of": "capo", "toward": "boss", "by": 15 } },
+            { "money": 400 },
+            { "memory": { "who": "capo", "about": "boss", "text": "the boss counted the envelope in front of him", "weight": -6 } }
+          ],
+          "failure": [
+            { "grievance": { "of": "capo", "toward": "boss", "by": 15 } },
+            { "opinion": { "of": "capo", "toward": "boss", "by": -12, "why": "Treated me like a stranger" } }
+          ],
+          "result": "{capo.first} came up with the rest by Monday. Nobody mentioned the weather again.",
+          "failText": "{capo.first} took it as an insult. He is telling the crew the boss counts pennies."
+        },
+        {
+          "label": "Let it go this once, and say so",
+          "hint": "He knows that you know.",
+          "effects": [
+            { "owes": { "who": "capo", "to": "boss" } },
+            { "opinion": { "of": "capo", "toward": "boss", "by": 6, "why": "Let it slide, once" } }
+          ]
+        },
+        {
+          "label": "Put a man on him for a month",
+          "hint": "Quietly. If he skims, you will know how much.",
+          "requires": { "money": 300 },
+          "effects": [ { "money": -300 }, { "flag": "watching_short_capo" } ],
+          "next": { "scene": "crew_short_envelope_report", "after": [3, 5] }
+        }
+      ]
+    },
+    {
+      "id": "crew_short_envelope_report",
+      "title": "What the watcher saw",
+      "theme": "crew",
+      "followup": true,
+      "who": { "capo": { "pool": "capo" } },
+      "text": "Your man sat in a parked Ford across from {capo.first}'s place on Pacific for four weeks. There is a second book. It is not yours. {capo.He} keeps it in a cigar box behind the register.",
+      "choices": [
+        {
+          "label": "Take the cigar box, and the book",
+          "effects": [
+            { "money": 1200 },
+            { "hook": { "on": "capo", "strong": true, "why": "His second book" } },
+            { "opinion": { "of": "capo", "toward": "boss", "by": -15, "why": "Took my book" } },
+            { "unflag": "watching_short_capo" }
+          ]
+        },
+        {
+          "label": "Say nothing; keep the book in your safe",
+          "hint": "A hook kept is better than a hook spent.",
+          "effects": [ { "hook": { "on": "capo", "strong": false, "why": "You know about the second book" } }, { "unflag": "watching_short_capo" } ]
+        }
+      ]
+    },
+    {
+      "id": "crew_hothead_bar_fight",
+      "title": "A fight at the Bucket of Blood",
+      "theme": "crew",
+      "when": { "season": "summer", "cooldown": 20, "chance": 0.7 },
+      "who": {
+        "hot": { "pool": "crew", "traits": ["Hot-headed"], "rank": ["soldier", "associate"] },
+        "other": { "pool": "crew", "rank": ["soldier", "associate"] }
+      },
+      "text": "Two in the morning, a tavern on the bay side the sailors call the Bucket of Blood. {hot.call} broke a chair over {other.call}'s back over a girl, a bet, nobody remembers. The bartender wants three hundred for the chair and the mirror, and the Wildwood police want to know whose boys these are.",
+      "choices": [
+        {
+          "label": "Pay for the mirror, and sit them both down",
+          "hint": "Two of yours do not fight in public.",
+          "requires": { "money": 300 },
+          "odds": { "base": 55, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 15, "why": "you can talk a dog off a meat truck" }, { "if": { "role": "hot", "trait": "Vengeful" }, "add": -15, "why": "he keeps score" } ] },
+          "effects": [ { "money": -300 } ],
+          "success": [ { "opinion": { "of": "hot", "toward": "other", "by": 12, "why": "The boss made us shake" } }, { "opinion": { "of": "other", "toward": "hot", "by": 12, "why": "The boss made us shake" } }, { "tie": { "a": "hot", "b": "other", "kind": "none" } } ],
+          "failure": [ { "tie": { "a": "hot", "b": "other", "kind": "rival", "why": "A chair over the back" } } ],
+          "result": "They shook hands over a plate of clams. Whether they meant it is another thing.",
+          "failText": "They shook hands for you. Neither one let go first."
+        },
+        {
+          "label": "Fine {hot.first} the cost, and then some",
+          "effects": [ { "money": 300 }, { "wealth": { "role": "hot", "by": -600 } }, { "grievance": { "of": "hot", "toward": "boss", "by": 10 } }, { "fear": { "of": "hot", "toward": "boss", "by": 8 } } ]
+        },
+        {
+          "label": "Let the sergeant keep {hot.first} overnight",
+          "hint": "A night in the tank teaches what you can't.",
+          "effects": [ { "jail": { "role": "hot", "weeks": 1 } }, { "heat": { "local": 2 } }, { "opinion": { "of": "other", "toward": "boss", "by": 6, "why": "The boss took my side" } } ]
+        }
+      ]
+    },
+    {
+      "id": "crew_loyal_soldier_ask",
+      "title": "{man.first} wants his chance",
+      "theme": "crew",
+      "when": { "week": { "min": 10 }, "cooldown": 40 },
+      "who": {
+        "man": { "pool": "crew", "rank": ["soldier"], "traits": ["Loyal-to-a-fault"], "opinionOfBoss": ">=20" }
+      },
+      "text": "{man.call} waits outside the barbershop on Rio Grande until you come out. Nine years he has carried for this family. He does not ask for money. He asks to be in the room when you decide things. \"Just once, boss. So the young ones see.\"",
+      "choices": [
+        {
+          "label": "Bring him to the next sit-down",
+          "effects": [ { "opinion": { "of": "man", "toward": "boss", "by": 18, "why": "Brought me into the room" } }, { "crew": { "by": 1, "why": "The boss remembers the old hands" } } ]
+        },
+        {
+          "label": "Recognize him at the Saturday table instead",
+          "effects": [ { "deed": { "id": "recognize", "actor": "boss", "target": "man" } } ]
+        },
+        {
+          "label": "\"The room is for capos, Joe.\"",
+          "hint": "He will swallow it. Loyal men do.",
+          "effects": [ { "opinion": { "of": "man", "toward": "boss", "by": -6, "why": "Kept me out of the room" } } ]
+        }
+      ]
+    },
+    {
+      "id": "crew_ambitious_rivals",
+      "title": "Two capos, one chair",
+      "theme": "crew",
+      "when": { "week": { "min": 20 }, "cooldown": 52 },
+      "who": {
+        "a": { "pool": "capo", "traits": ["Ambitious"] },
+        "b": { "pool": "capo", "opinionOf": { "a": "<0" } }
+      },
+      "text": "Everybody on the island knows you will need an underboss someday, and two of your capos have started acting like it is already decided. {a.call} picks up the check at Zaberer's for men who are not his. {b.call} says nothing, and says it loudly.",
+      "choices": [
+        {
+          "label": "Let {a.first} know the chair is not his yet",
+          "odds": { "deed": "demandRespect", "actor": "boss", "target": "a" },
+          "success": [ { "fear": { "of": "a", "toward": "boss", "by": 10 } }, { "opinion": { "of": "b", "toward": "boss", "by": 6, "why": "The boss put him in his place" } } ],
+          "failure": [ { "grievance": { "of": "a", "toward": "boss", "by": 15 } }, { "tie": { "a": "a", "b": "b", "kind": "rival", "why": "Both want the same chair" } } ],
+          "result": "{a.first} stopped picking up other men's checks.",
+          "failText": "{a.first} heard you, and heard something else: that the chair is open."
+        },
+        {
+          "label": "Set them against each other, and watch",
+          "hint": "Ambition is useful when it is pointed.",
+          "effects": [ { "tie": { "a": "a", "b": "b", "kind": "rival", "why": "The boss let them compete" } }, { "flag": "capos_compete" } ],
+          "next": { "scene": "crew_ambitious_rivals_after", "after": [4, 8] }
+        },
+        {
+          "label": "Dinner for the two of them, at your table",
+          "requires": { "money": 250 },
+          "effects": [ { "money": -250 }, { "opinion": { "of": "a", "toward": "b", "by": 10, "why": "Broke bread at the boss's table" } }, { "opinion": { "of": "b", "toward": "a", "by": 10, "why": "Broke bread at the boss's table" } } ]
+        }
+      ]
+    },
+    {
+      "id": "crew_ambitious_rivals_after",
+      "title": "The race between {a.first} and {b.first}",
+      "theme": "crew",
+      "followup": true,
+      "who": { "a": { "pool": "capo" }, "b": { "pool": "capo" } },
+      "text": "Two months of {a.first} and {b.first} racing each other to your door. Your take is up. So is the temperature. Last night {b.first}'s nephew found his car with four flat tires on {a.first}'s block.",
+      "choices": [
+        {
+          "label": "Name the winner: {a.first}",
+          "effects": [ { "opinion": { "of": "a", "toward": "boss", "by": 15, "why": "The boss picked me" } }, { "opinion": { "of": "b", "toward": "boss", "by": -15, "why": "The boss picked him over me" } }, { "money": 1500 }, { "unflag": "capos_compete" } ]
+        },
+        {
+          "label": "Name the winner: {b.first}",
+          "effects": [ { "opinion": { "of": "b", "toward": "boss", "by": 15, "why": "The boss picked me" } }, { "opinion": { "of": "a", "toward": "boss", "by": -15, "why": "The boss picked him over me" } }, { "money": 1500 }, { "unflag": "capos_compete" } ]
+        },
+        {
+          "label": "Call it a tie, before the tires become something worse",
+          "effects": [ { "tie": { "a": "a", "b": "b", "kind": "none" } }, { "money": 800 }, { "unflag": "capos_compete" } ]
+        }
+      ]
+    }
+  ]
+}
