@@ -166,3 +166,151 @@ export function lifestyleMonth(ctx: Ctx): void {
     }
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Every man's focus: the crew lifestyles (crewXp.ts grows them)        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * CK-style passive growth for every man in the family (not the boss, who has
+ * the lifestyles above): a FOCUS (Muscle, Money, Brains, Diplomacy,
+ * Leadership) picked from his nature or set by the boss; lifestyle XP every
+ * month (crewXp.ts growthMonth); his focus skill ticks up on its own; and a
+ * perk tree per focus (3 branches × 4 perks) that unlocks by itself every
+ * CREW_PERK_LXP. The twelve old specialties (crewXp PERKS) are nodes in these
+ * trees, so every hasPerk() still works. Perks act only where the man acts
+ * (manMod: his jobs, his hustle, his corners, his crew, his seat).
+ */
+export type Focus = 'muscle' | 'money' | 'brains' | 'diplomacy' | 'leadership';
+export const FOCUS_IDS: Focus[] = ['muscle', 'money', 'brains', 'diplomacy', 'leadership'];
+
+/** What a crew perk moves (each key is read by one engine hook; tests/crewPerks.test.ts proves it). */
+export type ManKey =
+  | 'jobs' | 'muscleJobs' | 'fixJobs' | 'scoreJobs' | 'take' | 'hustle' | 'corners' | 'evidence' | 'rat' | 'flip'
+  | 'loyalBoss' | 'crewLoyal' | 'popular' | 'poach' | 'crewLxp' | 'ltSkill' | 'scheme' | 'guard'
+  /** Read by the deeds and dating once the interactions branch lands (stated, not yet wired). */
+  | 'accept' | 'datingOdds' | 'pleadVote';
+/** Keys whose hook waits for the interactions branch. */
+export const MAN_KEYS_WAITING: ManKey[] = ['accept', 'datingOdds', 'pleadVote'];
+
+export interface CrewPerk {
+  id: string;
+  name: string;
+  text: string;
+  mods: Partial<Record<ManKey, number>>;
+  /** One of the twelve old specialties (crewXp PERKS): earning it here gives him that specialty. */
+  xp?: 'bookmaker' | 'enforcer' | 'fixer' | 'wheelman' | 'safecracker' | 'talker' | 'ghost' | 'ironjaw' | 'rainmaker' | 'standup' | 'taskmaster' | 'mentor';
+}
+export interface CrewBranch { name: string; perks: CrewPerk[] }
+export interface FocusDef {
+  id: Focus;
+  name: string;
+  icon: string;
+  /** The skill it feeds (and the second one, a third as fast). */
+  skill: keyof Attributes;
+  second: keyof Attributes;
+  /** The boss's lifestyle it matches (for the heir who takes the chair). */
+  lifestyle: LifestyleId;
+  branches: [CrewBranch, CrewBranch, CrewBranch];
+}
+
+const C = (id: string, name: string, text: string, mods: CrewPerk['mods'], xp?: CrewPerk['xp']): CrewPerk => ({ id, name, text, mods, ...(xp ? { xp } : {}) });
+
+export const FOCI: Record<Focus, FocusDef> = {
+  muscle: {
+    id: 'muscle', name: 'Muscle', icon: '✊', skill: 'force', second: 'discipline', lifestyle: 'muscle',
+    branches: [
+      { name: 'Collector', perks: [C('m_enforcer', 'Enforcer', '+8 on muscle jobs.', {}, 'enforcer'), C('m_heavy', 'Heavy Hand', 'His own hustle +5%.', { hustle: 5 }), C('m_debt', 'Debt Man', 'The take of his jobs +5%.', { take: 5 }), C('m_fear', 'Fear', '+5 when he asks something of a man (with the deeds).', { accept: 5 })] },
+      { name: 'Shooter', perks: [C('m_wheel', 'Wheelman', '+8 on scores and loads.', {}, 'wheelman'), C('m_steady', 'Steady Hand', '+8 power on a hit he is on.', { scheme: 8 }), C('m_getaway', 'Clean Getaway', 'Evidence on him when a job goes wrong −10%.', { evidence: 10 }), C('m_pro', 'Professional', '+5 on every dirty job.', { jobs: 5 })] },
+      { name: 'Wall', perks: [C('m_jaw', 'Iron jaw', 'Never talks when picked up.', {}, 'ironjaw'), C('m_bodyguard', 'Bodyguard', '+10% on any detail he guards.', { guard: 10 }), C('m_hard', 'Hard to Kill', 'Rivals want him 10 less (he is not worth the trouble).', { poach: 10 }), C('m_mattress', 'Mattress Veteran', '+8 on muscle jobs.', { muscleJobs: 8 })] },
+    ],
+  },
+  money: {
+    id: 'money', name: 'Money', icon: '$', skill: 'business', second: 'diplomacy', lifestyle: 'money',
+    branches: [
+      { name: 'Rackets', perks: [C('$_book', 'Bookmaker', 'His own hustle +15%.', {}, 'bookmaker'), C('$_margin', 'Eye for Margin', 'His own hustle +5%.', { hustle: 5 }), C('$_steady', 'Steady Earner', 'His own hustle +10%.', { hustle: 10 }), C('$_rain', 'Rainmaker', '+10% on every take he brings in.', {}, 'rainmaker')] },
+      { name: 'Books', perks: [C('$_ledgers', 'Two Ledgers', 'The take of his jobs +5%.', { take: 5 }), C('$_paper', 'Paper Trail', 'Evidence on him −10%.', { evidence: 10 }), C('$_front', 'Clean Front', 'Evidence on him −10% more.', { evidence: 10 }), C('$_banker', 'Banker', 'His own hustle +10%; capos: district take +3%.', { hustle: 10, corners: 3 })] },
+      { name: 'Loans', perks: [C('$_six', 'Six Points', 'The take of his jobs +5%.', { take: 5 }), C('$_terms', 'Easy Terms', '+3 when he asks something of a man (with the deeds).', { accept: 3 }), C('$_collat', 'Collateral', 'The take of his jobs +5%.', { take: 5 }), C('$_street', 'Street Banker', 'His own hustle +5%; take +5%.', { hustle: 5, take: 5 })] },
+    ],
+  },
+  brains: {
+    id: 'brains', name: 'Brains', icon: '✦', skill: 'intrigue', second: 'discipline', lifestyle: 'shadows',
+    branches: [
+      { name: 'Ears', perks: [C('b_listen', 'Listener', '+5 on scores (he hears where the money is).', { scoreJobs: 5 }), C('b_ghost', 'Ghost', 'Half the evidence; his file fades.', {}, 'ghost'), C('b_wire', 'Spot a Wire', 'His chance to talk when picked up −20%.', { rat: 20 }), C('b_rat', 'Rat Catcher', '+10% on any detail he guards.', { guard: 10 })] },
+      { name: 'Schemer', perks: [C('b_plan', 'Planner', '+8 power on a scheme he is on.', { scheme: 8 }), C('b_safe', 'Safecracker', '+10 on warehouse, jewel and payroll jobs.', {}, 'safecracker'), C('b_alibi', 'Alibi', 'Evidence on him −15%.', { evidence: 15 }), C('b_master', 'Mastermind', '+8 more on a scheme he is on.', { scheme: 8 })] },
+      { name: 'Liar', perks: [C('b_smooth', 'Smooth', '+4 on every dirty job.', { jobs: 4 }), C('b_forger', 'Forger', '+6 on fixes.', { fixJobs: 6 }), C('b_double', 'Double Game', 'At trial, 5 points less likely to flip.', { flip: 5 }), C('b_puppet', 'Puppeteer', '+6 power on a scheme he is on; +4 on every job.', { scheme: 6, jobs: 4 })] },
+    ],
+  },
+  diplomacy: {
+    id: 'diplomacy', name: 'Diplomacy', icon: '☏', skill: 'diplomacy', second: 'business', lifestyle: 'politics',
+    branches: [
+      { name: 'Talker', perks: [C('d_talk', 'Smooth talker', '+4 on every job, +6 more on fixes.', {}, 'talker'), C('d_peace', 'Peacemaker', 'His crew thinks 1 better of him every month.', { popular: 1 }), C('d_envoy', 'Envoy', 'In a council seat: +5 competence.', { ltSkill: 5 }), C('d_states', 'Statesman', '+5 on a Table vote when he pleads (with the deeds).', { pleadVote: 5 })] },
+      { name: 'Fixer', perks: [C('d_fixer', 'Fixer', '+8 on fixes.', {}, 'fixer'), C('d_grease', 'Grease', '+6 on fixes.', { fixJobs: 6 }), C('d_favor', 'Favor Bank', 'The take of his jobs +5%.', { take: 5 }), C('d_king', 'Kingmaker', 'In a council seat: +8 competence.', { ltSkill: 8 })] },
+      { name: 'Charm', perks: [C('d_friend', 'Friendly', 'His crew thinks 1 better of him every month.', { popular: 1 }), C('d_ladies', 'Ladies\' Man', '+10 on his dates (with the deeds).', { datingOdds: 10 }), C('d_popular', 'Popular', 'He thinks 1 better of the boss every month.', { loyalBoss: 1 }), C('d_beloved', 'Beloved', 'Rivals want him 15 less.', { poach: 15 })] },
+    ],
+  },
+  leadership: {
+    id: 'leadership', name: 'Leadership', icon: '♜', skill: 'leadership', second: 'diplomacy', lifestyle: 'family',
+    branches: [
+      { name: 'Captain', perks: [C('l_task', 'Taskmaster', 'District take +8%.', {}, 'taskmaster'), C('l_tight', 'Tight Crew', 'District take +4%.', { corners: 4 }), C('l_recruit', 'Recruiter', 'His crew grows 15% faster.', { crewLxp: 15 }), C('l_regime', 'Regime', 'District take +5%.', { corners: 5 })] },
+      { name: 'Teacher', perks: [C('l_mentor', 'Mentor', 'His men learn 25% faster.', {}, 'mentor'), C('l_bring', 'Brings Them Up', 'His crew grows 15% faster.', { crewLxp: 15 }), C('l_proud', 'Proud Crew', 'His men think 1 better of the boss every month.', { crewLoyal: 1 }), C('l_old', 'Old School', 'His crew grows 10% faster; he thinks 1 better of the boss every month.', { crewLxp: 10, loyalBoss: 1 })] },
+      { name: 'Strategist', perks: [C('l_reads', 'Reads the Street', 'In a council seat: +8 competence.', { ltSkill: 8 }), C('l_field', 'Field Commander', '+6 on muscle jobs he is on.', { muscleJobs: 6 }), C('l_hold', 'Holds the Line', 'His men think 1 better of the boss every month.', { crewLoyal: 1 }), C('l_standup', 'Stand-up guy', 'Can\'t be courted; thinks better of the boss.', {}, 'standup')] },
+    ],
+  },
+};
+
+/** Lifestyle XP for each perk in his branch. */
+export const CREW_PERK_LXP = 100;
+
+export function allCrewPerks(): (CrewPerk & { focus: Focus; branch: number; index: number })[] {
+  return FOCUS_IDS.flatMap((f) => FOCI[f].branches.flatMap((b, bi) => b.perks.map((p, pi) => ({ ...p, focus: f, branch: bi, index: pi }))));
+}
+const CREW_CACHE = new Map<string, CrewPerk & { focus: Focus; branch: number; index: number }>();
+export function crewPerk(id: string) {
+  if (!CREW_CACHE.size) for (const p of allCrewPerks()) CREW_CACHE.set(p.id, p);
+  return CREW_CACHE.get(id);
+}
+
+/** A man's crew perks (earned along his focus; never lost when it changes). */
+export function crewPerksOf(s: GameState, id: string): string[] {
+  return s.xp?.men[id]?.gp ?? [];
+}
+
+/** Sum of a modifier across ONE man's crew perks (read where he acts). */
+export function manMod(s: GameState, c: Character | string | undefined, key: ManKey): number {
+  const id = typeof c === 'string' ? c : c?.id;
+  if (!id) return 0;
+  let v = 0;
+  for (const p of crewPerksOf(s, id)) v += crewPerk(p)?.mods[key] ?? 0;
+  return v;
+}
+
+const lean = (c: Character, ...t: Character['traits'][number][]) => t.reduce((a, x) => a + (c.traits.includes(x) ? 12 : 0), 0);
+
+/** The focus his nature takes him to: his top skill, leaned by his traits; a captain leads. */
+export function natureFocus(_s: GameState, c: Character): Focus {
+  const capo = c.rank === 'capo' || c.rank === 'underboss';
+  const score: Record<Focus, number> = {
+    muscle: c.attributes.force + lean(c, 'Cruel', 'Hot-headed'),
+    money: c.attributes.business + lean(c, 'Greedy', 'Gambler'),
+    brains: c.attributes.intrigue + lean(c, 'Paranoid', 'Patient'),
+    diplomacy: c.attributes.diplomacy + lean(c, 'Charming', 'Womanizer'),
+    leadership: c.attributes.leadership + lean(c, 'Ambitious') + (capo ? 40 : c.rank === 'consigliere' ? 10 : -15),
+  };
+  if (c.rank === 'consigliere') score.diplomacy += 25;
+  return FOCUS_IDS.reduce((best, f) => (score[f] > score[best] ? f : best), FOCUS_IDS[0]);
+}
+
+/** The branch of his focus that fits his traits and skills best (ties: the first). */
+export function natureBranch(_s: GameState, c: Character, f: Focus): 0 | 1 | 2 {
+  const a = c.attributes;
+  const fits: Record<Focus, [number, number, number]> = {
+    muscle: [a.business / 2 + lean(c, 'Greedy', 'Cruel'), a.intrigue / 2 + lean(c, 'Hot-headed'), a.discipline / 2 + lean(c, 'Loyal-to-a-fault', 'Patient')],
+    money: [a.business / 2 + lean(c, 'Gambler'), a.intrigue / 2 + lean(c, 'Patient', 'Honest'), a.force / 2 + lean(c, 'Greedy', 'Cruel')],
+    brains: [a.discipline / 2 + lean(c, 'Paranoid'), a.force / 2 + lean(c, 'Patient'), a.diplomacy / 2 + lean(c, 'Charming')],
+    diplomacy: [a.leadership / 2 + lean(c, 'Pious', 'Honest'), a.business / 2 + lean(c, 'Greedy'), a.diplomacy / 2 + lean(c, 'Charming', 'Womanizer')],
+    leadership: [a.business / 2 + lean(c, 'Ambitious'), a.diplomacy / 2 + lean(c, 'Patient'), a.force / 2 + lean(c, 'Loyal-to-a-fault')],
+  };
+  const v = fits[f];
+  return (v[1] > v[0] && v[1] >= v[2] ? 1 : v[2] > v[0] && v[2] > v[1] ? 2 : 0) as 0 | 1 | 2;
+}

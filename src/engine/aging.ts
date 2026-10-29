@@ -659,3 +659,22 @@ export function describeAgingOp(s: GameState, o: AgingOp): string | undefined {
     case 'regent': return o.mode === 'none' ? 'Nobody acts for you' : o.mode === 'ub' ? 'The underboss acts for you' : 'Your heir acts for you';
   }
 }
+
+/**
+ * How fast a man grows along his lifestyle focus at this age (crewXp.ts,
+ * the monthly lifestyle experience): youth grows fast, the prime holds, and
+ * it tapers after 45. Under 16 there is only schooling (0 here).
+ */
+export function ageCurve(age: number): number {
+  if (age < 16) return 0;
+  if (age < 25) return 1.5;
+  if (age < 45) return 1;
+  if (age < 55) return 0.7;
+  if (age < 65) return 0.4;
+  return 0.2;
+}
+
+/** The age curve in a word, for the sheet. */
+export function ageCurveWord(age: number): string {
+  return age < 16 ? 'at school' : age < 25 ? 'young: learns fast' : age < 45 ? 'in his prime' : age < 55 ? 'past his prime' : age < 65 ? 'slowing down' : 'an old man';
+}
