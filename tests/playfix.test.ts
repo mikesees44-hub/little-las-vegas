@@ -110,3 +110,14 @@ describe('Playtest fixes: The Old Don', () => {
     for (const ch of ev.choices) if (ch.detail) expect(explainChoice(s, ch).purpose).not.toBe(ch.detail);
   });
 });
+
+describe('Playtest fixes: dates', () => {
+  it('a relationship seeded from before the game reads as a date, never a negative week', async () => {
+    const { sinceWeek } = await import('../src/ui/format');
+    expect(sinceWeek(5)).toBe('Since week 5');
+    const old = sinceWeek(-93, 3);
+    expect(old).not.toMatch(/-\d/);
+    expect(old).toMatch(/^For 1?\d years \(since \w+ 19[45]\d\)$|^Since \w+ 19[45]\d$/);
+    expect(sinceWeek(-200, 3)).toMatch(/^For 3 years \(since /);
+  });
+});

@@ -5,6 +5,7 @@ import { attachmentBoard, connectionsOf, sideName } from '../../engine/earsWeb';
 import type { GameState } from '../../engine/types';
 import { CharLink, Face } from '../components/People';
 import { Tip } from '../clarity';
+import { sinceWeek } from '../format';
 
 const TYPE_TONE: Record<string, string> = {
   likes: 'text-sky-300', regular: 'text-amber-200', girlfriend: 'text-rose-300', mistress: 'text-rose-400', in_love: 'text-pink-300', ex: 'text-stone-500', owes: 'text-amber-400',
@@ -26,7 +27,7 @@ export function ConnectionsList({ s, id, compact }: { s: GameState; id: string; 
       {list.slice(0, compact ? 6 : 12).map((x) => (
         <li key={`${x.otherId}:${x.type}`} className="flex items-center gap-2 text-sm min-w-0">
           {!compact && s.characters[x.otherId] && <Face s={s} c={s.characters[x.otherId]} size={28} />}
-          <Tip text={`${x.text}${x.type !== 'ex' && x.ended === undefined ? ` · strength ${Math.round(x.strength)} of 100` : ''} · since week ${x.since}${x.source === 'romance' ? ' · a romance' : ''}`}>
+          <Tip text={`${x.text}${x.type !== 'ex' && x.ended === undefined ? ` · strength ${Math.round(x.strength)} of 100` : ''} · ${sinceWeek(x.since).toLowerCase()}${x.source === 'romance' ? ' · a romance' : ''}`}>
             <span className={`min-w-0 truncate ${compact ? 'text-xs' : ''}`}>
               <CharLink s={s} id={x.otherId} className="text-stone-200" />
               <span className={`ml-1.5 ${TYPE_TONE[x.type] ?? 'text-stone-300'} ${x.ended !== undefined ? 'line-through decoration-stone-600' : ''}`}>{x.short}</span>

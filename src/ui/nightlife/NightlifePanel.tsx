@@ -10,7 +10,7 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
 import { Modal } from '../components/Modal';
 import { CharLink, Face } from '../components/People';
-import { fmt$ } from '../format';
+import { fmt$, sinceWeek } from '../format';
 import { useShell } from '../shell/context';
 import { CallingCard } from './CallingCard';
 import { LooksBadge } from '../components/LooksBadge';
@@ -189,7 +189,7 @@ export function NightlifePanel({ s }: { s: GameState }) {
                       <div className="min-w-0 flex-1 text-[12px] text-stone-300">
                         <div className="font-semibold text-stone-100">{displayName(c)}</div>
                         <div>{g.where} · {fmt$(g.rent)} rent + {fmt$(g.allowance)} allowance a week, from your pocket{g.missed ? <span className="text-red-300"> · {g.missed} week{g.missed === 1 ? '' : 's'} unpaid</span> : null}</div>
-                        <div className="text-[11px] text-stone-500">Since week {g.since}{g.wifeKnows ? ' · your wife knows' : ''}{g.public ? ' · it is talk on the island' : ''}</div>
+                        <div className="text-[11px] text-stone-500">{sinceWeek(g.since, s.week)}{g.wifeKnows ? ' · your wife knows' : ''}{g.public ? ' · it is talk on the island' : ''}</div>
                       </div>
                       <button type="button" className="btn-ghost px-2 py-1 text-[11px]" onClick={() => setCard(g.id)}>Card ▸</button>
                     </div>
