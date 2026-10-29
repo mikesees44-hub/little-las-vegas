@@ -4,6 +4,9 @@ import { sumLines } from '../../engine/ledger';
 import type { GameState, ReportLine, Stat, WeeklyReport } from '../../engine/types';
 import { fmt$, signed, STAT_LABEL } from '../format';
 import { Modal } from './Modal';
+import { useState } from 'react';
+import { weekBrief } from '../../engine/weekSummary';
+import { useSheet } from './People';
 
 const STATS: Stat[] = ['money', 'respect', 'heat.local', 'heat.family', 'heat.federal'];
 
@@ -56,7 +59,11 @@ export function ReportModal({ s, reports, onClose }: { s?: GameState; reports: W
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-5 gap-2">
+        {s && <WeekInBrief s={s} reports={reports} />}
+
+        <details className="mt-4 group" data-testid="report-ledger" open={!s}>
+        <summary className="cursor-pointer list-none text-[10px] uppercase tracking-[0.25em] text-stone-500 hover:text-gold-300">The full ledger <span className="normal-case tracking-normal text-gold-400 group-open:hidden">▸ open</span></summary>
+        <div className="mt-2 grid grid-cols-2 sm:grid-cols-5 gap-2">
           {STATS.map((st) => {
             const a = valueOf(first.start, st);
             const b = valueOf(last.end, st);
@@ -148,8 +155,44 @@ export function ReportModal({ s, reports, onClose }: { s?: GameState; reports: W
             </ul>
           </>
         )}
+        </details>
       </div>
     </Modal>
+  );
+}
+
+/** THE WEEK IN BRIEF (engine/weekSummary.ts): three lines, what was handled for you, how your people grew. */
+function WeekInBrief({ s, reports }: { s: GameState; reports: WeeklyReport[] }) {
+  const b = weekBrief(s, reports);
+  const sheet = useSheet();
+  const [all, setAll] = useState(false);
+  const shown = all ? b.handled : b.handled.slice(0, 6);
+  return (
+    <section className="mt-3 rounded-md border border-gold-600/40 bg-noir-800/60 p-3" data-testid="week-brief">
+      <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">The week in brief</div>
+      <ul className="mt-1 space-y-0.5 text-sm text-stone-200">{b.lines.map((l) => <li key={l}>{l}</li>)}</ul>
+      {b.handled.length > 0 && (
+        <div className="mt-2" data-testid="brief-handled">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Handled for you ({b.handled.length})</div>
+          <ul className="mt-1 space-y-0.5 text-[12px]">
+            {shown.map((h, i) => (
+              <li key={i} className={`border-l-2 pl-2 ${h.tone === 'good' ? 'border-emerald-700/70 text-stone-300' : h.tone === 'bad' ? 'border-red-700/70 text-red-200' : 'border-noir-600 text-stone-400'}`}>
+                <span className="text-stone-500">{h.who}:</span> {h.text}
+                {h.byId && <button type="button" className="ml-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => sheet.open(h.byId!)}>why?</button>}
+              </li>
+            ))}
+          </ul>
+          {b.handled.length > 6 && <button type="button" className="mt-0.5 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setAll((x) => !x)}>{all ? 'show fewer' : `show all ${b.handled.length} ▾`}</button>}
+        </div>
+      )}
+      {b.grew.lines.length > 0 && (
+        <div className="mt-2" data-testid="brief-grew">
+          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Your people grew</div>
+          <ul className="mt-1 space-y-0.5 text-[12px] text-emerald-200/90">{b.grew.lines.map((g) => <li key={g.id}>{g.text}</li>)}</ul>
+          {b.grew.more > 0 && <div className="text-[11px] text-stone-500">+{b.grew.more} more</div>}
+        </div>
+      )}
+    </section>
   );
 }
 

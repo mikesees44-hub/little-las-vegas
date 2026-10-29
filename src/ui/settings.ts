@@ -27,6 +27,16 @@ export interface Settings {
   pauseOnEvening?: boolean;
   /** Stop the clock on an alarm (live alerts): a rival strikes, a plot or a blown scheme, an arrest, the heat boiling over. */
   pauseOnAlarm?: boolean;
+  /** Stop the clock when something red lands on the Desk (clockPolicy.ts). */
+  pauseOnRed?: boolean;
+  /** Stop the clock when someone asks for an urgent meeting. */
+  pauseOnUrgent?: boolean;
+  /** Stop the clock on a battle or a war declared. */
+  pauseOnWar?: boolean;
+  /** Stop the clock when a plot against you is uncovered. */
+  pauseOnPlot?: boolean;
+  /** The running clock became the default for everyone once (v2): the stored turn-based setting was moved over. */
+  clockV?: number;
   /** Live alerts: keep the small news out of the strip and the good news out of the pop-ups. */
   quietLowAlerts?: boolean;
   /** Developer inspector: show the engine's internal ids (agreements) next to their names. */
@@ -80,7 +90,11 @@ export type TimeMode = 'clock' | 'turns';
 
 /** The autopause list (Settings): what stops the running clock by itself. */
 export const AUTO_PAUSE: { key: keyof Settings; label: string }[] = [
-  { key: 'pauseOnDecision', label: 'When a decision is waiting' },
+  { key: 'pauseOnRed', label: 'Something red lands on the Desk' },
+  { key: 'pauseOnUrgent', label: 'Someone asks for an urgent meeting' },
+  { key: 'pauseOnWar', label: 'A battle, or a war is declared' },
+  { key: 'pauseOnPlot', label: 'A plot against you is uncovered' },
+  { key: 'pauseOnDecision', label: 'Any decision waiting, even a routine one (off: only red ones)' },
   { key: 'pauseOnCapo', label: 'When a capo has an urgent problem' },
   { key: 'pauseOnViolence', label: 'On a hit or a killing' },
   { key: 'pauseOnArrest', label: 'When one of yours is arrested' },
@@ -102,7 +116,7 @@ export function pausesOn(key: keyof Settings): boolean {
 }
 
 const KEY = 'llv.settings';
-export const DEFAULT_SETTINGS: Settings = { reducedMotion: false, textSpeed: 'normal', pauseOnDecision: true, pauseOnWarning: true };
+export const DEFAULT_SETTINGS: Settings = { reducedMotion: false, textSpeed: 'normal', pauseOnDecision: false, pauseOnWarning: true, clockV: 2 };
 export const TEXT_CPS: Record<TextSpeed, number> = { slow: 22, normal: 38, fast: 80, instant: 10000 };
 
 let cached: Settings | undefined;
@@ -112,12 +126,23 @@ export function getSettings(): Settings {
   let s = { ...DEFAULT_SETTINGS };
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) s = { ...s, ...(JSON.parse(raw) as Partial<Settings>) };
+    if (raw) s = migrateClock({ ...s, clockV: undefined, ...(JSON.parse(raw) as Partial<Settings>) });
   } catch {
     /* defaults */
   }
   cached = s;
   return s;
+}
+
+/**
+ * Once, for a player from before: the running clock becomes the default (turn-based stays one
+ * click away in Settings), and only red decisions stop it (any decision, if he turns that back on).
+ */
+export function migrateClock(s: Settings): Settings {
+  if ((s.clockV ?? 0) >= 2) return s;
+  const out = { ...s, timeMode: 'clock' as TimeMode, pauseOnDecision: false, clockV: 2 };
+  try { localStorage.setItem(KEY, JSON.stringify(out)); } catch { /* not remembered */ }
+  return out;
 }
 
 /** Forget the cached settings (read again from storage next time): tests, and another tab's change. */

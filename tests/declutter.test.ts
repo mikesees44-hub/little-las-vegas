@@ -164,7 +164,7 @@ describe('declutter: one home per screen, old routes land', () => {
   });
   it('fewer places than before (52 → 35), and no home over ten', () => {
     expect(NAV_ITEMS.length).toBeLessThanOrEqual(35);
-    for (const h of HOME_IDS) expect(NAV_TREE[h].flatMap((g) => g.items).length, h).toBeLessThanOrEqual(10);
+    for (const h of HOME_IDS) expect(NAV_TREE[h].flatMap((g) => g.items).length, h).toBeLessThanOrEqual(9);
   });
 
 });

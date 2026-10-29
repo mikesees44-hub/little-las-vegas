@@ -253,7 +253,7 @@ describe('impossible to miss', () => {
     const s = rich('earn-miss');
     const g = racketGaps(s);
     expect(g.noEarner.length).toBeGreaterThan(0);
-    const items = doNow(s, 'biz', { alerts: [], opps: [], unanswered: 0, brief: 0 });
+    const items = doNow(s, 'money', { alerts: [], opps: [], unanswered: 0, brief: 0 });
     expect(items.some((i) => i.id === 'steady-earners')).toBe(true);
     if (g.rackets < 3) expect(items.some((i) => i.id === 'start-racket')).toBe(true);
     const d = whereFor(s, 'protection')[0];

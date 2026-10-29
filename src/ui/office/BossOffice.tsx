@@ -1,6 +1,6 @@
 import { unreadCount } from '../../engine/paper';
 import { useMemo, useState, type ReactNode } from 'react';
-import { inboxBadge } from '../../engine/inbox';
+import { deskBadge } from '../../engine/attention';
 import { officeBriefing, officePhone, officeRoom, officeVisitors, type DelegateOp, type OfficeUi, type OfficeVisitor } from '../../engine/bossOffice';
 import { displayName } from '../../engine/characters';
 import { formatDay } from '../../engine/days';
@@ -68,8 +68,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const [panel, setPanel] = useState<OfficePanel | undefined>(initialPanel);
   const brief = useMemo(() => officeBriefing(s, ui), [s, ui]);
   const visitors = useMemo(() => officeVisitors(s, ui), [s, ui]);
-  // The one count (engine/inbox.ts): the door's badge says what the top bar and the desk say; the door lists the people at it.
-  const box = useMemo(() => inboxBadge(s, ui), [s, ui]);
+  // The one count (engine/attention.ts, on the inbox): the door's badge says what the top bar and the desk say; the door lists the people at it.
+  const box = useMemo(() => deskBadge(s, ui), [s, ui]);
   const room = useMemo(() => officeRoom(s), [s]);
   const rep = latestReport(s);
   const envelopeWaiting = rep?.status === 'presented';
@@ -104,10 +104,10 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     map: 'Go out: Wildwood and beyond',
   };
 
-  const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} />
+  const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} onDesk={() => api.openDesk('people')} />
     : panel === 'phone' ? <PhonePanel s={s} />
     : panel === 'week' ? <WeekSchedule s={s} />
-    : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={api.openDesk} onDone={() => setPanel(undefined)} table={table} />
+    : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={() => api.openDesk()} onDone={() => setPanel(undefined)} table={table} />
     : undefined;
 
   return (
@@ -119,8 +119,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
             <div className="text-[11px] text-stone-400">{room.hq.club ? 'Upstairs at the Shore Social Club' : `Business is done at: ${room.hq.name.toLowerCase()}. The office upstairs at the club`} · {formatDay(s)} · week {s.week}</div>
           </div>
           <div className="flex gap-1.5">
-            <button type="button" className="btn-ghost text-xs" onClick={onClub} data-testid="office-downstairs">⇣ Downstairs</button>
-            <button type="button" className="btn-ghost text-xs" onClick={api.openMap} data-testid="office-to-map">⌖ The map</button>
+            <button type="button" className="btn-secondary text-xs" onClick={onClub} data-testid="office-downstairs">⇣ Downstairs</button>
+            <button type="button" className="btn-secondary text-xs" onClick={api.openMap} data-testid="office-to-map">⌖ The map</button>
           </div>
         </div>
         {room.absence && (
@@ -197,9 +197,9 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
             );
           })}
           <li className="grid grid-cols-2 gap-1.5 sm:col-span-2 xl:col-span-3 xl:grid-cols-4 pt-1">
-            <button type="button" className="btn-ghost text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
-            <button type="button" className="btn-ghost text-xs" onClick={api.openDesk} data-testid="office-desk">▤ The desk's list</button>
-            <button type="button" className="btn-gold col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
+            <button type="button" className="btn-secondary text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
+            <button type="button" className="btn-secondary text-xs" onClick={() => api.openDesk()} data-testid="office-desk">▤ The desk's list</button>
+            <button type="button" className="btn-primary col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
           </li>
         </ul>
       </div>
@@ -237,11 +237,11 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table
         </div>
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1.5">
-        <button type="button" className="btn-gold text-xs" onClick={onEnvelope} data-testid="office-hear-count">{brief.count !== undefined ? 'Hear the count' : 'The envelope pages'}</button>
-        <button type="button" className="btn-ghost text-xs" onClick={onDoor} data-testid="office-see-waiting">See who's waiting</button>
-        <button type="button" className="btn-ghost text-xs" onClick={onDesk} data-testid="office-review-desk">Review the desk</button>
-        <button type="button" className="btn-ghost text-xs" onClick={onDone} data-testid="office-something-else">{monday ? 'Start with something else' : 'Thanks, that\'s all'}</button>
-        {table && <button type="button" className="btn-ghost col-span-2 text-xs" disabled={!table.onOpen} onClick={table.onOpen} title={table.about ? `Everyone's view on: ${table.about}` : 'Nothing waiting at the door to weigh'} data-testid="office-table">⚖ {table.label}{table.about ? <span className="text-stone-500"> — on {table.about.length > 38 ? `${table.about.slice(0, 37)}…` : table.about}</span> : <span className="text-stone-500"> (nothing waiting to weigh)</span>}</button>}
+        <button type="button" className="btn-primary text-xs" onClick={onEnvelope} data-testid="office-hear-count">{brief.count !== undefined ? 'Hear the count' : 'The envelope pages'}</button>
+        <button type="button" className="btn-secondary text-xs" onClick={onDoor} data-testid="office-see-waiting">See who's waiting</button>
+        <button type="button" className="btn-secondary text-xs" onClick={onDesk} data-testid="office-review-desk">Review the desk</button>
+        <button type="button" className="btn-secondary text-xs" onClick={onDone} data-testid="office-something-else">{monday ? 'Start with something else' : 'Thanks, that\'s all'}</button>
+        {table && <button type="button" className="btn-secondary col-span-2 text-xs" disabled={!table.onOpen} onClick={table.onOpen} title={table.about ? `Everyone's view on: ${table.about}` : 'Nothing waiting at the door to weigh'} data-testid="office-table">⚖ {table.label}{table.about ? <span className="text-stone-500"> — on {table.about.length > 38 ? `${table.about.slice(0, 37)}…` : table.about}</span> : <span className="text-stone-500"> (nothing waiting to weigh)</span>}</button>}
       </div>
     </section>
   );
@@ -249,10 +249,10 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table
 
 const KIND_WORD: Record<OfficeVisitor['kind'], string> = { decision: 'Wants a decision', petition: 'A petition', morning: 'A capo\'s request', sitdown: 'For the sit-down', lawyer: 'Your lawyer' };
 
-function DoorPanel({ s, visitors, onInvite, onDelegate, onLater }: { s: GameState; visitors: OfficeVisitor[]; onInvite: (v: OfficeVisitor) => void; onDelegate: (op: DelegateOp) => void; onLater: (v: OfficeVisitor) => void }) {
+function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: GameState; visitors: OfficeVisitor[]; onInvite: (v: OfficeVisitor) => void; onDelegate: (op: DelegateOp) => void; onLater: (v: OfficeVisitor) => void; onDesk?: () => void }) {
   return (
     <div data-testid="office-door">
-      <div className="panel-title text-base">Outside the door</div>
+      <div className="flex items-baseline justify-between gap-2"><div className="panel-title text-base">Outside the door</div>{onDesk && <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" onClick={onDesk} data-testid="office-door-desk">On the Desk ▸</button>}</div>
       {!visitors.length && <p className="mt-1 text-[12px] text-stone-400">Nobody is waiting. The hall is empty except for the man on the door.</p>}
       <ul className="mt-1.5 space-y-1.5">
         {visitors.map((v) => {
@@ -267,10 +267,10 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater }: { s: GameStat
                 </div>
               </div>
               <div className="mt-1 flex flex-wrap gap-1">
-                <button type="button" className="btn-gold px-2 py-0.5 text-[11px]" onClick={() => onInvite(v)} data-testid="office-invite">Invite in</button>
-                {v.delegate && <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" title={v.delegate.does} onClick={() => onDelegate(v.delegate!.op)} data-testid="office-delegate">{v.delegate.label} <span className="text-stone-500">({v.delegate.does})</span></button>}
-                <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => onLater(v)} data-testid="office-later">Schedule for later</button>
-                {v.ref.event && <TableButton s={s} subject={{ kind: 'event', iid: v.ref.event }} onChoose={(choiceId) => onDelegate({ kind: 'answer', iid: v.ref.event!, choiceId })} className="btn-ghost px-2 py-0.5 text-[11px]" testid="office-visitor-table" />}
+                <button type="button" className="btn-primary px-2 py-0.5 text-[11px]" onClick={() => onInvite(v)} data-testid="office-invite">Invite in</button>
+                {v.delegate && <button type="button" className="btn-secondary px-2 py-0.5 text-[11px]" title={v.delegate.does} onClick={() => onDelegate(v.delegate!.op)} data-testid="office-delegate">{v.delegate.label} <span className="text-stone-500">({v.delegate.does})</span></button>}
+                <button type="button" className="btn-secondary px-2 py-0.5 text-[11px]" onClick={() => onLater(v)} data-testid="office-later">Schedule for later</button>
+                {v.ref.event && <TableButton s={s} subject={{ kind: 'event', iid: v.ref.event }} onChoose={(choiceId) => onDelegate({ kind: 'answer', iid: v.ref.event!, choiceId })} className="btn-secondary px-2 py-0.5 text-[11px]" testid="office-visitor-table" />}
               </div>
             </li>
           );
@@ -301,7 +301,7 @@ function PhonePanel({ s }: { s: GameState }) {
                 <div className="text-[12px] font-semibold text-stone-100">{p.name}</div>
                 <div className="text-[11px] text-stone-400">{p.role}{p.blocked ? ` · ${p.blocked}` : ''}</div>
               </div>
-              <button type="button" className="btn-ghost shrink-0 px-2 py-0.5 text-[11px]" disabled={!!p.blocked}
+              <button type="button" className="btn-secondary shrink-0 px-2 py-0.5 text-[11px]" disabled={!!p.blocked}
                 onClick={(e) => { if (p.kind === 'lawyer') setLawyer((x) => !x); else if (p.kind === 'dating' || p.kind === 'company') openDating({ tab: p.kind === 'company' ? 'adult' : 'together' }); else if (p.charId) sheet.menu?.(p.charId, p.kind === 'rival' ? 'diplomacy' : 'talk', { x: Math.max(8, e.clientX - 260), y: e.clientY }); }}
                 data-testid={p.kind === 'lawyer' ? 'office-call-lawyer-btn' : undefined}>☏ Call</button>
             </div>
@@ -310,9 +310,9 @@ function PhonePanel({ s }: { s: GameState }) {
                 <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">On the line: what he will tell you</div>
                 {reading.lines.map((l, i) => <p key={i}>{l}</p>)}
                 <div className="mt-1.5 flex flex-wrap gap-1">
-                  <button type="button" className="btn-gold px-2 py-0.5 text-[11px]" onClick={() => api.openCalendar()} data-testid="office-lawyer-book">Book an hour with him (an evening) ▸</button>
+                  <button type="button" className="btn-primary px-2 py-0.5 text-[11px]" onClick={() => api.openCalendar()} data-testid="office-lawyer-book">Book an hour with him (an evening) ▸</button>
                   {reading.moves.filter((m) => m.action).map((m) => (
-                    <button key={m.label} type="button" title={m.why} className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => orders.queue(m.action!)}>{m.label} ▸</button>
+                    <button key={m.label} type="button" title={m.why} className="btn-secondary px-2 py-0.5 text-[11px]" onClick={() => orders.queue(m.action!)}>{m.label} ▸</button>
                   ))}
                 </div>
                 <p className="mt-1 text-[10px] text-stone-500">A real sit-down with him is an evening in your week (Your affairs). Anything he does is an order, carried out when the week turns.</p>
@@ -321,7 +321,7 @@ function PhonePanel({ s }: { s: GameState }) {
           </li>
         ))}
       </ul>
-      <button type="button" className="btn-ghost mt-1.5 w-full px-2 py-1 text-[11px]" onClick={() => shell.go('you.dating')} data-testid="office-call-dating-open">♥ Relationships & Dating ▸</button>
+      <button type="button" className="btn-secondary mt-1.5 w-full px-2 py-1 text-[11px]" onClick={() => shell.go('you.dating')} data-testid="office-call-dating-open">♥ Relationships & Dating ▸</button>
     </div>
   );
 }

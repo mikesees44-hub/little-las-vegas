@@ -9,7 +9,7 @@ import { holder } from './council';
 import { DAY_NAMES, daysOf } from './days';
 import { fmtMoney } from './effects';
 import { HQ_INFO } from './hq';
-import { inboxCount } from './inbox';
+import { deskCount } from './attention';
 import { bossInside, LAWYER } from './longgame';
 import { pwView } from './powerState';
 import { personalRounds } from './roundsPersonal';
@@ -43,6 +43,8 @@ export interface OfficeUi {
   briefSkip?: readonly string[];
   /** Visitors the boss said to come back later (this week, UI only). */
   later?: readonly string[];
+  /** Desk items the boss took back from "Handled for you" (attention.ts). */
+  taken?: readonly string[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -105,8 +107,8 @@ export function officeBriefing(s: GameState, ui: OfficeUi = {}): OfficeBriefing 
   const answers = ui.answers ?? {};
   const rep = latestReport(s);
   const fresh = rep && rep.week >= s.week - 1 ? rep : undefined;
-  // The one count (engine/inbox.ts): the same number the top bar, the desk and the door show.
-  const needs = inboxCount(s, { answers, briefSkip: ui.briefSkip });
+  // The one count (engine/attention.ts, on the inbox): the same number the top bar, the desk and the door show.
+  const needs = deskCount(s, { answers, briefSkip: ui.briefSkip, taken: ui.taken });
   const lines: string[] = [];
   const abs = officeAbsence(s);
   if (abs) {

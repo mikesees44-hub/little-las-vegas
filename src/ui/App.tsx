@@ -15,6 +15,7 @@ import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
 import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Speed } from './clock';
+import { autoPauses, DEFAULT_SPEED, firstPause, redKeys, speedKey } from './clockPolicy';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
@@ -44,7 +45,9 @@ import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
-import { homeForKey, itemOf, resolveRoute, type NavRoute } from './shell/nav';
+import { homeForKey, itemOf, KEYS_CHANGED, resolveRoute, type NavRoute } from './shell/nav';
+import { homeLock } from './shell/unlocks';
+import { HOME_IDS } from './shell/routes';
 import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
@@ -82,7 +85,8 @@ import { unreadCount } from '../engine/paper';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
-import { BossDesk, ReadyToAdvance } from './desk/BossDesk';
+import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
+import { RiseColumn } from './borgata/TheRise';
 import { readyReview } from '../engine/desk';
 import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
 import { UrgentMeeting } from './components/UrgentMeeting';
@@ -92,7 +96,8 @@ import { BossOffice } from './office/BossOffice';
 import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
-import { inboxBadge } from '../engine/inbox';
+import { deskBadge } from '../engine/attention';
+import { answerOffer } from '../engine/lieutenants';
 import { MorningReports, WhoHandlesWhat } from './lieutenants/Lieutenants';
 import { markOrder, setRecentSeed } from './plans/orderMarks';
 import { PlansContext, type PlansApi } from './plans/context';
@@ -158,6 +163,9 @@ export function App({ startOn = 'title' }: AppProps) {
   const [officeView, setOfficeView] = useState<'office' | 'club' | undefined>();
   const [mondayCard, setMondayCard] = useState(false);
   const [later, setLater] = useState<{ week: number; keys: string[] }>({ week: 0, keys: [] });
+  // The Desk: items the boss took back from "Handled for you" this week, and the filter a door opened it on.
+  const [taken, setTaken] = useState<{ week: number; keys: string[] }>({ week: 0, keys: [] });
+  const [deskFilter, setDeskFilter] = useState<DeskFilter>('all');
   const lastQueued = useRef<{ a: PlayerAction; at: number } | undefined>(undefined);
   const ordersApi = useMemo(() => ({
     orders,
@@ -251,7 +259,13 @@ export function App({ startOn = 'title' }: AppProps) {
   useEffect(() => {
     if (!menu) saveSlot(slot, s);
   }, [s, menu, slot]);
-  const [speed, setSpeed] = useState<Speed>(0);
+  // The clock runs by default (CK style; clockPolicy.ts): a new or loaded game starts moving.
+  const [speed, setSpeed] = useState<Speed>(() => (timeMode() === 'clock' ? DEFAULT_SPEED : 0));
+  // Red Desk items the clock already stopped for (it stops once per item).
+  const ackedRef = useRef<Set<string>>(new Set());
+  const turningRef = useRef(false);
+  const cardOpenRef = useRef(false);
+  const ackNowRef = useRef<() => void>(() => {});
   // The running clock's day: the evening scenes that just happened, the day window.
   const [evenings, setEvenings] = useState<{ cue: EveningCue; s: GameState }[]>([]);
   const [dayWin, setDayWin] = useState<number | undefined>();
@@ -305,7 +319,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (menu || urgent) return;
     const fresh = unseenUrgent(s);
     if (!fresh.length) return;
-    setSpeed(0);
+    if (pausesOn('pauseOnUrgent')) setSpeed(0);
     setUrgent(fresh[0]);
     setS((x) => markTipsSeen(x, fresh));
   }, [s, menu, urgent]);
@@ -338,6 +352,7 @@ export function App({ startOn = 'title' }: AppProps) {
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
       if (quiet) {
+        clockAutoPause(s, r.state);
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
         const heads = weekHeadlines(s, r.state).filter((h) => pausesOn(h.kind === 'hit' ? 'pauseOnViolence' : h.kind === 'arrest' ? 'pauseOnArrest' : 'pauseOnLife'));
@@ -452,7 +467,9 @@ export function App({ startOn = 'title' }: AppProps) {
     setNight([]);
     setReels([]);
     setAutoOpened({});
-    setSpeed(0);
+    // A new or loaded game starts with the clock moving (the opening's cards hold it until they close).
+    setSpeed(timeMode() === 'clock' ? DEFAULT_SPEED : 0);
+    ackedRef.current = new Set();
     setRoute({});
     setReportLog([]);
     setCtxMenu(undefined);
@@ -575,7 +592,8 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab) go(l.tab);
   }
   const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = cityOpen || vacOpen || goTo !== undefined || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  // Only a decision card holds the clock (clockPolicy.ts): the menus, sheets, drawers and the office do not.
+  const busy = !!menu || !!current || !!ready || !!sitdown || !!scene || !!urgent || !!confirm || dayWin !== undefined || cues.length > 0 || reels.length > 0 || night.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
     const d = daysOf(s).day;
@@ -584,11 +602,32 @@ export function App({ startOn = 'title' }: AppProps) {
       setEvenings((x) => [...x.slice(-1), { cue: { week: s.week, day: d, roundId: id }, s }]);
       if (pausesOn('pauseOnEvening')) { setSpeed(0); setClockNote('Paused: your evening'); }
     }
-    if (d >= 6) { run('week', answers, true); return; }
+    if (d >= 6) {
+      // The week turns without freezing the clock's controls: say so, let the screen paint, then turn it.
+      if (turningRef.current) return;
+      turningRef.current = true;
+      setClockNote('The week turns…');
+      setTimeout(() => { try { run('week', answers, true); } finally { turningRef.current = false; } }, 16);
+      return;
+    }
     const next = tickDay(s);
     setS(next);
+    clockAutoPause(s, next);
     const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
     if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
+  }
+  /** The clock's auto-pause (clockPolicy.ts): red on the Desk, an urgent meeting, war, a death in the house, a plot. */
+  function clockAutoPause(prev: GameState, next: GameState) {
+    const ui = { answers, briefSkip };
+    const w = firstPause(autoPauses(prev, next, ackedRef.current, ui), (k) => pausesOn(k));
+    ackedRef.current = new Set([...ackedRef.current, ...redKeys(next, ui)]);
+    if (w) { setSpeed(0); setClockNote(`Paused: ${w.text}`); }
+  }
+  /** Play / a speed: what is red on the Desk now has been seen. */
+  function playAt(v: Speed) {
+    if (v > 0) ackedRef.current = new Set([...ackedRef.current, ...redKeys(s, { answers, briefSkip })]);
+    setSpeed(v);
+    setClockNote(undefined);
   }
   function endDay() {
     setEndDayDue(false);
@@ -600,6 +639,8 @@ export function App({ startOn = 'title' }: AppProps) {
     endDay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endDayDue, s, confirm]);
+  cardOpenRef.current = busy;
+  ackNowRef.current = () => { ackedRef.current = new Set([...ackedRef.current, ...redKeys(s, { answers, briefSkip })]); };
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
     step: stepDay,
@@ -622,7 +663,7 @@ export function App({ startOn = 'title' }: AppProps) {
     // (the sit-down is one step away, at the door); the desk's list; or the map.
     const start = weekStart(s);
     if (start === 'office') { setRoute({}); setOfficeView('office'); setMondayCard(true); return; }
-    if (start === 'desk') setRoute({ home: 'week' });
+    if (start === 'desk') setRoute({ home: 'desk' });
     if (getSettings().sitdownEachWeek !== false) setSitdown('council');
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
@@ -631,9 +672,17 @@ export function App({ startOn = 'title' }: AppProps) {
       if (e.code === 'Space') {
         if (timeMode() !== 'clock' || !clockSpaceAllowed(e)) return;
         e.preventDefault();
-        setSpeed((v) => (v === 0 ? 2 : 0));
+        setSpeed((v) => {
+          if (v === 0) ackNowRef.current();
+          return v === 0 ? DEFAULT_SPEED : 0;
+        });
         setClockNote(undefined);
         return;
+      }
+      // 1-5: the clock's speed, only while no decision card is open (inside one they pick a choice).
+      if (timeMode() === 'clock' && !shortcutBlocked(e)) {
+        const sp = speedKey(e.key, cardOpenRef.current);
+        if (sp) { e.preventDefault(); setSpeed(sp); setClockNote(undefined); return; }
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !menu) { e.preventDefault(); setFinding(true); return; }
       if (shortcutBlocked(e)) return;
@@ -643,6 +692,12 @@ export function App({ startOn = 'title' }: AppProps) {
       const h = homeForKey(e.key);
       if (h) {
         e.preventDefault();
+        // The letters that changed meaning with the six homes: say so once.
+        if ('mrbld'.includes(e.key.toLowerCase())) {
+          let seen = false;
+          try { seen = localStorage.getItem('llv.keysChanged') === '1'; localStorage.setItem('llv.keysChanged', '1'); } catch { seen = true; }
+          if (!seen) setClockNote(KEYS_CHANGED);
+        }
         setRoute((r) => (r.home === h ? {} : { home: h }));
       }
     };
@@ -666,11 +721,12 @@ export function App({ startOn = 'title' }: AppProps) {
     const h = a.severity !== 'info' ? alertHome(a) : undefined;
     if (h) badges[h] = (badges[h] ?? 0) + 1;
   }
-  if (unanswered.length) badges.week = (badges.week ?? 0) + unanswered.length;
+  // The Desk's badge is the one count (attention.ts): what needs you.
+  { const n = deskBadge(s, { answers, briefSkip, taken: taken.week === s.week ? taken.keys : [] }).n; if (n) badges.desk = n; else delete badges.desk; }
   const morningOpen = dayCheckIns(s, daysOf(s).day).filter((c) => c.problem && !daysOf(s).answers[c.key] && !daysOf(s).skipped.includes(c.day));
   const homeDoNowAll = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
   // This Week's front page is the Boss's Desk, which lists the decisions, the morning and the sit-down: said once.
-  const homeDoNow = home === 'week' ? homeDoNowAll.filter((d) => d.act.kind !== 'decisions' && d.act.kind !== 'day' && d.act.kind !== 'sitdown') : homeDoNowAll;
+  const homeDoNow = home === 'desk' ? homeDoNowAll.filter((d) => d.act.kind !== 'decisions' && d.act.kind !== 'day' && d.act.kind !== 'sitdown') : homeDoNowAll;
   const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); };
   function onDoNow(d: DoNowItem) {
     const a = d.act;
@@ -692,9 +748,17 @@ export function App({ startOn = 'title' }: AppProps) {
     onCancelOrder: (i: number) => ordersApi.remove(i),
     onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
     onChar: (id: string) => setSheet(id),
+    onLt: () => setLtOpen(true),
+    onUrgent: (tip: string) => setUrgent(tip),
+    onEnvelope: () => tributeApi.openAudience(),
+    onTake: (key: string) => setTaken((t) => ({ week: s.week, keys: [...(t.week === s.week ? t.keys : []).filter((k) => k !== key), key] })),
+    onMotion: () => (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(),
+    onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
+  const takenKeys = taken.week === s.week ? taken.keys : [];
+  const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'desk' }); };
   const officeApi: OfficeApi = {
-    openDesk: () => setRoute({ home: 'week' }),
+    openDesk: (f?: DeskFilter) => openDesk(f),
     openEnvelope: () => tributeApi.openAudience(),
     openVisitors: () => setSitdown('council'),
     openLedger: () => openRoute({ panel: 'holdings', section: 'take' }),
@@ -715,9 +779,9 @@ export function App({ startOn = 'title' }: AppProps) {
     lieutenants: () => setLtOpen(true),
   };
   // The one count (engine/inbox.ts): Waiting on you, the desk and the door all say this number.
-  const box = inboxBadge(s, { answers, briefSkip });
+  const box = deskBadge(s, { answers, briefSkip, taken: takenKeys });
   const laterKeys = later.week === s.week ? later.keys : [];
-  const officeUi = { answers, briefSkip, later: laterKeys };
+  const officeUi = { answers, briefSkip, later: laterKeys, taken: takenKeys };
   function officeDelegate(op: DelegateOp) {
     if (op.kind === 'answer') { setAnswers((a) => ({ ...a, [op.iid]: op.choiceId })); noteAnswer(op.iid, op.choiceId); }
     else if (op.kind === 'checkin') act((x) => answerCheckIn(x, op.key, op.answer), 'Answered a capo\'s check-in');
@@ -737,9 +801,9 @@ export function App({ startOn = 'title' }: AppProps) {
     : officeView === 'office' ? <BossOffice key={s.week} s={s} ui={officeUi} monday={mondayCard} onMondayDone={() => setMondayCard(false)} onInvite={officeInvite} onDelegate={officeDelegate} onLater={officeLater} onClub={() => setOfficeView('club')} />
     : officeView === 'club' ? <SocialClub s={s} onUpstairs={() => setOfficeView('office')} onHq={() => openRoute({ panel: 'holdings', section: 'hq' })} onMap={() => setOfficeView(undefined)} />
     : undefined;
-  const weekTop = home === 'week' && !s.gameOver ? (
+  const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
@@ -753,7 +817,7 @@ export function App({ startOn = 'title' }: AppProps) {
     </section>
   ) : undefined;
   // Rackets & Businesses: "Start a racket" first, big, and who still lacks a steady earner.
-  const gaps = home === 'biz' && !s.gameOver ? racketGaps(s) : undefined;
+  const gaps = home === 'money' && !s.gameOver ? racketGaps(s) : undefined;
   const bizTop = gaps ? (
     <section className="mb-4" data-testid="biz-start">
       <div className="grid grid-cols-2 gap-2">
@@ -763,14 +827,14 @@ export function App({ startOn = 'title' }: AppProps) {
       <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
     </section>
   ) : undefined;
-  const youTop = home === 'you' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'week' })} /> : undefined;
+  const youTop = home === 'life' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'desk' })} /> : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
       {!s.gameOver && <UnderbossSuggests s={s} compact />}
       {!s.gameOver && <SitDownCard s={s} b={briefForRail} onOpen={() => setSitdown('council')} onRounds={() => setSitdown('rounds')} />}
       <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} hideAdvice />
-      {!s.gameOver && <GoalsCard goals={goals} onShow={showGoal} />}
+      {!s.gameOver && home !== 'desk' && <GoalsCard goals={goals} onShow={showGoal} />}
       <div className="2xl:hidden"><StreetFeedCard s={s} /></div>
     </>
   );
@@ -785,20 +849,20 @@ export function App({ startOn = 'title' }: AppProps) {
       <EmpireHost s={s} setS={setS}>
       <Shell
         top={(<>
-          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={playAt} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
             urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
-            onSitDown={() => setSitdown('council')} sitCount={brief.items.filter((it) => !briefSkip.includes(it.id)).length} onDesk={() => setRoute({ home: 'week' })}
+            onSitDown={() => setSitdown('council')} sitCount={brief.items.filter((it) => !briefSkip.includes(it.id)).length} onDesk={() => openDesk()}
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}
             fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}
-        rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
+        rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} locks={Object.fromEntries(HOME_IDS.map((h) => [h, homeLock(s, h)]).filter(([, r]) => r))} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
         map={<MapView s={s} alerts={alertList} onAlert={() => {}} onOpenBusiness={() => go('business')} onEnvoy={(city) => plannerApi.plan('envoy', undefined, { city })} shell focus={mapFocus} />}
         overlay={(
           <>
@@ -830,7 +894,7 @@ export function App({ startOn = 'title' }: AppProps) {
               <div className="pointer-events-none absolute bottom-24 md:bottom-14 right-2 z-[1130] flex flex-col items-end gap-2">
                 {evenings.map((e, i) => (
                   <EveningScene key={`${e.cue.week}:${e.cue.day}`} s={e.s} cue={e.cue} older={i < evenings.length - 1} onClose={() => setEvenings((x) => x.filter((y) => y !== e))}
-                    onMore={() => { setEvenings([]); setRoute({ home: 'week' }); }} />
+                    onMore={() => { setEvenings([]); setRoute({ home: 'desk' }); }} />
                 ))}
               </div>
             )}

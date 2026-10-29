@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { newGameWith, type StartId } from '../../engine/starts';
+import { newGameWith, recommendedStart, STARTS, type StartId } from '../../engine/starts';
 import type { GameState } from '../../engine/types';
 import { musicPlaying, savePref, startMusic, stopMusic } from '../audio';
 import { NoirStill } from '../cutscene/NoirStill';
@@ -58,7 +58,7 @@ export interface StartMenuProps {
 
 export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onBack, onStart }: StartMenuProps) {
   const [screen, setScreen] = useState<MenuScreen>(initial);
-  const [start, setStart] = useState<StartId>('classic');
+  const [start, setStart] = useState<StartId>(() => recommendedStart());
   const [seed, setSeed] = useState(() => seedHint || freshSeed());
   const [slots, setSlots] = useState<(SlotMeta | undefined)[]>(() => listSlots());
   const latest = useMemo(() => slots.filter((m): m is SlotMeta => !!m).sort((a, b) => b.savedAt - a.savedAt)[0], [slots]);
@@ -96,7 +96,7 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
             {START_CARDS.map((c) => (
               <button key={c.id} data-start={c.id} onClick={() => setStart(c.id)} className={`panel p-4 text-left transition border ${start === c.id ? 'border-gold-400 ring-1 ring-gold-400' : 'border-noir-700 hover:border-gold-600'}`}>
                 <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-display text-xl text-gold-300">{c.name}{c.recommended && <span className="ml-2 align-middle text-[10px] uppercase tracking-wider rounded bg-gold-500/20 text-gold-200 px-1.5 py-0.5" data-testid="start-recommended">Recommended</span>}</h3>
+                  <h3 className="font-display text-xl text-gold-300">{c.name}{STARTS[c.id as StartId]?.recommended && <span className="ml-2 align-middle rounded bg-gold-500 px-1.5 py-0.5 font-sans text-[10px] font-bold uppercase tracking-wider text-noir-950" data-testid="start-here">Start here</span>}</h3>
                   <span className={`text-[10px] uppercase tracking-wider border rounded px-1.5 py-0.5 whitespace-nowrap ${DIFF_CLS[c.difficulty]}`}>{c.difficulty}</span>
                 </div>
                 <p className="mt-1 text-sm text-stone-300">{c.text}</p>

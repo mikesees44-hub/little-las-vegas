@@ -15,7 +15,7 @@ export function InMotionStrip({ chips, onChip }: { chips: MotionChip[]; onChip: 
   return (
     <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap px-2 py-1 tabbar" data-testid="in-motion">
       <span className="shrink-0 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</span>
-      {chips.length === 0 && <span className="text-[11px] text-stone-500">Nothing under way. Plan something: This Week › Plan a job, or any man's sheet.</span>}
+      {chips.length === 0 && <span className="text-[11px] text-stone-500">Nothing under way. Plan something: the Desk › Jobs › Plan a job, or any man's sheet.</span>}
       {shown.map((c) => (
         <button key={c.key} type="button" onClick={() => onChip(c)} data-testid="motion-chip"
           className={`relative shrink-0 rounded border px-2 py-0.5 text-[11px] hover:border-gold-500 ${TONE[c.tone]}`}>

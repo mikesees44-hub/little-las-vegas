@@ -14,20 +14,20 @@ export function railTipClass(panelOpen: boolean, clicked: boolean): string | und
   return 'invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity delay-500';
 }
 
-function RailButton({ h, active, badge, dot, onClick, compact, panelOpen }: { h: HomeDef; active: boolean; badge?: number; dot?: boolean; onClick: () => void; compact?: boolean; panelOpen?: boolean }) {
+function RailButton({ h, active, badge, dot, onClick, compact, panelOpen, locked }: { h: HomeDef; active: boolean; badge?: number; dot?: boolean; onClick: () => void; compact?: boolean; panelOpen?: boolean; /** Why it is not open yet (greyed; it still opens). */ locked?: string }) {
   const [clicked, setClicked] = useState(false);
   const tip = compact ? undefined : railTipClass(!!panelOpen, clicked);
   return (
     <button type="button" onClick={() => { setClicked(true); onClick(); }} onMouseLeave={() => setClicked(false)} data-tab={h.id} data-testid={`rail-${h.id}`} aria-pressed={active}
-      title={compact ? `${h.label} (${h.key.toUpperCase()}) — ${h.blurb}` : undefined} aria-label={h.label}
-      className={`group relative flex flex-col items-center justify-center rounded-md ${compact ? 'h-12 flex-1 min-w-0' : 'h-14 w-[60px]'} border text-[10px] leading-tight transition-colors ${active ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-transparent text-stone-400 hover:border-noir-600 hover:text-gold-300'}`}>
+      title={locked ? `${h.label}: ${locked}` : compact ? `${h.label} (${h.key.toUpperCase()}) — ${h.blurb}` : undefined} aria-label={h.label} data-locked={locked ? 'true' : undefined}
+      className={`group relative flex flex-col items-center justify-center rounded-md ${compact ? 'h-12 flex-1 min-w-0' : 'h-14 w-[60px]'} border text-[10px] leading-tight transition-colors ${locked && !active ? 'opacity-45 ' : ''}${active ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-transparent text-stone-400 hover:border-noir-600 hover:text-gold-300'}`}>
       <span className="text-lg leading-none">{glyph(h.icon)}</span>
       <span className="mt-0.5 truncate max-w-full px-0.5">{h.short}</span>
       {!!badge && <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded-full bg-blood-500 px-1 text-[9px] font-bold text-white">{badge}</span>}
       {dot && !badge && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold-400 animate-pulse" aria-label="new" />}
       {tip && (
         <span className={`pointer-events-none absolute left-full top-1/2 z-[1200] ml-2 w-56 -translate-y-1/2 rounded border border-gold-600/50 bg-noir-950/95 px-2 py-1.5 text-left text-[11px] text-stone-300 shadow-lg ${tip}`} data-testid="rail-tip">
-          <span className="block font-semibold text-gold-300">{h.label} <span className="text-stone-500 font-normal">· {h.key.toUpperCase()}</span></span>{h.blurb}
+          <span className="block font-semibold text-gold-300">{h.label} <span className="text-stone-500 font-normal">· {h.key.toUpperCase()}</span></span>{locked ? <span className="block text-amber-200">🔒 {locked}</span> : null}{h.blurb}
         </span>
       )}
     </button>
@@ -39,8 +39,10 @@ function RailButton({ h, active, badge, dot, onClick, compact, panelOpen }: { h:
  * phones. Red badges count what needs the boss there; a gold dot means
  * something new opened up.
  */
-export function LeftRail({ active, badges, dots, onOpen, onHelp }: {
+export function LeftRail({ active, badges, dots, onOpen, onHelp, locks = {} }: {
   active?: HomeId;
+  /** Homes not open yet, and why (unlocks.ts homeLock). */
+  locks?: Partial<Record<HomeId, string>>;
   badges: Partial<Record<HomeId, number>>;
   dots: Set<HomeId>;
   onOpen: (h: HomeId) => void;
@@ -49,13 +51,13 @@ export function LeftRail({ active, badges, dots, onOpen, onHelp }: {
   return (
     <>
       <nav className="hidden md:flex w-[68px] shrink-0 flex-col items-center gap-1 border-r border-noir-700 bg-noir-900/90 py-2" data-testid="rail" aria-label="The game's places">
-        {HOMES.map((h) => <RailButton key={h.id} h={h} active={active === h.id} badge={badges[h.id]} dot={dots.has(h.id)} onClick={() => onOpen(h.id)} panelOpen={!!active} />)}
+        {HOMES.map((h) => <RailButton key={h.id} h={h} active={active === h.id} badge={badges[h.id]} dot={dots.has(h.id)} onClick={() => onOpen(h.id)} panelOpen={!!active} locked={locks[h.id]} />)}
         <button type="button" onClick={onHelp} data-testid="rail-help" title="Help: what should I do, the glossary, the keyboard (?)" className="mt-auto flex h-12 w-14 flex-col items-center justify-center rounded-md text-[10px] text-stone-400 hover:text-gold-300">
           <span className="text-lg leading-none">?</span>Help
         </button>
       </nav>
       <nav className="md:hidden fixed inset-x-0 bottom-0 z-[1160] flex gap-0.5 border-t border-noir-700 bg-noir-900/95 px-1 pb-[env(safe-area-inset-bottom)] pt-0.5" data-testid="rail-phone" aria-label="The game's places">
-        {HOMES.map((h) => <RailButton key={h.id} compact h={h} active={active === h.id} badge={badges[h.id]} dot={dots.has(h.id)} onClick={() => onOpen(h.id)} />)}
+        {HOMES.map((h) => <RailButton key={h.id} compact h={h} active={active === h.id} badge={badges[h.id]} dot={dots.has(h.id)} onClick={() => onOpen(h.id)} locked={locks[h.id]} />)}
       </nav>
     </>
   );

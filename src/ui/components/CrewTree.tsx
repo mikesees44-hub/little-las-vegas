@@ -15,6 +15,7 @@ import type { Character, GameState, OrderVia } from '../../engine/types';
 import { FACTION_NAMES } from '../../engine/world';
 import { fmt$ } from '../format';
 import { Portrait } from '../portrait/Portrait';
+import { GrowthGlance } from '../borgata/GrowthTab';
 import { ActionCard, useOrders } from './Orders';
 import { ActionsHandle, FACTION_TINT, useSheet } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
@@ -103,6 +104,7 @@ export function TreeNode({ s, c, size = 44, sub, compact }: { s: GameState; c: C
       <span className="min-w-0">
         <span className={`block truncate ${compact ? 'text-xs' : 'text-sm'} font-semibold text-stone-100 group-hover:text-gold-300`}>{callName(c)} {c.lastName}</span>
         {(subText || (badge && size < 40)) && <span className="block truncate text-[11px] text-stone-400" data-testid="tree-sub">{size < 40 && badge ? <span className="uppercase tracking-wider text-[9px] text-gold-300">{badge}</span> : null}{size < 40 && badge && subText ? ' · ' : ''}{subText}</span>}
+        {size >= 32 && c.alive && <span className="block"><GrowthGlance s={s} c={c} compact={compact} /></span>}
         <Badges items={warningsFor(s, c)} />
       </span>
     </button>

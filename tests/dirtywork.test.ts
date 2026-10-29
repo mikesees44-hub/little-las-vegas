@@ -222,7 +222,7 @@ describe('Dirty work: the week', () => {
       if (t) {
         tips++;
         expect(JOBS_BY_ID[t.job]).toBeTruthy();
-        const items = doNow(s, 'biz', { alerts: [], opps: [], unanswered: 0, brief: 0 });
+        const items = doNow(s, 'money', { alerts: [], opps: [], unanswered: 0, brief: 0 });
         if (!jobLock(s, t.job)) expect(items.some((x) => x.id === 'dirty-tip')).toBe(true);
       }
     }
@@ -266,7 +266,7 @@ describe('Dirty work: the screens', () => {
     const c = renderToString(wrap(createElement(DirtyOnPerson, { s, charId: rivalMan.id, onGo: () => {} })));
     expect(c).toContain('Lean on him');
     expect(c).toContain('A hit');
-    const biz = NAV.biz.flatMap((g) => g.items).map((i) => i.keys[0]);
+    const biz = NAV.money.flatMap((g) => g.items).map((i) => i.keys[0]);
     expect(biz.indexOf('holdings.dirty')).toBe(biz.indexOf('holdings.hub') + 1);
   });
 });

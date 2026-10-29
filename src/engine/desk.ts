@@ -1,7 +1,8 @@
 import { urgentMeetings } from './threats';
 import { attackEstimate, pressurePoints } from './oldDon';
+import { deskQueue, handlerOf } from './attention';
+import type { InboxItem } from './inbox';
 import { previewAction, queuedMoney } from './actions';
-import { briefing } from './briefing';
 import { weekCheckIns, type CheckProblem } from './checkins';
 import { DAY_NAMES, daysOf, weekPlan } from './days';
 import { fmtMoney } from './effects';
@@ -26,7 +27,10 @@ function ownWay(p: CheckProblem): string {
   return a ? `${a.label} (${a.hint})` : 'he handles it his own way';
 }
 
-export type DeskKind = 'decision' | 'morning' | 'sitdown' | 'order' | 'bill' | 'upcoming';
+/** Where a desk row came from (the inbox's kinds, plus the desk's own). */
+export type DeskKind = 'decision' | 'petition' | 'urgent' | 'morning' | 'sitdown' | 'lieutenant' | 'request' | 'envelope' | 'lawyer' | 'order' | 'bill' | 'upcoming';
+/** The desk's sections: what needs you, what is handled for you, your orders, the bills, what is coming. */
+export type DeskGroupKind = 'needs' | 'handled' | 'order' | 'bill' | 'upcoming';
 
 export interface DeskItem {
   key: string;
@@ -39,43 +43,77 @@ export interface DeskItem {
   urgent?: boolean;
   /** Money involved (positive: a cost). */
   cost?: number;
-  /** Where it goes: an event iid, a morning's day, a sit-down item, an order index. */
-  ref: { event?: string; day?: number; brief?: string; order?: number; charId?: string };
+  /** What is on the line, as chips (attention.ts). */
+  why?: string[];
+  /** Handled for you: who, what, which day. */
+  handled?: { by: string; byId?: string; does: string; day?: number; delegated?: boolean };
+  /** Where it goes: an event iid, a morning's day, a sit-down item, an order index, a lieutenant's job, a tip, a place ask. */
+  ref: { event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string };
 }
 
-export interface DeskGroup { kind: DeskKind; title: string; items: DeskItem[] }
+export interface DeskGroup { kind: DeskGroupKind; title: string; items: DeskItem[] }
 
 export interface DeskUi {
   answers?: Record<string, string>;
   orders?: readonly PlayerAction[];
   briefSkip?: readonly string[];
+  /** Items the boss took back from the handled list this week. */
+  taken?: readonly string[];
 }
 
-const GROUP_TITLE: Record<DeskKind, string> = {
-  decision: 'Decisions waiting', morning: 'Capos\' morning requests', sitdown: 'The sit-down recommends', order: 'Orders for this week', bill: 'Bills and what is owed', upcoming: 'Coming up',
+const GROUP_TITLE: Record<DeskGroupKind, string> = {
+  needs: 'Needs you', handled: 'Handled for you', order: 'Your orders this week', bill: 'Bills and what is owed', upcoming: 'Coming up',
 };
 
+function fromInbox(it: InboxItem): DeskItem {
+  return { key: it.key, kind: it.kind, title: it.title, detail: it.why, urgent: it.tone === 'red', why: it.stakes?.why, ref: { ...it.ref, charId: it.charId } };
+}
+
+/**
+ * The desk: the attention queue (engine/attention.ts, built on the one inbox)
+ * as Needs you and Handled for you, then the boss's own orders, the bills and
+ * what is coming. The header's count is `needs.length` of the same queue, so
+ * the count and the rows can never disagree. Decisions and mornings he has
+ * already answered this week stay at the end of Needs you, ticked.
+ */
 export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
   const answers = ui.answers ?? {};
   const orders = ui.orders ?? [];
-  const groups: Record<DeskKind, DeskItem[]> = { decision: [], morning: [], sitdown: [], order: [], bill: [], upcoming: [] };
+  const groups: Record<DeskGroupKind, DeskItem[]> = { needs: [], handled: [], order: [], bill: [], upcoming: [] };
+  const q = deskQueue(s, ui);
+  for (const it of q.needs) {
+    const row = fromInbox(it);
+    if (it.ref.event) {
+      const ev = s.pendingEvents.find((e) => e.iid === it.ref.event);
+      const ch = ev?.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev?.choices[0];
+      if (ch) row.ifNothing = `"${ch.label}"`;
+    } else if (it.kind === 'morning') {
+      const c = weekCheckIns(s).find((x) => `am:${x.key}` === it.key);
+      if (c?.problem) { row.ifNothing = ownWay(c.problem); row.title = `${DAY_NAMES[c.day]}: ${c.name}`; row.detail = c.problem.text; }
+    } else {
+      const h = handlerOf(s, it);
+      row.ifNothing = `${h.by}: ${h.does}`;
+    }
+    groups.needs.push(row);
+  }
+  // Answered this week: ticked, at the end (they don't count).
   for (const ev of s.pendingEvents) {
     const ans = answers[ev.iid];
-    const ch = ev.choices.find((c) => c.id === (ans ?? ev.defaultChoiceId)) ?? ev.choices[0];
-    groups.decision.push({ key: `ev:${ev.iid}`, kind: 'decision', title: ev.title, detail: ans ? `You chose: ${ch?.label}` : ev.text.length > 120 ? `${ev.text.slice(0, 117)}…` : ev.text, ifNothing: ans ? undefined : ch ? `"${ch.label}"` : undefined, done: !!ans, urgent: ev.mandatory && !ans, ref: { event: ev.iid } });
+    if (!ans) continue;
+    const ch = ev.choices.find((c) => c.id === ans);
+    groups.needs.push({ key: `ev:${ev.iid}`, kind: 'decision', title: ev.title, detail: `You chose: ${ch?.label ?? ans}`, done: true, ref: { event: ev.iid } });
   }
   const d = daysOf(s);
   for (const c of weekCheckIns(s)) {
     if (!c.problem || c.day < d.day || d.skipped.includes(c.day)) continue;
     const ans = d.answers[c.key];
     const a = ans ? c.problem.answers.find((x) => x.id === ans) : undefined;
-    groups.morning.push({ key: `am:${c.key}`, kind: 'morning', title: `${DAY_NAMES[c.day]}: ${c.name}`, detail: a ? `You said: ${a.label}` : c.problem.text, ifNothing: ans ? undefined : ownWay(c.problem), done: !!ans, urgent: c.problem.urgent && !ans, ref: { day: c.day, charId: c.capoId } });
+    if (a) groups.needs.push({ key: `am:${c.key}`, kind: 'morning', title: `${DAY_NAMES[c.day]}: ${c.name}`, detail: `You said: ${a.label}`, done: true, ref: { day: c.day, charId: c.capoId } });
   }
-  const b = briefing(s);
-  for (const it of b.items) {
-    if (ui.briefSkip?.includes(it.id)) continue;
-    const rec = it.options.find((o) => o.id === it.recommended);
-    groups.sitdown.push({ key: `sd:${it.id}`, kind: 'sitdown', title: `${it.speaker}: ${it.topic}`, detail: rec ? `Recommends: ${rec.label}` : it.line, ifNothing: it.routine ? 'A trusted adviser may handle it himself' : 'It waits a week', ref: { brief: it.id, charId: it.charId } });
+  for (const h of q.handled) {
+    const row = fromInbox(h.item);
+    row.handled = { by: h.by, byId: h.byId, does: h.does, day: h.day, ...(h.delegated ? { delegated: true } : {}) };
+    groups.handled.push(row);
   }
   orders.forEach((a, i) => {
     const p = previewAction(s, a);
@@ -101,7 +139,12 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
   for (const sc of s.schemes.filter((x) => x.owner === 'player').slice(0, 4)) {
     groups.upcoming.push({ key: `sch:${sc.id}`, kind: 'upcoming', title: `${SCHEME_INFO[sc.kind].name} under way`, detail: `${sc.progress}% along`, ref: { charId: sc.targetId } });
   }
-  return (Object.keys(groups) as DeskKind[]).map((k) => ({ kind: k, title: GROUP_TITLE[k], items: groups[k] })).filter((g) => g.items.length);
+  return (Object.keys(groups) as DeskGroupKind[]).map((k) => ({ kind: k, title: GROUP_TITLE[k], items: groups[k] })).filter((g) => g.items.length);
+}
+
+/** The desk's header count: the same queue's Needs you (attention.ts). */
+export function deskHeaderCount(s: GameState, ui: DeskUi = {}): number {
+  return deskQueue(s, ui).needs.length;
 }
 
 export interface ReadyReview {

@@ -5,6 +5,7 @@ import { actTitle, docketOf, ifSilent, pendingAsks } from './lieutenants';
 import { openAsks, TRADES, TROUBLE_WORD, troubled } from './placeAsks';
 import { today } from './days';
 import type { GameState } from './types';
+import type { Stakes } from './attention';
 
 /**
  * THE INBOX: the one list of what wants the boss right now, and its one
@@ -33,6 +34,8 @@ export interface InboxItem {
   /** One line: why it is here. */
   why: string;
   charId?: string;
+  /** What is on the line (engine/attention.ts fills it; the inbox itself never does). */
+  stakes?: Stakes;
   ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string; /** Trouble at a tenant's racket (placeAsks.ts). */ trouble?: string };
 }
 
