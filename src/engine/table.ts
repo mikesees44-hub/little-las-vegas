@@ -204,6 +204,8 @@ export function tableWeek(ctx: Ctx): void {
   }
   // A war that drags on is brought to the Table.
   for (const w of s.wars) {
+    // Philadelphia's own war is not the Table's to end: Sal is the chair (army.ts).
+    if (w.rival === 'philly') continue;
     if (s.week - w.startWeek >= 10 && !s.disputes.some((d) => d.warId === w.id && !d.ruling)) {
       openDispute(s, newDispute(s, 'peace', 'player', w.rival, { warId: w.id, district: w.district }));
       ctx.log.push(`Philadelphia has had enough of the war with ${FACTION_NAMES[w.rival]}. The Table will rule on it in ${HEARING_DELAY} weeks.`);

@@ -151,6 +151,9 @@ export const TIME_TABLE: Record<string, number> = {
   'mymen:answer': 2, 'mymen:warn': 0.5, 'mymen:fine': 0.5, 'mymen:demote': 0.5, 'mymen:shelf': 0.5, 'mymen:kill': 1,
   // The Store: a day at the track (an afternoon), sharing the wealth (an hour of envelopes and phone calls).
   'spend:race': 4, 'spend:share': 1,
+  // The army (army.ts): word to the capos is a quarter of an hour; a call to arms or a pact is a sit-down; an attack, an evening by the phone.
+  'army:raise': 0.5, 'army:disband': 0.25, 'army:hire': 1, 'army:dismiss': 0.25, 'army:safehouses': 1,
+  'army:ask': 3, 'army:pact': 3, 'army:attack': 2,
 };
 
 /** Time with the family: it is the dinner, not a missed one. */

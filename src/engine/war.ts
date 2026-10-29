@@ -63,7 +63,7 @@ export function raidOdds(s: GameState, w: War): number {
 export function startWar(ctx: Ctx, rival: RivalId, district: string, cb: CasusBelli, sanctioned: boolean): War {
   const s = ctx.s;
   const r = s.rivals.find((x) => x.id === rival)!;
-  const w: War = { id: `w${s.nextId++}`, rival, district, cb, sanctioned, score: 0, startWeek: s.week };
+  const w: War = { id: `w${s.nextId++}`, rival, district, cb, sanctioned, score: 0, startWeek: s.week, by: 'player' };
   s.wars.push(w);
   r.war = true;
   addOpinion(s, r.leaderId, s.playerId, 'Declared war on us', -30, 1);
@@ -124,10 +124,13 @@ export function warWeek(ctx: Ctx): void {
       endWar(ctx, w, 'won', 'district');
       continue;
     }
+    // A war with a campaign (army.ts) is decided by its battles, the ground held and the terms there.
+    const camp = !!s.army?.camps[w.id];
     // Attrition: muscle decides the drift.
-    const drift = Math.round((playerMuscle(s) - rivalStrength(s, r)) / 25);
+    const drift = camp ? 0 : Math.round((playerMuscle(s) - rivalStrength(s, r)) / 25);
     if (drift) changeScore(s, w.id, drift);
     if (!w.sanctioned && s.week % 4 === 0) applyEffects(ctx, [{ type: 'heat', bar: 'family', amount: 2, label: `Unsanctioned war with ${r.shortName}: Philadelphia is unhappy` }], { label: '', because: '' });
+    if (camp) continue;
     if (w.score <= -60 && !s.eventQueue.some((e) => e.defId === 'war_terms')) s.eventQueue.push(buildEnemyTerms(s, w));
     if (w.score >= 70 && chance(s, 0.3)) {
       ctx.log.push(`${r.name} sent word through Philadelphia: they want out.`);

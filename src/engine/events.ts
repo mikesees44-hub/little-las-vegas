@@ -62,7 +62,9 @@ export const TRIBUTE_RATE = 0.09;
 export function envelopeSize(s: GameState): number {
   const recent = s.incomeHistory.slice(-4);
   const avg = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 2000;
-  return Math.max(600, rnd100(s, tributeOnWeekly(avg) * 4.33 * (1 - perkMod(s, 'tribute') / 100)));
+  // A lost war with Philadelphia (army.ts): their man sits over you and the envelope is half again as big.
+  const overseer = (s.army?.overseerUntil ?? 0) > s.week ? 1.5 : 1;
+  return Math.max(600, rnd100(s, tributeOnWeekly(avg) * 4.33 * (1 - perkMod(s, 'tribute') / 100) * overseer));
 }
 
 /**
@@ -98,7 +100,7 @@ export function underADon(s: GameState): boolean {
 }
 
 export function bagmanDue(s: GameState): boolean {
-  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !unnoticed(s) && !underADon(s);
+  return s.week >= BAGMAN_START_WEEK && s.lastBagmanMonth !== monthKey(s.date) && !s.flags.brokeFromPhilly && !s.wars.some((w) => w.rival === 'philly') && !unnoticed(s) && !underADon(s);
 }
 
 /**
