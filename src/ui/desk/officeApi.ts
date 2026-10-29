@@ -7,8 +7,8 @@ import { createContext, useContext } from 'react';
  * the defaults do nothing so components render in isolation (tests).
  */
 export interface OfficeApi {
-  /** The Boss's Desk (This Week home). */
-  openDesk: () => void;
+  /** The Desk (its home), optionally on one filter ('people' at the door, 'money' for the envelope). */
+  openDesk: (filter?: 'all' | 'decisions' | 'capos' | 'lieutenants' | 'money' | 'people') => void;
   /** The envelope meeting: the underboss's audience for this week's report (or the envelope pages). */
   openEnvelope: () => void;
   /** Visitors and requests: the sit-down (the capos' and advisers' business). */

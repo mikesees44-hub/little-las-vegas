@@ -13,6 +13,8 @@ import { doNow } from '../src/ui/shell/doNow';
 import { shellAlerts } from '../src/ui/shell/alertRoutes';
 import { Drawer } from '../src/ui/shell/Drawer';
 import { playWeeks } from './helpers';
+import { bossDesk } from '../src/engine/desk';
+import { deskQueue } from '../src/engine/attention';
 
 const configured = HOME_IDS.flatMap((h) => NAV[h].flatMap((g) => g.items.flatMap((it) => [...it.keys, ...(it.aliases ?? [])])));
 
@@ -132,6 +134,11 @@ describe('Do this now', () => {
     const w = doNow(s, 'week', { alerts: sa, opps: whatShouldIDo(s, 12), unanswered: 2, brief: 3 });
     expect(w[0].act.kind).toBe('decisions');
     expect(w[1].act.kind).toBe('sitdown');
+    // The Desk itself: Needs you first, then Handled for you, then your orders, bills, what is coming.
+    const order = ['needs', 'handled', 'order', 'bill', 'upcoming'];
+    const g = bossDesk(s).map((x) => x.kind);
+    expect([...g].sort((a, b) => order.indexOf(a) - order.indexOf(b))).toEqual(g);
+    if (deskQueue(s).needs.length) expect(g[0]).toBe('needs');
     for (const h of HOME_IDS) {
       const items = doNow(s, h, { alerts: sa, opps: whatShouldIDo(s, 12), unanswered: 0, brief: 0 });
       for (const d of items) {

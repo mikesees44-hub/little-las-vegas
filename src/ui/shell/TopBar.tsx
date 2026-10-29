@@ -150,38 +150,23 @@ export const menuItem ='block w-full text-left rounded px-2 py-1.5 text-sm text-
  * what still wants the boss (decisions unanswered, the sit-down's items, the
  * morning's problems, the envelope); the list opens each one, or the whole desk.
  */
-function WaitingButton({ count, tone, pending, answered, sitCount, mornings, envelope, urgent = 0, onReview, onSitDown, onRounds, onEnvelope, onDesk, onUrgent }: {
-  /** The one count (engine/inbox.ts), the same as the desk and the door. */
+/**
+ * DESK (n): the one loop button. One count (engine/attention.ts: what needs
+ * the boss, reds always) and one place it opens: the Desk. The old menu's
+ * lines (decisions, the sit-down, rounds, the envelope, urgent, all of it)
+ * are the Desk's filter chips and doors now. The test ids stay the same.
+ */
+function WaitingButton({ count, tone, onDesk, onReview }: {
   count?: number; tone?: 'red' | 'amber' | 'gold';
-  pending: number; answered: number; sitCount: number; mornings: number; envelope: boolean; urgent?: number;
-  onReview: () => void; onSitDown?: () => void; onRounds?: () => void; onEnvelope?: () => void; onDesk?: () => void; onUrgent?: () => void;
+  onReview: () => void; onDesk?: () => void;
 }) {
-  const open = pending - answered;
-  const n = count ?? open + sitCount + mornings + (envelope ? 1 : 0) + urgent;
-  const red = tone ? tone === 'red' : urgent > 0;
+  const n = count ?? 0;
+  const red = tone === 'red';
   return (
-    <Popover align="left" testid="waiting-menu" button={(o, t) => (
-      <button type="button" onClick={t} aria-expanded={o} data-testid="waiting-button" title="Everything waiting on you this week: decisions, the sit-down, the morning, the envelope"
-        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${red ? 'border-red-500 text-red-300 bg-red-500/10' : n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
-        ▤<span className="hidden sm:inline"> Waiting on you</span>{n ? <span className={`ml-1 rounded-full px-1.5 text-[10px] ${red ? 'bg-red-500 text-white' : 'bg-gold-500 text-noir-950'}`} data-testid="waiting-count">{n}</span> : <span className="ml-1 text-stone-500">✓</span>} ▾
-      </button>
-    )}>
-      {(close) => (
-        <div className="w-64 space-y-0.5 text-xs">
-          {urgent > 0 && onUrgent && <button type="button" className={`${menuItem} border border-red-500/60 bg-red-500/10 text-red-200`} onClick={() => { close(); onUrgent(); }} data-testid="urgent-button">
-            ⚠ Urgent: {urgent === 1 ? 'someone wants' : `${urgent} people want`} a meeting <span className="float-right tabular-nums">{urgent}</span>
-          </button>}
-          <button type="button" className={menuItem} disabled={!pending} onClick={() => { close(); onReview(); }} data-testid="decisions-button">
-            ✉ Decisions <span className="float-right tabular-nums text-stone-400">{answered}/{pending}</span>
-          </button>
-          {onSitDown && <button type="button" className={menuItem} onClick={() => { close(); onSitDown(); }} data-testid="sitdown-button">♜ The sit-down <span className="float-right tabular-nums text-stone-400">{sitCount || '—'}</span></button>}
-          {onRounds && <button type="button" className={menuItem} onClick={() => { close(); onRounds(); }} data-testid="rounds-button">☕ Your rounds: mornings & evenings <span className="float-right tabular-nums text-stone-400">{mornings ? `${mornings} waiting` : ''}</span></button>}
-          {onEnvelope && envelope && <button type="button" className={menuItem} onClick={() => { close(); onEnvelope(); }} data-testid="envelope-button">✉ The envelope is on your desk</button>}
-          {onDesk && <><div className="my-1 h-px bg-noir-700" /><button type="button" className={`${menuItem} text-gold-300`} onClick={() => { close(); onDesk(); }} data-testid="desk-button">▤ The whole desk ▸</button></>}
-          <button type="button" className={`${menuItem} text-gold-300`} onClick={() => { close(); (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(); }} data-testid="waiting-all">◐ All of it, and everything in motion ▸</button>
-        </div>
-      )}
-    </Popover>
+    <button type="button" onClick={onDesk ?? onReview} data-testid="waiting-button" title="The Desk: what needs you this week, and what your people are handling for you"
+      className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${red ? 'border-red-500 text-red-300 bg-red-500/10' : n ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`}>
+      ▤<span className="hidden sm:inline"> Desk</span>{n ? <span className={`ml-1 rounded-full px-1.5 text-[10px] ${red ? 'bg-red-500 text-white' : 'bg-gold-500 text-noir-950'}`} data-testid="waiting-count">{n}</span> : <span className="ml-1 text-stone-500">✓</span>}
+    </button>
   );
 }
 
@@ -190,7 +175,7 @@ function WaitingButton({ count, tone, pending, answered, sitCount, mornings, env
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, pending, answered, onReview, urgent = 0, onUrgent, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onSitDown, sitCount, onDesk, onOffice, officeOpen, mornings = 0, envelope = false, onRounds, onEnvelope, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile }: {
   s: GameState;
   /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
   inboxN?: number;
@@ -287,8 +272,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>
             </div>
-            <WaitingButton count={inboxN} tone={inboxTone} pending={pending} answered={answered} sitCount={sitCount ?? 0} mornings={mornings} envelope={envelope} urgent={urgent} onUrgent={onUrgent}
-              onReview={onReview} onSitDown={onSitDown} onRounds={onRounds} onEnvelope={onEnvelope} onDesk={onDesk} />
+            <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />
             {onOffice && (
               <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
                 className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>

@@ -70,3 +70,19 @@ describe('attention: the desk queue', () => {
     expect(a.handled.map((x) => x.item.key)).toEqual(b.handled.map((x) => x.item.key));
   });
 });
+
+describe('the Desk is one list', () => {
+  it('the rows of Needs you and Handled are the queue, and the header count is Needs you', async () => {
+    const { bossDesk, deskHeaderCount } = await import('../src/engine/desk');
+    const s = crowded('att-desk', 1, 7);
+    const q = deskQueue(s);
+    const g = bossDesk(s);
+    const needs = g.find((x) => x.kind === 'needs')!.items.filter((x) => !x.done);
+    const handled = g.find((x) => x.kind === 'handled')?.items ?? [];
+    expect(needs.map((x) => x.key)).toEqual(q.needs.map((x) => x.key));
+    expect(handled.map((x) => x.key)).toEqual(q.handled.map((x) => x.item.key));
+    expect(deskHeaderCount(s)).toBe(q.needs.length);
+    expect(g[0].kind).toBe('needs');
+    for (const h of handled) expect(h.handled?.by).toBeTruthy();
+  });
+});

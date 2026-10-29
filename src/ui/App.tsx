@@ -81,7 +81,7 @@ import { unreadCount } from '../engine/paper';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
-import { BossDesk, ReadyToAdvance } from './desk/BossDesk';
+import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import { readyReview } from '../engine/desk';
 import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
 import { UrgentMeeting } from './components/UrgentMeeting';
@@ -91,7 +91,7 @@ import { BossOffice } from './office/BossOffice';
 import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
-import { inboxBadge } from '../engine/inbox';
+import { deskBadge } from '../engine/attention';
 import { MorningReports, WhoHandlesWhat } from './lieutenants/Lieutenants';
 import { markOrder, setRecentSeed } from './plans/orderMarks';
 import { PlansContext, type PlansApi } from './plans/context';
@@ -157,6 +157,9 @@ export function App({ startOn = 'title' }: AppProps) {
   const [officeView, setOfficeView] = useState<'office' | 'club' | undefined>();
   const [mondayCard, setMondayCard] = useState(false);
   const [later, setLater] = useState<{ week: number; keys: string[] }>({ week: 0, keys: [] });
+  // The Desk: items the boss took back from "Handled for you" this week, and the filter a door opened it on.
+  const [taken, setTaken] = useState<{ week: number; keys: string[] }>({ week: 0, keys: [] });
+  const [deskFilter, setDeskFilter] = useState<DeskFilter>('all');
   const lastQueued = useRef<{ a: PlayerAction; at: number } | undefined>(undefined);
   const ordersApi = useMemo(() => ({
     orders,
@@ -691,9 +694,16 @@ export function App({ startOn = 'title' }: AppProps) {
     onCancelOrder: (i: number) => ordersApi.remove(i),
     onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
     onChar: (id: string) => setSheet(id),
+    onLt: () => setLtOpen(true),
+    onUrgent: (tip: string) => setUrgent(tip),
+    onEnvelope: () => tributeApi.openAudience(),
+    onTake: (key: string) => setTaken((t) => ({ week: s.week, keys: [...(t.week === s.week ? t.keys : []).filter((k) => k !== key), key] })),
+    onMotion: () => (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(),
   };
+  const takenKeys = taken.week === s.week ? taken.keys : [];
+  const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'week' }); };
   const officeApi: OfficeApi = {
-    openDesk: () => setRoute({ home: 'week' }),
+    openDesk: (f?: DeskFilter) => openDesk(f),
     openEnvelope: () => tributeApi.openAudience(),
     openVisitors: () => setSitdown('council'),
     openLedger: () => openRoute({ panel: 'holdings', section: 'take' }),
@@ -714,9 +724,9 @@ export function App({ startOn = 'title' }: AppProps) {
     lieutenants: () => setLtOpen(true),
   };
   // The one count (engine/inbox.ts): Waiting on you, the desk and the door all say this number.
-  const box = inboxBadge(s, { answers, briefSkip });
+  const box = deskBadge(s, { answers, briefSkip, taken: takenKeys });
   const laterKeys = later.week === s.week ? later.keys : [];
-  const officeUi = { answers, briefSkip, later: laterKeys };
+  const officeUi = { answers, briefSkip, later: laterKeys, taken: takenKeys };
   function officeDelegate(op: DelegateOp) {
     if (op.kind === 'answer') { setAnswers((a) => ({ ...a, [op.iid]: op.choiceId })); noteAnswer(op.iid, op.choiceId); }
     else if (op.kind === 'checkin') act((x) => answerCheckIn(x, op.key, op.answer), 'Answered a capo\'s check-in');
@@ -738,7 +748,7 @@ export function App({ startOn = 'title' }: AppProps) {
     : undefined;
   const weekTop = home === 'week' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk s={s} ui={{ answers, orders, briefSkip }} api={deskApi} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} /></div>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
@@ -790,7 +800,7 @@ export function App({ startOn = 'title' }: AppProps) {
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
             seedInput={seedInput} setSeedInput={setSeedInput} slot={slot} pulse={s.week <= 4 && goalIdx >= 1 && unanswered.length === 0}
-            onSitDown={() => setSitdown('council')} sitCount={brief.items.filter((it) => !briefSkip.includes(it.id)).length} onDesk={() => setRoute({ home: 'week' })}
+            onSitDown={() => setSitdown('council')} sitCount={brief.items.filter((it) => !briefSkip.includes(it.id)).length} onDesk={() => openDesk()}
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}

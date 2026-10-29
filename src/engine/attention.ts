@@ -1,5 +1,5 @@
 import { inbox, type InboxItem, type InboxUi } from './inbox';
-import { officeSeat } from './bossOffice';
+import { envelopeMan } from './tribute';
 import { briefing } from './briefing';
 import { weekCheckIns } from './checkins';
 import { DAY_NAMES, today } from './days';
@@ -151,8 +151,8 @@ export function stakesOf(s: GameState, it: InboxItem, ui: DeskQueueUi = {}): Sta
 
 /** Who handles an item the boss does not see to, and what he does. */
 export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
-  const seat = officeSeat(s);
-  const ub = seat.role !== 'none' ? { by: seat.name, byId: seat.charId } : { by: 'Nobody', byId: undefined };
+  const m = envelopeMan(s).c;
+  const ub = m ? { by: displayName(m), byId: m.id as string | undefined } : { by: 'Nobody', byId: undefined as string | undefined };
   if (it.ref.lt) {
     const a = docketOf(s).find((x) => x.id === it.ref.lt);
     if (a) {

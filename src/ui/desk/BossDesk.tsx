@@ -1,17 +1,18 @@
-import { inboxCount } from '../../engine/inbox';
 import { TableButton } from '../advice/CounselTable';
-import { bossDesk, readyReview, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
+import { bossDesk, deskHeaderCount, readyReview, type DeskGroup, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
 import type { GameState } from '../../engine/types';
+import { DAY_NAMES } from '../../engine/days';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { DeskClock } from '../components/DeskClock';
 
 /**
- * THE BOSS'S DESK: one weekly place for everything that wants the boss —
- * decisions, morning requests, the sit-down's recommendations, this week's
- * orders, bills and what is coming. Each row opens the same screen the
- * header's shortcuts open (the decision, the day, the sit-down, the order).
+ * THE DESK: the one daily hub. One list, one count (engine/attention.ts on
+ * engine/inbox.ts): what NEEDS YOU (at most five a week, reds always), what is
+ * HANDLED FOR YOU (who, what, which day; Take it back to decide it yourself),
+ * then your orders, the bills and what is coming. The old "Waiting on you"
+ * menu lines are the filter chips. Each row opens the same screen as before.
  */
 
 export interface DeskApi {
@@ -21,43 +22,101 @@ export interface DeskApi {
   onCancelOrder: (i: number) => void;
   onMoney: () => void;
   onChar: (id: string) => void;
+  /** A lieutenant's proposal: the chain of command. */
+  onLt?: () => void;
+  /** An urgent meeting (threats.ts). */
+  onUrgent?: (tip: string) => void;
+  /** The envelope meeting. */
+  onEnvelope?: () => void;
+  /** Take a handled item back: it moves to Needs you (and opens). */
+  onTake?: (key: string) => void;
+  /** Everything in motion (the plans panel). */
+  onMotion?: () => void;
 }
 
-const ICON: Record<DeskKind, string> = { decision: '✉', morning: '☕', sitdown: '♜', order: '☰', bill: '$', upcoming: '◷' };
+export type DeskFilter = 'all' | 'decisions' | 'capos' | 'lieutenants' | 'money' | 'people';
+const FILTERS: { id: DeskFilter; label: string; kinds: DeskKind[] }[] = [
+  { id: 'all', label: 'All', kinds: [] },
+  { id: 'decisions', label: '✉ Decisions', kinds: ['decision', 'urgent', 'petition'] },
+  { id: 'capos', label: '☕ Capos & sit-down', kinds: ['morning', 'sitdown'] },
+  { id: 'lieutenants', label: '♜ Lieutenants', kinds: ['lieutenant'] },
+  { id: 'money', label: '$ Money', kinds: ['envelope', 'request', 'bill'] },
+  { id: 'people', label: '☏ At the door', kinds: ['decision', 'petition', 'morning', 'sitdown', 'lawyer', 'urgent'] },
+];
+const inFilter = (f: DeskFilter, it: DeskItem) => f === 'all' || FILTERS.find((x) => x.id === f)!.kinds.includes(it.kind);
 
-function Row({ it, api }: { it: DeskItem; api: DeskApi }) {
-  const open = () => {
-    if (it.ref.event) api.onEvent(it.ref.event);
-    else if (it.kind === 'morning' || (it.kind === 'upcoming' && it.ref.day !== undefined)) api.onDay(it.ref.day ?? 0);
-    else if (it.kind === 'sitdown') api.onSitDown();
-    else if (it.kind === 'bill') api.onMoney();
-    else if (it.ref.charId) api.onChar(it.ref.charId);
-  };
-  const verb = it.kind === 'decision' ? (it.done ? 'Change' : 'Decide') : it.kind === 'morning' ? (it.done ? 'Change' : 'Answer') : it.kind === 'sitdown' ? 'Hear him out' : it.kind === 'bill' ? 'Money' : it.kind === 'order' ? undefined : 'Open';
+const ICON: Record<DeskKind, string> = { decision: '✉', petition: '☏', urgent: '⚠', morning: '☕', sitdown: '♜', lieutenant: '♜', request: '♣', envelope: '$', lawyer: '§', order: '☰', bill: '$', upcoming: '◷' };
+
+function openItem(it: DeskItem, api: DeskApi) {
+  if (it.ref.tip && api.onUrgent) api.onUrgent(it.ref.tip);
+  else if (it.ref.event) api.onEvent(it.ref.event);
+  else if (it.kind === 'morning' || (it.kind === 'upcoming' && it.ref.day !== undefined)) api.onDay(it.ref.day ?? 0);
+  else if (it.kind === 'sitdown') api.onSitDown();
+  else if (it.kind === 'lieutenant' && api.onLt) api.onLt();
+  else if (it.kind === 'envelope' && api.onEnvelope) api.onEnvelope();
+  else if (it.kind === 'bill' || it.kind === 'envelope') api.onMoney();
+  else if (it.ref.charId) api.onChar(it.ref.charId);
+  else api.onSitDown();
+}
+
+function verbOf(it: DeskItem): string | undefined {
+  switch (it.kind) {
+    case 'decision': case 'petition': return it.done ? 'Change' : 'Decide';
+    case 'urgent': return 'See him';
+    case 'morning': return it.done ? 'Change' : 'Answer';
+    case 'sitdown': return 'Hear him out';
+    case 'lieutenant': return 'Your word';
+    case 'envelope': return 'Split it';
+    case 'bill': return 'Money';
+    case 'order': return undefined;
+    default: return 'Open';
+  }
+}
+
+function WhyChips({ why }: { why?: string[] }) {
+  if (!why?.length) return null;
+  return <div className="mt-0.5 flex flex-wrap gap-1">{why.slice(0, 3).map((w) => <span key={w} className="rounded bg-noir-700/80 px-1 text-[10px] text-amber-200/90">{w}</span>)}</div>;
+}
+
+function NeedRow({ it, api }: { it: DeskItem; api: DeskApi }) {
+  const verb = verbOf(it);
   return (
-    <li className={`flex items-start gap-2 rounded border px-2 py-1.5 ${it.urgent ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-noir-700 opacity-75' : 'border-noir-700 bg-noir-900/60'}`} data-testid={`desk-item-${it.kind}`}>
+    <li className={`flex items-start gap-2 rounded border px-2 py-1.5 ${it.urgent ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-noir-700 opacity-70' : 'border-noir-700 bg-noir-900/60'}`} data-testid={`desk-item-${it.kind}`}>
+      <span className="mt-0.5 w-4 shrink-0 text-center text-stone-500" aria-hidden>{it.done ? '✓' : ICON[it.kind]}</span>
       <div className="min-w-0 flex-1">
-        <div className="text-[12px] font-semibold text-stone-100">{it.done ? '✓ ' : ''}{it.title}{it.urgent && <span className="ml-1 rounded bg-red-500/80 px-1 text-[9px] font-bold uppercase text-white">urgent</span>}</div>
+        <div className="text-[12px] font-semibold text-stone-100">{it.title}{it.urgent && <span className="ml-1 rounded bg-red-500/80 px-1 text-[9px] font-bold uppercase text-white">urgent</span>}</div>
         <div className="text-[11px] text-stone-400">{it.detail}</div>
-        {it.ifNothing && <div className="text-[10px] text-stone-500">If you leave it: {it.ifNothing}</div>}
+        {!it.done && <WhyChips why={it.why} />}
+        {it.ifNothing && !it.done && <div className="text-[10px] text-stone-500">If you leave it: {it.ifNothing}</div>}
       </div>
-      {it.kind === 'order' && it.ref.order !== undefined
-        ? <button type="button" className="btn-ghost shrink-0 text-[11px] py-0.5" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
-        : verb && <button type="button" className="btn-ghost shrink-0 text-[11px] py-0.5" onClick={open}>{verb} ▸</button>}
+      {verb && <button type="button" className={`${it.done ? 'btn-ghost' : 'btn-gold'} shrink-0 py-0.5 text-[11px]`} onClick={() => openItem(it, api)}>{verb} ▸</button>}
     </li>
   );
 }
 
-/** A group's rows: the first three (unanswered first), then "show all" — the rest are a tap away, never gone. */
-function DeskGroupList({ g, api }: { g: ReturnType<typeof bossDesk>[number]; api: DeskApi }) {
+function HandledRow({ it, api }: { it: DeskItem; api: DeskApi }) {
+  const h = it.handled!;
+  return (
+    <li className="flex items-start gap-2 rounded border border-noir-800 bg-noir-900/40 px-2 py-1" data-testid={`desk-handled-${it.kind}`}>
+      <span className="mt-0.5 w-4 shrink-0 text-center text-stone-600" aria-hidden>{ICON[it.kind]}</span>
+      <div className="min-w-0 flex-1 text-[11px]">
+        <div className="truncate text-stone-300">{it.title}</div>
+        <div className="text-stone-500"><span className="text-stone-300">{h.by}</span>: {h.does}{h.day !== undefined ? ` · ${DAY_NAMES[h.day]}` : ''}{h.delegated ? ' · standing order' : ''}</div>
+      </div>
+      <button type="button" className="btn-ghost shrink-0 py-0.5 text-[10px]" onClick={() => { api.onTake?.(it.key); openItem(it, api); }} data-testid="desk-take-back">Take it back</button>
+    </li>
+  );
+}
+
+function Fold({ g, render, n = 3, testid }: { g: DeskGroup; render: (it: DeskItem) => ReactNode; n?: number; testid?: string }) {
   const [all, setAll] = useState(false);
-  const rows = [...g.items.filter((x) => !x.done), ...g.items.filter((x) => x.done)];
-  const shown = all ? rows : rows.slice(0, 3);
+  const rows = g.items;
+  const shown = all ? rows : rows.slice(0, n);
   return (
     <>
-      <ul className="mt-1 space-y-1">{shown.map((it) => <Row key={it.key} it={it} api={api} />)}</ul>
-      {rows.length > 3 && (
-        <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setAll((x) => !x)} data-testid={`desk-more-${g.kind}`}>
+      <ul className="mt-1 space-y-1">{shown.map((it) => <Fragment key={it.key}>{render(it)}</Fragment>)}</ul>
+      {rows.length > n && (
+        <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setAll((x) => !x)} data-testid={testid ?? `desk-more-${g.kind}`}>
           {all ? 'show fewer' : `show all ${rows.length} ▾`}
         </button>
       )}
@@ -65,27 +124,68 @@ function DeskGroupList({ g, api }: { g: ReturnType<typeof bossDesk>[number]; api
   );
 }
 
-export function BossDesk({ s, ui, api }: { s: GameState; ui: DeskUi; api: DeskApi }) {
-  const groups = bossDesk(s, ui);
-  // The one count (engine/inbox.ts): the same number as the top bar and the Office door.
-  const waiting = inboxCount(s, ui);
+function SmallRow({ it, api }: { it: DeskItem; api: DeskApi }) {
+  return (
+    <li className="flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px]" data-testid={`desk-item-${it.kind}`}>
+      <div className="min-w-0 flex-1"><div className="text-stone-200">{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
+      {it.kind === 'order' && it.ref.order !== undefined
+        ? <button type="button" className="btn-ghost shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
+        : <button type="button" className="shrink-0 text-[10px] text-gold-400 hover:text-gold-300" onClick={() => openItem(it, api)}>{verbOf(it) ?? 'Open'} ▸</button>}
+    </li>
+  );
+}
+
+export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode }) {
+  const [filter, setFilter] = useState<DeskFilter>(filter0);
+  const all = bossDesk(s, ui);
+  // The one count: Needs you of the same queue the rows come from.
+  const waiting = deskHeaderCount(s, ui);
+  const get = (k: DeskGroup['kind']) => all.find((g) => g.kind === k);
+  const pick = (g?: DeskGroup): DeskGroup | undefined => (g ? { ...g, items: g.items.filter((it) => inFilter(filter, it)) } : undefined);
+  const needs = pick(get('needs'));
+  const handled = pick(get('handled'));
+  const counts = FILTERS.map((f) => ({ ...f, n: all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done && inFilter(f.id, it)).length }));
+  const rest = (['order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
   return (
     <section className="rounded-md border border-gold-600/50 bg-noir-800/50 p-2.5" data-testid="boss-desk">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="panel-title text-base">The Boss's Desk</div>
-          <div className="text-[11px] text-stone-400">{waiting ? `${waiting} waiting on you` : 'Nothing waiting on you'} · week {s.week}</div>
+          <div className="panel-title text-base">The Desk</div>
+          <div className="text-[11px] text-stone-400" data-testid="desk-count">{waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : 'Nothing needs you'}{handled?.items.length ? ` · ${get('handled')!.items.length} handled for you` : ''} · week {s.week}</div>
         </div>
         <DeskClock s={s} className="text-[11px] sm:text-[13px]" />
       </div>
-      {!groups.length && <p className="mt-1 text-[12px] text-stone-500">A clean desk. Plan an evening, start something, or advance the week.</p>}
-      <div className="mt-1.5 grid gap-2 lg:grid-cols-2">
-        {groups.map((g) => (
-          <div key={g.kind} data-testid={`desk-group-${g.kind}`}>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{ICON[g.kind]} {g.title} ({g.items.length})</div>
-            <DeskGroupList g={g} api={api} />
-          </div>
+      <div className="mt-1.5 flex flex-wrap gap-1" role="tablist" aria-label="Filter the desk">
+        {counts.filter((f) => f.id === 'all' || f.n > 0 || f.id === filter).map((f) => (
+          <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)} data-testid={`desk-filter-${f.id}`}
+            className={`rounded-full border px-2 py-0.5 text-[10px] ${filter === f.id ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}>{f.label}{f.id !== 'all' ? ` ${f.n}` : ''}</button>
         ))}
+        {api.onMotion && <button type="button" className="ml-auto text-[10px] text-gold-400 hover:text-gold-300" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
+      </div>
+      <div className={`mt-1.5 grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
+        <div className="min-w-0 space-y-2">
+          <div data-testid="desk-group-needs">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>
+            {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow it={it} api={api} />} /> : <p className="mt-1 text-[12px] text-stone-500">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
+          </div>
+          {handled && handled.items.length > 0 && (
+            <div data-testid="desk-group-handled">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Handled for you ({handled.items.length})</div>
+              <Fold g={handled} n={3} render={(it) => <HandledRow it={it} api={api} />} />
+            </div>
+          )}
+          {rest.length > 0 && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {rest.map((g) => (
+                <div key={g.kind} data-testid={`desk-group-${g.kind}`}>
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{g.title} ({g.items.length}){g.kind === 'bill' ? ` · ${fmt$(g.items.reduce((a, x) => a + (x.cost ?? 0), 0))}` : ''}</div>
+                  <Fold g={g} n={2} render={(it) => <SmallRow it={it} api={api} />} />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {side && <aside className="min-w-0" data-testid="desk-side">{side}</aside>}
       </div>
     </section>
   );

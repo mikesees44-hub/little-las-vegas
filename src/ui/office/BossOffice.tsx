@@ -1,6 +1,6 @@
 import { unreadCount } from '../../engine/paper';
 import { useMemo, useState, type ReactNode } from 'react';
-import { inboxBadge } from '../../engine/inbox';
+import { deskBadge } from '../../engine/attention';
 import { officeBriefing, officePhone, officeRoom, officeVisitors, type DelegateOp, type OfficeUi, type OfficeVisitor } from '../../engine/bossOffice';
 import { displayName } from '../../engine/characters';
 import { formatDay } from '../../engine/days';
@@ -68,8 +68,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   const [panel, setPanel] = useState<OfficePanel | undefined>(initialPanel);
   const brief = useMemo(() => officeBriefing(s, ui), [s, ui]);
   const visitors = useMemo(() => officeVisitors(s, ui), [s, ui]);
-  // The one count (engine/inbox.ts): the door's badge says what the top bar and the desk say; the door lists the people at it.
-  const box = useMemo(() => inboxBadge(s, ui), [s, ui]);
+  // The one count (engine/attention.ts, on the inbox): the door's badge says what the top bar and the desk say; the door lists the people at it.
+  const box = useMemo(() => deskBadge(s, ui), [s, ui]);
   const room = useMemo(() => officeRoom(s), [s]);
   const rep = latestReport(s);
   const envelopeWaiting = rep?.status === 'presented';
@@ -104,10 +104,10 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     map: 'Go out: Wildwood and beyond',
   };
 
-  const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} />
+  const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} onDesk={() => api.openDesk('people')} />
     : panel === 'phone' ? <PhonePanel s={s} />
     : panel === 'week' ? <WeekSchedule s={s} />
-    : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={api.openDesk} onDone={() => setPanel(undefined)} table={table} />
+    : panel === 'brief' ? <BriefCard s={s} brief={brief} onEnvelope={openEnvelope} onDoor={() => setPanel('door')} onDesk={() => api.openDesk()} onDone={() => setPanel(undefined)} table={table} />
     : undefined;
 
   return (
@@ -198,7 +198,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
           })}
           <li className="grid grid-cols-2 gap-1.5 sm:col-span-2 xl:col-span-3 xl:grid-cols-4 pt-1">
             <button type="button" className="btn-ghost text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
-            <button type="button" className="btn-ghost text-xs" onClick={api.openDesk} data-testid="office-desk">▤ The desk's list</button>
+            <button type="button" className="btn-ghost text-xs" onClick={() => api.openDesk()} data-testid="office-desk">▤ The desk's list</button>
             <button type="button" className="btn-gold col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
           </li>
         </ul>
@@ -249,10 +249,10 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table
 
 const KIND_WORD: Record<OfficeVisitor['kind'], string> = { decision: 'Wants a decision', petition: 'A petition', morning: 'A capo\'s request', sitdown: 'For the sit-down', lawyer: 'Your lawyer' };
 
-function DoorPanel({ s, visitors, onInvite, onDelegate, onLater }: { s: GameState; visitors: OfficeVisitor[]; onInvite: (v: OfficeVisitor) => void; onDelegate: (op: DelegateOp) => void; onLater: (v: OfficeVisitor) => void }) {
+function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: GameState; visitors: OfficeVisitor[]; onInvite: (v: OfficeVisitor) => void; onDelegate: (op: DelegateOp) => void; onLater: (v: OfficeVisitor) => void; onDesk?: () => void }) {
   return (
     <div data-testid="office-door">
-      <div className="panel-title text-base">Outside the door</div>
+      <div className="flex items-baseline justify-between gap-2"><div className="panel-title text-base">Outside the door</div>{onDesk && <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" onClick={onDesk} data-testid="office-door-desk">On the Desk ▸</button>}</div>
       {!visitors.length && <p className="mt-1 text-[12px] text-stone-400">Nobody is waiting. The hall is empty except for the man on the door.</p>}
       <ul className="mt-1.5 space-y-1.5">
         {visitors.map((v) => {
