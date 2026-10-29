@@ -18,6 +18,7 @@ import { pactWith, rivalRelation } from './talks';
 import { changeScore, endWar } from './war';
 import { FACTION_NAMES } from './world';
 import { backMeter } from './myMen';
+import { capoLevyReasons } from './capos';
 import {
   ensureArmy, type AllyId, type AllyOffer, type ArmyAction, type ArmyState, type BandId, type BattleHow, type BattleRecord,
   type Campaign, type Commitment, type PendingBattle, type WarGoal,
@@ -184,6 +185,8 @@ export function willingness(s: GameState, holder: string): { f: number; reasons:
   if (traits.includes('Cowardly')) reasons.push({ label: 'Cowardly', value: -15 });
   if (traits.includes('Greedy')) reasons.push({ label: 'Greedy: his men are his income', value: -8 });
   if (k.courtedBy) reasons.push({ label: 'Another family is courting him', value: -15 });
+  // His stance and his last crisis move (capos.ts): a rally, or men kept home.
+  reasons.push(...capoLevyReasons(s, k));
   const back = backMeter(s);
   if (back !== 50) reasons.push({ label: 'Does the boss have our back?', value: Math.round((back - 50) / 4) });
   const v = reasons.reduce((a, r) => a + r.value, 0);

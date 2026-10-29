@@ -41,6 +41,7 @@ import { applyXpOp, describeXpOp } from './crewXp';
 import { applyProtectOp, describeProtectOp } from './protect';
 import { applyWomenOp, describeWomenOp } from './women';
 import { applyHoneyOp, describeHoneyOp } from './honey';
+import { applyCapoOp, describeCapoOp } from './capos';
 import { applyMinigameEffect, describeMinigame } from './minigame';
 import { onArrest } from './trial';
 
@@ -253,6 +254,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeWomenOp(s, e.op);
     case 'honey':
       return describeHoneyOp(s, e.op);
+    case 'capo':
+      return describeCapoOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -818,6 +821,12 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       c.rank = 'civilian';
       for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
       for (const b of s.businesses) if (b.staffIds) b.staffIds = b.staffIds.filter((id) => id !== c.id);
+      if (e.own) {
+        // He walked away on his own: nobody sent him.
+        addOpinion(s, c.id, s.playerId, 'Walked away from the family', -20, 0);
+        ctx.log.push(`${displayName(c)} walked away from the family.`);
+        break;
+      }
       addOpinion(s, c.id, s.playerId, 'Exiled me from Wildwood', -40, 0);
       changeMeter(s, c.id, s.playerId, 'grievance', 40);
       ctx.log.push(`${displayName(c)} packed a suitcase and left the island.`);
@@ -920,6 +929,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'honey':
       applyHoneyOp(ctx, e.op);
+      break;
+    case 'capo':
+      applyCapoOp(ctx, e.op);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

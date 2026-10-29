@@ -18,6 +18,10 @@ import { CharLink, Face, TraitIcons } from '../components/People';
 import { useClarity } from '../clarity/context';
 import { MoreButton } from '../sheet/MoreButton';
 import { RichTip } from '../shell/Num';
+import { useState } from 'react';
+import { capoActionsFor, capoCard, crisisOf, type CapoCard } from '../../engine/capos';
+import { MOOD_TEXT, type Mood } from '../../engine/minds/types';
+import { ActionRow } from '../components/ActionRow';
 
 const same = (a: PlayerAction, b: PlayerAction) => JSON.stringify(a) === JSON.stringify(b);
 
@@ -67,13 +71,70 @@ function NextCapo({ s }: { s: GameState }) {
   );
 }
 
+
+const READ_TONE = { good: 'text-emerald-300', plain: 'text-stone-300', warn: 'text-amber-300', bad: 'text-red-300' } as const;
+const money$ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+
+/** One capo's desk (engine/capos.ts): his ground, his men, his take and its trend, his noise, how he seems, what he is doing, what he asks, what he tells you. */
+export function CapoDesk({ s, card }: { s: GameState; card: CapoCard }) {
+  const [open, setOpen] = useState(card.requests.length > 0 || card.read.tone === 'bad');
+  const dev = !!getSettings().devIds;
+  const c = card.c;
+  const trend = card.trend > 0.08 ? '▲' : card.trend < -0.08 ? '▼' : '▬';
+  const trendTone = card.trend > 0.08 ? 'text-emerald-300' : card.trend < -0.08 ? 'text-red-300' : 'text-stone-400';
+  return (
+    <div className="space-y-1.5 rounded-md border border-noir-700/80 bg-noir-900/50 px-2 py-1.5 text-[11px]" data-testid="capo-desk">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-stone-400">
+        <span>Grip <span className="tabular-nums text-stone-100">{card.grip}</span></span>
+        <span>Take <span className="tabular-nums text-stone-100">{money$(card.take)}</span>/wk <span className={trendTone}>{trend}</span></span>
+        <span>Noise <span className="text-stone-200">{card.heatLabel}</span></span>
+        <span>Mood <span className="text-stone-200">{MOOD_TEXT[card.mood as Mood] ?? card.mood}</span></span>
+        <span>Wants <span className="text-stone-200">{card.ambition}</span></span>
+        <span>Read <span className={READ_TONE[card.read.tone]}>{card.read.word}</span></span>
+        {card.watched && <span className="text-amber-300">a man on him</span>}
+        {card.tied && <span className="text-gold-300">family ({card.tied})</span>}
+        <button type="button" className="ml-auto text-gold-300 hover:underline" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? 'Less' : `More${card.requests.length ? ` · ${card.requests.length} asking` : ''}`}</button>
+      </div>
+      <div className="text-stone-300">This week: {card.doing}{card.grooming.length > 0 && <span className="text-stone-500"> · bringing along {card.grooming.map((g) => `${g.name} (${g.stage.toLowerCase()})`).join(', ')}</span>}</div>
+      {dev && <div className="text-fuchsia-300">dev: {card.truth.stance} · tide {card.truth.tide} · hedge {card.truth.hedge}{card.truth.plot ? ` · ${card.truth.plot}` : ''}</div>}
+      {open && (
+        <div className="space-y-1.5">
+          {card.signs.length > 0 && <ul className="space-y-0.5" data-testid="capo-signs">{card.signs.map((x, i) => <li key={i} className="text-stone-400"><span className="text-stone-500">wk {x.w}</span> {x.t}.</li>)}</ul>}
+          {card.reports.length > 0 && (
+            <ul className="space-y-0.5" data-testid="capo-reports">
+              {card.reports.map((r) => (
+                <li key={r.id}>
+                  <span className="text-stone-500">wk {r.w}</span> <span className="text-stone-200">What {c.firstName} tells you: "{r.told}."</span>
+                  {(r.rev !== undefined || dev) && r.kind !== 'honest' && <span className="block pl-8 text-red-300">The truth{r.rev !== undefined ? ` (week ${r.rev}, ${r.how?.toLowerCase()})` : ' (dev)'}: {r.truth}.</span>}
+                </li>
+              ))}
+            </ul>
+          )}
+          {card.requests.map((q) => (
+            <div key={q.id} className="space-y-1 rounded border border-gold-700/40 bg-gold-500/5 p-1.5" data-testid="capo-request">
+              <div className="text-stone-200">"{q.y}"</div>
+              <div className="grid gap-1 sm:grid-cols-3">
+                {(['yes', 'redirect', 'no'] as const).map((a) => <ActionRow key={a} s={s} action={{ kind: 'capo', op: { op: 'answer', req: q.id, a } }} hostile={a === 'no'} />)}
+              </div>
+            </div>
+          ))}
+          <div className="grid gap-1 sm:grid-cols-2">
+            {capoActionsFor(s, c.id).map((a) => <ActionRow key={a.op} s={s} action={{ kind: 'capo', op: a }} hostile={a.op === 'confront' || a.op === 'watch'} />)}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** The Borgata › Capos & Men: each capo with his contract stepper; every man a status row and "⋯". */
 export function CaposSection({ s }: { s: GameState }) {
   const list = capos(s);
   return (
     <section className="space-y-2" data-testid="capos">
       <div className="panel-title">Capos</div>
-      <p className="text-xs text-stone-500">Each capo holds a district and keeps a share of its take ({Math.round(CAPO_CUT * 100)}% is the custom). Squeeze the contract and he may refuse, and remember. Hover −/+ for his odds.</p>
+      <p className="text-xs text-stone-500">Your capos run the street: their corners, their men, the word from their ground. You make the big calls. Each holds a district and keeps a share of its take ({Math.round(CAPO_CUT * 100)}% is the custom). Squeeze the contract and he may refuse, and remember. Hover −/+ for his odds. Watch how they seem: a capo who feels the tide going out starts hedging, and it shows before it lands.</p>
+      {(() => { const cr = crisisOf(s); return cr ? <div className="rounded-md border border-red-700/50 bg-red-900/10 px-2.5 py-1.5 text-xs text-red-200" data-testid="capo-crisis">{cr.why}: the weeks that show which capos save the family, and which sell it.</div> : null; })()}
       <NextCapo s={s} />
       {list.map((c) => {
         const d = s.districts.find((x) => x.capoId === c.id);
@@ -89,6 +150,7 @@ export function CaposSection({ s }: { s: GameState }) {
             <XpBadge s={s} c={c} />
             <OpinionBadge v={opinion(s, c.id, s.playerId)} />
             <MoreButton id={c.id} category="business" />
+            <div className="basis-full"><CapoDesk s={s} card={capoCard(s, c)} /></div>
           </div>
         );
       })}

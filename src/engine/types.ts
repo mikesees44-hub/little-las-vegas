@@ -492,7 +492,8 @@ export type Effect =
   | ({ type: 'goal'; key: 'bank' | 'land' | 'sellLand' | 'license' } & EffectBase)
   | ({ type: 'unwashed'; amount: number } & EffectBase)
   | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase)
-  | ({ type: 'exile'; charId: string } & EffectBase)
+  /** `own`: he walked away on his own (a story's outcome), not sent away by anyone. */
+  | ({ type: 'exile'; charId: string; own?: true } & EffectBase)
   | ({ type: 'wealth'; charId: string; amount: number } & EffectBase)
   | ({ type: 'seat'; seat: Seat; charId?: string; task?: CouncilTask; target?: string } & EffectBase)
   | ({ type: 'policy'; charId: string; policy: CrewPolicy } & EffectBase)
@@ -577,7 +578,9 @@ export type Effect =
   /** The women (women.ts): affairs, requests, hooks, talent; answers to her events. */
   | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase)
   /** Honey (honey.ts): dares, women working the boss, mistresses' demands, the scorned. */
-  | ({ type: 'honey'; op: import('./honey').HoneyOp } & EffectBase);
+  | ({ type: 'honey'; op: import('./honey').HoneyOp } & EffectBase)
+  /** The capos (capos.ts): answers to their requests, a man on one of them, having it out with him. */
+  | ({ type: 'capo'; op: import('./caposState').CapoOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -1001,6 +1004,8 @@ export interface GameState {
   deeds?: import('./deeds/types').DeedsState;
   /** The Old Don start's hidden hands, the fog over the coming move, and the verdict on the first year (oldDon.ts; only that start has it). */
   oldDon?: import('./oldDon').OldDonState;
+  /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */
+  capos?: import('./caposState').CaposState;
 }
 
 export interface PlayerChoices {
@@ -1104,6 +1109,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'protect'; op: import('./protect').ProtectAction }
   /** The army (army.ts): raise the troops, hire muscle, the mattresses, a call to arms, a pact, take the fight to them. */
   | { kind: 'army'; op: import('./armyState').ArmyAction }
+  /** The capos (capos.ts): answer a request, reward, recognize, more ground, make him family, a man on him, ask him straight, have it out. */
+  | { kind: 'capo'; op: import('./caposState').CapoAction }
   /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
   | { kind: 'women'; op: import('./women').WomenAction }
   /** Honey (honey.ts): the bold dare as it went, a quiet look into her, turn her, feed her lies, have it out, end it, settle a mistress. */

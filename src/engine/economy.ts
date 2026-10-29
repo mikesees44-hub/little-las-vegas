@@ -22,6 +22,7 @@ import { hasEarner, routeEarner } from './earners';
 import { ensureEcon } from './econState';
 import { kickupMonth } from './kickup';
 import { placeAsksWeek } from './placeAsks';
+import { capoSkimAdd } from './capos';
 
 /**
  * The weekly economy. ONE ledger, applied once per week, in a fixed order:
@@ -118,6 +119,8 @@ export function skimRate(s: GameState, c: Character): number {
   if (op < -20) r += 0.06;
   // A boss who takes a greedy cut of the envelope (money.ts) teaches the capos to help themselves.
   r += greedSkim(s);
+  // A capo hedging his bets helps himself a little more (capos.ts).
+  r += capoSkimAdd(s, c);
   if (op > 40) r *= 0.5;
   r *= 1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_tax'));
   const fear = s.relations[`${c.id}>${s.playerId}`]?.fear ?? 0;
