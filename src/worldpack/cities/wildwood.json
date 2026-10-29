@@ -4947,7 +4947,7 @@
     },
     "crs": "local-meters",
     "derivedFrom": {
-      "at": "2026-10-29T03:55:58.150Z",
+      "at": "2026-10-29T14:29:47.555Z",
       "method": "scripts/cityimport/build/islandgrid.ts + islandpkg.ts (npx tsx scripts/cityimport/cli.ts grid --area island)",
       "report": "citydata/wildwood/packs/island/grid-report.json",
       "sources": [
@@ -20727,7 +20727,7 @@
       "districtId": "d:crest",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Trenton Ave (on the real grid its next street is St Louis Ave, not Sweet Briar Rd).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Trenton Ave (on the real grid its next street is St Louis Ave, not Sweet Briar Rd).] [Slid 2 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -20739,7 +20739,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 701,
+        "u": 703,
         "v": -31
       },
       "residential": {},
@@ -20751,7 +20751,7 @@
       "districtId": "d:crest",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Trenton Ave (on the real grid its next street is St Louis Ave, not Sweet Briar Rd).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Trenton Ave (on the real grid its next street is St Louis Ave, not Sweet Briar Rd).] [Slid 3 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -20763,7 +20763,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 715,
+        "u": 718,
         "v": -31
       },
       "residential": {},
@@ -20775,7 +20775,7 @@
       "districtId": "d:crest",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Trenton Ave (on the real grid its next street is St Louis Ave, not Sweet Briar Rd).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Trenton Ave (on the real grid its next street is St Louis Ave, not Sweet Briar Rd).] [Slid 26 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -20787,7 +20787,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 728,
+        "u": 754,
         "v": -31
       },
       "residential": {},
@@ -24043,7 +24043,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m south along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24055,7 +24055,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4912,
+        "u": 4886,
         "v": 101
       },
       "residential": {
@@ -24078,7 +24078,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24090,7 +24090,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4917,
+        "u": 4943,
         "v": 100
       },
       "residential": {
@@ -24285,7 +24285,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 14 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24297,7 +24297,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 4944,
+        "u": 4958,
         "v": 179
       },
       "residential": {},
@@ -24309,7 +24309,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 13 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24321,7 +24321,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 4960,
+        "u": 4973,
         "v": 180
       },
       "residential": {},
@@ -24333,7 +24333,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 12 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24345,7 +24345,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 4976,
+        "u": 4988,
         "v": 181
       },
       "residential": {},
@@ -24357,7 +24357,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Cedar Ave (on the real grid its next street is Oak Ave, not Spicer Ave).] [Slid 29 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24369,7 +24369,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 4992,
+        "u": 5021,
         "v": 182
       },
       "residential": {},
@@ -24384,7 +24384,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 14 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24396,7 +24396,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5022,
+        "u": 5036,
         "v": 185
       },
       "residential": {
@@ -24419,7 +24419,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 12 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24431,7 +24431,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5039,
+        "u": 5051,
         "v": 186
       },
       "residential": {
@@ -24454,7 +24454,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 11 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24466,7 +24466,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5055,
+        "u": 5066,
         "v": 187
       },
       "residential": {
@@ -24489,7 +24489,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Oak Ave (on the real grid its next street is Wildwood Ave, not Pine Ave).] [Slid 29 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24501,7 +24501,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5072,
+        "u": 5101,
         "v": 189
       },
       "residential": {
@@ -24594,7 +24594,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Pine Ave (on the real grid its next street is Maple Ave, not Wildwood Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Pine Ave (on the real grid its next street is Maple Ave, not Wildwood Ave).] [Slid 1 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24606,7 +24606,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5211,
+        "u": 5212,
         "v": 200
       },
       "residential": {
@@ -24769,7 +24769,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m south along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24781,7 +24781,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4912,
+        "u": 4886,
         "v": 178
       },
       "residential": {
@@ -24804,7 +24804,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Schellenger Ave (on the real grid its next street is Cedar Ave, not Garfield Ave).] [Slid 26 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -24816,7 +24816,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4917,
+        "u": 4943,
         "v": 178
       },
       "residential": {
@@ -25705,7 +25705,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).] [Slid 7 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -25717,7 +25717,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4200,
+        "u": 4207,
         "v": 589
       },
       "residential": {
@@ -25740,7 +25740,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).] [Slid 30 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -25752,7 +25752,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4208,
+        "u": 4238,
         "v": 589
       },
       "residential": {
@@ -25775,7 +25775,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).] [Slid 46 m south along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -25787,7 +25787,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4216,
+        "u": 4170,
         "v": 589
       },
       "residential": {
@@ -26317,7 +26317,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).] [Slid 7 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -26329,7 +26329,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4200,
+        "u": 4207,
         "v": 635
       },
       "residential": {
@@ -26352,7 +26352,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).] [Slid 30 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -26364,7 +26364,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4208,
+        "u": 4238,
         "v": 635
       },
       "residential": {
@@ -26387,7 +26387,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: the same spot between Davis Ave and Crocker Ave (neighbours on the real grid too).] [Slid 46 m south along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -26399,7 +26399,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 4216,
+        "u": 4170,
         "v": 635
       },
       "residential": {
@@ -26750,7 +26750,7 @@
       "districtId": "d:downtown",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Pine Ave (on the real grid its next street is Maple Ave, not Wildwood Ave).]"
+        "source": "An invented 1960 house lot on a real street, placed approximately by block (not a surveyed lot). [Re-placed 2026-10-29: in the block north of Pine Ave (on the real grid its next street is Maple Ave, not Wildwood Ave).] [Slid 1 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 20,
@@ -26762,7 +26762,7 @@
         "status": "private"
       },
       "pos": {
-        "u": 5211,
+        "u": 5212,
         "v": 901
       },
       "residential": {
@@ -30672,7 +30672,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 3 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30684,7 +30684,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5024,
+        "u": 5027,
         "v": 1554
       },
       "residential": {},
@@ -30696,7 +30696,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 7 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30708,7 +30708,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5035,
+        "u": 5042,
         "v": 1554
       },
       "residential": {},
@@ -30720,7 +30720,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 10 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30732,7 +30732,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5047,
+        "u": 5057,
         "v": 1554
       },
       "residential": {},
@@ -30744,7 +30744,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 14 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30756,7 +30756,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5058,
+        "u": 5072,
         "v": 1554
       },
       "residential": {},
@@ -30768,7 +30768,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 17 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30780,7 +30780,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5070,
+        "u": 5087,
         "v": 1554
       },
       "residential": {},
@@ -30792,7 +30792,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 21 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30804,7 +30804,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5081,
+        "u": 5102,
         "v": 1554
       },
       "residential": {},
@@ -30816,7 +30816,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 24 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30828,7 +30828,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5093,
+        "u": 5117,
         "v": 1554
       },
       "residential": {},
@@ -30840,7 +30840,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 28 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30852,7 +30852,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5104,
+        "u": 5132,
         "v": 1554
       },
       "residential": {},
@@ -30864,7 +30864,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 31 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30876,7 +30876,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5116,
+        "u": 5147,
         "v": 1554
       },
       "residential": {},
@@ -30912,7 +30912,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 3 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30924,7 +30924,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5369,
+        "u": 5372,
         "v": 1554
       },
       "residential": {},
@@ -30936,7 +30936,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 7 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30948,7 +30948,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5380,
+        "u": 5387,
         "v": 1554
       },
       "residential": {},
@@ -30960,7 +30960,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 10 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30972,7 +30972,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5392,
+        "u": 5402,
         "v": 1554
       },
       "residential": {},
@@ -30984,7 +30984,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 14 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -30996,7 +30996,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5403,
+        "u": 5417,
         "v": 1554
       },
       "residential": {},
@@ -31008,7 +31008,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 17 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -31020,7 +31020,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5415,
+        "u": 5432,
         "v": 1554
       },
       "residential": {},
@@ -31032,7 +31032,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 21 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -31044,7 +31044,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5426,
+        "u": 5447,
         "v": 1554
       },
       "residential": {},
@@ -31056,7 +31056,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 24 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -31068,7 +31068,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5438,
+        "u": 5462,
         "v": 1554
       },
       "residential": {},
@@ -31080,7 +31080,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 28 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -31092,7 +31092,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5449,
+        "u": 5477,
         "v": 1554
       },
       "residential": {},
@@ -31104,7 +31104,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 31 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -31116,7 +31116,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5461,
+        "u": 5492,
         "v": 1554
       },
       "residential": {},
@@ -31128,85 +31128,13 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 35 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
         "w": 15
       },
       "id": "rs.ww.40",
-      "market": {
-        "owner": "private",
-        "status": "sale"
-      },
-      "pos": {
-        "u": 5472,
-        "v": 1554
-      },
-      "residential": {},
-      "rotation": 0,
-      "zone": "westww"
-    },
-    {
-      "address": "264 W. Bayview Ave",
-      "districtId": "d:westww",
-      "evidence": {
-        "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
-      },
-      "footprint": {
-        "d": 18,
-        "w": 15
-      },
-      "id": "rs.ww.41",
-      "market": {
-        "owner": "private",
-        "status": "sale"
-      },
-      "pos": {
-        "u": 5484,
-        "v": 1554
-      },
-      "residential": {},
-      "rotation": 0,
-      "zone": "westww"
-    },
-    {
-      "address": "268 W. Bayview Ave",
-      "districtId": "d:westww",
-      "evidence": {
-        "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
-      },
-      "footprint": {
-        "d": 18,
-        "w": 15
-      },
-      "id": "rs.ww.42",
-      "market": {
-        "owner": "private",
-        "status": "sale"
-      },
-      "pos": {
-        "u": 5495,
-        "v": 1554
-      },
-      "residential": {},
-      "rotation": 0,
-      "zone": "westww"
-    },
-    {
-      "address": "272 W. Bayview Ave",
-      "districtId": "d:westww",
-      "evidence": {
-        "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
-      },
-      "footprint": {
-        "d": 18,
-        "w": 15
-      },
-      "id": "rs.ww.43",
       "market": {
         "owner": "private",
         "status": "sale"
@@ -31220,11 +31148,83 @@
       "zone": "westww"
     },
     {
+      "address": "264 W. Bayview Ave",
+      "districtId": "d:westww",
+      "evidence": {
+        "confidence": "invented",
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 38 m north along its street to free ground (the real block is shorter).]"
+      },
+      "footprint": {
+        "d": 18,
+        "w": 15
+      },
+      "id": "rs.ww.41",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": 5522,
+        "v": 1554
+      },
+      "residential": {},
+      "rotation": 0,
+      "zone": "westww"
+    },
+    {
+      "address": "268 W. Bayview Ave",
+      "districtId": "d:westww",
+      "evidence": {
+        "confidence": "invented",
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 42 m north along its street to free ground (the real block is shorter).]"
+      },
+      "footprint": {
+        "d": 18,
+        "w": 15
+      },
+      "id": "rs.ww.42",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": 5537,
+        "v": 1554
+      },
+      "residential": {},
+      "rotation": 0,
+      "zone": "westww"
+    },
+    {
+      "address": "272 W. Bayview Ave",
+      "districtId": "d:westww",
+      "evidence": {
+        "confidence": "invented",
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 45 m north along its street to free ground (the real block is shorter).]"
+      },
+      "footprint": {
+        "d": 18,
+        "w": 15
+      },
+      "id": "rs.ww.43",
+      "market": {
+        "owner": "private",
+        "status": "sale"
+      },
+      "pos": {
+        "u": 5552,
+        "v": 1554
+      },
+      "residential": {},
+      "rotation": 0,
+      "zone": "westww"
+    },
+    {
       "address": "276 W. Bayview Ave",
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Slid 49 m north along its street to free ground (the real block is shorter).]"
       },
       "footprint": {
         "d": 18,
@@ -31236,7 +31236,7 @@
         "status": "sale"
       },
       "pos": {
-        "u": 5518,
+        "u": 5567,
         "v": 1554
       },
       "residential": {},
@@ -31248,7 +31248,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Set one lot back (20 m): no free frontage on the real block.]"
       },
       "footprint": {
         "d": 18,
@@ -31261,7 +31261,7 @@
       },
       "pos": {
         "u": 5530,
-        "v": 1554
+        "v": 1574
       },
       "residential": {},
       "rotation": 0,
@@ -31272,7 +31272,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Set one lot back (-20 m): no free frontage on the real block.]"
       },
       "footprint": {
         "d": 18,
@@ -31285,7 +31285,7 @@
       },
       "pos": {
         "u": 5541,
-        "v": 1554
+        "v": 1534
       },
       "residential": {},
       "rotation": 0,
@@ -31296,7 +31296,7 @@
       "districtId": "d:westww",
       "evidence": {
         "confidence": "invented",
-        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).]"
+        "source": "An invented 1960 house lot in West Wildwood, placed approximately (not a surveyed lot). [Re-placed 2026-10-29: the same spot of West Wildwood (scaled to its real streets).] [Set one lot back (20 m): no free frontage on the real block.]"
       },
       "footprint": {
         "d": 18,
@@ -31309,7 +31309,7 @@
       },
       "pos": {
         "u": 5553,
-        "v": 1554
+        "v": 1574
       },
       "residential": {},
       "rotation": 0,

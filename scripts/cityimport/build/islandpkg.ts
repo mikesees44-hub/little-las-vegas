@@ -682,9 +682,66 @@ export function replacePlaces(old: CityPackage, pkg: CityPackage, m: Measured, r
     bump(stats.parcels, r.how.startsWith('the same spot') ? 'street-relative' : 'street-relative-block');
     if (!r.ok) { stats.queued.push(pc.id); review.push({ id: `rq-parcel-${pc.id}`, kind: 'parcel-not-placed', priority: 'high', target: { layer: 'parcels', id: pc.id }, detail: `${pc.id} (${pc.address}): ${r.how}`, suggestion: 'Place it in the map editor.', status: 'open' }); }
   }
+  // The real blocks are often shorter than the memory grid's: lots moved block by block can land on each other.
+  // Slide each onto the nearest free ground along its own street (never across a cross street), and say so.
+  const nudged = separateByPoint(pkg, newCross.map((c) => c.u!), newWW);
+  if (nudged.length) {
+    stats.parcels.nudged = nudged.length;
+    review.push({ id: 'rq-parcel-nudged', kind: 'parcel-nudged', priority: 'low', detail: `${nudged.length} lots placed by point landed on each other on the shorter real blocks and were slid along their street to the nearest free ground: ${nudged.map((n) => `${n.id} ${n.du > 0 ? '+' : ''}${n.du} m`).join(', ')}.`, suggestion: 'Check them in the map editor (invented house lots: their spot is approximate anyway).', status: 'open' });
+  }
   const invented = pkg.parcels.filter((p) => p.pos && p.residential).length;
   review.push({ id: 'rq-house-lot-addresses', kind: 'invented-addresses', priority: 'low', detail: `${invented} invented house lots keep their invented house numbers, which do not follow the real numbering (moved by their block, not by number; ${stats.parcels.address ?? 0} matched a real tax-list address near their block and stand on it).`, suggestion: 'Renumber them from the parcels they now stand on, or leave them as fiction.', status: 'open' });
   return stats;
+}
+
+/** A point-placed parcel's ground (as hoodGeo's posSlot lays it out). */
+function posRect(pc: CityPackage['parcels'][number], u = pc.pos!.u): [number, number, number, number] {
+  const turned = Math.abs((pc.rotation ?? 0) % 180) === 90;
+  const w = pc.footprint?.w ?? 16; const d = pc.footprint?.d ?? 22;
+  const [du, dv] = turned ? [d, w] : [w, d];
+  return [u - du / 2, u + du / 2, pc.pos!.v - dv / 2, pc.pos!.v + dv / 2];
+}
+
+/**
+ * Point-placed parcels that overlap are slid along u (in 1 m steps, nearest
+ * first, up to 160 m) to free ground; in Wildwood, North Wildwood and the Crest
+ * a lot never straddles a cross street. Order along u is kept where it can be.
+ */
+export function separateByPoint(pkg: CityPackage, crossU: number[], ww: { u0: number; u1: number; v0: number; v1: number }): { id: string; du: number }[] {
+  const ps = pkg.parcels.filter((p) => p.pos).sort((a, b) => a.pos!.u - b.pos!.u || a.id.localeCompare(b.id));
+  const hit = (a: number[], b: number[]) => a[0] < b[1] - 0.5 && b[0] < a[1] - 0.5 && a[2] < b[3] - 0.5 && b[2] < a[3] - 0.5;
+  const inWW = (pc: CityPackage['parcels'][number]) => pc.pos!.u >= ww.u0 - 30 && pc.pos!.u <= ww.u1 + 30 && pc.pos!.v >= ww.v0 - 30 && pc.pos!.v <= ww.v1 + 30;
+  const straddles = (r: number[]) => crossU.some((u) => r[0] < u + 6 && r[1] > u - 6);
+  const placed: number[][] = [];
+  const out: { id: string; du: number }[] = [];
+  for (const pc of ps) {
+    const r0 = posRect(pc);
+    if (!placed.some((q) => hit(r0, q))) { placed.push(r0); continue; }
+    const ww1 = inWW(pc);
+    let done = false;
+    for (let k = 1; k <= 160 && !done; k++) for (const du of [k, -k]) {
+      const r = posRect(pc, pc.pos!.u + du);
+      if (ww1 ? (r[0] < ww.u0 - 10 || r[1] > ww.u1 + 10) : straddles(r)) continue;
+      if (placed.some((q) => hit(r, q))) continue;
+      pc.pos = { u: pc.pos!.u + du, v: pc.pos!.v };
+      pc.evidence = { ...pc.evidence, source: `${pc.evidence.source} [Slid ${Math.abs(du)} m ${du > 0 ? 'north' : 'south'} along its street to free ground (the real block is shorter).]` };
+      placed.push(r); out.push({ id: pc.id, du }); done = true; break;
+    }
+    if (!done) {
+      // No free ground within reach on its own line: one row further from the street (a rear lot).
+      const dv = (r0[3] - r0[2]) + 2;
+      for (const sgn of [1, -1]) {
+        const moved = { ...pc, pos: { u: pc.pos!.u, v: pc.pos!.v + sgn * dv } };
+        const r = posRect(moved);
+        if (placed.some((q) => hit(r, q))) continue;
+        pc.pos = moved.pos;
+        pc.evidence = { ...pc.evidence, source: `${pc.evidence.source} [Set one lot back (${Math.round(sgn * dv)} m): no free frontage on the real block.]` };
+        placed.push(r); out.push({ id: pc.id, du: 0 }); done = true; break;
+      }
+      if (!done) placed.push(r0);
+    }
+  }
+  return out;
 }
 
 /* ---------------- frontage ---------------- */

@@ -181,7 +181,8 @@ export function ensureHood(s: GameState): HoodState | undefined {
     const rr = { rng: hashSeed(`${s.seed}:fill`) };
     let n = 0;
     for (const c of fillCandidates()) {
-      if (have.has(c.id) || !chance(rr, c.p)) continue;
+      // The die is cast for a blocked half-block too, so the rest of the draw is as before.
+      if (have.has(c.id) || !chance(rr, c.p) || c.blocked) continue;
       const l = fillLot(s, rr, c.id, c.zone, pick(rr, c.uses), 200 + n++);
       l.address = addressOf(c.id);
       e.lots.push(l);

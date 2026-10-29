@@ -1,7 +1,7 @@
 {
  "schemaVersion": 1,
  "packId": "wildwood/island-grid",
- "generatedAt": "2026-10-29T03:55:58.150Z",
+ "generatedAt": "2026-10-29T14:29:47.555Z",
  "items": [
   {
    "id": "rq-grid-ave-lake-ave-wildwood",
@@ -221,6 +221,14 @@
    },
    "detail": "Rick's Seafood (Park Blvd by Otten's Harbor): no corner or tax-list address to place it by; moved in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).",
    "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-parcel-nudged",
+   "kind": "parcel-nudged",
+   "priority": "low",
+   "detail": "49 lots placed by point landed on each other on the shorter real blocks and were slid along their street to the nearest free ground: rs.ato.trentonave.1 +2 m, rs.ato.trentonave.2 +3 m, rs.ato.trentonave.3 +26 m, rs.nji.davisave.1 +7 m, rs.njo.davisave.1 +7 m, rs.nji.davisave.2 +30 m, rs.njo.davisave.2 +30 m, rs.nji.davisave.3 -46 m, rs.njo.davisave.3 -46 m, rs.ato.schellengerave.1 -26 m, rs.oci.schellengerave.1 -26 m, rs.ato.schellengerave.2 +26 m, rs.oci.schellengerave.2 +26 m, rs.ato.cedarave.0 +14 m, rs.ato.cedarave.1 +13 m, rs.ato.cedarave.2 +12 m, rs.ato.cedarave.3 +29 m, rs.ato.oakave.0 +14 m, rs.ww.1 +3 m, rs.ww.2 +7 m, rs.ato.oakave.1 +12 m, rs.ww.3 +10 m, rs.ato.oakave.2 +11 m, rs.ww.4 +14 m, rs.ww.5 +17 m, rs.ato.oakave.3 +29 m, rs.ww.6 +21 m, rs.ww.7 +24 m, rs.ww.8 +28 m, rs.ww.9 +31 m, rs.ato.pineave.2 +1 m, rs.pko.pineave.2 +1 m, rs.ww.31 +3 m, rs.ww.32 +7 m, rs.ww.33 +10 m, rs.ww.34 +14 m, rs.ww.35 +17 m, rs.ww.36 +21 m, rs.ww.37 +24 m, rs.ww.38 +28 m, rs.ww.39 +31 m, rs.ww.40 +35 m, rs.ww.41 +38 m, rs.ww.42 +42 m, rs.ww.43 +45 m, rs.ww.44 +49 m, rs.ww.45 0 m, rs.ww.46 0 m, rs.ww.47 0 m.",
+   "suggestion": "Check them in the map editor (invented house lots: their spot is approximate anyway).",
    "status": "open"
   },
   {

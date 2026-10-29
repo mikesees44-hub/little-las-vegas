@@ -164,18 +164,21 @@ function fillSlot(id: string): Slot | undefined {
   return b ? slotOf(zone as ZoneId, run as RunId, b, half as 'a' | 'b') : undefined;
 }
 
-/** Every half-block the generated records may take (not already a 1960 seed's), in a stable order. */
-export function fillCandidates(): { id: string; zone: ZoneId; p: number; uses: string[] }[] {
+/** Every half-block the generated records may take (not already a 1960 seed's), in a stable order; `blocked` where a lot placed by a point stands. */
+export function fillCandidates(): { id: string; zone: ZoneId; p: number; uses: string[]; blocked?: boolean }[] {
   const seeded = new Set<string>();
   for (const sl of Object.values(SEED_SLOT)) for (const t of taken(sl.tag)) seeded.add(t);
-  const out: { id: string; zone: ZoneId; p: number; uses: string[] }[] = [];
+  // Nor the ground of the package's lots placed by a point (on the real, shorter blocks they can share a half-block).
+  const pts = [...extraSlots({}).values()].filter((x) => x.tag.startsWith('pos:'));
+  const onPoint = (a: Slot) => pts.some((b) => a.u0 < b.u1 - 0.5 && b.u0 < a.u1 - 0.5 && a.v0 < b.v1 - 0.5 && b.v0 < a.v1 - 0.5);
+  const out: { id: string; zone: ZoneId; p: number; uses: string[]; blocked?: boolean }[] = [];
   for (const f of FILL) {
     for (const b of blocksOf(f.from, f.to)) {
       const ci = CROSS_BY_NAME[b.cross].idx;
       for (const half of ['a', 'b'] as const) {
         const sl = slotOf(f.zone, f.run, b, half);
         if (seeded.has(sl.tag)) continue;
-        out.push({ id: `hf.${f.zone}.${f.run}.${ci}.${half}`, zone: f.zone, p: f.p, uses: f.uses });
+        out.push({ id: `hf.${f.zone}.${f.run}.${ci}.${half}`, zone: f.zone, p: f.p, uses: f.uses, ...(onPoint(sl) ? { blocked: true } : {}) });
       }
     }
   }

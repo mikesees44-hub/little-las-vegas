@@ -10,8 +10,8 @@ import { P, type Proj } from './iso';
 
 /**
  * Wildwood's political map: the island cut into its game districts (their
- * outlines on the real island, from the town package; the piers out over the
- * water go to the district of the nearest record standing on them),
+ * outlines on the real island, from the town package; the piers are cut out
+ * of the Boardwalk's outline by the records standing on them),
  * each held by whoever has the most influence there (s.districts), for the
  * <PoliticalOverlay>. The cut depends only on where the records stand, so it
  * is cached per placement and projection; the holders are read fresh.
@@ -89,11 +89,14 @@ export function wildwoodShapes(s: GameState, pr: RealmFrame): Map<string, Pt[][]
     return best && best.d <= pad ? best : undefined;
   };
   const ww = WEST_WILDWOOD;
+  const piers = ps.filter((p) => p.r === 'piers');
   const label = (i: number, j: number): string | null => {
     const u = U0 + (i + 0.5) * DU;
     const v = V0 + (j + 0.5) * DV;
     // The districts' real outlines first; off them (the piers, out over the water) the nearest record within reach.
     if (DISTRICT_RINGS.length) {
+      // The piers are their own region, though the Boardwalk's outline runs out over them.
+      if (piers.some((p) => u >= p.u0 - 6 && u <= p.u1 + 6 && v >= p.v0 - 6 && v <= p.v1 + 6)) return 'piers';
       const r = regionAt(u, v);
       if (r) return r;
       const hit = near(u, v, 45);
