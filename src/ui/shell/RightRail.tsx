@@ -146,7 +146,7 @@ export function GoalsCard({ goals, onShow }: { goals: GuidedGoal[]; onShow: (g: 
         <div className="mt-1">
           <div className="font-semibold text-stone-100 leading-snug" data-testid="goal-current">{cur.title}</div>
           <div className="text-[11px] text-stone-400 leading-snug">{cur.hint}</div>
-          {cur.show && <button type="button" className="mt-1 rounded border border-gold-500 px-2 py-0.5 text-[11px] font-semibold text-gold-300 hover:bg-gold-500/15" onClick={() => onShow(cur)} data-testid="goal-show">Show me</button>}
+          {cur.show && <button type="button" className="btn-secondary btn-sm mt-1" onClick={() => onShow(cur)} data-testid="goal-show">Show me</button>}
         </div>
       ) : <div className="mt-1 text-emerald-300">Every goal met. The shore is yours to lose.</div>}
       {list && (

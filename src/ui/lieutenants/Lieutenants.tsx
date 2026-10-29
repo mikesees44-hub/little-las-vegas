@@ -42,14 +42,14 @@ function ActLine({ s, a, update, onChar, kind }: { s: GameState; a: LtAct; updat
       {kind === 'needs' && <div className="text-[10px] text-stone-400">{a.why ? `His reason: ${a.why}. ` : ''}{a.tell ? <span className="text-amber-200/80">{a.tell} </span> : null}{ifSilent(a)}</div>}
       {!locked && kind !== 'done' && (
         <div className="mt-0.5 flex flex-wrap items-center gap-1">
-          {kind === 'needs' && <button type="button" className="rounded border border-emerald-700 px-1.5 py-0.5 text-[10px] text-emerald-200 hover:bg-emerald-500/10" onClick={() => decide('approve')} data-testid="lt-approve">Approve</button>}
+          {kind === 'needs' && <button type="button" className="btn-primary btn-sm" onClick={() => decide('approve')} data-testid="lt-approve">Approve</button>}
           {others.length > 0 && (
             <select className="rounded border border-noir-600 bg-noir-900 px-1 py-0.5 text-[10px] text-stone-300" value="" onChange={(e) => e.target.value && decide('change', e.target.value)} data-testid="lt-change" aria-label="Change how">
               <option value="">Change ▾</option>
               {others.map((x) => <option key={x.id} value={x.id}>{x.label}{x.cost ? ` (${fmt$(x.cost)})` : ''}</option>)}
             </select>
           )}
-          <button type="button" className="rounded border border-red-800/70 px-1.5 py-0.5 text-[10px] text-red-300 hover:border-red-500" onClick={() => decide('veto')} data-testid="lt-veto">{kind === 'needs' ? 'Veto' : 'Stop him'}</button>
+          <button type="button" className="btn-danger btn-sm" onClick={() => decide('veto')} data-testid="lt-veto">{kind === 'needs' ? 'Veto' : 'Stop him'}</button>
           {call && <button type="button" className="text-[10px] text-stone-500 underline" onClick={() => decide(undefined)}>undo</button>}
           {a.charId && onChar && <button type="button" className="text-[10px] text-stone-500 underline decoration-dotted" onClick={() => onChar(a.charId!)}>who?</button>}
         </div>
@@ -111,7 +111,7 @@ export function MorningReports({ s, update, onChar, onSettings }: { s: GameState
           <div className="panel-title text-base">Morning report</div>
           <div className="text-[11px] text-stone-400">Your underboss and consigliere run their side of the business. {needs ? <span className="text-amber-200">{needs} waiting on your word.</span> : 'Nothing waiting on your word.'}</div>
         </div>
-        <button type="button" className="btn-ghost text-[11px]" onClick={onSettings} data-testid="lt-settings-open">Who handles what ▸</button>
+        <button type="button" className="btn-secondary text-[11px]" onClick={onSettings} data-testid="lt-settings-open">Who handles what ▸</button>
       </div>
       <div className="mt-1.5 grid gap-2 lg:grid-cols-2">
         {reps.map((r) => <ReportCard key={r.seat} s={s} r={r} update={update} onChar={onChar} />)}
@@ -214,7 +214,7 @@ export function WhoHandlesWhat({ s, update, onClose }: { s: GameState; update: U
       <div className="p-4 sm:p-5 space-y-3" data-testid="lt-settings">
         <div className="flex items-start justify-between gap-2">
           <h2 className="font-display text-2xl text-gold-400">Who handles what</h2>
-          <button type="button" className="btn-ghost text-xs" onClick={onClose} data-testid="lt-settings-close">Done</button>
+          <button type="button" className="btn-secondary text-xs" onClick={onClose} data-testid="lt-settings-close">Done</button>
         </div>
         <ChainOfCommand s={s} update={update} />
       </div>

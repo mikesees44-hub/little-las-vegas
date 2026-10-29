@@ -92,7 +92,7 @@ function NeedRow({ it, api }: { it: DeskItem; api: DeskApi }) {
         {!it.done && <WhyChips why={it.why} />}
         {it.ifNothing && !it.done && <div className="text-[10px] text-stone-500">If you leave it: {it.ifNothing}</div>}
       </div>
-      {verb && <button type="button" className={`${it.done ? 'btn-ghost' : 'btn-gold'} shrink-0 py-0.5 text-[11px]`} onClick={() => openItem(it, api)}>{verb} ▸</button>}
+      {verb && <button type="button" className={`${it.done ? 'btn-secondary' : 'btn-primary'} btn-sm shrink-0`} onClick={() => openItem(it, api)}>{verb} ▸</button>}
     </li>
   );
 }
@@ -106,7 +106,7 @@ function HandledRow({ it, api }: { it: DeskItem; api: DeskApi }) {
         <div className="truncate text-stone-300">{it.title}</div>
         <div className="text-stone-500"><span className="text-stone-300">{h.by}</span>: {h.does}{h.day !== undefined ? ` · ${DAY_NAMES[h.day]}` : ''}{h.delegated ? ' · standing order' : ''}</div>
       </div>
-      <button type="button" className="btn-ghost shrink-0 py-0.5 text-[10px]" onClick={() => { api.onTake?.(it.key); openItem(it, api); }} data-testid="desk-take-back">Take it back</button>
+      <button type="button" className="btn-secondary btn-sm shrink-0" onClick={() => { api.onTake?.(it.key); openItem(it, api); }} data-testid="desk-take-back">Take it back</button>
     </li>
   );
 }
@@ -119,7 +119,7 @@ function Fold({ g, render, n = 3, testid }: { g: DeskGroup; render: (it: DeskIte
     <>
       <ul className="mt-1 space-y-1">{shown.map((it) => <Fragment key={it.key}>{render(it)}</Fragment>)}</ul>
       {rows.length > n && (
-        <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setAll((x) => !x)} data-testid={testid ?? `desk-more-${g.kind}`}>
+        <button type="button" className="btn-quiet mt-1 text-[11px]" onClick={() => setAll((x) => !x)} data-testid={testid ?? `desk-more-${g.kind}`}>
           {all ? 'show fewer' : `show all ${rows.length} ▾`}
         </button>
       )}
@@ -132,8 +132,8 @@ function SmallRow({ it, api }: { it: DeskItem; api: DeskApi }) {
     <li className="flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px]" data-testid={`desk-item-${it.kind}`}>
       <div className="min-w-0 flex-1"><div className="text-stone-200">{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
       {it.kind === 'order' && it.ref.order !== undefined
-        ? <button type="button" className="btn-ghost shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
-        : <button type="button" className="shrink-0 text-[10px] text-gold-400 hover:text-gold-300" onClick={() => openItem(it, api)}>{verbOf(it) ?? 'Open'} ▸</button>}
+        ? <button type="button" className="btn-secondary shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
+        : <button type="button" className="btn-quiet shrink-0 text-[10px]" onClick={() => openItem(it, api)}>{verbOf(it) ?? 'Open'} ▸</button>}
     </li>
   );
 }
@@ -161,8 +161,8 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: Gam
       {ltView(s).offer && api.onOffer && (
         <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded border border-gold-600/60 bg-gold-500/10 px-2 py-1.5 text-[12px] text-stone-200" data-testid="desk-offer">
           <span className="min-w-0 flex-1">Your underboss offers to handle the routine: the crews, the rackets, the street, the papers and the quarrels, and each capo his own territory. Big steps still wait for you.</span>
-          <button type="button" className="btn-ghost py-0.5 text-[11px]" onClick={() => api.onOffer!(false)} data-testid="desk-offer-keep">Keep it as it was</button>
-          <button type="button" className="btn-gold py-0.5 text-[11px]" onClick={() => api.onOffer!(true)} data-testid="desk-offer-take">Let him</button>
+          <button type="button" className="btn-secondary py-0.5 text-[11px]" onClick={() => api.onOffer!(false)} data-testid="desk-offer-keep">Keep it as it was</button>
+          <button type="button" className="btn-primary py-0.5 text-[11px]" onClick={() => api.onOffer!(true)} data-testid="desk-offer-take">Let him</button>
         </div>
       )}
       <div className="mt-1.5 flex flex-wrap gap-1" role="tablist" aria-label="Filter the desk">
@@ -170,7 +170,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: Gam
           <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)} data-testid={`desk-filter-${f.id}`}
             className={`rounded-full border px-2 py-0.5 text-[10px] ${filter === f.id ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}>{f.label}{f.id !== 'all' ? ` ${f.n}` : ''}</button>
         ))}
-        {api.onMotion && <button type="button" className="ml-auto text-[10px] text-gold-400 hover:text-gold-300" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
+        {api.onMotion && <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
       </div>
       <div className={`mt-1.5 grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
         <div className="min-w-0 space-y-2">
@@ -209,7 +209,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
       <div className="p-4 sm:p-5 space-y-3" data-testid="ready-review">
         <div className="flex items-baseline justify-between">
           <h2 className="font-display text-2xl text-gold-400">Ready to advance{month ? ' the month' : ''}?</h2>
-          <button type="button" className="btn-ghost text-xs" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn-secondary text-xs" onClick={onClose}>Cancel</button>
         </div>
         {r.unanswered.length > 0 && (
           <div data-testid="ready-unanswered">
@@ -236,8 +236,8 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
         </div>
         {r.warnings.map((w, i) => <div key={i} className="text-[12px] text-red-300">⚠ {w}</div>)}
         <div className="flex flex-wrap gap-2 border-t border-noir-700 pt-2">
-          {(r.unanswered.length > 0 || r.mornings.length > 0) && <button type="button" className="btn-ghost text-sm" onClick={onReview} data-testid="ready-review-btn">Review first</button>}
-          <button type="button" className="btn-gold text-sm" onClick={onAdvance} data-testid="ready-advance">{r.unanswered.length ? 'Advance anyway ▸' : 'Advance ▸'}</button>
+          {(r.unanswered.length > 0 || r.mornings.length > 0) && <button type="button" className="btn-secondary text-sm" onClick={onReview} data-testid="ready-review-btn">Review first</button>}
+          <button type="button" className="btn-primary text-sm" onClick={onAdvance} data-testid="ready-advance">{r.unanswered.length ? 'Advance anyway ▸' : 'Advance ▸'}</button>
         </div>
       </div>
     </Modal>

@@ -73,7 +73,7 @@ function MoneyChips({ s }: { s: GameState }) {
           <BigPots s={s} compact />
           <div className="text-[12px] text-stone-300"><WeekPotsLine s={s} /></div>
           <MoveMoney s={s} />
-          <button type="button" className="btn-gold w-full text-xs" onClick={() => { setOpen(false); go('holdings.money'); }} data-testid="money-popover-open">Open the Money screen: where every dollar came from and went ▸</button>
+          <button type="button" className="btn-primary w-full text-xs" onClick={() => { setOpen(false); go('holdings.money'); }} data-testid="money-popover-open">Open the Money screen: where every dollar came from and went ▸</button>
         </div>
       )}
     </div>
@@ -267,8 +267,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           <div className="order-4 flex w-full lg:w-auto items-center gap-0.5 sm:gap-1.5 flex-wrap">
             {clockMode && <div className="llv-clock-compact"><ClockControls speed={speed} setSpeed={setSpeed} /></div>}
             <div className="flex">
-              <button className={`btn-gold h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
-              <Popover testid="advance-menu" button={(o, t) => <button className="btn-gold h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
+              <button className={`btn-primary h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
+              <Popover testid="advance-menu" button={(o, t) => <button className="btn-primary h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
                 {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
               </Popover>
             </div>
@@ -298,7 +298,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             {note && <span className="text-[11px] text-amber-300 truncate max-w-[40vw]">{note}</span>}
             {ticker && speed > 0 && <span className="hidden xl:inline text-[11px] text-stone-500 truncate max-w-[24rem]">{ticker}</span>}
             <div className="ml-auto">
-              <Popover testid="game-menu" button={(o, t) => <button className="h-8 w-7 sm:w-8 rounded border border-noir-600 text-stone-300 hover:border-gold-500" aria-label="Game menu" aria-expanded={o} onClick={t} data-testid="game-menu-button">≡</button>}>
+              <Popover testid="game-menu" button={(o, t) => <button className="btn-secondary h-8 w-7 sm:w-8 px-0 py-0" aria-label="Game menu" aria-expanded={o} onClick={t} data-testid="game-menu-button">≡</button>}>
                 {(close) => (
                   <div className="space-y-1 text-xs">
                     <GameMenuLinks close={close} />

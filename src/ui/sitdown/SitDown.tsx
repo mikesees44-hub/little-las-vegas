@@ -103,11 +103,11 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
             </div>
             <div className="flex justify-center gap-1 pb-1 sm:hidden" aria-hidden>{[...(lesson ? [0] : []), ...speakers].map((_, i) => <span key={i} className="h-1.5 w-1.5 rounded-full bg-noir-600" />)}</div>
             <footer className="flex flex-wrap items-center gap-2 border-t border-noir-700 px-3 py-2">
-              <button type="button" className="btn-gold text-xs sm:text-sm" disabled={!recs.length} onClick={acceptAll} data-testid="sitdown-accept-all">
+              <button type="button" className="btn-primary text-xs sm:text-sm" disabled={!recs.length} onClick={acceptAll} data-testid="sitdown-accept-all">
                 Do what they recommend{recs.length ? ` (${recs.length})` : ''}
               </button>
               <span className="text-[11px] text-stone-500 flex-1 min-w-[140px]">{recs.length ? 'Queues each advisor\'s pick as this week\'s orders. You can take any back.' : 'Nothing left to order.'}</span>
-              <button type="button" className="btn-ghost text-xs" onClick={() => setTab('rounds')} data-testid="sitdown-to-rounds">Your rounds ▸</button>
+              <button type="button" className="btn-secondary text-xs" onClick={() => setTab('rounds')} data-testid="sitdown-to-rounds">Your rounds ▸</button>
             </footer>
           </>
         ) : (
@@ -125,7 +125,7 @@ function LessonCard({ lesson }: { lesson: SitDownLesson }) {
       <div className="mt-1 font-semibold text-stone-100 leading-snug">{lesson.title}</div>
       <p className="mt-1 text-stone-400 leading-snug">{lesson.hint}</p>
       <p className="mt-2 text-[11px] text-stone-500 leading-snug">Every week your people come in here. Each brings a thing or two, with options and what he would do. One click gives the order; "Do what they recommend" gives them all.</p>
-      {lesson.onShow && <button type="button" className="mt-2 rounded border border-gold-500 px-2 py-0.5 text-[11px] font-semibold text-gold-300 hover:bg-gold-500/15" onClick={lesson.onShow} data-testid="sitdown-lesson-show">Show me</button>}
+      {lesson.onShow && <button type="button" className="btn-secondary btn-sm mt-2" onClick={lesson.onShow} data-testid="sitdown-lesson-show">Show me</button>}
     </section>
   );
 }
@@ -151,7 +151,7 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
       {sp.empty ? (
         <div className="mt-2 text-stone-400">
           <p>Nobody to tell you. {sp.nudge?.text}</p>
-          {sp.nudge && <button type="button" className="mt-2 rounded border border-gold-500 px-2 py-0.5 text-[11px] font-semibold text-gold-300" onClick={() => onLink(sp.nudge!.link)} data-testid="advisor-appoint">Appoint someone ▸</button>}
+          {sp.nudge && <button type="button" className="btn-secondary btn-sm mt-2" onClick={() => onLink(sp.nudge!.link)} data-testid="advisor-appoint">Appoint someone ▸</button>}
         </div>
       ) : !sp.items.length ? (
         <p className="mt-2 italic text-stone-500">"Nothing that needs you this week."</p>
@@ -230,7 +230,7 @@ function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameSt
           {Array.from({ length: slots }).map((_, i) => <span key={i} className={`h-3 w-3 rounded-full border ${i < used ? 'border-gold-400 bg-gold-500' : 'border-noir-500'}`} />)}
           <span className="ml-1 text-[12px] text-stone-300">{used} of {slots} evenings</span>
         </div>
-        <button type="button" className="btn-ghost px-2 py-1 text-xs" onClick={() => setRounds(undefined)} data-testid="rounds-usual">Usual week</button>
+        <button type="button" className="btn-secondary px-2 py-1 text-xs" onClick={() => setRounds(undefined)} data-testid="rounds-usual">Usual week</button>
         <button type="button" className="text-[11px] text-stone-500 hover:text-gold-300" onClick={() => setRounds([])}>clear</button>
         <span className="flex-1" />
         {rounds === undefined && <span className="text-[11px] text-stone-500">Your usual week is set. Change anything.</span>}
@@ -288,7 +288,7 @@ function RoundsPlanner({ s, b, rounds, setRounds, onTrust, onDone }: { s: GameSt
       )}
       <footer className="flex items-center gap-2 border-t border-noir-700 px-3 py-2">
         <span className="flex-1 text-[11px] text-stone-500">Your evenings land on days of the week (This Week); they happen as the clock runs, or all at once when you advance.</span>
-        <button type="button" className="btn-gold text-xs sm:text-sm" onClick={onDone} data-testid="rounds-done">Done — back to the map</button>
+        <button type="button" className="btn-primary text-xs sm:text-sm" onClick={onDone} data-testid="rounds-done">Done — back to the map</button>
       </footer>
     </div>
   );

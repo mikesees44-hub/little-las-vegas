@@ -24,11 +24,33 @@ body {
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
   }
-  .btn-gold {
+  /*
+   * The button hierarchy (STREAMLINE_PLAN §6.1). At most one primary per card, modal or desk row
+   * (bottom-right of a card, right end of a row); secondaries to its left; quiet ones are inline
+   * text links (details, why?, show all); danger is for the hostile and the irreversible and always
+   * sits behind a confirm. btn-gold and btn-ghost stay as aliases while components migrate.
+   */
+  .btn-primary {
     @apply btn bg-gold-500 text-noir-950 hover:bg-gold-400;
   }
-  .btn-ghost {
+  .btn-secondary {
     @apply btn border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300;
+  }
+  .btn-quiet {
+    @apply inline-flex items-center gap-1 text-gold-400 underline-offset-2 hover:text-gold-300 hover:underline disabled:opacity-40 disabled:cursor-not-allowed;
+  }
+  .btn-danger {
+    @apply btn border border-red-700 bg-red-900/40 text-red-100 hover:bg-red-800/60 hover:border-red-500;
+  }
+  /* A compact size for rows and chips of buttons. */
+  .btn-sm {
+    @apply px-1.5 py-0.5 text-[11px] rounded;
+  }
+  .btn-gold {
+    @apply btn-primary;
+  }
+  .btn-ghost {
+    @apply btn-secondary;
   }
   .inp {
     @apply w-full rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200;
