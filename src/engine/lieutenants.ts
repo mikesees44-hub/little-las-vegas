@@ -15,6 +15,7 @@ import { hashSeed } from './rng';
 import { timeCost } from './timeCost';
 import { spotLtCands } from './kickup';
 import { ltLean } from './minds/planner';
+import { manMod } from './lifestyle';
 import { ensureTribute, noteFavor } from './tributeState';
 import type { Character, GameState, PlayerAction, RivalId } from './types';
 
@@ -272,7 +273,8 @@ export function ltProfile(s: GameState, seat: LtSeat): LtProfile | undefined {
   if (!c) return undefined;
   const skill = c.attributes[SEAT_INFO[seat].skill];
   const judg = attr(s, c, 'judgment');
-  const competence = Math.round(clamp01(((skill + judg) / 2 - 30) / 55) * 100) / 100;
+  // His growth perks (lifestyle.ts: Envoy, Kingmaker, Reads the Street) sharpen him in the seat.
+  const competence = Math.round(clamp01(((skill + judg) / 2 - 30) / 55 + manMod(s, c, 'ltSkill') / 100) * 100) / 100;
   const loyalty = Math.round(opinion(s, c.id, s.playerId));
   const hon = honesty(s, c);
   // His career goal as remembered (underboss.ts), else read off his nature (never written here: this is pure).

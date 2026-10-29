@@ -482,33 +482,39 @@ export function xpJobOdds(s: GameState, c: Character | undefined, job: string, t
   if (hasPerk(s, c, 'wheelman') && (tile === 'scores' || tile === 'goods') && !SAFE.has(job)) out.push({ label: 'Wheelman', value: 8 });
   if (hasPerk(s, c, 'safecracker') && SAFE.has(job)) out.push({ label: 'Safecracker', value: 10 });
   if (hasPerk(s, c, 'talker')) out.push({ label: 'Smooth talker', value: tile === 'fixes' ? 10 : 4 });
+  // His crew perks (lifestyle.ts FOCI), each with its own line.
+  const add = (label: string, v: number) => { if (v) out.push({ label, value: v }); };
+  add('His craft (perks)', manMod(s, c, 'jobs'));
+  if (tile === 'muscle' || MUSCLE.has(job)) add('His muscle (perks)', manMod(s, c, 'muscleJobs'));
+  if (tile === 'fixes') add('His connections (perks)', manMod(s, c, 'fixJobs'));
+  if (tile === 'scores' || tile === 'goods' || SAFE.has(job)) add('His eye for a score (perks)', manMod(s, c, 'scoreJobs'));
   return out;
 }
 
 /** His chance to talk when he is picked up (Iron jaw). */
 export function xpRatMult(s: GameState, c: Character | undefined): number {
-  return c && hasPerk(s, c, 'ironjaw') ? 1 / 6 : 1;
+  return (c && hasPerk(s, c, 'ironjaw') ? 1 / 6 : 1) * (1 - Math.min(90, manMod(s, c, 'rat')) / 100);
 }
 
 /** Evidence on him when a job goes wrong (Ghost). */
 export function xpEvidenceMult(s: GameState, c: Character | undefined): number {
-  return c && hasPerk(s, c, 'ghost') ? 0.5 : 1;
+  return (c && hasPerk(s, c, 'ghost') ? 0.5 : 1) * (1 - Math.min(80, manMod(s, c, 'evidence')) / 100);
 }
 
 /** The take of a job he brings in (Rainmaker). */
 export function xpTakeMult(s: GameState, c: Character | undefined): number {
-  return c && hasPerk(s, c, 'rainmaker') ? 1.1 : 1;
+  return (c && hasPerk(s, c, 'rainmaker') ? 1.1 : 1) * (1 + manMod(s, c, 'take') / 100);
 }
 
 /** His own hustle (Bookmaker, Rainmaker). */
 export function xpHustleMult(s: GameState, c: Character | undefined): number {
   if (!c || !s.xp?.men[c.id]) return 1;
-  return (hasPerk(s, c, 'bookmaker') ? 1.15 : 1) * (hasPerk(s, c, 'rainmaker') ? 1.1 : 1);
+  return (hasPerk(s, c, 'bookmaker') ? 1.15 : 1) * (hasPerk(s, c, 'rainmaker') ? 1.1 : 1) * (1 + manMod(s, c, 'hustle') / 100);
 }
 
 /** A capo's district take (Taskmaster). */
 export function xpCornersMult(s: GameState, capo: Character | undefined): number {
-  return capo && hasPerk(s, capo, 'taskmaster') ? 1.08 : 1;
+  return (capo && hasPerk(s, capo, 'taskmaster') ? 1.08 : 1) * (1 + manMod(s, capo, 'corners') / 100);
 }
 
 /** Reasons on a man's odds of flipping at trial (trialCase.ts). */
@@ -516,6 +522,8 @@ export function xpFlipReasons(s: GameState, c: Character): { label: string; valu
   const out: { label: string; value: number }[] = [];
   if (!s.xp?.men[c.id]) return out;
   if (hasPerk(s, c, 'ironjaw')) out.push({ label: 'Iron jaw: never talks', value: -0.25 });
+  const fl = manMod(s, c, 'flip');
+  if (fl) out.push({ label: 'He plays the long game (perks)', value: -fl / 100 });
   const l = level(s, c.id);
   if (l >= 5 && honored(s, c)) out.push({ label: `A ${titleOf(s, c).toLowerCase()} the boss looks after`, value: -0.05 });
   if (slighted(s, c)) out.push({ label: 'A veteran the boss slighted', value: 0.06 });
@@ -527,6 +535,12 @@ export function xpPoachBonus(s: GameState, c: Character): number {
   if (!s.xp?.men[c.id]) return 0;
   if (hasPerk(s, c, 'standup')) return -999;
   const l = level(s, c.id);
+  const less = manMod(s, c, 'poach');
+  if (less) return xpPoachBase(s, c, l) - less;
+  return xpPoachBase(s, c, l);
+}
+
+function xpPoachBase(s: GameState, c: Character, l: number): number {
   if (l < 4) return 0;
   if (honored(s, c)) return (l - 3) * 2 - 10;
   return (l - 3) * 5 + (slighted(s, c) ? 10 : 0);

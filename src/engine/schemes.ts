@@ -1,5 +1,5 @@
 import { ableness, frailtyAgainst } from './aging';
-import { perkMod } from './lifestyle';
+import { manMod, perkMod } from './lifestyle';
 import { bonesFromScheme } from './bones';
 import { roll01 } from './bonesState';
 import { fileReceipt, noteScore, receiptLie } from './ledgerbook';
@@ -135,6 +135,9 @@ function agentPower(s: GameState, agents: Character[], kind: SchemeKind): { labe
   if (kind === 'heist' && safe) out.push({ label: `${safe.firstName} cracks the safe`, value: 20 });
   const forger = agents.find((c) => c.specialty === 'forger') ?? hasSpecialist(s, 'forger');
   if (kind === 'claim' && forger) out.push({ label: `${forger.firstName}'s forged papers`, value: 20 });
+  // The agents' growth perks (lifestyle.ts: Planner, Mastermind, Steady Hand).
+  const plan = agents.reduce((x, c) => x + manMod(s, c, 'scheme'), 0);
+  if (plan) out.push({ label: 'Their craft (perks)', value: plan });
   const cold = agents.filter((c) => hasTrait(c, 'Cowardly'));
   if (cold.length && (kind === 'murder' || kind === 'heist')) out.push({ label: 'A coward on the team', value: -10 });
   return out;

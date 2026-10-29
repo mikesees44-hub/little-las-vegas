@@ -1,3 +1,4 @@
+import { manMod } from './lifestyle';
 import { attr } from './attrs';
 import { ageOn } from './calendar';
 import { crew, displayName, hasTrait, isFree } from './characters';
@@ -257,7 +258,8 @@ export function guardAttrs(s: GameState, c: Character, toward = s.playerId): Gua
 /** 0-1: how much good he does on a detail. */
 export function guardScore(s: GameState, c: Character): number {
   const g = guardAttrs(s, c);
-  return (g.awareness * 0.3 + g.composure * 0.2 + g.judgment * 0.15 + g.reliability * 0.2 + g.physical * 0.15) / 100;
+  // His growth perks (lifestyle.ts: Bodyguard, Rat Catcher): +n% on a detail, never past 1.
+  return Math.min(1, ((g.awareness * 0.3 + g.composure * 0.2 + g.judgment * 0.15 + g.reliability * 0.2 + g.physical * 0.15) / 100) * (1 + manMod(s, c, 'guard') / 100));
 }
 
 /** His weekly wage on a shift. */
