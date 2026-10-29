@@ -142,6 +142,38 @@ describe('declutter: every order is still reachable', () => {
   });
 });
 
+describe('declutter: people first (STREAMLINE S9)', () => {
+  it('an entry aimed at a person lists "person"; one aimed at a place lists "place"', () => {
+    for (const e of ACTION_ENTRIES) {
+      if (e.subject === 'person') expect(e.at, `${e.label}: aimed at a person`).toContain('person');
+      if (e.subject === 'place') expect(e.at, `${e.label}: aimed at a place`).toContain('place');
+    }
+  });
+
+  it('most orders are reachable from the person or the place they are aimed at', () => {
+    const person = ACTION_ENTRIES.filter((e) => e.at.includes('person')).length;
+    const place = ACTION_ENTRIES.filter((e) => e.at.includes('place')).length;
+    expect(person).toBeGreaterThanOrEqual(60);
+    expect(place).toBeGreaterThanOrEqual(12);
+    // Every entry the person menu newly reaches is built by the menu's own builders.
+    // (menuMore asks two engines for the gestures that fit him: bonds.gesturesFor, myMen.menActionsFor.)
+    const builders = ['ui/sheet/menuCatalog.ts', 'ui/sheet/menuMore.ts', 'ui/ears/earsMenu.ts', 'engine/bonds.ts', 'engine/myMen.ts'].map(read).join('\n');
+    for (const e of ACTION_ENTRIES.filter((x) => x.files.includes('ui/sheet/menuMore.ts'))) expect(builders, e.label).toMatch(new RegExp(`kind: '${e.kind}'`));
+  });
+
+  it('the person menu has exactly six categories, in order, for anyone', async () => {
+    const { playWeeks } = await import('./helpers');
+    const { menuFor, SIX } = await import('../src/ui/sheet/menuCatalog');
+    const s = playWeeks('declutter-six', 4);
+    expect(SIX).toEqual(['talk', 'business', 'crew', 'heart', 'pressure', 'move']);
+    for (const c of Object.values(s.characters).filter((x) => x.alive).slice(0, 40)) expect(menuFor(s, c).map((x) => x.id), c.firstName).toEqual(SIX);
+    // The boss's own menu too (his own business: the law, how he rules, his court, a trip).
+    const me = menuFor(s, s.characters[s.playerId]);
+    expect(me.map((x) => x.id)).toEqual(SIX);
+    expect(me.find((x) => x.id === 'move')!.items.length).toBeGreaterThan(3);
+  });
+});
+
 describe('declutter: one home per screen, old routes land', () => {
   it('every section in nav has exactly one home', () => {
     for (const k of [...REGISTRY_KEYS, ...NAV_ONLY]) {

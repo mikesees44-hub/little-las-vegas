@@ -72,7 +72,6 @@ import { Modal } from './components/Modal';
 import { SheetFrame } from './shell/SheetFrame';
 import { PolSheet } from './cityhall/CityHall';
 import { ContextMenu } from './sheet/InteractionMenu';
-import type { MenuCategoryId } from './sheet/menuCatalog';
 import { AudienceScene } from './tribute/AudienceScene';
 import { TributeUiContext, type TributeUiApi } from './tribute/context';
 import type { EnvelopeChoice } from '../engine/tributeOps';
@@ -975,7 +974,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {sheet && !current && (s.characters[sheet] || !s.pol?.people[sheet]
         ? <CharacterSheet key={sheet} s={s} id={sheet} onClose={() => setSheet(undefined)} />
         : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}
-      {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category as MenuCategoryId | undefined} onClose={() => setCtxMenu(undefined)} />}
+      {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category} onClose={() => setCtxMenu(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
       {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
       {helpMenu && (

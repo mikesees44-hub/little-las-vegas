@@ -13,7 +13,7 @@ import { usePlanner } from '../components/Schemes';
 import { useClarity } from '../clarity/context';
 import { useTravel } from '../travel/context';
 import { useShell } from '../shell/context';
-import { CATEGORY_LABEL, menuFor, rankedGifts, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
+import { CATEGORY_LABEL, GROUP_LABEL, menuFor, rankedGifts, toCategory, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
 import { EarsPicker } from '../ears/EarsPicker';
 import { ActionRow } from '../components/ActionRow';
 import { DatingSection } from '../dating/DatingPanel';
@@ -82,6 +82,22 @@ function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; 
   );
 }
 
+/** A category's rows, under their finer groups' subheads when it holds more than one. */
+function Grouped({ s, c, items, onDone, sub }: { s: GameState; c: Character; items: MenuItem[]; onDone?: () => void; sub: boolean }) {
+  const groups = [...new Set(items.map((it) => it.group))];
+  if (!sub || groups.length < 2) return <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5">{sortItems(s, items).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}</div>;
+  return (
+    <div className="mt-2 space-y-2">
+      {groups.map((g) => (
+        <div key={g ?? '-'} data-testid={`menu-group-${g}`}>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{g ? GROUP_LABEL[g] : ''}</div>
+          <div className="mt-1 grid grid-cols-[minmax(0,1fr)] gap-1.5">{sortItems(s, items.filter((it) => it.group === g)).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Everything one line of the menu says, for "Find an action…". */
 function itemText(s: GameState, it: MenuItem): string {
   const t = it.action ? `${previewAction(s, it.action).title} ${previewAction(s, it.action).verb ?? ''}` : '';
@@ -119,15 +135,16 @@ export function bestFor(s: GameState, c: { id: string } & Parameters<typeof quic
  * "Find an action…" searches every category; each order is a folded row (tap
  * it for the full card). What can't be done now sits last with its reason.
  */
-export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: GameState; c: Character; initial?: MenuCategoryId; onDone?: () => void; cats?: MenuCategory[] }) {
+export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: GameState; c: Character; initial?: string; onDone?: () => void; cats?: MenuCategory[] }) {
   const base = useMemo(() => given ?? menuFor(s, c), [given, s, c]);
   const cats = useMemo(() => {
-    const best = base.length > 1 ? bestFor(s, c, base) : [];
+    const best = base.filter((x) => x.items.length).length > 1 ? bestFor(s, c, base) : [];
     return best.length >= 2 ? [{ id: 'best' as MenuCategoryId, label: CATEGORY_LABEL.best, items: best }, ...base] : base;
   }, [base, s, c]);
-  const [cur, setCur] = useState<MenuCategoryId | undefined>(initial && cats.some((x) => x.id === initial) ? initial : cats[0]?.id);
+  const want = toCategory(initial);
+  const [cur, setCur] = useState<MenuCategoryId | undefined>(want && cats.some((x) => x.id === want && x.items.length) ? want : cats.find((x) => x.items.length)?.id);
   const [q, setQ] = useState('');
-  if (!cats.length) return null;
+  if (!cats.some((x) => x.items.length)) return null;
   const cat = cats.find((x) => x.id === cur) ?? cats[0];
   const total = base.reduce((n, x) => n + x.items.length, 0);
   const query = q.trim().toLowerCase();
@@ -151,15 +168,14 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
         <>
           <nav className="mt-1.5 flex flex-wrap gap-1" aria-label="Interaction categories">
             {cats.map((x) => (
-              <button key={x.id} type="button" onClick={() => setCur(x.id)} data-testid={`menu-cat-${x.id}`}
-                className={`rounded px-2 py-1 text-xs font-semibold ${cat.id === x.id ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+              <button key={x.id} type="button" onClick={() => setCur(x.id)} data-testid={`menu-cat-${x.id}`} disabled={!x.items.length}
+                title={x.items.length ? undefined : `Nothing of this kind for ${c.firstName} right now`}
+                className={`rounded px-2 py-1 text-xs font-semibold ${cat.id === x.id ? 'bg-gold-500 text-noir-950' : x.items.length ? 'border border-noir-600 text-stone-300 hover:border-gold-500' : 'border border-noir-800 text-stone-600 cursor-default'}`}>
                 {x.label} <span className={cat.id === x.id ? 'text-noir-800' : 'text-stone-500'}>{x.items.length}</span>
               </button>
             ))}
           </nav>
-          <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5">
-            {sortItems(s, cat.items).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}
-          </div>
+          <Grouped s={s} c={c} items={cat.items} onDone={onDone} sub={cat.id !== 'best'} />
         </>
       )}
     </section>
@@ -167,7 +183,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
 }
 
 /** The right-click menu: the same categories in a floating card at the cursor. */
-export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; id: string; x: number; y: number; category?: MenuCategoryId; onClose: () => void }) {
+export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; id: string; x: number; y: number; category?: string; onClose: () => void }) {
   const c = s.characters[id];
   const { open } = useSheet();
   const ref = useRef<HTMLDivElement>(null);

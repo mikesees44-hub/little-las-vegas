@@ -22,17 +22,53 @@ import { wantedFor } from '../../engine/fugitive';
 import { jobsForPerson } from '../../engine/dirtyWork';
 import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
+import { addMore } from './menuMore';
 import { nightActionsFor } from '../../engine/nightlife';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
 /**
- * The CK-style interaction menu: every verb aimed at one person, grouped in
- * categories. Pure: it lists PlayerActions (shown as order cards) and a few
- * "openers" (the scheme planner, the trip planner, the gift catalog).
+ * The CK-style interaction menu: every verb aimed at one person, in SIX FIXED
+ * CATEGORIES, always in the same order (STREAMLINE §2b): Talk & Favors,
+ * Business, Crew, Family & Heart, Pressure, Move ("Best now" on top is added
+ * by the menu). Inside a category the verbs keep their old finer groups as
+ * subheads, so nothing is lost and nothing moves more than one tap. Pure: it
+ * lists PlayerActions (shown as order rows) and a few "openers" (the scheme
+ * planner, the trip planner, the gift catalog).
  */
-export type MenuCategoryId = 'best' | 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife' | 'family' | 'crew';
+export type MenuCategoryId = 'best' | 'talk' | 'business' | 'crew' | 'heart' | 'pressure' | 'move';
+
+/** The six, in their fixed order. */
+export const SIX: Exclude<MenuCategoryId, 'best'>[] = ['talk', 'business', 'crew', 'heart', 'pressure', 'move'];
+
+/** The finer groups each builder adds to (the old 13 categories plus a few new ones), each living in one of the six. */
+export type MenuGroupId =
+  | 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife' | 'family' | 'crew'
+  | 'envelope' | 'care' | 'discipline' | 'bonds' | 'spies' | 'protect' | 'council' | 'campaign';
+
+export const GROUP_HOME: Record<MenuGroupId, Exclude<MenuCategoryId, 'best'>> = {
+  talk: 'talk', diplomacy: 'talk', bonds: 'heart',
+  business: 'business', cityhall: 'business', table: 'business', envelope: 'business', campaign: 'business',
+  crew: 'crew', heirs: 'crew', care: 'crew', discipline: 'crew', protect: 'crew', council: 'crew',
+  family: 'heart', romance: 'heart', nightlife: 'heart',
+  intrigue: 'pressure', hostile: 'pressure', spies: 'pressure',
+  travel: 'move', self: 'move',
+};
+
+export const GROUP_LABEL: Record<MenuGroupId, string> = {
+  talk: 'Talk', diplomacy: 'Favors & goodwill', business: 'The Family business', heirs: 'Heirs & grooming', intrigue: 'Intrigue', hostile: 'Hostile',
+  romance: 'Romance & marriage', travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The night & the Ears',
+  family: 'Family', crew: 'Crew', envelope: 'The envelope & the books', care: 'Take care of him', discipline: 'Discipline', bonds: 'You and them',
+  spies: 'Spies & rats', protect: 'Protection', council: 'The council', campaign: 'Elections',
+};
+
+/** An old category id (a ⋯ button, a saved link) lands in its new home. */
+export function toCategory(id: string | undefined): MenuCategoryId | undefined {
+  if (!id) return undefined;
+  if (id === 'best' || (SIX as string[]).includes(id)) return id as MenuCategoryId;
+  return GROUP_HOME[id as MenuGroupId];
+}
 
 export type Opener =
   | { type: 'plan'; kind: SchemeKind }
@@ -59,6 +95,8 @@ export interface MenuItem {
   /** Opener text. */
   text?: string;
   hostile?: boolean;
+  /** The finer group it was added to (a subhead inside its category). */
+  group?: MenuGroupId;
 }
 
 export interface MenuCategory {
@@ -68,19 +106,17 @@ export interface MenuCategory {
 }
 
 export const CATEGORY_LABEL: Record<MenuCategoryId, string> = {
-  best: 'Best now', talk: 'Talk', diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
-  travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The night & the Ears',
-  family: 'Family', crew: 'Crew',
+  best: 'Best now', talk: 'Talk & Favors', business: 'Business', crew: 'Crew', heart: 'Family & Heart', pressure: 'Pressure', move: 'Move',
 };
 
 /** The deeds' groups (deeds/catalog.ts) in the menu. */
-const DEED_MENU: Record<DeedCat, MenuCategoryId> = { diplomacy: 'diplomacy', intrigue: 'intrigue', business: 'business', family: 'family', crew: 'crew' };
+const DEED_MENU: Record<DeedCat, MenuGroupId> = { diplomacy: 'diplomacy', intrigue: 'intrigue', business: 'business', family: 'family', crew: 'crew' };
 /** Old verbs a deed now does better (the deed has his answer and its reasons): not listed twice. */
 const SUPERSEDED = new Set<InteractionId>(['threaten']);
 
-const INTERACT_CAT: Record<InteractionId, MenuCategoryId> = {
+const INTERACT_CAT: Record<InteractionId, MenuGroupId> = {
   dinner: 'diplomacy', gift_small: 'diplomacy', gift_large: 'diplomacy', favor: 'diplomacy', bribe: 'diplomacy', demand: 'diplomacy',
-  recruit: 'business', bringIn: 'business', make: 'business', promote: 'business', demote: 'business',
+  recruit: 'crew', bringIn: 'crew', make: 'crew', promote: 'crew', demote: 'discipline',
   expose: 'intrigue', threaten: 'hostile', exile: 'hostile', whack: 'hostile',
   court: 'romance', affair: 'romance', proposeMarriage: 'romance', endRomance: 'romance', separate: 'romance',
 };
@@ -99,8 +135,8 @@ export function rankedGifts(s: GameState, c: Character) {
 }
 
 export function menuFor(s: GameState, c: Character): MenuCategory[] {
-  const cats = new Map<MenuCategoryId, MenuItem[]>();
-  const add = (id: MenuCategoryId, item: MenuItem) => { if (!cats.has(id)) cats.set(id, []); cats.get(id)!.push(item); };
+  const cats = new Map<MenuGroupId, MenuItem[]>();
+  const add = (id: MenuGroupId, item: MenuItem) => { if (!cats.has(id)) cats.set(id, []); cats.get(id)!.push({ ...item, group: id }); };
   const isBoss = c.id === s.playerId;
   if (!c.alive || s.gameOver) return [];
 
@@ -113,6 +149,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
     const p = pwView(s);
     if (p.station !== 'boss') { add('self', { key: 'climb', action: { kind: 'power', op: { op: 'climb' } } }); add('self', { key: 'takeover', action: { kind: 'power', op: { op: 'takeover' } } }); }
     addProtect(s, c, add);
+    addMore(s, c, add);
     add('travel', { key: 'trip', open: { type: 'trip' }, label: 'Plan a trip…', text: 'A vacation, or business in another city.' });
     if (wantedFor(s, c.id)) add('travel', { key: 'flee', open: { type: 'flee' }, label: 'Run for it…', text: 'Leave town before they come for you.', hostile: true });
     return order(cats);
@@ -142,20 +179,20 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   // The family business.
   const mine = c.faction === 'player' && c.rank !== 'civilian';
   if (mine && isFree(s, c)) {
-    if (c.rank === 'associate' && c.proposedWeek === undefined) add('business', { key: 'propose', action: { kind: 'propose', charId: c.id } });
+    if (c.rank === 'associate' && c.proposedWeek === undefined) add('crew', { key: 'propose', action: { kind: 'propose', charId: c.id } });
     if ((c.rank === 'soldier' || c.rank === 'associate') && !c.specialty) {
-      for (const pol of ['tax', 'earn', 'squeeze'] as CrewPolicy[]) if (pol !== (c.policy ?? 'tax')) add('business', { key: `pol:${pol}`, action: { kind: 'policy', charId: c.id, policy: pol } });
-      for (const k of capos(s).filter((k) => k.id !== c.capoId).slice(0, 4)) add('business', { key: `re:${k.id}`, action: { kind: 'reassign', charId: c.id, capoId: k.id } });
+      for (const pol of ['tax', 'earn', 'squeeze'] as CrewPolicy[]) if (pol !== (c.policy ?? 'tax')) add('crew', { key: `pol:${pol}`, action: { kind: 'policy', charId: c.id, policy: pol } });
+      for (const k of capos(s).filter((k) => k.id !== c.capoId).slice(0, 4)) add('crew', { key: `re:${k.id}`, action: { kind: 'reassign', charId: c.id, capoId: k.id } });
     }
     if (c.rank === 'capo') {
       const keep = c.keep ?? CAPO_CUT;
-      if (keep > 0.2) add('business', { key: 'k-', action: { kind: 'contract', charId: c.id, keep: Math.round((keep - 0.05) * 100) / 100 } });
-      if (keep < 0.45) add('business', { key: 'k+', action: { kind: 'contract', charId: c.id, keep: Math.round((keep + 0.05) * 100) / 100 } });
+      if (keep > 0.2) add('crew', { key: 'k-', action: { kind: 'contract', charId: c.id, keep: Math.round((keep - 0.05) * 100) / 100 } });
+      if (keep < 0.45) add('crew', { key: 'k+', action: { kind: 'contract', charId: c.id, keep: Math.round((keep + 0.05) * 100) / 100 } });
     }
     if (c.rank !== 'associate' && !c.specialty) {
-      for (const st of SEATS) if (holder(s, st)?.id !== c.id) add('business', { key: `seat:${st}`, action: { kind: 'appoint', seat: st, charId: c.id }, label: `Seat him as ${SEAT_INFO[st].name.toLowerCase()}${holder(s, st) ? ` (in ${holder(s, st)!.firstName}'s place)` : ''}` });
+      for (const st of SEATS) if (holder(s, st)?.id !== c.id) add('council', { key: `seat:${st}`, action: { kind: 'appoint', seat: st, charId: c.id }, label: `Seat him as ${SEAT_INFO[st].name.toLowerCase()}${holder(s, st) ? ` (in ${holder(s, st)!.firstName}'s place)` : ''}` });
     }
-    add('business', { key: 'bg', action: { kind: 'background', charId: c.id } });
+    add('crew', { key: 'bg', action: { kind: 'background', charId: c.id } });
     // Set him up with a spot of his own (kickup.ts): his three best, by you; and the answers when he is short or wants more.
     if (canHoldSpot(s, c)) {
       const sp = spotOf(s, c.id);
@@ -194,6 +231,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   for (const k of kinds) add('intrigue', { key: `plan:${k}`, open: { type: 'plan', kind: k }, label: `${SCHEME_INFO[k].name}…`, text: SCHEME_INFO[k].text, hostile: SCHEME_INFO[k].hostile });
   addEarsItems(s, c, add);
   addProtect(s, c, add);
+  addMore(s, c, add);
   if (!c.office && c.faction !== 'law') add('hostile', { key: 'plan:murder', open: { type: 'plan', kind: 'murder' }, label: 'Plan a hit…', text: SCHEME_INFO.murder.text, hostile: true });
 
   // Dirty work aimed at him: the same jobs as the old row on his sheet, now in the menu everywhere.
@@ -228,9 +266,9 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
     const contested = s.districts.filter((d) => (d.influence[rival] ?? 0) > 0);
     for (const d of contested.slice(0, 2)) add('table', { key: `dis:${d.id}`, action: { kind: 'raiseDispute', dispute: 'district', rival, district: d.id } });
     add('table', { key: 'rep', action: { kind: 'raiseDispute', dispute: 'reparations', rival } });
-    for (const d of contested.filter((x) => casusBelli(s, rival, x.id) && !s.wars.some((w) => w.rival === rival)).slice(0, 2)) add('table', { key: `war:${d.id}`, action: { kind: 'declareWar', rival, district: d.id }, hostile: true });
+    for (const d of contested.filter((x) => casusBelli(s, rival, x.id) && !s.wars.some((w) => w.rival === rival)).slice(0, 2)) add('hostile', { key: `war:${d.id}`, action: { kind: 'declareWar', rival, district: d.id }, hostile: true });
     for (const w of s.wars.filter((x) => x.rival === rival)) {
-      add('table', { key: `raid:${w.id}`, action: { kind: 'raid', warId: w.id }, hostile: true });
+      add('hostile', { key: `raid:${w.id}`, action: { kind: 'raid', warId: w.id }, hostile: true });
       for (const t of ['white', 'tribute', 'district'] as const) add('table', { key: `terms:${w.id}:${t}`, action: { kind: 'terms', warId: w.id, terms: t } });
     }
   }
@@ -245,11 +283,11 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
 }
 
 /** Protection & intelligence (engine/protect.ts): Assign protection, and have him looked into. */
-function addProtect(s: GameState, c: Character, add: (id: MenuCategoryId, item: MenuItem) => void): void {
+function addProtect(s: GameState, c: Character, add: (id: MenuGroupId, item: MenuItem) => void): void {
   const boss = s.characters[s.playerId];
   const isBoss = c.id === s.playerId;
   const close = isBoss || c.dynasty || boss?.spouseId === c.id || boss?.childrenIds.includes(c.id) || !!s.nightlife?.goomars[c.id] || c.faction === 'player';
-  const cat: MenuCategoryId = isBoss ? 'self' : 'intrigue';
+  const cat: MenuGroupId = isBoss ? 'self' : 'protect';
   if (close) {
     const rec = recommendGuards(s, c.id, 'day', 1)[0];
     if (rec) add(cat, { key: 'protect', action: { kind: 'protect', op: { op: 'guard', subject: c.id, who: [rec.guard.id], kind: isBoss ? 'bodyguard' : isMinor(s, c) ? 'family' : 'driver', shift: 'day', weeks: 8, reportsTo: isBoss ? 'me' : 'both' } }, label: `Assign protection: ${rec.guard.firstName} on ${isBoss ? 'you' : c.firstName}` });
@@ -263,7 +301,7 @@ function addProtect(s: GameState, c: Character, add: (id: MenuCategoryId, item: 
 }
 
 /** City Hall verbs for a person of the political world (by pol id). */
-export function addPol(s: GameState, polId: string, add: (id: MenuCategoryId, item: MenuItem) => void): void {
+export function addPol(s: GameState, polId: string, add: (id: MenuGroupId, item: MenuItem) => void): void {
   const p = s.pol?.people[polId];
   if (!p) return;
   const pa = (op: Extract<PlayerAction, { kind: 'pol' }>['op']): PlayerAction => ({ kind: 'pol', op });
@@ -276,7 +314,10 @@ export function addPol(s: GameState, polId: string, add: (id: MenuCategoryId, it
   if (p.street) add('cityhall', { key: 'recruit', action: pa({ op: 'recruit', id: p.id }) });
 }
 
-const ORDER: MenuCategoryId[] = ['self', 'talk', 'diplomacy', 'intrigue', 'business', 'family', 'crew', 'heirs', 'romance', 'nightlife', 'hostile', 'table', 'cityhall', 'travel'];
-function order(m: Map<MenuCategoryId, MenuItem[]>): MenuCategory[] {
-  return ORDER.filter((id) => m.get(id)?.length).map((id) => ({ id, label: CATEGORY_LABEL[id], items: m.get(id)! }));
+/** The finer groups in the order they read inside their category. */
+const GROUP_ORDER: MenuGroupId[] = ['talk', 'diplomacy', 'bonds', 'business', 'envelope', 'table', 'cityhall', 'campaign', 'crew', 'council', 'care', 'discipline', 'protect', 'heirs', 'family', 'romance', 'nightlife', 'intrigue', 'spies', 'hostile', 'self', 'travel'];
+
+/** Always the six, in the same order (an empty one stays, greyed, so the menu never changes shape). */
+function order(m: Map<MenuGroupId, MenuItem[]>): MenuCategory[] {
+  return SIX.map((id) => ({ id, label: CATEGORY_LABEL[id], items: GROUP_ORDER.filter((g) => GROUP_HOME[g] === id).flatMap((g) => m.get(g) ?? []) }));
 }

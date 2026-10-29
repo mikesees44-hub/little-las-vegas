@@ -114,15 +114,16 @@ describe('deeds: the boss does them', () => {
     expect(previewAction(s, a).disabledReason).toMatch(/Tried lately/);
   });
 
-  it('the menu lists the deeds in their groups, with no duplicate threaten', () => {
+  it('the menu lists the deeds in the six categories, with no duplicate threaten', () => {
     const s = game();
     const k = capo(s);
     const cats = menuFor(s, k);
+    expect(cats.map((c) => c.id)).toEqual(['talk', 'business', 'crew', 'heart', 'pressure', 'move']);
     const keys = new Map(cats.flatMap((c) => c.items.map((it) => [it.key, c.id] as const)));
-    expect(keys.get('d:befriend')).toBe('diplomacy');
+    expect(keys.get('d:befriend')).toBe('talk');
     expect(keys.get('d:recognize')).toBe('crew');
     expect(keys.get('d:discipline')).toBe('crew');
-    expect(keys.get('d:findSecrets')).toBe('intrigue');
+    expect(keys.get('d:findSecrets')).toBe('pressure');
     expect(keys.has('d:threaten')).toBe(true);
     expect(keys.has('i:threaten')).toBe(false);
     const rival = s.characters[s.rivals.find((r) => r.kind === 'mob')!.leaderId];

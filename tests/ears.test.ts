@@ -294,11 +294,12 @@ describe('the Ears: UI', () => {
     const someone = s.ears!.links[0]?.a ?? t.id;
     renderToString(createElement(ConnectionsList, { s, id: someone, compact: true }));
     const cats = menuFor(s, t);
-    const night = cats.find((c) => c.id === 'nightlife');
+    // On a man the Ears are a way to listen to him (Pressure); on the Madam they are the night (Family & Heart).
+    const night = cats.find((c) => c.id === 'pressure');
     expect(night).toBeDefined();
     expect(night!.items.some((i) => i.key === 'ears:close')).toBe(true);
     expect(night!.items.some((i) => i.key === 'ears:dance')).toBe(true);
-    const mc = menuFor(s, s.characters[s.ears!.madam.id]).find((c) => c.id === 'nightlife');
+    const mc = menuFor(s, s.characters[s.ears!.madam.id]).find((c) => c.id === 'heart');
     expect(mc!.items.some((i) => i.key === 'madam:call')).toBe(true);
   });
 });

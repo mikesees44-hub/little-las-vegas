@@ -7,6 +7,8 @@ import type { Business, GameState, PlayerAction } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
 import { DirtyHere } from '../econ/DirtyWork';
 import { useEmpire } from '../empire/context';
+import { workPlace } from '../../engine/bizRacket';
+import { openAsks, troubled } from '../../engine/placeAsks';
 import { useShell } from '../shell/context';
 
 /**
@@ -36,6 +38,40 @@ export function placeOrder(l: Lot | undefined, id: PlaceActionId): PlayerAction 
   if (id === 'lease') return { kind: 'econ', op: { type: 'leaseLot', lotId: l.id } };
   if (id === 'renovate') return { kind: 'econ', op: { type: 'renovate', lotId: l.id } };
   return undefined;
+}
+
+/**
+ * The orders a place of yours takes that used to live only on the Rackets &
+ * Holdings screens (STREAMLINE S9: the place is a door too): upgrade it,
+ * collect, sell it, the back room as headquarters, audit the man who runs
+ * it, answer a man who wants to run a racket here, trouble with a tenant.
+ */
+export function placeMoreOrders(s: GameState, l: Lot | undefined, biz?: Business): { key: string; label?: string; action: PlayerAction; hostile?: boolean }[] {
+  const out: { key: string; label?: string; action: PlayerAction; hostile?: boolean }[] = [];
+  const mine = !!l && (l.status === 'owned' || l.status === 'leased');
+  const b = biz ?? (l?.bizId ? s.businesses.find((x) => x.id === l.bizId) : undefined);
+  if (b && (mine || !l)) {
+    out.push({ key: 'upgrade', action: { kind: 'econ', op: { type: 'upgrade', bizId: b.id } } });
+    out.push({ key: 'collect', action: { kind: 'econ', op: { type: 'collect', bizId: b.id } } });
+    if (/trattoria|restaurant|diner|supper/i.test(`${b.kind} ${l?.use ?? ''}`) && s.econ?.hq?.bizId !== b.id) out.push({ key: 'hq', label: 'Make its back room your headquarters', action: { kind: 'econ', op: { type: 'hq', kind: 'restaurant', bizId: b.id } } });
+    if (!l) out.push({ key: 'sellBiz', action: { kind: 'sellBusiness', businessId: b.id }, hostile: true });
+  }
+  if (l && mine) {
+    const key = b?.id ?? `lot:${l.id}`;
+    if (s.econ?.managers[key]) out.push({ key: 'audit', label: 'Audit the manager\'s books', action: { kind: 'econ', op: { type: 'audit', key } } });
+    if (l.status === 'owned') out.push({ key: 'sell', label: 'Sell the property', action: { kind: 'econ', op: { type: 'sellLot', lotId: l.id } }, hostile: true });
+  }
+  const wp = workPlace(s, l, biz);
+  if (wp) {
+    for (const a of openAsks(s).filter((x) => x.place === wp.id).slice(0, 1)) {
+      out.push({ key: `ask:${a.id}:y`, label: `Let ${a.name} run it here`, action: { kind: 'econ', op: { type: 'placeAsk', id: a.id, how: 'accept' } } });
+      out.push({ key: `ask:${a.id}:n`, label: `Turn ${a.name} down`, action: { kind: 'econ', op: { type: 'placeAsk', id: a.id, how: 'refuse' } } });
+    }
+    for (const [id, tn] of troubled(s).filter(([, x]) => x.place === wp.id).slice(0, 1)) {
+      for (const how of ['keep', 'replace', 'withdraw'] as const) out.push({ key: `ten:${id}:${how}`, label: `${tn.name}: ${how === 'keep' ? 'keep him' : how === 'replace' ? 'put your own man in' : 'close it'}`, action: { kind: 'econ', op: { type: 'tenantCall', id, how } } });
+    }
+  }
+  return out;
 }
 
 export function PlaceVerbs({ s, lot, biz, on = {}, extra, title = 'This place', hide = [] }: {
@@ -74,6 +110,7 @@ export function PlaceVerbs({ s, lot, biz, on = {}, extra, title = 'This place', 
   // Reasons for the verbs this card can show; the dirty jobs say their own (DirtyHere).
   const notNow = acts.filter((a) => a.why && !DIRTY.includes(a.id) && (opener(a) || placeOrder(lot, a.id)));
   const hasDirty = acts.some((a) => DIRTY.includes(a.id));
+  const more = placeMoreOrders(s, lot, biz);
   return (
     <section className="space-y-1.5" data-testid="place-verbs">
       <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{title}</div>
@@ -86,6 +123,7 @@ export function PlaceVerbs({ s, lot, biz, on = {}, extra, title = 'This place', 
         </div>
       )}
       {orders.map((a) => <ActionRow key={a.id} s={s} action={placeOrder(lot, a.id)!} label={a.label} />)}
+      {more.map((o) => <ActionRow key={o.key} s={s} action={o.action} label={o.label} hostile={o.hostile} />)}
       {hasDirty && <DirtyHere s={s} lot={lot} biz={biz} onGo={() => shell.go('holdings.dirty')} />}
       {notNow.length > 0 && (
         <div className="text-[11px] text-stone-500" data-testid="place-not-now">
