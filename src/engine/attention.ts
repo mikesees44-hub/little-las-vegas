@@ -1,9 +1,9 @@
 import { inbox, type InboxItem, type InboxUi } from './inbox';
-import { envelopeMan } from './tribute';
+import { envelopeMan, latestReport } from './tribute';
 import { briefing } from './briefing';
 import { weekCheckIns } from './checkins';
 import { DAY_NAMES, today } from './days';
-import { chosenOpt, docketOf } from './lieutenants';
+import { capoLevelOf, chosenOpt, docketOf, levelOf } from './lieutenants';
 import { displayName } from './characters';
 import type { Choice, Effect, GameState } from './types';
 
@@ -192,7 +192,30 @@ export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
  * (lieutenants.ts) say otherwise.
  */
 export type DelegationRule = (s: GameState, it: InboxItem) => boolean;
-const RULES: DelegationRule[] = [];
+const RULES: DelegationRule[] = [
+  // A capo's routine morning problem: his territory, his call (unless the boss keeps it).
+  (s, it) => {
+    if (it.kind !== 'morning') return false;
+    const c = weekCheckIns(s).find((x) => `am:${x.key}` === it.key);
+    return !!c?.problem && !c.problem.urgent && capoLevelOf(s, c.capoId) === 'handle';
+  },
+  // The envelope on a quiet week: the bagman takes the standing split (only a short, a skim or a petition needs the boss).
+  (s, it) => it.kind === 'envelope' && !envelopeOff(s),
+  // The sit-down's routine items: the speaker sees to them.
+  (s, it) => {
+    if (!it.ref.brief) return false;
+    return !!briefing(s).items.find((x) => x.id === it.ref.brief)?.routine;
+  },
+  // A tenant asking to run his racket at your place, trouble at a tenant's: the underboss's rackets, at Handle it.
+  (s, it) => (!!it.ref.ask || !!it.ref.trouble) && it.tone === 'gold' && levelOf(s, 'rackets') === 'handle' && !!envelopeMan(s).c,
+];
+
+/** Something off in this week's envelope: a short crew, an issue, a petition (MAKE_IT_GREAT #9). */
+export function envelopeOff(s: GameState): boolean {
+  const rep = latestReport(s);
+  if (!rep) return false;
+  return rep.issues.length > 0 || rep.petitions.length > 0 || rep.crews.some((c) => c.short > 0);
+}
 /** Register a delegation line (lieutenants.ts and friends; kept here so attention stays a leaf for them). */
 export function addDelegationRule(r: DelegationRule): void { if (!RULES.includes(r)) RULES.push(r); }
 export function delegated(s: GameState, it: InboxItem): boolean {

@@ -331,3 +331,20 @@ describe('several packs', () => {
     registerWorldMaterializer(() => undefined);
   });
 });
+
+describe('Sunday dinner settles quietly unless it is new (storyPace.ts)', () => {
+  it('a seen scene at a peaceful table is a quiet line; a new one or a grudge reaches the boss', async () => {
+    const { quietRule } = await import('../src/engine/storyPace');
+    const { newGame } = await import('../src/engine/newGame');
+    const { addOpinion } = await import('../src/engine/relations');
+    const s = newGame('sunday-quiet');
+    const guest = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.id !== s.playerId)!;
+    const ev = { iid: 'x1', defId: 'act_toast', title: 'Sunday dinner: The toast', text: '', week: s.week, mandatory: true, priority: 62, meta: { activity: 'sunday' }, actors: [guest.id], defaultChoiceId: 'a', choices: [{ id: 'a', label: 'Short and sweet', effects: [] }] } as unknown as Parameters<typeof quietRule>[1];
+    s.director = { hist: [], tribute: [] } as unknown as typeof s.director;
+    expect(quietRule(s, ev)).toBeUndefined();
+    s.director!.hist.push([s.week - 10, 'act_toast', 'family']);
+    expect(quietRule(s, ev)?.choice).toBe('a');
+    addOpinion(s, guest.id, s.playerId, 'test', -100, 1);
+    expect(quietRule(s, ev)).toBeUndefined();
+  });
+});

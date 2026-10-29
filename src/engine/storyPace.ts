@@ -1,3 +1,4 @@
+import { opinion } from './relations';
 import { isSurrender, safeDefault } from './handover';
 import { hashSeed, rand, type RngHolder } from './rng';
 import { director } from './storyDirector';
@@ -98,6 +99,13 @@ for (const id of SCORE_IDS) {
   };
 }
 
+/** Two people at the table who can't stand each other (or one who can't stand the boss). */
+function grudgeAt(s: GameState, ids: readonly string[]): boolean {
+  const all = [...ids, s.playerId];
+  for (const a of all) for (const b of all) if (a !== b && s.characters[a] && s.characters[b] && opinion(s, a, b) <= -40) return true;
+  return false;
+}
+
 function seenTemplate(s: GameState, id: string): boolean {
   return (s.director?.hist ?? []).some((h) => h[1] === id);
 }
@@ -120,6 +128,10 @@ function dealRoutine(s: GameState, ev: EventInstance): QuietRule | undefined {
 
 /** May this popup be settled quietly instead (routine), and how? */
 export function quietRule(s: GameState, ev: EventInstance): QuietRule | undefined {
+  // Sunday dinner: the house keeps it (a quiet line), unless the scene is new or a grudge sits at the table.
+  if (ev.meta?.activity === 'sunday' && ev.defId.startsWith('act_') && seenTemplate(s, ev.defId) && !grudgeAt(s, ev.actors ?? [])) {
+    return { choice: ev.defaultChoiceId, note: (e, ch) => `${e.title}. The house kept it: ${ch.label.toLowerCase()}.` };
+  }
   if (ev.mandatory || ev.meta?.due) return undefined;
   const d = dealRoutine(s, ev);
   if (d) return d;

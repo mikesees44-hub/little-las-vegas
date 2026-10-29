@@ -93,6 +93,7 @@ import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
 import { deskBadge } from '../engine/attention';
+import { answerOffer } from '../engine/lieutenants';
 import { MorningReports, WhoHandlesWhat } from './lieutenants/Lieutenants';
 import { markOrder, setRecentSeed } from './plans/orderMarks';
 import { PlansContext, type PlansApi } from './plans/context';
@@ -700,6 +701,7 @@ export function App({ startOn = 'title' }: AppProps) {
     onEnvelope: () => tributeApi.openAudience(),
     onTake: (key: string) => setTaken((t) => ({ week: s.week, keys: [...(t.week === s.week ? t.keys : []).filter((k) => k !== key), key] })),
     onMotion: () => (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(),
+    onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
   const takenKeys = taken.week === s.week ? taken.keys : [];
   const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'week' }); };

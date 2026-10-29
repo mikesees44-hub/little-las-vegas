@@ -2,6 +2,7 @@ import { TableButton } from '../advice/CounselTable';
 import { bossDesk, deskHeaderCount, readyReview, type DeskGroup, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
 import type { GameState } from '../../engine/types';
 import { DAY_NAMES } from '../../engine/days';
+import { ltView } from '../../engine/lieutenants';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
 import { Fragment, useState, type ReactNode } from 'react';
@@ -32,6 +33,8 @@ export interface DeskApi {
   onTake?: (key: string) => void;
   /** Everything in motion (the plans panel). */
   onMotion?: () => void;
+  /** An old save's one-time offer: let the underboss handle the routine (true) or keep it as it was. */
+  onOffer?: (take: boolean) => void;
 }
 
 export type DeskFilter = 'all' | 'decisions' | 'capos' | 'lieutenants' | 'money' | 'people';
@@ -155,6 +158,13 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: Gam
         </div>
         <DeskClock s={s} className="text-[11px] sm:text-[13px]" />
       </div>
+      {ltView(s).offer && api.onOffer && (
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded border border-gold-600/60 bg-gold-500/10 px-2 py-1.5 text-[12px] text-stone-200" data-testid="desk-offer">
+          <span className="min-w-0 flex-1">Your underboss offers to handle the routine: the crews, the rackets, the street, the papers and the quarrels, and each capo his own territory. Big steps still wait for you.</span>
+          <button type="button" className="btn-ghost py-0.5 text-[11px]" onClick={() => api.onOffer!(false)} data-testid="desk-offer-keep">Keep it as it was</button>
+          <button type="button" className="btn-gold py-0.5 text-[11px]" onClick={() => api.onOffer!(true)} data-testid="desk-offer-take">Let him</button>
+        </div>
+      )}
       <div className="mt-1.5 flex flex-wrap gap-1" role="tablist" aria-label="Filter the desk">
         {counts.filter((f) => f.id === 'all' || f.n > 0 || f.id === filter).map((f) => (
           <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)} data-testid={`desk-filter-${f.id}`}

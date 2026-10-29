@@ -58,20 +58,29 @@ export type LtLevel = 'handle' | 'ask' | 'self';
 export const LT_SEATS: LtSeat[] = ['underboss', 'consigliere'];
 
 export const DOMAINS: Record<LtDomain, { seat: LtSeat; name: string; blurb: string; def: LtLevel }> = {
-  crews: { seat: 'underboss', name: 'The crews', blurb: 'Discipline, sore and wavering men, recruiting, who gets made.', def: 'ask' },
+  crews: { seat: 'underboss', name: 'The crews', blurb: 'Discipline, sore and wavering men, recruiting, who gets made.', def: 'handle' },
   collections: { seat: 'underboss', name: 'Collections', blurb: 'Short envelopes, the shylock book, the count, washing the cash.', def: 'handle' },
-  rackets: { seat: 'underboss', name: 'Rackets upkeep', blurb: 'Staffing, how the places run, a capo\'s earner, a new racket.', def: 'ask' },
-  street: { seat: 'underboss', name: 'The street', blurb: 'The corners, small threats, answering a rival\'s strike, guarding you.', def: 'ask' },
+  rackets: { seat: 'underboss', name: 'Rackets upkeep', blurb: 'Staffing, how the places run, a capo\'s earner, a new racket.', def: 'handle' },
+  street: { seat: 'underboss', name: 'The street', blurb: 'The corners, small threats, answering a rival\'s strike, guarding you.', def: 'handle' },
   law: { seat: 'consigliere', name: 'Lawyers & bail', blurb: 'The file, the lawyer, lying low.', def: 'ask' },
   pad: { seat: 'consigliere', name: 'The pad', blurb: 'Cops and politicians on the payroll, the heat.', def: 'handle' },
   families: { seat: 'consigliere', name: 'Other families', blurb: 'Negotiations, truces and terms, plans of ours that got out.', def: 'ask' },
   table: { seat: 'consigliere', name: 'The Table & Philadelphia', blurb: 'Disputes before the Table, keeping Philadelphia sweet.', def: 'ask' },
-  press: { seat: 'consigliere', name: 'The papers', blurb: 'Spiking a story about us before it runs.', def: 'ask' },
-  mediation: { seat: 'consigliere', name: 'Quarrels in the family', blurb: 'Grudges, capos at odds, a man getting too big.', def: 'ask' },
+  press: { seat: 'consigliere', name: 'The papers', blurb: 'Spiking a story about us before it runs.', def: 'handle' },
+  mediation: { seat: 'consigliere', name: 'Quarrels in the family', blurb: 'Grudges, capos at odds, a man getting too big.', def: 'handle' },
   paperwork: { seat: 'consigliere', name: 'Legitimate paperwork', blurb: 'Stop-work orders, inspectors, permits on your lots.', def: 'handle' },
 };
 
 export const DOMAIN_IDS = Object.keys(DOMAINS) as LtDomain[];
+
+/**
+ * The defaults before the streamline (a save from then keeps them: upgradeSave writes them out).
+ * Today the routine is the lieutenants': only the lawyers, the other families and the Table ask
+ * first, and a big step (bigStep: money out, new ground, a man made, a war move) still waits for
+ * the boss's word unless he trusts them with it (`free`, the "Let them run it" preset).
+ */
+export const OLD_DEFAULTS: Record<LtDomain, LtLevel> = { crews: 'ask', collections: 'handle', rackets: 'ask', street: 'ask', law: 'ask', pad: 'handle', families: 'ask', table: 'ask', press: 'ask', mediation: 'ask', paperwork: 'handle' };
+export const DEFAULTS_V = 2;
 export const LEVEL_LABEL: Record<LtLevel, string> = { handle: 'Handle it', ask: 'Ask me first', self: 'I\'ll do it' };
 
 /** Weekly Family money each may spend on his own (the boss sets it). */
@@ -187,6 +196,14 @@ export interface LtFound {
 
 export interface LtState {
   levels: Partial<Record<LtDomain, LtLevel>>;
+  /** Big steps on "Handle it" go through without the boss's word (a save from before, or "Let them run it"). */
+  free?: boolean;
+  /** Each capo's say over his own territory's routine (his morning problems); unset: `capoDefault`. */
+  capoLevel?: Record<string, LtLevel>;
+  /** The capos' level when not set per man (unset: Handle it; a save from before: Ask me first). */
+  capoDefault?: LtLevel;
+  /** The one-time Desk note on an old save: "Your underboss offers to handle the routine". */
+  offer?: 1;
   budget: Partial<Record<LtSeat, number>>;
   docket?: { week: number; acts: LtAct[] };
   /** The boss's word on this week's docket (act id -> call). */
@@ -221,7 +238,7 @@ export function ensureLt(s: GameState): LtState {
 function withLt(s: GameState, f: (lt: LtState) => void): GameState {
   const prev = s.briefing ?? { trust: {}, log: [] };
   const lt0 = prev.lt ?? fresh(s);
-  const lt: LtState = { ...lt0, levels: { ...lt0.levels }, budget: { ...lt0.budget }, calls: { ...lt0.calls } };
+  const lt: LtState = { ...lt0, levels: { ...lt0.levels }, budget: { ...lt0.budget }, calls: { ...lt0.calls }, ...(lt0.capoLevel ? { capoLevel: { ...lt0.capoLevel } } : {}) };
   // The week's docket is fixed from the first word the boss gives (a level or a budget changed mid-week
   // never reshuffles the days: it is read when they act, and next week is planned with it).
   if (!lt.docket || lt.docket.week !== s.week) { lt.docket = { week: s.week, acts: docketOf(s) }; lt.calls = {}; }
@@ -243,6 +260,74 @@ export function setLevel(s: GameState, d: LtDomain, level: LtLevel): GameState {
 
 export function setBudget(s: GameState, seat: LtSeat, amount: number): GameState {
   return withLt(s, (lt) => { lt.budget[seat] = Math.max(0, Math.round(amount)); });
+}
+
+/** A capo's say over his territory's routine: Handle it (his own answer), Ask me first, or I'll do it. */
+export function capoLevelOf(s: GameState, capoId: string): LtLevel {
+  const lt = s.briefing?.lt;
+  return lt?.capoLevel?.[capoId] ?? lt?.capoDefault ?? 'handle';
+}
+
+export function setCapoLevel(s: GameState, capoId: string, level: LtLevel): GameState {
+  return withLt(s, (lt) => { lt.capoLevel = { ...(lt.capoLevel ?? {}), [capoId]: level }; });
+}
+
+/** Big steps on "Handle it" go through without asking. */
+export function bigStepsFree(s: GameState): boolean {
+  return !!s.briefing?.lt?.free;
+}
+
+/** The chain of command's presets (who handles what, in one tap). */
+export type LtPreset = 'hands' | 'balanced' | 'run';
+export const PRESETS: Record<LtPreset, { name: string; blurb: string; levels: Record<LtDomain, LtLevel>; capos: LtLevel; free: boolean }> = {
+  hands: { name: 'Hands-on', blurb: 'Your lieutenants and capos propose; you say yes or no to all of it.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, 'ask'])) as Record<LtDomain, LtLevel>, capos: 'ask', free: false },
+  balanced: { name: 'Balanced', blurb: 'They handle the routine; the lawyers, the other families, the Table and every big step wait for you.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, DOMAINS[d].def])) as Record<LtDomain, LtLevel>, capos: 'handle', free: false },
+  run: { name: 'Let them run it', blurb: 'They handle everything, big steps too. You hear about it after.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, 'handle'])) as Record<LtDomain, LtLevel>, capos: 'handle', free: true },
+};
+
+/** Apply a preset: exactly its levels, its capo level for every capo, and whether big steps wait (pure). */
+export function applyPreset(s: GameState, p: LtPreset): GameState {
+  const P = PRESETS[p];
+  return withLt(s, (lt) => {
+    lt.levels = {};
+    for (const d of DOMAIN_IDS) if (P.levels[d] !== DOMAINS[d].def) lt.levels[d] = P.levels[d];
+    lt.capoLevel = {};
+    if (P.capos === 'handle') delete lt.capoDefault; else lt.capoDefault = P.capos;
+    if (P.free) lt.free = true; else delete lt.free;
+    delete lt.offer;
+  });
+}
+
+/** Which preset the current settings are, if any. */
+export function presetOf(s: GameState): LtPreset | undefined {
+  return (Object.keys(PRESETS) as LtPreset[]).find((p) => {
+    const P = PRESETS[p];
+    const capos = Object.values(s.briefing?.lt?.capoLevel ?? {});
+    return DOMAIN_IDS.every((d) => levelOf(s, d) === P.levels[d]) && bigStepsFree(s) === P.free && (s.briefing?.lt?.capoDefault ?? 'handle') === P.capos && capos.every((l) => l === P.capos);
+  });
+}
+
+/**
+ * A save from before the new defaults (upgradeSave): its old defaults written out, so nothing
+ * changes under the player, and a one-time offer on the Desk to let them handle the routine.
+ */
+export function keepOldDelegation(s: GameState): void {
+  const lt = ensureLt(s);
+  for (const d of DOMAIN_IDS) if (lt.levels[d] === undefined && OLD_DEFAULTS[d] !== DOMAINS[d].def) lt.levels[d] = OLD_DEFAULTS[d];
+  lt.free = true;
+  lt.capoDefault ??= 'ask';
+  lt.offer = 1;
+}
+
+/** The offer, answered: "Let him" takes the new defaults (the levels you set yourself stay); "Keep it" keeps it as it was (pure). */
+export function answerOffer(s: GameState, take: boolean): GameState {
+  return withLt(s, (lt) => {
+    delete lt.offer;
+    if (!take) return;
+    for (const d of DOMAIN_IDS) if (lt.levels[d] === OLD_DEFAULTS[d] && OLD_DEFAULTS[d] !== DOMAINS[d].def) delete lt.levels[d];
+    delete lt.free;
+    if (lt.capoDefault === 'ask') delete lt.capoDefault;
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -591,7 +676,9 @@ function plan(s: GameState): LtAct[] {
       const surrender = actionSurrenders(s, ch.pick.action);
       const over = surrender || spend + ch.pick.cost > budget;
       if (!over) spend += ch.pick.cost;
-      const mode: LtAct['mode'] = level === 'handle' && !over ? 'handle' : 'ask';
+      // A big step waits for the boss's word, even on "Handle it", unless he trusts them with it.
+      const big = bigStep(ch.pick.action, ch.pick.cost);
+      const mode: LtAct['mode'] = level === 'handle' && !over && !(big && !bigStepsFree(s)) ? 'handle' : 'ask';
       const day = mode === 'handle' ? Math.min(5, nHandle++) : Math.min(5, 2 + nAsk++);
       const lineSeed = Math.floor(h01(`${s.seed}|${s.week}|${c.id}|line`) * c.says.length);
       out.push({
@@ -628,7 +715,7 @@ export function planNextWeek(s: GameState): void {
 
 /** Ask me first (or over budget: he needs the OK) vs Handle it, as the domain is set now. */
 export function modeOf(s: GameState, a: LtAct): LtAct['mode'] {
-  return a.needsOk || levelOf(s, a.domain) !== 'handle' ? 'ask' : 'handle';
+  return a.needsOk || levelOf(s, a.domain) !== 'handle' || (a.waits && !bigStepsFree(s)) ? 'ask' : 'handle';
 }
 
 /** Past his day: the boss's word can no longer reach him. */
@@ -722,7 +809,7 @@ export function lieutenantsWeek(ctx: Ctx, docket: readonly LtAct[], calls: Recor
     }
     const approved = call?.verdict === 'approve' || call?.verdict === 'change';
     // Asked about a big step and never answered: he waits for your word (unless you told him to handle it).
-    if (a.waits && !approved && levelOf(s, a.domain) !== 'handle') { lt.log.push({ week: s.week, day: a.day, seat: a.seat, byId: a.byId, actId: a.id, domain: a.domain, text: `${who} held off on "${a.topic}": a step that big waits for your word.`, result: 'skipped', cost: 0 }); continue; }
+    if (a.waits && !approved && !(levelOf(s, a.domain) === 'handle' && bigStepsFree(s))) { lt.log.push({ week: s.week, day: a.day, seat: a.seat, byId: a.byId, actId: a.id, domain: a.domain, text: `${who} held off on "${a.topic}": a step that big waits for your word.`, result: 'skipped', cost: 0 }); continue; }
     if (a.needsOk && !approved) { lt.log.push({ week: s.week, day: a.day, seat: a.seat, byId: a.byId, actId: a.id, domain: a.domain, text: `${who} let "${a.topic}" go: over his budget, and you never said yes.`, result: 'skipped', cost: 0 }); continue; }
     const o = chosenOpt(s, a);
     if (!o) continue;
