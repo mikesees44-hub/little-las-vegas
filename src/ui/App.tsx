@@ -319,7 +319,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (menu || urgent) return;
     const fresh = unseenUrgent(s);
     if (!fresh.length) return;
-    setSpeed(0);
+    if (pausesOn('pauseOnUrgent')) setSpeed(0);
     setUrgent(fresh[0]);
     setS((x) => markTipsSeen(x, fresh));
   }, [s, menu, urgent]);
@@ -467,7 +467,9 @@ export function App({ startOn = 'title' }: AppProps) {
     setNight([]);
     setReels([]);
     setAutoOpened({});
-    setSpeed(0);
+    // A new or loaded game starts with the clock moving (the opening's cards hold it until they close).
+    setSpeed(timeMode() === 'clock' ? DEFAULT_SPEED : 0);
+    ackedRef.current = new Set();
     setRoute({});
     setReportLog([]);
     setCtxMenu(undefined);
