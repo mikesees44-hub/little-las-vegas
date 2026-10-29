@@ -45,6 +45,11 @@ old memory grid are moved by what they say (a verified point stays; a tax-list a
 spot between the same streets) and every id is kept; what could not be placed confidently is in
 `packs/island/grid-review.json`. The street order is in `evidence/osm-street-order.json` (the tests check the game
 against it). Old saves move their own added places once (`src/engine/legacyGrid.ts`).
+Two long cross streets that come out under 45 m apart at the middle (Schellenger and Cedar converge west of New
+Jersey Avenue) are read where both run and are furthest apart, so a real block stays between them. Lots placed
+by a point that land on each other on the shorter real blocks are slid along their street to free ground
+(`separateByPoint`; listed in the review item `rq-parcel-nudged`), and generated lots skip a half-block where
+such a lot stands. Rerun with `grid --area island --legacy <(git show 23dcadc:src/worldpack/cities/wildwood.json)`.
 
 ### Sanborn 1950 (`sanborn-geo`)
 
