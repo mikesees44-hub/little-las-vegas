@@ -26,6 +26,7 @@ import { addMore } from './menuMore';
 import { nightActionsFor } from '../../engine/nightlife';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
+import { capoActionsFor } from '../../engine/capos';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
 /**
@@ -188,6 +189,11 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
       const keep = c.keep ?? CAPO_CUT;
       if (keep > 0.2) add('crew', { key: 'k-', action: { kind: 'contract', charId: c.id, keep: Math.round((keep - 0.05) * 100) / 100 } });
       if (keep < 0.45) add('crew', { key: 'k+', action: { kind: 'contract', charId: c.id, keep: Math.round((keep + 0.05) * 100) / 100 } });
+    }
+    // The capos (capos.ts): his requests waiting on your word, and what you can do about him.
+    if (c.rank === 'capo') {
+      for (const q of s.capos?.req.filter((x) => x.capo === c.id && !x.ans) ?? []) for (const a of ['yes', 'redirect', 'no'] as const) add('crew', { key: `capo:answer:${q.id}:${a}`, action: { kind: 'capo', op: { op: 'answer', req: q.id, a } } });
+      for (const a of capoActionsFor(s, c.id)) add('crew', { key: `capo:${a.op}`, action: { kind: 'capo', op: a }, hostile: a.op === 'confront' || a.op === 'watch' });
     }
     if (c.rank !== 'associate' && !c.specialty) {
       for (const st of SEATS) if (holder(s, st)?.id !== c.id) add('council', { key: `seat:${st}`, action: { kind: 'appoint', seat: st, charId: c.id }, label: `Seat him as ${SEAT_INFO[st].name.toLowerCase()}${holder(s, st) ? ` (in ${holder(s, st)!.firstName}'s place)` : ''}` });

@@ -50,6 +50,7 @@ import { previewHoney } from './honey';
 import { commitPaper, previewPaper } from './paper';
 import { commitIntrigue, previewIntrigue } from './intrigueOps';
 import { commitArmy, previewArmy } from './army';
+import { commitCapo, previewCapo } from './capos';
 import { commitDev, previewDev } from './develop';
 import { commitSpend, previewSpend } from './spend';
 import { commitDeedAction, previewDeedAction } from './deeds/action';
@@ -165,6 +166,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   intrigue: { preview: (s, a) => previewIntrigue(s, a.op), commit: (ctx, a) => commitIntrigue(ctx, a.op) },
   /** The army (army.ts): raise the troops, hire muscle, the mattresses, a call to arms, a pact, an attack. */
   army: { preview: (s, a) => previewArmy(s, a.op), commit: (ctx, a) => commitArmy(ctx, a.op) },
+  /** The capos (capos.ts): answers, rewards, more ground, family, a man on him, ask him, have it out. */
+  capo: { preview: (s, a) => previewCapo(s, a.op), commit: (ctx, a) => commitCapo(ctx, a.op) },
   dev: { preview: (s, a) => previewDev(s, a.op), commit: (ctx, a) => commitDev(ctx, a.op) },
   /** Spend (spend.ts): the catalog; the Pocket or the Family pays, the IRS counts. */
   spend: { preview: (s, a) => previewSpend(s, a.op), commit: (ctx, a) => commitSpend(ctx, a.op) },

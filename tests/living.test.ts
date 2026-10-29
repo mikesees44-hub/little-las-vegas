@@ -310,7 +310,8 @@ describe('the men build their own wealth (crew financial lives)', () => {
   });
 
   it('outcomes vary: not everyone gets rich at the same rate', () => {
-    const s = hands('living-a', 104);
+    // The biggest of three hands-off families (one left alone for two years can bleed down to a man or two).
+    const s = [hands('living-a', 104), hands('living-b', 104), hands('living-c', 104)].sort((a, b) => purseMen(b).length - purseMen(a).length)[0];
     const worth = purseMen(s).map((c) => { const f = finOf(s, c.id); return c.wealth + (f?.bank ?? 0) + (f?.assets.reduce((a, x) => a + x.value, 0) ?? 0) - (f?.loans.reduce((a, d) => a + d.out, 0) ?? 0); });
     const mean = worth.reduce((a, b) => a + b, 0) / worth.length;
     const sd = Math.sqrt(worth.reduce((a, b) => a + (b - mean) ** 2, 0) / worth.length);

@@ -11,6 +11,7 @@ import { addOpinion, changeMeter, opinion } from './relations';
 import { hashSeed, rand, type RngHolder } from './rng';
 import { xfer } from './tribute';
 import { tripOf } from './travelState';
+import { revealReport } from './capos';
 import { FACTION_NAMES } from './world';
 import { honeyFinding } from './honeyFind';
 import type { ActionPreview } from './actions';
@@ -841,6 +842,13 @@ export function findingsAbout(s: GameState, subjectId: string, purpose: InvPurpo
     const plan = s.shadow?.plans[c.id];
     if (plan && plan.goal === 'leave_organization') out.push({ ground: { src: 'plan', ref: c.id }, observation: `${He} has been asking how a man gets out.`, interpretation: `${He} wants to retire.`, alternatives: [], secrecy: 2, weight: 1, helpful: true, tone: 'help' });
     else if (plan && (plan.goal === 'seek_leadership' || plan.goal === 'support_underboss' || plan.goal === 'support_heir' || plan.goal === 'build_influence') && plan.prefer) out.push({ ground: { src: 'plan', ref: c.id }, observation: plan.prefer === c.id ? `${He} has been building support for ${him}self.` : `${He} has been talking up ${first(s, plan.prefer)} for after you.`, interpretation: 'Thinking about the succession.', alternatives: ['Every man thinks about it; few act'], secrecy: 2, weight: 2, tone: 'talk' });
+    // A capo's own game (capos.ts): the deal he is making, and what he kept from you.
+    const cb = s.capos?.books[c.id];
+    if (cb?.plot) {
+      const pk = cb.plot.k;
+      out.push({ ground: { src: 'plan', ref: `capo:${c.id}` }, observation: pk === 'defect' ? `${He} has been sitting down with ${FACTION_NAMES[cb.plot.rival ?? 'none'] ?? 'another family'} people, at night, away from his corners.` : pk === 'fbi' ? `${He} got into a car with two men in gray suits, twice.` : `${He} has been counting heads among the capos.`, interpretation: pk === 'defect' ? `${He} may be making a deal to go over, with his crew.` : pk === 'fbi' ? `${He} may be talking to the FBI.` : `${He} may be part of a move against you.`, alternatives: ['Men meet for many reasons'], secrecy: 3, weight: 5, tone: pk === 'fbi' ? 'rat' : 'talk', reveal: (st, lvl) => { const b = st.capos?.books[c.id]; if (b?.plot && lvl !== 'low' && !b.plot.known) b.plot.known = st.week; } });
+    }
+    for (const r of s.capos?.reports ?? []) if (r.capo === c.id && r.kind !== 'honest' && r.rev === undefined && s.week - r.w <= 26) out.push({ ground: { src: 'fact', ref: `capo:${r.id}` }, observation: r.kind === 'slant' ? `What ${he} told you ("${r.told}") is not what the street says.` : `${He} knew something and did not bring it to you.`, interpretation: `The truth: ${r.truth}.`, alternatives: ['A capo hears a lot; not all of it is worth your time'], secrecy: 2, weight: 3, tone: 'talk', reveal: (st, lvl) => { if (lvl !== 'low') revealReport(st, r.id, 'The man you had look into him'); } });
     for (const x of s.secrets) if (x.ownerId === c.id && (x.kind === 'informant' || x.kind === 'plot') && !x.knownBy.includes('player')) out.push({ ground: { src: 'secret', ref: x.id }, observation: x.text.replace(/\.$/, '') + '.', interpretation: 'If it is true, it is serious.', alternatives: ['Things said about a man are not always so'], secrecy: 3, weight: 4, tone: 'rat', reveal: (st, lvl) => { const y = st.secrets.find((z) => z.id === x.id); if (y && lvl !== 'low' && !y.knownBy.includes('player')) y.knownBy.push('player'); } });
   }
   if (purpose === 'personal' || purpose === 'story') {
