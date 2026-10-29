@@ -24,7 +24,25 @@ import { ASSET_URLS } from './art/assetUrls';
  * A fictional occupant set on a building is game state (saved with the game).
  */
 
-const LAYER_FILE = 'imported-wildwood-test-blocks.json';
+/** The imported layers (public/geo, loaded when the view opens): the whole island, and the first test area. */
+const LAYERS = [
+  { id: 'island', file: 'imported-wildwood-island.json', label: 'Whole island' },
+  { id: 'test', file: 'imported-wildwood-test-blocks.json', label: 'Test blocks' },
+] as const;
+const LAYER_KEY = 'llv-imported-layer';
+/** The 1950 Sanborn sheets, georeferenced (cli.ts sanborn-geo): matrices only; the images load by file name. */
+const SANBORN_FILE = 'sanborn-1950-wildwood.json';
+interface SanbornSheet { id: string; file: string; size: [number, number]; crop?: [number, number, number, number]; kind: string; rmsM: number; small?: string; matrix: [number, number, number, number, number, number] }
+/**
+ * Where a sheet's image is: a downscaled copy shipped in public/sanborn/ for a
+ * few sheets; the rest by file name from the asset store once uploaded
+ * (window.__SANBORN_BASE, set by the host page), else not drawn (outline only).
+ */
+function sanbornHref(sh: SanbornSheet): string | undefined {
+  if (sh.small) return `./sanborn/${sh.small}`;
+  const base = typeof window !== 'undefined' ? (window as unknown as { __SANBORN_BASE?: string }).__SANBORN_BASE : undefined;
+  return base ? `${base}${sh.file}` : undefined;
+}
 const r1 = (x: number) => Math.round(x * 10) / 10;
 type Level = 'island' | 'area' | 'block' | 'building' | 'entrance';
 interface VB { x: number; y: number; w: number; h: number }
@@ -47,15 +65,37 @@ const KIND_LABEL: Record<string, string> = { verified: 'Verified for the year', 
 
 export function ImportedView({ s, onClose }: { s: GameState; onClose: () => void }) {
   const shell = useShell();
+  const [which, setWhich] = useState<string>(() => { try { return localStorage.getItem(LAYER_KEY) ?? 'island'; } catch { return 'island'; } });
   const [layer, setLayer] = useState<ImportedLayer | undefined>();
   const [err, setErr] = useState<string | undefined>();
-  useEffect(() => { getGeo<ImportedLayer>(LAYER_FILE).then(setLayer, (e: unknown) => setErr(String(e))); }, []);
+  useEffect(() => {
+    setLayer(undefined);
+    const f = (LAYERS.find((l) => l.id === which) ?? LAYERS[0]).file;
+    getGeo<ImportedLayer>(f).then(setLayer, (e: unknown) => setErr(String(e)));
+    try { localStorage.setItem(LAYER_KEY, which); } catch { /* private window */ }
+  }, [which]);
   if (err) return <div className="absolute inset-0 grid place-items-center bg-noir-950 text-sm text-stone-300" data-testid="imported-view">The imported blocks could not be loaded ({err}). <button type="button" className="ml-2 underline" onClick={onClose}>Back</button></div>;
   if (!layer) return <div className="absolute inset-0 grid place-items-center bg-noir-950 text-sm text-stone-400" data-testid="imported-view">Loading the imported blocks…</div>;
-  return <ImportedMap s={s} layer={layer} onClose={onClose} update={shell.act ?? shell.update} />;
+  return <ImportedMap key={layer.packId} s={s} layer={layer} onClose={onClose} update={shell.act ?? shell.update} which={which} onWhich={setWhich} />;
 }
 
-function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: ImportedLayer; onClose: () => void; update?: (f: (s: GameState) => GameState, what?: string) => void }) {
+/** A feature's box [u0, v0, u1, v1] from its flat points. */
+function boxFlat(pts: number[]): [number, number, number, number] {
+  let a = Infinity; let b = Infinity; let c = -Infinity; let d = -Infinity;
+  for (let i = 0; i < pts.length; i += 2) { a = Math.min(a, pts[i]); c = Math.max(c, pts[i]); b = Math.min(b, pts[i + 1]); d = Math.max(d, pts[i + 1]); }
+  return [a, b, c, d];
+}
+
+function ImportedMap({ s, layer, onClose, update, which, onWhich }: { s: GameState; layer: ImportedLayer; onClose: () => void; update?: (f: (s: GameState) => GameState, what?: string) => void; which?: string; onWhich?: (id: string) => void }) {
+  const [sanborn, setSanborn] = useState<SanbornSheet[] | undefined>();
+  const [showSanborn, setShowSanborn] = useState(false);
+  useEffect(() => { if (showSanborn && !sanborn) getGeo<{ sheets: SanbornSheet[] }>(SANBORN_FILE).then((x) => setSanborn(x.sheets), () => setSanborn([])); }, [showSanborn, sanborn]);
+  // Boxes for drawing only what is in view (the whole island is ~11,000 buildings and ~21,000 parcels).
+  const boxes = useMemo(() => {
+    const m = new Map<string, [number, number, number, number]>();
+    for (const x of [...layer.buildings, ...layer.parcels, ...layer.roads, ...layer.blocks]) m.set(x.id, boxFlat(x.pts));
+    return m;
+  }, [layer]);
   const year = s.date.y;
   const [mode, setMode] = useState<ShowMode>('eligible');
   const [showGame, setShowGame] = useState(true);
@@ -69,7 +109,9 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
   const [entrance, setEntrance] = useState<string | undefined>();
   const [tasks, setTasks] = useState(false);
   const [exportText, setExportText] = useState<string | undefined>();
-  const B = layer.bounds;
+  // The area to frame: the layer's box, cut to the island and its back bay for an island-wide layer.
+  const wide = layer.bounds.u1 - layer.bounds.u0 > 3000;
+  const B = wide ? { u0: Math.max(layer.bounds.u0, U_SOUTH - 300), u1: Math.min(layer.bounds.u1, U_NORTH + 300), v0: Math.max(layer.bounds.v0, -700), v1: Math.min(layer.bounds.v1, 1700) } : layer.bounds;
   const [vb, setVb] = useState<VB>(() => vbOf(B.u0, B.v0, B.u1, B.v1));
   const svg = useRef<SVGSVGElement>(null);
 
@@ -160,6 +202,10 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
 
   const px = (svg.current?.clientWidth ?? 1000) / vb.w; // screen px per metre
   const hs = 1 / Math.max(px, 0.05); // one screen px in metres
+  // In view (with a margin): the view box is (u, -v).
+  const inView = (id: string) => { const b = boxes.get(id); if (!b) return true; const m = vb.w * 0.1; return b[2] >= vb.x - m && b[0] <= vb.x + vb.w + m && -b[1] >= vb.y - m && -b[3] <= vb.y + vb.h + m; };
+  // Fine detail (parcels, buildings, entrances) only when zoomed in enough to see it.
+  const fine = vb.w < 2600;
   const exportFile = (): string => JSON.stringify({ schemaVersion: 1, packId: layer.packId, targetYear: layer.targetYear, overrides } satisfies HistOverridesFile, null, 2);
   const download = () => {
     const text = exportFile();
@@ -194,29 +240,44 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
         {showGame && <g data-testid="iv-game-streets" pointerEvents="none">
           {gameCross.map((c) => <line key={c.n} x1={c.u} y1={-(c.vRange?.[0] ?? 0)} x2={c.u} y2={-(c.vRange?.[1] ?? bayEdge(c.u))} stroke="#c0392b" strokeOpacity="0.45" strokeWidth={Math.max(1.5 * hs, 0.6)} strokeDasharray={`${6 * hs} ${4 * hs}`} />)}
           {AVENUES.map((a) => <polyline key={a.id} points={(a.path ?? [[a.from ?? U_SOUTH, a.v], [a.to ?? U_NORTH, a.v]]).map(([u, v]) => `${u},${-v}`).join(' ')} fill="none" stroke="#c0392b" strokeOpacity="0.45" strokeWidth={Math.max(1.5 * hs, 0.6)} strokeDasharray={`${6 * hs} ${4 * hs}`} />)}
-          {level !== 'island' && gameCross.map((c) => <text key={`t${c.n}`} x={c.u + 2 * hs} y={-B.v0 + 14 * hs} fontSize={10 * hs} fill="#ffb3a7">{c.n} (game)</text>)}
-          {level !== 'island' && AVENUES.map((a) => <text key={`t${a.id}`} x={Math.max(vb.x, U_SOUTH) + 4 * hs} y={-aveV(a.id, Math.max(vb.x, U_SOUTH)) - 3 * hs} fontSize={10 * hs} fill="#ffb3a7">{a.names[townAt(vb.x + vb.w / 2)] ?? a.names.wildwood} (game)</text>)}
+          {level !== 'island' && gameCross.length <= 30 && gameCross.map((c) => <text key={`t${c.n}`} x={c.u + 2 * hs} y={-B.v0 + 14 * hs} fontSize={10 * hs} fill="#ffb3a7">{c.n} (game)</text>)}
+          {level !== 'island' && vb.w < 2600 && AVENUES.map((a) => <text key={`t${a.id}`} x={Math.max(vb.x, U_SOUTH) + 4 * hs} y={-aveV(a.id, Math.max(vb.x, U_SOUTH)) - 3 * hs} fontSize={10 * hs} fill="#ffb3a7">{a.names[townAt(vb.x + vb.w / 2)] ?? a.names.wildwood} (game)</text>)}
         </g>}
         {/* The imported area's box: click it from the island. */}
-        <rect x={B.u0} y={-B.v1} width={B.u1 - B.u0} height={B.v1 - B.v0} fill={level === 'island' ? '#ff5fa2' : 'none'} fillOpacity="0.25" stroke="#ff5fa2" strokeWidth={Math.max(2 * hs, 0.5)} data-testid="iv-area" style={{ cursor: level === 'island' ? 'pointer' : undefined }}
+        <rect x={B.u0} y={-B.v1} width={B.u1 - B.u0} height={B.v1 - B.v0} fill={level === 'island' && !wide ? '#ff5fa2' : 'none'} display={wide && level !== 'island' ? 'none' : undefined} fillOpacity="0.25" stroke="#ff5fa2" strokeWidth={Math.max(2 * hs, 0.5)} data-testid="iv-area" style={{ cursor: level === 'island' ? 'pointer' : undefined }}
           onPointerDown={(e) => { if (level === 'island') { e.stopPropagation(); goArea(); } }} />
         {level !== 'island' && <g>
           {/* The imported area is land (the game's own island outline is narrower here). */}
-          <rect x={B.u0} y={-B.v1} width={B.u1 - B.u0} height={B.v1 - B.v0} fill="#d9d2bf" pointerEvents="none" />
+          {!wide && <rect x={B.u0} y={-B.v1} width={B.u1 - B.u0} height={B.v1 - B.v0} fill="#d9d2bf" pointerEvents="none" />}
           {/* Blocks from the street network. */}
-          {layer.blocks.map((b) => <polygon key={b.id} points={poly(b.pts)} fill={b.id === blockId ? '#fff3c4' : '#e6dfcc'} fillOpacity={b.id === blockId ? 0.7 : 0.35} stroke="#b9ae93" strokeWidth={hs} data-testid="iv-block" data-id={b.id}
+          {layer.blocks.filter((b) => inView(b.id)).map((b) => <polygon key={b.id} points={poly(b.pts)} fill={b.id === blockId ? '#fff3c4' : '#e6dfcc'} fillOpacity={b.id === blockId ? 0.7 : 0.35} stroke="#b9ae93" strokeWidth={hs} data-testid="iv-block" data-id={b.id}
             onPointerDown={(e) => { if (!edit && level === 'area') { e.stopPropagation(); goBlock(b.id); } }} style={{ cursor: level === 'area' ? 'pointer' : undefined }} />)}
-          {showParcels && <g pointerEvents="none">{layer.parcels.map((p) => <polygon key={p.id} points={poly(p.pts)} fill="none" stroke="#9c927d" strokeOpacity="0.6" strokeWidth={0.6 * hs} />)}</g>}
+          {showSanborn && sanborn && <g pointerEvents="none" data-testid="iv-sanborn" opacity="0.85">
+            {sanborn.filter((sh) => sh.kind !== 'keymap').map((sh) => {
+              const [x0, y0, x1, y1] = sh.crop ?? [0, 0, sh.size[0], sh.size[1]];
+              const href = sanbornHref(sh);
+              const [a, b, c, d, e, f] = sh.matrix;
+              return (
+                <g key={sh.id} transform={`matrix(${a} ${b} ${c} ${d} ${e} ${f})`} data-sheet={sh.id}>
+                  {href && <><clipPath id={`iv-sb-${sh.id}`}><rect x={x0} y={y0} width={x1 - x0} height={y1 - y0} /></clipPath>
+                    <image href={href} x={0} y={0} width={sh.size[0]} height={sh.size[1]} preserveAspectRatio="none" clipPath={`url(#iv-sb-${sh.id})`} /></>}
+                  <rect x={x0} y={y0} width={x1 - x0} height={y1 - y0} fill={href ? 'none' : '#f4e3b0'} fillOpacity="0.25" stroke="#a0522d" strokeWidth={3} strokeDasharray="12 8" />
+                  <text x={(x0 + x1) / 2} y={(y0 + y1) / 2} fontSize={60} textAnchor="middle" fill="#a0522d" opacity={href ? 0.5 : 0.9}>{sh.id.replace(/^0+/, '')}</text>
+                </g>
+              );
+            })}
+          </g>}
+          {showParcels && fine && <g pointerEvents="none">{layer.parcels.filter((p) => inView(p.id)).map((p) => <polygon key={p.id} points={poly(p.pts)} fill="none" stroke="#9c927d" strokeOpacity="0.6" strokeWidth={0.6 * hs} />)}</g>}
           {/* Streets (OSM centrelines) drawn at a street width. */}
           <g pointerEvents="none">
-            {layer.roads.map((r) => <polyline key={r.id} points={poly(r.pts)} fill="none" stroke={r.cls === 'street' ? '#4a4a50' : r.cls === 'service' ? '#77746c' : '#a68d6a'} strokeWidth={r.cls === 'street' ? 9 : r.cls === 'service' ? 4 : 1.6} strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.9" />)}
+            {layer.roads.filter((r) => inView(r.id) && (fine || r.cls === 'street')).map((r) => <polyline key={r.id} points={poly(r.pts)} fill="none" stroke={r.cls === 'street' ? '#4a4a50' : r.cls === 'service' ? '#77746c' : '#a68d6a'} strokeWidth={r.cls === 'street' ? 9 : r.cls === 'service' ? 4 : 1.6} strokeLinecap="round" strokeLinejoin="round" strokeOpacity="0.9" />)}
             {layer.rail.map((r) => <polyline key={r.id} points={poly(r.pts)} fill="none" stroke="#5a3d2b" strokeWidth={Math.max(1.2, 1.5 * hs)} strokeDasharray={`${4} ${3}`} />)}
             {px > 0.6 && roadLabels(layer, vb).map((l) => <text key={`n${l.id}`} x={l.u} y={-l.v} fontSize={Math.max(4, 9 * hs)} fill="#fffaf0" textAnchor="middle" stroke="#2a2a30" strokeWidth={0.25 * hs * 9} paintOrder="stroke">{l.name}</text>)}
           </g>
           {/* Buildings. */}
-          {view.buildings.map((b) => {
+          {fine && view.buildings.map((b) => {
             const dc = drawClass(b, mode);
-            if (dc === 'hidden') return null;
+            if (dc === 'hidden' || !inView(b.id)) return null;
             const isSel = selB?.id === b.id;
             const pts = isSel && ghostAt && drag.current?.move?.id === b.id ? shift(b.pts, ghostAt) : b.pts;
             return (
@@ -229,10 +290,10 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
               </polygon>
             );
           })}
-          {px > 0.8 && view.buildings.filter((b) => drawClass(b, mode) === 'task').map((b) => { const [u, v] = centerOf(b.pts); return <text key={`q${b.id}`} x={u} y={-v + 3 * hs} fontSize={Math.min(6, 9 * hs)} textAnchor="middle" fill="#5e5446" pointerEvents="none">?</text>; })}
+          {px > 0.8 && view.buildings.filter((b) => drawClass(b, mode) === 'task' && inView(b.id)).map((b) => { const [u, v] = centerOf(b.pts); return <text key={`q${b.id}`} x={u} y={-v + 3 * hs} fontSize={Math.min(6, 9 * hs)} textAnchor="middle" fill="#5e5446" pointerEvents="none">?</text>; })}
           {view.buildings.filter((b) => b.asset).map((b) => { const [u, v] = centerOf(b.pts); return <text key={`a${b.id}`} x={u} y={-v} fontSize={14 * hs} textAnchor="middle" fill="#ff5fa2" pointerEvents="none">★</text>; })}
           {/* Entrances (real: green; generated: orange). */}
-          {px > 1.2 && view.buildings.filter((b) => drawClass(b, mode) !== 'hidden').flatMap((b) => b.entrances.map((e) => (
+          {px > 1.2 && view.buildings.filter((b) => drawClass(b, mode) !== 'hidden' && inView(b.id)).flatMap((b) => b.entrances.map((e) => (
             <circle key={e.id} cx={e.u} cy={-e.v} r={Math.max(0.6, 3 * hs)} fill={e.gen ? '#ff9f1c' : '#2ecc71'} stroke={e.node < 0 ? '#c0392b' : '#1b1030'} strokeWidth={e.node < 0 ? 2 * hs : 0.8 * hs} data-testid="iv-entrance" data-gen={e.gen ? '1' : '0'} data-node={e.node}
               onPointerDown={(ev) => { ev.stopPropagation(); if (selB?.id !== b.id) pickBuilding(b); goEntrance(e.id); }} style={{ cursor: 'pointer' }} />
           )))}
@@ -264,7 +325,9 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
           <button type="button" className={`hv-btn ${mode === 'all' ? 'hv-on' : ''}`} onClick={() => setMode('all')} data-testid="iv-mode-all">All imported</button>
         </div>
         <div className="flex gap-1 flex-wrap justify-end">
-          <button type="button" className={`hv-btn ${showGame ? 'hv-on' : ''}`} onClick={() => setShowGame((x) => !x)} title="The game's own street grid (drawn from memory), dashed red">Game streets</button>
+          <button type="button" className={`hv-btn ${showGame ? 'hv-on' : ''}`} onClick={() => setShowGame((x) => !x)} title="The game's own street grid (measured from the same OSM data), dashed red">Game streets</button>
+          <button type="button" className={`hv-btn ${showSanborn ? 'hv-on' : ''}`} onClick={() => setShowSanborn((x) => !x)} title="The 1950 Sanborn fire-insurance sheets, georeferenced to the streets (evidence layer)" data-testid="iv-sanborn-btn">1950 Sanborn</button>
+          {onWhich && <select className="hv-btn" value={which} onChange={(e) => onWhich(e.target.value)} data-testid="iv-layer">{LAYERS.map((l) => <option key={l.id} value={l.id}>{l.label}</option>)}</select>}
           <button type="button" className={`hv-btn ${showParcels ? 'hv-on' : ''}`} onClick={() => setShowParcels((x) => !x)}>Parcels</button>
           <button type="button" className={`hv-btn ${showNav ? 'hv-on' : ''}`} onClick={() => setShowNav((x) => !x)} data-testid="iv-nav-btn">Walk graph</button>
           <button type="button" className={`hv-btn ${edit ? 'hv-on' : ''}`} onClick={() => setEdit((x) => !x)} data-testid="iv-edit">Map editor</button>
@@ -277,7 +340,7 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
       {!edit && <div data-iv-ui className="absolute left-2 top-[4.6rem] z-[5] max-w-[min(26rem,60%)] rounded bg-noir-900/90 border border-noir-700 p-2 text-[10px] text-stone-300 space-y-0.5" data-testid="iv-legend">
         <div className="font-semibold text-stone-100">Imported blocks (beta) · {layer.name}</div>
         <div><Sw c={FILL.verified} /> verified {counts.verified} · <Sw c={FILL.provisional} /> provisional {counts.provisional} · <Sw c={FILL.task} dash /> unresolved {counts.task} · {mode === 'all' ? <><Sw c="none" dash /> built later {counts.ghost}</> : <>built later, hidden {counts.hidden}</>} · <Sw hatch /> generated outline</div>
-        <div><span className="text-[#ff9f1c]">●</span> generated entrance · <span className="text-[#2ecc71]">●</span> mapped entrance · <span className="text-[#c0392b]">--</span> the game's own streets (drawn from memory; they do not match the real grid here)</div>
+        <div><span className="text-[#ff9f1c]">●</span> generated entrance · <span className="text-[#2ecc71]">●</span> mapped entrance · <span className="text-[#c0392b]">--</span> the game's own streets (measured from OSM; they sit on the real ones){showSanborn && <> · <span className="text-[#a0522d]">▭</span> 1950 Sanborn sheet (outline only until its image is in the asset store)</>}</div>
         <div className="text-stone-500">{layer.attribution.join(' · ')}</div>
       </div>}
 

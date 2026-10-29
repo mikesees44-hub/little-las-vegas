@@ -792,3 +792,25 @@ export function districtOutlines(m: Measured, pkg: CityPackage, slots: SlotLike[
   for (const [id, rings] of shapes) out[id] = rings.filter((x) => Math.abs(ringArea(x)) > 6000).map((x) => simplifyRing(x as UVp[], 8).map(([u, v]) => [r0(u), r0(v)] as [number, number])).filter((x) => x.length >= 4);
   return out;
 }
+
+/**
+ * The world map's Wildwood districts (public/geo/wildwood.json): the package's
+ * district outlines through its frame to lon/lat, by game district id, and the
+ * piers as their decks. Coordinates to 1e-5° (~1 m).
+ */
+export function worldMapDistricts(pkg: CityPackage): { type: 'FeatureCollection'; features: unknown[] } {
+  const f = frameFns(pkg.geography.frame!);
+  const ll = (r: [number, number][]) => { const ring = r.map(([u, v]) => f.toLngLat(u, v).map((x) => Math.round(x * 1e5) / 1e5) as [number, number]); return [...ring, ring[0]]; };
+  const features: unknown[] = [];
+  for (const d of pkg.districts) {
+    if (!d.gameDistrict) continue;
+    const rings = pkg.geography.outlines?.[d.id] ?? (d.polygon.length ? [d.polygon] : []);
+    if (!rings.length) continue;
+    features.push({ type: 'Feature', properties: { id: d.gameDistrict }, geometry: rings.length === 1 ? { type: 'Polygon', coordinates: [ll(rings[0])] } : { type: 'MultiPolygon', coordinates: rings.map((r) => [ll(r)]) } });
+  }
+  const bw = pkg.streets.find((s) => s.kind === 'boardwalk');
+  const bwV = (u: number) => (bw?.path ? profAt(bw.path, u) : 0);
+  const decks = pkg.landmarks.filter((l) => l.kind === 'pier' && l.pos && l.size).map((l) => { const { u } = l.pos!; const { w, d } = l.size!; const b = bwV(u) - (bw?.width ?? 16); return [ll([[u - w / 2, b], [u + w / 2, b], [u + w / 2, b - d], [u - w / 2, b - d]])]; });
+  if (decks.length) features.push({ type: 'Feature', properties: { id: 'piers' }, geometry: { type: 'MultiPolygon', coordinates: decks } });
+  return { type: 'FeatureCollection', features };
+}

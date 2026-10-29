@@ -1,0 +1,1840 @@
+{
+ "schemaVersion": 1,
+ "source": {
+  "title": "Sanborn Fire Insurance Map from New Jersey Coast, Vol. 4 (1909, corrected to Nov 1950)",
+  "item": "https://www.loc.gov/item/sanborn05568_015/",
+  "scans": "IIIF pct:25 JPEGs (about 1660 x 1950 px), downloaded in a browser 2026-10-29; not in git (36 MB): file names are the cache's",
+  "rights": "Public domain"
+ },
+ "method": "Pixel positions of street intersections read by eye off the 25% scans (zoomed 2x), each with the two street names as printed; ground positions are where the two OSM centrelines cross (scripts/cityimport/build/sanborngeo.ts). Pixels are on the whole scan (x right, y down). Accuracy of a reading: about 3-5 px on a detailed sheet (~1-2 m/px), 5-10 px on the key map.",
+ "sheets": {
+  "0030": {
+   "file": "sanborn1950_35_0030.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "keymap",
+   "note": "Sheet 30: the Five Mile Beach title sheet and key map (sheets 27-63B, 104-109).",
+   "points": [
+    {
+     "px": [
+      50,
+      1599
+     ],
+     "a": "Rambler Rd",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      236,
+      1599
+     ],
+     "a": "Wisteria Rd",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      422.5,
+      1601
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      50,
+      1692.5
+     ],
+     "a": "Rambler Rd",
+     "b": "Seaview Ave"
+    },
+    {
+     "px": [
+      236,
+      1654
+     ],
+     "a": "Wisteria Rd",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      502.5,
+      1602.5
+     ],
+     "a": "Hand Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      670,
+      1602.5
+     ],
+     "a": "Roberts Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      756,
+      1602.5
+     ],
+     "a": "Garfield Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      422.5,
+      1652.5
+     ],
+     "a": "Cresse Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1119,
+      1595
+     ],
+     "a": "19th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1262.5,
+      1645
+     ],
+     "a": "12th Ave",
+     "b": "Central Ave"
+    },
+    {
+     "px": [
+      1487.5,
+      1610
+     ],
+     "a": "1st Ave",
+     "b": "Central Ave"
+    },
+    {
+     "px": [
+      1119,
+      1505
+     ],
+     "a": "19th Ave",
+     "b": "Delaware Ave"
+    },
+    {
+     "px": [
+      1262.5,
+      1730
+     ],
+     "a": "12th Ave",
+     "b": "Surf Ave"
+    },
+    {
+     "px": [
+      756,
+      1707.5
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave"
+    }
+   ]
+  },
+  "0040": {
+   "file": "sanborn1950_45_0040.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      577,
+      200
+     ],
+     "a": "Roberts Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1588,
+      200
+     ],
+     "a": "Roberts Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      577,
+      945
+     ],
+     "a": "Montgomery Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1588,
+      945
+     ],
+     "a": "Montgomery Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      577,
+      1757
+     ],
+     "a": "Burk Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1588,
+      1757
+     ],
+     "a": "Burk Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      577,
+      1365
+     ],
+     "a": "Davis Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      577,
+      572
+     ],
+     "a": "Baker Ave",
+     "b": "Pacific Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Pacific to Atlantic, Roberts to Burk"
+  },
+  "0041": {
+   "file": "sanborn1950_46_0041.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1068,
+      185
+     ],
+     "a": "Garfield Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1068,
+      1770
+     ],
+     "a": "Roberts Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1068,
+      975
+     ],
+     "a": "Spencer Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      45,
+      185
+     ],
+     "a": "Garfield Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      45,
+      1770
+     ],
+     "a": "Roberts Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      45,
+      1375
+     ],
+     "a": "Youngs Ave",
+     "b": "Arctic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Arctic to New Jersey and east, Garfield to Roberts"
+  },
+  "0042": {
+   "file": "sanborn1950_47_0042.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      588,
+      182
+     ],
+     "a": "Garfield Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1598,
+      182
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      588,
+      970
+     ],
+     "a": "Spencer Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1598,
+      970
+     ],
+     "a": "Spencer Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      588,
+      1760
+     ],
+     "a": "Roberts Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1598,
+      1760
+     ],
+     "a": "Roberts Ave",
+     "b": "Atlantic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Pacific to Atlantic, Garfield to Roberts"
+  },
+  "0043": {
+   "file": "sanborn1950_48_0043.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      325,
+      1185
+     ],
+     "a": "Garfield Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      722,
+      1185
+     ],
+     "a": "Lincoln Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1118,
+      1185
+     ],
+     "a": "Schellenger Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      325,
+      160
+     ],
+     "a": "Garfield Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      722,
+      160
+     ],
+     "a": "Lincoln Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      1118,
+      160
+     ],
+     "a": "Schellenger Ave",
+     "b": "Arctic Ave"
+    }
+   ],
+   "note": "Wildwood: Garfield to Cedar, Arctic to the New Jersey Ave blocks (the gas works)"
+  },
+  "0044": {
+   "file": "sanborn1950_49_0044.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      305,
+      500
+     ],
+     "a": "Garfield Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      702,
+      500
+     ],
+     "a": "Lincoln Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1095,
+      500
+     ],
+     "a": "Schellenger Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      305,
+      1530
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      702,
+      1530
+     ],
+     "a": "Lincoln Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      1095,
+      1530
+     ],
+     "a": "Schellenger Ave",
+     "b": "Atlantic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Garfield to Cedar, Pacific to Atlantic (The Shamrock at 3702-06 Pacific; Hunt's Shores Theatre)"
+  },
+  "0035": {
+   "file": "sanborn1950_40_0035.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1088,
+      218
+     ],
+     "a": "Hand Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1088,
+      1795
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1088,
+      1000
+     ],
+     "a": "Bennett Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      62,
+      218
+     ],
+     "a": "Hand Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      62,
+      1400
+     ],
+     "a": "Hildreth Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      62,
+      607
+     ],
+     "a": "Leaming Ave",
+     "b": "Arctic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Arctic to New Jersey and east, Hand to Cresse (the Crest line)"
+  },
+  "0036": {
+   "file": "sanborn1950_41_0036.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      584,
+      208
+     ],
+     "a": "Hand Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1595,
+      208
+     ],
+     "a": "Hand Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      584,
+      995
+     ],
+     "a": "Bennett Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      584,
+      1788
+     ],
+     "a": "Cresse Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1595,
+      1788
+     ],
+     "a": "Cresse Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      1595,
+      995
+     ],
+     "a": "Bennett Ave",
+     "b": "Atlantic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): New Jersey to Atlantic, Hand to Cresse"
+  },
+  "0037": {
+   "file": "sanborn1950_42_0037.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1080,
+      193
+     ],
+     "a": "Burk Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1080,
+      982
+     ],
+     "a": "Taylor Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1080,
+      1780
+     ],
+     "a": "Hand Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      68,
+      193
+     ],
+     "a": "Burk Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      68,
+      982
+     ],
+     "a": "Taylor Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      68,
+      1780
+     ],
+     "a": "Hand Ave",
+     "b": "Arctic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Arctic to New Jersey and east, Burk to Hand"
+  },
+  "0038": {
+   "file": "sanborn1950_43_0038.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      580,
+      183
+     ],
+     "a": "Burk Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1590,
+      183
+     ],
+     "a": "Burk Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      580,
+      978
+     ],
+     "a": "Taylor Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1590,
+      978
+     ],
+     "a": "Taylor Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      580,
+      1775
+     ],
+     "a": "Hand Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1590,
+      1775
+     ],
+     "a": "Hand Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      580,
+      1380
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Pacific Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): New Jersey to Atlantic, Burk to Hand"
+  },
+  "0039": {
+   "file": "sanborn1950_44_0039.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1065,
+      180
+     ],
+     "a": "Roberts Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1065,
+      972
+     ],
+     "a": "Montgomery Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1065,
+      1765
+     ],
+     "a": "Burk Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      62,
+      180
+     ],
+     "a": "Roberts Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      62,
+      972
+     ],
+     "a": "Montgomery Ave",
+     "b": "Arctic Ave"
+    },
+    {
+     "px": [
+      62,
+      1765
+     ],
+     "a": "Burk Ave",
+     "b": "Arctic Ave"
+    }
+   ],
+   "note": "Wildwood (Holly Beach): Arctic to New Jersey and east, Roberts to Burk"
+  },
+  "0049": {
+   "file": "sanborn1950_54_0049.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1035,
+      228
+     ],
+     "a": "Maple Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1035,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      1035,
+      1368
+     ],
+     "a": "Oak Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      122,
+      228
+     ],
+     "a": "Maple Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      122,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      122,
+      1368
+     ],
+     "a": "Oak Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1035,
+      585
+     ],
+     "a": "Pine Ave",
+     "b": "Pacific Ave",
+     "town": "wildwood"
+    }
+   ],
+   "note": "Wildwood: New Jersey to Pacific and east, Maple to Cedar"
+  },
+  "0050": {
+   "file": "sanborn1950_55_0050.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      632,
+      220
+     ],
+     "a": "Maple Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      632,
+      1365
+     ],
+     "a": "Oak Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      1500,
+      220
+     ],
+     "a": "Maple Ave",
+     "b": "Ocean Ave"
+    },
+    {
+     "px": [
+      1500,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "Ocean Ave"
+    },
+    {
+     "px": [
+      632,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "Atlantic Ave"
+    }
+   ],
+   "note": "Wildwood: Pacific to the Boardwalk, Maple to Cedar (Casino Pier, Casino Arcade, Hunt's Casino at Oak and Cedar)"
+  },
+  "0051": {
+   "file": "sanborn1950_56_0051.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      871,
+      148
+     ],
+     "a": "26th Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      871,
+      712
+     ],
+     "a": "Poplar Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      871,
+      1418
+     ],
+     "a": "Glenwood Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      871,
+      1765
+     ],
+     "a": "Maple Ave",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      222,
+      148
+     ],
+     "a": "26th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      75,
+      1418
+     ],
+     "a": "Glenwood Ave",
+     "b": "New Jersey Ave"
+    }
+   ],
+   "note": "Wildwood: New Jersey (on the diagonal) to past Pacific, 26th to Maple"
+  },
+  "0052": {
+   "file": "sanborn1950_57_0052.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      445,
+      368
+     ],
+     "a": "Juniper Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      445,
+      1070
+     ],
+     "a": "Magnolia Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      445,
+      1775
+     ],
+     "a": "Maple Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      1255,
+      368
+     ],
+     "a": "Juniper Ave",
+     "b": "Ocean Ave"
+    },
+    {
+     "px": [
+      1255,
+      1070
+     ],
+     "a": "Magnolia Ave",
+     "b": "Ocean Ave"
+    },
+    {
+     "px": [
+      1255,
+      715
+     ],
+     "a": "Poplar Ave",
+     "b": "Ocean Ave"
+    }
+   ],
+   "note": "Wildwood: Pacific to Ocean, 26th to Maple (inset: the Municipal Casino Pier, Starlight Ballroom)"
+  },
+  "0047": {
+   "file": "sanborn1950_52_0047.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      100,
+      298
+     ],
+     "a": "Maple Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      100,
+      1050
+     ],
+     "a": "Wildwood Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      100,
+      1440
+     ],
+     "a": "Oak Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1458,
+      1440
+     ],
+     "a": "Oak Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1572,
+      298
+     ],
+     "a": "Maple Ave",
+     "b": "New Jersey Ave"
+    }
+   ],
+   "note": "Wildwood: Park Blvd to New Jersey, Maple to Schellenger (Holly Park, the Penn-Reading station, the water works)"
+  },
+  "0048": {
+   "file": "sanborn1950_53_0048.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      262,
+      1075
+     ],
+     "a": "Glenwood Ave",
+     "b": "New York Ave"
+    },
+    {
+     "px": [
+      618,
+      1075
+     ],
+     "a": "Magnolia Ave",
+     "b": "New York Ave"
+    },
+    {
+     "px": [
+      973,
+      1075
+     ],
+     "a": "Poplar Ave",
+     "b": "New York Ave"
+    },
+    {
+     "px": [
+      1318,
+      1075
+     ],
+     "a": "Juniper Ave",
+     "b": "New York Ave"
+    },
+    {
+     "px": [
+      262,
+      150
+     ],
+     "a": "Glenwood Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1318,
+      150
+     ],
+     "a": "Juniper Ave",
+     "b": "Park Blvd"
+    }
+   ],
+   "note": "Wildwood: Park Blvd to New Jersey, Glenwood to 26th (Wildwood Public School No. 2, Maple Park, Fountain Park)"
+  },
+  "0062": {
+   "file": "sanborn1950_67_0062.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [],
+   "skip": "Not fitted: the main frame has one street line (Ocean Ave) crossing the cross streets; its other edge is the Boardwalk, which OSM does not cross with the streets (they end at it), and the inset (Maple to Oak) is drawn to its own placement. Readings kept in the note: Ocean & Juniper (85,365), Ocean & Magnolia (85,1065), Ocean & Maple (85,1765).",
+   "note": "Wildwood: Ocean Ave to the Boardwalk, 26th to Maple; inset Maple to Oak (movies, flats on piles)"
+  },
+  "0063A-wildwood": {
+   "file": "sanborn1950_69_0063A.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      140,
+      285
+     ],
+     "a": "Burk Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      440,
+      285
+     ],
+     "a": "Burk Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    },
+    {
+     "px": [
+      140,
+      1083
+     ],
+     "a": "Hand Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      440,
+      1083
+     ],
+     "a": "Hand Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    },
+    {
+     "px": [
+      140,
+      1885
+     ],
+     "a": "Cresse Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      440,
+      883
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    }
+   ],
+   "note": "Sheet 63A, left strip (Oct 1949): Wildwood beachfront, Atlantic to the Boardwalk, Davis to Cresse",
+   "crop": [
+    60,
+    30,
+    700,
+    1930
+   ]
+  },
+  "0063A-north": {
+   "file": "sanborn1950_69_0063A.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      740,
+      45
+     ],
+     "a": "3rd Ave",
+     "b": "Surf Ave"
+    },
+    {
+     "px": [
+      1180,
+      45
+     ],
+     "a": "3rd Ave",
+     "b": "Ocean Ave",
+     "town": "north"
+    },
+    {
+     "px": [
+      740,
+      845
+     ],
+     "a": "7th Ave",
+     "b": "Surf Ave"
+    },
+    {
+     "px": [
+      1180,
+      845
+     ],
+     "a": "7th Ave",
+     "b": "Ocean Ave",
+     "town": "north"
+    },
+    {
+     "px": [
+      740,
+      1665
+     ],
+     "a": "11th Ave",
+     "b": "Surf Ave"
+    },
+    {
+     "px": [
+      1180,
+      1665
+     ],
+     "a": "11th Ave",
+     "b": "Ocean Ave",
+     "town": "north"
+    }
+   ],
+   "note": "Sheet 63A, right strip (Oct 1949): North Wildwood oceanfront, Surf Ave to the proposed Boardwalk, 3rd to 12th",
+   "crop": [
+    700,
+    30,
+    1640,
+    1930
+   ]
+  },
+  "0108": {
+   "file": "sanborn1950_77_0108.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      165,
+      200
+     ],
+     "a": "Spencer Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      790,
+      200
+     ],
+     "a": "Spencer Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    },
+    {
+     "px": [
+      165,
+      993
+     ],
+     "a": "Roberts Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      790,
+      993
+     ],
+     "a": "Roberts Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    },
+    {
+     "px": [
+      165,
+      1787
+     ],
+     "a": "Montgomery Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      790,
+      1787
+     ],
+     "a": "Montgomery Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    }
+   ],
+   "note": "Wildwood: Atlantic to the Boardwalk (Beach Ave), Spencer to Montgomery (add. sheet July 1923: the Municipal Piers, the Auditorium)"
+  },
+  "0109": {
+   "file": "sanborn1950_78_0109.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      118,
+      375
+     ],
+     "a": "Schellenger Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      745,
+      375
+     ],
+     "a": "Schellenger Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    },
+    {
+     "px": [
+      118,
+      1170
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      745,
+      1170
+     ],
+     "a": "Garfield Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    },
+    {
+     "px": [
+      118,
+      1565
+     ],
+     "a": "Spicer Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      745,
+      1565
+     ],
+     "a": "Spicer Ave",
+     "b": "Ocean Ave",
+     "town": "wildwood"
+    }
+   ],
+   "note": "Wildwood: Atlantic to the Boardwalk, Cedar to Spencer (add. sheet July 1923: Playland, the roller coaster, the open-air amusement pier at Schellenger; Hunt's Regent theatre)"
+  },
+  "0034": {
+   "file": "sanborn1950_39_0034.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      82,
+      1665
+     ],
+     "a": "Cresse Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1075,
+      1665
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1470,
+      1665
+     ],
+     "a": "Andrews Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1075,
+      815
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Susquehanna Ave"
+    },
+    {
+     "px": [
+      878,
+      1328
+     ],
+     "a": "Hand Ave",
+     "b": "Hudson Ave"
+    },
+    {
+     "px": [
+      1272,
+      1328
+     ],
+     "a": "Taylor Ave",
+     "b": "Hudson Ave"
+    }
+   ],
+   "note": "Wildwood bayside (Nov 1950, 100 ft to the inch): Cresse to Andrews, Arctic to Grassy Sound; Lake Rd"
+  },
+  "0045": {
+   "file": "sanborn1950_50_0045.jpg",
+   "size": [
+    1652,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1050,
+      1072
+     ],
+     "a": "Baker Ave",
+     "b": "Hudson Ave"
+    },
+    {
+     "px": [
+      1050,
+      1885
+     ],
+     "a": "Andrews Ave",
+     "b": "Hudson Ave"
+    },
+    {
+     "px": [
+      545,
+      1072
+     ],
+     "a": "Baker Ave",
+     "b": "Susquehanna Ave"
+    },
+    {
+     "px": [
+      545,
+      1885
+     ],
+     "a": "Andrews Ave",
+     "b": "Susquehanna Ave"
+    },
+    {
+     "px": [
+      1418,
+      1885
+     ],
+     "a": "Andrews Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1418,
+      1278
+     ],
+     "a": "Montgomery Ave",
+     "b": "Park Blvd"
+    }
+   ],
+   "note": "Otten's Harbor (100 ft to the inch): Mediterranean to Arctic, Baker to Andrews (main frame; the insets above, Wildwood Blvd and Niagara Ave, are drawn to their own placements and not registered)",
+   "crop": [
+    0,
+    1010,
+    1640,
+    1949
+   ]
+  },
+  "0046": {
+   "file": "sanborn1950_51_0046.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1218,
+      290
+     ],
+     "a": "Juniper Ave",
+     "b": "Hudson Ave"
+    },
+    {
+     "px": [
+      1218,
+      1520
+     ],
+     "a": "Oak Ave",
+     "b": "Hudson Ave"
+    },
+    {
+     "px": [
+      1568,
+      290
+     ],
+     "a": "Juniper Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      1568,
+      1345
+     ],
+     "a": "Wildwood Ave",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      912,
+      465
+     ],
+     "a": "Poplar Ave",
+     "b": "Lake Ave"
+    },
+    {
+     "px": [
+      1218,
+      995
+     ],
+     "a": "Maple Ave",
+     "b": "Hudson Ave"
+    }
+   ],
+   "note": "Wildwood bayside (100 ft to the inch): Sunset Lake to Park Blvd, 26th to Lincoln"
+  },
+  "0053": {
+   "file": "sanborn1950_58_0053.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      95,
+      530
+     ],
+     "a": "26th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1522,
+      530
+     ],
+     "a": "19th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      95,
+      1400
+     ],
+     "a": "26th Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      1522,
+      1400
+     ],
+     "a": "19th Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      905,
+      965
+     ],
+     "a": "22nd Ave",
+     "b": "Central Ave"
+    },
+    {
+     "px": [
+      705,
+      108
+     ],
+     "a": "23rd Ave",
+     "b": "New York Ave"
+    }
+   ],
+   "note": "North Wildwood (100 ft to the inch): 26th to 19th, New York Ave to Surf Ave"
+  },
+  "0054": {
+   "file": "sanborn1950_59_0054.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      50,
+      478
+     ],
+     "a": "19th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1270,
+      478
+     ],
+     "a": "13th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      50,
+      1352
+     ],
+     "a": "19th Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      1270,
+      1352
+     ],
+     "a": "13th Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      660,
+      920
+     ],
+     "a": "16th Ave",
+     "b": "Central Ave"
+    },
+    {
+     "px": [
+      660,
+      45
+     ],
+     "a": "16th Ave",
+     "b": "New York Ave"
+    }
+   ],
+   "note": "North Wildwood (100 ft to the inch): 19th to 12th, New York Ave to Surf Ave (Wildwood Catholic High School; North Wildwood Junior High)"
+  },
+  "0055": {
+   "file": "sanborn1950_60_0055.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [],
+   "skip": "Not fitted: only Maryland Ave crosses the sheet's streets in OSM (three collinear points); Virginia Ave between 15th and 19th is not in OSM today (the bayside here was re-cut), so no second line. Readings: Maryland & 16th (1258,485), & 17th (1258,900), & 19th (1258,1723); Virginia & 16th (388,485), & 19th (388,1723).",
+   "note": "North Wildwood bayside (formerly Anglesea): Virginia to Maryland, 15th to 19th (Otten's Canal)"
+  },
+  "0058": {
+   "file": "sanborn1950_63_0058.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      78,
+      500
+     ],
+     "a": "12th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      78,
+      1385
+     ],
+     "a": "12th Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      880,
+      500
+     ],
+     "a": "8th Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      880,
+      1385
+     ],
+     "a": "8th Ave",
+     "b": "Atlantic Ave"
+    },
+    {
+     "px": [
+      475,
+      945
+     ],
+     "a": "10th Ave",
+     "b": "Central Ave"
+    },
+    {
+     "px": [
+      475,
+      65
+     ],
+     "a": "10th Ave",
+     "b": "New York Ave"
+    }
+   ],
+   "note": "North Wildwood (new sheet Apr 1938, 100 ft to the inch), left strip: 12th to 8th, New York to Surf (North Wildwood City Hall, the public school). Right strip (Beach Creek, 2nd to 11th west of New York Ave) not registered.",
+   "crop": [
+    20,
+    30,
+    945,
+    1930
+   ]
+  },
+  "0031": {
+   "file": "sanborn1950_36_0031.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      1520,
+      110
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1520,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      1520,
+      1645
+     ],
+     "a": "Sweetbriar Rd",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      868,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      935,
+      1645
+     ],
+     "a": "Sweetbriar Rd",
+     "b": "Park Blvd"
+    },
+    {
+     "px": [
+      840,
+      295
+     ],
+     "a": "Morning Glory Rd",
+     "b": "Park Blvd"
+    }
+   ],
+   "note": "Wildwood Crest west (100 ft to the inch): Lake Rd / Sunset Lake to New Jersey, Cresse to Wistaria (the inset at lower left is a detached Wildwood block, no longer corrected: not registered)"
+  },
+  "0032": {
+   "file": "sanborn1950_37_0032.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "points": [
+    {
+     "px": [
+      163,
+      95
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      163,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      163,
+      1840
+     ],
+     "a": "Wisteria Rd",
+     "b": "New Jersey Ave"
+    },
+    {
+     "px": [
+      670,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      670,
+      1840
+     ],
+     "a": "Wisteria Rd",
+     "b": "Pacific Ave"
+    },
+    {
+     "px": [
+      958,
+      1053
+     ],
+     "a": "Crocus Rd",
+     "b": "Seaview Ave"
+    }
+   ],
+   "note": "Wildwood Crest (100 ft to the inch): New Jersey to the beach, Cresse to Wistaria (the Crest Pier at Heather Rd)"
+  }
+ }
+}

@@ -81,6 +81,13 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
   const idxFile = join(cityDir(city.id, root), 'evidence', 'sanborn-1950-additional-index.json');
   const sanIdx = existsSync(idxFile) ? (JSON.parse(readFileSync(idxFile, 'utf8')) as IndexDoc) : undefined;
   const namedIn1949 = new Set((sanIdx?.entries ?? []).map((e) => streetKey(e.street)));
+  // Georeferenced 1950 sheets (cli.ts sanborn-geo): which registered sheet shows a point.
+  const georefFile = join(cityDir(city.id, root), 'evidence', 'sanborn-1950-georef.json');
+  const georef = existsSync(georefFile) ? (JSON.parse(readFileSync(georefFile, 'utf8')) as { sheets: { sheet: string; file: string; status: string; cornersLonLat?: LL[]; rmsM?: number }[] }) : undefined;
+  const regSheets = (georef?.sheets ?? []).filter((x) => x.status === 'registered' && x.cornersLonLat && !x.sheet.startsWith('0030'));
+  const inQuad = (p: LL, q: LL[]) => { let inside = false; for (let i = 0, j = q.length - 1; i < q.length; j = i++) if ((q[i][1] > p[1]) !== (q[j][1] > p[1]) && p[0] < ((q[j][0] - q[i][0]) * (p[1] - q[i][1])) / (q[j][1] - q[i][1]) + q[i][0]) inside = !inside; return inside; };
+  const sheetsAt = (p: LL) => regSheets.filter((x) => inQuad(p, x.cornersLonLat!)).map((x) => x.sheet);
+  const sheetCount = new Map<string, number>();
 
   /* ---------- roads, rail, water ---------- */
   const keepLine = (c: LL[]) => c.some((p) => inBoxLL(p, 0.0005));
@@ -184,7 +191,8 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
     const ents = b.entranceNodes.length
       ? b.entranceNodes.map((e, i) => ({ id: `${b.id}#e${i + 1}`, sourceId: e.sourceId, generated: false, method: 'OSM entrance node', at: toLocal(e.at), street: nearestStreet(toLocal(e.at)).name }))
       : (() => {
-        const es = edges(b.local).filter((e) => e.len >= 1.5);
+        const es0 = edges(b.local).filter((e) => e.len >= 1.5);
+        const es = es0.length ? es0 : edges(b.local);
         let best = { e: es[0], d: Infinity, street: '' };
         for (const e of es) { const mid: XY = [(e.a[0] + e.b[0]) / 2, (e.a[1] + e.b[1]) / 2]; const ns = nearestStreet(mid); if (ns.d < best.d) best = { e, d: ns.d, street: ns.name }; }
         const mid: XY = [(best.e.a[0] + best.e.b[0]) / 2, (best.e.a[1] + best.e.b[1]) / 2];
@@ -206,6 +214,7 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
         address: b.tags['addr:street'] ? `${b.tags['addr:housenumber'] ?? ''} ${b.tags['addr:street']}`.trim() : prim?.address ?? null,
         height: hv.height, levels: hv.levels, roof, template: tpl.id,
         entrances: ents.map((e) => ({ id: e.id, sourceId: e.sourceId ?? null, generated: e.generated, method: e.method, street: e.street || null, lonLat: roundLL(localToLL(e.at)), local: roundM(e.at), game: roundM(toGame(localToLL(e.at)), 10), navNode: -1, connector: -1 })),
+        sanbornSheets: (() => { const ss = sheetsAt(meanOf(b.ring)); for (const x of ss) sheetCount.set(x, (sheetCount.get(x) ?? 0) + 1); return ss; })(),
         historical: { status: rul.status === 'unknown' ? 'unknown' : rul.status, yrConstr: rul.yr ?? null, evidence: rul.evidence, note: `${b.src === 'generated' ? 'generated outline; ' : 'modern outline (OSM); '}${rul.note}`, conflict: rul.conflict ?? null, verified: false },
         assetId: null,
         local: b.local.map((q) => roundM(q)), game: Gr(ll),
@@ -253,7 +262,10 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
     { sheet: 'ind3 (scan seq 4, 05568_04_1950-ind3)', why: 'The volume\'s main index / key map. The cached scan (ind2) shows only the pasted-on 1949 Additional Index and 1950 Addenda, which list none of this area\'s addresses: the test blocks are on base sheets of the 1909 volume that only the main index names.', priority: 'high' },
     ...(plan?.neighbours ?? []).map((n) => ({ sheet: n.sheet, why: `Neighbouring sheet (same streets at other numbers): ${n.why.slice(0, 4).join('; ')}${n.why.length > 4 ? ` … +${n.why.length - 4}` : ''}`, priority: 'medium' })),
   ];
-  review.unshift({ id: 'rq-sanborn-sheets', kind: 'sanborn-sheets-needed', priority: 'high', detail: `No Sanborn sheet for these blocks is cached. The transcribed index covers ${plan?.covered.reduce((s, c) => s + c.addresses.length, 0) ?? 0} of ${parcels.filter((p) => p.address).length} parcel addresses here. Fetch: ${sheetsToFetch.map((s) => s.sheet).join(', ')}.`, suggestion: 'Download the sheets (IIIF, pct:50 or full) via the browser hand-off, then compare buildings block by block and mark them verified or removed in the map editor. Note: the 1958 volume (sanborn05568_027) is in the catalog but not scanned.', status: 'open' });
+  if (regSheets.length) {
+    for (const g of regSheets) { const n = sheetCount.get(g.sheet) ?? 0; if (n) review.push({ id: `rq-sanborn-compare-${g.sheet}`, kind: 'sanborn-compare', priority: 'medium', detail: `${n} buildings stand on Sanborn 1950 sheet ${g.sheet} (${g.file}, georeferenced, RMS ${g.rmsM} m). No building was corrected from it automatically.`, suggestion: 'Open the "1950 Sanborn" overlay in the imported view; mark buildings verified or removed (with the sheet as evidence) in the map editor.', status: 'open' }); }
+  }
+  if (!regSheets.length) review.unshift({ id: 'rq-sanborn-sheets', kind: 'sanborn-sheets-needed', priority: 'high', detail: `No Sanborn sheet for these blocks is cached. The transcribed index covers ${plan?.covered.reduce((s, c) => s + c.addresses.length, 0) ?? 0} of ${parcels.filter((p) => p.address).length} parcel addresses here. Fetch: ${sheetsToFetch.map((s) => s.sheet).join(', ')}.`, suggestion: 'Download the sheets (IIIF, pct:50 or full) via the browser hand-off, then compare buildings block by block and mark them verified or removed in the map editor. Note: the 1958 volume (sanborn05568_027) is in the catalog but not scanned.', status: 'open' });
   const unknownYr = buildingFeatures.filter((f) => f.properties.historical.status === 'unknown');
   if (unknownYr.length) review.push({ id: 'rq-unknown-year', kind: 'historical-unknown', priority: 'medium', detail: `${unknownYr.length} buildings have no assessor year built: ${unknownYr.slice(0, 12).map((f) => f.properties.id).join(', ')}${unknownYr.length > 12 ? ' …' : ''}`, suggestion: 'Check them on the Sanborn sheets.', status: 'open' });
 
@@ -322,7 +334,7 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
     counts, matching: match1,
     blocks: { method: 'planar faces of the street-centreline graph', vertices: bk.vertices, edges: bk.edges, deadEndsPruned: bk.pruned, taxBlockAgreement: { median: median(agree), min: agree.length ? Math.min(...agree) : null, n: agree.length } },
     scale, alignment,
-    sanborn: { index: sanIdx ? 'citydata/wildwood/evidence/sanborn-1950-additional-index.json (transcribed)' : null, plan, sheetsToFetch, volumes: city.sanborn ?? [] },
+    sanborn: { index: sanIdx ? 'citydata/wildwood/evidence/sanborn-1950-additional-index.json (transcribed)' : null, plan, sheetsToFetch: regSheets.length ? [] : sheetsToFetch, volumes: city.sanborn ?? [], georef: georef ? { file: 'citydata/wildwood/evidence/sanborn-1950-georef.json', registered: regSheets.map((g) => g.sheet), buildingsPerSheet: Object.fromEntries(sheetCount), correctionsDerived: 0, note: 'Sheets are registered as evidence layers only; no building-level correction was derived from them (the 25% scans are read by a person, in the map editor).' } : null },
     directories: { status: dirRun.status, detail: dirRun.detail, candidates: dirRun.candidates.length },
   };
   // Occupancy: who was in which building when (validTo exclusive). A business that moves or closes keeps
@@ -363,12 +375,16 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
   write('nav.json', navJson);
 
   /* ---------- game layer ---------- */
-  const flat = (c: XY[]) => c.flatMap(([u, v]) => [r1(u), r1(v)]);
+  // The game layer is generalized for the whole island (it ships with the page, loaded when the view opens):
+  // coordinates to the metre and outlines simplified (Douglas–Peucker) by area0.gameLayer; the pack keeps full detail.
+  const gl = area0.gameLayer ?? { round: 0.1, simplify: 0 };
+  const q = (x: number) => (gl.round >= 1 ? Math.round(x / gl.round) * gl.round : Math.round(x * 10) / 10);
+  const flat = (c: XY[]) => (gl.simplify > 0 && c.length > 4 ? simplifyDP(c, gl.simplify) : c).flatMap(([u, v]) => [q(u), q(v)]);
   const gB = boxLocal.map((q) => toGame(localToLL(q)));
   const layer: ImportedLayer = {
     v: IMPORTED_LAYER_VERSION, packId, name: area0.name, targetYear: city.targetYear, frame: gf.describe.frame,
     attribution: sourcesJson.attribution,
-    bounds: { u0: r1(Math.min(...gB.map((q) => q[0]))), u1: r1(Math.max(...gB.map((q) => q[0]))), v0: r1(Math.min(...gB.map((q) => q[1]))), v1: r1(Math.max(...gB.map((q) => q[1]))) },
+    bounds: { u0: q(Math.min(...gB.map((q) => q[0]))), u1: q(Math.max(...gB.map((q) => q[0]))), v0: q(Math.min(...gB.map((q) => q[1]))), v1: q(Math.max(...gB.map((q) => q[1]))) },
     fit: alignment.fit,
     roads: roadFeatures.map((f) => ({ id: f.id, name: f.properties.displayName ?? undefined, cls: f.properties.cls, pts: flat(f.properties.game as XY[]) })),
     rail: railFeatures.map((f) => ({ id: f.id, cls: 'foot' as const, pts: flat(f.properties.game as XY[]) })),
@@ -380,10 +396,10 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
       h: f.properties.height.value, hGen: f.properties.height.generated, roof: f.properties.roof.value, roofGen: f.properties.roof.generated, levels: f.properties.levels.value,
       tpl: f.properties.template, parcels: f.properties.parcels.map((l) => l.parcelId), status: f.properties.historical.status as ImportedLayer['buildings'][number]['status'],
       yr: f.properties.historical.yrConstr ?? undefined,
-      entrances: f.properties.entrances.map((e) => ({ id: e.id, u: r1(e.game[0]), v: r1(e.game[1]), gen: e.generated, node: e.navNode })),
+      entrances: f.properties.entrances.map((e) => ({ id: e.id, u: q(e.game[0]), v: q(e.game[1]), gen: e.generated, node: e.navNode })),
     })),
-    businesses: businessesOut.map((b) => ({ id: b.id, name: b.name, cat: b.category, u: r1(b.game[0]), v: r1(b.game[1]), building: b.buildingId, parcel: b.parcelId, addr: b.address, srcIds: b.sourceIds, status: 'unverified' })),
-    nav: { nodes: navJson.nodesGame.flatMap(([u, v]) => [r1(u), r1(v)]), edges: nav.edges.flat() },
+    businesses: businessesOut.map((b) => ({ id: b.id, name: b.name, cat: b.category, u: q(b.game[0]), v: q(b.game[1]), building: b.buildingId, parcel: b.parcelId, addr: b.address, srcIds: b.sourceIds, status: 'unverified' })),
+    nav: { nodes: navJson.nodesGame.flatMap(([u, v]) => [q(u), q(v)]), edges: nav.edges.flat() },
   };
   let gameLayerFile: string | undefined;
   if (opts.writeGameLayer !== false) {
@@ -392,6 +408,30 @@ export function buildPack(city: CityConfig, area0: ImportArea, opts: BuildOpts =
   }
   return { packDir, gameLayerFile, cityJson, counts, review, layer, alignment, scale, plan, sheetsToFetch };
 }
+
+/** Douglas–Peucker on a polyline (a closed ring keeps its first and last point). */
+function simplifyDP(pts: XY[], tol: number): XY[] {
+  const keep = new Uint8Array(pts.length);
+  keep[0] = keep[pts.length - 1] = 1;
+  const st: [number, number][] = [[0, pts.length - 1]];
+  // A closed ring: split at its farthest point so the first chord is not degenerate.
+  if (pts.length > 3 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1]) {
+    let far = 1; let fd = -1;
+    for (let i = 1; i < pts.length - 1; i++) { const d = Math.hypot(pts[i][0] - pts[0][0], pts[i][1] - pts[0][1]); if (d > fd) { fd = d; far = i; } }
+    keep[far] = 1; st.length = 0; st.push([0, far], [far, pts.length - 1]);
+  }
+  while (st.length) {
+    const [a, b] = st.pop()!;
+    const [ax, ay] = pts[a]; const [bx, by] = pts[b];
+    const L = Math.hypot(bx - ax, by - ay) || 1e-9;
+    let md = -1; let mi = -1;
+    for (let i = a + 1; i < b; i++) { const d = Math.abs((bx - ax) * (ay - pts[i][1]) - (ax - pts[i][0]) * (by - ay)) / L; if (d > md) { md = d; mi = i; } }
+    if (md > tol) { keep[mi] = 1; st.push([a, mi], [mi, b]); }
+  }
+  return pts.filter((_, i) => keep[i]);
+}
+
+function meanOf(r: LL[]): LL { const p = r.length > 1 && r[0][0] === r[r.length - 1][0] && r[0][1] === r[r.length - 1][1] ? r.slice(0, -1) : r; return [p.reduce((a, q) => a + q[0], 0) / p.length, p.reduce((a, q) => a + q[1], 0) / p.length]; }
 
 function count(xs: string[]): Record<string, number> {
   const o: Record<string, number> = {};

@@ -11,6 +11,8 @@ describe('bundled map data', () => {
   it('stays within the geo budget (8 MB) and every layer parses', () => {
     let total = 0;
     for (const f of readdirSync(GEO)) {
+      // The imported layers load only with the imported view: their own budget is in islandpack.test.ts.
+      if (f.startsWith('imported-')) continue;
       total += statSync(join(GEO, f)).size;
       expect(() => JSON.parse(readFileSync(join(GEO, f), 'utf8'))).not.toThrow();
     }

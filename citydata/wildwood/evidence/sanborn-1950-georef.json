@@ -1,0 +1,4092 @@
+{
+ "schemaVersion": 1,
+ "generatedAt": "2026-10-29T04:21:06.145Z",
+ "source": {
+  "title": "Sanborn Fire Insurance Map from New Jersey Coast, Vol. 4 (1909, corrected to Nov 1950)",
+  "item": "https://www.loc.gov/item/sanborn05568_015/",
+  "scans": "IIIF pct:25 JPEGs (about 1660 x 1950 px), downloaded in a browser 2026-10-29; not in git (36 MB): file names are the cache's",
+  "rights": "Public domain"
+ },
+ "notExamined": [
+  {
+   "file": "sanborn1950_01_covr.jpg",
+   "why": "cover, title or index page (ind2: the 1949 Additional Index, transcribed separately; ind3: the main index)"
+  },
+  {
+   "file": "sanborn1950_02_titl.jpg",
+   "why": "cover, title or index page (ind2: the 1949 Additional Index, transcribed separately; ind3: the main index)"
+  },
+  {
+   "file": "sanborn1950_03_ind2.jpg",
+   "why": "cover, title or index page (ind2: the 1949 Additional Index, transcribed separately; ind3: the main index)"
+  },
+  {
+   "file": "sanborn1950_04_ind3.jpg",
+   "why": "cover, title or index page (ind2: the 1949 Additional Index, transcribed separately; ind3: the main index)"
+  },
+  {
+   "file": "sanborn1950_05_0000.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_06_0001.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_07_0002.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_08_0003.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_09_0004.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_10_0005.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_11_0006.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_12_0007.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_13_0008.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_14_0009.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_15_0010.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_16_0011.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_17_0012.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_18_0013.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_19_0014.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_20_0015.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_21_0016.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_22_0017.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_23_0018.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_24_0019.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_25_0020.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_26_0021.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_27_0022.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_28_0023.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_29_0024.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_30_0025.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_31_0026.jpg",
+   "why": "outside Five Mile Beach (the key map on sheet 30 gives the island as sheets 27-63B and 104-109); not examined"
+  },
+  {
+   "file": "sanborn1950_32_0027.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_33_0028.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_34_0029.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_38_0033.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_61_0056.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_62_0057.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_64_0059.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_65_0060.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_66_0061.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_68_0063.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_70_0063B.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_71_0076.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_72_0077.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_73_0080.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_74_0081.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_75_0104.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  },
+  {
+   "file": "sanborn1950_76_0105.jpg",
+   "why": "on the island; not examined in this pass (control points not read yet)"
+  }
+ ],
+ "method": "Pixel positions of street intersections read by eye off the 25% scans (zoomed 2x), each with the two street names as printed; ground positions are where the two OSM centrelines cross (scripts/cityimport/build/sanborngeo.ts). Pixels are on the whole scan (x right, y down). Accuracy of a reading: about 3-5 px on a detailed sheet (~1-2 m/px), 5-10 px on the key map. Fit: least-squares affine, pixel -> local metres (scripts/cityimport/build/sanborngeo.ts); registered when RMS <= 15 m (key map 60 m). looMaxM: each point predicted from the others.",
+ "sheets": [
+  {
+   "sheet": "0030",
+   "file": "sanborn1950_35_0030.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "keymap",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      50,
+      1599
+     ],
+     "a": "Rambler Rd",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.839756,
+      38.9730301
+     ],
+     "residualM": 37.4
+    },
+    {
+     "px": [
+      236,
+      1599
+     ],
+     "a": "Wisteria Rd",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.833938,
+      38.977279
+     ],
+     "residualM": 13.4
+    },
+    {
+     "px": [
+      422.5,
+      1601
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82803,
+      38.981625
+     ],
+     "residualM": 6.4
+    },
+    {
+     "px": [
+      50,
+      1692.5
+     ],
+     "a": "Rambler Rd",
+     "b": "Seaview Ave",
+     "found": true,
+     "lonLat": [
+      -74.8371893,
+      38.9708734
+     ],
+     "residualM": 21.8
+    },
+    {
+     "px": [
+      236,
+      1654
+     ],
+     "a": "Wisteria Rd",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8323003,
+      38.975926
+     ],
+     "residualM": 8.5
+    },
+    {
+     "px": [
+      502.5,
+      1602.5
+     ],
+     "a": "Hand Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82536,
+      38.983582
+     ],
+     "residualM": 9
+    },
+    {
+     "px": [
+      670,
+      1602.5
+     ],
+     "a": "Roberts Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.820015,
+      38.987499
+     ],
+     "residualM": 13.3
+    },
+    {
+     "px": [
+      756,
+      1602.5
+     ],
+     "a": "Garfield Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.8173393,
+      38.9894607
+     ],
+     "residualM": 24.2
+    },
+    {
+     "px": [
+      422.5,
+      1652.5
+     ],
+     "a": "Cresse Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8263942,
+      38.980263
+     ],
+     "residualM": 20
+    },
+    {
+     "px": [
+      1119,
+      1595
+     ],
+     "a": "19th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.805566,
+      38.998125
+     ],
+     "residualM": 18.5
+    },
+    {
+     "px": [
+      1262.5,
+      1645
+     ],
+     "a": "12th Ave",
+     "b": "Central Ave",
+     "found": true,
+     "lonLat": [
+      -74.7995573,
+      39.0008515
+     ],
+     "residualM": 47.4
+    },
+    {
+     "px": [
+      1487.5,
+      1610
+     ],
+     "a": "1st Ave",
+     "b": "Central Ave",
+     "found": true,
+     "lonLat": [
+      -74.7923993,
+      39.0067827
+     ],
+     "residualM": 56.3
+    },
+    {
+     "px": [
+      1119,
+      1505
+     ],
+     "a": "19th Ave",
+     "b": "Delaware Ave",
+     "found": true,
+     "lonLat": [
+      -74.8084823,
+      39.0002715
+     ],
+     "residualM": 19.5
+    },
+    {
+     "px": [
+      1262.5,
+      1730
+     ],
+     "a": "12th Ave",
+     "b": "Surf Ave",
+     "found": true,
+     "lonLat": [
+      -74.796364,
+      38.998489
+     ],
+     "residualM": 17.7
+    },
+    {
+     "px": [
+      756,
+      1707.5
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.814064,
+      38.986719
+     ],
+     "residualM": 44.3
+    }
+   ],
+   "rmsM": 28.1,
+   "maxM": 56.3,
+   "affine": [
+    2.818806,
+    2.730135,
+    -6728.460782,
+    2.628126,
+    -2.613477,
+    1902.737587
+   ],
+   "scaleMPerPx": 3.813,
+   "rotationDeg": 43,
+   "cornersLonLat": [
+    [
+     -74.8921824,
+     39.0093135
+    ],
+    [
+     -74.8381723,
+     39.0486348
+    ],
+    [
+     -74.7767296,
+     39.0027488
+    ],
+    [
+     -74.8307388,
+     38.9634557
+    ]
+   ],
+   "looMaxM": 77.7
+  },
+  {
+   "sheet": "0040",
+   "file": "sanborn1950_45_0040.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      577,
+      200
+     ],
+     "a": "Roberts Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8183685,
+      38.9861276
+     ],
+     "residualM": 1.5
+    },
+    {
+     "px": [
+      1588,
+      200
+     ],
+     "a": "Roberts Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8167314,
+      38.9847862
+     ],
+     "residualM": 3
+    },
+    {
+     "px": [
+      577,
+      945
+     ],
+     "a": "Montgomery Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8197057,
+      38.9851762
+     ],
+     "residualM": 4.1
+    },
+    {
+     "px": [
+      1588,
+      945
+     ],
+     "a": "Montgomery Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8180754,
+      38.9838108
+     ],
+     "residualM": 4.5
+    },
+    {
+     "px": [
+      577,
+      1757
+     ],
+     "a": "Burk Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8210332,
+      38.98418
+     ],
+     "residualM": 2
+    },
+    {
+     "px": [
+      1588,
+      1757
+     ],
+     "a": "Burk Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8194145,
+      38.9828277
+     ],
+     "residualM": 1.4
+    },
+    {
+     "px": [
+      577,
+      1365
+     ],
+     "a": "Davis Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.82038,
+      38.9846821
+     ],
+     "residualM": 1.7
+    },
+    {
+     "px": [
+      577,
+      572
+     ],
+     "a": "Baker Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8190256,
+      38.9856551
+     ],
+     "residualM": 0.5
+    }
+   ],
+   "rmsM": 2.7,
+   "maxM": 4.5,
+   "affine": [
+    0.139519,
+    -0.148626,
+    -387.439405,
+    -0.148966,
+    -0.138845,
+    -560.740568
+   ],
+   "scaleMPerPx": 0.204,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8189717,
+     38.9871489
+    ],
+    [
+     -74.8162889,
+     38.9849134
+    ],
+    [
+     -74.819632,
+     38.9824758
+    ],
+    [
+     -74.8223148,
+     38.9847111
+    ]
+   ],
+   "looMaxM": 6.7
+  },
+  {
+   "sheet": "0041",
+   "file": "sanborn1950_46_0041.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1068,
+      185
+     ],
+     "a": "Garfield Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.8173393,
+      38.9894607
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      1068,
+      1770
+     ],
+     "a": "Roberts Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.820015,
+      38.987499
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      1068,
+      975
+     ],
+     "a": "Spencer Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.818678,
+      38.988479
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      45,
+      185
+     ],
+     "a": "Garfield Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8189655,
+      38.990815
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      45,
+      1770
+     ],
+     "a": "Roberts Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.821642,
+      38.988857
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      45,
+      1375
+     ],
+     "a": "Youngs Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.820971,
+      38.989348
+     ],
+     "residualM": 0.3
+    }
+   ],
+   "rmsM": 0.3,
+   "maxM": 0.4,
+   "affine": [
+    0.137503,
+    -0.146255,
+    -365.947207,
+    -0.147441,
+    -0.137223,
+    -121.528978
+   ],
+   "scaleMPerPx": 0.201,
+   "rotationDeg": -47,
+   "cornersLonLat": [
+    [
+     -74.8187239,
+     38.9911052
+    ],
+    [
+     -74.8160797,
+     38.9888927
+    ],
+    [
+     -74.8193696,
+     38.9864835
+    ],
+    [
+     -74.8220138,
+     38.988696
+    ]
+   ],
+   "looMaxM": 0.8
+  },
+  {
+   "sheet": "0042",
+   "file": "sanborn1950_47_0042.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      588,
+      182
+     ],
+     "a": "Garfield Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8156854,
+      38.9881003
+     ],
+     "residualM": 1.5
+    },
+    {
+     "px": [
+      1598,
+      182
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.814064,
+      38.986719
+     ],
+     "residualM": 0.8
+    },
+    {
+     "px": [
+      588,
+      970
+     ],
+     "a": "Spencer Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8170308,
+      38.9871079
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      1598,
+      970
+     ],
+     "a": "Spencer Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.815396,
+      38.985745
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      588,
+      1760
+     ],
+     "a": "Roberts Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8183685,
+      38.9861276
+     ],
+     "residualM": 0.9
+    },
+    {
+     "px": [
+      1598,
+      1760
+     ],
+     "a": "Roberts Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8167314,
+      38.9847862
+     ],
+     "residualM": 1.5
+    }
+   ],
+   "rmsM": 1,
+   "maxM": 1.5,
+   "affine": [
+    0.139921,
+    -0.146892,
+    -158.743203,
+    -0.149694,
+    -0.137376,
+    -343.483048
+   ],
+   "scaleMPerPx": 0.203,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8163322,
+     38.989106
+    ],
+    [
+     -74.8136417,
+     38.9868595
+    ],
+    [
+     -74.8169459,
+     38.9844477
+    ],
+    [
+     -74.8196365,
+     38.9866941
+    ]
+   ],
+   "looMaxM": 3.5
+  },
+  {
+   "sheet": "0043",
+   "file": "sanborn1950_48_0043.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      325,
+      1185
+     ],
+     "a": "Garfield Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.8173393,
+      38.9894607
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      722,
+      1185
+     ],
+     "a": "Lincoln Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.816675,
+      38.989947
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      1118,
+      1185
+     ],
+     "a": "Schellenger Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.816005,
+      38.990438
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      325,
+      160
+     ],
+     "a": "Garfield Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8189655,
+      38.990815
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      722,
+      160
+     ],
+     "a": "Lincoln Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8183,
+      38.991302
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      1118,
+      160
+     ],
+     "a": "Schellenger Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8176236,
+      38.9917889
+     ],
+     "residualM": 0.4
+    }
+   ],
+   "rmsM": 0.3,
+   "maxM": 0.4,
+   "affine": [
+    0.146196,
+    0.137201,
+    -456.362966,
+    0.136573,
+    -0.146588,
+    -174.794717
+   ],
+   "scaleMPerPx": 0.2,
+   "rotationDeg": 43.1,
+   "cornersLonLat": [
+    [
+     -74.8197675,
+     38.9906254
+    ],
+    [
+     -74.8169563,
+     38.992675
+    ],
+    [
+     -74.8138697,
+     38.9901015
+    ],
+    [
+     -74.8166809,
+     38.9880519
+    ]
+   ],
+   "looMaxM": 0.8
+  },
+  {
+   "sheet": "0044",
+   "file": "sanborn1950_49_0044.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      305,
+      500
+     ],
+     "a": "Garfield Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8156854,
+      38.9881003
+     ],
+     "residualM": 0.8
+    },
+    {
+     "px": [
+      702,
+      500
+     ],
+     "a": "Lincoln Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8150273,
+      38.9885863
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      1095,
+      500
+     ],
+     "a": "Schellenger Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.814366,
+      38.9890718
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      305,
+      1530
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.814064,
+      38.986719
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      702,
+      1530
+     ],
+     "a": "Lincoln Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.813395,
+      38.987208
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      1095,
+      1530
+     ],
+     "a": "Schellenger Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.812718,
+      38.987703
+     ],
+     "residualM": 1
+    }
+   ],
+   "rmsM": 0.6,
+   "maxM": 1,
+   "affine": [
+    0.146158,
+    0.13744,
+    -216.721191,
+    0.137398,
+    -0.148322,
+    -423.303286
+   ],
+   "scaleMPerPx": 0.201,
+   "rotationDeg": 43.2,
+   "cornersLonLat": [
+    [
+     -74.8170014,
+     38.988387
+    ],
+    [
+     -74.8141909,
+     38.9904489
+    ],
+    [
+     -74.8110992,
+     38.9878449
+    ],
+    [
+     -74.8139097,
+     38.985783
+    ]
+   ],
+   "looMaxM": 2.3
+  },
+  {
+   "sheet": "0035",
+   "file": "sanborn1950_40_0035.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1088,
+      218
+     ],
+     "a": "Hand Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82536,
+      38.983582
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      1088,
+      1795
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82803,
+      38.981625
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      1088,
+      1000
+     ],
+     "a": "Bennett Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.826695,
+      38.982603
+     ],
+     "residualM": 0.9
+    },
+    {
+     "px": [
+      62,
+      218
+     ],
+     "a": "Hand Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.826993,
+      38.98494
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      62,
+      1400
+     ],
+     "a": "Hildreth Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.828994,
+      38.983475
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      62,
+      607
+     ],
+     "a": "Leaming Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.827654,
+      38.984456
+     ],
+     "residualM": 0.2
+    }
+   ],
+   "rmsM": 0.5,
+   "maxM": 0.9,
+   "affine": [
+    0.137632,
+    -0.146697,
+    -1059.079887,
+    -0.147306,
+    -0.137666,
+    -766.772786
+   ],
+   "scaleMPerPx": 0.201,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8267233,
+     38.9852924
+    ],
+    [
+     -74.8240766,
+     38.9830821
+    ],
+    [
+     -74.8273759,
+     38.9806649
+    ],
+    [
+     -74.8300226,
+     38.9828752
+    ]
+   ],
+   "looMaxM": 1.4
+  },
+  {
+   "sheet": "0036",
+   "file": "sanborn1950_41_0036.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      584,
+      208
+     ],
+     "a": "Hand Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8237223,
+      38.9822173
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      1595,
+      208
+     ],
+     "a": "Hand Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8220808,
+      38.9808552
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      584,
+      995
+     ],
+     "a": "Bennett Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8250513,
+      38.9812373
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      584,
+      1788
+     ],
+     "a": "Cresse Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8263942,
+      38.980263
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      1595,
+      1788
+     ],
+     "a": "Cresse Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8247557,
+      38.9788984
+     ],
+     "residualM": 0
+    },
+    {
+     "px": [
+      1595,
+      995
+     ],
+     "a": "Bennett Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8234162,
+      38.9798783
+     ],
+     "residualM": 0.2
+    }
+   ],
+   "rmsM": 0.3,
+   "maxM": 0.5,
+   "affine": [
+    0.140404,
+    -0.146629,
+    -850.472095,
+    -0.149561,
+    -0.137386,
+    -992.444566
+   ],
+   "scaleMPerPx": 0.203,
+   "rotationDeg": -46.8,
+   "cornersLonLat": [
+    [
+     -74.8243154,
+     38.9832599
+    ],
+    [
+     -74.8216155,
+     38.9810156
+    ],
+    [
+     -74.8249133,
+     38.9786034
+    ],
+    [
+     -74.8276132,
+     38.9808476
+    ]
+   ],
+   "looMaxM": 0.8
+  },
+  {
+   "sheet": "0037",
+   "file": "sanborn1950_42_0037.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1080,
+      193
+     ],
+     "a": "Burk Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.822676,
+      38.985549
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      1080,
+      982
+     ],
+     "a": "Taylor Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.824011,
+      38.984571
+     ],
+     "residualM": 0
+    },
+    {
+     "px": [
+      1080,
+      1780
+     ],
+     "a": "Hand Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82536,
+      38.983582
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      68,
+      193
+     ],
+     "a": "Burk Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.824305,
+      38.986907
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      68,
+      982
+     ],
+     "a": "Taylor Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.825642,
+      38.985929
+     ],
+     "residualM": 0
+    },
+    {
+     "px": [
+      68,
+      1780
+     ],
+     "a": "Hand Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.826993,
+      38.98494
+     ],
+     "residualM": 0.1
+    }
+   ],
+   "rmsM": 0.1,
+   "maxM": 0.1,
+   "affine": [
+    0.139624,
+    -0.146661,
+    -830.821114,
+    -0.148987,
+    -0.137581,
+    -550.876125
+   ],
+   "scaleMPerPx": 0.203,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8240891,
+     38.9872374
+    ],
+    [
+     -74.8214041,
+     38.9850018
+    ],
+    [
+     -74.8247028,
+     38.9825862
+    ],
+    [
+     -74.8273878,
+     38.9848217
+    ]
+   ],
+   "looMaxM": 0.2
+  },
+  {
+   "sheet": "0038",
+   "file": "sanborn1950_43_0038.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      580,
+      183
+     ],
+     "a": "Burk Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8210332,
+      38.98418
+     ],
+     "residualM": 1
+    },
+    {
+     "px": [
+      1590,
+      183
+     ],
+     "a": "Burk Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8194145,
+      38.9828277
+     ],
+     "residualM": 0.9
+    },
+    {
+     "px": [
+      580,
+      978
+     ],
+     "a": "Taylor Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8223786,
+      38.9832027
+     ],
+     "residualM": 1.2
+    },
+    {
+     "px": [
+      1590,
+      978
+     ],
+     "a": "Taylor Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8207341,
+      38.9818403
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      580,
+      1775
+     ],
+     "a": "Hand Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8237223,
+      38.9822173
+     ],
+     "residualM": 1.9
+    },
+    {
+     "px": [
+      1590,
+      1775
+     ],
+     "a": "Hand Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8220808,
+      38.9808552
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      580,
+      1380
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8230135,
+      38.98274
+     ],
+     "residualM": 3.8
+    }
+   ],
+   "rmsM": 1.8,
+   "maxM": 3.8,
+   "affine": [
+    0.139436,
+    -0.145361,
+    -620.402523,
+    -0.150324,
+    -0.136742,
+    -777.139801
+   ],
+   "scaleMPerPx": 0.202,
+   "rotationDeg": -47.2,
+   "cornersLonLat": [
+    [
+     -74.8216603,
+     38.9851995
+    ],
+    [
+     -74.8189791,
+     38.9829437
+    ],
+    [
+     -74.8222485,
+     38.9805429
+    ],
+    [
+     -74.8249298,
+     38.9827986
+    ]
+   ],
+   "looMaxM": 5.3
+  },
+  {
+   "sheet": "0039",
+   "file": "sanborn1950_44_0039.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1065,
+      180
+     ],
+     "a": "Roberts Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.820015,
+      38.987499
+     ],
+     "residualM": 0
+    },
+    {
+     "px": [
+      1065,
+      972
+     ],
+     "a": "Montgomery Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.821346,
+      38.986524
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      1065,
+      1765
+     ],
+     "a": "Burk Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.822676,
+      38.985549
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      62,
+      180
+     ],
+     "a": "Roberts Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.821642,
+      38.988857
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      62,
+      972
+     ],
+     "a": "Montgomery Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.822974,
+      38.987881
+     ],
+     "residualM": 0.1
+    },
+    {
+     "px": [
+      62,
+      1765
+     ],
+     "a": "Burk Ave",
+     "b": "Arctic Ave",
+     "found": true,
+     "lonLat": [
+      -74.824305,
+      38.986907
+     ],
+     "residualM": 0.1
+    }
+   ],
+   "rmsM": 0.1,
+   "maxM": 0.1,
+   "affine": [
+    0.140619,
+    -0.145526,
+    -601.387811,
+    -0.150283,
+    -0.136568,
+    -337.259173
+   ],
+   "scaleMPerPx": 0.203,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8214413,
+     38.9891618
+    ],
+    [
+     -74.8187372,
+     38.9869067
+    ],
+    [
+     -74.8220105,
+     38.9845089
+    ],
+    [
+     -74.8247146,
+     38.986764
+    ]
+   ],
+   "looMaxM": 0.2
+  },
+  {
+   "sheet": "0049",
+   "file": "sanborn1950_54_0049.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1035,
+      228
+     ],
+     "a": "Maple Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8115593,
+      38.991381
+     ],
+     "residualM": 6.2
+    },
+    {
+     "px": [
+      1035,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8127372,
+      38.9903874
+     ],
+     "residualM": 2.1
+    },
+    {
+     "px": [
+      1035,
+      1368
+     ],
+     "a": "Oak Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8133607,
+      38.9898729
+     ],
+     "residualM": 5.6
+    },
+    {
+     "px": [
+      122,
+      228
+     ],
+     "a": "Maple Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.8130893,
+      38.992469
+     ],
+     "residualM": 7.6
+    },
+    {
+     "px": [
+      122,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.814429,
+      38.991593
+     ],
+     "residualM": 3.2
+    },
+    {
+     "px": [
+      122,
+      1368
+     ],
+     "a": "Oak Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.815093,
+      38.991107
+     ],
+     "residualM": 4.4
+    },
+    {
+     "px": [
+      1035,
+      585
+     ],
+     "a": "Pine Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8121268,
+      38.9908942
+     ],
+     "residualM": 1.8
+    }
+   ],
+   "rmsM": 4.9,
+   "maxM": 7.6,
+   "affine": [
+    0.156046,
+    -0.144406,
+    130.382268,
+    -0.142836,
+    -0.139722,
+    84.213917
+   ],
+   "scaleMPerPx": 0.206,
+   "rotationDeg": -42.5,
+   "cornersLonLat": [
+    [
+     -74.812995,
+     38.9929586
+    ],
+    [
+     -74.8099944,
+     38.990815
+    ],
+    [
+     -74.813243,
+     38.9883621
+    ],
+    [
+     -74.8162436,
+     38.9905056
+    ]
+   ],
+   "looMaxM": 19.9
+  },
+  {
+   "sheet": "0050",
+   "file": "sanborn1950_55_0050.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      632,
+      220
+     ],
+     "a": "Maple Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.809772,
+      38.99011
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      632,
+      1365
+     ],
+     "a": "Oak Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.81159,
+      38.988611
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      1500,
+      220
+     ],
+     "a": "Maple Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8083093,
+      38.9890693
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      1500,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8095064,
+      38.9880997
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      632,
+      975
+     ],
+     "a": "Wildwood Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.810966,
+      38.989125
+     ],
+     "residualM": 0.3
+    }
+   ],
+   "rmsM": 0.6,
+   "maxM": 0.7,
+   "affine": [
+    0.145964,
+    -0.137448,
+    347.68479,
+    -0.131782,
+    -0.144477,
+    -117.362287
+   ],
+   "scaleMPerPx": 0.198,
+   "rotationDeg": -42.1,
+   "cornersLonLat": [
+    [
+     -74.8104869,
+     38.9911428
+    ],
+    [
+     -74.8076802,
+     38.989165
+    ],
+    [
+     -74.8107723,
+     38.9866287
+    ],
+    [
+     -74.813579,
+     38.9886064
+    ]
+   ],
+   "looMaxM": 2
+  },
+  {
+   "sheet": "0051",
+   "file": "sanborn1950_56_0051.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      871,
+      148
+     ],
+     "a": "26th Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.809021,
+      38.993549
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      871,
+      712
+     ],
+     "a": "Poplar Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8099097,
+      38.9927928
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      871,
+      1418
+     ],
+     "a": "Glenwood Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8110112,
+      38.9918556
+     ],
+     "residualM": 0.9
+    },
+    {
+     "px": [
+      871,
+      1765
+     ],
+     "a": "Maple Ave",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8115593,
+      38.991381
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      222,
+      148
+     ],
+     "a": "26th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.810131,
+      38.994365
+     ],
+     "residualM": 0.9
+    },
+    {
+     "px": [
+      75,
+      1418
+     ],
+     "a": "Glenwood Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.8123983,
+      38.992835
+     ],
+     "residualM": 0.7
+    }
+   ],
+   "rmsM": 0.7,
+   "maxM": 0.9,
+   "affine": [
+    0.149765,
+    -0.136369,
+    364.765705,
+    -0.138146,
+    -0.148983,
+    292.546834
+   ],
+   "scaleMPerPx": 0.203,
+   "rotationDeg": -42.7,
+   "cornersLonLat": [
+    [
+     -74.8102895,
+     38.9948351
+    ],
+    [
+     -74.8074097,
+     38.9927618
+    ],
+    [
+     -74.8104776,
+     38.9901464
+    ],
+    [
+     -74.8133575,
+     38.9922196
+    ]
+   ],
+   "looMaxM": 2.7
+  },
+  {
+   "sheet": "0052",
+   "file": "sanborn1950_57_0052.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      445,
+      368
+     ],
+     "a": "Juniper Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.807456,
+      38.9919018
+     ],
+     "residualM": 1.8
+    },
+    {
+     "px": [
+      445,
+      1070
+     ],
+     "a": "Magnolia Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.808624,
+      38.991009
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      445,
+      1775
+     ],
+     "a": "Maple Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.809772,
+      38.99011
+     ],
+     "residualM": 1.3
+    },
+    {
+     "px": [
+      1255,
+      368
+     ],
+     "a": "Juniper Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8061097,
+      38.9909601
+     ],
+     "residualM": 3.2
+    },
+    {
+     "px": [
+      1255,
+      1070
+     ],
+     "a": "Magnolia Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8072178,
+      38.9900076
+     ],
+     "residualM": 3
+    },
+    {
+     "px": [
+      1255,
+      715
+     ],
+     "a": "Poplar Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.806664,
+      38.9904836
+     ],
+     "residualM": 0.6
+    }
+   ],
+   "rmsM": 2,
+   "maxM": 3.2,
+   "affine": [
+    0.147258,
+    -0.141431,
+    595.600875,
+    -0.134167,
+    -0.14323,
+    80.671282
+   ],
+   "scaleMPerPx": 0.2,
+   "rotationDeg": -42.3,
+   "cornersLonLat": [
+    [
+     -74.8076252,
+     38.9929265
+    ],
+    [
+     -74.8047937,
+     38.9909128
+    ],
+    [
+     -74.8079755,
+     38.9883985
+    ],
+    [
+     -74.810807,
+     38.9904121
+    ]
+   ],
+   "looMaxM": 6.7
+  },
+  {
+   "sheet": "0047",
+   "file": "sanborn1950_52_0047.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      100,
+      298
+     ],
+     "a": "Maple Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.8157322,
+      38.9943653
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      100,
+      1050
+     ],
+     "a": "Wildwood Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.816907,
+      38.993359
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      100,
+      1440
+     ],
+     "a": "Oak Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.81752,
+      38.992836
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      1458,
+      1440
+     ],
+     "a": "Oak Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.815093,
+      38.991107
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      1572,
+      298
+     ],
+     "a": "Maple Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.8130893,
+      38.992469
+     ],
+     "residualM": 0.6
+    }
+   ],
+   "rmsM": 0.6,
+   "maxM": 0.7,
+   "affine": [
+    0.155149,
+    -0.136047,
+    -81.394961,
+    -0.142219,
+    -0.147643,
+    298.001009
+   ],
+   "scaleMPerPx": 0.206,
+   "rotationDeg": -42.5,
+   "cornersLonLat": [
+    [
+     -74.8154395,
+     38.9948843
+    ],
+    [
+     -74.812456,
+     38.99275
+    ],
+    [
+     -74.8155165,
+     38.990158
+    ],
+    [
+     -74.8185001,
+     38.9922922
+    ]
+   ],
+   "looMaxM": 2.7
+  },
+  {
+   "sheet": "0048",
+   "file": "sanborn1950_53_0048.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      262,
+      1075
+     ],
+     "a": "Glenwood Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.813597,
+      38.99369
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      618,
+      1075
+     ],
+     "a": "Magnolia Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.813049,
+      38.994161
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      973,
+      1075
+     ],
+     "a": "Poplar Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.812499,
+      38.994635
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      1318,
+      1075
+     ],
+     "a": "Juniper Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.811959,
+      38.995099
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      262,
+      150
+     ],
+     "a": "Glenwood Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.815191,
+      38.994822
+     ],
+     "residualM": 0.3
+    },
+    {
+     "px": [
+      1318,
+      150
+     ],
+     "a": "Juniper Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.813543,
+      38.996227
+     ],
+     "residualM": 0.3
+    }
+   ],
+   "rmsM": 0.3,
+   "maxM": 0.4,
+   "affine": [
+    0.134755,
+    0.148609,
+    -117.226685,
+    0.147932,
+    -0.135847,
+    272.582027
+   ],
+   "scaleMPerPx": 0.201,
+   "rotationDeg": 47.7,
+   "cornersLonLat": [
+    [
+     -74.8158531,
+     38.9946553
+    ],
+    [
+     -74.8132617,
+     38.9968753
+    ],
+    [
+     -74.8099184,
+     38.9944903
+    ],
+    [
+     -74.8125099,
+     38.9922704
+    ]
+   ],
+   "looMaxM": 1
+  },
+  {
+   "sheet": "0062",
+   "file": "sanborn1950_67_0062.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "not-fitted",
+   "points": [],
+   "why": "Not fitted: the main frame has one street line (Ocean Ave) crossing the cross streets; its other edge is the Boardwalk, which OSM does not cross with the streets (they end at it), and the inset (Maple to Oak) is drawn to its own placement. Readings kept in the note: Ocean & Juniper (85,365), Ocean & Magnolia (85,1065), Ocean & Maple (85,1765)."
+  },
+  {
+   "sheet": "0063A-wildwood",
+   "file": "sanborn1950_69_0063A.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      140,
+      285
+     ],
+     "a": "Burk Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8194145,
+      38.9828277
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      440,
+      285
+     ],
+     "a": "Burk Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8184473,
+      38.9820278
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      140,
+      1083
+     ],
+     "a": "Hand Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8220808,
+      38.9808552
+     ],
+     "residualM": 1
+    },
+    {
+     "px": [
+      440,
+      1083
+     ],
+     "a": "Hand Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8211306,
+      38.9800649
+     ],
+     "residualM": 0.9
+    },
+    {
+     "px": [
+      140,
+      1885
+     ],
+     "a": "Cresse Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8247557,
+      38.9788984
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      440,
+      883
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.82045,
+      38.9805615
+     ],
+     "residualM": 0.4
+    }
+   ],
+   "crop": [
+    60,
+    30,
+    700,
+    1930
+   ],
+   "rmsM": 0.7,
+   "maxM": 1,
+   "affine": [
+    0.276658,
+    -0.289669,
+    -381.761827,
+    -0.294618,
+    -0.27266,
+    -921.93423
+   ],
+   "scaleMPerPx": 0.401,
+   "rotationDeg": -46.8,
+   "cornersLonLat": [
+    [
+     -74.8188147,
+     38.9836624
+    ],
+    [
+     -74.8167711,
+     38.981964
+    ],
+    [
+     -74.8231223,
+     38.9772972
+    ],
+    [
+     -74.8251659,
+     38.9789955
+    ]
+   ],
+   "looMaxM": 2.3
+  },
+  {
+   "sheet": "0063A-north",
+   "file": "sanborn1950_69_0063A.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      740,
+      45
+     ],
+     "a": "3rd Ave",
+     "b": "Surf Ave",
+     "found": true,
+     "lonLat": [
+      -74.7904971,
+      39.0033559
+     ],
+     "residualM": 1.5
+    },
+    {
+     "px": [
+      1180,
+      45
+     ],
+     "a": "3rd Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.7890026,
+      39.0022527
+     ],
+     "residualM": 1.1
+    },
+    {
+     "px": [
+      740,
+      845
+     ],
+     "a": "7th Ave",
+     "b": "Surf Ave",
+     "found": true,
+     "lonLat": [
+      -74.793105,
+      39.001192
+     ],
+     "residualM": 2.9
+    },
+    {
+     "px": [
+      1180,
+      845
+     ],
+     "a": "7th Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.7916075,
+      39.0000974
+     ],
+     "residualM": 2.4
+    },
+    {
+     "px": [
+      740,
+      1665
+     ],
+     "a": "11th Ave",
+     "b": "Surf Ave",
+     "found": true,
+     "lonLat": [
+      -74.79571,
+      38.999032
+     ],
+     "residualM": 1.3
+    },
+    {
+     "px": [
+      1180,
+      1665
+     ],
+     "a": "11th Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.79421,
+      38.997929
+     ],
+     "residualM": 1.3
+    }
+   ],
+   "crop": [
+    700,
+    30,
+    1640,
+    1930
+   ],
+   "rmsM": 1.9,
+   "maxM": 2.9,
+   "affine": [
+    0.294857,
+    -0.278514,
+    1872.426343,
+    -0.277534,
+    -0.296356,
+    1456.386621
+   ],
+   "scaleMPerPx": 0.406,
+   "rotationDeg": -43.3,
+   "cornersLonLat": [
+    [
+     -74.7905977,
+     39.0034863
+    ],
+    [
+     -74.7873989,
+     39.0011356
+    ],
+    [
+     -74.7935092,
+     38.9960648
+    ],
+    [
+     -74.796708,
+     38.9984153
+    ]
+   ],
+   "looMaxM": 4.3
+  },
+  {
+   "sheet": "0108",
+   "file": "sanborn1950_77_0108.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      165,
+      200
+     ],
+     "a": "Spencer Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.815396,
+      38.985745
+     ],
+     "residualM": 0.8
+    },
+    {
+     "px": [
+      790,
+      200
+     ],
+     "a": "Spencer Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.814449,
+      38.984955
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      165,
+      993
+     ],
+     "a": "Roberts Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8167314,
+      38.9847862
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      790,
+      993
+     ],
+     "a": "Roberts Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8157816,
+      38.9839794
+     ],
+     "residualM": 0
+    },
+    {
+     "px": [
+      165,
+      1787
+     ],
+     "a": "Montgomery Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.8180754,
+      38.9838108
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      790,
+      1787
+     ],
+     "a": "Montgomery Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.8171155,
+      38.9830028
+     ],
+     "residualM": 0.6
+    }
+   ],
+   "rmsM": 0.6,
+   "maxM": 0.8,
+   "affine": [
+    0.132008,
+    -0.145938,
+    -70.405498,
+    -0.142386,
+    -0.13593,
+    -665.139076
+   ],
+   "scaleMPerPx": 0.197,
+   "rotationDeg": -47.2,
+   "cornersLonLat": [
+    [
+     -74.8153126,
+     38.9862086
+    ],
+    [
+     -74.8127744,
+     38.9840718
+    ],
+    [
+     -74.816057,
+     38.9816854
+    ],
+    [
+     -74.8185953,
+     38.9838221
+    ]
+   ],
+   "looMaxM": 1.9
+  },
+  {
+   "sheet": "0109",
+   "file": "sanborn1950_78_0109.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      118,
+      375
+     ],
+     "a": "Schellenger Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.812718,
+      38.987703
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      745,
+      375
+     ],
+     "a": "Schellenger Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.811771,
+      38.986914
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      118,
+      1170
+     ],
+     "a": "Garfield Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.814064,
+      38.986719
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      745,
+      1170
+     ],
+     "a": "Garfield Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.813117,
+      38.985929
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      118,
+      1565
+     ],
+     "a": "Spicer Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.814722,
+      38.986238
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      745,
+      1565
+     ],
+     "a": "Spicer Ave",
+     "b": "Ocean Ave",
+     "found": true,
+     "lonLat": [
+      -74.813774,
+      38.985449
+     ],
+     "residualM": 0.4
+    }
+   ],
+   "rmsM": 0.4,
+   "maxM": 0.6,
+   "affine": [
+    0.13091,
+    -0.145989,
+    193.540234,
+    -0.139756,
+    -0.136789,
+    -431.565298
+   ],
+   "scaleMPerPx": 0.196,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8122662,
+     38.9883125
+    ],
+    [
+     -74.8097491,
+     38.9862152
+    ],
+    [
+     -74.8130331,
+     38.9838138
+    ],
+    [
+     -74.8155502,
+     38.9859111
+    ]
+   ],
+   "looMaxM": 1
+  },
+  {
+   "sheet": "0034",
+   "file": "sanborn1950_39_0034.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      82,
+      1665
+     ],
+     "a": "Cresse Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.830277,
+      38.983494
+     ],
+     "residualM": 1.2
+    },
+    {
+     "px": [
+      1075,
+      1665
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.82693,
+      38.985945
+     ],
+     "residualM": 1.9
+    },
+    {
+     "px": [
+      1470,
+      1665
+     ],
+     "a": "Andrews Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.825588,
+      38.986927
+     ],
+     "residualM": 2.1
+    },
+    {
+     "px": [
+      1075,
+      815
+     ],
+     "a": "Rio Grande Ave",
+     "b": "Susquehanna Ave",
+     "found": true,
+     "lonLat": [
+      -74.829682,
+      38.988238
+     ],
+     "residualM": 3.3
+    },
+    {
+     "px": [
+      878,
+      1328
+     ],
+     "a": "Hand Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.8287408,
+      38.9864183
+     ],
+     "residualM": 5.1
+    },
+    {
+     "px": [
+      1272,
+      1328
+     ],
+     "a": "Taylor Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.827392,
+      38.987387
+     ],
+     "residualM": 3.4
+    }
+   ],
+   "rmsM": 3.1,
+   "maxM": 5.1,
+   "affine": [
+    0.292322,
+    0.282106,
+    -1861.650293,
+    0.275035,
+    -0.300472,
+    -487.91278
+   ],
+   "scaleMPerPx": 0.407,
+   "rotationDeg": 43.3,
+   "cornersLonLat": [
+    [
+     -74.8359869,
+     38.987803
+    ],
+    [
+     -74.8303871,
+     38.9919165
+    ],
+    [
+     -74.82404,
+     38.9866421
+    ],
+    [
+     -74.8296398,
+     38.9825289
+    ]
+   ],
+   "looMaxM": 16.9
+  },
+  {
+   "sheet": "0045",
+   "file": "sanborn1950_50_0045.jpg",
+   "size": [
+    1652,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1050,
+      1072
+     ],
+     "a": "Baker Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.82405,
+      38.989846
+     ],
+     "residualM": 1
+    },
+    {
+     "px": [
+      1050,
+      1885
+     ],
+     "a": "Andrews Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.826727,
+      38.987876
+     ],
+     "residualM": 2.2
+    },
+    {
+     "px": [
+      545,
+      1072
+     ],
+     "a": "Baker Ave",
+     "b": "Susquehanna Ave",
+     "found": true,
+     "lonLat": [
+      -74.825654,
+      38.991185
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      545,
+      1885
+     ],
+     "a": "Andrews Ave",
+     "b": "Susquehanna Ave",
+     "found": true,
+     "lonLat": [
+      -74.8283487,
+      38.9892283
+     ],
+     "residualM": 1.2
+    },
+    {
+     "px": [
+      1418,
+      1885
+     ],
+     "a": "Andrews Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.825588,
+      38.986927
+     ],
+     "residualM": 0.8
+    },
+    {
+     "px": [
+      1418,
+      1278
+     ],
+     "a": "Montgomery Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.823587,
+      38.988392
+     ],
+     "residualM": 1.1
+    }
+   ],
+   "crop": [
+    0,
+    1010,
+    1640,
+    1949
+   ],
+   "rmsM": 1.2,
+   "maxM": 2.2,
+   "affine": [
+    0.2735,
+    -0.286283,
+    -808.410788,
+    -0.292547,
+    -0.26786,
+    333.756663
+   ],
+   "scaleMPerPx": 0.396,
+   "rotationDeg": -46.9,
+   "cornersLonLat": [
+    [
+     -74.8271687,
+     38.9927688
+    ],
+    [
+     -74.8219909,
+     38.9884475
+    ],
+    [
+     -74.8250933,
+     38.9861816
+    ],
+    [
+     -74.8302711,
+     38.9905028
+    ]
+   ],
+   "looMaxM": 3.3
+  },
+  {
+   "sheet": "0046",
+   "file": "sanborn1950_51_0046.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1218,
+      290
+     ],
+     "a": "Juniper Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.814798,
+      38.99712
+     ],
+     "residualM": 2.6
+    },
+    {
+     "px": [
+      1218,
+      1520
+     ],
+     "a": "Oak Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.818749,
+      38.993711
+     ],
+     "residualM": 5.3
+    },
+    {
+     "px": [
+      1568,
+      290
+     ],
+     "a": "Juniper Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.813543,
+      38.996227
+     ],
+     "residualM": 1.8
+    },
+    {
+     "px": [
+      1568,
+      1345
+     ],
+     "a": "Wildwood Ave",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.816907,
+      38.993359
+     ],
+     "residualM": 1.6
+    },
+    {
+     "px": [
+      912,
+      465
+     ],
+     "a": "Poplar Ave",
+     "b": "Lake Ave",
+     "found": true,
+     "lonLat": [
+      -74.816388,
+      38.997402
+     ],
+     "residualM": 1.4
+    },
+    {
+     "px": [
+      1218,
+      995
+     ],
+     "a": "Maple Ave",
+     "b": "Hudson Ave",
+     "found": true,
+     "lonLat": [
+      -74.81698,
+      38.995238
+     ],
+     "residualM": 6.9
+    }
+   ],
+   "rmsM": 3.9,
+   "maxM": 6.9,
+   "affine": [
+    0.303705,
+    -0.277588,
+    -312.585943,
+    -0.278567,
+    -0.304494,
+    973.919134
+   ],
+   "scaleMPerPx": 0.412,
+   "rotationDeg": -42.5,
+   "cornersLonLat": [
+    [
+     -74.8181085,
+     39.0009728
+    ],
+    [
+     -74.8122887,
+     38.9968074
+    ],
+    [
+     -74.8185336,
+     38.9914616
+    ],
+    [
+     -74.8243533,
+     38.9956267
+    ]
+   ],
+   "looMaxM": 11.7
+  },
+  {
+   "sheet": "0053",
+   "file": "sanborn1950_58_0053.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      95,
+      530
+     ],
+     "a": "26th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.810131,
+      38.994365
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      1522,
+      530
+     ],
+     "a": "19th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.805566,
+      38.998125
+     ],
+     "residualM": 1.5
+    },
+    {
+     "px": [
+      95,
+      1400
+     ],
+     "a": "26th Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.807117,
+      38.9921572
+     ],
+     "residualM": 1.8
+    },
+    {
+     "px": [
+      1522,
+      1400
+     ],
+     "a": "19th Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.802569,
+      38.995922
+     ],
+     "residualM": 1.6
+    },
+    {
+     "px": [
+      905,
+      965
+     ],
+     "a": "22nd Ave",
+     "b": "Central Ave",
+     "found": true,
+     "lonLat": [
+      -74.8060739,
+      38.9954572
+     ],
+     "residualM": 6
+    },
+    {
+     "px": [
+      705,
+      108
+     ],
+     "a": "23rd Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.809633,
+      38.997043
+     ],
+     "residualM": 0.7
+    }
+   ],
+   "rmsM": 2.8,
+   "maxM": 6,
+   "affine": [
+    0.276451,
+    0.298808,
+    194.020102,
+    0.293012,
+    -0.280776,
+    361.952256
+   ],
+   "scaleMPerPx": 0.406,
+   "rotationDeg": 46.7,
+   "cornersLonLat": [
+    [
+     -74.8122604,
+     38.9954604
+    ],
+    [
+     -74.8069627,
+     38.9998415
+    ],
+    [
+     -74.8002409,
+     38.9949115
+    ],
+    [
+     -74.8055386,
+     38.9905307
+    ]
+   ],
+   "looMaxM": 7.4
+  },
+  {
+   "sheet": "0054",
+   "file": "sanborn1950_59_0054.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      50,
+      478
+     ],
+     "a": "19th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.805566,
+      38.998125
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      1270,
+      478
+     ],
+     "a": "13th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.801651,
+      39.001368
+     ],
+     "residualM": 0.7
+    },
+    {
+     "px": [
+      50,
+      1352
+     ],
+     "a": "19th Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.802569,
+      38.995922
+     ],
+     "residualM": 2.5
+    },
+    {
+     "px": [
+      1270,
+      1352
+     ],
+     "a": "13th Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.798652,
+      38.999168
+     ],
+     "residualM": 2.4
+    },
+    {
+     "px": [
+      660,
+      920
+     ],
+     "a": "16th Ave",
+     "b": "Central Ave",
+     "found": true,
+     "lonLat": [
+      -74.8021569,
+      38.9987012
+     ],
+     "residualM": 7.9
+    },
+    {
+     "px": [
+      660,
+      45
+     ],
+     "a": "16th Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.80508,
+      39.000823
+     ],
+     "residualM": 1.7
+    }
+   ],
+   "rmsM": 3.6,
+   "maxM": 7.9,
+   "affine": [
+    0.278022,
+    0.295967,
+    618.151387,
+    0.295275,
+    -0.27797,
+    776.344792
+   ],
+   "scaleMPerPx": 0.406,
+   "rotationDeg": 46.7,
+   "cornersLonLat": [
+    [
+     -74.8073642,
+     38.9991929
+    ],
+    [
+     -74.8020166,
+     39.0036236
+    ],
+    [
+     -74.7953587,
+     38.9987427
+    ],
+    [
+     -74.8007063,
+     38.9943122
+    ]
+   ],
+   "looMaxM": 9.6
+  },
+  {
+   "sheet": "0055",
+   "file": "sanborn1950_60_0055.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "not-fitted",
+   "points": [],
+   "why": "Not fitted: only Maryland Ave crosses the sheet's streets in OSM (three collinear points); Virginia Ave between 15th and 19th is not in OSM today (the bayside here was re-cut), so no second line. Readings: Maryland & 16th (1258,485), & 17th (1258,900), & 19th (1258,1723); Virginia & 16th (388,485), & 19th (388,1723)."
+  },
+  {
+   "sheet": "0058",
+   "file": "sanborn1950_63_0058.jpg",
+   "size": [
+    1666,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      78,
+      500
+     ],
+     "a": "12th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.80101,
+      39.0019
+     ],
+     "residualM": 1.1
+    },
+    {
+     "px": [
+      78,
+      1385
+     ],
+     "a": "12th Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.798012,
+      38.999699
+     ],
+     "residualM": 1.9
+    },
+    {
+     "px": [
+      880,
+      500
+     ],
+     "a": "8th Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.798402,
+      39.004063
+     ],
+     "residualM": 1.1
+    },
+    {
+     "px": [
+      880,
+      1385
+     ],
+     "a": "8th Ave",
+     "b": "Atlantic Ave",
+     "found": true,
+     "lonLat": [
+      -74.795403,
+      39.001861
+     ],
+     "residualM": 1.9
+    },
+    {
+     "px": [
+      475,
+      945
+     ],
+     "a": "10th Ave",
+     "b": "Central Ave",
+     "found": true,
+     "lonLat": [
+      -74.7982528,
+      39.0019252
+     ],
+     "residualM": 6.4
+    },
+    {
+     "px": [
+      475,
+      65
+     ],
+     "a": "10th Ave",
+     "b": "New York Ave",
+     "found": true,
+     "lonLat": [
+      -74.801166,
+      39.004057
+     ],
+     "residualM": 1.5
+    }
+   ],
+   "crop": [
+    20,
+    30,
+    945,
+    1930
+   ],
+   "rmsM": 2.9,
+   "maxM": 6.4,
+   "affine": [
+    0.281702,
+    0.291972,
+    1000.83007,
+    0.299359,
+    -0.275637,
+    1192.518798
+   ],
+   "scaleMPerPx": 0.406,
+   "rotationDeg": 46.7,
+   "cornersLonLat": [
+    [
+     -74.80278,
+     39.0029208
+    ],
+    [
+     -74.7997713,
+     39.0054147
+    ],
+    [
+     -74.7933683,
+     39.0006963
+    ],
+    [
+     -74.796377,
+     38.9982025
+    ]
+   ],
+   "looMaxM": 7.8
+  },
+  {
+   "sheet": "0031",
+   "file": "sanborn1950_36_0031.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      1520,
+      110
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82803,
+      38.981625
+     ],
+     "residualM": 1.5
+    },
+    {
+     "px": [
+      1520,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.83061,
+      38.979723
+     ],
+     "residualM": 1.4
+    },
+    {
+     "px": [
+      1520,
+      1645
+     ],
+     "a": "Sweetbriar Rd",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.83328,
+      38.977762
+     ],
+     "residualM": 1.3
+    },
+    {
+     "px": [
+      868,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.832741,
+      38.981492
+     ],
+     "residualM": 1.4
+    },
+    {
+     "px": [
+      935,
+      1645
+     ],
+     "a": "Sweetbriar Rd",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.835154,
+      38.979324
+     ],
+     "residualM": 2.1
+    },
+    {
+     "px": [
+      840,
+      295
+     ],
+     "a": "Morning Glory Rd",
+     "b": "Park Blvd",
+     "found": true,
+     "lonLat": [
+      -74.830897,
+      38.982995
+     ],
+     "residualM": 0.5
+    }
+   ],
+   "rmsM": 1.5,
+   "maxM": 2.1,
+   "affine": [
+    0.282338,
+    -0.294903,
+    -1570.577227,
+    -0.299403,
+    -0.279954,
+    -688.103313
+   ],
+   "scaleMPerPx": 0.409,
+   "rotationDeg": -46.7,
+   "cornersLonLat": [
+    [
+     -74.8326269,
+     38.9860003
+    ],
+    [
+     -74.8272168,
+     38.9815241
+    ],
+    [
+     -74.8338487,
+     38.9766083
+    ],
+    [
+     -74.8392589,
+     38.9810842
+    ]
+   ],
+   "looMaxM": 4.6
+  },
+  {
+   "sheet": "0032",
+   "file": "sanborn1950_37_0032.jpg",
+   "size": [
+    1660,
+    1949
+   ],
+   "kind": "sheet",
+   "status": "registered",
+   "points": [
+    {
+     "px": [
+      163,
+      95
+     ],
+     "a": "Cresse Ave",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.82803,
+      38.981625
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      163,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.83061,
+      38.979723
+     ],
+     "residualM": 0.6
+    },
+    {
+     "px": [
+      163,
+      1840
+     ],
+     "a": "Wisteria Rd",
+     "b": "New Jersey Ave",
+     "found": true,
+     "lonLat": [
+      -74.833938,
+      38.977279
+     ],
+     "residualM": 0.2
+    },
+    {
+     "px": [
+      670,
+      860
+     ],
+     "a": "Heather Rd",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8289707,
+      38.9783676
+     ],
+     "residualM": 0.4
+    },
+    {
+     "px": [
+      670,
+      1840
+     ],
+     "a": "Wisteria Rd",
+     "b": "Pacific Ave",
+     "found": true,
+     "lonLat": [
+      -74.8323003,
+      38.975926
+     ],
+     "residualM": 0.5
+    },
+    {
+     "px": [
+      958,
+      1053
+     ],
+     "a": "Crocus Rd",
+     "b": "Seaview Ave",
+     "found": true,
+     "lonLat": [
+      -74.828693,
+      38.97711
+     ],
+     "residualM": 0.4
+    }
+   ],
+   "rmsM": 0.5,
+   "maxM": 0.6,
+   "affine": [
+    0.280776,
+    -0.293736,
+    -1189.689536,
+    -0.297165,
+    -0.27638,
+    -1099.066608
+   ],
+   "scaleMPerPx": 0.406,
+   "rotationDeg": -46.6,
+   "cornersLonLat": [
+    [
+     -74.8282301,
+     38.9822991
+    ],
+    [
+     -74.8228505,
+     38.9778561
+    ],
+    [
+     -74.8294562,
+     38.9730032
+    ],
+    [
+     -74.8348359,
+     38.9774459
+    ]
+   ],
+   "looMaxM": 1.7
+  }
+ ]
+}

@@ -4,10 +4,10 @@
  * Game coordinates are computed from the original lon/lat by the town
  * package's own frame (src/worldpack/cities/<town>.json → cityPackage.frameFns),
  * so imported data lands where the game's frame says the real place is. The
- * game's drawn street grid was laid out from memory, so the imported streets
- * and the game's streets disagree; `alignment` measures by how much (per named
- * street that both have) and fits u' = a·u + b, v' = c·v + d to the game grid,
- * which the view can apply ("fit to the game's streets").
+ * game's street grid is measured from the same OSM data (cli.ts grid), so the
+ * imported streets and the game's agree; `alignment` measures by how much (per
+ * named street that both have: the median offset of its points from the
+ * game's street, an avenue along its course) and fits u' = a·u + b, v' = c·v + d.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -45,52 +45,46 @@ function fit1(xs: number[], ys: number[]): { k: number; m: number } {
  * Cross streets compare their mean u with the game's u; avenues their mean v.
  */
 export function measureAlignment(pkg: CityPackage, lines: { name: string; uv: [number, number][] }[]): Alignment {
-  const game = new Map<string, { kind: 'cross' | 'avenue'; value: number; display: string }>();
+  // The game's streets by key; a name can repeat (Pine Ave in Wildwood and in North Wildwood: keyed by its printed label).
+  type G = { kind: 'cross' | 'avenue'; value: number; display: string; path?: [number, number][]; from?: number; to?: number };
+  const game = new Map<string, G[]>();
+  const put = (k: string, g: G) => { const l = game.get(k); if (l) l.push(g); else game.set(k, [g]); };
   for (const s of pkg.streets) {
-    if (s.kind === 'cross' && s.u !== undefined) game.set(streetKey(s.name), { kind: 'cross', value: s.u, display: s.name });
-    if (s.kind === 'avenue' && s.v !== undefined) for (const n of new Set([s.name, ...Object.values(s.names ?? {})])) game.set(streetKey(n), { kind: 'avenue', value: s.v, display: n });
+    if (s.hidden) continue;
+    if (s.kind === 'cross' && s.u !== undefined) put(streetKey(s.label ?? s.name), { kind: 'cross', value: s.u, display: s.name });
+    if (s.kind === 'avenue' && s.v !== undefined) for (const n of new Set([s.name, ...Object.values(s.names ?? {})])) put(streetKey(n), { kind: 'avenue', value: s.v, display: n, path: s.path, from: s.from as number | undefined, to: s.to as number | undefined });
   }
-  const acc = new Map<string, { sum: number; n: number; pts: [number, number][] }>();
+  const along = (pts: [number, number][], u: number) => { if (u <= pts[0][0]) return pts[0][1]; for (let i = 1; i < pts.length; i++) if (u <= pts[i][0]) { const a = pts[i - 1]; const b = pts[i]; return a[1] + ((u - a[0]) / (b[0] - a[0] || 1)) * (b[1] - a[1]); } return pts[pts.length - 1][1]; };
+  // Where the game has the street at a point: a cross street's u; an avenue's v at that u (its course).
+  const gameAt = (g: G, u: number) => (g.kind === 'cross' ? g.value : g.path ? along(g.path, u) : g.value);
+  const acc = new Map<G, { res: number[]; n: number; key: string }>();
   const notMatched = new Set<string>();
   for (const l of lines) {
     const k = streetKey(l.name);
-    const g = game.get(k);
-    if (!g) { notMatched.add(l.name); continue; }
-    const a = acc.get(k) ?? { sum: 0, n: 0, pts: [] };
-    for (const [u, v] of l.uv) { a.sum += g.kind === 'cross' ? u : v; a.n++; a.pts.push([u, v]); }
-    acc.set(k, a);
+    const gs = game.get(k);
+    if (!gs || !l.uv.length) { notMatched.add(l.name); continue; }
+    const mu = l.uv.reduce((s, p) => s + p[0], 0) / l.uv.length;
+    const mv = l.uv.reduce((s, p) => s + p[1], 0) / l.uv.length;
+    const g = gs.reduce((b, x) => (Math.abs((x.kind === 'cross' ? mu : mv) - gameAt(x, mu)) < Math.abs((b.kind === 'cross' ? mu : mv) - gameAt(b, mu)) ? x : b));
+    const a = acc.get(g) ?? { res: [], n: 0, key: k };
+    for (const [u, v] of l.uv) { a.res.push((g.kind === 'cross' ? u : v) - gameAt(g, u)); a.n++; }
+    acc.set(g, a);
   }
   const streets: StreetObs[] = [];
-  // Streets are compared where they cross the middle of the area (a street not parallel to the game's
-  // axis would otherwise read differently depending on which of its vertices fall in the box).
-  const allPts = [...acc.values()].flatMap((a) => a.pts);
-  const ref = { u: mid(allPts.map((p) => p[0])), v: mid(allPts.map((p) => p[1])) };
-  for (const [k, a] of acc) {
-    const g = game.get(k)!;
-    // The street's direction in the frame vs the game's (cross streets run along v, avenues along u).
-    const xs = a.pts.map((p) => (g.kind === 'cross' ? p[1] : p[0])), ys = a.pts.map((p) => (g.kind === 'cross' ? p[0] : p[1]));
-    const f = fit1(xs, ys);
-    const spread = Math.max(...xs) - Math.min(...xs);
-    const observed = spread > 20 ? f.k * (g.kind === 'cross' ? ref.v : ref.u) + f.m : a.sum / a.n;
-    streets.push({ key: k, display: g.display, kind: g.kind, gameValue: g.value, observed: Math.round(observed * 10) / 10, n: a.n, residual: Math.round((observed - g.value) * 10) / 10, bearingDiff: Math.round((Math.atan(f.k) * 180) / Math.PI * 10) / 10 });
+  for (const [g, a] of acc) {
+    const s = [...a.res].sort((x, y) => x - y);
+    const med = s[Math.floor(s.length / 2)];
+    streets.push({ key: a.key, display: g.display, kind: g.kind, gameValue: g.value, observed: Math.round((g.value + med) * 10) / 10, n: a.n, residual: Math.round(med * 10) / 10 });
   }
   streets.sort((x, y) => (x.kind === y.kind ? x.gameValue - y.gameValue : x.kind === 'cross' ? -1 : 1));
-  const cross = streets.filter((s) => s.kind === 'cross'), ave = streets.filter((s) => s.kind === 'avenue');
+  const cross = streets.filter((s) => s.kind === 'cross'); const ave = streets.filter((s) => s.kind === 'avenue');
   const fu = fit1(cross.map((s) => s.observed), cross.map((s) => s.gameValue));
   const fv = fit1(ave.map((s) => s.observed), ave.map((s) => s.gameValue));
   const all = streets.length || 1;
   const rmsBefore = Math.sqrt(streets.reduce((s, x) => s + x.residual ** 2, 0) / all);
   const rmsAfter = Math.sqrt(streets.reduce((s, x) => s + ((x.kind === 'cross' ? fu.k * x.observed + fu.m : fv.k * x.observed + fv.m) - x.gameValue) ** 2, 0) / all);
-  const bd = cross.map((s) => s.bearingDiff ?? 0);
-  return {
-    ref: { u: r2(ref.u), v: r2(ref.v) },
-    streets,
-    fit: { a: r4(fu.k), b: r2(fu.m), c: r4(fv.k), d: r2(fv.m), rmsBefore: r2(rmsBefore), rmsAfter: r2(rmsAfter), n: streets.length },
-    notMatched: [...notMatched].sort(),
-    meanCrossBearingDiffDeg: bd.length ? r2(bd.reduce((s, x) => s + x, 0) / bd.length) : undefined,
-  };
+  return { streets, fit: { a: r4(fu.k), b: r2(fu.m), c: r4(fv.k), d: r2(fv.m), rmsBefore: r2(rmsBefore), rmsAfter: r2(rmsAfter), n: streets.length }, notMatched: [...notMatched].sort() };
 }
 
-const mid = (xs: number[]) => (xs.length ? (Math.min(...xs) + Math.max(...xs)) / 2 : 0);
 const r2 = (x: number) => Math.round(x * 100) / 100;
 const r4 = (x: number) => Math.round(x * 10000) / 10000;

@@ -24,7 +24,7 @@
   "localXZ": "the Python starter's local_xy (x east, z south, spherical tangent) is x ≈ local.x, z ≈ -local.y; within this box they differ by under 0.4%"
  },
  "status": "beta: test area",
- "generatedAt": "2026-10-28T17:40:32.119Z",
+ "generatedAt": "2026-10-29T04:17:17.606Z",
  "generator": "scripts/cityimport (npx tsx scripts/cityimport/cli.ts build)",
  "city": {
   "id": "wildwood",
@@ -61,23 +61,12 @@
   },
   "game": {
    "frame": "wildwood-island-uv",
-   "package": "src/worldpack/cities/wildwood.json (2026-10-27.wildwood-1)",
+   "package": "src/worldpack/cities/wildwood.json (2026-10-29.wildwood-island-grid)",
    "anchor": {
-    "lat": 38.989378,
-    "lng": -74.80456
+    "lat": 38.984395,
+    "lng": -74.824311
    },
-   "bearing": 49.2,
-   "pin": {
-    "from": 4200,
-    "lngLat": [
-     -74.79222,
-     39.00667
-    ],
-    "uv": [
-     7246,
-     365
-    ]
-   },
+   "bearing": 46.43,
    "note": "u along the island (m), v inland (m); spherical 111,320 m/deg; stretched beyond pin.from towards the Hereford Inlet pin"
   }
  },
@@ -184,32 +173,32 @@
     "geodesic": 693.1,
     "local": 693.1,
     "localErrPpm": 0,
-    "game": 692.2,
-    "gameErrPct": -0.13
+    "game": 669.5,
+    "gameErrPct": -3.4
    },
    {
     "what": "west edge (N-S)",
     "geodesic": 610.6,
     "local": 610.6,
     "localErrPpm": 0,
-    "game": 612.3,
-    "gameErrPct": 0.27
+    "game": 641.6,
+    "gameErrPct": 5.08
    },
    {
     "what": "diagonal",
     "geodesic": 923.7,
     "local": 923.7,
     "localErrPpm": 0,
-    "game": 924.1,
-    "gameErrPct": 0.05
+    "game": 927.7,
+    "gameErrPct": 0.43
    },
    {
     "what": "7.6 km diagonal",
     "geodesic": 9358.5,
     "local": 9358.5,
     "localErrPpm": 0,
-    "game": 10740.6,
-    "gameErrPct": 14.77
+    "game": 9381.5,
+    "gameErrPct": 0.25
    }
   ],
   "assessorLots": {
@@ -230,171 +219,231 @@
    {
     "from": "Garfield Ave",
     "to": "Lincoln Ave",
-    "real": 80.3,
-    "game": 95
+    "real": 82.2,
+    "game": 79
    },
    {
     "from": "Lincoln Ave",
     "to": "Schellenger Ave",
-    "real": 80,
-    "game": -190
+    "real": 78.3,
+    "game": 81
    },
    {
     "from": "Schellenger Ave",
     "to": "Oak Ave",
-    "real": 104.4,
-    "game": -380
+    "real": 108.3,
+    "game": 107
    },
    {
     "from": "Oak Ave",
     "to": "Wildwood Ave",
-    "real": 79.1,
-    "game": 190
+    "real": 77.6,
+    "game": 80
    },
    {
     "from": "Wildwood Ave",
     "to": "Pine Ave",
-    "real": 77.7,
-    "game": -95
+    "real": 77.5,
+    "game": 80
    },
    {
     "from": "Pine Ave",
+    "to": "Maple Ave",
+    "real": 73.7,
+    "game": 74
+   },
+   {
+    "from": "Maple Ave",
+    "to": "Glenwood Ave",
+    "real": 70.4,
+    "game": 69
+   },
+   {
+    "from": "Glenwood Ave",
     "to": "Magnolia Ave",
-    "real": 215.8,
-    "game": -190
+    "real": 71.2,
+    "game": 70
+   },
+   {
+    "from": "Magnolia Ave",
+    "to": "Poplar Ave",
+    "real": 71.4,
+    "game": 71
+   },
+   {
+    "from": "Poplar Ave",
+    "to": "Juniper Ave",
+    "real": 69.8,
+    "game": 70
    }
   ]
  },
  "alignment": {
-  "ref": {
-   "u": 3309.07,
-   "v": 666.77
-  },
   "streets": [
-   {
-    "key": "magnolia ave",
-    "display": "Magnolia Ave",
-    "kind": "cross",
-    "gameValue": 3655,
-    "observed": 3552.6,
-    "n": 7,
-    "residual": -102.4,
-    "bearingDiff": -6.9
-   },
-   {
-    "key": "oak ave",
-    "display": "Oak Ave",
-    "kind": "cross",
-    "gameValue": 3750,
-    "observed": 3180,
-    "n": 18,
-    "residual": -570,
-    "bearingDiff": -6.7
-   },
-   {
-    "key": "pine ave",
-    "display": "Pine Ave",
-    "kind": "cross",
-    "gameValue": 3845,
-    "observed": 3336.8,
-    "n": 15,
-    "residual": -508.2,
-    "bearingDiff": -6.7
-   },
-   {
-    "key": "wildwood ave",
-    "display": "Wildwood Ave",
-    "kind": "cross",
-    "gameValue": 3940,
-    "observed": 3259.1,
-    "n": 23,
-    "residual": -680.9,
-    "bearingDiff": -6.7
-   },
-   {
-    "key": "schellenger ave",
-    "display": "Schellenger Ave",
-    "kind": "cross",
-    "gameValue": 4130,
-    "observed": 3075.6,
-    "n": 17,
-    "residual": -1054.4,
-    "bearingDiff": -1.9
-   },
    {
     "key": "garfield ave",
     "display": "Garfield Ave",
     "kind": "cross",
-    "gameValue": 4225,
-    "observed": 2915.3,
+    "gameValue": 4740,
+    "observed": 4740.3,
     "n": 2,
-    "residual": -1309.7,
-    "bearingDiff": -3.7
+    "residual": 0.3
    },
    {
     "key": "lincoln ave",
     "display": "Lincoln Ave",
     "kind": "cross",
-    "gameValue": 4320,
-    "observed": 2995.6,
+    "gameValue": 4819,
+    "observed": 4822.5,
     "n": 7,
-    "residual": -1324.4,
-    "bearingDiff": -2.2
+    "residual": 3.5
+   },
+   {
+    "key": "schellenger ave",
+    "display": "Schellenger Ave",
+    "kind": "cross",
+    "gameValue": 4900,
+    "observed": 4900.8,
+    "n": 17,
+    "residual": 0.8
+   },
+   {
+    "key": "oak ave",
+    "display": "Oak Ave",
+    "kind": "cross",
+    "gameValue": 5007,
+    "observed": 5009.1,
+    "n": 18,
+    "residual": 2.1
+   },
+   {
+    "key": "wildwood ave",
+    "display": "Wildwood Ave",
+    "kind": "cross",
+    "gameValue": 5087,
+    "observed": 5086.7,
+    "n": 23,
+    "residual": -0.3
+   },
+   {
+    "key": "pine ave",
+    "display": "Pine Ave",
+    "kind": "cross",
+    "gameValue": 5167,
+    "observed": 5164.2,
+    "n": 15,
+    "residual": -2.8
+   },
+   {
+    "key": "maple ave",
+    "display": "Maple Ave",
+    "kind": "cross",
+    "gameValue": 5241,
+    "observed": 5237.9,
+    "n": 11,
+    "residual": -3.1
+   },
+   {
+    "key": "glenwood ave",
+    "display": "Glenwood Ave",
+    "kind": "cross",
+    "gameValue": 5310,
+    "observed": 5308.3,
+    "n": 13,
+    "residual": -1.7
+   },
+   {
+    "key": "magnolia ave",
+    "display": "Magnolia Ave",
+    "kind": "cross",
+    "gameValue": 5380,
+    "observed": 5379.5,
+    "n": 7,
+    "residual": -0.5
+   },
+   {
+    "key": "poplar ave",
+    "display": "Poplar Ave",
+    "kind": "cross",
+    "gameValue": 5451,
+    "observed": 5450.9,
+    "n": 4,
+    "residual": -0.1
+   },
+   {
+    "key": "juniper ave",
+    "display": "Juniper Ave",
+    "kind": "cross",
+    "gameValue": 5521,
+    "observed": 5520.7,
+    "n": 2,
+    "residual": -0.3
    },
    {
     "key": "pacific ave",
     "display": "Pacific Ave",
     "kind": "avenue",
-    "gameValue": 330,
-    "observed": 425.2,
+    "gameValue": 406,
+    "observed": 405.6,
     "n": 16,
-    "residual": 95.2,
-    "bearingDiff": 6.6
+    "residual": -0.4
    },
    {
     "key": "new jersey ave",
     "display": "New Jersey Ave",
     "kind": "avenue",
-    "gameValue": 450,
-    "observed": 611.5,
+    "gameValue": 612,
+    "observed": 611.7,
     "n": 61,
-    "residual": 161.5,
-    "bearingDiff": -1.2
+    "residual": -0.3
+   },
+   {
+    "key": "new york ave",
+    "display": "New York Ave",
+    "kind": "avenue",
+    "gameValue": 786,
+    "observed": 785.7,
+    "n": 5,
+    "residual": -0.3
+   },
+   {
+    "key": "arctic ave",
+    "display": "Arctic Ave",
+    "kind": "avenue",
+    "gameValue": 819,
+    "observed": 818.9,
+    "n": 5,
+    "residual": -0.1
    },
    {
     "key": "park blvd",
     "display": "Park Blvd",
     "kind": "avenue",
-    "gameValue": 570,
-    "observed": 918.5,
+    "gameValue": 896,
+    "observed": 895.2,
     "n": 21,
-    "residual": 348.5,
-    "bearingDiff": 6.2
+    "residual": -0.8
+   },
+   {
+    "key": "hudson ave",
+    "display": "Hudson Ave",
+    "kind": "avenue",
+    "gameValue": 1042,
+    "observed": 1040.9,
+    "n": 2,
+    "residual": -1.1
    }
   ],
   "fit": {
-   "a": -1.0157,
-   "b": 7218.63,
-   "c": 0.477,
-   "d": 139.12,
-   "rmsBefore": 761.25,
-   "rmsAfter": 91.56,
-   "n": 10
+   "a": 1.0038,
+   "b": -19.56,
+   "c": 1.001,
+   "d": -0.25,
+   "rmsBefore": 1.54,
+   "rmsAfter": 1.29,
+   "n": 17
   },
-  "notMatched": [
-   "Arctic Avenue",
-   "East Glenwood Avenue",
-   "East Juniper Avenue",
-   "East Maple Avenue",
-   "East Poplar Avenue",
-   "Hudson Avenue",
-   "New York Avenue",
-   "West Glenwood Avenue",
-   "West Juniper Avenue",
-   "West Maple Avenue",
-   "West Poplar Avenue"
-  ],
-  "meanCrossBearingDiffDeg": -4.97
+  "notMatched": []
  },
  "sanborn": {
   "index": "citydata/wildwood/evidence/sanborn-1950-additional-index.json (transcribed)",
@@ -766,7 +815,7 @@
  },
  "directories": {
   "status": "not-run",
-  "detail": "no directory pages cached (expected under /home/claude/llv-cityimport/citydata/wildwood/raw/directories/<directory>/manifest.json)",
+  "detail": "no directory pages cached (expected under /home/claude/llv-islandmap/citydata/wildwood/raw/directories/<directory>/manifest.json)",
   "candidates": 0
  }
 }

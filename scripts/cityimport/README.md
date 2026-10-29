@@ -2,8 +2,9 @@
 
 Builds a *city pack* of real geography for the game — streets, water, rail, parcels,
 buildings, businesses — from documented sources, at development time only. Players
-never trigger a download. Wildwood (test blocks) is imported; Atlantic City and
-Philadelphia are configured in `config/cities.ts` and use the same pipeline.
+never trigger a download. Wildwood is imported — the whole island (Five Mile Beach) and
+the first test blocks; Atlantic City and Philadelphia are configured in `config/cities.ts`
+and use the same pipeline.
 
 ```
 npx tsx scripts/cityimport/cli.ts fetch    --city wildwood --area test-blocks   # download + cache (polite)
@@ -12,7 +13,49 @@ npx tsx scripts/cityimport/cli.ts handoff  --from <dir> [--images a.jpg]        
 npx tsx scripts/cityimport/cli.ts sheets   --item sanborn05568_015 --sheets ind3,63B,27 [--pct 50]
 npx tsx scripts/cityimport/cli.ts build                                         # pack + game layer, then validate
 npx tsx scripts/cityimport/cli.ts validate
+npx tsx scripts/cityimport/cli.ts grid --area island --legacy <old wildwood.json>  # the game's street grid from OSM
+npx tsx scripts/cityimport/cli.ts sanborn-geo --images <scans dir> --bundle 0043,0049 # georeference the 1950 sheets
 ```
+
+## The whole island (2026-10-29)
+
+The island raw files (OSM map.json, 36 tiles merged; NJOGIS parcels for 0507/0513/0514/0515, owner/mailing/sale
+fields never requested) came from a browser hand-off and are **not in git** (35 MB; sha256 in `raw/manifest.json`):
+
+```
+npx tsx scripts/cityimport/cli.ts handoff --area island --from <folder with wildwood_island.osm.json and _parcels.geojson>
+NODE_OPTIONS=--max-old-space-size=3000 npx tsx scripts/cityimport/cli.ts build --area island   # ~2.5 min
+```
+
+The island pack's bulky layers (buildings, parcels, roads, water, rail, blocks, nav, asset manifest, overrides:
+~60 MB) are rebuilt by that command and kept out of git; `city.json` (counts, matching, Sanborn coverage),
+`review-queue.json`, `businesses.json` and `sources-and-attribution.json` are committed. The game layer
+`public/geo/imported-wildwood-island.json` is generalized for the page (`gameLayer` in `config/cities.ts`:
+coordinates to 1 m, outlines Douglas–Peucker at 0.8 m): 7.7 MB, 1.2 MB gzipped, loaded only when the imported
+view opens (it culls to the view; parcels and buildings appear below ~2.6 km across).
+
+### The game's street grid (`grid`)
+
+`build/islandgrid.ts` and `build/islandpkg.ts` re-derive the Wildwood town package's geography from the same data:
+a curvilinear frame along New Jersey Avenue (u along the island, v inland from the Wildwood Boardwalk; its cross
+direction leans with the streets), every cross street in its real order (105 on the grid), the avenues on their
+measured courses, the island / town / West Wildwood / municipal outlines (parcels and streets inside the OSM
+coastline), the front, beach and bay profiles, the causeway, and the district outlines. Records laid out on the
+old memory grid are moved by what they say (a verified point stays; a tax-list address; a corner; else the same
+spot between the same streets) and every id is kept; what could not be placed confidently is in
+`packs/island/grid-review.json`. The street order is in `evidence/osm-street-order.json` (the tests check the game
+against it). Old saves move their own added places once (`src/engine/legacyGrid.ts`).
+
+### Sanborn 1950 (`sanborn-geo`)
+
+Control points (street intersections read by eye off the 25% scans) are in `evidence/sanborn-1950-control-points.json`;
+each is matched to where the two OSM centrelines cross, and each sheet (or each frame of a two-strip sheet) gets a
+least-squares affine with its residuals and a leave-one-out check (`evidence/sanborn-1950-georef.json`). Sheets that
+cannot be fitted (collinear points, streets gone from OSM) are listed with why; scans not examined are listed too.
+The imported view's **1950 Sanborn** button draws the registered sheets (a few downscaled copies ship in
+`public/sanborn/`; the rest by file name once the scans are in the asset store: `window.__SANBORN_BASE`). Buildings
+record the sheets they stand on (`sanbornSheets`) and each sheet is a review task; no building was corrected from a
+sheet automatically.
 
 ## On a machine with network
 

@@ -1,0 +1,6369 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/island",
+ "id": "wildwood-island",
+ "name": "Five Mile Beach: Wildwood Crest, Wildwood, North Wildwood, West Wildwood",
+ "bbox": [
+  -74.865,
+  38.945,
+  -74.775,
+  39.015
+ ],
+ "originLonLat": [
+  -74.8145,
+  38.9922
+ ],
+ "coordinateSystem": {
+  "geography": "EPSG:4326",
+  "game": "wildwood-island-uv (the town package frame, metres)",
+  "local": "transverse Mercator about originLonLat, metres, x east, y north",
+  "originLonLat": [
+   -74.8145,
+   38.9922
+  ],
+  "localXZ": "the Python starter's local_xy (x east, z south, spherical tangent) is x ≈ local.x, z ≈ -local.y; within this box they differ by under 0.4%"
+ },
+ "status": "beta: test area",
+ "generatedAt": "2026-10-29T04:21:50.165Z",
+ "generator": "scripts/cityimport (npx tsx scripts/cityimport/cli.ts build)",
+ "city": {
+  "id": "wildwood",
+  "name": "Wildwood (Five Mile Beach)",
+  "state": "NJ"
+ },
+ "area": {
+  "id": "island",
+  "name": "Five Mile Beach: Wildwood Crest, Wildwood, North Wildwood, West Wildwood",
+  "bbox": [
+   -74.865,
+   38.945,
+   -74.775,
+   39.015
+  ],
+  "municipalities": [
+   "0507",
+   "0513",
+   "0514",
+   "0515"
+  ]
+ },
+ "targetYear": 1960,
+ "crs": {
+  "geographic": "EPSG:4326 (lon, lat): GeoJSON geometry, as downloaded",
+  "local": {
+   "type": "transverse-mercator",
+   "datum": "WGS84",
+   "origin": {
+    "lon": -74.8145,
+    "lat": 38.9922
+   },
+   "k0": 1,
+   "units": "m",
+   "axes": "x east, y north"
+  },
+  "game": {
+   "frame": "wildwood-island-uv",
+   "package": "src/worldpack/cities/wildwood.json (2026-10-29.wildwood-island-grid)",
+   "anchor": {
+    "lat": 38.984395,
+    "lng": -74.824311
+   },
+   "bearing": 46.43,
+   "note": "u along the island (m), v inland (m); spherical 111,320 m/deg; stretched beyond pin.from towards the Hereford Inlet pin"
+  }
+ },
+ "coordinateFields": {
+  "geometry": "original lon/lat (EPSG:4326)",
+  "properties.local": "local metres [x east, y north] (transverse Mercator about the origin)",
+  "properties.game": "game frame [u, v] metres (the town package frame)"
+ },
+ "layers": {
+  "roads": "roads.geojson",
+  "water": "water.geojson",
+  "parcels": "parcels.geojson",
+  "buildings": "buildings.geojson",
+  "businesses": "businesses.json",
+  "historicalOverrides": "historical-overrides.json",
+  "assets": "asset-manifest.json",
+  "sources": "sources-and-attribution.json",
+  "reviewQueue": "review-queue.json",
+  "extra": {
+   "rail": "rail.geojson",
+   "blocks": "blocks.geojson",
+   "nav": "nav.json"
+  },
+  "gameLayer": "public/geo/imported-wildwood-island.json"
+ },
+ "counts": {
+  "roads": 2718,
+  "roadsByClass": {
+   "service": 672,
+   "street": 793,
+   "foot": 1253
+  },
+  "rail": 75,
+  "water": 1409,
+  "parcelsInput": 21351,
+  "parcels": 20883,
+  "parcelsMergedExact": 3,
+  "parcelsMultipart": 416,
+  "buildingsOsm": 2981,
+  "buildingsGenerated": 8566,
+  "blocks": 665,
+  "blocksComplete": 663,
+  "businesses": 520,
+  "businessesMerged": 2,
+  "institutions": 39,
+  "entrances": 11561,
+  "entrancesGenerated": 11540,
+  "entrancesUnconnected": 662,
+  "navNodes": 28445,
+  "navEdges": 30145,
+  "overridesProposed": 10071,
+  "reviewItems": 2007,
+  "historical": {
+   "osm:unknown": 926,
+   "osm:absent": 1032,
+   "osm:likely-existed": 1023,
+   "generated:absent": 2809,
+   "generated:likely-existed": 5207,
+   "generated:unknown": 550
+  },
+  "osmIgnored": {
+   "node tourism=information (not an occupant)": 3,
+   "node tourism=viewpoint (not an occupant)": 3,
+   "node amenity=parking_space (not an occupant)": 13,
+   "way other": 407,
+   "way amenity": 382,
+   "way leisure": 280,
+   "way landuse": 113,
+   "relation boundary": 10,
+   "relation route=bicycle": 2,
+   "relation multipolygon": 57,
+   "relation route=road": 8,
+   "node amenity=parking_entrance (not an occupant)": 2,
+   "node amenity=bench (not an occupant)": 24,
+   "way man_made": 468,
+   "relation route=railway": 2,
+   "relation restriction": 10,
+   "relation superroute=waterway": 1,
+   "relation route=boat": 1,
+   "relation route=bus": 5,
+   "node amenity=shelter (not an occupant)": 1,
+   "node amenity=parking (not an occupant)": 10,
+   "node leisure=swimming_pool (not an occupant)": 77,
+   "node tourism=artwork (not an occupant)": 3,
+   "highway area": 35,
+   "node amenity=post_box (not an occupant)": 1,
+   "node amenity=fountain (not an occupant)": 1,
+   "node amenity=bicycle_parking (not an occupant)": 2,
+   "node amenity=vending_machine (not an occupant)": 1,
+   "node leisure=playground (not an occupant)": 3,
+   "relation route=foot": 1
+  }
+ },
+ "matching": {
+  "oneParcel": 10078,
+  "spans": 1257,
+  "noParcel": 212,
+  "ambiguous": 204,
+  "parcelsWithMany": 1041,
+  "parcelsWithOne": 12200,
+  "osmOnly": {
+   "oneParcel": 2094,
+   "spans": 675,
+   "noParcel": 212,
+   "ambiguous": 118,
+   "parcelsWithMany": 580,
+   "parcelsWithOne": 3997
+  }
+ },
+ "blocks": {
+  "method": "planar faces of the street-centreline graph",
+  "vertices": 1015,
+  "edges": 1684,
+  "deadEndsPruned": 194,
+  "taxBlockAgreement": {
+   "median": 1,
+   "min": 0.10526315789473684,
+   "n": 575
+  }
+ },
+ "scale": {
+  "projection": [
+   {
+    "what": "south edge (E-W)",
+    "geodesic": 7802.4,
+    "local": 7802.4,
+    "localErrPpm": 0.1,
+    "game": 7793.3,
+    "gameErrPct": -0.12
+   },
+   {
+    "what": "west edge (N-S)",
+    "geodesic": 7771.1,
+    "local": 7771.1,
+    "localErrPpm": 0.2,
+    "game": 7777.4,
+    "gameErrPct": 0.08
+   },
+   {
+    "what": "diagonal",
+    "geodesic": 11009.4,
+    "local": 11009.4,
+    "localErrPpm": 0.1,
+    "game": 10972.6,
+    "gameErrPct": -0.33
+   },
+   {
+    "what": "7.6 km diagonal",
+    "geodesic": 19422.1,
+    "local": 19422.1,
+    "localErrPpm": 0.2,
+    "game": 19401.6,
+    "gameErrPct": -0.11
+   }
+  ],
+  "assessorLots": {
+   "n": 9171,
+   "method": "parcel outline (oriented rectangle, local metres) vs LAND_DESC feet × 0.3048, rectangular lots only",
+   "longSide": {
+    "p25": 1,
+    "median": 1,
+    "p75": 1.001
+   },
+   "shortSide": {
+    "p25": 0.995,
+    "median": 1,
+    "p75": 1
+   }
+  },
+  "crossStreetSpacing": [
+   {
+    "from": "Raleigh Ave",
+    "to": "Station Ave",
+    "real": 67.3,
+    "game": 106
+   },
+   {
+    "from": "Station Ave",
+    "to": "Dune Dr",
+    "real": 131.4,
+    "game": 93
+   },
+   {
+    "from": "Dune Dr",
+    "to": "Turtle Gut Circle",
+    "real": 1.1,
+    "game": 14
+   },
+   {
+    "from": "Turtle Gut Circle",
+    "to": "Memphis Ave",
+    "real": 62.8,
+    "game": 49
+   },
+   {
+    "from": "Memphis Ave",
+    "to": "Rochester Ave",
+    "real": 63.3,
+    "game": 63
+   },
+   {
+    "from": "Rochester Ave",
+    "to": "Jefferson Ave",
+    "real": 130.2,
+    "game": 131
+   },
+   {
+    "from": "Jefferson Ave",
+    "to": "Washington Ave",
+    "real": 65.6,
+    "game": 68
+   },
+   {
+    "from": "Washington Ave",
+    "to": "Newark Ave",
+    "real": 63.3,
+    "game": 61
+   },
+   {
+    "from": "Newark Ave",
+    "to": "Trenton Ave",
+    "real": 64.4,
+    "game": 64
+   },
+   {
+    "from": "Trenton Ave",
+    "to": "St Louis Ave",
+    "real": 63.9,
+    "game": 64
+   },
+   {
+    "from": "St Louis Ave",
+    "to": "Charleston Ave",
+    "real": 64,
+    "game": 65
+   },
+   {
+    "from": "Charleston Ave",
+    "to": "Pittsburgh Ave",
+    "real": 65.8,
+    "game": 65
+   },
+   {
+    "from": "Pittsburgh Ave",
+    "to": "Topeka Ave",
+    "real": 65.4,
+    "game": 65
+   },
+   {
+    "from": "Topeka Ave",
+    "to": "Hollywood Ave",
+    "real": 63.8,
+    "game": 65
+   },
+   {
+    "from": "Hollywood Ave",
+    "to": "Preston Ave",
+    "real": 64,
+    "game": 64
+   },
+   {
+    "from": "Preston Ave",
+    "to": "Syracuse Ave",
+    "real": 64.1,
+    "game": 64
+   },
+   {
+    "from": "Syracuse Ave",
+    "to": "Denver Ave",
+    "real": 63.8,
+    "game": 63
+   },
+   {
+    "from": "Denver Ave",
+    "to": "Toledo Ave",
+    "real": 71.8,
+    "game": 72
+   },
+   {
+    "from": "Toledo Ave",
+    "to": "Monterey Ave",
+    "real": 141.8,
+    "game": 142
+   },
+   {
+    "from": "Monterey Ave",
+    "to": "Miami Ave",
+    "real": 69.9,
+    "game": 70
+   },
+   {
+    "from": "Miami Ave",
+    "to": "Louisville Ave",
+    "real": 70.3,
+    "game": 70
+   },
+   {
+    "from": "Louisville Ave",
+    "to": "Nashville Ave",
+    "real": 70.6,
+    "game": 71
+   },
+   {
+    "from": "Nashville Ave",
+    "to": "Atlanta Ave",
+    "real": 72.6,
+    "game": 73
+   },
+   {
+    "from": "Atlanta Ave",
+    "to": "Farragut Rd",
+    "real": 76.6,
+    "game": 76
+   },
+   {
+    "from": "Farragut Rd",
+    "to": "Stanton Rd",
+    "real": 76.5,
+    "game": 76
+   },
+   {
+    "from": "Stanton Rd",
+    "to": "Stockton Rd",
+    "real": 75.9,
+    "game": 77
+   },
+   {
+    "from": "Stockton Rd",
+    "to": "Orchid Rd",
+    "real": 76.1,
+    "game": 75
+   },
+   {
+    "from": "Orchid Rd",
+    "to": "Rambler Rd",
+    "real": 79.1,
+    "game": 80
+   },
+   {
+    "from": "Rambler Rd",
+    "to": "Primrose Rd",
+    "real": 80.1,
+    "game": 78
+   },
+   {
+    "from": "Primrose Rd",
+    "to": "Myrtle Rd",
+    "real": 76,
+    "game": 77
+   },
+   {
+    "from": "Myrtle Rd",
+    "to": "Lotus Rd",
+    "real": 77.9,
+    "game": 79
+   },
+   {
+    "from": "Lotus Rd",
+    "to": "Palm Rd",
+    "real": 77.4,
+    "game": 77
+   },
+   {
+    "from": "Palm Rd",
+    "to": "Fern Rd",
+    "real": 76.3,
+    "game": 76
+   },
+   {
+    "from": "Fern Rd",
+    "to": "Forget-Me-Not Rd",
+    "real": 76.8,
+    "game": 77
+   },
+   {
+    "from": "Forget-Me-Not Rd",
+    "to": "Rosemary Rd",
+    "real": 76.1,
+    "game": 76
+   },
+   {
+    "from": "Rosemary Rd",
+    "to": "Columbine Rd",
+    "real": 76.1,
+    "game": 77
+   },
+   {
+    "from": "Columbine Rd",
+    "to": "Wisteria Rd",
+    "real": 76.2,
+    "game": 75
+   },
+   {
+    "from": "Wisteria Rd",
+    "to": "Cardinal Rd",
+    "real": 158.9,
+    "game": 159
+   },
+   {
+    "from": "Cardinal Rd",
+    "to": "Aster Rd",
+    "real": 80.5,
+    "game": 81
+   },
+   {
+    "from": "Aster Rd",
+    "to": "Crocus Rd",
+    "real": 77.3,
+    "game": 78
+   },
+   {
+    "from": "Crocus Rd",
+    "to": "Heather Rd",
+    "real": 78.2,
+    "game": 78
+   },
+   {
+    "from": "Heather Rd",
+    "to": "Lavender Rd",
+    "real": 77.8,
+    "game": 77
+   },
+   {
+    "from": "Lavender Rd",
+    "to": "Buttercup Rd",
+    "real": 75.9,
+    "game": 76
+   },
+   {
+    "from": "Buttercup Rd",
+    "to": "Morning Glory Rd",
+    "real": 76.5,
+    "game": 76
+   },
+   {
+    "from": "Morning Glory Rd",
+    "to": "Cresse Ave",
+    "real": 78,
+    "game": 78
+   },
+   {
+    "from": "Cresse Ave",
+    "to": "Hildreth Ave",
+    "real": 79.5,
+    "game": 80
+   },
+   {
+    "from": "Hildreth Ave",
+    "to": "Bennett Ave",
+    "real": 79.4,
+    "game": 79
+   },
+   {
+    "from": "Bennett Ave",
+    "to": "Leaming Ave",
+    "real": 79.6,
+    "game": 80
+   },
+   {
+    "from": "Leaming Ave",
+    "to": "Hand Ave",
+    "real": 79,
+    "game": 79
+   },
+   {
+    "from": "Hand Ave",
+    "to": "Rio Grande Ave",
+    "real": 80.3,
+    "game": 79
+   },
+   {
+    "from": "Rio Grande Ave",
+    "to": "Taylor Ave",
+    "real": 80.3,
+    "game": 81
+   },
+   {
+    "from": "Taylor Ave",
+    "to": "Andrews Ave",
+    "real": 79.4,
+    "game": 80
+   },
+   {
+    "from": "Andrews Ave",
+    "to": "Burk Ave",
+    "real": 79.6,
+    "game": 79
+   },
+   {
+    "from": "Burk Ave",
+    "to": "Davis Ave",
+    "real": 78.3,
+    "game": 79
+   },
+   {
+    "from": "Davis Ave",
+    "to": "Montgomery Ave",
+    "real": 79.9,
+    "game": 80
+   },
+   {
+    "from": "Montgomery Ave",
+    "to": "Baker Ave",
+    "real": 80.4,
+    "game": 80
+   },
+   {
+    "from": "Baker Ave",
+    "to": "Roberts Ave",
+    "real": 77.9,
+    "game": 78
+   },
+   {
+    "from": "Roberts Ave",
+    "to": "Youngs Ave",
+    "real": 79.5,
+    "game": 79
+   },
+   {
+    "from": "Youngs Ave",
+    "to": "Spencer Ave",
+    "real": 80.5,
+    "game": 80
+   },
+   {
+    "from": "Spencer Ave",
+    "to": "Spicer Ave",
+    "real": 78.6,
+    "game": 80
+   },
+   {
+    "from": "Spicer Ave",
+    "to": "Garfield Ave",
+    "real": 78.9,
+    "game": 79
+   },
+   {
+    "from": "Garfield Ave",
+    "to": "Lincoln Ave",
+    "real": 79.4,
+    "game": 79
+   },
+   {
+    "from": "Lincoln Ave",
+    "to": "Schellenger Ave",
+    "real": 73,
+    "game": 81
+   },
+   {
+    "from": "Schellenger Ave",
+    "to": "Cedar Ave",
+    "real": 51.6,
+    "game": 29
+   },
+   {
+    "from": "Cedar Ave",
+    "to": "Oak Ave",
+    "real": 67.7,
+    "game": 78
+   },
+   {
+    "from": "Oak Ave",
+    "to": "Wildwood Ave",
+    "real": 77.6,
+    "game": 80
+   },
+   {
+    "from": "Wildwood Ave",
+    "to": "Pine Ave",
+    "real": 77.8,
+    "game": 80
+   },
+   {
+    "from": "Pine Ave",
+    "to": "Maple Ave",
+    "real": 72.4,
+    "game": 74
+   },
+   {
+    "from": "Maple Ave",
+    "to": "Glenwood Ave",
+    "real": 72.6,
+    "game": 69
+   },
+   {
+    "from": "Glenwood Ave",
+    "to": "Magnolia Ave",
+    "real": 69.4,
+    "game": 70
+   },
+   {
+    "from": "Magnolia Ave",
+    "to": "Poplar Ave",
+    "real": 66.2,
+    "game": 71
+   },
+   {
+    "from": "Poplar Ave",
+    "to": "Juniper Ave",
+    "real": 73.3,
+    "game": 70
+   },
+   {
+    "from": "Juniper Ave",
+    "to": "26th Ave",
+    "real": 46.5,
+    "game": 46
+   },
+   {
+    "from": "26th Ave",
+    "to": "25th Ave",
+    "real": 80.2,
+    "game": 82
+   },
+   {
+    "from": "25th Ave",
+    "to": "24th Ave",
+    "real": 83.6,
+    "game": 82
+   },
+   {
+    "from": "24th Ave",
+    "to": "23rd Ave",
+    "real": 83.1,
+    "game": 83
+   },
+   {
+    "from": "23rd Ave",
+    "to": "22nd Ave",
+    "real": 81.7,
+    "game": 82
+   },
+   {
+    "from": "22nd Ave",
+    "to": "21st Ave",
+    "real": 82.4,
+    "game": 82
+   },
+   {
+    "from": "21st Ave",
+    "to": "20th Ave",
+    "real": 83.5,
+    "game": 84
+   },
+   {
+    "from": "20th Ave",
+    "to": "19th Ave",
+    "real": 81.7,
+    "game": 82
+   },
+   {
+    "from": "19th Ave",
+    "to": "18th Ave",
+    "real": 83.1,
+    "game": 83
+   },
+   {
+    "from": "18th Ave",
+    "to": "17th Ave",
+    "real": 81.9,
+    "game": 81
+   },
+   {
+    "from": "17th Ave",
+    "to": "16th Ave",
+    "real": 82,
+    "game": 83
+   },
+   {
+    "from": "16th Ave",
+    "to": "15th Ave",
+    "real": 83,
+    "game": 82
+   },
+   {
+    "from": "15th Ave",
+    "to": "14th Ave",
+    "real": 81.6,
+    "game": 82
+   },
+   {
+    "from": "14th Ave",
+    "to": "13th Ave",
+    "real": 83.3,
+    "game": 83
+   },
+   {
+    "from": "13th Ave",
+    "to": "12th Ave",
+    "real": 81.7,
+    "game": 82
+   },
+   {
+    "from": "12th Ave",
+    "to": "11th Ave",
+    "real": 82.7,
+    "game": 83
+   },
+   {
+    "from": "11th Ave",
+    "to": "10th Ave",
+    "real": 82,
+    "game": 82
+   },
+   {
+    "from": "10th Ave",
+    "to": "9th Ave",
+    "real": 82.3,
+    "game": 83
+   },
+   {
+    "from": "9th Ave",
+    "to": "8th Ave",
+    "real": 82.3,
+    "game": 82
+   },
+   {
+    "from": "8th Ave",
+    "to": "7th Ave",
+    "real": 82.7,
+    "game": 82
+   },
+   {
+    "from": "7th Ave",
+    "to": "6th Ave",
+    "real": 82.4,
+    "game": 82
+   },
+   {
+    "from": "6th Ave",
+    "to": "5th Ave",
+    "real": 81.9,
+    "game": 82
+   },
+   {
+    "from": "5th Ave",
+    "to": "4th Ave",
+    "real": 83.7,
+    "game": 84
+   },
+   {
+    "from": "4th Ave",
+    "to": "3rd Ave",
+    "real": 82.5,
+    "game": 82
+   },
+   {
+    "from": "3rd Ave",
+    "to": "2nd Ave",
+    "real": 82,
+    "game": 82
+   },
+   {
+    "from": "2nd Ave",
+    "to": "1st Ave",
+    "real": 81.9,
+    "game": 82
+   },
+   {
+    "from": "1st Ave",
+    "to": "Chestnut Ave",
+    "real": 82.8,
+    "game": 83
+   },
+   {
+    "from": "Chestnut Ave",
+    "to": "Walnut Ave",
+    "real": 81.9,
+    "game": 82
+   },
+   {
+    "from": "Walnut Ave",
+    "to": "Spruce Ave",
+    "real": 83.1,
+    "game": 70
+   },
+   {
+    "from": "Spruce Ave",
+    "to": "Pine Ave (North Wildwood)",
+    "real": 83.6,
+    "game": 96
+   }
+  ]
+ },
+ "alignment": {
+  "streets": [
+   {
+    "key": "raleigh ave",
+    "display": "Raleigh Ave",
+    "kind": "cross",
+    "gameValue": 27,
+    "observed": 27.2,
+    "n": 13,
+    "residual": 0.2
+   },
+   {
+    "key": "station ave",
+    "display": "Station Ave",
+    "kind": "cross",
+    "gameValue": 133,
+    "observed": 94.5,
+    "n": 18,
+    "residual": -38.5
+   },
+   {
+    "key": "dune dr",
+    "display": "Dune Dr",
+    "kind": "cross",
+    "gameValue": 226,
+    "observed": 225.9,
+    "n": 12,
+    "residual": -0.1
+   },
+   {
+    "key": "turtle gut circle",
+    "display": "Turtle Gut Circle",
+    "kind": "cross",
+    "gameValue": 240,
+    "observed": 227,
+    "n": 16,
+    "residual": -13
+   },
+   {
+    "key": "memphis ave",
+    "display": "Memphis Ave",
+    "kind": "cross",
+    "gameValue": 289,
+    "observed": 289.8,
+    "n": 20,
+    "residual": 0.8
+   },
+   {
+    "key": "rochester ave",
+    "display": "Rochester Ave",
+    "kind": "cross",
+    "gameValue": 352,
+    "observed": 353.1,
+    "n": 29,
+    "residual": 1.1
+   },
+   {
+    "key": "jefferson ave",
+    "display": "Jefferson Ave",
+    "kind": "cross",
+    "gameValue": 483,
+    "observed": 483.3,
+    "n": 22,
+    "residual": 0.3
+   },
+   {
+    "key": "washington ave",
+    "display": "Washington Ave",
+    "kind": "cross",
+    "gameValue": 551,
+    "observed": 548.9,
+    "n": 25,
+    "residual": -2.1
+   },
+   {
+    "key": "newark ave",
+    "display": "Newark Ave",
+    "kind": "cross",
+    "gameValue": 612,
+    "observed": 612.2,
+    "n": 21,
+    "residual": 0.2
+   },
+   {
+    "key": "trenton ave",
+    "display": "Trenton Ave",
+    "kind": "cross",
+    "gameValue": 676,
+    "observed": 676.6,
+    "n": 21,
+    "residual": 0.6
+   },
+   {
+    "key": "st louis ave",
+    "display": "St Louis Ave",
+    "kind": "cross",
+    "gameValue": 740,
+    "observed": 740.5,
+    "n": 19,
+    "residual": 0.5
+   },
+   {
+    "key": "charleston ave",
+    "display": "Charleston Ave",
+    "kind": "cross",
+    "gameValue": 805,
+    "observed": 804.5,
+    "n": 16,
+    "residual": -0.5
+   },
+   {
+    "key": "pittsburgh ave",
+    "display": "Pittsburgh Ave",
+    "kind": "cross",
+    "gameValue": 870,
+    "observed": 870.3,
+    "n": 18,
+    "residual": 0.3
+   },
+   {
+    "key": "topeka ave",
+    "display": "Topeka Ave",
+    "kind": "cross",
+    "gameValue": 935,
+    "observed": 935.7,
+    "n": 16,
+    "residual": 0.7
+   },
+   {
+    "key": "hollywood ave",
+    "display": "Hollywood Ave",
+    "kind": "cross",
+    "gameValue": 1000,
+    "observed": 999.5,
+    "n": 14,
+    "residual": -0.5
+   },
+   {
+    "key": "preston ave",
+    "display": "Preston Ave",
+    "kind": "cross",
+    "gameValue": 1064,
+    "observed": 1063.5,
+    "n": 16,
+    "residual": -0.5
+   },
+   {
+    "key": "syracuse ave",
+    "display": "Syracuse Ave",
+    "kind": "cross",
+    "gameValue": 1128,
+    "observed": 1127.6,
+    "n": 23,
+    "residual": -0.4
+   },
+   {
+    "key": "denver ave",
+    "display": "Denver Ave",
+    "kind": "cross",
+    "gameValue": 1191,
+    "observed": 1191.4,
+    "n": 16,
+    "residual": 0.4
+   },
+   {
+    "key": "toledo ave",
+    "display": "Toledo Ave",
+    "kind": "cross",
+    "gameValue": 1263,
+    "observed": 1263.2,
+    "n": 21,
+    "residual": 0.2
+   },
+   {
+    "key": "monterey ave",
+    "display": "Monterey Ave",
+    "kind": "cross",
+    "gameValue": 1405,
+    "observed": 1405,
+    "n": 20,
+    "residual": 0
+   },
+   {
+    "key": "miami ave",
+    "display": "Miami Ave",
+    "kind": "cross",
+    "gameValue": 1475,
+    "observed": 1474.9,
+    "n": 22,
+    "residual": -0.1
+   },
+   {
+    "key": "louisville ave",
+    "display": "Louisville Ave",
+    "kind": "cross",
+    "gameValue": 1545,
+    "observed": 1545.2,
+    "n": 17,
+    "residual": 0.2
+   },
+   {
+    "key": "nashville ave",
+    "display": "Nashville Ave",
+    "kind": "cross",
+    "gameValue": 1616,
+    "observed": 1615.8,
+    "n": 15,
+    "residual": -0.2
+   },
+   {
+    "key": "atlanta ave",
+    "display": "Atlanta Ave",
+    "kind": "cross",
+    "gameValue": 1689,
+    "observed": 1688.4,
+    "n": 17,
+    "residual": -0.6
+   },
+   {
+    "key": "farragut rd",
+    "display": "Farragut Rd",
+    "kind": "cross",
+    "gameValue": 1765,
+    "observed": 1765,
+    "n": 24,
+    "residual": 0
+   },
+   {
+    "key": "stanton rd",
+    "display": "Stanton Rd",
+    "kind": "cross",
+    "gameValue": 1841,
+    "observed": 1841.5,
+    "n": 17,
+    "residual": 0.5
+   },
+   {
+    "key": "stockton rd",
+    "display": "Stockton Rd",
+    "kind": "cross",
+    "gameValue": 1918,
+    "observed": 1917.4,
+    "n": 15,
+    "residual": -0.6
+   },
+   {
+    "key": "orchid rd",
+    "display": "Orchid Rd",
+    "kind": "cross",
+    "gameValue": 1993,
+    "observed": 1993.5,
+    "n": 18,
+    "residual": 0.5
+   },
+   {
+    "key": "rambler rd",
+    "display": "Rambler Rd",
+    "kind": "cross",
+    "gameValue": 2073,
+    "observed": 2072.6,
+    "n": 22,
+    "residual": -0.4
+   },
+   {
+    "key": "primrose rd",
+    "display": "Primrose Rd",
+    "kind": "cross",
+    "gameValue": 2151,
+    "observed": 2152.7,
+    "n": 20,
+    "residual": 1.7
+   },
+   {
+    "key": "myrtle rd",
+    "display": "Myrtle Rd",
+    "kind": "cross",
+    "gameValue": 2228,
+    "observed": 2228.7,
+    "n": 20,
+    "residual": 0.7
+   },
+   {
+    "key": "lotus rd",
+    "display": "Lotus Rd",
+    "kind": "cross",
+    "gameValue": 2307,
+    "observed": 2306.6,
+    "n": 34,
+    "residual": -0.4
+   },
+   {
+    "key": "palm rd",
+    "display": "Palm Rd",
+    "kind": "cross",
+    "gameValue": 2384,
+    "observed": 2384,
+    "n": 22,
+    "residual": 0
+   },
+   {
+    "key": "fern rd",
+    "display": "Fern Rd",
+    "kind": "cross",
+    "gameValue": 2460,
+    "observed": 2460.3,
+    "n": 21,
+    "residual": 0.3
+   },
+   {
+    "key": "forget-me-not rd",
+    "display": "Forget-Me-Not Rd",
+    "kind": "cross",
+    "gameValue": 2537,
+    "observed": 2537.1,
+    "n": 25,
+    "residual": 0.1
+   },
+   {
+    "key": "rosemary rd",
+    "display": "Rosemary Rd",
+    "kind": "cross",
+    "gameValue": 2613,
+    "observed": 2613.2,
+    "n": 21,
+    "residual": 0.2
+   },
+   {
+    "key": "columbine rd",
+    "display": "Columbine Rd",
+    "kind": "cross",
+    "gameValue": 2690,
+    "observed": 2689.3,
+    "n": 26,
+    "residual": -0.7
+   },
+   {
+    "key": "wisteria rd",
+    "display": "Wisteria Rd",
+    "kind": "cross",
+    "gameValue": 2765,
+    "observed": 2765.5,
+    "n": 25,
+    "residual": 0.5
+   },
+   {
+    "key": "cardinal rd",
+    "display": "Cardinal Rd",
+    "kind": "cross",
+    "gameValue": 2924,
+    "observed": 2924.4,
+    "n": 25,
+    "residual": 0.4
+   },
+   {
+    "key": "aster rd",
+    "display": "Aster Rd",
+    "kind": "cross",
+    "gameValue": 3005,
+    "observed": 3004.9,
+    "n": 34,
+    "residual": -0.1
+   },
+   {
+    "key": "crocus rd",
+    "display": "Crocus Rd",
+    "kind": "cross",
+    "gameValue": 3083,
+    "observed": 3082.2,
+    "n": 28,
+    "residual": -0.8
+   },
+   {
+    "key": "heather rd",
+    "display": "Heather Rd",
+    "kind": "cross",
+    "gameValue": 3161,
+    "observed": 3160.4,
+    "n": 31,
+    "residual": -0.6
+   },
+   {
+    "key": "lavender rd",
+    "display": "Lavender Rd",
+    "kind": "cross",
+    "gameValue": 3238,
+    "observed": 3238.2,
+    "n": 34,
+    "residual": 0.2
+   },
+   {
+    "key": "buttercup rd",
+    "display": "Buttercup Rd",
+    "kind": "cross",
+    "gameValue": 3314,
+    "observed": 3314.1,
+    "n": 32,
+    "residual": 0.1
+   },
+   {
+    "key": "morning glory rd",
+    "display": "Morning Glory Rd",
+    "kind": "cross",
+    "gameValue": 3390,
+    "observed": 3390.6,
+    "n": 34,
+    "residual": 0.6
+   },
+   {
+    "key": "cresse ave",
+    "display": "Cresse Ave",
+    "kind": "cross",
+    "gameValue": 3468,
+    "observed": 3468.6,
+    "n": 39,
+    "residual": 0.6
+   },
+   {
+    "key": "hildreth ave",
+    "display": "Hildreth Ave",
+    "kind": "cross",
+    "gameValue": 3548,
+    "observed": 3548.1,
+    "n": 27,
+    "residual": 0.1
+   },
+   {
+    "key": "bennett ave",
+    "display": "Bennett Ave",
+    "kind": "cross",
+    "gameValue": 3627,
+    "observed": 3627.5,
+    "n": 28,
+    "residual": 0.5
+   },
+   {
+    "key": "leaming ave",
+    "display": "Leaming Ave",
+    "kind": "cross",
+    "gameValue": 3707,
+    "observed": 3707.1,
+    "n": 34,
+    "residual": 0.1
+   },
+   {
+    "key": "hand ave",
+    "display": "Hand Ave",
+    "kind": "cross",
+    "gameValue": 3786,
+    "observed": 3786.1,
+    "n": 28,
+    "residual": 0.1
+   },
+   {
+    "key": "rio grande ave",
+    "display": "Rio Grande Ave",
+    "kind": "cross",
+    "gameValue": 3865,
+    "observed": 3866.4,
+    "n": 79,
+    "residual": 1.4
+   },
+   {
+    "key": "taylor ave",
+    "display": "Taylor Ave",
+    "kind": "cross",
+    "gameValue": 3946,
+    "observed": 3946.7,
+    "n": 36,
+    "residual": 0.7
+   },
+   {
+    "key": "andrews ave",
+    "display": "Andrews Ave",
+    "kind": "cross",
+    "gameValue": 4026,
+    "observed": 4026.1,
+    "n": 33,
+    "residual": 0.1
+   },
+   {
+    "key": "burk ave",
+    "display": "Burk Ave",
+    "kind": "cross",
+    "gameValue": 4105,
+    "observed": 4105.7,
+    "n": 39,
+    "residual": 0.7
+   },
+   {
+    "key": "davis ave",
+    "display": "Davis Ave",
+    "kind": "cross",
+    "gameValue": 4184,
+    "observed": 4184,
+    "n": 21,
+    "residual": 0
+   },
+   {
+    "key": "montgomery ave",
+    "display": "Montgomery Ave",
+    "kind": "cross",
+    "gameValue": 4264,
+    "observed": 4263.9,
+    "n": 40,
+    "residual": -0.1
+   },
+   {
+    "key": "baker ave",
+    "display": "Baker Ave",
+    "kind": "cross",
+    "gameValue": 4344,
+    "observed": 4344.3,
+    "n": 33,
+    "residual": 0.3
+   },
+   {
+    "key": "roberts ave",
+    "display": "Roberts Ave",
+    "kind": "cross",
+    "gameValue": 4422,
+    "observed": 4422.2,
+    "n": 28,
+    "residual": 0.2
+   },
+   {
+    "key": "youngs ave",
+    "display": "Youngs Ave",
+    "kind": "cross",
+    "gameValue": 4501,
+    "observed": 4501.7,
+    "n": 29,
+    "residual": 0.7
+   },
+   {
+    "key": "spencer ave",
+    "display": "Spencer Ave",
+    "kind": "cross",
+    "gameValue": 4581,
+    "observed": 4582.2,
+    "n": 26,
+    "residual": 1.2
+   },
+   {
+    "key": "spicer ave",
+    "display": "Spicer Ave",
+    "kind": "cross",
+    "gameValue": 4661,
+    "observed": 4660.8,
+    "n": 27,
+    "residual": -0.2
+   },
+   {
+    "key": "garfield ave",
+    "display": "Garfield Ave",
+    "kind": "cross",
+    "gameValue": 4740,
+    "observed": 4739.7,
+    "n": 28,
+    "residual": -0.3
+   },
+   {
+    "key": "lincoln ave",
+    "display": "Lincoln Ave",
+    "kind": "cross",
+    "gameValue": 4819,
+    "observed": 4819.1,
+    "n": 22,
+    "residual": 0.1
+   },
+   {
+    "key": "schellenger ave",
+    "display": "Schellenger Ave",
+    "kind": "cross",
+    "gameValue": 4900,
+    "observed": 4892.1,
+    "n": 37,
+    "residual": -7.9
+   },
+   {
+    "key": "cedar ave",
+    "display": "Cedar Ave",
+    "kind": "cross",
+    "gameValue": 4929,
+    "observed": 4943.7,
+    "n": 4,
+    "residual": 14.7
+   },
+   {
+    "key": "oak ave",
+    "display": "Oak Ave",
+    "kind": "cross",
+    "gameValue": 5007,
+    "observed": 5011.4,
+    "n": 35,
+    "residual": 4.4
+   },
+   {
+    "key": "wildwood ave",
+    "display": "Wildwood Ave",
+    "kind": "cross",
+    "gameValue": 5087,
+    "observed": 5089,
+    "n": 38,
+    "residual": 2
+   },
+   {
+    "key": "pine ave",
+    "display": "Pine Ave",
+    "kind": "cross",
+    "gameValue": 5167,
+    "observed": 5166.8,
+    "n": 45,
+    "residual": -0.2
+   },
+   {
+    "key": "maple ave",
+    "display": "Maple Ave",
+    "kind": "cross",
+    "gameValue": 5241,
+    "observed": 5239.2,
+    "n": 37,
+    "residual": -1.8
+   },
+   {
+    "key": "glenwood ave",
+    "display": "Glenwood Ave",
+    "kind": "cross",
+    "gameValue": 5310,
+    "observed": 5311.8,
+    "n": 57,
+    "residual": 1.8
+   },
+   {
+    "key": "magnolia ave",
+    "display": "Magnolia Ave",
+    "kind": "cross",
+    "gameValue": 5380,
+    "observed": 5381.2,
+    "n": 33,
+    "residual": 1.2
+   },
+   {
+    "key": "poplar ave",
+    "display": "Poplar Ave",
+    "kind": "cross",
+    "gameValue": 5451,
+    "observed": 5447.4,
+    "n": 45,
+    "residual": -3.6
+   },
+   {
+    "key": "juniper ave",
+    "display": "Juniper Ave",
+    "kind": "cross",
+    "gameValue": 5521,
+    "observed": 5520.7,
+    "n": 19,
+    "residual": -0.3
+   },
+   {
+    "key": "26th ave",
+    "display": "26th Ave",
+    "kind": "cross",
+    "gameValue": 5567,
+    "observed": 5567.2,
+    "n": 39,
+    "residual": 0.2
+   },
+   {
+    "key": "25th ave",
+    "display": "25th Ave",
+    "kind": "cross",
+    "gameValue": 5649,
+    "observed": 5647.4,
+    "n": 19,
+    "residual": -1.6
+   },
+   {
+    "key": "24th ave",
+    "display": "24th Ave",
+    "kind": "cross",
+    "gameValue": 5731,
+    "observed": 5731,
+    "n": 28,
+    "residual": 0
+   },
+   {
+    "key": "23rd ave",
+    "display": "23rd Ave",
+    "kind": "cross",
+    "gameValue": 5814,
+    "observed": 5814.1,
+    "n": 18,
+    "residual": 0.1
+   },
+   {
+    "key": "22nd ave",
+    "display": "22nd Ave",
+    "kind": "cross",
+    "gameValue": 5896,
+    "observed": 5895.8,
+    "n": 15,
+    "residual": -0.2
+   },
+   {
+    "key": "21st ave",
+    "display": "21st Ave",
+    "kind": "cross",
+    "gameValue": 5978,
+    "observed": 5978.2,
+    "n": 18,
+    "residual": 0.2
+   },
+   {
+    "key": "20th ave",
+    "display": "20th Ave",
+    "kind": "cross",
+    "gameValue": 6062,
+    "observed": 6061.7,
+    "n": 21,
+    "residual": -0.3
+   },
+   {
+    "key": "19th ave",
+    "display": "19th Ave",
+    "kind": "cross",
+    "gameValue": 6144,
+    "observed": 6143.4,
+    "n": 19,
+    "residual": -0.6
+   },
+   {
+    "key": "18th ave",
+    "display": "18th Ave",
+    "kind": "cross",
+    "gameValue": 6227,
+    "observed": 6226.5,
+    "n": 27,
+    "residual": -0.5
+   },
+   {
+    "key": "17th ave",
+    "display": "17th Ave",
+    "kind": "cross",
+    "gameValue": 6308,
+    "observed": 6308.4,
+    "n": 34,
+    "residual": 0.4
+   },
+   {
+    "key": "16th ave",
+    "display": "16th Ave",
+    "kind": "cross",
+    "gameValue": 6391,
+    "observed": 6390.4,
+    "n": 22,
+    "residual": -0.6
+   },
+   {
+    "key": "15th ave",
+    "display": "15th Ave",
+    "kind": "cross",
+    "gameValue": 6473,
+    "observed": 6473.4,
+    "n": 27,
+    "residual": 0.4
+   },
+   {
+    "key": "14th ave",
+    "display": "14th Ave",
+    "kind": "cross",
+    "gameValue": 6555,
+    "observed": 6555,
+    "n": 24,
+    "residual": 0
+   },
+   {
+    "key": "13th ave",
+    "display": "13th Ave",
+    "kind": "cross",
+    "gameValue": 6638,
+    "observed": 6638.3,
+    "n": 25,
+    "residual": 0.3
+   },
+   {
+    "key": "12th ave",
+    "display": "12th Ave",
+    "kind": "cross",
+    "gameValue": 6720,
+    "observed": 6720,
+    "n": 21,
+    "residual": 0
+   },
+   {
+    "key": "11th ave",
+    "display": "11th Ave",
+    "kind": "cross",
+    "gameValue": 6803,
+    "observed": 6802.7,
+    "n": 21,
+    "residual": -0.3
+   },
+   {
+    "key": "10th ave",
+    "display": "10th Ave",
+    "kind": "cross",
+    "gameValue": 6885,
+    "observed": 6884.7,
+    "n": 26,
+    "residual": -0.3
+   },
+   {
+    "key": "9th ave",
+    "display": "9th Ave",
+    "kind": "cross",
+    "gameValue": 6968,
+    "observed": 6967,
+    "n": 18,
+    "residual": -1
+   },
+   {
+    "key": "8th ave",
+    "display": "8th Ave",
+    "kind": "cross",
+    "gameValue": 7050,
+    "observed": 7049.3,
+    "n": 19,
+    "residual": -0.7
+   },
+   {
+    "key": "7th ave",
+    "display": "7th Ave",
+    "kind": "cross",
+    "gameValue": 7132,
+    "observed": 7132,
+    "n": 17,
+    "residual": 0
+   },
+   {
+    "key": "6th ave",
+    "display": "6th Ave",
+    "kind": "cross",
+    "gameValue": 7214,
+    "observed": 7214.4,
+    "n": 14,
+    "residual": 0.4
+   },
+   {
+    "key": "5th ave",
+    "display": "5th Ave",
+    "kind": "cross",
+    "gameValue": 7296,
+    "observed": 7296.3,
+    "n": 18,
+    "residual": 0.3
+   },
+   {
+    "key": "4th ave",
+    "display": "4th Ave",
+    "kind": "cross",
+    "gameValue": 7380,
+    "observed": 7380,
+    "n": 31,
+    "residual": 0
+   },
+   {
+    "key": "3rd ave",
+    "display": "3rd Ave",
+    "kind": "cross",
+    "gameValue": 7462,
+    "observed": 7462.5,
+    "n": 48,
+    "residual": 0.5
+   },
+   {
+    "key": "2nd ave",
+    "display": "2nd Ave",
+    "kind": "cross",
+    "gameValue": 7544,
+    "observed": 7544.5,
+    "n": 86,
+    "residual": 0.5
+   },
+   {
+    "key": "1st ave",
+    "display": "1st Ave",
+    "kind": "cross",
+    "gameValue": 7626,
+    "observed": 7626.4,
+    "n": 30,
+    "residual": 0.4
+   },
+   {
+    "key": "chestnut ave",
+    "display": "Chestnut Ave",
+    "kind": "cross",
+    "gameValue": 7709,
+    "observed": 7709.2,
+    "n": 15,
+    "residual": 0.2
+   },
+   {
+    "key": "walnut ave",
+    "display": "Walnut Ave",
+    "kind": "cross",
+    "gameValue": 7791,
+    "observed": 7791.1,
+    "n": 22,
+    "residual": 0.1
+   },
+   {
+    "key": "spruce ave",
+    "display": "Spruce Ave",
+    "kind": "cross",
+    "gameValue": 7861,
+    "observed": 7874.2,
+    "n": 43,
+    "residual": 13.2
+   },
+   {
+    "key": "pine ave",
+    "display": "Pine Ave (North Wildwood)",
+    "kind": "cross",
+    "gameValue": 7957,
+    "observed": 7957.8,
+    "n": 48,
+    "residual": 0.8
+   },
+   {
+    "key": "ocean ave",
+    "display": "Ocean Ave",
+    "kind": "avenue",
+    "gameValue": -119,
+    "observed": -119.3,
+    "n": 50,
+    "residual": -0.3
+   },
+   {
+    "key": "beach ave",
+    "display": "Beach Ave",
+    "kind": "avenue",
+    "gameValue": 1,
+    "observed": 1.5,
+    "n": 27,
+    "residual": 0.5
+   },
+   {
+    "key": "ocean ave",
+    "display": "Ocean Ave",
+    "kind": "avenue",
+    "gameValue": 75,
+    "observed": 74.9,
+    "n": 155,
+    "residual": -0.1
+   },
+   {
+    "key": "surf ave",
+    "display": "Surf Ave",
+    "kind": "avenue",
+    "gameValue": 75,
+    "observed": 74.9,
+    "n": 122,
+    "residual": -0.1
+   },
+   {
+    "key": "atlantic ave",
+    "display": "Atlantic Ave",
+    "kind": "avenue",
+    "gameValue": 198,
+    "observed": 197.8,
+    "n": 313,
+    "residual": -0.2
+   },
+   {
+    "key": "seaview ave",
+    "display": "Seaview Ave",
+    "kind": "avenue",
+    "gameValue": 271,
+    "observed": 270.7,
+    "n": 175,
+    "residual": -0.3
+   },
+   {
+    "key": "pacific ave",
+    "display": "Pacific Ave",
+    "kind": "avenue",
+    "gameValue": 406,
+    "observed": 405.4,
+    "n": 227,
+    "residual": -0.6
+   },
+   {
+    "key": "central ave",
+    "display": "Central Ave",
+    "kind": "avenue",
+    "gameValue": 406,
+    "observed": 406.6,
+    "n": 146,
+    "residual": 0.6
+   },
+   {
+    "key": "new jersey ave",
+    "display": "New Jersey Ave",
+    "kind": "avenue",
+    "gameValue": 612,
+    "observed": 612.4,
+    "n": 339,
+    "residual": 0.4
+   },
+   {
+    "key": "new york ave",
+    "display": "New York Ave",
+    "kind": "avenue",
+    "gameValue": 786,
+    "observed": 787.1,
+    "n": 64,
+    "residual": 1.1
+   },
+   {
+    "key": "bayview ave",
+    "display": "Bayview Ave",
+    "kind": "avenue",
+    "gameValue": 807,
+    "observed": 807.1,
+    "n": 64,
+    "residual": 0.1
+   },
+   {
+    "key": "arctic ave",
+    "display": "Arctic Ave",
+    "kind": "avenue",
+    "gameValue": 819,
+    "observed": 816.9,
+    "n": 46,
+    "residual": -2.1
+   },
+   {
+    "key": "park blvd",
+    "display": "Park Blvd",
+    "kind": "avenue",
+    "gameValue": 896,
+    "observed": 895.2,
+    "n": 148,
+    "residual": -0.8
+   },
+   {
+    "key": "delaware ave",
+    "display": "Delaware Ave",
+    "kind": "avenue",
+    "gameValue": 959,
+    "observed": 959.3,
+    "n": 83,
+    "residual": 0.3
+   },
+   {
+    "key": "hudson ave",
+    "display": "Hudson Ave",
+    "kind": "avenue",
+    "gameValue": 1042,
+    "observed": 1040.6,
+    "n": 47,
+    "residual": -1.4
+   },
+   {
+    "key": "maryland ave",
+    "display": "Maryland Ave",
+    "kind": "avenue",
+    "gameValue": 1154,
+    "observed": 1154.3,
+    "n": 30,
+    "residual": 0.3
+   },
+   {
+    "key": "lake rd",
+    "display": "Lake Rd",
+    "kind": "avenue",
+    "gameValue": 1181,
+    "observed": 1181.1,
+    "n": 36,
+    "residual": 0.1
+   },
+   {
+    "key": "susquehanna ave",
+    "display": "Susquehanna Ave",
+    "kind": "avenue",
+    "gameValue": 1246,
+    "observed": 1245,
+    "n": 36,
+    "residual": -1
+   }
+  ],
+  "fit": {
+   "a": 0.9995,
+   "b": 1.98,
+   "c": 1.0004,
+   "d": -0.02,
+   "rmsBefore": 4.25,
+   "rmsAfter": 4.13,
+   "n": 121
+  },
+  "notMatched": [
+   "A Avenue",
+   "Aberdeen Way",
+   "Anglesea Drive",
+   "Arion Avenue",
+   "B Avenue",
+   "Bay Avenue",
+   "Bayview Drive",
+   "C Avenue",
+   "Carpenter Lane",
+   "Carroll Avenue",
+   "Channel Avenue",
+   "Channel Drive",
+   "County Boulevard",
+   "D Avenue",
+   "Delsea Drive",
+   "Diamond Sand Drive",
+   "Diane Avenue",
+   "Dock Street",
+   "E Avenue",
+   "East Austin Avenue",
+   "East Richmond Avenue",
+   "East Saint Paul Avenue",
+   "East Sweetbriar Road",
+   "F Avenue",
+   "Falkirk Drive",
+   "Fish Dock Road",
+   "G Avenue",
+   "Garden State Parkway",
+   "Given Drive",
+   "H Avenue",
+   "Hereford Avenue",
+   "Hoffman Avenue",
+   "I Avenue",
+   "Ibis Lane",
+   "J Avenue",
+   "John F Kennedy Boulevard",
+   "K Avenue",
+   "Keo Drive",
+   "L Avenue",
+   "Lake Avenue",
+   "Lee Avenue",
+   "M Avenue",
+   "Mace Avenue",
+   "Madison Avenue",
+   "Mediterranean",
+   "Mediterranean Avenue",
+   "Morning-Glory Road",
+   "Mueller Avenue",
+   "Mulberry Avenue",
+   "N Avenue",
+   "Neptune Avenue",
+   "Niagara Avenue",
+   "North 7th Street",
+   "North Avenue",
+   "North Wildwood Boulevard",
+   "Northwest 18th Avenue",
+   "O Avenue",
+   "Ocean Drive",
+   "Ohio Avenue",
+   "Olde New Jersey Avenue",
+   "P Avenue",
+   "Paradise Way",
+   "Q Avenue",
+   "R Avenue",
+   "S Avenue",
+   "Saint Demetrios Avenue",
+   "Seapointe Boulevard",
+   "Shawcrest Road",
+   "South Wildwood Boulevard",
+   "USCG Entrance Street",
+   "Venice Avenue",
+   "Virginia Avenue",
+   "Weeks Avenue",
+   "West Anglesea Drive",
+   "West Richmond Avenue",
+   "West Saint Louis Avenue",
+   "West Saint Paul Avenue",
+   "West Sweetbriar Road",
+   "West Tacony Road",
+   "Wildwood Boulevard",
+   "Wilson Avenue",
+   "Yerkes Avenue"
+  ]
+ },
+ "sanborn": {
+  "index": "citydata/wildwood/evidence/sanborn-1950-additional-index.json (transcribed)",
+  "plan": {
+   "covered": [
+    {
+     "sheet": "27",
+     "addresses": [
+      "1901 NEW YORK AVE",
+      "1902 NEW YORK AVE",
+      "1905 NEW YORK AVE",
+      "1907 NEW YORK AVE",
+      "1909 DELAWARE AVE",
+      "1911 NEW YORK AVE",
+      "2000 DELAWARE AVE",
+      "2000 NEW YORK AVE",
+      "2001 NEW YORK AVE",
+      "2002 NEW YORK AVE",
+      "2003 DELAWARE AVE",
+      "2003 NEW YORK AVE",
+      "2004 NEW YORK AVE",
+      "2005 NEW YORK AVE",
+      "2006 NEW YORK AVE",
+      "2008 NEW YORK AVE",
+      "201 W 22ND AVE",
+      "201 W 23RD AVE",
+      "201 W 24TH AVE",
+      "2011 NEW YORK AVE",
+      "202 W 22ND AVE",
+      "202 W 26TH AVE",
+      "203 W 21ST AVE",
+      "203 W 22ND AVE",
+      "203 W 23RD AVE",
+      "203 W 26TH AVE",
+      "204 W 20TH AVE",
+      "204 W 21ST AVE",
+      "204 W 22ND AVE",
+      "205 W 21ST AVE",
+      "205 W 22ND AVE",
+      "205 W 23RD AVE",
+      "205 W 26TH AVE",
+      "206 W 19TH AVE",
+      "206 W 20TH AVE",
+      "206 W 21ST AVE",
+      "206 W 22ND AVE",
+      "206 W 23RD AVE",
+      "207 W 21ST AVE",
+      "207 W 23RD AVE",
+      "207 W 25TH AVE",
+      "207 W 26TH AVE",
+      "208 W 20TH AVE",
+      "208 W 21ST AVE",
+      "208 W 22ND AVE",
+      "208 W 24TH AVE",
+      "208 W 25TH AVE",
+      "209 W 21ST AVE",
+      "209 W 22ND AVE",
+      "209 W 23RD AVE",
+      "209 W 24TH AVE",
+      "209 W 25TH AVE",
+      "210 W 19TH AVE",
+      "210 W 20TH AVE",
+      "210 W 21ST AVE",
+      "210 W 23RD AVE",
+      "210 W 25TH AVE",
+      "210 W 26TH AVE",
+      "2100 DELAWARE AVE",
+      "2100 NEW YORK AVE",
+      "2101 DELAWARE AVE",
+      "2101 NEW YORK AVE",
+      "2106 NEW YORK AVE",
+      "2108 NEW YORK AVE",
+      "211 W 19TH AVE",
+      "211 W 21ST AVE",
+      "211 W 22ND AVE",
+      "211 W 26TH AVE",
+      "2110 NEW YORK AVE",
+      "212 W 19TH AVE",
+      "212 W 20TH AVE",
+      "212 W 21ST AVE",
+      "212 W 23RD AVE",
+      "212 W 24TH AVE",
+      "213 W 19TH AVE",
+      "213 W 21ST AVE",
+      "213 W 22ND AVE",
+      "213 W 26TH AVE",
+      "214 W 19TH AVE",
+      "214 W 20TH AVE",
+      "214 W 21ST AVE",
+      "214 W 22ND AVE",
+      "214 W 23RD AVE",
+      "214 W 25TH AVE",
+      "215 W 21ST AVE",
+      "215 W 22ND AVE",
+      "215 W 23RD AVE",
+      "215 W 24TH AVE",
+      "215 W 25TH AVE",
+      "216 W 19TH AVE",
+      "216 W 20TH AVE",
+      "216 W 21ST AVE",
+      "216 W 22ND AVE",
+      "216 W 23RD AVE",
+      "216 W 24TH AVE",
+      "216 W 25TH AVE",
+      "216 W 26TH AVE",
+      "217 W 19TH AVE",
+      "217 W 22ND AVE",
+      "217 W 25TH AVE",
+      "217 W 26TH AVE",
+      "218 W 20TH AVE",
+      "218 W 21ST AVE",
+      "218 W 22ND AVE",
+      "218 W 24TH AVE",
+      "218 W 26TH AVE",
+      "219 W 19TH AVE",
+      "219 W 20TH AVE",
+      "219 W 22ND AVE",
+      "219 W 24TH AVE",
+      "219 W 25TH AVE",
+      "220 W 19TH AVE",
+      "220 W 20TH AVE",
+      "220 W 22ND AVE",
+      "220 W 24TH AVE",
+      "2200 DELAWARE AVE",
+      "2200 NEW YORK AVE",
+      "2201 DELAWARE AVE",
+      "2201 NEW YORK AVE",
+      "2203 NEW YORK AVE",
+      "2204 NEW YORK AVE",
+      "2205 NEW YORK AVE",
+      "2206 NEW YORK AVE",
+      "2207 DELAWARE AVE",
+      "2207 NEW YORK AVE",
+      "2208 NEW YORK AVE",
+      "221 W 19TH AVE",
+      "221 W 20TH AVE",
+      "221 W 24TH AVE",
+      "221 W 25TH AVE",
+      "2210 NEW YORK AVE",
+      "2211-15 NEW YORK AVE",
+      "222 W 22ND AVE",
+      "222 W 23RD AVE",
+      "222 W 24TH AVE",
+      "223 W 19TH AVE",
+      "223 W 20TH AVE",
+      "223 W 23RD AVE",
+      "223 W 25TH AVE",
+      "224 W 23RD AVE",
+      "224 W 24TH AVE",
+      "224 W 25TH AVE",
+      "225 W 19TH AVE",
+      "225 W 20TH AVE",
+      "225 W 23RD AVE",
+      "225 W 24TH AVE",
+      "225 W 25TH AVE",
+      "226 W 23RD AVE",
+      "226 W 24TH AVE",
+      "227 W 19TH AVE",
+      "227 W 20TH AVE",
+      "227 W 23RD AVE",
+      "227 W 24TH AVE",
+      "227 W 25TH AVE",
+      "227 W 26TH AVE",
+      "228 W 25TH AVE",
+      "229 W 19TH AVE",
+      "229 W 24TH AVE",
+      "229 W 26TH AVE",
+      "230 W 25TH AVE",
+      "2300 DELAWARE AVE",
+      "2300 NEW YORK AVE",
+      "2301 NEW YORK AVE",
+      "2302 NEW YORK AVE",
+      "2303 NEW YORK AVE",
+      "2305 NEW YORK AVE",
+      "2307 NEW YORK AVE",
+      "2310 NEW YORK AVE",
+      "232 W 19TH AVE",
+      "235 W 25TH AVE",
+      "236 W 26TH AVE",
+      "238 W 26TH AVE",
+      "240 W 26TH AVE",
+      "2400 DELAWARE AVE",
+      "2400 NEW YORK AVE",
+      "2401 DELAWARE AVE",
+      "2401 NEW YORK AVE",
+      "2402 NEW YORK AVE",
+      "2403 DELAWARE AVE",
+      "2404 NEW YORK AVE",
+      "2405 DELAWARE AVE",
+      "2405 NEW YORK AVENUE",
+      "2406 NEW YORK AVE",
+      "2407 NEW YORK AVE",
+      "2500 DELAWARE AVE",
+      "2507 DELAWARE AVE",
+      "2510 NEW YORK AVE",
+      "300 W 19TH AVE",
+      "301 W 19TH AVE",
+      "301 W 20TH AVE",
+      "302 W 19TH AVE",
+      "303 W 20TH AVE",
+      "304 W 19TH AVE",
+      "305 W 20TH AVE",
+      "306 W 19TH AVE",
+      "307 W 20TH AVE",
+      "311 W 19TH AVE",
+      "311 W 20TH AVE",
+      "313 W 20TH AVE",
+      "314 W 19TH AVE",
+      "314 W 26TH AVE",
+      "315 W 19TH AVE",
+      "315 W 24TH AVE",
+      "316 W 19TH AVE",
+      "318 W 19TH AVE",
+      "319 W 19TH AVE",
+      "321 W 20TH AVE",
+      "324-326 W 19TH AVE",
+      "325 W 20TH AVE",
+      "328 W 19TH AVE",
+      "329 W 20TH AVE",
+      "332 W 19TH AVE",
+      "333 W 20TH AVE",
+      "335 W 19TH AVE",
+      "335 W 20TH AVE",
+      "337 W 19TH AVE",
+      "338 W 19TH AVE",
+      "339 W 19TH AVE",
+      "340 W 19TH AVE",
+      "400 W 20TH AVE",
+      "400 W 21ST AVE",
+      "400 W 22ND AVE",
+      "400 W 23RD AVE",
+      "400 W 24TH AVE",
+      "401 W 19TH AVE",
+      "401 W 26TH AVE",
+      "404-06 W 19TH AVE",
+      "405 W 19TH AVE",
+      "406 W 26TH AVE",
+      "407 W 19TH AVE",
+      "408 W 19TH AVE",
+      "409 W 20TH AVE",
+      "411 W 20TH AVE",
+      "412 W 19TH AVE",
+      "412 W 26TH AVE",
+      "415 W 20TH AVE",
+      "416 W 19TH AVE",
+      "421 W 19TH AVE",
+      "422 W 19TH AVE",
+      "424 W 19TH AVE",
+      "427 W 19TH AVE",
+      "429 W 19TH AVE",
+      "430 W 19TH AVE",
+      "433 W 19TH AVE",
+      "437 W 19TH AVE",
+      "439 W 19TH AVE",
+      "441 W 19TH AVE",
+      "500 W 19TH AVE",
+      "500 W 21ST AVE",
+      "501 W 19TH AVE",
+      "501 W 21ST AVE",
+      "501 W 24TH AVE",
+      "501 W 25TH AVE",
+      "501 W 26TH AVE",
+      "503 W 19TH AVE",
+      "505 W 19TH AVE",
+      "509 W 19TH AVE",
+      "510 W 26TH AVE",
+      "511 W 19TH AVE",
+      "513 W 19TH AVE",
+      "514 W 26TH AVE",
+      "516 W 26TH AVE",
+      "522 W 26TH AVE",
+      "530 W 19TH AVE",
+      "530 W 26TH AVE"
+     ]
+    },
+    {
+     "sheet": "28",
+     "addresses": [
+      "1207 OCEAN AVE",
+      "1300 OCEAN AVE",
+      "1300 SURF AVE",
+      "1302 OCEAN AVE",
+      "1305 SURF AVE",
+      "1306 OCEAN AVE",
+      "1307 SURF AVE",
+      "1400 OCEAN AVE",
+      "1401 OCEAN AVE",
+      "1403 OCEAN AVE",
+      "1407 SURF AVE",
+      "1410 OCEAN AVE",
+      "1411 OCEAN AVE",
+      "1412 OCEAN AVE",
+      "1506 OCEAN AVE",
+      "1507 OCEAN AVE",
+      "1508 OCEAN AVE",
+      "1510 OCEAN AVE",
+      "1600 OCEAN AVE",
+      "1600 SURF AVE",
+      "1601 BOARDWALK",
+      "1601 OCEAN AVE",
+      "1601 SURF AVE",
+      "1608 OCEAN AVE",
+      "1610 BOARDWALK",
+      "1610 SURF AVE",
+      "1700 SURF AVE",
+      "1700-1710 BOARDWALK",
+      "1701 SURF AVE",
+      "1702 OCEAN AVE",
+      "1702 SURF AVE",
+      "1704 SURF AVE",
+      "1705 SURF AVE",
+      "1710 OCEAN AVENUE",
+      "1711 SURF AVE",
+      "1801 BOARDWALK",
+      "1801 SURF AVE",
+      "1803 SURF AVE",
+      "1900 BOARDWALK",
+      "1901-03 SURF AVE",
+      "2001 SURF AVE",
+      "2002-24 BOARDWALK",
+      "2005 SURF AVE",
+      "2100 BOARDWALK",
+      "2101 SURF AVE",
+      "2106 SURF AVE",
+      "2200 SURF AVE",
+      "2200-10 BOARDWALK",
+      "2208 SURF AVE #100",
+      "2208 SURF AVE #200",
+      "2210 SURF AVE #101",
+      "2210 SURF AVE #201",
+      "2212 SURF AVE",
+      "2214 SURF AVE #102",
+      "2214 SURF AVE #202",
+      "2216 SURF AVE #103",
+      "2216 SURF AVE #203",
+      "2218 SURF AVE",
+      "2301 BOARDWALK",
+      "2400-24 BOARDWALK",
+      "2401 BOARDWALK",
+      "2500 BOARDWALK",
+      "2501 BOARDWALK",
+      "401 E 14TH AVE",
+      "401-407 E 21ST AVE",
+      "402 E 26TH AVE",
+      "403 E 12TH AVE",
+      "403 E 14TH AVE",
+      "403 E 15TH AVE",
+      "404 E 12TH AVE",
+      "404 E 14TH AVE",
+      "404 E 19TH AVE",
+      "405 E 12TH AVE",
+      "405 E 15TH AVE",
+      "406 E 14TH AVE",
+      "406 E 17TH AVENUE",
+      "406 E 19TH AVE",
+      "406 E 20TH AVE",
+      "407 E 14TH AVE",
+      "407 E 16TH AVE",
+      "408 E 12TH AVE",
+      "408 E 14TH AVE",
+      "408 E 18TH AVE",
+      "408 E 19TH AVE",
+      "408 E 20TH AVE",
+      "408 E 26TH AVE",
+      "409 E 16TH AVE",
+      "409 E 20TH AVE",
+      "410 E 12TH AVE",
+      "410 E 13TH AVE",
+      "410 E 14TH AVE",
+      "410 E 15TH AVE",
+      "410 E 17TH AVE",
+      "410 E 19TH AVE",
+      "410 E 20TH AVE",
+      "411 E 15TH AVE",
+      "411 E 16TH AVE",
+      "411 E 20TH AVE",
+      "411 E 26TH AVE",
+      "412 E 12TH AVE",
+      "412 E 14TH AVE",
+      "412 E 15TH AVE",
+      "412 E 17TH AVENUE",
+      "412 E 20TH AVE",
+      "412 E 26TH AVE",
+      "413 E 13TH AVE",
+      "413 E 14TH AVE",
+      "413 E 15TH AVE",
+      "413 E 16TH AVE",
+      "413 E 20TH AVE",
+      "413 E 21ST AVE",
+      "414 E 14TH AVE",
+      "414 E 15TH AVE",
+      "414 E 20TH AVE",
+      "415 E 13TH AVE",
+      "415 E 16TH AVE",
+      "415 E 20TH AVE",
+      "415 E 21ST AVE",
+      "415 E 25TH AVE",
+      "415 E 26TH AVE",
+      "416 E 14TH AVE",
+      "416 E 16TH AVE",
+      "416 E 17TH AVE",
+      "416 E 20TH AVE",
+      "416 E 26TH AVE",
+      "417 E 21ST AVE",
+      "418 E 13TH AVE",
+      "418 E 26TH AVE",
+      "419 E 14TH AVE",
+      "419 E 16TH AVE",
+      "419 E 20TH AVE",
+      "419 E 23RD AVE",
+      "420 E 12TH AVE",
+      "420 E 15TH AVE",
+      "420 E 16TH AVE",
+      "420 E 17TH AVE",
+      "420 E 22ND AVE #102",
+      "420 E 22ND AVE #104",
+      "420 E 22ND AVE #106",
+      "420 E 22ND AVE #202",
+      "420 E 22ND AVE #204",
+      "420 E 22ND AVE #206",
+      "420 E 25TH AVE",
+      "420 E 26TH AVE",
+      "421 E 14TH AVE",
+      "421 E 15TH AVE",
+      "421 E 16TH AVE",
+      "421 E 23RD AVE #101",
+      "421 E 23RD AVE #103",
+      "421 E 23RD AVE #105",
+      "421 E 23RD AVE #201",
+      "421 E 23RD AVE #203",
+      "421 E 23RD AVE #205",
+      "421 E 24TH AVE",
+      "422 E 12TH AVE",
+      "422 E 16TH AVE",
+      "422 E 17TH AVE",
+      "422 E 18TH AVE",
+      "422 E 25TH AVE",
+      "423 E 15TH AVE",
+      "423 E 16TH AVE",
+      "423 E 23RD AVE",
+      "424 E 15TH AVE",
+      "424 E 17TH AVE",
+      "424 E 18TH AVE",
+      "425 E 15TH AVE",
+      "425 E 16TH AVE",
+      "425 E 18TH AVE",
+      "425-429 E 21ST AVE",
+      "426 E 15TH AVE",
+      "426 E 16TH AVE",
+      "426 E 19TH AVE",
+      "427-429 E 18TH AVE",
+      "428 E 15TH AVE",
+      "428 E 19TH AVE",
+      "428 E 22ND AVE",
+      "428-444 E 22ND AVE",
+      "430 E 19TH AVE",
+      "430 E 20TH AVE",
+      "430 E 21ST AVE",
+      "430 E 22ND AVE",
+      "431 E 13TH AVE",
+      "431 E 18TH AVE",
+      "431 E 25TH AVE",
+      "431 E 26TH AVE",
+      "432 E 13TH AVE",
+      "432 E 19TH AVE",
+      "432 E 21ST AVE",
+      "434 E 13TH AVE",
+      "434 E 19TH AVE",
+      "435 E 26TH AVE",
+      "500 E 19TH AVE",
+      "502 E 18TH AVE",
+      "502 E 19TH AVE",
+      "503 E 13TH AVE",
+      "504 E 18TH AVE",
+      "505 E 12TH AVE",
+      "506 E 13TH AVE",
+      "506 E 18TH AVE",
+      "508 E 13TH AVE",
+      "508 E 16TH AVE",
+      "510 E 13TH AVE",
+      "510 E 18TH AVE",
+      "511 E 16TH AVE",
+      "511 E 17TH AVE"
+     ]
+    },
+    {
+     "sheet": "31",
+     "addresses": [
+      "100 W ASTER RD",
+      "102 W CRESSE AVE",
+      "103-105 W ASTER RD",
+      "105 W CRESSE AVE",
+      "106 W ASTER RD",
+      "106 W CRESSE AVE",
+      "107 W CRESSE AVE",
+      "108 W ASTER RD",
+      "108 W CRESSE AVE",
+      "109 W ASTER RD",
+      "109 W CRESSE AVE",
+      "110 W CRESSE AVE",
+      "111 W ASTER RD",
+      "112 W ASTER RD",
+      "114 W CRESSE AVE",
+      "115 W ASTER RD",
+      "116 W ASTER RD",
+      "118 W ASTER RD",
+      "118 W CRESSE AVE",
+      "119 W ASTER RD",
+      "121 W ASTER RD",
+      "122 W ASTER RD",
+      "123 W ASTER RD #1",
+      "123 W ASTER RD #2",
+      "124 W ASTER RD",
+      "125 W ASTER RD",
+      "126 W ASTER RD",
+      "126 W CRESSE AVE",
+      "127 W ASTER RD",
+      "128 W ASTER RD",
+      "128 W CRESSE AVE",
+      "129 W ASTER RD",
+      "130 W ASTER RD",
+      "131 W ASTER RD",
+      "131 W CRESSE AVE",
+      "132 W ASTER RD",
+      "132 W CRESSE AVE",
+      "133 W ASTER RD",
+      "133 W CRESSE AVE",
+      "134 W ASTER RD",
+      "134 W CRESSE AVE",
+      "135 W ASTER RD",
+      "135 W CRESSE AVE",
+      "136 W CRESSE AVE",
+      "137 W ASTER RD",
+      "137 W CRESSE AVE",
+      "138 W CRESSE AVE",
+      "140 W CRESSE AVE",
+      "143 W CRESSE AVE",
+      "144 W CRESSE AVE",
+      "145 W CRESSE AVE",
+      "146 W CRESSE AVE",
+      "150 W CRESSE AVE",
+      "152 W CRESSE AVE",
+      "205 W CRESSE AVE",
+      "308 W CRESSE AVE",
+      "309 W CRESSE AVE",
+      "310 W CRESSE AVE",
+      "312 W CRESSE AVE",
+      "314 W CRESSE AVE",
+      "316 W CRESSE AVE",
+      "318 W CRESSE AVE",
+      "319 W CRESSE AVE",
+      "320 W CRESSE AVE",
+      "322 W CRESSE AVE",
+      "324 W CRESSE AVE",
+      "328 W CRESSE AVE",
+      "400 W CRESSE AVE",
+      "401 WEST CRESSE AVE",
+      "403 WEST CRESSE AVE",
+      "404 W CRESSE AVE",
+      "405 W CRESSE AVE",
+      "406 W CRESSE AVE",
+      "408 W CRESSE AVE",
+      "409 W CRESSE AVE",
+      "411 W CRESSE AVE",
+      "415 W CRESSE AVE",
+      "419 W CRESSE AVE",
+      "501 W CRESSE AVE"
+     ]
+    },
+    {
+     "sheet": "34",
+     "addresses": [
+      "201 W ANDREWS AVE",
+      "201 W LEAMING AVE",
+      "203 W ANDREWS AVE",
+      "203 W HILDRETH AVE",
+      "204 W ANDREWS AVE",
+      "204 W HILDRETH AVE",
+      "205 W CRESSE AVE",
+      "206 W ANDREWS AVE",
+      "207-209 W BENNETT AVE",
+      "302 W ANDREWS AVE",
+      "308 W CRESSE AVE",
+      "309 W CRESSE AVE",
+      "310 W CRESSE AVE",
+      "310 W HILDRETH AVE",
+      "312 W CRESSE AVE",
+      "314 W CRESSE AVE",
+      "314 W HILDRETH AVE",
+      "316 W CRESSE AVE",
+      "318 W CRESSE AVE",
+      "319 W CRESSE AVE",
+      "320 W CRESSE AVE",
+      "322 W CRESSE AVE",
+      "324 W CRESSE AVE",
+      "325 W ANDREWS AVE",
+      "327 W ANDREWS AVE",
+      "328 W CRESSE AVE",
+      "330 W ANDREWS AVE",
+      "332 W ANDREWS AVE",
+      "333 W ANDREWS AVE",
+      "334 W ANDREWS AVE",
+      "335 W ANDREWS AVE",
+      "336 W ANDREWS AVE",
+      "337 W ANDREWS AVE",
+      "338 W ANDREWS AVE",
+      "339 W ANDREWS AVE",
+      "341 W ANDREWS AVE",
+      "346 W ANDREWS AVE",
+      "400 W CRESSE AVE",
+      "400 W LEAMING AVE",
+      "401 W ANDREWS AVE",
+      "401 WEST CRESSE AVE",
+      "403 WEST CRESSE AVE",
+      "404 W ANDREWS AVE",
+      "404 W CRESSE AVE",
+      "405 W ANDREWS AVE",
+      "405 W CRESSE AVE",
+      "406 W ANDREWS AVE",
+      "406 W CRESSE AVE",
+      "408 W ANDREWS AVE",
+      "408 W CRESSE AVE",
+      "409 W CRESSE AVE",
+      "410 W ANDREWS AVE",
+      "411 W ANDREWS AVE",
+      "411 W CRESSE AVE",
+      "411 W HILDRETH AVE",
+      "412 W ANDREWS AVE",
+      "412 W HILDRETH AVE",
+      "413 W ANDREWS AVE",
+      "415 W ANDREWS AVE",
+      "415 W CRESSE AVE",
+      "416 W ANDREWS AVE",
+      "416 W HILDRETH AVE",
+      "417 W ANDREWS AVE",
+      "419 W ANDREWS AVE",
+      "419 W CRESSE AVE",
+      "420 W ANDREWS AVE",
+      "422 W ANDREWS AVE",
+      "423 W ANDREWS AVE",
+      "424 W ANDREWS AVE",
+      "425 W ANDREWS AVE",
+      "427-29 W ANDREWS AVE",
+      "428 W ANDREWS AVE",
+      "431 W ANDREWS AVE",
+      "432 W ANDREWS AVE",
+      "433 W ANDREWS AVE",
+      "435 W ANDREWS AVE",
+      "4700 ARCTIC AVE",
+      "4700 SUSQUEHANNA AVE",
+      "4701 ARCTIC AVE",
+      "4702 ARCTIC AVE",
+      "4702 PARK BLVD",
+      "4702 SUSQUEHANNA AVE",
+      "4703 PARK BLVD",
+      "4704 ARCTIC AVE",
+      "4704 PARK BLVD",
+      "4704 SUSQUEHANNA AVE",
+      "4705 PARK BLVD",
+      "4706 ARCTIC AVE",
+      "4706 PARK BLVD",
+      "4708 PARK BLVD",
+      "4708 SUSQUEHANNA AVE",
+      "4708-10 ARCTIC AVE",
+      "4709 PARK BLVD",
+      "4710 HUDSON AVE",
+      "4710 PARK BLVD",
+      "4711 PARK BLVD",
+      "4712 ARCTIC AVE",
+      "4800 ARCTIC AVE",
+      "4800 HUDSON AVE",
+      "4800 PARK BLVD",
+      "4800 SUSQUEHANNA AVE",
+      "4801 ARCTIC AVE",
+      "4801 PARK BLVD",
+      "4802 SUSQUEHANNA AVE",
+      "4804 ARCTIC AVE",
+      "4805 PARK BLVD",
+      "4806 SUSQUEHANNA AVE",
+      "4809 PARK BLVD",
+      "4900 ARCTIC AVE",
+      "4900 PARK BLVD",
+      "4901 PARK BLVD",
+      "4902 SUSQUEHANNA AVE",
+      "4910 ARCTIC AVE",
+      "4912 ARCTIC AVE",
+      "500 W ANDREWS AVE",
+      "5000 PARK BLVD",
+      "5001 ARCTIC AVE",
+      "5001 HUDSON AVE",
+      "5001 SUSQUEHANNA AVE",
+      "5007 PARK BLVD",
+      "501 W ANDREWS AVE",
+      "5010 ARCTIC AVE",
+      "501A W ANDREWS AVE",
+      "503 W ANDREWS AVE",
+      "504 W ANDREWS AVE",
+      "505 W ANDREWS AVE",
+      "506 W ANDREWS AVE",
+      "507 W ANDREWS AVE",
+      "509 W ANDREWS AVE",
+      "510 W ANDREWS AVE",
+      "5100 ARCTIC AVE",
+      "5100 PARK BLVD",
+      "5100 SUSQUEHANNA AVE",
+      "5101 HUDSON AVE",
+      "5101 PARK BLVD",
+      "5103 PARK BLVD",
+      "5105 PARK BLVD",
+      "5106 ARCTIC AVE",
+      "5108 ARCTIC AVE",
+      "5110 ARCTIC AVE",
+      "5200 ARCTIC AVE",
+      "5200 PARK BLVD",
+      "5201 PARK BLVD",
+      "5205 ARCTIC AVE",
+      "5205 PARK BLVD",
+      "5207 ARCTIC AVE",
+      "5207 PARK BLVD",
+      "5211 PARK BLVD",
+      "5212 LAKE ROAD",
+      "529 W ANDREWS AVE",
+      "5301 ARCTIC AVE",
+      "5301 PARK BLVD",
+      "5302 LAKE RD",
+      "5304 LAKE RD",
+      "5305 ARCTIC AVE",
+      "5305 LAKE RD",
+      "5307 ARCTIC AVE",
+      "5307 PARK BLVD",
+      "5308 ARCTIC AVE",
+      "5309 PARK BLVD",
+      "531 W ANDREWS AVE",
+      "5310 ARCTIC AVE",
+      "5310 PARK BLVD",
+      "5311 PARK BLVD",
+      "533 W ANDREWS AVE",
+      "605 W ANDREWS AVE"
+     ]
+    },
+    {
+     "sheet": "45",
+     "addresses": [
+      "201 W ANDREWS AVE",
+      "203 W ANDREWS AVE",
+      "204 W ANDREWS AVE",
+      "206 W ANDREWS AVE",
+      "302 W ANDREWS AVE",
+      "325 W ANDREWS AVE",
+      "327 W ANDREWS AVE",
+      "330 W ANDREWS AVE",
+      "332 W ANDREWS AVE",
+      "333 W ANDREWS AVE",
+      "334 W ANDREWS AVE",
+      "335 W ANDREWS AVE",
+      "336 W ANDREWS AVE",
+      "337 W ANDREWS AVE",
+      "338 W ANDREWS AVE",
+      "339 W ANDREWS AVE",
+      "341 W ANDREWS AVE",
+      "346 W ANDREWS AVE",
+      "401 W ANDREWS AVE",
+      "404 W ANDREWS AVE",
+      "405 W ANDREWS AVE",
+      "406 W ANDREWS AVE",
+      "408 W ANDREWS AVE",
+      "410 W ANDREWS AVE",
+      "411 W ANDREWS AVE",
+      "412 W ANDREWS AVE",
+      "413 W ANDREWS AVE",
+      "415 W ANDREWS AVE",
+      "416 W ANDREWS AVE",
+      "417 W ANDREWS AVE",
+      "419 W ANDREWS AVE",
+      "420 W ANDREWS AVE",
+      "422 W ANDREWS AVE",
+      "423 W ANDREWS AVE",
+      "424 W ANDREWS AVE",
+      "425 W ANDREWS AVE",
+      "427-29 W ANDREWS AVE",
+      "428 W ANDREWS AVE",
+      "431 W ANDREWS AVE",
+      "432 W ANDREWS AVE",
+      "433 W ANDREWS AVE",
+      "435 W ANDREWS AVE",
+      "500 W ANDREWS AVE",
+      "501 W ANDREWS AVE",
+      "501A W ANDREWS AVE",
+      "503 W ANDREWS AVE",
+      "504 W ANDREWS AVE",
+      "505 W ANDREWS AVE",
+      "506 W ANDREWS AVE",
+      "507 W ANDREWS AVE",
+      "509 W ANDREWS AVE",
+      "510 W ANDREWS AVE",
+      "529 W ANDREWS AVE",
+      "531 W ANDREWS AVE",
+      "533 W ANDREWS AVE",
+      "605 W ANDREWS AVE"
+     ]
+    },
+    {
+     "sheet": "54",
+     "addresses": [
+      "102 E 12TH AVE",
+      "103 W 12TH AVE",
+      "104 W 12TH AVE",
+      "106 W 12TH AVE",
+      "107 W 12TH AVE",
+      "109 W 12TH AVE",
+      "110-108 W 12TH AVE",
+      "112 E 12TH AVE",
+      "112 W 12TH AVE",
+      "113 E 12TH AVE",
+      "114 E 12TH AVE",
+      "115 W 12TH AVE",
+      "116 E 12TH AVE",
+      "116 W 12TH AVE",
+      "117 W 12TH AVE",
+      "118 W 12TH AVE",
+      "119 W 12TH AVE",
+      "120 W 12TH AVE",
+      "121 W 12TH AVE",
+      "122 W 12TH AVE",
+      "124 W 12TH AVE",
+      "125 W 12TH AVE",
+      "126 W 12TH AVE",
+      "127 W 12TH AVE",
+      "130 E 12TH AVE",
+      "132 E 12TH AVE",
+      "133 E 12TH AVE",
+      "137 E 12TH AVE",
+      "208 E 12TH AVE",
+      "211 E 12TH AVE",
+      "212 E 12TH AVE",
+      "213 E 12TH AVE",
+      "214 E 12TH AVE",
+      "215 E 12TH AVE",
+      "216 E 12TH AVE",
+      "217 E 12TH AVE",
+      "218 E 12TH AVE",
+      "219 E 12TH AVE",
+      "224 E 12TH AVENUE",
+      "228 E 12TH AVE",
+      "230 E 12TH AVE",
+      "301 E 12TH AVE",
+      "303 E 12TH AVE",
+      "305 E 12TH AVE",
+      "315 E 12TH AVE",
+      "317 E 12TH AVE",
+      "319 E 12TH AVE",
+      "321 E 12TH AVE",
+      "323 E 12TH AVE",
+      "325 E 12TH AVE"
+     ]
+    },
+    {
+     "sheet": "56",
+     "addresses": [
+      "1101 NEW YORK AVE",
+      "1102 NEW YORK AVE",
+      "1104 NEW YORK AVE",
+      "1106 NEW YORK AVE",
+      "1107 NEW YORK AVE",
+      "1108 NEW YORK AVE",
+      "1109 NEW YORK AVE",
+      "1110 NEW YORK AVE",
+      "1111 NEW YORK AVE"
+     ]
+    },
+    {
+     "sheet": "57",
+     "addresses": [
+      "101 E 8TH AVE",
+      "102 E 8TH AVE",
+      "102 W 8TH AVE",
+      "103 E 8TH AVE",
+      "104 W 8TH AVE",
+      "105 E 8TH AVE",
+      "105 W 8TH AVE",
+      "106 W 8TH AVE",
+      "107 E 8TH AVE",
+      "107 W 8TH AVE",
+      "108 W 8TH AVE",
+      "109 E 8TH AVE",
+      "109 NEW YORK AVE",
+      "110 E 8TH AVE",
+      "110 W 8TH AVE",
+      "111 E 8TH AVE",
+      "111 W 8TH AVE",
+      "112 E 8TH AVE",
+      "113 E 8TH AVE",
+      "113 W 8TH AVE",
+      "115 E 8TH AVE",
+      "115 N NEW YORK AVE",
+      "116 E 8TH AVE",
+      "117 E 8TH AVE",
+      "122 E 8TH AVE",
+      "124 E 8TH AVE",
+      "126 E 8TH AVE",
+      "200 E 8TH AVE",
+      "201 NEW YORK AVE",
+      "202 E 8TH AVE",
+      "204 E 8TH AVE",
+      "205 N NEW YORK AVE",
+      "206 N NEW YORK AVE",
+      "208 NEW YORK AVE",
+      "212 NEW YORK AVE",
+      "213 NEW YORK AVE",
+      "216 NEW YORK AVE",
+      "218 NEW YORK AVE",
+      "222 E 8TH AVE",
+      "226 E 8TH AVE",
+      "228 E 8TH AVE",
+      "230 E 8TH AVE",
+      "232 E 8TH AVE",
+      "234 E 8TH AVE",
+      "301 NEW YORK AVE",
+      "302 E 8TH AVE",
+      "304 E 8TH AVE",
+      "305 E 8TH AVE",
+      "306 E 8TH AVE",
+      "307 E 8TH AVE",
+      "308 E 8TH AVE",
+      "309 E 8TH AVE",
+      "310 E 8TH AVE",
+      "311 E 8TH AVE",
+      "312 E 8TH AVE",
+      "315 E 8TH AVE",
+      "317 E 8TH AVE",
+      "317 NEW YORK AVE",
+      "319 E 8TH AVE",
+      "320 E 8TH AVE",
+      "324 E 8TH AVE",
+      "326 E 8TH AVE",
+      "327 E 8TH AVE",
+      "328 E 8TH AVE",
+      "401 NEW YORK AVE",
+      "405 NEW YORK AVE",
+      "501 NEW YORK AVE",
+      "505 NEW YORK AVE",
+      "510-610 NEW YORK AVE",
+      "601 NEW YORK AVE",
+      "704 NEW YORK AVE",
+      "706 NEW YORK AVE",
+      "710 NEW YORK AVE",
+      "711 NEW YORK AVE"
+     ]
+    },
+    {
+     "sheet": "58",
+     "addresses": [
+      "100 W 10TH AVE",
+      "1000 ATLANTIC AVE",
+      "1000 NEW YORK AVE",
+      "1001 ATLANTIC AVE",
+      "1001 CENTRAL AVE",
+      "1001 NEW YORK AVE",
+      "1002 CENTRAL AVE",
+      "1003 CENTRAL AVE",
+      "1003 NEW JERSEY AVE",
+      "1003 NEW YORK AVE",
+      "1004 NEW YORK AVE",
+      "1005 CENTRAL AVE",
+      "1005 NEW JERSEY AVE",
+      "1005 NEW YORK AVE",
+      "1006 CENTRAL AVE",
+      "1006 NEW YORK AVE",
+      "1007 CENTRAL AVE",
+      "1007 NEW YORK AVE",
+      "1008 CENTRAL AVE",
+      "1009 NEW YORK AVE",
+      "101 E 11TH AVE",
+      "101 E 8TH AVE",
+      "101 W 10TH AVE",
+      "101 W 11TH AVE",
+      "1010 ATLANTIC AVE",
+      "1010 CENTRAL AVE",
+      "1011 ATLANTIC AVE",
+      "1011 NEW YORK AVE",
+      "102 E 12TH AVE",
+      "102 E 8TH AVE",
+      "102 W 10TH AVE",
+      "102 W 8TH AVE",
+      "103 E 11TH AVE",
+      "103 E 8TH AVE",
+      "103 W 10TH AVE",
+      "103 W 11TH AVE",
+      "103 W 12TH AVE",
+      "104 W 10TH AVE",
+      "104 W 12TH AVE",
+      "104 W 8TH AVE",
+      "105 E 11TH AVE",
+      "105 E 8TH AVE",
+      "105 W 10TH AVE",
+      "105 W 11TH AVE",
+      "105 W 8TH AVE",
+      "106 W 10TH AVE",
+      "106 W 12TH AVE",
+      "106 W 8TH AVE",
+      "107 E 11TH AVE",
+      "107 E 8TH AVE",
+      "107 W 10TH AVE",
+      "107 W 11TH AVE",
+      "107 W 12TH AVE",
+      "107 W 8TH AVE",
+      "108 E 11TH AVE",
+      "108 W 10TH AVE",
+      "108 W 8TH AVE",
+      "109 E 11TH AVE",
+      "109 E 8TH AVE",
+      "109 W 10TH AVE",
+      "109 W 12TH AVE",
+      "110 E 11TH AVE",
+      "110 E 8TH AVE",
+      "110 W 10TH AVE",
+      "110 W 8TH AVE",
+      "110-108 W 12TH AVE",
+      "1100 CENTRAL AVE",
+      "1100 SURF AVE",
+      "1101 CENTRAL AVE",
+      "1101 NEW JERSEY AVE",
+      "1103 CENTRAL AVE",
+      "1103 NEW JERSEY AVE",
+      "1105 CENTRAL AVE",
+      "1106 ATLANTIC AVE",
+      "1106 CENTRAL AVE",
+      "1107 NEW JERSEY AVE",
+      "1108 ATLANTIC AVE",
+      "111 E 8TH AVE",
+      "111 W 11TH AVE",
+      "111 W 8TH AVE",
+      "1110 ATLANTIC AVE",
+      "1110 CENTRAL AVE",
+      "1112 ATLANTIC AVE",
+      "112 E 12TH AVE",
+      "112 E 8TH AVE",
+      "112 W 11TH AVE",
+      "112 W 12TH AVE",
+      "113 E 12TH AVE",
+      "113 E 8TH AVE",
+      "113 W 11TH AVE",
+      "113 W 8TH AVE",
+      "114 E 11TH AVE",
+      "114 E 12TH AVE",
+      "114 W 11TH AVE",
+      "115 E 8TH AVE",
+      "115 W 11TH AVE",
+      "115 W 12TH AVE",
+      "116 E 12TH AVE",
+      "116 E 8TH AVE",
+      "116 W 11TH AVE",
+      "116 W 12TH AVE",
+      "116 W 8TH AVE",
+      "117 E 8TH AVE",
+      "117 W 11TH AVE",
+      "117 W 12TH AVE",
+      "118 E 11TH AVE",
+      "118 W 10TH AVE",
+      "118 W 11TH AVE",
+      "118 W 12TH AVE",
+      "119 E 11TH AVE",
+      "119 W 10TH AVE",
+      "119 W 11TH AVE",
+      "119 W 12TH AVE",
+      "120 E 11TH AVE",
+      "120 W 10TH AVE",
+      "120 W 11TH AVE",
+      "120 W 12TH AVE",
+      "121 E 11TH AVE",
+      "121 W 10TH AVE",
+      "121 W 11TH AVE",
+      "121 W 12TH AVE",
+      "122 E 11TH AVE",
+      "122 E 8TH AVE",
+      "122 W 10TH AVE",
+      "122 W 11TH AVE",
+      "122 W 12TH AVE",
+      "123 W 10TH AVE",
+      "123 W 11TH AVE",
+      "124 E 8TH AVE",
+      "124 W 10TH AVE",
+      "124 W 12TH AVE",
+      "124 W 8TH AVE",
+      "125 E 11TH AVE",
+      "125 W 12TH AVE",
+      "126 E 8TH AVE",
+      "126 W 12TH AVE",
+      "126 W 8TH AVE",
+      "127 W 12TH AVE",
+      "127 W 8TH AVE",
+      "128 W 8TH AVE",
+      "129 W 8TH AVE",
+      "130 E 12TH AVE",
+      "130 W 8TH AVE",
+      "131 E 11TH AVE",
+      "131 W 8TH AVE",
+      "132 E 12TH AVE",
+      "133 E 12TH AVE",
+      "137 E 12TH AVE",
+      "200 E 8TH AVE",
+      "200 W 8TH AVE",
+      "201 NEW YORK AVE",
+      "201 W 10TH AVE",
+      "202 E 8TH AVE",
+      "202 W 8TH AVE",
+      "203 W 10TH AVE",
+      "204 E 11TH AVE",
+      "204 E 8TH AVE",
+      "204 W 11TH AVE",
+      "204 W 8TH AVE",
+      "204-206 W 2ND AVE",
+      "205 E 11TH AVE",
+      "205 N NEW YORK AVE",
+      "205 W 3RD AVE",
+      "206 E 11TH AVE",
+      "206 N NEW YORK AVE",
+      "206 W 11TH AVE",
+      "206 W 8TH AVE",
+      "207 E 11TH AVE",
+      "207 W 3RD AVE",
+      "207 W 8TH AVE",
+      "208 E 12TH AVE",
+      "208 NEW YORK AVE",
+      "208 W 10TH AVE",
+      "209 W 10TH AVE",
+      "209 W 11TH AVE",
+      "209 W 3RD AVE",
+      "210 E 11TH AVE",
+      "210 W 10TH AVE",
+      "210 W 11TH AVE",
+      "210 W 2ND AVE",
+      "211 E 11TH AVE",
+      "211 E 12TH AVE",
+      "211 W 10TH AVE",
+      "211 W 11TH AVE",
+      "211 W 3RD AVE",
+      "212 E 12TH AVE",
+      "212 NEW YORK AVE",
+      "212 W 10TH AVE",
+      "212 W 11TH AVE",
+      "213 E 12TH AVE",
+      "213 NEW YORK AVE",
+      "213 W 8TH AVE",
+      "214 E 12TH AVE",
+      "214 W 10TH AVE",
+      "214 W 11TH AVE",
+      "214 W 2ND AVE",
+      "214 W 8TH AVE",
+      "215 E 12TH AVE",
+      "215 W 11TH AVE",
+      "215 W 3RD AVE",
+      "215 W 8TH AVE",
+      "216 E 12TH AVE",
+      "216 NEW YORK AVE",
+      "216 W 10TH AVE",
+      "216 W 11TH AVE",
+      "216-218 W 2ND AVE",
+      "217 E 12TH AVE",
+      "217 W 10TH AVE",
+      "218 E 12TH AVE",
+      "218 NEW YORK AVE",
+      "218 W 10TH AVE",
+      "218 W 11TH AVE",
+      "218 W 8TH AVE",
+      "219 E 12TH AVE",
+      "219 W 10TH AVE",
+      "219 W 11TH AVE",
+      "219 W 2ND AVE",
+      "219 W 3RD AVE",
+      "220 E 11TH AVE",
+      "220 W 11TH AVE",
+      "220 W 8TH AVE",
+      "221 W 10TH AVE",
+      "221 W 2ND AVE",
+      "221 W 3RD AVE",
+      "222 E 8TH AVE",
+      "222 W 11TH AVE",
+      "222 W 2ND AVE",
+      "223 W 10TH AVE",
+      "223 W 11TH AVE",
+      "223 W 2ND AVE",
+      "224 E 12TH AVENUE",
+      "224 W 10TH AVE",
+      "224 W 11TH AVE",
+      "224 W 2ND AVE",
+      "225 W 11TH AVE",
+      "225 W 2ND AVE",
+      "225 W 3RD AVE",
+      "225 W 8TH AVE",
+      "226 E 8TH AVE",
+      "227 W 11TH AVE",
+      "227 W 3RD AVE",
+      "227 W 8TH AVE",
+      "228 E 12TH AVE",
+      "228 E 8TH AVE",
+      "228 W 2ND AVE",
+      "229 W 8TH AVE",
+      "230 E 12TH AVE",
+      "230 E 8TH AVE",
+      "231 E 11TH AVE",
+      "231 W 10TH AVE",
+      "231 W 3RD AVE",
+      "232 E 8TH AVE",
+      "233 E 11TH AVE",
+      "234 E 8TH AVE",
+      "235 E 11TH AVE",
+      "235 W 3RD AVE",
+      "237 E 11TH AVE",
+      "238 E 11TH AVE",
+      "240 E 11TH AVE",
+      "300 E 11TH AVE",
+      "301 E 11TH AVENUE",
+      "301 E 12TH AVE",
+      "301 NEW YORK AVE",
+      "302 E 8TH AVE",
+      "303 E 11TH AVE",
+      "303 E 12TH AVE",
+      "304 E 8TH AVE",
+      "305 E 12TH AVE",
+      "305 E 8TH AVE",
+      "306 E 11TH AVE",
+      "306 E 8TH AVE",
+      "307 E 11TH AVE",
+      "307 E 8TH AVE",
+      "308 E 8TH AVE",
+      "309 E 8TH AVE",
+      "310 E  11TH AVE",
+      "310 E 8TH AVE",
+      "311 E 11TH AVE",
+      "311 E 8TH AVE",
+      "312 E 8TH AVE",
+      "313 E 11TH AVE",
+      "315 E 11TH AVE",
+      "315 E 12TH AVE",
+      "315 E 8TH AVE",
+      "317 E 12TH AVE",
+      "317 E 8TH AVE",
+      "317 NEW YORK AVE",
+      "319 E 12TH AVE",
+      "319 E 8TH AVE",
+      "320 E 11TH AVE",
+      "320 E 8TH AVE",
+      "321 E 12TH AVE",
+      "322 E 11TH AVE",
+      "323 E 12TH AVE",
+      "324 E 11TH AVE",
+      "324 E 8TH AVE",
+      "325 E 11TH AVE",
+      "325 E 12TH AVE",
+      "326 E 11TH AVE",
+      "326 E 8TH AVE",
+      "327 E 11TH AVE",
+      "327 E 8TH AVE",
+      "328 E 8TH AVE",
+      "401 NEW YORK AVE",
+      "405 NEW YORK AVE",
+      "501 NEW YORK AVE",
+      "505 NEW YORK AVE",
+      "510-610 NEW YORK AVE",
+      "601 NEW YORK AVE",
+      "704 NEW YORK AVE",
+      "706 NEW YORK AVE",
+      "710 NEW YORK AVE",
+      "800 NEW JERSEY AVE",
+      "804 SURF AVE",
+      "805 SURF AVE",
+      "806 NEW JERSEY AVE",
+      "806 NEW YORK AVE",
+      "806 SURF AVE",
+      "807 NEW YORK AVE",
+      "808 NEW YORK AVE",
+      "809 ATLANTIC AVE",
+      "809 SURF AVE",
+      "810 ATLANTIC AVE",
+      "810 NEW YORK AVE",
+      "811 ATLANTIC AVE",
+      "811 NEW YORK AVE",
+      "900 ATLANTIC AVE",
+      "900 CENTRAL AVENUE",
+      "900 NEW YORK AVE",
+      "900 SURF AVE",
+      "901 ATLANTIC AVE",
+      "901 CENTRAL AVE",
+      "901 NEW JERSEY AVE",
+      "902 ATLANTIC AVE",
+      "902 NEW YORK AVE",
+      "902 SURF AVE",
+      "904 NEW YORK AVE",
+      "904 SURF AVE",
+      "905 NEW YORK AVE",
+      "906 ATLANTIC AVE",
+      "906 NEW YORK AVE",
+      "906 SURF AVE",
+      "907 CENTRAL AVE",
+      "907 NEW YORK AVE",
+      "909 CENTRAL AVE",
+      "909 NEW YORK AVE",
+      "911 SURF AVE",
+      "915 NEW YORK AVE"
+     ]
+    },
+    {
+     "sheet": "59",
+     "addresses": [
+      "109 NEW YORK AVE",
+      "115 N NEW YORK AVE",
+      "200 NEW JERSEY AVE",
+      "201 NEW JERSEY AVE",
+      "201 NEW YORK AVE",
+      "205 N NEW YORK AVE",
+      "206 N NEW YORK AVE",
+      "208 NEW YORK AVE",
+      "211 NEW JERSEY AVE",
+      "212 NEW JERSEY AVE",
+      "212 NEW YORK AVE",
+      "213 NEW YORK AVE",
+      "216 NEW YORK AVE",
+      "218 NEW YORK AVE",
+      "300 NEW JERSEY AVE",
+      "301 NEW JERSEY AVE",
+      "301 NEW YORK AVE",
+      "317 NEW YORK AVE",
+      "400 NEW JERSEY AVE",
+      "401 NEW YORK AVE",
+      "405 NEW YORK AVE"
+     ]
+    },
+    {
+     "sheet": "60",
+     "addresses": [
+      "109 NEW YORK AVE",
+      "115 N NEW YORK AVE",
+      "201 CENTRAL AVE",
+      "201 NEW YORK AVE",
+      "202 CENTRAL AVE",
+      "204 N CENTRAL AVE",
+      "205 CENTRAL AVE",
+      "205 N NEW YORK AVE",
+      "206 N NEW YORK AVE",
+      "207 CENTRAL AVE",
+      "208 CENTRAL AVE",
+      "208 NEW YORK AVE",
+      "209 CENTRAL AVE",
+      "210 CENTRAL AVE",
+      "212 NEW YORK AVE",
+      "213 NEW YORK AVE",
+      "216 NEW YORK AVE",
+      "218 NEW YORK AVE",
+      "301 NEW YORK AVE",
+      "317 NEW YORK AVE",
+      "401 NEW YORK AVE",
+      "405 NEW YORK AVE",
+      "501 NEW YORK AVE",
+      "505 NEW YORK AVE",
+      "510-610 NEW YORK AVE"
+     ]
+    },
+    {
+     "sheet": "63A",
+     "addresses": [
+      "1012 OCEAN AVE",
+      "1100 SURF AVE",
+      "1101 OCEAN AVE",
+      "1104 OCEAN AVE",
+      "1106 OCEAN AVE",
+      "1107 OCEAN AVE",
+      "300 E RIO GRANDE AVE",
+      "300 E TAYLOR AVE",
+      "301-309 OCEAN AVE",
+      "302 SURF AVE",
+      "305 E HILDRETH AVE",
+      "305 E LEAMING AVE",
+      "305 E RIO GRANDE AVE",
+      "305 SURF AVE",
+      "306 E HAND AVE",
+      "306 E RIO GRANDE AVE",
+      "307 E HAND AVE",
+      "307 E HILDRETH AVE",
+      "307 E LEAMING AVE",
+      "307 E TAYLOR AVE",
+      "308 E CRESSE AVE",
+      "308 E HAND AVE",
+      "308 E LEAMING AVE",
+      "309 E HAND AVE",
+      "310 E LEAMING AVE",
+      "311 E HILDRETH AVE",
+      "312 E CRESSE AVE",
+      "312 E LEAMING AVE",
+      "400 E 8TH AVE",
+      "400 SURF AVE",
+      "401 E 8TH AVE",
+      "401 OCEAN AVE",
+      "402 SURF AVE",
+      "403 E 11TH AVE",
+      "403 E 12TH AVE",
+      "403 E 8TH AVE",
+      "404 E 12TH AVE",
+      "404 E 8TH AVE",
+      "405 E 12TH AVE",
+      "405 E 8TH AVE",
+      "405 SURF AVE",
+      "406 E 8TH AVE",
+      "407 E 8TH AVE",
+      "408 E 12TH AVE",
+      "410 E 12TH AVE",
+      "410 E 8TH AVE",
+      "411 E 11TH AVE",
+      "412 E 12TH AVE",
+      "412 E 8TH AVE",
+      "412 SURF AVE",
+      "414 E 8TH AVE",
+      "414 SURF AVE",
+      "415 E 11TH AVE",
+      "416 E 8TH AVE",
+      "418 E 11TH AVE",
+      "418 E 8TH AVE",
+      "418 SURF AVE",
+      "420 E 11TH AVE",
+      "420 E 12TH AVE",
+      "420 E 8TH AVE",
+      "420 SURF AVE",
+      "421 E 11TH AVE",
+      "422 E 11TH AVE",
+      "422 E 12TH AVE",
+      "423 E 8TH AVE",
+      "425 E 8TH AVE",
+      "427 E 8TH AVE",
+      "429 E 8TH AVE",
+      "4501 ATLANTIC AVE",
+      "4501 BOARDWALK",
+      "4502 ATLANTIC AVE",
+      "4504 ATLANTIC AVE",
+      "4506 ATLANTIC AVE",
+      "4600 ATLANTIC AVE",
+      "4600 OCEAN AVE",
+      "4601 ATLANTIC AVE",
+      "4601 OCEAN AVE",
+      "4610 OCEAN AVE",
+      "4612 ATLANTIC AVE",
+      "4616 ATLANTIC AVE",
+      "4701 OCEAN AVE",
+      "4708 OCEAN AVE",
+      "4711 ATLANTIC AVE",
+      "4712 OCEAN AVE",
+      "4800 ATLANTIC AVE",
+      "4800 OCEAN AVE",
+      "4801 OCEAN AVE",
+      "4806 ATLANTIC AVE",
+      "4900 ATLANTIC AVE",
+      "4900 OCEAN AVE",
+      "4901 OCEAN AVE",
+      "4906 ATLANTIC AVE",
+      "4906 OCEAN AVE",
+      "4908 OCEAN AVE",
+      "5000 OCEAN AVE",
+      "5001 BOARDWALK",
+      "5001 OCEAN AVE",
+      "5006 ATLANTIC AVE",
+      "5006 OCEAN AVE",
+      "5010 OCEAN AVE",
+      "5011 OCEAN AVE",
+      "504 E 8TH AVE",
+      "505 E 12TH AVE",
+      "506 E 8TH AVE",
+      "507 E 8TH AVE",
+      "507 SURF AVE",
+      "508 E 11TH AVE",
+      "509 E 8TH AVE",
+      "509 SURF AVE",
+      "5100 ATLANTIC AVE",
+      "5100 OCEAN AVE",
+      "5101 OCEAN AVE",
+      "5106 OCEAN AVE",
+      "511 E 11TH AVE",
+      "511 E 8TH AVE",
+      "5114 ATLANTIC AVE",
+      "5116 ATLANTIC AVE",
+      "5118 ATLANTIC AVE",
+      "515 E 8TH AVE",
+      "5200 ATLANTIC AVE",
+      "5200 OCEAN AVE",
+      "5201 ATLANTIC AVE",
+      "5210 OCEAN AVE",
+      "5300 ATLANTIC AVE",
+      "5304 ATLANTIC AVE",
+      "5305 ATLANTIC AVE",
+      "5308 ATLANTIC AVE",
+      "601 SURF AVE",
+      "601-603 OCEAN AVE",
+      "603 SURF AVE",
+      "607 SURF AVE",
+      "609 OCEAN AVE",
+      "700 OCEAN AVE",
+      "710 OCEAN AVE",
+      "801 OCEAN AVE",
+      "802 OCEAN AVE",
+      "804 SURF AVE",
+      "805 SURF AVE",
+      "806 SURF AVE",
+      "807 OCEAN AVE",
+      "809 SURF AVE",
+      "900 SURF AVE",
+      "901 OCEAN AVE",
+      "902 SURF AVE",
+      "904 SURF AVE",
+      "906 SURF AVE",
+      "907 OCEAN AVE",
+      "911 SURF AVE"
+     ]
+    },
+    {
+     "sheet": "63B",
+     "addresses": [
+      "500 W GLENWOOD AVE",
+      "500 W MAPLE AVE",
+      "501 W GLENWOOD AVE",
+      "501 W MAPLE AVE",
+      "501-503 W POPLAR AVE",
+      "502 W GLENWOOD AVE",
+      "503 W GLENWOOD AVE",
+      "503 W MAPLE AVE",
+      "503 W PINE AVE",
+      "504 W MAGNOLIA AVE",
+      "504 W MAPLE AVE",
+      "505 W GLENWOOD AVE",
+      "505 W MAPLE AVE",
+      "505 W PINE AVE",
+      "505 W POPLAR AVE",
+      "506 W GLENWOOD AVE",
+      "506 W PINE AVE",
+      "506 W POPLAR AVE",
+      "507 W GLENWOOD AVE",
+      "507 W MAGNOLIA AVE",
+      "507 W POPLAR AVE",
+      "508 W MAGNOLIA AVE",
+      "508 W MAPLE AVE",
+      "508 W PINE AVE",
+      "508 W POPLAR AVE",
+      "509 W MAPLE AVE",
+      "509 W PINE AVE",
+      "510 W GLENWOOD AVE",
+      "510 W MAGNOLIA AVE",
+      "510 W MAPLE AVE",
+      "510 W PINE AVE",
+      "510 W POPLAR AVE",
+      "511 W GLENWOOD AVE",
+      "511 W MAGNOLIA AVE",
+      "512 W GLENWOOD AVE",
+      "512 W MAGNOLIA AVE",
+      "512 W POPLAR AVE",
+      "513 W GLENWOOD AVE",
+      "513 W MAPLE AVE",
+      "514 W GLENWOOD AVE",
+      "514 W MAGNOLIA AVE",
+      "514 W MAPLE AVE",
+      "514 W PINE AVE",
+      "514 W POPLAR AVE",
+      "515 W GLENWOOD AVE",
+      "515 W MAGNOLIA AVE",
+      "515 W PINE AVE",
+      "515 W POPLAR AVE",
+      "516 W GLENWOOD AVE",
+      "516 W POPLAR AVE",
+      "517 W MAGNOLIA AVE",
+      "517 W POPLAR AVE",
+      "518 W GLENWOOD AVE",
+      "519 W MAGNOLIA AVE",
+      "519 W PINE AVE",
+      "519 W POPLAR AVE",
+      "520 W GLENWOOD AVE",
+      "520 W MAPLE AVE",
+      "520 W POPLAR AVE",
+      "521 W GLENWOOD AVE",
+      "521 W MAPLE AVE",
+      "521 W POPLAR AVE",
+      "522 W GLENWOOD AVE",
+      "522 W MAGNOLIA AVE",
+      "522 W MAPLE AVE",
+      "522 W POPLAR AVE #A",
+      "522 W POPLAR AVE #B",
+      "523 W MAPLE AVE",
+      "523 W PINE AVE",
+      "524 W MAPLE AVE",
+      "525 W GLENWOOD AVE",
+      "525 W MAPLE AVE",
+      "525 W PINE AVE",
+      "525 W POPLAR AVE",
+      "526 W MAGNOLIA AVE",
+      "526 W MAPLE AVE",
+      "526 W POPLAR AVE",
+      "527 W PINE AVE",
+      "527 W POPLAR AVE",
+      "528 W GLENWOOD AVE",
+      "528 W MAPLE AVE",
+      "528 W PINE AVE",
+      "528 W POPLAR AVE",
+      "529 W MAGNOLIA AVE",
+      "529 W MAPLE AVE",
+      "529 W PINE AVE",
+      "529 W POPLAR AVE",
+      "530 W GLENWOOD AVE",
+      "530 W MAGNOLIA AVE",
+      "530 W MAPLE AVE",
+      "530 W PINE AVE",
+      "530 W POPLAR AVE",
+      "531 W GLENWOOD AVE",
+      "531 W MAGNOLIA AVE",
+      "531 W MAPLE AVE",
+      "531 W PINE AVE",
+      "531 W POPLAR AVE",
+      "533 W GLENWOOD AVE",
+      "533 W MAPLE AVE #A",
+      "533 W MAPLE AVE #B",
+      "533 W PINE AVE",
+      "533 W POPLAR AVE",
+      "534 W GLENWOOD AVE",
+      "534 W MAGNOLIA AVE",
+      "534 W MAPLE AVE",
+      "534 W PINE AVE",
+      "535 W GLENWOOD AVE",
+      "535 W MAGNOLIA AVE",
+      "535 W MAPLE AVE",
+      "535 W PINE AVE",
+      "535 W POPLAR AVE",
+      "536 W GLENWOOD AVE",
+      "536 W MAPLE AVE",
+      "536 W PINE AVE",
+      "537 W GLENWOOD AVE",
+      "537 W PINE AVE",
+      "538 W GLENWOOD AVE",
+      "538 W MAGNOLIA AVE",
+      "538 W PINE AVE",
+      "539 W GLENWOOD AVE",
+      "539 W MAGNOLIA AVE",
+      "539 W MAPLE AVE",
+      "539 W PINE AVE",
+      "540 W MAGNOLIA AVE",
+      "540 W PINE AVE",
+      "540 W POPLAR AVE",
+      "541 W MAGNOLIA AVE",
+      "541 W PINE AVE",
+      "542 W MAPLE AVE",
+      "543 W MAGNOLIA AVE",
+      "543 W MAPLE AVE",
+      "543 W PINE AVE",
+      "544 W MAPLE AVE",
+      "545 W MAGNOLIA AVE",
+      "545 W MAPLE AVE",
+      "545 W PINE AVE",
+      "546 W MAPLE AVE",
+      "546 W PINE AVE",
+      "547 W MAGNOLIA AVE",
+      "547 W MAPLE AVE",
+      "548 W GLENWOOD AVE",
+      "548 W MAPLE AVE",
+      "548 W PINE AVE",
+      "549 W MAPLE AVE",
+      "550 W GLENWOOD AVE",
+      "550 W PINE AVE",
+      "551 W MAPLE AVE",
+      "552 W GLENWOOD AVE",
+      "553 W GLENWOOD AVE",
+      "554 W GLENWOOD AVE",
+      "554 W MAGNOLIA AVE",
+      "555 W GLENWOOD AVE",
+      "555 W MAGNOLIA AVE",
+      "556 W GLENWOOD AVE",
+      "556 W MAGNOLIA AVE",
+      "556 W PINE AVE",
+      "557 W MAGNOLIA AVE",
+      "558 W MAGNOLIA AVE",
+      "562 W MAGNOLIA AVE",
+      "600 W GLENWOOD AVE",
+      "600 W MAGNOLIA AVE",
+      "600 W POPLAR AVE",
+      "601 W GLENWOOD AVE",
+      "601 W MAGNOLIA AVE",
+      "601 W POPLAR AVE",
+      "603 W GLENWOOD AVE",
+      "603 W MAGNOLIA AVE",
+      "604 W MAPLE AVE",
+      "604 W POPLAR AVE",
+      "605 W GLENWOOD AVE",
+      "605 W MAGNOLIA AVE",
+      "605 W MAPLE AVE",
+      "605 W POPLAR AVE",
+      "606 W GLENWOOD AVE",
+      "606 W MAGNOLIA AVE",
+      "607 W GLENWOOD AVE",
+      "607 W MAGNOLIA AVE",
+      "607 W PINE AVE",
+      "607 W POPLAR AVE",
+      "608 W GLENWOOD AVE",
+      "608 W MAGNOLIA AVE",
+      "608 W MAPLE AVE",
+      "609 W GLENWOOD AVE",
+      "609 W MAPLE AVE",
+      "609 W PINE AVE",
+      "609 W POPLAR AVE",
+      "610 W GLENWOOD AVE",
+      "610 W MAGNOLIA AVE",
+      "610 W MAPLE AVE",
+      "610 W PINE AVE",
+      "610 W POPLAR AVE",
+      "611 W GLENWOOD AVE",
+      "611 W MAGNOLIA AVE",
+      "611 W MAPLE AVE",
+      "611 W PINE AVE",
+      "612 W GLENWOOD AVE",
+      "612 W MAGNOLIA AVE",
+      "612 W MAPLE AVE",
+      "612 W PINE AVE",
+      "612 W POPLAR AVE",
+      "613 W GLENWOOD AVE",
+      "613 W MAGNOLIA AVE",
+      "613 W MAPLE AVE",
+      "613 W PINE AVE",
+      "613 W PINE AVE #A",
+      "613 W PINE AVE #B",
+      "614 W GLENWOOD AVE",
+      "614 W MAPLE AVE",
+      "614 W PINE AVE",
+      "614 W POPLAR AVE",
+      "615 W GLENWOOD AVE",
+      "615 W MAPLE AVE",
+      "615 W PINE AVE",
+      "615 W POPLAR AVE",
+      "616 W GLENWOOD AVE",
+      "616 W MAPLE AVE",
+      "616 W PINE AVE",
+      "616 W POPLAR AVE",
+      "617 W GLENWOOD AVE",
+      "617 W MAPLE AVE",
+      "617 W PINE AVE",
+      "617 W POPLAR AVE",
+      "618 W GLENWOOD AVE",
+      "618 W MAPLE AVE",
+      "618 W PINE AVE",
+      "619 W GLENWOOD AVE",
+      "619 W MAPLE AVE",
+      "619 W PINE AVE",
+      "619 W POPLAR AVE",
+      "620 W GLENWOOD AVE",
+      "620 W MAPLE AVE",
+      "620 W PINE AVE",
+      "621 W GLENWOOD AVE",
+      "621 W MAPLE AVE",
+      "621 W PINE AVE",
+      "621 W POPLAR AVE",
+      "622 W GLENWOOD AVE",
+      "622 W MAPLE AVE",
+      "622 W PINE AVE",
+      "622 W POPLAR AVE",
+      "623 W MAPLE AVE",
+      "623 W PINE AVE",
+      "623 W POPLAR AVE",
+      "624 W GLENWOOD AVE",
+      "624 W MAPLE AVE",
+      "624 W PINE AVE",
+      "624 W POPLAR AVE",
+      "625 W MAPLE AVE",
+      "625 W PINE AVE",
+      "626 W PINE AVE",
+      "627 W MAPLE AVE",
+      "627 W PINE AVE",
+      "627 W POPLAR AVE",
+      "628 W GLENWOOD AVE",
+      "628 W MAPLE AVE",
+      "628 W PINE AVE",
+      "628 W POPLAR AVE",
+      "629 W GLENWOOD AVE",
+      "629 W MAPLE AVE",
+      "629 W PINE AVE",
+      "629 W POPLAR AVE",
+      "630 W GLENWOOD AVE",
+      "630 W MAPLE AVE",
+      "630 W PINE AVE",
+      "631 W GLENWOOD AVE",
+      "631 W MAPLE AVE",
+      "631 W PINE AVE",
+      "632 W GLENWOOD AVE",
+      "632 W MAPLE AVE",
+      "633 W GLENWOOD AVE",
+      "633 W MAPLE AVE",
+      "633 W PINE AVE",
+      "633 W POPLAR AVE",
+      "634 W MAPLE AVE",
+      "634 W POPLAR AVE",
+      "635 W GLENWOOD AVE",
+      "635 W MAPLE AVE",
+      "635 W PINE AVE",
+      "636 W GLENWOOD AVE",
+      "636 W MAPLE AVE",
+      "637 W MAPLE AVE",
+      "637 W PINE AVE",
+      "637 W POPLAR AVE",
+      "638 W GLENWOOD AVE",
+      "638 W PINE AVE",
+      "638 W POPLAR AVE",
+      "639 W MAPLE AVE",
+      "639 W PINE AVE",
+      "639 W POPLAR AVE",
+      "640 W GLENWOOD AVE",
+      "640 W MAPLE AVE",
+      "640 W PINE AVE",
+      "640 W POPLAR AVE",
+      "641 W GLENWOOD AVE",
+      "641 W MAPLE AVE",
+      "641 W PINE AVE",
+      "641 W POPLAR AVE",
+      "642 W 26TH AVE",
+      "642 W GLENWOOD AVE",
+      "642 W POPLAR AVE",
+      "643 W GLENWOOD AVE",
+      "643 W MAPLE AVE",
+      "643 W PINE AVE",
+      "643 W POPLAR AVE",
+      "644 W MAPLE AVE",
+      "644 W PINE AVE",
+      "644 W POPLAR AVE",
+      "645 W GLENWOOD AVE",
+      "645 W MAPLE AVE",
+      "645 W PINE AVE",
+      "645 W POPLAR AVE",
+      "646 W GLENWOOD AVE",
+      "646 W PINE AVE",
+      "647 W PINE AVE",
+      "647 W POPLAR AVE",
+      "648 W GLENWOOD AVE",
+      "648 W MAPLE AVE",
+      "648 W PINE AVE",
+      "649 W GLENWOOD AVE",
+      "649 W PINE AVE",
+      "649 W POPLAR AVE",
+      "650 W GLENWOOD AVE",
+      "650 W MAPLE AVE",
+      "650 W PINE AVE",
+      "650 W POPLAR AVE",
+      "651 W GLENWOOD AVE",
+      "651 W MAPLE AVE",
+      "651 W PINE AVE",
+      "651 W POPLAR AVE",
+      "652 W GLENWOOD AVE",
+      "652 W POPLAR AVE",
+      "653 W MAPLE AVE",
+      "653 W PINE AVE",
+      "653 W POPLAR AVE",
+      "654 W GLENWOOD AVE",
+      "654 W PINE AVE",
+      "655 W MAPLE AVE",
+      "655 W POPLAR AVE",
+      "656 W 26TH AVE"
+     ]
+    }
+   ],
+   "uncovered": [
+    {
+     "street": "1/2 w poplar Ave",
+     "from": 517,
+     "to": 517,
+     "parcels": 1
+    },
+    {
+     "street": "10th Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 511,
+     "parcels": 46
+    },
+    {
+     "street": "11th Ave",
+     "dir": "W",
+     "from": 500,
+     "to": 500,
+     "parcels": 2
+    },
+    {
+     "street": "12th Ave",
+     "dir": "W",
+     "from": 207,
+     "to": 606,
+     "parcels": 17
+    },
+    {
+     "street": "13th Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 328,
+     "parcels": 40
+    },
+    {
+     "street": "13th Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 599,
+     "parcels": 36
+    },
+    {
+     "street": "14th Ave",
+     "dir": "E",
+     "from": 106,
+     "to": 331,
+     "parcels": 45
+    },
+    {
+     "street": "14th Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 600,
+     "parcels": 37
+    },
+    {
+     "street": "15th Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 325,
+     "parcels": 38
+    },
+    {
+     "street": "15th Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 601,
+     "parcels": 56
+    },
+    {
+     "street": "16th",
+     "dir": "W",
+     "from": 601,
+     "to": 601,
+     "parcels": 1
+    },
+    {
+     "street": "16th Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 327,
+     "parcels": 37
+    },
+    {
+     "street": "16th Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 600,
+     "parcels": 75
+    },
+    {
+     "street": "17th Ave",
+     "dir": "E",
+     "from": 108,
+     "to": 329,
+     "parcels": 25
+    },
+    {
+     "street": "17th Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 601,
+     "parcels": 79
+    },
+    {
+     "street": "17th St",
+     "dir": "W",
+     "from": 500,
+     "to": 500,
+     "parcels": 1
+    },
+    {
+     "street": "18th Ave",
+     "dir": "E",
+     "from": 105,
+     "to": 326,
+     "parcels": 30
+    },
+    {
+     "street": "18th Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 512,
+     "parcels": 66
+    },
+    {
+     "street": "19th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 322,
+     "parcels": 39
+    },
+    {
+     "street": "19th Ave",
+     "dir": "W",
+     "from": 111,
+     "to": 130,
+     "parcels": 11
+    },
+    {
+     "street": "1st Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 326,
+     "parcels": 42
+    },
+    {
+     "street": "1st Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 306,
+     "parcels": 40
+    },
+    {
+     "street": "20th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 330,
+     "parcels": 40
+    },
+    {
+     "street": "20th Ave",
+     "dir": "W",
+     "from": 104,
+     "to": 701,
+     "parcels": 15
+    },
+    {
+     "street": "20th St",
+     "dir": "W",
+     "from": 403,
+     "to": 403,
+     "parcels": 1
+    },
+    {
+     "street": "21st Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 349,
+     "parcels": 32
+    },
+    {
+     "street": "21st Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 700,
+     "parcels": 17
+    },
+    {
+     "street": "21st St",
+     "dir": "W",
+     "from": 217,
+     "to": 217,
+     "parcels": 1
+    },
+    {
+     "street": "22nd Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 444,
+     "parcels": 43
+    },
+    {
+     "street": "22nd Ave",
+     "dir": "W",
+     "from": 104,
+     "to": 600,
+     "parcels": 18
+    },
+    {
+     "street": "23rd Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 454,
+     "parcels": 38
+    },
+    {
+     "street": "23rd Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 700,
+     "parcels": 20
+    },
+    {
+     "street": "24th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 465,
+     "parcels": 39
+    },
+    {
+     "street": "24th Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 124,
+     "parcels": 18
+    },
+    {
+     "street": "25th Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 329,
+     "parcels": 24
+    },
+    {
+     "street": "25th Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 128,
+     "parcels": 16
+    },
+    {
+     "street": "26th Ave",
+     "dir": "E",
+     "from": 107,
+     "to": 333,
+     "parcels": 24
+    },
+    {
+     "street": "26th Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 130,
+     "parcels": 22
+    },
+    {
+     "street": "26th St",
+     "dir": "W",
+     "from": 590,
+     "to": 710,
+     "parcels": 28
+    },
+    {
+     "street": "2nd Ave",
+     "dir": "E",
+     "from": 105,
+     "to": 505,
+     "parcels": 45
+    },
+    {
+     "street": "2nd Ave",
+     "dir": "W",
+     "from": 105,
+     "to": 231,
+     "parcels": 20
+    },
+    {
+     "street": "3rd Ave",
+     "dir": "E",
+     "from": 110,
+     "to": 428,
+     "parcels": 40
+    },
+    {
+     "street": "3rd Ave",
+     "dir": "W",
+     "from": 112,
+     "to": 132,
+     "parcels": 12
+    },
+    {
+     "street": "4th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 512,
+     "parcels": 50
+    },
+    {
+     "street": "4th Ave",
+     "dir": "W",
+     "from": 104,
+     "to": 135,
+     "parcels": 18
+    },
+    {
+     "street": "5th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 427,
+     "parcels": 51
+    },
+    {
+     "street": "5th Ave",
+     "dir": "W",
+     "from": 107,
+     "to": 125,
+     "parcels": 13
+    },
+    {
+     "street": "5th ave front",
+     "dir": "W",
+     "from": 127,
+     "to": 127,
+     "parcels": 1
+    },
+    {
+     "street": "6th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 506,
+     "parcels": 57
+    },
+    {
+     "street": "6th Ave",
+     "dir": "W",
+     "from": 113,
+     "to": 138,
+     "parcels": 7
+    },
+    {
+     "street": "6th St",
+     "dir": "E",
+     "from": 231,
+     "to": 231,
+     "parcels": 1
+    },
+    {
+     "street": "7th Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 503,
+     "parcels": 48
+    },
+    {
+     "street": "7th Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 240,
+     "parcels": 25
+    },
+    {
+     "street": "9th Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 540,
+     "parcels": 55
+    },
+    {
+     "street": "9th Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 230,
+     "parcels": 28
+    },
+    {
+     "street": "A Ave",
+     "from": 3,
+     "to": 24,
+     "parcels": 11
+    },
+    {
+     "street": "A Ave North",
+     "from": 8,
+     "to": 8,
+     "parcels": 1
+    },
+    {
+     "street": "A Ave South",
+     "from": 8,
+     "to": 8,
+     "parcels": 1
+    },
+    {
+     "street": "Allen Dr",
+     "from": 101,
+     "to": 786,
+     "parcels": 39
+    },
+    {
+     "street": "Andrews Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 303,
+     "parcels": 19
+    },
+    {
+     "street": "Andrews Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 700,
+     "parcels": 21
+    },
+    {
+     "street": "Anglesea Dr",
+     "from": 101,
+     "to": 600,
+     "parcels": 8
+    },
+    {
+     "street": "Arctic Ave",
+     "from": 3600,
+     "to": 4610,
+     "parcels": 46
+    },
+    {
+     "street": "Arion Ave",
+     "from": 101,
+     "to": 3111,
+     "parcels": 2
+    },
+    {
+     "street": "Ash Ave",
+     "from": 900,
+     "to": 900,
+     "parcels": 1
+    },
+    {
+     "street": "Aster Rd",
+     "dir": "E",
+     "from": 104,
+     "to": 405,
+     "parcels": 34
+    },
+    {
+     "street": "Atlanta Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 433,
+     "parcels": 51
+    },
+    {
+     "street": "Atlantic Ave",
+     "from": 100,
+     "to": 9501,
+     "parcels": 713
+    },
+    {
+     "street": "Atlantic Ave",
+     "dir": "N",
+     "from": 110,
+     "to": 120,
+     "parcels": 2
+    },
+    {
+     "street": "Ave",
+     "dir": "E",
+     "from": 1,
+     "to": 8,
+     "parcels": 7
+    },
+    {
+     "street": "Ave",
+     "dir": "N",
+     "from": 201,
+     "to": 215,
+     "parcels": 10
+    },
+    {
+     "street": "Ave",
+     "dir": "S",
+     "from": 500,
+     "to": 512,
+     "parcels": 9
+    },
+    {
+     "street": "B Ave",
+     "from": 1,
+     "to": 7,
+     "parcels": 7
+    },
+    {
+     "street": "B W Rio Grande Ave",
+     "from": 604,
+     "to": 604,
+     "parcels": 1
+    },
+    {
+     "street": "Baker Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 221,
+     "parcels": 10
+    },
+    {
+     "street": "Baker Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 730,
+     "parcels": 61
+    },
+    {
+     "street": "Bay Ave",
+     "from": 1,
+     "to": 26,
+     "parcels": 22
+    },
+    {
+     "street": "Bayfront",
+     "from": 2,
+     "to": 4,
+     "parcels": 2
+    },
+    {
+     "street": "Bayview Dr",
+     "from": 8003,
+     "to": 9407,
+     "parcels": 39
+    },
+    {
+     "street": "Beach",
+     "from": 1501,
+     "to": 3701,
+     "parcels": 38
+    },
+    {
+     "street": "Beach Ave",
+     "from": 5600,
+     "to": 9006,
+     "parcels": 12
+    },
+    {
+     "street": "Beach Creek",
+     "from": 701,
+     "to": 811,
+     "parcels": 6
+    },
+    {
+     "street": "Bennett Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 247,
+     "parcels": 34
+    },
+    {
+     "street": "Bennett Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 141,
+     "parcels": 19
+    },
+    {
+     "street": "Boardwalk",
+     "from": 2600,
+     "to": 4314,
+     "parcels": 75
+    },
+    {
+     "street": "Burk Ave",
+     "dir": "E",
+     "from": 112,
+     "to": 253,
+     "parcels": 18
+    },
+    {
+     "street": "Burk Ave",
+     "dir": "W",
+     "from": 118,
+     "to": 720,
+     "parcels": 75
+    },
+    {
+     "street": "Burk Ave Rear",
+     "dir": "E",
+     "from": 236,
+     "to": 236,
+     "parcels": 1
+    },
+    {
+     "street": "Buttercup Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 411,
+     "parcels": 56
+    },
+    {
+     "street": "Buttercup Rd",
+     "dir": "W",
+     "from": 100,
+     "to": 237,
+     "parcels": 69
+    },
+    {
+     "street": "C Ave",
+     "from": 1,
+     "to": 8,
+     "parcels": 8
+    },
+    {
+     "street": "Cardinal Rd",
+     "dir": "E",
+     "from": 103,
+     "to": 302,
+     "parcels": 28
+    },
+    {
+     "street": "Cardinal Rd",
+     "dir": "W",
+     "from": 107,
+     "to": 141,
+     "parcels": 36
+    },
+    {
+     "street": "Cedar Ave",
+     "dir": "W",
+     "from": 406,
+     "to": 422,
+     "parcels": 5
+    },
+    {
+     "street": "Central Ave",
+     "from": 100,
+     "to": 2509,
+     "parcels": 106
+    },
+    {
+     "street": "Central Ave",
+     "dir": "N",
+     "from": 100,
+     "to": 501,
+     "parcels": 12
+    },
+    {
+     "street": "Charleston Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 408,
+     "parcels": 63
+    },
+    {
+     "street": "Charleston Ave",
+     "dir": "W",
+     "from": 94,
+     "to": 217,
+     "parcels": 28
+    },
+    {
+     "street": "Chestnut",
+     "dir": "E",
+     "from": 117,
+     "to": 117,
+     "parcels": 1
+    },
+    {
+     "street": "Chestnut Ave",
+     "dir": "E",
+     "from": 109,
+     "to": 300,
+     "parcels": 12
+    },
+    {
+     "street": "Chestnut Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 329,
+     "parcels": 43
+    },
+    {
+     "street": "Columbine Rd",
+     "dir": "E",
+     "from": 104,
+     "to": 420,
+     "parcels": 43
+    },
+    {
+     "street": "Columbine Rd",
+     "dir": "W",
+     "from": 104,
+     "to": 133,
+     "parcels": 19
+    },
+    {
+     "street": "Cresse Ave",
+     "dir": "E",
+     "from": 94,
+     "to": 408,
+     "parcels": 52
+    },
+    {
+     "street": "Crocus Rd",
+     "dir": "E",
+     "from": 103,
+     "to": 404,
+     "parcels": 53
+    },
+    {
+     "street": "Crocus Rd",
+     "dir": "W",
+     "from": 105,
+     "to": 164,
+     "parcels": 26
+    },
+    {
+     "street": "D Ave",
+     "from": 1,
+     "to": 7,
+     "parcels": 7
+    },
+    {
+     "street": "Davis Ave",
+     "dir": "E",
+     "from": 111,
+     "to": 239,
+     "parcels": 28
+    },
+    {
+     "street": "Davis Ave",
+     "dir": "W",
+     "from": 115,
+     "to": 210,
+     "parcels": 11
+    },
+    {
+     "street": "Delaware Ave",
+     "from": 100,
+     "to": 1805,
+     "parcels": 62
+    },
+    {
+     "street": "Delaware Ave",
+     "dir": "N",
+     "from": 201,
+     "to": 210,
+     "parcels": 3
+    },
+    {
+     "street": "Delaware Ave Rear",
+     "from": 1609,
+     "to": 1609,
+     "parcels": 1
+    },
+    {
+     "street": "Denver Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 405,
+     "parcels": 124
+    },
+    {
+     "street": "Denver Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 124,
+     "parcels": 20
+    },
+    {
+     "street": "Dock St",
+     "dir": "W",
+     "from": 318,
+     "to": 450,
+     "parcels": 12
+    },
+    {
+     "street": "Dr",
+     "dir": "N",
+     "from": 600,
+     "to": 798,
+     "parcels": 24
+    },
+    {
+     "street": "Evergreen",
+     "from": 200,
+     "to": 200,
+     "parcels": 1
+    },
+    {
+     "street": "F Ave",
+     "from": 1,
+     "to": 8,
+     "parcels": 7
+    },
+    {
+     "street": "Farragut Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 408,
+     "parcels": 70
+    },
+    {
+     "street": "Farragut Rd (e)",
+     "dir": "E",
+     "from": 110,
+     "to": 112,
+     "parcels": 2
+    },
+    {
+     "street": "Farragut Rd (es)",
+     "dir": "E",
+     "from": 308,
+     "to": 308,
+     "parcels": 1
+    },
+    {
+     "street": "Farragut Rd (w)",
+     "dir": "E",
+     "from": 110,
+     "to": 112,
+     "parcels": 2
+    },
+    {
+     "street": "Farragut Rd (ws)",
+     "dir": "E",
+     "from": 308,
+     "to": 308,
+     "parcels": 1
+    },
+    {
+     "street": "Fern Rd",
+     "dir": "E",
+     "from": 101,
+     "to": 308,
+     "parcels": 35
+    },
+    {
+     "street": "Fern Rd",
+     "dir": "W",
+     "from": 101,
+     "to": 123,
+     "parcels": 9
+    },
+    {
+     "street": "Forget-Me-Not Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 309,
+     "parcels": 56
+    },
+    {
+     "street": "Forget-Me-Not Rd",
+     "dir": "W",
+     "from": 101,
+     "to": 123,
+     "parcels": 16
+    },
+    {
+     "street": "G Ave",
+     "from": 1,
+     "to": 8,
+     "parcels": 8
+    },
+    {
+     "street": "Garfield",
+     "dir": "E",
+     "from": 112,
+     "to": 228,
+     "parcels": 3
+    },
+    {
+     "street": "Garfield",
+     "dir": "W",
+     "from": 128,
+     "to": 413,
+     "parcels": 3
+    },
+    {
+     "street": "Garfield Ave",
+     "dir": "E",
+     "from": 109,
+     "to": 312,
+     "parcels": 22
+    },
+    {
+     "street": "Garfield Ave",
+     "dir": "W",
+     "from": 110,
+     "to": 515,
+     "parcels": 50
+    },
+    {
+     "street": "Glenwood",
+     "dir": "W",
+     "from": 100,
+     "to": 100,
+     "parcels": 1
+    },
+    {
+     "street": "Glenwood Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 417,
+     "parcels": 31
+    },
+    {
+     "street": "Glenwood Ave",
+     "dir": "W",
+     "from": 104,
+     "to": 795,
+     "parcels": 142
+    },
+    {
+     "street": "H Ave",
+     "from": 1,
+     "to": 10,
+     "parcels": 8
+    },
+    {
+     "street": "Hand Ave",
+     "dir": "E",
+     "from": 105,
+     "to": 242,
+     "parcels": 28
+    },
+    {
+     "street": "Hand Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 500,
+     "parcels": 29
+    },
+    {
+     "street": "Heather Rd",
+     "dir": "E",
+     "from": 103,
+     "to": 415,
+     "parcels": 59
+    },
+    {
+     "street": "Heather Rd",
+     "dir": "W",
+     "from": 107,
+     "to": 217,
+     "parcels": 31
+    },
+    {
+     "street": "Hereford Ave",
+     "from": 100,
+     "to": 208,
+     "parcels": 6
+    },
+    {
+     "street": "Hildreth",
+     "dir": "E",
+     "from": 139,
+     "to": 139,
+     "parcels": 1
+    },
+    {
+     "street": "Hildreth Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 225,
+     "parcels": 40
+    },
+    {
+     "street": "Hildreth Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 148,
+     "parcels": 21
+    },
+    {
+     "street": "Hoffman Ave",
+     "from": 203,
+     "to": 226,
+     "parcels": 10
+    },
+    {
+     "street": "Hoffman Canal",
+     "from": 1005,
+     "to": 1413,
+     "parcels": 21
+    },
+    {
+     "street": "Hollywood Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 430,
+     "parcels": 74
+    },
+    {
+     "street": "Hollywood Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 129,
+     "parcels": 31
+    },
+    {
+     "street": "Hollywood Ave Flr 1",
+     "dir": "W",
+     "from": 128,
+     "to": 128,
+     "parcels": 1
+    },
+    {
+     "street": "Hollywood Ave Flr 2",
+     "dir": "W",
+     "from": 128,
+     "to": 128,
+     "parcels": 1
+    },
+    {
+     "street": "Hudson Ave",
+     "from": 2600,
+     "to": 4312,
+     "parcels": 36
+    },
+    {
+     "street": "I Ave",
+     "from": 1,
+     "to": 9,
+     "parcels": 8
+    },
+    {
+     "street": "Illinois Ave",
+     "dir": "W",
+     "from": 402,
+     "to": 402,
+     "parcels": 1
+    },
+    {
+     "street": "J Ave",
+     "from": 1,
+     "to": 220,
+     "parcels": 25
+    },
+    {
+     "street": "Jefferson Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 314,
+     "parcels": 48
+    },
+    {
+     "street": "Jefferson Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 121,
+     "parcels": 17
+    },
+    {
+     "street": "Juniper Ave",
+     "dir": "E",
+     "from": 106,
+     "to": 417,
+     "parcels": 27
+    },
+    {
+     "street": "Juniper Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 432,
+     "parcels": 74
+    },
+    {
+     "street": "K Ave",
+     "from": 2,
+     "to": 10,
+     "parcels": 5
+    },
+    {
+     "street": "Kennedy Dr",
+     "from": 210,
+     "to": 300,
+     "parcels": 2
+    },
+    {
+     "street": "L Ave",
+     "from": 209,
+     "to": 209,
+     "parcels": 1
+    },
+    {
+     "street": "Lake Ave",
+     "from": 2602,
+     "to": 3009,
+     "parcels": 21
+    },
+    {
+     "street": "Lake Rd",
+     "from": 2,
+     "to": 5810,
+     "parcels": 51
+    },
+    {
+     "street": "Lake Rd",
+     "dir": "W",
+     "from": 31,
+     "to": 31,
+     "parcels": 1
+    },
+    {
+     "street": "Lavender Rd",
+     "dir": "E",
+     "from": 104,
+     "to": 424,
+     "parcels": 60
+    },
+    {
+     "street": "Lavender Rd",
+     "dir": "W",
+     "from": 106,
+     "to": 225,
+     "parcels": 45
+    },
+    {
+     "street": "Leaming Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 246,
+     "parcels": 28
+    },
+    {
+     "street": "Leaming Ave",
+     "dir": "W",
+     "from": 104,
+     "to": 157,
+     "parcels": 16
+    },
+    {
+     "street": "Lincoln",
+     "dir": "E",
+     "from": 125,
+     "to": 125,
+     "parcels": 1
+    },
+    {
+     "street": "Lincoln Ave",
+     "dir": "E",
+     "from": 106,
+     "to": 234,
+     "parcels": 25
+    },
+    {
+     "street": "Lincoln Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 512,
+     "parcels": 33
+    },
+    {
+     "street": "Lotus Rd",
+     "dir": "E",
+     "from": 101,
+     "to": 301,
+     "parcels": 33
+    },
+    {
+     "street": "Lotus Rd",
+     "dir": "W",
+     "from": 100,
+     "to": 117,
+     "parcels": 9
+    },
+    {
+     "street": "Louisville Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 423,
+     "parcels": 71
+    },
+    {
+     "street": "M Ave",
+     "from": 207,
+     "to": 213,
+     "parcels": 5
+    },
+    {
+     "street": "Mace Ave",
+     "from": 1,
+     "to": 7,
+     "parcels": 4
+    },
+    {
+     "street": "Magnolia",
+     "dir": "E",
+     "from": 225,
+     "to": 225,
+     "parcels": 1
+    },
+    {
+     "street": "Magnolia Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 423,
+     "parcels": 40
+    },
+    {
+     "street": "Magnolia Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 425,
+     "parcels": 60
+    },
+    {
+     "street": "Maple Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 401,
+     "parcels": 26
+    },
+    {
+     "street": "Maple Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 757,
+     "parcels": 86
+    },
+    {
+     "street": "Maryland Ave",
+     "from": 200,
+     "to": 1508,
+     "parcels": 7
+    },
+    {
+     "street": "Maryland Ave",
+     "dir": "N",
+     "from": 511,
+     "to": 511,
+     "parcels": 1
+    },
+    {
+     "street": "Mediterranean Ave",
+     "from": 3901,
+     "to": 4613,
+     "parcels": 12
+    },
+    {
+     "street": "Miami Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 427,
+     "parcels": 127
+    },
+    {
+     "street": "Miami Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 100,
+     "parcels": 1
+    },
+    {
+     "street": "Miami Ave (east)",
+     "dir": "E",
+     "from": 315,
+     "to": 315,
+     "parcels": 1
+    },
+    {
+     "street": "Miami Ave (west)",
+     "dir": "E",
+     "from": 315,
+     "to": 315,
+     "parcels": 1
+    },
+    {
+     "street": "Michigan Ave",
+     "from": 1,
+     "to": 6,
+     "parcels": 6
+    },
+    {
+     "street": "Monterey Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 427,
+     "parcels": 152
+    },
+    {
+     "street": "Monterey Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 102,
+     "parcels": 2
+    },
+    {
+     "street": "Montgomery",
+     "dir": "E",
+     "from": 221,
+     "to": 221,
+     "parcels": 1
+    },
+    {
+     "street": "Montgomery Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 401,
+     "parcels": 29
+    },
+    {
+     "street": "Montgomery Ave",
+     "dir": "W",
+     "from": 109,
+     "to": 780,
+     "parcels": 96
+    },
+    {
+     "street": "Morning Glory Rd",
+     "dir": "E",
+     "from": 101,
+     "to": 411,
+     "parcels": 66
+    },
+    {
+     "street": "Morning Glory Rd",
+     "dir": "W",
+     "from": 103,
+     "to": 240,
+     "parcels": 70
+    },
+    {
+     "street": "Mueller Ave",
+     "from": 1,
+     "to": 14,
+     "parcels": 14
+    },
+    {
+     "street": "Mulberry",
+     "dir": "W",
+     "from": 530,
+     "to": 530,
+     "parcels": 1
+    },
+    {
+     "street": "Mulberry Ave",
+     "dir": "W",
+     "from": 400,
+     "to": 538,
+     "parcels": 31
+    },
+    {
+     "street": "Myrtle Rd",
+     "dir": "E",
+     "from": 101,
+     "to": 408,
+     "parcels": 50
+    },
+    {
+     "street": "Myrtle Rd",
+     "dir": "W",
+     "from": 97,
+     "to": 103,
+     "parcels": 6
+    },
+    {
+     "street": "Nashville Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 450,
+     "parcels": 85
+    },
+    {
+     "street": "Neptune Ave",
+     "from": 6,
+     "to": 212,
+     "parcels": 19
+    },
+    {
+     "street": "New Jersey",
+     "from": 4009,
+     "to": 4009,
+     "parcels": 1
+    },
+    {
+     "street": "New Jersey Ave",
+     "from": 500,
+     "to": 9502,
+     "parcels": 315
+    },
+    {
+     "street": "New Jersey Ave (1n)",
+     "from": 8705,
+     "to": 8705,
+     "parcels": 1
+    },
+    {
+     "street": "New Jersey Ave (1s)",
+     "from": 8705,
+     "to": 8705,
+     "parcels": 1
+    },
+    {
+     "street": "New Jersey Ave (2n)",
+     "from": 8705,
+     "to": 8705,
+     "parcels": 1
+    },
+    {
+     "street": "New Jersey Ave (2s)",
+     "from": 8705,
+     "to": 8705,
+     "parcels": 1
+    },
+    {
+     "street": "New York",
+     "from": 1705,
+     "to": 1705,
+     "parcels": 1
+    },
+    {
+     "street": "New York Ave",
+     "from": 1205,
+     "to": 3012,
+     "parcels": 63
+    },
+    {
+     "street": "New York Ave",
+     "dir": "N",
+     "from": 2,
+     "to": 12,
+     "parcels": 4
+    },
+    {
+     "street": "Newark Ave",
+     "dir": "E",
+     "from": 202,
+     "to": 315,
+     "parcels": 26
+    },
+    {
+     "street": "Newark Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 127,
+     "parcels": 16
+    },
+    {
+     "street": "Niagara Ave",
+     "from": 4300,
+     "to": 4405,
+     "parcels": 3
+    },
+    {
+     "street": "O Ave",
+     "from": 201,
+     "to": 220,
+     "parcels": 16
+    },
+    {
+     "street": "Oak Ave",
+     "from": 737,
+     "to": 757,
+     "parcels": 11
+    },
+    {
+     "street": "Oak Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 333,
+     "parcels": 18
+    },
+    {
+     "street": "Oak Ave",
+     "dir": "W",
+     "from": 113,
+     "to": 746,
+     "parcels": 60
+    },
+    {
+     "street": "Ocean Ave",
+     "from": 201,
+     "to": 9400,
+     "parcels": 268
+    },
+    {
+     "street": "Ohio Ave",
+     "from": 504,
+     "to": 624,
+     "parcels": 15
+    },
+    {
+     "street": "Olde New Jersey Ave",
+     "from": 100,
+     "to": 209,
+     "parcels": 5
+    },
+    {
+     "street": "Orchid Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 500,
+     "parcels": 69
+    },
+    {
+     "street": "Ottens Canal",
+     "from": 600,
+     "to": 600,
+     "parcels": 1
+    },
+    {
+     "street": "P Ave",
+     "from": 201,
+     "to": 224,
+     "parcels": 19
+    },
+    {
+     "street": "Pacific Ave",
+     "from": 2600,
+     "to": 9500,
+     "parcels": 461
+    },
+    {
+     "street": "Palm Rd",
+     "dir": "E",
+     "from": 101,
+     "to": 407,
+     "parcels": 67
+    },
+    {
+     "street": "Palm Rd",
+     "dir": "W",
+     "from": 108,
+     "to": 126,
+     "parcels": 7
+    },
+    {
+     "street": "Paradise Way",
+     "from": 406,
+     "to": 414,
+     "parcels": 4
+    },
+    {
+     "street": "Park Blvd",
+     "from": 2600,
+     "to": 7118,
+     "parcels": 220
+    },
+    {
+     "street": "Pine",
+     "dir": "W",
+     "from": 632,
+     "to": 632,
+     "parcels": 1
+    },
+    {
+     "street": "Pine Ave",
+     "dir": "E",
+     "from": 111,
+     "to": 324,
+     "parcels": 13
+    },
+    {
+     "street": "Pine Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 754,
+     "parcels": 113
+    },
+    {
+     "street": "Pine Ave (inlet)",
+     "dir": "E",
+     "from": 100,
+     "to": 100,
+     "parcels": 1
+    },
+    {
+     "street": "Pittsburg Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 320,
+     "parcels": 49
+    },
+    {
+     "street": "Pittsburg Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 214,
+     "parcels": 20
+    },
+    {
+     "street": "Poplar",
+     "dir": "W",
+     "from": 130,
+     "to": 130,
+     "parcels": 1
+    },
+    {
+     "street": "Poplar Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 430,
+     "parcels": 27
+    },
+    {
+     "street": "Poplar Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 761,
+     "parcels": 131
+    },
+    {
+     "street": "Preston Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 335,
+     "parcels": 67
+    },
+    {
+     "street": "Preston Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 126,
+     "parcels": 26
+    },
+    {
+     "street": "Preston Ave (e)",
+     "dir": "W",
+     "from": 112,
+     "to": 112,
+     "parcels": 1
+    },
+    {
+     "street": "Preston Ave (w)",
+     "dir": "W",
+     "from": 112,
+     "to": 112,
+     "parcels": 1
+    },
+    {
+     "street": "Primrose Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 301,
+     "parcels": 38
+    },
+    {
+     "street": "Primrose Rd #a-1",
+     "dir": "E",
+     "from": 101,
+     "to": 101,
+     "parcels": 1
+    },
+    {
+     "street": "Primrose Rd #a-2",
+     "dir": "E",
+     "from": 101,
+     "to": 101,
+     "parcels": 1
+    },
+    {
+     "street": "Primrose Rd #a-3",
+     "dir": "E",
+     "from": 101,
+     "to": 101,
+     "parcels": 1
+    },
+    {
+     "street": "Primrose Rd #a-4",
+     "dir": "E",
+     "from": 101,
+     "to": 101,
+     "parcels": 1
+    },
+    {
+     "street": "Proposed Ave",
+     "from": 3901,
+     "to": 3909,
+     "parcels": 5
+    },
+    {
+     "street": "Q Ave",
+     "from": 202,
+     "to": 224,
+     "parcels": 9
+    },
+    {
+     "street": "R Ave",
+     "from": 200,
+     "to": 227,
+     "parcels": 7
+    },
+    {
+     "street": "Rambler Rd",
+     "dir": "E",
+     "from": 103,
+     "to": 535,
+     "parcels": 32
+    },
+    {
+     "street": "Rio Grande",
+     "dir": "W",
+     "from": 108,
+     "to": 108,
+     "parcels": 1
+    },
+    {
+     "street": "Rio Grande &watrwy",
+     "dir": "W",
+     "from": 604,
+     "to": 604,
+     "parcels": 1
+    },
+    {
+     "street": "Rio Grande Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 241,
+     "parcels": 23
+    },
+    {
+     "street": "Rio Grande Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 610,
+     "parcels": 38
+    },
+    {
+     "street": "Rio Grande Waterwy",
+     "dir": "W",
+     "from": 615,
+     "to": 618,
+     "parcels": 2
+    },
+    {
+     "street": "Ritz Ave",
+     "from": 401,
+     "to": 401,
+     "parcels": 1
+    },
+    {
+     "street": "Roberts Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 309,
+     "parcels": 18
+    },
+    {
+     "street": "Roberts Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 720,
+     "parcels": 54
+    },
+    {
+     "street": "Rosemary Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 211,
+     "parcels": 37
+    },
+    {
+     "street": "Rosemary Rd",
+     "dir": "W",
+     "from": 105,
+     "to": 131,
+     "parcels": 15
+    },
+    {
+     "street": "Schellenger",
+     "dir": "E",
+     "from": 222,
+     "to": 248,
+     "parcels": 2
+    },
+    {
+     "street": "Schellenger",
+     "dir": "W",
+     "from": 314,
+     "to": 324,
+     "parcels": 2
+    },
+    {
+     "street": "Schellenger Ave",
+     "dir": "E",
+     "from": 110,
+     "to": 245,
+     "parcels": 10
+    },
+    {
+     "street": "Schellenger Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 333,
+     "parcels": 5
+    },
+    {
+     "street": "Seabreeze Ct",
+     "from": 231,
+     "to": 266,
+     "parcels": 20
+    },
+    {
+     "street": "Seabreeze Ct A&b",
+     "from": 240,
+     "to": 270,
+     "parcels": 5
+    },
+    {
+     "street": "Seaspray Ct",
+     "from": 94,
+     "to": 131,
+     "parcels": 18
+    },
+    {
+     "street": "Seaview Ave",
+     "from": 5404,
+     "to": 9500,
+     "parcels": 342
+    },
+    {
+     "street": "Seaview Ct",
+     "from": 100,
+     "to": 141,
+     "parcels": 20
+    },
+    {
+     "street": "Seaview Ct A&b",
+     "from": 115,
+     "to": 125,
+     "parcels": 2
+    },
+    {
+     "street": "Seaview Ct C&d",
+     "from": 109,
+     "to": 133,
+     "parcels": 2
+    },
+    {
+     "street": "Spencer",
+     "dir": "E",
+     "from": 246,
+     "to": 246,
+     "parcels": 1
+    },
+    {
+     "street": "Spencer Ave",
+     "dir": "E",
+     "from": 110,
+     "to": 408,
+     "parcels": 28
+    },
+    {
+     "street": "Spencer Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 146,
+     "parcels": 24
+    },
+    {
+     "street": "Spicer Ave",
+     "dir": "E",
+     "from": 105,
+     "to": 325,
+     "parcels": 27
+    },
+    {
+     "street": "Spicer Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 600,
+     "parcels": 36
+    },
+    {
+     "street": "Spruce Ave",
+     "dir": "E",
+     "from": 112,
+     "to": 300,
+     "parcels": 7
+    },
+    {
+     "street": "Spruce Ave",
+     "dir": "W",
+     "from": 120,
+     "to": 800,
+     "parcels": 80
+    },
+    {
+     "street": "St Demetrios Ave",
+     "from": 101,
+     "to": 321,
+     "parcels": 7
+    },
+    {
+     "street": "St Louis Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 317,
+     "parcels": 36
+    },
+    {
+     "street": "St Louis Ave",
+     "dir": "W",
+     "from": 97,
+     "to": 126,
+     "parcels": 27
+    },
+    {
+     "street": "St Paul Ave",
+     "dir": "E",
+     "from": 103,
+     "to": 500,
+     "parcels": 122
+    },
+    {
+     "street": "St Paul Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 112,
+     "parcels": 9
+    },
+    {
+     "street": "St Vincent Ct",
+     "from": 2,
+     "to": 12,
+     "parcels": 11
+    },
+    {
+     "street": "Stanton Rd",
+     "dir": "E",
+     "from": 102,
+     "to": 507,
+     "parcels": 96
+    },
+    {
+     "street": "Stockton Rd",
+     "dir": "E",
+     "from": 100,
+     "to": 520,
+     "parcels": 151
+    },
+    {
+     "street": "Surf Ave",
+     "from": 100,
+     "to": 212,
+     "parcels": 4
+    },
+    {
+     "street": "Susquehanna Ave",
+     "from": 3504,
+     "to": 4608,
+     "parcels": 29
+    },
+    {
+     "street": "Sweet-Briar Rd",
+     "dir": "E",
+     "from": 104,
+     "to": 303,
+     "parcels": 36
+    },
+    {
+     "street": "Sweet-Briar Rd",
+     "dir": "W",
+     "from": 105,
+     "to": 137,
+     "parcels": 25
+    },
+    {
+     "street": "Syracuse Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 324,
+     "parcels": 70
+    },
+    {
+     "street": "Syracuse Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 123,
+     "parcels": 18
+    },
+    {
+     "street": "Syracuse Ave (e)",
+     "dir": "W",
+     "from": 111,
+     "to": 111,
+     "parcels": 1
+    },
+    {
+     "street": "Syracuse Ave (w)",
+     "dir": "W",
+     "from": 111,
+     "to": 111,
+     "parcels": 1
+    },
+    {
+     "street": "Syracuse Ave #1 (e)",
+     "dir": "E",
+     "from": 112,
+     "to": 112,
+     "parcels": 1
+    },
+    {
+     "street": "Syracuse Ave #2 (w)",
+     "dir": "E",
+     "from": 112,
+     "to": 112,
+     "parcels": 1
+    },
+    {
+     "street": "Tacony Rd",
+     "dir": "W",
+     "from": 319,
+     "to": 633,
+     "parcels": 18
+    },
+    {
+     "street": "Taylor Ave",
+     "from": 25,
+     "to": 29,
+     "parcels": 3
+    },
+    {
+     "street": "Taylor Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 249,
+     "parcels": 28
+    },
+    {
+     "street": "Taylor Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 601,
+     "parcels": 60
+    },
+    {
+     "street": "Toledo Ave",
+     "dir": "E",
+     "from": 101,
+     "to": 428,
+     "parcels": 62
+    },
+    {
+     "street": "Toledo Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 120,
+     "parcels": 18
+    },
+    {
+     "street": "Topeka Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 431,
+     "parcels": 69
+    },
+    {
+     "street": "Topeka Ave",
+     "dir": "W",
+     "from": 103,
+     "to": 208,
+     "parcels": 26
+    },
+    {
+     "street": "Topeka Ave (flr 1)",
+     "dir": "W",
+     "from": 201,
+     "to": 201,
+     "parcels": 1
+    },
+    {
+     "street": "Topeka Ave (flr 2)",
+     "dir": "W",
+     "from": 201,
+     "to": 201,
+     "parcels": 1
+    },
+    {
+     "street": "Trenton Ave",
+     "dir": "E",
+     "from": 203,
+     "to": 315,
+     "parcels": 23
+    },
+    {
+     "street": "Trenton Ave",
+     "dir": "W",
+     "from": 101,
+     "to": 127,
+     "parcels": 27
+    },
+    {
+     "street": "Venice Ave",
+     "from": 1,
+     "to": 39,
+     "parcels": 16
+    },
+    {
+     "street": "Virginia Ave",
+     "from": 408,
+     "to": 705,
+     "parcels": 8
+    },
+    {
+     "street": "Virginia Ave",
+     "dir": "W",
+     "from": 610,
+     "to": 703,
+     "parcels": 2
+    },
+    {
+     "street": "Walnut Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 309,
+     "parcels": 14
+    },
+    {
+     "street": "Walnut Ave",
+     "dir": "W",
+     "from": 100,
+     "to": 334,
+     "parcels": 39
+    },
+    {
+     "street": "Walnut Ave Rear",
+     "dir": "W",
+     "from": 229,
+     "to": 229,
+     "parcels": 1
+    },
+    {
+     "street": "Washington Ave",
+     "from": 4310,
+     "to": 4510,
+     "parcels": 2
+    },
+    {
+     "street": "Washington Ave",
+     "dir": "E",
+     "from": 102,
+     "to": 313,
+     "parcels": 37
+    },
+    {
+     "street": "Washington Ave",
+     "dir": "W",
+     "from": 102,
+     "to": 122,
+     "parcels": 6
+    },
+    {
+     "street": "Weeks Ave",
+     "from": 4,
+     "to": 4,
+     "parcels": 1
+    },
+    {
+     "street": "Wildwood Ave",
+     "dir": "E",
+     "from": 100,
+     "to": 401,
+     "parcels": 15
+    },
+    {
+     "street": "Wildwood Ave",
+     "dir": "W",
+     "from": 119,
+     "to": 509,
+     "parcels": 68
+    },
+    {
+     "street": "Windsor Ave",
+     "from": 100,
+     "to": 100,
+     "parcels": 1
+    },
+    {
+     "street": "Wisteria Rd",
+     "dir": "E",
+     "from": 102,
+     "to": 304,
+     "parcels": 29
+    },
+    {
+     "street": "Wisteria Rd",
+     "dir": "W",
+     "from": 106,
+     "to": 136,
+     "parcels": 33
+    },
+    {
+     "street": "Youngs Ave",
+     "dir": "E",
+     "from": 105,
+     "to": 323,
+     "parcels": 42
+    },
+    {
+     "street": "Youngs Ave",
+     "dir": "W",
+     "from": 106,
+     "to": 601,
+     "parcels": 35
+    }
+   ],
+   "neighbours": [
+    {
+     "sheet": "27",
+     "why": [
+      "Delaware Ave 1900-2511 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Maryland Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "New York Ave 1900-2514 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Ohio Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Virginia Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 19th Ave 200-540 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 20th Ave 200-545 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 21st Ave 200-545 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 22nd Ave 200-545 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 23rd Ave 200-545 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 24th Ave 200-545 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 25th Ave 200-545 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 26th Ave 201-545 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "28",
+     "why": [
+      "Boardwalk 1600-2519 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 13th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 14th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 15th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 16th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 17th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 18th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 19th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 20th Ave 400-525 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 21st Ave 400-439 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 22nd Ave 400-439 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 23rd Ave 400-445 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 24th Ave 400-449 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 25th Ave 400-439 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 26th Ave 401-441 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Ocean Ave 1200-1805 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Surf Ave 1201-2515 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "29",
+     "why": [
+      "Ritz Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "32",
+     "why": [
+      "Seaview Court (no range) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "34",
+     "why": [
+      "Arctic Ave 4700-5314 (one side shown) [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "Hudson Ave 4700-5315 [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "Lake Rd 5200-5315 [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "Mediterranean Ave (no range) [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "Park Blvd 4700-5319 [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "Susquehanna Ave 4700-5205 [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "W Andrews Ave 200-615 (one side shown) [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "W Bennett Ave 200-515 [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "W Hildreth Ave 200-505 [Addenda, Nov 1950, to Additional Index of Oct 1949]",
+      "W Leaming Ave 200-515 [Addenda, Nov 1950, to Additional Index of Oct 1949]"
+     ]
+    },
+    {
+     "sheet": "45",
+     "why": [
+      "W Andrews Ave 201-614 (one side shown) [Addenda, Nov 1950, to Additional Index of Oct 1949]"
+     ]
+    },
+    {
+     "sheet": "54",
+     "why": [
+      "W 12th Ave 100-130 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "56",
+     "why": [
+      "New York Ave 1101-1113 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "57",
+     "why": [
+      "New York Ave 101-711 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "58",
+     "why": [
+      "Atlantic Ave 800-1113 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Central Ave 900-1111 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 10th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 9th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "New Jersey Ave 800-1111 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "New York Ave 200-710 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "New York Ave 800-1013 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Surf Ave 800-1112 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 11th Ave 100-131 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 11th Ave 201-309 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 12th Ave 101-131 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 2nd Ave 200-228 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 3rd Ave 200-239 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 4th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 5th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 6th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 7th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 9th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "59",
+     "why": [
+      "N New Jersey Ave 100-415 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N New York Ave 101-415 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "60",
+     "why": [
+      "E 1st Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N Central Ave 201-213 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N Delaware Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N Maryland Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N New York Ave 100-550 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N Ohio Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "N Virginia Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "New York Ave 100-114 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "63A",
+     "why": [
+      "Atlantic Ave 4501-5315 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Boardwalk 300-1114 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Boardwalk 4500-5314 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 10th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 3rd Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 4th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 5th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 6th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 7th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E 9th Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Burk Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Cresse Ave 301-325 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Davis Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Hand Ave 300-325 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Hildreth Ave 300-325 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Leaming Ave 300-325 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Rio Grande Ave 300-325 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Taylor Ave 300-325 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Ocean Ave 300-1115 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Ocean Ave 4500-5315 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Surf Ave 301-1115 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    },
+    {
+     "sheet": "63B",
+     "why": [
+      "Arion Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "E Bennett Ave 300-325 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Lake Rd (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Neptune Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Ritz Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "Venice Ave (no range) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W 26th Ave 600-698 (one side shown) [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W Glenwood Ave 500-655 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W Magnolia Ave 500-619 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W Maple Ave 500-655 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W Pine Ave 500-655 [Additional Index, Oct 1949 (Five Mile Beach)]",
+      "W Poplar Ave 500-655 [Additional Index, Oct 1949 (Five Mile Beach)]"
+     ]
+    }
+   ]
+  },
+  "sheetsToFetch": [],
+  "volumes": [
+   {
+    "item": "sanborn05568_015",
+    "title": "Sanborn Fire Insurance Map from New Jersey Coast, Vol. 4 (1909, corrected to Nov 1950)",
+    "date": "1950",
+    "scanned": true
+   },
+   {
+    "item": "sanborn05568_027",
+    "title": "New Jersey Coast, Vol. 4 (May 1958)",
+    "date": "1958-05",
+    "scanned": false,
+    "note": "In the LOC catalog but not scanned online; the closest volume to 1960 if it is ever digitized."
+   }
+  ],
+  "georef": {
+   "file": "citydata/wildwood/evidence/sanborn-1950-georef.json",
+   "registered": [
+    "0040",
+    "0041",
+    "0042",
+    "0043",
+    "0044",
+    "0035",
+    "0036",
+    "0037",
+    "0038",
+    "0039",
+    "0049",
+    "0050",
+    "0051",
+    "0052",
+    "0047",
+    "0048",
+    "0063A-wildwood",
+    "0063A-north",
+    "0108",
+    "0109",
+    "0034",
+    "0045",
+    "0046",
+    "0053",
+    "0054",
+    "0058",
+    "0031",
+    "0032"
+   ],
+   "buildingsPerSheet": {
+    "0031": 601,
+    "0032": 708,
+    "0038": 121,
+    "0063A-wildwood": 78,
+    "0036": 180,
+    "0035": 177,
+    "0034": 319,
+    "0037": 133,
+    "0039": 117,
+    "0040": 129,
+    "0041": 161,
+    "0045": 278,
+    "0046": 550,
+    "0050": 67,
+    "0109": 66,
+    "0108": 97,
+    "0044": 88,
+    "0042": 132,
+    "0049": 98,
+    "0043": 85,
+    "0047": 104,
+    "0048": 233,
+    "0052": 105,
+    "0051": 152,
+    "0053": 581,
+    "0054": 575,
+    "0063A-north": 220,
+    "0058": 343
+   },
+   "correctionsDerived": 0,
+   "note": "Sheets are registered as evidence layers only; no building-level correction was derived from them (the 25% scans are read by a person, in the map editor)."
+  }
+ },
+ "directories": {
+  "status": "not-run",
+  "detail": "no directory pages cached (expected under /home/claude/llv-islandmap/citydata/wildwood/raw/directories/<directory>/manifest.json)",
+  "candidates": 0
+ }
+}

@@ -294,7 +294,6 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
       {/* Water and town names. */}
       {(() => { const [x, y] = P(pr, 3600, -beachWidth(3600) - 350); return label(x, y, 'ATLANTIC OCEAN', 13, ax, { color: mood === 'day' ? '#e9fbff' : '#9fc3d6', spacing: 0.6, ital: true }); })()}
       {(() => { const [x, y] = P(pr, 6900, 1350); return label(x, y, 'Grassy Sound', 10, ax, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
-      {(() => { const [x, y] = P(pr, 2000, 1150); return label(x, y, 'Sunset Lake', 9, ax, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
       {(() => { const [x, y] = P(pr, U_NORTH + 260, 300); return label(x, y, 'Hereford Inlet', 10, 0, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
       {(() => { const [x, y] = P(pr, CAUSEWAY.mainlandU, Math.min(CAUSEWAY.mainlandV, 2450)); return label(x, y, 'to RIO GRANDE ↓', 10, 0, { spacing: 0.3 }); })()}
       {(() => { const mid = CAUSEWAY.path?.[Math.floor((CAUSEWAY.path?.length ?? 0) / 3)] ?? [CAUSEWAY.u - 210, 1500]; const [x, y] = P(pr, mid[0] + 80, mid[1]); return tier >= 1 ? label(x, y, 'Rio Grande Ave causeway', 8, 0, { ital: true }) : null; })()}

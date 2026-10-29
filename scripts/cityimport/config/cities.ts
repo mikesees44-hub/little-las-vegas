@@ -14,6 +14,8 @@ export interface ImportArea {
   bbox: BBox4;
   /** Municipality codes (NJ MOD-IV PCL_MUN) the parcels may come from. */
   municipalities?: string[];
+  /** How the game layer is generalized: coordinates rounded to `round` metres, outlines simplified to `simplify` metres (0: kept). */
+  gameLayer?: { round: number; simplify: number };
   note?: string;
 }
 
@@ -131,6 +133,7 @@ export const WILDWOOD: CityConfig = {
       bbox: [-74.865, 38.945, -74.775, 39.015],
       // NJ municipality codes (Cape May County 05xx), confirmed by the island download (2026-10-29): 0507 North Wildwood, 0513 West Wildwood, 0514 Wildwood, 0515 Wildwood Crest.
       municipalities: ['0507', '0513', '0514', '0515'],
+      gameLayer: { round: 1, simplify: 0.8 },
       note: 'Imported 2026-10-29 from a browser hand-off (OSM API map.json, 36 tiles merged; NJOGIS parcels by PCL_MUN). The raw files (35 MB) are kept out of git: restore them with `handoff --area island --from <cache>`; their sha256 is in the manifest.',
     },
   ],

@@ -7,3 +7,13 @@ data/nyc/downloads/
 # City importer: the island raw downloads (35 MB) stay out of git; see citydata/wildwood/raw/manifest.json (sha256) and scripts/cityimport/README.md
 citydata/wildwood/raw/osm/island.osm.json
 citydata/wildwood/raw/njgin-parcels/island.geojson
+# The island pack's bulky layers (60 MB) are rebuilt from the raw downloads: `cli.ts build --area island`.
+citydata/wildwood/packs/island/buildings.geojson
+citydata/wildwood/packs/island/parcels.geojson
+citydata/wildwood/packs/island/roads.geojson
+citydata/wildwood/packs/island/water.geojson
+citydata/wildwood/packs/island/rail.geojson
+citydata/wildwood/packs/island/blocks.geojson
+citydata/wildwood/packs/island/nav.json
+citydata/wildwood/packs/island/asset-manifest.json
+citydata/wildwood/packs/island/historical-overrides.json

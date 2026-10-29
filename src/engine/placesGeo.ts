@@ -15,8 +15,8 @@ import { WILDWOOD_PACKAGE as PKG } from '../worldpack/cities';
  *   located       'verified' only when the point itself comes from a source; else 'approximate'
  *   source        where the location (and the years) come from, and what is not sourced
  *
- * Coordinates were generated from the game's street frame, anchored on the
- * sourced Hunt's Pier point. The records live in the Wildwood town package
+ * Coordinates were generated from the game's street frame and re-placed on
+ * the real grid (2026-10-29) by address or corner where the record gives one. The records live in the Wildwood town package
  * (src/worldpack/cities/wildwood.json); corrections made in the map editor
  * are exported (a package, or GeoJSON) to be folded back in there.
  */
@@ -73,13 +73,11 @@ export function placementFeature(p: Placement): PlaceFeature {
 export const PLACES: PlaceFeature[] = PKG.placements.map(placementFeature);
 
 /**
- * The game draws the island longer than it is (its streets are spaced from
- * memory), so one rotation fits only near its anchor. The frame is pinned at
- * a second sourced point, the Hereford Inlet Light (Wikipedia: 39.00667,
- * -74.79222, at First and Central Avenues), to the game's corner of 1st and
- * Central; between them the frame stretches along the island. Below the
- * pin's `from` (the Crest, Wildwood, Hunt's Pier) it is the plain rotation.
- * The math lives with the package format (`cityPackage.frameFns`).
+ * The frame follows the real island (measured from OpenStreetMap, 2026-10-29:
+ * a curvilinear frame along New Jersey Avenue, see `cityPackage.frameFns` and
+ * scripts/cityimport `grid`), so a point's lng/lat and its u, v agree
+ * everywhere; the sourced points (Hunt's Pier, the Hereford Inlet Light) land
+ * on their own streets.
  */
 const FNS = frameFns(FRAME);
 

@@ -11,7 +11,8 @@ The bundled basemap in `public/geo/` is built once, offline, and committed.
    Atlantic City Expressway — shown only from 1964 — and the New Jersey and Pennsylvania turnpikes)
    and simplified with mapshaper into `lakes.topo.json`, `rivers.topo.json`, `roads.topo.json`,
    `places.json`.
-4. `python3 4_wildwood_districts.py` lays the game's districts along the real Wildwood coastline
+4. The game's Wildwood districts (`wildwood.json`) come from the town package's district outlines (measured from OSM and the
+   NJ parcels): `npx tsx scripts/cityimport/cli.ts grid-geo`. (`4_wildwood_districts.py` made the earlier, hand-laid version.)
    (`wildwood.json`).
 5. States and counties come straight from `us-atlas` (`us.topo.json`), borders from `world-atlas`.
 6. New York City, 1960 (`data/nyc/nyc-1960.json`, bundled into the page, ~225 KB): download the sources
