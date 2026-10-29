@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { lotOverlay, type HoodOverlay } from '../../engine/hood';
-import { HOODS, crossU, type HoodId } from '../../engine/hoodData';
+import { HOODS, boardwalkV, crossU, type HoodId } from '../../engine/hoodData';
 import { hoodBounds, placeAll } from '../../engine/hoodGeo';
 import { groupOfBiz, groupOfLot, PROP_GROUP_BY_ID, PROP_GROUPS, type PropGroup } from '../../engine/propertyGroups';
 import { USES_BY_ID } from '../../engine/property';
@@ -206,7 +206,8 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
     fit(Math.min(...pts.map((p) => p[0])), Math.min(...pts.map((p) => p[1])), Math.max(...pts.map((p) => p[0])), Math.max(...pts.map((p) => p[1])), pad);
   }, [fit, pr]);
 
-  const home = useCallback(() => fitUV(crossU('Spicer Ave') - 20, crossU('Garfield Ave') + 40, -170, 120, 1), [fitUV]);
+  // Home: the middle of the boards (Spencer Ave to Pine Ave: the Marine Pier, the arcades).
+  const home = useCallback(() => fitUV(crossU('Spencer Ave') - 20, crossU('Pine Ave') + 40, -170, 120, 1), [fitUV]);
   const whole = useCallback(() => { const b = VIEW_BOUNDS(pr); fit(b.x0 + 700, b.y0 + 200, b.x1 - 300, b.y1 - 600, 1.05); }, [fit, pr]);
 
   // First view: the Boardwalk.
@@ -407,8 +408,9 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   );
 
   const tram = useMemo(() => {
-    const a = P(pr, crossU('Cresse Ave') + 30, -8);
-    const b = P(pr, crossU('16th Ave') - 30, -8);
+    // The tram runs the straight Wildwood stretch of the boards (they turn seaward into North Wildwood).
+    const a = P(pr, crossU('Cresse Ave') + 30, boardwalkV(crossU('Cresse Ave') + 30) - 8);
+    const b = P(pr, crossU('26th Ave') - 30, boardwalkV(crossU('26th Ave') - 30) - 8);
     return { a, b };
   }, [pr]);
 

@@ -1,9 +1,8 @@
 import type { Lot, ZoneId } from './econState';
-import { AVE_V, CAUSEWAY, CROSS, CROSS_BY_NAME, FILL, HOODS, PIERS, SEED, WEST_WILDWOOD, ZONE_RUNS, type AveId, type HoodId, type RunId } from './hoodData';
+import { AVENUES, CAUSEWAY, CROSS, CROSS_BY_IDX, CROSS_BY_NAME, FILL, HOODS, PIERS, SEED, WEST_WILDWOOD, ZONE_RUNS, aveRuns, aveV, boardwalkV, frontV, nextCross, type AveId, type HoodId, type RunId } from './hoodData';
 import { USES_BY_ID, useIcon, type UseIcon } from './property';
 import type { GameState } from './types';
 import { homePackage } from './homePackage';
-import { AVENUES } from './hoodData';
 import type { Parcel as PkgParcel } from './cityPackage';
 
 /**
@@ -31,6 +30,13 @@ export interface Footprint { u0: number; u1: number; v0: number; v1: number; h: 
 
 const STREET_HALF = 9;
 
+/** The block north of a cross street: from it to the next street along the island (hidden ones count). */
+function blockAt(c: { n: string; u: number } | undefined): { cross: string; u0: number; u1: number } | undefined {
+  if (!c) return undefined;
+  const nx = nextCross(CROSS_BY_NAME[c.n]);
+  return nx ? { cross: c.n, u0: c.u + 8, u1: nx.u - 8 } : undefined;
+}
+
 function blocksOf(from: string, to: string): { cross: string; u0: number; u1: number }[] {
   const a = CROSS_BY_NAME[from]?.u ?? 0;
   const b = CROSS_BY_NAME[to]?.u ?? 0;
@@ -43,30 +49,54 @@ function blocksOf(from: string, to: string): { cross: string; u0: number; u1: nu
   return out;
 }
 
-/** The v band of a run (inland distance of the slot's two long sides). */
-function band(run: RunId): { v0: number; v1: number; front: 'v0' | 'v1' } {
-  if (run === 'bw') return { v0: 8, v1: 74, front: 'v0' };
+/** The lines a run's lots sit between at u: the front and every avenue that runs there, in order inland. */
+function linesAt(u: number): number[] {
+  const out = [frontV(u)];
+  for (const a of AVENUES) if (aveRuns(a.id, u)) out.push(aveV(a.id, u));
+  return out.sort((x, y) => x - y);
+}
+
+/**
+ * Runs placed away from the grid's own streets (the causeway's mainland end,
+ * West Wildwood) are shifted along u so their blocks keep their widths but
+ * stand where the place is.
+ */
+const CW_RUN = Object.values(ZONE_RUNS).flat().find((r) => r?.run === 'cw');
+const CW_SHIFT = CW_RUN ? CAUSEWAY.mainlandU - ((CROSS_BY_NAME[CW_RUN.from]?.u ?? 0) + (CROSS_BY_NAME[CW_RUN.to]?.u ?? 0)) / 2 : 0;
+
+/** The v band of a run at u (inland distance of the slot's two long sides). */
+function band(run: RunId, u: number): { v0: number; v1: number; front: 'v0' | 'v1' } {
+  if (run === 'bw') { const b = boardwalkV(u); const oc = aveRuns('oc', u) ? aveV('oc', u) - STREET_HALF : b + 74; return { v0: b + 8, v1: Math.max(b + 30, Math.min(b + 74, oc)), front: 'v0' }; }
   if (run === 'cw') return { v0: CAUSEWAY.mainlandV + 40, v1: CAUSEWAY.mainlandV + 100, front: 'v0' };
   if (run === 'ww') return { v0: WEST_WILDWOOD.v0 + 40, v1: WEST_WILDWOOD.v0 + 100, front: 'v0' };
-  const ave = AVE_V[run.slice(0, 2) as AveId];
-  if (run === 'oc-') return { v0: 8, v1: ave - STREET_HALF, front: 'v1' };
-  return run.endsWith('+') ? { v0: ave + STREET_HALF, v1: ave + STREET_HALF + 52, front: 'v0' } : { v0: ave - STREET_HALF - 52, v1: ave - STREET_HALF, front: 'v1' };
+  const id = run.slice(0, 2) as AveId;
+  const ave = aveV(id, u);
+  const lines = linesAt(u);
+  // Lots are 52 m deep, or less where the next street is close.
+  const prev = [...lines].reverse().find((x) => x < ave - 1) ?? ave - 120;
+  const next = lines.find((x) => x > ave + 1) ?? ave + 120;
+  if (run === 'oc-') return { v0: Math.min(frontV(u) + 8, ave - STREET_HALF - 20), v1: ave - STREET_HALF, front: 'v1' };
+  if (run.endsWith('+')) { const d = Math.max(20, Math.min(52, (next - ave) / 2 - STREET_HALF - 2)); return { v0: ave + STREET_HALF, v1: ave + STREET_HALF + d, front: 'v0' }; }
+  const d = Math.max(20, Math.min(52, (ave - prev) / 2 - STREET_HALF - 2));
+  return { v0: ave - STREET_HALF - d, v1: ave - STREET_HALF, front: 'v1' };
 }
 
 export type Slot = Omit<Parcel, 'key'> & { tag: string };
 
-function slotOf(zone: ZoneId, run: RunId, b: { cross: string; u0: number; u1: number }, half: 'a' | 'b' | 'w'): Slot {
-  const bd = band(run);
+function slotOf(zone: ZoneId, run: RunId, b0: { cross: string; u0: number; u1: number }, half: 'a' | 'b' | 'w'): Slot {
+  const sh = run === 'cw' ? CW_SHIFT : 0;
+  const b = { cross: b0.cross, u0: b0.u0 + sh, u1: b0.u1 + sh };
   const mid = (b.u0 + b.u1) / 2;
+  const bd = band(run, mid);
   const [u0, u1] = half === 'w' ? [b.u0, b.u1] : half === 'a' ? [b.u0, mid - 3] : [mid + 3, b.u1];
   return { tag: `${run}:${b.cross}:${half}`, zone, run, cross: b.cross, u0, u1, v0: bd.v0, v1: bd.v1, front: bd.front };
 }
 
 function pierSlot(zone: ZoneId, cross: string, k: number): Slot | undefined {
-  const p = PIERS.find((x) => x.u === CROSS_BY_NAME[cross]?.u);
+  const p = PIERS.find((x) => x.at === cross);
   if (!p) return undefined;
   const seg = p.len / 4;
-  const v1 = -20 - k * seg;
+  const v1 = boardwalkV(p.u) - 20 - k * seg;
   return { tag: `pier:${cross}:${k}`, zone, run: 'pier', cross, u0: p.u - p.w / 2 + 5, u1: p.u + p.w / 2 - 5, v0: v1 - seg + 6, v1, front: 'v0', pier: p.id };
 }
 
@@ -74,7 +104,7 @@ function pierSlot(zone: ZoneId, cross: string, k: number): Slot | undefined {
 function zoneSlots(zone: ZoneId): Slot[] {
   if (zone === 'piers') {
     const out: Slot[] = [];
-    for (const p of PIERS) for (let k = 0; k < 4; k++) { const c = CROSS.find((x) => x.u === p.u)!; out.push(pierSlot(zone, c.n, k)!); }
+    for (const p of PIERS) for (let k = 0; k < 4; k++) out.push(pierSlot(zone, p.at, k)!);
     return out;
   }
   const out: Slot[] = [];
@@ -86,17 +116,16 @@ const SEED_SLOT: Record<string, Slot> = {};
 for (const r of SEED) {
   const [id, zone, run, cross, half] = r;
   if (run === 'pier') { const s = pierSlot(zone, cross, half as number); if (s) SEED_SLOT[id] = s; continue; }
-  const i = CROSS.findIndex((c) => c.n === cross);
-  if (i < 0 || i >= CROSS.length - 1) continue;
-  SEED_SLOT[id] = slotOf(zone, run, { cross, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b' | 'w');
+  const b = blockAt(CROSS_BY_NAME[cross]);
+  if (!b) continue;
+  SEED_SLOT[id] = slotOf(zone, run, b, half as 'a' | 'b' | 'w');
 }
 
 /** A grid slot by name (a package parcel's `slot`): undefined if the street is not on the grid. */
 export function slotRect(zone: ZoneId, run: RunId, cross: string, half: 'a' | 'b' | 'w' | 0 | 1 | 2): Slot | undefined {
   if (run === 'pier') return pierSlot(zone, cross, half as number);
-  const i = CROSS.findIndex((c) => c.n === cross);
-  if (i < 0 || i >= CROSS.length - 1) return undefined;
-  return slotOf(zone, run, { cross, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b' | 'w');
+  const b = blockAt(CROSS_BY_NAME[cross]);
+  return b ? slotOf(zone, run, b, half as 'a' | 'b' | 'w') : undefined;
 }
 
 /** A package parcel placed by a point (not on a grid slot): its footprint around the point, its front toward the nearest avenue. */
@@ -108,8 +137,9 @@ export function posSlot(pc: Pick<PkgParcel, 'id' | 'zone' | 'pos' | 'footprint' 
   const d = pc.footprint?.d ?? 22;
   const [du, dv] = turned ? [d, w] : [w, d];
   let best = AVENUES[0];
-  for (const a of AVENUES) if (Math.abs(a.v - v) < Math.abs(best.v - v)) best = a;
-  const inland = v >= best.v;
+  const at = (a: typeof best) => (aveRuns(a.id, u) ? aveV(a.id, u) : Infinity);
+  for (const a of AVENUES) if (Math.abs(at(a) - v) < Math.abs(at(best) - v)) best = a;
+  const inland = v >= at(best);
   const cross = [...CROSS].reverse().find((c) => c.u <= u)?.n ?? CROSS[0].n;
   return { tag: `pos:${pc.id}`, zone: (pc.zone ?? 'downtown') as ZoneId, run: `${best.id}${inland ? '+' : '-'}` as RunId, cross, u0: u - du / 2, u1: u + du / 2, v0: v - dv / 2, v1: v + dv / 2, front: inland ? 'v0' : 'v1' };
 }
@@ -126,13 +156,12 @@ export function extraSlots(s: Pick<GameState, 'addedPlaces'>): Map<string, Slot>
   return out;
 }
 
-/** A generated record's slot, from its id (`hf.<zone>.<run>.<cross index>.<half>`). */
+/** A generated record's slot, from its id (`hf.<zone>.<run>.<street idx>.<half>`: the street's stable index, CROSS_BY_IDX). */
 function fillSlot(id: string): Slot | undefined {
   if (!id.startsWith('hf.')) return undefined;
   const [, zone, run, ci, half] = id.split('.');
-  const i = Number(ci);
-  if (!CROSS[i + 1]) return undefined;
-  return slotOf(zone as ZoneId, run as RunId, { cross: CROSS[i].n, u0: CROSS[i].u + 8, u1: CROSS[i + 1].u - 8 }, half as 'a' | 'b');
+  const b = blockAt(CROSS_BY_IDX[Number(ci)]);
+  return b ? slotOf(zone as ZoneId, run as RunId, b, half as 'a' | 'b') : undefined;
 }
 
 /** Every half-block the generated records may take (not already a 1960 seed's), in a stable order. */
@@ -142,7 +171,7 @@ export function fillCandidates(): { id: string; zone: ZoneId; p: number; uses: s
   const out: { id: string; zone: ZoneId; p: number; uses: string[] }[] = [];
   for (const f of FILL) {
     for (const b of blocksOf(f.from, f.to)) {
-      const ci = CROSS.findIndex((c) => c.n === b.cross);
+      const ci = CROSS_BY_NAME[b.cross].idx;
       for (const half of ['a', 'b'] as const) {
         const sl = slotOf(f.zone, f.run, b, half);
         if (seeded.has(sl.tag)) continue;
@@ -174,7 +203,7 @@ export function seedBlocker(seedId: string, lotIds: Iterable<string>, slot: Slot
   for (const id of lotIds) {
     if (!id.startsWith('hf.')) continue;
     const [, , run, ci, half] = id.split('.');
-    const c = CROSS[Number(ci)];
+    const c = CROSS_BY_IDX[Number(ci)];
     if (c && mine.has(`${run}:${c.n}:${half}`)) return id;
   }
   return undefined;
@@ -281,4 +310,14 @@ export function hoodBounds(s: GameState, id: HoodId): { u0: number; u1: number; 
 export function seedSlotRect(id: string): { u0: number; u1: number; v0: number; v1: number } | undefined {
   const sl = SEED_SLOT[id];
   return sl && { u0: sl.u0, u1: sl.u1, v0: sl.v0, v1: sl.v1 };
+}
+
+/**
+ * Every grid slot the package lays out (the 1960 records' and the frontage runs'), with its zone:
+ * what the district outlines are cut from (scripts/cityimport `grid`). Pure.
+ */
+export function allGridSlots(): Slot[] {
+  const out: Slot[] = Object.values(SEED_SLOT);
+  for (const z of Object.keys(ZONE_RUNS) as ZoneId[]) out.push(...zoneSlots(z));
+  return out;
 }

@@ -1,4 +1,4 @@
-import { HOODS, U_NORTH, WEST_WILDWOOD, bayEdge, beachWidth, type HoodId } from '../../engine/hoodData';
+import { HOODS, OUTLINES, U_NORTH, WEST_WILDWOOD, bayEdge, beachWidth, type HoodId } from '../../engine/hoodData';
 import { placeAll, type Parcel } from '../../engine/hoodGeo';
 import { SIDE_STYLE } from '../../engine/sides';
 import { frontsOf, warNotes } from '../../engine/army';
@@ -9,8 +9,9 @@ import { holderFromShares, type Pt, type RealmRegion } from '../realm/realmGeo';
 import { P, type Proj } from './iso';
 
 /**
- * Wildwood's political map: the island cut into its game districts (each
- * patch of land goes to the district of the nearest record standing on it),
+ * Wildwood's political map: the island cut into its game districts (their
+ * outlines on the real island, from the town package; the piers out over the
+ * water go to the district of the nearest record standing on them),
  * each held by whoever has the most influence there (s.districts), for the
  * <PoliticalOverlay>. The cut depends only on where the records stand, so it
  * is cached per placement and projection; the holders are read fresh.
@@ -26,10 +27,32 @@ function regionOfZone(zone: string): string | undefined {
   return h ? h.district ?? h.id : undefined;
 }
 
+/**
+ * The districts' outlines on the real island (the package's, traced from the
+ * municipal lines and the 1960 lots: scripts/cityimport `grid`), by region id.
+ */
+const DISTRICT_RINGS: { region: string; ring: [number, number][]; box: [number, number, number, number] }[] = HOODS.flatMap((h) =>
+  (OUTLINES[`d:${h.id}`] ?? []).map((ring) => ({ region: h.district ?? h.id, ring, box: [Math.min(...ring.map((p) => p[0])), Math.min(...ring.map((p) => p[1])), Math.max(...ring.map((p) => p[0])), Math.max(...ring.map((p) => p[1]))] as [number, number, number, number] })));
+
+function inRing(u: number, v: number, r: [number, number][]): boolean {
+  let inside = false;
+  for (let i = 0, j = r.length - 1; i < r.length; j = i++) {
+    const [ui, vi] = r[i]; const [uj, vj] = r[j];
+    if ((vi > v) !== (vj > v) && u < ((uj - ui) * (v - vi)) / (vj - vi) + ui) inside = !inside;
+  }
+  return inside;
+}
+
+/** The district (region id) whose outline holds a point, if any. */
+export function regionAt(u: number, v: number): string | undefined {
+  for (const d of DISTRICT_RINGS) if (u >= d.box[0] && u <= d.box[2] && v >= d.box[1] && v <= d.box[3] && inRing(u, v, d.ring)) return d.region;
+  return undefined;
+}
+
 const DU = 40;
 const DV = 20;
 const U0 = -700;
-const V0 = -360;
+const V0 = -700;
 
 /** 'uv' is the block map's flat frame (x = u, y = -v). */
 export type RealmFrame = Proj | 'uv';
@@ -44,7 +67,7 @@ export function wildwoodShapes(s: GameState, pr: RealmFrame): Map<string, Pt[][]
   const hit = byPr.get(pr);
   if (hit) return hit;
   const ps = [...parcels.values()].map((p) => ({ ...p, r: regionOfZone(p.zone) })).filter((p): p is Parcel & { r: string } => !!p.r);
-  const vMax = Math.max(1100, ...ps.map((p) => p.v1 + 60));
+  const vMax = Math.max(1100, ...ps.map((p) => p.v1 + 60), ...DISTRICT_RINGS.map((d) => d.box[3] + 20));
   const cols = Math.ceil((U_NORTH + 80 - U0) / DU);
   const rows = Math.ceil((vMax - V0) / DV);
   // Parcels bucketed along the island, for the nearest-record search.
@@ -69,6 +92,13 @@ export function wildwoodShapes(s: GameState, pr: RealmFrame): Map<string, Pt[][]
   const label = (i: number, j: number): string | null => {
     const u = U0 + (i + 0.5) * DU;
     const v = V0 + (j + 0.5) * DV;
+    // The districts' real outlines first; off them (the piers, out over the water) the nearest record within reach.
+    if (DISTRICT_RINGS.length) {
+      const r = regionAt(u, v);
+      if (r) return r;
+      const hit = near(u, v, 45);
+      return hit ? hit.r : null;
+    }
     if (u >= ww.u0 - 20 && u <= ww.u1 + 20 && v >= ww.v0 - 20 && v <= ww.v1 + 20) return 'westww';
     const island = u <= U_NORTH + 40 && v >= -beachWidth(Math.max(u, -700)) && v <= bayEdge(Math.max(u, -700));
     const hit = near(u, v, island ? 1e9 : 45);

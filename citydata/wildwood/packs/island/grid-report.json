@@ -1,0 +1,925 @@
+{
+ "at": "2026-10-29T03:55:58.150Z",
+ "frame": {
+  "njWays": 70,
+  "njPoints": 339,
+  "axisBearing": 46.43,
+  "alongRange": [
+   -3500,
+   3600
+  ],
+  "vertices": 66,
+  "crossSkewRmsDegByIteration": [
+   1.7,
+   0.9,
+   0.9
+  ],
+  "boardwalkWays": 2,
+  "shift": {
+   "du": -2585.8,
+   "dv": 611.5,
+   "why": "u = 0 lies 450 m south of the Crest's southernmost parcel (Diamond Beach); v = 0 is the median line of the Wildwood Boardwalk (OSM)"
+  },
+  "bearing": 46.43
+ },
+ "cross": {
+  "grid": 105,
+  "hidden": [
+   "Lake Rd",
+   "Crocker Ave"
+  ],
+  "minor": 11,
+  "legacyMatched": 72,
+  "legacyTotal": 74,
+  "new": 33
+ },
+ "avenues": [
+  {
+   "id": "ave:oc",
+   "names": {
+    "crest": "Ocean Ave",
+    "wildwood": "Ocean Ave",
+    "north": "Surf Ave"
+   },
+   "v": 75,
+   "from": 1765,
+   "to": 7627,
+   "pts": 18
+  },
+  {
+   "id": "ave:at",
+   "names": {
+    "crest": "Atlantic Ave",
+    "wildwood": "Atlantic Ave",
+    "north": "Atlantic Ave"
+   },
+   "v": 198,
+   "from": -31,
+   "to": 7626,
+   "pts": 19
+  },
+  {
+   "id": "ave:pa",
+   "names": {
+    "crest": "Pacific Ave",
+    "wildwood": "Pacific Ave",
+    "north": "Central Ave"
+   },
+   "v": 406,
+   "from": -52,
+   "to": 7852,
+   "pts": 14
+  },
+  {
+   "id": "ave:nj",
+   "names": {
+    "crest": "New Jersey Ave",
+    "wildwood": "New Jersey Ave",
+    "north": "New Jersey Ave"
+   },
+   "v": 612,
+   "from": 461,
+   "to": 7937,
+   "pts": 12
+  },
+  {
+   "id": "ave:pk",
+   "names": {
+    "crest": "Park Blvd",
+    "wildwood": "Park Blvd"
+   },
+   "v": 896,
+   "from": 2229,
+   "to": 5569,
+   "pts": 12
+  },
+  {
+   "id": "ave:bc",
+   "names": {
+    "crest": "Beach Ave"
+   },
+   "v": 1,
+   "from": 2538,
+   "to": 3466,
+   "pts": 2
+  },
+  {
+   "id": "ave:sv",
+   "names": {
+    "crest": "Seaview Ave"
+   },
+   "v": 271,
+   "from": -36,
+   "to": 3469,
+   "pts": 11
+  },
+  {
+   "id": "ave:by",
+   "names": {
+    "crest": "Bayview Ave"
+   },
+   "v": 807,
+   "from": 482,
+   "to": 1616,
+   "pts": 12
+  },
+  {
+   "id": "ave:ar",
+   "names": {
+    "wildwood": "Arctic Ave"
+   },
+   "v": 819,
+   "from": 3469,
+   "to": 4907,
+   "pts": 2
+  },
+  {
+   "id": "ave:hu",
+   "names": {
+    "wildwood": "Hudson Ave"
+   },
+   "v": 1042,
+   "from": 3469,
+   "to": 5569,
+   "pts": 3
+  },
+  {
+   "id": "ave:sq",
+   "names": {
+    "wildwood": "Susquehanna Ave"
+   },
+   "v": 1246,
+   "from": 3787,
+   "to": 5140,
+   "pts": 3
+  },
+  {
+   "id": "ave:lr",
+   "names": {
+    "wildwood": "Lake Rd"
+   },
+   "v": 1181,
+   "from": 3314,
+   "to": 3787,
+   "pts": 8
+  },
+  {
+   "id": "ave:no",
+   "names": {
+    "north": "Ocean Ave"
+   },
+   "v": -119,
+   "from": 6227,
+   "to": 7545,
+   "pts": 3
+  },
+  {
+   "id": "ave:ny",
+   "names": {
+    "north": "New York Ave",
+    "wildwood": "New York Ave"
+   },
+   "v": 786,
+   "from": 5239,
+   "to": 8035,
+   "pts": 5
+  },
+  {
+   "id": "ave:de",
+   "names": {
+    "north": "Delaware Ave"
+   },
+   "v": 959,
+   "from": 5569,
+   "to": 7874,
+   "pts": 5
+  },
+  {
+   "id": "ave:md",
+   "names": {
+    "north": "Maryland Ave"
+   },
+   "v": 1154,
+   "from": 6144,
+   "to": 8088,
+   "pts": 3
+  }
+ ],
+ "error": {
+  "streets": 72,
+  "meanBefore": 1165.8,
+  "maxBefore": 3182.8,
+  "meanAfter": 1.2,
+  "maxAfter": 16,
+  "orderInversionsBefore": 235,
+  "pairs": 2556,
+  "rows": [
+   {
+    "name": "Jefferson Ave",
+    "before": 1687.6,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Aster Rd",
+    "before": 723.2,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "St. Paul Ave",
+    "before": 1042.6,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Morning Glory Rd",
+    "before": 898.4,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Columbine Rd",
+    "before": 93.5,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Trenton Ave",
+    "before": 2013.9,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Sweet Briar Rd",
+    "before": 36.7,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Raleigh Ave",
+    "before": 2874.7,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Miami Ave",
+    "before": 1534.1,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Lotus Rd",
+    "before": 813.1,
+    "after": 0.8,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Orchid Rd",
+    "before": 1224.1,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Primrose Rd",
+    "before": 1173.3,
+    "after": 1.8,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Cardinal Rd",
+    "before": 517.4,
+    "after": 0.4,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Rochester Ave",
+    "before": 3182.8,
+    "after": 1.1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Atlanta Ave",
+    "before": 1951.5,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Myrtle Rd",
+    "before": 1521.8,
+    "after": 0.8,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Fern Rd",
+    "before": 1395,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Buttercup Rd",
+    "before": 647.4,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Toledo Ave",
+    "before": 2793.9,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Lavender Rd",
+    "before": 934.5,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Stockton Rd",
+    "before": 2352.1,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Heather Rd",
+    "before": 1217,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Rambler Rd",
+    "before": 2404.2,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Cresse Ave",
+    "before": 1143.4,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Roberts Ave",
+    "before": 285.7,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Hand Ave",
+    "before": 1033.5,
+    "after": 0.1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Bennett Ave",
+    "before": 1277.6,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Montgomery Ave",
+    "before": 735.6,
+    "after": 0.4,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Taylor Ave",
+    "before": 1153.9,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Burk Ave",
+    "before": 1092.8,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Cedar Ave",
+    "before": 359.4,
+    "after": 16,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Spicer Ave",
+    "before": 711.3,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Magnolia Ave",
+    "before": 93,
+    "after": 2.4,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Oak Ave",
+    "before": 540.4,
+    "after": 5.9,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Pine Ave",
+    "before": 537.7,
+    "after": 4.8,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Wildwood Ave",
+    "before": 655.5,
+    "after": 3.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Spencer Ave",
+    "before": 1263.1,
+    "after": 1.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Schellenger Ave",
+    "before": 1044.8,
+    "after": 11.1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Garfield Ave",
+    "before": 1301.4,
+    "after": 2.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Lincoln Ave",
+    "before": 1321.9,
+    "after": 5.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Youngs Ave",
+    "before": 1734.1,
+    "after": 0.8,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Hildreth Ave",
+    "before": 2786,
+    "after": 0.1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Rio Grande Ave",
+    "before": 2567.2,
+    "after": 2.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Davis Ave",
+    "before": 2336.5,
+    "after": 0.1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Leaming Ave",
+    "before": 2995,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "Andrews Ave",
+    "before": 2787.4,
+    "after": 0.4,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "26th Ave",
+    "before": 1324.7,
+    "after": 1.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "25th Ave",
+    "before": 1312.3,
+    "after": 1.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "24th Ave",
+    "before": 1318.2,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "23rd Ave",
+    "before": 1307.7,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "22nd Ave",
+    "before": 1347.4,
+    "after": 1.1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "21st Ave",
+    "before": 1355.6,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "20th Ave",
+    "before": 1306.6,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "19th Ave",
+    "before": 1279.2,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "18th Ave",
+    "before": 1144.1,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "17th Ave",
+    "before": 1147.1,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "16th Ave",
+    "before": 1043.9,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "15th Ave",
+    "before": 974.5,
+    "after": 0.4,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "14th Ave",
+    "before": 914,
+    "after": 0.2,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "13th Ave",
+    "before": 809.1,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "12th Ave",
+    "before": 748.2,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "11th Ave",
+    "before": 681.1,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "10th Ave",
+    "before": 644.3,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "9th Ave",
+    "before": 522.1,
+    "after": 1,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "8th Ave",
+    "before": 480.3,
+    "after": 0.7,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "7th Ave",
+    "before": 412,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "6th Ave",
+    "before": 310.3,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "5th Ave",
+    "before": 264,
+    "after": 0.3,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "4th Ave",
+    "before": 198.2,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "3rd Ave",
+    "before": 136.4,
+    "after": 0.6,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "2nd Ave",
+    "before": 104.6,
+    "after": 0.5,
+    "oldOrder": 0,
+    "newOrder": 0
+   },
+   {
+    "name": "1st Ave",
+    "before": 59.8,
+    "after": 0.4,
+    "oldOrder": 0,
+    "newOrder": 0
+   }
+  ]
+ },
+ "causeway": {
+  "mainlandU": 3131,
+  "mainlandV": 5070,
+  "path": [
+   [
+    3866,
+    600
+   ],
+   [
+    3859,
+    1600
+   ],
+   [
+    3817,
+    1800
+   ],
+   [
+    3644,
+    2100
+   ],
+   [
+    3619,
+    2300
+   ],
+   [
+    3583,
+    2400
+   ],
+   [
+    3567,
+    2500
+   ],
+   [
+    3453,
+    2800
+   ],
+   [
+    3416,
+    3000
+   ],
+   [
+    3321,
+    3300
+   ],
+   [
+    3266,
+    3700
+   ],
+   [
+    3301,
+    3900
+   ],
+   [
+    3280,
+    4200
+   ],
+   [
+    3230,
+    4400
+   ],
+   [
+    3178,
+    4700
+   ],
+   [
+    3158,
+    4900
+   ],
+   [
+    3128,
+    5000
+   ],
+   [
+    3131,
+    5070
+   ]
+  ],
+  "ways": 54,
+  "note": "the westernmost point in the download, 5070 m inland of the Boardwalk line"
+ },
+ "westww": {
+  "u0": 4994,
+  "u1": 5572,
+  "v0": 1304,
+  "v1": 2577
+ },
+ "profiles": {
+  "beach": 28,
+  "bay": 73,
+  "front": 109,
+  "uSouth": -33,
+  "uNorth": 8150,
+  "subTowns": [
+   {
+    "id": "crest",
+    "name": "Wildwood Crest",
+    "uMax": 3467
+   },
+   {
+    "id": "wildwood",
+    "name": "Wildwood",
+    "uMax": 5566
+   },
+   {
+    "id": "north",
+    "name": "North Wildwood",
+    "uMax": 1000000000
+   }
+  ]
+ },
+ "coast": {
+  "cells": 151249,
+  "used": true
+ },
+ "outlines": {
+  "land": {
+   "rings": 3,
+   "points": 738
+  },
+  "town": {
+   "rings": 1,
+   "points": 868
+  },
+  "westww": {
+   "rings": 1,
+   "points": 170
+  },
+  "isles": {
+   "rings": 0,
+   "points": 0
+  },
+  "mun:crest": {
+   "rings": 3,
+   "points": 190
+  },
+  "mun:wildwood": {
+   "rings": 1,
+   "points": 142
+  },
+  "mun:north": {
+   "rings": 1,
+   "points": 168
+  }
+ },
+ "placed": {
+  "placements": {
+   "kept-verified": 2,
+   "relative-to-verified": 4,
+   "corner": 67,
+   "street-relative": 9,
+   "address": 4
+  },
+  "parcels": {
+   "grid-slot": 71,
+   "street-relative-block": 195,
+   "street-relative": 168,
+   "address": 1
+  },
+  "queued": [
+   "sa05",
+   "bw-olympia",
+   "bw-taffy-tides",
+   "nw-lollypop",
+   "nw-lollypop-sign",
+   "at-satellite",
+   "bay-urys",
+   "oc-beach-haus",
+   "at-panorama",
+   "at-rio-grande-motel",
+   "pk-ricks"
+  ]
+ },
+ "frontage": {
+  "d:boardwalk bw": "Cresse Ave–16th Ave → Cresse Ave–16th Ave",
+  "d:pacific pa+": "Burk Ave–Rio Grande Ave → Rio Grande Ave–Poplar Ave",
+  "d:pacific pa-": "Burk Ave–Rio Grande Ave → Rio Grande Ave–Maple Ave",
+  "d:downtown nj+": "Cedar Ave–Rio Grande Ave → Rio Grande Ave–Oak Ave",
+  "d:downtown nj-": "Cedar Ave–Rio Grande Ave → Rio Grande Ave–Maple Ave",
+  "d:downtown at+": "Spicer Ave–Schellenger Ave → Spicer Ave–Schellenger Ave",
+  "d:docks pk+": "Lincoln Ave–Andrews Ave → Andrews Ave–Lincoln Ave",
+  "d:docks pk-": "Garfield Ave–Andrews Ave → Andrews Ave–Lincoln Ave",
+  "d:crest oc-": "Lake Rd–Rambler Rd → Rochester Ave–Morning Glory Rd",
+  "d:crest oc+": "Jefferson Ave–Rambler Rd → Jefferson Ave–Rambler Rd",
+  "d:crest at+": "Morning Glory Rd–Cardinal Rd → Cardinal Rd–Morning Glory Rd",
+  "d:north at+": "26th Ave–3rd Ave → 26th Ave–3rd Ave",
+  "d:north nj-": "24th Ave–5th Ave → 24th Ave–5th Ave",
+  "d:north oc+": "15th Ave–3rd Ave → 15th Ave–3rd Ave",
+  "d:causeway cw": "Pine Ave–Andrews Ave → Pine Ave–Andrews Ave",
+  "d:westww ww": "Pine Ave–Davis Ave → Oak Ave–26th Ave",
+  "fill boardwalk bw": "Roberts Ave–Andrews Ave (22 blocks, p 0.72) → Hildreth Ave–25th Ave (29 blocks, p 0.55)",
+  "fill pacific pa+": "Burk Ave–Rio Grande Ave (13 blocks, p 0.32) → Rio Grande Ave–Poplar Ave (22 blocks, p 0.19)",
+  "fill pacific pa-": "Burk Ave–Rio Grande Ave (13 blocks, p 0.28) → Rio Grande Ave–Maple Ave (19 blocks, p 0.19)",
+  "fill downtown nj+": "Cedar Ave–Rio Grande Ave (12 blocks, p 0.22) → Rio Grande Ave–Oak Ave (16 blocks, p 0.17)",
+  "fill downtown nj-": "Cedar Ave–Rio Grande Ave (12 blocks, p 0.18) → Rio Grande Ave–Maple Ave (19 blocks, p 0.11)",
+  "fill crest oc-": "Lake Rd–Rambler Rd (23 blocks, p 0.34) → Rochester Ave–Morning Glory Rd (42 blocks, p 0.19)",
+  "fill crest oc+": "Jefferson Ave–Rambler Rd (22 blocks, p 0.12) → Jefferson Ave–Rambler Rd (23 blocks, p 0.11)",
+  "fill north at+": "26th Ave–3rd Ave (23 blocks, p 0.18) → 26th Ave–3rd Ave (23 blocks, p 0.18)",
+  "fill north oc+": "15th Ave–3rd Ave (12 blocks, p 0.15) → 15th Ave–3rd Ave (12 blocks, p 0.15)",
+  "fill docks pk+": "Lincoln Ave–Andrews Ave (7 blocks, p 0.25) → Andrews Ave–Lincoln Ave (11 blocks, p 0.16)",
+  "fill causeway cw": "Pine Ave–Andrews Ave (12 blocks, p 0.3) → Pine Ave–Andrews Ave (16 blocks, p 0.22)",
+  "fill westww ww": "Pine Ave–Davis Ave (9 blocks, p 0.15) → Oak Ave–26th Ave (8 blocks, p 0.15)"
+ }
+}

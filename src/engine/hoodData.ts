@@ -5,15 +5,17 @@ import { occupantIn, occupantsOf, profileAt } from './cityPackage';
 import { WILDWOOD_PACKAGE as PKG } from '../worldpack/cities';
 
 /**
- * The island, drawn by hand (no OpenStreetMap from here): Five Mile Beach in
- * 1960 — Wildwood Crest, Wildwood and North Wildwood — as a frame of
- * avenues running along the island and cross streets running across it.
+ * The illustrated island: Five Mile Beach in 1960 — Wildwood Crest, Wildwood
+ * and North Wildwood — as a frame of avenues running along the island and
+ * cross streets running across it.
  *
  * Coordinates are meters in the island's own frame: `u` runs along the island
- * from the Crest's south end (0) to Hereford Inlet (~7500); `v` runs inland
- * from the Boardwalk line (0) toward the bay, negative out over the beach.
- * The street ORDER and spacing are authored from memory and approximate;
- * the avenue order (Ocean, Atlantic, Pacific, New Jersey, Park) is right.
+ * from Diamond Beach (0) to Hereford Inlet (~8000); `v` runs inland from the
+ * Wildwood Boardwalk line (0) toward the bay, negative out over the beach.
+ * The frame follows the island (a smoothed New Jersey Avenue, its cross
+ * direction leaning with the streets), and the street order, spacing, the
+ * avenues' courses and the island's outline are measured from OpenStreetMap
+ * (scripts/cityimport, `cli.ts grid`); today's grid, assumed for 1960.
  *
  * Everything here is small, static data (it ships inside the single-file
  * build). The neighborhood records themselves are ordinary lots in
@@ -28,36 +30,95 @@ import { WILDWOOD_PACKAGE as PKG } from '../worldpack/cities';
 
 export type Town = 'crest' | 'wildwood' | 'north';
 
-export interface CrossStreet { n: string; u: number; town: Town }
+export interface CrossStreet {
+  n: string;
+  u: number;
+  town: Town;
+  /** What the map prints (n is the key; it differs where a name repeats, "Pine Ave (North Wildwood)"). */
+  label: string;
+  /** Stable index (generated lot ids encode it; never renumbered). */
+  idx: number;
+  /** Where it runs across the island (v from, to); undefined for a hidden street. */
+  vRange?: [number, number];
+  /** A street of the old grid the sources do not show: kept for its records, not drawn. */
+  hidden?: boolean;
+}
 
-export const CROSS: CrossStreet[] = PKG.streets.filter((x) => x.kind === 'cross').map((x) => ({ n: x.name, u: x.u!, town: x.sub as Town }));
+/** The cross streets in their real order along the island (south to north), measured from OpenStreetMap. */
+export const CROSS: CrossStreet[] = PKG.streets.filter((x) => x.kind === 'cross').map((x, i) => {
+  const c: CrossStreet = { n: x.name, u: x.u!, town: x.sub as Town, label: x.label ?? x.name, idx: x.idx ?? i };
+  if (x.vRange) c.vRange = x.vRange;
+  if (x.hidden) c.hidden = true;
+  return c;
+}).sort((a, b) => a.u - b.u);
 export const CROSS_BY_NAME: Record<string, CrossStreet> = Object.fromEntries(CROSS.map((c) => [c.n, c]));
+export const CROSS_BY_IDX: Record<number, CrossStreet> = Object.fromEntries(CROSS.map((c) => [c.idx, c]));
 export const crossU = (n: string): number => CROSS_BY_NAME[n]?.u ?? 0;
+/** The street after this one along the island (north), hidden ones included. */
+export function nextCross(c: CrossStreet): CrossStreet | undefined {
+  const i = CROSS.indexOf(c);
+  return i >= 0 ? CROSS[i + 1] : undefined;
+}
 
 /** The island's ends (land tapers off past these). */
 export const U_SOUTH = PKG.geography.uSouth!;
 export const U_NORTH = PKG.geography.uNorth!;
+/** The view's extent in the frame. */
+export const ISLAND_BOUNDS = PKG.geography.bounds!;
+/** The frame's mean bearing (degrees east of north of +u): the island is drawn turned to it. */
+export const ISLAND_BEARING = PKG.geography.frame?.bearing ?? 35;
 
 /** Avenues: distance inland from the Boardwalk line, and their names by town. */
-export type AveId = 'oc' | 'at' | 'pa' | 'nj' | 'pk';
-export const AVENUES: { id: AveId; v: number; names: Partial<Record<Town, string>>; from?: number; to?: number }[] = PKG.streets.filter((x) => x.kind === 'avenue').map((x) => {
-  const a: { id: AveId; v: number; names: Partial<Record<Town, string>>; from?: number; to?: number } = { id: x.id.slice(4) as AveId, v: x.v!, names: x.names as Partial<Record<Town, string>> };
+export type AveId = 'oc' | 'at' | 'pa' | 'nj' | 'pk' | 'bc' | 'sv' | 'by' | 'ar' | 'hu' | 'sq' | 'lr' | 'no' | 'ny' | 'de' | 'md';
+export const AVENUES: { id: AveId; v: number; names: Partial<Record<Town, string>>; from?: number; to?: number; path?: [number, number][] }[] = PKG.streets.filter((x) => x.kind === 'avenue').map((x) => {
+  const a: { id: AveId; v: number; names: Partial<Record<Town, string>>; from?: number; to?: number; path?: [number, number][] } = { id: x.id.slice(4) as AveId, v: x.v!, names: x.names as Partial<Record<Town, string>> };
   if (x.from !== undefined) a.from = x.from as number;
   if (x.to !== undefined) a.to = x.to as number;
+  if (x.path) a.path = x.path;
   return a;
 });
+/** Each avenue's typical distance inland (its median; `aveV` gives it where it is). */
 export const AVE_V: Record<AveId, number> = Object.fromEntries(AVENUES.map((a) => [a.id, a.v])) as Record<AveId, number>;
+
+function along(pts: [number, number][], u: number): number {
+  if (u <= pts[0][0]) return pts[0][1];
+  for (let i = 1; i < pts.length; i++) if (u <= pts[i][0]) { const a = pts[i - 1]; const b = pts[i]; return a[1] + ((u - a[0]) / (b[0] - a[0] || 1)) * (b[1] - a[1]); }
+  return pts[pts.length - 1][1];
+}
+
+/** Where an avenue runs at u (its real course; its median where it has none, or beyond its ends). */
+export function aveV(id: AveId, u: number): number {
+  const a = AVENUES.find((x) => x.id === id);
+  if (!a) return 0;
+  return a.path ? along(a.path, u) : a.v;
+}
+/** Whether an avenue runs at u. */
+export function aveRuns(id: AveId, u: number): boolean {
+  const a = AVENUES.find((x) => x.id === id);
+  return !!a && (a.from === undefined || u >= a.from - 20) && (a.to === undefined || u <= a.to + 20);
+}
 
 const SUBTOWNS = PKG.geography.subTowns!;
 export function townAt(u: number): Town {
   return (SUBTOWNS.find((t) => u < t.uMax) ?? SUBTOWNS[SUBTOWNS.length - 1]).id as Town;
 }
+/** Where each town runs along the island ([from, to] in u). */
+export const TOWN_SPANS: Record<Town, [number, number]> = (() => {
+  const o = {} as Record<Town, [number, number]>;
+  let lo = U_SOUTH;
+  for (const t of SUBTOWNS) { o[t.id as Town] = [lo, Math.min(t.uMax, U_NORTH)]; lo = t.uMax; }
+  return o;
+})();
 
-/** The Boardwalk: Cresse Avenue to 16th Avenue, 1960. */
+/** The Boardwalk: Cresse Avenue to 16th Avenue, 1960, on its real course (`path`: its inland edge). */
 const BW = PKG.streets.find((x) => x.kind === 'boardwalk')!;
-export const BOARDWALK = { from: crossU(BW.from as string), to: crossU(BW.to as string), w: BW.width! };
+export const BOARDWALK = { from: crossU(BW.from as string), to: crossU(BW.to as string), w: BW.width!, path: BW.path };
+/** The Boardwalk's line at u (v of its inland edge; 0 where it has no course). */
+export function boardwalkV(u: number): number {
+  return BOARDWALK.path ? along(BOARDWALK.path, u) : 0;
+}
 
-/** How far the beach runs out (to the waterline) — wide at the Crest, thin at the north end. */
+/** How far the beach runs out (to the waterline) from the Boardwalk line (v = 0). */
 export function beachWidth(u: number): number {
   return profileAt(PKG.geography.profiles!.beach, u);
 }
@@ -67,11 +128,20 @@ export function bayEdge(u: number): number {
   return profileAt(PKG.geography.profiles!.bay, u);
 }
 
+/** The town's seaward edge (the Boardwalk, or the oceanfront lots' line): the beach lies beyond it. */
+export function frontV(u: number): number {
+  const f = PKG.geography.profiles!.front;
+  return f ? profileAt(f, u) : 0;
+}
+
+/** Traced outlines of the island (land, the town without its beach, West Wildwood, the towns): rings of [u, v]. */
+export const OUTLINES: Record<string, [number, number][][]> = PKG.geography.outlines ?? {};
+
 /* ---------------- piers & landmarks ---------------- */
 
-export interface Pier { id: string; name: string; u: number; w: number; len: number; sign: SignColor }
-/** The amusement piers of 1960 (positions approximate). */
-export const PIERS: Pier[] = PKG.landmarks.filter((l) => l.kind === 'pier').map((l) => ({ id: l.id.slice(5), name: l.name, u: l.pos!.u, w: l.size!.w, len: l.size!.d, sign: l.sign as SignColor }));
+export interface Pier { id: string; name: string; u: number; w: number; len: number; sign: SignColor; at: string }
+/** The amusement piers of 1960 (Hunt's Pier at its sourced point; the others at the streets the game gives them). `at` names their deck slots. */
+export const PIERS: Pier[] = PKG.landmarks.filter((l) => l.kind === 'pier').map((l) => ({ id: l.id.slice(5), name: l.name, u: l.pos!.u, w: l.size!.w, len: l.size!.d, sign: l.sign as SignColor, at: l.atStreet ?? CROSS.reduce((b, c) => (Math.abs(c.u - l.pos!.u) < Math.abs(b.u - l.pos!.u) ? c : b)).n }));
 
 /** Places on the island that are part of the ground, not property (no record). */
 export const LANDMARKS: { n: string; u: number; v: number; kind: 'lighthouse' | 'harbor' | 'lake' | 'tower' }[] = PKG.landmarks
@@ -80,7 +150,7 @@ export const LANDMARKS: { n: string; u: number; v: number; kind: 'lighthouse' | 
 
 /** The Rio Grande Avenue causeway: from the island's bay edge over the marsh to the mainland. */
 const CW = PKG.routes.find((r) => r.kind === 'causeway')!;
-export const CAUSEWAY = { u: crossU(CW.atStreet!), mainlandV: CW.mainlandV! };
+export const CAUSEWAY = { u: crossU(CW.atStreet!), mainlandV: CW.mainlandV!, mainlandU: CW.mainlandU ?? crossU(CW.atStreet!), path: CW.path };
 /** West Wildwood: the little island in the back bay. */
 const WWA = PKG.geography.areas!.find((a) => a.id === 'westww')!;
 export const WEST_WILDWOOD = { u0: WWA.u0, u1: WWA.u1, v0: WWA.v0, v1: WWA.v1 };

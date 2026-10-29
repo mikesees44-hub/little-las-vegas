@@ -15,6 +15,7 @@ import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
 import { ensureHood } from './hoodState';
 import { SEED } from './hoodData';
+import { migrateIslandGrid } from './legacyGrid';
 import { migrateTowns } from './towns';
 import { ensureMissions } from './missions';
 import { ensureTalks } from './talks';
@@ -65,6 +66,8 @@ export function upgradeSave(s: GameState): GameState {
   try { migrateVice(s); } catch { /* nothing to move */ }
   // Towns away from home: merge a corrected package by stable ids (ownership and debts untouched).
   if (s.towns) try { migrateTowns(s); } catch { /* the weekly update will try again */ }
+  // Places added on the old (memory) Wildwood grid move onto the real one, by their streets (once; ids unchanged).
+  try { migrateIslandGrid(s); } catch { /* left where they were */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }

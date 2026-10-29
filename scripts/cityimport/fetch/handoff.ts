@@ -40,8 +40,8 @@ export function ingestHandoff(city: CityConfig, area: ImportArea, from: string, 
           sourceId: 'osm', areaId: area.id, title: `OpenStreetMap API 0.6 map call, ${area.name}`,
           url: `https://api.openstreetmap.org/api/0.6/map.json?bbox=${b.minlon},${b.minlat},${b.maxlon},${b.maxlat}`,
           request: { generator: j.generator, version: j.version }, license: osm.license, attribution: osm.attribution,
-          downloadedAt: mtime, coverage: { bbox: [b.minlon, b.minlat, b.maxlon, b.maxlat] },
-          notes: [`Hand-off file ${name}. Download date taken from the hand-off file's timestamp.`, 'The map call returns every node of every way touching the box, so ways run past its edges.'],
+          downloadedAt: String(j.downloaded ?? mtime), coverage: { bbox: [b.minlon, b.minlat, b.maxlon, b.maxlat] },
+          notes: [`Hand-off file ${name}. Download date from the document's 'downloaded' field, else the hand-off file's timestamp.`, 'The map call returns every node of every way touching the box, so ways run past its edges.'],
         });
       } else if (Array.isArray(j.features) && JSON.stringify((j.features as { properties?: object }[])[0]?.properties ?? {}).includes('PAMS_PIN')) {
         const feats = j.features as { properties: Record<string, unknown> }[];

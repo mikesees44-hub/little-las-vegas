@@ -1,6 +1,6 @@
 import type { BuildStyle, SignColor } from './design';
 import type { Lot } from './econState';
-import { CROSS } from './hoodData';
+import { CROSS, CROSS_BY_IDX } from './hoodData';
 import { ADJ, FIRSTNAMES, HOOD_IDS, HOODS, MOTEL_NAMES, NOUN, SEED, SURNAMES, type HoodId } from './hoodData';
 import { fillCandidates, seedBlocked } from './hoodGeo';
 import { chance, pick, randInt } from './rng';
@@ -97,8 +97,9 @@ function addressOf(id: string): string {
   const [, , run, ci, half] = id.split('.');
   const i = Number(ci);
   const ave = AVE_NAME[run.slice(0, 2)] ?? 'the Boardwalk';
-  if (run === 'bw') return `Boardwalk at ${CROSS[i]?.n ?? ''}`;
-  return `${(i + 1) * 100 + (half === 'b' ? 51 : 1) + (run.endsWith('-') ? 1 : 0)} ${ave}`;
+  if (run === 'bw') return `Boardwalk at ${CROSS_BY_IDX[i]?.label ?? ''}`;
+  const k = CROSS_BY_IDX[i] ? CROSS.indexOf(CROSS_BY_IDX[i]) : i;
+  return `${((k % 80) + 1) * 100 + (half === 'b' ? 51 : 1) + (run.endsWith('-') ? 1 : 0)} ${ave}`;
 }
 
 function seedLot(s: GameState, i: number): Lot {

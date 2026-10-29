@@ -110,7 +110,9 @@ describe('Wildwood through the package', () => {
   // Captured from the pre-package modules (master 5b2fd0a) before the data moved:
   // what hoodData, placesGeo and walkStretches export, hashed key-order-free.
   // If the Wildwood data is changed on purpose, re-capture these.
-  const GOLDEN = { data: '42edaf0f', places: 'c725a01e', stretches: '64c18575' };
+  // Re-captured 2026-10-29: the street grid, the avenues, the outline and the places were re-derived
+  // from OpenStreetMap (scripts/cityimport `grid`); was { data: '42edaf0f', places: 'c725a01e' }.
+  const GOLDEN = { data: 'df05ffe3', places: '50108518', stretches: '64c18575' };
 
   it('the adapters export exactly the old hand data', () => {
     const samples = Array.from({ length: 80 }, (_, i) => i * 100);

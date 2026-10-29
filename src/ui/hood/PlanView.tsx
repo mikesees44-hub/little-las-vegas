@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AVENUES, AVE_V, BOARDWALK, CROSS, PIERS, bayEdge, beachWidth, townAt } from '../../engine/hoodData';
-import { applyPlaceEdits, lngLatToUv, placesGeoJson, placesIn, uvToLngLat, type PlaceEdit, type PlaceFeature } from '../../engine/placesGeo';
+import { extraSlots } from '../../engine/hoodGeo';
+import { AVENUES, BOARDWALK, CROSS, PIERS, RES_SEED, aveRuns, aveV, bayEdge, beachWidth, boardwalkV, frontV, townAt } from '../../engine/hoodData';
+import { PLACES as PLACES_ALL, applyPlaceEdits, lngLatToUv, placesGeoJson, placesIn, uvToLngLat, type PlaceEdit, type PlaceFeature } from '../../engine/placesGeo';
 import { rivalName } from '../../engine/construction';
 import type { GameState } from '../../engine/types';
 import { OWNER_COLOR } from '../map/lotIcons';
@@ -27,26 +28,41 @@ import { wildwoodDetails, wildwoodHeat, wildwoodRackets, wildwoodRegions, wildwo
  * details; "Edit map" lets you move, turn and resize buildings, save the
  * corrections in this browser and copy them to the clipboard as GeoJSON (no download links: the published page cannot follow them).
  *
- * The areas, block by block from the first one (the Boardwalk around Hunt's
- * Pier): the Pacific Avenue clubs round Taylor Avenue, the Boardwalk north
- * into North Wildwood, North Wildwood's City Hall and the Hereford Inlet
- * Light, and the Crest motels on Atlantic Avenue.
+ * The areas cover the island south to north (makeAreas), the Boardwalk
+ * around Hunt's Pier first.
  */
 
 export interface PlanArea { id: string; name: string; u0: number; u1: number; v0: number; v1: number }
-export const PLAN_AREAS: PlanArea[] = [
-  { id: 'hunts', name: 'The Boardwalk around Hunt\'s Pier', u0: 3500, u1: 4170, v0: -270, v1: 420 },
-  { id: 'taylor', name: 'Pacific Ave clubs, churches, the high school', u0: 2990, u1: 3600, v0: -40, v1: 560 },
-  { id: 'rio', name: 'Rio Grande Ave: the Starlux', u0: 4420, u1: 4800, v0: -140, v1: 300 },
-  { id: 'bwnorth', name: 'The Boardwalk north to 23rd Ave', u0: 4560, u1: 5460, v0: -220, v1: 300 },
-  { id: 'nw', name: 'North Wildwood: City Hall to Hereford Inlet', u0: 6440, u1: 7360, v0: -120, v1: 520 },
-  { id: 'crest', name: 'The Crest: the motels', u0: 1790, u1: 2400, v0: -120, v1: 300 },
-  { id: 'nwboard', name: 'The Boardwalk, 23rd to 16th Ave', u0: 5340, u1: 5990, v0: -160, v1: 280 },
-  { id: 'bay', name: 'The bayfront: Otten\'s Harbor to the causeway', u0: 4330, u1: 4700, v0: 360, v1: 800 },
-  { id: 'homes', name: 'Wildwood\'s houses: Oak Ave to Schellenger', u0: 3720, u1: 4180, v0: 60, v1: 640 },
-  { id: 'crestsouth', name: 'The Crest\'s south end: empty lots', u0: 240, u1: 900, v0: 120, v1: 520 },
-  { id: 'nwhomes', name: 'North Wildwood\'s houses: 26th to 20th Ave', u0: 5080, u1: 5640, v0: 40, v1: 620 },
-];
+/**
+ * The areas, laid out on the real grid: the island's places and house lots
+ * taken south to north in windows of at most 700 m along the island, each
+ * named by the streets at its ends (the Boardwalk around Hunt's Pier first).
+ */
+function makeAreas(): PlanArea[] {
+  const pts: { u: number; v: number; id: string }[] = PLACES_ALL.map((f) => { const [u, v] = lngLatToUv(f.geometry.coordinates); return { u, v, id: f.id }; });
+  const ex = extraSlots({});
+  for (const r of RES_SEED) { const sl = ex.get(r.id); if (sl) pts.push({ u: (sl.u0 + sl.u1) / 2, v: (sl.v0 + sl.v1) / 2, id: r.id }); }
+  pts.sort((a, b) => a.u - b.u);
+  const streetAt = (u: number) => CROSS.filter((c) => !c.hidden).reduce((b, c) => (Math.abs(c.u - u) < Math.abs(b.u - u) ? c : b)).label;
+  const out: PlanArea[] = [];
+  for (let i = 0; i < pts.length;) {
+    const start = pts[i].u;
+    const win: typeof pts = [];
+    while (i < pts.length && pts[i].u <= start + 700) win.push(pts[i++]);
+    // A lone place at the end of the island joins the window before it.
+    if (i >= pts.length && win.length < 2 && out.length) { const prev = out.pop()!; win.push({ u: prev.u0 + 50, v: prev.v0 + 60, id: '' }, { u: prev.u1 - 50, v: prev.v1 - 60, id: '' }); }
+    const us = win.map((p) => p.u); const vs = win.map((p) => p.v);
+    let v0 = Math.min(...vs) - 60; let v1 = Math.max(...vs) + 60;
+    if (v1 - v0 < 320) { const m = (v0 + v1) / 2; v0 = m - 160; v1 = m + 160; }
+    const u0 = Math.round(Math.min(...us) - 50); const u1 = Math.round(Math.max(...us, Math.min(...us) + 300) + 50);
+    const hunts = win.some((p) => p.id === 'hunts-pier');
+    const a = streetAt(u0 + 50); const b = streetAt(u1 - 50);
+    out.push({ id: hunts ? 'hunts' : `a-${a.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, name: hunts ? 'The Boardwalk around Hunt\'s Pier' : `${townName(townAt((u0 + u1) / 2))}: ${a === b ? a : `${a} to ${b}`}`, u0, u1, v0: Math.round(v0), v1: Math.round(v1) });
+  }
+  return out.sort((x, y) => (x.id === 'hunts' ? -1 : y.id === 'hunts' ? 1 : 0));
+}
+const townName = (t: string) => (t === 'crest' ? 'The Crest' : t === 'north' ? 'North Wildwood' : 'Wildwood');
+export const PLAN_AREAS: PlanArea[] = makeAreas();
 const AREA_KEY = 'llv-place-area';
 function loadArea(): PlanArea {
   try { const id = localStorage.getItem(AREA_KEY); return PLAN_AREAS.find((a) => a.id === id) ?? PLAN_AREAS[0]; } catch { return PLAN_AREAS[0]; }
@@ -164,11 +180,16 @@ function Footprint({ p, sel, edit, color, label, photo, dot, dotR, hs, onDown }:
 
 function Ground({ year, A }: { year: number; A: PlanArea }) {
   const { u0, u1, v0, v1 } = A;
-  const cross = CROSS.filter((c) => c.u > u0 - 20 && c.u < u1 + 20);
-  const shore = -16 - beachWidth((u0 + u1) / 2);
+  const um = (u0 + u1) / 2;
+  const cross = CROSS.filter((c) => !c.hidden && c.u > u0 - 20 && c.u < u1 + 20);
+  // The town's front here: the Boardwalk's inland edge where the boards run, else the oceanfront lots' line (y = -v).
+  const onBoards = um >= BOARDWALK.from && um <= BOARDWALK.to;
+  const fr = onBoards ? boardwalkV(um) : frontV(um);
+  const sea = beachWidth(um);
   const piers = PIERS.filter((p) => p.u > u0 - 60 && p.u < u1 + 60 && (p.id !== 'hunts' || year >= 1957));
-  const town = townAt((u0 + u1) / 2);
-  const aves = AVENUES.filter((a) => a.v < v1 + 40 && (a.from === undefined || (u1 > a.from && u0 < (a.to ?? 1e9)))).map((a) => ({ id: a.id, v: AVE_V[a.id], n: a.names[town] ?? a.names.wildwood ?? '' }));
+  const town = townAt(um);
+  const aves = AVENUES.filter((a) => aveRuns(a.id, um) && aveV(a.id, um) < v1 + 40).map((a) => ({ id: a.id, v: aveV(a.id, um), n: a.names[town] ?? a.names.wildwood ?? '' }));
+  const ocV = aves.length ? Math.min(...aves.map((a) => a.v)) : fr + 90;
   const bw0 = Math.max(u0 - 400, BOARDWALK.from);
   const bw1 = Math.min(u1 + 400, BOARDWALK.to);
   return (
@@ -180,13 +201,13 @@ function Ground({ year, A }: { year: number; A: PlanArea }) {
       </defs>
       <rect x={u0 - 400} y={-v1 - 400} width={u1 - u0 + 800} height={v1 - v0 + 800} fill="#d9d2bf" />
       {/* Lots ground, ocean, beach. */}
-      <rect x={u0 - 400} y={-shore} width={u1 - u0 + 800} height={600} fill="url(#plan-sea)" />
-      <rect x={u0 - 400} y={16} width={u1 - u0 + 800} height={-shore - 16} fill="#ecd9a6" />
-      <path d={`M${u0 - 400} ${-shore}H${u1 + 400}`} stroke="#ffffff" strokeOpacity="0.6" strokeWidth="2" />
+      <rect x={u0 - 400} y={sea} width={u1 - u0 + 800} height={900} fill="url(#plan-sea)" />
+      <rect x={u0 - 400} y={-fr + (onBoards ? 16 : 0)} width={u1 - u0 + 800} height={Math.max(0, sea + fr - (onBoards ? 16 : 0))} fill="#ecd9a6" />
+      <path d={`M${u0 - 400} ${sea}H${u1 + 400}`} stroke="#ffffff" strokeOpacity="0.6" strokeWidth="2" />
       {/* Piers out over the beach and the water. */}
-      {piers.map((p) => <rect key={p.id} x={p.u - p.w / 2} y={16} width={p.w} height={p.len} fill="url(#plan-deck)" stroke="#5e4128" strokeWidth="0.8" />)}
+      {piers.map((p) => <rect key={p.id} x={p.u - p.w / 2} y={-boardwalkV(p.u) + 16} width={p.w} height={p.len} fill="url(#plan-deck)" stroke="#5e4128" strokeWidth="0.8" />)}
       {/* The Boardwalk. */}
-      {bw1 > bw0 && <rect x={bw0} y={0} width={bw1 - bw0} height={16} fill="url(#plan-planks)" stroke="#5e4128" strokeWidth="0.6" />}
+      {bw1 > bw0 && <rect x={bw0} y={-fr} width={bw1 - bw0} height={16} fill="url(#plan-planks)" stroke="#5e4128" strokeWidth="0.6" />}
       {/* Avenues: sidewalk, curb, asphalt, center line. */}
       {aves.map((a) => (
         <g key={a.id}>
@@ -198,18 +219,18 @@ function Ground({ year, A }: { year: number; A: PlanArea }) {
       {/* Cross streets, with their sidewalks, down to the boards. */}
       {cross.map((c) => (
         <g key={c.n}>
-          <rect x={c.u - 8} y={-v1 - 400} width={16} height={v1 + 400} fill="#cfcac0" />
-          <rect x={c.u - 5} y={-v1 - 400} width={10} height={v1 + 400} fill="#4a4a50" />
+          <rect x={c.u - 8} y={-(c.vRange?.[1] ?? v1 + 400)} width={16} height={(c.vRange?.[1] ?? v1 + 400) - Math.max(fr, c.vRange?.[0] ?? fr)} fill="#cfcac0" />
+          <rect x={c.u - 5} y={-(c.vRange?.[1] ?? v1 + 400)} width={10} height={(c.vRange?.[1] ?? v1 + 400) - Math.max(fr, c.vRange?.[0] ?? fr)} fill="#4a4a50" />
           {aves.map((a) => <rect key={a.id} x={c.u - 5} y={-a.v - 6} width={10} height={12} fill="#4a4a50" />)}
         </g>
       ))}
       {/* The back bay, past the island's inland edge. */}
       {v1 + 400 > 500 && <path d={`M${u0 - 400} ${-v1 - 400}${Array.from({ length: Math.ceil((u1 - u0 + 800) / 20) + 1 }, (_, i) => { const u = u0 - 400 + i * 20; return `L${u} ${-bayEdge(u)}`; }).join('')}L${u1 + 400} ${-v1 - 400}Z`} fill="url(#plan-sea)" data-testid="plan-bay" />}
       {/* Names. */}
-      {cross.map((c) => <text key={`t-${c.n}`} x={c.u} y={-AVE_V.oc - 30} transform={`rotate(-90 ${c.u} ${-AVE_V.oc - 30})`} fontSize="5.5" fill="#fffaf0" fontWeight="700" textAnchor="middle" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{c.n}</text>)}
+      {cross.map((c) => <text key={`t-${c.n}`} x={c.u} y={-ocV - 30} transform={`rotate(-90 ${c.u} ${-ocV - 30})`} fontSize="5.5" fill="#fffaf0" fontWeight="700" textAnchor="middle" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{c.label}</text>)}
       {aves.map((a) => <text key={`t-${a.id}`} x={u0 + 6} y={-a.v + 2} fontSize="5.5" fill="#fffaf0" fontWeight="700" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>{a.n}</text>)}
-      {bw1 > bw0 && <text x={Math.max(u0, bw0) + 6} y={11} fontSize="5.5" fill="#3a2414" fontWeight="800" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>THE BOARDWALK</text>}
-      <text x={u0 + 6} y={-shore + 22} fontSize="8" fill="#cfe9f5" fontStyle="italic" style={{ fontFamily: 'Georgia, serif' }}>Atlantic Ocean</text>
+      {bw1 > bw0 && <text x={Math.max(u0, bw0) + 6} y={-fr + 11} fontSize="5.5" fill="#3a2414" fontWeight="800" style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>THE BOARDWALK</text>}
+      <text x={u0 + 6} y={sea + 22} fontSize="8" fill="#cfe9f5" fontStyle="italic" style={{ fontFamily: 'Georgia, serif' }}>Atlantic Ocean</text>
     </g>
   );
 }

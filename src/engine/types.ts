@@ -917,6 +917,8 @@ export interface GameState {
   towns?: Record<string, TownState>;
   /** Places added from the town editor's "Add a Place" into this game, by stable id (addPlace.ts; optional for old saves). */
   addedPlaces?: import('./addPlace').AddedPlaces;
+  /** Which Wildwood street grid the save's own positions (addedPlaces) are on: 2 = the real one (2026-10-29); missing = the old memory grid. */
+  islandGrid?: number;
   /** The living neighborhood: townsfolk, households, businesses, debts, the world-event ledger, causal stories (livingState.ts; optional for old saves). */
   living?: import('./livingState').LivingState;
   /** The town's houses: families saving, buying lots, building, moving in (housing.ts; optional for old saves). */

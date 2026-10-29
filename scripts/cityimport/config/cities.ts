@@ -128,10 +128,10 @@ export const WILDWOOD: CityConfig = {
     {
       id: 'island',
       name: 'Five Mile Beach: Wildwood Crest, Wildwood, North Wildwood, West Wildwood',
-      bbox: [-74.865, 38.955, -74.775, 39.015],
-      // NJ municipality codes (Cape May County 05xx). 0507 and 0514 are confirmed by the test download; 0513 and 0515 are from the NJ code list and should be confirmed on the first full fetch.
+      bbox: [-74.865, 38.945, -74.775, 39.015],
+      // NJ municipality codes (Cape May County 05xx), confirmed by the island download (2026-10-29): 0507 North Wildwood, 0513 West Wildwood, 0514 Wildwood, 0515 Wildwood Crest.
       municipalities: ['0507', '0513', '0514', '0515'],
-      note: 'Not imported yet: run after the test area is accepted.',
+      note: 'Imported 2026-10-29 from a browser hand-off (OSM API map.json, 36 tiles merged; NJOGIS parcels by PCL_MUN). The raw files (35 MB) are kept out of git: restore them with `handoff --area island --from <cache>`; their sha256 is in the manifest.',
     },
   ],
   sources: [OSM, NJGIN_PARCELS, NJGIN_AERIALS, LOC_SANBORN, LOC_DIRECTORIES],

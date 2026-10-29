@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AVENUES, CROSS, U_NORTH, U_SOUTH, bayEdge, beachWidth, townAt } from '../../engine/hoodData';
+import { AVENUES, CROSS, OUTLINES, U_NORTH, U_SOUTH, aveV, bayEdge, beachWidth, townAt } from '../../engine/hoodData';
 import {
   assignImportedOccupant, boxOf, centerOf, drawClass, editorOverride, insideFlat, layerForYear, unflat, walkToEntrance,
   type HistOverride, type HistOverridesFile, type ImportedLayer, type ShowMode, type ViewBuilding, type ViewBusiness,
@@ -92,7 +92,7 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
   }, [ent, selB, block, layer, B]);
 
   const zoomTo = (u0: number, v0: number, u1: number, v1: number, pad = 0.15) => setVb(vbOf(u0, v0, u1, v1, pad));
-  const goIsland = () => { setLevel('island'); setSel(undefined); setBlockId(undefined); setEntrance(undefined); zoomTo(U_SOUTH, -250, U_NORTH, 1100, 0.02); };
+  const goIsland = () => { setLevel('island'); setSel(undefined); setBlockId(undefined); setEntrance(undefined); zoomTo(U_SOUTH, -600, U_NORTH, 1700, 0.02); };
   const goArea = () => { setLevel('area'); setSel(undefined); setBlockId(undefined); setEntrance(undefined); zoomTo(B.u0, B.v0, B.u1, B.v1); };
   const goBlock = (id: string) => { const b = layer.blocks.find((x) => x.id === id); if (!b) return; setBlockId(id); setLevel('block'); setEntrance(undefined); const [u0, v0, u1, v1] = boxOf(b.pts); zoomTo(u0, v0, u1, v1, 0.2); };
   const pickBuilding = (b: ViewBuilding) => {
@@ -180,7 +180,7 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
       } catch { /* the text box below has it */ }
     })();
   };
-  const gameCross = CROSS.filter((c) => c.u > vb.x - 50 && c.u < vb.x + vb.w + 50);
+  const gameCross = CROSS.filter((c) => !c.hidden && c.u > vb.x - 50 && c.u < vb.x + vb.w + 50);
   const occupant = selB ? s.importedOccupants?.[selB.id] : undefined;
 
   return (
@@ -190,12 +190,12 @@ function ImportedMap({ s, layer, onClose, update }: { s: GameState; layer: Impor
           <pattern id="iv-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" fill="#d9d2bf" /><line x1="0" y1="0" x2="0" y2="3" stroke="#8d8576" strokeWidth="1.1" /></pattern>
         </defs>
         {/* The island (the game's frame): land between the beach and the bay. */}
-        <path d={`M${U_SOUTH} ${-bayEdge(U_SOUTH)}${Array.from({ length: 80 }, (_, i) => { const u = U_SOUTH + ((U_NORTH - U_SOUTH) * i) / 79; return `L${u} ${-bayEdge(u)}`; }).join('')}${Array.from({ length: 80 }, (_, i) => { const u = U_NORTH - ((U_NORTH - U_SOUTH) * i) / 79; return `L${u} ${16 + beachWidth(u)}`; }).join('')}Z`} fill="#d9d2bf" data-testid="iv-island" />
+        <path d={OUTLINES.land?.length ? [...OUTLINES.land, ...(OUTLINES.westww ?? [])].map((r) => `M${r.map(([u, v]) => `${u} ${-v}`).join('L')}Z`).join('') : `M${U_SOUTH} ${-bayEdge(U_SOUTH)}${Array.from({ length: 80 }, (_, i) => { const u = U_SOUTH + ((U_NORTH - U_SOUTH) * i) / 79; return `L${u} ${-bayEdge(u)}`; }).join('')}${Array.from({ length: 80 }, (_, i) => { const u = U_NORTH - ((U_NORTH - U_SOUTH) * i) / 79; return `L${u} ${beachWidth(u)}`; }).join('')}Z`} fill="#d9d2bf" fillRule="evenodd" data-testid="iv-island" />
         {showGame && <g data-testid="iv-game-streets" pointerEvents="none">
-          {gameCross.map((c) => <line key={c.n} x1={c.u} y1={0} x2={c.u} y2={-bayEdge(c.u)} stroke="#c0392b" strokeOpacity="0.45" strokeWidth={Math.max(1.5 * hs, 0.6)} strokeDasharray={`${6 * hs} ${4 * hs}`} />)}
-          {AVENUES.map((a) => <line key={a.id} x1={Math.max(U_SOUTH, a.from ?? U_SOUTH)} y1={-a.v} x2={Math.min(U_NORTH, a.to ?? U_NORTH)} y2={-a.v} stroke="#c0392b" strokeOpacity="0.45" strokeWidth={Math.max(1.5 * hs, 0.6)} strokeDasharray={`${6 * hs} ${4 * hs}`} />)}
+          {gameCross.map((c) => <line key={c.n} x1={c.u} y1={-(c.vRange?.[0] ?? 0)} x2={c.u} y2={-(c.vRange?.[1] ?? bayEdge(c.u))} stroke="#c0392b" strokeOpacity="0.45" strokeWidth={Math.max(1.5 * hs, 0.6)} strokeDasharray={`${6 * hs} ${4 * hs}`} />)}
+          {AVENUES.map((a) => <polyline key={a.id} points={(a.path ?? [[a.from ?? U_SOUTH, a.v], [a.to ?? U_NORTH, a.v]]).map(([u, v]) => `${u},${-v}`).join(' ')} fill="none" stroke="#c0392b" strokeOpacity="0.45" strokeWidth={Math.max(1.5 * hs, 0.6)} strokeDasharray={`${6 * hs} ${4 * hs}`} />)}
           {level !== 'island' && gameCross.map((c) => <text key={`t${c.n}`} x={c.u + 2 * hs} y={-B.v0 + 14 * hs} fontSize={10 * hs} fill="#ffb3a7">{c.n} (game)</text>)}
-          {level !== 'island' && AVENUES.map((a) => <text key={`t${a.id}`} x={Math.max(vb.x, U_SOUTH) + 4 * hs} y={-a.v - 3 * hs} fontSize={10 * hs} fill="#ffb3a7">{a.names[townAt(vb.x + vb.w / 2)] ?? a.names.wildwood} (game)</text>)}
+          {level !== 'island' && AVENUES.map((a) => <text key={`t${a.id}`} x={Math.max(vb.x, U_SOUTH) + 4 * hs} y={-aveV(a.id, Math.max(vb.x, U_SOUTH)) - 3 * hs} fontSize={10 * hs} fill="#ffb3a7">{a.names[townAt(vb.x + vb.w / 2)] ?? a.names.wildwood} (game)</text>)}
         </g>}
         {/* The imported area's box: click it from the island. */}
         <rect x={B.u0} y={-B.v1} width={B.u1 - B.u0} height={B.v1 - B.v0} fill={level === 'island' ? '#ff5fa2' : 'none'} fillOpacity="0.25" stroke="#ff5fa2" strokeWidth={Math.max(2 * hs, 0.5)} data-testid="iv-area" style={{ cursor: level === 'island' ? 'pointer' : undefined }}

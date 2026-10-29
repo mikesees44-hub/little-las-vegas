@@ -85,7 +85,7 @@ describe('street art: the asset manifest, storefront paintings, turnarounds and 
     for (const r of SEED) expect(seedBlocked(r[0], ids), r[0]).toBe(false);
     // Strip the new records, as a save from before them; put a generated shop on one's ground.
     s.econ!.lots = s.econ!.lots.filter((l) => !l.id.startsWith('sa'));
-    const fake = { ...s.econ!.lots.find((l) => l.id.startsWith('hf.downtown'))!, id: `hf.downtown.nj+.${CROSS.findIndex((c) => c.n === 'Cedar Ave')}.a` };
+    const fake = { ...s.econ!.lots.find((l) => l.id.startsWith('hf.downtown'))!, id: `hf.downtown.nj+.${CROSS.find((c) => c.n === 'Cedar Ave')!.idx}.a` };
     s.econ!.lots.push(fake);
     const up = upgradeSave(JSON.parse(JSON.stringify(s)));
     const got = new Set(up.econ!.lots.map((l) => l.id));

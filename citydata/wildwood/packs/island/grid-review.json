@@ -1,0 +1,243 @@
+{
+ "schemaVersion": 1,
+ "packId": "wildwood/island-grid",
+ "generatedAt": "2026-10-29T03:55:58.150Z",
+ "items": [
+  {
+   "id": "rq-grid-ave-lake-ave-wildwood",
+   "kind": "grid-avenue-not-drawn",
+   "priority": "low",
+   "detail": "Lake Ave (Wildwood, 411 m along the island at v≈1207) is in OSM but not on the game's grid.",
+   "suggestion": "Add it as an avenue if it existed in 1960 (Sanborn 1950).",
+   "status": "open"
+  },
+  {
+   "id": "rq-grid-ave-john-f-kennedy-blvd-north",
+   "kind": "grid-avenue-not-drawn",
+   "priority": "medium",
+   "detail": "John F Kennedy Blvd (North Wildwood, 908 m along the island at v≈-261) is in OSM but not on the game's grid. It carries a post-1963 name: what the beachfront road was called in 1960 (and whether it existed) is not in the data.",
+   "suggestion": "Add it as an avenue if it existed in 1960 (Sanborn 1950).",
+   "status": "open"
+  },
+  {
+   "id": "rq-grid-street-lake-rd",
+   "kind": "grid-street-not-found",
+   "priority": "high",
+   "target": {
+    "layer": "streets",
+    "id": "st:lake-rd"
+   },
+   "detail": "Lake Rd (the game's Wildwood Crest) is not a cross street in OSM or the tax list (OSM's Lake Road is a bayside road in Wildwood, running along the island). Kept hidden at u 443, half a block south of Jefferson Ave (its northern neighbour on the old grid), so the records on it keep their ground; everything on it is queued below.",
+   "suggestion": "Find the street in a 1950s source (Sanborn index, a directory) or move its records onto a real street in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-grid-street-crocker-ave",
+   "kind": "grid-street-not-found",
+   "priority": "high",
+   "target": {
+    "layer": "streets",
+    "id": "st:crocker-ave"
+   },
+   "detail": "Crocker Ave (the game's Wildwood) is not a cross street in OSM or the tax list. Kept hidden at u 4224, half a block north of Davis Ave (its southern neighbour on the old grid), so the records on it keep their ground; everything on it is queued below.",
+   "suggestion": "Find the street in a 1950s source (Sanborn index, a directory) or move its records onto a real street in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-pier-pier:hunts",
+   "kind": "pier-street-changed",
+   "priority": "medium",
+   "target": {
+    "layer": "landmarks",
+    "id": "pier:hunts"
+   },
+   "detail": "Hunt's Pier: the game had it at Oak Ave; its sourced point (and OSM's outline of the pier) is at Juniper Ave on the real grid. It now stands there; its deck slots keep the name \"Oak Ave\" in the records.",
+   "suggestion": "Rename the pier slots' street in the records when convenient (ids are unaffected).",
+   "status": "open"
+  },
+  {
+   "id": "rq-pier-pier:marine",
+   "kind": "pier-street-unverified",
+   "priority": "medium",
+   "target": {
+    "layer": "landmarks",
+    "id": "pier:marine"
+   },
+   "detail": "Marine Pier stands at Schellenger Ave because the game put it there; no source places it.",
+   "suggestion": "Check the 1950 Sanborn sheets / a 1960 directory for the pier's street.",
+   "status": "open"
+  },
+  {
+   "id": "rq-pier-pier:sportland",
+   "kind": "pier-street-unverified",
+   "priority": "medium",
+   "target": {
+    "layer": "landmarks",
+    "id": "pier:sportland"
+   },
+   "detail": "Sportland Pier stands at Rio Grande Ave because the game put it there; no source places it.",
+   "suggestion": "Check the 1950 Sanborn sheets / a 1960 directory for the pier's street.",
+   "status": "open"
+  },
+  {
+   "id": "rq-pier-pier:casino",
+   "kind": "pier-street-unverified",
+   "priority": "medium",
+   "target": {
+    "layer": "landmarks",
+    "id": "pier:casino"
+   },
+   "detail": "Casino Pier stands at 25th Ave because the game put it there; no source places it.",
+   "suggestion": "Check the 1950 Sanborn sheets / a 1960 directory for the pier's street.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-sa05",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "sa05"
+   },
+   "detail": "The Shamrock (3700 Pacific Ave): no corner or tax-list address to place it by; moved in the block north of Spencer Ave (on the real grid its next street is Spicer Ave, not Schellenger Ave).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-bw-olympia",
+   "kind": "place-on-unknown-street",
+   "priority": "high",
+   "target": {
+    "layer": "placements",
+    "id": "bw-olympia"
+   },
+   "detail": "Olympia Fascination (Boardwalk at Crocker Ave): Crocker Ave is not a real street; placed beside its stand-in.",
+   "suggestion": "Find the real corner and move it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-bw-taffy-tides",
+   "kind": "place-on-unknown-street",
+   "priority": "high",
+   "target": {
+    "layer": "placements",
+    "id": "bw-taffy-tides"
+   },
+   "detail": "Taffy Tides (Boardwalk at Crocker Ave): Crocker Ave is not a real street; placed beside its stand-in.",
+   "suggestion": "Find the real corner and move it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-nw-lollypop",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "nw-lollypop"
+   },
+   "detail": "The Lollypop Motel (2301 Atlantic Ave, North Wildwood): no corner or tax-list address to place it by; moved the same spot between 23rd Ave and 22nd Ave (neighbours on the real grid too).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-nw-lollypop-sign",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "nw-lollypop-sign"
+   },
+   "detail": "The Lollypop Motel sign (2301 Atlantic Ave, North Wildwood): no corner or tax-list address to place it by; moved the same spot between 23rd Ave and 22nd Ave (neighbours on the real grid too).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-at-satellite",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "at-satellite"
+   },
+   "detail": "The Satellite Motel (5909 Atlantic Ave, Wildwood Crest): no corner or tax-list address to place it by; moved in the block north of Myrtle Rd (on the real grid its next street is Lotus Rd, not Fern Rd).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-bay-urys",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "bay-urys"
+   },
+   "detail": "Ury's Waterfront Restaurant (The bayfront at Rio Grande Ave): no corner or tax-list address to place it by; moved in the block north of Hildreth Ave (on the real grid its next street is Bennett Ave, not Rio Grande Ave).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-oc-beach-haus",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "oc-beach-haus"
+   },
+   "detail": "The Beach House (Ocean Ave at Toledo Ave, Wildwood Crest): no corner or tax-list address to place it by; moved in the block north of Toledo Ave (on the real grid its next street is St. Paul Ave, not Lavender Rd).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-at-panorama",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "at-panorama"
+   },
+   "detail": "The Panorama Motel Apts (Atlantic Ave, Wildwood Crest): no corner or tax-list address to place it by; moved in the block north of Toledo Ave (on the real grid its next street is St. Paul Ave, not Lavender Rd).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-at-rio-grande-motel",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "at-rio-grande-motel"
+   },
+   "detail": "The Rio Grande Motel (Atlantic Ave, Wildwood Crest): no corner or tax-list address to place it by; moved in the block north of Fern Rd (on the real grid its next street is Forget-Me-Not Rd, not Buttercup Rd).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-place-pk-ricks",
+   "kind": "place-approximate",
+   "priority": "medium",
+   "target": {
+    "layer": "placements",
+    "id": "pk-ricks"
+   },
+   "detail": "Rick's Seafood (Park Blvd by Otten's Harbor): no corner or tax-list address to place it by; moved in the block north of Lincoln Ave (on the real grid its next street is Schellenger Ave, not Youngs Ave).",
+   "suggestion": "Confirm the spot (Sanborn 1950, a directory) and correct it in the map editor.",
+   "status": "open"
+  },
+  {
+   "id": "rq-house-lot-addresses",
+   "kind": "invented-addresses",
+   "priority": "low",
+   "detail": "364 invented house lots keep their invented house numbers, which do not follow the real numbering (moved by their block, not by number; 1 matched a real tax-list address near their block and stand on it).",
+   "suggestion": "Renumber them from the parcels they now stand on, or leave them as fiction.",
+   "status": "open"
+  },
+  {
+   "id": "rq-frontage-refit",
+   "kind": "district-frontage",
+   "priority": "medium",
+   "detail": "The districts' frontage runs and the generated-lot runs were re-fitted to the real street order (each covers its 1960 records and its old end streets); the generated-lot odds were scaled so a new game gets about as many lots as before. d:boardwalk bw: Cresse Ave–16th Ave → Cresse Ave–16th Ave; d:pacific pa+: Burk Ave–Rio Grande Ave → Rio Grande Ave–Poplar Ave; d:pacific pa-: Burk Ave–Rio Grande Ave → Rio Grande Ave–Maple Ave; d:downtown nj+: Cedar Ave–Rio Grande Ave → Rio Grande Ave–Oak Ave; d:downtown nj-: Cedar Ave–Rio Grande Ave → Rio Grande Ave–Maple Ave; d:downtown at+: Spicer Ave–Schellenger Ave → Spicer Ave–Schellenger Ave; d:docks pk+: Lincoln Ave–Andrews Ave → Andrews Ave–Lincoln Ave; d:docks pk-: Garfield Ave–Andrews Ave → Andrews Ave–Lincoln Ave; d:crest oc-: Lake Rd–Rambler Rd → Rochester Ave–Morning Glory Rd; d:crest oc+: Jefferson Ave–Rambler Rd → Jefferson Ave–Rambler Rd; d:crest at+: Morning Glory Rd–Cardinal Rd → Cardinal Rd–Morning Glory Rd; d:north at+: 26th Ave–3rd Ave → 26th Ave–3rd Ave; d:north nj-: 24th Ave–5th Ave → 24th Ave–5th Ave; d:north oc+: 15th Ave–3rd Ave → 15th Ave–3rd Ave; d:causeway cw: Pine Ave–Andrews Ave → Pine Ave–Andrews Ave; d:westww ww: Pine Ave–Davis Ave → Oak Ave–26th Ave; fill boardwalk bw: Roberts Ave–Andrews Ave (22 blocks, p 0.72) → Hildreth Ave–25th Ave (29 blocks, p 0.55); fill pacific pa+: Burk Ave–Rio Grande Ave (13 blocks, p 0.32) → Rio Grande Ave–Poplar Ave (22 blocks, p 0.19); fill pacific pa-: Burk Ave–Rio Grande Ave (13 blocks, p 0.28) → Rio Grande Ave–Maple Ave (19 blocks, p 0.19); fill downtown nj+: Cedar Ave–Rio Grande Ave (12 blocks, p 0.22) → Rio Grande Ave–Oak Ave (16 blocks, p 0.17); fill downtown nj-: Cedar Ave–Rio Grande Ave (12 blocks, p 0.18) → Rio Grande Ave–Maple Ave (19 blocks, p 0.11); fill crest oc-: Lake Rd–Rambler Rd (23 blocks, p 0.34) → Rochester Ave–Morning Glory Rd (42 blocks, p 0.19); fill crest oc+: Jefferson Ave–Rambler Rd (22 blocks, p 0.12) → Jefferson Ave–Rambler Rd (23 blocks, p 0.11); fill north at+: 26th Ave–3rd Ave (23 blocks, p 0.18) → 26th Ave–3rd Ave (23 blocks, p 0.18); fill north oc+: 15th Ave–3rd Ave (12 blocks, p 0.15) → 15th Ave–3rd Ave (12 blocks, p 0.15); fill docks pk+: Lincoln Ave–Andrews Ave (7 blocks, p 0.25) → Andrews Ave–Lincoln Ave (11 blocks, p 0.16); fill causeway cw: Pine Ave–Andrews Ave (12 blocks, p 0.3) → Pine Ave–Andrews Ave (16 blocks, p 0.22); fill westww ww: Pine Ave–Davis Ave (9 blocks, p 0.15) → Oak Ave–26th Ave (8 blocks, p 0.15)",
+   "suggestion": "Check that each district covers the stretch it should (Pacific Avenue's club row, the docks).",
+   "status": "open"
+  }
+ ]
+}

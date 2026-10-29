@@ -48,6 +48,14 @@ export interface Frame {
   bearing: number;
   /** A second sourced point the frame is stretched to, beyond `from` (plain-frame u). */
   pin?: { lngLat: [number, number]; uv: [number, number]; from: number };
+  /**
+   * A curvilinear frame that follows the town (it replaces the rotation; anchor
+   * and bearing then only describe its middle and mean axis, for drawing): `u`
+   * is the arc length along the spine plus `u0`, `v` the distance along the
+   * spine's normal (inland positive) minus `v0`. The spine is a smoothed real
+   * street (Wildwood: New Jersey Avenue), extended past the town's ends.
+   */
+  spine?: { pts: [number, number][]; u0: number; v0: number; source?: string; ribs?: number[] };
 }
 
 export interface Geography {
@@ -65,6 +73,14 @@ export interface Geography {
   uNorth?: number;
   /** Small islands or fixed rectangles (West Wildwood). */
   areas?: { id: string; name: string; u0: number; u1: number; v0: number; v1: number }[];
+  /**
+   * Traced outlines in the frame (rings of [u, v]): `land` the island(s), `town`
+   * the land inland of the front (the built-up town, without the beach), and
+   * one per municipality or named area. Drawn instead of the profiles when present.
+   */
+  outlines?: Record<string, [number, number][][]>;
+  /** Where the geography was measured from (sources, dates, method). */
+  derivedFrom?: { sources: string[]; method: string; at: string; report?: string };
 }
 
 export type StreetKind = 'cross' | 'avenue' | 'boardwalk' | 'road' | 'path';
@@ -84,8 +100,16 @@ export interface Street {
   from?: number | string;
   to?: number | string;
   width?: number;
-  /** Free-form path for roads that are not on the grid. */
+  /** Free-form path for roads that are not on the grid; for an avenue, its real course ([u, v] along its length). */
   path?: [number, number][];
+  /** What the map prints (when `name`, the street's key, had to be made unique: "Pine Ave (North Wildwood)" prints "Pine Ave"). */
+  label?: string;
+  /** A stable index for ids that encode a street (generated lots `hf.<zone>.<run>.<idx>.<half>`): never reused or renumbered. */
+  idx?: number;
+  /** Cross streets: where the street runs across the island (v from, to). */
+  vRange?: [number, number];
+  /** Not drawn: a street the game used that the sources do not show (kept so the places on it keep their ground). */
+  hidden?: boolean;
   years?: Years;
   evidence?: Evidence;
 }
@@ -175,6 +199,8 @@ export interface Landmark {
   id: string;
   name: string;
   kind: string;
+  /** The cross street it stands at (piers: the deck slots are named by it). */
+  atStreet?: string;
   districtId?: string;
   pos?: UV;
   geo?: [number, number];
@@ -216,6 +242,10 @@ export interface Route {
   /** Where it leaves town (a cross street) and how far inland its mainland end is. */
   atStreet?: string;
   mainlandV?: number;
+  /** Where along the island its mainland end lies (the road need not run square to the island). */
+  mainlandU?: number;
+  /** Its course in the frame ([u, v]), when measured. */
+  path?: [number, number][];
   evidence?: Evidence;
 }
 
@@ -654,6 +684,7 @@ export interface FrameFns { toLngLat: (u: number, v: number) => [number, number]
  * to `pin.from` and stretches beyond it so the pin's point lands on its uv.
  */
 export function frameFns(f: Frame): FrameFns {
+  if (f.spine) return spineFns(f);
   if (!f.pin) return { toLngLat: (u, v) => rawToLngLat(f, u, v), toUv: (p) => rawToUv(f, p) };
   const pin = f.pin;
   const [bu, bv] = rawToUv(f, pin.lngLat);
@@ -680,6 +711,125 @@ export function frameFns(f: Frame): FrameFns {
       return [b + du, v + dv];
     },
   };
+}
+
+const spineCache = new WeakMap<object, FrameFns>();
+
+/**
+ * The curvilinear frame (`Frame.spine`): a point is C(s) + d·N(s), where C is
+ * the spine polyline, s its arc length, and N the unit normal (inland) linearly
+ * blended between the vertices' normals, so the frame bends smoothly and both
+ * conversions are exact. Plane: metres east/north about the anchor (the same
+ * 111,320 m/deg sphere as the rotation frame).
+ */
+function spineFns(f: Frame): FrameFns {
+  const hit = spineCache.get(f.spine!);
+  if (hit) return hit;
+  const sp = f.spine!;
+  const lat0 = f.anchor.lat;
+  const lng0 = f.anchor.lng;
+  const kx = M_LAT * Math.cos(lat0 * RAD);
+  const toXY = (p: [number, number]): [number, number] => [(p[0] - lng0) * kx, (p[1] - lat0) * M_LAT];
+  const toLL = (x: number, y: number): [number, number] => [lng0 + x / kx, lat0 + y / M_LAT];
+  const P = sp.pts.map(toXY);
+  const n = P.length;
+  const S: number[] = [0];
+  for (let i = 1; i < n; i++) S.push(S[i - 1] + Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]));
+  // Segment normals (inland = the tangent turned 90° counter-clockwise, as the rotation frame's bearing - 90).
+  const segN: [number, number][] = [];
+  for (let i = 0; i < n - 1; i++) {
+    const dx = P[i + 1][0] - P[i][0];
+    const dy = P[i + 1][1] - P[i][1];
+    const L = Math.hypot(dx, dy) || 1;
+    segN.push([-dy / L, dx / L]);
+  }
+  // The cross direction at each vertex: the measured direction of the cross streets (`ribs`, bearings of +v), else the normal.
+  const N: [number, number][] = P.map((_, i) => {
+    if (sp.ribs?.[i] !== undefined) { const b = sp.ribs[i] * RAD; return [Math.sin(b), Math.cos(b)]; }
+    const a = segN[Math.max(0, i - 1)];
+    const b = segN[Math.min(n - 2, i)];
+    const x = a[0] + b[0];
+    const y = a[1] + b[1];
+    const L = Math.hypot(x, y) || 1;
+    return [x / L, y / L];
+  });
+  const at = (s: number): { c: [number, number]; nn: [number, number] } => {
+    let i = 0;
+    if (s >= S[n - 1]) i = n - 2;
+    else if (s > 0) { let lo = 0; let hi = n - 1; while (hi - lo > 1) { const m = (lo + hi) >> 1; if (S[m] <= s) lo = m; else hi = m; } i = lo; }
+    const L = S[i + 1] - S[i] || 1;
+    const t = (s - S[i]) / L;
+    const tc = Math.max(0, Math.min(1, t));
+    const c: [number, number] = [P[i][0] + t * (P[i + 1][0] - P[i][0]), P[i][1] + t * (P[i + 1][1] - P[i][1])];
+    const x = N[i][0] + tc * (N[i + 1][0] - N[i][0]);
+    const y = N[i][1] + tc * (N[i + 1][1] - N[i][1]);
+    const l = Math.hypot(x, y) || 1;
+    return { c, nn: [x / l, y / l] };
+  };
+  const fns: FrameFns = {
+    toLngLat: (u, v) => {
+      const { c, nn } = at(u - sp.u0);
+      const d = v + sp.v0;
+      return toLL(c[0] + d * nn[0], c[1] + d * nn[1]);
+    },
+    toUv: (ll) => {
+      const p = toXY(ll);
+      let best: { s: number; d: number } | undefined;
+      const consider = (s: number) => {
+        const { c, nn } = at(s);
+        const rx = p[0] - c[0];
+        const ry = p[1] - c[1];
+        const d = rx * nn[0] + ry * nn[1];
+        const off = Math.abs(rx * nn[1] - ry * nn[0]);
+        if (off > 1e-3 * Math.max(1, Math.abs(d)) + 0.05) return;
+        if (!best || Math.abs(d) < Math.abs(best.d)) best = { s, d };
+      };
+      for (let i = 0; i < n - 1; i++) {
+        // (p - C(t))·T(t) = 0 with C, N linear in t (T = N turned back): a quadratic in t.
+        const D: [number, number] = [P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]];
+        const a: [number, number] = [p[0] - P[i][0], p[1] - P[i][1]];
+        const b: [number, number] = [N[i][1], -N[i][0]];
+        const e: [number, number] = [N[i + 1][1] - N[i][1], -(N[i + 1][0] - N[i][0])];
+        const A2 = -(D[0] * e[0] + D[1] * e[1]);
+        const B1 = a[0] * e[0] + a[1] * e[1] - (D[0] * b[0] + D[1] * b[1]);
+        const C0 = a[0] * b[0] + a[1] * b[1];
+        const roots: number[] = [];
+        if (Math.abs(A2) < 1e-12) { if (Math.abs(B1) > 1e-12) roots.push(-C0 / B1); } else {
+          const disc = B1 * B1 - 4 * A2 * C0;
+          if (disc >= 0) { const q = Math.sqrt(disc); roots.push((-B1 + q) / (2 * A2), (-B1 - q) / (2 * A2)); }
+        }
+        const L = S[i + 1] - S[i];
+        for (const t of roots) if (t >= -1e-9 && t <= 1 + 1e-9) consider(S[i] + t * L);
+      }
+      // Beyond the ends the frame runs straight on with the end normal.
+      for (const [i, j, sgn] of [[0, 1, -1], [n - 1, n - 2, 1]] as const) {
+        // p - P_i = s·D + d·N_i (D: the end segment's unit direction).
+        const L = S[Math.max(i, j)] - S[Math.min(i, j)] || 1;
+        const D: [number, number] = [(P[Math.max(i, j)][0] - P[Math.min(i, j)][0]) / L, (P[Math.max(i, j)][1] - P[Math.min(i, j)][1]) / L];
+        const rx = p[0] - P[i][0];
+        const ry = p[1] - P[i][1];
+        const det = D[0] * N[i][1] - D[1] * N[i][0];
+        if (Math.abs(det) < 1e-9) continue;
+        const s = (rx * N[i][1] - ry * N[i][0]) / det;
+        if (s * sgn > 0) consider(S[i] + s);
+      }
+      if (!best) {
+        // Off the frame's reach (beyond its curvature): the nearest point on the spine.
+        let bd = Infinity;
+        for (let i = 0; i < n - 1; i++) {
+          const D: [number, number] = [P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]];
+          const L2 = D[0] * D[0] + D[1] * D[1] || 1;
+          const t = Math.max(0, Math.min(1, ((p[0] - P[i][0]) * D[0] + (p[1] - P[i][1]) * D[1]) / L2));
+          const q = [P[i][0] + t * D[0], P[i][1] + t * D[1]];
+          const dd = Math.hypot(p[0] - q[0], p[1] - q[1]);
+          if (dd < bd) { bd = dd; const s = S[i] + t * Math.sqrt(L2); const { c, nn } = at(s); best = { s, d: (p[0] - c[0]) * nn[0] + (p[1] - c[1]) * nn[1] }; }
+        }
+      }
+      return [best!.s + sp.u0, best!.d - sp.v0];
+    },
+  };
+  spineCache.set(sp, fns);
+  return fns;
 }
 
 /** A piecewise-linear profile along u. */

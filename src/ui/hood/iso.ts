@@ -1,11 +1,14 @@
 /**
  * The illustrated island's projection and palettes. North is up; the island
  * (whose frame runs along its length, `u`, and inland, `v`) is turned to its
- * real bearing (~35° east of north) and the ground is tilted (2.5D) so the
+ * real bearing (~46° east of north) and the ground is tilted (2.5D) so the
  * ocean-facing fronts of buildings face the viewer. "Plan" flattens it.
  */
 
-const TH = (35 * Math.PI) / 180;
+import { ISLAND_BEARING } from '../../engine/hoodData';
+
+/** The island's real bearing (the frame's mean axis, measured from OpenStreetMap: ~46° east of north). */
+const TH = (ISLAND_BEARING * Math.PI) / 180;
 const SIN = Math.sin(TH);
 const COS = Math.cos(TH);
 

@@ -1,0 +1,741 @@
+{
+ "note": "The island's cross streets in their real order (south to north), measured from OpenStreetMap (2026-10-29) in the game frame: u where each crosses the middle of the island. Written by `cli.ts grid`; tests check the game's grid against it.",
+ "source": "© OpenStreetMap contributors (ODbL)",
+ "streets": [
+  {
+   "name": "Raleigh Ave",
+   "label": "Raleigh Ave",
+   "u": 27,
+   "town": "crest",
+   "source": "OpenStreetMap Raleigh Ave (1 ways, Diamond Beach, Lower Township): u where it cr"
+  },
+  {
+   "name": "Station Ave",
+   "label": "Station Ave",
+   "u": 133,
+   "town": "crest",
+   "source": "OpenStreetMap Station Ave (4 ways, Diamond Beach, Lower Township): u where it cr"
+  },
+  {
+   "name": "Dune Dr",
+   "label": "Dune Dr",
+   "u": 226,
+   "town": "crest",
+   "source": "OpenStreetMap Dune Dr (3 ways, Diamond Beach, Lower Township): u where it crosse"
+  },
+  {
+   "name": "Turtle Gut Circle",
+   "label": "Turtle Gut Circle",
+   "u": 240,
+   "town": "crest",
+   "source": "OpenStreetMap Turtle Gut Circle (2 ways, Diamond Beach, Lower Township): u where"
+  },
+  {
+   "name": "Memphis Ave",
+   "label": "Memphis Ave",
+   "u": 289,
+   "town": "crest",
+   "source": "OpenStreetMap Memphis Ave (4 ways, Diamond Beach, Lower Township): u where it cr"
+  },
+  {
+   "name": "Rochester Ave",
+   "label": "Rochester Ave",
+   "u": 352,
+   "town": "crest",
+   "source": "OpenStreetMap Rochester Ave (3 ways, Diamond Beach, Lower Township): u where it "
+  },
+  {
+   "name": "Jefferson Ave",
+   "label": "Jefferson Ave",
+   "u": 483,
+   "town": "crest",
+   "source": "OpenStreetMap Jefferson Ave (3 ways, Wildwood Crest): u where it crosses the mid"
+  },
+  {
+   "name": "Washington Ave",
+   "label": "Washington Ave",
+   "u": 551,
+   "town": "crest",
+   "source": "OpenStreetMap Washington Ave (3 ways, Wildwood Crest): u where it crosses the mi"
+  },
+  {
+   "name": "Newark Ave",
+   "label": "Newark Ave",
+   "u": 612,
+   "town": "crest",
+   "source": "OpenStreetMap Newark Ave (3 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Trenton Ave",
+   "label": "Trenton Ave",
+   "u": 676,
+   "town": "crest",
+   "source": "OpenStreetMap Trenton Ave (3 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "St Louis Ave",
+   "label": "St Louis Ave",
+   "u": 740,
+   "town": "crest",
+   "source": "OpenStreetMap St Louis Ave (2 ways, Wildwood Crest): u where it crosses the midd"
+  },
+  {
+   "name": "Charleston Ave",
+   "label": "Charleston Ave",
+   "u": 805,
+   "town": "crest",
+   "source": "OpenStreetMap Charleston Ave (3 ways, Wildwood Crest): u where it crosses the mi"
+  },
+  {
+   "name": "Pittsburgh Ave",
+   "label": "Pittsburgh Ave",
+   "u": 870,
+   "town": "crest",
+   "source": "OpenStreetMap Pittsburgh Ave (3 ways, Wildwood Crest): u where it crosses the mi"
+  },
+  {
+   "name": "Topeka Ave",
+   "label": "Topeka Ave",
+   "u": 935,
+   "town": "crest",
+   "source": "OpenStreetMap Topeka Ave (4 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Hollywood Ave",
+   "label": "Hollywood Ave",
+   "u": 1000,
+   "town": "crest",
+   "source": "OpenStreetMap Hollywood Ave (4 ways, Wildwood Crest): u where it crosses the mid"
+  },
+  {
+   "name": "Preston Ave",
+   "label": "Preston Ave",
+   "u": 1064,
+   "town": "crest",
+   "source": "OpenStreetMap Preston Ave (3 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Syracuse Ave",
+   "label": "Syracuse Ave",
+   "u": 1128,
+   "town": "crest",
+   "source": "OpenStreetMap Syracuse Ave (5 ways, Wildwood Crest): u where it crosses the midd"
+  },
+  {
+   "name": "Denver Ave",
+   "label": "Denver Ave",
+   "u": 1191,
+   "town": "crest",
+   "source": "OpenStreetMap Denver Ave (3 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Toledo Ave",
+   "label": "Toledo Ave",
+   "u": 1263,
+   "town": "crest",
+   "source": "OpenStreetMap Toledo Ave (2 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "St. Paul Ave",
+   "label": "St. Paul Ave",
+   "u": 1335,
+   "town": "crest",
+   "source": "OpenStreetMap Saint Paul Ave (3 ways, Wildwood Crest): u where it crosses the mi"
+  },
+  {
+   "name": "Monterey Ave",
+   "label": "Monterey Ave",
+   "u": 1405,
+   "town": "crest",
+   "source": "OpenStreetMap Monterey Ave (3 ways, Wildwood Crest): u where it crosses the midd"
+  },
+  {
+   "name": "Miami Ave",
+   "label": "Miami Ave",
+   "u": 1475,
+   "town": "crest",
+   "source": "OpenStreetMap Miami Ave (3 ways, Wildwood Crest): u where it crosses the middle "
+  },
+  {
+   "name": "Louisville Ave",
+   "label": "Louisville Ave",
+   "u": 1545,
+   "town": "crest",
+   "source": "OpenStreetMap Louisville Ave (2 ways, Wildwood Crest): u where it crosses the mi"
+  },
+  {
+   "name": "Nashville Ave",
+   "label": "Nashville Ave",
+   "u": 1616,
+   "town": "crest",
+   "source": "OpenStreetMap Nashville Ave (2 ways, Wildwood Crest): u where it crosses the mid"
+  },
+  {
+   "name": "Atlanta Ave",
+   "label": "Atlanta Ave",
+   "u": 1689,
+   "town": "crest",
+   "source": "OpenStreetMap Atlanta Ave (1 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Farragut Rd",
+   "label": "Farragut Rd",
+   "u": 1765,
+   "town": "crest",
+   "source": "OpenStreetMap Farragut Rd (4 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Stanton Rd",
+   "label": "Stanton Rd",
+   "u": 1841,
+   "town": "crest",
+   "source": "OpenStreetMap Stanton Rd (3 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Stockton Rd",
+   "label": "Stockton Rd",
+   "u": 1918,
+   "town": "crest",
+   "source": "OpenStreetMap Stockton Rd (2 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Orchid Rd",
+   "label": "Orchid Rd",
+   "u": 1993,
+   "town": "crest",
+   "source": "OpenStreetMap Orchid Rd (3 ways, Wildwood Crest): u where it crosses the middle "
+  },
+  {
+   "name": "Rambler Rd",
+   "label": "Rambler Rd",
+   "u": 2073,
+   "town": "crest",
+   "source": "OpenStreetMap Rambler Rd (6 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Primrose Rd",
+   "label": "Primrose Rd",
+   "u": 2151,
+   "town": "crest",
+   "source": "OpenStreetMap Primrose Rd (2 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Myrtle Rd",
+   "label": "Myrtle Rd",
+   "u": 2228,
+   "town": "crest",
+   "source": "OpenStreetMap Myrtle Rd (3 ways, Wildwood Crest): u where it crosses the middle "
+  },
+  {
+   "name": "Lotus Rd",
+   "label": "Lotus Rd",
+   "u": 2307,
+   "town": "crest",
+   "source": "OpenStreetMap Lotus Rd (3 ways, Wildwood Crest): u where it crosses the middle o"
+  },
+  {
+   "name": "Palm Rd",
+   "label": "Palm Rd",
+   "u": 2384,
+   "town": "crest",
+   "source": "OpenStreetMap Palm Rd (4 ways, Wildwood Crest): u where it crosses the middle of"
+  },
+  {
+   "name": "Fern Rd",
+   "label": "Fern Rd",
+   "u": 2460,
+   "town": "crest",
+   "source": "OpenStreetMap Fern Rd (4 ways, Wildwood Crest): u where it crosses the middle of"
+  },
+  {
+   "name": "Forget-Me-Not Rd",
+   "label": "Forget-Me-Not Rd",
+   "u": 2537,
+   "town": "crest",
+   "source": "OpenStreetMap Forget-Me-Not Rd (4 ways, Wildwood Crest): u where it crosses the "
+  },
+  {
+   "name": "Rosemary Rd",
+   "label": "Rosemary Rd",
+   "u": 2613,
+   "town": "crest",
+   "source": "OpenStreetMap Rosemary Rd (4 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Columbine Rd",
+   "label": "Columbine Rd",
+   "u": 2690,
+   "town": "crest",
+   "source": "OpenStreetMap Columbine Rd (3 ways, Wildwood Crest): u where it crosses the midd"
+  },
+  {
+   "name": "Wisteria Rd",
+   "label": "Wisteria Rd",
+   "u": 2765,
+   "town": "crest",
+   "source": "OpenStreetMap Wisteria Rd (4 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Sweet Briar Rd",
+   "label": "Sweet Briar Rd",
+   "u": 2843,
+   "town": "crest",
+   "source": "OpenStreetMap Sweetbriar Rd (2 ways, Wildwood Crest): u where it crosses the mid"
+  },
+  {
+   "name": "Cardinal Rd",
+   "label": "Cardinal Rd",
+   "u": 2924,
+   "town": "crest",
+   "source": "OpenStreetMap Cardinal Rd (3 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Aster Rd",
+   "label": "Aster Rd",
+   "u": 3005,
+   "town": "crest",
+   "source": "OpenStreetMap Aster Rd (3 ways, Wildwood Crest): u where it crosses the middle o"
+  },
+  {
+   "name": "Crocus Rd",
+   "label": "Crocus Rd",
+   "u": 3083,
+   "town": "crest",
+   "source": "OpenStreetMap Crocus Rd (5 ways, Wildwood Crest): u where it crosses the middle "
+  },
+  {
+   "name": "Heather Rd",
+   "label": "Heather Rd",
+   "u": 3161,
+   "town": "crest",
+   "source": "OpenStreetMap Heather Rd (2 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Lavender Rd",
+   "label": "Lavender Rd",
+   "u": 3238,
+   "town": "crest",
+   "source": "OpenStreetMap Lavender Rd (4 ways, Wildwood Crest): u where it crosses the middl"
+  },
+  {
+   "name": "Buttercup Rd",
+   "label": "Buttercup Rd",
+   "u": 3314,
+   "town": "crest",
+   "source": "OpenStreetMap Buttercup Rd (4 ways, Wildwood Crest): u where it crosses the midd"
+  },
+  {
+   "name": "Morning Glory Rd",
+   "label": "Morning Glory Rd",
+   "u": 3390,
+   "town": "crest",
+   "source": "OpenStreetMap Morning Glory Rd (4 ways, Wildwood Crest): u where it crosses the "
+  },
+  {
+   "name": "Cresse Ave",
+   "label": "Cresse Ave",
+   "u": 3468,
+   "town": "crest",
+   "source": "OpenStreetMap Cresse Ave (5 ways, Wildwood Crest): u where it crosses the middle"
+  },
+  {
+   "name": "Hildreth Ave",
+   "label": "Hildreth Ave",
+   "u": 3548,
+   "town": "wildwood",
+   "source": "OpenStreetMap Hildreth Ave (3 ways, Wildwood): u where it crosses the middle of "
+  },
+  {
+   "name": "Bennett Ave",
+   "label": "Bennett Ave",
+   "u": 3627,
+   "town": "wildwood",
+   "source": "OpenStreetMap Bennett Ave (4 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "Leaming Ave",
+   "label": "Leaming Ave",
+   "u": 3707,
+   "town": "wildwood",
+   "source": "OpenStreetMap Leaming Ave (5 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "Hand Ave",
+   "label": "Hand Ave",
+   "u": 3786,
+   "town": "wildwood",
+   "source": "OpenStreetMap Hand Ave (3 ways, Wildwood): u where it crosses the middle of the "
+  },
+  {
+   "name": "Rio Grande Ave",
+   "label": "Rio Grande Ave",
+   "u": 3865,
+   "town": "wildwood",
+   "source": "OpenStreetMap Rio Grande Ave (16 ways, Wildwood): u where it crosses the middle "
+  },
+  {
+   "name": "Taylor Ave",
+   "label": "Taylor Ave",
+   "u": 3946,
+   "town": "wildwood",
+   "source": "OpenStreetMap Taylor Ave (3 ways, Wildwood): u where it crosses the middle of th"
+  },
+  {
+   "name": "Andrews Ave",
+   "label": "Andrews Ave",
+   "u": 4026,
+   "town": "wildwood",
+   "source": "OpenStreetMap Andrews Ave (4 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "Burk Ave",
+   "label": "Burk Ave",
+   "u": 4105,
+   "town": "wildwood",
+   "source": "OpenStreetMap Burk Ave (4 ways, Wildwood): u where it crosses the middle of the "
+  },
+  {
+   "name": "Davis Ave",
+   "label": "Davis Ave",
+   "u": 4184,
+   "town": "wildwood",
+   "source": "OpenStreetMap Davis Ave (3 ways, Wildwood): u where it crosses the middle of the"
+  },
+  {
+   "name": "Montgomery Ave",
+   "label": "Montgomery Ave",
+   "u": 4264,
+   "town": "wildwood",
+   "source": "OpenStreetMap Montgomery Ave (5 ways, Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "Baker Ave",
+   "label": "Baker Ave",
+   "u": 4344,
+   "town": "wildwood",
+   "source": "OpenStreetMap Baker Ave (5 ways, Wildwood): u where it crosses the middle of the"
+  },
+  {
+   "name": "Roberts Ave",
+   "label": "Roberts Ave",
+   "u": 4422,
+   "town": "wildwood",
+   "source": "OpenStreetMap Roberts Ave (4 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "Youngs Ave",
+   "label": "Youngs Ave",
+   "u": 4501,
+   "town": "wildwood",
+   "source": "OpenStreetMap Youngs Ave (5 ways, Wildwood): u where it crosses the middle of th"
+  },
+  {
+   "name": "Spencer Ave",
+   "label": "Spencer Ave",
+   "u": 4581,
+   "town": "wildwood",
+   "source": "OpenStreetMap Spencer Ave (4 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "Spicer Ave",
+   "label": "Spicer Ave",
+   "u": 4661,
+   "town": "wildwood",
+   "source": "OpenStreetMap Spicer Ave (2 ways, Wildwood): u where it crosses the middle of th"
+  },
+  {
+   "name": "Garfield Ave",
+   "label": "Garfield Ave",
+   "u": 4740,
+   "town": "wildwood",
+   "source": "OpenStreetMap Garfield Ave (2 ways, Wildwood): u where it crosses the middle of "
+  },
+  {
+   "name": "Lincoln Ave",
+   "label": "Lincoln Ave",
+   "u": 4819,
+   "town": "wildwood",
+   "source": "OpenStreetMap Lincoln Ave (4 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "Schellenger Ave",
+   "label": "Schellenger Ave",
+   "u": 4900,
+   "town": "wildwood",
+   "source": "OpenStreetMap Schellenger Ave (5 ways, Wildwood): u where it crosses the middle "
+  },
+  {
+   "name": "Cedar Ave",
+   "label": "Cedar Ave",
+   "u": 4929,
+   "town": "wildwood",
+   "source": "OpenStreetMap Cedar Ave (2 ways, Wildwood): u where it crosses the middle of the"
+  },
+  {
+   "name": "Oak Ave",
+   "label": "Oak Ave",
+   "u": 5007,
+   "town": "wildwood",
+   "source": "OpenStreetMap Oak Ave (4 ways, Wildwood): u where it crosses the middle of the i"
+  },
+  {
+   "name": "Wildwood Ave",
+   "label": "Wildwood Ave",
+   "u": 5087,
+   "town": "wildwood",
+   "source": "OpenStreetMap Wildwood Ave (4 ways, Wildwood): u where it crosses the middle of "
+  },
+  {
+   "name": "Pine Ave",
+   "label": "Pine Ave",
+   "u": 5167,
+   "town": "wildwood",
+   "source": "OpenStreetMap Pine Ave (6 ways, Wildwood): u where it crosses the middle of the "
+  },
+  {
+   "name": "Maple Ave",
+   "label": "Maple Ave",
+   "u": 5241,
+   "town": "wildwood",
+   "source": "OpenStreetMap Maple Ave (6 ways, Wildwood): u where it crosses the middle of the"
+  },
+  {
+   "name": "Glenwood Ave",
+   "label": "Glenwood Ave",
+   "u": 5310,
+   "town": "wildwood",
+   "source": "OpenStreetMap Glenwood Ave (8 ways, Wildwood): u where it crosses the middle of "
+  },
+  {
+   "name": "Magnolia Ave",
+   "label": "Magnolia Ave",
+   "u": 5380,
+   "town": "wildwood",
+   "source": "OpenStreetMap Magnolia Ave (7 ways, Wildwood): u where it crosses the middle of "
+  },
+  {
+   "name": "Poplar Ave",
+   "label": "Poplar Ave",
+   "u": 5451,
+   "town": "wildwood",
+   "source": "OpenStreetMap Poplar Ave (7 ways, Wildwood): u where it crosses the middle of th"
+  },
+  {
+   "name": "Juniper Ave",
+   "label": "Juniper Ave",
+   "u": 5521,
+   "town": "wildwood",
+   "source": "OpenStreetMap Juniper Ave (4 ways, Wildwood): u where it crosses the middle of t"
+  },
+  {
+   "name": "26th Ave",
+   "label": "26th Ave",
+   "u": 5567,
+   "town": "wildwood",
+   "source": "OpenStreetMap 26th Ave (8 ways, Wildwood): u where it crosses the middle of the "
+  },
+  {
+   "name": "25th Ave",
+   "label": "25th Ave",
+   "u": 5649,
+   "town": "north",
+   "source": "OpenStreetMap 25th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "24th Ave",
+   "label": "24th Ave",
+   "u": 5731,
+   "town": "north",
+   "source": "OpenStreetMap 24th Ave (3 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "23rd Ave",
+   "label": "23rd Ave",
+   "u": 5814,
+   "town": "north",
+   "source": "OpenStreetMap 23rd Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "22nd Ave",
+   "label": "22nd Ave",
+   "u": 5896,
+   "town": "north",
+   "source": "OpenStreetMap 22nd Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "21st Ave",
+   "label": "21st Ave",
+   "u": 5978,
+   "town": "north",
+   "source": "OpenStreetMap 21st Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "20th Ave",
+   "label": "20th Ave",
+   "u": 6062,
+   "town": "north",
+   "source": "OpenStreetMap 20th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "19th Ave",
+   "label": "19th Ave",
+   "u": 6144,
+   "town": "north",
+   "source": "OpenStreetMap 19th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "18th Ave",
+   "label": "18th Ave",
+   "u": 6227,
+   "town": "north",
+   "source": "OpenStreetMap 18th Ave (3 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "17th Ave",
+   "label": "17th Ave",
+   "u": 6308,
+   "town": "north",
+   "source": "OpenStreetMap 17th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "16th Ave",
+   "label": "16th Ave",
+   "u": 6391,
+   "town": "north",
+   "source": "OpenStreetMap 16th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "15th Ave",
+   "label": "15th Ave",
+   "u": 6473,
+   "town": "north",
+   "source": "OpenStreetMap 15th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "14th Ave",
+   "label": "14th Ave",
+   "u": 6555,
+   "town": "north",
+   "source": "OpenStreetMap 14th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "13th Ave",
+   "label": "13th Ave",
+   "u": 6638,
+   "town": "north",
+   "source": "OpenStreetMap 13th Ave (3 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "12th Ave",
+   "label": "12th Ave",
+   "u": 6720,
+   "town": "north",
+   "source": "OpenStreetMap 12th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "11th Ave",
+   "label": "11th Ave",
+   "u": 6803,
+   "town": "north",
+   "source": "OpenStreetMap 11th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "10th Ave",
+   "label": "10th Ave",
+   "u": 6885,
+   "town": "north",
+   "source": "OpenStreetMap 10th Ave (2 ways, North Wildwood): u where it crosses the middle o"
+  },
+  {
+   "name": "9th Ave",
+   "label": "9th Ave",
+   "u": 6968,
+   "town": "north",
+   "source": "OpenStreetMap 9th Ave (2 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "8th Ave",
+   "label": "8th Ave",
+   "u": 7050,
+   "town": "north",
+   "source": "OpenStreetMap 8th Ave (2 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "7th Ave",
+   "label": "7th Ave",
+   "u": 7132,
+   "town": "north",
+   "source": "OpenStreetMap 7th Ave (2 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "6th Ave",
+   "label": "6th Ave",
+   "u": 7214,
+   "town": "north",
+   "source": "OpenStreetMap 6th Ave (2 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "5th Ave",
+   "label": "5th Ave",
+   "u": 7296,
+   "town": "north",
+   "source": "OpenStreetMap 5th Ave (3 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "4th Ave",
+   "label": "4th Ave",
+   "u": 7380,
+   "town": "north",
+   "source": "OpenStreetMap 4th Ave (2 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "3rd Ave",
+   "label": "3rd Ave",
+   "u": 7462,
+   "town": "north",
+   "source": "OpenStreetMap 3rd Ave (2 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "2nd Ave",
+   "label": "2nd Ave",
+   "u": 7544,
+   "town": "north",
+   "source": "OpenStreetMap 2nd Ave (3 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "1st Ave",
+   "label": "1st Ave",
+   "u": 7626,
+   "town": "north",
+   "source": "OpenStreetMap 1st Ave (4 ways, North Wildwood): u where it crosses the middle of"
+  },
+  {
+   "name": "Chestnut Ave",
+   "label": "Chestnut Ave",
+   "u": 7709,
+   "town": "north",
+   "source": "OpenStreetMap Chestnut Ave (2 ways, North Wildwood): u where it crosses the midd"
+  },
+  {
+   "name": "Walnut Ave",
+   "label": "Walnut Ave",
+   "u": 7791,
+   "town": "north",
+   "source": "OpenStreetMap Walnut Ave (5 ways, North Wildwood): u where it crosses the middle"
+  },
+  {
+   "name": "Spruce Ave",
+   "label": "Spruce Ave",
+   "u": 7861,
+   "town": "north",
+   "source": "OpenStreetMap Spruce Ave (4 ways, North Wildwood): u where it crosses the middle"
+  },
+  {
+   "name": "Pine Ave (North Wildwood)",
+   "label": "Pine Ave",
+   "u": 7957,
+   "town": "north",
+   "source": "OpenStreetMap Pine Ave (4 ways, North Wildwood): u where it crosses the middle o"
+  }
+ ]
+}

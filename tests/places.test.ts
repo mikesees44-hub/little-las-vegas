@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { applyPlaceEdits, lngLatToUv, placeOpenIn, placesGeoJson, placesIn, uvToLngLat, PLACES } from '../src/engine/placesGeo';
 import { ASSET_URLS } from '../src/ui/hood/art/assetUrls';
 import { newGame } from '../src/engine/newGame';
-import { CROSS_BY_NAME, AVE_V, RES_SEED } from '../src/engine/hoodData';
+import { CROSS_BY_NAME, RES_SEED, aveV } from '../src/engine/hoodData';
 import { extraSlots } from '../src/engine/hoodGeo';
 import { PLAN_AREAS } from '../src/ui/hood/PlanView';
 
@@ -80,14 +80,14 @@ describe('the business-location layer', () => {
     expect(JSON.parse(JSON.stringify(fc)).features.length).toBe(PLACES.length);
   });
 
-  it('the frame is pinned at both sourced points: Hunt\'s Pier on Oak Ave, the lighthouse at 1st and Central', () => {
-    const [hu] = lngLatToUv(PLACES.find((f) => f.id === 'hunts-pier')!.geometry.coordinates);
-    expect(hu).toBeCloseTo(CROSS_BY_NAME['Oak Ave'].u, 0);
+  it('the real frame puts both sourced points on their streets: Hunt\'s Pier between Poplar and Juniper (2701 Boardwalk), the lighthouse at 1st and Central', () => {
+    const [hu, hv] = lngLatToUv(PLACES.find((f) => f.id === 'hunts-pier')!.geometry.coordinates);
+    expect(hu).toBeGreaterThan(CROSS_BY_NAME['Poplar Ave'].u);
+    expect(hu).toBeLessThan(CROSS_BY_NAME['Juniper Ave'].u + 20);
+    expect(hv).toBeLessThan(0); // out over the beach, seaward of the boards
     const [lu, lv] = lngLatToUv(PLACES.find((f) => f.id === 'hereford-light')!.geometry.coordinates);
-    expect(lu).toBeGreaterThan(CROSS_BY_NAME['2nd Ave'].u);
-    expect(lu).toBeLessThan(CROSS_BY_NAME['1st Ave'].u);
-    expect(lv).toBeGreaterThan(AVE_V.pa);
-    expect(lv).toBeLessThan(AVE_V.nj);
+    expect(Math.abs(lu - CROSS_BY_NAME['1st Ave'].u)).toBeLessThan(40);
+    expect(Math.abs(lv - aveV('pa', lu))).toBeLessThan(60);
   });
 
   it('every feature stands in one of the block-map areas, and each area has its places', () => {

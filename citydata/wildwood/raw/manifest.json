@@ -1,6 +1,6 @@
 {
   "city": "wildwood",
-  "updatedAt": "2026-10-28T17:34:27.667Z",
+  "updatedAt": "2026-10-29T03:20:02.094Z",
   "files": [
     {
       "sourceId": "loc-sanborn",
@@ -36,6 +36,34 @@
     },
     {
       "sourceId": "njgin-parcels",
+      "areaId": "island",
+      "title": "NJGIN / NJOGIS Parcels Composite (with MOD-IV attributes), Five Mile Beach: Wildwood Crest, Wildwood, North Wildwood, West Wildwood",
+      "url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
+      "request": {
+        "source": "NJOGIS Parcels_Composite_NJ_WM layer 0"
+      },
+      "license": "NJ public data (NJOGIS terms of use; attribution requested)",
+      "attribution": "Parcels: NJ Office of GIS (NJOGIS), Cape May County; MOD-IV tax-list attributes via NJ Division of Taxation",
+      "downloadedAt": "2026-10-29T03:01:54.006Z",
+      "coverage": {
+        "bbox": [
+          -74.865,
+          38.945,
+          -74.775,
+          39.015
+        ]
+      },
+      "notes": [
+        "Hand-off file wildwood_island_parcels.geojson; 21351 features.",
+        "Fields: allowlist only (no owner, mailing or sale data)."
+      ],
+      "file": "njgin-parcels/island.geojson",
+      "bytes": 17753146,
+      "sha256": "1102f47cd2df5de79d2cba4e4b790c74491a4e074937bf58b882631ded4c5208",
+      "retrievedBy": "browser-handoff"
+    },
+    {
+      "sourceId": "njgin-parcels",
       "areaId": "test-blocks",
       "title": "NJGIN / NJOGIS Parcels Composite (with MOD-IV attributes), Wildwood: Lincoln Ave to 26th Ave, Park Blvd to Pacific Ave (test area)",
       "url": "https://services2.arcgis.com/XVOqAjTOJ5P6ngMu/arcgis/rest/services/Parcels_Composite_NJ_WM/FeatureServer/0",
@@ -67,6 +95,35 @@
       "file": "njgin-parcels/test-blocks.geojson",
       "bytes": 589340,
       "sha256": "a4f678b54b2bd0a59c6c4d9d1c39c20844274149600d28875b003bb60e60bf1b",
+      "retrievedBy": "browser-handoff"
+    },
+    {
+      "sourceId": "osm",
+      "areaId": "island",
+      "title": "OpenStreetMap API 0.6 map call, Five Mile Beach: Wildwood Crest, Wildwood, North Wildwood, West Wildwood",
+      "url": "https://api.openstreetmap.org/api/0.6/map.json?bbox=-74.865,38.945,-74.775,39.015",
+      "request": {
+        "generator": "OSM API 0.6 map.json, 36 tiles merged in browser",
+        "version": "0.6"
+      },
+      "license": "ODbL 1.0",
+      "attribution": "© OpenStreetMap contributors (https://www.openstreetmap.org/copyright)",
+      "downloadedAt": "2026-10-29T03:00:45.869Z",
+      "coverage": {
+        "bbox": [
+          -74.865,
+          38.945,
+          -74.775,
+          39.015
+        ]
+      },
+      "notes": [
+        "Hand-off file wildwood_island.osm.json. Download date from the document's 'downloaded' field, else the hand-off file's timestamp.",
+        "The map call returns every node of every way touching the box, so ways run past its edges."
+      ],
+      "file": "osm/island.osm.json",
+      "bytes": 17601634,
+      "sha256": "7fc5b2ee0acd9ec516a01e4285517b1385812ae6a06c087bed698fb9878c919c",
       "retrievedBy": "browser-handoff"
     },
     {

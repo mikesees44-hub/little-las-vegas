@@ -9,6 +9,8 @@
  *   sheets     download Sanborn sheets: --item sanborn05568_015 --sheets ind3,63B,27 [--pct 50]
  *   build      build the city pack (citydata/<city>/packs/<area>/) and the game layer (public/geo/)
  *   validate   check a built pack against the schema
+ *   grid       re-derive the game's island grid (frame, street order, avenues, outlines, districts) from the
+ *              island download and re-place the town package's records on it (src/worldpack/cities/wildwood.json)
  *   all        fetch (or use the cache) then build and validate
  *
  * --offline: use the cache only and report every source that would need the network.
@@ -24,7 +26,7 @@ import { cityDir, readManifest } from './lib/manifest';
 import { buildPack } from './build/pack';
 import { validatePackDir } from './build/schema';
 import { join } from 'node:path';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const argv = process.argv.slice(2);
 const cmd = argv[0];
@@ -82,6 +84,7 @@ async function main() {
     return;
   }
   if (cmd === 'build') { runBuild(); return; }
+  if (cmd === 'grid') { await runGrid(); return; }
   if (cmd === 'validate') { validate(); return; }
   console.log('commands: fetch | handoff | sheets | build | validate | all   (see the header of scripts/cityimport/cli.ts)');
 }
@@ -95,6 +98,54 @@ function runBuild(rep?: SourceStatus[]) {
   console.log(`alignment: rms ${r.alignment.fit.rmsBefore} m -> ${r.alignment.fit.rmsAfter} m after fit over ${r.alignment.fit.n} streets`);
   console.log(`game layer: ${r.gameLayerFile}`);
   validate();
+}
+
+async function runGrid() {
+  const { measureIsland } = await import('./build/islandgrid');
+  const { buildIslandGrid, replacePlaces, refitFrontage } = await import('./build/islandpkg');
+  const { exportCityPackage, validateCityPackage } = await import('../../src/engine/cityPackage');
+  const m0 = readManifest(city.id);
+  const osmF = m0.files.find((f) => f.sourceId === 'osm' && f.areaId === 'island');
+  const pcF = m0.files.find((f) => f.sourceId === 'njgin-parcels' && f.areaId === 'island');
+  if (!osmF || !pcF) throw new Error('the island download is not in the raw manifest: run handoff --area island first');
+  const raw = join(cityDir(city.id), 'raw');
+  const pkgFile = join(cityDir(city.id), '..', '..', 'src', 'worldpack', 'cities', 'wildwood.json');
+  // The records are re-placed from the old (memory) grid: the package before the first run (or --legacy <file>, a copy of it).
+  const legacyFile = arg('legacy');
+  const old = JSON.parse(readFileSync(legacyFile ?? pkgFile, 'utf8'));
+  if (old.geography?.frame?.spine) throw new Error('the package already has the real grid (frame.spine): re-placing would move its records twice. Pass --legacy <the package as it was on the memory grid> (git show 23dcadc:src/worldpack/cities/wildwood.json).');
+  const doc = JSON.parse(readFileSync(join(raw, osmF.file), 'utf8'));
+  const pcs = JSON.parse(readFileSync(join(raw, pcF.file), 'utf8'));
+  const now = new Date().toISOString();
+  const m = measureIsland(doc, pcs.features);
+  const g = buildIslandGrid(m, old, { now });
+  const placed = replacePlaces(old, g.pkg, m, g.review);
+  const frontage = refitFrontage(old, g.pkg, g.review);
+  writeFileSync(pkgFile, `${exportCityPackage(g.pkg)}\n`);
+  // The districts' outlines need the game's slot layout on the new grid: load it fresh (it reads the package just written).
+  const { allGridSlots } = await import('../../src/engine/hoodGeo');
+  const { districtOutlines } = await import('./build/islandpkg');
+  const shapes = districtOutlines(m, g.pkg, allGridSlots(), g.debug!.lab, g.debug!.raster);
+  for (const d of g.pkg.districts) {
+    const rings = shapes[d.id] ?? [];
+    if (!rings.length) { g.review.push({ id: `rq-district-${d.id}`, kind: 'district-no-outline', priority: 'high', target: { layer: 'districts', id: d.id }, detail: `${d.name}: no ground on the real island`, suggestion: 'Check its frontage.', status: 'open' }); continue; }
+    const area = (x: [number, number][]) => Math.abs(x.reduce((s, p, i) => { const q = x[(i + 1) % x.length]; return s + p[0] * q[1] - q[0] * p[1]; }, 0) / 2);
+    d.polygon = [...rings].sort((a, b) => area(b) - area(a))[0];
+    d.evidence = { confidence: 'approximate', source: `Outline: ${d.id === 'd:crest' || d.id === 'd:north' || d.id === 'd:westww' ? 'the town\'s ground (municipal line from the NJ tax parcels)' : d.id === 'd:boardwalk' ? 'the boards\' strip, beach to Ocean Avenue, Cresse to 16th Avenue' : d.id === 'd:causeway' ? 'the causeway\'s course (OSM) and its mainland end' : 'the part of Wildwood nearest its 1960 lots (on the real grid)'}; traced 2026-10-29 (scripts/cityimport grid). ${rings.length > 1 ? `${rings.length} pieces; all in geography.outlines['${d.id}'].` : ''} 1960 population is a Census-scale guess.` };
+    g.pkg.geography.outlines![d.id] = rings;
+  }
+  const v = validateCityPackage(g.pkg);
+  if (!v.ok) { console.error(v.errors.slice(0, 20)); process.exit(1); }
+  writeFileSync(pkgFile, `${exportCityPackage(g.pkg)}\n`);
+  const packDir = join(cityDir(city.id), 'packs', 'island');
+  mkdirSync(packDir, { recursive: true });
+  writeFileSync(join(packDir, 'grid-report.json'), `${JSON.stringify({ at: now, ...g.report, placed, frontage }, null, 1)}\n`);
+  writeFileSync(join(packDir, 'grid-review.json'), `${JSON.stringify({ schemaVersion: 1, packId: 'wildwood/island-grid', generatedAt: now, items: g.review }, null, 1)}\n`);
+  writeFileSync(join(cityDir(city.id), 'evidence', 'osm-street-order.json'), `${JSON.stringify({ note: 'The island\'s cross streets in their real order (south to north), measured from OpenStreetMap (2026-10-29) in the game frame: u where each crosses the middle of the island. Written by `cli.ts grid`; tests check the game\'s grid against it.', source: '© OpenStreetMap contributors (ODbL)', streets: g.order }, null, 1)}\n`);
+  const e = g.report.error as { meanBefore: number; meanAfter: number; maxBefore: number; maxAfter: number; streets: number };
+  console.log(`grid: ${g.order.length} cross streets; error over ${e.streets} shared streets ${e.meanBefore} m (max ${e.maxBefore}) -> ${e.meanAfter} m (max ${e.maxAfter})`);
+  console.log(`placements ${JSON.stringify(placed.placements)}; parcels ${JSON.stringify(placed.parcels)}; queued ${placed.queued.length}; review items ${g.review.length}`);
+  console.log(`wrote ${pkgFile} (${v.warnings.length} warnings), with the districts' outlines`);
 }
 
 function validate() {

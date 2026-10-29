@@ -252,7 +252,9 @@ export function namePolicyNote(p: NamePolicy): string {
 /* ---------------- into the game ---------------- */
 
 /** Adds a place's records to the game in progress (the home town picks them up as a lot; nothing rerolls). */
-export function addPlaceLive(s: { addedPlaces?: AddedPlaces }, townId: string, rec: PlaceRecords): void {
+export function addPlaceLive(s: { addedPlaces?: AddedPlaces; islandGrid?: number }, townId: string, rec: PlaceRecords): void {
+  // Positions added now are on the real Wildwood grid (an old save's were moved onto it when it loaded).
+  s.islandGrid ??= 2;
   s.addedPlaces ??= {};
   const t = (s.addedPlaces[townId] ??= { parcels: [], businesses: [], placements: [], landmarks: [] });
   const put = <T extends { id: string }>(list: T[], r?: T) => { if (!r) return; const i = list.findIndex((x) => x.id === r.id); if (i >= 0) list[i] = r; else list.push(r); };

@@ -1,5 +1,5 @@
 import { SIGN_HEX } from '../../engine/design';
-import { AVENUES, BOARDWALK, CAUSEWAY, CROSS, LANDMARKS, PIERS, U_NORTH, U_SOUTH, WEST_WILDWOOD, bayEdge, beachWidth, townAt, type Town } from '../../engine/hoodData';
+import { AVENUES, BOARDWALK, CAUSEWAY, CROSS, ISLAND_BOUNDS, LANDMARKS, OUTLINES, PIERS, TOWN_SPANS, U_NORTH, U_SOUTH, WEST_WILDWOOD, aveRuns, aveV, bayEdge, beachWidth, boardwalkV, frontV, townAt } from '../../engine/hoodData';
 import { axisAngle, crossAngle, line, P, poly, type Mood, type Palette, type Proj } from './iso';
 
 /**
@@ -18,7 +18,10 @@ function hash(n: number): number {
 }
 
 export const VIEW_BOUNDS = (pr: Proj) => {
-  const pts = [P(pr, -500, -700), P(pr, 7900, -700), P(pr, 7900, 2500), P(pr, -500, 2500)];
+  const B = ISLAND_BOUNDS;
+  // The island and its back bay (the mainland end of the causeway lies further out; the view need not take it in).
+  const v1 = Math.min(B.v1, 2600);
+  const pts = [P(pr, B.u0, B.v0), P(pr, B.u1, B.v0), P(pr, B.u1, v1), P(pr, B.u0, v1)];
   const xs = pts.map((p) => p[0]);
   const ys = pts.map((p) => p[1]);
   return { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
@@ -59,7 +62,13 @@ export function GroundDefs({ pal, mood }: { pal: Palette; mood: Mood }) {
   );
 }
 
+/** Rings of the frame as one path (even-odd: a ring inside another is a hole). */
+function ringsPath(pr: Proj, rings: [number, number][][] | undefined): string {
+  return (rings ?? []).map((r) => poly(r.map(([u, v]) => P(pr, u, v)))).join('');
+}
+
 function islandOutline(pr: Proj): string {
+  if (OUTLINES.land?.length) return ringsPath(pr, OUTLINES.land);
   const sea: [number, number][] = step(-700, U_NORTH, 100).map((u) => P(pr, u, -beachWidth(u)));
   const tip: [number, number][] = [P(pr, U_NORTH + 70, 60), P(pr, U_NORTH + 40, 220)];
   const bay: [number, number][] = step(-700, U_NORTH, 100).reverse().map((u) => P(pr, u, bayEdge(u)));
@@ -67,57 +76,64 @@ function islandOutline(pr: Proj): string {
 }
 
 function townOutline(pr: Proj): string {
+  if (OUTLINES.town?.length) return ringsPath(pr, OUTLINES.town);
   const front: [number, number][] = step(-700, U_NORTH - 20, 100).map((u) => P(pr, u, -2));
   const bay: [number, number][] = step(-700, U_NORTH - 20, 100).reverse().map((u) => P(pr, u, bayEdge(u) - 4));
   return poly([...front, ...bay]);
 }
 
-/** Bands of blocks between avenues (v ranges), and whether they apply in a town. */
-const BANDS: { v0: number; v1: number; where: (u: number, t: Town) => boolean }[] = [
-  { v0: 8, v1: 81, where: (u) => u < BOARDWALK.from || u > BOARDWALK.to },
-  { v0: 99, v1: 201, where: () => true },
-  { v0: 219, v1: 321, where: () => true },
-  { v0: 339, v1: 441, where: () => true },
-  { v0: 459, v1: 561, where: (u, t) => t !== 'north' && u >= 900 },
-  { v0: 459, v1: 9999, where: (u, t) => t === 'north' || u < 900 },
-  { v0: 579, v1: 9999, where: (u, t) => t !== 'north' && u >= 900 },
-];
+/** The lines the blocks lie between at u: the town's front, the avenues that run there, the bay. */
+function linesAt(u: number): number[] {
+  const out = [frontV(u)];
+  for (const a of AVENUES) if (aveRuns(a.id, u)) out.push(aveV(a.id, u));
+  out.push(bayEdge(u));
+  return out.sort((x, y) => x - y);
+}
 
+/**
+ * The blocks: between each pair of neighbouring cross streets, a block between
+ * each pair of neighbouring avenues (the front and the bay at the ends), cut to
+ * the town's outline by a clip path (Ground draws it), so the harbours and
+ * lagoons cut into them as they do on the ground.
+ */
 function blocksPath(pr: Proj): string {
   let d = '';
-  const all = [{ u: U_SOUTH - 60 }, ...CROSS, { u: U_NORTH - 40 }];
+  const grid = CROSS.filter((c) => !c.hidden);
+  const all = [{ u: U_SOUTH - 60 }, ...grid, { u: U_NORTH - 20 }];
   for (let i = 0; i < all.length - 1; i++) {
     const ua = all[i].u + 7;
     const ub = all[i + 1].u - 7;
-    if (ub - ua < 20) continue;
-    const t = townAt((ua + ub) / 2);
-    for (const b of BANDS) {
-      if (!b.where((ua + ub) / 2, t)) continue;
-      const v1 = Math.min(b.v1, bayEdge(ua) - 14, bayEdge(ub) - 14);
-      if (v1 - b.v0 < 18) continue;
-      d += poly([P(pr, ua, b.v0), P(pr, ub, b.v0), P(pr, ub, v1), P(pr, ua, v1)]);
+    if (ub - ua < 14) continue;
+    const um = (ua + ub) / 2;
+    const L = linesAt(um);
+    for (let k = 0; k < L.length - 1; k++) {
+      const v0 = L[k] + (k === 0 ? 2 : 8);
+      const v1 = L[k + 1] - (k + 1 === L.length - 1 ? 0 : 8);
+      if (v1 - v0 < 14) continue;
+      // Each corner follows the avenues where they bend (they are measured, not straight).
+      const ka = linesAt(ua); const kb = linesAt(ub);
+      const same = ka.length === L.length && kb.length === L.length;
+      const at = (K: number[], j: number, fb: number) => (same ? K[j] : fb);
+      const a0 = at(ka, k, L[k]) - L[k] + v0; const b0 = at(kb, k, L[k]) - L[k] + v0;
+      const a1 = at(ka, k + 1, L[k + 1]) - L[k + 1] + v1; const b1 = at(kb, k + 1, L[k + 1]) - L[k + 1] + v1;
+      d += poly([P(pr, ua, a0), P(pr, ub, b0), P(pr, ub, b1), P(pr, ua, a1)]);
     }
   }
   return d;
 }
 
-function avenueRange(v: number, from = U_SOUTH, to = U_NORTH): [number, number] | undefined {
-  let a: number | undefined;
-  let b: number | undefined;
-  for (let u = from; u <= to; u += 20) {
-    if (bayEdge(u) > v + 14) { a ??= u; b = u; }
-  }
-  return a !== undefined && b !== undefined ? [a, b] : undefined;
-}
-
 function streetsPath(pr: Proj): { aves: string; cross: string } {
   let aves = '';
   for (const a of AVENUES) {
-    const r = avenueRange(a.v, a.from ?? U_SOUTH - 60, Math.min(a.to ?? U_NORTH, U_NORTH - 30));
-    if (r) aves += line([P(pr, r[0], a.v), P(pr, r[1], a.v)]);
+    if (a.path?.length) { aves += line(a.path.map(([u, v]) => P(pr, u, v))); continue; }
+    aves += line([P(pr, a.from ?? U_SOUTH, a.v), P(pr, a.to ?? U_NORTH, a.v)]);
   }
   let cross = '';
-  for (const c of CROSS) cross += line([P(pr, c.u, c.u >= BOARDWALK.from && c.u <= BOARDWALK.to ? 0 : -2), P(pr, c.u, bayEdge(c.u) - 6)]);
+  for (const c of CROSS) {
+    if (c.hidden) continue;
+    const [v0, v1] = c.vRange ?? [frontV(c.u), bayEdge(c.u) - 6];
+    cross += line([P(pr, c.u, Math.max(v0, frontV(c.u)) - 2), P(pr, c.u, Math.min(v1, bayEdge(c.u)))]);
+  }
   return { aves, cross };
 }
 
@@ -143,8 +159,9 @@ function marshes(pr: Proj): { d: string; ch: string } {
 
 function mainland(pr: Proj): string {
   const v0 = CAUSEWAY.mainlandV;
-  const edge: [number, number][] = step(-700, 7900, 200).map((u, i) => P(pr, u, v0 + (hash(i + 7) - 0.5) * 60 + Math.max(0, u - 5200) * 0.12));
-  return poly([...edge, P(pr, 7900, 4000), P(pr, -700, 4000)]);
+  const B = ISLAND_BOUNDS;
+  const edge: [number, number][] = step(B.u0, B.u1, 200).map((u, i) => P(pr, u, v0 + (hash(i + 7) - 0.5) * 60 + Math.max(0, u - 5200) * 0.12));
+  return poly([...edge, P(pr, B.u1, v0 + 3000), P(pr, B.u0, v0 + 3000)]);
 }
 
 export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mood: Mood; tier: number; sc: number }) {
@@ -157,12 +174,11 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
   const cx = crossAngle(pr);
   const waterline = line(step(-700, U_NORTH, 60).map((u) => P(pr, u, -beachWidth(u))));
   const wave = (off: number) => line(step(-700, U_NORTH + 300, 120).map((u, i) => P(pr, u, -beachWidth(Math.min(u, U_NORTH)) - off - (i % 2) * 6)));
-  const cw0 = P(pr, CAUSEWAY.u, bayEdge(CAUSEWAY.u));
-  const cwBend = P(pr, CAUSEWAY.u - 260, 1300);
-  const cw1 = P(pr, CAUSEWAY.u - 420, CAUSEWAY.mainlandV + 160);
+  const cwPts: [number, number][] = CAUSEWAY.path?.length ? CAUSEWAY.path.map(([u, v]) => P(pr, u, v)) : [P(pr, CAUSEWAY.u, bayEdge(CAUSEWAY.u)), P(pr, CAUSEWAY.u - 260, 1300), P(pr, CAUSEWAY.u - 420, CAUSEWAY.mainlandV + 160)];
   const ww = WEST_WILDWOOD;
-  const wwPoly = poly([P(pr, ww.u0, ww.v0), P(pr, ww.u1, ww.v0 - 20), P(pr, ww.u1 + 30, ww.v1), P(pr, ww.u0 - 20, ww.v1 + 10)]);
-  const wwBridge = line([P(pr, ww.u1 - 40, ww.v0 - 10), P(pr, ww.u1 - 30, bayEdge(ww.u1 - 30) - 2)]);
+  const wwPoly = OUTLINES.westww?.length ? ringsPath(pr, OUTLINES.westww) : poly([P(pr, ww.u0, ww.v0), P(pr, ww.u1, ww.v0 - 20), P(pr, ww.u1 + 30, ww.v1), P(pr, ww.u0 - 20, ww.v1 + 10)]);
+  // The bridge to West Wildwood: from its nearest corner straight to the island.
+  const wwBridge = line([P(pr, ww.u0 + 60, ww.v0 + 10), P(pr, ww.u0 + 60, ww.v0 - 60)]);
   const label = (x: number, y: number, t: string, size: number, rot = 0, opts: { color?: string; ital?: boolean; spacing?: number; weight?: number } = {}) => (
     <text key={`${t}-${x.toFixed(0)}`} x={x} y={y} transform={rot ? `rotate(${rot} ${x} ${y})` : undefined} fontSize={fs(size)} textAnchor="middle" fill={opts.color ?? pal.label}
       stroke={pal.labelHalo} strokeWidth={fs(size) * 0.22} paintOrder="stroke" fontStyle={opts.ital ? 'italic' : undefined} letterSpacing={opts.spacing ? fs(size) * opts.spacing : undefined}
@@ -173,9 +189,10 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
   if (tier >= 1) {
     for (let u = U_SOUTH + 40; u < U_NORTH - 200; u += 34) {
       const i = Math.round(u);
-      const bw = beachWidth(u);
-      if (hash(i) < 0.35) continue;
-      const v = -20 - hash(i + 3) * (bw - 50);
+      const f = Math.min(frontV(u), boardwalkV(u));
+      const span = f + beachWidth(u);
+      if (hash(i) < 0.35 || span < 70) continue;
+      const v = f - 20 - hash(i + 3) * (span - 50);
       const [x, y] = P(pr, u + hash(i + 9) * 20, v);
       umbrellas.push(<use key={i} href={`#hv-umb-${'abc'[i % 3]}`} x={x - 6} y={y - 9} width="12" height="10" />);
     }
@@ -193,18 +210,21 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
   }
   const avLabels: JSX.Element[] = [];
   for (const a of tier >= 1 ? AVENUES : []) {
-    const r = avenueRange(a.v, a.from ?? U_SOUTH, a.to ?? U_NORTH);
-    if (!r) continue;
-    for (let u = r[0] + 500; u < r[1] - 200; u += tier >= 2 ? 700 : 1600) {
+    const r: [number, number] = [a.from ?? U_SOUTH, a.to ?? U_NORTH];
+    for (let u = r[0] + (tier >= 2 ? 250 : 500); u < r[1] - 150; u += tier >= 2 ? 700 : 1600) {
       const nm = a.names[townAt(u)];
       if (!nm) continue;
-      const [x, y] = P(pr, u, a.v);
+      const [x, y] = P(pr, u, aveV(a.id, u));
       avLabels.push(label(x, y + fs(3.5), nm.toUpperCase(), tier >= 2 ? 9 : 8, ax, { spacing: 0.12 }));
     }
   }
-  const crossLabels = tier >= 2 ? CROSS.map((c) => { const [x, y] = P(pr, c.u, 150); return label(x, y, c.n, 8.5, cx, { weight: 500 }); }) : tier >= 1 ? CROSS.filter((_, i) => i % 3 === 0).map((c) => { const [x, y] = P(pr, c.u, 150); return label(x, y, c.n, 8, cx, { weight: 500 }); }) : [];
-  const bwPoly = poly([P(pr, BOARDWALK.from, -BOARDWALK.w), P(pr, BOARDWALK.to, -BOARDWALK.w), P(pr, BOARDWALK.to, 0), P(pr, BOARDWALK.from, 0)]);
-  const bwLine = line([P(pr, BOARDWALK.from + 20, -BOARDWALK.w / 2), P(pr, BOARDWALK.to - 20, -BOARDWALK.w / 2)]);
+  const shown = CROSS.filter((c) => !c.hidden);
+  const crossLabel = (c: (typeof CROSS)[number], size: number) => { const v = (aveRuns('at', c.u) ? aveV('at', c.u) : frontV(c.u) + 150) - 45; const [x, y] = P(pr, c.u, v); return label(x, y, c.label, size, cx, { weight: 500 }); };
+  const crossLabels = tier >= 2 ? shown.map((c) => crossLabel(c, 8.5)) : tier >= 1 ? shown.filter((_, i) => i % 3 === 0).map((c) => crossLabel(c, 8)) : [];
+  // The Boardwalk on its course: its inland edge (BOARDWALK.path) and the planks seaward of it.
+  const bwUs = step(BOARDWALK.from, BOARDWALK.to, 40);
+  const bwPoly = poly([...bwUs.map((u) => P(pr, u, boardwalkV(u) - BOARDWALK.w)), ...[...bwUs].reverse().map((u) => P(pr, u, boardwalkV(u)))]);
+  const bwLine = line(step(BOARDWALK.from + 20, BOARDWALK.to - 20, 40).map((u) => P(pr, u, boardwalkV(u) - BOARDWALK.w / 2)));
   const lights = mood !== 'day';
   return (
     <g>
@@ -216,30 +236,34 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
       <path d={poly([...step(-700, U_NORTH + 600, 100).map((u) => P(pr, u, -beachWidth(Math.min(u, U_NORTH)) + (u > U_NORTH ? (u - U_NORTH) * 0.9 : 0))), P(pr, U_NORTH + 900, 2000), P(pr, 9000, 2400), P(pr, 9000, -4000), P(pr, -900, -4000)])} fill="url(#hv-ocean)" />
       <path d={wave(40)} stroke={pal.foam} strokeOpacity="0.35" strokeWidth={3} fill="none" strokeDasharray="30 50" className="hv-wave" />
       <path d={wave(120)} stroke={pal.foam} strokeOpacity="0.22" strokeWidth={3} fill="none" strokeDasharray="20 70" className="hv-wave hv-wave2" />
-      <path d={islandOutline(pr)} fill={pal.sand} />
+      <path d={islandOutline(pr)} fill={pal.sand} fillRule="evenodd" />
       <path d={waterline} stroke={pal.foam} strokeWidth="5" fill="none" strokeOpacity="0.85" />
-      <path d={townOutline(pr)} fill={pal.ground} />
-      <path d={blocksPath(pr)} fill="url(#hv-houses)" stroke={pal.block} strokeWidth="1" />
-      <path d={aves} stroke={pal.street} strokeWidth="14" fill="none" />
-      <path d={cross} stroke={pal.street} strokeWidth="9" fill="none" />
+      <clipPath id="hv-town-clip"><path d={townOutline(pr)} clipRule="evenodd" /></clipPath>
+      <path d={townOutline(pr)} fill={pal.ground} fillRule="evenodd" />
+      <path d={blocksPath(pr)} fill="url(#hv-houses)" stroke={pal.block} strokeWidth="1" clipPath="url(#hv-town-clip)" />
+      <g clipPath="url(#hv-town-clip)">
+        <path d={aves} stroke={pal.street} strokeWidth="14" fill="none" />
+        <path d={cross} stroke={pal.street} strokeWidth="9" fill="none" />
+      </g>
       {tier >= 1 && <path d={aves} stroke={pal.streetLine} strokeWidth="0.8" strokeDasharray="6 6" fill="none" opacity="0.8" />}
       {lights && tier >= 1 && <path d={aves} stroke="#ffd27a" strokeOpacity={night ? 0.22 : 0.14} strokeWidth="5" strokeLinecap="round" strokeDasharray="0 36" fill="none" />}
       {/* The causeway over the meadows, and West Wildwood. */}
-      <path d={line([cw0, cwBend, cw1])} stroke={pal.street} strokeWidth="12" fill="none" />
-      <path d={line([cw0, cwBend, cw1])} stroke={pal.streetLine} strokeWidth="1" strokeDasharray="8 8" fill="none" />
-      <path d={wwPoly} fill={pal.ground} stroke={pal.sand2} strokeWidth="4" />
-      <path d={wwPoly} fill="url(#hv-houses)" opacity="0.6" />
+      <path d={line(cwPts)} stroke={pal.street} strokeWidth="12" fill="none" />
+      <path d={line(cwPts)} stroke={pal.streetLine} strokeWidth="1" strokeDasharray="8 8" fill="none" />
+      <path d={wwPoly} fill={pal.ground} stroke={pal.sand2} strokeWidth="4" fillRule="evenodd" />
+      <path d={wwPoly} fill="url(#hv-houses)" opacity="0.6" fillRule="evenodd" />
       <path d={wwBridge} stroke={pal.street} strokeWidth="7" />
       {/* The Boardwalk and the pier decks. */}
       <path d={bwPoly} fill="url(#hv-planks)" stroke={pal.plank2} strokeWidth="1.2" />
       {lights && <path d={bwLine} stroke="#ffe7a8" strokeOpacity={night ? 0.5 : 0.3} strokeWidth="2.4" strokeLinecap="round" strokeDasharray="0 22" fill="none" />}
       {PIERS.map((p) => {
         const L = p.len;
-        const deck = poly([P(pr, p.u - p.w / 2, -BOARDWALK.w), P(pr, p.u + p.w / 2, -BOARDWALK.w), P(pr, p.u + p.w / 2, -BOARDWALK.w - L), P(pr, p.u - p.w / 2, -BOARDWALK.w - L)]);
-        const piles = step(0, p.w, 12).map((d) => P(pr, p.u - p.w / 2 + d, -BOARDWALK.w - L, -4));
+        const b0 = boardwalkV(p.u) - BOARDWALK.w;
+        const deck = poly([P(pr, p.u - p.w / 2, b0), P(pr, p.u + p.w / 2, b0), P(pr, p.u + p.w / 2, b0 - L), P(pr, p.u - p.w / 2, b0 - L)]);
+        const piles = step(0, p.w, 12).map((d) => P(pr, p.u - p.w / 2 + d, b0 - L, -4));
         return (
           <g key={p.id}>
-            <path d={poly([P(pr, p.u - p.w / 2, -BOARDWALK.w - L), P(pr, p.u + p.w / 2, -BOARDWALK.w - L), P(pr, p.u + p.w / 2, -BOARDWALK.w - L, -5), P(pr, p.u - p.w / 2, -BOARDWALK.w - L, -5)])} fill={pal.plank2} />
+            <path d={poly([P(pr, p.u - p.w / 2, b0 - L), P(pr, p.u + p.w / 2, b0 - L), P(pr, p.u + p.w / 2, b0 - L, -5), P(pr, p.u - p.w / 2, b0 - L, -5)])} fill={pal.plank2} />
             {tier >= 1 && piles.map((q, i) => <path key={i} d={line([q, [q[0], q[1] + 5]])} stroke={pal.plank2} strokeWidth="1.4" />)}
             <path d={deck} fill="url(#hv-planks)" stroke={pal.plank2} strokeWidth="1.5" />
           </g>
@@ -268,14 +292,15 @@ export function Ground({ pr, pal, mood, tier, sc }: { pr: Proj; pal: Palette; mo
       {avLabels}
       {crossLabels}
       {/* Water and town names. */}
-      {(() => { const [x, y] = P(pr, 3600, -900); return label(x, y, 'ATLANTIC OCEAN', 13, ax, { color: mood === 'day' ? '#e9fbff' : '#9fc3d6', spacing: 0.6, ital: true }); })()}
-      {(() => { const [x, y] = P(pr, 5000, 1500); return label(x, y, 'Grassy Sound', 10, ax, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
+      {(() => { const [x, y] = P(pr, 3600, -beachWidth(3600) - 350); return label(x, y, 'ATLANTIC OCEAN', 13, ax, { color: mood === 'day' ? '#e9fbff' : '#9fc3d6', spacing: 0.6, ital: true }); })()}
+      {(() => { const [x, y] = P(pr, 6900, 1350); return label(x, y, 'Grassy Sound', 10, ax, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
+      {(() => { const [x, y] = P(pr, 2000, 1150); return label(x, y, 'Sunset Lake', 9, ax, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
       {(() => { const [x, y] = P(pr, U_NORTH + 260, 300); return label(x, y, 'Hereford Inlet', 10, 0, { ital: true, color: mood === 'day' ? '#1d5f63' : '#9fc3d6' }); })()}
-      {(() => { const [x, y] = P(pr, CAUSEWAY.u - 420, CAUSEWAY.mainlandV + 230); return label(x, y, 'RIO GRANDE', 10, 0, { spacing: 0.3 }); })()}
-      {(() => { const [x, y] = P(pr, CAUSEWAY.u - 210, 1500); return tier >= 1 ? label(x, y, 'Rio Grande Ave causeway', 8, 0, { ital: true }) : null; })()}
+      {(() => { const [x, y] = P(pr, CAUSEWAY.mainlandU, Math.min(CAUSEWAY.mainlandV, 2450)); return label(x, y, 'to RIO GRANDE ↓', 10, 0, { spacing: 0.3 }); })()}
+      {(() => { const mid = CAUSEWAY.path?.[Math.floor((CAUSEWAY.path?.length ?? 0) / 3)] ?? [CAUSEWAY.u - 210, 1500]; const [x, y] = P(pr, mid[0] + 80, mid[1]); return tier >= 1 ? label(x, y, 'Rio Grande Ave causeway', 8, 0, { ital: true }) : null; })()}
       {(() => { const [x, y] = P(pr, -300, 300); return label(x, y, '↙ to Cape May', 9, 0, { ital: true }); })()}
-      {(() => { const [x, y] = P(pr, (ww.u0 + ww.u1) / 2, ww.v1 + 70); return label(x, y, 'WEST WILDWOOD', 9, ax, { spacing: 0.25 }); })()}
-      {sc < 0.5 && ([['WILDWOOD CREST', 1400], ['WILDWOOD', 3900], ['NORTH WILDWOOD', 6200]] as const).map(([t, u]) => { const [x, y] = P(pr, u, 330); return label(x, y, t, 15, ax, { spacing: 0.35, weight: 800, color: mood === 'day' ? '#c2185b' : '#ff5fa2' }); })}
+      {(() => { const [x, y] = P(pr, (ww.u0 + ww.u1) / 2, (ww.v0 + ww.v1) / 2 + 60); return label(x, y, 'WEST WILDWOOD', 9, ax, { spacing: 0.25 }); })()}
+      {sc < 0.5 && ([['WILDWOOD CREST', 'crest'], ['WILDWOOD', 'wildwood'], ['NORTH WILDWOOD', 'north']] as const).map(([t, k]) => { const [a, b] = TOWN_SPANS[k]; const u = (a + Math.min(b, U_NORTH - 300)) / 2; const [x, y] = P(pr, u, aveRuns('pa', u) ? aveV('pa', u) + 60 : 400); return label(x, y, t, 15, ax, { spacing: 0.35, weight: 800, color: mood === 'day' ? '#c2185b' : '#ff5fa2' }); })}
     </g>
   );
 }
@@ -288,7 +313,7 @@ export function PierArches({ pr, mood, tier, sc }: { pr: Proj; mood: Mood; tier:
     <g>
       {PIERS.map((p) => {
               // The arch over the pier's entrance, with its name in neon.
-              const [ax, ay] = P(pr, p.u, -BOARDWALK.w - 4);
+              const [ax, ay] = P(pr, p.u, boardwalkV(p.u) - BOARDWALK.w - 4);
               const hw = Math.min(26, p.w * 0.38);
               const neon = SIGN_HEX[p.sign];
               const fsz = Math.max(4.2, Math.min(9, 9 / sc));
