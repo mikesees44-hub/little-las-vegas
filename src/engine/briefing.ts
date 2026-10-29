@@ -775,6 +775,11 @@ function capoItems(s: GameState, k: Character): Draft[] {
   return out;
 }
 
+/** Married or courting (as good as engaged): nobody looks for a match for him. */
+function courting(s: GameState, id: string): boolean {
+  return (s.romance?.rels ?? []).some((r) => r.ended === undefined && r.kind === 'courtship' && (r.a === id || r.b === id));
+}
+
 function wifeItems(s: GameState, w: Character): Draft[] {
   const out: Draft[] = [];
   if (!s.dyn) return out;
@@ -800,7 +805,7 @@ function wifeItems(s: GameState, w: Character): Draft[] {
     opts: [{ id: 'host', label: 'Throw the wedding', action: { kind: 'dynasty', op: { type: 'host', activity: 'wedding', guests: suggestGuests(s, 'wedding'), honoreeId: wed.id } } as PlayerAction, why: 'renown, and everybody in one room' }, wait()],
   });
   const heir = chooseHeir(s, boss).heir;
-  if (heir && heir.id !== w.id && !heir.spouseId && heir.dynasty && fam(s, heir.id).path !== 'priest' && heir.birth && s.date.y - heir.birth.y >= 21) out.push({
+  if (heir && heir.id !== w.id && !heir.spouseId && !courting(s, heir.id) && heir.dynasty && fam(s, heir.id).path !== 'priest' && heir.birth && s.date.y - heir.birth.y >= 21) out.push({
     id: `match:${heir.id}`, charId: heir.id, about: [heir.id], priority: 220, topic: `${heir.firstName}'s future`, covers: [{ kind: 'family' }],
     says: [`${heir.firstName} should be married by now. A good house, a good name.`, `I've been talking to the mothers at St. Ann's about ${heir.firstName}.`, `A match for ${heir.firstName} would make an ally of somebody.`],
     opts: [{ id: 'match', label: 'Look for a match', link: { tab: 'marriages' }, why: 'an alliance for as long as it lasts' }, wait()],
