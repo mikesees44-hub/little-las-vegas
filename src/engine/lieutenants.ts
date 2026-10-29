@@ -978,7 +978,9 @@ function coverBy(s: GameState, d: LtDomain): number {
   // A skimmer watching the count is no watch at all; a disloyal man covers nothing.
   if (p.disloyal || (d === 'collections' && p.greedy && p.honesty < 50)) return 0;
   const loyal = clamp01((p.loyalty + 40) / 100);
-  return Math.round(clamp01(p.competence * 0.7 + loyal * 0.3) * (lv === 'handle' ? 1 : 0.85) * 100) / 100;
+  // A man who checks with the boss first is careful; one left to handle it alone lets a little slip
+  // (delegation is not running the family: MAKE_IT_GREAT #1, the passive boss pays for it).
+  return Math.round(clamp01(p.competence * 0.7 + loyal * 0.3) * (lv === 'handle' ? 0.85 : 1) * 100) / 100;
 }
 
 /** How much of an absent boss's cost each domain's lieutenant takes off (0 none … 1 all of it). */
