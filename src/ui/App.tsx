@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { acceptSettlement, mayCommit, type SettledMark } from '../engine/settle';
 import { sameOrder } from './verbs';
+import { nextConfirms } from './confirmQueue';
 import { clockSpaceAllowed, shortcutBlocked } from './keys';
 import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
@@ -214,7 +215,10 @@ export function App({ startOn = 'title' }: AppProps) {
   const [ltOpen, setLtOpen] = useState(false);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
-  const [confirm, setConfirm] = useState<PlayerAction | undefined>();
+  // "Are you sure?" waits in line (confirmQueue.ts): two orders given at once each get their own window.
+  const [confirms, setConfirms] = useState<PlayerAction[]>([]);
+  const confirm = confirms[0];
+  const setConfirm = useCallback((a: PlayerAction | undefined) => setConfirms((q) => nextConfirms(q, a)), []);
   const closeToast = useCallback(() => setToast(undefined), []);
   // Click feedback (components/Feedback.tsx): every decision, every change made at once, the week settling.
   const [feedback, setFeedback] = useState<Feedback | undefined>();
