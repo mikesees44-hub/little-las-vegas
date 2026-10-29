@@ -358,6 +358,8 @@ export function defectTo(ctx: Ctx, c: Character, rival: RivalId | undefined, why
     }
   }
   for (const m of [c, ...followers]) {
+    // Never the boss himself.
+    if (m.id === s.playerId) continue;
     m.faction = r?.id ?? 'none';
     m.courtedBy = undefined;
     m.defectStage = 0;

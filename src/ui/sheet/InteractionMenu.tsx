@@ -89,7 +89,7 @@ function itemText(s: GameState, it: MenuItem): string {
 }
 
 /** Moves that are never a suggestion (they stay in their category): breaking a man down, sending him away, ending things. */
-const HARSH = /^i:(demote|exile|threaten|whack|expose|endRomance|separate|demand)$|^(k-|unplace)$/;
+const HARSH = /^i:(demote|exile|threaten|whack|expose|endRomance|separate|demand)$|^(k-|unplace)$|^d:(insult|threaten|demandRespect|disown|frame|blackmail|plantRumor|fabricateHook|discipline|turn)$/;
 
 /**
  * "Best now": the few orders that fit this kind of man best (the sheet's quick

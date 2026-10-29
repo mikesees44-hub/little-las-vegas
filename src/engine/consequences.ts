@@ -135,6 +135,8 @@ const HANDLERS: Record<string, Handler> = {
     if (!c?.alive || c.faction !== 'none') return undefined;
     const r = s.rivals.filter((x) => x.kind === 'mob' && s.characters[x.leaderId]?.alive)[0];
     if (!r) return undefined;
+    // Never the boss himself.
+    if (c.id === s.playerId) return undefined;
     c.faction = r.id;
     c.rank = 'soldier';
     r.muscle = Math.min(100, r.muscle + 4);

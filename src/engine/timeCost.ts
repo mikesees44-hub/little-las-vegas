@@ -7,6 +7,7 @@ import { spendHours } from './spendData';
 import { workHours } from './bizRacketData';
 import { PROTECT_HOURS } from './protectData';
 import { WOMEN_HOURS } from './womenState';
+import { DEED_HOURS } from './deeds/hours';
 import type { GameState, PlayerAction } from './types';
 
 /**
@@ -154,6 +155,9 @@ export const TIME_TABLE: Record<string, number> = {
   // The army (army.ts): word to the capos is a quarter of an hour; a call to arms or a pact is a sit-down; an attack, an evening by the phone.
   'army:raise': 0.5, 'army:disband': 0.25, 'army:hire': 1, 'army:dismiss': 0.25, 'army:safehouses': 1,
   'army:ask': 3, 'army:pact': 3, 'army:attack': 2,
+  // Deeds (deeds/): a flattering word is half an hour; a dinner is an evening; finding a man's secrets is an afternoon of asking around.
+  deed: 1,
+  ...Object.fromEntries(Object.entries(DEED_HOURS).map(([k, v]) => [`deed:${k}`, v])),
 };
 
 /** Time with the family: it is the dinner, not a missed one. */
@@ -162,6 +166,7 @@ const FAMILY_TIME = new Set(['dynasty:host', 'dynasty:marry', 'bond:date', 'bond
 /** The op name of an order (`type` / `op` / `t`, the interaction id, the scheme kind), if it has one. */
 export function opName(a: PlayerAction): string | undefined {
   if (a.kind === 'interact') return a.id;
+  if (a.kind === 'deed') return a.id;
   if (a.kind === 'scheme') return a.scheme;
   const o = (a as { op?: unknown }).op;
   if (typeof o === 'string') return o;

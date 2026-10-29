@@ -91,9 +91,14 @@ import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
 import { mindsWeek } from './minds';
+import { deedsEventSource, deedsWeek } from './deeds';
+import { sceneEventSource } from './authored/run';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
+// The deeds' asks at the boss's door and the authored scenes (deeds/, authored/): one candidate a week each.
+registerEventSource(deedsEventSource);
+registerEventSource(sceneEventSource);
 registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
@@ -383,6 +388,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     officeWeek(s);
     // The minds think before the capos and the rivals act (minds/): their choices read fresh minds.
     mindsWeek(ctx);
+    // People act on each other (deeds/): the NPCs' own interactions, the clashes, partnerships and loans.
+    deedsWeek(ctx);
     regimesWeek(ctx);
     bonesWeek(ctx);
     ledgerWeek(ctx);

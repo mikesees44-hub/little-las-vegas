@@ -1,0 +1,94 @@
+{
+  "_about": "Rivals: the other families on the island, and the men who carry their messages.",
+  "scenes": [
+    {
+      "id": "rival_man_at_the_bar",
+      "title": "One of {rboss.last}'s men drinks on your side",
+      "theme": "rivals",
+      "when": { "week": { "min": 5 }, "cooldown": 26, "chance": 0.6 },
+      "who": {
+        "rboss": { "pool": "rivalBoss" },
+        "man": { "pool": "rival", "rank": ["soldier", "associate"], "sameSideAs": "rboss", "opinionOf": { "rboss": "<10" } }
+      },
+      "text": "{man.call} has been drinking at the Hialeah on Pacific three nights running, on your side of the avenue, alone. He works for {rboss.call}. Your bartender says he tips like a man who wants to be noticed, and complains about his boss like a man who wants to be overheard.",
+      "choices": [
+        {
+          "label": "Buy him a drink and listen",
+          "hint": "A sour man talks.",
+          "odds": { "deed": "sway", "actor": "boss", "target": "man" },
+          "success": [ { "hook": { "on": "man", "strong": false, "why": "Talked out of turn about his boss" } }, { "opinion": { "of": "man", "toward": "boss", "by": 10, "why": "Bought me a drink, listened" } } ],
+          "failure": [ { "opinion": { "of": "rboss", "toward": "boss", "by": -5, "why": "Working on my men" } } ],
+          "result": "By the third drink {man.first} had told you which of {rboss.first}'s numbers banks is behind on its ice.",
+          "failText": "{man.first} drank your liquor and told {rboss.first} about it in the morning."
+        },
+        {
+          "label": "Make him your eyes inside",
+          "hint": "Money, every Tuesday.",
+          "requires": { "money": 1500 },
+          "effects": [ { "deed": { "id": "turn", "actor": "boss", "target": "man" } } ]
+        },
+        {
+          "label": "Have him walked to the corner",
+          "hint": "Your side is your side.",
+          "effects": [ { "fear": { "of": "man", "toward": "boss", "by": 10 } }, { "opinion": { "of": "rboss", "toward": "boss", "by": -4, "why": "Threw my man out of a bar" } }, { "respect": 1 } ]
+        }
+      ]
+    },
+    {
+      "id": "rival_insult_funeral",
+      "title": "At Bracelin's funeral home",
+      "theme": "rivals",
+      "when": { "cooldown": 40, "chance": 0.4 },
+      "who": {
+        "rboss": { "pool": "rivalBoss", "traits": ["Hot-headed"] },
+        "capo": { "pool": "capo" }
+      },
+      "text": "Old man Fiorello's wake, and every family on the island signs the book. {rboss.call} arrives late with four men and stops at your pew. Loud enough for the widow: \"Your {capo.first} still collecting for you? Somebody has to.\"",
+      "choices": [
+        {
+          "label": "Say nothing. Not at a wake.",
+          "hint": "The old women will remember who kept his dignity.",
+          "effects": [ { "respect": 1 }, { "opinion": { "of": "capo", "toward": "boss", "by": -4, "why": "Let him say that about me" } } ]
+        },
+        {
+          "label": "Answer him, quietly, so only he hears",
+          "odds": { "deed": "threaten", "actor": "boss", "target": "rboss" },
+          "success": [ { "fear": { "of": "rboss", "toward": "boss", "by": 10 } }, { "opinion": { "of": "capo", "toward": "boss", "by": 6, "why": "Stood up for me" } } ],
+          "failure": [ { "tie": { "a": "rboss", "b": "boss", "kind": "rival", "why": "Words at a wake" } } ],
+          "result": "{rboss.first} went pale and signed the book with a shaking hand.",
+          "failText": "{rboss.first} laughed, a wake-house laugh, and the whole room heard it."
+        },
+        {
+          "label": "Let {capo.first} answer for himself",
+          "effects": [ { "deed": { "id": "insult", "actor": "capo", "target": "rboss" } } ]
+        }
+      ]
+    },
+    {
+      "id": "rival_truce_offer",
+      "title": "A cannoli from {rboss.first}",
+      "theme": "rivals",
+      "when": { "week": { "min": 12 }, "cooldown": 52, "chance": 0.5 },
+      "who": { "rboss": { "pool": "rivalBoss", "notTraits": ["Hot-headed"], "opinionOfBoss": ">-30" } },
+      "text": "A white box from Pagano's bakery, tied with string, left on the hood of your car outside St. Ann's. Inside, a dozen cannoli and a card in {rboss.call}'s own hand: \"Life is short. The season is shorter. Coffee?\"",
+      "choices": [
+        {
+          "label": "Coffee, then",
+          "odds": { "deed": "alliance", "actor": "boss", "target": "rboss" },
+          "success": [ { "tie": { "a": "rboss", "b": "boss", "kind": "ally", "why": "Coffee and cannoli" } } ],
+          "failure": [ { "opinion": { "of": "rboss", "toward": "boss", "by": -3, "why": "Coffee went nowhere" } } ],
+          "result": "Two hours over coffee. Nothing written down. Everything understood.",
+          "failText": "Two hours over coffee, and you both left knowing exactly where the other one stands: apart."
+        },
+        {
+          "label": "Send the box back, unopened",
+          "effects": [ { "opinion": { "of": "rboss", "toward": "boss", "by": -10, "why": "Sent back my cannoli" } }, { "respect": 1 } ]
+        },
+        {
+          "label": "Eat the cannoli. Send a thank-you note and nothing else.",
+          "effects": [ { "opinion": { "of": "rboss", "toward": "boss", "by": 2, "why": "A polite note" } } ]
+        }
+      ]
+    }
+  ]
+}

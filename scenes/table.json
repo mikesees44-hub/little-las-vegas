@@ -1,0 +1,58 @@
+{
+  "_about": "The Table: Philadelphia, the bagman, the men above you.",
+  "scenes": [
+    {
+      "id": "table_philly_asks_about_capo",
+      "title": "Philadelphia asks about {capo.first}",
+      "theme": "rivals",
+      "when": { "week": { "min": 15 }, "cooldown": 52, "chance": 0.5 },
+      "who": { "capo": { "pool": "capo", "traits": ["Ambitious"] } },
+      "text": "The man from Philadelphia takes his coffee black at the Doo Wop diner and does not take off his coat. \"Your {capo.first}. He's been calling people in South Philly. Our people. Asking how things are done.\" He lets it sit. \"We wondered if you knew.\"",
+      "choices": [
+        {
+          "label": "\"I sent him.\"",
+          "hint": "A lie to cover your man. Philadelphia checks.",
+          "odds": { "base": 45, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 15, "why": "you lie like a priest" }, { "if": { "bossTrait": "Honest" }, "add": -20, "why": "your face gives you away" } ] },
+          "success": [ { "opinion": { "of": "capo", "toward": "boss", "by": 15, "why": "Covered for me with Philadelphia" } }, { "owes": { "who": "capo", "to": "boss" } } ],
+          "failure": [ { "heat": { "family": 8 } }, { "respect": -2 } ],
+          "result": "The man from Philadelphia nodded and paid for the coffee. {capo.first} owes you more than he knows.",
+          "failText": "He knew you were lying before you finished. Philadelphia will remember you lie to them."
+        },
+        {
+          "label": "\"I didn't know. I'll handle it.\"",
+          "effects": [ { "heat": { "family": -3 } }, { "deed": { "id": "discipline", "actor": "boss", "target": "capo" } } ]
+        },
+        {
+          "label": "\"He's ambitious. Maybe Philadelphia could use a man like that.\"",
+          "hint": "Give him up, and be rid of him.",
+          "effects": [ { "heat": { "family": -6 } }, { "opinion": { "of": "capo", "toward": "boss", "by": -25, "why": "Sold me to Philadelphia" } }, { "memory": { "who": "capo", "about": "boss", "text": "the boss offered him up to Philadelphia", "weight": -25 } } ]
+        }
+      ]
+    },
+    {
+      "id": "table_sitdown_favor",
+      "title": "A seat at the Table, for a price",
+      "theme": "rivals",
+      "when": { "respect": ">=45", "cooldown": 52, "chance": 0.4 },
+      "who": { "rboss": { "pool": "rivalBoss" } },
+      "text": "The Table is hearing {rboss.call}'s complaint about the piers next month. A councilman's cousin says three of the five chairs could be persuaded, for the right consideration. Favors, mostly. Some cash.",
+      "choices": [
+        {
+          "label": "Spend the favors",
+          "requires": { "favors": 2 },
+          "effects": [ { "flag": "table_persuaded" }, { "opinion": { "of": "rboss", "toward": "boss", "by": -8, "why": "Bought the Table out from under me" } } ]
+        },
+        {
+          "label": "Pay cash ($2,500)",
+          "requires": { "money": 2500 },
+          "effects": [ { "money": -2500 }, { "flag": "table_persuaded" }, { "heat": { "family": 2 } } ]
+        },
+        {
+          "label": "Let the Table judge it fairly",
+          "hint": "There is a first time for everything.",
+          "effects": [ { "respect": 1 } ]
+        }
+      ]
+    }
+  ]
+}

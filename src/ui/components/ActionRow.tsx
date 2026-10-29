@@ -9,6 +9,8 @@ import { DealWindow } from '../econ/DealWindow';
 import { hoursShort, timeBlock, timeCost } from '../../engine/timeCost';
 import { mainRisk } from '../plans/actionGoals';
 import { isPinnedOrder, togglePinOrder, usePins } from '../plans/pins';
+import { settlesNow } from '../../engine/deeds/now';
+import { useShell } from '../shell/context';
 
 /**
  * The universal action row: one order folded to a line — what it is, what it
@@ -45,6 +47,9 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
   const risk = mainRisk(p);
   usePins();
   const pinned = isPinnedOrder(s.seed, action);
+  // A person interaction is weighed on its card first (every reason), then settled on the spot.
+  const shell = useShell();
+  const now = !!shell.update && !deal && settlesNow(s, action);
   if (open) {
     return (
       <div className="sm:col-span-2" data-testid="action-row-open">
@@ -62,16 +67,16 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
           {why ? <span className="text-red-300/90" data-testid="action-row-why">{why}</span> : <>
             {p.cost > 0 && <span className={pocket ? 'text-amber-300' : 'text-gold-400'}>{fmt$(p.cost)} {pocket ? 'pocket' : 'Family'}</span>}
             {p.cost > 0 && pct !== undefined && ' · '}
-            {pct !== undefined && <span className={pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}>{p.odds ? 'success' : 'yes'} {pct}%</span>}
+            {pct !== undefined && <span className={pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}>{p.oddsLabel === 'He says yes' ? 'yes' : p.odds ? 'success' : 'yes'} {pct}%</span>}
             {!(p.cost > 0) && pct === undefined && !risk && (p.detail ? p.detail.slice(0, 90) : 'details ▸')}
             {risk && <>{(p.cost > 0 || pct !== undefined) && ' · '}<span className="text-red-300/90" data-testid="action-row-risk">⚠ {risk}</span></>}
           </>}
         </span>
       </button>
-      <button type="button" disabled={!!why || queued}
-        className={`shrink-0 text-xs py-1 ${queued || why ? 'btn-ghost' : 'btn-gold'}`}
-        onClick={() => (deal ? setDealing(true) : needsCard ? setOpen(true) : queue(action))} data-testid={deal ? 'make-offer' : 'action-row-go'}>
-        {queued ? (deal ? 'Signed ✓' : verbOf(action, p).done) : deal ? 'Make an offer' : needsCard ? 'More ▸' : verbOf(action, p).verb}
+      <button type="button" disabled={!!why || (queued && !now)}
+        className={`shrink-0 text-xs py-1 ${(queued && !now) || why ? 'btn-ghost' : 'btn-gold'}`}
+        onClick={() => (deal ? setDealing(true) : needsCard || now ? setOpen(true) : queue(action))} data-testid={deal ? 'make-offer' : 'action-row-go'}>
+        {now ? 'Weigh it ▸' : queued ? (deal ? 'Signed ✓' : verbOf(action, p).done) : deal ? 'Make an offer' : needsCard ? 'More ▸' : verbOf(action, p).verb}
       </button>
       <button type="button" className={`shrink-0 px-0.5 text-sm ${pinned ? 'text-gold-400' : 'text-stone-600 hover:text-gold-300'}`} onClick={() => togglePinOrder(s.seed, action)} aria-pressed={pinned} title={pinned ? 'Unpin this order' : 'Pin it: it waits on Find\'s front page (Ctrl+K)'} data-testid="action-row-pin">{pinned ? '★' : '☆'}</button>
       {!hard && noTime && !queued && later && (

@@ -6,6 +6,8 @@ import { CAPO_CUT } from '../../engine/economy';
 import { GIFTS, LEVERAGE, giftAvailable, giftPrice, houseTickets, tastes } from '../../engine/gifts';
 import { DESIGNATION_INFO, DESIGNATION_MODES, GROOM_PATHS, GROOM_PATH_IDS, successionCandidates } from '../../engine/heir';
 import { interactionsFor, playerHook } from '../../engine/interactions';
+import { deedPreview, deedsFor } from '../../engine/deeds/resolve';
+import type { DeedCat } from '../../engine/deeds/types';
 import { favorsFor } from '../../engine/polPuppets';
 import { peekCtl } from '../../engine/polGov';
 import { FAVORS } from '../../engine/polData';
@@ -30,7 +32,7 @@ import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, Riv
  * categories. Pure: it lists PlayerActions (shown as order cards) and a few
  * "openers" (the scheme planner, the trip planner, the gift catalog).
  */
-export type MenuCategoryId = 'best' | 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife';
+export type MenuCategoryId = 'best' | 'talk' | 'diplomacy' | 'business' | 'heirs' | 'intrigue' | 'hostile' | 'romance' | 'travel' | 'table' | 'cityhall' | 'self' | 'nightlife' | 'family' | 'crew';
 
 export type Opener =
   | { type: 'plan'; kind: SchemeKind }
@@ -68,7 +70,13 @@ export interface MenuCategory {
 export const CATEGORY_LABEL: Record<MenuCategoryId, string> = {
   best: 'Best now', talk: 'Talk', diplomacy: 'Diplomacy', business: 'The Family business', heirs: 'Heirs & Grooming', intrigue: 'Intrigue', hostile: 'Hostile', romance: 'Romance & Marriage',
   travel: 'Travel', table: 'The Table', cityhall: 'City Hall', self: 'Yourself', nightlife: 'The night & the Ears',
+  family: 'Family', crew: 'Crew',
 };
+
+/** The deeds' groups (deeds/catalog.ts) in the menu. */
+const DEED_MENU: Record<DeedCat, MenuCategoryId> = { diplomacy: 'diplomacy', intrigue: 'intrigue', business: 'business', family: 'family', crew: 'crew' };
+/** Old verbs a deed now does better (the deed has his answer and its reasons): not listed twice. */
+const SUPERSEDED = new Set<InteractionId>(['threaten']);
 
 const INTERACT_CAT: Record<InteractionId, MenuCategoryId> = {
   dinner: 'diplomacy', gift_small: 'diplomacy', gift_large: 'diplomacy', favor: 'diplomacy', bribe: 'diplomacy', demand: 'diplomacy',
@@ -114,8 +122,16 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   const inters = interactionsFor(s, c.id);
   const hook = !!playerHook(s, c.id);
   for (const p of inters) {
+    if (SUPERSEDED.has(p.id) && deedPreview(s, 'threaten', s.playerId, c.id)) continue;
     add(INTERACT_CAT[p.id] ?? 'diplomacy', { key: `i:${p.id}`, action: { kind: 'interact', id: p.id, target: c.id }, hostile: INTERACT_CAT[p.id] === 'hostile' });
     if (hook && p.acceptance) add('intrigue', { key: `ih:${p.id}`, action: { kind: 'interact', id: p.id, target: c.id, useHook: true } });
+  }
+
+  // Deeds (deeds/): befriend, sway, insult, find secrets, blackmail, partner, discipline... each with his answer and its reasons.
+  for (const d of deedsFor(s, s.playerId, c.id)) {
+    const cat = DEED_MENU[d.def.cat];
+    add(cat, { key: `d:${d.def.id}`, action: { kind: 'deed', id: d.def.id, target: c.id }, hostile: d.def.hostile });
+    if (hook && d.def.mode === 'consent' && !d.blocked && d.def.id !== 'callFavor') add('intrigue', { key: `dh:${d.def.id}`, action: { kind: 'deed', id: d.def.id, target: c.id, hook: true }, label: `${d.title} (lean on your hook)`, hostile: d.def.hostile });
   }
 
   // Gifts, tickets, gifts with strings.
@@ -260,7 +276,7 @@ export function addPol(s: GameState, polId: string, add: (id: MenuCategoryId, it
   if (p.street) add('cityhall', { key: 'recruit', action: pa({ op: 'recruit', id: p.id }) });
 }
 
-const ORDER: MenuCategoryId[] = ['self', 'talk', 'diplomacy', 'business', 'heirs', 'romance', 'intrigue', 'nightlife', 'hostile', 'table', 'cityhall', 'travel'];
+const ORDER: MenuCategoryId[] = ['self', 'talk', 'diplomacy', 'intrigue', 'business', 'family', 'crew', 'heirs', 'romance', 'nightlife', 'hostile', 'table', 'cityhall', 'travel'];
 function order(m: Map<MenuCategoryId, MenuItem[]>): MenuCategory[] {
   return ORDER.filter((id) => m.get(id)?.length).map((id) => ({ id, label: CATEGORY_LABEL[id], items: m.get(id)! }));
 }
