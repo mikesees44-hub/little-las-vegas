@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Backdrop } from '../hood/art/sceneArt';
 import { briefing, recommendedActions, shortName, type BriefItem, type BriefLink, type BriefOption, type Briefing, type Speaker } from '../../engine/briefing';
 import { ALL_LANES, LANE_NAME, leeway, neglect, roundOptions, roundSlots, usualWeek, type Lane, type Round } from '../../engine/rounds';
@@ -37,22 +37,43 @@ export interface SitDownProps {
   onClose: () => void;
   lesson?: SitDownLesson;
   initialTab?: 'council' | 'rounds';
+  /** The item the boss came in for (a Desk row's "Hear him out"): always on the table, and shown first. */
+  focus?: string;
 }
 
 const same = (a: PlayerAction, b: PlayerAction) => JSON.stringify(a) === JSON.stringify(b);
 
 /** New players hear the two most important things; everyone else up to six. */
-export function visibleItems(s: GameState, b: Briefing): Set<string> {
+export function visibleItems(s: GameState, b: Briefing, focus?: string): Set<string> {
   const cap = s.week <= 3 ? 2 : 6;
-  return new Set([...b.items].sort((x, y) => y.priority - x.priority).slice(0, cap).map((i) => i.id));
+  const out = new Set([...b.items].sort((x, y) => y.priority - x.priority).slice(0, cap).map((i) => i.id));
+  // The item the boss asked to hear is always on the table, whoever brings it.
+  if (focus && b.items.some((i) => i.id === focus)) out.add(focus);
+  return out;
 }
 
-export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, onDecisions, onClose, lesson, initialTab = 'council' }: SitDownProps) {
+/** Who sits at the table: anyone with something shown, the council seats always; the one the boss came to hear first. */
+export function sitdownSpeakers(b: Briefing, shown: Set<string>, first?: string): Speaker[] {
+  const sp = b.speakers.map((x) => ({ ...x, items: x.items.filter((i) => shown.has(i.id)) })).filter((x) => x.items.length || x.empty || x.role === 'underboss' || x.role === 'consigliere');
+  if (first) sp.sort((x, y) => (x.key === first ? -1 : y.key === first ? 1 : 0));
+  return sp;
+}
+
+export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, onDecisions, onClose, lesson, initialTab = 'council', focus }: SitDownProps) {
   const b = useMemo(() => briefing(s), [s]);
   const [tab, setTab] = useState<'council' | 'rounds'>(initialTab);
   const { orders, queue, remove } = useOrders();
-  const shown = visibleItems(s, b);
-  const speakers = b.speakers.map((sp) => ({ ...sp, items: sp.items.filter((i) => shown.has(i.id)) })).filter((sp) => sp.items.length || sp.empty || sp.role === 'underboss' || sp.role === 'consigliere');
+  const shown = visibleItems(s, b, focus);
+  const focusSpeaker = focus ? b.speakers.find((sp) => sp.items.some((i) => i.id === focus))?.key : undefined;
+  const speakers = sitdownSpeakers(b, shown, focusSpeaker);
+  // The item the boss came in for: brought into view and marked.
+  useEffect(() => {
+    if (!focus || typeof document === 'undefined') return;
+    const el = document.querySelector(`[data-testid="item-${focus.replace(/"/g, '')}"]`);
+    if (!el) return;
+    el.classList.add('ring-2', 'ring-gold-400');
+    el.scrollIntoView?.({ block: 'nearest', inline: 'center' });
+  }, [focus, tab]);
   const recs = recommendedActions(s, { ...b, items: b.items.filter((i) => shown.has(i.id)) }, orders, skip);
 
   function choose(it: BriefItem, o: BriefOption) {

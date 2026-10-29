@@ -158,6 +158,8 @@ export function App({ startOn = 'title' }: AppProps) {
   // morning check-ins live in the state's days plan (engine/days.ts), so a reload keeps them.
   const [briefSkip, setBriefSkip] = useState<string[]>([]);
   const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
+  // The Sit-Down item a Desk row asked to hear ("Hear him out" on Paolo's future).
+  const [sitFocus, setSitFocus] = useState<string | undefined>();
   const [sitSeen, setSitSeen] = useState<string | undefined>();
   // The Boss's Office (ui/office): the room upstairs or the club from the street; Monday's arrival card;
   // visitors the boss said to see later this week (UI only: they stay on the desk).
@@ -748,7 +750,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const deskApi = {
     onEvent: (iid: string) => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => e.iid === iid))); },
     onDay: (day: number) => { setSpeed(0); setDayWin(day); },
-    onSitDown: () => setSitdown('council'),
+    onSitDown: (brief?: string) => { setSitFocus(brief); setSitdown('council'); },
     onCancelOrder: (i: number) => ordersApi.remove(i),
     onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
     onChar: (id: string) => setSheet(id),
@@ -794,7 +796,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function officeInvite(v: OfficeVisitor) {
     if (v.ref.event) deskApi.onEvent(v.ref.event);
     else if (v.ref.day !== undefined) deskApi.onDay(v.ref.day);
-    else if (v.ref.brief) setSitdown('council');
+    else if (v.ref.brief) { setSitFocus(v.ref.brief); setSitdown('council'); }
     else officeApi.openCalendar();
   }
   function officeLater(v: OfficeVisitor) {
@@ -934,8 +936,8 @@ export function App({ startOn = 'title' }: AppProps) {
 
       {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={act} onClose={() => setLtOpen(false)} />}
       {sitdown && !current && !scene && (
-        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => act((x) => setWeekRounds(x, ids), 'Your evenings for the week are set')} skip={briefSkip} setSkip={setBriefSkip}
-          onTrust={(k, on) => act((x) => setTrust(x, k, on), on ? 'Trusted him with it' : 'Took it back into your own hands')} onLink={followLink} onClose={() => setSitdown(undefined)}
+        <SitDown key={`${s.week}:${sitdown}:${sitFocus ?? ''}`} s={s} initialTab={sitdown} focus={sitFocus} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => act((x) => setWeekRounds(x, ids), 'Your evenings for the week are set')} skip={briefSkip} setSkip={setBriefSkip}
+          onTrust={(k, on) => act((x) => setTrust(x, k, on), on ? 'Trusted him with it' : 'Took it back into your own hands')} onLink={followLink} onClose={() => { setSitdown(undefined); setSitFocus(undefined); }}
           onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
           lesson={helpLevel() === 'guided' && s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
       )}

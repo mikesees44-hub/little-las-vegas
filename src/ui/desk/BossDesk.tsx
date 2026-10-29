@@ -19,7 +19,8 @@ import { DeskClock } from '../components/DeskClock';
 export interface DeskApi {
   onEvent: (iid: string) => void;
   onDay: (day: number) => void;
-  onSitDown: () => void;
+  /** The Sit-Down, opened on one item when a row brings it (its brief id). */
+  onSitDown: (brief?: string) => void;
   onCancelOrder: (i: number) => void;
   onMoney: () => void;
   onChar: (id: string) => void;
@@ -54,7 +55,7 @@ function openItem(it: DeskItem, api: DeskApi) {
   if (it.ref.tip && api.onUrgent) api.onUrgent(it.ref.tip);
   else if (it.ref.event) api.onEvent(it.ref.event);
   else if (it.kind === 'morning' || (it.kind === 'upcoming' && it.ref.day !== undefined)) api.onDay(it.ref.day ?? 0);
-  else if (it.kind === 'sitdown') api.onSitDown();
+  else if (it.kind === 'sitdown') api.onSitDown(it.ref.brief);
   else if (it.kind === 'lieutenant' && api.onLt) api.onLt();
   else if (it.kind === 'envelope' && api.onEnvelope) api.onEnvelope();
   else if (it.kind === 'bill' || it.kind === 'envelope') api.onMoney();
