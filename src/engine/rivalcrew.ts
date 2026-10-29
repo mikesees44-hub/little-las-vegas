@@ -99,6 +99,8 @@ export function executeCrewMove(ctx: Ctx, r: Rival, m: CrewMove): boolean {
       const c = copOnPad(s);
       if (!c) return false;
       r.money -= 1500;
+    // Never the boss himself.
+    if (c.id === s.playerId) return false;
       c.faction = r.id;
       c.capoId = undefined;
       rivalHeatHit(ctx, 'local', 3, `${c.office ?? 'Your man'} ${c.lastName} now takes ${r.shortName}'s envelope`, rivalCaps(s).heatPerBar);

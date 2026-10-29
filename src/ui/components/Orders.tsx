@@ -14,6 +14,9 @@ import { sameOrder, verbOf } from '../verbs';
 import { actionFacts } from '../actionFacts';
 import { AdviceButton } from '../advice/AdviceButton';
 import { hoursLabel, timeBlock, timeCost } from '../../engine/timeCost';
+import { actNow, settlesNow } from '../../engine/deeds/now';
+import { useShell } from '../shell/context';
+import { postNow } from '../deeds/NowResult';
 
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
@@ -66,6 +69,17 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
   const hard = deal ? (p.disabledReason && !/^Needs \$/.test(p.disabledReason) ? p.disabledReason : undefined) : p.disabledReason ?? broke;
   const why = hard ?? noTime;
   const facts = actionFacts(s, action, p);
+  // A person interaction is settled in the moment (deeds/now.ts): the odds are on this card; the roll happens on the tap.
+  const shell = useShell();
+  const now = !!shell.update && !deal && settlesNow(s, action);
+  const [nowErr, setNowErr] = useState<string | undefined>();
+  const odds = p.acceptance ?? p.odds;
+  const doNow = () => {
+    const r = actNow(s, short > 0 ? { ...action, fund: 'family' } : action);
+    if (!r.result.ok) { setNowErr(r.result.error); return; }
+    shell.update!(() => r.state);
+    postNow(r.result);
+  };
   return (
     <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -77,11 +91,11 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         </div>
         <button
           className={queued ? 'btn-ghost text-xs py-1 shrink-0 max-w-full' : 'btn-gold text-xs py-1 shrink-0 max-w-full'}
-          disabled={!!why || queued}
-          onClick={() => (deal ? setDealing(true) : queue(short > 0 ? { ...action, fund: 'family' } : action))}
-          data-testid={deal ? 'make-offer' : undefined}
+          disabled={!!why || (queued && !now)}
+          onClick={() => (deal ? setDealing(true) : now ? doNow() : queue(short > 0 ? { ...action, fund: 'family' } : action))}
+          data-testid={deal ? 'make-offer' : now ? 'do-now' : undefined}
         >
-          {queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${facts.button.charAt(0).toLowerCase()}${facts.button.slice(1)}` : facts.button}
+          {now ? `${short > 0 ? `Take ${fmt$(short)} from the Family & do` : 'Do'} it now${odds ? ` (${Math.round(odds.chance * 100)}%)` : ''}` : queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${facts.button.charAt(0).toLowerCase()}${facts.button.slice(1)}` : facts.button}
         </button>
       </div>
       {short > 0 && !why && !queued && (
@@ -98,6 +112,8 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       {p.refuseEffects && p.refuseEffects.length > 0 && (
         <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
       )}
+      {nowErr && <div className="text-[11px] text-red-400 mt-1">{nowErr}</div>}
+      {now && !why && <div className="text-[11px] mt-1 text-stone-500">Settled the moment you do it: the dice roll now, and it is done.</div>}
       {why && <div className="text-[11px] text-red-400 mt-1" data-testid="unavailable">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
       {queued && !compact && <BookNote />}
       {!hard && noTime && !queued && later && (

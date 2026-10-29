@@ -76,7 +76,7 @@ export function deedsWeek(ctx: Ctx): string[] {
       if (ageOn(c.birth, s.date) >= 16) {
         delete D.edu[cid];
         const pass = tu.traits.filter((t) => !c.traits.includes(t) && t !== 'Cowardly');
-        if (pass.length && d01(D) < 0.35 && c.traits.length < 4) {
+        if (pass.length && d01(D) < 0.35 && c.traits.length < 3) {
           const t = pass[Math.floor(d01(D) * pass.length)];
           c.traits.push(t);
           lines.push(`${c.firstName} grew up at ${tu.firstName}'s elbow, and it shows: ${t.toLowerCase()}, like his teacher.`);

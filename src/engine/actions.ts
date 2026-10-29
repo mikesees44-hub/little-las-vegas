@@ -1002,6 +1002,36 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
 }
 
 /**
+ * One order settled NOW, the answer already decided (deeds/now.ts rolls it on
+ * its own dice): the same effects, commit, chronicle and Book entry as at the
+ * week's turn, so it is never applied twice (it is not queued).
+ */
+export function settleOrderNow(ctx: Ctx, a: PlayerAction, accepted: boolean): ActionPreview {
+  const s = ctx.s;
+  const def = DEFS[a.kind] as Def<typeof a.kind>;
+  const mark = bookMark(ctx);
+  const p = previewCore(s, a);
+  if (!accepted) {
+    if (p.refuseEffects?.length) applyEffects(ctx, p.refuseEffects, { label: `${p.title}: refused`, because: p.because, category: p.category });
+    ctx.log.push(`${p.title} — refused.`);
+    s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You tried: ${p.title.charAt(0).toLowerCase()}${p.title.slice(1)}. The answer was no.`, kind: 'decision' });
+    bookOrder(ctx, mark, a, { title: p.title, outcome: 'refused' });
+    return p;
+  }
+  applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
+  def.commit?.(ctx, a as never);
+  noteAttention(s, a);
+  noteOrder(s, a);
+  if (a.kind === 'interact' || a.kind === 'deed') {
+    const t = s.characters[a.target];
+    if (t) { t.neglect = 0; t.defectStage = 0; }
+  }
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${p.because}.`, kind: 'decision' });
+  bookOrder(ctx, mark, a, { title: p.title, outcome: 'done' });
+  return p;
+}
+
+/**
  * Every order the player could give right now (some disabled). Used by the
  * sim's random player and by tests; the UI builds its own menus.
  */

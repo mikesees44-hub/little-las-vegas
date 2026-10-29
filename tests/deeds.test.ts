@@ -4,7 +4,7 @@ import { advanceWeek } from '../src/engine/engine';
 import { capos, player } from '../src/engine/characters';
 import { newCtx } from '../src/engine/ledger';
 import { upgradeSave } from '../src/engine/upgradeSave';
-import { addOpinion, opinion } from '../src/engine/relations';
+import { addOpinion, getRelation, opinion } from '../src/engine/relations';
 import { mindsWeek } from '../src/engine/minds';
 import { previewAction } from '../src/engine/actions';
 import { timeCost, hasTimeCost } from '../src/engine/timeCost';
@@ -300,5 +300,77 @@ describe('deeds: determinism and saves', () => {
     expect(JSON.stringify(D).length).toBeLessThan(40000);
     deedsWeek(newCtx(s));
     expect(player(s).alive).toBe(true);
+  });
+});
+
+describe('deeds: on the sheet', () => {
+  it('the sheet shows "How he leans", the web and the feed', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { CharacterSheet } = await import('../src/ui/components/CharacterSheet');
+    const s = playWeeks('deeds-sheet', 10);
+    const k = capo(s);
+    expect(renderToString(createElement(CharacterSheet, { s, id: k.id, onClose: () => {} }))).toContain('data-testid="sheet-leans"');
+    expect(renderToString(createElement(CharacterSheet, { s, id: k.id, onClose: () => {}, initialTab: 'relationships' }))).toContain('data-testid="relations-web"');
+    const mine = renderToString(createElement(CharacterSheet, { s, id: s.playerId, onClose: () => {}, initialTab: 'relationships' }));
+    expect(mine).toContain('data-testid="deed-feed"');
+    const act = renderToString(createElement(CharacterSheet, { s, id: k.id, onClose: () => {}, initialTab: 'actions' }));
+    expect(act).toContain('data-testid="menu-cat-crew"');
+  });
+});
+
+describe('deeds: in the moment', () => {
+  it('a deed is settled the moment it is done (odds shown first), and the week\'s turn does not apply it again', async () => {
+    const { actNow, settlesNow } = await import('../src/engine/deeds/now');
+    const { hoursUsed } = await import('../src/engine/timeCost');
+    const s = game('deeds-now');
+    const k = capo(s);
+    const a = { kind: 'deed' as const, id: 'befriend' as const, target: k.id };
+    expect(settlesNow(s, a)).toBe(true);
+    const odds = previewAction(s, a).odds!;
+    const { state, result } = actNow(s, a);
+    expect(result.ok).toBe(true);
+    expect(result.chance).toBeCloseTo(odds.chance, 6);
+    expect(result.roll).toBeGreaterThanOrEqual(0);
+    expect(result.headline).toMatch(new RegExp(`^${Math.round(odds.chance * 100)}% — (he|she) (said yes|said no|took offense)`));
+    expect(state.deeds!.log.filter((l) => l.id === 'befriend' && l.a === s.playerId).length).toBe(1);
+    expect(hoursUsed(state)).toBeGreaterThan(hoursUsed(s));
+    // The input is untouched (pure).
+    expect(s.deeds?.log.length ?? 0).toBe(0);
+    const op1 = opinion(state, k.id, s.playerId);
+    const next = advanceWeek(state, {}).state;
+    expect(next.deeds!.log.filter((l) => l.id === 'befriend' && l.a === s.playerId).length).toBe(1);
+    expect(opinion(next, k.id, s.playerId)).toBeLessThanOrEqual(op1 + 5);
+    expect(actNow(state, a).result.ok).toBe(false);
+  });
+
+  it('the old verbs (a gift, an envelope) settle now too, with the roll, the changes, and their teeth', async () => {
+    const { actNow, settlesNow } = await import('../src/engine/deeds/now');
+    const s = game('deeds-now2');
+    s.money = 50000;
+    if (s.tribute) s.tribute.acct.personal = 20000;
+    const k = capo(s);
+    const gift = { kind: 'interact' as const, id: 'gift_small' as const, target: k.id };
+    expect(settlesNow(s, gift)).toBe(true);
+    const g = actNow(s, gift);
+    expect(g.result.ok).toBe(true);
+    const mod = (st: GameState) => getRelation(st, k.id, s.playerId)?.modifiers.find((m) => m.reason === 'Sent me a generous gift')?.value ?? 0;
+    expect(mod(g.state)).toBeGreaterThan(0);
+    expect(g.result.changes.some((c) => c.includes('opinion of you'))).toBe(true);
+    const after = advanceWeek(g.state, {}).state;
+    expect(mod(after)).toBeLessThanOrEqual(mod(g.state));
+    // An official's envelope: odds, a roll, and across many tries the disaster comes with the police.
+    const off = Object.values(s.characters).find((c) => c.alive && c.office && previewAction(s, { kind: 'interact', id: 'bribe', target: c.id }).acceptance);
+    if (off) {
+      const b = { kind: 'interact' as const, id: 'bribe' as const, target: off.id };
+      let worst = false;
+      let st = s;
+      for (let i = 0; i < 40 && !worst; i++) {
+        st = { ...st, deeds: { ...ensureDeeds(st), rng: (st.deeds?.rng ?? 1) + 7919 * (i + 1) }, hours: undefined };
+        const r = actNow(st, b);
+        expect(r.result.headline).toMatch(/^\d+% — /);
+        if (r.result.tier === 'critFail') { worst = true; expect(r.result.changes.some((c) => /heat/.test(c))).toBe(true); }
+      }
+    }
   });
 });

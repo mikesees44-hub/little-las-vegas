@@ -1,4 +1,7 @@
-import { useMemo } from 'react';
+import { settlesNow } from '../../engine/deeds/now';
+import { useShell } from '../shell/context';
+import { ActionCard } from '../components/Orders';
+import { useMemo, useState } from 'react';
 import { previewAction } from '../../engine/actions';
 import type { Character, GameState, PlayerAction } from '../../engine/types';
 import { specificButton } from '../actionFacts';
@@ -40,13 +43,17 @@ export function quickActionsFor(s: GameState, c: Character): PlayerAction[] {
 export function QuickActions({ s, c, onAll }: { s: GameState; c: Character; onAll: () => void }) {
   const acts = useMemo(() => quickActionsFor(s, c), [s, c]);
   const { orders, queue } = useOrders();
+  const shell = useShell();
+  // A person interaction opens its card (the odds and every reason) and is settled there, on the spot.
+  const [pick, setPick] = useState<PlayerAction | undefined>();
   return (
+    <>
     <div className="mt-3 flex flex-wrap gap-1.5" data-testid="quick-actions">
       {acts.map((a, i) => {
         const p = previewAction(s, a);
         const on = orders.some((o) => sameOrder(o, a));
         return (
-          <button key={i} type="button" disabled={on} onClick={() => queue(a)} title={p.detail ?? p.title} data-testid="quick-action"
+          <button key={i} type="button" disabled={on} onClick={() => (shell.update && settlesNow(s, a) ? setPick(pick && sameOrder(pick, a) ? undefined : a) : queue(a))} title={p.detail ?? p.title} data-testid="quick-action"
             className={on ? 'btn-ghost text-xs py-1' : 'btn-gold text-xs py-1'}>
             {on ? verbOf(a, p).done : specificButton(s, a, p)}
           </button>
@@ -54,5 +61,7 @@ export function QuickActions({ s, c, onAll }: { s: GameState; c: Character; onAl
       })}
       <button type="button" className="btn-ghost text-xs py-1" onClick={onAll} data-testid="quick-all-actions">☰ All actions</button>
     </div>
+    {pick && <div className="mt-1.5"><ActionCard s={s} action={pick} /></div>}
+    </>
   );
 }

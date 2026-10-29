@@ -28,7 +28,7 @@ export type Cast = Record<string, string>;
 /** Weekly chance a random scene is offered at all (when one fits). */
 export const SCENE_CHANCE = 0.4;
 const PRIORITY_NEXT = 52;
-const PRIORITY_RANDOM = 46;
+const PRIORITY_RANDOM = 43;
 /** A follow-up that cannot be cast for this long is dropped. */
 const DUE_WAIT = 8;
 
