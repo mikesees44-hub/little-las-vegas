@@ -298,18 +298,24 @@ describe('declutter: Find… reaches screens, people, places and things to do', 
 });
 
 describe('declutter: a calm frame', () => {
-  it('the top bar has one loop button, Office, orders and Find; the map has one dock', async () => {
+  it('the top bar reads at a glance: money, one standing strip, the clock, Desk, Find and one ☰; the rest is one click away in ☰', async () => {
     const { createElement } = await import('react');
     const { renderToString } = await import('react-dom/server');
     const { App } = await import('../src/ui/App');
     const html = renderToString(createElement(App, { startOn: 'game' }));
-    expect(html).toContain('data-testid="waiting-button"');
-    expect(html).toContain('data-testid="office-button"');
-    expect(html).toContain('data-testid="orders-button"');
-    expect(html).toContain('data-testid="find-button"');
-    // The four old loop buttons are lines in the Waiting menu now, not buttons on the bar.
     const bar = html.slice(html.indexOf('data-testid="topbar"'), html.indexOf('data-testid="map-area"'));
-    for (const id of ['decisions-button', 'sitdown-button', 'desk-button']) expect(bar, id).not.toContain(`data-testid="${id}"`);
+    for (const id of ['waiting-button', 'find-button', 'game-menu-button', 'topbar-standing', 'topbar-family', 'advance-week']) expect(bar, id).toContain(`data-testid="${id}"`);
+    // Moved off the bar (STREAMLINE S14), never removed: they are lines in the ☰ menu.
+    for (const id of ['office-button', 'orders-button', 'plans-button', 'file-button', 'paper-button', 'decisions-button', 'sitdown-button', 'desk-button']) expect(bar, id).not.toContain(`data-testid="${id}"`);
+    // The rail is the six homes only; the bottom strip folded into the Desk.
+    expect(html).not.toContain('data-testid="rail-help"');
+    expect(html).not.toContain('data-testid="in-motion"');
+    const { TopBar } = await import('../src/ui/shell/TopBar');
+    const { newGame } = await import('../src/engine/newGame');
+    const g = newGame('topbar-menu');
+    const menu = renderToString(createElement(TopBar, { s: g, speed: 0, setSpeed: () => {}, onAdvance: () => {}, pending: 0, answered: 0, onReview: () => {}, onNewGame: () => {}, onMainMenu: () => {}, seedInput: '', setSeedInput: () => {}, slot: 1,
+      onOffice: () => {}, onFile: () => {}, onPaper: () => {}, onHelp: () => {}, onFind: () => {}, menuOpen: true }));
+    for (const id of ['office-button', 'orders-button', 'plans-button', 'plans-count', 'file-button', 'paper-button', 'rail-help', 'menu-settings-ingame', 'footer-new']) expect(menu, id).toContain(`data-testid="${id}"`);
     // Today, the club and (on phones) the next goal share one dock.
     const dock = html.slice(html.indexOf('data-testid="map-dock"'));
     expect(html).toContain('data-testid="map-dock"');

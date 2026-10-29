@@ -173,7 +173,9 @@ describe('the drawer renders every home', () => {
     for (const h of HOME_IDS) {
       const html = renderToString(createElement(Drawer, { s, home: h, groups: NAV_TREE[h], ctx, onOpen: () => {}, onClose: () => {}, escEnabled: false, doNow: [], onDo: () => {}, extras: {} }));
       expect(html, h).toContain(`data-testid="drawer-${h}"`);
-      expect(html, h).toContain('data-testid="do-now"');
+      // The Desk is the calm home screen: its "Do this now" shows only when there is something to do (STREAMLINE S14).
+      if (h !== 'desk') expect(html, h).toContain('data-testid="do-now"');
+      else expect(html, h).not.toContain('data-testid="do-now-empty"');
       for (const it of NAV_TREE[h].flatMap((g) => g.items)) expect(html, it.id).toContain(`data-testid="nav-item-${it.id}"`);
     }
   });

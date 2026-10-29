@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 
 /**
  * The map-first layout: top bar; left rail; the map (never unmounted) with
@@ -15,14 +15,22 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
   overlay?: ReactNode;
   right: ReactNode;
   rightIcons: ReactNode;
-  bottom: ReactNode;
+  /** The bottom strip (empty: the In-motion chips live on the Desk now). */
+  bottom?: ReactNode;
   alertCount: number;
   danger: boolean;
 }) {
   const [wide, setWide] = useState(false);
   const [sheet, setSheet] = useState(false);
   // Wide screens: the right column folds to its icons for more map (remembered in this browser).
-  const [folded, setFolded] = useState(() => { try { return localStorage.getItem('llv-right-folded') === '1'; } catch { return false; } });
+  // Folded by default (a calm home screen: the Desk is the focus); unfolding is remembered.
+  const [folded, setFolded] = useState(() => { try { return localStorage.getItem('llv-right-folded') !== '0'; } catch { return true; } });
+  // Phones: the ☰ menu's "Alerts" opens the sheet (the floating button shows only when something is dangerous).
+  useEffect(() => {
+    const on = () => setSheet(true);
+    window.addEventListener('llv-open-alerts', on);
+    return () => window.removeEventListener('llv-open-alerts', on);
+  }, []);
   const fold = (v: boolean) => { setFolded(v); try { localStorage.setItem('llv-right-folded', v ? '1' : '0'); } catch { /* storage unavailable */ } };
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden" data-testid="shell">
@@ -54,10 +62,10 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
           </div>
         )}
       </div>
-      <div className="shrink-0 border-t border-noir-700 bg-noir-900/95 mb-[52px] md:mb-0">{bottom}</div>
+      {bottom ? <div className="shrink-0 border-t border-noir-700 bg-noir-900/95 mb-[52px] md:mb-0">{bottom}</div> : <div className="h-[52px] shrink-0 md:hidden" aria-hidden />}
       {/* Phones: alerts as a bottom sheet. */}
       <button type="button" onClick={() => setSheet(true)} data-testid="alerts-phone"
-        className={`md:hidden fixed right-2 bottom-[96px] z-[1140] rounded-full border-2 px-3 py-1.5 text-xs font-semibold shadow-lg shadow-black/70 ${danger ? 'border-red-300 bg-blood-500/90 text-white llv-ring' : 'border-gold-500 bg-noir-900/95 text-gold-300'}`}>
+        className={`${danger ? '' : 'hidden'} md:hidden fixed right-2 bottom-[96px] z-[1140] rounded-full border-2 px-3 py-1.5 text-xs font-semibold shadow-lg shadow-black/70 ${danger ? 'border-red-300 bg-blood-500/90 text-white llv-ring' : 'border-gold-500 bg-noir-900/95 text-gold-300'}`}>
         Alerts ({alertCount})
       </button>
       {sheet && (

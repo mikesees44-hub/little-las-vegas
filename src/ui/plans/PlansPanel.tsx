@@ -91,12 +91,17 @@ export function PlansPanel({ s, onClose }: { s: GameState; onClose: () => void }
   );
 }
 
-/** The top bar's "Plans" button: how much is in motion, red when something is against you. */
-export function PlansButton({ s }: { s: GameState }) {
+/** How much is in motion, and whether something is against you (the Plans button's count and colour). */
+export function usePlansCount(s: GameState) {
   const { orders } = useOrders();
   const api = usePlansApi();
+  return useMemo(() => plansCount(plansInMotion(s, { orders, answers: api.answers, briefSkip: api.briefSkip })), [s, orders, api.answers, api.briefSkip]);
+}
+
+/** The top bar's "Plans" button: how much is in motion, red when something is against you. */
+export function PlansButton({ s }: { s: GameState }) {
   const [open, setOpen] = useState(false);
-  const c = useMemo(() => plansCount(plansInMotion(s, { orders, answers: api.answers, briefSkip: api.briefSkip })), [s, orders, api.answers, api.briefSkip]);
+  const c = usePlansCount(s);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} data-testid="plans-button" title="Plans in motion: everything you have going and everything going on against you"

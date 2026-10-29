@@ -8,13 +8,15 @@ import { heatBand } from '../../engine/heat';
 import { statHelp } from '../../engine/glossary';
 import { HEAT_BARS, type GameState, type HeatBar, type Stat } from '../../engine/types';
 import { fmt$ } from '../format';
-import { ClockControls, type Speed } from '../clock';
+import { SPEED_NAME, type Speed } from '../clock';
+import { DEFAULT_SPEED } from '../clockPolicy';
 import { MusicToggle } from '../audio';
 import { Num, type Reason } from './Num';
 import { moneyTop } from '../../engine/money';
 import { useShell } from './context';
-import { OrdersButton } from './OrdersPopover';
-import { PlansButton } from '../plans/PlansPanel';
+import { OrdersTray, useOrders } from '../components/Orders';
+import { queuedMoney } from '../../engine/actions';
+import { PlansPanel, usePlansCount } from '../plans/PlansPanel';
 import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
 import { eraHeadline } from '../../engine/intrigue';
 import { ERA_TONE } from '../intrigue/IntrigueBoard';
@@ -31,6 +33,86 @@ function ArmyChip({ s }: { s: GameState }) {
     <button type="button" onClick={() => go('diplomacy.army')} className={`whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] sm:text-[11px] tabular-nums ${s.wars.length ? 'text-red-200 border-red-500/60' : 'text-amber-200 border-amber-500/40'}`} title={title} data-testid="topbar-army">
       ⚔ {m.raised}/{m.available}{m.hired ? `+${m.hired}` : ''}{m.allies ? ` · allies ${m.allies}` : ''} · vs {enemy}
     </button>
+  );
+}
+
+
+/**
+ * Respect, the three heats and favors as ONE strip (they were six chips): the numbers at a glance,
+ * a tap for each one's chip with last week's reasons, and the era with the families.
+ */
+function StandingStrip({ s }: { s: GameState }) {
+  const dr = delta(s, 'respect');
+  const heatTone = (v: number) => (v >= 80 ? 'text-red-400' : v >= 50 ? 'text-orange-300' : v >= 25 ? 'text-amber-200' : 'text-sky-200');
+  const era = eraHeadline(s);
+  return (
+    <Popover align="left" testid="standing-popover" button={(o, t) => (
+      <button type="button" onClick={t} aria-expanded={o} data-testid="topbar-standing" title={`Respect ${s.respect} · heat: local ${s.heat.local}, family ${s.heat.family}, federal ${s.heat.federal} · favors ${s.favors} · ${era.text}. Tap for the reasons.`}
+        className="flex h-[38px] items-center gap-2 whitespace-nowrap rounded border border-noir-700 bg-noir-800 px-2 text-[11px] tabular-nums text-stone-400 hover:border-gold-600">
+        <span>Respect <b className="text-stone-100">{s.respect}</b>{dr ? <span className={dr > 0 ? 'text-emerald-400' : 'text-red-400'}> {dr > 0 ? '+' : ''}{dr}</span> : null}</span>
+        <span>Heat {HEAT_BARS.map((b, i) => <b key={b} className={heatTone(s.heat[b])}>{i ? '·' : ''}{s.heat[b]}</b>)}</span>
+        <span className="hidden sm:inline">Favors <b className="text-stone-100">{s.favors}</b></span>
+        <span className={`hidden lg:inline h-2 w-2 rounded-full ${era.era === 'war' ? 'bg-red-500' : era.era === 'peace' ? 'bg-emerald-500' : 'bg-amber-400'}`} aria-hidden />
+        <span className="text-stone-500">▾</span>
+      </button>
+    )}>
+      {() => (
+        <div className="flex max-w-[92vw] flex-wrap items-start gap-1 sm:max-w-[560px]" data-testid="resources-detail">
+          <Num v={dr ?? 0} reasons={reasonsFor(s, 'respect')} term="respect"><Chip label="Respect" value={`${s.respect}`} d={dr} good={(dr ?? 0) >= 0} bar={s.respect} barColor="bg-gold-500" /></Num>
+          {HEAT_BARS.map((b) => {
+            const d = delta(s, b);
+            return (
+              <Num key={b} v={d ?? 0} reasons={reasonsFor(s, `heat.${b}` as Stat)} term={`heat.${b}`}>
+                <Chip label={`${b[0].toUpperCase()}${b.slice(1)} heat`} value={`${s.heat[b]}`} d={d} good={(d ?? 0) <= 0} bar={s.heat[b]} barColor={BAND_COLOR[heatBand(s.heat[b])]} tone={s.heat[b] >= 80 ? 'text-red-400' : undefined} />
+              </Num>
+            );
+          })}
+          <Num v={s.favors} reasons={[]} term="favors"><Chip label="Favors" value={`${s.favors}`} /></Num>
+          <div className="basis-full" />
+          <EraChip s={s} />
+        </div>
+      )}
+    </Popover>
+  );
+}
+
+/** The clock in two buttons: play/pause, and the speed (1–5 in a small menu; the keys 1–5 still work). */
+function ClockCompact({ speed, setSpeed }: { speed: Speed; setSpeed: (v: Speed) => void }) {
+  const paused = speed === 0;
+  return (
+    <div className="flex items-center gap-0.5" data-testid="clock">
+      <button type="button" onClick={() => setSpeed(paused ? DEFAULT_SPEED : 0)} title={paused ? 'Play (space)' : 'Pause (space)'} aria-label={paused ? 'Play' : 'Pause'} data-testid="clock-pause" data-paused={paused}
+        className={`h-8 min-w-[2.25rem] rounded border px-2 text-sm font-bold ${paused ? 'bg-gold-500 text-noir-950 border-gold-400' : 'bg-noir-800 text-gold-300 border-gold-600'}`}>{paused ? '▶' : '❚❚'}</button>
+      <Popover align="left" testid="clock-speeds" button={(o, t) => (
+        <button type="button" onClick={t} aria-expanded={o} aria-label="Clock speed" title="How fast the days go (keys 1–5)" data-testid="clock-speed"
+          className="h-8 rounded border border-noir-600 bg-noir-800 px-1.5 text-[11px] font-bold tabular-nums text-stone-300 hover:border-gold-500">{paused ? 'speed' : `×${speed}`}<span className="ml-0.5 text-stone-500">▾</span></button>
+      )}>
+        {(close) => (
+          <div className="flex gap-1">
+            {([1, 2, 3, 4, 5] as const).map((v) => (
+              <button key={v} type="button" onClick={() => { setSpeed(v); close(); }} aria-pressed={speed === v} aria-label={`Play ${SPEED_NAME[v].toLowerCase()}`} title={`Speed ${v}: ${SPEED_NAME[v].toLowerCase()} (key ${v})`} data-testid={`clock-speed-${v}`}
+                className={`h-8 min-w-[2rem] rounded border px-1 text-[11px] font-bold tabular-nums ${speed === v ? 'bg-gold-500 text-noir-950 border-gold-400' : 'bg-noir-800 text-stone-300 border-noir-600 hover:border-gold-500'}`}>{v}</button>
+            ))}
+          </div>
+        )}
+      </Popover>
+    </div>
+  );
+}
+
+/** This week's orders, opened from the menu (the tray that used to hang off its own button). */
+function OrdersPane({ s, onClose }: { s: GameState; onClose: () => void }) {
+  const { orders } = useOrders();
+  useEscape(true, onClose);
+  return (
+    <div className="fixed inset-0 z-[1170]" onClick={onClose}>
+      <div className="absolute left-2 right-2 top-[7.5rem] sm:left-auto sm:right-2 sm:top-14 sm:w-[min(440px,94vw)] max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="orders-popover">
+        <div className="flex justify-end"><button type="button" className="btn-quiet text-xs" onClick={onClose} aria-label="Close">close ×</button></div>
+        {orders.length ? <OrdersTray s={s} /> : (
+          <div className="panel p-3 text-xs text-stone-400">No orders this week. Every "Order" button on a sheet, a card or a drawer adds one here; they are carried out when you advance.</div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -113,8 +195,8 @@ function Chip({ label, value, d, good, bar, barColor, tone, cash, after }: { lab
 }
 
 /** A small menu anchored to a button; closes on outside click and Esc. */
-export function Popover({ button, children, align = 'right', testid }: { button: (open: boolean, toggle: () => void) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right'; testid?: string }) {
-  const [open, setOpen] = useState(false);
+export function Popover({ button, children, align = 'right', testid, initialOpen }: { button: (open: boolean, toggle: () => void) => ReactNode; children: (close: () => void) => ReactNode; align?: 'left' | 'right'; testid?: string; /** Tests and tours: start open. */ initialOpen?: boolean }) {
+  const [open, setOpen] = useState(!!initialOpen);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -175,7 +257,7 @@ function WaitingButton({ count, tone, onDesk, onReview }: {
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen }: {
   s: GameState;
   /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
   inboxN?: number;
@@ -223,10 +305,20 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   /** Your File (the Book, engine/journal.ts): new entries since the boss last looked, and the opener. */
   fileNew?: number;
   onFile?: () => void;
+  /** "What should I do" (the help menu; it used to sit at the foot of the rail). */
+  onHelp?: () => void;
+  /** Start with the ☰ menu open (tests). */
+  menuOpen?: boolean;
 }) {
   const info = seasonInfo(s.date);
   const boss = player(s);
-  const dr = delta(s, 'respect');
+  const { orders } = useOrders();
+  const orderCost = queuedMoney(s, orders).family;
+  const plans = usePlansCount(s);
+  const [pane, setPane] = useState<'orders' | 'plans' | undefined>();
+  // The one menu carries what left the bar: its badge is this week's orders; a dot for something new or against you.
+  const menuBadge = orders.length;
+  const menuDot = fileNew > 0 || paperUnread > 0 || plans.danger;
   return (
     <header className="relative z-[1150] border-b border-noir-700 bg-noir-900/95 px-2 sm:px-3 py-1.5 shadow-lg shadow-black/50" data-testid="topbar">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
@@ -239,17 +331,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
         </div>
         <div className="order-3 sm:order-2 flex w-full sm:w-auto items-center gap-1 overflow-x-auto sm:overflow-visible pb-0.5 sm:pb-0" data-testid="resources">
           <MoneyChips s={s} />
-          <Num v={dr ?? 0} reasons={reasonsFor(s, 'respect')} term="respect"><Chip label="Respect" value={`${s.respect}`} d={dr} good={(dr ?? 0) >= 0} bar={s.respect} barColor="bg-gold-500" /></Num>
-          {HEAT_BARS.map((b) => {
-            const d = delta(s, b);
-            return (
-              <Num key={b} v={d ?? 0} reasons={reasonsFor(s, `heat.${b}` as Stat)} term={`heat.${b}`}>
-                <Chip label={`${b[0].toUpperCase()}${b.slice(1)} heat`} value={`${s.heat[b]}`} d={d} good={(d ?? 0) <= 0} bar={s.heat[b]} barColor={BAND_COLOR[heatBand(s.heat[b])]} tone={s.heat[b] >= 80 ? 'text-red-400' : undefined} />
-              </Num>
-            );
-          })}
-          <Num v={s.favors} reasons={[]} term="favors"><Chip label="Favors" value={`${s.favors}`} /></Num>
-          <EraChip s={s} />
+          <StandingStrip s={s} />
           <ArmyChip s={s} />
         </div>
         <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
@@ -265,7 +347,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
         </div>
         {!s.gameOver && (
           <div className="order-4 flex w-full lg:w-auto items-center gap-0.5 sm:gap-1.5 flex-wrap">
-            {clockMode && <div className="llv-clock-compact"><ClockControls speed={speed} setSpeed={setSpeed} /></div>}
+            {clockMode && <ClockCompact speed={speed} setSpeed={setSpeed} />}
             <div className="flex">
               <button className={`btn-primary h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-primary h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
@@ -278,24 +360,6 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
               </Popover>
             </div>
             <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />
-            {onOffice && (
-              <button type="button" onClick={onOffice} data-testid="office-button" aria-pressed={!!officeOpen} title="The Boss's Office: where the week's business starts"
-                className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${officeOpen ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>⌂<span className="hidden sm:inline"> Office</span></button>
-            )}
-            {onFile && (
-              <button type="button" onClick={onFile} data-testid="file-button" title={fileNew ? `Your File: ${fileNew} new` : 'Your File: everything you did and what came of it'}
-                className="relative h-8 rounded border border-gold-600/70 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-gold-300 hover:border-gold-400">❡<span className="hidden sm:inline"> Your File</span>
-                {fileNew > 0 && <span className="absolute -right-1.5 -top-1.5 min-w-[1.1rem] rounded-full bg-blood-500 px-1 text-center text-[10px] leading-4 text-white ring-2 ring-noir-900" data-testid="file-badge">{fileNew > 99 ? '99+' : fileNew}</span>}
-              </button>
-            )}
-            {onPaper && (
-              <button type="button" onClick={onPaper} data-testid="paper-button" title={paperUnread ? `The paper is on the desk (${paperUnread} unread)` : 'The Daily Tide and the Weekly Leader'}
-                className="relative h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">▤<span className="hidden sm:inline"> Paper</span>
-                {paperUnread > 0 && <span className="absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full bg-blood-500 ring-2 ring-noir-900" data-testid="paper-dot" aria-label={`${paperUnread} unread`} />}
-              </button>
-            )}
-            <OrdersButton s={s} />
-            <PlansButton s={s} />
             {onFind && (
               <button type="button" onClick={onFind} data-testid="find-button" title="Find a person, a place, a screen or something to do (Ctrl+K or /)"
                 className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Find</span></button>
@@ -303,9 +367,23 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             {note && <span className="text-[11px] text-amber-300 truncate max-w-[40vw]">{note}</span>}
             {ticker && speed > 0 && <span className="hidden xl:inline text-[11px] text-stone-500 truncate max-w-[24rem]">{ticker}</span>}
             <div className="ml-auto">
-              <Popover testid="game-menu" button={(o, t) => <button className="btn-secondary h-8 w-7 sm:w-8 px-0 py-0" aria-label="Game menu" aria-expanded={o} onClick={t} data-testid="game-menu-button">≡</button>}>
+              <Popover testid="game-menu" initialOpen={menuOpen} button={(o, t) => (
+                <button className="btn-secondary relative h-8 w-8 px-0 py-0" aria-label="Menu: the office, your file, the paper, orders, plans, help, settings" aria-expanded={o} onClick={t} data-testid="game-menu-button">
+                  ☰
+                  {menuBadge > 0 && <span className="absolute -right-1.5 -top-1.5 min-w-[1.1rem] rounded-full bg-gold-500 px-1 text-center text-[10px] font-bold leading-4 text-noir-950 ring-2 ring-noir-900" data-testid="menu-badge">{menuBadge}</span>}
+                  {menuBadge === 0 && menuDot && <span className={`absolute -right-1 -top-1 h-2.5 w-2.5 rounded-full ring-2 ring-noir-900 ${plans.danger ? 'bg-red-500' : 'bg-blood-500'}`} data-testid="menu-dot" />}
+                </button>
+              )}>
                 {(close) => (
-                  <div className="space-y-1 text-xs">
+                  <div className="space-y-0.5 text-xs" data-testid="topbar-more">
+                    {onOffice && <button type="button" className={menuItem} onClick={() => { close(); onOffice(); }} data-testid="office-button" aria-pressed={!!officeOpen}>⌂ The Office <span className="text-stone-500">· upstairs at the club</span></button>}
+                    <button type="button" className={menuItem} onClick={() => { close(); setPane('orders'); }} data-testid="orders-button">☰ This week's orders <span className={orders.length ? 'text-gold-300' : 'text-stone-500'}>({orders.length}{orders.length && orderCost > 0 ? ` · ${fmt$(orderCost)}` : ''})</span></button>
+                    <button type="button" className={menuItem} onClick={() => { close(); setPane('plans'); }} data-testid="plans-button">◐ Plans in motion <span className={`rounded-full px-1.5 text-[10px] ${plans.danger ? 'bg-red-500 text-white' : 'bg-noir-700 text-stone-200'}`} data-testid="plans-count">{plans.motion}</span></button>
+                    {onFile && <button type="button" className={menuItem} onClick={() => { close(); onFile(); }} data-testid="file-button">❡ Your File{fileNew > 0 && <span className="ml-1 rounded-full bg-blood-500 px-1.5 text-[10px] text-white" data-testid="file-badge">{fileNew > 99 ? '99+' : fileNew} new</span>}</button>}
+                    {onPaper && <button type="button" className={menuItem} onClick={() => { close(); onPaper(); }} data-testid="paper-button">▤ The paper{paperUnread > 0 && <span className="ml-1 inline-block h-2 w-2 rounded-full bg-blood-500" data-testid="paper-dot" aria-label={`${paperUnread} unread`} />}</button>}
+                    <button type="button" className={`${menuItem} md:hidden`} onClick={() => { close(); window.dispatchEvent(new Event('llv-open-alerts')); }} data-testid="menu-alerts">⚑ Alerts</button>
+                    {onHelp && <button type="button" className={menuItem} onClick={() => { close(); onHelp(); }} data-testid="rail-help">? What should I do</button>}
+                    <div className="my-1 h-px bg-noir-700" />
                     <GameMenuLinks close={close} />
                     <div className="flex items-center justify-between px-2 py-1 text-sm text-stone-300">Music <MusicToggle /></div>
                     <div className="my-1 h-px bg-noir-700" />
@@ -318,6 +396,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                 )}
               </Popover>
             </div>
+            {pane === 'orders' && <OrdersPane s={s} onClose={() => setPane(undefined)} />}
+            {pane === 'plans' && <PlansPanel s={s} onClose={() => setPane(undefined)} />}
           </div>
         )}
       </div>

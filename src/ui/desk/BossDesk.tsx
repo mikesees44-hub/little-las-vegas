@@ -156,7 +156,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: Gam
           <div className="panel-title text-base">The Desk</div>
           <div className="text-[11px] text-stone-400" data-testid="desk-count">{waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : 'Nothing needs you'}{handled?.items.length ? ` · ${get('handled')!.items.length} handled for you` : ''} · week {s.week}</div>
         </div>
-        <DeskClock s={s} className="text-[11px] sm:text-[13px]" />
+        <div className="hidden sm:block"><DeskClock s={s} className="text-[11px] sm:text-[13px]" /></div>
       </div>
       {ltView(s).offer && api.onOffer && (
         <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded border border-gold-600/60 bg-gold-500/10 px-2 py-1.5 text-[12px] text-stone-200" data-testid="desk-offer">

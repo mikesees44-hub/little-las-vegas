@@ -92,6 +92,7 @@ import { UrgentMeeting } from './components/UrgentMeeting';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 import { BossOffice } from './office/BossOffice';
+import { AssetImg } from './hood/AssetImg';
 import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
@@ -661,7 +662,7 @@ export function App({ startOn = 'title' }: AppProps) {
     // Where the week starts (Settings): the office, with the man across the desk and his briefing
     // (the sit-down is one step away, at the door); the desk's list; or the map.
     const start = weekStart(s);
-    if (start === 'office') { setRoute({}); setOfficeView('office'); setMondayCard(true); return; }
+    if (start === 'office') { setRoute({ home: 'desk' }); setOfficeView('office'); setMondayCard(true); return; }
     if (start === 'desk') setRoute({ home: 'desk' });
     if (getSettings().sitdownEachWeek !== false) setSitdown('council');
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
@@ -796,13 +797,17 @@ export function App({ startOn = 'title' }: AppProps) {
     setLater({ week: s.week, keys: [...laterKeys, v.key] });
     if (v.ref.brief && !briefSkip.includes(v.ref.brief)) setBriefSkip([...briefSkip, v.ref.brief]);
   }
-  const officeScreen = s.gameOver ? undefined
+  const officeScreen = s.gameOver || home ? undefined
     : officeView === 'office' ? <BossOffice key={s.week} s={s} ui={officeUi} monday={mondayCard} onMondayDone={() => setMondayCard(false)} onInvite={officeInvite} onDelegate={officeDelegate} onLater={officeLater} onClub={() => setOfficeView('club')} />
     : officeView === 'club' ? <SocialClub s={s} onUpstairs={() => setOfficeView('office')} onHq={() => openRoute({ panel: 'holdings', section: 'hq' })} onMap={() => setOfficeView(undefined)} />
     : undefined;
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
+      <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
+        <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>
+        <InMotionStrip chips={motion} onChip={onChip} inDesk />
+      </section>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
@@ -858,7 +863,7 @@ export function App({ startOn = 'title' }: AppProps) {
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}
-            fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
+            onHelp={() => setHelpMenu(true)} fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} locks={Object.fromEntries(HOME_IDS.map((h) => [h, homeLock(s, h)]).filter(([, r]) => r))} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
@@ -867,6 +872,12 @@ export function App({ startOn = 'title' }: AppProps) {
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
             {officeScreen}
+            {home === 'desk' && !s.gameOver && (
+              // The office as ambience behind the Desk: the painting, dimmed, no hotspots (they are the Desk's rows now).
+              <div className="pointer-events-none absolute inset-0 z-[1090] overflow-hidden bg-noir-950" data-testid="desk-ambience" aria-hidden>
+                <AssetImg k="office_interior" alt="" className="h-full w-full object-cover opacity-25 blur-[1px]" />
+              </div>
+            )}
             {!s.gameOver && !home && !officeView && (
               <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-16 md:top-3 z-[1005] flex justify-center" data-testid="return-home-dock">
                 <ReturnHome s={s} update={setS} />
@@ -920,7 +931,6 @@ export function App({ startOn = 'title' }: AppProps) {
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
-        bottom={<InMotionStrip chips={motion} onChip={onChip} />}
         alertCount={shellAlertList.length}
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
