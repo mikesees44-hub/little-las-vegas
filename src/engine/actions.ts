@@ -46,6 +46,7 @@ import { commitDirty, previewDirty } from './dirtyWork';
 import { commitWork, previewWork } from './bizRacket';
 import { commitProtect, previewProtect } from './protect';
 import { previewWomen } from './women';
+import { previewHoney } from './honey';
 import { commitPaper, previewPaper } from './paper';
 import { commitIntrigue, previewIntrigue } from './intrigueOps';
 import { commitArmy, previewArmy } from './army';
@@ -156,6 +157,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   protect: { preview: (s, a) => previewProtect(s, a.op), commit: (ctx, a) => commitProtect(ctx, a.op) },
   /** The women (women.ts): her answer is rolled; the outcome lands through the 'women' effect. */
   women: { preview: (s, a) => previewWomen(s, a.op) },
+  /** Honey (honey.ts): the dare replays the window; turning her is her decision; the rest land through the 'honey' effect. */
+  honey: { preview: (s, a) => previewHoney(s, a.op) },
   paper: { preview: (s, a) => previewPaper(s, a.op), commit: (ctx, a) => commitPaper(ctx, a.op) },
   intrigue: { preview: (s, a) => previewIntrigue(s, a.op), commit: (ctx, a) => commitIntrigue(ctx, a.op) },
   /** The army (army.ts): raise the troops, hire muscle, the mattresses, a call to arms, a pact, an attack. */

@@ -1,5 +1,5 @@
 import { DEEDS } from '../deeds/catalog';
-import { EFFECT_KEYS, ROLE_POOLS, SCENE_THEMES, type Scene } from './format';
+import { EFFECT_KEYS, MATURE_POOLS, ROLE_POOLS, SCENE_THEMES, type Scene } from './format';
 
 /**
  * THE VALIDATOR. Every scene file is checked field by field before the game
@@ -17,8 +17,8 @@ export const DISTRICTS = ['boardwalk', 'pacific', 'piers', 'downtown', 'docks', 
 export const FIELDS = ['name', 'first', 'last', 'nick', 'call', 'he', 'his', 'him', 'He', 'His'];
 
 const SCENE_KEYS = ['id', 'title', 'theme', 'followup', 'when', 'who', 'text', 'choices'];
-const WHEN_KEYS = ['years', 'season', 'months', 'week', 'flags', 'notFlags', 'money', 'respect', 'heat', 'boss', 'location', 'chance', 'weight', 'cooldown', 'once'];
-const ROLE_KEYS = ['pool', 'rank', 'traits', 'notTraits', 'gender', 'age', 'mood', 'opinionOfBoss', 'opinionOf', 'tie', 'sameSideAs'];
+const WHEN_KEYS = ['years', 'season', 'months', 'week', 'flags', 'notFlags', 'money', 'respect', 'heat', 'boss', 'location', 'chance', 'weight', 'cooldown', 'once', 'mature'];
+const ROLE_KEYS = ['pool', 'rank', 'traits', 'notTraits', 'gender', 'age', 'mood', 'opinionOfBoss', 'opinionOf', 'tie', 'sameSideAs', 'partnerOf'];
 const CHOICE_KEYS = ['label', 'hint', 'requires', 'odds', 'effects', 'success', 'failure', 'result', 'failText', 'next'];
 const REQ_KEYS = ['money', 'respect', 'favors', 'flag', 'trait', 'notTrait'];
 const ODDS_KEYS = ['base', 'deed', 'actor', 'target', 'plus'];
@@ -219,6 +219,8 @@ function checkRole(p: string, spec: unknown, roles: Set<string>, err: (p: string
     }
   }
   if (spec.sameSideAs !== undefined && !roles.has(String(spec.sameSideAs))) err(`${p}.sameSideAs`, `no role "${String(spec.sameSideAs)}"${didYouMean(String(spec.sameSideAs), [...roles])}`);
+  if (spec.partnerOf !== undefined && (!roles.has(String(spec.partnerOf)) || spec.partnerOf === 'boss')) err(`${p}.partnerOf`, `no role "${String(spec.partnerOf)}"${didYouMean(String(spec.partnerOf), [...roles])}`);
+  if (spec.age !== undefined && MATURE_POOLS.includes(spec.pool as never) && Array.isArray(spec.age) && Number(spec.age[0]) < 18) err(`${p}.age`, 'adults only: this pool starts at 18');
   if (spec.tie !== undefined) {
     if (!isObj(spec.tie)) err(`${p}.tie`, 'should be { "otherRole": "feud" }');
     else for (const [r, k] of Object.entries(spec.tie)) {
@@ -252,6 +254,7 @@ function checkWhen(w: unknown, err: (p: string, m: string) => void): void {
   if (w.chance !== undefined && !(isNum(w.chance) && w.chance > 0 && w.chance <= 1)) err('when.chance', 'is between 0 and 1 (e.g. 0.3)');
   for (const k of ['weight', 'cooldown'] as const) if (w[k] !== undefined && !(isNum(w[k]) && (w[k] as number) >= 0)) err(`when.${k}`, 'is a number of 0 or more');
   if (w.once !== undefined && typeof w.once !== 'boolean') err('when.once', 'is true or false');
+  if (w.mature !== undefined && typeof w.mature !== 'boolean') err('when.mature', 'is true or false');
 }
 
 function checkEffect(p: string, fx: unknown, roles: Set<string>, err: (p: string, m: string) => void): void {
@@ -281,6 +284,9 @@ function checkEffect(p: string, fx: unknown, roles: Set<string>, err: (p: string
     case 'jail': { const o = obj(['role', 'weeks']); if (o) { role('role', o.role); num('weeks', o.weeks); if (o.role === 'boss') err(p, 'the boss cannot be jailed from a scene'); } break; }
     case 'whack': { const o = obj(['role', 'why']); if (o) { role('role', o.role); if (o.role === 'boss') err(p, 'a scene cannot whack the boss'); } break; }
     case 'runs': { const o = obj(['role']); if (o) { role('role', o.role); if (o.role === 'boss') err(p, 'the boss does not run from a scene'); } break; }
+    case 'scorn': { const o = obj(['who', 'by', 'why']); if (o) { role('who', o.who); num('by', o.by); if (o.who === 'boss') err(p, 'the boss does not scorn himself'); } break; }
+    case 'hush': case 'leak': { const o = obj(['role']); if (o) { role('role', o.role); if (o.role === 'boss') err(p, `"${k}" is about her, not the boss`); } break; }
+    case 'suspect': { const o = obj(['role', 'by']); if (o) { role('role', o.role); num('by', o.by); if (o.role === 'boss') err(p, 'the boss does not suspect himself'); } break; }
     default: err(p, `unknown effect "${k}"${didYouMean(k, EFFECT_KEYS)}`);
   }
 }

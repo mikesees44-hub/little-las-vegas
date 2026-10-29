@@ -7,6 +7,7 @@ import { spendHours } from './spendData';
 import { workHours } from './bizRacketData';
 import { PROTECT_HOURS } from './protectData';
 import { WOMEN_HOURS } from './womenState';
+import { HONEY_HOURS } from './honeyState';
 import { DEED_HOURS } from './deeds/hours';
 import type { GameState, PlayerAction } from './types';
 
@@ -79,6 +80,8 @@ export const TIME_TABLE: Record<string, number> = {
   ...Object.fromEntries(Object.entries(PROTECT_HOURS).map(([k, v]) => [`protect:${k}`, v])),
   // The women: a dinner, an evening, a gift (women.ts).
   ...Object.fromEntries(Object.entries(WOMEN_HOURS).map(([k, v]) => [`women:${k}`, v])),
+  // Honey: a dare is half an hour; a word with her about what she is, an hour (honey.ts).
+  ...Object.fromEntries(Object.entries(HONEY_HOURS).map(([k, v]) => [`honey:${k}`, v])),
   'dev:adopt': 1, 'dev:drop': 0.25, 'dev:resp': 0.25, 'dev:mandate': 0.25,
   'dev:buy': 1, 'dev:assign': 0.25, 'dev:repair': 0.25, 'dev:scrap': 0.25,
   // Money

@@ -1,0 +1,150 @@
+{
+  "_about": "HONEY: secrets, mistresses, men and women scorned. The owner's idea (2026-10-28): the mafia ran on secrets, mistresses and people who were wronged. Every scene here casts from the adults-only pools (lover, mistress, husband, scorned, suspect), so none of it comes up with Mature content Off. Non-explicit; violence implied.",
+  "scenes": [
+    {
+      "id": "honey_loud_mouth",
+      "title": "Four Manhattans at the Bolero",
+      "theme": "romance",
+      "when": { "week": { "min": 6 }, "chance": 0.5, "cooldown": 30 },
+      "who": { "mist": { "pool": "mistress" }, "capo": { "pool": "capo" } },
+      "text": "{capo.call} doesn't sit down. \"Your friend {mist.first}. Last night at the Bolero she had four Manhattans and told the bartender what you keep in your desk drawer. The bartender's brother-in-law is a county detective. I'm just saying.\"",
+      "choices": [
+        { "label": "Send her a mink stole, and a word about discretion", "hint": "Sweet, then firm. She may even listen.", "effects": [ { "money": -600 }, { "opinion": { "of": "mist", "toward": "boss", "by": 6, "why": "He sent me a mink" } }, { "hush": { "role": "mist" } } ], "result": "{mist.first} wore the mink to the Bolero and drank ginger ale all night. For a week." },
+        { "label": "Have {capo.first} take care of the bartender", "hint": "The bartender forgets. {mist.first} doesn't learn.", "effects": [ { "money": -300 }, { "opinion": { "of": "capo", "toward": "boss", "by": -3, "why": "Cleaning up after the boss's girlfriend" } }, { "heat": { "local": 1 } } ], "result": "The bartender at the Bolero has developed a very poor memory." },
+        { "label": "Tell her to keep her mouth shut, or else", "hint": "She'll be quiet. She'll also remember how you said it.", "effects": [ { "opinion": { "of": "mist", "toward": "boss", "by": -15, "why": "He talked to me like I was one of his soldiers" } }, { "scorn": { "who": "mist", "by": 30, "why": "he told me to shut my mouth like I was a dog" } }, { "hush": { "role": "mist" } } ] },
+        { "label": "Everybody talks at the Bolero", "hint": "Let it go. She'll talk again.", "effects": [ { "leak": { "role": "mist" } } ] }
+      ]
+    },
+    {
+      "id": "honey_matchbook",
+      "title": "A matchbook from the Starlight",
+      "theme": "romance",
+      "when": { "week": { "min": 6 }, "chance": 0.4, "cooldown": 40 },
+      "who": { "wife": { "pool": "wife" }, "lover": { "pool": "lover" } },
+      "text": "{wife.first} is at the kitchen table with your good suit over her arm and a matchbook from the Starlight Motel on the oilcloth in front of her. She isn't crying. That's what worries you. \"We don't know anybody who stays at the Starlight,\" she says.",
+      "choices": [
+        { "label": "\"A business meeting. Out-of-town people.\"", "hint": "A lie, said well. Maybe.", "odds": { "base": 55, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 15, "why": "you could sell sand on the boardwalk" }, { "if": { "role": "wife", "trait": "Paranoid" }, "add": -20, "why": "she checks your pockets for a reason" } ] }, "success": [ { "opinion": { "of": "wife", "toward": "boss", "by": -2, "why": "Business meetings at a motel" } } ], "failure": [ { "opinion": { "of": "wife", "toward": "boss", "by": -15, "why": "He lied to my face about the Starlight" } }, { "memory": { "who": "wife", "about": "boss", "text": "the matchbook, and the lie he told about it", "weight": -20 } } ], "result": "She put the matchbook in the drawer with the others. You didn't know there were others.", "failText": "\"Out-of-town people,\" she repeated, and went upstairs, and locked the door." },
+        { "label": "Dinner at the Shalimar Saturday, just the two of you", "hint": "No explanation. Attention, which is what she wants.", "effects": [ { "money": -150 }, { "opinion": { "of": "wife", "toward": "boss", "by": 4, "why": "He took me to the Shalimar" } }, { "memory": { "who": "wife", "about": "boss", "text": "a dinner that was really an apology", "weight": 4 } } ] },
+        { "label": "Say nothing, and take the suit to the cleaners yourself", "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": -6, "why": "He didn't even bother to lie" } } ] }
+      ]
+    },
+    {
+      "id": "honey_husband_at_the_bar",
+      "title": "Her husband, at the end of the bar",
+      "theme": "romance",
+      "when": { "week": { "min": 8 }, "chance": 0.45, "cooldown": 30 },
+      "who": { "lover": { "pool": "lover" }, "husband": { "pool": "husband", "partnerOf": "lover" } },
+      "text": "{husband.call} has been at the end of the bar at the Riptide since six o'clock. He isn't drunk yet. He keeps turning his wedding ring around and around, and every time the door opens he looks at it, and every time it isn't {lover.first} he looks at you.",
+      "choices": [
+        { "label": "Buy him a drink and talk to him like a man", "hint": "Some men can be talked down. Some can't.", "odds": { "base": 45, "plus": [ { "if": { "role": "husband", "trait": "Cowardly" }, "add": 20, "why": "he doesn't have it in him" }, { "if": { "role": "husband", "trait": "Hot-headed" }, "add": -25, "why": "one more drink and he swings" }, { "if": { "bossTrait": "Charming" }, "add": 10, "why": "you can talk to anybody" } ] }, "success": [ { "opinion": { "of": "husband", "toward": "boss", "by": 5, "why": "He sat with me like a man" } }, { "scorn": { "who": "husband", "by": 20, "why": "he bought me a drink with the money he spends on my wife" } } ], "failure": [ { "scorn": { "who": "husband", "by": 60, "why": "he sat across from me and smiled" } }, { "heat": { "local": 1 } } ], "result": "You talked about the Phillies for an hour. He went home. He'll be back.", "failText": "He threw the drink at the mirror behind the bar. The bouncer walked him out. Everybody saw." },
+        { "label": "Have the bouncer show him the door", "hint": "Clean. He'll take it home with him.", "effects": [ { "scorn": { "who": "husband", "by": 45, "why": "he had me thrown out of a bar like a drunk" } }, { "respect": -1 } ] },
+        { "label": "Go out the kitchen door", "effects": [ { "scorn": { "who": "husband", "by": 25, "why": "he couldn't even look me in the eye" } } ] }
+      ]
+    },
+    {
+      "id": "honey_scorned_reporter",
+      "title": "A reporter at her table",
+      "theme": "romance",
+      "when": { "week": { "min": 10 }, "chance": 0.4, "cooldown": 40 },
+      "who": { "her": { "pool": "scorned", "gender": "F" } },
+      "text": "{her.call} is at the corner table at the Shamrock with a man in a seersucker suit who writes for the Philadelphia Inquirer. She's doing the talking. He's doing the writing. Every so often she looks over at you and smiles the smile of a woman who has nothing left to lose.",
+      "choices": [
+        { "label": "Send over a bottle of champagne and an envelope", "hint": "For her, not the reporter. She may take both.", "odds": { "base": 50, "plus": [ { "if": { "role": "her", "trait": "Greedy" }, "add": 25, "why": "she likes money more than she hates you" }, { "if": { "role": "her", "trait": "Vengeful" }, "add": -25, "why": "she wants you to hurt" } ] }, "effects": [ { "money": -1000 } ], "success": [ { "opinion": { "of": "her", "toward": "boss", "by": 15, "why": "He finally treated me like I mattered" } } ], "failure": [ { "heat": { "local": 2, "federal": 1 } }, { "respect": -1 } ], "result": "She folded the envelope into her purse and told the reporter she'd made the whole thing up. He looked very disappointed.", "failText": "She sent the champagne back with the envelope still in the bucket. The Inquirer ran it on page eleven." },
+        { "label": "Sit down at her table and apologize, in front of him", "hint": "It costs you face. It might cost her the story.", "odds": { "base": 40, "plus": [ { "if": { "role": "her", "opinionOfBoss": ">-30" }, "add": 20, "why": "she doesn't hate you as much as she says" } ] }, "effects": [ { "respect": -1 } ], "success": [ { "opinion": { "of": "her", "toward": "boss", "by": 20, "why": "He said he was sorry in front of a newspaperman" } } ], "failure": [ { "heat": { "local": 1 } } ], "result": "\"I'm sorry,\" you said. She cried. The reporter put his pencil away.", "failText": "\"Write that down,\" she told the reporter. \"He's sorry.\"" },
+        { "label": "Have the reporter walked to his car", "hint": "The story doesn't run. The reason it didn't run might.", "effects": [ { "heat": { "local": 3 } }, { "scorn": { "who": "her", "by": 20, "why": "he had my reporter thrown out like garbage" } } ] },
+        { "label": "Let her talk", "effects": [ { "heat": { "local": 1, "federal": 1 } } ] }
+      ]
+    },
+    {
+      "id": "honey_capo_saw_her",
+      "title": "\"I seen her in a car\"",
+      "theme": "romance",
+      "when": { "week": { "min": 8 }, "chance": 0.5, "cooldown": 26 },
+      "who": { "sus": { "pool": "suspect" }, "capo": { "pool": "capo" } },
+      "text": "{capo.call} waits until the bookkeeper leaves. \"Your friend {sus.first}. Tuesday I seen her in a car outside the Shamrock with two fellas I didn't like the look of. Out-of-town plates. Could be her cousins. I don't think they were her cousins.\"",
+      "choices": [
+        { "label": "\"Find out for sure. Quietly.\"", "hint": "If she's working you, you'll know. If she isn't, she can never know you asked.", "effects": [ { "suspect": { "role": "sus", "by": 30 } }, { "opinion": { "of": "capo", "toward": "boss", "by": 4, "why": "The boss listened to me" } } ], "result": "{capo.first} will have a man sit on her for a while." },
+        { "label": "\"Keep her away from the office.\"", "hint": "A sensible precaution. She'll notice the door is always closed now.", "effects": [ { "suspect": { "role": "sus", "by": 15 } }, { "opinion": { "of": "sus", "toward": "boss", "by": -4, "why": "He doesn't let me upstairs anymore" } } ] },
+        { "label": "\"She's got cousins. Drop it.\"", "hint": "He'll drop it. He won't forget you didn't want to hear it.", "effects": [ { "opinion": { "of": "capo", "toward": "boss", "by": -6, "why": "I warned him and he told me to drop it" } } ] }
+      ]
+    },
+    {
+      "id": "honey_brother_eddie",
+      "title": "A job for her kid brother",
+      "theme": "romance",
+      "when": { "week": { "min": 6 }, "chance": 0.4, "cooldown": 52 },
+      "who": { "mist": { "pool": "mistress" } },
+      "text": "{mist.first} brings it up over breakfast at the Pink Flamingo, buttering your toast for you. Her kid brother Eddie is nineteen and a good boy and he can drive anything with wheels. \"He just needs somebody to give him a chance. Somebody like you.\"",
+      "choices": [
+        { "label": "Put Eddie on as a driver", "hint": "She'll be grateful. Eddie will know things about you. So will his friends.", "effects": [ { "money": -400 }, { "opinion": { "of": "mist", "toward": "boss", "by": 10, "why": "He gave my brother a chance" } }, { "hush": { "role": "mist" } }, { "crew": { "by": -1, "why": "The boss's girlfriend's brother on the payroll" } } ] },
+        { "label": "Find him something legitimate: the car wash on Rio Grande", "hint": "A job, not a life. She'll understand, mostly.", "effects": [ { "money": -150 }, { "opinion": { "of": "mist", "toward": "boss", "by": 4, "why": "He found Eddie something, at least" } } ] },
+        { "label": "\"Keep your family out of my business.\"", "effects": [ { "opinion": { "of": "mist", "toward": "boss", "by": -10, "why": "My family isn't good enough for him" } }, { "scorn": { "who": "mist", "by": 20, "why": "he said my family wasn't good enough" } } ] }
+      ]
+    },
+    {
+      "id": "honey_two_pews_back",
+      "title": "Two pews behind your wife",
+      "theme": "romance",
+      "when": { "week": { "min": 10 }, "chance": 0.35, "cooldown": 52 },
+      "who": { "wife": { "pool": "wife" }, "mist": { "pool": "mistress" } },
+      "text": "The ten o'clock Mass at St. Ann's. You're on the aisle, {wife.first} beside you with the missal. Two pews back, in a hat that cost you forty dollars, {mist.call} is singing the Kyrie louder than anybody in the church. She wants something, and she wants you to know she knows where you sit on Sundays.",
+      "choices": [
+        { "label": "Monday: give her what she's been asking for", "hint": "It ends this. It also teaches her that Sunday works.", "effects": [ { "money": -1500 }, { "hush": { "role": "mist" } }, { "opinion": { "of": "mist", "toward": "boss", "by": 6, "why": "He finally listened" } } ], "result": "{mist.first} went to the eight o'clock Mass the next Sunday, and every Sunday after." },
+        { "label": "Catch her on the church steps, quietly", "hint": "In front of the whole parish. Quietly.", "odds": { "base": 50, "plus": [ { "if": { "role": "mist", "trait": "Hot-headed" }, "add": -25, "why": "she doesn't do quietly" }, { "if": { "role": "mist", "trait": "Patient" }, "add": 15, "why": "she'll wait for a better day" } ] }, "success": [ { "opinion": { "of": "mist", "toward": "boss", "by": -4, "why": "He shushed me on the church steps" } } ], "failure": [ { "opinion": { "of": "wife", "toward": "boss", "by": -12, "why": "That woman on the steps after Mass" } }, { "leak": { "role": "mist" } } ], "result": "A word, a smile for the monsignor, and she went home.", "failText": "Her voice carried. So did the monsignor's eyebrows. {wife.first} was waiting in the car." },
+        { "label": "Hurry {wife.first} out the side door after communion", "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": -3, "why": "He rushed me out of Mass like the church was on fire" } }, { "scorn": { "who": "mist", "by": 15, "why": "he ran out of the church so he wouldn't have to look at me" } } ] }
+      ]
+    },
+    {
+      "id": "honey_the_old_man_speaks",
+      "title": "The old man says his piece",
+      "theme": "crew",
+      "when": { "week": { "min": 8 }, "chance": 0.35, "cooldown": 52 },
+      "who": { "lover": { "pool": "lover" }, "husband": { "pool": "husband", "partnerOf": "lover" }, "old": { "pool": "capo", "notTraits": ["Womanizer"] } },
+      "text": "{old.call} has been with the family since before the war. He takes his hat off to talk to you, which he never does. \"{husband.first} is a married man. {lover.first} is a married woman. Everybody on Pacific Avenue knows, and some of them are laughing, and some of them are not. In my day a man didn't do that. Not to anybody. I'm saying it once.\"",
+      "choices": [
+        { "label": "\"You're right. It's finished.\"", "hint": "The old school will remember you listened.", "effects": [ { "opinion": { "of": "old", "toward": "boss", "by": 10, "why": "He listened to an old man" } }, { "crew": { "by": 1, "why": "The boss can still be told" } }, { "scorn": { "who": "lover", "by": 25, "why": "he dropped me because an old man told him to" } } ], "result": "You'll have to tell {lover.first} yourself." },
+        { "label": "\"Your day is over.\"", "hint": "The young bloods will love it. The old men will remember it.", "effects": [ { "opinion": { "of": "old", "toward": "boss", "by": -15, "why": "Told me my day was over" } }, { "grievance": { "of": "old", "toward": "boss", "by": 10 } } ] },
+        { "label": "Thank him, and change nothing", "effects": [ { "opinion": { "of": "old", "toward": "boss", "by": -5, "why": "He thanked me and did nothing" } } ] }
+      ]
+    },
+    {
+      "id": "honey_photographs",
+      "title": "An envelope of photographs",
+      "theme": "romance",
+      "when": { "week": { "min": 12 }, "chance": 0.3, "cooldown": 60 },
+      "who": { "lover": { "pool": "lover" }, "capo": { "pool": "capo" } },
+      "text": "A manila envelope under the office door, no stamp. Inside: six photographs taken through a motel window, grainy, but not grainy enough. You and {lover.first}. A typed note: five thousand dollars, in a Wanamaker's bag, in the locker at the bus terminal. Friday.",
+      "choices": [
+        { "label": "Pay it", "hint": "Men who sell photographs usually have more than one set.", "effects": [ { "money": -5000 } ], "result": "The bag went into the locker. Nobody ever came for it while your men were watching. On Monday it was gone." },
+        { "label": "Have {capo.first} find whoever took them", "hint": "A man with a camera leaves a trail: a darkroom, a drugstore, a cousin.", "odds": { "base": 55, "plus": [ { "if": { "role": "capo", "trait": "Patient" }, "add": 10, "why": "he'll sit on the drugstore for a week" }, { "if": { "role": "capo", "trait": "Hot-headed" }, "add": -10, "why": "he'll lean on the wrong druggist" } ] }, "effects": [ { "money": -300 } ], "success": [ { "flag": "honey_photographer_found" } ], "failure": [ { "money": -5000 }, { "heat": { "local": 1 } } ], "result": "{capo.first} has a name: a kid with a Speed Graphic who develops his film at the Rexall on Pacific.", "failText": "{capo.first} came up empty. You paid on Friday after all, and more for being slow.", "next": { "scene": "honey_photographs_found", "after": [1, 2], "on": "success" } },
+        { "label": "Burn them, and let him try", "hint": "Maybe he's bluffing. Maybe Spout Off is getting a nice set of pictures.", "effects": [ { "heat": { "local": 1 } }, { "respect": -1 }, { "opinion": { "of": "lover", "toward": "boss", "by": -6, "why": "He let those pictures get out" } } ] }
+      ]
+    },
+    {
+      "id": "honey_photographs_found",
+      "title": "The kid with the Speed Graphic",
+      "theme": "romance",
+      "followup": true,
+      "who": { "lover": { "pool": "lover" }, "capo": { "pool": "capo" } },
+      "text": "{capo.call} has the kid in the back of the Rexall: nineteen, pimples, a camera worth more than his car. He's crying. He says a man paid him fifty dollars to sit in the parking lot at the Starlight, and the man talked like he was from North Jersey.",
+      "choices": [
+        { "label": "Buy the negatives and the camera, and send him home", "hint": "Clean. And now you know somebody from North Jersey is interested in your evenings.", "effects": [ { "money": -500 }, { "unflag": "honey_photographer_found" }, { "evidence": { "role": "boss", "by": -2 } } ], "result": "The negatives went into the furnace at the Shamrock. The kid went to Penn State." },
+        { "label": "Put him on the payroll: a photographer is a useful thing to have", "hint": "Now his pictures are your pictures.", "effects": [ { "money": -200 }, { "unflag": "honey_photographer_found" }, { "flag": "honey_photographer_ours" } ], "result": "The kid takes pictures for you now. He's very good at parking lots." },
+        { "label": "Let {capo.first} make sure he never picks up a camera again", "hint": "Your order. He's a kid.", "effects": [ { "unflag": "honey_photographer_found" }, { "heat": { "local": 3 } }, { "opinion": { "of": "capo", "toward": "boss", "by": -4, "why": "He had me lean on a crying kid" } }, { "respect": 1 } ] }
+      ]
+    },
+    {
+      "id": "honey_jilted_fella",
+      "title": "The fella she left",
+      "theme": "romance",
+      "when": { "week": { "min": 8 }, "chance": 0.45, "cooldown": 40 },
+      "who": { "him": { "pool": "scorned", "gender": "M" } },
+      "text": "{him.call} is out front of the club in a borrowed suit, telling the doorman and anybody else who'll listen exactly what he thinks of you. The doorman is a patient man. He wants to know how patient you want him to be.",
+      "choices": [
+        { "label": "Go out and talk to him yourself", "hint": "A man to a man. It might even work.", "odds": { "base": 40, "plus": [ { "if": { "role": "him", "trait": "Cowardly" }, "add": 25, "why": "he loses his nerve face to face" }, { "if": { "role": "him", "trait": "Vengeful" }, "add": -20, "why": "he's been rehearsing this for weeks" } ] }, "success": [ { "scorn": { "who": "him", "by": 15, "why": "he talked to me like he was doing me a favor" } }, { "respect": 1 } ], "failure": [ { "scorn": { "who": "him", "by": 50, "why": "he laughed at me in front of the whole street" } } ], "result": "He went home. He didn't say thank you. He did go home.", "failText": "He took a swing. The doorman stopped being patient." },
+        { "label": "Twenty dollars and a cab", "hint": "Insulting, and effective, about half the time.", "effects": [ { "money": -20 }, { "scorn": { "who": "him", "by": 25, "why": "he paid me off like a bum" } } ] },
+        { "label": "Let the doorman be patient", "effects": [ { "respect": -1 } ] }
+      ]
+    }
+  ]
+}

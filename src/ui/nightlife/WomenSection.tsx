@@ -6,6 +6,7 @@ import { ActionRow } from '../components/ActionRow';
 import { CharLink } from '../components/People';
 import { LooksBadge } from '../components/LooksBadge';
 import { DossierModal } from './Dossier';
+import { HoneySection } from './HoneySection';
 
 /**
  * HER SIDE OF IT (engine/women.ts): the boss's affairs (her feelings, her
@@ -34,6 +35,7 @@ export function WomenSection({ s, onCard }: { s: GameState; onCard: (id: string)
           ))}</ul>
         )}
       </div>
+      <HoneySection s={s} />
       <div>
         <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Your company's talent</div>
         {talent.length === 0 ? <p className="mt-1 text-xs text-stone-500">Nobody under contract. With a talent agency, a label or a picture outfit, you can sign a woman from her dossier.</p> : (

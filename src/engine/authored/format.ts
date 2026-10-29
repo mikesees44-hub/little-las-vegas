@@ -40,10 +40,14 @@ export interface When {
   cooldown?: number;
   /** Only ever once. */
   once?: boolean;
+  /** Adults-only material: the scene never comes up with Mature content Off (scenes with a lover, a husband, a mistress, the scorned or a suspect are always this). */
+  mature?: boolean;
 }
 
-export type RolePool = 'crew' | 'capo' | 'family' | 'wife' | 'kin' | 'rival' | 'rivalBoss' | 'official' | 'anyone';
-export const ROLE_POOLS: RolePool[] = ['crew', 'capo', 'family', 'wife', 'kin', 'rival', 'rivalBoss', 'official', 'anyone'];
+export type RolePool = 'crew' | 'capo' | 'family' | 'wife' | 'kin' | 'rival' | 'rivalBoss' | 'official' | 'anyone' | 'lover' | 'mistress' | 'husband' | 'scorned' | 'suspect';
+export const ROLE_POOLS: RolePool[] = ['crew', 'capo', 'family', 'wife', 'kin', 'rival', 'rivalBoss', 'official', 'anyone', 'lover', 'mistress', 'husband', 'scorned', 'suspect'];
+/** The adults-only pools (honey.ts): a scene that casts from one never comes up with Mature content Off. */
+export const MATURE_POOLS: RolePool[] = ['lover', 'mistress', 'husband', 'scorned', 'suspect'];
 
 export interface Role {
   /** Where to look: your crew, your capos, your house, your wife, the extended family, a rival's man, a rival boss, an official, anyone with a name. */
@@ -64,6 +68,8 @@ export interface Role {
   tie?: Record<string, string>;
   /** On the same side (faction) as another role: a rival boss's own man. */
   sameSideAs?: string;
+  /** Her husband or fella: the man of another role (a lover's husband). */
+  partnerOf?: string;
 }
 
 /** One effect: an object with exactly one key (the whitelisted effect types). */
@@ -90,9 +96,17 @@ export type SEffect =
   /** The boss's own order on a man's life (only ever from a choice the player picks). */
   | { whack: { role: string; why?: string } }
   /** He gets away: runs off, out of the family (never the boss). */
-  | { runs: { role: string } };
+  | { runs: { role: string } }
+  /** Someone holds it against the boss (a woman scorned, a husband): they remember, and act on it. */
+  | { scorn: { who: string; by: number; why?: string } }
+  /** A mistress's demand is settled; she goes quiet. */
+  | { hush: { role: string } }
+  /** A mistress talks (Spout Off, the beauty parlor, the crew, a rival bar). */
+  | { leak: { role: string } }
+  /** The boss's suspicion that she is working him (what he has seen; never the hidden truth). */
+  | { suspect: { role: string; by: number } };
 
-export const EFFECT_KEYS = ['money', 'respect', 'heat', 'opinion', 'fear', 'trust', 'grievance', 'crew', 'family', 'flag', 'unflag', 'tie', 'memory', 'wealth', 'hook', 'owes', 'deed', 'evidence', 'jail', 'whack', 'runs'] as const;
+export const EFFECT_KEYS = ['money', 'respect', 'heat', 'opinion', 'fear', 'trust', 'grievance', 'crew', 'family', 'flag', 'unflag', 'tie', 'memory', 'wealth', 'hook', 'owes', 'deed', 'evidence', 'jail', 'whack', 'runs', 'scorn', 'hush', 'leak', 'suspect'] as const;
 
 /** A condition for an odds bonus. */
 export interface PlusIf { role?: string; trait?: string; bossTrait?: string; flag?: string; opinionOfBoss?: Compare }

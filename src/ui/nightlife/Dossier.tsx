@@ -5,6 +5,7 @@ import { herPick, pregnancyRisk } from '../../engine/womenAffairs';
 import { SETTING_INFO, SETTINGS, type DescOverride, type Setting } from '../../engine/womenState';
 import { settingView } from '../../engine/womenAffairs';
 import { previewWomen, womenActionsFor } from '../../engine/women';
+import { honeyActionsFor } from '../../engine/honey';
 import { affairOf } from '../../engine/womenCore';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
@@ -81,7 +82,7 @@ export function Dossier({ s, id, actions = true }: { s: GameState; id: string; a
   const c = s.characters[id];
   if (!v || !c) return <p className="text-xs text-stone-500" data-testid="dossier-none">No dossier: adults only, with mature content on.</p>;
   const set = (k: keyof DescOverride, val: string | undefined) => (shell.act ?? shell.update)?.((x) => setDescriptor(x, id, k, val), 'Changed a description');
-  const acts = actions ? womenActionsFor(s, id).filter((a) => !(a.kind === 'women' && a.op.op === 'night')) : [];
+  const acts = actions ? [...womenActionsFor(s, id).filter((a) => !(a.kind === 'women' && a.op.op === 'night')), ...honeyActionsFor(s, id)] : [];
   const affair = affairOf(s, id);
   const hookActs = acts.filter((a) => a.kind === 'women' && a.op.op === 'hook');
   const L = v.look;
@@ -174,7 +175,7 @@ export function Dossier({ s, id, actions = true }: { s: GameState; id: string; a
         <Sec title="You and her (she decides every time)" testid="dossier-actions">
           <div className="space-y-1.5">
             {affair?.stage === 'affair' && <NightPicker s={s} id={id} />}
-            {acts.map((a, i) => <ActionRow key={i} s={s} action={a} label={previewWomen(s, (a as Extract<PlayerAction, { kind: 'women' }>).op).title} />)}
+            {acts.map((a, i) => <ActionRow key={i} s={s} action={a} label={a.kind === 'women' ? previewWomen(s, a.op).title : undefined} />)}
           </div>
         </Sec>
       )}

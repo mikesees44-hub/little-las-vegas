@@ -9,7 +9,9 @@ import { deedPreview } from '../deeds/resolve';
 import { d01, ensureDeeds, tieOf } from '../deeds/state';
 import type { DeedId, TieKind } from '../deeds/types';
 import { freshness } from '../storyDirector';
-import type { Next, Role, SChoice, Scene, SEffect } from './format';
+import { MATURE_POOLS, type Next, type Role, type SChoice, type Scene, type SEffect } from './format';
+import { adultOn } from '../datingState';
+import { honeyBlock, involvedWith, manOf } from '../honeyCore';
 import { SCENES, SCENES_BY_ID } from './library';
 import { compare } from './validate';
 
@@ -56,7 +58,19 @@ export function whenOk(s: GameState, sc: Scene): boolean {
   if (w.boss?.traits?.some((t) => !hasTrait(boss, t as Trait))) return false;
   if (w.boss?.notTraits?.some((t) => hasTrait(boss, t as Trait))) return false;
   if (w.location && (s.districts.find((d) => d.id === w.location)?.influence.player ?? 0) < 20) return false;
+  // Adults-only material never comes up with Mature content Off.
+  if ((w.mature || isMature(sc)) && !adultOn(s)) return false;
   return true;
+}
+
+/** The adults-only pools a scene needs have somebody in them (so it does not crowd out the scenes that can be cast). */
+function maturePoolsOk(s: GameState, sc: Scene): boolean {
+  return Object.values(sc.who ?? {}).every((r) => !MATURE_POOLS.includes(r.pool) || pool(s, r).length > 0);
+}
+
+/** Does the scene cast from an adults-only pool (or say it is mature)? */
+export function isMature(sc: Scene): boolean {
+  return !!sc.when?.mature || Object.values(sc.who ?? {}).some((r) => MATURE_POOLS.includes(r.pool));
 }
 
 function pool(s: GameState, r: Role): Character[] {
@@ -72,6 +86,12 @@ function pool(s: GameState, r: Role): Character[] {
     case 'rivalBoss': return all.filter((c) => s.rivals.some((rv) => rv.leaderId === c.id && rv.kind === 'mob'));
     case 'official': return all.filter((c) => !!c.office);
     case 'anyone': return all.filter((c) => ageOn(c.birth, s.date) >= 16);
+    // The honey pools: adults only, mature content on, and only what the boss could know.
+    case 'lover': return adultOn(s) ? involvedWith(s).map((id) => s.characters[id]).filter((c): c is Character => !!c && !honeyBlock(s, c.id)) : [];
+    case 'mistress': return adultOn(s) ? Object.values(s.honey?.mistresses ?? {}).filter((m) => !m.settled).map((m) => s.characters[m.id]).filter((c): c is Character => !!c && !honeyBlock(s, c.id)) : [];
+    case 'husband': return adultOn(s) ? all.filter((c) => c.gender === 'M' && ageOn(c.birth, s.date) >= 18 && involvedWith(s).some((id) => s.characters[id] && manOf(s, s.characters[id])?.id === c.id)) : [];
+    case 'scorned': return adultOn(s) ? Object.values(s.honey?.scorn ?? {}).filter((x) => x.heat >= 30).map((x) => s.characters[x.id]).filter((c): c is Character => !!c?.alive && ageOn(c.birth, s.date) >= 18 && isFree(s, c)) : [];
+    case 'suspect': return adultOn(s) ? Object.values(s.honey?.watch ?? {}).filter((w) => w.susp >= 20 && w.known === undefined).map((w) => s.characters[w.id]).filter((c): c is Character => !!c && !honeyBlock(s, c.id)) : [];
   }
   return [];
 }
@@ -93,6 +113,10 @@ function fits(s: GameState, c: Character, r: Role, cast: Cast): boolean {
     if (oid === undefined) continue; // checked again from the other side once both are cast
     if (!compare(opinion(s, c.id, oid), cmp)) return false;
   }
+  if (r.partnerOf) {
+    const oid = cast[r.partnerOf];
+    if (oid !== undefined && (!s.characters[oid] || manOf(s, s.characters[oid])?.id !== c.id)) return false;
+  }
   if (r.sameSideAs) {
     const oid = r.sameSideAs === 'boss' ? s.playerId : cast[r.sameSideAs];
     if (oid !== undefined && s.characters[oid]?.faction !== c.faction) return false;
@@ -107,6 +131,7 @@ function fits(s: GameState, c: Character, r: Role, cast: Cast): boolean {
 
 /** Cast every role (deterministic on the deeds' dice); `carried` keeps a chain's people. */
 export function castScene(s: GameState, sc: Scene, carried: Cast = {}): Cast | undefined {
+  if (isMature(sc) && !adultOn(s)) return undefined;
   const D = ensureDeeds(s);
   const cast: Cast = {};
   const used = new Set<string>([s.playerId]);
@@ -185,6 +210,10 @@ export function mapEffect(s: GameState, sc: Scene, cast: Cast, fx: SEffect): Eff
     case 'jail': { const o = v as { role: string; weeks: number }; return id(o.role) && o.role !== 'boss' ? [{ type: 'imprison', charId: id(o.role), weeks: o.weeks }] : []; }
     case 'whack': { const o = v as { role: string; why?: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'kill', charId: id(o.role), cause: why(o.why ?? 'Disappeared. Nobody saw anything.') }, { type: 'heat', bar: 'local', amount: 4 }] : []; }
     case 'runs': { const o = v as { role: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'exile', charId: id(o.role) }] : []; }
+    case 'scorn': { const o = v as { who: string; by: number; why?: string }; return id(o.who) && o.who !== 'boss' ? [{ type: 'honey', op: { op: 'scorn', who: id(o.who), by: o.by, why: why(o.why) } }] : []; }
+    case 'hush': { const o = v as { role: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'honey', op: { op: 'hush', id: id(o.role) } }] : []; }
+    case 'leak': { const o = v as { role: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'honey', op: { op: 'leak', id: id(o.role) } }] : []; }
+    case 'suspect': { const o = v as { role: string; by: number }; return id(o.role) && o.role !== 'boss' ? [{ type: 'honey', op: { op: 'suspect', id: id(o.role), by: o.by } }] : []; }
   }
   return [];
 }
@@ -337,7 +366,7 @@ export function sceneEventSource(s: GameState): EventInstance | undefined {
   }
   // 2. A fresh scene, now and then.
   if (s.week < 3 || d01(D) > SCENE_CHANCE) return undefined;
-  const pool = SCENES.filter((sc) => !sc.followup && !pending.has(sc.id) && whenOk(s, sc) && freshness(s, `scene_${sc.id}`) > 0);
+  const pool = SCENES.filter((sc) => !sc.followup && !pending.has(sc.id) && whenOk(s, sc) && freshness(s, `scene_${sc.id}`) > 0 && maturePoolsOk(s, sc));
   const weights = pool.map((sc) => (sc.when?.weight ?? 10) * Math.min(2, freshness(s, `scene_${sc.id}`)));
   for (let tries = 0; tries < 3 && pool.length; tries++) {
     const total = weights.reduce((a, b) => a + b, 0);
