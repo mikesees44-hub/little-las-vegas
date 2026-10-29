@@ -575,7 +575,9 @@ export type Effect =
   /** Protection & intelligence (protect.ts): answers to the guards' and inquiries' events. */
   | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase)
   /** The women (women.ts): affairs, requests, hooks, talent; answers to her events. */
-  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase);
+  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase)
+  /** Honey (honey.ts): dares, women working the boss, mistresses' demands, the scorned. */
+  | ({ type: 'honey'; op: import('./honey').HoneyOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -989,6 +991,8 @@ export interface GameState {
   protect?: import('./protect').ProtectState;
   /** The women (women.ts): careers and arcs, affairs, office requests, talent, hooks (adults only; mature content). */
   women?: import('./womenState').WomenState;
+  /** Honey (honey.ts): claims, women working the boss (hidden truth and what he has seen), mistresses, the scorned (adults only; mature content). */
+  honey?: import('./honeyState').HoneyState;
   /** The Book (journal.ts): every order and what came of it, and everything else that happened, by person, place and money. Bounded; optional (made by the first week that turns). */
   journal?: import('./journal').JournalState;
   /** NPC minds: needs, moods, ambitions, beliefs, memories and plans of the people who matter (minds/; optional: made by the weekly update). */
@@ -1100,6 +1104,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'army'; op: import('./armyState').ArmyAction }
   /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
   | { kind: 'women'; op: import('./women').WomenAction }
+  /** Honey (honey.ts): the bold dare as it went, a quiet look into her, turn her, feed her lies, have it out, end it, settle a mistress. */
+  | { kind: 'honey'; op: import('./honey').HoneyAction }
   /** Deeds (deeds/): the CK-style interactions on anyone (befriend, sway, insult, find secrets, blackmail, partner, discipline...). He decides, or it works or it doesn't. */
   | ({ kind: 'deed' } & import('./deeds/types').DeedAction)
 );

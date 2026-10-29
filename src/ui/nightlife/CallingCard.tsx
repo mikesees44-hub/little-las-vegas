@@ -12,6 +12,8 @@ import { eveningKindOf } from '../../engine/evening';
 import { adultOn } from '../../engine/datingState';
 import { boldEligible } from '../../engine/quickies';
 import { BoldFlow, CarFlow, EveningFlow } from './EveningFlow';
+import { DareFlow } from './DareFlow';
+import { dareBlock } from '../../engine/honeyScript';
 import { LooksBadge } from '../components/LooksBadge';
 import { bodyOf } from '../../engine/body';
 import { DossierModal } from './Dossier';
@@ -45,13 +47,14 @@ function Sec({ title, children, testid }: { title: string; children: ReactNode; 
 
 export function CallingCard({ s, id, actions = true, startOpen = false }: { s: GameState; id: string; actions?: boolean; startOpen?: boolean }) {
   const [more, setMore] = useState(startOpen);
-  const [flow, setFlow] = useState<'evening' | 'car' | 'bold' | undefined>();
+  const [flow, setFlow] = useState<'evening' | 'car' | 'bold' | 'dare' | undefined>();
   const [dossier, setDossier] = useState(false);
   const v = callingCard(s, id);
   const c = s.characters[id];
   if (!v || !c) return <p className="text-xs text-stone-500" data-testid="calling-card-none">No calling card: adults only.</p>;
   const acts = actions ? nightActionsFor(s, id) : [];
   const side = sideOf(s, id);
+  const canDare = actions && !dareBlock(s, id);
   return (
     <article className="space-y-2.5" data-testid="calling-card" data-id={id}>
       {/* The card itself: an engraved little rectangle, gold rule, the face. */}
@@ -86,16 +89,18 @@ export function CallingCard({ s, id, actions = true, startOpen = false }: { s: G
       )}
       {dossier && <DossierModal s={s} id={id} onClose={() => setDossier(false)} />}
 
-      {actions && (eveningKindOf(s, id) || boldEligible(s, id)) && (
+      {actions && (eveningKindOf(s, id) || boldEligible(s, id) || canDare) && (
         <div className="flex flex-wrap gap-1.5" data-testid="calling-card-flows">
           {eveningKindOf(s, id) && <button type="button" className="btn-gold text-xs py-1" onClick={() => setFlow('evening')} data-testid="open-evening">Plan an evening with {c.firstName}…</button>}
           {adultOn(s) && eveningKindOf(s, id) && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('car')} data-testid="open-car">"Step outside to my car"…</button>}
           {boldEligible(s, id) && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('bold')} data-testid="open-bold">A bold offer…</button>}
+          {canDare && <button type="button" className="btn-ghost text-xs py-1" onClick={() => setFlow('dare')} data-testid="open-dare">A bold dare, here and now…</button>}
         </div>
       )}
       {flow === 'evening' && <EveningFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
       {flow === 'car' && <CarFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
       {flow === 'bold' && <BoldFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
+      {flow === 'dare' && <DareFlow s={s} id={id} onClose={() => setFlow(undefined)} />}
 
       {acts.length > 0 && (
         <div className="space-y-1.5" data-testid="calling-card-actions">

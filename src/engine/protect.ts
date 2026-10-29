@@ -11,6 +11,7 @@ import { hashSeed, rand, type RngHolder } from './rng';
 import { xfer } from './tribute';
 import { tripOf } from './travelState';
 import { FACTION_NAMES } from './world';
+import { honeyFinding } from './honeyFind';
 import type { ActionPreview } from './actions';
 import type { Character, Choice, Effect, EventInstance, GameState } from './types';
 import {
@@ -123,7 +124,7 @@ export interface Assignment {
 
 /** What a report rests on: one record in the simulation. */
 export interface Ground {
-  src: 'skimmed' | 'arrears' | 'debt' | 'loan' | 'stake' | 'spend' | 'goal' | 'debtTo' | 'lt' | 'informant' | 'courted' | 'defect' | 'faction' | 'plan' | 'secret' | 'fact' | 'bond' | 'threat' | 'scheme' | 'grudge' | 'job';
+  src: 'skimmed' | 'arrears' | 'debt' | 'loan' | 'stake' | 'spend' | 'goal' | 'debtTo' | 'lt' | 'informant' | 'courted' | 'defect' | 'faction' | 'plan' | 'secret' | 'fact' | 'bond' | 'threat' | 'scheme' | 'grudge' | 'job' | 'honey';
   ref: string;
 }
 
@@ -862,6 +863,9 @@ export function findingsAbout(s: GameState, subjectId: string, purpose: InvPurpo
     const rel = s.relations ? Object.entries(s.relations).filter(([k, r]) => k.endsWith(`>${c.id}`) && r.grievance >= 50).slice(0, 2) : [];
     for (const [k] of rel) { const from = k.split('>')[0]; if (s.characters[from]?.alive) out.push({ ground: { src: 'grudge', ref: k }, observation: `${full(s, from)} has a real grievance with ${c.firstName}.`, interpretation: 'A genuine dispute.', alternatives: ['Grudges are mostly talk'], secrecy: 1, weight: 2, tone: 'talk' }); }
   }
+  // A woman who is working the boss leaves a trail; an innocent one is cleared (honeyFind.ts).
+  const hf = honeyFinding(s, c.id, purpose);
+  if (hf) out.push({ ground: { src: 'honey', ref: c.id }, ...hf });
   if (purpose === 'romance') {
     // Only what anyone could see: nothing about her feelings, nothing intimate.
     const job = s.living?.people[c.id]?.job;

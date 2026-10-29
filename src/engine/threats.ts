@@ -79,6 +79,8 @@ export interface Threat {
   blunt: number;
   /** A rival scheme (schemes.ts) this threat is the street's view of: it resolves there, not here. */
   schemeId?: string;
+  /** A honey trap (honey.ts): the woman who set the boss up for it. The hit waits where she asked him to meet her. */
+  lure?: string;
 }
 
 export interface Tip {
@@ -629,7 +631,7 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
   const r = s.rivals.find((x) => x.id === t.by);
   const tgt = t.targetId ? s.characters[t.targetId] : undefined;
   // Guards on the target take a share off a hit (protect.ts): never all of it.
-  const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id).cut : 0;
+  const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id, t.lure ? 'night' : 'any').cut : 0;
   const blunt = guard > 0 ? 1 - (1 - t.blunt) * (1 - guard) : t.blunt;
   if (blunt > 0 && chance(T, blunt)) {
     T.stats.foiled++;
@@ -649,7 +651,18 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
     case 'hit': {
       if (!tgt?.alive) return;
       if (r) addOpinion(s, s.playerId, r.leaderId, `Went after ${tgt.id === s.playerId ? 'me' : tgt.firstName}`, -20, 1);
-      if (tgt.id === s.playerId) {
+      if (tgt.id === s.playerId && t.lure) {
+        // The honey trap: he went where she asked him to. Only here, only after the warnings, can it end him.
+        const her = s.characters[t.lure];
+        respect(ctx, -2, `${by} came for the boss`, 'rival');
+        if (chance(T, LURE_DEADLY)) {
+          note(ctx, T, `Room 9 at the Starlight. ${her ? her.firstName : 'She'} never came. ${by}'s men did.${tag}`);
+          killCharacter(ctx, tgt.id, `shot in a motel room on the Boulevard, set up by ${her ? `${her.firstName} ${her.lastName}` : 'a woman'} for ${by}`, r?.id);
+        } else {
+          tgt.health = Math.max(10, tgt.health - 30);
+          note(ctx, T, `Room 9 at the Starlight. ${her ? her.firstName : 'She'} never came. ${by}'s men did, and you went out the bathroom window with a bullet in your shoulder.${tag}`);
+        }
+      } else if (tgt.id === s.playerId) {
         tgt.health = Math.max(10, tgt.health - 25);
         respect(ctx, -2, `${by} came for the boss`, 'rival');
         note(ctx, T, `${by}'s men came for you. You walked away; the car didn't.${tag}`);
@@ -743,6 +756,55 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
       return;
     }
   }
+}
+
+/** When a honey trap is not stopped: the share of the time it kills the boss (the rest, a bullet in the shoulder). */
+export const LURE_DEADLY = 0.4;
+
+/**
+ * A honey trap (honey.ts): a rival family sets the boss up through a woman.
+ * It is an ordinary hit on the boss in this pipeline (the answers at the
+ * urgent meeting blunt it, his guards take their share when it lands), with
+ * one difference: it waits where she asked him to meet her, and it can kill
+ * him. It never comes without a warning: somebody always asks for an urgent
+ * meeting about it (the night man at the motel, a guard, a woman from the
+ * clubs). `caution` (0-1) is what the boss's own care already took off it.
+ */
+export function planLure(s: GameState, by: RivalId, womanId: string, caution = 0): Threat | undefined {
+  const T = ensureThreats(s);
+  if (T.threats.some((x) => x.lure === womanId)) return undefined;
+  const boss = player(s);
+  const blunt = Math.max(0, Math.min(0.9, caution + (hasTrait(boss, 'Paranoid') ? 0.35 : 0)));
+  const t: Threat = { id: nid(T, 'th'), kind: 'hit', by, targetId: s.playerId, start: s.week, due: s.week + 1, blunt, lure: womanId };
+  T.threats.push(t);
+  T.stats.planned++;
+  const srcs = sourcesOf(s).filter((x) => x.ownedBy !== by && x.loyalty > -30);
+  const src = srcs.find((x) => x.kind === 'street' && /motel|night clerk/i.test(x.name)) ?? srcs.find((x) => x.kind === 'ear') ?? srcs.find((x) => x.kind === 'consigliere' || x.kind === 'underboss') ?? srcs[0];
+  const her = s.characters[womanId];
+  const solid = chance(T, src ? reliability(src, t) : 0.5);
+  const tip = makeTip(s, T, src ?? { id: 'street:starlight', kind: 'street', name: 'The night clerk at the Starlight', role: 'Owes you a favor', loyalty: 10, wits: 45 }, { kind: 'hit', by: solid ? by : t.by, targetId: s.playerId }, t.due, solid ? 'solid' : 'garbled', t.id);
+  tip.hint = `Two men from out of town took the room next to number 9 at the Starlight. They asked if a lady${her ? ` called ${her.firstName}` : ''} had checked in.`;
+  tip.detail = `${rivalName(s, by)} has men waiting where ${her ? her.firstName : 'the woman'} asked you to meet her. If you go, you go into their room. Lie low, double the security, or move the family: and stay away from the Starlight.`;
+  T.tips.push(tip);
+  T.stats.tips++;
+  return t;
+}
+
+/** The chance a planned honey trap lands, now (its blunting so far, and the boss's guards at night). */
+export function lureOdds(s: GameState, t: Threat): number {
+  const guard = protectionFor(s, s.playerId, 'night').cut;
+  return (1 - t.blunt) * (1 - guard);
+}
+
+/** She called it off, or he never went: the honey trap comes to nothing (and its warning with it). */
+export function dropLure(s: GameState, womanId: string): boolean {
+  const T = s.threats;
+  if (!T) return false;
+  const t = T.threats.find((x) => x.lure === womanId);
+  if (!t) return false;
+  T.threats = T.threats.filter((x) => x !== t);
+  for (const tip of T.tips) if (tip.threatId === t.id && tip.status === 'waiting') tip.status = 'done';
+  return true;
 }
 
 /** Planted and garbled talk: a rival with wits puts a story in an ear he owns; a bar rumor grows legs. */
