@@ -146,3 +146,32 @@ describe('passive growth: determinism and the save', () => {
     expect(JSON.stringify(upgradeSave(clone(s)))).toBe(before);
   });
 });
+
+describe('growth at a glance', () => {
+  it('a chart node shows his rank, level, focus icon and newest perk', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { TreeNode } = await import('../src/ui/components/CrewTree');
+    const s = newGame('grow-node');
+    const c = soldier(s);
+    ensureXp(s).men[c.id] = { xp: 30, lvl: 2, fo: 'muscle', gp: ['m_wheel', 'm_steady'] };
+    const html = renderToString(createElement(TreeNode, { s, c, size: 44 }));
+    expect(html).toContain('data-testid="xp-pip"');
+    expect(html).toContain('>2<');
+    expect(html).toContain('data-testid="growth-focus"');
+    expect(html).toContain('✊');
+    expect(html).toContain('Steady Hand');
+    expect(html.toLowerCase()).toContain('soldier');
+  });
+  it('the week in brief lists at most 5 growth lines, with "+n more"', async () => {
+    const { growthLines } = await import('../src/engine/weekSummary');
+    const s = newGame('grow-brief');
+    const x = ensureXp(s);
+    x.grew = men(s).slice(0, 8).flatMap((c) => [{ w: s.week, id: c.id, t: '+1 Force (Muscle)', k: 'skill' as const }, { w: s.week, id: c.id, t: '+1 Force (Muscle)', k: 'skill' as const }, { w: s.week, id: c.id, t: 'earned Steady Hand', k: 'perk' as const }]);
+    const g = growthLines(s, s.week);
+    const n = Math.min(8, men(s).length);
+    expect(g.lines.length).toBe(Math.min(5, n));
+    expect(g.more).toBe(Math.max(0, n - 5));
+    expect(g.lines[0].text).toContain('+2 Force (Muscle); earned Steady Hand');
+  });
+});
