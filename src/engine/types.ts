@@ -575,7 +575,9 @@ export type Effect =
   /** Protection & intelligence (protect.ts): answers to the guards' and inquiries' events. */
   | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase)
   /** The women (women.ts): affairs, requests, hooks, talent; answers to her events. */
-  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase);
+  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase)
+  /** The capos (capos.ts): answers to their requests, a man on one of them, having it out with him. */
+  | ({ type: 'capo'; op: import('./caposState').CapoOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -995,6 +997,8 @@ export interface GameState {
   minds?: import('./minds/types').MindsState;
   /** Deeds: the CK-style interactions between anyone (cooldowns, ties, favors owed, NPC hooks, asks at the boss's door, authored scenes' memory) (deeds/; optional: made by the weekly update). */
   deeds?: import('./deeds/types').DeedsState;
+  /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */
+  capos?: import('./caposState').CaposState;
 }
 
 export interface PlayerChoices {
@@ -1098,6 +1102,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'protect'; op: import('./protect').ProtectAction }
   /** The army (army.ts): raise the troops, hire muscle, the mattresses, a call to arms, a pact, take the fight to them. */
   | { kind: 'army'; op: import('./armyState').ArmyAction }
+  /** The capos (capos.ts): answer a request, reward, recognize, more ground, make him family, a man on him, ask him straight, have it out. */
+  | { kind: 'capo'; op: import('./caposState').CapoAction }
   /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
   | { kind: 'women'; op: import('./women').WomenAction }
   /** Deeds (deeds/): the CK-style interactions on anyone (befriend, sway, insult, find secrets, blackmail, partner, discipline...). He decides, or it works or it doesn't. */

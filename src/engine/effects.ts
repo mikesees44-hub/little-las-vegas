@@ -40,6 +40,7 @@ import { applyBondOp, describeBondOp } from './bonds';
 import { applyXpOp, describeXpOp } from './crewXp';
 import { applyProtectOp, describeProtectOp } from './protect';
 import { applyWomenOp, describeWomenOp } from './women';
+import { applyCapoOp, describeCapoOp } from './capos';
 import { applyMinigameEffect, describeMinigame } from './minigame';
 import { onArrest } from './trial';
 
@@ -250,6 +251,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeProtectOp(s, e.op);
     case 'women':
       return describeWomenOp(s, e.op);
+    case 'capo':
+      return describeCapoOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -914,6 +917,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'women':
       applyWomenOp(ctx, e.op);
+      break;
+    case 'capo':
+      applyCapoOp(ctx, e.op);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

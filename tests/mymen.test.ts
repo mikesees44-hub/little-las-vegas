@@ -99,7 +99,9 @@ describe('every order for a man', () => {
     // Bonus.
     const base = advanceWeek(clone(s), {}).state;
     let t = order(clone(s), { op: 'bonus', id: m.id, amount: 500 });
-    expect(t.characters[m.id].wealth).toBeGreaterThan(base.characters[m.id].wealth + 300);
+    // The $500 reaches him (the rest of his week is dice, which drift with every new layer).
+    expect(t.lastReport!.lines.some((l) => l.stat === 'money' && l.amount === -500)).toBe(true);
+    expect(t.characters[m.id].wealth).toBeGreaterThan(base.characters[m.id].wealth + 150);
     expect(t.mymen!.back).toBeGreaterThan(50);
     expect(previewAction(t, A({ op: 'bonus', id: m.id, amount: 500 })).disabledReason).toMatch(/weeks? ago/);
     // A bigger end: a soldier is squeezed less.

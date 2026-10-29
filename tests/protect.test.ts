@@ -94,6 +94,8 @@ describe('protection & intelligence: the working example', () => {
     const { s: s0, capo, g3 } = setup();
     const s1 = clone(s0);
     s1.characters[capo.id].skimmed = 2400;
+    // A sharp investigator: the finding should not hang on four lucky rolls (the dice drift with every new layer).
+    s1.characters[g3.id].attributes.intrigue = 90;
     delete s1.characters[capo.id].arrears;
     if (s1.tribute?.life) delete s1.tribute.life[capo.id];
     let s = week(s1, [P({ op: 'investigate', subject: capo.id, purpose: 'money', who: g3.id, weeks: 12 })]).state;

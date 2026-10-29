@@ -93,6 +93,7 @@ import { xpEventSource, xpWeek } from './crewXp';
 import { mindsWeek } from './minds';
 import { deedsEventSource, deedsWeek } from './deeds';
 import { sceneEventSource } from './authored/run';
+import { capoEventSource, caposWeek } from './capos';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -108,6 +109,8 @@ registerEventSource(racketEventSource);
 registerEventSource(livingEventSource);
 registerEventSource(fbankEventSource);
 registerEventSource(xpEventSource);
+// The capos' requests, the word from their streets, a capo the boss has found out (capos.ts): one candidate a week.
+registerEventSource(capoEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -391,6 +394,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     // People act on each other (deeds/): the NPCs' own interactions, the clashes, partnerships and loans.
     deedsWeek(ctx);
     regimesWeek(ctx);
+    // The capos run the street: their ground, their men, their ears, their reading of the tide (capos.ts).
+    caposWeek(ctx);
     bonesWeek(ctx);
     ledgerWeek(ctx);
     earsWeek(ctx);

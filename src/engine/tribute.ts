@@ -1,4 +1,5 @@
 import { xpCornersMult, xpHustleMult } from './crewXp';
+import { capoStreetMult } from './capos';
 import { steadyMult } from './earners';
 import { spotOf, spotShortOdds, spotsTake } from './kickup';
 import { idleMen } from './business';
@@ -485,7 +486,7 @@ export function collectTake(ctx: Ctx, mult: number): number {
     if (infl <= 0) continue;
     const skill = 0.85 + capo.attributes.business / 400;
     const variance = Math.max(0.3, 1 + gauss(s) * kickupSpread(capo) * steadyMult(s, capo.id));
-    const take0 = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach * xpCornersMult(s, capo);
+    const take0 = d.streetBase * (infl / 100) * mult * skill * variance * blitz * incomeBoost(s, 'corners') * reach * xpCornersMult(s, capo) * capoStreetMult(s, capo);
     // His men (and he) working their own spots spend less time on the corners (kickup.ts).
     const take = Math.max(take0 * 0.5, take0 - (spot.carve[capo.id] ?? 0));
     const keep = capo.keep ?? 0.3;
