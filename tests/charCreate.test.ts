@@ -4,7 +4,7 @@ import { advanceWeek } from '../src/engine/engine';
 import { reconcile } from '../src/engine/ledger';
 import { newGameWith, type StartId } from '../src/engine/starts';
 import { validateHierarchy } from '../src/engine/hierarchy';
-import { AGE_RANGE, BUDGET, creatorBase, pointsSpent, validateCharOptions, type CharOptions } from '../src/engine/charCreate';
+import { AGE_RANGE, BUDGET, creatorBase, pointsSpent, traitCost, validateCharOptions, type CharOptions } from '../src/engine/charCreate';
 import { NICKNAMES } from '../src/engine/names';
 import { nicknameOrigin, suggestNickname } from '../src/engine/nicknames';
 import { deleteSlot, listSlots, loadSlot, migrateLegacy, saveSlot, type KV } from '../src/ui/save';
@@ -76,7 +76,8 @@ describe('character creator', () => {
     expect(() => newGameWith('cc2', 'classic', over)).toThrow(/Over budget/);
     // Flaws and a vice buy points back.
     const bought: CharOptions = { traits: ['Patient', 'Drinker', 'Cowardly'], vice: 'cards', skills: { leadership: 10, business: 10 } };
-    expect(pointsSpent(base, bought)).toBe(6 - 5 - 6 - 2 + 20);
+    // Counted against the start as written: its own traits are free.
+    expect(pointsSpent(base, bought)).toBe(6 - 5 - 6 - 2 + 20 - traitCost(base.traits));
     expect(validateCharOptions(base, { skills: { force: 11 } }).length).toBeGreaterThan(0);
     expect(validateCharOptions(base, { age: 90 }).length).toBeGreaterThan(0);
   });

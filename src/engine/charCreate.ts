@@ -134,7 +134,10 @@ export interface CreatorBase {
   spouseName: string;
   kids: number;
   motherAlive: boolean;
+  /** The points to spend: what you keep as written (traits, vices) is free; changes cost or refund. */
   budget: number;
+  /** The start's own vices (as written). */
+  vices?: Vice[];
 }
 
 function boss(s: GameState): Character {
@@ -165,17 +168,21 @@ export function creatorBase(s: GameState, start: StartKey): CreatorBase {
     spouseName: sp?.firstName ?? '',
     kids: kidsOf(s, b).length,
     motherAlive: !!mother?.alive,
-    budget: BUDGET + traitCost(b.traits),
+    budget: BUDGET,
+    vices: [...(b.vices ?? [])],
   };
 }
 
 /** Points spent by these picks (compare with `base.budget`). */
-export function pointsSpent(base: Pick<CreatorBase, 'traits'>, o: CharOptions): number {
+export function pointsSpent(base: Pick<CreatorBase, 'traits'> & { vices?: readonly Vice[] }, o: CharOptions): number {
   let n = 0;
   for (const k of SKILLS) n += o.skills?.[k] ?? 0;
   for (const g of BUY_GROUPS) n += (o.groups?.[g] ?? 0) * GROUP_COST;
-  n += traitCost(o.traits ?? base.traits);
-  if (o.vice && o.vice !== 'none') n -= VICE_REFUND;
+  // Traits and the vice count against the start as written: keeping them is free, so the points left never exceed the pool.
+  n += traitCost(o.traits ?? base.traits) - traitCost(base.traits);
+  const had = (base.vices?.length ?? 0) > 0;
+  const has = o.vice === undefined ? had : o.vice !== 'none';
+  n -= ((has ? 1 : 0) - (had ? 1 : 0)) * VICE_REFUND;
   return n;
 }
 

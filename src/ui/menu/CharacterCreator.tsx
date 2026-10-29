@@ -52,7 +52,7 @@ export function CharacterCreator({ seed, start, startName, slot: slot0, slots, o
   const [o, setO] = useState<CharOptions>(() => ({
     firstName: base.firstName, nickname: base.nickname, sex: base.sex, age: base.age, birthplace: 'wildwood', houseName: base.house,
     appearance: { genes: { ...genesOf(seed, baseBoss) }, hat: 'none' }, skills: {}, groups: {}, traits: [...base.traits], lifestyle: 'money',
-    background: 'numbers', vice: 'none', married: base.married, spouseName: base.spouseName || suggestSpouseName(seed, base.sex), kids: base.kids,
+    background: 'numbers', vice: base.vices?.length ? undefined : 'none', married: base.married, spouseName: base.spouseName || suggestSpouseName(seed, base.sex), kids: base.kids,
     motherAlive: base.motherAlive, hard: false,
   }));
   const [sec, setSec] = useState<Section>('identity');
@@ -262,6 +262,7 @@ export function CharacterCreator({ seed, start, startName, slot: slot0, slots, o
                 ))}
               </Group>
               <Group title={`Vice (a vice gives back ${VICE_REFUND} points)`}>
+                {base.vices?.length ? <Choice on={o.vice === undefined} onClick={() => up({ vice: undefined })} title="As written" text={`${base.vices.join(', ')}: the man the start describes.`} /> : null}
                 {VICES.map((v) => <Choice key={v.id} on={o.vice === v.id} onClick={() => up({ vice: v.id })} title={v.name} text={v.text} />)}
               </Group>
               <Group title="Difficulty">
