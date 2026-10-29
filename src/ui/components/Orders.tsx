@@ -203,7 +203,7 @@ export function OrdersTray({ s }: { s: GameState }) {
               {short > 0 && (
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-red-300" data-testid="order-unfunded">
                   By the time it runs your pocket is {fmt$(short)} short. It won't be carried out unless you approve Family money.
-                  {replace && <button type="button" className="btn-ghost text-[11px] py-0" onClick={() => replace(i, { ...a, fund: 'family' })}>Take {fmt$(short)} from the Family</button>}
+                  {replace && <button type="button" className="btn-secondary text-[11px] py-0" onClick={() => replace(i, { ...a, fund: 'family' })}>Take {fmt$(short)} from the Family</button>}
                 </div>
               )}
             </li>

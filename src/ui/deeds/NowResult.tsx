@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Overlay } from '../components/Modal';
 import type { NowResult } from '../../engine/deeds/now';
 import { useEscape } from '../keys';
 import { ResultCard } from '../decide/ResultCard';
@@ -27,8 +28,8 @@ export function NowResultHost() {
   useEscape(!!r, () => setR(undefined));
   if (!r) return null;
   return (
-    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-black/60 p-3" onClick={() => setR(undefined)} data-testid="now-host">
+    <Overlay z={1200} className="flex items-center justify-center bg-black/60 p-3" onClick={() => setR(undefined)} data-testid="now-host">
       <ResultCard r={r} onClose={() => setR(undefined)} onFile={() => { setR(undefined); window.dispatchEvent(new Event('llv-open-file')); }} />
-    </div>
+    </Overlay>
   );
 }

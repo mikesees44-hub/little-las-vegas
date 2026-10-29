@@ -10,7 +10,7 @@ import { PROJECTS_BY_ID, projectOptions } from '../../engine/empireProjects';
 import type { ConceptId, Mode, Venue } from '../../engine/empireState';
 import { crewCandidates } from '../../engine/managers';
 import type { GameState } from '../../engine/types';
-import { Modal } from '../components/Modal';
+import { Modal, Overlay } from '../components/Modal';
 import { ActionCard } from '../components/Orders';
 import { fmt$ } from '../format';
 import { useEmpire } from './context';
@@ -349,7 +349,7 @@ export function DesignerHub({ s, target, onClose }: { s: GameState; target: Desi
   const b = venueBuilding(s.empire!, v)!;
   const neon = SIGN_HEX[b.sign ?? 'pink'];
   return (
-    <div className="fixed inset-0 z-[1200] flex items-stretch justify-center bg-black/70 backdrop-blur-sm sm:p-4" onClick={onClose}>
+    <Overlay z={1200} className="flex items-stretch justify-center bg-black/70 backdrop-blur-sm sm:p-4" onClick={onClose}>
       <div className="panel flex w-full max-w-5xl flex-col overflow-hidden rounded-none sm:rounded-lg border-gold-600/40" onClick={(x) => x.stopPropagation()} data-testid="designer-hub">
         <header className="flex items-center gap-2 border-b border-noir-700 px-3 py-2" style={{ background: `linear-gradient(90deg, ${STYLE_PALETTE[b.style ?? 'doowop'].sky}aa, transparent)` }}>
           <div className="min-w-0">
@@ -374,6 +374,6 @@ export function DesignerHub({ s, target, onClose }: { s: GameState; target: Desi
           {tab === 'history' && <HistoryTab s={s} v={v} />}
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }

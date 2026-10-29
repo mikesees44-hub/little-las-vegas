@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
 
 /**
@@ -10,7 +11,7 @@ export function SheetFrame({ children, onClose, embedded }: { children: ReactNod
   useEscape(!embedded && !!onClose, () => onClose?.());
   if (embedded) return <div className="llv-sheet-embedded">{children}</div>;
   return (
-    <div className="fixed inset-0 z-[1150] flex justify-end bg-black/40 sm:bg-black/25" onClick={onClose} data-testid="sheet-frame">
+    <Overlay z={1150} className="flex justify-end bg-black/40 sm:bg-black/25" onClick={onClose} data-testid="sheet-frame">
       <aside
         className="panel h-full w-full sm:w-[min(640px,92vw)] overflow-y-auto rounded-none sm:rounded-l-lg border-gold-600/40 shadow-2xl shadow-black/70 llv-slide-right"
         onClick={(e) => e.stopPropagation()}
@@ -19,6 +20,6 @@ export function SheetFrame({ children, onClose, embedded }: { children: ReactNod
       >
         {children}
       </aside>
-    </div>
+    </Overlay>
   );
 }

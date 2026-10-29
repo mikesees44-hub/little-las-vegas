@@ -122,7 +122,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
               {c.alive && <div className="mt-1"><XpBadge s={s} c={c} /></div>}
             </div>
           </div>
-          {!embedded && <button className="btn-ghost text-xs" onClick={onClose}>Close</button>}
+          {!embedded && <button className="btn-secondary text-xs" onClick={onClose}>Close</button>}
         </div>
 
         {c.alive && !s.gameOver && <QuickActions s={s} c={c} onAll={() => setTab('actions')} />}
@@ -206,7 +206,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         )}
 
         {tab === 'overview' && <>
-        {age >= 18 && <button type="button" className="btn-ghost mt-3 px-2 py-1 text-[11px]" onClick={() => setTab('card')} data-testid="sheet-open-card">{c.firstName}'s calling card ▸ <span className="text-stone-500">looks, family, money as known, you, rumors</span></button>}
+        {age >= 18 && <button type="button" className="btn-secondary mt-3 px-2 py-1 text-[11px]" onClick={() => setTab('card')} data-testid="sheet-open-card">{c.firstName}'s calling card ▸ <span className="text-stone-500">looks, family, money as known, you, rumors</span></button>}
         <DynastyFacts s={s} c={c} />
         <PowerFacts s={s} c={c} />
         <MindSection s={s} c={c} />

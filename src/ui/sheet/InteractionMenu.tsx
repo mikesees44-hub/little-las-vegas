@@ -1,4 +1,5 @@
 import { CallingCard } from '../nightlife/CallingCard';
+import { Overlay } from '../components/Modal';
 import { openProtectionFor } from '../borgata/Protection';
 import { previewAction } from '../../engine/actions';
 import { useEscape } from '../keys';
@@ -196,7 +197,7 @@ export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; 
   // Phones: a sheet from near the top, the whole height to scroll in.
   const top = w < 640 ? 48 : Math.max(8, Math.min(y, h - 360));
   return (
-    <div className="fixed inset-0 z-[1180] bg-black/40 sm:bg-transparent" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} data-testid="context-menu-backdrop">
+    <Overlay z={1180} className="bg-black/40 sm:bg-transparent" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} data-testid="context-menu-backdrop">
       <div ref={ref} className="absolute panel border-gold-600/60 p-3 overflow-y-auto shadow-2xl shadow-black/80" style={{ left, top, width, maxHeight: h - top - 8 }} onClick={(e) => e.stopPropagation()} data-testid="context-menu">
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
@@ -204,12 +205,12 @@ export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; 
             {c.id !== s.playerId && <SideChip s={s} id={c.id} full />}
           </div>
           <div className="flex gap-1 shrink-0">
-            <button type="button" className="btn-ghost text-xs py-0.5" onClick={() => { onClose(); open(c.id); }}>Open sheet</button>
-            <button type="button" className="btn-ghost text-xs py-0.5" onClick={onClose} aria-label="Close">×</button>
+            <button type="button" className="btn-secondary text-xs py-0.5" onClick={() => { onClose(); open(c.id); }}>Open sheet</button>
+            <button type="button" className="btn-secondary text-xs py-0.5" onClick={onClose} aria-label="Close">×</button>
           </div>
         </div>
         <InteractionMenu s={s} c={c} initial={category} onDone={onClose} />
       </div>
-    </div>
+    </Overlay>
   );
 }

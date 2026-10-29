@@ -1,4 +1,5 @@
 import { OFFICE_BY_ID } from '../../engine/polData';
+import { Overlay } from '../components/Modal';
 import { mName, type ElectionResult } from '../../engine/polState';
 import type { GameState } from '../../engine/types';
 
@@ -7,7 +8,7 @@ export function ElectionNight({ s, results, onClose }: { s: GameState; results: 
   if (!results.length) return null;
   const lead = results.find((r) => r.backed) ?? results[0];
   return (
-    <div className="fixed inset-0 z-[1300] flex items-start justify-center overflow-y-auto bg-black/80 p-2 sm:p-6" onClick={onClose} data-testid="election-night">
+    <Overlay z={1300} className="flex items-start justify-center overflow-y-auto bg-black/80 p-2 sm:p-6" onClick={onClose} data-testid="election-night">
       <div className="w-full max-w-2xl rounded-md bg-[#efe6d2] p-3 sm:p-5 text-[#1d1a16] shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="border-b-4 border-double border-[#1d1a16] pb-1 text-center">
           <div className="font-display text-2xl sm:text-3xl tracking-wide">{lead.paper}</div>
@@ -43,6 +44,6 @@ export function ElectionNight({ s, results, onClose }: { s: GameState; results: 
         <div className="mt-4 text-center"><button className="rounded bg-[#1d1a16] px-4 py-2 text-sm text-[#efe6d2]" onClick={onClose}>Fold the paper</button></div>
         <div className="sr-only">{s.week}</div>
       </div>
-    </div>
+    </Overlay>
   );
 }

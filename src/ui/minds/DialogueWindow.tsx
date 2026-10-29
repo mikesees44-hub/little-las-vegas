@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Overlay } from '../components/Modal';
 import { displayName, player } from '../../engine/characters';
 import { suggestedOffer, toneOptions, type Dialogue, type Tone } from '../../engine/minds/dialogue';
 import type { GameState } from '../../engine/types';
@@ -51,7 +52,7 @@ export function DialogueWindow({
   const st = d.stake;
   const fmt = (n: number) => (st?.unit === '%' ? `${Math.round(n)}%` : `$${Math.round(n).toLocaleString('en-US')}`);
   return (
-    <div className="fixed inset-0 z-[1180] flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
+    <Overlay z={1180} className="flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={title} onClick={onClose}>
       <div className="panel w-full max-h-[94vh] overflow-y-auto rounded-b-none border-gold-600/40 sm:max-w-lg sm:rounded-lg" onClick={(e) => e.stopPropagation()} data-testid="dialogue-window">
         <div className="flex items-center justify-between gap-2 border-b border-noir-700 px-3 py-2">
           <h3 className="truncate font-display text-lg text-gold-300">{title}</h3>
@@ -115,7 +116,7 @@ export function DialogueWindow({
         )}
         <div className="px-3 pb-3 pt-2">{footer}</div>
       </div>
-    </div>
+    </Overlay>
   );
 }
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
 import { seasonInfo } from '../../engine/calendar';
 import { hoursLabel, hoursLeft, nowLabel } from '../../engine/timeCost';
@@ -105,14 +106,14 @@ function OrdersPane({ s, onClose }: { s: GameState; onClose: () => void }) {
   const { orders } = useOrders();
   useEscape(true, onClose);
   return (
-    <div className="fixed inset-0 z-[1170]" onClick={onClose}>
+    <Overlay z={1170} onClick={onClose}>
       <div className="absolute left-2 right-2 top-[7.5rem] sm:left-auto sm:right-2 sm:top-14 sm:w-[min(440px,94vw)] max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="orders-popover">
         <div className="flex justify-end"><button type="button" className="btn-quiet text-xs" onClick={onClose} aria-label="Close">close ×</button></div>
         {orders.length ? <OrdersTray s={s} /> : (
           <div className="panel p-3 text-xs text-stone-400">No orders this week. Every "Order" button on a sheet, a card or a drawer adds one here; they are carried out when you advance.</div>
         )}
       </div>
-    </div>
+    </Overlay>
   );
 }
 

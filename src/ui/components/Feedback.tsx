@@ -42,7 +42,7 @@ export function FeedbackToast({ item, onClose }: { item: Feedback; onClose: () =
     return () => window.clearTimeout(t);
   }, [item.at, item.kind, onClose]);
   return (
-    <div className="fixed z-[4000] bottom-4 left-1/2 w-[min(92vw,460px)] -translate-x-1/2 rounded-lg border border-gold-500 bg-noir-900/95 px-4 py-3 shadow-2xl" role="status" data-testid="feedback-toast" data-kind={item.kind}>
+    <div className="fixed z-[1160] bottom-[64px] md:bottom-4 left-1/2 -translate-x-1/2 md:left-[84px] md:translate-x-0 w-[min(92vw,460px)] rounded-lg border border-gold-500 bg-noir-900/95 px-4 py-3 shadow-2xl" role="status" data-testid="feedback-toast" data-kind={item.kind}>
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <div className="text-[11px] uppercase tracking-widest text-gold-400">{FEEDBACK_HEAD[item.kind]}{item.kind === 'ordered' || item.kind === 'decided' ? ` · happens ${item.when ?? 'when the week turns'}` : ''}</div>

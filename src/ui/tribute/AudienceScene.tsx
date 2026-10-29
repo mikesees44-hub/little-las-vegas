@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Overlay } from '../components/Modal';
 import { formatDate, dateOfWeek } from '../../engine/calendar';
 import { displayName } from '../../engine/characters';
 import { obligations, UB_TYPE_LABEL } from '../../engine/tribute';
@@ -130,7 +131,7 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
   const same = (a: Split, b: Split) => a.personal === b.personal && a.reserve === b.reserve;
   const pick = (id: string, sp: Split) => onDecide?.(id, { report: rep.id, split: sp, standing, grant });
   return (
-    <div className="fixed inset-0 z-[1180] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-3" onClick={onClose} data-testid="audience-scene">
+    <Overlay z={1180} className="flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-3" onClick={onClose} data-testid="audience-scene">
       <div className="panel w-full sm:max-w-5xl max-h-[96vh] overflow-y-auto rounded-b-none sm:rounded-lg border-gold-600/50 bg-gradient-to-b from-noir-900 to-noir-950" onClick={(e) => e.stopPropagation()}>
         <div className="relative overflow-hidden flex items-start justify-between gap-2 border-b border-noir-700 px-3 sm:px-5 py-3 sm:py-10" data-testid="audience-header">
           <img src={OFFICE_ART} alt="" aria-hidden className="pointer-events-none absolute right-0 top-0 h-full w-[60%] sm:w-[380px] object-cover object-[center_45%] opacity-40 sm:opacity-70" style={{ maskImage: 'linear-gradient(to right, transparent, black 45%)', WebkitMaskImage: 'linear-gradient(to right, transparent, black 45%)' }} />
@@ -228,7 +229,7 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
           </div>
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }
 

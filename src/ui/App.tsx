@@ -69,7 +69,7 @@ import { shellAlerts, type ShellAlert } from './shell/alertRoutes';
 import { guidedGoals, type GuidedGoal } from './shell/goals';
 import { useShellState } from './shell/useShellState';
 import { HintHost, Toast } from './shell/HintHost';
-import { Modal } from './components/Modal';
+import { Modal, Overlay } from './components/Modal';
 import { SheetFrame } from './shell/SheetFrame';
 import { PolSheet } from './cityhall/CityHall';
 import { ContextMenu } from './sheet/InteractionMenu';
@@ -1013,7 +1013,7 @@ export function App({ startOn = 'title' }: AppProps) {
         </Modal>
       )}
       {dayWin !== undefined && !current && (
-        <div className="fixed inset-0 z-[1180] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" onClick={() => setDayWin(undefined)}>
+        <Overlay z={1180} className="flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" onClick={() => setDayWin(undefined)}>
           <div className="panel w-full sm:max-w-2xl max-h-[92dvh] overflow-y-auto rounded-b-none sm:rounded-lg p-3" onClick={(e) => e.stopPropagation()} data-testid="day-window">
             <div className="mb-2 flex items-center justify-between">
               <div className="panel-title">Your day</div>
@@ -1021,7 +1021,7 @@ export function App({ startOn = 'title' }: AppProps) {
             </div>
             <WeekPlanner s={s} update={act} initialDay={dayWin} onSitDown={() => { setDayWin(undefined); setSitdown('rounds'); }} />
           </div>
-        </div>
+        </Overlay>
       )}
       {finding && <FindPalette s={s} open={shellUi.open} onPick={onFind} onClose={() => setFinding(false)} />}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}

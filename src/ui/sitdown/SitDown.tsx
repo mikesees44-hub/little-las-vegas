@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Overlay } from '../components/Modal';
 import { Backdrop } from '../hood/art/sceneArt';
 import { briefing, recommendedActions, shortName, type BriefItem, type BriefLink, type BriefOption, type Briefing, type Speaker } from '../../engine/briefing';
 import { ALL_LANES, LANE_NAME, leeway, neglect, roundOptions, roundSlots, usualWeek, type Lane, type Round } from '../../engine/rounds';
@@ -78,7 +79,7 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
   }
 
   return (
-    <div className="fixed inset-0 z-[1180] flex items-stretch sm:items-center justify-center bg-black/75 backdrop-blur-sm" data-testid="sitdown" onClick={onClose}>
+    <Overlay z={1180} className="flex items-stretch sm:items-center justify-center bg-black/75 backdrop-blur-sm" data-testid="sitdown" onClick={onClose}>
       <div className="relative flex max-h-[100dvh] w-full flex-col overflow-hidden border-gold-600/40 bg-noir-950/95 sm:max-h-[94vh] sm:max-w-[1400px] sm:rounded-lg sm:border" onClick={(e) => e.stopPropagation()}>
         <header className="relative isolate overflow-hidden flex flex-wrap items-center gap-2 border-b border-noir-700 px-3 py-2">
           <Backdrop k={tab === 'council' ? 'scene_boss_office' : ['street_pacific_neon', 'scene_club_stage']} opacity={0.22} className="-z-10" />
@@ -119,7 +120,7 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
           <RoundsPlanner s={s} b={b} rounds={rounds} setRounds={setRounds} onTrust={onTrust} onDone={onClose} />
         )}
       </div>
-    </div>
+    </Overlay>
   );
 }
 

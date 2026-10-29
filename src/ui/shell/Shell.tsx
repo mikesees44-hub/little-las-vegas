@@ -1,4 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
+import { Overlay } from '../components/Modal';
 
 /**
  * The map-first layout: top bar; left rail; the map (never unmounted) with
@@ -69,12 +70,12 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
         Alerts ({alertCount})
       </button>
       {sheet && (
-        <div className="md:hidden fixed inset-0 z-[1165] bg-black/60" onClick={() => setSheet(false)}>
+        <Overlay z={1165} className="md:hidden bg-black/60" onClick={() => setSheet(false)}>
           <div className="absolute inset-x-0 bottom-0 max-h-[78vh] overflow-y-auto rounded-t-lg border-t border-gold-600/50 bg-noir-900 p-2 space-y-2" onClick={(e) => e.stopPropagation()} data-testid="alerts-sheet">
             <div className="flex justify-between"><span className="text-[10px] uppercase tracking-[0.25em] text-stone-500 pt-1">What is going on</span><button type="button" className="text-xs text-stone-400" onClick={() => setSheet(false)}>close ×</button></div>
             {right}
           </div>
-        </div>
+        </Overlay>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import { SideBadge } from '../components/Side';
+import { Overlay } from '../components/Modal';
 import { sideOfPol } from '../../engine/sides';
 import { useMemo, useState } from 'react';
 import { PEOPLE_BY_ID } from '../../worldpack';
@@ -467,9 +468,9 @@ export function PolSheet({ s, id, onClose, onOpen, embedded }: { s: GameState; i
 
 function OverlayFrame({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[1200] flex items-start justify-center overflow-y-auto bg-black/70 p-2 sm:p-6" onClick={onClose} data-testid="pol-sheet">
+    <Overlay z={1200} className="flex items-start justify-center overflow-y-auto bg-black/70 p-2 sm:p-6" onClick={onClose} data-testid="pol-sheet">
       <div className="panel w-full max-w-2xl p-3 sm:p-4" onClick={(e) => e.stopPropagation()}>{children}</div>
-    </div>
+    </Overlay>
   );
 }
 function EmbeddedFrame({ children }: { children: React.ReactNode; onClose: () => void }) {

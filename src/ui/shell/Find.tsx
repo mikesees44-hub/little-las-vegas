@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { Overlay } from '../components/Modal';
 import type { GameState } from '../../engine/types';
 import { SideChip, SideFilterBar } from '../components/Side';
 import { sideMatches, type SideFilter } from '../../engine/sides';
@@ -28,7 +29,7 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
   };
   let lastKind = '';
   return (
-    <div className="fixed inset-0 z-[1190] flex items-start justify-center bg-black/60 p-2 pt-[8vh] sm:pt-[12vh]" onClick={onClose} data-testid="find-palette">
+    <Overlay z={1190} className="flex items-start justify-center bg-black/60 p-2 pt-[8vh] sm:pt-[12vh]" onClick={onClose} data-testid="find-palette">
       <div className="panel w-full max-w-xl overflow-hidden border-gold-600/60 shadow-2xl shadow-black/80" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Find">
         <div className="flex items-center gap-2 border-b border-noir-700 px-3 py-2">
           <span className="text-gold-400" aria-hidden>⌕</span>
@@ -61,6 +62,6 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
           })}
         </div>
       </div>
-    </div>
+    </Overlay>
   );
 }

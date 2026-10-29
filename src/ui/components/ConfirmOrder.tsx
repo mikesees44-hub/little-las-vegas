@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Overlay } from './Modal';
 import { heavyOf } from '../../engine/heavy';
 import { VoicesLine } from '../decide/DecisionCard';
 import { previewAction } from '../../engine/actions';
@@ -49,7 +50,7 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
     return () => window.removeEventListener('keydown', k, true);
   }, [onYes, onNo, onTomorrow, noTime]);
   return (
-    <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-label="Are you sure?" data-testid="confirm-order">
+    <Overlay z={5000} className="flex items-end sm:items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-label="Are you sure?" data-testid="confirm-order">
       <div className="w-[min(94vw,520px)] max-h-[90vh] overflow-y-auto rounded-lg border border-gold-500 bg-noir-900 shadow-2xl p-4">
         <div className="text-[11px] uppercase tracking-widest text-gold-400">{noTime ? 'Not enough time today' : 'Are you sure?'}</div>
         {heavy && !noTime && <ul className="mt-1 list-disc pl-5 text-xs text-red-300" data-testid="confirm-heavy">{heavy.map((h, i) => <li key={i}>{h}</li>)}</ul>}
@@ -83,6 +84,6 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
         </div>
         <button className="mt-2 text-[11px] text-stone-500 underline" onClick={onNeverAsk}>Don't ask me again (change in Settings)</button>
       </div>
-    </div>
+    </Overlay>
   );
 }
