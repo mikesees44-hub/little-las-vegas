@@ -6,6 +6,7 @@ import type { Effect, GameState } from '../types';
 import { acceptance, type Acceptance, type Reason } from './accept';
 import { cash, copOnPad, DEEDS, type Cost, type DeedDef, type DX } from './catalog';
 import { cooldownLeft, d01, ensureDeeds } from './state';
+import { rxDeedBegin, rxEnd } from '../reactions/apply';
 import { TIER_LABEL, type DeedId, type DeedsState, type Tier } from './types';
 
 /**
@@ -137,7 +138,9 @@ export function applyDeed(ctx: Ctx, p: DeedPreview, r: Tier, paid = false): stri
     ...tv.fx,
     { type: 'deed', op: { op: 'note', id: p.def.id, a: p.x.a.id, t: p.x.t.id, r, x: tv.line, p: Math.round(p.chance * 100), cd: p.def.cooldown } },
   ];
+  const rx = p.x.boss ? rxDeedBegin(ctx.s, p.x.t.id, tv.fx, `You: ${p.title}`, p.def.id) : undefined;
   applyEffects(ctx, fx, { label: p.title, because: `${p.def.id === 'insult' ? 'traded words' : 'dealt'} with ${p.x.t.firstName}`, category: 'event' });
+  rxEnd(ctx, rx);
   return tv.line;
 }
 

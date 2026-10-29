@@ -35,6 +35,7 @@ import { ensureMinds } from './minds/state';
 import { ensureArmy } from './armyState';
 import { ensureDeeds } from './deeds/state';
 import { ensureCapos } from './caposState';
+import { ensureReactions } from './reactions/state';
 import { migrateTrust } from './trustMigrations';
 import { keepOldDelegation } from './lieutenants';
 import type { GameState } from './types';
@@ -49,7 +50,7 @@ export function upgradeSave(s: GameState): GameState {
   // created by the weekly update itself, so loading never changes the dice.
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
-    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos], ['reactions', ensureReactions],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;

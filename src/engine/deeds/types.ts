@@ -158,7 +158,9 @@ export type DeedOp =
   | { op: 'loan'; by: string; to: string; amt: number; due: number }
   /** The boss acknowledges his child; disowns one of his house. */
   | { op: 'legit'; child: string; father: string }
-  | { op: 'disown'; who: string };
+  | { op: 'disown'; who: string }
+  /** The reactions to a decision (reactions/): first in a choice's effects, so they are read before the rest lands. */
+  | { op: 'react'; d: import('../reactions/types').Decision };
 
 /** A partnership (both draw `n` a month for a year from week `w`). */
 export interface Partnership { a: string; b: string; w: number; n: number }

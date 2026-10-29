@@ -1004,6 +1004,8 @@ export interface GameState {
   minds?: import('./minds/types').MindsState;
   /** Deeds: the CK-style interactions between anyone (cooldowns, ties, favors owed, NPC hooks, asks at the boss's door, authored scenes' memory) (deeds/; optional: made by the weekly update). */
   deeds?: import('./deeds/types').DeedsState;
+  /** CK-style reactions to the boss's decisions, and the NPCs' proposals (reactions/). */
+  reactions?: import('./reactions/types').ReactionsState;
   /** The Old Don start's hidden hands, the fog over the coming move, and the verdict on the first year (oldDon.ts; only that start has it). */
   oldDon?: import('./oldDon').OldDonState;
   /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */

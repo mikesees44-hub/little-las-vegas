@@ -7,6 +7,7 @@ import type { GameState } from '../types';
 import { sceneNext, sceneRoll } from '../authored/run';
 import { DEEDS } from './catalog';
 import { doDeed } from './resolve';
+import { applyDecision } from '../reactions/apply';
 import { cdKey, ensureDeeds, setTie } from './state';
 import { LOG_CAP, OWED_CAP, TIE_LABEL, type DeedOp } from './types';
 
@@ -112,6 +113,9 @@ export function applyDeedOp(ctx: Ctx, o: DeedOp): void {
       if (!f.childrenIds.includes(c.id)) f.childrenIds.push(c.id);
       break;
     }
+    case 'react':
+      applyDecision(ctx, o.d);
+      break;
     case 'disown': {
       const c = s.characters[o.who];
       if (!c) break;

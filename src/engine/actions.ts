@@ -1,4 +1,5 @@
 import { noteOrder, previewMen } from './myMen';
+import { rxActionBegin, rxEnd } from './reactions/apply';
 import { bookMark, bookOrder } from './journal';
 import { isIncapable } from './aging';
 import { previewUnderbelly } from './underbelly';
@@ -993,8 +994,10 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
       bookOrder(ctx, mark, a, { title: p.title, outcome: 'refused', by: by(i) });
       continue;
     }
+    const rx = rxActionBegin(s, a, p.effects, `You: ${p.title}`);
     applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
     def.commit?.(ctx, a as never);
+    rxEnd(ctx, rx);
     noteAttention(s, a);
     noteOrder(s, a);
     if (a.kind === 'interact' || a.kind === 'deed') {
@@ -1027,8 +1030,10 @@ export function settleOrderNow(ctx: Ctx, a: PlayerAction, accepted: boolean): Ac
     bookOrder(ctx, mark, a, { title: p.title, outcome: 'refused' });
     return p;
   }
+  const rx = rxActionBegin(s, a, p.effects, `You: ${p.title}`);
   applyEffects(ctx, p.effects, { label: p.title, because: p.because, category: p.category });
   def.commit?.(ctx, a as never);
+  rxEnd(ctx, rx);
   noteAttention(s, a);
   noteOrder(s, a);
   if (a.kind === 'interact' || a.kind === 'deed') {
