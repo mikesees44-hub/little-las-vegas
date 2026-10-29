@@ -554,6 +554,8 @@ export type Effect =
   | ({ type: 'bones'; op: BonesOp } & EffectBase)
   /** The boss's books and the receipts (ledgerbook.ts). */
   | ({ type: 'ledger'; op: LedgerOp } & EffectBase)
+  /** Deeds between people, ties, favors owed, authored scenes (deeds/ops.ts). */
+  | ({ type: 'deed'; op: import('./deeds/types').DeedOp } & EffectBase)
   /** The weekly take (tributeOps.ts). */
   | ({ type: 'tribute'; op: import('./tributeOps').TributeOp } & EffectBase)
   /** The Ears: the Madam, the nightlife workers, the connection web (ears.ts). */
@@ -987,6 +989,8 @@ export interface GameState {
   journal?: import('./journal').JournalState;
   /** NPC minds: needs, moods, ambitions, beliefs, memories and plans of the people who matter (minds/; optional: made by the weekly update). */
   minds?: import('./minds/types').MindsState;
+  /** Deeds: the CK-style interactions between anyone (cooldowns, ties, favors owed, NPC hooks, asks at the boss's door, authored scenes' memory) (deeds/; optional: made by the weekly update). */
+  deeds?: import('./deeds/types').DeedsState;
 }
 
 export interface PlayerChoices {
@@ -1090,6 +1094,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'protect'; op: import('./protect').ProtectAction }
   /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
   | { kind: 'women'; op: import('./women').WomenAction }
+  /** Deeds (deeds/): the CK-style interactions on anyone (befriend, sway, insult, find secrets, blackmail, partner, discipline...). He decides, or it works or it doesn't. */
+  | ({ kind: 'deed' } & import('./deeds/types').DeedAction)
 );
 
 export type InteractionId =

@@ -3,7 +3,7 @@ import { createContext, useContext, useState } from 'react';
 import { pocketCash } from '../../engine/tributeState';
 import { sameTarget, targetOf } from '../../engine/deals';
 import { DealWindow } from '../econ/DealWindow';
-import { previewAction, queuedMoney } from '../../engine/actions';
+import { previewAction, queuedMoney, type ActionPreview } from '../../engine/actions';
 import { dipPenalty, DIP, recentDips } from '../../engine/pocket';
 import type { Acceptance } from '../../engine/interactions';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -91,7 +91,9 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       )}
       <Chips s={s} effects={p.effects} />
       {p.acceptance && <AcceptanceLine a={p.acceptance} />}
-      {p.odds && <AcceptanceLine a={p.odds} prefix="Success" />}
+      {p.odds && <AcceptanceLine a={p.odds} prefix={p.oddsLabel ?? 'Success'} />}
+      {p.outcomes && p.outcomes.length > 1 && <Outcomes s={s} outcomes={p.outcomes} />}
+      {p.cooldown !== undefined && <div className="text-[11px] mt-1 text-stone-500" data-testid="deed-cooldown">Then not again with this person for {p.cooldown} weeks.</div>}
       {p.warning && <div className="text-[11px] text-amber-400 mt-1">⚠ {p.warning}</div>}
       {p.refuseEffects && p.refuseEffects.length > 0 && (
         <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
@@ -116,6 +118,22 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
 }
 
 /** "Will accept: 62%" with the reasons, CK style. */
+/** Every way it can go (deeds/): better than hoped, success, failure, disaster, each with its chance and its effects. */
+function Outcomes({ s, outcomes }: { s: GameState; outcomes: NonNullable<ActionPreview['outcomes']> }) {
+  const tone: Record<string, string> = { crit: 'text-emerald-300', success: 'text-emerald-400/90', fail: 'text-amber-300', critFail: 'text-red-300' };
+  return (
+    <div className="mt-1.5 grid gap-1 text-[11px]" data-testid="deed-outcomes">
+      {outcomes.map((o) => (
+        <div key={o.tier} className="rounded border border-noir-700/70 px-2 py-1">
+          <span className={`font-semibold ${tone[o.tier] ?? 'text-stone-300'}`}>{o.label} · {Math.round(o.chance * 100)}%</span>
+          <span className="text-stone-400"> — {o.text}</span>
+          {o.effects.length > 0 && <div className="mt-0.5"><Chips s={s} effects={o.effects} /></div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AcceptanceLine({ a, prefix = 'Will accept' }: { a: Acceptance; prefix?: string }) {
   const pct = Math.round(a.chance * 100);
   return (

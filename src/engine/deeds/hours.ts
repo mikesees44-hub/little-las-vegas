@@ -1,0 +1,33 @@
+import type { DeedId } from './types';
+
+/** Hours of the boss's day each deed takes (timeCost.ts reads this; no imports, so no cycles). */
+export const DEED_HOURS: Record<DeedId, number> = {
+  befriend: 2,
+  flatter: 0.5,
+  feast: 3,
+  sway: 2,
+  askFavor: 1,
+  callFavor: 1,
+  alliance: 3,
+  demandRespect: 1,
+  insult: 0.5,
+  threaten: 1,
+  findSecrets: 2,
+  fabricateHook: 2,
+  blackmail: 1,
+  envelope: 0.5,
+  plantRumor: 1,
+  turn: 2,
+  court: 3,
+  frame: 1,
+  offerPiece: 1,
+  buyOut: 2,
+  partner: 2,
+  askLoan: 1,
+  lend: 0.5,
+  legitimize: 2,
+  disown: 1,
+  educate: 2,
+  recognize: 0.5,
+  discipline: 1,
+};

@@ -1,0 +1,80 @@
+{
+  "_about": "The paper: the Wildwood Leader, its reporters, what gets printed and what doesn't.",
+  "scenes": [
+    {
+      "id": "paper_reporter_question",
+      "title": "A reporter from the Leader",
+      "theme": "town",
+      "when": { "heat": { "local": ">=25" }, "cooldown": 30, "chance": 0.5 },
+      "who": { "capo": { "pool": "capo" } },
+      "text": "A kid with a press card in his hatband stops you outside the Shamrock. The Wildwood Leader is doing a series: \"Who Owns the Boardwalk?\" He has a photograph of {capo.call} handing an envelope to a man in a city sanitation uniform. He would like a comment.",
+      "choices": [
+        {
+          "label": "\"Mr. {capo.last} is a civic-minded businessman.\"",
+          "hint": "Smile for the camera.",
+          "effects": [ { "heat": { "local": 3 } }, { "opinion": { "of": "capo", "toward": "boss", "by": 4, "why": "Stood behind me in the paper" } } ]
+        },
+        {
+          "label": "Buy the photograph ($600)",
+          "requires": { "money": 600 },
+          "odds": { "base": 60, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 10, "why": "you make it sound like his idea" } ] },
+          "effects": [ { "money": -600 } ],
+          "success": [ { "heat": { "local": -4 } } ],
+          "failure": [ { "heat": { "local": 6 } }, { "evidence": { "role": "capo", "by": 5 } } ],
+          "result": "The negative went into the Shamrock's furnace. The series ran without a picture.",
+          "failText": "He took your money and printed it anyway, with a line about the offer."
+        },
+        {
+          "label": "Have someone talk to his editor",
+          "hint": "Editors have mortgages.",
+          "effects": [ { "heat": { "local": -1 } }, { "flag": "leaned_on_leader" } ],
+          "next": { "scene": "paper_editor_calls", "after": [2, 4] }
+        }
+      ]
+    },
+    {
+      "id": "paper_editor_calls",
+      "title": "The editor calls back",
+      "theme": "town",
+      "followup": true,
+      "who": { "capo": { "pool": "capo" } },
+      "text": "The Leader's editor telephones the house, which nobody does. The series is dead, he says. The kid has been moved to the obituaries. He would like, in return, an ad: a full page, every week, for the Season. From one of {capo.first}'s places.",
+      "choices": [
+        {
+          "label": "Buy the ad ($900)",
+          "requires": { "money": 900 },
+          "effects": [ { "money": -900 }, { "heat": { "local": -4 } }, { "unflag": "leaned_on_leader" } ]
+        },
+        {
+          "label": "Remind him who he is talking to",
+          "effects": [ { "heat": { "local": 4 } }, { "respect": 1 }, { "unflag": "leaned_on_leader" } ]
+        }
+      ]
+    },
+    {
+      "id": "paper_obituary_mistake",
+      "title": "The Leader buried you early",
+      "theme": "town",
+      "when": { "years": [1960, 1966], "cooldown": 104, "once": true, "week": { "min": 30 } },
+      "who": {},
+      "text": "Page six of Thursday's Leader: your obituary. Fifty-one words, two of them spelled wrong, and a photograph of a different man. The printer says it was a joke by a linotype operator. The whole island read it before lunch.",
+      "choices": [
+        {
+          "label": "Send flowers to the linotype operator",
+          "hint": "A man who can laugh at his own funeral.",
+          "effects": [ { "respect": 2 } ]
+        },
+        {
+          "label": "Find out who paid him to set it",
+          "requires": { "money": 300 },
+          "odds": { "base": 50 },
+          "effects": [ { "money": -300 } ],
+          "success": [ { "flag": "obit_was_rival" }, { "respect": 1 } ],
+          "failure": [],
+          "result": "It was not a joke. Somebody across the avenue paid twenty dollars for it. Now you know who wants you dead enough to print it.",
+          "failText": "The operator swears it was a joke. Maybe it was."
+        }
+      ]
+    }
+  ]
+}

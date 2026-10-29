@@ -50,6 +50,7 @@ import { commitPaper, previewPaper } from './paper';
 import { commitIntrigue, previewIntrigue } from './intrigueOps';
 import { commitDev, previewDev } from './develop';
 import { commitSpend, previewSpend } from './spend';
+import { commitDeedAction, previewDeedAction } from './deeds/action';
 
 /** A capo's willingness to accept a worse contract. */
 export function contractAcceptance(s: GameState, c: Character, cut: number): Acceptance {
@@ -102,6 +103,12 @@ export interface ActionPreview {
   warning?: string;
   /** The button's words, when the action knows better than the generic verb ("Hire runners — $300"). */
   verb?: string;
+  /** What the odds line says ("He says yes", "It works"; default "Success"). */
+  oddsLabel?: string;
+  /** Every way it can go (deeds/): better than hoped, success, failure, disaster, with chances and effects. */
+  outcomes?: { tier: string; label: string; chance: number; text: string; effects: Effect[] }[];
+  /** Weeks before it can be tried again on the same person. */
+  cooldown?: number;
 }
 
 type ActionOf<K extends PlayerAction['kind']> = Extract<PlayerAction, { kind: K }>;
@@ -140,6 +147,8 @@ export const ORDER_TITLES: Record<string, string> = {
 export const ORDER_PRINTS: Record<string, number> = { shakedown: 4, expand: 3, hitback: 6, kessler: 4, cops: 3, shylock: 3, launder: 2 };
 
 const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
+  /** Deeds (deeds/): the roll decides the outcome after the costs are paid. */
+  deed: { preview: (s, a) => previewDeedAction(s, a), commit: (ctx, a) => commitDeedAction(ctx, a) },
   pol: { preview: (s, a) => previewPol(s, a.op) },
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
   work: { preview: (s, a) => previewWork(s, a.op), commit: (ctx, a) => commitWork(ctx, a.op) },
@@ -979,7 +988,7 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     def.commit?.(ctx, a as never);
     noteAttention(s, a);
     noteOrder(s, a);
-    if (a.kind === 'interact') {
+    if (a.kind === 'interact' || a.kind === 'deed') {
       const t = s.characters[a.target];
       if (t) {
         t.neglect = 0;

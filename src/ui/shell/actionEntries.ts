@@ -85,6 +85,7 @@ export const ACTION_ENTRIES: ActionEntry[] = [
   { kind: 'propose', label: 'Put a man up for membership', words: 'propose made membership books open vouch', at: ['person', 'borgata.membership'], files: ['ui/sheet/menuCatalog.ts'] },
   { kind: 'background', label: 'Check a man out', words: 'background check vet', at: ['person'], files: ['ui/components/CharacterSheet.tsx', 'ui/sheet/menuCatalog.ts'] },
   { kind: 'interact', label: 'Dinner, favors, promote, threaten, court…', words: 'dinner favor promote demote threaten whack bribe exile recruit make court affair marriage propose', at: ['person'], files: ['ui/sheet/menuCatalog.ts', 'ui/books/TheBooks.tsx'] },
+  { kind: 'deed', label: 'Befriend, sway, insult, find secrets, blackmail, partner, discipline…', words: 'befriend flatter feast dinner sway favor call in alliance pact demand respect insult threaten secrets fabricate hook blackmail envelope bribe rumor turn frame arrest piece buy out partner loan lend legitimize disown educate recognize discipline', at: ['person'], files: ['ui/sheet/menuCatalog.ts'] },
   { kind: 'talk', ops: ['ask'], label: 'Talk to someone: business, advice, a meeting', words: 'talk discuss ask advice meeting sit down negotiate partner', at: ['person', 'place'], files: ['ui/sheet/menuCatalog.ts', 'ui/hood/WalkCard.tsx'] },
   { kind: 'talk', ops: ['answer'], label: 'Answer an offer someone made you', words: 'answer offer accept turn down', at: ['ops.missions'], files: ['ui/hood/MissionBoard.tsx'] },
 

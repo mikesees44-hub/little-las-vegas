@@ -137,6 +137,7 @@ export function actionVerb(a: PlayerAction): Verb {
     case 'charterBank': return v('Charter the bank', 'Chartering');
     case 'casino': return a.sell ? v('Sell the casino', 'Selling') : v('Buy in', 'Buying in');
     case 'interact': return INTERACT[a.id] ?? v('Do it', 'Set');
+    case 'deed': return v('Do it', 'On it');
     case 'scheme': return SCHEME[a.scheme] ?? v('Start the plan', 'Plan started');
     case 'cancelScheme': return v('Call it off', 'Calling off');
     case 'declareWar': return v('Go to war', 'War declared');
