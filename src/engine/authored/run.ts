@@ -183,6 +183,8 @@ export function mapEffect(s: GameState, sc: Scene, cast: Cast, fx: SEffect): Eff
     case 'deed': { const o = v as { id: string; actor: string; target: string }; return id(o.actor) && id(o.target) ? [{ type: 'deed', op: { op: 'npcDeed', id: o.id as DeedId, a: id(o.actor), t: id(o.target) } }] : []; }
     case 'evidence': { const o = v as { role: string; by: number }; return id(o.role) ? [{ type: 'evidence', charId: id(o.role), amount: o.by }] : []; }
     case 'jail': { const o = v as { role: string; weeks: number }; return id(o.role) && o.role !== 'boss' ? [{ type: 'imprison', charId: id(o.role), weeks: o.weeks }] : []; }
+    case 'whack': { const o = v as { role: string; why?: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'kill', charId: id(o.role), cause: why(o.why ?? 'Disappeared. Nobody saw anything.') }, { type: 'heat', bar: 'local', amount: 4 }] : []; }
+    case 'runs': { const o = v as { role: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'exile', charId: id(o.role) }] : []; }
   }
   return [];
 }

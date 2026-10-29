@@ -1,0 +1,106 @@
+{
+  "_about": "GETTING MADE (the Goodfellas setup). A young soldier screwed you: he killed a made man without permission, or he stole and lied. You tell him he's getting made on Sunday. He shows up in a new suit. Written from the owner's idea, 2026-10-28.",
+  "scenes": [
+    {
+      "id": "made_setup_offer",
+      "title": "The kid crossed the line",
+      "theme": "crew",
+      "when": { "week": { "min": 10 }, "chance": 0.2, "cooldown": 52, "weight": 12 },
+      "who": {
+        "kid": { "pool": "crew", "rank": ["soldier", "associate"], "age": [18, 32], "traits": ["Hot-headed"] },
+        "capo": { "pool": "capo" }
+      },
+      "text": "{capo.call} closes the office door. \"It's {kid.call}. Saturday night he put a made guy from the Kessler outfit in the hospital over a card game, then robbed him. No permission, no word to nobody. Kessler wants an answer. And the kid's been telling the whole Shamrock he's about to get his button.\"",
+      "choices": [
+        {
+          "label": "Tell him he's getting made Sunday. Wear a nice suit",
+          "hint": "He'll come smiling. He won't come home.",
+          "effects": [ { "flag": "made_setup" }, { "opinion": { "of": "kid", "toward": "boss", "by": 25, "why": "The boss is making me" } } ],
+          "result": "{kid.first} kissed your hand. He went straight out and bought a sharkskin suit.",
+          "next": { "scene": "made_setup_sunday", "after": [1, 1] }
+        },
+        {
+          "label": "Make him for real. Square it with Kessler",
+          "hint": "Pay Kessler off and keep a hothead who owes you everything.",
+          "requires": { "money": 3000 },
+          "effects": [ { "money": -3000 }, { "owes": { "who": "kid", "to": "boss" } }, { "opinion": { "of": "capo", "toward": "boss", "by": -8, "why": "He rewarded a kid who made us look bad" } }, { "respect": -2 } ],
+          "result": "Kessler took the money. The kid got his button. Everyone at the table watched him grin."
+        },
+        {
+          "label": "Ship him out of town. Florida, tonight",
+          "effects": [ { "runs": { "role": "kid" } }, { "money": -500 }, { "respect": -1 } ]
+        },
+        {
+          "label": "Let Kessler come and get his own answer",
+          "hint": "Your men will see that you didn't stand up for one of your own, or for your word.",
+          "effects": [ { "crew": { "by": -3, "why": "The boss let Kessler handle our business" } }, { "heat": { "local": 2 } } ]
+        }
+      ]
+    },
+    {
+      "id": "made_setup_sunday",
+      "title": "His big day",
+      "theme": "crew",
+      "followup": true,
+      "who": { "kid": { "pool": "crew" }, "capo": { "pool": "capo" } },
+      "text": "Sunday. {kid.call} is waiting on his mother's porch in the new suit, hair combed, a carnation in his lapel. His mother calls your house to thank you. {capo.call} is waiting in the car with two of your men to drive him to the ceremony.",
+      "choices": [
+        {
+          "label": "Go through with it",
+          "hint": "There's no ceremony. There's a basement in North Wildwood.",
+          "odds": { "base": 82, "plus": [
+            { "if": { "role": "kid", "trait": "Paranoid" }, "add": -20, "why": "he smells everything" },
+            { "if": { "role": "capo", "trait": "Cruel" }, "add": 8, "why": "his capo won't hesitate" }
+          ] },
+          "effects": [ { "unflag": "made_setup" }, { "heat": { "local": 2 } } ],
+          "success": [ { "whack": { "role": "kid", "why": "Left home in a new suit on a Sunday. Never seen again." } }, { "respect": 3 }, { "memory": { "who": "capo", "about": "boss", "text": "the boss settled the kid himself, no hesitation", "weight": 15 } } ],
+          "failure": [ { "runs": { "role": "kid" } }, { "respect": -2 } ],
+          "result": "Kessler got his answer. The kid's mother still sets a place for him on Sundays.",
+          "failText": "Something in the car felt wrong to him. At the light on Rio Grande he was out the door and running in his new suit.",
+          "next": { "scene": "made_setup_ran", "on": "failure", "after": [2, 3] }
+        },
+        {
+          "label": "Change your mind: make him for real today",
+          "requires": { "money": 3000 },
+          "effects": [ { "unflag": "made_setup" }, { "money": -3000 }, { "owes": { "who": "kid", "to": "boss" } }, { "opinion": { "of": "capo", "toward": "boss", "by": -10, "why": "He went soft at the last minute" } } ],
+          "result": "The kid got his button after all. He will never know how close it came."
+        },
+        {
+          "label": "Send the car away and let him wait on the porch",
+          "effects": [ { "unflag": "made_setup" }, { "opinion": { "of": "kid", "toward": "boss", "by": -30, "why": "He made a fool of me in front of my mother" } }, { "grievance": { "of": "kid", "toward": "boss", "by": 20 } } ]
+        }
+      ]
+    },
+    {
+      "id": "made_setup_ran",
+      "title": "The kid in the sharkskin suit",
+      "theme": "crew",
+      "followup": true,
+      "who": { "kid": { "pool": "anyone" } },
+      "text": "{kid.call} is hiding at a cousin's place in Camden and has called a lawyer. A kid who knows where three of your cars are buried, talking to a lawyer.",
+      "choices": [
+        {
+          "label": "Find him before the lawyer does",
+          "odds": { "base": 60 },
+          "effects": [ { "money": -1000 } ],
+          "success": [ { "whack": { "role": "kid", "why": "Found in the Cooper River." } }, { "respect": 2 } ],
+          "failure": [ { "evidence": { "role": "kid", "by": 12 } }, { "heat": { "federal": 5 } } ],
+          "result": "The lawyer waited all afternoon. His client never showed.",
+          "failText": "He made it to the lawyer's office. The FBI has a new friend from Wildwood."
+        },
+        {
+          "label": "Get word to him: keep quiet and stay gone, and he lives",
+          "odds": { "base": 55, "plus": [ { "if": { "role": "kid", "trait": "Cowardly" }, "add": 20, "why": "fear keeps his mouth shut" } ] },
+          "success": [ { "fear": { "of": "kid", "toward": "boss", "by": 30 } } ],
+          "failure": [ { "evidence": { "role": "kid", "by": 8 } }, { "heat": { "federal": 3 } } ],
+          "result": "He took the deal and the bus to Miami.",
+          "failText": "He took the deal, then talked anyway."
+        },
+        {
+          "label": "Let him go",
+          "effects": [ { "respect": -3 }, { "heat": { "federal": 2 } } ]
+        }
+      ]
+    }
+  ]
+}

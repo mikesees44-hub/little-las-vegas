@@ -1,0 +1,187 @@
+{
+  "_about": "THE BOSS NEEDS TO GO. Two capos plot to take the chair. You hear whispers; you can find out, sit them down, or ignore it. Uncover it and stop it, then whack them or try. With proper planning they die; rush it and one may get away. Ignore it and they make their move. Written from the owner's idea, 2026-10-28.",
+  "scenes": [
+    {
+      "id": "plot_whispers",
+      "title": "The old man's tired",
+      "theme": "crew",
+      "when": { "week": { "min": 16 }, "chance": 0.25, "cooldown": 52, "weight": 14 },
+      "who": {
+        "lead": { "pool": "capo", "opinionOfBoss": "<=10" },
+        "second": { "pool": "capo", "opinionOfBoss": "<=25" },
+        "ear": { "pool": "crew", "rank": ["soldier", "associate"], "opinionOfBoss": ">=15" }
+      },
+      "text": "{ear.call} waits until the bartender goes in the back. \"Boss, I don't like saying it. {lead.call} and {second.call} had a table at the Shamrock last night, the back room, with two fellas from Philly I never seen. I heard {lead.first} say it plain: the old man's tired. Then they saw me and changed the subject to the Phillies.\"",
+      "choices": [
+        {
+          "label": "Put a guy on both of them, quiet",
+          "hint": "Two weeks of watching. If they smell it, they move faster.",
+          "odds": { "base": 55, "plus": [
+            { "if": { "bossTrait": "Paranoid" }, "add": 15, "why": "you were already watching" },
+            { "if": { "role": "lead", "trait": "Paranoid" }, "add": -15, "why": "he checks his mirrors" },
+            { "if": { "role": "ear", "trait": "Loyal-to-a-fault" }, "add": 10, "why": "your ear won't talk" }
+          ] },
+          "effects": [ { "money": -400 }, { "owes": { "who": "boss", "to": "ear" } } ],
+          "success": [ { "flag": "plot_watched" } ],
+          "failure": [ { "fear": { "of": "lead", "toward": "boss", "by": 10 } } ],
+          "result": "Your man stayed on them. He came back white as a sheet.",
+          "failText": "{lead.first} made the tail on Pacific and waved at him. They know you know.",
+          "next": [ { "scene": "plot_proof", "on": "success", "after": [2, 3] }, { "scene": "plot_they_move", "on": "failure", "after": [1, 2] } ]
+        },
+        {
+          "label": "Call them both in. Look them in the eye",
+          "hint": "Sometimes a man only needs to know you heard.",
+          "odds": { "deed": "sway", "actor": "boss", "target": "lead" },
+          "success": [ { "grievance": { "of": "lead", "toward": "boss", "by": -15 } }, { "opinion": { "of": "second", "toward": "boss", "by": 8, "why": "The boss gave us a chance to come clean" } }, { "flag": "plot_backed_down" } ],
+          "failure": [ { "fear": { "of": "lead", "toward": "boss", "by": 15 } }, { "grievance": { "of": "second", "toward": "boss", "by": 10 } } ],
+          "result": "{lead.first} kissed your cheek and swore on his mother. {second.first} couldn't look at you. For now it's over.",
+          "failText": "They both swore on their mothers. Neither of them meant it, and now they know their time is short.",
+          "next": { "scene": "plot_they_move", "on": "failure", "after": [1, 3] }
+        },
+        {
+          "label": "Old men talk. Let it go",
+          "hint": "Maybe it's nothing.",
+          "effects": [ { "opinion": { "of": "ear", "toward": "boss", "by": -6, "why": "I stuck my neck out and he shrugged" } } ],
+          "next": { "scene": "plot_they_move", "after": [4, 8] }
+        }
+      ]
+    },
+    {
+      "id": "plot_proof",
+      "title": "After the Feast",
+      "theme": "crew",
+      "followup": true,
+      "who": { "lead": { "pool": "capo" }, "second": { "pool": "capo" }, "ear": { "pool": "crew" } },
+      "text": "It's worse than talk. {lead.call} has two shooters from Philadelphia on his payroll and a date: the Sunday after the Feast, when you walk out of St. Ann's. {second.call} brings the car. Philly gets your rackets on Pacific and {lead.first} gets your chair. Your man has the license plate written on a matchbook.",
+      "choices": [
+        {
+          "label": "Do it right: two weeks, the right men, the same night for both",
+          "hint": "Proper planning. They won't see it coming.",
+          "effects": [ { "money": -2500 }, { "flag": "plot_planned" } ],
+          "result": "You give the job to men who have never missed. Nobody says a word for two weeks.",
+          "next": { "scene": "plot_the_night", "after": [2, 2] }
+        },
+        {
+          "label": "Move tonight, before they do",
+          "hint": "Fast is dangerous. One of them may slip away.",
+          "odds": { "base": 50, "plus": [
+            { "if": { "flag": "plot_watched" }, "add": 10, "why": "you know where they sleep" },
+            { "if": { "role": "lead", "trait": "Cowardly" }, "add": 10, "why": "he won't fight, he'll freeze" },
+            { "if": { "role": "lead", "trait": "Paranoid" }, "add": -15, "why": "he sleeps in a different bed every night" }
+          ] },
+          "effects": [ { "heat": { "local": 3 } } ],
+          "success": [ { "whack": { "role": "lead", "why": "Found in the trunk of his own car on the causeway." } }, { "whack": { "role": "second", "why": "Never came home from the Shamrock." } }, { "respect": 4 }, { "crew": { "by": 3, "why": "The boss took care of it himself" } } ],
+          "failure": [ { "whack": { "role": "second", "why": "Never came home from the Shamrock." } }, { "runs": { "role": "lead" } }, { "respect": -2 } ],
+          "result": "By morning both of them were gone. Nobody on Pacific Avenue says their names anymore.",
+          "failText": "{second.first} is gone. {lead.first} was out the bathroom window of the Shamrock in his socks. He's on the road to Philadelphia.",
+          "next": { "scene": "plot_escaped", "on": "failure", "after": [2, 4] }
+        },
+        {
+          "label": "Take it to Philadelphia first",
+          "hint": "If they bless it, nobody comes for you after. If they're in on it…",
+          "odds": { "base": 45, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 10, "why": "Philly likes you" } ] },
+          "effects": [ { "money": -1500 } ],
+          "success": [ { "whack": { "role": "lead", "why": "Philadelphia gave its blessing. He went for a ride and didn't come back." } }, { "runs": { "role": "second" } }, { "respect": 3 }, { "heat": { "family": -5 } } ],
+          "failure": [ { "heat": { "family": 6 } }, { "fear": { "of": "lead", "toward": "boss", "by": 20 } } ],
+          "result": "Philadelphia said: it's your house, clean it. {lead.first} went for a ride. {second.first} begged, and you let him leave town.",
+          "failText": "Philadelphia said they'd think about it. By the next morning {lead.first} knew you'd been to see them.",
+          "next": { "scene": "plot_they_move", "on": "failure", "after": [1, 2] }
+        },
+        {
+          "label": "Sit on it and watch your back",
+          "hint": "You'll be walking out of church in a few weeks.",
+          "next": { "scene": "plot_they_move", "after": [2, 4] }
+        }
+      ]
+    },
+    {
+      "id": "plot_the_night",
+      "title": "The night it ends",
+      "theme": "crew",
+      "followup": true,
+      "who": { "lead": { "pool": "capo" }, "second": { "pool": "capo" } },
+      "text": "Two weeks of watching. You know where {lead.call} eats on Thursdays and where {second.call} parks. The men are in place. The car is clean. All anybody needs is your nod.",
+      "choices": [
+        {
+          "label": "Give the nod",
+          "odds": { "base": 80, "plus": [
+            { "if": { "flag": "plot_watched" }, "add": 8, "why": "you've had eyes on them for a month" },
+            { "if": { "role": "lead", "trait": "Paranoid" }, "add": -10, "why": "he changed restaurants" }
+          ] },
+          "effects": [ { "heat": { "local": 2 } } ],
+          "success": [ { "whack": { "role": "lead", "why": "Shot at his usual table at the Thursday clam bar. Nobody saw anything." } }, { "whack": { "role": "second", "why": "Never got out of his car." } }, { "respect": 6 }, { "crew": { "by": 4, "why": "The boss doesn't miss" } }, { "unflag": "plot_planned" } ],
+          "failure": [ { "whack": { "role": "second", "why": "Never got out of his car." } }, { "runs": { "role": "lead" } }, { "respect": 1 } ],
+          "result": "Thursday night, two places, eleven minutes apart. In the morning the Daily Tide called it a robbery.",
+          "failText": "{second.first} is done. {lead.first} didn't come to the clam bar. Somebody tipped him.",
+          "next": { "scene": "plot_escaped", "on": "failure", "after": [2, 4] }
+        },
+        {
+          "label": "Call it off. Make peace instead",
+          "hint": "They'll know how close they came.",
+          "effects": [ { "fear": { "of": "lead", "toward": "boss", "by": 25 } }, { "fear": { "of": "second", "toward": "boss", "by": 25 } }, { "grievance": { "of": "lead", "toward": "boss", "by": 10 } }, { "unflag": "plot_planned" } ]
+        }
+      ]
+    },
+    {
+      "id": "plot_escaped",
+      "title": "He got away",
+      "theme": "crew",
+      "followup": true,
+      "who": { "lead": { "pool": "anyone" } },
+      "text": "Word from Philadelphia: {lead.call} is living over a bakery on Passyunk Avenue, telling anybody who'll listen what he knows about your books. Every week he breathes is a week the feds might find him first.",
+      "choices": [
+        {
+          "label": "Send two men to Passyunk Avenue",
+          "odds": { "base": 55, "plus": [ { "if": { "role": "lead", "trait": "Paranoid" }, "add": -15, "why": "he never sits with his back to the door" } ] },
+          "effects": [ { "money": -1500 }, { "heat": { "family": 3 } } ],
+          "success": [ { "whack": { "role": "lead", "why": "Found in the alley behind a bakery in South Philadelphia." } }, { "respect": 3 } ],
+          "failure": [ { "evidence": { "role": "lead", "by": 10 } }, { "heat": { "federal": 4 } } ],
+          "result": "It's finished. The bakery opened at six like always.",
+          "failText": "He saw them coming and went to the FBI's door instead. Now he has company."
+        },
+        {
+          "label": "Put a price on him and let the street do it",
+          "effects": [ { "money": -3000 }, { "flag": "price_on_lead" }, { "heat": { "local": 2 } } ]
+        },
+        {
+          "label": "Let him rot in Philadelphia",
+          "hint": "He's not your problem as long as he keeps his mouth shut.",
+          "effects": [ { "respect": -3 } ]
+        }
+      ]
+    },
+    {
+      "id": "plot_they_move",
+      "title": "A car outside St. Ann's",
+      "theme": "crew",
+      "followup": true,
+      "who": { "lead": { "pool": "capo" }, "second": { "pool": "capo" } },
+      "text": "Sunday. Mass lets out. Your driver squeezes your arm: a Buick with Pennsylvania plates is idling across from St. Ann's with the engine running, and {second.call}'s car is parked behind it. {lead.call} is nowhere, which is how you know.",
+      "choices": [
+        {
+          "label": "Back inside. Out through the rectory, and hit back tonight",
+          "hint": "Survive first. Then answer.",
+          "odds": { "base": 60, "plus": [ { "if": { "bossTrait": "Paranoid" }, "add": 15, "why": "you always know two ways out" } ] },
+          "effects": [ { "heat": { "local": 4 } } ],
+          "success": [ { "whack": { "role": "second", "why": "Shot in his car on Rio Grande Avenue the same night." } }, { "runs": { "role": "lead" } }, { "respect": 3 } ],
+          "failure": [ { "money": -4000 }, { "respect": -6 }, { "runs": { "role": "lead" } }, { "runs": { "role": "second" } }, { "crew": { "by": -4, "why": "They came for the boss at church and walked away" } } ],
+          "result": "The priest let you out the rectory door. By midnight {second.first} was dead and {lead.first} was running.",
+          "failText": "You got out the side door and lived. They got away clean, both of them, and took half the Pacific Avenue book with them."
+        },
+        {
+          "label": "Walk straight at the Buick",
+          "hint": "Let them see you aren't afraid. They might lose their nerve.",
+          "odds": { "base": 35, "plus": [ { "if": { "role": "lead", "trait": "Cowardly" }, "add": 25, "why": "his men won't shoot at a man walking at them" } ] },
+          "success": [ { "respect": 8 }, { "fear": { "of": "lead", "toward": "boss", "by": 30 } }, { "fear": { "of": "second", "toward": "boss", "by": 30 } }, { "crew": { "by": 5, "why": "The boss walked straight at them" } } ],
+          "failure": [ { "respect": -4 }, { "money": -2000 }, { "heat": { "local": 6 } } ],
+          "result": "The Buick pulled away from the curb before you got to it. Everybody on the church steps saw.",
+          "failText": "They fired and missed. Your driver took one in the shoulder. The police came, and so did the Daily Tide."
+        },
+        {
+          "label": "Stay inside until they leave",
+          "effects": [ { "respect": -5 }, { "fear": { "of": "lead", "toward": "boss", "by": -15 } } ]
+        }
+      ]
+    }
+  ]
+}

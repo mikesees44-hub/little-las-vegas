@@ -86,9 +86,13 @@ export type SEffect =
   | { owes: { who: string; to: string } }
   | { deed: { id: string; actor: string; target: string } }
   | { evidence: { role: string; by: number } }
-  | { jail: { role: string; weeks: number } };
+  | { jail: { role: string; weeks: number } }
+  /** The boss's own order on a man's life (only ever from a choice the player picks). */
+  | { whack: { role: string; why?: string } }
+  /** He gets away: runs off, out of the family (never the boss). */
+  | { runs: { role: string } };
 
-export const EFFECT_KEYS = ['money', 'respect', 'heat', 'opinion', 'fear', 'trust', 'grievance', 'crew', 'family', 'flag', 'unflag', 'tie', 'memory', 'wealth', 'hook', 'owes', 'deed', 'evidence', 'jail'] as const;
+export const EFFECT_KEYS = ['money', 'respect', 'heat', 'opinion', 'fear', 'trust', 'grievance', 'crew', 'family', 'flag', 'unflag', 'tie', 'memory', 'wealth', 'hook', 'owes', 'deed', 'evidence', 'jail', 'whack', 'runs'] as const;
 
 /** A condition for an odds bonus. */
 export interface PlusIf { role?: string; trait?: string; bossTrait?: string; flag?: string; opinionOfBoss?: Compare }

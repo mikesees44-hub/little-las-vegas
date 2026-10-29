@@ -279,6 +279,8 @@ function checkEffect(p: string, fx: unknown, roles: Set<string>, err: (p: string
     case 'deed': { const o = obj(['id', 'actor', 'target']); if (o) { if (!(String(o.id) in DEEDS)) err(`${p}.deed.id`, `"${String(o.id)}" is not a deed${didYouMean(String(o.id), Object.keys(DEEDS))}`); role('actor', o.actor); role('target', o.target); } break; }
     case 'evidence': { const o = obj(['role', 'by']); if (o) { role('role', o.role); num('by', o.by); } break; }
     case 'jail': { const o = obj(['role', 'weeks']); if (o) { role('role', o.role); num('weeks', o.weeks); if (o.role === 'boss') err(p, 'the boss cannot be jailed from a scene'); } break; }
+    case 'whack': { const o = obj(['role', 'why']); if (o) { role('role', o.role); if (o.role === 'boss') err(p, 'a scene cannot whack the boss'); } break; }
+    case 'runs': { const o = obj(['role']); if (o) { role('role', o.role); if (o.role === 'boss') err(p, 'the boss does not run from a scene'); } break; }
     default: err(p, `unknown effect "${k}"${didYouMean(k, EFFECT_KEYS)}`);
   }
 }
