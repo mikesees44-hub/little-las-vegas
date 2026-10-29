@@ -1,7 +1,7 @@
 import { inbox, type InboxItem, type InboxUi } from './inbox';
 import { envelopeMan, latestReport } from './tribute';
-import { briefing } from './briefing';
-import { weekCheckIns } from './checkins';
+import { briefing as briefing0 } from './briefing';
+import { weekCheckIns as weekCheckIns0 } from './checkins';
 import { DAY_NAMES, today } from './days';
 import { capoLevelOf, chosenOpt, docketOf, levelOf } from './lieutenants';
 import { displayName } from './characters';
@@ -21,6 +21,12 @@ import type { Choice, Effect, GameState } from './types';
  * chip ("a man's life", "$4,000 on the line"). Pure and deterministic: reads
  * the state and the UI's unsent bits, never writes.
  */
+
+/** Per-state memo of the heavy reads (the sit-down, the week's check-ins): one pass per state, however many items ask. */
+const reads = new WeakMap<GameState, { b?: ReturnType<typeof briefing0>; w?: ReturnType<typeof weekCheckIns0> }>();
+function memo1(s: GameState) { let r = reads.get(s); if (!r) { r = {}; reads.set(s, r); } return r; }
+const briefing = (s: GameState) => { const r = memo1(s); return (r.b ??= briefing0(s)); };
+const weekCheckIns = (s: GameState) => { const r = memo1(s); return (r.w ??= weekCheckIns0(s)); };
 
 export const DESK_CAP = 5;
 export const DESK_HARD_MAX = 8;
@@ -222,13 +228,13 @@ export function delegated(s: GameState, it: InboxItem): boolean {
   return it.tone !== 'red' && RULES.some((r) => { try { return r(s, it); } catch { return false; } });
 }
 
-const memo = new WeakMap<GameState, Map<string, DeskQueue>>();
+const queues = new WeakMap<GameState, Map<string, DeskQueue>>();
 
 /** The week's desk: what needs the boss, and what is handled for him. Pure, deterministic. */
 export function deskQueue(s: GameState, ui: DeskQueueUi = {}): DeskQueue {
   const k = JSON.stringify([ui.answers ?? {}, ui.briefSkip ?? [], ui.taken ?? []]);
-  let m = memo.get(s);
-  if (!m) { m = new Map(); memo.set(s, m); }
+  let m = queues.get(s);
+  if (!m) { m = new Map(); queues.set(s, m); }
   const hit = m.get(k);
   if (hit) return hit;
   const items = inbox(s, ui).map((it) => ({ ...it, stakes: stakesOf(s, it, ui) }));

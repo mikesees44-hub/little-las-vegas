@@ -269,7 +269,11 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             <div className="flex">
               <button className={`btn-primary h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-primary h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
-                {(close) => <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>}
+                {(close) => <>
+                  {onEndDay && <button className={menuItem} onClick={() => { close(); onEndDay(); }} data-testid="skip-morning">Skip to the next morning</button>}
+                  <button className={menuItem} onClick={() => { close(); onAdvance('week'); }} data-testid="skip-week">Skip to next week</button>
+                  <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>
+                </>}
               </Popover>
             </div>
             <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />

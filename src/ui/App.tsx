@@ -15,6 +15,7 @@ import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
 import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Speed } from './clock';
+import { autoPauses, DEFAULT_SPEED, firstPause, redKeys, speedKey } from './clockPolicy';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
@@ -258,7 +259,13 @@ export function App({ startOn = 'title' }: AppProps) {
   useEffect(() => {
     if (!menu) saveSlot(slot, s);
   }, [s, menu, slot]);
-  const [speed, setSpeed] = useState<Speed>(0);
+  // The clock runs by default (CK style; clockPolicy.ts): a new or loaded game starts moving.
+  const [speed, setSpeed] = useState<Speed>(() => (timeMode() === 'clock' ? DEFAULT_SPEED : 0));
+  // Red Desk items the clock already stopped for (it stops once per item).
+  const ackedRef = useRef<Set<string>>(new Set());
+  const turningRef = useRef(false);
+  const cardOpenRef = useRef(false);
+  const ackNowRef = useRef<() => void>(() => {});
   // The running clock's day: the evening scenes that just happened, the day window.
   const [evenings, setEvenings] = useState<{ cue: EveningCue; s: GameState }[]>([]);
   const [dayWin, setDayWin] = useState<number | undefined>();
@@ -345,6 +352,7 @@ export function App({ startOn = 'title' }: AppProps) {
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
       if (quiet) {
+        clockAutoPause(s, r.state);
         setTicker(tickerLine(r.report));
         const warn = newWarnings(s, r.state);
         const heads = weekHeadlines(s, r.state).filter((h) => pausesOn(h.kind === 'hit' ? 'pauseOnViolence' : h.kind === 'arrest' ? 'pauseOnArrest' : 'pauseOnLife'));
@@ -582,7 +590,8 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (l.tab) go(l.tab);
   }
   const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
-  const busy = cityOpen || vacOpen || goTo !== undefined || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!menu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || cues.length > 0 || reels.length > 0;
+  // Only a decision card holds the clock (clockPolicy.ts): the menus, sheets, drawers and the office do not.
+  const busy = !!menu || !!current || !!ready || !!sitdown || !!scene || !!urgent || !!confirm || dayWin !== undefined || cues.length > 0 || reels.length > 0 || night.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
     const d = daysOf(s).day;
@@ -591,11 +600,32 @@ export function App({ startOn = 'title' }: AppProps) {
       setEvenings((x) => [...x.slice(-1), { cue: { week: s.week, day: d, roundId: id }, s }]);
       if (pausesOn('pauseOnEvening')) { setSpeed(0); setClockNote('Paused: your evening'); }
     }
-    if (d >= 6) { run('week', answers, true); return; }
+    if (d >= 6) {
+      // The week turns without freezing the clock's controls: say so, let the screen paint, then turn it.
+      if (turningRef.current) return;
+      turningRef.current = true;
+      setClockNote('The week turns…');
+      setTimeout(() => { try { run('week', answers, true); } finally { turningRef.current = false; } }, 16);
+      return;
+    }
     const next = tickDay(s);
     setS(next);
+    clockAutoPause(s, next);
     const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
     if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
+  }
+  /** The clock's auto-pause (clockPolicy.ts): red on the Desk, an urgent meeting, war, a death in the house, a plot. */
+  function clockAutoPause(prev: GameState, next: GameState) {
+    const ui = { answers, briefSkip };
+    const w = firstPause(autoPauses(prev, next, ackedRef.current, ui), (k) => pausesOn(k));
+    ackedRef.current = new Set([...ackedRef.current, ...redKeys(next, ui)]);
+    if (w) { setSpeed(0); setClockNote(`Paused: ${w.text}`); }
+  }
+  /** Play / a speed: what is red on the Desk now has been seen. */
+  function playAt(v: Speed) {
+    if (v > 0) ackedRef.current = new Set([...ackedRef.current, ...redKeys(s, { answers, briefSkip })]);
+    setSpeed(v);
+    setClockNote(undefined);
   }
   function endDay() {
     setEndDayDue(false);
@@ -607,6 +637,8 @@ export function App({ startOn = 'title' }: AppProps) {
     endDay();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [endDayDue, s, confirm]);
+  cardOpenRef.current = busy;
+  ackNowRef.current = () => { ackedRef.current = new Set([...ackedRef.current, ...redKeys(s, { answers, briefSkip })]); };
   useClock({
     speed, s, busy, unanswered: getSettings().pauseOnDecision ? unanswered.length : 0,
     step: stepDay,
@@ -638,9 +670,17 @@ export function App({ startOn = 'title' }: AppProps) {
       if (e.code === 'Space') {
         if (timeMode() !== 'clock' || !clockSpaceAllowed(e)) return;
         e.preventDefault();
-        setSpeed((v) => (v === 0 ? 2 : 0));
+        setSpeed((v) => {
+          if (v === 0) ackNowRef.current();
+          return v === 0 ? DEFAULT_SPEED : 0;
+        });
         setClockNote(undefined);
         return;
+      }
+      // 1-5: the clock's speed, only while no decision card is open (inside one they pick a choice).
+      if (timeMode() === 'clock' && !shortcutBlocked(e)) {
+        const sp = speedKey(e.key, cardOpenRef.current);
+        if (sp) { e.preventDefault(); setSpeed(sp); setClockNote(undefined); return; }
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !menu) { e.preventDefault(); setFinding(true); return; }
       if (shortcutBlocked(e)) return;
@@ -807,7 +847,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <EmpireHost s={s} setS={setS}>
       <Shell
         top={(<>
-          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={(v) => { setSpeed(v); setClockNote(undefined); }} note={clockNote}
+          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={playAt} note={clockNote}
             onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
             urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
