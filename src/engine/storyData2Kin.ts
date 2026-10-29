@@ -273,7 +273,7 @@ At the font, Father Dom asks you, "Do you reject Satan, and all his works, and a
       {
         text: `"Quit the force. I'll set you up with something clean: the hardware store on Rio Grande."`,
         gate: { money: 2000 },
-        effects: [money(-2000), biz('add', 'stand', 'causeway'), op('cop', 15), op('priest', 10), famOp(6), then('p2_cz_4', 30, 60, 1)],
+        effects: [money(-2000), biz('add', 'stand', 'causeway', undefined, 'Rio Grande Hardware'), op('cop', 15), op('priest', 10), famOp(6), then('p2_cz_4', 30, 60, 1)],
         preview: `Richie sells paint and screen doors. He's the happiest man in the family, and the State Police lose their best way in.`,
       },
       {

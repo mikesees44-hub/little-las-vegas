@@ -521,7 +521,7 @@ export function mapFx(s: GameState, e: PackEvent, b: Bound, fx: Fx, carried: Rec
     case 'business': {
       if (fx.op === 'add') {
         const d = !fx.district || fx.district === '{district}' ? b.district : fx.district;
-        return [{ type: 'addBusiness', business: newBusiness(s, fx.kind, d) }];
+        return [{ type: 'addBusiness', business: newBusiness(s, fx.kind, d, fx.name) }];
       }
       const biz = s.businesses.find((x) => x.owner === 'player' && x.kind === fx.kind);
       return biz ? [{ type: 'closeBusiness', businessId: biz.id, weeks: fx.weeks ?? 4 }] : [];
