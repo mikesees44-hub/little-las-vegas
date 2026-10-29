@@ -135,6 +135,7 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   org: { home: 'org' },
   life: { home: 'life' },
   chain: { panel: 'borgata', section: 'chain' },
+  rise: { panel: 'borgata', section: 'rise' },
   rackets: { home: 'money', key: 'holdings.hub' },
 };
 

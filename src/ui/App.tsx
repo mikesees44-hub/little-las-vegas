@@ -83,6 +83,7 @@ import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
+import { RiseColumn } from './borgata/TheRise';
 import { readyReview } from '../engine/desk';
 import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
 import { UrgentMeeting } from './components/UrgentMeeting';
@@ -758,7 +759,7 @@ export function App({ startOn = 'title' }: AppProps) {
     : undefined;
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
@@ -789,7 +790,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {!s.gameOver && <UnderbossSuggests s={s} compact />}
       {!s.gameOver && <SitDownCard s={s} b={briefForRail} onOpen={() => setSitdown('council')} onRounds={() => setSitdown('rounds')} />}
       <ThisWeekCard s={s} onReport={() => s.lastReport && setReports([s.lastReport])} hideAdvice />
-      {!s.gameOver && <GoalsCard goals={goals} onShow={showGoal} />}
+      {!s.gameOver && home !== 'desk' && <GoalsCard goals={goals} onShow={showGoal} />}
       <div className="2xl:hidden"><StreetFeedCard s={s} /></div>
     </>
   );

@@ -35,6 +35,7 @@ import { Succession } from '../house/Succession';
 import { ShadowCourt } from '../power/ShadowCourt';
 import { CouncilSeats } from '../borgata/CouncilSeats';
 import { ChainOfCommandPlace } from '../lieutenants/Lieutenants';
+import { TheRise } from '../borgata/TheRise';
 import { CaposSection, MenRoster } from '../borgata/Capos';
 import { MyMen } from '../borgata/MyMen';
 import { ProgressBoard } from '../borgata/CrewXp';
@@ -147,6 +148,7 @@ export const PANELS: PanelDef[] = [
     id: 'borgata', icon: '⚑', label: 'The Borgata', short: 'Borgata', key: 'b',
     blurb: 'Your men: the org chart, the council, the capos, who gets made.',
     sections: [
+      { id: 'rise', label: 'The Rise', wide: true, blurb: 'Grow the family: the ladder, your capos front and center (territory, take, mood, ambition, their men), every man\'s level, focus and newest perk, and who is ready for more.', render: (s) => <TheRise s={s} /> },
       { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
       { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and your cut goes in on its own: the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },
       { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
