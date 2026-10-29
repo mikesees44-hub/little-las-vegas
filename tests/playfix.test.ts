@@ -148,3 +148,18 @@ describe('Playtest fixes: Ready to advance?', () => {
     expect(r.costs.familyAfter).toBe(Math.round(s.money - r.costs.orders - r.costs.bills));
   });
 });
+
+describe('Playtest fixes: answered is answered', () => {
+  it('an answered decision is no open thread, and a sit-down item already ordered leaves Needs you', async () => {
+    const { plansInMotion } = await import('../src/ui/plans/plans');
+    const s = newGameWith(SEED, 'olddon');
+    const ev = s.pendingEvents[0];
+    const rowsFor = (answers: Record<string, string>) => plansInMotion(s, { orders: [], answers }).flatMap((g) => g.rows).filter((r) => r.key.includes(ev.iid));
+    expect(rowsFor({}).some((r) => r.acts.some((a) => a.label === 'Answer'))).toBe(true);
+    expect(rowsFor({ [ev.iid]: ev.choices[0].id }).some((r) => r.acts.some((a) => a.label === 'Answer'))).toBe(false);
+    const item = briefing(s).items.find((i) => i.options.some((o) => o.action) && inbox(s).some((x) => x.ref.brief === i.id));
+    expect(item).toBeDefined();
+    const o = item!.options.find((x) => x.action)!;
+    expect(inbox(s, { orders: [o.action!] }).some((x) => x.ref.brief === item!.id)).toBe(false);
+  });
+});

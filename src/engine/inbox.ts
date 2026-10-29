@@ -4,7 +4,7 @@ import { urgentMeetings } from './threats';
 import { actTitle, docketOf, ifSilent, pendingAsks } from './lieutenants';
 import { openAsks, TRADES, TROUBLE_WORD, troubled } from './placeAsks';
 import { today } from './days';
-import type { GameState } from './types';
+import type { GameState, PlayerAction } from './types';
 import type { Stakes } from './attention';
 
 /**
@@ -42,6 +42,8 @@ export interface InboxItem {
 export interface InboxUi {
   answers?: Record<string, string>;
   briefSkip?: readonly string[];
+  /** This week's orders (a sit-down item already ordered is answered). */
+  orders?: readonly PlayerAction[];
 }
 
 const TONE_ORDER: Record<InboxTone, number> = { red: 0, amber: 1, gold: 2 };
@@ -61,7 +63,7 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
   }
   let asks: ReturnType<typeof pendingAsks> = [];
   try { asks = pendingAsks(s); } catch { /* nobody seated yet */ }
-  const door = officeVisitors(s, { answers, briefSkip: ui.briefSkip });
+  const door = officeVisitors(s, { answers, briefSkip: ui.briefSkip, orders: ui.orders });
   out.push(...door.map(fromVisitor));
   const atDoor = new Set(door.map((v) => v.key));
   let envelope = false;

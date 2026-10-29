@@ -45,7 +45,12 @@ export interface OfficeUi {
   later?: readonly string[];
   /** Desk items the boss took back from "Handled for you" (attention.ts). */
   taken?: readonly string[];
+  /** This week's orders: a sit-down item he already gave an order on is answered. */
+  orders?: readonly PlayerAction[];
 }
+
+/** The same order, whoever pays for it. */
+const sameOrd = (a: PlayerAction, b: PlayerAction) => JSON.stringify({ ...a, fund: undefined }) === JSON.stringify({ ...b, fund: undefined });
 
 /* ------------------------------------------------------------------ */
 /* The chair across the desk                                           */
@@ -210,6 +215,7 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
   } catch { /* nobody seated yet */ }
   for (const it of b.items) {
     if (ui.briefSkip?.includes(it.id) || proposed.has(it.id)) continue;
+    if (ui.orders?.length && it.options.some((o) => o.action && ui.orders!.some((x) => sameOrd(x, o.action!)))) continue;
     const rec = it.options.find((o) => o.id === it.recommended);
     const who = it.charId ? s.characters[it.charId] : it.role === 'underboss' || it.role === 'consigliere' ? holder(s, it.role) : undefined;
     out.push({

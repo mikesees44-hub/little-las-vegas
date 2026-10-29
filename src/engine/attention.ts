@@ -244,7 +244,7 @@ const queues = new WeakMap<GameState, Map<string, DeskQueue>>();
 
 /** The week's desk: what needs the boss, and what is handled for him. Pure, deterministic. */
 export function deskQueue(s: GameState, ui: DeskQueueUi = {}): DeskQueue {
-  const k = JSON.stringify([ui.answers ?? {}, ui.briefSkip ?? [], ui.taken ?? []]);
+  const k = JSON.stringify([ui.answers ?? {}, ui.briefSkip ?? [], ui.taken ?? [], ui.orders ?? []]);
   let m = queues.get(s);
   if (!m) { m = new Map(); queues.set(s, m); }
   const hit = m.get(k);

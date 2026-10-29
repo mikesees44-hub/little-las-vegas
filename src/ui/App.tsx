@@ -728,7 +728,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (h) badges[h] = (badges[h] ?? 0) + 1;
   }
   // The Desk's badge is the one count (attention.ts): what needs you.
-  { const n = deskBadge(s, { answers, briefSkip, taken: taken.week === s.week ? taken.keys : [] }).n; if (n) badges.desk = n; else delete badges.desk; }
+  { const n = deskBadge(s, { answers, briefSkip, orders, taken: taken.week === s.week ? taken.keys : [] }).n; if (n) badges.desk = n; else delete badges.desk; }
   const morningOpen = dayCheckIns(s, daysOf(s).day).filter((c) => c.problem && !daysOf(s).answers[c.key] && !daysOf(s).skipped.includes(c.day));
   const homeDoNowAll = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
   // This Week's front page is the Boss's Desk, which lists the decisions, the morning and the sit-down: said once.
@@ -785,9 +785,9 @@ export function App({ startOn = 'title' }: AppProps) {
     lieutenants: () => setLtOpen(true),
   };
   // The one count (engine/inbox.ts): Waiting on you, the desk and the door all say this number.
-  const box = deskBadge(s, { answers, briefSkip, taken: takenKeys });
+  const box = deskBadge(s, { answers, briefSkip, orders, taken: takenKeys });
   const laterKeys = later.week === s.week ? later.keys : [];
-  const officeUi = { answers, briefSkip, later: laterKeys, taken: takenKeys };
+  const officeUi = { answers, briefSkip, orders, later: laterKeys, taken: takenKeys };
   function officeDelegate(op: DelegateOp) {
     if (op.kind === 'answer') { setAnswers((a) => ({ ...a, [op.iid]: op.choiceId })); noteAnswer(op.iid, op.choiceId); }
     else if (op.kind === 'checkin') act((x) => answerCheckIn(x, op.key, op.answer), 'Answered a capo\'s check-in');

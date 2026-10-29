@@ -5,7 +5,7 @@ import {
 } from '../../engine/journal';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { plansInMotion, type PlanRow } from '../plans/plans';
-import { usePlanDo } from '../plans/context';
+import { usePlanDo, usePlansApi } from '../plans/context';
 import { useOrders } from '../components/Orders';
 import { useSheet } from '../components/People';
 import { useShell } from '../shell/context';
@@ -150,11 +150,13 @@ function OldWeeks({ s, old }: { s: GameState; old: JWeek[] }) {
 /** Things still in motion, each with the latest word on it from the Book. */
 function OpenThreads({ s }: { s: GameState }) {
   const { orders } = useOrders();
+  const api = usePlansApi();
   const doIt = usePlanDo(s);
   const sheet = useSheet();
+  // The boss's answers this week (they reach the state when the week turns): an answered thread is not "Answer" any more.
   const rows: PlanRow[] = useMemo(() => {
-    try { return plansInMotion(s, { orders }).flatMap((g) => g.rows); } catch { return []; }
-  }, [s, orders]);
+    try { return plansInMotion(s, { orders, answers: api.answers, briefSkip: api.briefSkip }).flatMap((g) => g.rows); } catch { return []; }
+  }, [s, orders, api.answers, api.briefSkip]);
   const all = useMemo(() => bookEntries(s), [s]);
   const [all3, setAll3] = useState(false);
   if (!rows.length) return null;
