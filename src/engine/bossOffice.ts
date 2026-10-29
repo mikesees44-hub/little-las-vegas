@@ -1,6 +1,6 @@
 import { todaysHeadline } from './paper';
 import { agingOf, isBlind, lvl } from './aging';
-import { pendingAsks } from './lieutenants';
+import { docketOf, ltView, pendingAsks } from './lieutenants';
 import { briefing } from './briefing';
 import { datingPhone } from './dating';
 import { capos, displayName, isFree, player } from './characters';
@@ -176,13 +176,15 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
   for (const ev of s.pendingEvents) {
     if (answers[ev.iid] || ev.defId === 'tribute_audience') continue;
     const petition = ev.defId.startsWith('office_');
-    const who = personIn(s, ev.actors);
+    // The boss's own matter (his birthday) is his, not the first man in the room's.
+    const own = !!ev.meta?.aboutBoss;
+    const who = own ? s.characters[s.playerId] : personIn(s, ev.actors);
     if (!who && !petition) continue;
     const def = ev.choices.find((c) => c.id === ev.defaultChoiceId && !c.disabledReason);
     out.push({
       key: `ev:${ev.iid}`, kind: petition ? 'petition' : 'decision',
-      name: who ? displayName(who) : 'Somebody from town', charId: who?.id,
-      why: `${ev.title}. ${clip(ev.text)}`, urgent: ev.mandatory,
+      name: own ? ev.title : who ? displayName(who) : 'Somebody from town', charId: who?.id,
+      why: own ? clip(ev.text) : `${ev.title}. ${clip(ev.text)}`, urgent: ev.mandatory,
       ref: { event: ev.iid },
       delegate: def && by && seat.charId !== who?.id ? { label: `Ask ${by} to handle it`, does: def.label, op: { kind: 'answer', iid: ev.iid, choiceId: def.id } } : def && by ? { label: `Let ${by} handle it`, does: def.label, op: { kind: 'answer', iid: ev.iid, choiceId: def.id } } : undefined,
     });
@@ -201,7 +203,11 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
   const b = briefing(s);
   // A subject the underboss or the consigliere has already put to the boss as a proposal (lieutenants.ts) is said once: the proposal.
   let proposed = new Set<string>();
-  try { proposed = new Set(pendingAsks(s).map((a) => a.id.slice(a.id.indexOf(':') + 1))); } catch { /* nobody seated yet */ }
+  // Once the boss has given his word on the proposal (approved, vetoed, changed), the subject is settled: it does not come back as a sit-down item.
+  try {
+    const calls = ltView(s).calls;
+    proposed = new Set([...pendingAsks(s), ...docketOf(s).filter((a) => calls[a.id])].map((a) => a.id.slice(a.id.indexOf(':') + 1)));
+  } catch { /* nobody seated yet */ }
   for (const it of b.items) {
     if (ui.briefSkip?.includes(it.id) || proposed.has(it.id)) continue;
     const rec = it.options.find((o) => o.id === it.recommended);
