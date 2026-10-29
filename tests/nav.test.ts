@@ -167,3 +167,12 @@ describe('the drawer renders every home', () => {
     }
   });
 });
+
+describe('the chain of command is a place', () => {
+  it('borgata.chain is placed once, as a view of the council', () => {
+    const items = NAV_ITEMS.filter((it) => it.keys.includes('borgata.chain'));
+    expect(items.length).toBe(1);
+    expect(items[0].keys[0]).toBe('borgata.council');
+    expect(resolveRoute('borgata.chain').key).toBe('borgata.chain');
+  });
+});

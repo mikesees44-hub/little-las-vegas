@@ -34,6 +34,7 @@ import { RivalBoard } from './sections/RivalBoard';
 import { Succession } from '../house/Succession';
 import { ShadowCourt } from '../power/ShadowCourt';
 import { CouncilSeats } from '../borgata/CouncilSeats';
+import { ChainOfCommandPlace } from '../lieutenants/Lieutenants';
 import { CaposSection, MenRoster } from '../borgata/Capos';
 import { MyMen } from '../borgata/MyMen';
 import { ProgressBoard } from '../borgata/CrewXp';
@@ -150,6 +151,7 @@ export const PANELS: PanelDef[] = [
       { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and your cut goes in on its own: the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },
       { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
+      { id: 'chain', label: 'Who handles what', blurb: 'The chain of command: what your underboss, your consigliere and each capo handle on their own, and what waits for you. One tap: Hands-on, Balanced, Let them run it.', render: (s) => <ChainOfCommandPlace s={s} /> },
       { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
       { id: 'mymen', label: 'My Men', wide: true, blurb: 'Take care of your men: their money, their safety, their back. The whole crew watches how you treat each one.', render: (s) => <MyMen s={s} /> },
       { id: 'progress', label: 'Coming up', blurb: 'Every man\'s level, title and specialty: who is ready to be made or to run a crew, who is waiting on your word, who feels slighted.', render: (s) => <ProgressBoard s={s} /> },

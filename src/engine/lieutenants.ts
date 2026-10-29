@@ -272,6 +272,21 @@ export function setCapoLevel(s: GameState, capoId: string, level: LtLevel): Game
   return withLt(s, (lt) => { lt.capoLevel = { ...(lt.capoLevel ?? {}), [capoId]: level }; });
 }
 
+/**
+ * Capo-level rules (mined from the leaders branch's offices: every capo holds the office of his
+ * district): what the chain of command would advise for one capo. A capo loyal and able runs his
+ * territory; one who is sore at the boss, courted by another family, or green gets asked first.
+ */
+export function capoAdvice(s: GameState, capoId: string): { level: LtLevel; why: string } {
+  const k = s.characters[capoId];
+  if (!k?.alive) return { level: 'handle', why: '' };
+  const loy = opinion(s, k.id, s.playerId);
+  if (k.courtedBy) return { level: 'ask', why: 'another family is courting him' };
+  if (loy <= -15) return { level: 'ask', why: `he thinks ${loy} of you` };
+  if (k.attributes.leadership < 35) return { level: 'ask', why: 'green: his leadership is thin' };
+  return { level: 'handle', why: loy >= 30 ? 'loyal and able' : 'able enough' };
+}
+
 /** Big steps on "Handle it" go through without asking. */
 export function bigStepsFree(s: GameState): boolean {
   return !!s.briefing?.lt?.free;

@@ -92,7 +92,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   family: [
     { title: 'Your crew', items: [
       { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen', 'borgata.protect'], icon: '⚑', label: 'Your men', sub: 'The chart, the capos and their men, taking care of each one, and who guards whom.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them', 'Guards & inquiries'] },
-      { keys: ['borgata.council'], icon: '♜', label: 'The council', sub: 'Five seats, one job each a week. Fill a seat, give it a job.' },
+      { keys: ['borgata.council', 'borgata.chain'], icon: '♜', label: 'Council & chain of command', sub: 'Five seats, one job each; and who handles what on their own: the underboss, the consigliere, each capo.', views: ['The seats', 'Who handles what'] },
       { keys: ['borgata.membership', 'borgata.progress'], icon: '✋', label: 'Getting made & coming up', sub: 'Philadelphia\'s books, the young men who want in, and every man\'s level and specialty: who is ready for more.', views: ['Getting made', 'Coming up'] },
       { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
       { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
