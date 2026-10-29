@@ -17,7 +17,9 @@ import { neglectWeek } from '../src/engine/neglect';
 import {
   actLocked, budgetOf, choose, DOMAIN_IDS, DOMAINS, docketOf, ensureLt, lieutenantsWeek, ltCover, ltDecide, ltProfile, ltView,
   morningReport, pendingAsks, planDocket, setBudget, setLevel, type LtAct, type LtCand, type LtDomain,
+  answerOffer, applyPreset, capoLevelOf, levelOf, modeOf, OLD_DEFAULTS, PRESETS, presetOf, type LtPreset,
 } from '../src/engine/lieutenants';
+import { deskQueue } from '../src/engine/attention';
 import { MorningReports, WhoHandlesWhat } from '../src/ui/lieutenants/Lieutenants';
 import { plansInMotion } from '../src/ui/plans/plans';
 import type { Character, GameState, PlayerAction } from '../src/engine/types';
@@ -85,7 +87,8 @@ describe('the docket: real jobs, by domain and level', () => {
     const self = setLevel(s0, d, 'self');
     expect(planDocket(self).some((a) => a.domain === d)).toBe(false);
     const handle = setLevel(s0, d, 'handle');
-    for (const a of planDocket(handle).filter((x) => x.domain === d)) expect(a.mode).toBe(a.needsOk ? 'ask' : 'handle');
+    // On "Handle it" a big step still waits for the boss's word (unless he lets them run it).
+    for (const a of planDocket(handle).filter((x) => x.domain === d)) expect(a.mode).toBe(a.needsOk || a.waits ? 'ask' : 'handle');
     const ask = setLevel(s0, d, 'ask');
     for (const a of planDocket(ask).filter((x) => x.domain === d)) expect(a.mode).toBe('ask');
     // Everything off: no jobs at all.
@@ -94,9 +97,60 @@ describe('the docket: real jobs, by domain and level', () => {
     expect(planDocket(none)).toEqual([]);
   });
 
-  it('defaults: most routine domains are "Ask me first"', () => {
-    const asks = DOMAIN_IDS.filter((d) => DOMAINS[d].def === 'ask').length;
-    expect(asks).toBeGreaterThan(DOMAIN_IDS.length / 2);
+  it('defaults: routine domains are "Handle it"; law, the families and the Table ask; big steps still wait', () => {
+    expect(DOMAIN_IDS.filter((d) => DOMAINS[d].def === 'ask').sort()).toEqual(['families', 'law', 'table']);
+    for (const d of ['crews', 'collections', 'rackets', 'street', 'pad', 'press', 'mediation', 'paperwork'] as LtDomain[]) expect(DOMAINS[d].def, d).toBe('handle');
+    // A big step on a handled domain is proposed, not done.
+    for (const s of weeks('lt-a')) for (const a of planDocket(s)) if (a.waits) expect(modeOf(s, a), a.id).toBe('ask');
+    // And never done on silence.
+    const big: LtAct = { id: 'underboss:test', seat: 'underboss', byId: holder(weeks('lt-a')[1], 'underboss')?.id ?? '', domain: 'crews', topic: 'test', line: '', options: [], pick: 'x', best: 'x', why: '', day: 0, mode: 'ask', waits: true, hours: 1, priority: 1 };
+    expect(modeOf(weeks('lt-a')[1], big)).toBe('ask');
+  });
+
+  it('an old save keeps its old levels (and gets the offer); a new game has the new defaults', () => {
+    const s = clone(weeks('lt-a')[2]);
+    s.schema = 1;
+    const up = upgradeSave(s);
+    for (const d of DOMAIN_IDS) expect(levelOf(up, d), d).toBe(OLD_DEFAULTS[d]);
+    expect(ltView(up).offer).toBe(1);
+    expect(ltView(up).free).toBe(true);
+    expect(capoLevelOf(up, 'anyone')).toBe('ask');
+    // "Let him": the new defaults; "Keep it": as it was.
+    const took = answerOffer(up, true);
+    for (const d of DOMAIN_IDS) expect(levelOf(took, d), d).toBe(DOMAINS[d].def);
+    expect(ltView(took).offer).toBeUndefined();
+    const kept = answerOffer(up, false);
+    for (const d of DOMAIN_IDS) expect(levelOf(kept, d), d).toBe(OLD_DEFAULTS[d]);
+    expect(ltView(kept).offer).toBeUndefined();
+    // A current save loads as it was written.
+    const cur = clone(weeks('lt-a')[2]);
+    expect(JSON.stringify(upgradeSave(clone(cur)).briefing?.lt ?? null)).toBe(JSON.stringify(cur.briefing?.lt ?? null));
+  });
+
+  it('presets set exactly the documented levels', () => {
+    const s = weeks('lt-a')[1];
+    for (const p of Object.keys(PRESETS) as LtPreset[]) {
+      const t = applyPreset(s, p);
+      for (const d of DOMAIN_IDS) expect(levelOf(t, d), `${p} ${d}`).toBe(PRESETS[p].levels[d]);
+      expect(capoLevelOf(t, 'anyone')).toBe(PRESETS[p].capos);
+      expect(ltView(t).free ?? false).toBe(PRESETS[p].free);
+      expect(presetOf(t)).toBe(p);
+    }
+    expect(PRESETS.hands.levels.crews).toBe('ask');
+    expect(PRESETS.run.levels.law).toBe('handle');
+    expect(presetOf(s)).toBe('balanced');
+  });
+
+  it('capo mornings at Handle it never reach Needs you; urgent ones do; at Ask me first they compete', () => {
+    for (const s of weeks('lt-m', 4)) {
+      const q = deskQueue(s);
+      for (const n of q.needs) if (n.kind === 'morning') expect(n.tone === 'red' || n.why.length > 0).toBe(true);
+      const routine = q.handled.filter((h) => h.item.kind === 'morning' && h.item.tone !== 'red');
+      for (const h of routine) expect(h.delegated).toBe(true);
+      expect(q.needs.some((n) => n.kind === 'morning' && n.tone !== 'red')).toBe(false);
+      const ask = applyPreset(s, 'hands');
+      expect(deskQueue(ask).handled.some((h) => h.item.kind === 'morning' && h.delegated)).toBe(false);
+    }
   });
 
   it('an empty seat plans nothing and says so', () => {
@@ -237,7 +291,7 @@ describe('their traits and agendas change their picks', () => {
 });
 
 describe('a big step and a favor', () => {
-  it('asked about a big step and never answered, he waits; on "Handle it" he goes ahead', () => {
+  it('asked about a big step and never answered, he waits (on "Handle it" too); with "Let them run it" he goes ahead', () => {
     let found: { s: GameState; a: LtAct } | undefined;
     for (const seed of ['lt-a', 'lt-b', 'lt-c']) for (const s of weeks(seed)) {
       const a = docketOf(s).find((x) => x.waits && !x.needsOk);
@@ -248,7 +302,9 @@ describe('a big step and a favor', () => {
     const quiet = advanceWeek(setLevel(s, a.domain, 'ask'), {});
     expect(ltView(quiet.state).log.find((e) => e.actId === a.id && e.week === s.week)?.text).toMatch(/held off/);
     const handled = advanceWeek(setLevel(s, a.domain, 'handle'), {});
-    expect(ltView(handled.state).log.find((e) => e.actId === a.id && e.week === s.week)?.text).not.toMatch(/held off/);
+    expect(ltView(handled.state).log.find((e) => e.actId === a.id && e.week === s.week)?.text).toMatch(/held off/);
+    const run = advanceWeek(applyPreset(s, 'run'), {});
+    expect(ltView(run.state).log.find((e) => e.actId === a.id && e.week === s.week)?.text).not.toMatch(/held off/);
   });
 
   it('a dinner he gives on his own is his: the man owes him, and an ambitious underboss keeps the credit', () => {

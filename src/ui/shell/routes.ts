@@ -11,15 +11,25 @@ export type PanelId = 'you' | 'house' | 'borgata' | 'holdings' | 'ops' | 'diplom
  * bottom bar. A drawer section keeps its registry key ("holdings.money");
  * nav.ts says which home it lives in.
  */
-export type HomeId = 'week' | 'money' | 'biz' | 'family' | 'town' | 'you';
-export const HOME_IDS: HomeId[] = ['week', 'money', 'biz', 'family', 'town', 'you'];
+export type HomeId = 'desk' | 'org' | 'money' | 'map' | 'rivals' | 'life';
+export const HOME_IDS: HomeId[] = ['desk', 'org', 'money', 'map', 'rivals', 'life'];
+
+/** The homes before the streamline (This Week, Money, Rackets, The Family, The Town, You): every one still lands. */
+export type LegacyHomeId = 'week' | 'biz' | 'family' | 'town' | 'you';
+export const LEGACY_HOME: Record<LegacyHomeId, HomeId> = { week: 'desk', biz: 'money', family: 'org', town: 'map', you: 'life' };
+/** A home id, old or new, as the home it is now. */
+export function homeId(h: string | undefined): HomeId | undefined {
+  if (!h) return undefined;
+  if ((HOME_IDS as string[]).includes(h)) return h as HomeId;
+  return LEGACY_HOME[h as LegacyHomeId];
+}
 
 export interface Route {
   /** A registry panel (with `section`): the old way to point at a section, still valid everywhere. */
   panel?: PanelId;
   section?: string;
-  /** A home (nav.ts); with `key` ("holdings.money" or "nav.settings") one section of it, else its front page. */
-  home?: HomeId;
+  /** A home (nav.ts); with `key` ("holdings.money" or "nav.settings") one section of it, else its front page. Old home ids still work. */
+  home?: HomeId | LegacyHomeId;
   key?: string;
 }
 
@@ -116,12 +126,17 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   walk: { panel: 'you', section: 'walk' },
   hood: { panel: 'town', section: 'hoods' },
   plan: { panel: 'ops', section: 'plan' },
-  settings: { home: 'you', key: 'nav.settings' },
-  help: { home: 'you', key: 'nav.help' },
-  // The six homes by name.
-  week: { home: 'week' },
-  biz: { home: 'biz' },
-  rackets: { home: 'biz', key: 'holdings.hub' },
+  settings: { home: 'life', key: 'nav.settings' },
+  help: { home: 'life', key: 'nav.help' },
+  // The six homes by name (and the old ones).
+  week: { home: 'desk' },
+  desk: { home: 'desk' },
+  biz: { home: 'money' },
+  org: { home: 'org' },
+  life: { home: 'life' },
+  chain: { panel: 'borgata', section: 'chain' },
+  rise: { panel: 'borgata', section: 'rise' },
+  rackets: { home: 'money', key: 'holdings.hub' },
 };
 
 /**
@@ -133,10 +148,12 @@ export function routeFor(tab: string): Route {
   if (Object.prototype.hasOwnProperty.call(LEGACY_TAB_ROUTE, tab)) return LEGACY_TAB_ROUTE[tab];
   if (tab.startsWith('home:')) {
     const [home, key] = tab.slice(5).split('/');
-    if ((HOME_IDS as string[]).includes(home)) return { home: home as HomeId, key: key || undefined };
+    const h = homeId(home);
+    if (h) return { home: h, key: key || undefined };
   }
   const [panel, section] = tab.split('.');
   if ((PANEL_IDS as string[]).includes(panel)) return { panel: panel as PanelId, section };
-  if ((HOME_IDS as string[]).includes(panel)) return { home: panel as HomeId };
+  const h = homeId(panel);
+  if (h) return { home: h };
   return {};
 }

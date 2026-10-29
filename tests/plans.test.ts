@@ -4,6 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { playWeeks } from './helpers';
 import { officeBriefing, officeVisitors } from '../src/engine/bossOffice';
 import { inbox, inboxCount } from '../src/engine/inbox';
+import { deskCount } from '../src/engine/attention';
 import { compareChoices } from '../src/engine/advice';
 import { ensureThreats } from '../src/engine/threats';
 import type { GameState, PlayerAction, Scheme } from '../src/engine/types';
@@ -103,7 +104,9 @@ describe('one inbox, one count', () => {
     for (const seed of ['inbox-a', 'inbox-b']) {
       const s = playWeeks(seed, 6);
       const n = inboxCount(s);
-      expect(officeBriefing(s).needs).toBe(n);
+      // The count the boss sees is the Desk's Needs you (attention.ts), built on the inbox.
+      expect(officeBriefing(s).needs).toBe(deskCount(s));
+      expect(deskCount(s)).toBeLessThanOrEqual(n);
       // Every visitor at the door is in the inbox.
       const keys = new Set(inbox(s).map((i) => i.key));
       for (const v of officeVisitors(s)) expect(keys.has(v.key), v.key).toBe(true);
@@ -114,7 +117,7 @@ describe('one inbox, one count', () => {
       if (e) {
         const answers = { [e.iid]: e.choices[0].id };
         expect(inboxCount(s, { answers })).toBe(n - 1);
-        expect(officeBriefing(s, { answers }).needs).toBe(n - 1);
+        expect(officeBriefing(s, { answers }).needs).toBe(deskCount(s, { answers }));
       }
     }
   });

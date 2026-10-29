@@ -9,7 +9,8 @@ import type { GameState } from './types';
  * it was written. `s.schema` records how far a save has been brought; `ui/save.ts` keeps a backup of the stored save before
  * returning one whose schema moved.
  */
-export const SCHEMA = 1;
+/** 2: the delegation defaults (lieutenants.ts keepOldDelegation, run by upgradeSave). */
+export const SCHEMA = 2;
 
 /** Old faces: one "heavy" gene drove both the beard shadow and the build. Keep the beard they had. */
 export function migrateAppearance(s: GameState): number {
@@ -32,7 +33,7 @@ export function migrateTrust(s: GameState): GameState {
   // never have been given; a current save is loaded exactly as it was written,
   // so saving and loading never changes how the game plays on (the weekly
   // update repairs a goal a rank change closed, for both alike).
-  try { repairGoals(s); } catch { /* the weekly update repairs them too */ }
+  if ((s.schema ?? 0) < 1) try { repairGoals(s); } catch { /* the weekly update repairs them too */ }
   s.schema = SCHEMA;
   return s;
 }

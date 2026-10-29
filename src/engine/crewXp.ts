@@ -1,4 +1,6 @@
-import { xpMult } from './aging';
+import { ageCurve, xpMult } from './aging';
+import { CREW_PERK_LXP, crewPerk, FOCI, FOCUS_IDS, manMod, natureBranch, natureFocus, type Focus } from './lifestyle';
+import { ageOn } from './calendar';
 import { monthKey } from './calendar';
 import { displayName, hasTrait, isFree } from './characters';
 import { addStory } from './hierarchy';
@@ -78,6 +80,19 @@ export interface XpMan {
   asked?: number;
   /** In prison since (week), for the "did his time" award. */
   jail?: number;
+  /** His lifestyle focus (lifestyle.ts FOCI): picked from his nature on the first monthly pass. */
+  fo?: Focus;
+  /** The boss set the focus himself (a promotion does not move it). */
+  fs?: 1;
+  /** Lifetime lifestyle XP, and what has built toward his next perk. */
+  lx?: number;
+  lp?: number;
+  /** The branch the boss pinned (0..2); unset: the one that fits him. */
+  br?: 0 | 1 | 2;
+  /** Crew perks earned (lifestyle.ts crew trees; never lost). */
+  gp?: string[];
+  /** Skill accumulators in hundredths: each 100 is +1 to the skill. */
+  acc?: Partial<Record<Skill, number>>;
 }
 
 export type XpFeedKind = 'level' | 'perk' | 'skill' | 'envy' | 'poach' | 'slight' | 'honor' | 'loyal';
@@ -93,10 +108,17 @@ export interface XpState {
   mon?: string;
   /** Week of the last XP popup. */
   ask?: number;
+  /** What grew lately (skills ticked, perks earned, a new focus): the week in brief reads it. */
+  grew?: XpGrew[];
   stats: { awards: number; xp: number; levels: number; perks: number; auto: number; envy: number; poached: number; slights: number };
 }
 
+/** One line of growth: "+1 Force (Muscle)", "earned Steady Hand". */
+export interface XpGrew { w: number; id: string; t: string; k: 'skill' | 'perk' | 'focus' }
+
 export type XpOp =
+  | { op: 'focus'; charId: string; focus: Focus }
+  | { op: 'branch'; charId: string; branch: 0 | 1 | 2 | null }
   | { op: 'perk'; charId: string; perk: XpPerk }
   | { op: 'auto'; charId: string }
   | { op: 'point'; charId: string; skill: Skill }
@@ -140,7 +162,8 @@ export const XP_HOWTO: string[] = [
 /* ------------------------------------------------------------------ */
 
 function fresh(): XpState {
-  return { v: 1, men: {}, feed: [], stats: { awards: 0, xp: 0, levels: 0, perks: 0, auto: 0, envy: 0, poached: 0, slights: 0 } };
+  // Every man spends his own points by his focus (the boss can turn it off and pick himself).
+  return { v: 1, men: {}, auto: true, feed: [], stats: { awards: 0, xp: 0, levels: 0, perks: 0, auto: 0, envy: 0, poached: 0, slights: 0 } };
 }
 
 export function ensureXp(s: GameState): XpState {
@@ -369,8 +392,21 @@ export function grantXp(s: GameState, charId: string, amount: number, reason: st
   const x = ensureXp(s);
   x.stats.awards++;
   x.stats.xp += n;
+  // What he does along his focus teaches the focus too (half of it).
+  if (m.fo && charId !== s.playerId && deedFocus(reason) === m.fo) addLxp(s, c, m, Math.round(n / 2));
   settle(s, c, m);
   return n;
+}
+
+/** Which focus a deed teaches (by the award's reason). */
+export function deedFocus(reason: string): Focus | undefined {
+  const r = reason.toLowerCase();
+  if (/crew's envelope|running a crew|brought in|short envelope/.test(r)) return 'leadership';
+  if (/envelope|quota|ran |worked his corner/.test(r)) return 'money';
+  if (/heist|piece of work|scheme|big case/.test(r)) return 'brains';
+  if (/calls|family's business|trip|recognized/.test(r)) return 'diplomacy';
+  if (/job|bones|war|pinch|empty on|picked up|did his time/.test(r)) return 'muscle';
+  return undefined;
 }
 
 /** Bring his level up to date with his XP (and his rank: the oath lifts the associate's cap). */
@@ -446,33 +482,39 @@ export function xpJobOdds(s: GameState, c: Character | undefined, job: string, t
   if (hasPerk(s, c, 'wheelman') && (tile === 'scores' || tile === 'goods') && !SAFE.has(job)) out.push({ label: 'Wheelman', value: 8 });
   if (hasPerk(s, c, 'safecracker') && SAFE.has(job)) out.push({ label: 'Safecracker', value: 10 });
   if (hasPerk(s, c, 'talker')) out.push({ label: 'Smooth talker', value: tile === 'fixes' ? 10 : 4 });
+  // His crew perks (lifestyle.ts FOCI), each with its own line.
+  const add = (label: string, v: number) => { if (v) out.push({ label, value: v }); };
+  add('His craft (perks)', manMod(s, c, 'jobs'));
+  if (tile === 'muscle' || MUSCLE.has(job)) add('His muscle (perks)', manMod(s, c, 'muscleJobs'));
+  if (tile === 'fixes') add('His connections (perks)', manMod(s, c, 'fixJobs'));
+  if (tile === 'scores' || tile === 'goods' || SAFE.has(job)) add('His eye for a score (perks)', manMod(s, c, 'scoreJobs'));
   return out;
 }
 
 /** His chance to talk when he is picked up (Iron jaw). */
 export function xpRatMult(s: GameState, c: Character | undefined): number {
-  return c && hasPerk(s, c, 'ironjaw') ? 1 / 6 : 1;
+  return (c && hasPerk(s, c, 'ironjaw') ? 1 / 6 : 1) * (1 - Math.min(90, manMod(s, c, 'rat')) / 100);
 }
 
 /** Evidence on him when a job goes wrong (Ghost). */
 export function xpEvidenceMult(s: GameState, c: Character | undefined): number {
-  return c && hasPerk(s, c, 'ghost') ? 0.5 : 1;
+  return (c && hasPerk(s, c, 'ghost') ? 0.5 : 1) * (1 - Math.min(80, manMod(s, c, 'evidence')) / 100);
 }
 
 /** The take of a job he brings in (Rainmaker). */
 export function xpTakeMult(s: GameState, c: Character | undefined): number {
-  return c && hasPerk(s, c, 'rainmaker') ? 1.1 : 1;
+  return (c && hasPerk(s, c, 'rainmaker') ? 1.1 : 1) * (1 + manMod(s, c, 'take') / 100);
 }
 
 /** His own hustle (Bookmaker, Rainmaker). */
 export function xpHustleMult(s: GameState, c: Character | undefined): number {
   if (!c || !s.xp?.men[c.id]) return 1;
-  return (hasPerk(s, c, 'bookmaker') ? 1.15 : 1) * (hasPerk(s, c, 'rainmaker') ? 1.1 : 1);
+  return (hasPerk(s, c, 'bookmaker') ? 1.15 : 1) * (hasPerk(s, c, 'rainmaker') ? 1.1 : 1) * (1 + manMod(s, c, 'hustle') / 100);
 }
 
 /** A capo's district take (Taskmaster). */
 export function xpCornersMult(s: GameState, capo: Character | undefined): number {
-  return capo && hasPerk(s, capo, 'taskmaster') ? 1.08 : 1;
+  return (capo && hasPerk(s, capo, 'taskmaster') ? 1.08 : 1) * (1 + manMod(s, capo, 'corners') / 100);
 }
 
 /** Reasons on a man's odds of flipping at trial (trialCase.ts). */
@@ -480,6 +522,8 @@ export function xpFlipReasons(s: GameState, c: Character): { label: string; valu
   const out: { label: string; value: number }[] = [];
   if (!s.xp?.men[c.id]) return out;
   if (hasPerk(s, c, 'ironjaw')) out.push({ label: 'Iron jaw: never talks', value: -0.25 });
+  const fl = manMod(s, c, 'flip');
+  if (fl) out.push({ label: 'He plays the long game (perks)', value: -fl / 100 });
   const l = level(s, c.id);
   if (l >= 5 && honored(s, c)) out.push({ label: `A ${titleOf(s, c).toLowerCase()} the boss looks after`, value: -0.05 });
   if (slighted(s, c)) out.push({ label: 'A veteran the boss slighted', value: 0.06 });
@@ -491,6 +535,12 @@ export function xpPoachBonus(s: GameState, c: Character): number {
   if (!s.xp?.men[c.id]) return 0;
   if (hasPerk(s, c, 'standup')) return -999;
   const l = level(s, c.id);
+  const less = manMod(s, c, 'poach');
+  if (less) return xpPoachBase(s, c, l) - less;
+  return xpPoachBase(s, c, l);
+}
+
+function xpPoachBase(s: GameState, c: Character, l: number): number {
   if (l < 4) return 0;
   if (honored(s, c)) return (l - 3) * 2 - 10;
   return (l - 3) * 5 + (slighted(s, c) ? 10 : 0);
@@ -606,6 +656,8 @@ export function applyXpOp(ctx: Ctx, o: XpOp): void {
   const c = s.characters[o.charId];
   if (!tracked(s, c)) return;
   switch (o.op) {
+    case 'focus': applyFocus(s, c, o.focus); break;
+    case 'branch': applyBranch(s, c, o.branch); break;
     case 'perk': applyPerk(s, c, o.perk, false); break;
     case 'auto': autoSpend(s, c); break;
     case 'point': applyPoint(s, c, o.skill); break;
@@ -617,6 +669,8 @@ export function describeXpOp(s: GameState, o: XpOp): string | undefined {
   const c = s.characters[o.charId];
   if (!c) return undefined;
   switch (o.op) {
+    case 'focus': return `${c.firstName} turns to ${FOCI[o.focus].name}`;
+    case 'branch': return o.branch === null ? `${c.firstName} follows his nature` : `${c.firstName}: ${FOCI[focusOf(s, c)].branches[o.branch].name}`;
     case 'perk': return `${c.firstName}: ${PERKS[o.perk].name}`;
     case 'auto': return `${c.firstName} picks for himself`;
     case 'point': return `${c.firstName}: +2 ${o.skill}`;
@@ -631,7 +685,8 @@ function withMan(s: GameState, id: string, f: (t: GameState, c: Character) => bo
   const x0 = s.xp ?? fresh();
   const m0 = x0.men[id];
   const x: XpState = { ...x0, men: { ...x0.men }, feed: x0.feed.slice(), stats: { ...x0.stats } };
-  if (m0) x.men[id] = { ...m0, ...(m0.sk ? { sk: { ...m0.sk } } : {}), ...(m0.perks ? { perks: m0.perks.slice() } : {}), ...(m0.log ? { log: m0.log.slice() } : {}) };
+  if (m0) x.men[id] = { ...m0, ...(m0.sk ? { sk: { ...m0.sk } } : {}), ...(m0.perks ? { perks: m0.perks.slice() } : {}), ...(m0.log ? { log: m0.log.slice() } : {}), ...(m0.gp ? { gp: m0.gp.slice() } : {}), ...(m0.acc ? { acc: { ...m0.acc } } : {}) };
+  if (x0.grew) x.grew = x0.grew.slice();
   const c: Character = { ...c0, attributes: { ...c0.attributes }, ...(c0.story ? { story: c0.story.slice() } : {}) };
   // Opinions change on a recognition or a pick (his of the boss): that relation gets its own copy.
   const relations = { ...s.relations };
@@ -666,6 +721,167 @@ export function recognizeMan(s: GameState, id: string): GameState {
 export function setAutoPick(s: GameState, on: boolean): GameState {
   const x0 = s.xp ?? fresh();
   return { ...s, xp: { ...x0, auto: on || undefined } };
+}
+
+/* ------------------------------------------------------------------ */
+/* Passive growth: the focus, lifestyle XP, skills and perks (CK-style) */
+/* ------------------------------------------------------------------ */
+
+const GREW_CAP = 40;
+/** Hundredths of a skill point per lifestyle XP: the focus skill, and the second one. */
+const ACC_MAIN = 100 / 180;
+const ACC_SECOND = 100 / 540;
+
+function grew(s: GameState, id: string, t: string, k: XpGrew['k']): void {
+  const x = ensureXp(s);
+  (x.grew ??= []).push({ w: s.week, id, t, k });
+  if (x.grew.length > GREW_CAP) x.grew = x.grew.slice(-GREW_CAP);
+}
+
+/** His focus (set, or what his nature would pick: never written by a read). */
+export function focusOf(s: GameState, c: Character): Focus {
+  return s.xp?.men[c.id]?.fo ?? natureFocus(s, c);
+}
+
+/** The branch his next perk comes from: the pinned one, else the one that fits him; a finished branch hands on to the next. */
+export function nextBranch(s: GameState, c: Character, m: XpMan | undefined = s.xp?.men[c.id]): 0 | 1 | 2 | undefined {
+  const f = m?.fo ?? natureFocus(s, c);
+  const have = new Set(m?.gp ?? []);
+  const first = m?.br ?? natureBranch(s, c, f);
+  for (let i = 0; i < 3; i++) {
+    const b = ((first + i) % 3) as 0 | 1 | 2;
+    if (FOCI[f].branches[b].perks.some((p) => !have.has(p.id))) return b;
+  }
+  return undefined;
+}
+
+/** The next crew perk he will earn (undefined: the tree is done). */
+export function nextCrewPerk(s: GameState, c: Character): { id: string; name: string; text: string; branch: number } | undefined {
+  const m = s.xp?.men[c.id];
+  const b = nextBranch(s, c, m);
+  if (b === undefined) return undefined;
+  const f = m?.fo ?? natureFocus(s, c);
+  const have = new Set(m?.gp ?? []);
+  const p = FOCI[f].branches[b].perks.find((x) => !have.has(x.id))!;
+  return { id: p.id, name: p.name, text: p.text, branch: b };
+}
+
+/** The newest crew perk he earned. */
+export function newestCrewPerk(s: GameState, id: string): { id: string; name: string } | undefined {
+  const g = s.xp?.men[id]?.gp;
+  const p = g?.length ? crewPerk(g[g.length - 1]) : undefined;
+  return p ? { id: p.id, name: p.name } : undefined;
+}
+
+function earnCrewPerk(s: GameState, c: Character, m: XpMan): boolean {
+  const nx = nextCrewPerk(s, c);
+  if (!nx) return false;
+  (m.gp ??= []).push(nx.id);
+  const p = crewPerk(nx.id)!;
+  // One of the twelve old specialties: it is his specialty too (every hasPerk() reads it).
+  if (p.xp && !(m.perks ??= []).includes(p.xp)) { m.perks.push(p.xp); clearPend(s, c, m); }
+  ensureXp(s).stats.perks++;
+  grew(s, c.id, `earned ${p.name}`, 'perk');
+  return true;
+}
+
+function addLxp(s: GameState, c: Character, m: XpMan, n: number): void {
+  if (!(n > 0)) return;
+  m.lx = (m.lx ?? 0) + n;
+  m.lp = (m.lp ?? 0) + n;
+  const f = FOCI[m.fo ?? natureFocus(s, c)];
+  const acc = (m.acc ??= {});
+  const tick = (k: Skill, per: number) => {
+    acc[k] = Math.round((acc[k] ?? 0) + n * per);
+    while ((acc[k] ?? 0) >= 100) {
+      acc[k]! -= 100;
+      if (c.attributes[k] >= 100) { acc[k] = 0; break; }
+      c.attributes[k] = Math.min(100, c.attributes[k] + 1);
+      grew(s, c.id, `+1 ${k[0].toUpperCase()}${k.slice(1)} (${f.name})`, 'skill');
+    }
+  };
+  tick(f.skill, ACC_MAIN);
+  tick(f.second, ACC_SECOND);
+  for (let i = 0; i < 3 && (m.lp ?? 0) >= CREW_PERK_LXP; i++) {
+    if (!earnCrewPerk(s, c, m)) { m.lp = Math.min(m.lp!, CREW_PERK_LXP); break; }
+    m.lp! -= CREW_PERK_LXP;
+  }
+}
+
+/** His lifestyle XP this month (before it is added): focus skill, his age, his mind, his capo. */
+export function monthlyLxp(s: GameState, c: Character): number {
+  const m = s.xp?.men[c.id];
+  const f = FOCI[m?.fo ?? natureFocus(s, c)];
+  const age = c.birth ? ageOn(c.birth, s.date) : 30;
+  const curve = ageCurve(age);
+  if (!curve) return 0;
+  const k = c.capoId ? s.characters[c.capoId] : undefined;
+  const km = k ? s.xp?.men[k.id] : undefined;
+  const mentor = k?.alive && (hasPerk(s, k, 'mentor') || (km?.fo === f.id && (km.lvl ?? 1) >= 5)) ? 4 : 0;
+  const learn = k?.alive ? manMod(s, k, 'crewLxp') / 100 : 0;
+  return Math.max(0, Math.round((8 + 0.4 * c.attributes[f.skill] + mentor) * curve * xpMult(s, c) * (1 + learn)));
+}
+
+/**
+ * The monthly growth pass (xpWeek, once a month): every man but the boss
+ * gets a focus if he has none (his nature), a captain who never had his
+ * focus set leads, and the month's lifestyle XP ticks his skills and earns
+ * his perks. No popups: the week in brief lists what grew.
+ */
+export function growthMonth(ctx: Ctx, men: Character[]): void {
+  const s = ctx.s;
+  for (const c of men) {
+    if (c.id === s.playerId) continue;
+    const m = man(s, c.id);
+    if (!m.fo) { m.fo = natureFocus(s, c); grew(s, c.id, `took up ${FOCI[m.fo].name}`, 'focus'); }
+    else if (!m.fs && m.fo !== 'leadership' && (c.rank === 'capo' || c.rank === 'underboss')) { m.fo = 'leadership'; delete m.br; grew(s, c.id, 'leads now: Leadership', 'focus'); }
+    addLxp(s, c, m, monthlyLxp(s, c));
+    // His perks at work on people: the men's opinions, month by month.
+    const lb = manMod(s, c, 'loyalBoss');
+    if (lb) addOpinion(s, c.id, s.playerId, 'Growing into the life', lb, 0.5);
+    const crewMen = c.rank === 'capo' ? men.filter((x) => x.capoId === c.id && x.id !== c.id) : [];
+    const cl = manMod(s, c, 'crewLoyal');
+    const pop = manMod(s, c, 'popular');
+    for (const x of crewMen) {
+      if (cl) addOpinion(s, x.id, s.playerId, `${c.firstName} speaks well of the boss`, cl, 0.5);
+      if (pop) addOpinion(s, x.id, c.id, 'A good man to work for', pop, 0.5);
+    }
+  }
+}
+
+/** The boss sets a man's focus (pure). Matching his nature pleases him a little; going against it, the opposite. */
+export function setFocus(s: GameState, id: string, f: Focus): GameState {
+  return withMan(s, id, (t, c) => applyFocus(t, c, f));
+}
+
+/** Pin the branch his next perks come from (null: let him follow his nature) (pure). */
+export function pinBranch(s: GameState, id: string, b: 0 | 1 | 2 | null): GameState {
+  return withMan(s, id, (t, c) => applyBranch(t, c, b));
+}
+
+function applyFocus(s: GameState, c: Character, f: Focus): boolean {
+  if (c.id === s.playerId || !FOCUS_IDS.includes(f)) return false;
+  const m = man(s, c.id);
+  if (m.fo === f && m.fs) return false;
+  const nat = natureFocus(s, c);
+  m.fo = f;
+  m.fs = 1;
+  delete m.br;
+  addOpinion(s, c.id, s.playerId, f === nat ? 'The boss sees what I am good at' : 'The boss wants me to be something I am not', f === nat ? 3 : -3, 1);
+  grew(s, c.id, `turned to ${FOCI[f].name}, on your word`, 'focus');
+  return true;
+}
+
+function applyBranch(s: GameState, c: Character, b: 0 | 1 | 2 | null): boolean {
+  if (c.id === s.playerId) return false;
+  const m = man(s, c.id);
+  if (b === null) delete m.br; else m.br = b;
+  return true;
+}
+
+/** What grew since a week (newest last), for the week in brief. */
+export function grewSince(s: GameState, week: number): XpGrew[] {
+  return (s.xp?.grew ?? []).filter((g) => g.w >= week);
 }
 
 /* ------------------------------------------------------------------ */
@@ -828,6 +1044,7 @@ export function xpWeek(ctx: Ctx, before?: GameState): void {
   const mk = monthKey(s.date);
   if (x.mon !== mk) {
     if (x.mon !== undefined) monthly(ctx, men);
+    growthMonth(ctx, men);
     x.mon = mk;
   }
 }

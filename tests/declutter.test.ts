@@ -80,6 +80,8 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   army: ['armyState.ts', 'ArmyAction', 'op'],
   protect: ['protect.ts', 'ProtectAction', 'op'],
   women: ['women.ts', 'WomenAction', 'op'],
+  honey: ['honey.ts', 'HoneyAction', 'op'],
+  capo: ['caposState.ts', 'CapoAction', 'op'],
 };
 
 const SPECIAL_AT = new Set(['person', 'place', 'map', 'office', 'event']);
@@ -163,7 +165,7 @@ describe('declutter: one home per screen, old routes land', () => {
   });
   it('fewer places than before (52 → 35), and no home over ten', () => {
     expect(NAV_ITEMS.length).toBeLessThanOrEqual(35);
-    for (const h of HOME_IDS) expect(NAV_TREE[h].flatMap((g) => g.items).length, h).toBeLessThanOrEqual(10);
+    for (const h of HOME_IDS) expect(NAV_TREE[h].flatMap((g) => g.items).length, h).toBeLessThanOrEqual(9);
   });
 
 });

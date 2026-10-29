@@ -492,7 +492,8 @@ export type Effect =
   | ({ type: 'goal'; key: 'bank' | 'land' | 'sellLand' | 'license' } & EffectBase)
   | ({ type: 'unwashed'; amount: number } & EffectBase)
   | ({ type: 'loanResolve'; loanId: string; mode: 'collect' | 'grace' | 'writeoff' } & EffectBase)
-  | ({ type: 'exile'; charId: string } & EffectBase)
+  /** `own`: he walked away on his own (a story's outcome), not sent away by anyone. */
+  | ({ type: 'exile'; charId: string; own?: true } & EffectBase)
   | ({ type: 'wealth'; charId: string; amount: number } & EffectBase)
   | ({ type: 'seat'; seat: Seat; charId?: string; task?: CouncilTask; target?: string } & EffectBase)
   | ({ type: 'policy'; charId: string; policy: CrewPolicy } & EffectBase)
@@ -575,7 +576,11 @@ export type Effect =
   /** Protection & intelligence (protect.ts): answers to the guards' and inquiries' events. */
   | ({ type: 'protect'; op: import('./protect').ProtectOp } & EffectBase)
   /** The women (women.ts): affairs, requests, hooks, talent; answers to her events. */
-  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase);
+  | ({ type: 'women'; op: import('./women').WomenOp } & EffectBase)
+  /** Honey (honey.ts): dares, women working the boss, mistresses' demands, the scorned. */
+  | ({ type: 'honey'; op: import('./honey').HoneyOp } & EffectBase)
+  /** The capos (capos.ts): answers to their requests, a man on one of them, having it out with him. */
+  | ({ type: 'capo'; op: import('./caposState').CapoOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -991,6 +996,8 @@ export interface GameState {
   protect?: import('./protect').ProtectState;
   /** The women (women.ts): careers and arcs, affairs, office requests, talent, hooks (adults only; mature content). */
   women?: import('./womenState').WomenState;
+  /** Honey (honey.ts): claims, women working the boss (hidden truth and what he has seen), mistresses, the scorned (adults only; mature content). */
+  honey?: import('./honeyState').HoneyState;
   /** The Book (journal.ts): every order and what came of it, and everything else that happened, by person, place and money. Bounded; optional (made by the first week that turns). */
   journal?: import('./journal').JournalState;
   /** NPC minds: needs, moods, ambitions, beliefs, memories and plans of the people who matter (minds/; optional: made by the weekly update). */
@@ -999,6 +1006,8 @@ export interface GameState {
   deeds?: import('./deeds/types').DeedsState;
   /** The Old Don start's hidden hands, the fog over the coming move, and the verdict on the first year (oldDon.ts; only that start has it). */
   oldDon?: import('./oldDon').OldDonState;
+  /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */
+  capos?: import('./caposState').CaposState;
 }
 
 export interface PlayerChoices {
@@ -1102,8 +1111,12 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'protect'; op: import('./protect').ProtectAction }
   /** The army (army.ts): raise the troops, hire muscle, the mattresses, a call to arms, a pact, take the fight to them. */
   | { kind: 'army'; op: import('./armyState').ArmyAction }
+  /** The capos (capos.ts): answer a request, reward, recognize, more ground, make him family, a man on him, ask him straight, have it out. */
+  | { kind: 'capo'; op: import('./caposState').CapoAction }
   /** The women (women.ts): dinner, an affair, an evening, a gift, an arrangement, ending it, her contract, a hook, amends. */
   | { kind: 'women'; op: import('./women').WomenAction }
+  /** Honey (honey.ts): the bold dare as it went, a quiet look into her, turn her, feed her lies, have it out, end it, settle a mistress. */
+  | { kind: 'honey'; op: import('./honey').HoneyAction }
   /** Deeds (deeds/): the CK-style interactions on anyone (befriend, sway, insult, find secrets, blackmail, partner, discipline...). He decides, or it works or it doesn't. */
   | ({ kind: 'deed' } & import('./deeds/types').DeedAction)
 );

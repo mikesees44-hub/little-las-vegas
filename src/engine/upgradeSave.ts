@@ -10,6 +10,7 @@ import { ensureWork } from './bizRacket';
 import { ensureXp } from './crewXp';
 import { ensureProtect } from './protect';
 import { ensureWomen } from './womenState';
+import { ensureHoney } from './honeyState';
 import { ensureDev } from './devState';
 import { ensureEcon } from './econState';
 import { ensureEmpire } from './empireState';
@@ -33,7 +34,9 @@ import { ensureHousing } from './housing';
 import { ensureMinds } from './minds/state';
 import { ensureArmy } from './armyState';
 import { ensureDeeds } from './deeds/state';
+import { ensureCapos } from './caposState';
 import { migrateTrust } from './trustMigrations';
+import { keepOldDelegation } from './lieutenants';
 import type { GameState } from './types';
 
 /**
@@ -46,7 +49,7 @@ export function upgradeSave(s: GameState): GameState {
   // created by the weekly update itself, so loading never changes the dice.
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
-    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;
@@ -68,6 +71,8 @@ export function upgradeSave(s: GameState): GameState {
   if (s.towns) try { migrateTowns(s); } catch { /* the weekly update will try again */ }
   // Places added on the old (memory) Wildwood grid move onto the real one, by their streets (once; ids unchanged).
   try { migrateIslandGrid(s); } catch { /* left where they were */ }
+  // A save from before the new delegation defaults keeps its old ones (and gets a one-time offer on the Desk).
+  if ((s.schema ?? 0) < 2) try { keepOldDelegation(s); } catch { /* nobody seated yet: the new defaults apply */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }

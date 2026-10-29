@@ -185,6 +185,8 @@ describe('Crew XP: points and specialties', () => {
 
   it('the popup: "made his bones — pick his specialty"; choosing applies it; the boss\'s pick is an honor', () => {
     const s = game();
+    // Every man picks for himself by default now: the boss turned the family rule off to pick himself.
+    ensureXp(s).auto = undefined;
     const c = aMan(s);
     setXp(s, c, XP_AT[2]);
     s.week += 1;
@@ -202,6 +204,7 @@ describe('Crew XP: points and specialties', () => {
 
   it('left waiting, he picks for himself by his nature; the family rule makes it at once', () => {
     const s = game();
+    ensureXp(s).auto = undefined;
     const c = aMan(s);
     c.craft = 'muscle';
     setXp(s, c, XP_AT[2]);
@@ -384,6 +387,6 @@ describe('Crew XP: the screens', () => {
     expect(sheet).toContain('sheet-xp');
     expect(sheet).toContain('xp-perks');
     expect(renderToString(createElement(XpBadge, { s, c }))).toMatch(/Lv (<!-- -->)?5/);
-    expect(NAV.family.flatMap((g) => g.items).some((i) => i.keys.includes('borgata.progress'))).toBe(true);
+    expect(NAV.org.flatMap((g) => g.items).some((i) => i.keys.includes('borgata.progress'))).toBe(true);
    }, 60000);
 });

@@ -94,10 +94,12 @@ describe('protection & intelligence: the working example', () => {
     const { s: s0, capo, g3 } = setup();
     const s1 = clone(s0);
     s1.characters[capo.id].skimmed = 2400;
+    s1.characters[g3.id].attributes.intrigue = 90; // a sharp man on it: the test is about what he finds, not his luck
     delete s1.characters[capo.id].arrears;
     if (s1.tribute?.life) delete s1.tribute.life[capo.id];
     let s = week(s1, [P({ op: 'investigate', subject: capo.id, purpose: 'money', who: g3.id, weeks: 12 })]).state;
-    for (let i = 0; i < 12; i++) s = week(s).state;
+    // (He keeps skimming: other systems — an audit, the underboss — may square his books in the meantime.)
+    for (let i = 0; i < 12; i++) { s.characters[capo.id].skimmed = Math.max(s.characters[capo.id].skimmed ?? 0, 2400); s = week(s).state; }
     const reps = reportsAbout(s, capo.id);
     expect(reps.length).toBeGreaterThan(0);
     const got = reps.find((r) => r.grounds.some((g) => g.src === 'skimmed'));

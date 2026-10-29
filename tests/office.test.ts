@@ -57,6 +57,7 @@ import { SocialClub } from '../src/ui/office/SocialClub';
 import { HOTSPOTS, openHotspot } from '../src/ui/office/hotspots';
 import { getSettings, OFFICE_HOME_FLAG, reloadSettings, setSettings, weekStart } from '../src/ui/settings';
 import { loadSlot, saveSlot, type KV } from '../src/ui/save';
+import { deskCount } from '../src/engine/attention';
 
 function spyApi(): { api: OfficeApi; calls: string[] } {
   const calls: string[] = [];
@@ -126,8 +127,8 @@ describe("the Boss's Office room", () => {
     expect(b.lines.length).toBeGreaterThanOrEqual(1);
     expect(b.lines.length).toBeLessThanOrEqual(2);
     expect(b.lines.join(' ')).toMatch(/brought in \$/);
-    const waiting = s.pendingEvents.filter((e) => e.defId !== 'tribute_audience').length;
-    expect(b.needs).toBeGreaterThanOrEqual(waiting);
+    // The Desk's count (attention.ts): what needs the boss, capped; the rest is handled for him.
+    expect(b.needs).toBe(deskCount(s));
     officeVisitors(s); officeRoom(s); officePhone(s);
     officeHtml(s, true); officeHtml(s, false);
     expect(JSON.stringify(s)).toBe(before);

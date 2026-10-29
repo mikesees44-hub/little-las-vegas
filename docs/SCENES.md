@@ -66,6 +66,7 @@ Every condition you write has to hold. Leave out the ones you don't need.
 | `weight` | `10` | How likely it is to be picked over other scenes that fit. The default is 10. |
 | `cooldown` | `26` | Weeks before it can come up again. The default is 26. |
 | `once` | `true` | It only ever happens once. |
+| `mature` | `true` | Adults-only material: it never comes up with Mature content Off. A scene that casts a `lover`, `mistress`, `husband`, `scorned` or `suspect` is always mature, whether you write this or not. |
 
 Comparisons are written as text: `"<0"`, `"<=10"`, `">40"`, `">=40"`, `"=3"`, `"!=0"`. A bare number such as `45` means "at least 45".
 
@@ -87,6 +88,9 @@ Each role is a name you choose (`capo`, `wife`, `rivalMan`), followed by where t
 | `opinionOf` | `{ "a": "<0" }` | What they think of another role. |
 | `tie` | `{ "other": "feud" }` | A standing tie with another role: `friend`, `ally`, `rival`, `feud` or `lovers`. |
 | `sameSideAs` | `"rboss"` | They belong to the same family as another role (for example, a rival boss's own man). |
+| `partnerOf` | `"lover"` | Her husband or fella: the man of another role (use it with the `husband` pool). |
+
+**The adults-only pools** (secrets and mistresses, `engine/honey.ts`): `lover` is a woman the boss is seeing (an affair, a goomar, a recent dare); `mistress` is a lover who has become a liability (a loud mouth, or she wants something); `husband` is the husband or fella of one of his lovers (pair it with `partnerOf`); `scorned` is someone who holds it against him (a woman scorned, a husband, a jilted man); `suspect` is a woman he has reason to wonder about (only what he has seen, never whether she really is working him). Everyone in them is 18 or older, and none of them is cast with Mature content Off.
 
 If nobody fits a role, the scene doesn't come up that week.
 
@@ -157,6 +161,10 @@ Each effect is an object with exactly one key:
 | `deed` | `{ "deed": { "id": "insult", "actor": "capo", "target": "rboss" } }` (one person does an interaction to another, rolled with all its odds) |
 | `evidence` | `{ "evidence": { "role": "man", "by": 6 } }` (what the law has on him) |
 | `jail` | `{ "jail": { "role": "hot", "weeks": 1 } }` (never the boss) |
+| `scorn` | `{ "scorn": { "who": "her", "by": 30, "why": "he laughed at me" } }` (they hold it against the boss and may act on it: the wife, the paper, a rival, the law, his fists) |
+| `hush` | `{ "hush": { "role": "mist" } }` (a mistress's demand is settled; she goes quiet) |
+| `leak` | `{ "leak": { "role": "mist" } }` (a mistress talks: Spout Off, the beauty parlor, the crew, a rival bar) |
+| `suspect` | `{ "suspect": { "role": "sus", "by": 20 } }` (the boss's suspicion that she is working him) |
 
 The deeds you can name in `deed` and in `odds.deed` are `befriend`, `flatter`, `feast`, `sway`, `askFavor`, `callFavor`, `alliance`, `demandRespect`, `insult`, `threaten`, `findSecrets`, `fabricateHook`, `blackmail`, `envelope`, `plantRumor`, `turn`, `court`, `frame`, `offerPiece`, `buyOut`, `partner`, `askLoan`, `lend`, `legitimize`, `disown`, `educate`, `recognize` and `discipline`.
 
@@ -186,5 +194,5 @@ Scenes join the same stream of popups as everything else in the game. At most on
 
 * The setting is 1960s Wildwood, New Jersey: the boardwalk, Pacific Avenue, the piers, St. Ann's, the Shamrock and the Riptide. Use period words: the Season, the numbers, the book, the envelope, a sit-down.
 * Keep the text to two or three sentences, and keep a label to a line. Let the people talk.
-* Everyone in the scenes is fictional. Violence is implied and never shown. Romance happens only between consenting adults and stays off the page.
+* Everyone in the scenes is fictional. Violence is implied and never shown. Romance happens only between consenting adults and stays off the page. She always decides; nobody is coerced.
 * Each choice should cost something and give something. The player should be able to argue for any of them.

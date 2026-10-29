@@ -38,7 +38,7 @@ export function surrenderedBy(s: GameState, effects: readonly Effect[]): string[
         break;
       // Sent away: given up, unless it is done for him (a plane ticket out of the prosecutor's reach).
       case 'exile':
-        if (isMyMan(s, e.charId) && !backed.has(e.charId)) out.add(e.charId);
+        if (isMyMan(s, e.charId) && !backed.has(e.charId) && !e.own) out.add(e.charId);
         break;
       // Retired: his wish granted, unless he is cut loose against it (he thinks less of the boss for it).
       case 'retire':

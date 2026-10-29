@@ -8,6 +8,7 @@ import { opinion } from './relations';
 import { roll } from './roundsPersonal';
 import { DAY_NAMES, missedMornings } from './days';
 import { whisperOn } from './shadow';
+import { capoLevelOf } from './lieutenants';
 import type { Character, Effect, GameState, RivalId } from './types';
 
 /**
@@ -218,7 +219,8 @@ export function checkinsWeek(ctx: Ctx, list: CheckIn[], answers: Record<string, 
     // Nobody answered him: he does it his own way.
     const mine = p.answers.find((a) => a.id === p.own);
     if (mine?.effects.length) applyEffects(ctx, mine.effects, { label: `${c.name} did it his own way`, because: `left ${c.name} to it`, category: 'event' });
-    if (!missed[c.day]) {
+    // His territory's routine is his to handle (lieutenants.ts capoLevelOf): no grudge for not being asked.
+    if (!missed[c.day] && !(capoLevelOf(s, c.capoId) === 'handle' && !p.urgent)) {
       ignored++;
       applyEffects(ctx, [op(k.id, B, -2, 'The boss didn\'t answer me')], { label: `${c.name} waited for an answer`, because: 'never answered him', category: 'event' });
     }

@@ -8,6 +8,7 @@ import type { Character, GameState } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { CharLink, Face } from '../components/People';
 import { useShell } from '../shell/context';
+import { GrowthGlance, GrowthPanel } from './GrowthTab';
 
 /**
  * YOUR MEN COME UP (engine/crewXp.ts): the level badge on rows and portraits,
@@ -40,6 +41,7 @@ export function XpBadge({ s, c, compact }: { s: GameState; c: Character; compact
       {!compact && <span className="text-stone-400">{t}</span>}
       <Bar frac={p.frac} className={compact ? 'w-8' : 'w-12'} />
       {open > 0 && <span className="text-amber-300" title="A point or a specialty to pick">★</span>}
+      <GrowthGlance s={s} c={c} compact={compact} />
     </span>
   );
 }
@@ -78,6 +80,7 @@ export function XpSection({ s, c }: { s: GameState; c: Character }) {
         <span className="whitespace-nowrap tabular-nums text-stone-400">{p.to ? `${p.xp - p.from}/${p.to - p.from}` : p.held ? 'held until made' : 'top'}</span>
       </div>
       {p.held && <div className="mt-1 text-amber-300">He has come as far as an associate can: he is ready to be made.</div>}
+      <GrowthPanel s={s} c={c} />
       {!isBoss && (honored(s, c) || slighted(s, c)) && (
         <div className={`mt-1 ${honored(s, c) ? 'text-emerald-300' : 'text-red-300'}`}>{honored(s, c) ? 'You honored him lately: he remembers it.' : 'He feels slighted: years of work and not a word from you. Rivals notice men like this.'}</div>
       )}

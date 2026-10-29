@@ -39,16 +39,16 @@ describe('1-2: the Boss\'s Desk and the Ready-to-advance review', () => {
     const g = bossDesk(s, { orders: [dinner] });
     const kinds = g.map((x) => x.kind);
     if (s.pendingEvents.length) {
-      expect(kinds).toContain('decision');
-      const d = g.find((x) => x.kind === 'decision')!.items[0];
-      expect(d.ifNothing).toBeTruthy();
-      expect(d.ref.event).toBe(s.pendingEvents[0].iid);
+      // A decision is either on Needs you (with what happens if left) or handled for you (with who does what).
+      const d = g.flatMap((x) => x.items).find((x) => x.ref.event === s.pendingEvents[0].iid)!;
+      expect(d).toBeDefined();
+      expect(d.ifNothing ?? d.handled?.does).toBeTruthy();
     }
     expect(kinds).toContain('order');
     expect(kinds).toContain('bill');
     const out = html(createElement(BossDesk, { s, ui: { orders: [dinner] }, api: { onEvent: () => {}, onDay: () => {}, onSitDown: () => {}, onCancelOrder: () => {}, onMoney: () => {}, onChar: () => {} } }));
     expect(out).toContain('data-testid="boss-desk"');
-    expect(out).toContain('The Boss&#x27;s Desk');
+    expect(out).toContain('The Desk');
   });
   it('the review lists unanswered decisions with their defaults, the orders, and the known costs', () => {
     const r = readyReview(s, { orders: [dinner] });

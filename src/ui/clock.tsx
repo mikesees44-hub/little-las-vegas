@@ -4,6 +4,7 @@ import { urgentOn } from '../engine/checkins';
 import { daysOf } from '../engine/days';
 import type { GameState, WeeklyReport } from '../engine/types';
 import { fmt$ } from './format';
+import { CLOCK_MS, CLOCK_NAME, DEFAULT_SPEED, type ClockSpeed } from './clockPolicy';
 
 /**
  * CK-style time: pause and three speeds. The clock moves one DAY per tick
@@ -14,10 +15,10 @@ import { fmt$ } from './format';
  * list) hits, arrests, births and deaths when the week turns. The tab going
  * hidden pauses it too (battery).
  */
-export type Speed = 0 | 1 | 2 | 3;
-/** Milliseconds per day. */
-export const SPEED_MS: Record<Exclude<Speed, 0>, number> = { 1: 2600, 2: 1300, 3: 500 };
-export const SPEED_NAME: Record<Speed, string> = { 0: 'Paused', 1: 'Slow', 2: 'Normal', 3: 'Fast' };
+export type Speed = ClockSpeed;
+/** Milliseconds per day (clockPolicy.ts). */
+export const SPEED_MS = CLOCK_MS;
+export const SPEED_NAME = CLOCK_NAME;
 
 /** New warnings since the last state (by title), worth stopping the clock for. */
 export function newWarnings(prev: GameState, next: GameState): string[] {
@@ -53,7 +54,8 @@ export function weekHeadlines(prev: GameState, next: GameState): Headline[] {
 /** Why the clock should not run right now (undefined = free to run). */
 export function pauseReason(s: GameState, busy: boolean, unanswered = s.pendingEvents.length): string | undefined {
   if (s.gameOver) return 'The game is over';
-  if (busy) return 'A window is open';
+  // Only a decision card holds the clock (menus, sheets and drawers do not: clockPolicy.ts).
+  if (busy) return 'A decision card is open';
   if (unanswered) return 'A decision is waiting';
   return undefined;
 }
@@ -78,6 +80,8 @@ export function useClock(opts: {
   ref.current = opts;
   useEffect(() => {
     if (opts.speed === 0) return;
+    // A decision card open holds the clock (it does not stop it): when the card closes, time moves on.
+    if (opts.busy && !opts.s.gameOver) return;
     const why = pauseReason(opts.s, opts.busy, opts.unanswered);
     if (why) {
       ref.current.onPause(why);
@@ -99,12 +103,12 @@ export function ClockControls({ speed, setSpeed, note }: { speed: Speed; setSpee
     <button
       key={v}
       type="button"
-      title={`Play: ${SPEED_NAME[v].toLowerCase()}`}
+      title={`Speed ${v}: ${SPEED_NAME[v].toLowerCase()} (key ${v})`}
       aria-label={`Play ${SPEED_NAME[v].toLowerCase()}`}
       aria-pressed={speed === v}
       onClick={() => setSpeed(v)}
       data-testid={`clock-speed-${v}`}
-      className={`h-9 sm:h-8 min-w-[2.25rem] sm:min-w-[2rem] rounded border px-1 text-[11px] font-bold tracking-tighter ${speed === v ? 'bg-gold-500 text-noir-950 border-gold-400' : 'bg-noir-800 text-stone-300 border-noir-600 hover:border-gold-500'}`}
+      className={`h-9 sm:h-8 min-w-[1.75rem] sm:min-w-[1.5rem] rounded border px-1 text-[11px] font-bold tabular-nums ${speed === v ? 'bg-gold-500 text-noir-950 border-gold-400' : 'bg-noir-800 text-stone-300 border-noir-600 hover:border-gold-500'}`}
     >
       {label}
     </button>
@@ -114,7 +118,7 @@ export function ClockControls({ speed, setSpeed, note }: { speed: Speed; setSpee
     <div className="flex items-center gap-1" data-testid="clock">
       <button
         type="button"
-        onClick={() => setSpeed(paused ? 2 : 0)}
+        onClick={() => setSpeed(paused ? DEFAULT_SPEED : 0)}
         title={paused ? 'Play (space)' : 'Pause (space)'}
         aria-label={paused ? 'Play' : 'Pause'}
         data-testid="clock-pause"
@@ -123,9 +127,7 @@ export function ClockControls({ speed, setSpeed, note }: { speed: Speed; setSpee
       >
         {paused ? '▶' : '❚❚'}
       </button>
-      {btn(1, '▸')}
-      {btn(2, '▸▸')}
-      {btn(3, '▸▸▸')}
+      {([1, 2, 3, 4, 5] as const).map((v) => btn(v, String(v)))}
       {note && <span className="ml-1 text-[11px] text-amber-300">{note}</span>}
     </div>
   );
