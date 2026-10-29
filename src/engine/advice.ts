@@ -697,7 +697,8 @@ export function whyPick(s: GameState, ch: Choice, ex: ActionExplanation): string
   }
   if (!ranked.length) {
     const named = ch.effects.map((e) => describeEffect(s, e)).filter((x): x is string => !!x);
-    return ch.detail ?? (named.length ? `What it does: ${named.slice(0, 3).join('; ')}. No money, respect or heat moves with it.` : 'No money, respect or heat moves with it; what follows is in the story it starts.');
+    // Never the option's own description again (the card already prints it right above).
+    return named.length ? `What it does: ${named.slice(0, 3).join('; ')}. No money, respect or heat moves with it.` : 'No money, respect or heat moves with it; what follows is in the story it starts.';
   }
   if (best) {
     const d = describeEffect(s, best.e) ?? '';
@@ -705,6 +706,9 @@ export function whyPick(s: GameState, ch: Choice, ex: ActionExplanation): string
     return `Pick this if ${why}: ${d}${cheap ? ', and it costs little' : ''}.`;
   }
   const least = ranked[ranked.length - 1];
+  // A price paid for something the ledger cannot count (what you learn, a favor owed, a story it starts) is not "the cheapest way out".
+  const buys = ch.effects.some((e) => effectValue(s, e) === 0 && (e.type === 'flag' || (e.type === 'deed' && e.op.op !== 'sceneFired') || e.type === 'schedule' || e.type === 'hook'));
+  if (buys) return `It costs ${describeEffect(s, least.e) ?? 'something'}; what it buys is in the story, not in the ledger.`;
   return `The cheapest way out: ${describeEffect(s, least.e) ?? ''}${ex.risks.length ? '' : ', with nothing coming back later'}.`;
 }
 

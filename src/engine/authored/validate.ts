@@ -16,7 +16,7 @@ export const TIE_KINDS = ['friend', 'ally', 'rival', 'feud', 'lovers'];
 export const DISTRICTS = ['boardwalk', 'pacific', 'piers', 'downtown', 'docks', 'crest', 'north', 'causeway'];
 export const FIELDS = ['name', 'first', 'last', 'nick', 'call', 'he', 'his', 'him', 'He', 'His'];
 
-const SCENE_KEYS = ['id', 'title', 'theme', 'followup', 'when', 'who', 'text', 'choices'];
+const SCENE_KEYS = ['id', 'title', 'theme', 'followup', 'about', 'when', 'who', 'text', 'choices'];
 const WHEN_KEYS = ['years', 'season', 'months', 'week', 'flags', 'notFlags', 'money', 'respect', 'heat', 'boss', 'location', 'chance', 'weight', 'cooldown', 'once', 'mature'];
 const ROLE_KEYS = ['pool', 'rank', 'traits', 'notTraits', 'gender', 'age', 'mood', 'opinionOfBoss', 'opinionOf', 'tie', 'sameSideAs', 'partnerOf'];
 const CHOICE_KEYS = ['label', 'hint', 'requires', 'odds', 'effects', 'success', 'failure', 'result', 'failText', 'next'];
@@ -105,6 +105,7 @@ function checkScene(file: string, sc: Record<string, unknown>, allIds: Set<strin
   if (!isStr(sc.text)) err('text', 'needs a "text" (what the boss reads)');
   if (sc.theme !== undefined && !SCENE_THEMES.includes(sc.theme as never)) err('theme', `"${String(sc.theme)}" is not a theme${didYouMean(String(sc.theme), SCENE_THEMES)}`);
   if (sc.followup !== undefined && typeof sc.followup !== 'boolean') err('followup', 'should be true or false');
+  if (sc.about !== undefined && sc.about !== 'boss') err('about', 'should be "boss"');
   // Roles.
   const roles = new Set<string>(['boss']);
   if (sc.who !== undefined) {

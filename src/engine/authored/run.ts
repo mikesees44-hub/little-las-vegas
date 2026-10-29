@@ -312,6 +312,7 @@ export function buildScene(s: GameState, sc: Scene, cast: Cast, due = false): Ev
       ...(theme === 'family' || theme === 'romance' ? { family: 1 } : {}),
       ...(crewRole && theme === 'crew' ? { crew: 1, charId: cast[crewRole[0]] } : {}),
       ...(due ? { due: `scene:${sc.id}` } : {}),
+      ...(sc.about === 'boss' ? { aboutBoss: 1 } : {}),
     },
     actors: Object.values(cast).slice(0, 3),
   };

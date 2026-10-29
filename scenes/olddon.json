@@ -4,6 +4,7 @@
     {
       "id": "od_birthday",
       "title": "Sixty-six candles",
+      "about": "boss",
       "theme": "crew",
       "when": { "flags": ["start_olddon"], "week": { "max": 2 }, "once": true },
       "who": {
