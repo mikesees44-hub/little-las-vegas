@@ -4,6 +4,7 @@ import { focusOf, monthlyLxp, newestCrewPerk, nextBranch, nextCrewPerk, pinBranc
 import { CREW_PERK_LXP, FOCI, FOCUS_IDS, natureFocus } from '../../engine/lifestyle';
 import type { Character, GameState } from '../../engine/types';
 import { useShell } from '../shell/context';
+import { rung } from '../shell/unlocks';
 
 /**
  * HOW HE GROWS (engine/crewXp.ts passive growth, lifestyle.ts FOCI): the
@@ -51,6 +52,8 @@ export function GrowthPanel({ s, c }: { s: GameState; c: Character }) {
   const nb = nextBranch(s, c);
   const age = ageOn(c.birth, s.date);
   const per = monthlyLxp(s, c);
+  // Steering opens with the second rung (two crews); before that it is all automatic.
+  const steer = !!update && rung(s) >= 2;
   return (
     <section className="mt-2 rounded border border-noir-700 bg-noir-900/50 p-2 text-xs" data-testid="growth-panel">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -59,7 +62,7 @@ export function GrowthPanel({ s, c }: { s: GameState; c: Character }) {
       </div>
       <div className="mt-1 flex flex-wrap gap-1" role="radiogroup" aria-label="His focus">
         {FOCUS_IDS.map((id) => (
-          <button key={id} type="button" role="radio" aria-checked={id === fid} disabled={!update || id === fid}
+          <button key={id} type="button" role="radio" aria-checked={id === fid} disabled={!steer || id === fid}
             className={`rounded border px-1.5 py-0.5 ${id === fid ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'} disabled:cursor-default`}
             title={id === nat ? 'What his nature takes him to: he likes it (+3)' : 'Against his nature: he takes it a little badly (−3)'}
             onClick={() => update?.((cur) => setFocus(cur, c.id, id))} data-testid={`growth-focus-${id}`}>
@@ -67,12 +70,13 @@ export function GrowthPanel({ s, c }: { s: GameState; c: Character }) {
           </button>
         ))}
       </div>
+      {!steer && update && <div className="mt-0.5 text-[10px] text-stone-500">Setting his focus opens with your second crew. Until then he follows his nature.</div>}
       <div className="mt-1.5 grid gap-1.5 sm:grid-cols-3">
         {f.branches.map((b, bi) => (
           <div key={b.name} className={`rounded border p-1.5 ${bi === nb ? 'border-gold-600/70' : 'border-noir-700'}`} data-testid="growth-branch">
             <div className="flex items-baseline justify-between gap-1">
               <span className="font-semibold text-stone-200">{b.name}</span>
-              <button type="button" className="text-[10px] text-gold-400 hover:text-gold-300 disabled:text-stone-600" disabled={!update}
+              <button type="button" className="text-[10px] text-gold-400 hover:text-gold-300 disabled:text-stone-600" disabled={!steer}
                 onClick={() => update?.((cur) => pinBranch(cur, c.id, m?.br === bi ? null : (bi as 0 | 1 | 2)))} data-testid={`growth-pin-${bi}`}>{m?.br === bi ? 'unpin' : 'pin'}</button>
             </div>
             <ol className="mt-0.5 space-y-0.5">

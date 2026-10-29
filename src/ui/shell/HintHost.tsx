@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { GameState } from '../../engine/types';
-import { HINTS } from './hints';
+import { HINT_GAP_MS, HINTS } from './hints';
 import type { Route } from './routes';
 
 const done = (id: string) => { try { return localStorage.getItem(`llv-hint-${id}`) === '1'; } catch { return true; } };
@@ -22,14 +22,18 @@ export const HINT_POS = {
 export const HINT_MS = 12000;
 
 /** One contextual hint at a time, the first whose moment has come; each only once, ever. */
+let lastShown = -Infinity;
+
 export function HintHost({ s, route, overlayOpen, motion, alerts, speed }: { s: GameState; route: Route; overlayOpen: boolean; motion: number; alerts: number; speed: number }) {
   const [, bump] = useState(0);
   // The one on screen: chosen once, then remembered as seen at once (a reload or the next place never
   // brings it back), and it leaves when its place does, on "Got it", or after a few seconds.
   const [showing, setShowing] = useState<{ id: string; home?: string } | undefined>();
-  const candidate = overlayOpen || showing ? undefined : HINTS.find((x) => !done(x.id) && x.when(s, { route, motion, alerts, speed }));
+  // Never over a decision (overlayOpen), and at most one bubble a minute.
+  const candidate = overlayOpen || showing || Date.now() - lastShown < HINT_GAP_MS ? undefined : HINTS.find((x) => !done(x.id) && x.when(s, { route, motion, alerts, speed }));
   useEffect(() => {
     if (!candidate) return;
+    lastShown = Date.now();
     markDone(candidate.id);
     setShowing({ id: candidate.id, home: route.home });
   }, [candidate?.id]); // eslint-disable-line react-hooks/exhaustive-deps

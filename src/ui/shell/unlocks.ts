@@ -4,6 +4,8 @@ import { getRelation } from '../../engine/relations';
 import { knownSecrets } from '../../engine/secrets';
 import { holder } from '../../engine/council';
 import type { GameState } from '../../engine/types';
+import { rungOf } from '../../engine/riseView';
+import type { HomeId } from './routes';
 
 /**
  * Progressive disclosure, CK style: which drawer sections a new boss sees.
@@ -31,8 +33,31 @@ export function heistOpen(s: GameState): boolean {
 const lotsOwned = (s: GameState) => (s.econ?.lots ?? []).some((l) => l.owner === 'player');
 const maxGrievance = (s: GameState) => Math.max(0, ...crew(s).map((c) => getRelation(s, c.id, s.playerId)?.grievance ?? 0));
 
+/** How high the family has climbed (riseView.ts LADDER), safe to call on any state. */
+export function rung(s: GameState): number {
+  try { return rungOf(s); } catch { return 1; }
+}
+
+/**
+ * Homes open by growth, not by the calendar: the Desk, the Family, Money & Business and the Map
+ * from the start; Your Life with week 2 or the first family event; Rivals & the Law at rung 4
+ * (a borgata) or the first rival move against you. A locked home stays on the rail, greyed, with
+ * its reason, and still opens: nothing is hidden for good.
+ */
+export function homeLock(s: GameState, h: HomeId): string | undefined {
+  if (seasoned(s)) return undefined;
+  if (h === 'life') return s.week >= 2 || s.pendingEvents.some((e) => /family|wife|son|daughter|wedding/i.test(e.title)) ? undefined : 'Opens next week, or with the first family event';
+  if (h === 'rivals') return rung(s) >= 4 || s.rivals.some((r) => r.lastMove?.target === 'player') || s.wars.length > 0 || s.disputes.length > 0 ? undefined : 'Opens when you are a borgata (a dozen men, respect 40), or when a rival moves on you';
+  return undefined;
+}
+
 /** Section key ("panel.section") → when it shows. Missing keys are always visible. */
 const RULES: Record<string, (s: GameState) => boolean> = {
+  // By the ladder (riseView.ts): what each rung opens. The old calendar rules stay as a fallback.
+  'borgata.chain': (s) => rung(s) >= 2 || s.week >= 6,
+  'diplomacy.intrigue': (s) => rung(s) >= 4 || intrigueOpen(s),
+  'diplomacy.warroom': (s) => rung(s) >= 5 || s.wars.length > 0 || s.week >= 8,
+  'diplomacy.army': (s) => rung(s) >= 5 || s.wars.length > 0 || s.week >= 8,
   'you.court': (s) => s.week >= 2,
   'you.possessions': (s) => s.money >= 20000,
   'house.tree': (s) => s.week >= 2 || s.pendingEvents.some((e) => /family|wife|son|daughter|wedding/i.test(e.title)),
@@ -49,22 +74,22 @@ const RULES: Record<string, (s: GameState) => boolean> = {
   'house.legacy': (s) => (s.dyn?.renownTotal ?? 0) > 0 || s.week >= 8,
   'house.decisions': (s) => (s.dyn?.renownTotal ?? 0) > 0 || s.week >= 8,
   'house.houses': (s) => (s.dyn?.renownTotal ?? 0) > 0 || s.week >= 8,
-  'borgata.membership': (s) => !!s.books?.open || (s.crewStats?.makings ?? 0) > 0 || s.week >= 4,
+  'borgata.membership': (s) => rung(s) >= 3 || !!s.books?.open || (s.crewStats?.makings ?? 0) > 0 || s.week >= 4,
   'borgata.grievances': (s) => maxGrievance(s) >= 40 || s.factions.length > 0,
-  'borgata.orders': (s) => s.week >= 3,
+  'borgata.orders': (s) => rung(s) >= 3 || s.week >= 3,
   'holdings.property': (s) => s.week >= 3 || s.money >= 15000 || lotsOwned(s),
   'holdings.designer': (s) => s.week >= 3 || Object.values(s.empire?.venues ?? {}).some((v) => v.owner === 'player'),
   'holdings.books': (s) => s.week >= 6 || Object.keys(s.econ?.cases ?? {}).length > 0,
   'holdings.hq': (s) => s.heat.federal >= 20 || (s.econ?.hq.found ?? 0) > 0 || s.week >= 8,
   'ops.travel': (s) => s.week >= 3 || s.outposts.length > 0 || (s.travel?.trips?.length ?? 0) > 0,
-  'diplomacy.board': (s) => s.week >= 4 || s.rivals.some((r) => r.lastMove?.target === 'player'),
-  'diplomacy.table': (s) => s.week >= 4 || s.disputes.length > 0 || s.wars.length > 0,
-  'diplomacy.balance': (s) => !!s.power?.crisis || (s.power?.blitzes.length ?? 0) > 0 || s.wars.length > 0,
+  'diplomacy.board': (s) => rung(s) >= 4 || s.week >= 4 || s.rivals.some((r) => r.lastMove?.target === 'player'),
+  'diplomacy.table': (s) => rung(s) >= 4 || s.week >= 4 || s.disputes.length > 0 || s.wars.length > 0,
+  'diplomacy.balance': (s) => rung(s) >= 7 || !!s.power?.crisis || (s.power?.blitzes.length ?? 0) > 0 || s.wars.length > 0,
   'diplomacy.front': (s) => !!s.power?.front,
   'town.case': (s) => (player(s).evidence ?? 0) >= 10 || s.heat.federal >= 30 || (!!s.legal && s.legal.stage !== 'quiet'),
-  'town.cityhall': (s) => s.favors > 0 || s.week >= 8,
+  'town.cityhall': (s) => rung(s) >= 6 || s.favors > 0 || s.week >= 8,
   'town.underbelly': (s) => !!s.underbelly && s.underbelly.stage !== 'waiting',
-  'town.patronage': (s) => s.money >= 30000 || s.respect >= 50,
+  'town.patronage': (s) => rung(s) >= 6 || s.money >= 30000 || s.respect >= 50,
 };
 
 export function sectionVisible(s: GameState, key: string): boolean {

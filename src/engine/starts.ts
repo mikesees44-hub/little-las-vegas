@@ -27,8 +27,9 @@ import { applyCharOptions, type CharOptions } from './charCreate';
  */
 export type StartId = 'classic' | 'rise' | 'sees' | 'associate' | 'soldier' | 'capo';
 
-export const STARTS: Record<StartId, { name: string; text: string }> = {
-  classic: { name: 'The House', text: 'You already run Wildwood for Philadelphia. A full crew, five rackets, and one problem from the past.' },
+/** `recommended`: the start the menu pre-selects and marks "Start here" (data, so a new start can take it). */
+export const STARTS: Record<StartId, { name: string; text: string; recommended?: boolean }> = {
+  classic: { name: 'The House', text: 'You already run Wildwood for Philadelphia. A full crew, five rackets, and one problem from the past.', recommended: true },
   rise: { name: 'Rise to Power', text: 'A young man with a numbers bank, a few guys and $6,000. Nobody in Philadelphia knows your name yet.' },
   sees: { name: 'The House of Sees', text: 'Don Salvatore "The Shark" Sees, sixty years old, and three heirs who all want the chair: Vito, Donato and Francesca.' },
   associate: { name: 'Start as an associate', text: 'Not even made. Two guys, a corner, and Don Cosimo Valente above you taking 30%.' },
@@ -37,6 +38,11 @@ export const STARTS: Record<StartId, { name: string; text: string }> = {
 };
 
 /** `charOptions` (the character creator) is applied on top of any start. */
+/** The start the menu recommends ("Start here"). */
+export function recommendedStart(): StartId {
+  return (Object.keys(STARTS) as StartId[]).find((k) => STARTS[k].recommended) ?? 'classic';
+}
+
 export function newGameWith(seed: string, start: StartId = 'classic', charOptions?: CharOptions): GameState {
   // The houses are built once the start (and the creator) has shaped the family.
   const s = newGame(seed, { skipHouses: start !== 'classic' || !!charOptions });

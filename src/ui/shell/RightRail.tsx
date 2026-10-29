@@ -134,7 +134,7 @@ export function GoalsCard({ goals, onShow }: { goals: GuidedGoal[]; onShow: (g: 
   const done = goals.filter((x) => x.done).length;
   const cur = goals.find((x) => !x.done);
   const [list, setList] = useState(false);
-  const season1 = goals.slice(0, 7);
+  const season1 = goals.slice(0, 8);
   const label = season1.some((x) => !x.done) ? 'Memorial Day to Labor Day' : 'Season two';
   return (
     <section className="rounded-md border border-gold-600/40 bg-noir-900/80 p-2 text-[12px]" data-testid="goals-card">
