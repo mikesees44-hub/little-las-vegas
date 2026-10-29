@@ -132,7 +132,7 @@ describe('Your File: every click says what it did, and every order lands in the 
     expect(sample.length).toBeGreaterThan(5);
     for (const [i, a] of sample.entries()) {
       const html = renderToString(createElement(OrderToast, { s, item: { action: a, index: i, at: 0 }, onUndo: () => {}, onClose: () => {} }));
-      expect(html, a.kind).toContain('✓ Ordered');
+      expect(html, a.kind).toContain('✓ Queued');
       expect(html, a.kind).toContain('See it in Your File');
     }
     const next = advanceWeek(s, { actions: sample }).state;

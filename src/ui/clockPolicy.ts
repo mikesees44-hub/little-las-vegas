@@ -17,7 +17,8 @@ import type { GameState } from '../engine/types';
  */
 export type ClockSpeed = 0 | 1 | 2 | 3 | 4 | 5;
 /** Milliseconds per day at each speed. */
-export const CLOCK_MS: Record<Exclude<ClockSpeed, 0>, number> = { 1: 3200, 2: 1800, 3: 1000, 4: 500, 5: 220 };
+// A CK pace (the playthrough: speed 1 ran two days in five seconds): about five seconds a day at the slowest.
+export const CLOCK_MS: Record<Exclude<ClockSpeed, 0>, number> = { 1: 5000, 2: 3000, 3: 1800, 4: 900, 5: 350 };
 export const CLOCK_NAME: Record<ClockSpeed, string> = { 0: 'Paused', 1: 'Slow', 2: 'Normal', 3: 'Brisk', 4: 'Fast', 5: 'Fastest' };
 /** The speed a new game (and a loaded one) starts at. */
 export const DEFAULT_SPEED: ClockSpeed = 2;

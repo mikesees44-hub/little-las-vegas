@@ -92,7 +92,8 @@ describe('4: specific buttons and the facts before the click', () => {
     expect(f.actor).toBe('You');
     expect(f.target).toContain(man.lastName);
     expect(f.cost).toMatch(/from your pocket|from Family money/);
-    expect(f.timing).toMatch(/advance the week/);
+    expect(f.timing).toMatch(/^Now: settled the moment/); // a dinner with your man is settled on the spot (STREAMLINE S11)
+    expect(actionFacts(s, { kind: 'dirty', op: { job: 'hijack', who: man.id } }).timing).toMatch(/week turns/);
     const ub = crew(s).find((c) => c.rank === 'underboss')!;
     const blocked = actionFacts(s, { kind: 'appoint', seat: 'underboss', charId: ub.id });
     expect(blocked.unavailable).toMatch(/^Unavailable: /);

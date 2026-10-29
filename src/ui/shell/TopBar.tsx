@@ -316,6 +316,12 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   const orderCost = queuedMoney(s, orders).family;
   const plans = usePlansCount(s);
   const [pane, setPane] = useState<'orders' | 'plans' | undefined>();
+  // The Desk's "In motion ▸" and others open the plans from anywhere.
+  useEffect(() => {
+    const on = () => setPane('plans');
+    window.addEventListener('llv-open-plans', on);
+    return () => window.removeEventListener('llv-open-plans', on);
+  }, []);
   // The one menu carries what left the bar: its badge is this week's orders; a dot for something new or against you.
   const menuBadge = orders.length;
   const menuDot = fileNew > 0 || paperUnread > 0 || plans.danger;

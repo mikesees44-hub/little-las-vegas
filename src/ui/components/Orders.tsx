@@ -18,6 +18,8 @@ import { actNow, settlesNow } from '../../engine/deeds/now';
 import { useShell } from '../shell/context';
 import { postNow } from '../deeds/NowResult';
 import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
+import { heavyOf } from '../../engine/heavy';
+import { getSettings } from '../settings';
 import { voicesFor } from '../decide/voices';
 import { oddsOfPreview, worstOfPreview } from '../../engine/decide';
 
@@ -86,7 +88,9 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
     postNow(r.result);
   };
   const buttonText = now ? `${short > 0 ? `Take ${fmt$(short)} from the Family & do` : 'Do'} it now${odds ? ` (${Math.round(odds.chance * 100)}%)` : ''}` : queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${facts.button.charAt(0).toLowerCase()}${facts.button.slice(1)}` : facts.button;
-  const go = () => (deal ? setDealing(true) : now ? doNow() : queue(short > 0 ? { ...action, fund: 'family' } : action));
+  // The card is the confirmation (STREAMLINE §4.4): a heavy order turns the card over first; then it is given, no second window.
+  const go = () => (deal ? setDealing(true) : now ? doNow() : queue(short > 0 ? { ...action, fund: 'family' } : action, true));
+  const heavy = !deal && getSettings().confirmOrders !== false ? heavyOf(s, action) : undefined;
   const tomorrow = !hard && noTime && !queued && later ? () => later(short > 0 ? { ...action, fund: 'family' } : action) : undefined;
   // One decision standard (ui/decide): the order is the card's one option, with its odds (or "certain"), its worst way, and one primary button.
   const opt: DecisionOption = {
@@ -120,6 +124,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
       <DecisionCard s={s} compact options={[opt]} selected="go"
         voices={!compact && voicesOpen ? voicesFor(s, { kind: 'action', action }) : undefined}
         primaryLabel={() => buttonText}
+        confirmFor={heavy ? () => ({ title: label ?? p.title, lines: [...heavy, ...(p.cost > 0 ? [`${fmt$(p.cost)} ${pocket ? 'from your pocket' : 'from Family money'}`] : []), `Takes ${hoursLabel(hours)}.`], yes: 'Yes, do it' }) : undefined}
         onDecide={() => { if (!why && !(queued && !now)) go(); }}
         onLater={tomorrow} laterLabel="Do it tomorrow"
         advice={<span className="flex flex-wrap items-center gap-2">

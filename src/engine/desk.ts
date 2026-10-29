@@ -28,9 +28,9 @@ function ownWay(p: CheckProblem): string {
 }
 
 /** Where a desk row came from (the inbox's kinds, plus the desk's own). */
-export type DeskKind = 'decision' | 'petition' | 'urgent' | 'morning' | 'sitdown' | 'lieutenant' | 'request' | 'envelope' | 'lawyer' | 'order' | 'bill' | 'upcoming';
+export type DeskKind = 'decision' | 'petition' | 'urgent' | 'morning' | 'sitdown' | 'lieutenant' | 'request' | 'envelope' | 'lawyer' | 'order' | 'bill' | 'upcoming' | 'result';
 /** The desk's sections: what needs you, what is handled for you, your orders, the bills, what is coming. */
-export type DeskGroupKind = 'needs' | 'handled' | 'order' | 'bill' | 'upcoming';
+export type DeskGroupKind = 'needs' | 'handled' | 'result' | 'order' | 'bill' | 'upcoming';
 
 export interface DeskItem {
   key: string;
@@ -48,7 +48,9 @@ export interface DeskItem {
   /** Handled for you: who, what, which day. */
   handled?: { by: string; byId?: string; does: string; day?: number; delegated?: boolean };
   /** Where it goes: an event iid, a morning's day, a sit-down item, an order index, a lieutenant's job, a tip, a place ask. */
-  ref: { event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string };
+  /** A result's tone (how it went). */
+  tone?: 'good' | 'bad';
+  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string };
 }
 
 export interface DeskGroup { kind: DeskGroupKind; title: string; items: DeskItem[] }
@@ -62,7 +64,7 @@ export interface DeskUi {
 }
 
 const GROUP_TITLE: Record<DeskGroupKind, string> = {
-  needs: 'Needs you', handled: 'Handled for you', order: 'Your orders this week', bill: 'Bills and what is owed', upcoming: 'Coming up',
+  needs: 'Needs you', handled: 'Handled for you', result: 'Results', order: 'Your orders this week', bill: 'Bills and what is owed', upcoming: 'Coming up',
 };
 
 function fromInbox(it: InboxItem): DeskItem {
@@ -79,7 +81,7 @@ function fromInbox(it: InboxItem): DeskItem {
 export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
   const answers = ui.answers ?? {};
   const orders = ui.orders ?? [];
-  const groups: Record<DeskGroupKind, DeskItem[]> = { needs: [], handled: [], order: [], bill: [], upcoming: [] };
+  const groups: Record<DeskGroupKind, DeskItem[]> = { needs: [], handled: [], result: [], order: [], bill: [], upcoming: [] };
   const q = deskQueue(s, ui);
   for (const it of q.needs) {
     const row = fromInbox(it);
@@ -115,6 +117,7 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     row.handled = { by: h.by, byId: h.byId, does: h.does, day: h.day, ...(h.delegated ? { delegated: true } : {}) };
     groups.handled.push(row);
   }
+  groups.result.push(...deskResults(s));
   orders.forEach((a, i) => {
     const p = previewAction(s, a);
     groups.order.push({ key: `or:${i}`, kind: 'order', title: p.title, detail: p.cost > 0 ? `${fmtMoney(p.cost)} from ${p.pot === 'pocket' ? 'your pocket' : 'Family money'}` : 'No money up front', cost: p.cost, ref: { order: i } });
@@ -140,6 +143,26 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     groups.upcoming.push({ key: `sch:${sc.id}`, kind: 'upcoming', title: `${SCHEME_INFO[sc.kind].name} under way`, detail: `${sc.progress}% along`, ref: { charId: sc.targetId } });
   }
   return (Object.keys(groups) as DeskGroupKind[]).map((k) => ({ kind: k, title: GROUP_TITLE[k], items: groups[k] })).filter((g) => g.items.length);
+}
+
+/**
+ * Results (STREAMLINE §4.3): what the boss's own orders came to — the ones
+ * settled in the moment this week, and the queued ones that landed when the
+ * week turned — newest first, each one line from Your File (written once).
+ */
+export function deskResults(s: GameState, n = 8): DeskItem[] {
+  const e = s.journal?.e ?? [];
+  const out: DeskItem[] = [];
+  for (let i = e.length - 1; i >= 0 && out.length < n; i--) {
+    const x = e[i];
+    if (x.w < s.week - 1) break;
+    if (x.src !== 'order' || !x.mine) continue;
+    const first = x.r?.[0];
+    const bad = !!first && (/^Not carried out|^The answer was no/.test(first));
+    const now = x.w === s.week;
+    out.push({ key: `res:${x.id}`, kind: 'result', title: x.t, detail: `${now ? 'Done now' : 'At the week\'s turn'}: ${first ?? 'done.'}`, tone: bad ? 'bad' : 'good', ref: { entry: x.id } });
+  }
+  return out;
 }
 
 /** The desk's header count: the same queue's Needs you (attention.ts). */

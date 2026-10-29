@@ -153,7 +153,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
     <section className="mt-4" data-testid="interaction-menu">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="panel-title text-base flex flex-wrap items-center gap-1.5">{c.id === s.playerId ? 'Your own business' : `Deal with ${c.firstName}`}{c.id !== s.playerId && <><SideChip s={s} id={c.id} /><RelationChip relation={sideOf(s, c.id).relation} /></>}</div>
-        <span className="text-[11px] text-stone-500">{total} things you can do · carried out when the week turns</span>
+        <span className="text-[11px] text-stone-500">{total} things you can do · talk, favors and asks settle on the spot; jobs land when the week turns</span>
       </div>
       {total > 6 && (
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Find an action… (gift, dinner, hit, promote)`} aria-label="Find an action"

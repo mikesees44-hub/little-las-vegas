@@ -108,7 +108,8 @@ export function ChoiceWhy({ a }: { a: ChoiceAdvice }) {
   return (
     <div className="mt-1" data-testid="choice-why">
       <div className="flex flex-wrap items-start gap-1.5 text-[11px]">
-        {(a.ex.verdict.tone === 'warn' || a.ex.verdict.tone === 'bad') && <VerdictTag v={a.ex.verdict} />}
+        {/* Only a risk is flagged on a decision's option; money judgements are in the chips (every option of a tribute costs). */}
+        {a.ex.verdict.tone === 'warn' && <VerdictTag v={a.ex.verdict} />}
         <span className="min-w-0 flex-1 leading-snug text-stone-300 italic">{a.ex.purpose}</span>
         <button type="button" className="shrink-0 text-gold-300 hover:underline" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? 'less' : 'why?'}</button>
       </div>

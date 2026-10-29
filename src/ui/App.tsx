@@ -19,8 +19,9 @@ import { autoPauses, DEFAULT_SPEED, firstPause, redKeys, speedKey } from './cloc
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
-import { SettledToast } from './minds/settled';
-import { NowResultHost } from './deeds/NowResult';
+import { NowResultHost, postNow } from './deeds/NowResult';
+import { actNow, instant } from '../engine/actNow';
+import { isHeavy } from '../engine/heavy';
 import { ReportModal } from './components/ReportModal';
 import type { ClarityApi } from './clarity/context';
 import { PickerModal } from './clarity/CandidatePicker';
@@ -176,12 +177,20 @@ export function App({ startOn = 'title' }: AppProps) {
         if (import.meta.env.MODE === 'test') { queueLater(a); return; }
         setConfirm(a); return;
       }
-      // "Are you sure?" first (Settings › Confirm orders); tests and the double-click guard skip it.
-      if (!confirmed && getSettings().confirmOrders !== false && import.meta.env.MODE !== 'test') { setConfirm(a); return; }
+      // "Are you sure?" only for a heavy order (engine/heavy.ts: a death, a war, disinheriting, selling a place,
+      // a big share of the Family's money); everything else is given on the card. Tests skip it.
+      if (!confirmed && getSettings().confirmOrders !== false && import.meta.env.MODE !== 'test' && isHeavy(s, a)) { setConfirm(a); return; }
       // A double click is one order: the same order again within a moment is ignored.
       const now = Date.now();
       if (lastQueued.current && now - lastQueued.current.at < 600 && sameOrder(lastQueued.current.a, a)) return;
       lastQueued.current = { a, at: now };
+      // Someone who is there (a deed, a talk, an ask, a gift): settled now, on the deeds' own dice; the result card shows the roll.
+      if (instant(s, a)) {
+        const r = actNow(s, a);
+        if (r.result.ok) setS(r.state);
+        postNow(r.result);
+        return;
+      }
       // A pocket order the pocket can't cover (after this week's orders) needs the player's word for Family money:
       // the toast asks, and the order tray keeps asking, before the week turns.
       const p = previewAction(s, a);
@@ -607,11 +616,13 @@ export function App({ startOn = 'title' }: AppProps) {
       if (turningRef.current) return;
       turningRef.current = true;
       setClockNote('The week turns…');
-      setTimeout(() => { try { run('week', answers, true); } finally { turningRef.current = false; } }, 16);
+      setTimeout(() => { try { run('week', answers, true); setClockNote('A new week: what came of your orders is on the Desk, under Results'); } finally { turningRef.current = false; } }, 16);
       return;
     }
     const next = tickDay(s);
     setS(next);
+    // The week's turn is never a surprise: Sunday says it is coming.
+    if (daysOf(next).day >= 6) setClockNote('Sunday: the week turns tonight at midnight (Space pauses)');
     clockAutoPause(s, next);
     const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
     if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
@@ -741,6 +752,12 @@ export function App({ startOn = 'title' }: AppProps) {
     'nav.settings': <SettingsPanel />,
     'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
   };
+  // The result card's "In Your File ▸".
+  useEffect(() => {
+    const on = () => { setOfficeView(undefined); markFileSeen(); go('book'); };
+    window.addEventListener('llv-open-file', on);
+    return () => window.removeEventListener('llv-open-file', on);
+  });
   const deskApi = {
     onEvent: (iid: string) => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => e.iid === iid))); },
     onDay: (day: number) => { setSpeed(0); setDayWin(day); },
@@ -752,7 +769,8 @@ export function App({ startOn = 'title' }: AppProps) {
     onUrgent: (tip: string) => setUrgent(tip),
     onEnvelope: () => tributeApi.openAudience(),
     onTake: (key: string) => setTaken((t) => ({ week: s.week, keys: [...(t.week === s.week ? t.keys : []).filter((k) => k !== key), key] })),
-    onMotion: () => (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(),
+    onMotion: () => window.dispatchEvent(new Event('llv-open-plans')),
+    onFile: () => window.dispatchEvent(new Event('llv-open-file')),
     onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
   const takenKeys = taken.week === s.week ? taken.keys : [];
@@ -969,7 +987,6 @@ export function App({ startOn = 'title' }: AppProps) {
       {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
-      <SettledToast />
       <NowResultHost />
       {urgent && !current && !scene && (
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
