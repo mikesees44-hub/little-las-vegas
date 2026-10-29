@@ -49,28 +49,29 @@ export interface DoNowInput {
 
 /** Alerts that carry no route: the home they belong to. */
 const KIND_HOME: Partial<Record<AlertKind, HomeId>> = {
-  unhappy: 'family', defector: 'family', faction: 'family', heir: 'family', family: 'family', books: 'family',
+  unhappy: 'org', defector: 'org', faction: 'org', heir: 'life', family: 'life', books: 'org',
   money: 'money', loan: 'money', debt: 'money',
-  staff: 'biz',
-  heat: 'you', law: 'you', evidence: 'you', lifestyle: 'you',
-  dispute: 'town', war: 'town', rival: 'town', courted: 'town', underbelly: 'town',
-  scheme: 'week', goal: 'you',
+  staff: 'money',
+  heat: 'rivals', law: 'rivals', evidence: 'rivals', lifestyle: 'life',
+  dispute: 'rivals', war: 'rivals', rival: 'rivals', courted: 'org', underbelly: 'map',
+  scheme: 'desk', goal: 'org',
 };
 
 /** Opportunities whose link points at a generic tab: the home they are really about. */
 function oppHome(o: Opportunity): HomeId | undefined {
-  if (/^heat:|^evidence$|^stress$|^lifestyle$|^perk$/.test(o.id)) return 'you';
+  if (/^heat:|^evidence$/.test(o.id)) return 'rivals';
+  if (/^stress$|^lifestyle$|^perk$/.test(o.id)) return 'life';
   if (/^unwashed$|^broke$|^cut-|^lend$/.test(o.id)) return 'money';
-  if (/^goal:/.test(o.id)) return 'week';
-  if (/^idle$|^racket$|^staff$/.test(o.id)) return 'biz';
-  if (/^plot$|^unhappy:|^drift:|^pressure:|^heir$|^books$|^bones$/.test(o.id)) return 'family';
-  if (/^dispute:|^official$/.test(o.id)) return 'town';
-  if (o.link.role?.kind === 'capo' || o.link.role?.kind === 'seat') return 'family';
+  if (/^goal:/.test(o.id)) return 'org';
+  if (/^idle$|^racket$|^staff$/.test(o.id)) return 'money';
+  if (/^plot$|^unhappy:|^drift:|^pressure:|^heir$|^books$|^bones$/.test(o.id)) return 'org';
+  if (/^dispute:|^official$/.test(o.id)) return 'rivals';
+  if (o.link.role?.kind === 'capo' || o.link.role?.kind === 'seat') return 'org';
   return o.link.tab ? resolveRoute(o.link.tab).home : undefined;
 }
 
 export function alertHome(a: ShellAlert): HomeId | undefined {
-  if (a.kind === 'decision') return 'week';
+  if (a.kind === 'decision') return 'desk';
   const r = a.route ? resolveRoute(a.route).home : undefined;
   // A heat alert points at the case; the case lives with the boss.
   return r ?? KIND_HOME[a.kind];
@@ -83,7 +84,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
   if (s.gameOver) return [];
   const out: DoNowItem[] = [];
   const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
-  if (home === 'week') {
+  if (home === 'desk') {
     if (x.unanswered > 0) out.push({ id: 'decisions', tone: 'warn', title: `${plural(x.unanswered, 'decision')} on your desk`, text: 'Answer them before the week turns, or they are decided for you.', cta: 'Read them', act: { kind: 'decisions' } });
     if (x.morning && x.morning.open > 0) out.push({ id: 'morning', tone: x.morning.urgent ? 'danger' : 'warn', title: x.morning.open === 1 ? `${x.morning.name ?? 'A capo'} has a problem at this morning's meeting` : `${x.morning.open} problems at this morning's meeting`, text: 'One tap to answer. Leave it and he does it his own way, and notices.', cta: 'Hear him', act: { kind: 'day' } });
     if (x.brief > 0) out.push({ id: 'sitdown', tone: 'info', title: `The sit-down: ${plural(x.brief, 'thing')} from your people`, text: 'Your underboss, consigliere and the rest, each with a recommendation.', cta: 'Hear them', act: { kind: 'sitdown', tab: 'council' } });
@@ -92,7 +93,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
     const rep = s.tribute?.reports[s.tribute.reports.length - 1];
     if (rep?.status === 'presented') out.push({ id: 'envelope', tone: 'warn', title: `The envelope is on your desk: $${rep.presented.toLocaleString('en-US')}`, text: 'Your underboss is waiting for your split.', cta: 'See him', act: { kind: 'office', reportId: rep.id } });
   }
-  if (home === 'family') {
+  if (home === 'org') {
     const empty = SEATS.filter((st) => !holder(s, st));
     if (empty.length && !x.opps.some((o) => o.link.role?.kind === 'seat')) out.push({ id: 'seats', tone: 'warn', title: empty.length === 1 ? `The ${SEAT_INFO[empty[0]].name.toLowerCase()} seat is empty` : `${empty.length} council seats are empty`, text: 'An empty seat does no job this week.', cta: 'Fill it', act: { kind: 'route', route: { panel: 'borgata', section: 'council' } } });
     const idleCapos = capos(s).filter((c) => !s.districts.some((d) => d.capoId === c.id));
@@ -100,7 +101,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
     const idle = idleMen(s).length;
     if (idle >= 3) out.push({ id: 'idle-men', tone: 'info', title: `${idle} men with nothing to do`, text: 'Start a racket or open a place and they go to work.', cta: 'Put them to work', act: { kind: 'route', route: { panel: 'holdings', section: 'hub' } } });
   }
-  if (home === 'biz') {
+  if (home === 'money') {
     // Rackets & steady earners (racketMenu.ts): impossible to miss.
     const g = racketGaps(s);
     const hub: DoNowAct = { kind: 'route', route: { panel: 'holdings', section: 'hub' } };
@@ -112,7 +113,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
     }
   }
   // Dirty work: some weeks a job is worth more (a tip), one tap to it.
-  if (home === 'biz' || home === 'week') {
+  if (home === 'money' || home === 'desk') {
     const tip = weekTip(s);
     if (tip && !jobLock(s, tip.job) && defaultMan(s, tip.job)) out.push({ id: 'dirty-tip', tone: 'good', title: `A tip: ${JOBS_BY_ID[tip.job].title.toLowerCase()} this week`, text: tip.text, cta: 'Dirty work', act: { kind: 'route', route: { panel: 'holdings', section: 'dirty' } } });
   }

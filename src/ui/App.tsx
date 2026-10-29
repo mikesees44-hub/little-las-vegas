@@ -44,7 +44,7 @@ import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
-import { homeForKey, itemOf, resolveRoute, type NavRoute } from './shell/nav';
+import { homeForKey, itemOf, KEYS_CHANGED, resolveRoute, type NavRoute } from './shell/nav';
 import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
@@ -626,7 +626,7 @@ export function App({ startOn = 'title' }: AppProps) {
     // (the sit-down is one step away, at the door); the desk's list; or the map.
     const start = weekStart(s);
     if (start === 'office') { setRoute({}); setOfficeView('office'); setMondayCard(true); return; }
-    if (start === 'desk') setRoute({ home: 'week' });
+    if (start === 'desk') setRoute({ home: 'desk' });
     if (getSettings().sitdownEachWeek !== false) setSitdown('council');
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
@@ -647,6 +647,12 @@ export function App({ startOn = 'title' }: AppProps) {
       const h = homeForKey(e.key);
       if (h) {
         e.preventDefault();
+        // The letters that changed meaning with the six homes: say so once.
+        if ('mrbld'.includes(e.key.toLowerCase())) {
+          let seen = false;
+          try { seen = localStorage.getItem('llv.keysChanged') === '1'; localStorage.setItem('llv.keysChanged', '1'); } catch { seen = true; }
+          if (!seen) setClockNote(KEYS_CHANGED);
+        }
         setRoute((r) => (r.home === h ? {} : { home: h }));
       }
     };
@@ -670,11 +676,12 @@ export function App({ startOn = 'title' }: AppProps) {
     const h = a.severity !== 'info' ? alertHome(a) : undefined;
     if (h) badges[h] = (badges[h] ?? 0) + 1;
   }
-  if (unanswered.length) badges.week = (badges.week ?? 0) + unanswered.length;
+  // The Desk's badge is the one count (attention.ts): what needs you.
+  { const n = deskBadge(s, { answers, briefSkip, taken: taken.week === s.week ? taken.keys : [] }).n; if (n) badges.desk = n; else delete badges.desk; }
   const morningOpen = dayCheckIns(s, daysOf(s).day).filter((c) => c.problem && !daysOf(s).answers[c.key] && !daysOf(s).skipped.includes(c.day));
   const homeDoNowAll = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
   // This Week's front page is the Boss's Desk, which lists the decisions, the morning and the sit-down: said once.
-  const homeDoNow = home === 'week' ? homeDoNowAll.filter((d) => d.act.kind !== 'decisions' && d.act.kind !== 'day' && d.act.kind !== 'sitdown') : homeDoNowAll;
+  const homeDoNow = home === 'desk' ? homeDoNowAll.filter((d) => d.act.kind !== 'decisions' && d.act.kind !== 'day' && d.act.kind !== 'sitdown') : homeDoNowAll;
   const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); };
   function onDoNow(d: DoNowItem) {
     const a = d.act;
@@ -704,7 +711,7 @@ export function App({ startOn = 'title' }: AppProps) {
     onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
   const takenKeys = taken.week === s.week ? taken.keys : [];
-  const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'week' }); };
+  const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'desk' }); };
   const officeApi: OfficeApi = {
     openDesk: (f?: DeskFilter) => openDesk(f),
     openEnvelope: () => tributeApi.openAudience(),
@@ -749,7 +756,7 @@ export function App({ startOn = 'title' }: AppProps) {
     : officeView === 'office' ? <BossOffice key={s.week} s={s} ui={officeUi} monday={mondayCard} onMondayDone={() => setMondayCard(false)} onInvite={officeInvite} onDelegate={officeDelegate} onLater={officeLater} onClub={() => setOfficeView('club')} />
     : officeView === 'club' ? <SocialClub s={s} onUpstairs={() => setOfficeView('office')} onHq={() => openRoute({ panel: 'holdings', section: 'hq' })} onMap={() => setOfficeView(undefined)} />
     : undefined;
-  const weekTop = home === 'week' && !s.gameOver ? (
+  const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} /></div>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
@@ -765,7 +772,7 @@ export function App({ startOn = 'title' }: AppProps) {
     </section>
   ) : undefined;
   // Rackets & Businesses: "Start a racket" first, big, and who still lacks a steady earner.
-  const gaps = home === 'biz' && !s.gameOver ? racketGaps(s) : undefined;
+  const gaps = home === 'money' && !s.gameOver ? racketGaps(s) : undefined;
   const bizTop = gaps ? (
     <section className="mb-4" data-testid="biz-start">
       <div className="grid grid-cols-2 gap-2">
@@ -775,7 +782,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
     </section>
   ) : undefined;
-  const youTop = home === 'you' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'week' })} /> : undefined;
+  const youTop = home === 'life' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'desk' })} /> : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
@@ -842,7 +849,7 @@ export function App({ startOn = 'title' }: AppProps) {
               <div className="pointer-events-none absolute bottom-24 md:bottom-14 right-2 z-[1130] flex flex-col items-end gap-2">
                 {evenings.map((e, i) => (
                   <EveningScene key={`${e.cue.week}:${e.cue.day}`} s={e.s} cue={e.cue} older={i < evenings.length - 1} onClose={() => setEvenings((x) => x.filter((y) => y !== e))}
-                    onMore={() => { setEvenings([]); setRoute({ home: 'week' }); }} />
+                    onMore={() => { setEvenings([]); setRoute({ home: 'desk' }); }} />
                 ))}
               </div>
             )}

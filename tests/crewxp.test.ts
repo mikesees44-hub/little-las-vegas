@@ -387,6 +387,6 @@ describe('Crew XP: the screens', () => {
     expect(sheet).toContain('sheet-xp');
     expect(sheet).toContain('xp-perks');
     expect(renderToString(createElement(XpBadge, { s, c }))).toMatch(/Lv (<!-- -->)?5/);
-    expect(NAV.family.flatMap((g) => g.items).some((i) => i.keys.includes('borgata.progress'))).toBe(true);
+    expect(NAV.org.flatMap((g) => g.items).some((i) => i.keys.includes('borgata.progress'))).toBe(true);
    }, 60000);
 });

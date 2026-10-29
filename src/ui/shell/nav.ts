@@ -1,10 +1,11 @@
 import { PANELS, type SectionDef } from './panels';
-import { HOME_IDS, LEGACY_TAB_ROUTE, routeFor, type HomeId, type PanelId, type Route } from './routes';
+import { HOME_IDS, homeId, LEGACY_TAB_ROUTE, routeFor, type HomeId, type PanelId, type Route } from './routes';
 
 /**
- * The game's menus, organized the way a boss thinks: six homes (This Week,
- * Money, Rackets & Businesses, The Family, The Town, You), each a short
- * list of places with a plain name, an icon and one line on what it is for.
+ * The game's menus, organized the way a boss thinks: six homes (The Desk,
+ * The Family, Money & Business, The Map, Rivals & the Law, Your Life), each a
+ * short list of places (at most nine) with a plain name, an icon and one line
+ * on what it is for. The old homes and letters still land (routes.ts LEGACY_HOME, OLD_KEYS).
  *
  * panels.tsx stays the registry of screens (a section = one key such as
  * "holdings.money"); this file only says WHERE each one lives and what it is
@@ -45,32 +46,48 @@ export interface NavGroupDef {
 }
 
 export const HOMES: HomeDef[] = [
-  { id: 'week', icon: '◷', label: 'This Week', short: 'Week', key: 'w', blurb: 'Your week, day by day: the morning meeting with your capos, your evenings, the sit-down, decisions, jobs under way, the news.' },
-  { id: 'money', icon: '$', label: 'Money', short: 'Money', key: 'm', blurb: 'The Family\'s money and your own pocket: what came in, where it went, who earned it.' },
-  { id: 'biz', icon: '♣', label: 'Rackets & Businesses', short: 'Rackets', key: 'r', blurb: 'What you run and what you own: rackets, places, real estate, hotels.' },
-  { id: 'family', icon: '⚑', label: 'The Family', short: 'Family', key: 'f', blurb: 'Your men and your blood: the council, the capos, who gets made, your wife, your kids, your heir.' },
-  { id: 'town', icon: '⌂', label: 'The Town', short: 'Town', key: 't', blurb: 'Wildwood outside your door: the streets, the other families, City Hall and the cops.' },
-  { id: 'you', icon: '☺', label: 'You', short: 'You', key: 'y', blurb: 'The boss himself: your sheet, how you live, your trips, your case. Settings and help.' },
+  { id: 'desk', icon: '▤', label: 'The Desk', short: 'Desk', key: 'd', blurb: 'What needs you this week, and what your people are handling for you. Jobs under way, the news, holding court.' },
+  { id: 'org', icon: '⚑', label: 'The Family', short: 'Family', key: 'f', blurb: 'The organization: the Rise, your capos and their men, the council and the chain of command, standing orders, trouble inside.' },
+  { id: 'money', icon: '$', label: 'Money & Business', short: 'Money', key: 'b', blurb: 'The money and what makes it: the envelope, the books, the rackets, dirty work, what you own, the loan desk.' },
+  { id: 'map', icon: '⌖', label: 'The Map', short: 'Map', key: 'm', blurb: 'Wildwood outside your door: the street, the boardwalk, the neighborhoods, the night, the underbelly, trips.' },
+  { id: 'rivals', icon: '♞', label: 'Rivals & the Law', short: 'Rivals', key: 'r', blurb: 'The other families and intrigue, the Table, City Hall, and the government\'s case against you.' },
+  { id: 'life', icon: '☺', label: 'Your Life', short: 'Life', key: 'l', blurb: 'The boss himself: your sheet, your people, the Store, your house, marriages and children, succession. Settings and help.' },
 ];
 export const HOMES_BY_ID = Object.fromEntries(HOMES.map((h) => [h.id, h])) as Record<HomeId, HomeDef>;
 
-/** The old drawer letters still open the home their sections moved to. */
-export const OLD_KEYS: Record<string, HomeId> = { h: 'family', b: 'family', l: 'biz', o: 'week', d: 'town', c: 'week' };
+/**
+ * The old letters still open the home their sections moved to (This Week w, the Town t, You y, the
+ * old drawers h o c). Where an old letter is a new home's letter now, the new home wins (m = Map,
+ * r = Rivals, b = Money & Business, l = Life, d = Desk); `$` is Money too. The shell says so once.
+ */
+export const OLD_KEYS: Record<string, HomeId> = { w: 'desk', t: 'map', y: 'life', h: 'life', o: 'desk', c: 'desk', $: 'money' };
+/** The one-time note for the letters that changed meaning. */
+export const KEYS_CHANGED = 'Keys changed: D = the Desk, F = the Family, B = Money & Business, M = the Map, R = Rivals & the Law, L = Your Life.';
 
 /** Where a registry section with no line in NAV lands: its old drawer's new home. */
 export const FALLBACK_HOME: Record<PanelId, HomeId> = {
-  you: 'you', house: 'family', borgata: 'family', holdings: 'biz', ops: 'week', diplomacy: 'town', town: 'town', chronicle: 'week',
+  you: 'life', house: 'life', borgata: 'org', holdings: 'money', ops: 'desk', diplomacy: 'rivals', town: 'map', chronicle: 'desk',
 };
 
 /** Sections that live in the shell itself (not in panels.tsx); App renders them. */
 export const NAV_ONLY = ['nav.settings', 'nav.help'] as const;
 
 export const NAV: Record<HomeId, NavGroupDef[]> = {
-  // The front page of This Week is the Boss's Desk (App.tsx): what needs you now. Below it, two places.
-  week: [
+  // The front page of the Desk is the one list (App.tsx: BossDesk): what needs you, what is handled. Below it, three places.
+  desk: [
     { items: [
       { keys: ['ops.progress', 'ops.missions', 'ops.plan'], icon: '⚙', label: 'Jobs', sub: 'What your people are working on, the big cases stage by stage, and planning a new job.', views: ['Under way', 'The big cases', 'Plan a job'] },
       { keys: ['chronicle.book', 'chronicle.all', 'chronicle.mine', 'chronicle.street', 'chronicle.family', 'chronicle.papers', 'chronicle.stories', 'chronicle.reports'], icon: '✎', label: 'The news', sub: 'Your story, the street, the family, the papers, the storylines and each week\'s report.', views: ['Your File', 'Everything', 'Yours', 'The street', 'Family', 'The papers', 'Storylines', 'Weekly reports'] },
+      { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
+    ] },
+  ],
+  org: [
+    { items: [
+      { keys: ['borgata.membership', 'borgata.progress'], icon: '✋', label: 'Getting made & coming up', sub: 'Philadelphia\'s books, the young men who want in, and every man\'s level and specialty: who is ready for more.', views: ['Getting made', 'Coming up'] },
+      { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen', 'borgata.protect'], icon: '⚑', label: 'Your men', sub: 'The chart, the capos and their men, taking care of each one, and who guards whom.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them', 'Guards & inquiries'] },
+      { keys: ['borgata.council', 'borgata.chain'], icon: '♜', label: 'Council & chain of command', sub: 'Five seats, one job each; and who handles what on their own: the underboss, the consigliere, each capo.', views: ['The seats', 'Who handles what'] },
+      { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
+      { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
     ] },
   ],
   money: [
@@ -78,10 +95,6 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['holdings.money'], icon: '$', label: 'This week\'s money', sub: 'Where it came from, your cut into the Family and your Pocket, where it went, the last 8 weeks.' },
       { keys: ['holdings.take', 'borgata.earnings'], aliases: ['borgata.take'], icon: '✉', label: 'The envelope', sub: 'What the underboss brings every Monday, crew by crew, and what every man earned and kept.', views: ['This week\'s envelope', 'Who earned what'] },
       { keys: ['holdings.books'], icon: '✍', label: 'The books & dirty money', sub: 'How the books are kept, washing dirty money, loans, and the bookkeeper.' },
-    ] },
-  ],
-  biz: [
-    { items: [
       { keys: ['holdings.hub'], icon: '♣', label: 'The rackets', sub: 'Every racket on the island: start one, decide how it runs, what it pays.' },
       { keys: ['holdings.dirty'], icon: '✂', label: 'Dirty work', sub: 'One-off jobs: hijack a truck, shake down a shop, fix a fight, move a load.' },
       { keys: ['holdings.rackets', 'holdings.property', 'holdings.designer', 'holdings.hq'], icon: '▣', label: 'What you own', sub: 'Your places, your real estate, your hotels and motels, and your headquarters.', views: ['Your places', 'Real estate', 'Hotels & motels', 'Headquarters'] },
@@ -89,46 +102,34 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['holdings.tech', 'holdings.gear'], icon: '⚙', label: 'Family development', sub: 'Technology, connections and crew equipment: how the family gets tougher over the years.', views: ['Technology & connections', 'Crew equipment'] },
     ] },
   ],
-  family: [
-    { title: 'Your crew', items: [
-      { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen', 'borgata.protect'], icon: '⚑', label: 'Your men', sub: 'The chart, the capos and their men, taking care of each one, and who guards whom.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them', 'Guards & inquiries'] },
-      { keys: ['borgata.council', 'borgata.chain'], icon: '♜', label: 'Council & chain of command', sub: 'Five seats, one job each; and who handles what on their own: the underboss, the consigliere, each capo.', views: ['The seats', 'Who handles what'] },
-      { keys: ['borgata.membership', 'borgata.progress'], icon: '✋', label: 'Getting made & coming up', sub: 'Philadelphia\'s books, the young men who want in, and every man\'s level and specialty: who is ready for more.', views: ['Getting made', 'Coming up'] },
-      { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
-      { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
-    ] },
-    { title: 'Your blood', items: [
-      { keys: ['house.tree', 'house.houses'], icon: '♔', label: 'Your house', sub: 'Your wife, your children, your house, and every family\'s tree back to the old country.', views: ['Family tree', 'Every house'] },
-      { keys: ['house.marriages'], icon: '♥', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
-      { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'] },
-      { keys: ['house.activities'], icon: '✦', label: 'Dinners & outings', sub: 'Host a dinner, a feast, a trip: the guests think better of you.' },
-      { keys: ['house.decisions', 'house.legacy'], icon: '★', label: 'The house\'s name', sub: 'Big moves for the house, what it is known for, and renown to spend.', views: ['Ambitions', 'Legacy & renown'] },
-    ] },
-  ],
-  town: [
-    { title: 'On the street', items: [
+  map: [
+    { items: [
       { keys: ['town.happening', 'town.attached'], icon: '☷', label: 'The street', sub: 'The Boardwalk\'s people on their own: stories, the talk, and who\'s with whom.', views: ['What\'s happening', 'Who\'s with whom'] },
       { keys: ['you.walk'], icon: '⇢', label: 'Walk the boardwalk', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.' },
       { keys: ['town.hoods'], icon: '⌂', label: 'Neighborhoods', sub: 'Each neighborhood: who lives and works there, who owns what, the police.' },
       { keys: ['town.nightlife', 'town.night'], icon: '☾', label: 'Nightlife & the Ears', sub: 'The people of the night, the madams\' houses, evenings, promises, goomars, and the Ears. She always decides.', views: ['Nightlife', 'The Ears & the Madam'] },
       { keys: ['town.underbelly'], icon: '⚓', label: 'The underbelly', sub: 'Outfits that prey on people, and what you do about them.' },
+      { keys: ['ops.travel'], icon: '✈', label: 'Trips & envoys', sub: 'Your trips, and the men you sent to other cities.' },
     ] },
-    { title: 'The other families & City Hall', items: [
+  ],
+  rivals: [
+    { items: [
       { keys: ['diplomacy.board', 'diplomacy.intrigue', 'diplomacy.army', 'diplomacy.warroom', 'diplomacy.balance'], icon: '♞', label: 'The other families & intrigue', sub: 'Every family: the era with each, spies and moles, lies, your army and allies, the war room.', views: ['The board', 'Intrigue', 'The army', 'The war room', 'Who\'s strongest'] },
       { keys: ['diplomacy.pacts', 'diplomacy.table'], icon: '⚖', label: 'The Table', sub: 'Truces and partnerships, and Philadelphia\'s sit-down: disputes, rulings, wars.', views: ['Pacts & truces', 'Disputes & wars'] },
       { keys: ['town.cityhall', 'town.patronage'], icon: '⌸', label: 'City Hall', sub: 'Who holds every seat that matters, and buying goodwill: tickets, projects, no-show jobs.', views: ['Who holds what', 'Gifts & patronage'] },
-    ] },
-  ],
-  you: [
-    { title: 'The boss', items: [
-      { keys: ['you.store', 'you.spend', 'you.possessions', 'you.lifestyle'], icon: '♠', label: 'The Store', sub: 'Everything money buys, from a flop house to a yacht. Share the wealth; take the whole family on vacation.', views: ['The Store', 'Everything, as a list', 'The good life (yours)', 'How you rule'] },
-      { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
-      { keys: ['you.people', 'you.dating'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel, remember, want. Dates and adult services.', views: ['Your people', 'Relationships & Dating'] },
-      { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
-      { keys: ['ops.travel'], icon: '✈', label: 'Trips & envoys', sub: 'Your trips, and the men you sent to other cities.' },
       { keys: ['town.case'], icon: '§', label: 'Your case', sub: 'The government\'s case against you, from a file to a trial.' },
     ] },
-    { title: 'The game', items: [
+  ],
+  life: [
+    { items: [
+      { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
+      { keys: ['you.people', 'you.dating'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel, remember, want. Dates and adult services.', views: ['Your people', 'Relationships & Dating'] },
+      { keys: ['you.store', 'you.spend', 'you.possessions', 'you.lifestyle'], icon: '♠', label: 'The Store', sub: 'Everything money buys, from a flop house to a yacht. Share the wealth; take the whole family on vacation.', views: ['The Store', 'Everything, as a list', 'The good life (yours)', 'How you rule'] },
+      { keys: ['house.tree', 'house.houses'], icon: '♔', label: 'Your house', sub: 'Your wife, your children, your house, and every family\'s tree back to the old country.', views: ['Family tree', 'Every house'] },
+      { keys: ['house.marriages'], icon: '♥', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
+      { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'] },
+      { keys: ['house.activities'], icon: '✦', label: 'Dinners & outings', sub: 'Host a dinner, a feast, a trip: the guests think better of you.' },
+      { keys: ['house.decisions', 'house.legacy'], icon: '★', label: 'The house\'s name', sub: 'Big moves for the house, what it is known for, and renown to spend.', views: ['Ambitions', 'Legacy & renown'] },
       { keys: ['nav.settings', 'nav.help'], icon: '⚙', label: 'Settings & help', sub: 'Motion, text speed, when the game pauses; what should I do, the glossary, the keys.', views: ['Settings', 'Help & keys'] },
     ] },
   ],
@@ -212,8 +213,9 @@ export function resolveRoute(r: Route | string | undefined): NavRoute {
   if (!r) return {};
   const route = typeof r === 'string' ? routeFor(r) : r;
   if (route.home) {
+    const home = homeId(route.home)!;
     const k = route.key ? canonicalKey(route.key) : undefined;
-    return k && itemOf(k)!.home === route.home ? { home: route.home, key: k } : { home: route.home };
+    return k && itemOf(k)!.home === home ? { home, key: k } : k ? { home: itemOf(k)!.home, key: k } : { home };
   }
   if (route.panel) {
     const p = PANELS.find((x) => x.id === route.panel);

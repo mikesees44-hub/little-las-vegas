@@ -7,7 +7,7 @@ import { newGame } from '../src/engine/newGame';
 import { alerts } from '../src/engine/alerts';
 import { whatShouldIDo } from '../src/engine/opportunities';
 import { PANELS } from '../src/ui/shell/panels';
-import { HOME_IDS, LEGACY_TAB_ROUTE, type Route } from '../src/ui/shell/routes';
+import { HOME_IDS, LEGACY_TAB_ROUTE, type HomeId, type Route } from '../src/ui/shell/routes';
 import { canonicalKey, HOMES, homeForKey, itemOf, NAV, NAV_ITEMS, NAV_ONLY, NAV_TREE, OLD_KEYS, REGISTRY_KEYS, resolveRoute } from '../src/ui/shell/nav';
 import { doNow } from '../src/ui/shell/doNow';
 import { shellAlerts } from '../src/ui/shell/alertRoutes';
@@ -59,8 +59,19 @@ describe('the menus: six homes, every screen in exactly one', () => {
     for (const h of HOME_IDS) {
       const n = NAV_TREE[h].flatMap((g) => g.items).length;
       expect(n, h).toBeGreaterThan(0);
-      expect(n, h).toBeLessThanOrEqual(15);
+      expect(n, h).toBeLessThanOrEqual(9);
     }
+    expect(NAV_ITEMS.length).toBeLessThanOrEqual(35);
+  });
+
+  it('the six homes are the Desk, the Family, Money & Business, the Map, Rivals & the Law, Your Life; every old home and letter still lands', () => {
+    expect(HOMES.map((h) => [h.id, h.key])).toEqual([['desk', 'd'], ['org', 'f'], ['money', 'b'], ['map', 'm'], ['rivals', 'r'], ['life', 'l']]);
+    const old: Record<string, string> = { week: 'desk', money: 'money', biz: 'money', family: 'org', town: 'map', you: 'life' };
+    for (const [o, n] of Object.entries(old)) expect(resolveRoute({ home: o as HomeId }).home, o).toBe(n);
+    for (const [k, h] of Object.entries({ w: 'desk', t: 'map', y: 'life', h: 'life', o: 'desk', c: 'desk', $: 'money' })) expect(homeForKey(k), k).toBe(h);
+    for (const k of ['w', 'r', 't', 'y', 'h', 'b', 'l', 'o', 'd', 'c']) expect(homeForKey(k), k).toBeDefined();
+    expect(resolveRoute('home:you/nav.settings')).toEqual({ home: 'life', key: 'nav.settings' });
+    expect(resolveRoute({ home: 'week' as HomeId, key: 'ops.plan' })).toEqual({ home: 'desk', key: 'ops.plan' });
   });
 
   it('every legacy tab id resolves to a home and a section in it', () => {
@@ -87,8 +98,8 @@ describe('the menus: six homes, every screen in exactly one', () => {
       expect(resolveRoute(p.id).home, p.id).toBeDefined();
     }
     for (const h of HOME_IDS) expect(resolveRoute({ home: h })).toEqual({ home: h });
-    expect(resolveRoute({ home: 'you', key: 'nav.settings' })).toEqual({ home: 'you', key: 'nav.settings' });
-    expect(resolveRoute('settings')).toEqual({ home: 'you', key: 'nav.settings' });
+    expect(resolveRoute({ home: 'life', key: 'nav.settings' })).toEqual({ home: 'life', key: 'nav.settings' });
+    expect(resolveRoute('settings')).toEqual({ home: 'life', key: 'nav.settings' });
     expect(resolveRoute('nonsense')).toEqual({});
   });
 
@@ -131,7 +142,7 @@ describe('Do this now', () => {
   it('This Week puts the decisions on the desk first', () => {
     const s = playWeeks('nav-donow', 6);
     const sa = shellAlerts(s, alerts(s));
-    const w = doNow(s, 'week', { alerts: sa, opps: whatShouldIDo(s, 12), unanswered: 2, brief: 3 });
+    const w = doNow(s, 'desk', { alerts: sa, opps: whatShouldIDo(s, 12), unanswered: 2, brief: 3 });
     expect(w[0].act.kind).toBe('decisions');
     expect(w[1].act.kind).toBe('sitdown');
     // The Desk itself: Needs you first, then Handled for you, then your orders, bills, what is coming.
@@ -150,7 +161,7 @@ describe('Do this now', () => {
   it('an empty council seat shows up under The Family', () => {
     const s = newGame('nav-seat');
     s.council.fixer = { ...s.council.fixer, holderId: undefined };
-    const f = doNow(s, 'family', { alerts: [], opps: [], unanswered: 0, brief: 0 });
+    const f = doNow(s, 'org', { alerts: [], opps: [], unanswered: 0, brief: 0 });
     expect(f.some((d) => d.id === 'seats')).toBe(true);
   });
 });
