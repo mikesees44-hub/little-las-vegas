@@ -93,6 +93,7 @@ import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
 import { mindsWeek } from './minds';
+import { argueWeek } from './argue/offer';
 import { deedsEventSource, deedsWeek } from './deeds';
 import { sceneEventSource } from './authored/run';
 import { capoEventSource, caposWeek } from './capos';
@@ -399,6 +400,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     officeWeek(s);
     // The minds think before the capos and the rivals act (minds/): their choices read fresh minds.
     mindsWeek(ctx);
+    // Arguments (argue/): a window left open is settled; the week's hearsay arrives; story seeds grow into the systems above and below.
+    argueWeek(ctx);
     // People act on each other (deeds/): the NPCs' own interactions, the clashes, partnerships and loans.
     deedsWeek(ctx);
     regimesWeek(ctx);

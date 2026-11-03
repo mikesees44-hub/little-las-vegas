@@ -1,0 +1,232 @@
+{
+  "_about": "Follow-ups to arguments (engine/argue): what a hard word in the back room grows into. Scheduled by a story seed with the same cast ({man}, and {wronged} for the family ones); never come up on their own.",
+  "scenes": [
+    {
+      "id": "argue_mend",
+      "title": "{man.first} comes by with a bottle",
+      "theme": "crew",
+      "followup": true,
+      "who": { "man": { "pool": "crew" } },
+      "text": "Tuesday, before the lunch crowd. {man.call} is at the bar with a bottle of the good anisette and two glasses already poured. \"I been thinking about the other night,\" {man.he} says, and does not finish. {man.He} is not a man who finishes those sentences.",
+      "choices": [
+        {
+          "label": "Sit down and drink with him",
+          "hint": "Nobody has to say sorry twice.",
+          "effects": [
+            { "opinion": { "of": "man", "toward": "boss", "by": 10, "why": "Drank with me after the argument" } },
+            { "memory": { "who": "man", "about": "boss", "text": "the boss sat down and had a drink with him after", "weight": 8 } },
+            { "grievance": { "of": "man", "toward": "boss", "by": -10 } }
+          ]
+        },
+        {
+          "label": "Take the glass, keep it short",
+          "hint": "One drink. Business after.",
+          "effects": [ { "opinion": { "of": "man", "toward": "boss", "by": 4, "why": "Took the drink, at least" } } ]
+        },
+        {
+          "label": "Tell him it's not that easy",
+          "hint": "He should sweat a little longer.",
+          "effects": [
+            { "fear": { "of": "man", "toward": "boss", "by": 6 } },
+            { "opinion": { "of": "man", "toward": "boss", "by": -8, "why": "Left me standing with the bottle" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "argue_shark",
+      "title": "{man.first} went to a shark",
+      "theme": "crew",
+      "followup": true,
+      "who": { "man": { "pool": "crew" } },
+      "text": "Word comes back the way it always does: {man.call} borrowed from one of the other family's shylocks after you turned him down. Six points a week. A man of yours, owing them. Their collector has already been by {man.his} house once.",
+      "choices": [
+        {
+          "label": "Pay off the shark yourself",
+          "hint": "He owes you now, not them.",
+          "requires": { "money": 900 },
+          "effects": [
+            { "money": -900 },
+            { "owes": { "who": "man", "to": "boss" } },
+            { "opinion": { "of": "man", "toward": "boss", "by": 12, "why": "Got the shark off my back" } }
+          ]
+        },
+        {
+          "label": "Send word: hands off my man",
+          "hint": "They may listen. They may not.",
+          "odds": { "base": 55, "plus": [ { "if": { "bossTrait": "Cruel" }, "add": 10, "why": "Your reputation" } ] },
+          "success": [
+            { "respect": 1 },
+            { "opinion": { "of": "man", "toward": "boss", "by": 6, "why": "Stood up for me with the other side" } }
+          ],
+          "failure": [
+            { "respect": -1 },
+            { "heat": { "local": 2 } }
+          ],
+          "result": "The collector stopped coming around. {man.first} still has to pay, but nobody is leaning.",
+          "failText": "They told your man to mind his own business. {man.first} is still paying six points."
+        },
+        {
+          "label": "He made his bed",
+          "hint": "A lesson about asking twice.",
+          "effects": [
+            { "opinion": { "of": "man", "toward": "boss", "by": -10, "why": "Let the shark eat me" } },
+            { "grievance": { "of": "man", "toward": "boss", "by": 10 } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "argue_vindicate",
+      "title": "{man.first} wants to prove it",
+      "theme": "crew",
+      "followup": true,
+      "who": { "man": { "pool": "crew" } },
+      "text": "{man.call} asks for five minutes, alone. {man.He} has not slept. \"Give me something. Anything. The worst job you got. I'll do it and then you'll know.\" {man.His} hands are steady. {man.His} voice is not.",
+      "choices": [
+        {
+          "label": "Tell him you were wrong",
+          "hint": "It costs you nothing but pride.",
+          "effects": [
+            { "opinion": { "of": "man", "toward": "boss", "by": 14, "why": "Said he was wrong about me" } },
+            { "grievance": { "of": "man", "toward": "boss", "by": -15 } },
+            { "memory": { "who": "man", "about": "boss", "text": "the boss looked him in the eye and took it back", "weight": 10 } }
+          ]
+        },
+        {
+          "label": "Give him the job",
+          "hint": "Let him earn it back.",
+          "odds": { "base": 65, "plus": [ { "if": { "role": "man", "trait": "Loyal-to-a-fault" }, "add": 15, "why": "{man.first} would walk through fire" } ] },
+          "success": [
+            { "money": 600 },
+            { "trust": { "of": "boss", "toward": "man", "by": 15 } },
+            { "opinion": { "of": "man", "toward": "boss", "by": 8, "why": "Let me prove myself" } }
+          ],
+          "failure": [
+            { "heat": { "local": 3 } },
+            { "opinion": { "of": "man", "toward": "boss", "by": -4, "why": "Set me up to fail" } }
+          ],
+          "result": "{man.first} did it clean and came back without a word. Everybody noticed.",
+          "failText": "It went sideways. {man.first} thinks you wanted it to."
+        },
+        {
+          "label": "Nothing to prove. Go home.",
+          "hint": "He'll take it however he takes it.",
+          "effects": [
+            { "opinion": { "of": "man", "toward": "boss", "by": -6, "why": "Would not even let me prove it" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "argue_allies",
+      "title": "{man.first} has been having dinners",
+      "theme": "crew",
+      "followup": true,
+      "who": { "man": { "pool": "crew" } },
+      "text": "Three Sundays running, {man.call} has had people to the house. Not family. The kind of people who do not go to each other's houses unless they have something to talk about. Somebody at the table told somebody, who told you.",
+      "choices": [
+        {
+          "label": "Invite yourself to the next one",
+          "hint": "Walk in smiling. Watch the faces.",
+          "odds": { "base": 50, "plus": [ { "if": { "bossTrait": "Charming" }, "add": 15, "why": "Your charm" } ] },
+          "success": [
+            { "respect": 1 },
+            { "grievance": { "of": "man", "toward": "boss", "by": -10 } },
+            { "fear": { "of": "man", "toward": "boss", "by": 8 } }
+          ],
+          "failure": [
+            { "opinion": { "of": "man", "toward": "boss", "by": -8, "why": "Came to my house to spy on me" } }
+          ],
+          "result": "You ate his wife's braciole and praised it twice. The dinners stopped.",
+          "failText": "The room went cold when you walked in. Now he knows you know."
+        },
+        {
+          "label": "Make him an offer he likes",
+          "hint": "A bigger end, and a seat closer to you.",
+          "requires": { "money": 1500 },
+          "effects": [
+            { "money": -1500 },
+            { "opinion": { "of": "man", "toward": "boss", "by": 15, "why": "Took care of me in the end" } },
+            { "grievance": { "of": "man", "toward": "boss", "by": -20 } }
+          ]
+        },
+        {
+          "label": "Let him talk. Watch who listens.",
+          "hint": "Names are worth more than one man's sulk.",
+          "effects": [ { "flag": "argue_watching_dinners" } ]
+        }
+      ]
+    },
+    {
+      "id": "argue_affair_kin",
+      "title": "{wronged.first}'s people want it settled",
+      "theme": "family",
+      "followup": true,
+      "when": { "mature": true },
+      "who": { "man": { "pool": "family" }, "wronged": { "pool": "family" } },
+      "text": "{wronged.call}'s brothers come to the house on a Sunday, in their church clothes, and do not sit down. They know about {man.first}. Everybody knows now. They want to hear from you what happens next, because in this family, it is your word.",
+      "choices": [
+        {
+          "label": "{man.first} apologizes to her, in front of them",
+          "hint": "Humiliating for him. It ends it.",
+          "effects": [
+            { "opinion": { "of": "wronged", "toward": "boss", "by": 10, "why": "Made him answer for it" } },
+            { "opinion": { "of": "man", "toward": "boss", "by": -10, "why": "Made me crawl in front of her brothers" } }
+          ]
+        },
+        {
+          "label": "Pay for a new start for her",
+          "hint": "A house, quietly, near her mother.",
+          "requires": { "money": 2000 },
+          "effects": [
+            { "money": -2000 },
+            { "opinion": { "of": "wronged", "toward": "boss", "by": 15, "why": "Looked after me when it fell apart" } },
+            { "family": { "by": 2, "why": "The boss looked after her" } }
+          ]
+        },
+        {
+          "label": "It's their marriage. Stay out.",
+          "hint": "Her side will not forget it.",
+          "effects": [
+            { "opinion": { "of": "wronged", "toward": "boss", "by": -12, "why": "Let it go like it was nothing" } },
+            { "family": { "by": -2, "why": "The boss let it go" } }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "argue_scandal",
+      "title": "The beauty parlor is talking",
+      "theme": "family",
+      "followup": true,
+      "when": { "mature": true },
+      "who": { "man": { "pool": "family" }, "wronged": { "pool": "family" } },
+      "text": "Your wife hears it under the dryer on Pacific Avenue: {man.first}, and somebody who is not {wronged.first}. By Friday it is at the church bazaar. Nobody says it to your face. Everybody says it behind your back.",
+      "choices": [
+        {
+          "label": "Be seen together at Mass, all of you",
+          "hint": "Smile for the parish. It quiets things.",
+          "effects": [
+            { "family": { "by": 2, "why": "The family stood together" } },
+            { "opinion": { "of": "wronged", "toward": "boss", "by": 5, "why": "Kept the family's face" } }
+          ]
+        },
+        {
+          "label": "Find out who started it",
+          "hint": "Somebody's mouth needs closing.",
+          "odds": { "base": 50 },
+          "success": [ { "respect": 1 } ],
+          "failure": [ { "respect": -1 } ],
+          "result": "The talk stopped the same week. Nobody asks why.",
+          "failText": "Asking around only made more people talk."
+        },
+        {
+          "label": "Ignore it",
+          "hint": "Talk dies. Usually.",
+          "effects": [ { "family": { "by": -1, "why": "The talk went on" } } ]
+        }
+      ]
+    }
+  ]
+}

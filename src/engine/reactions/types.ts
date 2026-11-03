@@ -99,6 +99,10 @@ export interface ReactionBatch {
   /** How many more (minor) reactions rolled into the summary. */
   more: number;
   src?: string;
+  /** The decision's kind and the people it was about (the argument window reads them: argue/offer.ts). */
+  k?: RxKind;
+  t?: string;
+  over?: string;
 }
 
 /** A minor reaction (or a batch held back by the caps), for the week's summary. */

@@ -1006,6 +1006,8 @@ export interface GameState {
   deeds?: import('./deeds/types').DeedsState;
   /** CK-style reactions to the boss's decisions, and the NPCs' proposals (reactions/). */
   reactions?: import('./reactions/types').ReactionsState;
+  /** Arguments: a heated decision answered in the moment, the rounds after it, its witnesses, its rumors and the story seeds it leaves (argue/; optional: made by the first argument). */
+  argue?: import('./argue/types').ArgueState;
   /** The Old Don start's hidden hands, the fog over the coming move, and the verdict on the first year (oldDon.ts; only that start has it). */
   oldDon?: import('./oldDon').OldDonState;
   /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */

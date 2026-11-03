@@ -138,7 +138,7 @@ function batch(s: GameState, d: Decision, items: Reaction[]): ReactionBatch | un
     return undefined;
   }
   log(items.slice(BATCH_ITEMS));
-  const b: ReactionBatch = { id: `rx${s.nextId++}`, w: s.week, title: d.label.slice(0, 90), items: shown, more: items.length - shown.length, ...(d.src ? { src: d.src } : {}) };
+  const b: ReactionBatch = { id: `rx${s.nextId++}`, w: s.week, title: d.label.slice(0, 90), items: shown, more: items.length - shown.length, ...(d.src ? { src: d.src } : {}), k: d.k, ...(d.t ? { t: d.t } : {}), ...(d.over ? { over: d.over } : {}) };
   R.q.push(b);
   while (R.q.length > Q_CAP) {
     const old = R.q.shift()!;
