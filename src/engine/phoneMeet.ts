@@ -379,7 +379,7 @@ export function meetView(s: GameState, it: ScheduledItem): MomentView | undefine
   const pl = placeOf(s, p.place);
   return {
     id: it.id, title: `${p.purpose === 'sitdown' ? 'The sit-down' : 'The meet'}: ${displayName(c)}`,
-    text: `${pl.name[0].toUpperCase()}${pl.name.slice(1)}. ${pl.hint}. ${STATE_TEXT[m.st](c.firstName)}`,
+    text: `${pl.name[0].toUpperCase()}${pl.name.slice(1)}. ${pl.hint.replace(/\.$/, '')}. ${STATE_TEXT[m.st](c.firstName)}`,
     when: whenText(it.d, it.h), warned: false,
     options: m.opts.map((o) => ({ id: o.id, label: o.label, hint: o.hint, odds: o.p, ...(o.blocked ? { blocked: o.blocked } : {}) })),
     def: m.st === 'setup' ? 'walk' : 'leave',
