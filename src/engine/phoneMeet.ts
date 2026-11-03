@@ -2,6 +2,8 @@ import { capos, crew, displayName, hasTrait, isFree, player } from './characters
 import { holder as seatHolder } from './council';
 import { applyEffects, fmtMoney } from './effects';
 import { newCtx, type Ctx } from './ledger';
+// The state copy that keeps the big copy-on-write parts shared (houses, politics, the Book): the screens' caches stay warm.
+import { cloneState } from './engine';
 import { journal, type JCat } from './journal';
 import { opinion } from './relations';
 import { DAY_NAMES, today } from './days';
@@ -213,7 +215,7 @@ export function dial(input: GameState, sp: DialSpec): { state: GameState; result
   if (sp.purpose === 'meet' && (sp.place === undefined || sp.d === undefined || sp.hour === undefined)) return fail('Pick a place and a time');
   const line = pv.line;
   const t = spendTime(input, { kind: 'phone', op: { op: sp.pay ? 'pay' : 'call' } } as unknown as PlayerAction);
-  const s = structuredClone(t.state) as GameState;
+  const s = cloneState(t.state);
   const P = ensurePhone(s);
   const ctx = newCtx(s);
   const before = { money: s.money + Math.round(s.tribute?.acct.personal ?? 0), respect: s.respect, heat: { ...s.heat } };
@@ -392,7 +394,7 @@ export function answerMeet(input: GameState, it: ScheduledItem, optId: string): 
   const o = m.opts.find((x) => x.id === optId && !x.blocked) ?? m.opts.find((x) => x.id === (m.st === 'setup' ? 'walk' : 'leave'))!;
   const p = it.payload as unknown as MeetPay;
   const t = spendTime(input, { kind: 'phone', op: { op: 'meet' } } as unknown as PlayerAction);
-  const s = structuredClone(t.state) as GameState;
+  const s = cloneState(t.state);
   const P = ensurePhone(s);
   const ctx = newCtx(s);
   const c = s.characters[p.who];

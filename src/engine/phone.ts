@@ -2,6 +2,8 @@ import { crew, displayName, isFree, player } from './characters';
 import { holder as seatHolder } from './council';
 import { applyEffects, fmtMoney } from './effects';
 import { newCtx, type Ctx } from './ledger';
+// The state copy that keeps the big copy-on-write parts shared (houses, politics, the Book): the screens' caches stay warm.
+import { cloneState } from './engine';
 import { journal, type JCat } from './journal';
 import { opinion } from './relations';
 import { answerCheckIn, daysOf, DAY_NAMES, today } from './days';
@@ -202,11 +204,12 @@ export function phoneDay(s: GameState): GameState {
   if (s.gameOver) return s;
   const d = today(s);
   if (d < 1) return s;
-  const x: GameState = { ...s, phone: structuredClone(s.phone) ?? undefined, threats: s.threats ? { ...s.threats, tips: s.threats.tips.map((t) => ({ ...t })) } : s.threats, action: structuredClone(s.action) ?? undefined };
+  const abs = s.week * 7 + d;
+  // Missed calls nobody returned: the caller remembers (opinions move: a real copy of the state).
+  const gone = (s.phone?.missed ?? []).filter((m) => m.until < abs);
+  const base = gone.length ? cloneState(s) : s;
+  const x: GameState = { ...base, phone: structuredClone(s.phone) ?? undefined, threats: s.threats ? { ...s.threats, tips: s.threats.tips.map((t) => ({ ...t })) } : s.threats, action: structuredClone(s.action) ?? undefined };
   const P = ensurePhone(x);
-  const abs = x.week * 7 + d;
-  // Missed calls nobody returned: the caller remembers.
-  const gone = P.missed.filter((m) => m.until < abs);
   if (gone.length) {
     const ctx = newCtx(x);
     for (const m of gone) {
@@ -516,7 +519,7 @@ export function answerCall(input: GameState, key: string, p: CallPayload, d: num
   if (!opts) return fail('The line is dead');
   let o = opts.find((x) => x.id === optId && !x.blocked) ?? opts.find((x) => x.id === 'ring')!;
   if (back && (o.id === 'ring' || o.id === 'msg')) o = opts.find((x) => x.id !== 'ring' && x.id !== 'msg' && !x.blocked) ?? o;
-  const s = structuredClone(input) as GameState;
+  const s = cloneState(input);
   const P = ensurePhone(s);
   const ctx = newCtx(s);
   const before = { money: s.money + Math.round(s.tribute?.acct.personal ?? 0), respect: s.respect, heat: { ...s.heat } };
