@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import '../src/engine/engine';
-import { cloneState } from '../src/engine/engine';
+import { advanceWeek, cloneState } from '../src/engine/engine';
 import { newGame } from '../src/engine/newGame';
 import { makeCharacter } from '../src/engine/characters';
 import { newCtx } from '../src/engine/ledger';
@@ -456,5 +456,30 @@ describe('arguments: the window', () => {
     expect(done).toContain('data-testid="argue-done"');
     expect(done).toContain('in Your File');
     expect(done).not.toContain('data-testid="argue-replies"');
+  });
+});
+
+describe('arguments: through the weekly turn', () => {
+  it('a window left open is settled at the turn; seeds grow into the authored follow-ups; hearsay arrives', () => {
+    let s = game();
+    traits(s, UB, ['Loyal-to-a-fault', 'Patient']);
+    addOpinion(s, UB, s.playerId, 'Years together', 60, 0);
+    beginArgument(s, { k: 'insult', t: UB, room: [MATTEO, MALACHY], label: 'You dressed Rocco down' });
+    const A = play(s, ['apologize', 'mediate', 'apologize']);
+    expect(A.end).toBe('reconciled');
+    // A second one, left hanging when the week turns.
+    traits(s, TIMOTHY, ['Hot-headed']);
+    beginArgument(s, { k: 'refuse', t: TIMOTHY, room: [PHILIP], label: 'You turned Timothy down' });
+    expect(s.argue!.live!.end).toBeUndefined();
+    s = advanceWeek(s, {}).state;
+    expect(s.argue!.live).toBeUndefined();
+    expect(s.argue!.hist.some((h) => h.t === TIMOTHY)).toBe(true);
+    for (let i = 0; i < 3; i++) s = advanceWeek(s, {}).state;
+    const mend = s.argue!.seeds.find((x) => x.k === 'mend' && x.who === UB);
+    expect(mend?.done).toBeDefined();
+    // The follow-up scene was scheduled (or already came up as a popup).
+    const due = (s.deeds?.due ?? []).some((d) => d.id === 'argue_mend') || s.pendingEvents.some((e) => e.defId === 'scene_argue_mend') || (s.deeds?.sc.argue_mend ?? -1) >= 0;
+    expect(due).toBe(true);
+    expect(s.argue!.stats.heard).toBeGreaterThan(0);
   });
 });
