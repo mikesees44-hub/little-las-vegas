@@ -187,7 +187,10 @@ export function DecisionCard(p: DecisionCardProps) {
   const chosen = options.find((o) => o.id === sel);
   const give = (id: string) => {
     const v = p.confirmFor?.(id);
-    if (v) { setSel(id); setConfirm({ id, v }); return; }
+    // One way to answer, on every card: a number key or the primary picks the option and gives it,
+    // and the card shows it picked (the footer never says "Pick one" after an answer).
+    setSel(id);
+    if (v) { setConfirm({ id, v }); return; }
     p.onDecide(id);
   };
   useNumberKeys(!!p.keys && !confirm, options.length, (i) => { const o = options[i]; if (o && !o.disabled) give(o.id); });

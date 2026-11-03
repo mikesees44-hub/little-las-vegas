@@ -1,6 +1,6 @@
 import { previewAction, queuedMoney } from '../../engine/actions';
 import { ABOUT_WORD, counsel, type Voice } from '../../engine/counsel';
-import { briefing } from '../../engine/briefing';
+import { briefing, speakerLabel } from '../../engine/briefing';
 import { opportunities } from '../../engine/opportunities';
 import { hoursShort, timeCost } from '../../engine/timeCost';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -69,7 +69,8 @@ export function candidates(s: GameState, orders: readonly PlayerAction[] = []): 
     out.push(c);
   };
   try {
-    for (const it of briefing(s).items) for (const o of it.options) if (o.action && o.id !== 'wait') push({ action: o.action, source: `${it.speaker}: ${it.topic}`, weight: it.priority + o.value / 100 });
+    const bf = briefing(s);
+    for (const it of bf.items) for (const o of it.options) if (o.action && o.id !== 'wait') push({ action: o.action, source: `${speakerLabel(bf, it.speaker)}: ${it.topic}`, weight: it.priority + o.value / 100 });
   } catch { /* no briefing yet */ }
   try {
     for (const o of opportunities(s)) if (o.link.action) push({ action: o.link.action, source: o.title, weight: o.score });

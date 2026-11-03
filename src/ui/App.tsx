@@ -24,6 +24,7 @@ import { NowResultHost, postNow } from './deeds/NowResult';
 import { actNow, instant } from '../engine/actNow';
 import { isHeavy } from '../engine/heavy';
 import { ReactionsHost } from './reactions/Reactions';
+import { nextReactions } from '../engine/reactions';
 import { ArgueHost } from './argue/ArgueWindow';
 import { ReportModal } from './components/ReportModal';
 import type { ClarityApi } from './clarity/context';
@@ -341,6 +342,10 @@ export function App({ startOn = 'title' }: AppProps) {
     setS((x) => markTipsSeen(x, fresh));
   }, [s, menu, urgent]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
+  // "How they took it" or an argument waiting: an urgent meeting waits behind it (never under it).
+  const rxWaiting = !!nextReactions(s) || !!s.argue?.live;
+  /** Answered: the meeting closes, and the next one still waiting on the boss (if any) takes its place. */
+  const nextUrgent = (done: string) => urgentMeetings(s).find((u) => u.id !== done && (u.status === 'waiting' || !u.response))?.id;
 
   const settledRef = useRef<SettledMark | undefined>(undefined);
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
@@ -457,7 +462,10 @@ export function App({ startOn = 'title' }: AppProps) {
     const next = { ...answers, [ev.iid]: choiceId };
     setAnswers(next);
     if (!advancing) {
-      setEventIdx(eventIdx + 1 < s.pendingEvents.length ? eventIdx + 1 : null);
+      // On to the next decision still open (never one already answered: answered cards don't come back), else close.
+      const after = s.pendingEvents.findIndex((e, j) => j > eventIdx && !next[e.iid]);
+      const any = after >= 0 ? after : s.pendingEvents.findIndex((e) => !next[e.iid]);
+      setEventIdx(any >= 0 ? any : null);
       return;
     }
     const nextIdx = s.pendingEvents.findIndex((e) => !next[e.iid]);
@@ -672,7 +680,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const sitKey = `${s.seed}:${s.week}`;
   useEffect(() => {
     if (menu || s.gameOver || speed !== 0 || sitSeen === sitKey || daysOf(s).day > 0) return;
-    if (current || scene || cues.length || reels.length || night.length || reports || sheet || planner || tripPlan || fleeFor || picker || office || ctxMenu) return;
+    if (current || scene || cues.length || reels.length || night.length || reports || sheet || planner || tripPlan || fleeFor || picker || office || ctxMenu || rxWaiting) return;
     let seen: string | null = null;
     try { seen = sessionStorage.getItem('llv-sitdown'); } catch { /* storage unavailable */ }
     setSitSeen(sitKey);
@@ -684,7 +692,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (start === 'office') { setRoute({ home: 'desk' }); setOfficeView('office'); setMondayCard(true); return; }
     if (start === 'desk') setRoute({ home: 'desk' });
     if (getSettings().sitdownEachWeek !== false) setSitdown('council');
-  }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
+  }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu, rxWaiting]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       // The keyboard rules (keys.ts): typing wins, a focused control keeps Space/Enter, a held key is one press.
@@ -994,15 +1002,16 @@ export function App({ startOn = 'title' }: AppProps) {
           onPolicy={(split, auto) => { ordersApi.queue({ kind: 'tribute', op: { op: 'policy', split, ...(auto !== undefined ? { auto } : {}) } }); setOffice(undefined); }} />
       )}
       {current && !scene && current.defId !== 'tribute_audience' && (
-        <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
+        <EventModal key={current.iid} s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       <NowResultHost />
+      {/* One queue, never stacked: a decision or a scene first, then "How they took it", then the argument it opens, then an urgent meeting. */}
       <ReactionsHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0 || !!s.argue?.live} />
       <ArgueHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0} />
-      {urgent && !current && !scene && (
+      {urgent && !current && !scene && !reports && !cues.length && !rxWaiting && (
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
-          onMeet={(id, via) => act((x) => meetTip(x, id, via), 'You agreed to the meeting')} onIgnore={(id) => { act((x) => ignoreTip(x, id), 'You let the warning go'); setUrgent(undefined); }}
-          onRespond={(id, r) => act((x) => respondTip(x, id, r), 'You gave your answer to the warning')} />
+          onMeet={(id, via) => act((x) => meetTip(x, id, via), 'You agreed to the meeting')} onIgnore={(id) => { act((x) => ignoreTip(x, id), 'You let the warning go'); setUrgent(nextUrgent(id)); }}
+          onRespond={(id, r) => { act((x) => respondTip(x, id, r), 'You gave your answer to the warning'); setUrgent(nextUrgent(id)); }} />
       )}
       {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}

@@ -589,6 +589,8 @@ export function threatsAnswer(ctx: Ctx): void {
   const T = s.threats;
   if (!T) return;
   for (const tip of T.tips) {
+    // His man died before the meeting: nothing to miss, nobody to snub.
+    if (tip.status === 'waiting' && s.characters[tip.sourceId] && !s.characters[tip.sourceId].alive) { tip.status = 'done'; continue; }
     if (tip.status === 'waiting' && tip.deadline <= s.week) {
       tip.status = 'missed';
       T.stats.ignored++;
@@ -1064,7 +1066,9 @@ export function urgentMeetings(s: GameState): UrgentView[] {
   const ub = seatHolder(s, 'underboss');
   const cons = seatHolder(s, 'consigliere');
   const block = meetBlock(s);
-  return T.tips.filter((t) => t.status === 'waiting' || t.status === 'met' || t.status === 'sent').map((t) => {
+  // A dead man asks for no meetings: his request is dropped at his death (the playthrough met Raymond after his funeral).
+  const gone = (t: Tip) => { const c = s.characters[t.sourceId]; return !!c && !c.alive; };
+  return T.tips.filter((t) => (t.status === 'waiting' || t.status === 'met' || t.status === 'sent') && !(t.status === 'waiting' && gone(t))).map((t) => {
     const left = t.deadline - s.week;
     const open = t.status !== 'waiting';
     return {

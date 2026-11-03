@@ -1,6 +1,6 @@
 import { inbox, type InboxItem, type InboxUi } from './inbox';
 import { envelopeMan, latestReport } from './tribute';
-import { briefing as briefing0 } from './briefing';
+import { briefing as briefing0, speakerLabel } from './briefing';
 import { weekCheckIns as weekCheckIns0 } from './checkins';
 import { DAY_NAMES, today } from './days';
 import { capoLevelOf, chosenOpt, docketOf, levelOf } from './lieutenants';
@@ -186,10 +186,12 @@ export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
     return { by: k ? displayName(k) : c?.name ?? 'The capo', byId: c?.capoId, does: own ? `his way: ${own.label.toLowerCase()}` : 'his own way', day: it.ref.day };
   }
   if (it.ref.brief) {
-    const b = briefing(s).items.find((x) => x.id === it.ref.brief);
+    const bf = briefing(s);
+    const b = bf.items.find((x) => x.id === it.ref.brief);
     const rec = b?.options.find((o) => o.id === b.recommended);
     const who = b?.charId ? s.characters[b.charId] : undefined;
-    return { by: who ? displayName(who) : b?.speaker ?? ub.by, byId: who?.id, does: rec && rec.id !== 'wait' ? `as he recommends: ${rec.label.toLowerCase()}` : 'it waits a week' };
+    const said = b ? speakerLabel(bf, b.speaker) : undefined;
+    return { by: who ? displayName(who) : said ? said.charAt(0).toUpperCase() + said.slice(1) : ub.by, byId: who?.id, does: rec && rec.id !== 'wait' ? `as he recommends: ${rec.label.toLowerCase()}` : 'it waits a week' };
   }
   if (it.ref.event) {
     const ev = s.pendingEvents.find((e) => e.iid === it.ref.event);

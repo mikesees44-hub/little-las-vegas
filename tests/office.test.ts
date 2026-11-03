@@ -46,7 +46,8 @@ describe("the boss's office", () => {
 // ---- The Boss's Office (the room upstairs at the club: ui/office, engine/bossOffice.ts) ----
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
-import { officeBriefing, officePhone, officeRoom, officeVisitors } from '../src/engine/bossOffice';
+import { officeBriefing, officePhone, officeRoom, officeSeat, officeVisitors } from '../src/engine/bossOffice';
+import { counsel } from '../src/engine/counsel';
 import { weekCheckIns } from '../src/engine/checkins';
 import { briefing } from '../src/engine/briefing';
 import { newGameWith } from '../src/engine/starts';
@@ -154,8 +155,14 @@ describe("the Boss's Office room", () => {
           expect(b.items.some((i) => i.id === v.ref.brief)).toBe(true);
         } else expect(v.kind).toBe('lawyer');
         if (v.delegate?.op.kind === 'answer') {
+          // "Ask X to handle it" carries X's own pick at the table (the playthrough: the button and his quote disagreed),
+          // else the default when he gives none.
           const ev = s.pendingEvents.find((e) => e.iid === v.ref.event)!;
-          expect(v.delegate.op.choiceId).toBe(ev.defaultChoiceId);
+          const seat = officeSeat(s);
+          const backs = counsel(s, { kind: 'event', iid: ev.iid })?.voices.find((x) => x.adviser.charId === seat.charId)?.backs;
+          const open = backs && ev.choices.some((c) => c.id === backs && !c.disabledReason);
+          expect(v.delegate.op.choiceId).toBe(open ? backs : ev.defaultChoiceId);
+          expect(v.delegate.does).toBe(ev.choices.find((c) => c.id === v.delegate!.op.choiceId)!.label);
         }
       }
       const first = vs.find((v) => v.ref.event);
