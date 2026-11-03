@@ -2,8 +2,6 @@ import { capos, crew, displayName, hasTrait, isFree, player } from './characters
 import { holder as seatHolder } from './council';
 import { applyEffects, fmtMoney } from './effects';
 import { newCtx, type Ctx } from './ledger';
-// The state copy that keeps the big copy-on-write parts shared (houses, politics, the Book): the screens' caches stay warm.
-import { cloneState } from './engine';
 import { journal, type JCat } from './journal';
 import { opinion } from './relations';
 import { DAY_NAMES, today } from './days';
@@ -13,7 +11,7 @@ import { hourText, whenText } from './threats';
 import { registerDelivery, scheduleInto, type MomentView, type ScheduledItem } from './schedule';
 import { clockHour, spendTime, timeBlock } from './timeCost';
 import { cannotArgue, openArgument } from './argue';
-import { lineAt, LINE_LABEL, offTape, onTape, phoneSweep, roll, tapeRisk, tapped } from './phone';
+import { lineAt, LINE_LABEL, offTape, onTape, phoneClone, phoneSweep, roll, tapeRisk, tapped } from './phone';
 import { ensurePhone, pushLog, type Line } from './phoneState';
 import type { NowResult } from './deeds/now';
 import type { Character, Effect, GameState, PlayerAction, RivalId } from './types';
@@ -188,7 +186,7 @@ function dialSpec(s: GameState, sp: DialSpec): DialOpt | undefined {
         ok: [{ type: 'respect', amount: 1, label: `${c.firstName} backed down on the phone` }, ...(rv ? [{ type: 'rivalOpinion', rival: rv.id as RivalId, amount: -6, reason: 'Threatened on the phone' } as Effect] : [{ type: 'meter', from: c.id, to: s.playerId, meter: 'fear', amount: 10 } as Effect]), ...opE(s, c.id, -6, 'He threatened me on the phone')],
         bad: [...opE(s, c.id, -8, 'He threatened me on the phone'), ...(canArgue ? [] : [{ type: 'respect', amount: -1, label: `${c.firstName} laughed at a threat` } as Effect])],
         okText: `${c.firstName} went quiet, then said he understood.`, badText: canArgue ? `${c.firstName} shouted back. It is not over.` : `${c.firstName} laughed and hung up.`,
-        then: (x, ok) => { if (!ok && canArgue) { const y = openArgument(x, { k: 'insult', t: c.id, label: 'A threat on the phone', src: 'phone' }); x.argue = y.argue; } },
+        then: (x, ok) => { if (!ok && canArgue) { const y = openArgument(x, { k: 'insult', t: c.id, label: 'A threat on the phone', src: 'phone' }); Object.assign(x, y); } },
       };
     }
     default: return undefined;
@@ -215,7 +213,7 @@ export function dial(input: GameState, sp: DialSpec): { state: GameState; result
   if (sp.purpose === 'meet' && (sp.place === undefined || sp.d === undefined || sp.hour === undefined)) return fail('Pick a place and a time');
   const line = pv.line;
   const t = spendTime(input, { kind: 'phone', op: { op: sp.pay ? 'pay' : 'call' } } as unknown as PlayerAction);
-  const s = cloneState(t.state);
+  const s = phoneClone(t.state);
   const P = ensurePhone(s);
   const ctx = newCtx(s);
   const before = { money: s.money + Math.round(s.tribute?.acct.personal ?? 0), respect: s.respect, heat: { ...s.heat } };
@@ -355,7 +353,7 @@ function meetOpts(s: GameState, it: ScheduledItem): { st: MeetState; opts: MeetO
       ok: [{ type: 'respect', amount: 1, label: `You leaned on ${nm}` }, { type: 'meter', from: c.id, to: s.playerId, meter: 'fear', amount: 10 } as Effect, ...opE(s, c.id, -4, 'He leaned on me at the meet'), ...(rv ? [{ type: 'rivalOpinion', rival: rv.id as RivalId, amount: -4, reason: 'Leaned on at a meet' } as Effect] : [])],
       bad: [...opE(s, c.id, -8, 'He tried to lean on me'), ...(canArgue ? [] : [{ type: 'respect', amount: -1, label: `${nm} walked out on you` } as Effect])],
       okText: `${nm} heard you. He did not like it, and he heard you.`, badText: canArgue ? `${nm} stood up and raised his voice.` : `${nm} walked out on you.`,
-      then: (x, ok) => { wired(x); if (!ok && canArgue) { const y = openArgument(x, { k: 'insult', t: c.id, label: `The meet at ${pl.name}`, src: 'phone' }); x.argue = y.argue; } } },
+      then: (x, ok) => { wired(x); if (!ok && canArgue) { const y = openArgument(x, { k: 'insult', t: c.id, label: `The meet at ${pl.name}`, src: 'phone' }); Object.assign(x, y); } } },
     { id: 'offer', label: close ? 'Bring her something' : 'Make him an offer', hint: `−${fmtMoney(offer)} · ${close ? 'she lights up (+10)' : `he warms up (+10)${rv ? ', his outfit +6' : ''}`}`, p: r2(0.75 + o / 400), blocked: s.money < offer ? `Needs ${fmtMoney(offer)}` : undefined,
       cost: [{ type: 'money', amount: -offer, category: 'event', label: `At the meet with ${nm}` }],
       ok: [...opE(s, c.id, 10, close ? 'He brought me something' : 'He made me a fair offer'), ...(rv ? [{ type: 'rivalOpinion', rival: rv.id as RivalId, amount: 6, reason: 'A fair offer at a meet' } as Effect] : [])], bad: opE(s, c.id, 2, 'He tried to buy me'),
@@ -394,7 +392,7 @@ export function answerMeet(input: GameState, it: ScheduledItem, optId: string): 
   const o = m.opts.find((x) => x.id === optId && !x.blocked) ?? m.opts.find((x) => x.id === (m.st === 'setup' ? 'walk' : 'leave'))!;
   const p = it.payload as unknown as MeetPay;
   const t = spendTime(input, { kind: 'phone', op: { op: 'meet' } } as unknown as PlayerAction);
-  const s = cloneState(t.state);
+  const s = phoneClone(t.state);
   const P = ensurePhone(s);
   const ctx = newCtx(s);
   const c = s.characters[p.who];

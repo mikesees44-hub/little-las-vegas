@@ -45,6 +45,20 @@ import type { Character, Effect, GameState, PlayerAction, RivalId } from './type
 
 export { wireIn };
 
+/**
+ * The copy a call works on: cloneState, keeping the parts no call ever touches (the city, the
+ * neighborhoods, the night life, the ears) as they were, so the map and the screens keep their caches.
+ * A call moves money, respect, heat, opinions, evidence, a rival's standing, the day's hours and the
+ * phone's own records, nothing else.
+ */
+const UNTOUCHED = ['econ', 'hood', 'nightlife', 'dating', 'ears', 'districts', 'businesses', 'empire', 'towns'] as const;
+export function phoneClone(s: GameState): GameState {
+  const c = cloneState(s) as unknown as Record<string, unknown>;
+  const src = s as unknown as Record<string, unknown>;
+  for (const k of UNTOUCHED) if (k in src) c[k] = src[k];
+  return c as unknown as GameState;
+}
+
 export function roll(str: string): number {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
@@ -207,7 +221,7 @@ export function phoneDay(s: GameState): GameState {
   const abs = s.week * 7 + d;
   // Missed calls nobody returned: the caller remembers (opinions move: a real copy of the state).
   const gone = (s.phone?.missed ?? []).filter((m) => m.until < abs);
-  const base = gone.length ? cloneState(s) : s;
+  const base = gone.length ? phoneClone(s) : s;
   const x: GameState = { ...base, phone: structuredClone(s.phone) ?? undefined, threats: s.threats ? { ...s.threats, tips: s.threats.tips.map((t) => ({ ...t })) } : s.threats, action: structuredClone(s.action) ?? undefined };
   const P = ensurePhone(x);
   if (gone.length) {
@@ -519,7 +533,7 @@ export function answerCall(input: GameState, key: string, p: CallPayload, d: num
   if (!opts) return fail('The line is dead');
   let o = opts.find((x) => x.id === optId && !x.blocked) ?? opts.find((x) => x.id === 'ring')!;
   if (back && (o.id === 'ring' || o.id === 'msg')) o = opts.find((x) => x.id !== 'ring' && x.id !== 'msg' && !x.blocked) ?? o;
-  const s = cloneState(input);
+  const s = phoneClone(input);
   const P = ensurePhone(s);
   const ctx = newCtx(s);
   const before = { money: s.money + Math.round(s.tribute?.acct.personal ?? 0), respect: s.respect, heat: { ...s.heat } };
