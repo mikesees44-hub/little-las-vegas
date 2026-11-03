@@ -143,7 +143,7 @@ describe('feds: flipping', () => {
     expect(c.informantFor).toBe('law');
     expect(isInformant(s, c.id)).toBe(true);
     expect(informantsAround(s).map((x) => x.id)).toContain(c.id);
-    s.feds!.wire = 80;
+    s.feds!.wire = 120;
     week(s);
     const r = answer(s, 'feds_wave', 'ride');
     expect(r.state.feds!.stats.waves).toBe(1);
