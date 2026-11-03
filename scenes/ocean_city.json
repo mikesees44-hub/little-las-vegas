@@ -1,0 +1,140 @@
+{
+  "_about": "Ocean City, the dry town: the run over the bridge, the speakeasy, the Camp Meeting board, Commissioner Batten (fictional). The flags oc_run, oc_run_causeway, oc_easy, oc_raided and oc_wet are set by the game (oceanCity.ts); the flags oc_crusade, oc_board_down, oc_board_up, oc_raid_tip and oc_batten_photo are read back by it once.",
+  "scenes": [
+    {
+      "id": "oc_minister_son",
+      "title": "The minister's son",
+      "theme": "town",
+      "when": { "flags": ["oc_easy"], "notFlags": ["oc_wet"], "season": "summer", "chance": 0.5, "cooldown": 52 },
+      "who": { "capo": { "pool": "capo" } },
+      "text": "{capo.call} calls from the speakeasy at one in the morning. The kid at the end of the bar is nineteen, owes forty dollars on his tab, and has just told the whole room that his father is the Reverend at the Tabernacle and could close this place with one sermon. He is buying a round for everybody on credit. {capo.He} wants to know what you want done with him.",
+      "choices": [
+        {
+          "label": "Cut him off and drive him home",
+          "hint": "A favor his father will never know about. The board will hear the place is careful.",
+          "effects": [ { "flag": "oc_board_down" } ],
+          "result": "{capo.first} drove him home and walked him to the parsonage door. Nobody ever said a word about it."
+        },
+        {
+          "label": "Let him run his tab",
+          "hint": "He is good for it. Probably.",
+          "odds": { "base": 55, "plus": [ { "if": { "role": "capo", "trait": "Patient" }, "add": 10, "why": "{capo.first} keeps him quiet" } ] },
+          "success": [ { "money": 300 } ],
+          "failure": [ { "flag": "oc_crusade" }, { "heat": { "local": 2 } } ],
+          "result": "He paid the tab in August with his summer wages, and brought friends.",
+          "failText": "He told his father. Sunday's sermon was about a den of iniquity three blocks from the Tabernacle, and a tent went up on the boardwalk."
+        },
+        {
+          "label": "Have {capo.first} get a photograph of him at the bar",
+          "hint": "A lever on the Reverend.",
+          "odds": { "base": 55 },
+          "success": [ { "flag": "oc_board_down" }, { "respect": 1 } ],
+          "failure": [ { "flag": "oc_board_up" }, { "heat": { "local": 3 } } ],
+          "result": "The Reverend got the photograph in a plain envelope. The board found other things to worry about this summer.",
+          "failText": "The flash went off, the kid saw it, and he ran straight to his father. The board met in emergency session."
+        }
+      ]
+    },
+    {
+      "id": "oc_raid_night",
+      "title": "After the raid",
+      "theme": "law",
+      "when": { "flags": ["oc_raided"], "cooldown": 8 },
+      "who": { "capo": { "pool": "capo" } },
+      "text": "The morning after the raid, {capo.call} has the list of who the Ocean City police held overnight. Most of them are summer people from Philadelphia. One of them is the brother-in-law of the Camp Meeting board's treasurer, and he is asking for a lawyer and his wife, in that order.",
+      "choices": [
+        {
+          "label": "Bail him out quietly ($400)",
+          "hint": "The treasurer owes you, whether he says so or not.",
+          "requires": { "money": 400 },
+          "effects": [ { "money": -400 }, { "unflag": "oc_raided" }, { "flag": "oc_board_down" } ],
+          "result": "He went home before breakfast. His name never made the Sentinel, and the treasurer stopped coming to the board's raids."
+        },
+        {
+          "label": "Let the Sentinel have his name",
+          "hint": "The board's own family in the paper.",
+          "odds": { "base": 50 },
+          "effects": [ { "unflag": "oc_raided" } ],
+          "success": [ { "flag": "oc_board_down" }, { "respect": 1 } ],
+          "failure": [ { "flag": "oc_crusade" } ],
+          "result": "The board could not very well raid its own treasurer's family twice. It went quiet.",
+          "failText": "The board called it proof of a conspiracy against the town and sent for a preacher from Ocean Grove."
+        },
+        {
+          "label": "Find out who called the raid in ($300)",
+          "hint": "A cop who talks to the board can talk to you, for money.",
+          "requires": { "money": 300 },
+          "odds": { "base": 50, "plus": [ { "if": { "role": "capo", "trait": "Paranoid" }, "add": 15, "why": "{capo.first} trusts nobody" } ] },
+          "effects": [ { "money": -300 }, { "unflag": "oc_raided" } ],
+          "success": [ { "flag": "oc_raid_tip" } ],
+          "failure": [ { "heat": { "local": 2 } } ],
+          "result": "A desk sergeant with three kids and a mortgage. For twenty dollars a week he will call before the next one.",
+          "failText": "Nobody would say. Somebody told the board you were asking."
+        }
+      ]
+    },
+    {
+      "id": "oc_causeway_storm",
+      "title": "A storm on the causeway",
+      "theme": "business",
+      "when": { "flags": ["oc_run_causeway"], "season": "offseason", "chance": 0.35, "cooldown": 26 },
+      "who": { "capo": { "pool": "capo" } },
+      "text": "A nor'easter off the ocean, and the bakery truck with sixty cases under the floor is halfway across the causeway. The drawbridge is stuck open, the wind is pushing the truck toward the rail, and there is a state police car idling at the toll booth with its lights off. {capo.call} is on the pay phone at the gas station in Somers Point.",
+      "choices": [
+        {
+          "label": "Push through when the bridge comes down",
+          "hint": "The trooper is cold and wants to go home.",
+          "odds": { "base": 55, "plus": [ { "if": { "role": "capo", "trait": "Patient" }, "add": 10, "why": "{capo.first} waits for the right moment" }, { "if": { "role": "capo", "trait": "Hot-headed" }, "add": -10, "why": "{capo.first} does not wait for anything" } ] },
+          "success": [ { "money": 400 } ],
+          "failure": [ { "money": -500 }, { "heat": { "local": 4 } }, { "flag": "oc_board_up" } ],
+          "result": "The bridge came down, the trooper waved the bakery truck through, and Ocean City had its rye by morning.",
+          "failText": "The trooper wanted to see the bread. The Sentinel ran a photograph of sixty cases lined up on the causeway in the rain."
+        },
+        {
+          "label": "Turn back and wait it out",
+          "hint": "Lose a night. Lose nothing else.",
+          "effects": [ { "money": -150 } ],
+          "result": "The truck spent the night in a garage in Somers Point. The cases went over two days later."
+        },
+        {
+          "label": "Dump the load in the bay",
+          "hint": "The clammers will be drinking well this winter.",
+          "effects": [ { "money": -600 }, { "heat": { "local": -2 } } ],
+          "result": "Sixty cases went over the rail into Great Egg Harbor Bay. The truck went across empty, and the trooper waved."
+        }
+      ]
+    },
+    {
+      "id": "oc_commissioner_case",
+      "title": "The commissioner's party",
+      "theme": "town",
+      "when": { "flags": ["oc_run"], "notFlags": ["oc_wet", "oc_case_party"], "chance": 0.35, "once": true },
+      "who": {},
+      "text": "Commissioner Batten's daughter is getting married at a hotel on the boardwalk, and a dry wedding is a dull wedding. His brother-in-law finds your man at the dock with a careful question: two cases of the good Scotch, delivered to the hotel kitchen, nothing said. The commissioner, of course, knows nothing about it.",
+      "choices": [
+        {
+          "label": "Send two cases, with your compliments",
+          "hint": "A man who drinks your Scotch is easier to talk to later.",
+          "effects": [ { "money": -150 }, { "flag": "oc_case_party" } ],
+          "result": "The reception ran until two in the morning. The commissioner made a toast with a glass of what he told everyone was ginger ale."
+        },
+        {
+          "label": "Send them with a photographer dressed as a waiter",
+          "hint": "A picture of the commissioner with a highball.",
+          "odds": { "base": 50 },
+          "effects": [ { "money": -150 } ],
+          "success": [ { "flag": "oc_batten_photo" } ],
+          "failure": [ { "flag": "oc_board_up" }, { "heat": { "local": 2 } } ],
+          "result": "The waiter got one good picture: the commissioner, a highball, and the head of the Camp Meeting board laughing at his elbow.",
+          "failText": "The brother-in-law spotted the camera and threw the waiter out by his collar. The board heard about it by Monday."
+        },
+        {
+          "label": "Tell him the town is dry",
+          "hint": "Let him find out what that means.",
+          "effects": [ { "respect": 1 } ],
+          "result": "The wedding was dry. The commissioner noticed who had said no."
+        }
+      ]
+    }
+  ]
+}
