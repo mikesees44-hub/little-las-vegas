@@ -91,7 +91,10 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
     }
   }
   const rep = latestReport(s);
-  if (envelope || rep?.status === 'presented') out.push({ key: 'envelope', kind: 'envelope', tone: 'gold', title: 'The envelope is on your desk', why: 'Your cut of the week\'s take: the split is yours to make.', ref: { envelope: rep?.id } });
+  // One envelope: once the boss has taken it (the count answered in the Office or on the Desk, or a split ordered),
+  // the open "on your desk" row goes; the answered count stays ticked on the Desk.
+  const taken = s.pendingEvents.some((e) => e.defId === 'tribute_audience' && answers[e.iid]) || !!ui.orders?.some((o) => o.kind === 'tribute');
+  if (!taken && (envelope || rep?.status === 'presented')) out.push({ key: 'envelope', kind: 'envelope', tone: 'gold', title: 'The envelope is on your desk', why: 'Your cut of the week\'s take: the split is yours to make.', ref: { envelope: rep?.id } });
   return out.sort((a, b) => TONE_ORDER[a.tone] - TONE_ORDER[b.tone]);
 }
 

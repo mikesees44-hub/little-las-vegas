@@ -40,3 +40,33 @@ describe('text integrity (deep-dive playthrough)', () => {
     }
   });
 });
+
+describe('the Old Don\'s night (deep-dive bug 16)', () => {
+  it('is not "Made the boss", and the recap keeps what he did at the Bolero and to the family', async () => {
+    const { playSession } = await import('../src/engine/minigame');
+    const s = newGameWith('od-recap', 'olddon');
+    const ev = s.pendingEvents.find((e) => e.defId === 'made_boss')!;
+    const ses = playSession(s, 'madeboss', ev.iid, { variant: String(ev.meta?.variant ?? 'olddon'), play: 1 }, {}, ['next', 'next', 'od_watch', 'next', 'w_respect']);
+    expect(ses.done).toBe(true);
+    expect(ses.outcome?.title).not.toBe('Made the boss');
+    const log = ses.beats.map((b) => b.text).join(' ');
+    expect(log).toMatch(/watched who didn't clap/);
+    expect(log).toMatch(/Ten years of peace/);
+    expect((ses.outcome?.effects ?? []).every((e) => !('label' in e) || (e as { label?: string }).label !== 'Made the boss')).toBe(true);
+  });
+});
+
+describe('one envelope (deep-dive bug 19)', () => {
+  it('once the count is taken, "The envelope is on your desk" goes; the answered count stays the one row', () => {
+    let s = newGameWith('env-once', 'rise');
+    for (let i = 0; i < 4 && !s.pendingEvents.some((e) => e.defId === 'tribute_audience'); i++) s = advanceWeek(s, { choices: {} }).state;
+    const ev = s.pendingEvents.find((e) => e.defId === 'tribute_audience');
+    expect(ev, 'a count reached the desk').toBeTruthy();
+    if (!ev) return;
+    expect(inbox(s).some((i) => i.key === 'envelope')).toBe(true);
+    const answers = { [ev.iid]: ev.choices[0].id };
+    expect(inbox(s, { answers }).some((i) => i.key === 'envelope')).toBe(false);
+    const rows = bossDesk(s, { answers }).flatMap((g) => g.items).filter((r) => r.key === 'envelope' || r.key === `ev:${ev.iid}`);
+    expect(rows.length).toBe(1);
+  }, 120_000);
+});

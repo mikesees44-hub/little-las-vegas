@@ -91,6 +91,7 @@ import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './ro
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import { RiseColumn } from './borgata/TheRise';
+import { ChairCard, useChairView } from './power/ChairCard';
 import { readyReview } from '../engine/desk';
 import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
 import { UrgentMeeting } from './components/UrgentMeeting';
@@ -777,6 +778,7 @@ export function App({ startOn = 'title' }: AppProps) {
     return () => window.removeEventListener('llv-open-file', on);
   });
 
+  const chair = useChairView(s);
   if (menu) {
     return (
       <StartMenu key={menu} initial={menu} inGame={!s.gameOver && !!loadSlot(slot)} seedHint={seedInput.trim() || undefined}
@@ -785,6 +787,8 @@ export function App({ startOn = 'title' }: AppProps) {
   }
 
   const motion = inMotion(s, { orders: orders.length });
+  // The Old Don and the Shark: the succession is the game, so it is one click from the Desk and the top bar.
+  const openSuccession = () => { setOfficeView(undefined); openRoute({ panel: 'house', section: 'court' }); };
   const home = route.home;
   const homeGroups = home ? shellUi.groupsOf(home) : [];
   const goalIdx = goals.findIndex((g) => !g.done);
@@ -876,7 +880,7 @@ export function App({ startOn = 'title' }: AppProps) {
     : undefined;
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<><ChairCard s={s} onOpen={openSuccession} /><RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} /></>} /></div>
       <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
         <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>
         <InMotionStrip chips={motion} onChip={onChip} inDesk />
@@ -936,6 +940,7 @@ export function App({ startOn = 'title' }: AppProps) {
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}
+            chair={chair?.pressure} onChair={() => openSuccession()}
             onHelp={() => setHelpMenu(true)} fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}

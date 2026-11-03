@@ -258,8 +258,11 @@ function WaitingButton({ count, tone, onDesk, onReview }: {
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen, chair, onChair }: {
   s: GameState;
+  /** The succession pressure, for the starts where the chair is the game (power/ChairCard.tsx), and its opener. */
+  chair?: number;
+  onChair?: () => void;
   /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
   inboxN?: number;
   inboxTone?: 'red' | 'amber' | 'gold';
@@ -370,6 +373,12 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             {onFind && (
               <button type="button" onClick={onFind} data-testid="find-button" title="Find a person, a place, a screen or something to do (Ctrl+K or /)"
                 className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Find</span></button>
+            )}
+            {chair !== undefined && onChair && (
+              <button type="button" onClick={onChair} data-testid="chair-chip" title="The succession: who comes after you, who backs whom, and your moves"
+                className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap hover:border-gold-500 ${chair >= 60 ? 'border-red-600/70 text-red-200' : chair >= 40 ? 'border-amber-600/70 text-amber-200' : 'border-noir-600 text-stone-300'}`}>
+                ♕<span className="hidden sm:inline"> The chair</span> <span className="tabular-nums">{chair}</span>
+              </button>
             )}
             {note && <span className="text-[11px] text-amber-300 truncate max-w-[40vw]">{note}</span>}
             {ticker && speed > 0 && <span className="hidden xl:inline text-[11px] text-stone-500 truncate max-w-[24rem]">{ticker}</span>}
