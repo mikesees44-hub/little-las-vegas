@@ -773,6 +773,26 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
     };
     return v;
   });
+  // One source for a recommendation (the playthrough: Red recommended "send him to collect" at the sit-down,
+  // then said "Don't" on the confirm): the man who put this order on the table at the sit-down backs it here too.
+  if (sub.kind === 'action' && !multi) {
+    const key0 = (a: PlayerAction) => JSON.stringify({ ...a, fund: undefined });
+    const want = key0(sub.action);
+    let items: BriefItem[] = [];
+    try { items = briefing(s).items; } catch { items = []; }
+    for (const it of items) {
+      const rec = it.options.find((o) => o.id === it.recommended);
+      if (!rec?.action || key0(rec.action) !== want) continue;
+      // The speaker is the seat (it.charId is who the item is about).
+      const v = voices.find((x) => x.adviser.role === it.role);
+      if (v && v.verdict !== 'do' && v.verdict !== 'doBut') {
+        v.verdict = 'doBut';
+        v.label = VERDICT_LABEL.doBut;
+        v.says = it.reason.replace(/^\S+ says:?\s*/, '');
+        v.but = v.cons[0]?.text ?? v.but;
+      }
+    }
+  }
   // On a decision, a man who backs another option says so as his "instead" on each option he passes over.
   const options: CounselOption[] | undefined = multi ? grid.map((g) => {
     const vs: Voice[] = g.ops.map((x, i) => {

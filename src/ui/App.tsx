@@ -19,8 +19,9 @@ import { autoPauses, DEFAULT_SPEED, firstPause, redKeys, speedKey } from './cloc
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
-import { SettledToast } from './minds/settled';
-import { NowResultHost } from './deeds/NowResult';
+import { NowResultHost, postNow } from './deeds/NowResult';
+import { actNow, instant } from '../engine/actNow';
+import { isHeavy } from '../engine/heavy';
 import { ReportModal } from './components/ReportModal';
 import type { ClarityApi } from './clarity/context';
 import { PickerModal } from './clarity/CandidatePicker';
@@ -68,11 +69,10 @@ import { shellAlerts, type ShellAlert } from './shell/alertRoutes';
 import { guidedGoals, type GuidedGoal } from './shell/goals';
 import { useShellState } from './shell/useShellState';
 import { HintHost, Toast } from './shell/HintHost';
-import { Modal } from './components/Modal';
+import { Modal, Overlay } from './components/Modal';
 import { SheetFrame } from './shell/SheetFrame';
 import { PolSheet } from './cityhall/CityHall';
 import { ContextMenu } from './sheet/InteractionMenu';
-import type { MenuCategoryId } from './sheet/menuCatalog';
 import { AudienceScene } from './tribute/AudienceScene';
 import { TributeUiContext, type TributeUiApi } from './tribute/context';
 import type { EnvelopeChoice } from '../engine/tributeOps';
@@ -93,6 +93,7 @@ import { UrgentMeeting } from './components/UrgentMeeting';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 import { BossOffice } from './office/BossOffice';
+import { AssetImg } from './hood/AssetImg';
 import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
 import { answerCheckIn } from '../engine/days';
@@ -176,12 +177,20 @@ export function App({ startOn = 'title' }: AppProps) {
         if (import.meta.env.MODE === 'test') { queueLater(a); return; }
         setConfirm(a); return;
       }
-      // "Are you sure?" first (Settings › Confirm orders); tests and the double-click guard skip it.
-      if (!confirmed && getSettings().confirmOrders !== false && import.meta.env.MODE !== 'test') { setConfirm(a); return; }
+      // "Are you sure?" only for a heavy order (engine/heavy.ts: a death, a war, disinheriting, selling a place,
+      // a big share of the Family's money); everything else is given on the card. Tests skip it.
+      if (!confirmed && getSettings().confirmOrders !== false && import.meta.env.MODE !== 'test' && isHeavy(s, a)) { setConfirm(a); return; }
       // A double click is one order: the same order again within a moment is ignored.
       const now = Date.now();
       if (lastQueued.current && now - lastQueued.current.at < 600 && sameOrder(lastQueued.current.a, a)) return;
       lastQueued.current = { a, at: now };
+      // Someone who is there (a deed, a talk, an ask, a gift): settled now, on the deeds' own dice; the result card shows the roll.
+      if (instant(s, a)) {
+        const r = actNow(s, a);
+        if (r.result.ok) setS(r.state);
+        postNow(r.result);
+        return;
+      }
       // A pocket order the pocket can't cover (after this week's orders) needs the player's word for Family money:
       // the toast asks, and the order tray keeps asking, before the week turns.
       const p = previewAction(s, a);
@@ -607,11 +616,13 @@ export function App({ startOn = 'title' }: AppProps) {
       if (turningRef.current) return;
       turningRef.current = true;
       setClockNote('The week turns…');
-      setTimeout(() => { try { run('week', answers, true); } finally { turningRef.current = false; } }, 16);
+      setTimeout(() => { try { run('week', answers, true); setClockNote('A new week: what came of your orders is on the Desk, under Results'); } finally { turningRef.current = false; } }, 16);
       return;
     }
     const next = tickDay(s);
     setS(next);
+    // The week's turn is never a surprise: Sunday says it is coming.
+    if (daysOf(next).day >= 6) setClockNote('Sunday: the week turns tonight at midnight (Space pauses)');
     clockAutoPause(s, next);
     const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
     if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
@@ -662,7 +673,7 @@ export function App({ startOn = 'title' }: AppProps) {
     // Where the week starts (Settings): the office, with the man across the desk and his briefing
     // (the sit-down is one step away, at the door); the desk's list; or the map.
     const start = weekStart(s);
-    if (start === 'office') { setRoute({}); setOfficeView('office'); setMondayCard(true); return; }
+    if (start === 'office') { setRoute({ home: 'desk' }); setOfficeView('office'); setMondayCard(true); return; }
     if (start === 'desk') setRoute({ home: 'desk' });
     if (getSettings().sitdownEachWeek !== false) setSitdown('council');
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
@@ -741,6 +752,12 @@ export function App({ startOn = 'title' }: AppProps) {
     'nav.settings': <SettingsPanel />,
     'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
   };
+  // The result card's "In Your File ▸".
+  useEffect(() => {
+    const on = () => { setOfficeView(undefined); markFileSeen(); go('book'); };
+    window.addEventListener('llv-open-file', on);
+    return () => window.removeEventListener('llv-open-file', on);
+  });
   const deskApi = {
     onEvent: (iid: string) => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => e.iid === iid))); },
     onDay: (day: number) => { setSpeed(0); setDayWin(day); },
@@ -752,7 +769,8 @@ export function App({ startOn = 'title' }: AppProps) {
     onUrgent: (tip: string) => setUrgent(tip),
     onEnvelope: () => tributeApi.openAudience(),
     onTake: (key: string) => setTaken((t) => ({ week: s.week, keys: [...(t.week === s.week ? t.keys : []).filter((k) => k !== key), key] })),
-    onMotion: () => (document.querySelector('[data-testid=plans-button]') as HTMLButtonElement | null)?.click(),
+    onMotion: () => window.dispatchEvent(new Event('llv-open-plans')),
+    onFile: () => window.dispatchEvent(new Event('llv-open-file')),
     onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
   const takenKeys = taken.week === s.week ? taken.keys : [];
@@ -797,13 +815,17 @@ export function App({ startOn = 'title' }: AppProps) {
     setLater({ week: s.week, keys: [...laterKeys, v.key] });
     if (v.ref.brief && !briefSkip.includes(v.ref.brief)) setBriefSkip([...briefSkip, v.ref.brief]);
   }
-  const officeScreen = s.gameOver ? undefined
+  const officeScreen = s.gameOver || home ? undefined
     : officeView === 'office' ? <BossOffice key={s.week} s={s} ui={officeUi} monday={mondayCard} onMondayDone={() => setMondayCard(false)} onInvite={officeInvite} onDelegate={officeDelegate} onLater={officeLater} onClub={() => setOfficeView('club')} />
     : officeView === 'club' ? <SocialClub s={s} onUpstairs={() => setOfficeView('office')} onHq={() => openRoute({ panel: 'holdings', section: 'hq' })} onMap={() => setOfficeView(undefined)} />
     : undefined;
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
+      <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
+        <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>
+        <InMotionStrip chips={motion} onChip={onChip} inDesk />
+      </section>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
@@ -859,7 +881,7 @@ export function App({ startOn = 'title' }: AppProps) {
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}
-            fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
+            onHelp={() => setHelpMenu(true)} fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}
         rail={<LeftRail active={home} badges={badges} dots={shellUi.dots} locks={Object.fromEntries(HOME_IDS.map((h) => [h, homeLock(s, h)]).filter(([, r]) => r))} onOpen={(h) => setRoute((r) => (r.home === h && !r.key ? {} : { home: h }))} onHelp={() => setHelpMenu(true)} />}
@@ -868,6 +890,12 @@ export function App({ startOn = 'title' }: AppProps) {
           <>
             <div className="hidden 2xl:block absolute bottom-6 left-[340px] z-[1000] w-[320px]"><StreetFeedCard s={s} overlay /></div>
             {officeScreen}
+            {home === 'desk' && !s.gameOver && (
+              // The office as ambience behind the Desk: the painting, dimmed, no hotspots (they are the Desk's rows now).
+              <div className="pointer-events-none absolute inset-0 z-[1090] overflow-hidden bg-noir-950" data-testid="desk-ambience" aria-hidden>
+                <AssetImg k="office_interior" alt="" className="h-full w-full object-cover opacity-25 blur-[1px]" />
+              </div>
+            )}
             {!s.gameOver && !home && !officeView && (
               <div className="pointer-events-none absolute left-1/2 -translate-x-1/2 top-16 md:top-3 z-[1005] flex justify-center" data-testid="return-home-dock">
                 <ReturnHome s={s} update={setS} />
@@ -921,7 +949,6 @@ export function App({ startOn = 'title' }: AppProps) {
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
-        bottom={<InMotionStrip chips={motion} onChip={onChip} />}
         alertCount={shellAlertList.length}
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
@@ -960,7 +987,6 @@ export function App({ startOn = 'title' }: AppProps) {
       {current && !scene && current.defId !== 'tribute_audience' && (
         <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
-      <SettledToast />
       <NowResultHost />
       {urgent && !current && !scene && (
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
@@ -975,7 +1001,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {sheet && !current && (s.characters[sheet] || !s.pol?.people[sheet]
         ? <CharacterSheet key={sheet} s={s} id={sheet} onClose={() => setSheet(undefined)} />
         : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}
-      {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category as MenuCategoryId | undefined} onClose={() => setCtxMenu(undefined)} />}
+      {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category} onClose={() => setCtxMenu(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
       {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
       {helpMenu && (
@@ -987,7 +1013,7 @@ export function App({ startOn = 'title' }: AppProps) {
         </Modal>
       )}
       {dayWin !== undefined && !current && (
-        <div className="fixed inset-0 z-[1180] flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" onClick={() => setDayWin(undefined)}>
+        <Overlay z={1180} className="flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4" onClick={() => setDayWin(undefined)}>
           <div className="panel w-full sm:max-w-2xl max-h-[92dvh] overflow-y-auto rounded-b-none sm:rounded-lg p-3" onClick={(e) => e.stopPropagation()} data-testid="day-window">
             <div className="mb-2 flex items-center justify-between">
               <div className="panel-title">Your day</div>
@@ -995,7 +1021,7 @@ export function App({ startOn = 'title' }: AppProps) {
             </div>
             <WeekPlanner s={s} update={act} initialDay={dayWin} onSitDown={() => { setDayWin(undefined); setSitdown('rounds'); }} />
           </div>
-        </div>
+        </Overlay>
       )}
       {finding && <FindPalette s={s} open={shellUi.open} onPick={onFind} onClose={() => setFinding(false)} />}
       {help && <GlossaryOverlay focus={help.focus} onClose={() => setHelp(undefined)} />}

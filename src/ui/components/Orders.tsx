@@ -17,6 +17,12 @@ import { hoursLabel, timeBlock, timeCost } from '../../engine/timeCost';
 import { actNow, settlesNow } from '../../engine/deeds/now';
 import { useShell } from '../shell/context';
 import { postNow } from '../deeds/NowResult';
+import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
+import { heavyOf } from '../../engine/heavy';
+import { getSettings } from '../settings';
+import { voicesFor } from '../decide/voices';
+import { oddsOfPreview, worstOfPreview } from '../../engine/decide';
+
 
 /** Orders queued this week, and how to add one. Provided by the App. */
 export interface OrdersApi {
@@ -74,59 +80,62 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
   const now = !!shell.update && !deal && settlesNow(s, action);
   const [nowErr, setNowErr] = useState<string | undefined>();
   const odds = p.acceptance ?? p.odds;
+  const [voicesOpen, setVoicesOpen] = useState(false);
   const doNow = () => {
     const r = actNow(s, short > 0 ? { ...action, fund: 'family' } : action);
     if (!r.result.ok) { setNowErr(r.result.error); return; }
     shell.update!(() => r.state);
     postNow(r.result);
   };
+  const buttonText = now ? `${short > 0 ? `Take ${fmt$(short)} from the Family & do` : 'Do'} it now${odds ? ` (${Math.round(odds.chance * 100)}%)` : ''}` : queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${facts.button.charAt(0).toLowerCase()}${facts.button.slice(1)}` : facts.button;
+  // The card is the confirmation (STREAMLINE §4.4): a heavy order turns the card over first; then it is given, no second window.
+  const go = () => (deal ? setDealing(true) : now ? doNow() : queue(short > 0 ? { ...action, fund: 'family' } : action, true));
+  const heavy = !deal && getSettings().confirmOrders !== false ? heavyOf(s, action) : undefined;
+  const tomorrow = !hard && noTime && !queued && later ? () => later(short > 0 ? { ...action, fund: 'family' } : action) : undefined;
+  // One decision standard (ui/decide): the order is the card's one option, with its odds (or "certain"), its worst way, and one primary button.
+  const opt: DecisionOption = {
+    id: 'go', label: label ?? p.title, effects: p.effects, odds: oddsOfPreview(p), worst: worstOfPreview(p), 
+    detail: (!compact || action.kind === 'talk') && detail ? detail : undefined,
+    note: (
+      <span className="block">
+        {p.cost > 0 && <span className={`mt-0.5 block text-[11px] tabular-nums ${pocket ? 'text-amber-300' : 'text-gold-400'}`} data-testid="price-pot">{fmt$(p.cost)} {pocket ? 'from your pocket' : 'from Family money'}</span>}
+        <span className="mt-0.5 block text-[11px] text-sky-300" data-testid="time-cost">Takes {hoursLabel(hours)}</span>
+        {short > 0 && !why && !queued && (
+          <span className="mt-1 block text-[11px] leading-snug text-amber-300" data-testid="dip-note">
+            Your pocket has {fmt$(Math.max(0, q.pocketLeft))}; the other {fmt$(short)} comes out of the Family. {dipPenalty(s, q.dips) ? `The capos notice: −${-dipPenalty(s, q.dips)} opinion each (${recentDips(s) + q.dips + 1} dips in ${DIP.window} weeks).` : `Once in ${DIP.window} weeks the capos let it go.`}
+          </span>
+        )}
+        {p.outcomes && p.outcomes.length > 1 && !compact && <Outcomes s={s} outcomes={p.outcomes} />}
+        {p.cooldown !== undefined && <span className="mt-1 block text-[11px] text-stone-500" data-testid="deed-cooldown">Then not again with this person for {p.cooldown} weeks.</span>}
+        {p.warning && <span className="mt-1 block text-[11px] text-amber-400">⚠ {p.warning}</span>}
+        {nowErr && <span className="mt-1 block text-[11px] text-red-400">{nowErr}</span>}
+        {now && !why && <span className="mt-1 block text-[11px] text-stone-500">Settled the moment you do it: the dice roll now, and it is done.</span>}
+        {why && <span className="mt-1 block text-[11px] text-red-400" data-testid="unavailable">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</span>}
+        {!compact && !why && (
+          <span className="mt-1 block text-[11px] leading-snug text-stone-500" data-testid="action-facts">
+            <span className="text-stone-400">Who:</span> {facts.actor}{facts.target ? <> · <span className="text-stone-400">On:</span> {facts.target}</> : null} · <span className="text-stone-400">When:</span> {facts.timing}
+          </span>
+        )}
+      </span>
+    ),
+  };
   return (
-    <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`}>
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-[10rem] flex-1">
-          <div className="font-semibold text-stone-100 text-sm">{label ?? p.title}</div>
-          {(!compact || action.kind === 'talk') && detail && <div className="text-xs text-stone-400 mt-0.5">{detail}</div>}
-          {p.cost > 0 && <div className={`text-[11px] mt-0.5 tabular-nums ${pocket ? 'text-amber-300' : 'text-gold-400'}`} data-testid="price-pot">{fmt$(p.cost)} {pocket ? 'from your pocket' : 'from Family money'}</div>}
-          <div className="text-[11px] mt-0.5 text-sky-300" data-testid="time-cost">Takes {hoursLabel(hours)}</div>
-        </div>
-        <button
-          className={queued ? 'btn-ghost text-xs py-1 shrink-0 max-w-full' : 'btn-gold text-xs py-1 shrink-0 max-w-full'}
-          disabled={!!why || (queued && !now)}
-          onClick={() => (deal ? setDealing(true) : now ? doNow() : queue(short > 0 ? { ...action, fund: 'family' } : action))}
-          data-testid={deal ? 'make-offer' : now ? 'do-now' : undefined}
-        >
-          {now ? `${short > 0 ? `Take ${fmt$(short)} from the Family & do` : 'Do'} it now${odds ? ` (${Math.round(odds.chance * 100)}%)` : ''}` : queued ? (deal ? 'Signed ✓' : verb.done) : deal ? 'Make an offer' : short > 0 && !why ? `Take ${fmt$(short)} from the Family & ${facts.button.charAt(0).toLowerCase()}${facts.button.slice(1)}` : facts.button}
-        </button>
-      </div>
-      {short > 0 && !why && !queued && (
-        <div className="mt-1 text-[11px] text-amber-300 leading-snug" data-testid="dip-note">
-          Your pocket has {fmt$(Math.max(0, q.pocketLeft))}; the other {fmt$(short)} comes out of the Family. {dipPenalty(s, q.dips) ? `The capos notice: −${-dipPenalty(s, q.dips)} opinion each (${recentDips(s) + q.dips + 1} dips in ${DIP.window} weeks).` : `Once in ${DIP.window} weeks the capos let it go.`}
-        </div>
-      )}
-      <Chips s={s} effects={p.effects} />
-      {p.acceptance && <AcceptanceLine a={p.acceptance} />}
-      {p.odds && <AcceptanceLine a={p.odds} prefix={p.oddsLabel ?? 'Success'} />}
-      {p.outcomes && p.outcomes.length > 1 && <Outcomes s={s} outcomes={p.outcomes} />}
-      {p.cooldown !== undefined && <div className="text-[11px] mt-1 text-stone-500" data-testid="deed-cooldown">Then not again with this person for {p.cooldown} weeks.</div>}
-      {p.warning && <div className="text-[11px] text-amber-400 mt-1">⚠ {p.warning}</div>}
-      {p.refuseEffects && p.refuseEffects.length > 0 && (
-        <div className="mt-1 text-[11px] text-stone-500">If the answer is no: <Chips s={s} effects={p.refuseEffects} /></div>
-      )}
-      {nowErr && <div className="text-[11px] text-red-400 mt-1">{nowErr}</div>}
-      {now && !why && <div className="text-[11px] mt-1 text-stone-500">Settled the moment you do it: the dice roll now, and it is done.</div>}
-      {why && <div className="text-[11px] text-red-400 mt-1" data-testid="unavailable">Unavailable: {why.charAt(0).toLowerCase()}{why.slice(1)}</div>}
+    <div className={`rounded-md border px-3 py-2 ${queued ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/70'}`} data-testid="action-card">
+      <DecisionCard s={s} compact options={[opt]} selected="go"
+        voices={!compact && voicesOpen ? voicesFor(s, { kind: 'action', action }) : undefined}
+        primaryLabel={() => buttonText}
+        confirmFor={heavy ? () => ({ title: label ?? p.title, lines: [...heavy, ...(p.cost > 0 ? [`${fmt$(p.cost)} ${pocket ? 'from your pocket' : 'from Family money'}`] : []), `Takes ${hoursLabel(hours)}.`], yes: 'Yes, do it' }) : undefined}
+        onDecide={() => { if (!why && !(queued && !now)) go(); }}
+        onLater={tomorrow} laterLabel="Do it tomorrow"
+        advice={<span className="flex flex-wrap items-center gap-2">
+          <AdviceButton s={s} subject={{ kind: 'action', action }} />
+          {!compact && !voicesOpen && <button type="button" className="btn-quiet text-[11px]" onClick={() => setVoicesOpen(true)} data-testid="voices-open">Your people weigh in ▸</button>}
+        </span>}
+        testid="action-decision"
+        primaryTestId={deal ? 'make-offer' : now ? 'do-now' : undefined}
+        primaryDisabled={!!why || (queued && !now)}
+      />
       {queued && !compact && <BookNote />}
-      {!hard && noTime && !queued && later && (
-        <button className="btn-gold text-xs py-1 mt-1" onClick={() => later(short > 0 ? { ...action, fund: 'family' } : action)} data-testid="do-tomorrow">Do it tomorrow</button>
-      )}
-      {!compact && !why && (
-        <div className="mt-1 text-[11px] text-stone-500 leading-snug" data-testid="action-facts">
-          <span className="text-stone-400">Who:</span> {facts.actor}{facts.target ? <> · <span className="text-stone-400">On:</span> {facts.target}</> : null} · <span className="text-stone-400">When:</span> {facts.timing}
-        </div>
-      )}
-      <div className="mt-1 flex flex-wrap items-center gap-2">
-        <AdviceButton s={s} subject={{ kind: 'action', action }} />
-      </div>
       <WhyPanel s={s} action={action} compact={compact} />
       {dealing && deal && <DealWindow s={s} target={deal} onClose={() => setDealing(false)} />}
     </div>
@@ -194,7 +203,7 @@ export function OrdersTray({ s }: { s: GameState }) {
               {short > 0 && (
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-red-300" data-testid="order-unfunded">
                   By the time it runs your pocket is {fmt$(short)} short. It won't be carried out unless you approve Family money.
-                  {replace && <button type="button" className="btn-ghost text-[11px] py-0" onClick={() => replace(i, { ...a, fund: 'family' })}>Take {fmt$(short)} from the Family</button>}
+                  {replace && <button type="button" className="btn-secondary text-[11px] py-0" onClick={() => replace(i, { ...a, fund: 'family' })}>Take {fmt$(short)} from the Family</button>}
                 </div>
               )}
             </li>

@@ -10,6 +10,9 @@ import { useShell } from '../shell/context';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
+import { previewAction } from '../../engine/actions';
+import { oddsOfPreview, worstOfPreview } from '../../engine/decide';
+import { DecisionCard } from '../decide/DecisionCard';
 
 /**
  * THE LIEUTENANTS ON THE DESK: each morning the underboss and the consigliere report (what they did
@@ -40,18 +43,35 @@ function ActLine({ s, a, update, onChar, kind }: { s: GameState; a: LtAct; updat
       </div>
       {kind === 'needs' && <div className="text-[11px] italic text-stone-300">"{a.line}"</div>}
       {kind === 'needs' && <div className="text-[10px] text-stone-400">{a.why ? `His reason: ${a.why}. ` : ''}{a.tell ? <span className="text-amber-200/80">{a.tell} </span> : null}{ifSilent(a)}</div>}
-      {!locked && kind !== 'done' && (
+      {!locked && kind === 'needs' && (
+        // One decision standard (ui/decide): his plan and the other ways, each with odds and the worst way; Veto is an option; one primary.
+        <DecisionCard s={s} compact selected={call?.verdict === 'veto' ? '__veto' : o?.id}
+          options={[
+            ...a.options.map((x) => {
+              const p = previewAction(s, x.action);
+              const odds = x.chance !== undefined ? { known: true, chance: x.chance, label: 'It goes through', reasons: oddsOfPreview(p).reasons } : oddsOfPreview(p);
+              return { id: x.id, label: x.label, detail: x.why, cost: x.cost || undefined, odds, worst: worstOfPreview(p), pickedBy: x.id === a.pick ? 'his plan' : undefined, rowTestId: `lt-opt-${x.id}` };
+            }),
+            { id: '__veto', label: 'Veto: he does nothing', odds: { known: false, label: 'no roll', reasons: [] }, hostile: true, rowTestId: 'lt-veto' },
+          ]}
+          onDecide={(id) => (id === '__veto' ? decide('veto') : id === a.pick ? decide('approve') : decide('change', id))}
+          primaryLabel={(x) => (!x ? 'Pick one' : x.id === '__veto' ? 'Veto' : x.id === a.pick ? 'Approve ▸' : 'Do it this way ▸')}
+          primaryTestId="lt-approve"
+          onLater={call ? () => decide(undefined) : undefined} laterLabel="undo"
+          advice={a.charId && onChar ? <button type="button" className="btn-quiet text-[10px]" onClick={() => onChar(a.charId!)}>who?</button> : undefined}
+          testid={`lt-decide-${a.id}`} />
+      )}
+      {!locked && kind !== 'done' && kind !== 'needs' && (
         <div className="mt-0.5 flex flex-wrap items-center gap-1">
-          {kind === 'needs' && <button type="button" className="btn-primary btn-sm" onClick={() => decide('approve')} data-testid="lt-approve">Approve</button>}
           {others.length > 0 && (
             <select className="rounded border border-noir-600 bg-noir-900 px-1 py-0.5 text-[10px] text-stone-300" value="" onChange={(e) => e.target.value && decide('change', e.target.value)} data-testid="lt-change" aria-label="Change how">
               <option value="">Change ▾</option>
               {others.map((x) => <option key={x.id} value={x.id}>{x.label}{x.cost ? ` (${fmt$(x.cost)})` : ''}</option>)}
             </select>
           )}
-          <button type="button" className="btn-danger btn-sm" onClick={() => decide('veto')} data-testid="lt-veto">{kind === 'needs' ? 'Veto' : 'Stop him'}</button>
-          {call && <button type="button" className="text-[10px] text-stone-500 underline" onClick={() => decide(undefined)}>undo</button>}
-          {a.charId && onChar && <button type="button" className="text-[10px] text-stone-500 underline decoration-dotted" onClick={() => onChar(a.charId!)}>who?</button>}
+          <button type="button" className="btn-danger btn-sm" onClick={() => decide('veto')} data-testid="lt-veto">Stop him</button>
+          {call && <button type="button" className="btn-quiet text-[10px]" onClick={() => decide(undefined)}>undo</button>}
+          {a.charId && onChar && <button type="button" className="btn-quiet text-[10px]" onClick={() => onChar(a.charId!)}>who?</button>}
         </div>
       )}
     </li>

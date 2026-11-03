@@ -1,3 +1,4 @@
+import { settlesNow } from '../engine/deeds/now';
 import { placeById } from '../engine/bizRacket';
 import { previewAction, VIA_INFO, type ActionPreview } from '../engine/actions';
 import { explainAction } from '../engine/advice';
@@ -127,12 +128,13 @@ function targetOfAction(s: GameState, a: PlayerAction): string | undefined {
   }
 }
 
-function timingOf(a: PlayerAction, p: ActionPreview): string {
+function timingOf(s: GameState, a: PlayerAction, p: ActionPreview): string {
+  if (settlesNow(s, a)) return 'Now: settled the moment you give it (the dice roll on the spot)';
   if (a.kind === 'scheme') return `Starts when you advance the week; ${SCHEME_INFO[a.scheme].name.toLowerCase()} takes several weeks (you can call it off)`;
   if (a.kind === 'order' && a.via !== 'direct') return 'Passed down this week, carried out next week';
   if (p.effects.some((e) => e.type === 'schedule' && e.key === 'delegated_order')) return 'Carried out next week';
   if (a.kind === 'contract' || a.kind === 'policy' || a.kind === 'edict') return 'From the next week on, every week, until you change it';
-  return 'When you advance the week (you can cancel it until then)';
+  return 'Lands when the week turns (you can cancel it until then)';
 }
 
 /** Everything the player should know before the click. Pure. */
@@ -151,7 +153,7 @@ export function actionFacts(s: GameState, a: PlayerAction, p: ActionPreview = pr
     actor: actorOf(s, a),
     target: targetOfAction(s, a),
     cost,
-    timing: timingOf(a, p),
+    timing: timingOf(s, a, p),
     consequences,
     unavailable: p.disabledReason ? `Unavailable: ${p.disabledReason.charAt(0).toLowerCase()}${p.disabledReason.slice(1)}` : undefined,
   };

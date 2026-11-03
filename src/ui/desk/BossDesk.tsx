@@ -31,6 +31,8 @@ export interface DeskApi {
   onEnvelope?: () => void;
   /** Take a handled item back: it moves to Needs you (and opens). */
   onTake?: (key: string) => void;
+  /** A result's entry in Your File. */
+  onFile?: (entry?: string) => void;
   /** Everything in motion (the plans panel). */
   onMotion?: () => void;
   /** An old save's one-time offer: let the underboss handle the routine (true) or keep it as it was. */
@@ -48,10 +50,11 @@ const FILTERS: { id: DeskFilter; label: string; kinds: DeskKind[] }[] = [
 ];
 const inFilter = (f: DeskFilter, it: DeskItem) => f === 'all' || FILTERS.find((x) => x.id === f)!.kinds.includes(it.kind);
 
-const ICON: Record<DeskKind, string> = { decision: '✉', petition: '☏', urgent: '⚠', morning: '☕', sitdown: '♜', lieutenant: '♜', request: '♣', envelope: '$', lawyer: '§', order: '☰', bill: '$', upcoming: '◷' };
+const ICON: Record<DeskKind, string> = { decision: '✉', petition: '☏', urgent: '⚠', morning: '☕', sitdown: '♜', lieutenant: '♜', request: '♣', envelope: '$', lawyer: '§', order: '☰', bill: '$', upcoming: '◷', result: '✓' };
 
 function openItem(it: DeskItem, api: DeskApi) {
-  if (it.ref.tip && api.onUrgent) api.onUrgent(it.ref.tip);
+  if (it.kind === 'result' && api.onFile) api.onFile(it.ref.entry);
+  else if (it.ref.tip && api.onUrgent) api.onUrgent(it.ref.tip);
   else if (it.ref.event) api.onEvent(it.ref.event);
   else if (it.kind === 'morning' || (it.kind === 'upcoming' && it.ref.day !== undefined)) api.onDay(it.ref.day ?? 0);
   else if (it.kind === 'sitdown') api.onSitDown();
@@ -130,7 +133,7 @@ function Fold({ g, render, n = 3, testid }: { g: DeskGroup; render: (it: DeskIte
 function SmallRow({ it, api }: { it: DeskItem; api: DeskApi }) {
   return (
     <li className="flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px]" data-testid={`desk-item-${it.kind}`}>
-      <div className="min-w-0 flex-1"><div className="text-stone-200">{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
+      <div className="min-w-0 flex-1"><div className={it.tone === 'bad' ? 'text-amber-200' : it.tone === 'good' ? 'text-emerald-200' : 'text-stone-200'}>{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
       {it.kind === 'order' && it.ref.order !== undefined
         ? <button type="button" className="btn-secondary shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
         : <button type="button" className="btn-quiet shrink-0 text-[10px]" onClick={() => openItem(it, api)}>{verbOf(it) ?? 'Open'} ▸</button>}
@@ -138,7 +141,7 @@ function SmallRow({ it, api }: { it: DeskItem; api: DeskApi }) {
   );
 }
 
-export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode }) {
+export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode; /** In the Desk drawer (its header already says "The Desk"): no second title, no second clock. */ inDrawer?: boolean }) {
   const [filter, setFilter] = useState<DeskFilter>(filter0);
   const all = bossDesk(s, ui);
   // The one count: Needs you of the same queue the rows come from.
@@ -148,15 +151,15 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: Gam
   const needs = pick(get('needs'));
   const handled = pick(get('handled'));
   const counts = FILTERS.map((f) => ({ ...f, n: all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done && inFilter(f.id, it)).length }));
-  const rest = (['order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
+  const rest = (['result', 'order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
   return (
     <section className="rounded-md border border-gold-600/50 bg-noir-800/50 p-2.5" data-testid="boss-desk">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="panel-title text-base">The Desk</div>
+          {!inDrawer && <div className="panel-title text-base">The Desk</div>}
           <div className="text-[11px] text-stone-400" data-testid="desk-count">{waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : 'Nothing needs you'}{handled?.items.length ? ` · ${get('handled')!.items.length} handled for you` : ''} · week {s.week}</div>
         </div>
-        <DeskClock s={s} className="text-[11px] sm:text-[13px]" />
+        {!inDrawer && <div className="hidden sm:block"><DeskClock s={s} className="text-[11px] sm:text-[13px]" /></div>}
       </div>
       {ltView(s).offer && api.onOffer && (
         <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded border border-gold-600/60 bg-gold-500/10 px-2 py-1.5 text-[12px] text-stone-200" data-testid="desk-offer">

@@ -9,11 +9,11 @@ const TONE = {
 };
 
 /** The bottom strip: everything under way, one chip each, soonest first. */
-export function InMotionStrip({ chips, onChip }: { chips: MotionChip[]; onChip: (c: MotionChip) => void }) {
+export function InMotionStrip({ chips, onChip, inDesk }: { chips: MotionChip[]; onChip: (c: MotionChip) => void; /** On the Desk: chips wrap, no scroll bar (the bottom strip folded into the Desk). */ inDesk?: boolean }) {
   const [all, setAll] = useState(false);
   const shown = all ? chips : chips.slice(0, 8);
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto whitespace-nowrap px-2 py-1 tabbar" data-testid="in-motion">
+    <div className={inDesk ? 'flex flex-wrap items-center gap-1.5' : 'flex items-center gap-1.5 overflow-x-auto whitespace-nowrap px-2 py-1 tabbar'} data-testid="in-motion">
       <span className="shrink-0 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</span>
       {chips.length === 0 && <span className="text-[11px] text-stone-500">Nothing under way. Plan something: the Desk › Jobs › Plan a job, or any man's sheet.</span>}
       {shown.map((c) => (

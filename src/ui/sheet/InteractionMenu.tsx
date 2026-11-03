@@ -1,4 +1,5 @@
 import { CallingCard } from '../nightlife/CallingCard';
+import { Overlay } from '../components/Modal';
 import { openProtectionFor } from '../borgata/Protection';
 import { previewAction } from '../../engine/actions';
 import { useEscape } from '../keys';
@@ -13,7 +14,7 @@ import { usePlanner } from '../components/Schemes';
 import { useClarity } from '../clarity/context';
 import { useTravel } from '../travel/context';
 import { useShell } from '../shell/context';
-import { CATEGORY_LABEL, menuFor, rankedGifts, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
+import { CATEGORY_LABEL, GROUP_LABEL, menuFor, rankedGifts, toCategory, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
 import { EarsPicker } from '../ears/EarsPicker';
 import { ActionRow } from '../components/ActionRow';
 import { DatingSection } from '../dating/DatingPanel';
@@ -82,6 +83,22 @@ function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; 
   );
 }
 
+/** A category's rows, under their finer groups' subheads when it holds more than one. */
+function Grouped({ s, c, items, onDone, sub }: { s: GameState; c: Character; items: MenuItem[]; onDone?: () => void; sub: boolean }) {
+  const groups = [...new Set(items.map((it) => it.group))];
+  if (!sub || groups.length < 2) return <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5">{sortItems(s, items).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}</div>;
+  return (
+    <div className="mt-2 space-y-2">
+      {groups.map((g) => (
+        <div key={g ?? '-'} data-testid={`menu-group-${g}`}>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{g ? GROUP_LABEL[g] : ''}</div>
+          <div className="mt-1 grid grid-cols-[minmax(0,1fr)] gap-1.5">{sortItems(s, items.filter((it) => it.group === g)).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 /** Everything one line of the menu says, for "Find an action…". */
 function itemText(s: GameState, it: MenuItem): string {
   const t = it.action ? `${previewAction(s, it.action).title} ${previewAction(s, it.action).verb ?? ''}` : '';
@@ -119,15 +136,16 @@ export function bestFor(s: GameState, c: { id: string } & Parameters<typeof quic
  * "Find an action…" searches every category; each order is a folded row (tap
  * it for the full card). What can't be done now sits last with its reason.
  */
-export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: GameState; c: Character; initial?: MenuCategoryId; onDone?: () => void; cats?: MenuCategory[] }) {
+export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: GameState; c: Character; initial?: string; onDone?: () => void; cats?: MenuCategory[] }) {
   const base = useMemo(() => given ?? menuFor(s, c), [given, s, c]);
   const cats = useMemo(() => {
-    const best = base.length > 1 ? bestFor(s, c, base) : [];
+    const best = base.filter((x) => x.items.length).length > 1 ? bestFor(s, c, base) : [];
     return best.length >= 2 ? [{ id: 'best' as MenuCategoryId, label: CATEGORY_LABEL.best, items: best }, ...base] : base;
   }, [base, s, c]);
-  const [cur, setCur] = useState<MenuCategoryId | undefined>(initial && cats.some((x) => x.id === initial) ? initial : cats[0]?.id);
+  const want = toCategory(initial);
+  const [cur, setCur] = useState<MenuCategoryId | undefined>(want && cats.some((x) => x.id === want && x.items.length) ? want : cats.find((x) => x.items.length)?.id);
   const [q, setQ] = useState('');
-  if (!cats.length) return null;
+  if (!cats.some((x) => x.items.length)) return null;
   const cat = cats.find((x) => x.id === cur) ?? cats[0];
   const total = base.reduce((n, x) => n + x.items.length, 0);
   const query = q.trim().toLowerCase();
@@ -136,7 +154,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
     <section className="mt-4" data-testid="interaction-menu">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="panel-title text-base flex flex-wrap items-center gap-1.5">{c.id === s.playerId ? 'Your own business' : `Deal with ${c.firstName}`}{c.id !== s.playerId && <><SideChip s={s} id={c.id} /><RelationChip relation={sideOf(s, c.id).relation} /></>}</div>
-        <span className="text-[11px] text-stone-500">{total} things you can do · carried out when the week turns</span>
+        <span className="text-[11px] text-stone-500">{total} things you can do · talk, favors and asks settle on the spot; jobs land when the week turns</span>
       </div>
       {total > 6 && (
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Find an action… (gift, dinner, hit, promote)`} aria-label="Find an action"
@@ -151,15 +169,14 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
         <>
           <nav className="mt-1.5 flex flex-wrap gap-1" aria-label="Interaction categories">
             {cats.map((x) => (
-              <button key={x.id} type="button" onClick={() => setCur(x.id)} data-testid={`menu-cat-${x.id}`}
-                className={`rounded px-2 py-1 text-xs font-semibold ${cat.id === x.id ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+              <button key={x.id} type="button" onClick={() => setCur(x.id)} data-testid={`menu-cat-${x.id}`} disabled={!x.items.length}
+                title={x.items.length ? undefined : `Nothing of this kind for ${c.firstName} right now`}
+                className={`rounded px-2 py-1 text-xs font-semibold ${cat.id === x.id ? 'bg-gold-500 text-noir-950' : x.items.length ? 'border border-noir-600 text-stone-300 hover:border-gold-500' : 'border border-noir-800 text-stone-600 cursor-default'}`}>
                 {x.label} <span className={cat.id === x.id ? 'text-noir-800' : 'text-stone-500'}>{x.items.length}</span>
               </button>
             ))}
           </nav>
-          <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5">
-            {sortItems(s, cat.items).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}
-          </div>
+          <Grouped s={s} c={c} items={cat.items} onDone={onDone} sub={cat.id !== 'best'} />
         </>
       )}
     </section>
@@ -167,7 +184,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
 }
 
 /** The right-click menu: the same categories in a floating card at the cursor. */
-export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; id: string; x: number; y: number; category?: MenuCategoryId; onClose: () => void }) {
+export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; id: string; x: number; y: number; category?: string; onClose: () => void }) {
   const c = s.characters[id];
   const { open } = useSheet();
   const ref = useRef<HTMLDivElement>(null);
@@ -180,7 +197,7 @@ export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; 
   // Phones: a sheet from near the top, the whole height to scroll in.
   const top = w < 640 ? 48 : Math.max(8, Math.min(y, h - 360));
   return (
-    <div className="fixed inset-0 z-[1180] bg-black/40 sm:bg-transparent" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} data-testid="context-menu-backdrop">
+    <Overlay z={1180} className="bg-black/40 sm:bg-transparent" onClick={onClose} onContextMenu={(e) => { e.preventDefault(); onClose(); }} data-testid="context-menu-backdrop">
       <div ref={ref} className="absolute panel border-gold-600/60 p-3 overflow-y-auto shadow-2xl shadow-black/80" style={{ left, top, width, maxHeight: h - top - 8 }} onClick={(e) => e.stopPropagation()} data-testid="context-menu">
         <div className="flex items-baseline justify-between gap-2">
           <div className="min-w-0">
@@ -188,12 +205,12 @@ export function ContextMenu({ s, id, x, y, category, onClose }: { s: GameState; 
             {c.id !== s.playerId && <SideChip s={s} id={c.id} full />}
           </div>
           <div className="flex gap-1 shrink-0">
-            <button type="button" className="btn-ghost text-xs py-0.5" onClick={() => { onClose(); open(c.id); }}>Open sheet</button>
-            <button type="button" className="btn-ghost text-xs py-0.5" onClick={onClose} aria-label="Close">×</button>
+            <button type="button" className="btn-secondary text-xs py-0.5" onClick={() => { onClose(); open(c.id); }}>Open sheet</button>
+            <button type="button" className="btn-secondary text-xs py-0.5" onClick={onClose} aria-label="Close">×</button>
           </div>
         </div>
         <InteractionMenu s={s} c={c} initial={category} onDone={onClose} />
       </div>
-    </div>
+    </Overlay>
   );
 }

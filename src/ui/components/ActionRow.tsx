@@ -54,7 +54,7 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
     return (
       <div className="sm:col-span-2" data-testid="action-row-open">
         <ActionCard s={s} action={action} label={label} />
-        <button type="button" className="mt-0.5 text-[11px] text-stone-500 hover:text-gold-300" onClick={() => setOpen(false)}>fold ▴</button>
+        <button type="button" className="btn-quiet mt-0.5 text-[11px]" onClick={() => setOpen(false)}>fold ▴</button>
       </div>
     );
   }
@@ -74,13 +74,13 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
         </span>
       </button>
       <button type="button" disabled={!!why || (queued && !now)}
-        className={`shrink-0 text-xs py-1 ${(queued && !now) || why ? 'btn-ghost' : 'btn-gold'}`}
+        className={`shrink-0 text-xs py-1 ${(queued && !now) || why ? 'btn-secondary' : 'btn-primary'}`}
         onClick={() => (deal ? setDealing(true) : needsCard || now ? setOpen(true) : queue(action))} data-testid={deal ? 'make-offer' : 'action-row-go'}>
         {now ? 'Weigh it ▸' : queued ? (deal ? 'Signed ✓' : verbOf(action, p).done) : deal ? 'Make an offer' : needsCard ? 'More ▸' : verbOf(action, p).verb}
       </button>
       <button type="button" className={`shrink-0 px-0.5 text-sm ${pinned ? 'text-gold-400' : 'text-stone-600 hover:text-gold-300'}`} onClick={() => togglePinOrder(s.seed, action)} aria-pressed={pinned} title={pinned ? 'Unpin this order' : 'Pin it: it waits on Find\'s front page (Ctrl+K)'} data-testid="action-row-pin">{pinned ? '★' : '☆'}</button>
       {!hard && noTime && !queued && later && (
-        <button type="button" className="shrink-0 btn-gold text-xs py-1" onClick={() => later(action)} title="Give the order now; it takes the hours out of tomorrow" data-testid="action-row-tomorrow">Tomorrow</button>
+        <button type="button" className="shrink-0 btn-secondary text-xs py-1" onClick={() => later(action)} title="Give the order now; it takes the hours out of tomorrow" data-testid="action-row-tomorrow">Tomorrow</button>
       )}
       {dealing && deal && <DealWindow s={s} target={deal} onClose={() => setDealing(false)} />}
     </div>

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { dayCheckIns } from '../../engine/checkins';
 import { awayReason, DAY_NAMES, dayBlock, daysOf, formatDay, setEvening, weekPlan } from '../../engine/days';
 import { roundOptions, roundOutcome, type Round } from '../../engine/rounds';
@@ -12,12 +12,19 @@ export interface EveningCue { week: number; day: number; roundId: string }
 
 export function EveningScene({ s, cue, onClose, onMore, older }: { s: GameState; cue: EveningCue; onClose: () => void; onMore?: () => void; /** An earlier scene still showing (phones show only the latest). */ older?: boolean }) {
   const r = useMemo(() => roundOptions(s).find((x) => x.id === cue.roundId), [s, cue.roundId]);
+  // A toast goes away on its own (the playthrough: evenings piled up over the office and the paper); hover holds it.
+  const [hold, setHold] = useState(false);
+  useEffect(() => {
+    if (hold) return;
+    const t = window.setTimeout(onClose, 12000);
+    return () => window.clearTimeout(t);
+  }, [hold]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!r || cue.week !== s.week) return null;
   const out = roundOutcome(s, r);
   const reading = r.reading === 'lawyer' ? lawyerReading(s).lines : r.reading === 'doctor' ? doctorReading(s).lines : undefined;
   const paid = r.action ? undefined : out.declined ? Math.round(r.cost / 3) : r.cost;
   return (
-    <div className={`pointer-events-auto w-[min(360px,calc(100vw-1rem))] ${older ? 'hidden md:block' : ''} rounded-lg border border-gold-600/60 bg-noir-900/[0.97] p-3 shadow-2xl shadow-black/80 llv-slide-right`} data-testid="evening-scene" role="status">
+    <div onMouseEnter={() => setHold(true)} onMouseLeave={() => setHold(false)} className={`pointer-events-auto w-[min(360px,calc(100vw-1rem))] ${older ? 'hidden' : ''} rounded-lg border border-gold-600/60 bg-noir-900/[0.97] p-3 shadow-2xl shadow-black/80 llv-slide-right`} data-testid="evening-scene" role="status">
       <div className="flex items-start justify-between gap-2">
         <div>
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{DAY_NAMES[cue.day]} evening</div>

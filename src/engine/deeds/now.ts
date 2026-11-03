@@ -37,6 +37,24 @@ export interface NowResult {
   line: string;
   changes: string[];
   leadsTo: string[];
+  /** What he will remember (the memory written to his mind), in his words. */
+  remember?: string;
+  /** His opinion of the boss moved by this much. */
+  opinionDelta?: number;
+}
+
+/** The tier's banner (STREAMLINE §4.3). */
+export const TIER_BANNER: Record<Tier, string> = { crit: 'Better than hoped', success: 'Success', fail: 'Failure', critFail: 'Disaster' };
+
+/** An order's fingerprint for the once-a-week guard. */
+export function nowKey(a: PlayerAction): string {
+  return JSON.stringify(a);
+}
+
+/** Already settled this week (the same order, the same week): a double click is one order. */
+export function settledThisWeek(s: GameState, a: PlayerAction): boolean {
+  const n = s.deeds?.now;
+  return !!n && n.w === s.week && n.k.includes(nowKey(a));
 }
 
 /** The person an order is aimed at, if it is a person interaction. */
@@ -142,6 +160,7 @@ export function actNow(input: GameState, action: PlayerAction): { state: GameSta
   const t = personOf(input, action);
   const fail = (error: string): { state: GameState; result: NowResult } => ({ state: input, result: { ok: false, error, title: p0.title, tier: 'fail', headline: error, line: '', changes: [], leadsTo: [] } });
   if (input.gameOver) return fail('The game is over');
+  if (settledThisWeek(input, action)) return fail('Already done this week');
   if (p0.disabledReason) return fail(p0.disabledReason);
   const tb = timeBlock(input, action);
   if (tb) return fail(tb);
@@ -152,6 +171,9 @@ export function actNow(input: GameState, action: PlayerAction): { state: GameSta
   const ctx: Ctx = newCtx(s);
   const before = snap(s, t);
   const D = ensureDeeds(s);
+  D.now = D.now && D.now.w === s.week ? D.now : { w: s.week, k: [] };
+  D.now.k.push(nowKey(action));
+  const mem0 = t ? (mindOf(s, t)?.mem.length ?? 0) : 0;
   const she = !!t && s.characters[t]?.gender === 'F';
   let tier: Tier = 'success';
   let chance: number | undefined;
@@ -185,16 +207,23 @@ export function actNow(input: GameState, action: PlayerAction): { state: GameSta
     const extra = t ? legacyCrit(s, action, t, tier) : { fx: [] };
     if (extra.fx.length) applyEffects(ctx, extra.fx, { label: `${p.title}: ${tier === 'crit' ? 'better than hoped' : 'it went badly'}`, because: p.because, category: 'event' });
     line = extra.line ?? (accepted ? `Done: ${p.title}.` : `${p.title}: the answer was no.`);
-    if (extra.line) s.chronicle.push({ week: s.week, date: { ...s.date }, text: extra.line, kind: 'decision' });
+    if (extra.line) {
+      const last = s.journal?.e[s.journal.e.length - 1];
+      if (last && last.src === 'order' && last.w === s.week) last.r = [...(last.r ?? []), extra.line];
+      else s.chronicle.push({ week: s.week, date: { ...s.date }, text: extra.line, kind: 'decision' });
+    }
   }
   const after = snap(s, t);
   const d = diff(s, before, after, t);
   const cd = action.kind === 'deed' ? deedPreview(s, action.id, s.playerId, action.target)?.cooldown ?? 0 : 0;
   if (cd > 0) d.leadsTo.push(`Not again with ${t ? s.characters[t]?.firstName : 'him'} for ${cd} weeks.`);
   const pct = chance !== undefined ? Math.round(chance * 100) : undefined;
+  const mems = t ? (mindOf(s, t)?.mem ?? []).slice(mem0).filter((m) => !m.who || m.who === s.playerId) : [];
+  const remember = mems.length ? mems[mems.length - 1].t : undefined;
+  const opinionDelta = before.op !== undefined && after.op !== undefined && after.op !== before.op ? after.op - before.op : undefined;
   const headline = pct !== undefined ? `${pct}% — ${verdict(tier, mode, she)}` : verdict(tier, 'order', she) === 'done' ? 'Done' : verdict(tier, mode, she);
   return {
     state: s,
-    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo },
+    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}) },
   };
 }

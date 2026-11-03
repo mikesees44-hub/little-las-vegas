@@ -101,7 +101,7 @@ export function LiveAlerts({ s, running }: { s: GameState; running: boolean }) {
         </div>
       )}
       {toast && (
-        <div className="fixed right-2 bottom-24 md:bottom-14 z-[1175] max-w-[min(92vw,380px)]" role="status" data-testid="alert-toast" data-severity={toast.severity}>
+        <div className="fixed right-2 top-[7.5rem] md:top-[5.5rem] z-[1160] max-w-[min(92vw,380px)]" role="status" data-testid="alert-toast" data-severity={toast.severity}>
           <div className={`flex items-start gap-2 rounded-md border-2 px-3 py-2 text-[12px] shadow-xl shadow-black/70 ${SEV[toast.severity].box}`}>
             <button type="button" className="min-w-0 flex-1 text-left" onClick={() => { setToast(undefined); goTo(toast); }}>
               <span className="block text-[9px] uppercase tracking-[0.2em] opacity-80">{toast.severity === 'danger' ? 'Needs you' : toast.severity === 'good' ? 'Good news' : 'Heads up'}</span>

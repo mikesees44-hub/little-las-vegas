@@ -92,7 +92,8 @@ describe('4: specific buttons and the facts before the click', () => {
     expect(f.actor).toBe('You');
     expect(f.target).toContain(man.lastName);
     expect(f.cost).toMatch(/from your pocket|from Family money/);
-    expect(f.timing).toMatch(/advance the week/);
+    expect(f.timing).toMatch(/^Now: settled the moment/); // a dinner with your man is settled on the spot (STREAMLINE S11)
+    expect(actionFacts(s, { kind: 'dirty', op: { job: 'hijack', who: man.id } }).timing).toMatch(/week turns/);
     const ub = crew(s).find((c) => c.rank === 'underboss')!;
     const blocked = actionFacts(s, { kind: 'appoint', seat: 'underboss', charId: ub.id });
     expect(blocked.unavailable).toMatch(/^Unavailable: /);
@@ -100,15 +101,16 @@ describe('4: specific buttons and the facts before the click', () => {
 });
 
 describe('5: decision advice with priorities and recurring effects', () => {
-  it('the decision card has the priority picker, the default, "Ask for advice", and the weekly effect of a contract', () => {
+  it('the decision card has the default, "Ask for advice", odds on every option and the weekly effect of a contract (the priority picker lives in Settings)', () => {
     let s = withEvent(newGame('ux-ev'));
     const k = capos(s).find((c) => s.districts.some((d) => d.capoId === c.id))!;
     s = { ...s, pendingEvents: [{ iid: 'ux1', defId: 'test', title: 'A bigger end', text: 'He wants more.', week: s.week, defaultChoiceId: 'no', mandatory: false, priority: 1,
       choices: [{ id: 'give', label: 'Give him 35%', because: 'gave', effects: [{ type: 'contract', charId: k.id, keep: 0.35 }] }, { id: 'no', label: 'No', because: 'said no', effects: [{ type: 'opinion', from: k.id, to: s.playerId, amount: -5, reason: 'No' }] }] }] };
     expect(recurringOf(s, { type: 'contract', charId: k.id, keep: 0.35 })).toBeTruthy();
     const out = html(createElement(EventModal, { s, ev: s.pendingEvents[0], index: 0, total: 1, onChoose: () => {}, onClose: () => {} }));
-    expect(out).toContain('data-testid="priority-picker"');
+    expect(out).not.toContain('data-testid="priority-picker"');
     expect(out).toContain('data-testid="event-default"');
+    expect(out.split('data-testid="odds-label"').length - 1).toBe(2);
     expect(out).toContain('data-testid="ask-advice"');
     expect(out).toContain('data-testid="recurring-note"');
     expect(out).toMatch(/Every week from now/);

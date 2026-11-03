@@ -1,8 +1,7 @@
 import { useSheet } from '../components/People';
-import type { MenuCategoryId } from './menuCatalog';
 
 /** "⋯" on a list row: the person's interaction menu, opened at the category the list is about. */
-export function MoreButton({ id, category, label = '⋯' }: { id: string; category?: MenuCategoryId; label?: string }) {
+export function MoreButton({ id, category, label = '⋯' }: { id: string; category?: string; label?: string }) {
   const { menu, open } = useSheet();
   return (
     <button type="button" data-testid="more-button" title="Everything you can do to him"

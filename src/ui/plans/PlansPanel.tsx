@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
 import type { GameState } from '../../engine/types';
 import { useOrders } from '../components/Orders';
@@ -74,7 +75,7 @@ export function PlansPanel({ s, onClose }: { s: GameState; onClose: () => void }
   const c = plansCount(groups);
   useEscape(true, onClose);
   return (
-    <div className="fixed inset-0 z-[1170] bg-black/50" onClick={onClose}>
+    <Overlay z={1170} className="bg-black/50" onClick={onClose}>
       <aside className="absolute right-0 top-0 bottom-0 w-full sm:w-[480px] overflow-y-auto border-l border-gold-600/40 bg-noir-900 p-3 space-y-3 shadow-2xl llv-slide-right" onClick={(e) => e.stopPropagation()} data-testid="plans-panel" role="dialog" aria-label="Plans in motion">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -87,16 +88,21 @@ export function PlansPanel({ s, onClose }: { s: GameState; onClose: () => void }
         {!groups.length && <p className="text-[12px] text-stone-400">Nothing under way and nothing waiting. Plan a job, give an order, or advance the week.</p>}
         {groups.map((g) => <Group key={g.id} s={s} g={g} onDone={onClose} />)}
       </aside>
-    </div>
+    </Overlay>
   );
+}
+
+/** How much is in motion, and whether something is against you (the Plans button's count and colour). */
+export function usePlansCount(s: GameState) {
+  const { orders } = useOrders();
+  const api = usePlansApi();
+  return useMemo(() => plansCount(plansInMotion(s, { orders, answers: api.answers, briefSkip: api.briefSkip })), [s, orders, api.answers, api.briefSkip]);
 }
 
 /** The top bar's "Plans" button: how much is in motion, red when something is against you. */
 export function PlansButton({ s }: { s: GameState }) {
-  const { orders } = useOrders();
-  const api = usePlansApi();
   const [open, setOpen] = useState(false);
-  const c = useMemo(() => plansCount(plansInMotion(s, { orders, answers: api.answers, briefSkip: api.briefSkip })), [s, orders, api.answers, api.briefSkip]);
+  const c = usePlansCount(s);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} data-testid="plans-button" title="Plans in motion: everything you have going and everything going on against you"

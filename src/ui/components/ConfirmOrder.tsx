@@ -1,11 +1,13 @@
 import { useEffect } from 'react';
+import { Overlay } from './Modal';
+import { heavyOf } from '../../engine/heavy';
+import { VoicesLine } from '../decide/DecisionCard';
 import { previewAction } from '../../engine/actions';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { actionFacts } from '../actionFacts';
 import { counsel, type Voice } from '../../engine/counsel';
 import { formatClock, hoursLabel, hoursLeft, clockHour, timeBlock, timeCost, DINNER_AT, LATE_AT } from '../../engine/timeCost';
 
-const VERDICT_COLOR: Record<string, string> = { do: 'text-emerald-300', doBut: 'text-amber-200', wait: 'text-amber-300', dont: 'text-red-300' };
 
 /** A line of counsel without the quote marks it may already carry (the card adds its own). */
 export function bareQuote(x: string): string {
@@ -36,6 +38,7 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
   const to = from + hours;
   const p = previewAction(s, action);
   const f = actionFacts(s, action, p);
+  const heavy = heavyOf(s, action);
   let voices: Voice[] = [];
   try { voices = pickVoices(counsel(s, { kind: 'action', action })?.voices ?? []); } catch { voices = []; }
   useEffect(() => {
@@ -47,9 +50,10 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
     return () => window.removeEventListener('keydown', k, true);
   }, [onYes, onNo, onTomorrow, noTime]);
   return (
-    <div className="fixed inset-0 z-[5000] flex items-end sm:items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-label="Are you sure?" data-testid="confirm-order">
+    <Overlay z={5000} className="flex items-end sm:items-center justify-center bg-black/60 p-3" role="dialog" aria-modal="true" aria-label="Are you sure?" data-testid="confirm-order">
       <div className="w-[min(94vw,520px)] max-h-[90vh] overflow-y-auto rounded-lg border border-gold-500 bg-noir-900 shadow-2xl p-4">
         <div className="text-[11px] uppercase tracking-widest text-gold-400">{noTime ? 'Not enough time today' : 'Are you sure?'}</div>
+        {heavy && !noTime && <ul className="mt-1 list-disc pl-5 text-xs text-red-300" data-testid="confirm-heavy">{heavy.map((h, i) => <li key={i}>{h}</li>)}</ul>}
         <div className="mt-1 text-base font-semibold text-stone-100">{f.button}</div>
         {p.detail && <div className="mt-1 text-xs text-stone-400">{p.detail}</div>}
         <dl className="mt-3 grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 text-xs">
@@ -68,24 +72,9 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
         {f.consequences.length > 0 && <ul className="mt-2 list-disc pl-5 text-xs text-stone-300 space-y-0.5">{f.consequences.slice(0, 5).map((c, i) => <li key={i}>{c}</li>)}</ul>}
         {f.unavailable && <div className="mt-2 text-xs text-red-300">{f.unavailable}</div>}
         {voices.length > 0 && (
-          <div className="mt-3 space-y-2" data-testid="confirm-voices">
-            <div className="text-[10px] uppercase tracking-widest text-stone-500">Your people weigh in</div>
-            {voices.map((v) => (
-              <div key={v.adviser.charId} className="rounded-md border border-noir-700 bg-noir-800/60 p-2">
-                <div className="flex items-baseline justify-between gap-2 text-xs">
-                  <span className="text-stone-200 font-semibold">{v.adviser.name} <span className="font-normal text-stone-500">· {v.adviser.title}</span></span>
-                  <span className={`shrink-0 ${VERDICT_COLOR[v.verdict] ?? 'text-stone-300'}`}>{v.label}</span>
-                </div>
-                <div className="mt-1 text-xs italic text-stone-300">“{bareQuote(v.says)}”</div>
-                {(v.pros[0] || v.cons[0]) && (
-                  <ul className="mt-1 text-[11px] space-y-0.5">
-                    {v.pros.slice(0, 2).map((x, i) => <li key={`p${i}`} className="text-emerald-200/90">+ {x.text}</li>)}
-                    {v.cons.slice(0, 2).map((x, i) => <li key={`c${i}`} className="text-red-200/90">− {x.text}</li>)}
-                  </ul>
-                )}
-                {v.bias && <div className="mt-1 text-[10px] text-amber-300">{v.bias}</div>}
-              </div>
-            ))}
+          // One line each (the playtest: three near-identical essays drowned the choice).
+          <div className="mt-3" data-testid="confirm-voices">
+            <VoicesLine voices={voices.map((v) => ({ who: `${v.adviser.title} ${v.adviser.name.split(' ')[0]}`, says: `${v.label}: ${bareQuote(v.says)}`, tone: v.verdict === 'do' || v.verdict === 'doBut' ? 'do' : v.verdict === 'dont' ? 'dont' : 'wait' }))} />
           </div>
         )}
         <div className="mt-4 flex flex-wrap gap-2 justify-end">
@@ -95,6 +84,6 @@ export function ConfirmOrder({ s, action, onYes, onNo, onNeverAsk, onTomorrow }:
         </div>
         <button className="mt-2 text-[11px] text-stone-500 underline" onClick={onNeverAsk}>Don't ask me again (change in Settings)</button>
       </div>
-    </div>
+    </Overlay>
   );
 }

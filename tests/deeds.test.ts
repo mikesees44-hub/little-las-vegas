@@ -98,7 +98,8 @@ describe('deeds: the acceptance breakdown', () => {
 });
 
 describe('deeds: the boss does them', () => {
-  it('an order costs hours, rolls when the week turns, and goes on cooldown', () => {
+  it('a deed with the man in front of you rolls now (STREAMLINE S11): hours and cooldown at once; a queued kind still rolls at the turn', async () => {
+    const { actNow, instant } = await import('../src/engine/actNow');
     let s = game('deeds-order');
     const k = capo(s);
     const a = { kind: 'deed' as const, id: 'befriend' as const, target: k.id };
@@ -108,21 +109,27 @@ describe('deeds: the boss does them', () => {
     expect(p.odds?.reasons.length).toBeGreaterThan(1);
     expect(p.outcomes?.length).toBe(4);
     expect(p.cooldown).toBe(DEEDS.befriend.cooldown);
-    s = advanceWeek(s, { actions: [a] }).state;
-    const log = s.deeds!.log.filter((l) => l.a === s.playerId && l.t === k.id && l.id === 'befriend');
-    expect(log.length).toBe(1);
+    expect(instant(s, a)).toBe(true);
+    const r = actNow(s, a);
+    expect(r.result.ok).toBe(true);
+    s = r.state;
+    expect(s.deeds!.log.filter((l) => l.a === s.playerId && l.t === k.id && l.id === 'befriend').length).toBe(1);
     expect(previewAction(s, a).disabledReason).toMatch(/Tried lately/);
+    // Things that take days in the fiction stay queued and land when the week turns.
+    const raidLike = { kind: 'scheme' as const, scheme: 'heist' as const, agents: [k.id], opts: { depth: 'planned' as const, heist: 'jewelry' as const } };
+    expect(instant(s, raidLike)).toBe(false);
   });
 
-  it('the menu lists the deeds in their groups, with no duplicate threaten', () => {
+  it('the menu lists the deeds in the six categories, with no duplicate threaten', () => {
     const s = game();
     const k = capo(s);
     const cats = menuFor(s, k);
+    expect(cats.map((c) => c.id)).toEqual(['talk', 'business', 'crew', 'heart', 'pressure', 'move']);
     const keys = new Map(cats.flatMap((c) => c.items.map((it) => [it.key, c.id] as const)));
-    expect(keys.get('d:befriend')).toBe('diplomacy');
+    expect(keys.get('d:befriend')).toBe('talk');
     expect(keys.get('d:recognize')).toBe('crew');
     expect(keys.get('d:discipline')).toBe('crew');
-    expect(keys.get('d:findSecrets')).toBe('intrigue');
+    expect(keys.get('d:findSecrets')).toBe('pressure');
     expect(keys.has('d:threaten')).toBe(true);
     expect(keys.has('i:threaten')).toBe(false);
     const rival = s.characters[s.rivals.find((r) => r.kind === 'mob')!.leaderId];

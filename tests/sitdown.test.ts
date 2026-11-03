@@ -169,7 +169,8 @@ describe('the Sit-Down', () => {
     expect(html).toContain('data-testid="sitdown"');
     expect(html).toContain('data-testid="advisor-underboss"');
     expect(html).toContain('data-recommended="true"');
-    expect(html).toContain('Do what they recommend');
+    expect(html).toContain('Let them handle the routine');
+    expect(html).toContain('data-testid="odds-label"');
     expect(renderToString(createElement(SitDown, { ...props, initialTab: 'rounds' }))).toContain('data-testid="lane-family"');
     const b: Briefing = briefing(s);
     expect(renderToString(createElement(SitDownCard, { s, b, onOpen: () => {}, onRounds: () => {} }))).toContain('Hear them');

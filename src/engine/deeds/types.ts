@@ -124,6 +124,8 @@ export interface DeedsState {
   pt: Partnership[];
   ln: Loan[];
   stats: { done: number; npc: number; asks: number; ties: number; scenes: number };
+  /** Settled in the moment this week (now.ts): one entry per order, so a double click is one order. */
+  now?: { w: number; k: string[] };
 }
 
 /** Effect ops of the deeds layer (the `deed` Effect). */

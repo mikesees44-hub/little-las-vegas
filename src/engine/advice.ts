@@ -616,7 +616,8 @@ function verdictOf(p: { disabledReason?: string }, value: number, chanceOk: numb
   const big = risks.filter((r) => r.severity === 'high');
   const metN = best.filter((c) => c.met).length;
   const unmet = best.filter((c) => !c.met);
-  if (value <= -1500) return { label: 'Not worth it now', tone: 'bad', because: 'It costs more than it brings in, as things stand.' };
+  // A fact, not a ruling (the playthrough: all three tribute options read "not worth it now").
+  if (value <= -1500) return { label: 'Costs more than it brings in', tone: 'bad', because: 'In money, as things stand; what it buys may be worth it to you.' };
   if (big.length && (chanceOk < 0.6 || value < 3000)) return { label: 'Risky', tone: 'warn', because: big[0].text };
   if (value >= 800 && chanceOk >= 0.6 && (best.length === 0 || metN * 2 >= best.length)) return { label: 'Good idea now', tone: 'good', because: best.find((c) => c.met)?.text ?? 'It pays for itself.' };
   if (value > 0 && chanceOk < 0.6) return { label: 'Risky', tone: 'warn', because: `Only ${Math.round(chanceOk * 100)}% it goes through.` };
@@ -705,7 +706,8 @@ export function whyPick(s: GameState, ch: Choice, ex: ActionExplanation): string
     return `Pick this if ${why}: ${d}${cheap ? ', and it costs little' : ''}.`;
   }
   const least = ranked[ranked.length - 1];
-  return `The cheapest way out: ${describeEffect(s, least.e) ?? ''}${ex.risks.length ? '' : ', with nothing coming back later'}.`;
+  // What it costs, said plainly (the playthrough: paying for proof was called "the cheapest way out").
+  return `What it costs: ${describeEffect(s, least.e) ?? 'little'}${ex.risks.length ? '' : ', with nothing known to come back later'}.`;
 }
 
 /** The three channels for a general order, compared. */

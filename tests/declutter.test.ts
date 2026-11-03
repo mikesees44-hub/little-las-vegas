@@ -143,6 +143,38 @@ describe('declutter: every order is still reachable', () => {
   });
 });
 
+describe('declutter: people first (STREAMLINE S9)', () => {
+  it('an entry aimed at a person lists "person"; one aimed at a place lists "place"', () => {
+    for (const e of ACTION_ENTRIES) {
+      if (e.subject === 'person') expect(e.at, `${e.label}: aimed at a person`).toContain('person');
+      if (e.subject === 'place') expect(e.at, `${e.label}: aimed at a place`).toContain('place');
+    }
+  });
+
+  it('most orders are reachable from the person or the place they are aimed at', () => {
+    const person = ACTION_ENTRIES.filter((e) => e.at.includes('person')).length;
+    const place = ACTION_ENTRIES.filter((e) => e.at.includes('place')).length;
+    expect(person).toBeGreaterThanOrEqual(60);
+    expect(place).toBeGreaterThanOrEqual(12);
+    // Every entry the person menu newly reaches is built by the menu's own builders.
+    // (menuMore asks two engines for the gestures that fit him: bonds.gesturesFor, myMen.menActionsFor.)
+    const builders = ['ui/sheet/menuCatalog.ts', 'ui/sheet/menuMore.ts', 'ui/ears/earsMenu.ts', 'engine/bonds.ts', 'engine/myMen.ts'].map(read).join('\n');
+    for (const e of ACTION_ENTRIES.filter((x) => x.files.includes('ui/sheet/menuMore.ts'))) expect(builders, e.label).toMatch(new RegExp(`kind: '${e.kind}'`));
+  });
+
+  it('the person menu has exactly six categories, in order, for anyone', async () => {
+    const { playWeeks } = await import('./helpers');
+    const { menuFor, SIX } = await import('../src/ui/sheet/menuCatalog');
+    const s = playWeeks('declutter-six', 4);
+    expect(SIX).toEqual(['talk', 'business', 'crew', 'heart', 'pressure', 'move']);
+    for (const c of Object.values(s.characters).filter((x) => x.alive).slice(0, 40)) expect(menuFor(s, c).map((x) => x.id), c.firstName).toEqual(SIX);
+    // The boss's own menu too (his own business: the law, how he rules, his court, a trip).
+    const me = menuFor(s, s.characters[s.playerId]);
+    expect(me.map((x) => x.id)).toEqual(SIX);
+    expect(me.find((x) => x.id === 'move')!.items.length).toBeGreaterThan(3);
+  });
+});
+
 describe('declutter: one home per screen, old routes land', () => {
   it('every section in nav has exactly one home', () => {
     for (const k of [...REGISTRY_KEYS, ...NAV_ONLY]) {
@@ -266,18 +298,24 @@ describe('declutter: Find… reaches screens, people, places and things to do', 
 });
 
 describe('declutter: a calm frame', () => {
-  it('the top bar has one loop button, Office, orders and Find; the map has one dock', async () => {
+  it('the top bar reads at a glance: money, one standing strip, the clock, Desk, Find and one ☰; the rest is one click away in ☰', async () => {
     const { createElement } = await import('react');
     const { renderToString } = await import('react-dom/server');
     const { App } = await import('../src/ui/App');
     const html = renderToString(createElement(App, { startOn: 'game' }));
-    expect(html).toContain('data-testid="waiting-button"');
-    expect(html).toContain('data-testid="office-button"');
-    expect(html).toContain('data-testid="orders-button"');
-    expect(html).toContain('data-testid="find-button"');
-    // The four old loop buttons are lines in the Waiting menu now, not buttons on the bar.
     const bar = html.slice(html.indexOf('data-testid="topbar"'), html.indexOf('data-testid="map-area"'));
-    for (const id of ['decisions-button', 'sitdown-button', 'desk-button']) expect(bar, id).not.toContain(`data-testid="${id}"`);
+    for (const id of ['waiting-button', 'find-button', 'game-menu-button', 'topbar-standing', 'topbar-family', 'advance-week']) expect(bar, id).toContain(`data-testid="${id}"`);
+    // Moved off the bar (STREAMLINE S14), never removed: they are lines in the ☰ menu.
+    for (const id of ['office-button', 'orders-button', 'plans-button', 'file-button', 'paper-button', 'decisions-button', 'sitdown-button', 'desk-button']) expect(bar, id).not.toContain(`data-testid="${id}"`);
+    // The rail is the six homes only; the bottom strip folded into the Desk.
+    expect(html).not.toContain('data-testid="rail-help"');
+    expect(html).not.toContain('data-testid="in-motion"');
+    const { TopBar } = await import('../src/ui/shell/TopBar');
+    const { newGame } = await import('../src/engine/newGame');
+    const g = newGame('topbar-menu');
+    const menu = renderToString(createElement(TopBar, { s: g, speed: 0, setSpeed: () => {}, onAdvance: () => {}, pending: 0, answered: 0, onReview: () => {}, onNewGame: () => {}, onMainMenu: () => {}, seedInput: '', setSeedInput: () => {}, slot: 1,
+      onOffice: () => {}, onFile: () => {}, onPaper: () => {}, onHelp: () => {}, onFind: () => {}, menuOpen: true }));
+    for (const id of ['office-button', 'orders-button', 'plans-button', 'plans-count', 'file-button', 'paper-button', 'rail-help', 'menu-settings-ingame', 'footer-new']) expect(menu, id).toContain(`data-testid="${id}"`);
     // Today, the club and (on phones) the next goal share one dock.
     const dock = html.slice(html.indexOf('data-testid="map-dock"'));
     expect(html).toContain('data-testid="map-dock"');

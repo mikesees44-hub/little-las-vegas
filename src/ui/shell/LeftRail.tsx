@@ -39,22 +39,20 @@ function RailButton({ h, active, badge, dot, onClick, compact, panelOpen, locked
  * phones. Red badges count what needs the boss there; a gold dot means
  * something new opened up.
  */
-export function LeftRail({ active, badges, dots, onOpen, onHelp, locks = {} }: {
+export function LeftRail({ active, badges, dots, onOpen, locks = {} }: {
   active?: HomeId;
   /** Homes not open yet, and why (unlocks.ts homeLock). */
   locks?: Partial<Record<HomeId, string>>;
   badges: Partial<Record<HomeId, number>>;
   dots: Set<HomeId>;
   onOpen: (h: HomeId) => void;
-  onHelp: () => void;
+  /** Help moved to the top bar's ☰ menu (the rail is the six homes only); kept for callers. */
+  onHelp?: () => void;
 }) {
   return (
     <>
       <nav className="hidden md:flex w-[68px] shrink-0 flex-col items-center gap-1 border-r border-noir-700 bg-noir-900/90 py-2" data-testid="rail" aria-label="The game's places">
         {HOMES.map((h) => <RailButton key={h.id} h={h} active={active === h.id} badge={badges[h.id]} dot={dots.has(h.id)} onClick={() => onOpen(h.id)} panelOpen={!!active} locked={locks[h.id]} />)}
-        <button type="button" onClick={onHelp} data-testid="rail-help" title="Help: what should I do, the glossary, the keyboard (?)" className="mt-auto flex h-12 w-14 flex-col items-center justify-center rounded-md text-[10px] text-stone-400 hover:text-gold-300">
-          <span className="text-lg leading-none">?</span>Help
-        </button>
       </nav>
       <nav className="md:hidden fixed inset-x-0 bottom-0 z-[1160] flex gap-0.5 border-t border-noir-700 bg-noir-900/95 px-1 pb-[env(safe-area-inset-bottom)] pt-0.5" data-testid="rail-phone" aria-label="The game's places">
         {HOMES.map((h) => <RailButton key={h.id} compact h={h} active={active === h.id} badge={badges[h.id]} dot={dots.has(h.id)} onClick={() => onOpen(h.id)} locked={locks[h.id]} />)}

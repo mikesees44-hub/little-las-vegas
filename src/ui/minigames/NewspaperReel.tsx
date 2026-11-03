@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Overlay } from '../components/Modal';
 import { monthName, weekday } from '../../engine/calendar';
 import type { GameDate } from '../../engine/types';
 import { CADILLAC, Man } from '../cutscene/figures';
@@ -178,9 +179,9 @@ export function NewspaperReel({ reel, onDone, inline }: { reel: Reel; onDone?: (
   );
   if (inline) return page;
   return (
-    <div className="fixed inset-0 z-[3100] bg-black flex flex-col items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={reel.headline} data-testid="newspaper-reel" onClick={() => (done ? onDone?.() : finish())}>
+    <Overlay z={3100} className="bg-black flex flex-col items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={reel.headline} data-testid="newspaper-reel" onClick={() => (done ? onDone?.() : finish())}>
       {page}
       <button className="btn-ghost text-xs mt-3" onClick={(e) => { e.stopPropagation(); onDone?.(); }}>{done ? 'Continue' : 'Skip'}</button>
-    </div>
+    </Overlay>
   );
 }

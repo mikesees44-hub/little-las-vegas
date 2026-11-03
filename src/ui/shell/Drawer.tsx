@@ -108,7 +108,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   const tabs = !cur ? [] : items.length <= 6 ? items : groups.find((g) => g.items.includes(cur))?.items ?? items;
   const sec = key ? sectionDef(key) : undefined;
   return (
-    <section className={`absolute inset-y-0 left-0 z-[1100] flex w-full ${cur?.wide ? 'md:w-[min(1080px,calc(100%-24px))]' : 'md:w-[min(680px,calc(100%-24px))]'} flex-col border-r border-gold-600/30 bg-noir-900 shadow-2xl shadow-black/70 llv-slide-left`} data-testid={`drawer-${home}`} aria-label={def.label}>
+    <section className={`absolute inset-y-0 left-0 z-[1100] flex w-full ${cur?.wide || (home === 'desk' && !cur) ? 'md:w-[min(1080px,calc(100%-24px))]' : 'md:w-[min(680px,calc(100%-24px))]'} flex-col border-r border-gold-600/30 bg-noir-900 shadow-2xl shadow-black/70 llv-slide-left`} data-testid={`drawer-${home}`} aria-label={def.label}>
       <header className="flex items-center gap-2 border-b border-noir-700 px-3 py-2">
         {cur ? (
           <button type="button" onClick={() => onOpen(undefined)} data-testid="drawer-back" aria-label={`Back to ${def.label}`}
@@ -139,8 +139,9 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
       <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" data-testid={cur ? `section-${key}` : 'home-landing'}>
         {!cur ? (
           <>
-            <p className="mb-3 text-xs text-stone-400">{def.blurb}</p>
-            <DoNowStrip s={s} items={doNow} onDo={onDo} />
+            {/* The Desk speaks for itself (a calm home screen): no blurb, and "Do this now" only when there is something. */}
+            {home !== 'desk' && <p className="mb-3 text-xs text-stone-400">{def.blurb}</p>}
+            {(home !== 'desk' || doNow.length > 0) && <DoNowStrip s={s} items={doNow} onDo={onDo} />}
             {top}
             {groups.map((g, i) => (
               <section key={g.title ?? i} className="mb-4">

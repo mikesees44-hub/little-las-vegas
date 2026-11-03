@@ -183,8 +183,8 @@ describe('time costs in the UI', () => {
     expect(late).toContain('Do it tomorrow');
     // The OK button is still there, disabled, with the reason.
     expect(late).toMatch(/disabled=""[^>]*data-testid="confirm-yes"|data-testid="confirm-yes"[^>]*disabled=""/);
-    expect(timeLine({ hours: 2, to: 21, late: 0, missedDinner: false })).toBe('2 hours pass — now 9 PM.');
-    expect(timeLine({ hours: 1, to: 9, late: 0, missedDinner: false })).toBe('1 hour passes — now 9 AM.');
+    expect(timeLine({ hours: 2, to: 21, late: 0, missedDinner: false })).toBe('Your day: 2 hours spent giving it — now 9 PM.');
+    expect(timeLine({ hours: 1, to: 9, late: 0, missedDinner: false })).toBe('Your day: 1 hour spent giving it — now 9 AM.');
     expect(timeLine({ hours: 3, to: 0, late: 0, missedDinner: false, bookedDay: 1 })).toMatch(/^Booked for Tuesday/);
   });
 });
