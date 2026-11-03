@@ -1,4 +1,6 @@
 import { LevelPip } from '../borgata/CrewXp';
+import { inTheRanks, rankWordOf } from '../../engine/rankView';
+import { AboveChart } from '../borgata/YourPlace';
 import { SideBadge } from './Side';
 import { sideOf } from '../../engine/sides';
 import { useState } from 'react';
@@ -88,7 +90,9 @@ function ringFor(s: GameState, c: Character): string {
 /** One person in the chart: portrait with an opinion-coloured ring, rank badge, warnings. Click opens the sheet. */
 export function TreeNode({ s, c, size = 44, sub, compact }: { s: GameState; c: Character; size?: number; sub?: string; compact?: boolean }) {
   const { open } = useSheet();
-  const badge = c.outside ? OUTSIDE_INFO[c.outside] : c.specialty ? c.specialty : RANK_BADGE[c.rank];
+  // The player's badge is his rank in the family (rankView.ts): BOSS only in the chair.
+  const me = c.id === s.playerId ? rankWordOf(s, c) : undefined;
+  const badge = c.outside ? OUTSIDE_INFO[c.outside] : c.specialty ? c.specialty : me ? me.charAt(0).toUpperCase() + me.slice(1) : RANK_BADGE[c.rank];
   const op = c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined;
   // "Soldier · Collector", never "SoldierCollector"; and no "Bookie · Bookie" when the badge and the trade are one word.
   const subText = sub && badge && sub.toLowerCase().startsWith(badge.toLowerCase()) ? sub.slice(badge.length).replace(/^\s*·\s*/, '') : sub;
@@ -351,6 +355,9 @@ export function CrewTree({ s, chartOnly }: { s: GameState; chartOnly?: boolean }
       )}
       {view === 'org' && !flat && <>
 
+      {/* Below the chair: the family above first, with you marked in it (valente.ts). */}
+      {inTheRanks(s) && <AboveChart s={s} />}
+      {inTheRanks(s) && <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Your own guys</div>}
       {/* Boss, then the administration */}
       <div className="flex flex-col items-center">
         <div className="rounded-lg border border-gold-600/60 bg-noir-800/80 px-3 py-2">
@@ -361,8 +368,8 @@ export function CrewTree({ s, chartOnly }: { s: GameState; chartOnly?: boolean }
           {[...ub, ...cons].map((c) => (
             <div key={c.id} className="rounded-md border border-noir-700 bg-noir-800/70 px-2.5 py-2"><TreeNode s={s} c={c} size={44} sub={c.rank === 'underboss' ? 'Second in command' : 'Counsel'} /></div>
           ))}
-          {!ub.length && <div className="rounded-md border border-dashed border-noir-600 px-3 py-2 text-xs text-stone-500">No underboss</div>}
-          {!cons.length && <div className="rounded-md border border-dashed border-noir-600 px-3 py-2 text-xs text-stone-500">No consigliere</div>}
+          {!ub.length && !inTheRanks(s) && <div className="rounded-md border border-dashed border-noir-600 px-3 py-2 text-xs text-stone-500">No underboss</div>}
+          {!cons.length && !inTheRanks(s) && <div className="rounded-md border border-dashed border-noir-600 px-3 py-2 text-xs text-stone-500">No consigliere</div>}
         </div>
         <div className="h-4 w-px bg-gold-600/50" />
       </div>

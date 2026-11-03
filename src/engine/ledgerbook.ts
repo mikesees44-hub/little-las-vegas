@@ -469,6 +469,11 @@ export const SECTION_LABEL: Record<Section, string> = {
   score: 'Scores & jobs', cost: 'Costs', debt: 'Debts', rival: 'Rivals', heat: 'Raids & fines', other: 'Other',
 };
 
+/** A section's label for this game: below the chair the tribute line is the kick-up up the ladder, not Philadelphia. */
+export function sectionLabel(s: GameState, k: Section): string {
+  return k === 'tribute' && s.power?.above && s.power.station !== 'boss' ? 'Kick-up up the ladder' : SECTION_LABEL[k];
+}
+
 const PAD = /^(Payroll: |Bribe: |Envelopes for the beat cops)|Grease the Chief|on the pad/;
 
 export function classify(l: BookLine): Section {

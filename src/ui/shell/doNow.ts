@@ -1,4 +1,5 @@
 import type { AlertKind } from '../../engine/alerts';
+import { can } from '../../engine/rankView';
 import { capos, displayName } from '../../engine/characters';
 import { holder, SEAT_INFO, SEATS } from '../../engine/council';
 import { idleMen } from '../../engine/business';
@@ -87,7 +88,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
   if (home === 'desk') {
     if (x.unanswered > 0) out.push({ id: 'decisions', tone: 'warn', title: `${plural(x.unanswered, 'decision')} on your desk`, text: 'Answer them before the week turns, or they are decided for you.', cta: 'Read them', act: { kind: 'decisions' } });
     if (x.morning && x.morning.open > 0) out.push({ id: 'morning', tone: x.morning.urgent ? 'danger' : 'warn', title: x.morning.open === 1 ? `${x.morning.name ?? 'A capo'} has a problem at this morning's meeting` : `${x.morning.open} problems at this morning's meeting`, text: 'One tap to answer. Leave it and he does it his own way, and notices.', cta: 'Hear him', act: { kind: 'day' } });
-    if (x.brief > 0) out.push({ id: 'sitdown', tone: 'info', title: `The sit-down: ${plural(x.brief, 'thing')} from your people`, text: 'Your underboss, consigliere and the rest, each with a recommendation.', cta: 'Hear them', act: { kind: 'sitdown', tab: 'council' } });
+    if (x.brief > 0 && can(s, 'sitdown')) out.push({ id: 'sitdown', tone: 'info', title: `The sit-down: ${plural(x.brief, 'thing')} from your people`, text: 'Your underboss, consigliere and the rest, each with a recommendation.', cta: 'Hear them', act: { kind: 'sitdown', tab: 'council' } });
   }
   if (home === 'money') {
     const rep = s.tribute?.reports[s.tribute.reports.length - 1];
@@ -95,7 +96,7 @@ export function doNow(s: GameState, home: HomeId, x: DoNowInput): DoNowItem[] {
   }
   if (home === 'org') {
     const empty = SEATS.filter((st) => !holder(s, st));
-    if (empty.length && !x.opps.some((o) => o.link.role?.kind === 'seat')) out.push({ id: 'seats', tone: 'warn', title: empty.length === 1 ? `The ${SEAT_INFO[empty[0]].name.toLowerCase()} seat is empty` : `${empty.length} council seats are empty`, text: 'An empty seat does no job this week.', cta: 'Fill it', act: { kind: 'route', route: { panel: 'borgata', section: 'council' } } });
+    if (empty.length && can(s, 'council') && !x.opps.some((o) => o.link.role?.kind === 'seat')) out.push({ id: 'seats', tone: 'warn', title: empty.length === 1 ? `The ${SEAT_INFO[empty[0]].name.toLowerCase()} seat is empty` : `${empty.length} council seats are empty`, text: 'An empty seat does no job this week.', cta: 'Fill it', act: { kind: 'route', route: { panel: 'borgata', section: 'council' } } });
     const idleCapos = capos(s).filter((c) => !s.districts.some((d) => d.capoId === c.id));
     if (idleCapos.length) out.push({ id: 'idle-capos', tone: 'info', title: idleCapos.length === 1 ? `${displayName(idleCapos[0])} has no district` : `${idleCapos.length} capos without a district`, text: 'A capo with nothing to run earns nothing and starts to wonder.', cta: 'Give him one', act: { kind: 'route', route: { panel: 'borgata', section: 'capos' } } });
     const idle = idleMen(s).length;

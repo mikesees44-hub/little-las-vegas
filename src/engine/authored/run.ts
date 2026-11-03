@@ -14,6 +14,8 @@ import { adultOn } from '../datingState';
 import { honeyBlock, involvedWith, manOf } from '../honeyCore';
 import { SCENES, SCENES_BY_ID } from './library';
 import { compare } from './validate';
+import { inTheRanks, stationOf } from '../rankView';
+import { above, chiefOf, donOf, inAbove } from '../valente';
 
 /**
  * AUTHORED SCENES AT RUN TIME. A scene whose `when` holds and whose roles can
@@ -60,7 +62,26 @@ export function whenOk(s: GameState, sc: Scene): boolean {
   if (w.location && (s.districts.find((d) => d.id === w.location)?.influence.player ?? 0) < 20) return false;
   // Adults-only material never comes up with Mature content Off.
   if ((w.mature || isMature(sc)) && !adultOn(s)) return false;
+  if (!stationOk(s, sc)) return false;
   return true;
+}
+
+/**
+ * His rank (rankView.ts). A scene that names its ranks comes up only at those
+ * ranks. One that does not is either the house's own life (family, romance,
+ * town, world, law: every rank) or a boss's desk (crew, business, rivals): an
+ * associate or a soldier never gets those; a capo gets the crew and the
+ * business, not the other families' bosses.
+ */
+export function stationOk(s: GameState, sc: Scene): boolean {
+  const st = stationOf(s);
+  const w = sc.when?.station;
+  if (w) return w.includes(st === 'exile' || st === 'independent' ? 'boss' : st);
+  if (!inTheRanks(s)) return true;
+  const theme = sc.theme ?? 'town';
+  if (theme === 'family' || theme === 'romance' || theme === 'town' || theme === 'world' || theme === 'law') return true;
+  if (st === 'associate' || st === 'soldier') return false;
+  return theme !== 'rivals' || st === 'underboss';
 }
 
 /** The adults-only pools a scene needs have somebody in them (so it does not crowd out the scenes that can be cast). */
@@ -91,6 +112,10 @@ function pool(s: GameState, r: Role): Character[] {
     case 'mistress': return adultOn(s) ? Object.values(s.honey?.mistresses ?? {}).filter((m) => !m.settled).map((m) => s.characters[m.id]).filter((c): c is Character => !!c && !honeyBlock(s, c.id)) : [];
     case 'husband': return adultOn(s) ? all.filter((c) => c.gender === 'M' && ageOn(c.birth, s.date) >= 18 && involvedWith(s).some((id) => s.characters[id] && manOf(s, s.characters[id])?.id === c.id)) : [];
     case 'scorned': return adultOn(s) ? Object.values(s.honey?.scorn ?? {}).filter((x) => x.heat >= 30).map((x) => s.characters[x.id]).filter((c): c is Character => !!c?.alive && ageOn(c.birth, s.date) >= 18 && isFree(s, c)) : [];
+    case 'chief': { const c = chiefOf(s); return c && all.includes(c) ? [c] : []; }
+    case 'don': { const c = donOf(s); return c && all.includes(c) ? [c] : []; }
+    case 'valente': return all.filter((c) => inAbove(s, c.id));
+    case 'donSon': { const id = above(s)?.sonId; return all.filter((c) => c.id === id); }
     case 'suspect': return adultOn(s) ? Object.values(s.honey?.watch ?? {}).filter((w) => w.susp >= 20 && w.known === undefined).map((w) => s.characters[w.id]).filter((c): c is Character => !!c && !honeyBlock(s, c.id)) : [];
   }
   return [];
@@ -214,6 +239,9 @@ export function mapEffect(s: GameState, sc: Scene, cast: Cast, fx: SEffect): Eff
     case 'hush': { const o = v as { role: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'honey', op: { op: 'hush', id: id(o.role) } }] : []; }
     case 'leak': { const o = v as { role: string }; return id(o.role) && o.role !== 'boss' ? [{ type: 'honey', op: { op: 'leak', id: id(o.role) } }] : []; }
     case 'suspect': { const o = v as { role: string; by: number }; return id(o.role) && o.role !== 'boss' ? [{ type: 'honey', op: { op: 'suspect', id: id(o.role), by: o.by } }] : []; }
+    case 'standing': return above(s) ? [{ type: 'power', op: { op: 'low', o: { op: 'standing', by: v as number, why: sc.title } } }] : [];
+    case 'sponsor': return id(v as string) && above(s) ? [{ type: 'power', op: { op: 'low', o: { op: 'sponsor', id: id(v as string) } } }] : [];
+    case 'settle': return above(s) ? [{ type: 'power', op: { op: 'low', o: { op: 'settle' } } }] : [];
   }
   return [];
 }

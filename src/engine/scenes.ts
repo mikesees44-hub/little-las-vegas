@@ -5,6 +5,7 @@ import { capos, crew, displayName, isFree, player } from './characters';
 import { regimeSizes } from './hierarchy';
 import { beat, hit, mgEffect, mgOf, registerAttacher, registerMinigame, type MgOption, type MgSession, type MinigameDef } from './minigame';
 import type { Character, Effect, EventInstance, GameDate, GameState } from './types';
+import { above, chiefOf, donOf } from './valente';
 
 /**
  * SCRIPTED SPECIAL MOMENTS, played in the mini-game framework as short
@@ -65,11 +66,16 @@ const name = (c: Character | undefined, fallback = 'somebody') => (c ? displayNa
 /* ---------------------------------------------------------------- */
 
 /** How the game opens: the old boss buried, the old boss retired, the old boss is you (House of Sees), or a first day on a corner. */
-export type OpeningPremise = 'funeral' | 'retired' | 'sees' | 'rise' | 'olddon';
+export type OpeningPremise = 'funeral' | 'retired' | 'sees' | 'rise' | 'olddon' | 'associate' | 'soldier' | 'capo';
 
 /** The scene variant a start opens with: the climbing starts (associate, soldier, capo) open like Rise to Power. */
 export function openingVariant(start: string): string {
-  return start === 'associate' || start === 'soldier' || start === 'capo' ? 'rise' : start;
+  return start;
+}
+
+/** The low starts: an opening that is true to the rank (an associate is never "made the boss"). */
+export function isRankVariant(v: string): v is 'associate' | 'soldier' | 'capo' {
+  return v === 'associate' || v === 'soldier' || v === 'capo';
 }
 
 /** The premise, from the start and from whether the old man (the boss's father) is alive. */
@@ -77,6 +83,7 @@ export function openingPremise(s: GameState, variant: string): OpeningPremise {
   if (variant === 'sees') return 'sees';
   if (variant === 'rise') return 'rise';
   if (variant === 'olddon') return 'olddon';
+  if (isRankVariant(variant)) return variant;
   const p = player(s);
   const old = p.fatherId ? s.characters[p.fatherId] : undefined;
   return variant === 'succession' || !old || !old.alive ? 'funeral' : 'retired';
@@ -107,7 +114,7 @@ export function boardwalkLine(d: GameDate): string {
 /** The title card that opens a new game (App shows it before the first scene). Same premise as the scene. */
 export function openingCard(s: GameState): { title: string; text: string; key: 'opening' | 'sitdown' } {
   const ev = s.pendingEvents.find((e) => e.defId === 'made_boss');
-  const variant = String(ev?.meta?.variant ?? (s.flags.start_olddon ? 'olddon' : s.flags.start_sees ? 'sees' : s.flags.start_rise ? 'rise' : 'classic'));
+  const variant = String(ev?.meta?.variant ?? (s.flags.start_olddon ? 'olddon' : s.flags.start_sees ? 'sees' : s.flags.start_rise ? 'rise' : s.flags.start_associate ? 'associate' : s.flags.start_soldier ? 'soldier' : s.flags.start_capo ? 'capo' : 'classic'));
   const premise = openingPremise(s, variant);
   const p = player(s);
   const when = `${MONTHS[s.date.m - 1]} ${s.date.d}, ${s.date.y}`;
@@ -116,6 +123,16 @@ export function openingCard(s: GameState): { title: string; text: string; key: '
   const list = kids.length ? kids.join(', ').replace(/, ([^,]*)$/, ' and $1') : '';
   if (premise === 'olddon') return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `Ten summers. Ten summers since ${displayName(p)} sat down in the old chair, and in all that time not one body on the boardwalk, not one envelope to Philadelphia that came up light. The houses are paid for, the children are set up, the cellar on Glenwood Avenue is full of Barolo, and there is a girl on Pacific Avenue who still laughs at his stories. ${line} Tonight the whole island drinks to him. And under the toasts, he can hear it, the way his knees hear rain coming: everybody is posting up.` };
   if (premise === 'sees') return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `A retirement dinner nobody calls a retirement dinner. ${displayName(p)} has run Wildwood for thirty years, and tonight he tells the room he will choose an heir before the summer is out.${list ? ` ${list} sit at three different tables.` : ''} ${line} By Labor Day everyone will know who comes after him.` };
+  if (isRankVariant(premise)) {
+    const a = above(s);
+    const chief = chiefOf(s);
+    const don = donOf(s);
+    const dn = don ? displayName(don) : 'Don Cosimo Valente';
+    const cn = chief ? displayName(chief) : 'your capo';
+    if (premise === 'associate') return { key: 'sitdown', title: `Pacific and Schellenger · ${when}`, text: `You are not anybody yet. You run slips for ${cn} out of a cigar store on Pacific Avenue, and on Mondays you carry an envelope up the back stairs of the Shamrock. Above ${chief?.firstName ?? 'him'} there is an underboss, and above the underboss there is ${dn}, who has never once said your name. ${line} Get made, and he will.` };
+    if (premise === 'soldier') return { key: 'sitdown', title: `The Shamrock · ${when}`, text: `Last winter you held a burning holy card in your hands and became one of them. Now you are a soldier in ${cn}'s regime in the ${a?.name ?? 'Valente'} family: a few kids who run for you, an envelope every Monday to ${chief?.firstName ?? 'your capo'}, and a long way still to the top of the stairs. ${line}` };
+    return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `${dn} gave you a crew last month. There are other capos at his table, and none of them asked for you. Every Monday your envelope goes up to the underboss, and every Monday they count it twice. ${line} Run your street, keep your men, and wait for a seat to open.` };
+  }
   if (premise === 'rise') return { key: 'sitdown', title: `Pacific and Schellenger · ${when}`, text: `A numbers bank, a few guys, and a corner. Nobody in Philadelphia knows your name yet. ${line} By Labor Day, a few men on this island will know it.` };
   if (premise === 'retired') return { key: 'sitdown', title: `The Bolero Supper Club · ${when}`, text: `A retirement dinner. The old man hands you the keys to the back room and a list of names in his own handwriting. ${line} From tonight you are running things, and behind you the capos are counting.` };
   // The funeral (the church still and clip) only when there was a funeral.
@@ -154,6 +171,11 @@ function madeBossBeats(s: GameState, ses: SS): Beat[] {
     { id: 'round', label: 'Take a different chair. "We\'ll get a round table."', detail: 'Generosity: every capo +5; the old guard grumbles.' },
   ] : next();
   const beats: Beat[] = [];
+  if (isRankVariant(variant)) {
+    ses.d.fx = [];
+    (ses.d as SceneData & { chairFx?: typeof fx }).chairFx = fx;
+    return rankBeats(s, variant);
+  }
   if (variant === 'olddon') {
     const kids = p.childrenIds.map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive);
     const goom = s.nightlife ? Object.values(s.nightlife.goomars).find((g) => !g.ended) : undefined;
@@ -212,6 +234,106 @@ function madeBossBeats(s: GameState, ses: SS): Beat[] {
   return beats;
 }
 
+/* ---------------------------------------------------------------- */
+/* The low starts' openings: true to the rank                        */
+/* ---------------------------------------------------------------- */
+
+type RankV = 'associate' | 'soldier' | 'capo';
+const RANK_OPENING: Record<RankV, { label: string; pitch: string; place: (s: GameState, chief: Character | undefined) => string }> = {
+  associate: { label: 'First day in the crew', pitch: 'Not made. Not anybody yet. Earn, keep your mouth shut, and wait for the books.', place: (s, ch) => `An associate in ${ch ? `${ch.firstName} ${ch.lastName}` : 'a capo'}'s crew, the ${above(s)?.name ?? 'Valente'} family` },
+  soldier: { label: 'A friend of ours', pitch: 'Made. A few kids of your own, an envelope every Monday, and a capo who decides how far you go.', place: (s, ch) => `A soldier in ${ch ? `${ch.firstName} ${ch.lastName}` : 'a capo'}'s regime, the ${above(s)?.name ?? 'Valente'} family` },
+  capo: { label: 'Your own crew', pitch: 'A crew, a street, and a boss above you who counts every envelope. The chair is two rungs up.', place: (s) => `A capo in the ${above(s)?.name ?? 'Valente'} family` },
+};
+
+function rankBeats(s: GameState, v: RankV): Beat[] {
+  const p = player(s);
+  const a = above(s);
+  const ch = chiefOf(s);
+  const don = donOf(s);
+  const wife = p.spouseId ? s.characters[p.spouseId] : undefined;
+  const ub = a?.underbossId ? s.characters[a.underbossId] : undefined;
+  const rival = a?.rivalId ? s.characters[a.rivalId] : undefined;
+  const others = (a?.capoIds ?? []).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive);
+  const mine = crew(s).slice(0, 3);
+  const nm = (c: Character | undefined, f: string) => (c ? displayName(c) : f);
+  const quota = a?.quota ?? 0;
+  const dusk: Beat = { card: { scene: 'street', kicker: 'The boardwalk at dusk', text: `You walk the length of it. The Ferris wheel on Hunt's Pier turns with nobody on it. ${v === 'associate' ? `${rival ? `Outside the Shamrock, ${rival.firstName} ${rival.lastName} is buying a round for two of ${ch?.firstName ?? 'the capo'}'s soldiers. He wants the same thing you want, and there is one slot when the books open.` : 'Nobody looks at you twice. Not yet.'}` : v === 'soldier' ? 'A kid at the ring-toss stand knows who you are and pretends he doesn\'t. That is what being made buys you on this island.' : 'Men nod at you now from the doorways. Some of them used to nod at somebody else, and they have not decided yet whether you will last.'}${wife ? `\n\nAt the end of the boards ${wife.firstName} is waiting with your coat.` : ''}`, actors: [p.id, ...(v === 'associate' && rival ? [rival.id] : []), ...(wife ? [wife.id] : [])] }, options: next() };
+  if (v === 'associate') return [
+    { card: { scene: 'street', kicker: 'Pacific and Schellenger', text: `The corner outside the cigar store, ${longDate(s.date)}. Runners go in with paper bags and come out with nothing. You are one of them, more or less. Nobody on this island knows your name. They know ${nm(ch, 'your capo')}'s.`, actors: [p.id] }, options: next() },
+    { card: { scene: 'sitdown', kicker: 'The back booth at the Shamrock', text: `${nm(ch, 'Your capo')} has the booth facing the door, the way he always does. Two of his soldiers sit at the bar with their backs to you and see everything. He doesn't stand up. He points at the seat across from him, the one that faces the wall.`, actors: [p.id, ...(ch ? [ch.id] : [])] }, options: [
+      { id: 'a1_loyal', label: 'Sit where he points.', detail: `${ch?.firstName ?? 'He'} +8. You know your place, and he likes that.` },
+      { id: 'a1_hard', label: 'Take the other side of the booth, facing the door.', detail: `Respect +2; ${ch?.firstName ?? 'he'} −6: the kid thinks he's somebody.` },
+      { id: 'a1_wait', label: 'Stay standing until he tells you twice.', detail: `${ch?.firstName ?? 'He'} +4; standing with the family +1.` },
+    ] },
+    dusk,
+    { card: { scene: 'sitdown', kicker: 'What he asks you', text: `${ch?.firstName ?? 'He'} stirs his coffee for a long time. "You bring me ${quota ? `$${quota.toLocaleString('en-US')}` : 'something'} every Monday. You don't come up short, you don't run your mouth, you don't touch nobody that's with us. Do that a while and maybe somebody stands up for you." He looks at you. "So what do you want out of this?"`, actors: [p.id, ...(ch ? [ch.id] : [])] }, options: [
+      { id: 'a2_hard', label: '"To get made."', detail: 'Standing +3: they like a kid who wants it. The other kids hear about it.' },
+      { id: 'a2_loyal', label: '"To earn. For you first."', detail: `${ch?.firstName ?? 'He'} +6.` },
+      { id: 'a2_wait', label: '"Whatever you need. Whenever."', detail: `Standing +2; ${ch?.firstName ?? 'he'} +3. He will take you up on it.` },
+    ] },
+  ];
+  if (v === 'soldier') return [
+    { card: { scene: 'street', kicker: 'A friend of ours', text: `${longDate(s.date)}. You have been made for six months. You still walk into the Shamrock the way you did as an associate and you still catch yourself. ${nm(ch, 'Your capo')} runs the regime; above him there is ${nm(ub, 'the underboss')}; above him, ${nm(don, 'the Don')}.`, actors: [p.id, ...(ch ? [ch.id] : [])] }, options: next() },
+    { card: { scene: 'sitdown', kicker: 'Monday morning', text: `${ch?.firstName ?? 'Your capo'} counts your envelope at the bar without looking at it, the way a man counts change. ${quota ? `$${quota.toLocaleString('en-US')} a week, that is the number.` : ''} "Everything all right with your guys?"`, actors: [p.id, ...(ch ? [ch.id] : [])] }, options: [
+      { id: 's1_loyal', label: '"Everything\'s fine." Hand it over.', detail: `${ch?.firstName ?? 'He'} +5.` },
+      { id: 's1_wait', label: 'Tell him one of your kids is slow, and that you\'re handling it.', detail: 'Standing +2: he likes a man who brings him the truth.' },
+      { id: 's1_hard', label: 'Put an extra $200 in it.', detail: `−$200; ${ch?.firstName ?? 'he'} +8, standing +2.`, disabled: s.money < 200 ? 'Needs $200' : undefined },
+    ] },
+    dusk,
+    { card: { scene: 'sitdown', kicker: 'Your guys', text: `${mine.length ? mine.map((c) => c.firstName).join(', ').replace(/, ([^,]*)$/, ' and $1') : 'The kids who run for you'} wait for you at the counter of the Admiral diner. They look at you the way you used to look at ${ch?.firstName ?? 'your capo'}.`, actors: [p.id, ...mine.map((c) => c.id)] }, options: [
+      { id: 's2_hard', label: 'Tell them the rules. Once.', detail: 'Their fear of you +8. Respect +2.' },
+      { id: 's2_loyal', label: 'Buy them dinner and ask about their mothers.', detail: 'Their opinion of you +6; −$60.' },
+      { id: 's2_wait', label: '"Earn, and I\'ll put your names up when the books open."', detail: 'Their opinion of you +4; they will hold you to it.' },
+    ] },
+  ];
+  return [
+    { card: { scene: 'sitdown', kicker: `The Bolero Supper Club. ${longDate(s.date)}.`, text: `${nm(don, 'The Don')} has the round table in the back. ${ub ? `${ub.firstName} on his right. ` : ''}The capos around the rest of it: ${others.map((c) => c.firstName).join(', ').replace(/, ([^,]*)$/, ' and $1') || 'the old men'}. Your chair is the one nearest the kitchen door. Last one in.`, actors: [p.id, ...(don ? [don.id] : []), ...others.slice(0, 2).map((c) => c.id)] }, options: next() },
+    { card: { scene: 'sitdown', kicker: 'The other capos', text: 'Everybody watches how the new capo comes into the room. They will tell the story of it for years, one way or the other.', actors: [p.id, ...others.map((c) => c.id)] }, options: [
+      { id: 'c1_loyal', label: `Kiss ${don?.firstName ?? 'the Don'}'s cheek, nod to the others.`, detail: `${don?.firstName ?? 'The Don'} +5; standing +2.` },
+      { id: 'c1_wait', label: 'Go around the table and shake every hand.', detail: 'Every capo +4.' },
+      { id: 'c1_hard', label: 'Sit down and let them come to you.', detail: 'Respect +3; every capo −3.' },
+    ] },
+    { card: { scene: 'street', kicker: 'Your street', text: `Your soldiers are waiting at the corner when you come out: ${mine.length ? mine.map((c) => c.firstName).join(', ').replace(/, ([^,]*)$/, ' and $1') : 'your men'}. The street is yours to run. What goes up the ladder is not yours to decide.`, actors: [p.id, ...mine.map((c) => c.id)] }, options: next() },
+    { card: { scene: 'sitdown', kicker: 'What the Don wants', text: `${don?.firstName ?? 'The Don'} doesn't raise his voice. "${quota ? `$${quota.toLocaleString('en-US')}` : 'Your envelope'} every Monday, through ${ub?.firstName ?? 'the underboss'}. Big moves, you come to me first. And you stay out of the Crest."`, actors: [p.id, ...(don ? [don.id] : [])] }, options: [
+      { id: 'c2_loyal', label: `"Yes, Don ${don?.firstName ?? 'Cosimo'}."`, detail: 'Standing +3.' },
+      { id: 'c2_hard', label: '"You\'ll have more than that."', detail: 'Standing +5, and he raises your number to match (+10%).' },
+      { id: 'c2_wait', label: '"And if the Crest comes to me?"', detail: `Respect +2; ${don?.firstName ?? 'he'} −3. He will remember you asked.` },
+    ] },
+  ];
+}
+
+function rankFx(s: GameState, move: string): Effect[] {
+  const p = player(s);
+  const a = above(s);
+  const ch = chiefOf(s);
+  const don = donOf(s);
+  const op = (c: Character | undefined, amount: number, reason: string): Effect[] => (c ? [{ type: 'opinion', from: c.id, to: p.id, amount, reason, decay: 1 }] : []);
+  const st = (by: number, why: string): Effect => ({ type: 'power', op: { op: 'low', o: { op: 'standing', by, why } } });
+  const mine = crew(s).slice(0, 3);
+  const others = (a?.capoIds ?? []).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive);
+  switch (move) {
+    case 'a1_loyal': return op(ch, 8, 'Sat where I told him');
+    case 'a1_hard': return [{ type: 'respect', amount: 2 }, ...op(ch, -6, 'The kid thinks he\'s somebody')];
+    case 'a1_wait': return [...op(ch, 4, 'Waited to be asked'), st(1, 'Knew his place on the first day')];
+    case 'a2_hard': return [st(3, 'Said out loud he wants to be made'), ...(a?.rivalId ? op(s.characters[a.rivalId], -5, 'Wants my slot') : [])];
+    case 'a2_loyal': return op(ch, 6, 'Earns for me first');
+    case 'a2_wait': return [st(2, 'Whatever they need'), ...op(ch, 3, 'Said whatever I need')];
+    case 's1_loyal': return op(ch, 5, 'No trouble on Monday');
+    case 's1_wait': return [st(2, 'Brought his capo the truth')];
+    case 's1_hard': return [{ type: 'money', amount: -200 }, ...op(ch, 8, 'Put extra in the envelope'), st(2, 'An envelope that came up heavy')];
+    case 's2_hard': return [{ type: 'respect', amount: 2 }, ...mine.map((c) => ({ type: 'meter', from: c.id, to: p.id, meter: 'fear', amount: 8 }) as Effect)];
+    case 's2_loyal': return [{ type: 'money', amount: -60 }, ...mine.flatMap((c) => op(c, 6, 'Bought us dinner'))];
+    case 's2_wait': return mine.flatMap((c) => op(c, 4, 'Promised to put our names up'));
+    case 'c1_loyal': return [...op(don, 5, 'Came to me first'), st(2, 'Paid his respects to the Don')];
+    case 'c1_wait': return others.flatMap((c) => op(c, 4, 'Shook my hand at the table'));
+    case 'c1_hard': return [{ type: 'respect', amount: 3 }, ...others.flatMap((c) => op(c, -3, 'Sat there like he owned the place'))];
+    case 'c2_loyal': return [st(3, 'Yes, Don Cosimo')];
+    case 'c2_hard': return [st(5, 'Promised the Don more'), { type: 'flag', key: 'low_quota_up', value: 1 }];
+    case 'c2_wait': return [{ type: 'respect', amount: 2 }, ...op(don, -3, 'Asked about the Crest')];
+  }
+  return [];
+}
+
 function firstWords(rise: boolean): MgOption[] {
   return rise
     ? [
@@ -230,10 +352,26 @@ function madeBossStep(s: GameState, ses: SS, move: string): void {
   const d = ses.d;
   const p = player(s);
   const fx = (d as SceneData & { chairFx: Record<string, Effect[]> }).chairFx;
-  // The chips' label: the Old Don's night is "Ten summers" (he was made boss ten years ago).
-  const label = String(ses.params.variant ?? '') === 'olddon' ? 'Ten summers' : 'Made the boss';
+  const rankV = isRankVariant(String(d.variant ?? ''));
+  // The chips' label: the Old Don's night is "Ten summers" (he was made boss ten years ago); a low start names its rung.
+  const label = rankV ? RANK_OPENING[d.variant as 'associate'].label : String(ses.params.variant ?? '') === 'olddon' ? 'Ten summers' : 'Made the boss';
   const add = (xs: Effect[]) => d.fx.push(...xs.map((e) => ({ ...e, label })));
   if (move !== 'next') d.picks.push(move);
+  if (rankV) {
+    add(rankFx(s, move));
+    if (d.i + 1 >= d.beats.length) {
+      const o = RANK_OPENING[d.variant as 'associate'];
+      const tone = d.picks.some((x) => x.endsWith('_hard')) ? 'nerve' : d.picks.some((x) => x.endsWith('_loyal')) ? 'loyalty' : 'patience';
+      const ch = chiefOf(s);
+      beat(ses, `${displayName(p)}. Head of the House of ${s.houseName}. ${o.place(s, ch)}. ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][s.date.m - 1]} ${s.date.d}, ${s.date.y}.`, 'quote');
+      ses.done = true;
+      ses.phase = 'end';
+      ses.outcome = { title: o.label, text: `${displayName(p)} is ${o.place(s, ch).replace(/^An? /, (x) => x.toLowerCase())}. How they will remember the first day: ${tone}.`, tone: 'good', effects: d.fx };
+      return;
+    }
+    advance(ses);
+    return;
+  }
   switch (move) {
     case 'sit':
     case 'stay':
@@ -324,7 +462,7 @@ export const MADE_BOSS: MinigameDef<SceneData> = {
     const v = String(ses.params.variant ?? '');
     const prem = openingPremise(s, v);
     const intro = madeBossWords(s, v);
-    return { d, phase: 'beat1', intro: { title: intro.title, kicker: `The House of ${s.houseName}`, text: v === 'succession' ? `The old man is gone, and the island looks at ${p.firstName}.` : prem === 'olddon' ? 'Ten years in the chair. Tonight they drink to you; tomorrow they start counting.' : prem === 'sees' ? 'The first five minutes of your last summer in the chair. Your answers set the tone for whoever comes after you.' : prem === 'rise' ? 'The first five minutes: a corner, a few guys, and men deciding what to make of you.' : `The first five minutes: ${prem === 'funeral' ? 'the old man is gone' : 'the old man has stepped aside'}, and the island looks at you. Your answers set the tone of your reign.`, scene: d.card.scene } };
+    return { d, phase: 'beat1', intro: { title: intro.title, kicker: isRankVariant(prem) ? `The ${above(s)?.name ?? 'Valente'} family` : `The House of ${s.houseName}`, text: v === 'succession' ? `The old man is gone, and the island looks at ${p.firstName}.` : prem === 'olddon' ? 'Ten years in the chair. Tonight they drink to you; tomorrow they start counting.' : prem === 'sees' ? 'The first five minutes of your last summer in the chair. Your answers set the tone for whoever comes after you.' : prem === 'rise' ? 'The first five minutes: a corner, a few guys, and men deciding what to make of you.' : isRankVariant(prem) ? `${RANK_OPENING[prem].place(s, chiefOf(s))}. ${RANK_OPENING[prem].pitch}` : `The first five minutes: ${prem === 'funeral' ? 'the old man is gone' : 'the old man has stepped aside'}, and the island looks at you. Your answers set the tone of your reign.`, scene: d.card.scene } };
   },
   options: sceneOptions,
   step: (s, ses, m) => {
@@ -479,6 +617,11 @@ export function madeBossWords(s: GameState, variant: string, old?: Character): {
   const p = player(s);
   if (variant === 'succession') return { title: 'Made the boss', text: `${old ? displayName(old) : 'The old boss'} is gone. ${p.firstName} takes the chair.`, play: 'Take the chair', playDetail: 'A short scene: three choices set the tone of your reign.' };
   const prem = openingPremise(s, variant);
+  if (isRankVariant(prem)) {
+    const ch = chiefOf(s);
+    const o = RANK_OPENING[prem];
+    return { title: o.label, text: `${o.place(s, ch)}. ${o.pitch}`, play: 'Walk in', playDetail: 'A short scene: four beats, and the men above you decide what to make of you.' };
+  }
   if (prem === 'olddon') return { title: 'The Old Don', text: `${p.firstName} has ruled Wildwood for ten years. Tonight the island drinks to him, and everyone is posting up.`, play: 'Hold the room', playDetail: 'A short scene: how the old man takes his own party sets the tone of his last year.' };
   if (prem === 'sees') return { title: 'The Shark\'s last summer', text: `${p.firstName} has run Wildwood for thirty years. Tonight he tells the room he will name an heir before the summer is out.`, play: 'Hold the room', playDetail: 'A short scene: three choices set the tone of your last summer in the chair.' };
   if (prem === 'rise') return { title: 'First day with the crew', text: 'A corner, a few guys, and nobody in Philadelphia who knows your name.', play: 'Walk in', playDetail: 'A short scene: three choices set the tone with your crew.' };

@@ -73,6 +73,7 @@ import { ORDERS } from './events';
 import { capoOf, obeyOdds, orderAgent, validCapo } from './hierarchy';
 import { FACTION_NAMES } from './world';
 import { takeLine } from './racketLife';
+import { rankBlock } from './rankView';
 import type { Effect, FactionId, GameState, LedgerCategory, OrderVia, PlayerAction, RivalId } from './types';
 
 export const PUSH_COST = 2000;
@@ -910,6 +911,9 @@ export function previewAction(s: GameState, a: PlayerAction): ActionPreview {
   const core = previewCore(s, a);
   const p = core.acceptance || core.odds || core.outcomes?.length ? { ...core, oddsKnown: true } : core;
   // The boss is in another city (visit.ts): what needs him in Wildwood stays on screen, disabled, with the reason.
+  // His rank in the family above (rankView.ts): a boss's order waits, greyed, until he climbs to it.
+  const rank = rankBlock(s, a);
+  if (rank) return { ...p, disabledReason: rank };
   const away = homeOnlyBlock(s, a);
   return away ? { ...p, disabledReason: away } : p;
 }
@@ -982,7 +986,9 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     const def = DEFS[a.kind] as Def<typeof a.kind>;
     if (!def) continue;
     const mark = bookMark(ctx);
-    const p = previewCore(s, a);
+    const core = previewCore(s, a);
+    const rb = rankBlock(s, a);
+    const p = rb ? { ...core, disabledReason: rb } : core;
     if (p.disabledReason) {
       ctx.log.push(`Order not carried out — ${p.title}: ${p.disabledReason}.`);
       bookOrder(ctx, mark, a, { title: p.title, outcome: 'blocked', why: p.disabledReason, by: by(i) });

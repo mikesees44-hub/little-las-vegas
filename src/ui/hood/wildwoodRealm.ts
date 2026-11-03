@@ -116,7 +116,9 @@ export function wildwoodShapes(s: GameState, pr: RealmFrame): Map<string, Pt[][]
 export function wildwoodStyles(s: GameState): Record<string, HolderStyle> {
   const out: Record<string, HolderStyle> = {};
   const house = (s.houseName || 'Your').trim();
-  out.player = { color: SIDE_STYLE.player.color, name: `THE ${house.toUpperCase()} FAMILY`, label: `The ${house} family (yours)`, emblem: SIDE_STYLE.player.emblem, ink: '#f4cf5a', halo: '#1a1206' };
+  // Below the chair the ground you hold is your crew's, inside the family above (valente.ts).
+  const fam = s.power?.above && s.power.station !== 'boss' ? s.power.above.name : undefined;
+  out.player = { color: SIDE_STYLE.player.color, name: fam ? `THE ${fam.toUpperCase()} FAMILY` : `THE ${house.toUpperCase()} FAMILY`, label: fam ? `The ${fam} family (your crew is in it)` : `The ${house} family (yours)`, emblem: SIDE_STYLE.player.emblem, ink: '#f4cf5a', halo: '#1a1206' };
   for (const id of ['manno', 'kessler', 'feldstein', 'philly'] as const) {
     const r = s.rivals.find((x) => x.id === id);
     const st = SIDE_STYLE[id];

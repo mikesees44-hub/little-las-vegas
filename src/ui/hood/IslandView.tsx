@@ -422,7 +422,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
     : overlay === 'reputation' ? [['Seedy', 'rgb(190,70,70)'], ['Postcard', 'rgb(255,120,190)']]
     : overlay === 'police' ? [['Quiet', 'rgb(120,170,220)'], ['Crawling with cops', 'rgb(20,60,200)']]
     : overlay === 'rival' ? [['Rival-held', OWNER_COLOR.manno], ['Rival pull (area)', 'rgb(200,30,40)']]
-    : mapMode === 'political' ? [...[...new Set(realmRegions.map((r) => r.holder).filter((h): h is string => !!h && !!realmStyles[h]))].map((h) => [realmStyles[h].label ?? realmStyles[h].name, realmStyles[h].color]), ...(realmRegions.some((r) => r.contested) ? [['Contested (striped)', 'repeating-linear-gradient(45deg,#d4a62a 0 3px,#c0392b 3px 6px)']] : []), ['Nobody holds it', '#e9dcbc']]
+    : mapMode === 'political' ? [...(s.power?.above && s.power.station !== 'boss' && !realmRegions.some((r) => r.holder === 'player') && realmStyles.player ? [[realmStyles.player.label ?? realmStyles.player.name, realmStyles.player.color]] : []), ...[...new Set(realmRegions.map((r) => r.holder).filter((h): h is string => !!h && !!realmStyles[h]))].map((h) => [realmStyles[h].label ?? realmStyles[h].name, realmStyles[h].color]), ...(realmRegions.some((r) => r.contested) ? [['Contested (striped)', 'repeating-linear-gradient(45deg,#d4a62a 0 3px,#c0392b 3px 6px)']] : []), ['Nobody holds it', '#e9dcbc']]
     : mapMode === 'heat' ? [['Quiet', '#f4e3b0'], ['Hot', '#b3261e']]
     : mapMode === 'rackets' ? [['Nothing of yours', '#efe6cf'], ['Your best earner', '#1f8a4c']] : [];
 

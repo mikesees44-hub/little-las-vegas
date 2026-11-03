@@ -37,6 +37,8 @@ export function registerEventSource(fn: (s: GameState) => EventInstance | undefi
   if (!EVENT_SOURCES.includes(fn)) EVENT_SOURCES.push(fn);
 }
 
+import { eventAllowed, honestAddress, inTheRanks } from './rankView';
+
 export interface EventDef {
   id: string;
   weight: (s: GameState) => number;
@@ -896,6 +898,8 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
     }
   }
   candidates.push(...extra);
+  // His rank (rankView.ts): a boss's business never reaches an associate; it comes back as he climbs.
+  for (let i = candidates.length - 1; i >= 0; i--) if (!eventAllowed(s, candidates[i])) candidates.splice(i, 1);
   // Silence never gives a man up (handover.ts): a default that would is rewritten to pay, bargain, defy or stall.
   guardDefaults(s, candidates);
   // The story director orders everything (novelty, the theme mix) and holds back templates seen too recently.
@@ -935,6 +939,8 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   }
   // Each recurring popup is told as a scene not shown yet this game (sceneVariants.ts).
   dressScenes(s, out);
+  // Below the chair nobody calls him "boss" (rankView.ts honestAddress).
+  if (inTheRanks(s)) for (const e of out) { e.text = honestAddress(s, e.text); for (const c of e.choices) { c.label = honestAddress(s, c.label); if (c.detail) c.detail = honestAddress(s, c.detail); } }
   guardDefaults(s, out);
   recordShown(s, out);
   return out;

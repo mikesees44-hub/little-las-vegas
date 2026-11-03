@@ -309,7 +309,7 @@ describe('A14: the opening agrees with its scenario and the date', () => {
   });
   it('a climbing start (associate) opens on the corner, not the boss\'s chair; the funeral only when the old man is dead', () => {
     const a = newGameWith('trust-a14b', 'associate');
-    expect(a.pendingEvents.find((e) => e.defId === 'made_boss')!.title).toBe('First day with the crew');
+    expect(a.pendingEvents.find((e) => e.defId === 'made_boss')!.title).toBe('First day in the crew');
     const c = newGameWith('trust-a14c', 'classic');
     const p = c.characters[c.playerId];
     const father = p.fatherId ? c.characters[p.fatherId] : undefined;

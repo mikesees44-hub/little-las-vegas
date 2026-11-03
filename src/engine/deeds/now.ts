@@ -76,6 +76,8 @@ const NOW_ECON = new Set(['gift', 'invite', 'leverage']);
 export function settlesNow(s: GameState, a: PlayerAction): boolean {
   // Ocean City's orders (oceanCity.ts) are the boss's big decisions: decided, and rolled, in the moment.
   if (a.kind === 'oc') return true;
+  // The climb from below (valente.ts): asking a made man to vouch, coffee with him, the sit-down: in the moment.
+  if (a.kind === 'power' && (a.op.op === 'low' || (a.op.op === 'climb' && !!s.power?.above))) return true;
   if (a.kind === 'econ') return NOW_ECON.has((a.op as { type: string }).type) && !!personOf(s, a);
   if (a.kind === 'interact' && (a.id === 'whack' || a.id === 'exile' || a.id === 'make' || a.id === 'promote' || a.id === 'demote')) return false;
   return NOW_KINDS.has(a.kind) && !!personOf(s, a);

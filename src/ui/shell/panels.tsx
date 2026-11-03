@@ -36,6 +36,7 @@ import { ShadowCourt } from '../power/ShadowCourt';
 import { CouncilSeats } from '../borgata/CouncilSeats';
 import { ChainOfCommandPlace } from '../lieutenants/Lieutenants';
 import { TheRise } from '../borgata/TheRise';
+import { YourPlace } from '../borgata/YourPlace';
 import { CaposSection, MenRoster } from '../borgata/Capos';
 import { MyMen } from '../borgata/MyMen';
 import { ProgressBoard } from '../borgata/CrewXp';
@@ -148,6 +149,7 @@ export const PANELS: PanelDef[] = [
     id: 'borgata', icon: '⚑', label: 'The Borgata', short: 'Borgata', key: 'b',
     blurb: 'Your men: the org chart, the council, the capos, who gets made.',
     sections: [
+      { id: 'place', label: 'Your place', wide: true, blurb: 'Where you stand in the family above you, and the way up.', render: (s) => <YourPlace s={s} /> },
       { id: 'rise', label: 'The Rise', wide: true, blurb: 'Grow the family: the ladder, your capos front and center (territory, take, mood, ambition, their men), every man\'s level, focus and newest perk, and who is ready for more.', render: (s) => <TheRise s={s} /> },
       { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
       { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and your cut goes in on its own: the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },

@@ -9,6 +9,7 @@ import { SCENE_ERRORS, SCENE_FILES, SCENES, SCENES_BY_ID } from '../src/engine/a
 import { buildScene, castScene, choiceOdds, tryScene, whenOk } from '../src/engine/authored/run';
 import { compare, validateScenes } from '../src/engine/authored/validate';
 import { SEED_SCENE } from '../src/engine/argue/seeds';
+import { ORDER_SCENES } from '../src/engine/valente';
 import type { GameState } from '../src/engine/types';
 import { playWeeks } from './helpers';
 
@@ -36,8 +37,8 @@ describe('authored scenes: the library', () => {
     expect(SCENES.length).toBeGreaterThanOrEqual(15);
     const themes = new Set(SCENES.map((s) => s.theme));
     for (const t of ['crew', 'family', 'rivals', 'town', 'business']) expect(themes.has(t as never), t).toBe(true);
-    // Chains: every follow-up is somebody's next (or an argument's story seed: engine/argue/seeds.ts).
-    const nexts = new Set([...SCENES.flatMap((s) => s.choices.flatMap((c) => (c.next === undefined ? [] : Array.isArray(c.next) ? c.next : [c.next]).map((n) => n.scene))), ...Object.values(SEED_SCENE)]);
+    // Chains: every follow-up is somebody's next (or an argument's story seed: engine/argue/seeds.ts, or an order from the family above: valente.ts).
+    const nexts = new Set([...SCENES.flatMap((s) => s.choices.flatMap((c) => (c.next === undefined ? [] : Array.isArray(c.next) ? c.next : [c.next]).map((n) => n.scene))), ...Object.values(SEED_SCENE), ...Object.values(ORDER_SCENES).flat()]);
     for (const s of SCENES.filter((x) => x.followup)) expect(nexts.has(s.id), s.id).toBe(true);
   });
 

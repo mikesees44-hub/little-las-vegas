@@ -1,4 +1,7 @@
 import { displayName } from '../../../engine/characters';
+import { inTheRanks } from '../../../engine/rankView';
+import { above } from '../../../engine/valente';
+import { AboveChart } from '../../borgata/YourPlace';
 import { opinion } from '../../../engine/relations';
 import type { GameState } from '../../../engine/types';
 import { fmt$ } from '../../format';
@@ -13,9 +16,15 @@ export function RivalBoard({ s }: { s: GameState }) {
   return (
     <div className="space-y-3" data-testid="rival-board">
       <p className="text-xs text-stone-500">Every family and power you deal with. Click a face for the man himself and everything you can do to him: gifts, sit-downs, schemes, a dispute at the Table.</p>
+      {/* Below the chair: your own family comes first, the one you answer to (valente.ts). */}
+      {inTheRanks(s) && (
+        <div data-testid="rival-board-above">
+          <AboveChart s={s} title={`Your family: the ${above(s)?.name ?? 'Valente'} family. You answer to them; the other families deal with the Don, not with you.`} />
+        </div>
+      )}
       {philly && (
         <div className="rounded-md border border-gold-600/40 bg-noir-800/60 px-3 py-2 text-sm">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Philadelphia's view of you</span>{' '}
+          <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{inTheRanks(s) ? 'Philadelphia (your Don\'s bosses) knows of you' : 'Philadelphia\'s view of you'}</span>{' '}
           <OpinionBadge v={opinion(s, philly.leaderId, s.playerId)} />
           <span className="text-xs text-stone-400"> · family heat {s.heat.family}{s.heat.family >= 60 ? ' — they are watching' : ''}</span>
         </div>

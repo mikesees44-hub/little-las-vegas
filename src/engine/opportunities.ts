@@ -1,4 +1,5 @@
 import { previewAction } from './actions';
+import { inTheRanks } from './rankView';
 import { whichRacket } from './racketHub';
 import { CATALOG } from './catalog';
 import { idleMen, owned, playerSlots, staffFactor } from './business';
@@ -184,7 +185,9 @@ export function opportunities(s: GameState): Opportunity[] {
   const g = ladderGoal(s);
   if (g) out.push({ id: `goal:${g.id}`, kind: 'opportunity', score: 420, title: `Next step: ${g.title}`, text: g.hint, cta: 'Go →', link: { tab: 'business' } });
 
-  return out.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+  // Below the chair (rankView.ts) a boss's to-do list is not his: no seats to fill, no City Hall, no Rise ladder.
+  const mine = inTheRanks(s) ? out.filter((o) => !(o.id.startsWith('goal:') || o.id === 'official' || o.id === 'lifestyle' || o.link.role?.kind === 'seat' || o.link.tab === 'cityhall' || o.link.tab === 'table')) : out;
+  return mine.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }
 
 /** The 3–5 things most worth doing now: the top of the list, with at least one threat if there is one. */

@@ -25,7 +25,7 @@ import type { Ctx } from './ledger';
  *    simulator's random player and an unanswered popup both take this road.
  */
 
-export type MinigameId = 'arraignment' | 'trial' | 'cards' | 'sitdown' | 'collection' | 'heist' | 'sweep' | 'election' | 'madeboss' | 'ceremony';
+export type MinigameId = 'arraignment' | 'trial' | 'cards' | 'sitdown' | 'collection' | 'heist' | 'sweep' | 'election' | 'madeboss' | 'ceremony' | 'getmade' | 'callin';
 
 export interface MgOption {
   id: string;
@@ -283,7 +283,7 @@ export function eventHasMinigame(ev: EventInstance): boolean {
 
 /** Chip text for a mini-game choice. */
 export function describeMinigame(e: Extract<Effect, { type: 'minigame' }>): string {
-  const NAMES: Record<MinigameId, string> = { arraignment: 'The arraignment', trial: 'The trial', cards: 'The card game', sitdown: 'The sit-down', collection: 'The collection round', heist: 'The job', sweep: 'The sweep', election: 'Election night', madeboss: 'The scene', ceremony: 'The ceremony' };
+  const NAMES: Record<MinigameId, string> = { arraignment: 'The arraignment', trial: 'The trial', cards: 'The card game', sitdown: 'The sit-down', collection: 'The collection round', heist: 'The job', sweep: 'The sweep', election: 'Election night', madeboss: 'The scene', ceremony: 'The ceremony', getmade: 'Your making', callin: 'The sit-down with the boss' };
   return e.params.play === 0 ? `${NAMES[e.game]} plays out on its own` : `▶ ${NAMES[e.game]}: you play it (or let it play out)`;
 }
 

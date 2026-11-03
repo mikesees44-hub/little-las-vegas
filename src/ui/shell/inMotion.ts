@@ -1,4 +1,5 @@
 import { displayName } from '../../engine/characters';
+import { aStation } from '../../engine/rankView';
 import { CITIES, HEISTS, SCHEME_INFO } from '../../engine/schemes';
 import { BUILD_STAGES, STAGE_LABEL, lotName, underConstruction } from '../../engine/property';
 import { travellers } from '../../engine/travel';
@@ -89,7 +90,7 @@ export function inMotion(s: GameState, ui: { orders: number } = { orders: 0 }): 
   safe(() => {
     const p = pwView(s);
     if (p.crisis) out.push({ key: 'crisis', glyph: '♛', text: `Succession crisis · beat ${p.crisis.beat + 1}/${p.crisis.beats}`, eta: p.crisis.beats - p.crisis.beat, tone: 'bad', route: { panel: 'house', section: 'succession' } });
-    if (p.station !== 'boss') out.push({ key: 'station', glyph: '▲', text: `You are ${p.station === 'exile' ? 'in exile' : `a ${p.station}`}: climb`, tone: 'warn', route: { panel: 'you', section: 'character' } });
+    if (p.station !== 'boss') out.push({ key: 'station', glyph: '▲', text: `You are ${p.station === 'exile' ? 'in exile' : aStation(p.station)}: climb`, tone: 'warn', route: p.above ? { panel: 'borgata', section: 'place' } : { panel: 'you', section: 'character' } });
     const g = p.designation.grooming;
     if (g) out.push({ key: 'groom', glyph: '🎓', text: `${name(g.charId)}: ${GROOM_PATHS[g.path].name.toLowerCase()} · ${Math.round((s.week - g.since) / 4.3)} mo`, tone: 'good', route: { panel: 'house', section: 'succession' } });
     for (const [id, pl] of Object.entries(p.placements)) out.push({ key: `pl:${id}`, glyph: '🎓', text: `${s.characters[id]?.firstName ?? '?'} learning: ${pl.post} · wk ${s.week - pl.since}`, tone: 'good', route: { panel: 'house', section: 'succession' } });

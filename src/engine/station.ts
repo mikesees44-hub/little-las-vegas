@@ -10,6 +10,8 @@ import { money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { chance } from './rng';
 import { pw, type Station } from './powerState';
+import { aboveWeek, buildAbove, chairOpen, chiefOf, clearCouncil, quotaWeek, takeTheChair } from './valente';
+import { sceneNext } from './authored/run';
 import type { Character, EventInstance, GameState } from './types';
 
 /**
@@ -19,9 +21,11 @@ import type { Character, EventInstance, GameState } from './types';
  * start at any rung: associate, soldier, capo or boss.
  *
  * The engine's invariant holds throughout: the player's character is always
- * the head of his own house and crew (`rank: 'boss'` of faction 'player').
- * The *station* is his place in the wider family above him: the man he
- * kicks up to (`power.overId`), how much he kicks up, and the ladder back.
+ * the head of his own HOUSE and his own little crew (`rank: 'boss'` of
+ * faction 'player'). His *station* is his RANK in the organization: the
+ * family above him (valente.ts: the Don, his officers and capos), the man he
+ * kicks up to, and the ladder. What each rank may see and do is decided in
+ * one place, rankView.ts; a boss has everything, exactly as before.
  */
 
 export const STATION_INFO: Record<Station, { name: string; text: string; kick: number; rank: number }> = {
@@ -65,10 +69,14 @@ export function stationWeek(ctx: Ctx): void {
     return;
   }
   const rate = STATION_INFO[p.station].kick;
-  if (rate && over?.alive) {
+  // In the ranks the envelope goes to the man you answer to: your capo, or the underboss and the Don.
+  const to = p.above ? chiefOf(s) ?? over : over;
+  if (rate && to?.alive) {
     const amt = Math.round(gross * rate);
-    if (amt) money(ctx, -amt, `Kick-up to ${displayName(over)} (${Math.round(rate * 100)}%)`, 'tribute');
+    if (amt) money(ctx, -amt, `Kick-up to ${displayName(to)} (${Math.round(rate * 100)}%)`, 'tribute');
+    if (p.above) quotaWeek(ctx, amt);
   }
+  if (p.above) aboveWeek(ctx, (id, cast) => sceneNext(s, id, [0, 1], cast, 'valente'));
 }
 
 /** The odds the man above you lets you climb a rung, with reasons. */
@@ -157,6 +165,13 @@ export function takeover(ctx: Ctx, success: boolean): void {
   const s = ctx.s;
   const p = pw(s);
   const over = overBoss(s);
+  if (success && p.above) {
+    // A coup from inside the family above: the Don is removed and his men are yours (valente.ts).
+    if (over?.alive) killCharacter(ctx, over.id, 'removed when the family changed hands', 'player');
+    respect(ctx, 10, 'You took the family', 'event');
+    takeTheChair(ctx, 'You moved on the Don, and it worked.');
+    return;
+  }
   if (success) {
     if (over?.alive) killCharacter(ctx, over.id, 'removed when the family changed hands', 'player');
     for (const c of Object.values(s.characters)) if (c.alive && c.faction === 'none' && p.followerIds?.includes(c.id)) rejoin(c);
@@ -255,6 +270,11 @@ export function stationMonth(ctx: Ctx): void {
   const p = pw(s);
   if (p.station === 'boss') return;
   const over = overBoss(s);
+  // In the ranks of a real family (valente.ts): the family decides who sits in the chair.
+  if (p.above && !over?.alive) {
+    chairOpen(ctx);
+    return;
+  }
   if (!over?.alive) {
     // The chair is open: the highest-ranking man takes it.
     if (p.station === 'capo' || p.station === 'underboss' || (p.station === 'soldier' && s.respect >= 40)) {
@@ -290,31 +310,42 @@ export function climbDisabled(s: GameState): string | undefined {
 }
 
 /**
- * Start lower on the ladder (built on Rise to Power): fewer men, less money,
- * and a boss above you who takes his cut every week.
+ * Start lower on the ladder (built on Rise to Power): the player heads his
+ * house, but his place in the organization is a real rung in the Valente
+ * family (valente.ts). Nobody of his blood keeps a rank above his: an
+ * associate's brother hangs around with him as an associate, a capo's
+ * cousin is one of his soldiers. Below capo, the old capo of the Rise crew
+ * is the player's own capo in the Valente family, the man he answers to.
  */
 export function rankStart(s: GameState, st: 'associate' | 'soldier' | 'capo'): void {
   const p = pw(s);
   const boss = player(s);
-  const keep = { associate: { soldier: 0, associate: 2 }, soldier: { soldier: 1, associate: 3 }, capo: { soldier: 2, associate: 99 } }[st];
+  const keep = { associate: { soldier: 0, associate: 2 }, soldier: { soldier: 0, associate: 3 }, capo: { soldier: 3, associate: 99 } }[st];
+  const men = Object.values(s.characters)
+    .filter((m) => m.alive && m.faction === 'player' && m.id !== boss.id && m.rank !== 'civilian' && !m.outside)
+    // Blood first (they stay close to him), then the senior men.
+    .sort((a, b) => Number(b.dynasty) - Number(a.dynasty) || RANK_ORDER.indexOf(b.rank) - RANK_ORDER.indexOf(a.rank) || a.id.localeCompare(b.id));
+  let reuse: string | undefined;
   let soldiers = 0;
   let assoc = 0;
-  for (const m of Object.values(s.characters)) {
-    if (!m.alive || m.faction !== 'player' || m.dynasty || m.rank === 'civilian' || m.outside) continue;
-    let stay = false;
-    if (m.rank === 'capo') {
-      // You are the capo now: your old capo works for you as a soldier.
-      if (st === 'capo') { m.rank = 'soldier'; stay = true; }
-    } else if (m.rank === 'soldier' && soldiers < keep.soldier) { stay = true; soldiers++; }
-    else if (m.rank === 'associate' && assoc < keep.associate) { stay = true; assoc++; }
-    if (!stay) {
+  for (const m of men) {
+    const senior = m.rank === 'capo' || m.rank === 'underboss' || m.rank === 'consigliere';
+    // Below capo: the Rise crew's capo becomes the player's capo in the Valente family.
+    if (senior && !m.dynasty && !reuse && st !== 'capo') { reuse = m.id; continue; }
+    let rank: Character['rank'] | undefined;
+    if ((m.rank === 'soldier' || senior) && soldiers < keep.soldier) { rank = 'soldier'; soldiers++; }
+    else if (assoc < keep.associate) { rank = 'associate'; assoc++; }
+    if (rank) {
+      m.rank = rank;
+      m.capoId = undefined;
+    } else {
       m.faction = 'none';
       m.rank = 'civilian';
       m.capoId = undefined;
     }
   }
   for (const d of s.districts) {
-    if (d.capoId && s.characters[d.capoId]?.rank !== 'capo') d.capoId = undefined;
+    if (d.capoId && (s.characters[d.capoId]?.rank !== 'capo' || s.characters[d.capoId]?.faction !== 'player')) d.capoId = undefined;
     const mine = d.influence.player ?? 0;
     const cut = Math.round(mine * (st === 'capo' ? 0.8 : st === 'soldier' ? 0.55 : 0.4));
     d.influence.player = cut;
@@ -322,12 +353,17 @@ export function rankStart(s: GameState, st: 'associate' | 'soldier' | 'capo'): v
   }
   s.money = st === 'capo' ? 6000 : st === 'soldier' ? 3500 : 2500;
   s.respect = st === 'capo' ? 15 : st === 'soldier' ? 10 : 6;
-  boss.ambition = st === 'associate' ? 'Get made' : st === 'soldier' ? 'Get his own crew' : 'Take the chair';
-  const over = makeOverBoss(s, { first: 'Cosimo', last: 'Valente', nick: 'the Undertaker' });
-  addOpinion(s, over.id, boss.id, st === 'capo' ? 'One of my capos' : 'One of my people', 5, 0);
+  boss.ambition = st === 'associate' ? 'Get made' : st === 'soldier' ? 'Get his own crew' : 'Become underboss';
   p.station = st;
-  p.overId = over.id;
   p.fallenWeek = s.week;
-  s.chronicle = [{ week: 1, date: { ...s.date }, text: `Memorial Day, 1960. ${displayName(boss)} is ${STATION_INFO[st].name.toLowerCase()} in the family of ${displayName(over)}. Every week, the envelope goes up. One day, the chair.`, kind: 'misc' }];
+  const a = buildAbove(s, st, { myCapoId: reuse });
+  const over = s.characters[a.bossId];
+  const chief = chiefOf(s);
+  p.overId = over.id;
+  const where = st === 'capo' ? `one of ${over.firstName}'s capos` : `${STATION_INFO[st].name.toLowerCase()} in ${chief ? `${displayName(chief)}'s crew` : 'the family'}`;
+  clearCouncil(s);
+  s.chronicle = [{ week: 1, date: { ...s.date }, text: `Memorial Day, 1960. ${displayName(boss)} is ${where}, in the family of ${displayName(over)}. Every Monday the envelope goes up. One day, maybe, the chair.`, kind: 'misc' }];
   tidyCouncil(s);
 }
+
+const RANK_ORDER: Character['rank'][] = ['civilian', 'associate', 'soldier', 'capo', 'consigliere', 'underboss', 'boss'];
