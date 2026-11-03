@@ -463,8 +463,13 @@ export function ensureTribute(s: GameState): TributeState {
 
 /** The new boss's own money on day one: $100,000 of his own (the user's call, 2026-10-27). */
 export const BOSS_START_POCKET = 100_000;
+/** The Rise's pocket: about a sixth of the family's $6,000, at most $1,500. */
+export const RISE_START_POCKET = (s: GameState): number => Math.min(1500, Math.max(500, Math.round((Math.max(0, s.money) * 0.15) / 100) * 100));
 export function startPocket(s: GameState): void {
   const notBoss = s.flags?.start_associate || s.flags?.start_soldier || s.flags?.start_capo;
+  // Rise to Power is "a young man with $6,000": a modest pocket of his own, not the established boss's $100,000
+  // (the deep-dive playthrough still had $95,537 of it at week 11).
+  if (s.flags?.start_rise) { ensureTribute(s).acct.personal = RISE_START_POCKET(s); s.flags[POCKET_TOPUP_FLAG] = 1; return; }
   ensureTribute(s).acct.personal = notBoss ? Math.min(3000, Math.round((Math.max(0, s.money) * 0.12) / 100) * 100) : BOSS_START_POCKET;
   s.flags[POCKET_TOPUP_FLAG] = 1;
 }

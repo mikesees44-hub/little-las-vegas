@@ -4,6 +4,7 @@ import { renderToString } from 'react-dom/server';
 import { MoneyView } from '../src/ui/money/MoneyView';
 import { PANELS } from '../src/ui/shell/panels';
 import { newGame } from '../src/engine/newGame';
+import { newGameWith } from '../src/engine/starts';
 import { advanceWeek } from '../src/engine/engine';
 import { newBusiness } from '../src/engine/business';
 import { previewAction } from '../src/engine/actions';
@@ -167,6 +168,13 @@ describe('the Money screen renders', () => {
 
 describe("the boss's pocket", () => {
   const capoOps = (s: GameState) => Object.values(s.characters).filter((c) => c.alive && c.rank === 'capo' && c.faction === 'player').map((c) => c.id);
+
+  it('Rise to Power is a young man with $6,000: a modest pocket, not the established boss\'s $100,000', () => {
+    const s = newGameWith('pocket-rise', 'rise');
+    expect(pocketCash(s)).toBeGreaterThan(0);
+    expect(pocketCash(s)).toBeLessThanOrEqual(1500);
+    expect(pocketCash(newGameWith('pocket-old-don', 'olddon'))).toBeGreaterThanOrEqual(100_000);
+  });
 
   it('a new boss starts with money of his own and takes 40% of every envelope', () => {
     const s = newGame('pocket-start');
