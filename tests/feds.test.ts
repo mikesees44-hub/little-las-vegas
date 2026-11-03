@@ -84,6 +84,9 @@ describe('feds: flipping', () => {
   it('the odds answer to loyalty, family care and traits', () => {
     const s = newGame('feds-flip');
     const c = soldier(s);
+    c.traits = ['Greedy'];
+    c.evidence = 70;
+    addOpinion(s, c.id, s.playerId, 'test', -40, 0);
     const p = { charId: c.id, years: 10, care: [] as string[] };
     const base = flipOdds(s, p);
     expect(flipOdds(s, { ...p, care: ['envelope'] })).toBeLessThan(base);
@@ -95,7 +98,7 @@ describe('feds: flipping', () => {
     const loyal = flipOdds(s, p);
     c.traits = traits;
     expect(coward).toBeGreaterThan(loyal);
-    addOpinion(s, c.id, s.playerId, 'test', 80, 0);
+    addOpinion(s, c.id, s.playerId, 'test2', 90, 0);
     expect(flipOdds(s, p)).toBeLessThan(base);
     expect(flipOdds(s, { ...p, years: 25 })).toBeGreaterThan(flipOdds(s, { ...p, years: 2 }));
   });
