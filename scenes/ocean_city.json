@@ -48,10 +48,10 @@
           "hint": "The treasurer owes you, whether he says so or not.",
           "requires": { "money": 400 },
           "effects": [ { "money": -400 }, { "unflag": "oc_raided" }, { "flag": "oc_board_down" } ],
-          "result": "He went home before breakfast. His name never made the Sentinel, and the treasurer stopped coming to the board's raids."
+          "result": "He went home before breakfast. His name never made the Clarion, and the treasurer stopped coming to the board's raids."
         },
         {
-          "label": "Let the Sentinel have his name",
+          "label": "Let the Clarion have his name",
           "hint": "The board's own family in the paper.",
           "odds": { "base": 50 },
           "effects": [ { "unflag": "oc_raided" } ],
@@ -88,7 +88,7 @@
           "success": [ { "money": 400 } ],
           "failure": [ { "money": -500 }, { "heat": { "local": 4 } }, { "flag": "oc_board_up" } ],
           "result": "The bridge came down, the trooper waved the bakery truck through, and Ocean City had its rye by morning.",
-          "failText": "The trooper wanted to see the bread. The Sentinel ran a photograph of sixty cases lined up on the causeway in the rain."
+          "failText": "The trooper wanted to see the bread. The Clarion ran a photograph of sixty cases lined up on the causeway in the rain."
         },
         {
           "label": "Turn back and wait it out",

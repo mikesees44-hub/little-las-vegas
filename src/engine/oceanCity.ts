@@ -410,7 +410,7 @@ export function previewOc(s: GameState, a: OcAction): ActionPreview {
       const cost = voteCost(s);
       return {
         ...base, cost, disabledReason: o?.vote ? 'The referendum is already running' : o?.stance === 'wet' ? 'The town is already wet' : need(cost),
-        detail: `Petitions, a lawyer, ads in the Sentinel, and the summer people's votes: six weeks of noise. Support starts near ${voteStart(s)}% and the money and your name move it. The board will fight, a preacher will come, and everybody will know who paid. If it wins, liquor is legal: the run and the speakeasy earn less and fear nothing.`,
+        detail: `Petitions, a lawyer, ads in the Clarion, and the summer people's votes: six weeks of noise. Support starts near ${voteStart(s)}% and the money and your name move it. The board will fight, a preacher will come, and everybody will know who paid. If it wins, liquor is legal: the run and the speakeasy earn less and fear nothing.`,
         effects: [{ type: 'money', amount: -cost, label: `${title}: petitions, ads and a lawyer` }, { type: 'heat', bar: 'local', amount: 3, label: title }],
         because: 'backed a "wet" referendum in Ocean City', verb: `Back it — ${$(cost)}`,
       };
@@ -474,7 +474,7 @@ export function commitOc(ctx: Ctx, a: OcAction): void {
       o.vote = { start: s.week, ends: s.week + 6, support: voteStart(s) };
       o.crusade = Math.max(o.crusade ?? 0, s.week + 8);
       o.board = clamp(o.board + 15, 0, 100);
-      s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Sentinel', headline: 'PETITION FORCES VOTE ON LIQUOR; CAMP MEETING BOARD VOWS FIGHT', body: 'Out-of-town money is said to be behind the drive. A revival tent goes up on the boardwalk Sunday.', kind: 'oc' });
+      s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Clarion', headline: 'PETITION FORCES VOTE ON LIQUOR; CAMP MEETING BOARD VOWS FIGHT', body: 'Out-of-town money is said to be behind the drive. A revival tent goes up on the boardwalk Sunday.', kind: 'oc' });
       note(s, `The wet referendum: six weeks, support at ${o.vote.support}%.`);
       ctx.log.push(`Done: the wet referendum is on. Support starts at ${o.vote.support}%.`);
       break;
@@ -592,14 +592,14 @@ function voteWeek(ctx: Ctx, o: OcState): void {
     o.board = 10;
     delete o.crusade;
     respect(ctx, 5, 'Ocean City voted wet', 'event');
-    s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Sentinel', headline: 'OCEAN CITY VOTES WET', body: 'The first legal drink in the town\'s history is poured at a hotel bar on the boardwalk. The Camp Meeting board calls it a dark day.', kind: 'oc' });
+    s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Clarion', headline: 'OCEAN CITY VOTES WET', body: 'The first legal drink in the town\'s history is poured at a hotel bar on the boardwalk. The Camp Meeting board calls it a dark day.', kind: 'oc' });
     note(s, 'The referendum won: Ocean City is wet. The run is a legal distributorship now, the speakeasy a licensed bar.');
     ctx.log.push('The Ocean City referendum won. The town is wet.');
   } else {
     o.board = clamp(o.board + 30, 0, 100);
     o.crusade = Math.max(o.crusade ?? 0, s.week + 12);
     respect(ctx, -2, 'The Ocean City referendum lost', 'event');
-    s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Sentinel', headline: 'DRYS HOLD THE LINE', body: 'Voters reject the liquor petition. The board promises a closer watch on "certain out-of-town interests."', kind: 'oc' });
+    s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Clarion', headline: 'DRYS HOLD THE LINE', body: 'Voters reject the liquor petition. The board promises a closer watch on "certain out-of-town interests."', kind: 'oc' });
     note(s, 'The referendum lost. The board is out for blood.');
     ctx.log.push('The Ocean City referendum lost. The board is watching harder than ever.');
   }
@@ -759,7 +759,7 @@ export function applyOcOp(ctx: Ctx, op: OcOp): void {
   const man = capos(s).find((k) => k.id === o.run?.runner) ?? undefined;
   const held = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.rank === 'associate' && isFree(s, c) && (!man || c.capoId === man.id));
   if (held && op.how === 'back') applyEffects(ctx, [{ type: 'imprison', charId: held.id, weeks: randInt(o, 2, 6) }], { label: `The raid: ${held.firstName} was held`, because: 'ran a speakeasy in Ocean City', category: 'event' });
-  if (e.front === 'church') s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Sentinel', headline: 'SALOON FOUND UNDER CHURCH-SUPPLY STORE', body: 'The Camp Meeting board calls for a day of prayer.', kind: 'oc' });
+  if (e.front === 'church') s.news.push({ week: s.week, date: { ...s.date }, paper: 'Ocean City Clarion', headline: 'SALOON FOUND UNDER CHURCH-SUPPLY STORE', body: 'The Camp Meeting board calls for a day of prayer.', kind: 'oc' });
   note(s, `Raided: closed ${op.how === 'back' ? 'six' : 'four'} weeks${e.front === 'church' ? ', and the church basement is in the paper' : ''}.`);
   ctx.log.push(`The Ocean City raid went badly (${pct(op.p)} odds).`);
 }

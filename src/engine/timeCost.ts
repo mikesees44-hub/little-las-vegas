@@ -76,7 +76,7 @@ export const TIME_TABLE: Record<string, number> = {
   'hood:restyle': 0.5,
   dirty: 0.25,
   // Ocean City (oceanCity.ts): an order to the capo who runs it; a meeting with the commissioner; a campaign.
-  'oc:run': 1, 'oc:stopRun': 0.25, 'oc:build': 2, 'oc:upgrade': 0.5, 'oc:buy': 2, 'oc:dig': 0.5, 'oc:squeeze': 1, 'oc:vote': 2,
+  oc: 1, 'oc:run': 1, 'oc:stopRun': 0.25, 'oc:build': 2, 'oc:upgrade': 0.5, 'oc:buy': 2, 'oc:dig': 0.5, 'oc:squeeze': 1, 'oc:vote': 2,
   // Work this place: a visit with an offer is an hour or so; an order to the crew less (workHours).
   'work:pitch': 1, 'work:scheme': 1, 'work:press': 0.5, 'work:drop': 0.25,
   // Protection & intelligence: a word with the man, a word with the family (protectData.ts).
