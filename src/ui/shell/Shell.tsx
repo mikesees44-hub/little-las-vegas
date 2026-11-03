@@ -65,9 +65,11 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
       </div>
       {bottom ? <div className="shrink-0 border-t border-noir-700 bg-noir-900/95 mb-[52px] md:mb-0">{bottom}</div> : <div className="h-[52px] shrink-0 md:hidden" aria-hidden />}
       {/* Phones: alerts as a bottom sheet. */}
-      <button type="button" onClick={() => setSheet(true)} data-testid="alerts-phone"
-        className={`${danger ? '' : 'hidden'} md:hidden fixed right-2 bottom-[96px] z-[1140] rounded-full border-2 px-3 py-1.5 text-xs font-semibold shadow-lg shadow-black/70 ${danger ? 'border-red-300 bg-blood-500/90 text-white llv-ring' : 'border-gold-500 bg-noir-900/95 text-gold-300'}`}>
-        Alerts ({alertCount})
+      {/* A small round bell, not a pill across the content (it sat on cards and numbers on every phone screen). */}
+      <button type="button" onClick={() => setSheet(true)} data-testid="alerts-phone" aria-label={`Alerts (${alertCount})`} title={`Alerts (${alertCount})`}
+        className={`${danger ? '' : 'hidden'} md:hidden fixed right-2 bottom-[62px] z-[1140] flex h-10 w-10 items-center justify-center rounded-full border-2 text-base font-bold shadow-lg shadow-black/70 ${danger ? 'border-red-300 bg-blood-500/95 text-white llv-ring' : 'border-gold-500 bg-noir-900/95 text-gold-300'}`}>
+        <span aria-hidden>!</span>
+        <span className="absolute -right-1 -top-1 min-w-[1.1rem] rounded-full bg-noir-950 px-1 text-center text-[10px] leading-4 text-white ring-1 ring-red-300">{alertCount}</span>
       </button>
       {sheet && (
         <Overlay z={1165} className="md:hidden bg-black/60" onClick={() => setSheet(false)}>

@@ -49,7 +49,7 @@ function StandingStrip({ s }: { s: GameState }) {
   return (
     <Popover align="left" testid="standing-popover" button={(o, t) => (
       <button type="button" onClick={t} aria-expanded={o} data-testid="topbar-standing" title={`Respect ${s.respect} · heat: local ${s.heat.local}, family ${s.heat.family}, federal ${s.heat.federal} · favors ${s.favors} · ${era.text}. Tap for the reasons.`}
-        className="flex h-[38px] items-center gap-2 whitespace-nowrap rounded border border-noir-700 bg-noir-800 px-2 text-[11px] tabular-nums text-stone-400 hover:border-gold-600">
+        className="flex h-[26px] sm:h-[38px] items-center gap-2 whitespace-nowrap rounded border border-noir-700 bg-noir-800 px-2 text-[11px] tabular-nums text-stone-400 hover:border-gold-600">
         <span>Respect <b className="text-stone-100">{s.respect}</b>{dr ? <span className={dr > 0 ? 'text-emerald-400' : 'text-red-400'}> {dr > 0 ? '+' : ''}{dr}</span> : null}</span>
         <span>Heat {HEAT_BARS.map((b, i) => <b key={b} className={heatTone(s.heat[b])}>{i ? '·' : ''}{s.heat[b]}</b>)}</span>
         <span className="hidden sm:inline">Favors <b className="text-stone-100">{s.favors}</b></span>
@@ -148,8 +148,8 @@ function MoneyChips({ s }: { s: GameState }) {
   return (
     <div ref={ref} className="flex items-center gap-1" data-testid="topbar-money">
       <button type="button" data-tour="treasury" className="flex items-center gap-1" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Family money ${fmt$(m.family)}, your pocket ${fmt$(m.pocket)}: open the money`} title={statHelp('money')} data-testid="topbar-family">
-        <Chip label="Family money" value={fmt$(m.family)} d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash after={p.familyAfter} />
-        <span data-testid="topbar-pocket"><Chip label="Your pocket" value={fmt$(m.pocket)} d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash after={p.pocketAfter} /></span>
+        <Chip label="Family money" short="Family" value={fmt$(m.family)} d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash after={p.familyAfter} />
+        <span data-testid="topbar-pocket"><Chip label="Your pocket" short="Pocket" value={fmt$(m.pocket)} d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash after={p.pocketAfter} /></span>
       </button>
       {open && (
         <div className="fixed left-2 right-2 top-[7.5rem] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 z-[1200] sm:w-[440px] max-h-[75vh] overflow-y-auto panel p-2 space-y-2" data-testid="money-popover">
@@ -181,15 +181,16 @@ function delta(s: GameState, k: 'money' | 'respect' | HeatBar): number | undefin
   return r.end.heat[k] - r.start.heat[k];
 }
 
-function Chip({ label, value, d, good, bar, barColor, tone, cash, after }: { label: string; value: string; d?: number; good?: boolean; bar?: number; barColor?: string; tone?: string; cash?: boolean; /** Where it lands after this week's orders. */ after?: number }) {
+function Chip({ label, short, value, d, good, bar, barColor, tone, cash, after }: { label: string; /** Phones: one line, this word before the number. */ short?: string; value: string; d?: number; good?: boolean; bar?: number; barColor?: string; tone?: string; cash?: boolean; /** Where it lands after this week's orders. */ after?: number }) {
   return (
-    <span className="inline-flex flex-col rounded bg-noir-800 border border-noir-700 px-1.5 sm:px-2 py-0.5 min-w-[52px] cursor-help">
-      <span className="text-[9px] uppercase tracking-widest text-stone-500 leading-tight whitespace-nowrap">{label}</span>
+    <span className={`inline-flex ${short ? 'flex-row items-baseline gap-1 sm:flex-col sm:items-stretch sm:gap-0' : 'flex-col'} rounded bg-noir-800 border border-noir-700 px-1.5 sm:px-2 py-0.5 min-w-[52px] cursor-help`}>
+      {short && <span className="sm:hidden text-[10px] text-stone-400 leading-tight whitespace-nowrap">{short}</span>}
+      <span className={`${short ? 'hidden sm:block' : ''} text-[9px] uppercase tracking-widest text-stone-500 leading-tight whitespace-nowrap`}>{label}</span>
       <span className={`text-sm font-semibold tabular-nums leading-tight whitespace-nowrap ${tone ?? 'text-stone-100'}`}>
         {value}
         {d !== undefined && d !== 0 && <span className={`ml-1 text-[10px] font-normal ${good ? 'text-emerald-400' : 'text-red-400'}`}>{d > 0 ? '+' : ''}{cash ? fmt$(d) : d}</span>}
       </span>
-      {after !== undefined && <span className="text-[9px] leading-tight text-sky-300 tabular-nums whitespace-nowrap">→ {fmt$(after)} after orders</span>}
+      {after !== undefined && <span className="text-[9px] leading-tight text-sky-300 tabular-nums whitespace-nowrap">→ {fmt$(after)}<span className="hidden sm:inline"> after orders</span></span>}
       {bar !== undefined && <span className="mt-0.5 block h-0.5 rounded bg-noir-700 overflow-hidden"><span className={`block h-full ${barColor}`} style={{ width: `${Math.max(0, Math.min(100, bar))}%` }} /></span>}
     </span>
   );
@@ -335,8 +336,10 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
         <div className="flex items-center gap-2 min-w-0 order-1">
           <span className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full border border-gold-600/70 bg-noir-800 font-display text-gold-300" aria-hidden>♛</span>
           <div className="min-w-0">
-            <h1 className="font-display text-base sm:text-lg text-gold-400 leading-none whitespace-nowrap">Little Las Vegas</h1>
-            <p className="text-[10px] sm:text-[11px] text-stone-400 truncate max-w-[42vw] sm:max-w-[16rem]">House of {s.houseName} · {displayName(boss)}</p>
+            {/* Phones: the house and the clock's word take the brand's line (the bar was four rows, 180 px of 844). */}
+            <h1 className="sr-only sm:not-sr-only font-display text-base sm:text-lg text-gold-400 leading-none whitespace-nowrap">Little Las Vegas</h1>
+            <p className="text-[11px] text-stone-300 sm:text-stone-400 truncate max-w-[52vw] sm:max-w-[16rem]">House of {s.houseName} · {displayName(boss)}</p>
+            {note && !s.gameOver && <p className="sm:hidden text-[11px] leading-tight text-amber-300 line-clamp-2 max-w-[52vw]" title={note}>{note}</p>}
           </div>
         </div>
         <div className="order-3 sm:order-2 flex w-full sm:w-auto items-center gap-1 overflow-x-auto sm:overflow-visible pb-0.5 sm:pb-0" data-testid="resources">
@@ -380,7 +383,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                 ♕<span className="hidden sm:inline"> The chair</span> <span className="tabular-nums">{chair}</span>
               </button>
             )}
-            {note && <span className="text-[11px] text-amber-300 truncate max-w-[40vw]">{note}</span>}
+            {note && <span className="hidden sm:inline text-[11px] text-amber-300 truncate max-w-[40vw]" title={note}>{note}</span>}
             {ticker && speed > 0 && <span className="hidden xl:inline text-[11px] text-stone-500 truncate max-w-[24rem]">{ticker}</span>}
             <div className="ml-auto">
               <Popover testid="game-menu" initialOpen={menuOpen} button={(o, t) => (

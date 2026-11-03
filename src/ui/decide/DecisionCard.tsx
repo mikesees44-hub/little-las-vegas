@@ -138,7 +138,7 @@ export function VoicesLine({ voices }: { voices: Voice[] }) {
   return (
     <div className="mt-2 border-t border-noir-700 pt-1.5 text-[11px]" data-testid="decision-voices">
       {(open ? voices : voices.slice(0, 3)).map((v, i) => (
-        <div key={i} className="truncate" title={v.says}><span className="text-stone-500">{v.who}:</span> <span className={`italic ${tone(v)}`}>“{v.says}”</span></div>
+        <div key={i} className="line-clamp-2 leading-snug" title={v.says}><span className="text-stone-500">{v.who}:</span> <span className={`italic ${tone(v)}`}>“{v.says}”</span></div>
       ))}
       {voices.length > 3 && <button type="button" className="btn-quiet text-[11px]" onClick={() => setOpen((x) => !x)}>{open ? 'fewer' : `${voices.length - 3} more`}</button>}
     </div>
@@ -231,10 +231,13 @@ export function DecisionCard(p: DecisionCardProps) {
         {options.map((o, i) => <OptionRow key={o.id} s={s} o={o} i={i} on={sel === o.id} compact={compact} testid={p.optionTestId ?? 'decision-row'} pick={() => setSel(o.id)} />)}
       </div>
       {p.voices && <VoicesLine voices={p.voices} />}
-      <div className={`flex flex-wrap items-center gap-2 ${compact ? 'mt-1.5' : 'mt-3'}`} data-testid="decision-footer">
+      {/* Advice sits above the footer, so the footer is only: put it off, hand it off, and the one primary. */}
+      {p.advice && !compact && <div className="mt-2 flex flex-wrap items-center gap-y-1 text-[11px]" data-testid="decision-advice">{p.advice}</div>}
+      {/* The footer stays in sight at the foot of a tall card (it was cut off at 900 px). */}
+      <div className={`flex flex-wrap items-center gap-2 ${compact ? 'mt-1.5' : 'sticky bottom-0 z-10 -mx-4 sm:-mx-5 mt-3 border-t border-noir-700 bg-noir-900/95 px-4 sm:px-5 py-2.5 backdrop-blur-sm'}`} data-testid="decision-footer">
         {p.onLater && <button type="button" className={`btn-secondary ${compact ? 'btn-sm' : 'text-xs'}`} onClick={p.onLater} data-testid="decision-later">{p.laterLabel ?? 'Later'}</button>}
-        {p.onHandOff && <button type="button" className={`btn-secondary ${compact ? 'btn-sm' : 'text-xs'}`} onClick={p.onHandOff} data-testid="decision-handoff">{p.handOffLabel ?? 'Hand it off'}</button>}
-        {p.advice && <span className="text-[11px]">{p.advice}</span>}
+        {p.onHandOff && <button type="button" className={`btn-secondary max-w-full ${compact ? 'btn-sm' : 'text-xs'}`} onClick={p.onHandOff} data-testid="decision-handoff">{p.handOffLabel ?? 'Hand it off'}</button>}
+        {p.advice && compact && <span className="text-[11px]">{p.advice}</span>}
         <button type="button" className={`btn-primary ml-auto ${compact ? 'btn-sm' : 'text-sm'}`} disabled={!chosen || !!chosen.disabled || p.primaryDisabled} onClick={() => chosen && give(chosen.id)} data-testid={p.primaryTestId ?? 'decision-primary'}>
           {p.primaryLabel ? p.primaryLabel(chosen) : chosen ? `Decide: ${chosen.label} ▸` : 'Pick one'}
         </button>

@@ -8,6 +8,7 @@ import type { HomeId } from './routes';
 import type { DoNowItem } from './doNow';
 import { useOpportunity } from './RightRail';
 import { sectionLock } from '../../engine/rankView';
+import { DoneMark } from '../components/Layout';
 
 const glyph = (g: string) => <span aria-hidden style={{ fontVariantEmoji: 'text' } as never}>{g}&#xFE0E;</span>;
 
@@ -39,10 +40,12 @@ function DoNowStrip({ s, items, onDo }: { s: GameState; items: DoNowItem[]; onDo
                   <div className="text-sm font-semibold leading-snug text-stone-100">{d.title}</div>
                   {d.text && <div className="text-[11px] leading-snug text-stone-400 line-clamp-2">{d.text}</div>}
                 </div>
-                <button type="button" disabled={queued} onClick={() => (d.act.kind === 'opp' ? opp.go(s, d.act.opp) : onDo(d))}
-                  className={`shrink-0 rounded border px-2.5 py-1 text-xs font-semibold ${queued ? 'border-noir-600 text-stone-500' : 'border-gold-500 text-gold-300 hover:bg-gold-500/15'}`}>
-                  {queued ? 'Ordered' : `${d.cta} ▸`}
-                </button>
+                {queued ? <DoneMark>Ordered</DoneMark> : (
+                  <button type="button" onClick={() => (d.act.kind === 'opp' ? opp.go(s, d.act.opp) : onDo(d))}
+                    className="shrink-0 rounded border border-gold-500 px-2.5 py-1 text-xs font-semibold text-gold-300 hover:bg-gold-500/15">
+                    {`${d.cta} ▸`}
+                  </button>
+                )}
               </li>
             );
           })}
@@ -137,11 +140,11 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
           ))}
         </nav>
       )}
-      <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4" data-testid={cur ? `section-${key}` : 'home-landing'}>
+      <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-16 sm:p-4 md:pb-4" data-testid={cur ? `section-${key}` : 'home-landing'}>
         {!cur ? (
           <>
             {/* The Desk speaks for itself (a calm home screen): no blurb, and "Do this now" only when there is something. */}
-            {home !== 'desk' && <p className="mb-3 text-xs text-stone-400">{def.blurb}</p>}
+            {home !== 'desk' && <p className="llv-pagehead-sub mb-3">{def.blurb}</p>}
             {(home !== 'desk' || doNow.length > 0) && <DoNowStrip s={s} items={doNow} onDo={onDo} />}
             {top}
             {groups.map((g, i) => (
@@ -165,7 +168,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
                 ))}
               </div>
             )}
-            <p className="mb-3 text-xs text-stone-500">{sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub}</p>
+            <p className="llv-pagehead-sub mb-3 text-stone-500">{sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub}</p>
             {key && sectionLock(s, key) ? (
               <div className="rounded border border-amber-600/50 bg-amber-900/10 p-3 text-sm text-amber-100" data-testid="rank-locked">
                 🔒 {sectionLock(s, key)}. This is a boss's business, above your rank in the family for now. It opens as you climb: Family › Your place.
