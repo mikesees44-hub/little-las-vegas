@@ -30,6 +30,7 @@ import { themeOf, templateOf } from '../../src/engine/storyDirector';
 import { meetTip, respondTip, responsesFor, unseenUrgent, markTipsSeen } from '../../src/engine/threats';
 import { autoPauses, budgetPause, IMMEDIATE, redKeys, type PauseLedger } from '../../src/ui/clockPolicy';
 import { advanceDay, answerMoment, closeWeek, eventsOut, momentView } from '../../src/engine/daily';
+import { scheduled } from '../../src/engine/schedule';
 import { extraToday, markExtraShown } from '../../src/engine/paper';
 import { morningStop, newWarnings, weekHeadlines } from '../../src/ui/clock';
 import { familyCash } from '../../src/engine/tributeState';
@@ -59,7 +60,7 @@ interface DayRec {
   /** Auto-pauses (reasons) under the default settings. */
   pauses: string[];
   /** Threats that struck today with a moment to answer; quiet ones that landed on their own; an EXTRA card. */
-  strikes?: number; quiet?: number; extra?: number;
+  strikes?: number; quiet?: number; extra?: number; calls?: number;
 }
 interface WeekRec {
   w: number; date: string; ms: number; start: string;
@@ -171,6 +172,7 @@ describe.skipIf(!ON)('daily sim', () => {
           const prev = s;
           const day = advanceDay(s);
           s = day.state;
+          const phoneKinds = day.strikes.map((m) => scheduled(s).find((x) => `sched:${x.id}` === m)?.payload.k as string | undefined);
           const nextRec: DayRec = { w: wk, d: d + 1, date: iso(s, d + 1), dec: 0, mand: 0, am: 0, amUrgent: 0, tips: 0, eve: null, cuts: [], heads: [], warns: [], now: 0, pauses: [], strikes: 0, quiet: 0, extra: 0 };
           nextRec.dec = day.released.length;
           nextRec.mand = s.pendingEvents.filter((e) => day.released.includes(e.iid) && e.mandatory).length;
@@ -185,15 +187,24 @@ describe.skipIf(!ON)('daily sim', () => {
             const r = answerMoment(s, id, opt);
             if (r.result.ok) { s = r.state; nextRec.strikes!++; strikeLines.push(r.result.line); }
           }
+          // A call the boss picked up about an urgent meeting: the meeting card opens for his answer (App.tsx), the first that fits.
+          for (const tip of s.threats?.tips ?? []) {
+            if ((tip.status === 'met' || tip.status === 'sent') && !tip.response && tip.week >= s.week - 1) { const r = responsesFor(s, tip); if (r[0]) s = respondTip(s, tip.id, r[0]); }
+          }
           // The App's one stop a morning (App.tsx pauseOnce): the most pressing reason, within the day's budget.
-          const cats: string[] = day.strikes.length ? ['strike'] : [];
+          // A phone call that stopped the clock is its own category ('call': the card holds the clock, like a strike).
+          const phoneOnly = day.strikes.length > 0 && day.strikes.every((m) => m.startsWith('sched:'));
+          const cats: string[] = day.strikes.length ? [phoneOnly ? 'call' : 'strike'] : [];
           const ps = autoPauses(prev, s, acked, ui).map((p) => p.cat);
           if (ps.length) cats.push(ps[0]);
           if (morningStop(s)) cats.push('capo');
           const ex = extraToday(s);
           if (ex) { s = markExtraShown(s, ex.id); nextRec.extra!++; nextRec.heads.push(`extra:${ex.h}`); cats.push('extra'); }
           nextRec.tips = unseenUrgent(s).length;
-          if (cats.length) pause(nextRec, cats.find((c) => IMMEDIATE.has(c)) ?? cats[0], s);
+          if (cats.length) pause(nextRec, cats[0] === 'call' ? 'strike' : cats.find((c) => IMMEDIATE.has(c)) ?? cats[0], s);
+          // A day the phone alone stopped the clock for (a call nothing else that morning would have stopped for).
+          if (cats[0] === 'call' && nextRec.pauses.length) nextRec.pauses[nextRec.pauses.length - 1] = cats.length === 1 && !phoneKinds.some((k) => k === 'tip' || k === 'capo') ? 'call' : 'call+';
+          nextRec.calls = s.phone?.log.filter((l) => l.w === s.week && l.d === d + 1).length ?? 0;
           days.push(nextRec);
           acked = new Set([...acked, ...redKeys(s, ui)]);
         }

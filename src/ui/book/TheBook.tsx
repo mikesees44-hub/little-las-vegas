@@ -60,7 +60,7 @@ function EntryRow({ s, e, onThread, followers }: { s: GameState; e: JEntry; onTh
         <Deltas e={e} />
       </div>
       <div className="ml-6 mt-0.5 flex flex-wrap items-center gap-1 text-[10px] uppercase tracking-wider">
-        {e.mine ? <span className="rounded bg-gold-500/20 px-1 text-gold-300">{e.src === 'decision' ? 'Your decision' : 'Your order'}</span> : e.by ? <span className="rounded bg-noir-700 px-1 text-stone-300">By {e.by}</span> : null}
+        {e.mine ? <span className="rounded bg-gold-500/20 px-1 text-gold-300">{e.src === 'decision' ? 'Your decision' : e.src === 'phone' ? 'On the phone' : 'Your order'}</span> : e.by ? <span className="rounded bg-noir-700 px-1 text-stone-300">By {e.by}</span> : null}
         {e.k === 'heard' && <span className="rounded bg-noir-700 px-1 text-sky-300" title="What people say; not seen with your own eyes">Heard</span>}
         {e.k === 'later' && <span className="rounded bg-noir-700 px-1 text-amber-300" title="Came out later">Came out later</span>}
         <span className="text-stone-600">{info.label}</span>

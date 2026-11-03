@@ -316,3 +316,25 @@ describe('save', () => {
     expect(phoneDay(BASE)).toBe(BASE);
   });
 });
+
+describe('the phone on screen', () => {
+  it('the window lists missed calls with call back, the book and the dial; a ringing call has its card', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { PhoneWindow, PhoneButton } = await import('../src/ui/phone/PhoneWindow');
+    const { StrikeCard } = await import('../src/ui/components/StrikeCard');
+    const { momentKicker } = await import('../src/engine/phone');
+    const { r, c } = rival(BASE);
+    const at = scheduleAt(BASE, { kind: 'call', day: 1, hour: 11, payload: { k: 'rival', who: c.id, name: c.firstName, role: 'x', rival: r.id, imp: 1 } });
+    const s = days(at.state, 1).s;
+    const card = renderToString(createElement(StrikeCard, { s, id: `sched:${at.id}`, kicker: momentKicker(s, `sched:${at.id}`), onChoose: () => {} }));
+    expect(card).toContain('data-testid="call-card"');
+    expect(card).toContain('The phone is ringing');
+    const missed = answerMoment(s, `sched:${at.id}`, 'ring').state;
+    const html = renderToString(createElement(PhoneWindow, { s: missed, onClose: () => {}, onDial: () => {}, onCallBack: () => {} }));
+    expect(html).toContain('data-testid="phone-missed"');
+    expect(html).toContain('Call back');
+    const btn = renderToString(createElement(PhoneButton, { missed: phoneBadge(missed), ringing: false, onOpen: () => {} }));
+    expect(btn).toContain('data-testid="phone-badge"');
+  });
+});

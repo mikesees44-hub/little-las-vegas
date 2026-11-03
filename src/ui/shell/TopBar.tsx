@@ -258,7 +258,7 @@ function WaitingButton({ count, tone, onDesk, onReview }: {
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen }: {
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen, phone }: {
   s: GameState;
   /** The one count of what wants the boss (engine/inbox.ts) and its worst tone. */
   inboxN?: number;
@@ -305,6 +305,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   onPaper?: () => void;
   /** Your File (the Book, engine/journal.ts): new entries since the boss last looked, and the opener. */
   fileNew?: number;
+  /** The phone (ui/phone/PhoneWindow.tsx PhoneButton): one button with its missed-calls badge. */
+  phone?: ReactNode;
   onFile?: () => void;
   /** "What should I do" (the help menu; it used to sit at the foot of the rail). */
   onHelp?: () => void;
@@ -367,6 +369,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
               </Popover>
             </div>
             <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />
+            {phone}
             {onFind && (
               <button type="button" onClick={onFind} data-testid="find-button" title="Find a person, a place, a screen or something to do (Ctrl+K or /)"
                 className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Find</span></button>

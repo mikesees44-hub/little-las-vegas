@@ -99,7 +99,7 @@ export function phoneWeek(s: GameState): void {
   if (P.tap && !P.tap.clicks && roll(`${s.seed}|${s.week}|clicks`) < 0.35) P.tap.clicks = 1;
   // The county's tap comes out after a season; the FBI's stays until somebody finds it.
   if (P.tap?.by === 'county' && s.week - P.tap.since >= 12) delete P.tap;
-  for (const k of Object.keys(P.stops)) if (Number(k) < s.week - 4) delete P.stops[k];
+  for (const k of Object.keys(P.stops)) if (Number(k) < fortnight(s.week) - 2) delete P.stops[k];
   for (const k of Object.keys(P.talked)) if (P.talked[k] < s.week - 1) delete P.talked[k];
   P.rung = P.rung.filter((x) => Number(x.split(':')[0]) >= s.week - 2);
 }
@@ -155,7 +155,7 @@ function candidates(s: GameState, P: PhoneState): { key: string; w: number; p: C
   // Philadelphia: the island is in the papers.
   const philly = s.rivals.find((r) => r.id === 'philly');
   const pl = philly ? rivalLeader(s, 'philly') : undefined;
-  if (pl && s.heat.family >= 35 && !cool('philly', 6)) out.push({ key: 'philly', w: 2 + s.heat.family / 30, p: { k: 'philly', who: pl.id, name: displayName(pl), role: 'Philadelphia', rival: 'philly', imp: 1 }, hours: [10, 11, 14] });
+  if (pl && s.heat.family >= 35 && !cool('philly', 6)) out.push({ key: 'philly', w: 2 + s.heat.family / 30, p: { k: 'philly', who: pl.id, name: displayName(pl), role: 'Philadelphia', rival: 'philly', ...(s.heat.family >= 60 ? { imp: 1 as const } : {}) }, hours: [10, 11, 14] });
   // A rival boss proposing a sit-down: at war, or cool enough to talk.
   for (const r of s.rivals) {
     if (r.kind !== 'mob' || cool('rival', 5) || cool(`rival:${r.id}`, 10)) continue;
@@ -163,7 +163,7 @@ function candidates(s: GameState, P: PhoneState): { key: string; w: number; p: C
     if (!c) continue;
     const o = opinion(s, c.id, s.playerId);
     if (!(r.war || r.feud || (o > -40 && o < 25 && roll(`${s.seed}|${s.week}|rv|${r.id}`) < 0.2))) continue;
-    out.push({ key: `rival:${r.id}`, w: r.war ? 2 : 0.8, p: { k: 'rival', who: c.id, name: displayName(c), role: `Boss of ${r.name}`, rival: r.id, imp: 1 }, hours: [11, 12, 16] });
+    out.push({ key: `rival:${r.id}`, w: r.war ? 2 : 0.8, p: { k: 'rival', who: c.id, name: displayName(c), role: `Boss of ${r.name}`, rival: r.id, ...(r.war || r.feud ? { imp: 1 as const } : {}) }, hours: [11, 12, 16] });
   }
   // An anonymous voice at 2 a.m.: somebody is planning something.
   const plan = (s.threats?.threats ?? []).find((t) => t.kind === 'hit' && t.targetId === s.playerId && !t.schemeId && t.due >= s.week);
@@ -190,8 +190,9 @@ function candidates(s: GameState, P: PhoneState): { key: string; w: number; p: C
 export const PHONE_GRACE = 3;
 /** The chance a new caller rings on a given day (Tuesday … Saturday). */
 export const CALL_DAY_ODDS = 0.25;
-/** New important calls that may stop the clock in a week (the replacements are not counted). */
+/** New important calls that may stop the clock in a fortnight (the calls that replaced a popup are not counted). */
 export const NEW_STOPS_WEEK = 1;
+const fortnight = (w: number) => Math.floor(w / 2);
 
 /**
  * The morning turns (daily.ts advanceDay, after the threats): put today's calls on the clock.
@@ -359,7 +360,7 @@ function callOpts(s: GameState, p: CallPayload, line: Line): Opt[] | undefined {
       return [
         { id: 'church', label: 'Agree: the church, neutral ground', hint: 'A sit-down in two days at noon', p: 1, okText: `You will sit down with ${nm} at the church.`, then: (x) => { setMeet(x, who.id, 'church', 'sitdown', 2, 12); } },
         { id: 'club', label: 'Your club, or nothing', hint: 'On your ground: if he takes it, respect +1', p: club, ok: [{ type: 'respect', amount: 1, label: `${nm} agreed to come to you` }], bad: [{ type: 'rivalOpinion', rival: rv, amount: -4, reason: 'Wanted me to come to him' }], okText: `${nm} agreed to come to your club.`, badText: `${nm} hung up.`, then: (x, ok) => { if (ok) setMeet(x, who.id, 'club', 'sitdown', 2, 15); } },
-        { id: 'no', label: 'There is nothing to talk about', hint: 'Respect +1 · his outfit −5', p: 1, ok: [{ type: 'respect', amount: 1, label: 'You turned down a sit-down' }, { type: 'rivalOpinion', rival: rv, amount: -5, reason: 'Turned down a sit-down' }], okText: `You told ${nm} there was nothing to talk about.` },
+        { id: 'no', label: 'There is nothing to talk about', hint: 'His outfit −5: they will take it as an answer', p: 1, ok: [{ type: 'rivalOpinion', rival: rv, amount: -5, reason: 'Turned down a sit-down' }], okText: `You told ${nm} there was nothing to talk about.` },
         { id: 'msg', label: 'Have someone take a message', hint: 'You can call him back tomorrow', p: 1, okText: `${nm} left a message: he wants to sit down.`, then: (x) => { keepMissed(x, p, 'msg'); } },
         ring,
       ];
@@ -575,7 +576,7 @@ function payloadOf(it: ScheduledItem): CallPayload {
 
 /** Stops this week by new important callers. */
 function newStops(s: GameState): number {
-  return s.phone?.stops[s.week] ?? 0;
+  return s.phone?.stops[fortnight(s.week)] ?? 0;
 }
 
 registerDelivery({
@@ -589,7 +590,7 @@ registerDelivery({
     if (liveItems(s).length) return false;
     // A new caller (not a call that replaced a popup) stops the clock at most NEW_STOPS_WEEK times a week.
     if (p.nw && newStops(s) >= NEW_STOPS_WEEK) return false;
-    if (p.nw && s.phone) s.phone.stops[s.week] = newStops(s) + 1;
+    if (p.nw && s.phone) s.phone.stops[fortnight(s.week)] = newStops(s) + 1;
     return true;
   },
   view: (s, it) => callView(s, it.id, payloadOf(it), it.d, it.h),
@@ -659,3 +660,21 @@ export function tipOfMoment(s: GameState, momentId: string): string | undefined 
   return p?.k === 'tip' ? p.tip : undefined;
 }
 
+
+/** The kicker over a moment's card when it is the phone or a meet (undefined: a strike, the storm). */
+export function momentKicker(s: GameState, momentId: string): string | undefined {
+  if (!momentId.startsWith('sched:')) return undefined;
+  const it = scheduled(s).find((x) => x.id === momentId.slice(6));
+  if (!it) return undefined;
+  if (it.kind === 'meet') return 'The meet';
+  if (it.kind !== 'call') return undefined;
+  const p = payloadOf(it);
+  return `The phone is ringing: ${LINE_LABEL[p.line ?? lineAt(it.h)]}`;
+}
+
+/** What the boss can tell about his line. */
+export function lineStatus(s: GameState): string {
+  if (s.phone?.tap?.clicks) return 'The line clicks when you pick up. Somebody may be listening.';
+  const g = tapGuess(s);
+  return g >= 0.3 ? 'With the federal heat on you, assume somebody is listening.' : g >= 0.12 ? 'Probably nobody is listening. Probably.' : 'The line sounds clean.';
+}
