@@ -80,7 +80,8 @@ export function openingRead(s: GameState, c: Character, k: ArgKind, room: readon
   const informs = k === 'accuse' && !!c.informantFor && c.informantFor !== 'player';
   const mask = masks(s, c) || (informs && !has(c, 'Hot-headed'));
   if (mask) heat = Math.min(heat, 22);
-  heat = Math.round(clamp(heat, 5, 95));
+  // Never past the line before the boss has said a word: the first answer always matters.
+  heat = Math.round(clamp(heat, 5, 80));
   hurt = Math.round(clamp(hurt, 5, 95));
   let pos: Posture;
   if (mask && !informs) pos = 'smiling';

@@ -9,6 +9,8 @@ import type { EventInstance, GameState } from '../../engine/types';
 import { Modal } from './Modal';
 import { negotiable } from '../../engine/minds/dialogue';
 import { NegotiationWindow } from '../minds/NegotiationWindow';
+import { faceToFace, heatedChoices } from '../../engine/argue';
+import { useShell } from '../shell/context';
 import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
 import { voicesFor } from '../decide/voices';
 
@@ -33,6 +35,11 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
   // A decision with someone on the other side can be talked out in the two-way window (minds/dialogue.ts).
   const [talk, setTalk] = useState(false);
   const nego = negotiable(s, ev);
+  // A heated answer can be given to his face: settled now, and he answers right there (engine/argue).
+  const shell = useShell();
+  const heated = shell.update ? heatedChoices(s, ev) : [];
+  const [face, setFace] = useState(false);
+  const toFace = (choiceId: string) => { shell.update?.((x) => faceToFace(x, ev.iid, choiceId)); onClose(); };
   const dflt = ev.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev.choices[0];
   const hand = officeVisitors(s).find((v) => v.ref.event === ev.iid)?.delegate;
   const options: DecisionOption[] = ev.choices.map((c) => ({
@@ -67,6 +74,16 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
             </button>
           )}
           {talk && <NegotiationWindow s={s} ev={ev} onClose={() => setTalk(false)} />}
+          {heated.length > 0 && (heated.length === 1
+            ? <button type="button" className="btn-quiet mt-1 block text-xs text-red-200" onClick={() => toFace(heated[0].ch.id)} data-testid="event-face">
+                Say it to {s.characters[heated[0].spec.t] ? `${s.characters[heated[0].spec.t].firstName}'s` : 'his'} face: {heated[0].ch.label}, settled now, and he answers ▸
+              </button>
+            : <div className="mt-1 text-xs" data-testid="event-face">
+                <button type="button" className="btn-quiet text-red-200" onClick={() => setFace((x) => !x)}>Say it to his face: settled now, and he answers ▸</button>
+                {face && <div className="mt-1 flex flex-wrap gap-1">{heated.map(({ ch, spec }) => (
+                  <button key={ch.id} type="button" className="btn-ghost px-1.5 py-0.5 text-[11px]" onClick={() => toFace(ch.id)}>{ch.label} ({s.characters[spec.t]?.firstName})</button>
+                ))}</div>}
+              </div>)}
           {dflt && <p className="mt-1 text-[11px] text-stone-500" data-testid="event-default">If you don't decide before the week turns: <span className="text-stone-300">{dflt.label}</span>.</p>}
         </>}
         options={options}

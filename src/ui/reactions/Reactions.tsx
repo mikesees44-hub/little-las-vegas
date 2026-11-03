@@ -5,6 +5,7 @@ import { useEscape } from '../keys';
 import { useShell } from '../shell/context';
 import { predictChoice, rxName, smoothOptions, smoothOver, dismissReactions, nextReactions, ROLE_LABEL, type Reaction, type ReactionBatch, type SmoothHow } from '../../engine/reactions';
 import type { Choice, EventInstance, GameState } from '../../engine/types';
+import { argueFromBatch, openArgument } from '../../engine/argue';
 
 /**
  * "HOW THEY TOOK IT": the CK-style reaction window. One compact list per
@@ -31,10 +32,13 @@ export interface ReactionsProps {
   /** Offer the smooth-it-over buttons (needs a batch id and a way to change the game). */
   onSmooth?: (who: string, how: SmoothHow) => void;
   compact?: boolean;
+  /** The one man the boss can have it out with, face to face (the argument window), and how to open it. */
+  argueWho?: string;
+  onArgue?: () => void;
 }
 
 /** The list of reactions (embeddable). */
-export function Reactions({ s, items, onSmooth, compact }: ReactionsProps) {
+export function Reactions({ s, items, onSmooth, compact, argueWho, onArgue }: ReactionsProps) {
   if (!items.length) return null;
   return (
     <ul className="space-y-1.5" data-testid="reactions">
@@ -60,6 +64,11 @@ export function Reactions({ s, items, onSmooth, compact }: ReactionsProps) {
                 </div>
                 {r.next && <div className="text-[11px] text-amber-200/90">→ {r.next}</div>}
                 {r.smoothed && <div className="text-[11px] text-emerald-300">Smoothed over — {r.smoothed}</div>}
+                {onArgue && argueWho === r.who && (
+                  <button type="button" className="btn-quiet mt-0.5 text-[11px] text-red-200" onClick={onArgue} data-testid="argue-open">
+                    Have it out with {c?.firstName ?? 'him'}, face to face ▸
+                  </button>
+                )}
               </div>
             </div>
             {opts.length > 0 && (
@@ -81,14 +90,15 @@ export function Reactions({ s, items, onSmooth, compact }: ReactionsProps) {
 }
 
 /** One window. */
-export function ReactionsWindow({ s, b, onSmooth, onClose }: { s: GameState; b: ReactionBatch; onSmooth?: (who: string, how: SmoothHow) => void; onClose: () => void }) {
+export function ReactionsWindow({ s, b, onSmooth, onClose, onArgue }: { s: GameState; b: ReactionBatch; onSmooth?: (who: string, how: SmoothHow) => void; onClose: () => void; onArgue?: (spec: NonNullable<ReturnType<typeof argueFromBatch>>) => void }) {
+  const offer = onArgue ? argueFromBatch(s, b) : undefined;
   const worst = b.items.some((r) => r.tone === 'furious') ? 'border-red-700/70' : b.items.some((r) => r.v < 0) ? 'border-amber-700/60' : 'border-emerald-700/60';
   return (
     <div className={`panel w-full max-w-md border-2 ${worst} p-4 shadow-2xl shadow-black/80`} role="dialog" aria-label="How they took it" data-testid="reactions-window" onClick={(e) => e.stopPropagation()}>
       <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">How they took it</div>
       <div className="mt-0.5 font-display text-lg text-gold-300">{b.title}</div>
       <div className="mt-2 max-h-[60vh] overflow-y-auto pr-1">
-        <Reactions s={s} items={b.items} onSmooth={onSmooth} />
+        <Reactions s={s} items={b.items} onSmooth={onSmooth} argueWho={offer?.t} onArgue={offer ? () => onArgue!(offer) : undefined} />
       </div>
       {b.more > 0 && <div className="mt-1 text-[11px] text-stone-500">…and {b.more} more took note (in the week's summary).</div>}
       <button type="button" className="btn-gold mt-3 w-full text-sm" onClick={onClose} data-testid="reactions-close">Go on</button>
@@ -105,7 +115,8 @@ export function ReactionsHost({ s, blocked }: { s: GameState; blocked?: boolean 
   if (!b || blocked || !shell.update) return null;
   return (
     <div className="fixed inset-0 z-[1150] flex items-center justify-center bg-black/60 p-3" onClick={close} data-testid="reactions-host">
-      <ReactionsWindow s={s} b={b} onClose={close} onSmooth={(who, how) => shell.update!((x) => smoothOver(x, b.id, who, how))} />
+      <ReactionsWindow s={s} b={b} onClose={close} onSmooth={(who, how) => shell.update!((x) => smoothOver(x, b.id, who, how))}
+        onArgue={(spec) => shell.update!((x) => openArgument(dismissReactions(x, b.id), spec))} />
     </div>
   );
 }
