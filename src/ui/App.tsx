@@ -379,6 +379,8 @@ export function App({ startOn = 'title' }: AppProps) {
       setReportLog((l) => [...l, r.report].slice(-26));
       // The jobs and the pushes come back as result cards: the dice and what happened, not one Results line.
       setWeekResults(weekResultCards(s, r.state, orders));
+      // The first week's "waits for you" note goes with the first week.
+      setClockNote((n) => (n && /^Paused: (your first week|Sunday of your first week)/.test(n) ? undefined : n));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);

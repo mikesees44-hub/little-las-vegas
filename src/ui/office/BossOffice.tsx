@@ -96,7 +96,7 @@ function PaintedFallback() {
       <rect x={X(1)} y={Y(54)} width={X(70)} height={Y(3)} fill="#6e4628" />
       <rect width="1697" height="927" fill="url(#of-lamp)" />
       {/* the phone */}
-      <rect x={X(phone.x + 3)} y={Y(phone.y + 6)} width={X(phone.w - 6)} height={Y(phone.h - 8)} rx="14" fill="#111" />
+      <rect x={X(phone.x + 3)} y={Y(phone.y + 5)} width={X(phone.w - 6)} height={Y(phone.h - 12)} rx="14" fill="#111" />
       <rect x={X(phone.x + 2)} y={Y(phone.y + 3)} width={X(phone.w - 4)} height={Y(4)} rx="10" fill="#1b1b1b" />
       <circle cx={X(phone.x + phone.w / 2)} cy={Y(phone.y + 12)} r={X(2)} fill="#2a2a2a" stroke="#555" strokeWidth="2" />
       {/* the paper */}
