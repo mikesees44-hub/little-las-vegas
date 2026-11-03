@@ -7,7 +7,7 @@ import { answerCheckIn, freezeWeek, tickDay, weekChoices } from '../src/engine/d
 import { weekCheckIns } from '../src/engine/checkins';
 import { addOpinion } from '../src/engine/relations';
 import { advanceDay, answerMoment, eventOut, eventsOut, momentView, releaseAll } from '../src/engine/daily';
-import { ensureThreats, liveStrikes, resolveStrike, strikeView, tickingClocks, tipOut, type Threat } from '../src/engine/threats';
+import { ensureThreats, liveStrikes, strikeView, tickingClocks, tipOut, type Threat } from '../src/engine/threats';
 import { ensureAction, raidedLately, noteRaided } from '../src/engine/actionState';
 import { bailoutSource, BAIL_WEEKS, summonsSource, wealthPressure } from '../src/engine/pressure';
 import { setPieceSource, stormTonight, weekOfDate } from '../src/engine/setPieces';
