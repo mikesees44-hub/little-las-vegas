@@ -183,8 +183,10 @@ describe('the required 52-week family', () => {
     for (const c of [...res.checks, ...res.demos]) expect(`${c.name}: ${c.ok ? 'ok' : c.detail}`).toBe(`${c.name}: ok`);
     expect(res.demos).toHaveLength(14);
     // Quiet weeks went by the standing split; the audience popped only when something needed the Don.
+    // (Success draws fire now, DAILY_LOGIC #9: raids and strikes leave more short weeks, so about half
+    // the weeks need him; at least a quarter of the year still goes by quietly.)
     const t = run.s.tribute!;
-    expect(t.stats.quiet).toBeGreaterThan(t.stats.audiences);
+    expect(t.stats.quiet).toBeGreaterThanOrEqual(13);
     // The JSON save round-trips exactly.
     expect(JSON.stringify(JSON.parse(JSON.stringify(run.mid)))).toBe(JSON.stringify(run.mid));
   }, 300000);

@@ -1,3 +1,4 @@
+import { eventsOut } from './eventDays';
 import { owned, staffFactor } from './business';
 import { mayPropose } from './bones';
 import { capos, crew, displayName, isFree, player } from './characters';
@@ -34,7 +35,8 @@ export function alerts(s: GameState): Alert[] {
   const out: Alert[] = [];
   if (s.gameOver) return out;
   const boss = player(s);
-  if (s.pendingEvents.length) out.push({ kind: 'decision', severity: 'info', title: `${s.pendingEvents.length} decision${s.pendingEvents.length > 1 ? 's' : ''} waiting`, text: s.pendingEvents.map((e) => e.title).join(' · ') });
+  const out0 = eventsOut(s);
+  if (out0.length) out.push({ kind: 'decision', severity: 'info', title: `${out0.length} decision${out0.length > 1 ? 's' : ''} waiting`, text: out0.map((e) => e.title).join(' · ') });
   for (const c of capos(s)) {
     const op = opinion(s, c.id, boss.id);
     if (op <= -20 && isFree(s, c)) out.push({ kind: 'unhappy', severity: op <= -40 ? 'danger' : 'warn', title: `${c.firstName} is unhappy`, text: `${displayName(c)} (capo) thinks ${op} of you.`, charId: c.id });

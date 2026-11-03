@@ -3,6 +3,7 @@ import { player } from './characters';
 import { roundOptions, roundSlots, usualWeek } from './rounds';
 import { tripOf, visitOn } from './travelState';
 import { shortName } from './visitData';
+import { computeCheckIns, type CheckIn } from './checkins';
 import type { GameDate, GameState, PlayerChoices } from './types';
 
 /**
@@ -34,6 +35,11 @@ export interface DaysState {
   answers: Record<string, string>;
   /** Mornings the boss skipped the check-in. */
   skipped: number[];
+  /**
+   * The week's check-ins as they stood when the week was first touched (checkins.ts): frozen so a
+   * mid-week change (an order settled on the spot) never reshuffles mornings already answered.
+   */
+  frozen?: CheckIn[];
 }
 
 /** This week's plan (read-only: a fresh one when the save has none or an old one). */
@@ -49,7 +55,18 @@ export function today(s: GameState): number {
 
 function withDays(s: GameState, f: (d: DaysState) => DaysState): GameState {
   const d = daysOf(s);
-  return { ...s, days: f({ ...d, answers: { ...d.answers }, skipped: [...d.skipped], ...(d.plan ? { plan: [...d.plan] } : {}) }) };
+  const frozen = d.frozen ?? computeCheckIns(s);
+  return { ...s, days: f({ ...d, answers: { ...d.answers }, skipped: [...d.skipped], ...(d.plan ? { plan: [...d.plan] } : {}), frozen }) };
+}
+
+/**
+ * Freeze the week's check-ins (DAILY_LOGIC B1): called before anything mid-week can change the
+ * state they are read from (an order settled on the spot). Pure; a no-op once frozen.
+ */
+export function freezeWeek(s: GameState): GameState {
+  const d = s.days;
+  if (s.gameOver || (d && d.week === s.week && d.frozen)) return s;
+  return withDays(s, (x) => x);
 }
 
 export function dayDate(s: GameState, day = today(s)): GameDate {

@@ -1,6 +1,7 @@
 /**
  * DAILY-LOGIC SIMULATOR (headless): plays the game the way the running clock does in the App,
- * one DAY at a time (days.ts tickDay), turning the week through advanceWeek on Sunday night,
+ * one DAY at a time (daily.ts advanceDay: held decisions come out, threats strike on their day and hour),
+ * turning the week through advanceWeek on Sunday night,
  * and records what the player would see each day: decisions, urgent meetings, morning problems,
  * evenings, cutscenes, headlines, the clock's auto-pauses (clockPolicy.ts + App.tsx stepDay/run).
  *
@@ -18,7 +19,7 @@ import { describe, it } from 'vitest';
 import { writeFileSync } from 'node:fs';
 import { advanceWeek } from '../../src/engine/engine';
 import { newGameWith, type StartId } from '../../src/engine/starts';
-import { daysOf, tickDay, weekChoices, weekPlan, answerCheckIn } from '../../src/engine/days';
+import { daysOf, weekChoices, weekPlan, answerCheckIn } from '../../src/engine/days';
 import { dayCheckIns } from '../../src/engine/checkins';
 import { compareChoices } from '../../src/engine/advice';
 import { recommendedActions } from '../../src/engine/briefing';
@@ -27,7 +28,9 @@ import { previewAction } from '../../src/engine/actions';
 import { cutscenesBetween } from '../../src/engine/cutscenes';
 import { themeOf, templateOf } from '../../src/engine/storyDirector';
 import { meetTip, respondTip, responsesFor, unseenUrgent, markTipsSeen } from '../../src/engine/threats';
-import { autoPauses, redKeys } from '../../src/ui/clockPolicy';
+import { autoPauses, budgetPause, IMMEDIATE, redKeys, type PauseLedger } from '../../src/ui/clockPolicy';
+import { advanceDay, answerMoment, closeWeek, eventsOut, momentView } from '../../src/engine/daily';
+import { extraToday, markExtraShown } from '../../src/engine/paper';
 import { morningStop, newWarnings, weekHeadlines } from '../../src/ui/clock';
 import { familyCash } from '../../src/engine/tributeState';
 import type { GameState, PlayerAction, PlayerChoices } from '../../src/engine/types';
@@ -55,6 +58,8 @@ interface DayRec {
   now: number;
   /** Auto-pauses (reasons) under the default settings. */
   pauses: string[];
+  /** Threats that struck today with a moment to answer; quiet ones that landed on their own; an EXTRA card. */
+  strikes?: number; quiet?: number; extra?: number;
 }
 interface WeekRec {
   w: number; date: string; ms: number; start: string;
@@ -64,6 +69,8 @@ interface WeekRec {
   wars: number; newWars: number; battles: number; deaths: { who: string; cause: string; violent: boolean; mine: boolean }[];
   arrests: number; successions: number; rivalBosses: number; plotsUncovered: number; schemesDone: number;
   actions: string[]; bad: string[];
+  /** Lines from strikes that landed mid-week (also appended to `log`). */
+  strikeLines?: string[];
 }
 
 function crewOf(s: GameState) { return Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.id !== s.playerId); }
@@ -103,22 +110,26 @@ describe.skipIf(!ON)('daily sim', () => {
     const weeks: WeekRec[] = [];
     const errors: string[] = [];
     let acked = new Set<string>();
+    let ledger: PauseLedger | undefined;
     const startWeek = s.week;
     let lastActNowFail = 0;
     for (let wi = 0; wi < YEARS * 52 && !s.gameOver; wi++) {
       const wk = s.week;
       const ui = { answers: {} as Record<string, string> };
-      // --- Monday morning: what the week turn put in front of him is counted on day 0 (in the previous week's turn record).
+      // --- The week, day by day: decisions come out on their days (daily.ts), threats strike on theirs.
       const answers: Record<string, string> = {};
-      for (const ev of s.pendingEvents) { const c = pickChoice(s, ev); if (c) answers[ev.iid] = c; }
+      const answerOut = () => { for (const ev of eventsOut(s)) if (!answers[ev.iid]) { const c = pickChoice(s, ev); if (c) answers[ev.iid] = c; } };
       const actions: PlayerAction[] = [];
       const actLog: string[] = [];
+      const strikeLines: string[] = [];
       // Sometimes act: the Sit-Down's top recommendation (settled at once if it can be, on a random day).
       const actDay = h32(`${SEED}:${wk}:actday`) < ACT_RATE ? Math.floor(h32(`${SEED}:${wk}:dd`) * 7) : -1;
+      const pause = (rec: DayRec, cat: string, at: GameState) => { const b = budgetPause(ledger, `${at.week}:${daysOf(at).day}`, cat); if (b.ok) { ledger = b.ledger; rec.pauses.push(cat); } };
       for (let d = 0; d < 7; d++) {
         if (s.gameOver) break;
         const rec = days.find((x) => x.w === wk && x.d === d) ?? { w: wk, d, date: iso(s, d), dec: 0, mand: 0, am: 0, amUrgent: 0, tips: 0, eve: null, cuts: [], heads: [], warns: [], now: 0, pauses: [] };
         if (!days.includes(rec)) days.push(rec);
+        answerOut();
         // Morning: the capos' check-ins.
         for (const c of dayCheckIns(s, d)) {
           if (!c.problem) continue;
@@ -158,20 +169,39 @@ describe.skipIf(!ON)('daily sim', () => {
         if (eve) rec.eve = eve;
         if (d < 6) {
           const prev = s;
-          s = tickDay(s);
+          const day = advanceDay(s);
+          s = day.state;
+          const nextRec: DayRec = { w: wk, d: d + 1, date: iso(s, d + 1), dec: 0, mand: 0, am: 0, amUrgent: 0, tips: 0, eve: null, cuts: [], heads: [], warns: [], now: 0, pauses: [], strikes: 0, quiet: 0, extra: 0 };
+          nextRec.dec = day.released.length;
+          nextRec.mand = s.pendingEvents.filter((e) => day.released.includes(e.iid) && e.mandatory).length;
+          for (const l of day.landed) { nextRec.quiet!++; strikeLines.push(l.line); }
+          // A strike: the clock stops; the reasonable player takes the best odds most of the time.
+          for (const id of day.strikes) {
+            const v = momentView(s, id);
+            if (!v) continue;
+            const open = v.options.filter((o) => !o.blocked);
+            const best = [...open].sort((a, b) => b.odds - a.odds)[0];
+            const opt = h32(`${SEED}:${id}:strike`) < 0.6 && best ? best.id : v.def;
+            const r = answerMoment(s, id, opt);
+            if (r.result.ok) { s = r.state; nextRec.strikes!++; strikeLines.push(r.result.line); }
+          }
+          // The App's one stop a morning (App.tsx pauseOnce): the most pressing reason, within the day's budget.
+          const cats: string[] = day.strikes.length ? ['strike'] : [];
           const ps = autoPauses(prev, s, acked, ui).map((p) => p.cat);
-          const urgent = morningStop(s);
-          const nextRec: DayRec = { w: wk, d: d + 1, date: iso(s, d + 1), dec: 0, mand: 0, am: 0, amUrgent: 0, tips: 0, eve: null, cuts: [], heads: [], warns: [], now: 0, pauses: [] };
-          if (ps.length) nextRec.pauses.push(ps[0]);
-          if (urgent) nextRec.pauses.push('capo');
+          if (ps.length) cats.push(ps[0]);
+          if (morningStop(s)) cats.push('capo');
+          const ex = extraToday(s);
+          if (ex) { s = markExtraShown(s, ex.id); nextRec.extra!++; nextRec.heads.push(`extra:${ex.h}`); cats.push('extra'); }
           nextRec.tips = unseenUrgent(s).length;
-          if (nextRec.tips && !nextRec.pauses.includes('urgent')) nextRec.pauses.push('urgent');
+          if (cats.length) pause(nextRec, cats.find((c) => IMMEDIATE.has(c)) ?? cats[0], s);
           days.push(nextRec);
           acked = new Set([...acked, ...redKeys(s, ui)]);
         }
       }
       if (s.gameOver) break;
-      // --- Sunday midnight: the week turns.
+      // --- Sunday midnight: the week turns (anything still held comes out and is answered).
+      s = closeWeek(s);
+      answerOut();
       const base: PlayerChoices = { choices: answers, actions };
       const t = s.tribute;
       const pend = t?.reports.find((r) => r.status === 'presented');
@@ -184,20 +214,18 @@ describe.skipIf(!ON)('daily sim', () => {
       try { res = advanceWeek(s, choices); } catch (e) { errors.push(`CRASH wk${wk}: ${(e as Error).message.slice(0, 400)}`); break; }
       const ms = performance.now() - t0;
       s = res.state;
-      // Day 0 of the new week: the turn's results land now.
-      const d0: DayRec = { w: s.week, d: 0, date: iso(s, 0), dec: s.pendingEvents.length, mand: s.pendingEvents.filter((e) => e.mandatory).length, am: 0, amUrgent: 0, tips: unseenUrgent(s).length, eve: null, cuts: [], heads: [], warns: [], now: 0, pauses: [] };
+      // Day 0 of the new week: Monday's decisions and the turn's results land now.
+      const mon = eventsOut(s);
+      const d0: DayRec = { w: s.week, d: 0, date: iso(s, 0), dec: mon.length, mand: mon.filter((e) => e.mandatory).length, am: 0, amUrgent: 0, tips: unseenUrgent(s).length, eve: null, cuts: [], heads: [], warns: [], now: 0, pauses: [] };
       d0.cuts = cutscenesBetween(prev, s).map((c) => c.key);
       d0.heads = weekHeadlines(prev, s).map((h) => `${h.kind}:${h.text}`);
       d0.warns = newWarnings(prev, s);
-      // The App's quiet week-turn pause logic (run('week', …, true)).
+      // The App's quiet week-turn pause (run('week', …, true)): everything folded into the one Sit-Down pause.
       const ui0 = { answers: {} };
       const ap = autoPauses(prev, s, acked, ui0).map((p) => p.cat);
-      if (ap.length) d0.pauses.push(ap[0]);
       acked = new Set([...acked, ...redKeys(s, ui0)]);
-      if (d0.heads.length) d0.pauses.push('headline');
-      else if (d0.warns.length || d0.cuts.length) d0.pauses.push('warning/cutscene');
-      else if (morningStop(s)) d0.pauses.push('capo');
-      if (d0.tips && !d0.pauses.includes('urgent')) d0.pauses.push('urgent');
+      const turnWhy = ap[0] ?? (d0.heads.length ? 'headline' : d0.warns.length || d0.cuts.length ? 'warning/cutscene' : morningStop(s) ? 'capo' : undefined);
+      if (turnWhy) pause(d0, turnWhy, s);
       days.push(d0);
       // The week's record.
       const crew = crewOf(s);
@@ -221,7 +249,7 @@ describe.skipIf(!ON)('daily sim', () => {
         money: Math.round(s.money), fam: Math.round(familyCash(s)), respect: s.respect, heat: { ...s.heat }, crew: crew.length, made: crew.filter((c) => c.rank !== 'associate').length,
         jailed: crew.filter((c) => c.imprisonedUntil !== undefined && c.imprisonedUntil > s.week).length,
         popups: s.pendingEvents.map((e) => ({ id: e.defId, tpl: templateOf(e), theme: themeOf(e), mand: e.mandatory, title: e.title.slice(0, 70), nChoices: e.choices.filter((c) => !c.disabledReason).length })),
-        log: res.log.map((l) => l.slice(0, 180)), news: newNews, chron: newChron, motion: res.report.motion?.length ?? 0,
+        log: [...res.log, ...strikeLines].map((l) => l.slice(0, 180)), news: newNews, strikeLines, chron: newChron, motion: res.report.motion?.length ?? 0,
         wars: s.wars.length, newWars: s.wars.filter((w) => !prev.wars.some((v) => v.id === w.id)).length,
         battles: (s.army?.history?.length ?? 0) - (prev.army?.history?.length ?? 0),
         deaths, arrests, successions: s.playerId !== prev.playerId ? 1 : 0, rivalBosses: rivalBossChange,

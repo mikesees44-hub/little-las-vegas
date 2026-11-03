@@ -8,7 +8,8 @@ import { sceneNext, sceneRoll } from '../authored/run';
 import { DEEDS } from './catalog';
 import { doDeed } from './resolve';
 import { applyDecision } from '../reactions/apply';
-import { cdKey, ensureDeeds, setTie } from './state';
+import { cdKey, d01, ensureDeeds, setTie } from './state';
+import { applyEffects } from '../effects';
 import { LOG_CAP, OWED_CAP, TIE_LABEL, type DeedOp } from './types';
 
 /**
@@ -87,6 +88,15 @@ export function applyDeedOp(ctx: Ctx, o: DeedOp): void {
     case 'sceneRoll':
       sceneRoll(ctx, o.id, o.c, o.cast, o.p);
       break;
+    case 'gamble': {
+      const ok = d01(ensureDeeds(s)) < o.p / 100;
+      const fx = ok ? o.ok : o.bad;
+      if (fx.length) applyEffects(ctx, fx, { label: o.label, because: ok ? 'it went your way' : 'it went against you', category: 'event' });
+      const line = ok ? o.okText : o.badText;
+      ctx.log.push(line);
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: line, kind: 'decision' });
+      break;
+    }
     case 'sceneNext':
       sceneNext(s, o.id, o.after, o.cast, o.from);
       break;
@@ -141,6 +151,7 @@ export function describeDeedOp(s: GameState, o: DeedOp): string | undefined {
     case 'disown': return `${n(o.who)} is out of the house`;
     case 'npcDeed': return `${n(o.a)} ${DEEDS[o.id]?.name({ s, a: s.characters[o.a], t: s.characters[o.t], boss: false, tBoss: false } as never).toLowerCase().split(' ')[0] ?? o.id}s ${n(o.t)}`;
     case 'sceneRoll': return `${o.p}% it goes your way`;
+    case 'gamble': return `${o.p}% it goes your way`;
     case 'sceneNext': return 'The story goes on…';
     default: return undefined;
   }

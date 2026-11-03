@@ -7,6 +7,7 @@ import { newCtx, type Ctx } from '../ledger';
 import { mindOf } from '../minds/state';
 import { getRelation, opinion } from '../relations';
 import { spendTime, timeBlock } from '../timeCost';
+import { freezeWeek } from '../days';
 import type { Effect, GameState, PlayerAction } from '../types';
 import { applyDeed, deedPreview, tierOf } from './resolve';
 import { d01, ensureDeeds, owedBy, tiesOf } from './state';
@@ -157,10 +158,12 @@ function verdict(tier: Tier, mode: 'consent' | 'odds' | 'order', she: boolean): 
  * Do it now. Pure: returns the new state (unchanged on an error) and the
  * result card. `fund`: the boss approved Family money for what his pocket lacks.
  */
-export function actNow(input: GameState, action: PlayerAction): { state: GameState; result: NowResult } {
+export function actNow(input0: GameState, action: PlayerAction): { state: GameState; result: NowResult } {
+  // The week's mornings are read before the order changes anything (DAILY_LOGIC B1).
+  const input = freezeWeek(input0);
   const p0 = previewAction(input, action);
   const t = personOf(input, action);
-  const fail = (error: string): { state: GameState; result: NowResult } => ({ state: input, result: { ok: false, error, title: p0.title, tier: 'fail', headline: error, line: '', changes: [], leadsTo: [] } });
+  const fail = (error: string): { state: GameState; result: NowResult } => ({ state: input0, result: { ok: false, error, title: p0.title, tier: 'fail', headline: error, line: '', changes: [], leadsTo: [] } });
   if (input.gameOver) return fail('The game is over');
   if (settledThisWeek(input, action)) return fail('Already done this week');
   if (p0.disabledReason) return fail(p0.disabledReason);

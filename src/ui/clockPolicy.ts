@@ -1,4 +1,5 @@
-import { deskQueue, type DeskQueueUi } from '../engine/attention';
+import { DAY_PAUSES, deskQueue, type DeskQueueUi } from '../engine/attention';
+import { tipOut } from '../engine/threats';
 import type { GameState } from '../engine/types';
 
 /**
@@ -24,8 +25,9 @@ export const CLOCK_NAME: Record<ClockSpeed, string> = { 0: 'Paused', 1: 'Slow', 
 export const DEFAULT_SPEED: ClockSpeed = 2;
 
 /** The auto-pause categories (each a setting; all on by default). */
-export type PauseCat = 'red' | 'urgent' | 'war' | 'death' | 'plot';
-export const PAUSE_CATS: { cat: PauseCat; key: 'pauseOnRed' | 'pauseOnUrgent' | 'pauseOnWar' | 'pauseOnLife' | 'pauseOnPlot'; label: string }[] = [
+export type PauseCat = 'red' | 'urgent' | 'war' | 'death' | 'plot' | 'strike';
+export const PAUSE_CATS: { cat: PauseCat; key: 'pauseOnRed' | 'pauseOnUrgent' | 'pauseOnWar' | 'pauseOnLife' | 'pauseOnPlot' | 'pauseOnStrike'; label: string }[] = [
+  { cat: 'strike', key: 'pauseOnStrike', label: 'A threat strikes (a raid at 2 a.m., a hit on Friday night): your call, now' },
   { cat: 'red', key: 'pauseOnRed', label: 'Something red lands on the Desk' },
   { cat: 'urgent', key: 'pauseOnUrgent', label: 'Someone asks for an urgent meeting' },
   { cat: 'war', key: 'pauseOnWar', label: 'A battle, or a war is declared' },
@@ -52,8 +54,9 @@ export interface PauseWhy { cat: PauseCat; text: string }
  */
 export function autoPauses(prev: GameState, next: GameState, acked: ReadonlySet<string>, ui: DeskQueueUi = {}): PauseWhy[] {
   const out: PauseWhy[] = [];
-  const urgentNow = new Set((next.threats?.tips ?? []).filter((t) => t.week >= next.week - 1).map((t) => t.id));
-  const urgentBefore = new Set((prev.threats?.tips ?? []).map((t) => t.id));
+  // A meeting counts the day it comes out on the clock (threats.ts tipOut), not the day the turn planned it.
+  const urgentNow = new Set((next.threats?.tips ?? []).filter((t) => t.week >= next.week - 1 && tipOut(next, t)).map((t) => t.id));
+  const urgentBefore = new Set((prev.threats?.tips ?? []).filter((t) => tipOut(prev, t)).map((t) => t.id));
   const reds = redKeys(next, ui).filter((k) => !acked.has(k));
   const newTips = [...urgentNow].filter((id) => !urgentBefore.has(id));
   if (newTips.length) out.push({ cat: 'urgent', text: 'Someone wants to see you, urgently' });
@@ -77,3 +80,22 @@ export function firstPause(whys: readonly PauseWhy[], on: (key: PauseCatKey) => 
   return whys.find((w) => on(PAUSE_CATS.find((p) => p.cat === w.cat)!.key));
 }
 export type PauseCatKey = (typeof PAUSE_CATS)[number]['key'];
+
+/**
+ * THE PAUSE BUDGET (DAILY_LOGIC B2): at most DAY_PAUSES stops a game day for what can wait (a
+ * warning, a headline, a capo's morning, a plot, an EXTRA); a red item, an urgent meeting, a war,
+ * a death and a strike stop the clock whenever they come (and count toward the day).
+ */
+export const IMMEDIATE: ReadonlySet<string> = new Set<string>(['red', 'urgent', 'war', 'death', 'strike']);
+export interface PauseLedger { key: string; n: number }
+export function budgetPause(l: PauseLedger | undefined, dayKey: string, cat: string): { ok: boolean; ledger: PauseLedger } {
+  const cur = l && l.key === dayKey ? l : { key: dayKey, n: 0 };
+  if (IMMEDIATE.has(cat)) return { ok: true, ledger: { key: dayKey, n: cur.n + 1 } };
+  if (cur.n >= DAY_PAUSES) return { ok: false, ledger: cur };
+  return { ok: true, ledger: { key: dayKey, n: cur.n + 1 } };
+}
+
+/** The day's key for the budget ("week:day"). */
+export function dayKey(s: GameState): string {
+  return `${s.week}:${s.days && s.days.week === s.week ? s.days.day : 0}`;
+}

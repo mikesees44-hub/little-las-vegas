@@ -982,6 +982,8 @@ export interface GameState {
   days?: import('./days').DaysState;
   /** Planned moves against the boss and the urgent meetings that warn of them (threats.ts; optional for old saves). */
   threats?: import('./threats').ThreatsState;
+  /** The week lived day by day: decisions held for later days, raid cooldowns, the weeks under water, the set-pieces (actionState.ts; optional). */
+  action?: import('./actionState').ActionState;
   /** The boss's hours today: what his orders have spent, what is booked ahead, late nights and missed dinners (timeCost.ts; optional, starts when used). */
   hours?: import('./timeCost').HoursState;
   /** Cutting up the big scores (cutScore.ts; optional, made by the first offer). */

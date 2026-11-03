@@ -50,8 +50,9 @@ describe('the event mix', () => {
           year = new Set();
         }
       }
-      // The kin come to the door every couple of months, not once a game.
-      expect(kinWeeks.length, `kin popups, seed ${seed}`).toBeGreaterThanOrEqual(6);
+      // The kin come to the door every few months, not once a game (the season's set-pieces and
+      // Philadelphia's summons take a mandatory seat a few weeks a year: DAILY_LOGIC #4, #9).
+      expect(kinWeeks.length, `kin popups, seed ${seed}`).toBeGreaterThanOrEqual(5);
       kinWeeks = [];
     }
     expect(total).toBeGreaterThan(3 * 104 * 1.5);

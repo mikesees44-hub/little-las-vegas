@@ -5,7 +5,7 @@ import { alliedWithFaction } from './familyHouses';
 import { pactWith } from './talks';
 import { lawZeal } from './polIntegrity';
 import { perkMod } from './lifestyle';
-import { gameYear } from './calendar';
+import { gameYear, isInSeason } from './calendar';
 import { crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { fmtMoney, shiftInfluence } from './effects';
 import { killCharacter } from './dynasty';
@@ -177,7 +177,8 @@ export function rivalWeek(ctx: Ctx): void {
     if (!choice) continue;
     executeMove(ctx, r, choice);
     noteRivalMove(s, r, choice.move, choice.target);
-    r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? 3 : choice.move === 'offer_deal' ? (r.kind === 'philly' ? 12 : 8) : 1);
+    // In season the island is loud and the money is out: a rival strikes again sooner (DAILY_LOGIC #9).
+    r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? (isInSeason(s.date) ? 2 : 3) : choice.move === 'offer_deal' ? (r.kind === 'philly' ? 12 : 8) : 1);
   }
 }
 

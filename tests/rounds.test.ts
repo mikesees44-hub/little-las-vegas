@@ -1,3 +1,4 @@
+import { setCapoLevel } from '../src/engine/lieutenants';
 import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -162,7 +163,9 @@ describe('the morning check-in', () => {
   });
 
   it('answers land on the books; unanswered problems are handled his way and he notices', () => {
-    const s = base;
+    // Capos left on "Ask me first", so an unanswered routine problem is a slight (on "Handle it" it is his call).
+    let s = base;
+    for (const k of capos(s)) s = setCapoLevel(s, k.id, 'ask');
     const c = weekCheckIns(s).find((x) => x.problem)!;
     const pick = c.problem!.answers.find((a) => a.id !== c.problem!.own) ?? c.problem!.answers[0];
     const answered = answerCheckIn(s, c.key, pick.id);

@@ -66,15 +66,17 @@ describe('the clock', () => {
     s.heat.local = 75;
     const u = weekCheckIns(s).find((c) => c.problem?.urgent);
     expect(u).toBeDefined();
-    expect(u!.day).toBe(0);
+    // An urgent problem can come in on any weekday (DAILY_LOGIC: the mornings are spread over the week).
+    expect(u!.day).toBeLessThanOrEqual(4);
+    for (let d = 0; d < u!.day; d++) s = tickDay(s);
     expect(morningStop(s)).toMatch(/urgent/);
     let answered = s;
-    for (const c of weekCheckIns(s).filter((x) => x.day === 0 && x.problem?.urgent)) {
+    for (const c of weekCheckIns(s).filter((x) => x.day === u!.day && x.problem?.urgent)) {
       expect(morningStop(answered)).toMatch(/urgent/);
       answered = answerCheckIn(answered, c.key, c.problem!.answers[0].id);
     }
     expect(morningStop(answered)).toBeUndefined();
-    expect(morningStop(skipMorning(s, 0, true))).toBeUndefined();
+    expect(morningStop(skipMorning(s, u!.day, true))).toBeUndefined();
   });
 });
 

@@ -157,25 +157,50 @@ const FLAVOR = (s: GameState, k: Character): string[] => {
   return out;
 };
 
-const PROBLEM_ODDS = 0.4;
+/** The chance a problem a capo could bring comes up at all this week (each kind once a week). */
+const PROBLEM_ODDS = 0.8;
+/** The days a routine problem can come in on (Monday … Saturday); an urgent one, Monday … Friday. */
+const ROUTINE_DAYS = 6;
+const URGENT_DAYS = 5;
 
-/** The whole week's check-ins (every capo, every day), from the state at the start of the week. */
+/**
+ * The whole week's check-ins (every capo, every day). Read off the state at the start of the week:
+ * once anything in the week has been touched (a morning answered, a day passed, an order settled on
+ * the spot) the list is frozen in the days plan (days.ts `freezeWeek`), so an answer the boss gave
+ * is never lost to a reshuffle (DAILY_LOGIC B1).
+ *
+ * Each problem a capo could bring gets its own seeded day, so the mornings are spread across the
+ * week, and an urgent one can come on any weekday, not only Monday.
+ */
 export function weekCheckIns(s: GameState): CheckIn[] {
+  const d = s.days;
+  if (d && d.week === s.week && d.frozen) return d.frozen;
+  return computeCheckIns(s);
+}
+
+export function computeCheckIns(s: GameState): CheckIn[] {
   if (s.gameOver) return [];
   const out: CheckIn[] = [];
   for (const k of capos(s).filter((c) => isFree(s, c)).sort((a, b) => a.id.localeCompare(b.id))) {
     const d = s.districts.find((x) => x.capoId === k.id);
     const cands = candidates(s, k);
-    const used = new Set<string>();
     const fl = FLAVOR(s, k);
     const sum = capoSummary(s, k) ?? (d ? `${d.name}.` : 'No district of his own.');
+    const slots: (CheckProblem | undefined)[] = Array(7).fill(undefined);
+    // Urgent first (they must find a weekday), then the rest, each on its own seeded day.
+    const order = [...cands].sort((a, b) => Number(b.urgent) - Number(a.urgent) || a.kind.localeCompare(b.kind));
+    for (const c of order) {
+      if (!c.urgent && roll(`${s.seed}|${s.week}|cq|${k.id}|${c.kind}`) >= PROBLEM_ODDS) continue;
+      const span = c.urgent ? URGENT_DAYS : ROUTINE_DAYS;
+      const first = Math.floor(roll(`${s.seed}|${s.week}|cd|${k.id}|${c.kind}`) * span) % span;
+      for (let i = 0; i < span; i++) {
+        const day = (first + i) % span;
+        if (!slots[day]) { slots[day] = c; break; }
+      }
+    }
     for (let day = 0; day < 7; day++) {
       const h = roll(`${s.seed}|${s.week}|ci|${k.id}|${day}`);
-      const left = cands.filter((c) => !used.has(c.kind));
-      // An urgent problem comes in on Monday; the rest when they come.
-      const urgent = day === 0 ? left.find((c) => c.urgent) : undefined;
-      const p = urgent ?? (h < PROBLEM_ODDS && left.length ? left[Math.floor(roll(`${s.seed}|${s.week}|cp|${k.id}|${day}`) * left.length) % left.length] : undefined);
-      if (p) used.add(p.kind);
+      const p = slots[day];
       // A capo loyal to the boss may drop a line about the underboss's court (shadow.ts).
       const line = whisperOn(s, k.id, day) ?? (day === 0 ? sum : fl[Math.floor(h * 1000) % fl.length]);
       out.push({ key: `${day}:${k.id}`, day, capoId: k.id, name: shortName(k), title: d ? `Capo · ${d.name}` : 'Capo', line, ...(p ? { problem: p } : {}) });

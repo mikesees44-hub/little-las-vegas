@@ -5,15 +5,19 @@ import { holder as seatHolder } from './council';
 import { killCharacter } from './dynasty';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
 import { alliedWithFaction } from './familyHouses';
-import { respect, rivalMoneyHit, type Ctx } from './ledger';
+import { newCtx as newCtxFor, respect, rivalMoneyHit, type Ctx } from './ledger';
 import { rivalCaps } from './rivals';
-import { awayReason, today } from './days';
+import { awayReason, DAY_NAMES, today } from './days';
+import { noteRaided, raidedLately, ensureAction } from './actionState';
+import { journal } from './journal';
+import type { NowResult } from './deeds/now';
 import { defectTo } from './regimes';
 import { addOpinion, opinion } from './relations';
 import { chance, hashSeed, pick, rand, randInt, type RngHolder } from './rng';
 import { strengthTotal } from './strength';
 import { pactWith } from './talks';
 import { protectFoiled, protectionFor } from './protect';
+import { wealthPressure } from './pressure';
 import { noteThreatPlan, threatLean } from './minds/planner';
 import type { Character, Effect, GameState, Rival, RivalId } from './types';
 
@@ -81,6 +85,13 @@ export interface Threat {
   schemeId?: string;
   /** A honey trap (honey.ts): the woman who set the boss up for it. The hit waits where she asked him to meet her. */
   lure?: string;
+  /** The day of its week it lands (0 Monday … 6 Sunday) and the hour (0-23): a ticking clock (daily.ts). Absent: it lands at the week's turn. */
+  dueDay?: number;
+  hour?: number;
+  /** It is happening right now: the boss has a moment to answer (strikeView / resolveStrike). */
+  live?: 1;
+  /** A raid the heat brought (heat.ts): cash seized, a bigger padlock, the pressure released. */
+  heatRaid?: 1;
 }
 
 export interface Tip {
@@ -113,6 +124,11 @@ export interface Tip {
   seen?: boolean;
   /** The day of the week the boss met him (for a time system). */
   metDay?: number;
+  /** When the source says it comes (his day and hour; a garbled tip can be a day off). */
+  dueDay?: number;
+  hour?: number;
+  /** When he asks for the meeting: the week and day it comes out on the clock (absent: at once). */
+  rel?: { w: number; d: number };
 }
 
 export interface ThreatLog { week: number; text: string }
@@ -272,6 +288,9 @@ export function aggression(s: GameState, r: Rival): { chance: number; reasons: {
   // What is on his mind (minds/planner.ts): a grudge, a plan against you, his read of your strength.
   const lean = threatLean(s, r);
   if (lean) mul(lean.label, lean.mult);
+  // Success draws fire (pressure.ts): a fat outfit is worth a move.
+  const fat = wealthPressure(s);
+  if (fat > 0) mul('You are getting fat: everybody wants a piece', 1 + 0.6 * fat);
   if (s.week < graceWeeks(s)) { p = 0; reasons.push({ label: 'Too early: they are still sizing you up', value: -100 }); }
   return { chance: Math.max(0, Math.min(0.4, p)), reasons };
 }
@@ -296,6 +315,59 @@ function ourBusinesses(s: GameState): GameState['businesses'] {
   return s.businesses.filter((b) => b.owner === 'player' && !(b.closedUntil !== undefined && b.closedUntil > s.week));
 }
 
+/** Places the cops (or a rival's planted gun) may hit: not one raided in the last RAID_COOLDOWN weeks (DAILY_LOGIC B3). */
+function raidable(s: GameState): GameState['businesses'] {
+  return ourBusinesses(s).filter((b) => !raidedLately(s, b.id));
+}
+
+/* ------------------------------------------------------------------ */
+/* When: the day and the hour (ticking clocks)                         */
+/* ------------------------------------------------------------------ */
+
+const HOURS: Record<ThreatKind, number[]> = {
+  hit: [22, 23, 0, 1, 2], move: [19, 20, 21, 22], racket: [23, 0, 1, 2, 3], poach: [13, 15, 20], bribe: [12, 14, 21], setup: [6, 7, 10, 11],
+  raid: [1, 2, 3, 4, 22], stakeout: [9, 11, 14, 16], wire: [8, 10, 15],
+  fed_post: [9, 10, 14], fed_wire: [8, 11], fed_flip: [7, 18, 19], fed_under: [20, 21, 22], fed_gj: [9, 10],
+};
+/** The days a kind likes (a hit on a Friday or Saturday night when the boardwalk is loud). */
+const DAYS: Partial<Record<ThreatKind, number[]>> = { hit: [4, 5, 3, 4, 5, 2], racket: [4, 5, 6, 3, 2], move: [1, 2, 3, 4, 5], raid: [1, 2, 3, 4, 5, 6] };
+
+/** A hash roll in [0,1) (the same as roundsPersonal.roll; kept here so this low-level module stays light). */
+function hroll(str: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  return (h >>> 0) / 4294967296;
+}
+
+/** Give a planned move its day and hour (hashed off the seed, never the dice). Day 1-6: Monday is for the warning. */
+export function stampWhen(s: GameState, t: Threat): void {
+  if (t.dueDay !== undefined) return;
+  const ds = DAYS[t.kind] ?? [1, 2, 3, 4, 5, 6];
+  const hs = HOURS[t.kind];
+  t.dueDay = ds[Math.floor(hroll(`${s.seed}|${t.id}|dd`) * ds.length) % ds.length];
+  t.hour = hs[Math.floor(hroll(`${s.seed}|${t.id}|hh`) * hs.length) % hs.length];
+}
+
+/** "2 a.m.", "11 p.m.", "midnight", "noon". */
+export function hourText(h: number | undefined): string {
+  if (h === undefined) return '';
+  if (h === 0) return 'midnight';
+  if (h === 12) return 'noon';
+  return h < 12 ? `${h} a.m.` : `${h - 12} p.m.`;
+}
+
+/** "Friday, 2 a.m." */
+export function whenText(day: number | undefined, hour: number | undefined): string {
+  if (day === undefined) return '';
+  const night = hour !== undefined && (hour >= 20 || hour <= 4);
+  return `${DAY_NAMES[day]}${night ? ' night' : ''}${hour !== undefined ? `, ${hourText(hour)}` : ''}`;
+}
+
+/** Has this urgent meeting come out yet on the clock? */
+export function tipOut(s: GameState, t: Tip): boolean {
+  return !t.rel || s.week > t.rel.w || (s.week === t.rel.w && today(s) >= t.rel.d);
+}
+
 function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined {
   const leader = s.characters[r.leaderId];
   const op = opinion(s, r.leaderId, s.playerId);
@@ -304,6 +376,7 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
   const caps = men.filter((c) => c.rank === 'capo');
   const ground = s.districts.filter((d) => (d.influence.player ?? 0) > 8);
   const biz = ourBusinesses(s);
+  const hittable = raidable(s);
   const cruel = hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed') ? 1.6 : 1;
   const hate = op <= -50 ? 1.6 : op <= -20 ? 1.2 : 0.6;
   const mk = threatLean(s, r)?.kinds ?? {};
@@ -312,14 +385,15 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
     ['racket', (biz.length ? 2 : 0) * (mk.racket ?? 1)],
     ['poach', (soldiers.length ? 1.5 : 0) * (mk.poach ?? 1)],
     ['bribe', (men.length ? 1.2 * (hasTrait(leader, 'Greedy') || hasTrait(leader, 'Charming') ? 1.4 : 1) : 0) * (mk.bribe ?? 1)],
-    ['setup', (biz.length ? 1 + s.heat.local / 60 : 0) * (mk.setup ?? 1)],
+    ['setup', (hittable.length ? 1 + s.heat.local / 60 : 0) * (mk.setup ?? 1)],
     ['hit', (caps.length + soldiers.length ? 0.9 : 0) * cruel * hate * (mk.hit ?? 1)],
   ]);
   if (!kind) return undefined;
   const t: Threat = { id: nid(T, 'th'), kind, by: r.id, start: s.week, due: s.week + randInt(T, 1, 3), blunt: 0 };
   switch (kind) {
     case 'move': t.district = (ground.find((d) => (d.influence[r.id] ?? 0) > 0 && chance(T, 0.6)) ?? pick(T, ground)).id; break;
-    case 'racket': case 'setup': { const b = pick(T, biz); t.bizId = b.id; t.district = b.districtId; break; }
+    case 'racket': { const b = pick(T, biz); t.bizId = b.id; t.district = b.districtId; break; }
+    case 'setup': { const b = pick(T, hittable); t.bizId = b.id; t.district = b.districtId; break; }
     case 'poach': t.targetId = soldiers.sort((a, b) => opinion(s, a.id, s.playerId) - opinion(s, b.id, s.playerId))[0].id; break;
     case 'bribe': t.targetId = pick(T, men).id; break;
     case 'hit': {
@@ -341,10 +415,11 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
 
 function planPolice(s: GameState, T: ThreatsState): Threat | undefined {
   const h = s.heat.local;
-  if (h < 35 || active(T).some((x) => x.by === 'police')) return undefined;
-  if (!chance(T, (h - 30) / 160)) return undefined;
-  const biz = ourBusinesses(s);
-  const kind: ThreatKind = h >= 60 && biz.length ? (chance(T, 0.6) ? 'raid' : 'stakeout') : chance(T, 0.25) ? 'wire' : 'stakeout';
+  if (h < 30 || active(T).some((x) => x.by === 'police')) return undefined;
+  // A fat outfit gets the county's attention too (pressure.ts); in season the county is on the boards.
+  if (!chance(T, (h - 25) / 150 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.015 : 0))) return undefined;
+  const biz = raidable(s);
+  const kind: ThreatKind = h >= 38 && biz.length ? (chance(T, 0.6) ? 'raid' : 'stakeout') : chance(T, 0.25) ? 'wire' : 'stakeout';
   const t: Threat = { id: nid(T, 'th'), kind, by: 'police', start: s.week, due: s.week + randInt(T, 1, 2), blunt: 0 };
   if (biz.length) { const b = pick(T, biz); t.bizId = b.id; t.district = b.districtId; }
   return t;
@@ -355,14 +430,16 @@ function planFeds(s: GameState, T: ThreatsState): Threat | undefined {
   const F = T.fed;
   if (s.week < F.next || active(T).some((x) => x.by === 'fbi')) return undefined;
   const ev = player(s).evidence ?? 0;
-  if (F.stage === 0 && s.heat.federal < 20 && ev < 15) { F.next = s.week + 4; return undefined; }
+  // Money talks to the government too: a fat outfit draws the FBI sooner (pressure.ts).
+  const fat = wealthPressure(s);
+  if (F.stage === 0 && s.heat.federal < 20 && ev < 15 && fat < 0.4) { F.next = s.week + 4; return undefined; }
   const kind: ThreatKind = F.stage <= 0 ? 'fed_post' : F.stage === 1 ? 'fed_wire' : F.stage === 2 ? (chance(T, 0.5) ? 'fed_flip' : 'fed_under') : 'fed_gj';
   const t: Threat = { id: nid(T, 'th'), kind, by: 'fbi', start: s.week, due: s.week + randInt(T, 2, 4), blunt: 0 };
   const men = crew(s).filter((c) => isFree(s, c));
   if (kind === 'fed_flip' && men.length) t.targetId = [...men].sort((a, b) => opinion(s, a.id, s.playerId) - opinion(s, b.id, s.playerId))[0].id;
   if (kind === 'fed_gj') { const k = men.filter((c) => c.rank === 'capo'); if (k.length) t.targetId = pick(T, k).id; }
   if (kind === 'fed_post' || kind === 'fed_under') { const b = ourBusinesses(s); if (b.length) { const x = pick(T, b); t.bizId = x.id; t.district = x.districtId; } }
-  F.next = s.week + randInt(T, 7, 11);
+  F.next = s.week + Math.max(4, randInt(T, 7, 11) - Math.round(fat * 4));
   return t;
 }
 
@@ -545,6 +622,7 @@ export function seedThreat(s: GameState, threat: Omit<Threat, 'id' | 'start' | '
   let threatId: string | undefined;
   if (threat) {
     const t: Threat = { ...threat, id: nid(T, 'th'), start: s.week, blunt: 0 };
+    stampWhen(s, t);
     T.threats.push(t);
     T.stats.planned++;
     threatId = t.id;
@@ -599,32 +677,38 @@ export function threatsAnswer(ctx: Ctx): void {
     }
     if (tip.status !== 'met' && tip.status !== 'sent') continue;
     if (!tip.response && tip.deadline > s.week) continue;
-    const resp = tip.response ?? 'nothing';
-    tip.status = 'done';
-    if (resp === 'nothing') continue;
-    const via = tip.via ?? 'boss';
-    applyEffects(ctx, responseEffects(s, tip, resp), { label: `Urgent meeting: ${RESPONSES[resp].label}`, because: `${RESPONSES[resp].because} on ${tip.sourceName}'s word`, category: 'event' });
-    if (resp === 'warn' && tip.targetId) { const c = s.characters[tip.targetId]; if (c?.alive && c.id !== s.playerId) c.busyUntil = Math.max(c.busyUntil ?? 0, s.week + 1); }
-    if (resp === 'feed' && T.fed.stage > 0 && tip.truth !== 'false') T.fed.stage = Math.max(0, T.fed.stage - 1);
-    // A planted tip that sent you after the wrong crew: the planter laughs.
-    if (resp === 'counter' && tip.truth === 'false' && tip.plantedBy) note(ctx, T, `Word comes back: ${rivalName(s, tip.plantedBy)} put that story in ${tip.sourceName}'s ear. You hit ${rivalName(s, tip.by)} for nothing.`);
-    const t = tip.threatId ? T.threats.find((x) => x.id === tip.threatId) : undefined;
-    if (!t) continue;
-    let eff = (EFFECT[resp as Exclude<ResponseId, 'nothing'>]?.[t.kind] ?? 0) * VIA_MULT[via] * (tip.truth === 'garbled' ? 0.6 : 1);
-    if (resp === 'move_family' && t.targetId && !(t.targetId === s.playerId || isFamily(s, s.characters[t.targetId]))) eff = 0.3;
-    if (resp === 'warn' && t.targetId === s.playerId) eff = 0;
-    if (resp === 'counter' && tip.by !== t.by) eff = 0;
-    t.blunt = 1 - (1 - t.blunt) * (1 - Math.max(0, Math.min(1, eff)));
-    // A scheme the street warned you about: an answer that works ends it now.
-    if (t.schemeId && eff > 0 && chance(T, t.blunt)) {
-      const sc = s.schemes.find((x) => x.id === t.schemeId);
-      if (sc) {
-        applyEffects(ctx, [{ type: 'endScheme', schemeId: sc.id, label: 'Urgent meeting' }], { label: 'Urgent meeting', because: `stopped ${rivalName(s, t.by)}'s plot on ${tip.sourceName}'s word`, category: 'event' });
-        note(ctx, T, `${rivalName(s, t.by)}'s plot against ${personName(s, t.targetId)} came to nothing: ${tip.sourceName} warned you in time.`);
-        credit(ctx, T, t);
-      }
-      T.threats = T.threats.filter((x) => x !== t);
+    answerTip(ctx, T, tip);
+  }
+}
+
+/** One answered meeting is carried out (at the week's turn, or the moment its threat strikes). */
+function answerTip(ctx: Ctx, T: ThreatsState, tip: Tip): void {
+  const s = ctx.s;
+  const resp = tip.response ?? 'nothing';
+  tip.status = 'done';
+  if (resp === 'nothing') return;
+  const via = tip.via ?? 'boss';
+  applyEffects(ctx, responseEffects(s, tip, resp), { label: `Urgent meeting: ${RESPONSES[resp].label}`, because: `${RESPONSES[resp].because} on ${tip.sourceName}'s word`, category: 'event' });
+  if (resp === 'warn' && tip.targetId) { const c = s.characters[tip.targetId]; if (c?.alive && c.id !== s.playerId) c.busyUntil = Math.max(c.busyUntil ?? 0, s.week + 1); }
+  if (resp === 'feed' && T.fed.stage > 0 && tip.truth !== 'false') T.fed.stage = Math.max(0, T.fed.stage - 1);
+  // A planted tip that sent you after the wrong crew: the planter laughs.
+  if (resp === 'counter' && tip.truth === 'false' && tip.plantedBy) note(ctx, T, `Word comes back: ${rivalName(s, tip.plantedBy)} put that story in ${tip.sourceName}'s ear. You hit ${rivalName(s, tip.by)} for nothing.`);
+  const t = tip.threatId ? T.threats.find((x) => x.id === tip.threatId) : undefined;
+  if (!t) return;
+  let eff = (EFFECT[resp as Exclude<ResponseId, 'nothing'>]?.[t.kind] ?? 0) * VIA_MULT[via] * (tip.truth === 'garbled' ? 0.6 : 1);
+  if (resp === 'move_family' && t.targetId && !(t.targetId === s.playerId || isFamily(s, s.characters[t.targetId]))) eff = 0.3;
+  if (resp === 'warn' && t.targetId === s.playerId) eff = 0;
+  if (resp === 'counter' && tip.by !== t.by) eff = 0;
+  t.blunt = 1 - (1 - t.blunt) * (1 - Math.max(0, Math.min(1, eff)));
+  // A scheme the street warned you about: an answer that works ends it now.
+  if (t.schemeId && eff > 0 && chance(T, t.blunt)) {
+    const sc = s.schemes.find((x) => x.id === t.schemeId);
+    if (sc) {
+      applyEffects(ctx, [{ type: 'endScheme', schemeId: sc.id, label: 'Urgent meeting' }], { label: 'Urgent meeting', because: `stopped ${rivalName(s, t.by)}'s plot on ${tip.sourceName}'s word`, category: 'event' });
+      note(ctx, T, `${rivalName(s, t.by)}'s plot against ${personName(s, t.targetId)} came to nothing: ${tip.sourceName} warned you in time.`);
+      credit(ctx, T, t);
     }
+    T.threats = T.threats.filter((x) => x !== t);
   }
 }
 
@@ -652,16 +736,23 @@ function warned(T: ThreatsState, t: Threat): boolean {
   return T.tips.some((x) => x.threatId === t.id);
 }
 
-/** A threat comes due: what is left of it after the boss's answers lands. */
-function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
+/** The share of the time a threat comes to nothing, now: its blunting so far and the guards on a hit. */
+export function foilOdds(s: GameState, t: Threat, extra = 0): number {
+  const tgt = t.targetId ? s.characters[t.targetId] : undefined;
+  // Guards on the target take a share off a hit (protect.ts): never all of it.
+  const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id, t.lure ? 'night' : 'any').cut : 0;
+  return 1 - (1 - t.blunt) * (1 - guard) * (1 - Math.max(0, Math.min(0.95, extra)));
+}
+
+/** A threat comes due: what is left of it after the boss's answers lands. `outcome`: already rolled (a strike in the moment). */
+function land(ctx: Ctx, T: ThreatsState, t: Threat, outcome?: 'foiled' | 'landed'): void {
   const s = ctx.s;
   const by = rivalName(s, t.by);
   const r = s.rivals.find((x) => x.id === t.by);
   const tgt = t.targetId ? s.characters[t.targetId] : undefined;
-  // Guards on the target take a share off a hit (protect.ts): never all of it.
   const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id, t.lure ? 'night' : 'any').cut : 0;
-  const blunt = guard > 0 ? 1 - (1 - t.blunt) * (1 - guard) : t.blunt;
-  if (blunt > 0 && chance(T, blunt)) {
+  const blunt = foilOdds(s, t);
+  if (outcome === 'foiled' || (outcome === undefined && blunt > 0 && chance(T, blunt))) {
     T.stats.foiled++;
     credit(ctx, T, t);
     if (guard > 0 && tgt) protectFoiled(ctx, tgt.id, by);
@@ -741,6 +832,18 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat): void {
     }
     case 'setup': case 'raid': {
       const b = s.businesses.find((x) => x.id === t.bizId && x.owner === 'player');
+      noteRaided(s, t.bizId);
+      if (t.heatRaid) {
+        // The heat's own raid (heat.ts): a bigger padlock, the cash in the back room, the photos in the paper.
+        const weeks = randInt(T, 3, 5);
+        const effects: Effect[] = [{ type: 'heat', bar: 'local', amount: -18 }, { type: 'respect', amount: -2 }];
+        if (b) effects.push({ type: 'closeBusiness', businessId: b.id, weeks });
+        const seized = Math.min(Math.max(0, s.money), Math.round(b ? b.weeklyBase * 2 : 1500));
+        if (seized > 0) effects.push({ type: 'money', amount: -seized, category: 'heat', label: `RAID: cash seized at ${bizName(s, t.bizId)}` });
+        eff(effects, 'the heat brought a raid');
+        note(ctx, T, `RAID: County detectives came through the door of ${bizName(s, t.bizId)} at ${hourText(t.hour ?? 2)} and padlocked it for ${weeks} weeks${seized > 0 ? `, with ${fmtMoney(seized)} from the back room` : ''}.${tag}`);
+        return;
+      }
       const fall = crew(s).filter((c) => isFree(s, c) && (c.rank === 'soldier' || c.rank === 'associate'));
       const effects: Effect[] = [{ type: 'heat', bar: 'local', amount: t.kind === 'setup' ? 6 : -8 }, { type: 'respect', amount: -1 }];
       if (b) effects.push({ type: 'closeBusiness', businessId: b.id, weeks: randInt(T, 2, 4) });
@@ -804,6 +907,7 @@ export function planLure(s: GameState, by: RivalId, womanId: string, caution = 0
   const boss = player(s);
   const blunt = Math.max(0, Math.min(0.9, caution + (hasTrait(boss, 'Paranoid') ? 0.35 : 0)));
   const t: Threat = { id: nid(T, 'th'), kind: 'hit', by, targetId: s.playerId, start: s.week, due: s.week + 1, blunt, lure: womanId };
+  stampWhen(s, t);
   T.threats.push(t);
   T.stats.planned++;
   const srcs = sourcesOf(s).filter((x) => x.ownedBy !== by && x.loyalty > -30);
@@ -896,6 +1000,7 @@ export function threatsWeek(ctx: Ctx): void {
   }
   if (s.week >= GRACE_WEEKS && room() > 0) { const t = planPolice(s, T); if (t) planned.push(t); }
   if (room() > 0) { const t = planFeds(s, T); if (t) planned.push(t); }
+  for (const t of planned) stampWhen(s, t);
   T.threats.push(...planned);
   T.stats.planned += planned.length;
   schemeThreats(s, T);
@@ -916,7 +1021,24 @@ export function threatsWeek(ctx: Ctx): void {
     }
   }
   if (s.week >= GRACE_WEEKS) falseTips(s, T, srcs, fresh);
+  let k = 0;
   for (const tip of fresh.slice(0, TIPS_PER_WEEK + 1)) {
+    // The meetings come out on the days of the week (never after the thing they warn of).
+    const th = tip.threatId ? T.threats.find((x) => x.id === tip.threatId) : undefined;
+    if (th?.dueDay !== undefined) {
+      const off = tip.truth === 'garbled' ? (hroll(`${s.seed}|${tip.id}|off`) < 0.5 ? -1 : 1) : 0;
+      tip.dueDay = Math.max(1, Math.min(6, th.dueDay + off));
+      tip.hour = th.hour;
+    } else if (!th) {
+      // Talk with nothing behind it still names a night.
+      const hs = HOURS[tip.kind];
+      tip.dueDay = 1 + (Math.floor(hroll(`${s.seed}|${tip.id}|fd`) * 6) % 6);
+      tip.hour = hs[Math.floor(hroll(`${s.seed}|${tip.id}|fh`) * hs.length) % hs.length];
+    }
+    const last = th && th.due === s.week + 1 && th.dueDay !== undefined ? th.dueDay - 1 : 4;
+    // Staggered over Monday … Thursday (never on or after the night it warns of).
+    const d = Math.min(last, (Math.floor(hroll(`${s.seed}|${tip.id}|rel`) * 4) + k++) % 4);
+    tip.rel = { w: s.week + 1, d: Math.max(0, d) };
     T.tips.push(tip);
     T.stats.tips++;
     if (tip.truth === 'false') T.stats.falseTips++;
@@ -1064,13 +1186,13 @@ export function urgentMeetings(s: GameState): UrgentView[] {
   const ub = seatHolder(s, 'underboss');
   const cons = seatHolder(s, 'consigliere');
   const block = meetBlock(s);
-  return T.tips.filter((t) => t.status === 'waiting' || t.status === 'met' || t.status === 'sent').map((t) => {
+  return T.tips.filter((t) => (t.status === 'waiting' || t.status === 'met' || t.status === 'sent') && tipOut(s, t)).map((t) => {
     const left = t.deadline - s.week;
     const open = t.status !== 'waiting';
     return {
       id: t.id, who: t.sourceName, role: t.sourceRole, sourceId: t.sourceId, charId: s.characters[t.sourceId] ? t.sourceId : undefined,
       hint: t.hint, detail: open ? t.detail : undefined, read: open ? t.read : undefined,
-      deadline: t.deadline, when: left <= 0 ? 'This week' : left === 1 ? 'By next week' : `Within ${left} weeks`,
+      deadline: t.deadline, when: left <= 0 && t.dueDay !== undefined ? whenText(t.dueDay, t.hour) : left <= 0 ? 'This week' : left === 1 ? 'By next week' : `Within ${left} weeks`,
       status: t.status, via: t.via, response: t.response,
       canMeet: block, underboss: ub ? displayName(ub) : undefined, consigliere: cons ? displayName(cons) : undefined,
       responses: open ? responsesFor(s, t).map((r) => ({ id: r, label: RESPONSES[r].label, hint: RESPONSES[r].hint })) : [],
@@ -1089,3 +1211,274 @@ export function unseenUrgent(s: GameState): string[] {
   return urgentMeetings(s).filter((u) => !u.seen && u.status === 'waiting').map((u) => u.id);
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Ticking clocks: a threat lands on its day, at its hour               */
+/* ------------------------------------------------------------------ */
+
+export type StrikeOptId = 'fight' | 'duck' | 'tipoff' | 'clean' | 'quiet' | 'ride';
+export interface StrikeOption {
+  id: StrikeOptId;
+  label: string;
+  hint: string;
+  /** 0-1: the chance it comes to nothing if he answers this way. */
+  odds: number;
+  blocked?: string;
+}
+export interface StrikeView {
+  id: string;
+  kind: ThreatKind;
+  title: string;
+  text: string;
+  when: string;
+  /** He was warned (an urgent meeting about it). */
+  warned: boolean;
+  options: StrikeOption[];
+  def: StrikeOptId;
+}
+
+interface OptSpec { id: StrikeOptId; label: string; hint: string; bonus: number; cost: Effect[]; win?: Effect[]; blocked?: string }
+
+/** A strike worth stopping the clock for: he was warned, or it comes at his people or his doors. */
+export function strikeWorthy(s: GameState, t: Threat): boolean {
+  const T = s.threats;
+  return (!!T && warned(T, t)) || t.kind === 'hit' || t.kind === 'raid' || t.kind === 'setup' || t.kind === 'racket';
+}
+
+function strikeSpecs(s: GameState, t: Threat): OptSpec[] {
+  const r = s.rivals.find((x) => x.id === t.by && x.kind === 'mob');
+  const mine = Math.max(5, strengthTotal(s));
+  const muscle = r ? Math.max(0, Math.min(1, mine / (mine + Math.max(5, r.muscle)))) : 0.5;
+  const L = `${rivalName(s, t.by)}: ${KIND_LABEL[t.kind].toLowerCase()}`;
+  const cash = (n: number, why: string): Effect => ({ type: 'money', amount: -n, category: 'event', label: why });
+  const capo = t.district ? s.districts.find((d) => d.id === t.district)?.capoId : undefined;
+  const capoName = capo && s.characters[capo]?.alive ? s.characters[capo].firstName : undefined;
+  const ride: OptSpec = { id: 'ride', label: capoName && r ? `Leave it to ${capoName}` : 'Let your people handle it', hint: capoName && r ? 'his street, his call · free' : 'free', bonus: capoName && r ? 0.08 : 0, cost: [] };
+  const take = Math.max(200, Math.round((s.lastReport?.grossIncome ?? 4000) * 0.06 / 50) * 50);
+  if (t.by === 'police') {
+    const pay = Math.round(600 + s.heat.local * 12);
+    return [
+      { id: 'tipoff', label: 'Call the sergeant on the pad', hint: `−$${pay.toLocaleString('en-US')} · he loses the warrant for an hour`, bonus: 0.5, cost: [cash(pay, 'An envelope for the sergeant, at an ungodly hour')], blocked: s.money < pay ? `Needs $${pay.toLocaleString('en-US')}` : undefined },
+      { id: 'clean', label: 'Get the books and the guns out the back', hint: `−$${take.toLocaleString('en-US')} (a night's take) · local heat −1`, bonus: 0.3, cost: [cash(take, 'Closed early, the back room emptied'), { type: 'heat', bar: 'local', amount: -1, label: L }] },
+      ride,
+    ];
+  }
+  if (t.by === 'fbi') {
+    return [
+      { id: 'quiet', label: 'Kill the phones, cancel every meet', hint: `−$${take.toLocaleString('en-US')} (a dead day) · federal −1`, bonus: 0.35, cost: [cash(take, 'A dead day: no phones, no meets'), { type: 'heat', bar: 'federal', amount: -1, label: L }] },
+      ride,
+    ];
+  }
+  const out: OptSpec[] = [];
+  if (t.kind === 'setup') {
+    const pay = Math.round(800 + s.heat.local * 10);
+    out.push({ id: 'clean', label: 'Toss the place before the county does', hint: '−$300 · two men tear it apart looking for what was planted', bonus: 0.4, cost: [cash(300, 'Tossed the place before the county came')] });
+    out.push({ id: 'tipoff', label: 'Call the sergeant on the pad', hint: `−$${pay.toLocaleString('en-US')} · the warrant gets lost`, bonus: 0.45, cost: [cash(pay, 'An envelope for the sergeant')], blocked: s.money < pay ? `Needs $${pay.toLocaleString('en-US')}` : undefined });
+    out.push(ride);
+    return out;
+  }
+  if (r && (t.kind === 'hit' || t.kind === 'move' || t.kind === 'racket')) {
+    const fightBonus = Math.round((0.2 + 0.35 * muscle) * 100) / 100;
+    out.push({
+      id: 'fight', label: t.kind === 'hit' && t.targetId === s.playerId ? 'Shoot your way out' : t.kind === 'hit' ? 'Send the crew to meet them' : t.kind === 'move' ? 'Put men on the corner, tonight' : 'Men to the door, now',
+      hint: `local heat +3 · if it works: respect +1, ${r.shortName} muscle −4`, bonus: fightBonus,
+      cost: [{ type: 'heat', bar: 'local', amount: 3, label: L }],
+      win: [{ type: 'respect', amount: 1, label: `Beat off ${r.shortName}` }, { type: 'rivalResource', rival: r.id as RivalId, muscle: -4, label: `Beat off ${r.shortName}` }],
+    });
+  }
+  if (t.kind === 'hit') out.push({ id: 'duck', label: t.targetId === s.playerId ? 'Out the back, into the car' : 'Get word to him: out the back', hint: t.targetId === s.playerId ? 'respect −1 · the street hears you ran' : '−$300 · a car and a driver', bonus: 0.3, cost: t.targetId === s.playerId ? [{ type: 'respect', amount: -1, label: 'The boss went out the back' }] : [cash(300, 'A car and a driver, fast')] });
+  if (t.kind === 'racket') out.push({ id: 'duck', label: 'Clear the till and close early', hint: `−$${take.toLocaleString('en-US')} (a night's take)`, bonus: 0.25, cost: [cash(take, 'Closed early, the till cleared')] });
+  out.push(ride);
+  return out;
+}
+
+function strikeTitle(s: GameState, t: Threat): string {
+  const by = rivalName(s, t.by);
+  switch (t.kind) {
+    case 'hit': return t.targetId === s.playerId ? `${by}'s men are outside` : `${by} is going after ${personName(s, t.targetId)}`;
+    case 'move': return `${by}'s men on ${districtName(s, t.district)}`;
+    case 'racket': return `${by} at the door of ${bizName(s, t.bizId)}`;
+    case 'setup': return `Something planted at ${bizName(s, t.bizId)}`;
+    case 'raid': return `RAID: a warrant for ${bizName(s, t.bizId)}`;
+    case 'stakeout': return 'A car with two men in it, again';
+    case 'wire': return 'A lineman at the wrong pole';
+    default: return `${KIND_LABEL[t.kind]}: it's happening`;
+  }
+}
+
+function strikeText(s: GameState, t: Threat): string {
+  const by = rivalName(s, t.by);
+  switch (t.kind) {
+    case 'hit': return t.targetId === s.playerId ? `Two cars with their lights off, one at each end of the block. The man on your door says they have been sitting there twenty minutes. ${by}.` : `A phone call: two men from out of town are waiting outside the bar where ${personName(s, t.targetId)} drinks. ${by} sent them.`;
+    case 'move': return `${by}'s runners are on ${districtName(s, t.district)} tonight, telling your people who they pay now.`;
+    case 'racket': return `A car has gone past ${bizName(s, t.bizId)} three times. There's a can of gasoline in the back seat. ${by}.`;
+    case 'setup': return `The kid who sweeps up at ${bizName(s, t.bizId)} saw a man leave a package behind the bar. Ten minutes later somebody called the county.`;
+    case 'raid': return `The sergeant's brother-in-law calls: the county has a warrant for ${bizName(s, t.bizId)}, and the cars are already rolling.`;
+    case 'stakeout': return `The same Plymouth is parked across from ${t.bizId ? bizName(s, t.bizId) : districtName(s, t.district)} for the third day, two men eating sandwiches.`;
+    case 'wire': return 'A man from the phone company is up a pole outside your place, and he is not from the phone company.';
+    default: return `${detailText(s, t, 1)}`;
+  }
+}
+
+/** The moves striking today, waiting on the boss (live). */
+export function liveStrikes(s: GameState): Threat[] {
+  return (s.threats?.threats ?? []).filter((t) => t.live);
+}
+
+export function strikeView(s: GameState, id: string): StrikeView | undefined {
+  const T = s.threats;
+  const t = T?.threats.find((x) => x.id === id);
+  if (!T || !t) return undefined;
+  const pend = pendingBlunt(s, T, t);
+  const tt = { ...t, blunt: pend };
+  const options = strikeSpecs(s, t).map((o) => ({ id: o.id, label: o.label, hint: o.hint, odds: Math.round(foilOdds(s, tt, o.bonus) * 100) / 100, ...(o.blocked ? { blocked: o.blocked } : {}) }));
+  return { id, kind: t.kind, title: strikeTitle(s, t), text: strikeText(s, t), when: whenText(t.dueDay, t.hour), warned: warned(T, t), options, def: 'ride' };
+}
+
+/** The blunting a threat will have once the answers already given at the meetings are carried out (for the odds on the card). */
+function pendingBlunt(s: GameState, T: ThreatsState, t: Threat): number {
+  let b = t.blunt;
+  for (const tip of T.tips) {
+    if (tip.threatId !== t.id || (tip.status !== 'met' && tip.status !== 'sent') || !tip.response || tip.response === 'nothing') continue;
+    let eff = (EFFECT[tip.response as Exclude<ResponseId, 'nothing'>]?.[t.kind] ?? 0) * VIA_MULT[tip.via ?? 'boss'] * (tip.truth === 'garbled' ? 0.6 : 1);
+    if (tip.response === 'move_family' && t.targetId && !(t.targetId === s.playerId || isFamily(s, s.characters[t.targetId]))) eff = 0.3;
+    if (tip.response === 'warn' && t.targetId === s.playerId) eff = 0;
+    if (tip.response === 'counter' && tip.by !== t.by) eff = 0;
+    b = 1 - (1 - b) * (1 - Math.max(0, Math.min(1, eff)));
+  }
+  return b;
+}
+
+/** Mark the threats due today as happening now (pure). Returns the new state and their ids. */
+export function strikesToday(s: GameState): { state: GameState; ids: string[] } {
+  const T = s.threats;
+  if (!T || s.gameOver) return { state: s, ids: [] };
+  const d = today(s);
+  const ids = T.threats.filter((t) => !t.live && !t.schemeId && t.due === s.week && t.dueDay === d).map((t) => t.id);
+  if (!ids.length) return { state: s, ids };
+  return { state: { ...s, threats: { ...T, threats: T.threats.map((t) => (ids.includes(t.id) ? { ...t, live: 1 as const } : t)) } }, ids };
+}
+
+/**
+ * The moment: the boss answers a strike, and it is rolled now (the threats' own dice). Pure. The
+ * answers he gave at the urgent meetings are carried out first; the option's cost lands; then it
+ * comes to nothing or lands in full. The result is written to Your File and to tomorrow's paper.
+ */
+export function resolveStrike(input: GameState, id: string, optId: StrikeOptId = 'ride'): { state: GameState; result: NowResult; extra?: { h: string; b: string } } {
+  const t0 = input.threats?.threats.find((x) => x.id === id);
+  const fail = (error: string): { state: GameState; result: NowResult } => ({ state: input, result: { ok: false, error, title: 'The night', tier: 'fail', headline: error, line: '', changes: [], leadsTo: [] } });
+  if (!t0 || input.gameOver) return fail('It is over');
+  const s = structuredClone(input) as GameState;
+  const T = s.threats!;
+  const t = T.threats.find((x) => x.id === id)!;
+  const ctx = newStrikeCtx(s);
+  const view = strikeView(s, id)!;
+  let spec = strikeSpecs(s, t).find((o) => o.id === optId);
+  if (!spec || spec.blocked) spec = strikeSpecs(s, t).find((o) => o.id === 'ride')!;
+  const before = { money: s.money + Math.round(s.tribute?.acct.personal ?? 0), respect: s.respect, heat: { ...s.heat } };
+  const logFrom = ctx.log.length;
+  // The meetings first: what he answered is carried out now; a warning nobody went to is missed.
+  for (const tip of T.tips) {
+    if (tip.threatId !== t.id) continue;
+    if (tip.status === 'waiting') { tip.status = 'missed'; T.stats.ignored++; }
+    else if (tip.status === 'ignored') { T.snubs[tip.sourceId] = (T.snubs[tip.sourceId] ?? 0) + 1; tip.status = 'done'; }
+    else if (tip.status === 'met' || tip.status === 'sent') answerTip(ctx, T, tip);
+  }
+  T.threats = T.threats.filter((x) => x.id !== t.id);
+  if (spec.cost.length) applyEffects(ctx, spec.cost, { label: spec.label, because: spec.label.toLowerCase(), category: 'event' });
+  const odds = foilOdds(s, t, spec.bonus);
+  const r = rand(T);
+  const foiled = r < odds;
+  delete t.live;
+  land(ctx, T, t, foiled ? 'foiled' : 'landed');
+  if (foiled) {
+    if (spec.win?.length) applyEffects(ctx, spec.win, { label: spec.label, because: spec.label.toLowerCase(), category: 'event' });
+    ensureAction(s).strength = s.week;
+  }
+  ensureAction(s).stats.strikes++;
+  const lines = ctx.log.slice(logFrom);
+  const after = { money: s.money + Math.round(s.tribute?.acct.personal ?? 0), respect: s.respect, heat: { ...s.heat } };
+  const changes: string[] = [];
+  const sgn = (n: number) => `${n > 0 ? '+' : '−'}${Math.abs(Math.round(n))}`;
+  if (after.money !== before.money) changes.push(`Money ${after.money > before.money ? '+' : '−'}$${Math.abs(after.money - before.money).toLocaleString('en-US')}`);
+  if (after.respect !== before.respect) changes.push(`Respect ${sgn(after.respect - before.respect)}`);
+  for (const k of ['local', 'family', 'federal'] as const) if (after.heat[k] !== before.heat[k]) changes.push(`${k[0].toUpperCase()}${k.slice(1)} heat ${sgn(after.heat[k] - before.heat[k])}`);
+  const pct = Math.round(odds * 100);
+  const title = `${view.when}: ${view.title}`;
+  const line = lines[lines.length - 1] ?? (foiled ? 'It came to nothing.' : 'It landed.');
+  journal(s, {
+    d: today(s), tm: hourText(t.hour), c: t.by === 'police' || t.by === 'fbi' ? 'law' : 'rivals', t: title, r: [`You chose: ${spec.label}.`, ...lines].slice(0, 8),
+    m: after.money - before.money, st: { respect: after.respect - before.respect, local: after.heat.local - before.heat.local, family: after.heat.family - before.heat.family, federal: after.heat.federal - before.heat.federal },
+    src: 'strike', mine: 1, ...(t.targetId ? { p: [t.targetId] } : {}), ...(t.bizId ? { pl: [`b:${t.bizId}`] } : {}),
+  });
+  // The papers: violence and raids that landed make tomorrow's front page (EXTRA!: daily.ts puts it in the paper).
+  const extra = !foiled && t.kind !== 'poach' && t.kind !== 'bribe' && t.kind !== 'fed_flip' ? { h: extraHeadline(s, t), b: line } : undefined;
+  return {
+    ...(extra ? { extra } : {}),
+    state: s,
+    result: { ok: true, title, ...(t.targetId && s.characters[t.targetId] ? { who: displayName(s.characters[t.targetId]) } : {}), chance: odds, roll: Math.floor(r * 100), tier: foiled ? (r < odds * 0.3 ? 'crit' : 'success') : 'fail', headline: `${pct}% — ${foiled ? 'it came to nothing' : 'it landed'}`, line, changes, leadsTo: foiled ? [] : ['It is in tomorrow\'s paper.'] },
+  };
+}
+
+function extraHeadline(s: GameState, t: Threat): string {
+  switch (t.kind) {
+    case 'hit': return t.targetId === s.playerId ? 'SHOTS ON THE ISLAND; BUSINESSMAN UNHURT' : 'MAN ATTACKED; POLICE HAVE NO SUSPECTS';
+    case 'racket': return 'FIRE, BROKEN GLASS AT LOCAL BUSINESS';
+    case 'move': return 'STRANGERS ON THE CORNERS, MERCHANTS SAY';
+    case 'raid': case 'setup': return 'COUNTY DETECTIVES RAID LOCAL BUSINESS';
+    case 'stakeout': case 'wire': return 'POLICE STEP UP WATCH ON THE ISLAND';
+    default: return 'FEDERAL AGENTS SEEN IN WILDWOOD';
+  }
+}
+
+function newStrikeCtx(s: GameState): Ctx {
+  return newCtxFor(s);
+}
+
+/** A planned raid the heat brought (heat.ts): due next week, on its night. */
+export function planHeatRaid(s: GameState): Threat | undefined {
+  const T = ensureThreats(s);
+  if (T.threats.some((x) => x.by === 'police')) return undefined;
+  const biz = raidable(s);
+  if (!biz.length) return undefined;
+  const b = pick(T, biz);
+  const t: Threat = { id: nid(T, 'th'), kind: 'raid', by: 'police', bizId: b.id, district: b.districtId, start: s.week, due: s.week + 1, blunt: 0, heatRaid: 1 };
+  stampWhen(s, t);
+  T.threats.push(t);
+  T.stats.planned++;
+  return t;
+}
+
+/** A ticking clock the boss can see: an urgent meeting that named a night, or a strike happening now. */
+export interface Ticking {
+  key: string;
+  tipId?: string;
+  threatId?: string;
+  /** "Manno's men · Fri night, 2 a.m.". */
+  text: string;
+  /** Days left (0: today/tonight; −1: now). */
+  days: number;
+  charId?: string;
+}
+
+const SHORT_KIND: Record<ThreatKind, string> = {
+  hit: 'a hit', move: 'a move on your corners', racket: 'a hit on a place', poach: 'courting one of yours', bribe: 'an envelope for one of yours', setup: 'a set-up',
+  raid: 'a raid', stakeout: 'a stake-out', wire: 'a wire', fed_post: 'an FBI post', fed_wire: 'a federal wire', fed_flip: 'the FBI on one of yours', fed_under: 'an undercover man', fed_gj: 'subpoenas',
+};
+
+/** The countdowns for the Desk and the In-motion strip, soonest first. */
+export function tickingClocks(s: GameState): Ticking[] {
+  const T = s.threats;
+  if (!T || s.gameOver) return [];
+  const d = today(s);
+  const out: Ticking[] = [];
+  for (const t of T.threats.filter((x) => x.live)) out.push({ key: `strike:${t.id}`, threatId: t.id, text: `${rivalName(s, t.by)}: ${SHORT_KIND[t.kind]} · NOW`, days: -1, ...(t.targetId && t.targetId !== s.playerId ? { charId: t.targetId } : {}) });
+  for (const tip of T.tips) {
+    if (tip.dueDay === undefined || !tipOut(s, tip) || tip.status === 'done' || tip.status === 'missed' || tip.status === 'ignored') continue;
+    const left = (tip.deadline - s.week) * 7 + tip.dueDay - d;
+    if (left < 0 || left > 13) continue;
+    const when = left === 0 ? 'tonight' : left === 1 ? 'tomorrow' : `${left} days`;
+    out.push({ key: `tick:${tip.id}`, tipId: tip.id, text: `${rivalName(s, tip.by)}: ${SHORT_KIND[tip.kind]} · ${whenText(tip.dueDay, tip.hour)} (${when})`, days: left });
+  }
+  return out.sort((a, b) => a.days - b.days || a.key.localeCompare(b.key));
+}

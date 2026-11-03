@@ -16,7 +16,9 @@ import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
 import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Speed } from './clock';
-import { autoPauses, DEFAULT_SPEED, firstPause, redKeys, speedKey } from './clockPolicy';
+import { autoPauses, budgetPause, dayKey, DEFAULT_SPEED, firstPause, IMMEDIATE, redKeys, speedKey, type PauseLedger } from './clockPolicy';
+import { advanceDay, answerMoment, eventOut, eventsOut, releaseAll } from '../engine/daily';
+import { StrikeCard } from './components/StrikeCard';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
@@ -82,16 +84,16 @@ import type { EnvelopeChoice } from '../engine/tributeOps';
 import { EmpireHost } from './empire/context';
 import { briefing as buildBriefing, setTrust, type BriefLink } from '../engine/briefing';
 import { dayCheckIns } from '../engine/checkins';
-import { daysOf, plannedRounds, setWeekRounds, tickDay, weekChoices, weekPlan } from '../engine/days';
+import { daysOf, plannedRounds, setWeekRounds, weekChoices, weekPlan } from '../engine/days';
 import { bookLater, refundTime, spendTime, timeBlock, unbook } from '../engine/timeCost';
-import { unreadCount } from '../engine/paper';
+import { extraToday, markExtraShown, unreadCount } from '../engine/paper';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import { RiseColumn } from './borgata/TheRise';
 import { readyReview } from '../engine/desk';
-import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
+import { ignoreTip, liveStrikes, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
 import { UrgentMeeting } from './components/UrgentMeeting';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
@@ -281,6 +283,10 @@ export function App({ startOn = 'title' }: AppProps) {
   // Red Desk items the clock already stopped for (it stops once per item).
   const ackedRef = useRef<Set<string>>(new Set());
   const turningRef = useRef(false);
+  // The day's pause budget (clockPolicy.ts budgetPause: DAILY_LOGIC B2).
+  const pauseLedgerRef = useRef<PauseLedger | undefined>(undefined);
+  // A threat striking now (threats.ts): the clock waits on the boss's answer.
+  const [strike, setStrike] = useState<string | undefined>();
   const cardOpenRef = useRef(false);
   const ackNowRef = useRef<() => void>(() => {});
   // The running clock's day: the evening scenes that just happened, the day window.
@@ -328,7 +334,10 @@ export function App({ startOn = 'title' }: AppProps) {
     setScene({ iid: ev.iid, choiceId: 'play', m });
   }, [s, menu, scene, cues.length, reports, answers, autoOpened]);
 
-  const unanswered = useMemo(() => s.pendingEvents.filter((e) => !answers[e.iid]), [s.pendingEvents, answers]);
+  // A decision comes out on its day (daily.ts): the counts and the "next decision" only see what is out.
+  const outEvents = useMemo(() => eventsOut(s), [s]);
+  const unanswered = useMemo(() => outEvents.filter((e) => !answers[e.iid]), [outEvents, answers]);
+  const firstOpen = (ans: Record<string, string>) => s.pendingEvents.findIndex((e) => !ans[e.iid] && eventOut(s, e));
   // Urgent meetings (threats.ts): a popup when one arrives; the Waiting-on-you menu lists them first.
   const [urgent, setUrgent] = useState<string | undefined>();
   const urgentN = useMemo(() => urgentCount(s), [s]);
@@ -369,16 +378,17 @@ export function App({ startOn = 'title' }: AppProps) {
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
       if (quiet) {
-        clockAutoPause(s, r.state);
         setTicker(tickerLine(r.report));
+        // Monday stops once (DAILY_LOGIC #7): the week's warnings, headlines and an urgent morning are folded
+        // into the one pause that opens the Sit-Down; red, war and death still stop it on their own.
+        const ui = { answers: {}, briefSkip: [] as string[] };
+        const w = firstPause(autoPauses(s, r.state, ackedRef.current, ui), (k) => pausesOn(k));
+        ackedRef.current = new Set([...ackedRef.current, ...redKeys(r.state, ui)]);
         const warn = newWarnings(s, r.state);
         const heads = weekHeadlines(s, r.state).filter((h) => pausesOn(h.kind === 'hit' ? 'pauseOnViolence' : h.kind === 'arrest' ? 'pauseOnArrest' : 'pauseOnLife'));
         const urgent = pausesOn('pauseOnCapo') ? morningStop(r.state) : undefined;
-        if (heads.length) { setSpeed(0); setClockNote(`Paused: ${heads[0].text}`); }
-        else if ((warn.length || r.state.cutscenes?.length) && getSettings().pauseOnWarning) {
-          setSpeed(0);
-          setClockNote(warn.length ? `Paused: ${warn[0]}` : 'Paused');
-        } else if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
+        const why = w?.text ?? heads[0]?.text ?? ((warn.length || r.state.cutscenes?.length) && getSettings().pauseOnWarning ? (warn[0] ?? 'the week turned') : undefined) ?? urgent;
+        if (why) pauseFor(r.state, w?.cat ?? 'warning', `the Sit-Down: ${why}`);
       }
     } else {
       const r = m === 'season' ? advanceSpan(s, SEASON_WEEKS, choices) : advanceMonth(s, choices);
@@ -407,6 +417,9 @@ export function App({ startOn = 'title' }: AppProps) {
   /** Advance: the "Ready to advance?" review first, unless nothing is waiting and nothing is queued. */
   const [ready, setReady] = useState<Mode | undefined>();
   function startAdvance(m: Mode) {
+    // Skipping the rest of the week brings out what it still held (daily.ts): the review lists it.
+    const out = releaseAll(s);
+    if (out !== s) { setS(out); setReady(m); return; }
     if (!readyReview(s, { answers, orders, briefSkip }).clear) { setReady(m); return; }
     setMode(m);
     setAdvancing(true);
@@ -415,7 +428,7 @@ export function App({ startOn = 'title' }: AppProps) {
   /** "Review first": the decisions one by one (the week turns after the last), else the first unanswered morning. */
   function reviewFirst(m: Mode) {
     setReady(undefined);
-    if (unanswered.length) { setMode(m); setAdvancing(true); setEventIdx(s.pendingEvents.findIndex((e) => !answers[e.iid])); return; }
+    if (unanswered.length) { setMode(m); setAdvancing(true); setEventIdx(firstOpen(answers)); return; }
     const r = readyReview(s, { answers, orders, briefSkip });
     const day = r.mornings[0] ? Number(r.mornings[0].key.split(':')[0]) : undefined;
     setSpeed(0);
@@ -457,10 +470,10 @@ export function App({ startOn = 'title' }: AppProps) {
     const next = { ...answers, [ev.iid]: choiceId };
     setAnswers(next);
     if (!advancing) {
-      setEventIdx(eventIdx + 1 < s.pendingEvents.length ? eventIdx + 1 : null);
+      { const k = s.pendingEvents.findIndex((e, j) => j > eventIdx && eventOut(s, e)); setEventIdx(k >= 0 ? k : null); }
       return;
     }
-    const nextIdx = s.pendingEvents.findIndex((e) => !next[e.iid]);
+    const nextIdx = firstOpen(next);
     if (nextIdx >= 0) setEventIdx(nextIdx);
     else run(mode, next, false, mv);
   }
@@ -560,7 +573,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const shellAlertList = useMemo(() => { const folded = coveredBy(briefForRail, briefSkip); return shellAlerts(s, alertList).filter((a) => !(shellUi.snoozed[a.key] > s.week) && !folded(a)); }, [s, alertList, shellUi.snoozed, briefForRail, briefSkip]);
   function onAlert(a: ShellAlert) {
     if (a.mapFocus) focusMap(a.mapFocus);
-    if (a.kind === 'decision') { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }
+    if (a.kind === 'decision') { setAdvancing(false); setEventIdx(Math.max(0, firstOpen(answers))); }
     else if (a.charId) setSheet(a.charId);
     else if (a.route?.panel || a.route?.home) openRoute(a.route);
   }
@@ -610,7 +623,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   // Only a decision card holds the clock (clockPolicy.ts): the menus, sheets, drawers and the office do not.
-  const busy = !!menu || !!current || !!ready || !!sitdown || !!scene || !!urgent || !!confirm || dayWin !== undefined || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = !!menu || !!current || !!ready || !!sitdown || !!scene || !!urgent || !!strike || !!confirm || dayWin !== undefined || cues.length > 0 || reels.length > 0 || night.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
     const d = daysOf(s).day;
@@ -627,21 +640,60 @@ export function App({ startOn = 'title' }: AppProps) {
       setTimeout(() => { try { run('week', answers, true); setClockNote('A new week: what came of your orders is on the Desk, under Results'); } finally { turningRef.current = false; } }, 16);
       return;
     }
-    const next = tickDay(s);
+    // The day turns (daily.ts): the day's held decisions come out, today's threats strike.
+    const day = advanceDay(s);
+    let next = day.state;
+    // The quiet ones landed on their own: a line on the ticker (the full story is in Your File).
+    if (day.landed.length) setTicker(`${day.landed[day.landed.length - 1].title}: ${day.landed[day.landed.length - 1].line}`);
+    // Everything that wants the clock stopped this morning: one stop (the most pressing reason), within the day's budget.
+    const whys: { cat: string; text: string }[] = [];
+    if (day.strikes.length) {
+      setStrike(day.strikes[0]);
+      whys.push({ cat: 'strike', text: 'it is happening now' });
+    }
+    const w = autoWhy(s, next);
+    if (w) whys.push(w);
+    const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
+    if (urgent) whys.push({ cat: 'capo', text: urgent });
+    // EXTRA! A front page about the violence comes out this morning: a headline card when the clock stops for it (or stops anyway).
+    const ex = extraToday(next);
+    if (ex) {
+      next = markExtraShown(next, ex.id);
+      if (pausesOn('pauseOnViolence')) whys.push({ cat: 'extra', text: ex.h ?? 'EXTRA!' });
+    }
     setS(next);
     // The week's turn is never a surprise: Sunday says it is coming.
     if (daysOf(next).day >= 6) setClockNote('Sunday: the week turns tonight at midnight (Space pauses)');
-    clockAutoPause(s, next);
-    const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
-    if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
+    const stopped = pauseOnce(next, whys);
+    if (ex && stopped && pausesOn('pauseOnViolence')) setCues((c) => [...c, { key: 'extra', title: 'EXTRA!', text: `${ex.h ?? ''}. ${ex.b}`, week: next.week }]);
   }
-  /** The clock's auto-pause (clockPolicy.ts): red on the Desk, an urgent meeting, war, a death in the house, a plot. */
-  function clockAutoPause(prev: GameState, next: GameState) {
+  /** One stop for a morning's reasons: an immediate one (clockPolicy.ts IMMEDIATE) first, else the first; within the day's budget. */
+  function pauseOnce(at: GameState, whys: { cat: string; text: string }[]): boolean {
+    if (!whys.length) return false;
+    const top = whys.find((x) => IMMEDIATE.has(x.cat)) ?? whys[0];
+    const b = budgetPause(pauseLedgerRef.current, dayKey(at), top.cat);
+    if (!b.ok) return false;
+    pauseLedgerRef.current = b.ledger;
+    setSpeed(0);
+    setClockNote(`Paused: ${top.text}`);
+    return true;
+  }
+  /** Stop the clock, within the day's pause budget (clockPolicy.ts budgetPause): red, urgent, war, death and a strike always stop it. */
+  function pauseFor(at: GameState, cat: string, text: string) {
+    const b = budgetPause(pauseLedgerRef.current, dayKey(at), cat);
+    if (!b.ok) return;
+    pauseLedgerRef.current = b.ledger;
+    setSpeed(0);
+    setClockNote(`Paused: ${text}`);
+  }
+  /** The clock's auto-pause reason (clockPolicy.ts): red on the Desk, an urgent meeting, war, a death in the house, a plot. */
+  function autoWhy(prev: GameState, next: GameState): { cat: string; text: string } | undefined {
     const ui = { answers, briefSkip };
     const w = firstPause(autoPauses(prev, next, ackedRef.current, ui), (k) => pausesOn(k));
     ackedRef.current = new Set([...ackedRef.current, ...redKeys(next, ui)]);
-    if (w) { setSpeed(0); setClockNote(`Paused: ${w.text}`); }
+    return w ? { cat: w.cat, text: w.text } : undefined;
   }
+
   /** Play / a speed: what is red on the Desk now has been seen. */
   function playAt(v: Speed) {
     if (v > 0) ackedRef.current = new Set([...ackedRef.current, ...redKeys(s, { answers, briefSkip })]);
@@ -666,7 +718,7 @@ export function App({ startOn = 'title' }: AppProps) {
     onPause: (why) => {
       setSpeed(0);
       setClockNote(`Paused: ${why.toLowerCase()}`);
-      if (why === 'A decision is waiting' && !busy) { setAdvancing(false); setEventIdx(s.pendingEvents.findIndex((e) => !answers[e.iid])); }
+      if (why === 'A decision is waiting' && !busy) { setAdvancing(false); setEventIdx(firstOpen(answers)); }
     },
   });
   const sitKey = `${s.seed}:${s.week}`;
@@ -753,7 +805,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const homeDoNowAll = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
   // This Week's front page is the Boss's Desk, which lists the decisions, the morning and the sit-down: said once.
   const homeDoNow = home === 'desk' ? homeDoNowAll.filter((d) => d.act.kind !== 'decisions' && d.act.kind !== 'day' && d.act.kind !== 'sitdown') : homeDoNowAll;
-  const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); };
+  const openDecisions = () => { setAdvancing(false); setEventIdx(Math.max(0, firstOpen(answers))); };
   function onDoNow(d: DoNowItem) {
     const a = d.act;
     if (a.kind === 'decisions') openDecisions();
@@ -881,7 +933,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <Shell
         top={(<>
           <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={playAt} note={clockNote}
-            onAdvance={startAdvance} pending={s.pendingEvents.length} answered={s.pendingEvents.length - unanswered.length}
+            onAdvance={startAdvance} pending={outEvents.length} answered={outEvents.length - unanswered.length}
             urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
             ticker={ticker} onNewGame={() => { setSpeed(0); setMenu('start'); }} onMainMenu={() => { setSpeed(0); setMenu('title'); }}
@@ -968,7 +1020,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {sitdown && !current && !scene && (
         <SitDown key={`${s.week}:${sitdown}:${sitFocus ?? ''}`} s={s} initialTab={sitdown} focus={sitFocus} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => act((x) => setWeekRounds(x, ids), 'Your evenings for the week are set')} skip={briefSkip} setSkip={setBriefSkip}
           onTrust={(k, on) => act((x) => setTrust(x, k, on), on ? 'Trusted him with it' : 'Took it back into your own hands')} onLink={followLink} onClose={() => { setSitdown(undefined); setSitFocus(undefined); }}
-          onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
+          onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, firstOpen(answers))); }}
           lesson={helpLevel() === 'guided' && s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
       )}
       {current && scene && (
@@ -994,7 +1046,7 @@ export function App({ startOn = 'title' }: AppProps) {
           onPolicy={(split, auto) => { ordersApi.queue({ kind: 'tribute', op: { op: 'policy', split, ...(auto !== undefined ? { auto } : {}) } }); setOffice(undefined); }} />
       )}
       {current && !scene && current.defId !== 'tribute_audience' && (
-        <EventModal s={s} ev={current} index={eventIdx!} total={s.pendingEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
+        <EventModal s={s} ev={current} index={Math.max(0, outEvents.indexOf(current))} total={outEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       <NowResultHost />
       <ReactionsHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0 || !!s.argue?.live} />
@@ -1003,6 +1055,15 @@ export function App({ startOn = 'title' }: AppProps) {
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}
           onMeet={(id, via) => act((x) => meetTip(x, id, via), 'You agreed to the meeting')} onIgnore={(id) => { act((x) => ignoreTip(x, id), 'You let the warning go'); setUrgent(undefined); }}
           onRespond={(id, r) => act((x) => respondTip(x, id, r), 'You gave your answer to the warning')} />
+      )}
+      {strike && !current && !scene && (
+        <StrikeCard s={s} id={strike} onChoose={(o) => {
+          const r = answerMoment(s, strike, o);
+          if (r.result.ok) setS(r.state);
+          // Two at once on the same night: the next one, then the clock goes on.
+          setStrike(r.result.ok ? liveStrikes(r.state)[0]?.id : undefined);
+          postNow(r.result);
+        }} />
       )}
       {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
@@ -1014,7 +1075,7 @@ export function App({ startOn = 'title' }: AppProps) {
         : <SheetFrame onClose={() => setSheet(undefined)}><div className="flex justify-end px-3 pt-3"><button className="btn-ghost text-xs" onClick={() => setSheet(undefined)}>Close</button></div><PolSheet s={s} id={sheet} embedded onClose={() => setSheet(undefined)} onOpen={(id) => setSheet(id)} /></SheetFrame>)}
       {ctxMenu && !current && <ContextMenu s={s} id={ctxMenu.id} x={ctxMenu.x} y={ctxMenu.y} category={ctxMenu.category} onClose={() => setCtxMenu(undefined)} />}
       {picker && !current && !sheet && <PickerModal s={s} role={picker.role} pool={picker.pool} onPick={picker.onPick} onClose={() => setPicker(undefined)} />}
-      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={s.pendingEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
+      {advice && !current && !sheet && !picker && !tripPlan && <WhatToDoModal s={s} answered={outEvents.length - unanswered.length} onTab={(t) => go(t)} onClose={() => setAdvice(false)} />}
       {helpMenu && (
         <Modal onClose={() => setHelpMenu(false)}>
           <div className="p-4 space-y-2" data-testid="help-menu">
