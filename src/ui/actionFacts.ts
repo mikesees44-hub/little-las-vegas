@@ -10,7 +10,6 @@ import { SCHEME_INFO } from '../engine/schemes';
 import { TALKS, type TalkId } from '../engine/talks';
 import type { GameState, PlayerAction } from '../engine/types';
 import { verbOf } from './verbs';
-import { settlesNow } from '../engine/deeds/now';
 
 /**
  * WHAT AN ORDER MEANS, before the click: who acts, on whom, what it costs and

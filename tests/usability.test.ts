@@ -23,7 +23,6 @@ import { autoBriefings, helpLevel } from '../src/ui/settings';
 import { AdvicePanel } from '../src/ui/advice/AdviceButton';
 import { quickActionsFor } from '../src/ui/sheet/QuickActions';
 import { recurringOf } from '../src/engine/recurring';
-import { settlesNow } from '../src/engine/deeds/now';
 
 const withSheet = (node: ReactNode) => createElement(SheetContext.Provider, { value: { open: () => {}, menu: () => {} } }, node);
 const html = (node: ReactNode) => renderToString(withSheet(node));
