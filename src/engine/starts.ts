@@ -22,6 +22,7 @@ import { startRomance } from './romance';
 import { ensureTribute } from './tributeState';
 import { randInt } from './rng';
 import { scheduleOpening, seedOldDon } from './oldDon';
+import { orgRung } from './riseView';
 import { seedThreat } from './threats';
 import type { RivalId } from './types';
 
@@ -59,6 +60,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
   if (start === 'classic' && !charOptions) {
     repairGoals(s);
     addOpeningScene(s, start);
+    s.flags.rise_floor = orgRung(s);
     return s;
   }
   if (start === 'classic') return finish(s, start, charOptions);
@@ -79,6 +81,8 @@ function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameSt
   refreshDynastyAfterStart(s);
   repairGoals(s);
   setupHouses(s);
+  // The Rise begins where the organization stands (an old Don's borgata is not "Two crews").
+  s.flags.rise_floor = orgRung(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};
   s.eventQueue = [];
