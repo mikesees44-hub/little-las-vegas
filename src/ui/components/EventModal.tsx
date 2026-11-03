@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PredictedReactions } from '../reactions/Reactions';
 import { compareChoices, PRIORITIES, PRIORITY_LABEL, type Priority } from '../../engine/advice';
 import { recurringOfAll } from '../../engine/recurring';
 import { AdviceButton } from '../advice/AdviceButton';
@@ -87,6 +88,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
                 <button type="button" disabled={!!c.disabledReason} onClick={() => onChoose(c.id)} className="w-full text-left px-3 pt-2.5 pb-1 disabled:cursor-not-allowed">
                   <div className="font-semibold text-stone-100">{i < 9 && <kbd className="mr-1.5 rounded border border-noir-500 px-1 text-[10px] font-normal text-stone-400" title={`Press ${i + 1}`} data-testid="choice-key">{i + 1}</kbd>}{c.label}</div>
                   {c.detail && <div className="text-xs text-stone-400 mt-0.5">{c.detail}</div>}
+                  {!/(Accepting|Declining):/.test(c.detail ?? '') && <PredictedReactions s={s} ev={ev} ch={c} />}
                   <Chips s={s} effects={c.effects} />
                   {recurringOfAll(s, c.effects).map((r, j) => <div key={j} className="text-[11px] text-amber-200 mt-1" data-testid="recurring-note">↻ {r.text}</div>)}
                   {c.disabledReason && <div className="text-xs text-red-400 mt-1">Unavailable: {c.disabledReason.charAt(0).toLowerCase()}{c.disabledReason.slice(1)}</div>}
