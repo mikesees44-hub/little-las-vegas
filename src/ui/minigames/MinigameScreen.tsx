@@ -9,7 +9,7 @@ import { TrialPanel } from './TrialPanel';
 import { CinematicBeat } from './Cinematic';
 import { CardsPanel, CollectionPanel, ElectionPanel, HeistPanel, SitdownPanel, SweepPanel } from './Panels';
 
-const CINEMATIC: Partial<Record<MinigameId, boolean>> = { madeboss: true, ceremony: true };
+const CINEMATIC: Partial<Record<MinigameId, boolean>> = { madeboss: true, ceremony: true, getmade: true, callin: true };
 
 /**
  * The mini-game screen: a cutscene-style intro card, then the scene itself

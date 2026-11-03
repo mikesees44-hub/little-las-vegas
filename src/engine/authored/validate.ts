@@ -17,7 +17,8 @@ export const DISTRICTS = ['boardwalk', 'pacific', 'piers', 'downtown', 'docks', 
 export const FIELDS = ['name', 'first', 'last', 'nick', 'call', 'he', 'his', 'him', 'He', 'His'];
 
 const SCENE_KEYS = ['id', 'title', 'theme', 'followup', 'about', 'when', 'who', 'text', 'choices'];
-const WHEN_KEYS = ['years', 'season', 'months', 'week', 'flags', 'notFlags', 'money', 'respect', 'heat', 'boss', 'location', 'chance', 'weight', 'cooldown', 'once', 'mature'];
+const WHEN_KEYS = ['years', 'season', 'months', 'week', 'flags', 'notFlags', 'money', 'respect', 'heat', 'boss', 'location', 'chance', 'weight', 'cooldown', 'once', 'mature', 'station'];
+const STATIONS = ['associate', 'soldier', 'capo', 'underboss', 'boss'];
 const ROLE_KEYS = ['pool', 'rank', 'traits', 'notTraits', 'gender', 'age', 'mood', 'opinionOfBoss', 'opinionOf', 'tie', 'sameSideAs', 'partnerOf'];
 const CHOICE_KEYS = ['label', 'hint', 'requires', 'odds', 'effects', 'success', 'failure', 'result', 'failText', 'next'];
 const REQ_KEYS = ['money', 'respect', 'favors', 'flag', 'trait', 'notTrait'];
@@ -256,6 +257,10 @@ function checkWhen(w: unknown, err: (p: string, m: string) => void): void {
   for (const k of ['weight', 'cooldown'] as const) if (w[k] !== undefined && !(isNum(w[k]) && (w[k] as number) >= 0)) err(`when.${k}`, 'is a number of 0 or more');
   if (w.once !== undefined && typeof w.once !== 'boolean') err('when.once', 'is true or false');
   if (w.mature !== undefined && typeof w.mature !== 'boolean') err('when.mature', 'is true or false');
+  if (w.station !== undefined) {
+    if (!Array.isArray(w.station) || !w.station.length) err('when.station', 'is a list of ranks, e.g. ["associate", "soldier"]');
+    else for (const x of w.station as unknown[]) if (!STATIONS.includes(String(x))) err('when.station', `"${String(x)}" is not a rank${didYouMean(String(x), STATIONS)}`);
+  }
 }
 
 function checkEffect(p: string, fx: unknown, roles: Set<string>, err: (p: string, m: string) => void): void {
@@ -288,6 +293,8 @@ function checkEffect(p: string, fx: unknown, roles: Set<string>, err: (p: string
     case 'scorn': { const o = obj(['who', 'by', 'why']); if (o) { role('who', o.who); num('by', o.by); if (o.who === 'boss') err(p, 'the boss does not scorn himself'); } break; }
     case 'hush': case 'leak': { const o = obj(['role']); if (o) { role('role', o.role); if (o.role === 'boss') err(p, `"${k}" is about her, not the boss`); } break; }
     case 'suspect': { const o = obj(['role', 'by']); if (o) { role('role', o.role); num('by', o.by); if (o.role === 'boss') err(p, 'the boss does not suspect himself'); } break; }
+    case 'standing': case 'settle': num(k, v); break;
+    case 'sponsor': role('sponsor', v); if (v === 'boss') err(p, 'the boss does not vouch for himself'); break;
     default: err(p, `unknown effect "${k}"${didYouMean(k, EFFECT_KEYS)}`);
   }
 }

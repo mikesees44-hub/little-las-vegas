@@ -41,6 +41,7 @@ import { ensureCut } from './cutScore';
 import { ensureOc } from './oceanCity';
 import { migrateTrust } from './trustMigrations';
 import { keepOldDelegation } from './lieutenants';
+import { ensureAbove } from './valente';
 import type { GameState } from './types';
 
 /**
@@ -80,5 +81,7 @@ export function upgradeSave(s: GameState): GameState {
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }
+  // A save from before the family above (a low start, or a fallen boss in someone's ranks): the Valente family, once.
+  try { ensureAbove(s); } catch { /* the station still works without it */ }
   return s;
 }

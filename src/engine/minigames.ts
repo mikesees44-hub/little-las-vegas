@@ -4,6 +4,7 @@
  */
 import './trial';
 import './scenes';
+import './lowScenes';
 import './minigameCards';
 import './minigameSitdown';
 import './minigameCollect';

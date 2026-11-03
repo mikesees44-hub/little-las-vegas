@@ -18,6 +18,8 @@ import { bossInside } from './longgame';
 import { addOpinion, changeMeter, opinion } from './relations';
 import { chance } from './rng';
 import { pw, type PowerAction, type PowerOp } from './powerState';
+import { inTheRanks } from './rankView';
+import { applyLowOp, commitLow, describeLowOp, previewLow } from './valente';
 import { climb, climbDisabled, climbOdds, chooseStation, depose, STATION_INFO, stationMonth, stationWeek, takeover, takeoverOdds } from './station';
 import { FACTION_NAMES } from './world';
 import { shadowWeek } from './shadow';
@@ -295,6 +297,8 @@ export function describePowerOp(s: GameState, op: PowerOp): string | undefined {
       return describeShadowOp(s, op.o);
     case 'climbAsked':
       return undefined;
+    case 'low':
+      return describeLowOp(s, op.o);
   }
 }
 
@@ -545,6 +549,9 @@ export function applyPowerOp(ctx: Ctx, op: PowerOp, label: string): void {
     case 'climbAsked':
       p.climbWeek = s.week;
       break;
+    case 'low':
+      applyLowOp(ctx, op.o, label);
+      break;
     case 'shadow':
       applyShadowOp(ctx, op.o);
       break;
@@ -713,8 +720,12 @@ export function previewPower(s: GameState, a: PowerAction): ActionPreview {
       return { ...base, title: 'End the front arrangement', effects: [note('You are boss in name again')], because: 'ended the front', disabledReason: p?.front ? undefined : 'No front boss' };
     case 'consult':
       return { ...base, title: 'Consult the front boss on something real', detail: 'Keeps him believing (suspicion −15), and gives him a little real say.', effects: [note('Suspicion −15 · his authority +5 · your influence −3')], because: 'consulted the front boss', disabledReason: p?.front && p.front.type !== 'prison' ? undefined : 'No front boss' };
+    case 'low':
+      return previewLow(s, a.a);
     case 'climb': {
       const st = p?.station ?? 'boss';
+      // In the ranks of the family above (valente.ts): moving up is a sit-down (or the making), not a roll at the turn.
+      if (s.power?.above && inTheRanks(s)) return { ...previewLow(s, { op: 'callIn' }), effects: [{ type: 'power', op: { op: 'low', o: { op: 'callIn' } } }] };
       const over = s.power?.overId ? s.characters[s.power.overId] : undefined;
       return {
         ...base, title: st === 'exile' ? 'Come home and ask to be taken back' : st === 'independent' ? 'Make peace and rejoin the family' : `Ask ${over?.firstName ?? 'the boss'} to move you up`,
@@ -852,8 +863,11 @@ export function commitPower(ctx: Ctx, a: PowerAction): void {
         p.front.influence = Math.max(0, p.front.influence - 3);
       }
       break;
+    case 'low':
+      commitLow(ctx, a.a);
+      break;
     case 'climb':
-      climb(ctx);
+      if (!(s.power?.above && inTheRanks(s))) climb(ctx);
       break;
     case 'takeover':
       takeover(ctx, chance(p, takeoverOdds(s).chance));

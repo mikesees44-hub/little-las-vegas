@@ -603,6 +603,8 @@ export function buildPackEvent(s: GameState, e: PackEvent, carried: Record<strin
   const meta: Record<string, string | number> = { pack: e.id, cast: JSON.stringify(b.roles), district: b.district, carried: JSON.stringify(carried) };
   if (dueId) meta.due = dueId;
   if (e.chain) meta.chain = e.chain.id;
+  // Its shelf, for the rank table (rankView.ts eventCap): a rival boss's offer is not an associate's business.
+  meta.cat = e.category;
   if (e.category === 'family' || e.category === 'romance-nonexplicit') meta.family = 1;
   if (e.category === 'crew' && actor && s.characters[actor]?.faction === 'player') {
     meta.crew = 1;

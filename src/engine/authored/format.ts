@@ -42,10 +42,16 @@ export interface When {
   once?: boolean;
   /** Adults-only material: the scene never comes up with Mature content Off (scenes with a lover, a husband, a mistress, the scorned or a suspect are always this). */
   mature?: boolean;
+  /**
+   * The player's rank in the family: "associate", "soldier", "capo", "underboss", "boss".
+   * Without it a scene is for a boss's desk (crew, rivals, business) or for every rank (family, romance, town, world, law).
+   */
+  station?: string[];
 }
 
-export type RolePool = 'crew' | 'capo' | 'family' | 'wife' | 'kin' | 'rival' | 'rivalBoss' | 'official' | 'anyone' | 'lover' | 'mistress' | 'husband' | 'scorned' | 'suspect';
-export const ROLE_POOLS: RolePool[] = ['crew', 'capo', 'family', 'wife', 'kin', 'rival', 'rivalBoss', 'official', 'anyone', 'lover', 'mistress', 'husband', 'scorned', 'suspect'];
+/** The low-rank pools: `chief` (the man you answer to), `don` (the boss of the family above), `valente` (anyone in the family above), `donSon` (the Don's son). */
+export type RolePool = 'crew' | 'capo' | 'family' | 'wife' | 'kin' | 'rival' | 'rivalBoss' | 'official' | 'anyone' | 'lover' | 'mistress' | 'husband' | 'scorned' | 'suspect' | 'chief' | 'don' | 'valente' | 'donSon';
+export const ROLE_POOLS: RolePool[] = ['crew', 'capo', 'family', 'wife', 'kin', 'rival', 'rivalBoss', 'official', 'anyone', 'lover', 'mistress', 'husband', 'scorned', 'suspect', 'chief', 'don', 'valente', 'donSon'];
 /** The adults-only pools (honey.ts): a scene that casts from one never comes up with Mature content Off. */
 export const MATURE_POOLS: RolePool[] = ['lover', 'mistress', 'husband', 'scorned', 'suspect'];
 
@@ -104,9 +110,15 @@ export type SEffect =
   /** A mistress talks (Spout Off, the beauty parlor, the crew, a rival bar). */
   | { leak: { role: string } }
   /** The boss's suspicion that she is working him (what he has seen; never the hidden truth). */
-  | { suspect: { role: string; by: number } };
+  | { suspect: { role: string; by: number } }
+  /** Standing with the family above (a low rank): up or down. */
+  | { standing: number }
+  /** He agrees to vouch for the boss when the books open (a made man of the family above). */
+  | { sponsor: string }
+  /** Pay what is owed up the ladder from a short week. */
+  | { settle: number };
 
-export const EFFECT_KEYS = ['money', 'respect', 'heat', 'opinion', 'fear', 'trust', 'grievance', 'crew', 'family', 'flag', 'unflag', 'tie', 'memory', 'wealth', 'hook', 'owes', 'deed', 'evidence', 'jail', 'whack', 'runs', 'scorn', 'hush', 'leak', 'suspect'] as const;
+export const EFFECT_KEYS = ['money', 'respect', 'heat', 'opinion', 'fear', 'trust', 'grievance', 'crew', 'family', 'flag', 'unflag', 'tie', 'memory', 'wealth', 'hook', 'owes', 'deed', 'evidence', 'jail', 'whack', 'runs', 'scorn', 'hush', 'leak', 'suspect', 'standing', 'sponsor', 'settle'] as const;
 
 /** A condition for an odds bonus. */
 export interface PlusIf { role?: string; trait?: string; bossTrait?: string; flag?: string; opinionOfBoss?: Compare }

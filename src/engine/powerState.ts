@@ -254,6 +254,8 @@ export interface PowerState {
   followerIds?: string[];
   /** Week you last asked to move up. */
   climbWeek?: number;
+  /** The family above a low start (valente.ts): the Don, his officers and capos, your standing, quota and sponsors. */
+  above?: import('./valente').AboveFamily;
   stats: PowerStats;
 }
 
@@ -322,6 +324,8 @@ export type PowerOp =
   /** A chip that names what an order's commit step does. */
   | { op: 'note'; text: string }
   | { op: 'climbAsked' }
+  /** The climb from below (valente.ts): standing, rolls, sponsors, promotions. */
+  | { op: 'low'; o: import('./valente').LowOp }
   /** The shadow court and the succession war (shadow.ts). */
   | { op: 'shadow'; o: import('./shadowState').ShadowOp };
 
@@ -344,6 +348,7 @@ export type PowerAction =
   | { op: 'endFront' }
   | { op: 'consult' }
   | { op: 'climb' }
+  | { op: 'low'; a: import('./valente').LowAction }
   | { op: 'takeover' }
   | { op: 'audience' }
   /** The shadow court and the succession war (shadowOps.ts). */
