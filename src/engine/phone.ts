@@ -565,7 +565,7 @@ export function answerCall(input: GameState, key: string, p: CallPayload, d: num
   if (!back) P.stats.in++; else P.stats.out++;
   const title = `${back ? 'You called back' : whenText(d, h)}: ${p.name}`;
   const text = `${o.label}${o.p < 1 ? ` (${Math.round(oddsOf(input, o, line) * 100)}%)` : ''}`;
-  pushLog(P, { w: s.week, d: back ? today(s) : d, h: back ? 12 : h, dir: o.id === 'ring' && !back ? 'missed' : back ? 'out' : 'in', name: p.name, t: `${text}: ${lines[0]}` });
+  pushLog(P, { w: s.week, d: back ? today(s) : d, h: back ? 12 : h, dir: o.id === 'ring' && !back ? 'missed' : back ? 'out' : 'in', name: p.name, t: o.id === 'ring' ? lines[0] : `${text}: ${lines[0]}` });
   journal(s, {
     d: back ? today(s) : d, tm: back ? undefined : hourText(h), c: KIND_CAT[p.k], t: `On the phone: ${p.name}`, r: [`${back ? 'You called back' : 'The phone rang'}. You chose: ${o.label}.`, ...lines, ...ctx.log].slice(0, 8),
     src: 'phone', mine: 1, ...(p.who ? { p: [p.who] } : {}), ...(p.biz ? { pl: [`b:${p.biz}`] } : {}),
