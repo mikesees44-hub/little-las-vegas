@@ -8,7 +8,8 @@ import type { EventInstance, GameState } from './types';
  */
 export function eventOut(s: GameState, ev: EventInstance): boolean {
   const d = ev.meta?.day;
-  return d === undefined || ev.week < s.week || today(s) >= Number(d);
+  // `dw`: the week it was scheduled for (a decision from the queue keeps its old `week`); a stale stamp is out.
+  return d === undefined || Number(ev.meta?.dw ?? s.week) !== s.week || today(s) >= Number(d);
 }
 
 /** The decisions on the desk now. */

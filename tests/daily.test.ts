@@ -6,7 +6,8 @@ import { newGameWith } from '../src/engine/starts';
 import { answerCheckIn, freezeWeek, tickDay, weekChoices } from '../src/engine/days';
 import { weekCheckIns } from '../src/engine/checkins';
 import { addOpinion } from '../src/engine/relations';
-import { advanceDay, answerMoment, eventOut, eventsOut, momentView, releaseAll } from '../src/engine/daily';
+import { advanceDay, answerMoment, eventOut, eventsOut, momentView, registerDelivery, releaseAll, scheduleAt } from '../src/engine/daily';
+import { scheduled } from '../src/engine/schedule';
 import { ensureThreats, liveStrikes, strikeView, tickingClocks, tipOut, type Threat } from '../src/engine/threats';
 import { ensureAction, raidedLately, noteRaided } from '../src/engine/actionState';
 import { bailoutSource, BAIL_WEEKS, summonsSource, wealthPressure } from '../src/engine/pressure';
@@ -53,7 +54,7 @@ describe('B1: the week\'s check-ins are frozen once the week is touched', () => 
 });
 
 describe('the week spread across the days', () => {
-  it('Monday keeps the money and the chair; the rest of the decisions come out Tuesday to Friday', () => {
+  it('Monday keeps the mandatory decisions (the money, the chair, a funeral); the rest come out Tuesday to Friday', () => {
     let seen = 0, later = 0;
     let s = newGame('daily-spread');
     for (let w = 0; w < 20 && !s.gameOver; w++) {
@@ -65,7 +66,7 @@ describe('the week spread across the days', () => {
         expect(Number(d)).toBeGreaterThanOrEqual(1);
         expect(Number(d)).toBeLessThanOrEqual(4);
         expect(['bagman', 'tribute_audience', 'made_boss']).not.toContain(e.defId);
-        if (e.mandatory) expect(Number(d)).toBeLessThanOrEqual(2);
+        expect(e.mandatory).toBe(false);
       }
       seen += s.pendingEvents.length;
       // Walk the week: every decision is out by Friday, and only what is out is on the desk.
@@ -159,6 +160,32 @@ describe('ticking clocks: a threat lands on its day and hour', () => {
     expect(raidedLately(s, b.id)).toBe(true);
     s.week += 6;
     expect(raidedLately(s, b.id)).toBe(false);
+  });
+});
+
+describe('the day/hour scheduler (schedule.ts: for the phone\'s calls and meets)', () => {
+  it('an item scheduled for Wednesday 11 p.m. is delivered as a moment that day, answered in the moment, and leaves the schedule', () => {
+    registerDelivery({
+      kind: 'test_call',
+      view: (_s, it) => ({ id: it.id, title: 'The phone rings', text: String(it.payload.who), when: 'Wednesday, 11 p.m.', warned: false, options: [{ id: 'pick', label: 'Pick up', hint: '', odds: 1 }, { id: 'ring', label: 'Let it ring', hint: '', odds: 1 }], def: 'ring' }),
+      answer: (st, it, opt) => ({ state: st, result: { ok: true, title: 'The call', tier: 'success', headline: opt, line: `${String(it.payload.who)}: ${opt}`, changes: [], leadsTo: [] } }),
+    });
+    const s0 = played('daily-sched', 3);
+    const { state, id } = scheduleAt(s0, { kind: 'test_call', day: 2, hour: 23, payload: { who: 'Sal' } });
+    let s = state;
+    const r1 = advanceDay(s);
+    expect(r1.strikes).not.toContain(`sched:${id}`);
+    const r2 = advanceDay(r1.state);
+    expect(r2.strikes).toContain(`sched:${id}`);
+    expect(momentView(r2.state, `sched:${id}`)?.title).toBe('The phone rings');
+    const a = answerMoment(r2.state, `sched:${id}`, 'pick');
+    expect(a.result.line).toBe('Sal: pick');
+    expect(scheduled(a.state)).toHaveLength(0);
+    // Unanswered: the default the next day.
+    s = scheduleAt(s0, { kind: 'test_call', day: 1, hour: 9, payload: { who: 'Nobody' } }).state;
+    const q1 = advanceDay(s);
+    const q2 = advanceDay(q1.state);
+    expect(q2.landed.some((x) => x.line === 'Nobody: ring')).toBe(true);
   });
 });
 

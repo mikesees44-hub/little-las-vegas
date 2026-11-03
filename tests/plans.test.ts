@@ -1,3 +1,4 @@
+import { eventsOut } from '../src/engine/eventDays';
 import { describe, expect, it, beforeEach } from 'vitest';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -110,10 +111,11 @@ describe('one inbox, one count', () => {
       // Every visitor at the door is in the inbox.
       const keys = new Set(inbox(s).map((i) => i.key));
       for (const v of officeVisitors(s)) expect(keys.has(v.key), v.key).toBe(true);
-      // Every unanswered decision is in it (the envelope as one item).
-      for (const e of s.pendingEvents.filter((x) => x.defId !== 'tribute_audience')) expect(keys.has(`ev:${e.iid}`), e.title).toBe(true);
+      // Every unanswered decision that is out (daily.ts: a decision comes out on its day) is in it (the envelope as one item).
+      for (const e of eventsOut(s).filter((x) => x.defId !== 'tribute_audience')) expect(keys.has(`ev:${e.iid}`), e.title).toBe(true);
+      for (const e of s.pendingEvents.filter((x) => !eventsOut(s).includes(x))) expect(keys.has(`ev:${e.iid}`), e.title).toBe(false);
       // Answering one takes one off everywhere.
-      const e = s.pendingEvents.find((x) => x.defId !== 'tribute_audience');
+      const e = eventsOut(s).find((x) => x.defId !== 'tribute_audience');
       if (e) {
         const answers = { [e.iid]: e.choices[0].id };
         expect(inboxCount(s, { answers })).toBe(n - 1);

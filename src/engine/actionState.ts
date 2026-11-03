@@ -24,6 +24,9 @@ export interface ActionState {
   /** EXTRA front pages already shown as a card (paper item ids). */
   extras: string[];
   stats: { strikes: number; raids: number; summons: number; bail: number; extras: number; setPieces: number };
+  /** The day/hour scheduler's items (schedule.ts scheduleAt) and its id counter. */
+  sched?: import('./schedule').ScheduledItem[];
+  schedN?: number;
 }
 
 export function ensureAction(s: GameState): ActionState {

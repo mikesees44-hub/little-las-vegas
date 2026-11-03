@@ -1,7 +1,9 @@
 import { ensureAction } from './actionState';
 import { daysOf, tickDay } from './days';
 import { roll } from './roundsPersonal';
-import { liveStrikes, resolveStrike, stampWhen, strikesToday, strikeView, strikeWorthy, type StrikeOptId, type StrikeView } from './threats';
+import { liveStrikes, resolveStrike, stampWhen, strikesToday, strikeView, strikeWorthy, type StrikeOptId } from './threats';
+import { answerItem, deliveryFor, dropItem, dueItems, itemView, liveItems, markLive, type MomentView } from './schedule';
+export { registerDelivery, scheduleAt, scheduleInto, type DeliveryHook, type MomentView, type ScheduledItem } from './schedule';
 import { resolveStorm, stormTonight, stormView, type StormOptId } from './setPieces';
 import type { NowResult } from './deeds/now';
 import { extraPress } from './paper';
@@ -14,13 +16,15 @@ import type { EventInstance, GameState } from './types';
  * the week; this layer hands its results to the running clock on their days, the way the papers
  * already come out day by day (paper.ts setEditions / isOut):
  *
- *  - Decisions: the money, the chair and the set-pieces are on the desk Monday; the rest come out
- *    Tuesday to Friday (`meta.day`, round-robin by priority; mandatory ones by Wednesday). They
+ *  - Decisions: the mandatory ones (the money, the chair, a funeral, the set-pieces) are on the desk
+ *    Monday, in the Sit-Down; the rest come out Tuesday to Friday (`meta.day`, round-robin). They
  *    stay in `pendingEvents`, so the engine is unchanged: an answer is applied at the turn; skipping
  *    the week with Advance Week brings them all out first (releaseAll), so nothing is lost.
  *  - Urgent meetings come out on their day (threats.ts Tip.rel).
  *  - Threats land on their day and hour (threats.ts Threat.dueDay/hour): the clock stops, the boss
- *    answers with odds, and it is rolled in the moment (resolveStrike).
+ *    answers with odds, and it is rolled in the moment (resolveStrike). The hurricane's night is a
+ *    moment too (setPieces.ts), and so is anything put on the general scheduler (schedule.ts
+ *    scheduleAt + registerDelivery: the phone's calls and meets plug in there).
  *
  * Pure: every function returns a new state.
  */
@@ -31,10 +35,8 @@ export const LAST_RELEASE_DAY = 4;
 /** Decisions that must be on the desk the moment the week opens (the money, the chair, a summons, a set-piece). */
 const MONDAY = new Set(['tribute_audience', 'bagman', 'made_boss', 'philly_summons', 'bailout', 'making']);
 function mondayOnly(ev: EventInstance): boolean {
-  return MONDAY.has(ev.defId) || ev.defId.startsWith('setpiece_') || ev.priority >= 90 || !!ev.meta?.asked;
+  return ev.mandatory || MONDAY.has(ev.defId) || ev.defId.startsWith('setpiece_') || ev.priority >= 90 || !!ev.meta?.asked;
 }
-/** A mandatory decision that can wait a day or two comes out early in the week (it must be answered). */
-const MANDATORY_LAST = 2;
 
 /**
  * At the end of the week turn: Monday's decisions stay as they are, the rest are given the day they
@@ -47,8 +49,7 @@ export function scheduleWeek(s: GameState): void {
   const later = s.pendingEvents.filter((e) => !mondayOnly(e)).sort((a, b) => b.priority - a.priority || a.iid.localeCompare(b.iid));
   const first = Math.floor(roll(`${s.seed}|${s.week}|rel`) * LAST_RELEASE_DAY);
   later.forEach((ev, i) => {
-    const span = ev.mandatory ? MANDATORY_LAST : LAST_RELEASE_DAY;
-    ev.meta = { ...(ev.meta ?? {}), day: 1 + ((first + i) % span) };
+    ev.meta = { ...(ev.meta ?? {}), day: 1 + ((first + i) % LAST_RELEASE_DAY), dw: s.week };
   });
 }
 
@@ -60,7 +61,7 @@ export function heldEvents(s: GameState): EventInstance[] {
 /** Everything the week still holds comes out now (Advance Week, the "Ready to advance" review). Pure. */
 export function releaseAll(s: GameState): GameState {
   if (!heldEvents(s).length) return s;
-  return { ...s, pendingEvents: s.pendingEvents.map((e) => (eventOut(s, e) ? e : { ...e, meta: { ...(e.meta ?? {}), day: 0 } })) };
+  return { ...s, pendingEvents: s.pendingEvents.map((e) => (eventOut(s, e) ? e : { ...e, meta: { ...(e.meta ?? {}), day: 0, dw: s.week } })) };
 }
 
 export interface DayResult {
@@ -87,6 +88,7 @@ export function advanceDay(s0: GameState): DayResult {
     if (r.result.ok) { s = r.state; landed.push(r.result); }
   }
   if (stormTonight(s)) { const r = answerMoment(s, 'storm', 'ride'); if (r.result.ok) { s = r.state; landed.push(r.result); } }
+  for (const it of liveItems(s)) { const r = answerMoment(s, `sched:${it.id}`); if (r.result.ok) { s = r.state; landed.push(r.result); } }
   if (daysOf(s).day >= 6) return { state: s, released: [], strikes: [], landed };
   const before = new Set(eventsOut(s).map((e) => e.iid));
   s = tickDay(s);
@@ -103,24 +105,40 @@ export function advanceDay(s0: GameState): DayResult {
   }
   // The September storm's night (setPieces.ts): the same kind of moment.
   if (stormTonight(s)) strikes.push('storm');
+  // Anything else on the day/hour schedule (schedule.ts: a phone call, a meet): a moment, or delivered quietly.
+  for (const it of dueItems(s)) {
+    const hook = deliveryFor(it.kind);
+    if (!hook || !hook.view(s, it)) { s = dropItem(s, it.id); continue; }
+    const late = it.w < s.week || it.d < daysOf(s).day;
+    if (!late && (hook.moment?.(s, it) ?? true)) { s = markLive(s, it.id); strikes.push(`sched:${it.id}`); continue; }
+    const r = answerMoment(s, `sched:${it.id}`);
+    if (r.result.ok) { s = r.state; landed.push(r.result); }
+  }
   return { state: s, released, strikes, landed };
 }
 
 /** A moment on the clock, by id: a threat striking now, or 'storm' (the hurricane's night). */
-export function momentView(s: GameState, id: string): StrikeView | undefined {
-  if (id === 'storm') return stormView(s) as StrikeView | undefined;
+export function momentView(s: GameState, id: string): MomentView | undefined {
+  if (id === 'storm') return stormView(s);
+  if (id.startsWith('sched:')) return itemView(s, id.slice(6));
   return strikeView(s, id);
 }
 
 /** Answer a moment (a strike or the storm) in the moment; what landed goes in tomorrow's paper. */
-export function answerMoment(s: GameState, id: string, opt: string): { state: GameState; result: NowResult } {
+export function answerMoment(s: GameState, id: string, opt?: string): { state: GameState; result: NowResult } {
+  if (id.startsWith('sched:')) {
+    const r = answerItem(s, id.slice(6), opt);
+    if (!r) return { state: dropItem(s, id.slice(6)), result: { ok: false, error: 'It is over', title: 'The moment passed', tier: 'fail', headline: 'It is over', line: '', changes: [], leadsTo: [] } };
+    if (r.extra) extraPress(r.state, r.extra.h, r.extra.b);
+    return { state: r.state, result: r.result };
+  }
   if (id === 'storm') {
-    const r = resolveStorm(s, opt as StormOptId);
+    const r = resolveStorm(s, (opt ?? 'ride') as StormOptId);
     if (!r) return { state: s, result: { ok: false, error: 'It is over', title: 'The storm', tier: 'fail', headline: 'It is over', line: '', changes: [], leadsTo: [] } };
     extraPress(r.state, r.extra.h, r.extra.b);
     return { state: r.state, result: r.result };
   }
-  return answerStrike(s, id, opt as StrikeOptId);
+  return answerStrike(s, id, (opt ?? 'ride') as StrikeOptId);
 }
 
 /** The boss answers a strike in the moment (what landed is in tomorrow's paper: EXTRA!). */

@@ -7,6 +7,7 @@ import { heat, money, newCtx, type Ctx } from './ledger';
 import { opinion } from './relations';
 import { today } from './days';
 import type { NowResult } from './deeds/now';
+import type { MomentView } from './schedule';
 import type { Effect, EventInstance, GameDate, GameState, RivalId } from './types';
 
 /**
@@ -191,7 +192,7 @@ function stormOpts(s: GameState): StormOpt[] {
 }
 
 /** The landfall card (the same shape as a strike's: threats.ts StrikeView). */
-export function stormView(s: GameState): { id: string; title: string; text: string; when: string; warned: boolean; options: { id: StormOptId; label: string; hint: string; odds: number; blocked?: string }[]; def: StormOptId } | undefined {
+export function stormView(s: GameState): MomentView | undefined {
   if (!stormTonight(s)) return undefined;
   const name = stormName(s, s.date.y);
   return {

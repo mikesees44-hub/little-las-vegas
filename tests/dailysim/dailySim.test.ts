@@ -28,7 +28,7 @@ import { previewAction } from '../../src/engine/actions';
 import { cutscenesBetween } from '../../src/engine/cutscenes';
 import { themeOf, templateOf } from '../../src/engine/storyDirector';
 import { meetTip, respondTip, responsesFor, unseenUrgent, markTipsSeen } from '../../src/engine/threats';
-import { autoPauses, budgetPause, redKeys, type PauseLedger } from '../../src/ui/clockPolicy';
+import { autoPauses, budgetPause, IMMEDIATE, redKeys, type PauseLedger } from '../../src/ui/clockPolicy';
 import { advanceDay, answerMoment, closeWeek, eventsOut, momentView } from '../../src/engine/daily';
 import { extraToday, markExtraShown } from '../../src/engine/paper';
 import { morningStop, newWarnings, weekHeadlines } from '../../src/ui/clock';
@@ -184,15 +184,16 @@ describe.skipIf(!ON)('daily sim', () => {
             const opt = h32(`${SEED}:${id}:strike`) < 0.6 && best ? best.id : v.def;
             const r = answerMoment(s, id, opt);
             if (r.result.ok) { s = r.state; nextRec.strikes!++; strikeLines.push(r.result.line); }
-            pause(nextRec, 'strike', s);
           }
-          const ex = extraToday(s);
-          if (ex) { s = markExtraShown(s, ex.id); nextRec.extra!++; nextRec.heads.push(`extra:${ex.h}`); pause(nextRec, 'extra', s); }
+          // The App's one stop a morning (App.tsx pauseOnce): the most pressing reason, within the day's budget.
+          const cats: string[] = day.strikes.length ? ['strike'] : [];
           const ps = autoPauses(prev, s, acked, ui).map((p) => p.cat);
-          if (ps.length) pause(nextRec, ps[0], s);
-          if (morningStop(s)) pause(nextRec, 'capo', s);
+          if (ps.length) cats.push(ps[0]);
+          if (morningStop(s)) cats.push('capo');
+          const ex = extraToday(s);
+          if (ex) { s = markExtraShown(s, ex.id); nextRec.extra!++; nextRec.heads.push(`extra:${ex.h}`); cats.push('extra'); }
           nextRec.tips = unseenUrgent(s).length;
-          if (nextRec.tips && !nextRec.pauses.includes('urgent')) pause(nextRec, 'urgent', s);
+          if (cats.length) pause(nextRec, cats.find((c) => IMMEDIATE.has(c)) ?? cats[0], s);
           days.push(nextRec);
           acked = new Set([...acked, ...redKeys(s, ui)]);
         }

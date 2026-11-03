@@ -115,7 +115,8 @@ export function bailoutSource(s: GameState): EventInstance | undefined {
 export function summonsChance(s: GameState): number {
   const ramp = Math.max(0, Math.min(1, (s.heat.family - 30) / 40));
   const short = (s.flags.bag_short ?? 0) > 0 ? 0.04 : 0;
-  return Math.min(0.3, 0.012 + 0.03 * wealthPressure(s) + 0.35 * ramp + short);
+  const known = s.respect >= 60 ? 0.01 : 0;
+  return Math.min(0.3, 0.025 + known + 0.03 * wealthPressure(s) + 0.35 * ramp + short);
 }
 
 export function summonsSource(s: GameState): EventInstance | undefined {

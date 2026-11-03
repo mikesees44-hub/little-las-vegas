@@ -16,7 +16,7 @@ import { MapView } from './map/MapView';
 import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
 import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Speed } from './clock';
-import { autoPauses, budgetPause, dayKey, DEFAULT_SPEED, firstPause, redKeys, speedKey, type PauseLedger } from './clockPolicy';
+import { autoPauses, budgetPause, dayKey, DEFAULT_SPEED, firstPause, IMMEDIATE, redKeys, speedKey, type PauseLedger } from './clockPolicy';
 import { advanceDay, answerMoment, eventOut, eventsOut, releaseAll } from '../engine/daily';
 import { StrikeCard } from './components/StrikeCard';
 import { SchemePlanner } from './components/Schemes';
@@ -645,23 +645,38 @@ export function App({ startOn = 'title' }: AppProps) {
     let next = day.state;
     // The quiet ones landed on their own: a line on the ticker (the full story is in Your File).
     if (day.landed.length) setTicker(`${day.landed[day.landed.length - 1].title}: ${day.landed[day.landed.length - 1].line}`);
-    // EXTRA! A front page about the week's violence comes out this morning: a headline card (within the day's budget).
+    // Everything that wants the clock stopped this morning: one stop (the most pressing reason), within the day's budget.
+    const whys: { cat: string; text: string }[] = [];
+    if (day.strikes.length) {
+      setStrike(day.strikes[0]);
+      whys.push({ cat: 'strike', text: 'it is happening now' });
+    }
+    const w = autoWhy(s, next);
+    if (w) whys.push(w);
+    const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
+    if (urgent) whys.push({ cat: 'capo', text: urgent });
+    // EXTRA! A front page about the violence comes out this morning: a headline card when the clock stops for it (or stops anyway).
     const ex = extraToday(next);
     if (ex) {
       next = markExtraShown(next, ex.id);
-      const ok = budgetPause(pauseLedgerRef.current, dayKey(next), 'extra');
-      if (ok.ok && pausesOn('pauseOnViolence')) { pauseLedgerRef.current = ok.ledger; setCues((c) => [...c, { key: 'extra', title: 'EXTRA!', text: `${ex.h ?? ''}. ${ex.b}`, week: next.week }]); }
+      if (pausesOn('pauseOnViolence')) whys.push({ cat: 'extra', text: ex.h ?? 'EXTRA!' });
     }
     setS(next);
     // The week's turn is never a surprise: Sunday says it is coming.
     if (daysOf(next).day >= 6) setClockNote('Sunday: the week turns tonight at midnight (Space pauses)');
-    if (day.strikes.length) {
-      setStrike(day.strikes[0]);
-      pauseFor(next, 'strike', 'it is happening now');
-    }
-    clockAutoPause(s, next);
-    const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
-    if (urgent) pauseFor(next, 'capo', urgent);
+    const stopped = pauseOnce(next, whys);
+    if (ex && stopped && pausesOn('pauseOnViolence')) setCues((c) => [...c, { key: 'extra', title: 'EXTRA!', text: `${ex.h ?? ''}. ${ex.b}`, week: next.week }]);
+  }
+  /** One stop for a morning's reasons: an immediate one (clockPolicy.ts IMMEDIATE) first, else the first; within the day's budget. */
+  function pauseOnce(at: GameState, whys: { cat: string; text: string }[]): boolean {
+    if (!whys.length) return false;
+    const top = whys.find((x) => IMMEDIATE.has(x.cat)) ?? whys[0];
+    const b = budgetPause(pauseLedgerRef.current, dayKey(at), top.cat);
+    if (!b.ok) return false;
+    pauseLedgerRef.current = b.ledger;
+    setSpeed(0);
+    setClockNote(`Paused: ${top.text}`);
+    return true;
   }
   /** Stop the clock, within the day's pause budget (clockPolicy.ts budgetPause): red, urgent, war, death and a strike always stop it. */
   function pauseFor(at: GameState, cat: string, text: string) {
@@ -671,13 +686,14 @@ export function App({ startOn = 'title' }: AppProps) {
     setSpeed(0);
     setClockNote(`Paused: ${text}`);
   }
-  /** The clock's auto-pause (clockPolicy.ts): red on the Desk, an urgent meeting, war, a death in the house, a plot. */
-  function clockAutoPause(prev: GameState, next: GameState) {
+  /** The clock's auto-pause reason (clockPolicy.ts): red on the Desk, an urgent meeting, war, a death in the house, a plot. */
+  function autoWhy(prev: GameState, next: GameState): { cat: string; text: string } | undefined {
     const ui = { answers, briefSkip };
     const w = firstPause(autoPauses(prev, next, ackedRef.current, ui), (k) => pausesOn(k));
     ackedRef.current = new Set([...ackedRef.current, ...redKeys(next, ui)]);
-    if (w) pauseFor(next, w.cat, w.text);
+    return w ? { cat: w.cat, text: w.text } : undefined;
   }
+
   /** Play / a speed: what is red on the Desk now has been seen. */
   function playAt(v: Speed) {
     if (v > 0) ackedRef.current = new Set([...ackedRef.current, ...redKeys(s, { answers, briefSkip })]);
