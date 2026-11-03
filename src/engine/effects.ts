@@ -45,6 +45,7 @@ import { applyCapoOp, describeCapoOp } from './capos';
 import { applyMinigameEffect, describeMinigame } from './minigame';
 import { onArrest } from './trial';
 import { applyCutOp, describeCutOp } from './cutScore';
+import { applyOcOp, describeOcOp } from './oceanCity';
 
 const HEAT_NAMES: Record<HeatBar, string> = { local: 'Local heat', family: 'Family heat', federal: 'Federal heat' };
 
@@ -259,6 +260,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeCapoOp(s, e.op);
     case 'cut':
       return describeCutOp(s, e.op);
+    case 'oc':
+      return describeOcOp(s, e.op);
     case 'evidence': {
       const c = s.characters[e.charId];
       if (!c) return undefined;
@@ -938,6 +941,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'cut':
       applyCutOp(ctx, e.op);
+      break;
+    case 'oc':
+      applyOcOp(ctx, e.op);
       break;
     case 'rivalResource': {
       const r = s.rivals.find((x) => x.id === e.rival);

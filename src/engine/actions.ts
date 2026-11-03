@@ -44,6 +44,7 @@ import { ledgerActions, previewLedger } from './ledgerbook';
 import { previewTribute } from './tributeOps';
 import { earsActions, previewEars } from './ears';
 import { commitDirty, previewDirty } from './dirtyWork';
+import { commitOc, previewOc } from './oceanCity';
 import { commitWork, previewWork } from './bizRacket';
 import { commitProtect, previewProtect } from './protect';
 import { previewWomen } from './women';
@@ -158,6 +159,8 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   deed: { preview: (s, a) => previewDeedAction(s, a), commit: (ctx, a) => commitDeedAction(ctx, a) },
   pol: { preview: (s, a) => previewPol(s, a.op) },
   dirty: { preview: (s, a) => previewDirty(s, a.op), commit: (ctx, a) => commitDirty(ctx, a.op) },
+  /** Ocean City, the dry town (oceanCity.ts): the run, the speakeasy, the commissioner; the odds roll now. */
+  oc: { preview: (s, a) => previewOc(s, a.op), commit: (ctx, a) => commitOc(ctx, a.op) },
   work: { preview: (s, a) => previewWork(s, a.op), commit: (ctx, a) => commitWork(ctx, a.op) },
   protect: { preview: (s, a) => previewProtect(s, a.op), commit: (ctx, a) => commitProtect(ctx, a.op) },
   /** The women (women.ts): her answer is rolled; the outcome lands through the 'women' effect. */

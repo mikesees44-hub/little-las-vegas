@@ -1,4 +1,5 @@
 import { desertMult, myMenWeek, noteChoice } from './myMen';
+import { ocWeek } from './oceanCity';
 import { econEventSource, econWeek } from './econ';
 import { hoodWeek } from './hood';
 import { livingWeek } from './livingWorld';
@@ -415,6 +416,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     myMenWeek(ctx);
     spendWeek(ctx);
     storeWeek(ctx);
+    ocWeek(ctx);
     workWeek(ctx);
     protectWeek(ctx);
     factionsWeek(ctx);

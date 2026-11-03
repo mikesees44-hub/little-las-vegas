@@ -582,7 +582,9 @@ export type Effect =
   /** The capos (capos.ts): answers to their requests, a man on one of them, having it out with him. */
   | ({ type: 'capo'; op: import('./caposState').CapoOp } & EffectBase)
   /** Cutting up a big score (cutScore.ts): the boss's cut, the envelopes, the party. */
-  | ({ type: 'cut'; op: import('./cutScore').CutOp } & EffectBase);
+  | ({ type: 'cut'; op: import('./cutScore').CutOp } & EffectBase)
+  /** Ocean City, the dry town (oceanCity.ts): the raid, the rival families. */
+  | ({ type: 'oc'; op: import('./oceanCity').OcOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -984,6 +986,8 @@ export interface GameState {
   hours?: import('./timeCost').HoursState;
   /** Cutting up the big scores (cutScore.ts; optional, made by the first offer). */
   cut?: import('./cutScore').CutState;
+  /** Ocean City, the dry town: the liquor run, the speakeasy, the commissioner, the referendum (oceanCity.ts; optional, made by the first order). */
+  oc?: import('./oceanCity').OcState;
   /** Dirty work: one-off jobs, their cooldowns and results (dirtyWork.ts; optional, starts when used). */
   dirty?: import('./dirtyWork').DirtyState;
   /** Family development: technology, connections, crew equipment, the other families' progress (devState.ts; optional for old saves). */
@@ -1093,6 +1097,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'ears'; op: EarsAction }
   /** Dirty work: a one-off job (dirtyWork.ts). */
   | { kind: 'dirty'; op: import('./dirtyWork').DirtyAction }
+  /** Ocean City, the dry town (oceanCity.ts): the liquor run, the speakeasy, the commissioner, the referendum. */
+  | { kind: 'oc'; op: import('./oceanCity').OcAction }
   /** Family development: technology, connections and crew equipment (develop.ts). */
   | { kind: 'dev'; op: import('./develop').DevAction }
   /** Relationships & Dating (dating.ts): invite, gifts, going steady, paid company, introductions. */

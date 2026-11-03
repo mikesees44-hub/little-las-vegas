@@ -1,4 +1,5 @@
 import { crew, displayName, isFree } from './characters';
+import { ocPressure } from './oceanCity';
 import { ESTIMATE_BAND } from './devData';
 import { tierOf } from './devState';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
@@ -755,6 +756,9 @@ export function campaignPressure(s: GameState, rival: RivalId = 'philly'): { val
   const pacts = (s.army?.pacts ?? []).filter((p) => p.until > s.week).length;
   if (pacts) reasons.push({ label: `Your pacts (${pacts})`, value: -Math.min(25, pacts * 10) });
   if (alliedWithFaction(s, rival)) reasons.push({ label: 'Married into his house', value: -30 });
+  // The dry town: told to stay out of Ocean City (oceanCity.ts).
+  const oc = ocPressure(s, rival);
+  if (oc) reasons.push({ label: 'You kept them out of Ocean City', value: oc });
   const value = Math.round(clamp(reasons.reduce((a, x) => a + x.value, 0), 0, 100));
   const goal: WarGoal = s.flags.bag_short || fh > 60 ? 'tribute' : ratio < 0.45 ? 'install' : 'districts';
   const why = goal === 'tribute' ? 'short envelopes and the noise you make' : goal === 'install' ? 'you look weak, and Sal wants his own man over you' : 'insults Sal will not swallow';
