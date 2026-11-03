@@ -3,12 +3,14 @@ import { applyEffects } from './effects';
 import { addStory } from './hierarchy';
 import type { Ctx } from './ledger';
 import { addOpinion, getRelation, opinion } from './relations';
+import { journal } from './journal';
 import { registerDelivery, scheduled, type MomentView, type ScheduledItem } from './schedule';
 import { grievanceLoad, publicHeir } from './heir';
 import { chooseHeir, killCharacter } from './dynasty';
 import { mindOf } from './minds/state';
 import { remember } from './minds/memory';
 import { bookOf } from './capos';
+import { holder as seatHolder } from './council';
 import type { Character, EventInstance, GameState } from './types';
 import { ensureFeds, fr, bossHasFlipped, type Crisis, type FedsState, type HollowCrown, type PlotStance } from './fedsState';
 import {
@@ -90,7 +92,7 @@ function recruitRound(s: GameState, C: Crisis, F: FedsState, push = 0): string[]
   for (const [id, v] of Object.entries(C.st)) {
     const c = s.characters[id];
     if (!c?.alive || c.faction !== 'player') { delete C.st[id]; continue; }
-    if ((v === 'neutral' || v === 'exploit') && fr(F) < 0.12 + push + C.strength / 80) { C.st[id] = 'join'; out.push(id); }
+    if ((v === 'neutral' || v === 'exploit') && fr(F) < (0.12 + push + C.strength / 80) * retributionDeters(s)) { C.st[id] = 'join'; out.push(id); }
     else if (v === 'join' && fr(F) < 0.05 + C.exposure / 60) C.st[id] = 'neutral';
     if (C.st[id] === 'inform' && fr(F) < 0.35) C.exposure += 1;
   }
@@ -225,15 +227,33 @@ function dmwView(s: GameState, it: ScheduledItem): MomentView | undefined {
       const sus = Object.values(C.st).filter((x) => x === 'neutral' || x === 'exploit').length;
       const flipped = bossHasFlipped(s);
       const caught = C.known.filter((id) => s.characters[id]?.alive);
-      return v(s, it, 'Day 7: the judgment', `Sunday night. Your consigliere puts four folders on the desk. You are alive; ${caught.length} men you can name agreed to your removal, and ${sus} more were happy to wait and see. Every man out there is watching what kind of Don you are now. There is no clean way out of this.`, [
-        { id: 'brutal', label: `The purge: ${caught.length} names, and whoever stood near them`, hint: 'Fear and control; a vacuum, a third to a half of the income gone while you rebuild, sons who remember', odds: 1 },
-        { id: 'mercy', label: 'Mercy: strip them and spare them', hint: 'No blood. The street will call you a dead man walking', odds: 1 },
-        { id: 'retire', label: 'Retire: give them the chair, and your heir', hint: 'The Succession: honor, a puppet, or a lonely beach house', odds: 1 },
-        { id: 'federal', label: 'Call the Bureau', hint: 'Part three: the deal. You only get to do it once', odds: 1, ...(flipped ? { blocked: 'You already made your deal with them once' } : {}) },
-      ], 'mercy');
+      const rings = ringleaders(s, C).map((c) => c.firstName).join(' and ');
+      return v(s, it, 'THE DON\'S RECKONING', `If you come for the Don, you better not miss — and they missed. Sunday night, the office. ${caught.length} men you can name agreed to your removal; ${sus} more were happy to wait and see. Every man out there is watching what kind of Don you are now. There is no clean way out of this.`, [
+        { id: 'nomercy', label: `No Mercy: ${caught.length} names, and the network around them`, hint: 'Fear goes through the roof. A vacuum, a third to a half of the income gone while you rebuild, and vendettas', odds: 1 },
+        { id: 'selective', label: `Selective Justice: ${rings || 'the ringleaders'} pay; the lesser men are spared`, hint: 'Every remaining capo must prove his loyalty in the weeks ahead, with odds', odds: 1 },
+        { id: 'warning', label: 'The Last Warning: forgive them, publicly', hint: 'Some become truly loyal. The rest see a dead man walking', odds: 1 },
+        { id: 'walk_retire', label: 'Walk Away: retire, and negotiate your exit', hint: 'Honor, a puppet, or a lonely beach house', odds: 1 },
+        { id: 'walk_heir', label: 'Walk Away: hand the chair to your heir now', hint: 'The succession, while you can still choose it', odds: 1 },
+        { id: 'walk_feds', label: 'Walk Away: call the Bureau', hint: 'The deal. You only get to do it once', odds: 1, ...(flipped ? { blocked: 'You already made your deal with them once' } : {}) },
+      ], 'warning');
     }
   }
   return undefined;
+}
+
+/** The owner's scene: the consigliere comes into the office, and the Don stands up. Names from the real plot. */
+export function reckoningScene(s: GameState, C: Crisis): string {
+  const cons = seatHolder(s, 'consigliere');
+  const lead = s.characters[C.leadId];
+  const caps = joiners(C).map((id) => s.characters[id]).filter((c): c is Character => !!c && c.rank === 'capo');
+  const second = caps[0] ?? joiners(C).map((id) => s.characters[id]).find((c) => !!c);
+  const soldiers = joiners(C).filter((id) => id !== second?.id && s.characters[id]?.rank !== 'capo').length;
+  const who = `${lead ? `${lead.firstName} ${lead.lastName}` : 'The ringleader'}${second ? ` and ${second.firstName} ${second.lastName}` : ''}${soldiers ? `, and ${soldiers} soldier${soldiers === 1 ? '' : 's'}` : ''}`;
+  const text = `${cons ? cons.firstName : 'Your consigliere'} closes the office door behind him. "We got them, boss. ${who}. They were going to take you out Saturday night." — "They thought I was weak?" — "They thought you wouldn't have the stomach to do what needed to be done." — "Then they should've remembered one thing." The Don slowly stands up. "If you come for the Don, you better not miss."`;
+  s.cutscenes = s.cutscenes.filter((c) => c.key !== 'dons_reckoning');
+  s.cutscenes.push({ key: 'betrayal_confrontation', title: 'The Don\'s Reckoning', text, week: s.week });
+  chron(s, `The plot against ${nm(player(s))} was foiled: ${who}.`, 'misc');
+  return text;
 }
 
 function foilOdds(_s: GameState, C: Crisis): number {
@@ -327,7 +347,7 @@ function dmwAnswer(input: GameState, it: ScheduledItem, opt: string) {
           if (ok) { C.exposure += 3; reveal(C, joiners(C).slice(0, 2)); line = 'You named names in front of the family. The ones you named could not look at you.'; }
           else { for (const n2 of byStance(C, 'neutral').slice(0, 2)) C.st[n2] = 'join'; line = 'You named names without proof. Two men who were sitting it out decided they could be next.'; }
         }
-        if (early(s, C, F)) { put(s, 'feds_dmw', C.w, 4, 22, { beat: 7, w: C.w }); line += ` Then ${ub?.firstName ?? 'your underboss'} walked in: he had them, all of them. It is over before the weekend.`; F.stats.crisisEnds.early = (F.stats.crisisEnds.early ?? 0) + 1; }
+        if (early(s, C, F)) { reckoningScene(s, C); put(s, 'feds_dmw', C.w, 4, 22, { beat: 7, w: C.w }); line += ` Then ${ub?.firstName ?? 'your underboss'} walked in: he had them, all of them. It is over before the weekend.`; F.stats.crisisEnds.early = (F.stats.crisisEnds.early ?? 0) + 1; }
         // The young soldier with the warning (tomorrow night).
         const young = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c) && c.id !== lead.id).sort((a, b) => a.birth.y > b.birth.y ? -1 : 1)[0];
         if (young) { C.warnerId = young.id; C.warnerTrue = (C.st[young.id] ?? 'resist') !== 'exploit' && !hasTrait(young, 'Greedy') && fr(F) < 0.8; }
@@ -357,7 +377,7 @@ function dmwAnswer(input: GameState, it: ScheduledItem, opt: string) {
           if (ok) { C.ub = 'loyal'; addOpinion(s, ub.id, s.playerId, 'The boss promised me the chair', 15, 1); line = `${ub.firstName} shook on it. He will remember the promise.`; } else line = `${ub.firstName} took the money and said he would think about it.`;
         } else if (id === 'guards') { pay(800); C.guard += 0.15; line = 'A different bed, two men in the hall, the lights off by ten.'; }
         else line = 'You went to Mass. Half the men in the pews were watching you pray.';
-        if (C.done !== 'early' && early(s, C, F)) { put(s, 'feds_dmw', C.w, 6, 21, { beat: 7, w: C.w }); line += ` Late that night ${ub?.firstName ?? 'your underboss'} had them, before they could move.`; F.stats.crisisEnds.early = (F.stats.crisisEnds.early ?? 0) + 1; }
+        if (C.done !== 'early' && early(s, C, F)) { reckoningScene(s, C); put(s, 'feds_dmw', C.w, 6, 21, { beat: 7, w: C.w }); line += ` Late that night ${ub?.firstName ?? 'your underboss'} had them, before they could move.`; F.stats.crisisEnds.early = (F.stats.crisisEnds.early ?? 0) + 1; }
         break;
       }
       case 6: {
@@ -368,7 +388,8 @@ function dmwAnswer(input: GameState, it: ScheduledItem, opt: string) {
           if (id === 'stand') applyEffects(ctx, [{ type: 'respect', amount: 5 }], { label, because: 'waited for them in the dark', category: 'event' });
           line = `They came, and it went wrong for them. By dawn ${lead.firstName} had vanished and two of his men were sitting in the back of your cousin's bakery with their hands tied. ${C.known.length} men agreed to your removal. Many more wanted to see how it came out.`;
           F.stats.crisisEnds.foiled = (F.stats.crisisEnds.foiled ?? 0) + 1;
-          return { line, chance: o.odds, ok: true, extra: { h: 'GUNFIRE ON QUIET WILDWOOD STREET', b: 'Residents reported shots before dawn. Police found shell casings and an abandoned car but no injuries.' } };
+          reckoningScene(s, C);
+          return { line, chance: o.odds, ok: true, extra: { h: 'IF YOU COME FOR THE DON, YOU BETTER NOT MISS', b: `Shots before dawn on a quiet Wildwood street. Police found shell casings and an abandoned car. On the boardwalk, they say ${lead.lastName}'s people missed.` } };
         }
         C.done = 'killed';
         endHollow(ctx, F, 'clipped');
@@ -393,11 +414,11 @@ function judge(ctx: Ctx, F: FedsState, C: Crisis, id: string): { line: string; o
   const H = F.hollow!;
   C.done = 'judged';
   F.stats.crisisEnds[id] = (F.stats.crisisEnds[id] ?? 0) + 1;
-  const label = 'The judgment';
+  const label = 'The Don\'s Reckoning';
   const named = [...new Set([C.leadId, ...C.known])].map((x) => s.characters[x]).filter((c): c is Character => mine(s, c));
   const witnesses = crew(s).filter((c) => !named.includes(c));
   const memAll = (t: string, val: number) => { for (const c of witnesses) { const m = mindOf(s, c.id); if (m) remember(m, { w: s.week, k: val < 0 ? 'fear' : 'favor', who: s.playerId, t, v: val }); } };
-  if (id === 'brutal') {
+  if (id === 'nomercy' || id === 'brutal') {
     const killed: Character[] = [];
     for (const c of named) {
       if (c.rank === 'capo' || c.id === C.leadId) {
@@ -422,20 +443,28 @@ function judge(ctx: Ctx, F: FedsState, C: Crisis, id: string): { line: string; o
     if (heir && heir.id !== s.playerId) addOpinion(s, heir.id, s.playerId, hasTrait(heir, 'Cruel') || hasTrait(heir, 'Hot-headed') ? 'Showed me what it takes to keep the chair' : 'I saw what my father did that week', hasTrait(heir, 'Cruel') || hasTrait(heir, 'Hot-headed') ? 10 : -10, 0);
     memAll('The week of the empty chairs', -10);
     endHollow(ctx, F, 'purge');
+    giveRetribution(ctx, F, C);
+    plantSurvivor(s, F, killed);
     return {
       line: `The Night of the Empty Chairs: ${killed.length} gone, ${named.length - killed.length} thrown out. Nobody will challenge you this year. Half the rackets have nobody who knows how to run them.`, ok: true, people: named.map((c) => c.id),
       leads: ['Rebuilding: the family earns a third to a half less for three months', 'Some of the dead have sons'],
       extra: { h: 'WAVE OF DISAPPEARANCES ALARMS SHORE', b: `Police are investigating the disappearance of ${killed.length} men with reputed ties to local rackets.` },
     };
   }
-  if (id === 'mercy') {
+  if (id === 'selective') return selective(ctx, F, C, named, witnesses);
+  if (id === 'warning' || id === 'mercy') {
     const lead = s.characters[C.leadId];
     if (mine(s, lead)) {
       applyEffects(ctx, [{ type: 'rank', charId: lead.id, rank: 'soldier' }], { label, because: `stripped ${lead.firstName} and spared him`, category: 'event' });
       for (const d of s.districts) if (d.capoId === lead.id) d.capoId = undefined;
       addOpinion(s, lead.id, s.playerId, 'He spared me — and took everything', -10, 0);
     }
-    for (const c of named) if (c.id !== C.leadId) addOpinion(s, c.id, s.playerId, 'The boss spared me after the plot', 10, 0);
+    // Forgiven in public: some of them mean it from now on.
+    for (const c of named) if (c.id !== C.leadId) {
+      const real = fr(F) < 0.35 + (hasTrait(c, 'Honest') ? 0.2 : 0) + (hasTrait(c, 'Loyal-to-a-fault') ? 0.2 : 0) - (hasTrait(c, 'Ambitious') ? 0.15 : 0);
+      addOpinion(s, c.id, s.playerId, real ? 'He forgave me in front of everybody. I owe him my life' : 'The boss spared me after the plot', real ? 30 : 10, 0);
+      if (real) addStory(s, c, 'Forgiven in public after the plot; loyal ever since.');
+    }
     for (const c of crew(s)) { const r = getRelation(s, c.id, s.playerId); if (r) r.fear = Math.max(0, (r.fear ?? 0) - 15); }
     // Somebody is devoted for life: the man whose brother (or friend) was spared.
     const dev = witnesses.find((c) => C.st[c.id] === 'resist' || C.st[c.id] === 'inform');
@@ -452,7 +481,7 @@ function judge(ctx: Ctx, F: FedsState, C: Crisis, id: string): { line: string; o
     chron(s, `${nm(player(s))} spared the men who plotted against him. The street calls him a dead man walking.`, 'misc');
     return { line: 'You stripped them and let them live. The men who wanted blood went home and told their wives you are finished. A few went home and lit a candle for you.', ok: true, people: named.map((c) => c.id), leads: ['DEAD MAN WALKING: light envelopes, ignored orders, more challenges', 'Win the capos back one at a time to lift it'] };
   }
-  if (id === 'retire') {
+  if (id === 'retire' || id === 'walk_retire' || id === 'walk_heir') {
     const b = player(s);
     const res = chooseHeir(s, b);
     const heir = res.heir;
@@ -460,7 +489,7 @@ function judge(ctx: Ctx, F: FedsState, C: Crisis, id: string): { line: string; o
       return { line: 'There is nobody to hand it to. You stay in the chair, and everyone knows you wanted out.', ok: false };
     }
     const op = opinion(s, heir.id, b.id);
-    const kind: 'honorable' | 'puppet' | 'isolated' = op >= 30 && s.respect >= 40 ? 'honorable' : C.ub === 'rival' || C.strength >= 10 ? 'puppet' : op >= 0 ? 'honorable' : 'isolated';
+    const kind: 'honorable' | 'puppet' | 'isolated' = id === 'walk_heir' ? 'honorable' : op >= 30 && s.respect >= 40 ? 'honorable' : C.ub === 'rival' || C.strength >= 10 ? 'puppet' : op >= 0 ? 'honorable' : 'isolated';
     F.retired = { id: b.id, kind, w: s.week };
     endHollow(ctx, F, 'stepped');
     applyEffects(ctx, [{ type: 'dyn', op: { op: 'abdicate' } }, { type: 'respect', amount: 3 }], { label, because: 'retired after the plot', category: 'event' });
@@ -479,6 +508,199 @@ function judge(ctx: Ctx, F: FedsState, C: Crisis, id: string): { line: string; o
   return { line: 'Monday morning, the federal building in Camden. You gave them everything. The family goes on without you, and it will never forgive you.', ok: true, extra: { h: 'RACKETS FIGURE SAID TO BE COOPERATING', b: 'Sources say a reputed shore rackets boss is cooperating with federal prosecutors.' } };
 }
 
+/** The ringleaders: the man who led it and the capo who stood next to him. */
+function ringleaders(s: GameState, C: Crisis): Character[] {
+  const lead = s.characters[C.leadId];
+  const second = joiners(C).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive && c.faction === 'player').sort((a, b) => (b.rank === 'capo' ? 1 : 0) - (a.rank === 'capo' ? 1 : 0))[0];
+  return [lead, second].filter((c): c is Character => !!c && mine(s, c));
+}
+
+/** The tests a spared family must pass: each capo left owes the boss proof, by a week. */
+const TESTS = ['bring in an extra envelope from his corners', 'give up the names of anyone who still talks about the plot', 'take care of a debt to the family nobody else could collect', 'settle a beef with the Manno crew without blood'];
+
+/** Selective Justice: the ringleaders pay, the lesser men are spared, and every capo must prove himself. */
+function selective(ctx: Ctx, F: FedsState, C: Crisis, named: Character[], witnesses: Character[]): { line: string; ok: boolean; extra?: { h: string; b: string }; leads?: string[]; people?: string[] } {
+  const s = ctx.s;
+  const label = 'The Don\'s Reckoning';
+  const rings = ringleaders(s, C);
+  for (const c of rings) applyEffects(ctx, [{ type: 'kill', charId: c.id, cause: 'killed for leading the plot against the boss', killer: 'player' }], { label, because: `had ${c.firstName} ${c.lastName} killed for the plot`, category: 'event' });
+  for (const c of rings) for (const d of s.districts) if (d.capoId === c.id) d.capoId = undefined;
+  for (const c of named) if (!rings.includes(c)) addOpinion(s, c.id, s.playerId, 'The boss let the small men live', 12, 0);
+  for (const c of crew(s)) { const r = getRelation(s, c.id, s.playerId); if (r) r.fear = Math.min(100, (r.fear ?? 0) + 12); }
+  applyEffects(ctx, [{ type: 'respect', amount: 4 }, { type: 'heat', bar: 'local', amount: 8 }, { type: 'heat', bar: 'federal', amount: 5 }], { label, because: 'punished the ringleaders and spared the rest', category: 'event' });
+  F.rebuild = { until: s.week + 6, cut: 0.15 };
+  const ks = capos(s).filter((k) => isFree(s, k));
+  ks.forEach((k, i) => F.tests.push({ capoId: k.id, due: s.week + 3 + i, what: TESTS[i % TESTS.length] }));
+  for (const c of witnesses) { const m = mindOf(s, c.id); if (m) remember(m, { w: s.week, k: 'fear', who: s.playerId, t: `Saw ${rings.map((x) => x.firstName).join(' and ')} pay for the plot`, v: -4 }); }
+  endHollow(ctx, F, 'selective');
+  return {
+    line: `${rings.map((c) => c.firstName).join(' and ') || 'The ringleaders'} did not come back from a ride to the Pines. The rest kissed your ring. Every capo you have left owes you proof, and you have told each of them what.`, ok: true, people: rings.map((c) => c.id),
+    leads: ks.map((k) => `${k.firstName} must ${TESTS[ks.indexOf(k) % TESTS.length]}`).slice(0, 3),
+    extra: { h: 'TWO MISSING IN SHORE RACKETS FEUD', b: `${rings.map((c) => nm(c)).join(' and ')} have not been seen since Sunday. Police suspect foul play.` },
+  };
+}
+
+/** Odds a capo passes his loyalty test. */
+export function testOdds(s: GameState, k: Character): number {
+  return clamp(0.45 + opinion(s, k.id, s.playerId) / 200 + (getRelation(s, k.id, s.playerId)?.fear ?? 0) / 300 + (hasTrait(k, 'Loyal-to-a-fault') ? 0.15 : 0) - (hasTrait(k, 'Ambitious') ? 0.1 : 0), 0.15, 0.9);
+}
+
+/** REPUTATION OF RETRIBUTION: a ruthless or calculating Don becomes a legend; a reckless or wrathful one a terror. */
+function giveRetribution(ctx: Ctx, F: FedsState, C: Crisis): void {
+  const s = ctx.s;
+  const b = player(s);
+  const wild = hasTrait(b, 'Hot-headed') || hasTrait(b, 'Vengeful');
+  const kind = wild && !hasTrait(b, 'Patient') ? 'terror' : 'legend';
+  F.retribution = { since: s.week, kind, lead: nm(s.characters[C.leadId]), bossId: b.id };
+  addStory(s, b, kind === 'legend' ? 'After the plot, a reputation: nobody comes for him twice.' : 'After the plot, a reputation: a man who kills first and counts later.');
+  ctx.log.push(kind === 'legend' ? 'A REPUTATION OF RETRIBUTION: on the island they talk about what happened to the men who came for you. Nobody will try it lightly again.' : 'A REPUTATION OF RETRIBUTION: on the island they say you have lost your mind. Some of your best earners are quietly looking for the door.');
+}
+
+/** The one the purge missed: a son, a nephew or a protégé of a dead man, taken in. Hidden. */
+function plantSurvivor(s: GameState, F: FedsState, killed: Character[]): void {
+  const dead = killed[Math.floor(fr(F) * killed.length)];
+  if (!dead || F.survivor) return;
+  let c = dead.childrenIds.map((x) => s.characters[x]).find((k) => k?.alive && k.gender === 'M' && s.date.y - k.birth.y >= 18 && k.faction !== 'player');
+  let tie: 'son' | 'nephew' | 'protege' = 'son';
+  if (!c) {
+    tie = fr(F) < 0.5 ? 'nephew' : 'protege';
+    c = makeCharacter(s, { gender: 'M', age: 22 + Math.floor(fr(F) * 6), faction: 'none', ethnicity: dead.ethnicity, ...(tie === 'nephew' ? { lastName: dead.lastName === 'Russo' ? 'Russo' : dead.lastName } : {}), traits: ['Patient', 'Charming'] });
+  }
+  c.faction = 'player';
+  c.rank = 'associate';
+  c.capoId = capos(s).find((k) => isFree(s, k))?.id;
+  c.traits = [...new Set([...c.traits.filter((x) => x !== 'Hot-headed'), 'Patient' as const])];
+  addStory(s, c, 'Came to the family after the purge, asking for work. Never late, never short.');
+  addOpinion(s, c.id, s.playerId, 'Gave me a chance when nobody else would', 20, 0);
+  F.survivor = { id: c.id, of: dead.id, tie, since: s.week };
+}
+
+/** Weekly: the loyalty tests, the reputation, and the survivor's long wait. */
+function afterWeek(ctx: Ctx, F: FedsState): void {
+  const s = ctx.s;
+  const b = player(s);
+  // Selective Justice: each capo's proof comes due.
+  for (const tst of F.tests.filter((x) => x.due <= s.week)) {
+    const k = s.characters[tst.capoId];
+    if (!mine(s, k)) continue;
+    const p = testOdds(s, k);
+    if (fr(F) < p) {
+      applyEffects(ctx, [{ type: 'money', amount: 1000, category: 'kickup' }, { type: 'opinion', from: s.playerId, to: k.id, amount: 10, reason: 'Proved himself after the plot', decay: 1 }], { label: `${k.firstName}'s proof`, because: `${k.firstName} had to prove himself`, category: 'kickup' });
+      ctx.log.push(`${nm(k)} did what you asked: he had to ${tst.what}. (${pc(p)}) He passed.`);
+    } else {
+      ctx.log.push(`${nm(k)} was asked to ${tst.what}, and did not. (${pc(p)})`);
+      s.eventQueue.push(failedTest(s, k, tst.what));
+    }
+  }
+  F.tests = F.tests.filter((x) => x.due > s.week);
+  // The reputation: men remember, and say so.
+  const R = F.retribution;
+  if (R && R.bossId !== s.playerId) F.retribution = undefined;
+  else if (R) {
+    for (const c of crew(s)) { const r = getRelation(s, c.id, s.playerId); if (r && (r.fear ?? 0) < 30) r.fear = 30; }
+    if (fr(F) < 0.08) {
+      const k = capos(s).filter((x) => isFree(s, x))[Math.floor(fr(F) * capos(s).length)];
+      if (k) {
+        const lines = [
+          `${k.firstName} had two drinks too many and somebody asked him if the boss is slipping. He said he still remembers how fast ${R.lead}'s crew was gone — a Sunday, and by Thursday nobody would say their names. He changed the subject.`,
+          `A young fella asked ${k.firstName} what it would take to run the island. ${k.firstName} told him about ${R.lead}, and the empty chairs, and told him to finish his beer and go home.`,
+        ];
+        journal(s, { c: 'crew', t: `They still talk about ${R.lead}`, x: lines[Math.floor(fr(F) * lines.length)], src: 'feds', k: 'heard', p: [k.id] });
+      }
+    }
+    if (R.kind === 'terror' && fr(F) < 0.05) {
+      const earner = crew(s).filter((c) => (c.rank === 'associate' || c.rank === 'soldier') && isFree(s, c) && opinion(s, c.id, s.playerId) < 20).sort((a, c) => (c.lastEarn ?? 0) - (a.lastEarn ?? 0))[0];
+      if (earner) { applyEffects(ctx, [{ type: 'retire', charId: earner.id }], { label: 'A reputation of retribution', because: 'the purge frightened the earners', category: 'event' }); ctx.log.push(`${nm(earner)}, one of your best earners, took his family to Florida. He did not say goodbye.`); }
+      applyEffects(ctx, [{ type: 'heat', bar: 'family', amount: 2 }, { type: 'heat', bar: 'federal', amount: 2 }], { label: 'A reputation of retribution', because: 'Philadelphia and the Bureau are nervous about you', category: 'heat' });
+    }
+  }
+  // The survivor: earns, rises, waits for the Don's weakest hour.
+  const V = F.survivor;
+  if (!V || V.moved) return;
+  const c = s.characters[V.id];
+  if (!c?.alive || c.faction !== 'player') { F.survivor = undefined; return; }
+  if (V.found) return;
+  const age = s.week - V.since;
+  applyEffects(ctx, [{ type: 'money', amount: 200 + Math.floor(fr(F) * 300), category: 'street' }], { label: `${c.firstName}'s corner`, because: `${c.firstName} earns`, category: 'street' });
+  if (age === 30 && c.rank === 'associate') applyEffects(ctx, [{ type: 'rank', charId: c.id, rank: 'soldier' }], { label: 'A rising man', because: `${c.firstName} earned his button`, category: 'event' });
+  if (fr(F) < 0.03) journal(s, { c: 'crew', t: `Talk about ${c.firstName} ${c.lastName}`, x: `An old-timer at the Shamrock swears ${c.firstName} has ${nm(s.characters[V.of])}'s way of holding a cigarette. Probably nothing.`, src: 'feds', k: 'heard', p: [c.id] });
+  const weak = b.health < 45 || s.wars.some((w) => w.score <= -25) || (F.hollow && !F.hollow.dmw) || s.playerId !== (F.retribution?.bossId ?? s.playerId);
+  if (age >= 52 && weak && !scheduled(s).some((x) => x.kind === 'feds_survivor') && fr(F) < 0.35) {
+    V.moved = s.week;
+    put(s, 'feds_survivor', s.week + 1, 1 + Math.floor(fr(F) * 5), 23, {});
+  }
+}
+
+function failedTest(s: GameState, k: Character, what: string): EventInstance {
+  const label = `${k.firstName} failed his test`;
+  return {
+    iid: `ev${s.nextId++}`, defId: 'feds_test', week: s.week, mandatory: false, priority: 76, actors: [k.id], meta: { feds: 1, crew: 1, charId: k.id },
+    title: `${k.firstName} did not deliver`, text: `After the plot you told ${nm(k)} to ${what}. He did not. He says he needs more time. Every capo who passed is watching.`, defaultChoiceId: 'chance',
+    choices: [
+      { id: 'chance', label: 'One more chance', detail: 'Patience; the others may read it as softness.', because: `gave ${k.firstName} one more chance`, effects: [{ type: 'respect', amount: -1, label }, { type: 'opinion', from: k.id, to: s.playerId, amount: 6, reason: 'The boss gave me another chance', decay: 1, label }] },
+      { id: 'bust', label: 'Bust him down to soldier', detail: 'His corner goes to a man who delivered.', because: `busted ${k.firstName} down`, effects: [{ type: 'rank', charId: k.id, rank: 'soldier', label }, { type: 'opinion', from: k.id, to: s.playerId, amount: -20, reason: 'Busted me down after the plot', decay: 1, label }, { type: 'respect', amount: 2, label }] },
+      { id: 'clip', label: `Have ${k.firstName} killed`, detail: 'Your explicit order. Nobody will fail you again — or nobody will stay.', because: `had ${k.firstName} killed for failing`, effects: [{ type: 'kill', charId: k.id, cause: 'killed for failing the boss after the plot', killer: 'player', label }, { type: 'crewOpinion', amount: -4, reason: `${k.firstName} was killed for failing a test`, label }, { type: 'heat', bar: 'local', amount: 6, label }] },
+    ],
+  };
+}
+
+function survivorView(s: GameState, it: ScheduledItem): MomentView | undefined {
+  const V = s.feds?.survivor;
+  const c = V ? s.characters[V.id] : undefined;
+  const dead = V ? s.characters[V.of] : undefined;
+  if (!V || !c?.alive || c.faction !== 'player' || !player(s)?.alive) return undefined;
+  const guards = clamp(0.35 + s.respect / 300 + (hasTrait(player(s), 'Paranoid') ? 0.15 : 0), 0.2, 0.8);
+  return v(s, it, 'The one you missed', `Eleven at night, the lot behind the Shamrock. ${nm(c)} is waiting by your car, the way he has waited by it a hundred times. Only tonight he is not smiling. ${dead ? `He is ${dead.firstName} ${dead.lastName}'s ${V.tie === 'son' ? 'son' : V.tie === 'nephew' ? 'nephew' : 'boy — the one ' + dead.firstName + ' raised'}.` : ''} The Don didn't miss either. He just didn't finish what he started.`, [
+    { id: 'draw', label: 'Go for the gun under the seat', hint: 'You are older and slower. You are also you', odds: clamp(guards - 0.05, 0.15, 0.8) },
+    { id: 'talk', label: `Say his father's name to him`, hint: 'Make him look you in the eye first', odds: clamp(0.3 + (hasTrait(player(s), 'Charming') ? 0.15 : 0), 0.15, 0.6) },
+    { id: 'run', label: 'Back inside, through the kitchen', hint: 'Live tonight', odds: clamp(guards + 0.05, 0.2, 0.85) },
+  ], 'run');
+}
+
+function survivorAnswer(input: GameState, it: ScheduledItem, opt: string) {
+  return moment(input, it, opt, 'The one you missed', (ctx, F) => {
+    const s = ctx.s;
+    const V = F.survivor!;
+    const c = s.characters[V.id];
+    const view = survivorView(input, it);
+    const o = view?.options.find((x) => x.id === opt) ?? view?.options.find((x) => x.id === 'run')!;
+    const ok = fr(F) < o.odds;
+    F.survivor = undefined;
+    if (ok) {
+      if (o.id === 'draw') applyEffects(ctx, [{ type: 'kill', charId: c.id, cause: 'shot by the boss in the lot behind the Shamrock', killer: 'player' }, { type: 'respect', amount: 4 }, { type: 'heat', bar: 'local', amount: 8 }], { label: 'The one you missed', because: `shot ${c.firstName} first`, category: 'event' });
+      else { c.faction = 'none'; c.rank = 'civilian'; c.capoId = undefined; addOpinion(s, c.id, s.playerId, 'Looked me in the eye and said my father\'s name', 20, 0); }
+      return { line: o.id === 'draw' ? `You were faster. ${c.firstName} lies on the gravel where you parked for twenty years.` : o.id === 'talk' ? `${c.firstName} lowered the gun. He walked out of the lot and out of Wildwood.` : 'You made the kitchen door. By morning he was gone, and so was every dollar on his corner.', chance: o.odds, ok: true, who: nm(c), people: [c.id] };
+    }
+    killCharacter(ctx, s.playerId, `shot by ${nm(c)}, whose ${V.tie === 'son' ? 'father' : V.tie === 'nephew' ? 'uncle' : 'mentor'} died in the purge`, 'none');
+    return { line: 'He finished what you started.', chance: o.odds, ok: false, who: nm(c), people: [c.id], extra: { h: 'REPUTED BOSS SLAIN BEHIND TAVERN', b: `${nm(player(input))} was shot to death in a parking lot. Police are seeking a young associate.` } };
+  });
+}
+
+/** The survivor found out (a background check, or the investigation): the boss decides. */
+export function survivorFound(s: GameState): EventInstance | undefined {
+  const V = s.feds?.survivor;
+  const c = V ? s.characters[V.id] : undefined;
+  if (!V || !c?.alive || V.found) return undefined;
+  V.found = s.week;
+  const dead = s.characters[V.of];
+  const label = 'The one you missed';
+  return {
+    iid: `ev${s.nextId++}`, defId: 'feds_survivor_found', week: s.week, mandatory: true, priority: 82, actors: [c.id], meta: { feds: 1, crew: 1, charId: c.id },
+    title: `${c.firstName} is ${dead?.lastName ?? 'one of'}'s ${V.tie === 'protege' ? 'boy' : V.tie}`, text: `${nm(c)} — never late, never short, the best young earner you have — is tied to ${dead ? nm(dead) : 'a man'} who died in the purge. He has been at your elbow for ${Math.round((s.week - V.since) / 4.3)} months.`, defaultChoiceId: 'away',
+    choices: [
+      { id: 'away', label: 'Send him away with money', detail: 'Out of Wildwood, alive.', because: `sent ${c.firstName} away`, effects: [{ type: 'money', amount: -2000, label }, { type: 'retire', charId: c.id, label }] },
+      { id: 'keep', label: 'Keep him close, and watch him', detail: 'Maybe he only wanted work.', because: `kept ${c.firstName} close`, effects: [{ type: 'opinion', from: c.id, to: s.playerId, amount: 5, reason: 'The boss knows and kept me anyway', decay: 1, label }] },
+      { id: 'clip', label: `Have ${c.firstName} killed`, detail: 'Your explicit order. Finish what you started.', because: `had ${c.firstName} killed`, effects: [{ type: 'kill', charId: c.id, cause: 'killed when the boss learned whose son he was', killer: 'player', label }, { type: 'heat', bar: 'local', amount: 5, label }] },
+    ],
+  };
+}
+
+/** The reputation deters plots (feds.ts reads it). */
+export function retributionDeters(s: GameState): number {
+  const R = s.feds?.retribution;
+  return R && R.bossId === s.playerId ? (R.kind === 'legend' ? 0.35 : 0.6) : 1;
+}
+
 /* ------------------------------------------------------------------ */
 /* The weeks after                                                       */
 /* ------------------------------------------------------------------ */
@@ -486,6 +708,7 @@ function judge(ctx: Ctx, F: FedsState, C: Crisis, id: string): { line: string; o
 /** Weekly: the purge's rebuilding; a crisis left hanging at the turn is closed out. */
 export function crisisWeek(ctx: Ctx, F: FedsState): void {
   const s = ctx.s;
+  afterWeek(ctx, F);
   if (F.rebuild) {
     if (F.rebuild.until <= s.week) { F.rebuild = undefined; ctx.log.push('The family has found its feet again after the purge.'); }
     else {
@@ -498,7 +721,7 @@ export function crisisWeek(ctx: Ctx, F: FedsState): void {
   const C = F.hollow?.crisis;
   // A crisis whose week passed without a judgment (the clock skipped it): mercy by default.
   if (C && C.w < s.week && C.done !== 'judged' && C.done !== 'killed' && player(s)?.alive) {
-    judge(ctx, F, C, 'mercy');
+    judge(ctx, F, C, 'warning');
   }
 }
 
@@ -583,6 +806,7 @@ export function registerCrisis(): void {
   if (registered) return;
   registered = true;
   registerDelivery({ kind: 'feds_dmw', view: dmwView, answer: dmwAnswer });
+  registerDelivery({ kind: 'feds_survivor', view: survivorView, answer: survivorAnswer });
 }
 
 /** For tests: the crisis now running, if any. */

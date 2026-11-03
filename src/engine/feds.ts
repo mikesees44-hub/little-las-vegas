@@ -15,7 +15,8 @@ import { grievanceLoad } from './heir';
 import { killCharacter } from './dynasty';
 import { tryScene } from './authored/run';
 import { buildPlantFound } from './crewEvents';
-import { crisisSeeds, crisisWeek, startCrisis, registerCrisis } from './fedsCrisis';
+import { crisisSeeds, crisisWeek, retributionDeters, startCrisis, registerCrisis, survivorFound } from './fedsCrisis';
+export { survivorFound };
 import type { NowResult } from './deeds/now';
 import type { Character, Effect, EventInstance, Faction, GameState, RivalId } from './types';
 import {
@@ -887,7 +888,7 @@ function hollowWeek(ctx: Ctx, F: FedsState): void {
     const fs = hollowFactors(s);
     if (!fs[3].on) return;
     const n = fs.filter((f) => f.on).length;
-    const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1);
+    const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1) * retributionDeters(s);
     if (!p || fr(F) > p) return;
     const lead = capos(s).filter((k) => isFree(s, k)).sort((a, b) => opinion(s, a.id, s.playerId) + (hasTrait(a, 'Ambitious') ? -15 : 0) - opinion(s, b.id, s.playerId) - (hasTrait(b, 'Ambitious') ? -15 : 0))[0];
     if (!lead) return;
@@ -1190,7 +1191,7 @@ export function isBrasco(s: GameState, id: string): boolean {
   return !!s.feds?.brasco && s.feds.brasco.id === id && !s.feds.brasco.end;
 }
 
-function startBrasco(ctx: Ctx, F: FedsState): void {
+export function startBrasco(ctx: Ctx, F: FedsState): void {
   const s = ctx.s;
   const vouchers = crew(s).filter((c) => isFree(s, c) && (c.rank === 'soldier' || c.rank === 'associate') && c.informantFor !== 'law' && capoOf(s, c));
   const v = vouchers.sort((a, b) => (hasTrait(b, 'Greedy') ? 1 : 0) - (hasTrait(a, 'Greedy') ? 1 : 0))[0];

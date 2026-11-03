@@ -187,6 +187,12 @@ export interface FedsState {
   seeds: FedsSeed[];
   /** Rebuilding after a purge: until this week the family earns this much less. */
   rebuild?: { until: number; cut: number };
+  /** REPUTATION OF RETRIBUTION (after No Mercy): plots are deterred; how it lands depends on the Don. */
+  retribution?: { since: number; kind: 'legend' | 'terror'; lead: string; bossId: string };
+  /** The one the purge missed (hidden: never shown until he is found out or makes his move). */
+  survivor?: { id: string; of: string; tie: 'son' | 'nephew' | 'protege'; since: number; found?: number; moved?: number };
+  /** Selective Justice: each remaining capo must deliver something by a week, with odds. */
+  tests: { capoId: string; due: number; what: string }[];
   /** A retired Don (the old boss, his kind of retirement). */
   retired?: { id: string; kind: 'honorable' | 'puppet' | 'isolated'; w: number };
   /** Week the last undercover operation ended. */
@@ -210,12 +216,13 @@ function seedOf(s: GameState): number {
 
 /** Create or top up (upgradeSave's step: a save from before it loads without a missing field). */
 export function ensureFeds(s: GameState): FedsState {
-  const F = (s.feds ??= { v: 1, rng: seedOf(s), n: 0, pinches: [], log: [], wire: 0, lastPinch: -99, owed: 0, tipped: [], flippers: [], seeds: [], stats: zeroStats() });
+  const F = (s.feds ??= { v: 1, rng: seedOf(s), n: 0, pinches: [], log: [], wire: 0, lastPinch: -99, owed: 0, tipped: [], flippers: [], seeds: [], tests: [], stats: zeroStats() });
   F.pinches ??= [];
   F.log ??= [];
   F.tipped ??= [];
   F.flippers ??= [];
   F.seeds ??= [];
+  F.tests ??= [];
   F.wire ??= 0;
   F.owed ??= 0;
   F.lastPinch ??= -99;
