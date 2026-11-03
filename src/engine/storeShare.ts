@@ -197,13 +197,14 @@ export function previewShare(s: GameState, a: Extract<SpendAction, { op: 'share'
   };
 }
 
-export function commitShare(ctx: Ctx, a: Extract<SpendAction, { op: 'share' }>): void {
+/** `key`: the journal key prefix (a cut-up of a score uses its own, so a Share the Wealth the same week still goes through). */
+export function commitShare(ctx: Ctx, a: Extract<SpendAction, { op: 'share' }>, key = `w${ctx.s.week}:share`): void {
   const s = ctx.s;
   const p = sharePlan(s, a.total, a.split, a.by);
   const from = a.pot === 'pocket' ? 'personal' : 'treasury';
   for (const l of p.lines) {
     if ((l.kind !== 'man' && l.kind !== 'widow') || !l.id || l.amount <= 0) continue;
-    xfer(ctx, from, `wealth:${l.id}`, l.amount, 'assistance', `w${s.week}:share:${l.id}`, { note: l.kind === 'widow' ? `An envelope for ${l.name}` : `A bonus for ${l.name}`, category: 'cost' });
+    xfer(ctx, from, `wealth:${l.id}`, l.amount, 'assistance', `${key}:${l.id}`, { note: l.kind === 'widow' ? `An envelope for ${l.name}` : `A bonus for ${l.name}`, category: 'cost' });
     addOpinion(s, l.id, s.playerId, l.opinion < 0 ? 'A thin envelope next to a fat one' : l.kind === 'widow' ? 'He never forgot my husband' : 'The boss shared the wealth', l.opinion, 1);
   }
   const sp = ensureSpend(s);

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { OceanCityPanel } from '../econ/OceanCity';
 import { standing } from '../../engine/cities';
 import { displayName } from '../../engine/characters';
 import { DAY_NAMES } from '../../engine/days';
@@ -126,6 +127,7 @@ export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (
         )}
 
         {v.cityId === 'newyork' && tab === 'map' && <NycMapView s={s} onPlace={(id) => { setHl(id); setTab('places'); }} />}
+        {v.cityId === 'oceancity' && phase !== 'back' && <OceanCityPanel s={s} open />}
 
         {phase !== 'back' && tab === 'places' && (
           <section className="space-y-2">

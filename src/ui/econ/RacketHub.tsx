@@ -14,6 +14,7 @@ import { StartRacket } from './StartRacket';
 import { SteadyEarners } from './SteadyEarners';
 import { QuickRacket, SetUpAllSuggested, SetUpsPanel } from './SetUps';
 import { DirtyWork } from './DirtyWork';
+import { OceanCityPanel } from './OceanCity';
 import { isInSeason } from '../../engine/calendar';
 
 /**
@@ -62,6 +63,7 @@ export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
             {ownedBiz.map((b) => <OpCard key={b.id} s={s} b={b} />)}
             {running.filter((c) => c.madam).map((c) => <MadamCard key={c.kind} s={s} c={c} />)}
           </div>
+          <OceanCityPanel s={s} />
         </div>
       )}
 

@@ -1,4 +1,5 @@
 import { devKeeperMult, devReportErr } from './devState';
+import { offerCut } from './cutScore';
 import type { ActionPreview } from './actions';
 import { attr } from './attrs';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
@@ -61,6 +62,8 @@ export function noteScore(ctx: Ctx, byId: string, value: number, what: string, y
     mine = l && l.stat === 'money' && l.label.startsWith('Big score') ? l.amount : 0;
   }
   b.scores.push({ week: ctx.s.week, byId, what, value: Math.round(value), yours: Math.round(mine) });
+  // What came to the boss's side is cut up with the family (cutScore.ts).
+  if (mine > 0) offerCut(ctx.s, mine, what === 'a big score' ? `${ctx.s.characters[byId]?.firstName ?? 'A crew'}'s big score` : what, byId);
   if (b.scores.length > 40) b.scores = b.scores.slice(-40);
 }
 

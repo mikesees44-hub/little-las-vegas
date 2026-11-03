@@ -73,6 +73,7 @@ export function standing(s: GameState, cityId: string): number {
 
 export function stake(s: GameState, cityId: string): string {
   if (cityId === 'wildwood') return 'Home';
+  if (cityId === 'oceancity' && s.oc && (s.oc.run || s.oc.easy)) return [s.oc.run ? 'Your liquor run' : '', s.oc.easy ? 'a speakeasy' : ''].filter(Boolean).join(' and ');
   const o = s.outposts.find((x) => x.city === cityId);
   if (o) return o.kind === 'franchise' ? `A franchise (${'$' + o.income}/wk)` : o.kind === 'partner' ? `A partnership (${'$' + o.income}/wk)` : 'A contact';
   const st = standing(s, cityId);
