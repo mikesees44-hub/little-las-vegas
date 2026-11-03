@@ -1,3 +1,4 @@
+import { genderize } from './pronouns';
 import { actionSurrenders } from './handover';
 import { previewAction } from './actions';
 import { shadowDrafts } from './shadowBrief';
@@ -837,7 +838,9 @@ function decide(s: GameState, sp: Seat0, d: Draft, opts: (BriefOption & { self: 
     if (v > top) { top = v; chosen = o; }
   }
   const biased = chosen.id !== best.id;
-  const tell = biased ? (w >= 0.4 && opts.some((o) => o.self !== 0) ? pick(s, `tell:${d.id}`, TELLS_SELF) : pick(s, `tellw:${d.id}`, TELLS_WEAK)) : undefined;
+  const tell0 = biased ? (w >= 0.4 && opts.some((o) => o.self !== 0) ? pick(s, `tell:${d.id}`, TELLS_SELF) : pick(s, `tellw:${d.id}`, TELLS_WEAK)) : undefined;
+  // The wife's tell is hers: "She isn't sure, and it shows."
+  const tell = tell0 ? genderize(tell0, c) : undefined;
   return { rec: chosen, biased, tell };
 }
 

@@ -1,7 +1,7 @@
 import type { MgOption, MgSession } from '../../engine/minigame';
 import type { SceneData } from '../../engine/scenes';
 import type { GameState } from '../../engine/types';
-import { prefersReducedMotion, useTypewriter } from '../cutscene/Cutscene';
+import { prefersReducedMotion, sceneCps, useTypewriter } from '../cutscene/Cutscene';
 import { Face } from '../components/People';
 import { MgStill } from './MgStill';
 
@@ -9,7 +9,7 @@ import { MgStill } from './MgStill';
 export function CinematicBeat({ s, ses, opts, onMove, onPlayOut }: { s: GameState; ses: MgSession<SceneData>; opts: MgOption[]; onMove: (id: string) => void; onPlayOut: () => void }) {
   const card = ses.d.card;
   const reduced = prefersReducedMotion();
-  const [text, done, finish] = useTypewriter(card.text, 48, reduced);
+  const [text, done, finish] = useTypewriter(card.text, sceneCps(48), reduced);
   const actors = card.actors.map((id) => s.characters[id]).filter((c): c is NonNullable<typeof c> => !!c).slice(0, 5);
   return (
     <div className="flex-1 flex flex-col min-h-0" data-testid="cinematic" onClick={() => !done && finish()}>
@@ -26,7 +26,7 @@ export function CinematicBeat({ s, ses, opts, onMove, onPlayOut }: { s: GameStat
       <div className="flex-1 overflow-y-auto bg-black px-5 sm:px-16 pb-6 pt-3">
         <div className="text-[10px] uppercase tracking-[0.4em] text-stone-500">{card.kicker} · {ses.d.i + 1} / {ses.d.beats.length}</div>
         <p className="font-display text-lg sm:text-xl text-stone-100 mt-2 max-w-3xl leading-snug whitespace-pre-line" aria-live="polite">{text}</p>
-        <div className={`mt-4 max-w-3xl space-y-1.5 transition-opacity ${done ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`mt-4 max-w-3xl space-y-1.5 transition-opacity ${done ? 'opacity-100' : 'opacity-60'}`}>
           {opts.map((x) => (
             <button key={x.id} disabled={!!x.disabled} data-testid="mg-option" onClick={(e) => { e.stopPropagation(); onMove(x.id); }}
               className={`w-full text-left rounded-md border px-3 py-2 disabled:opacity-40 ${x.id === 'next' ? 'border-noir-600 bg-transparent hover:border-gold-500 w-auto inline-block' : 'border-noir-600 bg-noir-900 hover:border-gold-500'}`}>

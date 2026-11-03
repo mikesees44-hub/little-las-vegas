@@ -162,7 +162,7 @@ describe("the Boss's Office room", () => {
           const backs = counsel(s, { kind: 'event', iid: ev.iid })?.voices.find((x) => x.adviser.charId === seat.charId)?.backs;
           const open = backs && ev.choices.some((c) => c.id === backs && !c.disabledReason);
           expect(v.delegate.op.choiceId).toBe(open ? backs : ev.defaultChoiceId);
-          expect(v.delegate.does).toBe(ev.choices.find((c) => c.id === v.delegate!.op.choiceId)!.label);
+          expect(v.delegate.does).toBe(ev.choices.find((c) => c.id === (v.delegate!.op as { choiceId: string }).choiceId)!.label);
         }
       }
       const first = vs.find((v) => v.ref.event);

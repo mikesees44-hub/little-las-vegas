@@ -3,7 +3,7 @@ import { Overlay } from '../components/Modal';
 import { monthName, weekday } from '../../engine/calendar';
 import type { GameDate } from '../../engine/types';
 import { CADILLAC, Man } from '../cutscene/figures';
-import { prefersReducedMotion, useTypewriter } from '../cutscene/Cutscene';
+import { prefersReducedMotion, sceneCps, useTypewriter } from '../cutscene/Cutscene';
 
 /**
  * THE NEWSPAPER REEL: a front page spins out of the dark, three turns,
@@ -164,7 +164,7 @@ export function NewspaperReel({ reel, onDone, inline }: { reel: Reel; onDone?: (
     const t = setTimeout(() => setLanded(true), 2700);
     return () => clearTimeout(t);
   }, [reduced]);
-  const [line, done, finish] = useTypewriter(landed ? reel.consequence : '', 40, reduced);
+  const [line, done, finish] = useTypewriter(landed ? reel.consequence : '', sceneCps(40), reduced);
   const page = (
     <div className="w-full max-w-xl mx-auto">
       <div className={reduced ? 'llv-reel-fade' : 'llv-reel-spin'}><FrontPage reel={reel} /></div>

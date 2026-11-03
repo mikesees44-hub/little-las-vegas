@@ -278,10 +278,12 @@ export function App({ startOn = 'title' }: AppProps) {
     if (!menu) saveSlot(slot, s);
   }, [s, menu, slot]);
   // The clock runs by default (CK style; clockPolicy.ts): a new or loaded game starts moving.
-  const [speed, setSpeed] = useState<Speed>(() => (timeMode() === 'clock' ? DEFAULT_SPEED : 0));
+  const [speed, setSpeed] = useState<Speed>(() => (timeMode() === 'clock' && boot.st.week > 1 ? DEFAULT_SPEED : 0));
   // Red Desk items the clock already stopped for (it stops once per item).
   const ackedRef = useRef<Set<string>>(new Set());
   const turningRef = useRef(false);
+  // The first week's Sunday stop has been made (once per game).
+  const firstWeekNoted = useRef(false);
   const cardOpenRef = useRef(false);
   const ackNowRef = useRef<() => void>(() => {});
   // The running clock's day: the evening scenes that just happened, the day window.
@@ -409,13 +411,21 @@ export function App({ startOn = 'title' }: AppProps) {
     setAdvancing(false);
   }
 
+  /** The week's turn takes a moment on a slow machine: "The week is turning…" is on screen before the work starts, and goes when it is done. */
+  const [turning, setTurning] = useState(false);
+  function turnWeek(f: () => void) {
+    if (import.meta.env.MODE === 'test' || typeof requestAnimationFrame === 'undefined') { f(); return; }
+    setTurning(true);
+    // Two frames: the indicator is painted before the (synchronous) week runs.
+    requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { try { f(); } finally { setTurning(false); } }, 0)));
+  }
   /** Advance: the "Ready to advance?" review first, unless nothing is waiting and nothing is queued. */
   const [ready, setReady] = useState<Mode | undefined>();
   function startAdvance(m: Mode) {
     if (!readyReview(s, { answers, orders, briefSkip }).clear) { setReady(m); return; }
     setMode(m);
     setAdvancing(true);
-    run(m, answers);
+    turnWeek(() => run(m, answers));
   }
   /** "Review first": the decisions one by one (the week turns after the last), else the first unanswered morning. */
   function reviewFirst(m: Mode) {
@@ -430,7 +440,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setReady(undefined);
     setMode(m);
     setAdvancing(true);
-    run(m, answers);
+    turnWeek(() => run(m, answers));
   }
 
   function choose(choiceId: string) {
@@ -470,10 +480,10 @@ export function App({ startOn = 'title' }: AppProps) {
     }
     const nextIdx = s.pendingEvents.findIndex((e) => !next[e.iid]);
     if (nextIdx >= 0) setEventIdx(nextIdx);
-    else run(mode, next, false, mv);
+    else { setEventIdx(null); turnWeek(() => run(mode, next, false, mv)); }
   }
 
-  function resetUi() {
+  function resetUi(st?: GameState) {
     setAnswers({});
     setMgMoves({});
     setMgPartial({});
@@ -492,8 +502,21 @@ export function App({ startOn = 'title' }: AppProps) {
     setNight([]);
     setReels([]);
     setAutoOpened({});
-    // A new or loaded game starts with the clock moving (the opening's cards hold it until they close).
-    setSpeed(timeMode() === 'clock' ? DEFAULT_SPEED : 0);
+    // Nothing carries over from the last game: its ticker line, its clock note, its open windows.
+    setTicker(undefined);
+    setClockNote(undefined);
+    setUrgent(undefined);
+    setReady(undefined);
+    setOffice(undefined);
+    setToast(undefined);
+    setFeedback(undefined);
+    // A loaded game starts with the clock moving (the opening's cards hold it until they close). The first week
+    // starts paused: it never runs out under a player who has not read his first card (the playthrough lost week 1
+    // three times in five starts). Space or ▶ starts it.
+    const first = !st || st.week <= 1;
+    setSpeed(timeMode() === 'clock' && !first ? DEFAULT_SPEED : 0);
+    firstWeekNoted.current = false;
+    if (first && timeMode() === 'clock') setClockNote('Paused: your first week waits for you. Press ▶ or Space when you are ready');
     ackedRef.current = new Set();
     setRoute({});
     setReportLog([]);
@@ -511,7 +534,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setCurrentSlot(n);
     setSlot(n);
     setS(next);
-    resetUi();
+    resetUi(next);
     setMenu(undefined);
     setCues([openingCue(next)]);
     // Seen: the opening is marked in the save itself, so Continue never plays it again (playtest #7).
@@ -531,7 +554,7 @@ export function App({ startOn = 'title' }: AppProps) {
     const opening = loaded.week <= 1 && !loaded.flags[OPENING_SEEN_FLAG];
     if (opening) loaded.flags[OPENING_SEEN_FLAG] = 1;
     setS(loaded);
-    resetUi();
+    resetUi(loaded);
     restoreDesk(loadDesk(n, loaded));
     setMenu(undefined);
     if (opening) setCues([openingCue(loaded)]);
@@ -591,6 +614,15 @@ export function App({ startOn = 'title' }: AppProps) {
   const fileKey = `llv.fileSeen.${s.seed}`;
   const fileTop = s.journal?.seq ?? 0;
   const [fileSeen, setFileSeen] = useState<number>(() => { try { return Number(localStorage.getItem(fileKey) ?? 0) || 0; } catch { return 0; } });
+  // Per game: a new or loaded game reads its own mark; a game this browser never opened starts with its back history read
+  // (the playthrough's "99+ new" right after a start was the opening's history, not news).
+  useEffect(() => {
+    let v: number | undefined;
+    try { const r = localStorage.getItem(fileKey); v = r === null ? undefined : Number(r) || 0; } catch { v = undefined; }
+    if (v === undefined) { v = s.journal?.seq ?? 0; try { localStorage.setItem(fileKey, String(v)); } catch { /* private window */ } }
+    setFileSeen(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileKey]);
   const markFileSeen = () => { setFileSeen(fileTop); try { localStorage.setItem(fileKey, String(fileTop)); } catch { /* private window */ } };
   const fileNew = Math.max(0, (s.journal?.e ?? []).filter((e) => e.mine || e.src !== 'ledger').filter((e) => seqOf(e.id) > fileSeen).length);
   const shellApi: ShellApi = { go, focus: focusMap, update: setS, act };
@@ -632,13 +664,19 @@ export function App({ startOn = 'title' }: AppProps) {
       if (turningRef.current) return;
       turningRef.current = true;
       setClockNote('The week turns…');
-      setTimeout(() => { try { run('week', answers, true); setClockNote('A new week: what came of your orders is on the Desk, under Results'); } finally { turningRef.current = false; } }, 16);
+      turnWeek(() => { try { run('week', answers, true); setClockNote('A new week: what came of your orders is on the Desk, under Results'); } finally { turningRef.current = false; } });
       return;
     }
     const next = tickDay(s);
     setS(next);
     // The week's turn is never a surprise: Sunday says it is coming.
     if (daysOf(next).day >= 6) setClockNote('Sunday: the week turns tonight at midnight (Space pauses)');
+    // The first week never turns by itself: the clock stops on its Sunday and waits for the player's word.
+    if (daysOf(next).day >= 6 && next.week <= 1 && !firstWeekNoted.current) {
+      firstWeekNoted.current = true;
+      setSpeed(0);
+      setClockNote('Paused: Sunday of your first week. The week turns tonight; press ▶ (or Advance Week) when you are ready');
+    }
     clockAutoPause(s, next);
     const urgent = pausesOn('pauseOnCapo') ? morningStop(next) : undefined;
     if (urgent) { setSpeed(0); setClockNote(`Paused: ${urgent}`); }
@@ -970,6 +1008,14 @@ export function App({ startOn = 'title' }: AppProps) {
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
+      {turning && (
+        <div className="pointer-events-none fixed inset-x-0 top-14 z-[6000] flex justify-center" role="status" aria-live="polite" data-testid="week-turning">
+          <div className="flex items-center gap-2 rounded-full border border-gold-600/70 bg-noir-900/95 px-4 py-1.5 text-sm text-gold-300 shadow-lg shadow-black/70">
+            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gold-400 border-t-transparent" aria-hidden />
+            The week is turning…
+          </div>
+        </div>
+      )}
       {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen || mondayCard} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={act} onClose={() => setLtOpen(false)} />}

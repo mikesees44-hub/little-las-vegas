@@ -30,18 +30,33 @@ export function prefersReducedMotion(): boolean {
   }
 }
 
-/** Text revealed a character at a time (instantly when motion is reduced). */
-export function useTypewriter(text: string, cps = 38, instant = false): [string, boolean, () => void] {
+/** The scene typewriters' pace: the player's text speed, never slower than `floor` (an authored beat's own pace). */
+export function sceneCps(floor = 0): number {
+  return Math.max(floor, TEXT_CPS[getSettings().textSpeed]);
+}
+
+/**
+ * Text revealed a few characters at a time (instantly when motion is reduced). `finish` completes
+ * the line being typed (to the next line break); the text after it keeps typing. On the last line
+ * it completes the text.
+ */
+export function useTypewriter(text: string, cps = 60, instant = false): [string, boolean, () => void] {
   const [n, setN] = useState(instant ? text.length : 0);
   useEffect(() => {
     setN(instant ? text.length : 0);
   }, [text, instant]);
   useEffect(() => {
     if (n >= text.length) return;
-    const t = setTimeout(() => setN((x) => Math.min(text.length, x + 1)), 1000 / cps);
+    // ~30 frames a second, several characters a frame at speed: smooth and quick.
+    const step = Math.max(1, Math.round(cps / 30));
+    const t = setTimeout(() => setN((x) => Math.min(text.length, x + step)), Math.max(16, 1000 / Math.min(cps, 30)));
     return () => clearTimeout(t);
   }, [n, text, cps]);
-  return [text.slice(0, n), n >= text.length, () => setN(text.length)];
+  const finish = () => setN((x) => {
+    const br = text.indexOf('\n', x);
+    return br < 0 ? text.length : br + 1;
+  });
+  return [text.slice(0, n), n >= text.length, finish];
 }
 
 /** Full-screen cards for this week's big moments, one after another. */
