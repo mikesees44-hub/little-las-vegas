@@ -65,7 +65,8 @@ export function useShellState(s: GameState, orders: PlayerAction[], sheetId?: st
     first.current = true;
   }, [seed]);
 
-  const visibleNow = useMemo(() => ALL_SECTION_KEYS.filter((k) => sectionVisible(s, k)), [s]);
+  // A screen above his rank is not "new" yet: it is told (and dotted) the week he climbs to it.
+  const visibleNow = useMemo(() => ALL_SECTION_KEYS.filter((k) => sectionVisible(s, k) && !sectionLock(s, k) && !rankHidden(s, k)), [s]);
   useEffect(() => {
     const add = visibleNow.filter((k) => !seen.includes(k));
     if (!add.length) { first.current = false; return; }
@@ -97,7 +98,8 @@ export function useShellState(s: GameState, orders: PlayerAction[], sheetId?: st
     setSeen(next);
     write(`llv-unlocked-${seed}`, next);
   };
-  const open = (k: string) => (unlocked.has(k) || (NAV_ONLY as readonly string[]).includes(k)) && !rankHidden(s, k);
+  // A screen above his rank still shows (greyed, under "Above your rank") once the calendar would have opened it.
+  const open = (k: string) => (unlocked.has(k) || (NAV_ONLY as readonly string[]).includes(k) || (!!sectionLock(s, k) && sectionVisible(s, k))) && !rankHidden(s, k);
   /**
    * A home's places open to this boss (an item shows when any of its views is open; a hidden view stays hidden).
    * His rank (rankView.ts): a place above it is not deleted; it moves to "Above your rank", greyed, with the rung that opens it.

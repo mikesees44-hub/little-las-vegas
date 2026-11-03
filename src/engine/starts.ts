@@ -43,9 +43,9 @@ export const STARTS: Record<StartId, { name: string; text: string; recommended?:
   classic: { name: 'The House', text: 'You already run Wildwood for Philadelphia. A full crew, five rackets, and one problem from the past.' },
   rise: { name: 'Rise to Power', text: 'A young man with a numbers bank, a few guys and $6,000. Nobody in Philadelphia knows your name yet.' },
   sees: { name: 'The House of Sees', text: 'Don Salvatore "The Shark" Sees, sixty years old, and three heirs who all want the chair: Vito, Donato and Francesca.' },
-  associate: { name: 'Start as an associate', text: 'Not even made. Two guys, a corner, and Don Cosimo Valente above you taking 30%.' },
-  soldier: { name: 'Start as a soldier', text: 'A made man with a few guys of his own, kicking up a quarter to Don Cosimo Valente.' },
-  capo: { name: 'Start as a capo', text: 'Your own crew in the Valente family. Fifteen percent up the ladder, and the chair one step further.' },
+  associate: { name: 'Start as an associate', text: 'Not even made. You run slips for a capo in Don Cosimo Valente\'s family and wait for the books to open.' },
+  soldier: { name: 'Start as a soldier', text: 'Made. A soldier in a Valente capo\'s regime, with a few kids of your own.' },
+  capo: { name: 'Start as a capo', text: 'One of Don Cosimo Valente\'s capos: your own crew, an envelope up the ladder, the chair two rungs away.' },
 };
 
 /** `charOptions` (the character creator) is applied on top of any start. */

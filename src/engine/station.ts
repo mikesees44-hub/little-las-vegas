@@ -10,7 +10,7 @@ import { money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { chance } from './rng';
 import { pw, type Station } from './powerState';
-import { aboveWeek, buildAbove, chiefOf, clearCouncil, quotaWeek } from './valente';
+import { aboveWeek, buildAbove, chairOpen, chiefOf, clearCouncil, quotaWeek, takeTheChair } from './valente';
 import { sceneNext } from './authored/run';
 import type { Character, EventInstance, GameState } from './types';
 
@@ -165,6 +165,13 @@ export function takeover(ctx: Ctx, success: boolean): void {
   const s = ctx.s;
   const p = pw(s);
   const over = overBoss(s);
+  if (success && p.above) {
+    // A coup from inside the family above: the Don is removed and his men are yours (valente.ts).
+    if (over?.alive) killCharacter(ctx, over.id, 'removed when the family changed hands', 'player');
+    respect(ctx, 10, 'You took the family', 'event');
+    takeTheChair(ctx, 'You moved on the Don, and it worked.');
+    return;
+  }
   if (success) {
     if (over?.alive) killCharacter(ctx, over.id, 'removed when the family changed hands', 'player');
     for (const c of Object.values(s.characters)) if (c.alive && c.faction === 'none' && p.followerIds?.includes(c.id)) rejoin(c);
@@ -263,6 +270,11 @@ export function stationMonth(ctx: Ctx): void {
   const p = pw(s);
   if (p.station === 'boss') return;
   const over = overBoss(s);
+  // In the ranks of a real family (valente.ts): the family decides who sits in the chair.
+  if (p.above && !over?.alive) {
+    chairOpen(ctx);
+    return;
+  }
   if (!over?.alive) {
     // The chair is open: the highest-ranking man takes it.
     if (p.station === 'capo' || p.station === 'underboss' || (p.station === 'soldier' && s.respect >= 40)) {

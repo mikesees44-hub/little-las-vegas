@@ -199,7 +199,8 @@ export function rankBlock(s: GameState, a: PlayerAction): string | undefined {
  * house's own life (wife, children, kin, romance) are for every rank.
  */
 const EVENT_CAP: [RegExp, Cap][] = [
-  [/^tribute_audience$/, 'envelope'],
+  // The Monday count in the Office is the underboss bringing the capos' envelopes: a capo has no such meeting.
+  [/^tribute_audience$/, 'office'],
   [/^bagman$|^deal_|^rx_philly|^deed_alliance$|^pitch_jukebox$|^intrigue_(venture|denial|accuse|truce|summit|offer)|^rx_rival|^let_dinner$|^table_|^dispute_|^war_|^army_|^blitz/, 'table'],
   [/^office_|^petition|^power_petition|^audience/, 'holdCourt'],
   [/^dyn_proposal$|^dyn_match/, 'alliance'],

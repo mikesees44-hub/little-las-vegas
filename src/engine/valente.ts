@@ -2,7 +2,8 @@ import { isInSeason } from './calendar';
 import { mgEffect } from './minigame';
 import { crew, displayName, isFree, makeCharacter, player } from './characters';
 import { applyEffects } from './effects';
-import { addStory } from './hierarchy';
+import { addStory, tidyRegimes } from './hierarchy';
+import { addSuccess } from './attrs';
 import type { Acceptance, Reason } from './interactions';
 import { money, respect, type Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
@@ -287,7 +288,10 @@ export type LowOp =
   | { op: 'forgive' }
   | { op: 'promote'; to: Station; why: string }
   | { op: 'booksAsked' }
-  | { op: 'callIn' };
+  | { op: 'callIn' }
+  | { op: 'chair'; why: string }
+  | { op: 'succeed'; backed: boolean }
+  | { op: 'exile' };
 
 export type LowAction =
   | { op: 'askVouch'; id: string }
@@ -304,6 +308,9 @@ export function describeLowOp(s: GameState, o: LowOp): string | undefined {
     case 'promote': return `You become ${aStation(o.to)}`;
     case 'booksAsked': return undefined;
     case 'callIn': return 'A sit-down with the boss';
+    case 'chair': return 'You take the chair';
+    case 'succeed': return o.backed ? 'The underboss takes the chair, and remembers you backed him' : 'The underboss takes the chair';
+    case 'exile': return 'Florida, until it is safe';
   }
 }
 
@@ -353,6 +360,23 @@ export function applyLowOp(ctx: Ctx, o: LowOp, label: string): void {
       pw(s).climbWeek = s.week;
       queueCallIn(s);
       break;
+    case 'chair':
+      takeTheChair(ctx, o.why);
+      break;
+    case 'succeed':
+      succeedQuietly(ctx, o.backed);
+      break;
+    case 'exile': {
+      const p = pw(s);
+      p.station = 'exile';
+      p.fallenWeek = s.week;
+      p.fell = true;
+      respect(ctx, -10, 'Lost the fight for the chair', 'event');
+      const line = 'You made your claim and lost. Florida, until it is safe to come home.';
+      ctx.log.push(line);
+      s.chronicle.push({ week: s.week, date: { ...s.date }, text: line, kind: 'succession' });
+      break;
+    }
   }
   void label;
 }
@@ -374,7 +398,9 @@ export function vouchOdds(s: GameState, c: Character): Acceptance {
 export function vouchCandidates(s: GameState): Character[] {
   const a = above(s);
   if (!a) return [];
-  return aboveIds(s).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive && isFree(s, c) && c.rank !== 'associate' && c.id !== a.bossId && !a.sponsors.includes(c.id));
+  return aboveIds(s).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive && isFree(s, c) && c.rank !== 'associate' && c.id !== a.bossId && !a.sponsors.includes(c.id))
+    // The likeliest first: your own capo, the men who know you.
+    .sort((x, y) => vouchOdds(s, y).chance - vouchOdds(s, x).chance || x.id.localeCompare(y.id));
 }
 
 /** Previews for the Your Place screen's orders. */
@@ -567,7 +593,7 @@ const fmt$ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 export function quotaNow(s: GameState): number {
   const a = above(s);
   if (!a || a.quota <= 0) return 0;
-  return isInSeason(s.date) ? a.quota : Math.max(50, Math.round((a.quota * 0.3) / 50) * 50);
+  return isInSeason(s.date) ? a.quota : Math.max(20, Math.round((a.quota * 0.1) / 10) * 10);
 }
 
 /** Monday: the kick-up against the quota (station.ts stationWeek passes the kick). */
@@ -728,3 +754,141 @@ export function aboveChart(s: GameState): ChartNode | undefined {
   return top;
 }
 
+
+/* ------------------------------------------------------------------ */
+/* The chair (stage 3): the Don goes, and the family decides           */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The player takes the chair of the family above: its men become his (the
+ * capos keep their crews, the underboss and consigliere their seats), the
+ * family's name is his to keep, and from here he plays the boss's game with
+ * everything open.
+ */
+export function takeTheChair(ctx: Ctx, why: string): void {
+  const s = ctx.s;
+  const p = pw(s);
+  const a = above(s);
+  const me = player(s);
+  const was = p.station;
+  if (a) {
+    const don = s.characters[a.bossId];
+    if (don?.alive) { don.rank = 'civilian'; don.faction = 'none'; }
+    for (const id of aboveIds(s)) {
+      const c = s.characters[id];
+      if (!c?.alive || id === a.bossId || id === me.id) continue;
+      c.faction = 'player';
+      c.capoId = undefined;
+    }
+    for (const k of a.capoIds) for (const m of a.regimes[k] ?? []) { const c = s.characters[m]; if (c?.alive && c.faction === 'player' && s.characters[k]?.alive) c.capoId = k; }
+    const ub = a.underbossId ? s.characters[a.underbossId] : undefined;
+    const cons = a.consigliereId ? s.characters[a.consigliereId] : undefined;
+    if (s.council && ub?.alive) { ub.rank = 'underboss'; s.council.underboss.holderId = ub.id; }
+    if (s.council && cons?.alive) { cons.rank = 'consigliere'; s.council.consigliere.holderId = cons.id; }
+    if (s.rivals.find((r) => r.id === 'philly')) addOpinion(s, s.rivals.find((r) => r.id === 'philly')!.leaderId, me.id, 'New boss in Wildwood', 0, 1);
+  }
+  p.above = undefined;
+  p.overId = undefined;
+  p.station = 'boss';
+  p.fell = false;
+  p.stats.promotions++;
+  tidyRegimes(s);
+  addSuccess(s, me, 'Took the chair of the family');
+  me.ambition = 'Get a seat at the Table';
+  respect(ctx, 15, 'Boss of the family', 'event');
+  const can = unlocksBetween(was, 'boss');
+  const line = `${displayName(me)} is the boss of the ${a?.name ?? 'Valente'} family now. ${why}`;
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: line, kind: 'succession' });
+  if (can.length) s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You can now: ${can.join('; ')}.`, kind: 'misc' });
+  ctx.log.push(line);
+  s.cutscenes.push({ key: 'heir_rises', title: 'Boss', text: `${line}${can.length ? `\n\nYou can now: ${can.join('; ')}.` : ''}`, week: s.week });
+}
+
+/** The odds the family turns to you when the chair is open, with every reason. */
+export function claimOdds(s: GameState): Acceptance {
+  const a = above(s);
+  const ub = a?.underbossId ? s.characters[a.underbossId] : undefined;
+  const reasons: Reason[] = [];
+  const add = (label: string, v: number) => { if (Math.round(v)) reasons.push({ label, value: Math.round(v) }); };
+  add('Base', 10);
+  add('Your standing with the family', ((a?.standing ?? 0) - 40) * 0.6);
+  add('Your reputation', (s.respect - 30) / 2);
+  add('Your men', Math.min(15, crew(s).filter((c) => isFree(s, c)).length * 1.5));
+  const capos = (a?.capoIds ?? []).map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive);
+  add('The capos who like you', capos.filter((c) => opinion(s, c.id, s.playerId) >= 20).length * 8 - capos.filter((c) => opinion(s, c.id, s.playerId) <= -10).length * 8);
+  if (ub?.alive) add(`${ub.firstName} wants it too (the underboss)`, -20);
+  if (s.flags.low_ub_promised) add('You promised the underboss your vote', -10);
+  return { chance: Math.max(0.05, Math.min(0.85, reasons.reduce((x, r) => x + r.value, 0) / 100)), reasons };
+}
+
+/** Monthly (station.ts stationMonth): the Don is dead. Who sits in the chair? */
+export function chairOpen(ctx: Ctx): void {
+  const s = ctx.s;
+  const a = above(s);
+  if (!a) return;
+  const st = stationOf(s);
+  const don = s.characters[a.bossId];
+  if (don?.alive) return;
+  if (st === 'underboss') { takeTheChair(ctx, `${don ? displayName(don) : 'The old Don'} is gone, and the chair passed to his underboss.`); return; }
+  if (st === 'capo' && !s.pendingEvents.some((e) => e.defId === 'low_chair') && !s.eventQueue.some((e) => e.defId === 'low_chair')) {
+    s.eventQueue.push(buildChairOpen(s));
+    return;
+  }
+  if (st === 'capo') return;
+  succeedQuietly(ctx);
+}
+
+/** The underboss takes the chair; the best-placed capo becomes his underboss (the player, if he is a capo the new Don wants). */
+export function succeedQuietly(ctx: Ctx, backed = false): void {
+  const s = ctx.s;
+  const a = above(s);
+  if (!a) return;
+  const old = s.characters[a.bossId];
+  const ub = a.underbossId ? s.characters[a.underbossId] : undefined;
+  const heir = ub?.alive ? ub : a.capoIds.map((id) => s.characters[id]).find((c) => c?.alive);
+  if (!heir) { takeTheChair(ctx, 'There was nobody else left to take it.'); return; }
+  heir.rank = 'boss';
+  a.bossId = heir.id;
+  a.capoIds = a.capoIds.filter((id) => id !== heir.id);
+  a.underbossId = undefined;
+  pw(s).overId = heir.id;
+  const st = stationOf(s);
+  const line = `${displayName(heir)} is the new Don of the ${a.name} family${old ? `, after ${displayName(old)}` : ''}.`;
+  ctx.log.push(line);
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: line, kind: 'succession' });
+  if (backed) {
+    addOpinion(s, heir.id, s.playerId, 'Backed me for the chair', 20, 0);
+    shiftStanding(s, 10, `Backed ${heir.firstName} for the chair`);
+  }
+  // He needs an underboss: the capo he trusts most, and a capo who backed him is the first he thinks of.
+  if (st === 'capo' && (backed || a.standing >= 60)) {
+    promote(ctx, 'underboss', `${heir.firstName} made you his underboss.`);
+    return;
+  }
+  const next = a.capoIds.map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive).sort((x, y) => opinion(s, heir.id, y.id) - opinion(s, heir.id, x.id))[0];
+  if (next) {
+    a.capoIds = a.capoIds.filter((id) => id !== next.id);
+    next.rank = 'underboss';
+    a.underbossId = next.id;
+    if (a.myCapoId === next.id) a.myCapoId = a.capoIds[0];
+  }
+}
+
+/** "The chair is open": a capo can back the underboss, or claim it (with the odds). */
+export function buildChairOpen(s: GameState): EventInstance {
+  const a = above(s)!;
+  const ub = a.underbossId ? s.characters[a.underbossId] : undefined;
+  const old = s.characters[a.bossId];
+  const odds = claimOdds(s);
+  const lowFx = (o: LowOp): Effect => ({ type: 'power', op: { op: 'low', o } });
+  return {
+    iid: `ev${s.nextId++}`, defId: 'low_chair', week: s.week, mandatory: true, priority: 99, meta: { low: 1 }, actors: [s.playerId, ...(ub ? [ub.id] : [])],
+    title: 'The chair is open',
+    text: `${old ? displayName(old) : 'The Don'} is dead. The capos meet in the back of the Bolero with the blinds down. ${ub?.alive ? `${ub.firstName} sits closest to the empty chair and waits for somebody to say his name.` : 'Nobody sits in the old man\'s chair.'} Everybody looks at everybody. Some of them look at you.`,
+    defaultChoiceId: 'back',
+    choices: [
+      { id: 'back', label: ub?.alive ? `Say ${ub.firstName}'s name first` : 'Let the old men decide', detail: `${ub?.alive ? `${ub.firstName} takes the chair and remembers who spoke first: standing +10, and he may make you his underboss.` : 'The family picks its own.'}`, because: 'backed the underboss for the chair', effects: [lowFx({ op: 'succeed', backed: true })] },
+      { id: 'claim', label: 'Claim the chair yourself', detail: `${Math.round(odds.chance * 100)}% the room turns to you (${odds.reasons.filter((r) => r.label !== 'Base').slice(0, 4).map((r) => `${r.value > 0 ? '+' : ''}${r.value} ${r.label.toLowerCase()}`).join(', ')}). If not, the new Don sends you to Florida.`, because: 'claimed the chair', effects: [lowFx({ op: 'roll', p: odds.chance, title: 'The chair', win: [lowFx({ op: 'chair', why: 'The capos turned to you in the back of the Bolero.' })], lose: [lowFx({ op: 'succeed', backed: false }), lowFx({ op: 'exile' })], winText: 'the room turned to you', loseText: 'the room turned to the underboss, and you are going to Florida' })] },
+    ],
+  };
+}

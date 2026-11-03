@@ -6,34 +6,113 @@
       "title": "{capo.first} wants his money back",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["associate", "soldier"] },
-      "who": { "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "{capo.call} slides a slip of paper across the booth: a name, an address on Spencer Avenue, a number. \"Owes me nine hundred since Easter. Owns a dry cleaner's, so don't tell me he don't have it. Bring it back by Saturday. All of it.\"",
       "choices": [
         {
           "label": "Go see him. Be polite the first time",
           "hint": "Patience usually works on a man with a shop and a family.",
-          "odds": { "base": 60, "plus": [ { "if": { "role": "capo", "opinionOfBoss": ">=20" }, "add": 5, "why": "{capo.first} gave you a soft one" } ] },
-          "success": [ { "standing": 4 }, { "opinion": { "of": "capo", "toward": "boss", "by": 5, "why": "Brought back every dollar" } } ],
-          "failure": [ { "standing": -3 }, { "opinion": { "of": "capo", "toward": "boss", "by": -4, "why": "Came back with excuses" } } ],
+          "odds": {
+            "base": 60,
+            "plus": [
+              {
+                "if": {
+                  "role": "capo",
+                  "opinionOfBoss": ">=20"
+                },
+                "add": 5,
+                "why": "{capo.first} gave you a soft one"
+              }
+            ]
+          },
+          "success": [
+            {
+              "standing": 4
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 5,
+                "why": "Brought back every dollar"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -3
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -4,
+                "why": "Came back with excuses"
+              }
+            }
+          ],
           "result": "The cleaner paid, in an envelope, with an apology. {capo.first} counted it and nodded.",
           "failText": "The cleaner cried, and you came back with three hundred and a story. {capo.first} did not want the story."
         },
         {
           "label": "Go see him with a tire iron in the car",
           "hint": "Faster. Louder. People talk.",
-          "odds": { "base": 80 },
-          "effects": [ { "heat": { "local": 3 } } ],
-          "success": [ { "standing": 5 }, { "respect": 2 } ],
-          "failure": [ { "standing": -2 }, { "evidence": { "role": "boss", "by": 3 } } ],
+          "odds": {
+            "base": 80
+          },
+          "effects": [
+            {
+              "heat": {
+                "local": 3
+              }
+            }
+          ],
+          "success": [
+            {
+              "standing": 5
+            },
+            {
+              "respect": 2
+            }
+          ],
+          "failure": [
+            {
+              "standing": -2
+            },
+            {
+              "evidence": {
+                "role": "boss",
+                "by": 3
+              }
+            }
+          ],
           "result": "He paid before you got the trunk open. The whole block saw you leave.",
           "failText": "His brother-in-law is a county detective. Now there is a report with your description on it."
         },
         {
           "label": "Pay {capo.first} the nine hundred yourself and let the man owe you",
           "hint": "The money is gone, but now a man on Spencer Avenue owes you, not him.",
-          "requires": { "money": 900 },
-          "effects": [ { "money": -900 }, { "standing": 3 } ],
+          "requires": {
+            "money": 900
+          },
+          "effects": [
+            {
+              "money": -900
+            },
+            {
+              "standing": 3
+            }
+          ],
           "result": "{capo.first} took your money and looked at you a long time. \"Smart,\" he said, and you could not tell if he meant it."
         }
       ]
@@ -43,37 +122,134 @@
       "title": "Hold this for me",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["associate"] },
-      "who": { "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "associate"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "{capo.call} hands you a paper bag from the Acme, folded over twice, heavy for its size. \"Keep it at your mother's. Don't open it. I'll want it back in a week.\" He doesn't say what's in it. He doesn't have to say that he knows exactly how much it is.",
       "choices": [
         {
-          "label": "Put it in your mother's cellar and don't look",
-          "hint": "This is a test. Most tests are this simple.",
-          "odds": { "base": 85 },
-          "success": [ { "standing": 6 }, { "opinion": { "of": "capo", "toward": "boss", "by": 8, "why": "Held the bag and never looked" } }, { "trust": { "of": "capo", "toward": "boss", "by": 10 } } ],
-          "failure": [ { "standing": -5 }, { "opinion": { "of": "capo", "toward": "boss", "by": -10, "why": "The bag came back light" } } ],
-          "result": "A week later he weighed the bag in his hand, opened it in front of you and counted it. Then he gave you two hundred out of it.",
-          "failText": "Your cousin found it in the cellar. Forty dollars gone. {capo.first} believes it wasn't you, almost."
-        },
-        {
           "label": "Count it, then put it away",
           "hint": "So you know. He might know you know.",
-          "odds": { "base": 50, "plus": [ { "if": { "bossTrait": "Patient" }, "add": 15, "why": "Patient hands" } ] },
-          "success": [ { "standing": 4 } ],
-          "failure": [ { "standing": -6 }, { "opinion": { "of": "capo", "toward": "boss", "by": -8, "why": "The folds on the bag were wrong" } } ],
+          "odds": {
+            "base": 50,
+            "plus": [
+              {
+                "if": {
+                  "bossTrait": "Patient"
+                },
+                "add": 15,
+                "why": "Patient hands"
+              }
+            ]
+          },
+          "success": [
+            {
+              "standing": 4
+            }
+          ],
+          "failure": [
+            {
+              "standing": -6
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -8,
+                "why": "The folds on the bag were wrong"
+              }
+            }
+          ],
           "result": "Six thousand two hundred. You folded it back the same way. He never said a word.",
           "failText": "He looked at the folds on the bag and then at you. \"Somebody's curious.\""
         },
         {
           "label": "Skim fifty. He'll never miss it",
           "hint": "He will.",
-          "odds": { "base": 25 },
-          "effects": [ { "money": 50 } ],
-          "success": [ { "standing": 1 } ],
-          "failure": [ { "standing": -15 }, { "opinion": { "of": "capo", "toward": "boss", "by": -25, "why": "Stole from me" } }, { "fear": { "of": "boss", "toward": "capo", "by": 20 } } ],
+          "odds": {
+            "base": 25
+          },
+          "effects": [
+            {
+              "money": 50
+            }
+          ],
+          "success": [
+            {
+              "standing": 1
+            }
+          ],
+          "failure": [
+            {
+              "standing": -15
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -25,
+                "why": "Stole from me"
+              }
+            },
+            {
+              "fear": {
+                "of": "boss",
+                "toward": "capo",
+                "by": 20
+              }
+            }
+          ],
           "result": "He didn't miss it. This time.",
           "failText": "He counted it in front of you and said the number out loud, fifty short. Then he hit you once, very hard, and said you were lucky it was him."
+        },
+        {
+          "label": "Put it in your mother's cellar and don't look",
+          "hint": "This is a test. Most tests are this simple.",
+          "odds": {
+            "base": 85
+          },
+          "success": [
+            {
+              "standing": 6
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 8,
+                "why": "Held the bag and never looked"
+              }
+            },
+            {
+              "trust": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 10
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -5
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -10,
+                "why": "The bag came back light"
+              }
+            }
+          ],
+          "result": "A week later he weighed the bag in his hand, opened it in front of you and counted it. Then he gave you two hundred out of it.",
+          "failText": "Your cousin found it in the cellar. Forty dollars gone. {capo.first} believes it wasn't you, almost."
         }
       ]
     },
@@ -82,34 +258,115 @@
       "title": "Something ugly",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["associate", "soldier"] },
-      "who": { "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "{capo.call} doesn't look at you while he says it. A bartender at the Riptide has been telling people things about the family, things a bartender hears. \"I want him in the hospital, not the paper. Tonight. You and whoever you trust.\"",
       "choices": [
         {
           "label": "Do it. Exactly what he asked, nothing more",
           "hint": "This is how men get noticed.",
-          "odds": { "base": 70, "plus": [ { "if": { "bossTrait": "Cruel" }, "add": 10, "why": "It comes easy to you" } ] },
-          "effects": [ { "heat": { "local": 4 } } ],
-          "success": [ { "standing": 8 }, { "respect": 3 }, { "opinion": { "of": "capo", "toward": "boss", "by": 8, "why": "Did the ugly thing and kept quiet" } } ],
-          "failure": [ { "standing": -2 }, { "evidence": { "role": "boss", "by": 6 } } ],
+          "odds": {
+            "base": 70,
+            "plus": [
+              {
+                "if": {
+                  "bossTrait": "Cruel"
+                },
+                "add": 10,
+                "why": "It comes easy to you"
+              }
+            ]
+          },
+          "effects": [
+            {
+              "heat": {
+                "local": 4
+              }
+            }
+          ],
+          "success": [
+            {
+              "standing": 8
+            },
+            {
+              "respect": 3
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 8,
+                "why": "Did the ugly thing and kept quiet"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -2
+            },
+            {
+              "evidence": {
+                "role": "boss",
+                "by": 6
+              }
+            }
+          ],
           "result": "The bartender went to Burdette Tomlin with two broken ribs and told the nurses he fell. {capo.first} bought you a drink, which he has never done.",
           "failText": "It got done, but a cab driver saw your face under the streetlight. The police have a description."
         },
         {
-          "label": "Talk to the bartender first. Scare him without a mark",
-          "hint": "Cleaner. Not what you were told.",
-          "odds": { "base": 55 },
-          "success": [ { "standing": 3 } ],
-          "failure": [ { "standing": -6 }, { "opinion": { "of": "capo", "toward": "boss", "by": -8, "why": "Did it his own way, and it didn't work" } } ],
-          "result": "The bartender quit Monday and moved to his sister's in Camden. {capo.first} said, \"Fine,\" in a voice that meant it would have to be.",
-          "failText": "The bartender laughed at you and kept talking. Now {capo.first} has to send somebody else, and everybody knows why."
-        },
-        {
           "label": "Tell {capo.first} you won't do it",
           "hint": "A man can say no once. Maybe.",
-          "effects": [ { "standing": -10 }, { "opinion": { "of": "capo", "toward": "boss", "by": -15, "why": "Wouldn't do what I asked" } } ],
+          "effects": [
+            {
+              "standing": -10
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -15,
+                "why": "Wouldn't do what I asked"
+              }
+            }
+          ],
           "result": "{capo.first} looked at you like he was writing something down. Somebody else went to the Riptide that night."
+        },
+        {
+          "label": "Talk to the bartender first. Scare him without a mark",
+          "hint": "Cleaner. Not what you were told.",
+          "odds": {
+            "base": 55
+          },
+          "success": [
+            {
+              "standing": 3
+            }
+          ],
+          "failure": [
+            {
+              "standing": -6
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -8,
+                "why": "Did it his own way, and it didn't work"
+              }
+            }
+          ],
+          "result": "The bartender quit Monday and moved to his sister's in Camden. {capo.first} said, \"Fine,\" in a voice that meant it would have to be.",
+          "failText": "The bartender laughed at you and kept talking. Now {capo.first} has to send somebody else, and everybody knows why."
         }
       ]
     },
@@ -118,32 +375,114 @@
       "title": "Sit on him",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["associate", "soldier"] },
-      "who": { "capo": { "pool": "chief" }, "mark": { "pool": "valente", "rank": ["soldier", "associate"] } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        },
+        "mark": {
+          "pool": "valente",
+          "rank": [
+            "soldier",
+            "associate"
+          ]
+        }
+      },
       "text": "\"I want to know where {mark.call} goes at night,\" {capo.first} says. \"Who he eats with. A week.\" {mark.first} is one of ours. You understand what it means that somebody wants to know.",
       "choices": [
         {
-          "label": "Watch him, and bring back everything",
-          "odds": { "base": 65 },
-          "success": [ { "standing": 5 }, { "trust": { "of": "capo", "toward": "boss", "by": 8 } } ],
-          "failure": [ { "standing": -3 }, { "opinion": { "of": "mark", "toward": "boss", "by": -20, "why": "Followed me around for a week" } } ],
-          "result": "{mark.first} has dinner twice a week with a man from Kessler's crew. You told {capo.first}. You do not know what happens next, and you don't ask.",
-          "failText": "{mark.first} made you on the second night. He waved."
-        },
-        {
           "label": "Watch him, and leave out the part that would hurt him",
           "hint": "A friend now, or the truth for your capo.",
-          "effects": [ { "opinion": { "of": "mark", "toward": "boss", "by": 10, "why": "Covered for me and never said" } }, { "standing": 1 } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "mark",
+                "toward": "boss",
+                "by": 10,
+                "why": "Covered for me and never said"
+              }
+            },
+            {
+              "standing": 1
+            }
+          ],
           "result": "You told {capo.first} {mark.first} goes home to his wife. Almost true."
         },
         {
           "label": "Warn {mark.first}",
           "hint": "If {capo.first} ever finds out, you are done.",
-          "odds": { "base": 70 },
-          "success": [ { "opinion": { "of": "mark", "toward": "boss", "by": 25, "why": "Warned me" } }, { "owes": { "who": "mark", "to": "boss" } } ],
-          "failure": [ { "standing": -15 }, { "opinion": { "of": "capo", "toward": "boss", "by": -25, "why": "Warned the man I was watching" } } ],
+          "odds": {
+            "base": 70
+          },
+          "success": [
+            {
+              "opinion": {
+                "of": "mark",
+                "toward": "boss",
+                "by": 25,
+                "why": "Warned me"
+              }
+            },
+            {
+              "owes": {
+                "who": "mark",
+                "to": "boss"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -15
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -25,
+                "why": "Warned the man I was watching"
+              }
+            }
+          ],
           "result": "{mark.first} owes you his life, maybe. He knows it.",
           "failText": "{mark.first} told somebody who told {capo.first}."
+        },
+        {
+          "label": "Watch him, and bring back everything",
+          "odds": {
+            "base": 65
+          },
+          "success": [
+            {
+              "standing": 5
+            },
+            {
+              "trust": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 8
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -3
+            },
+            {
+              "opinion": {
+                "of": "mark",
+                "toward": "boss",
+                "by": -20,
+                "why": "Followed me around for a week"
+              }
+            }
+          ],
+          "result": "{mark.first} has dinner twice a week with a man from Kessler's crew. You told {capo.first}. You do not know what happens next, and you don't ask.",
+          "failText": "{mark.first} made you on the second night. He waved."
         }
       ]
     },
@@ -152,32 +491,116 @@
       "title": "A truck off Route 47",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["soldier", "capo"] },
-      "who": { "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "soldier",
+          "capo"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "{capo.call} has a tip: a load of Zenith television sets coming through Rio Grande on Thursday, a driver who will stop for coffee and take a long time over it. \"The family gets half,\" he says. \"You get the rest to split with your guys. Don't make it messy.\"",
       "choices": [
         {
           "label": "Take it, and send the family's half up the same night",
-          "odds": { "base": 65, "plus": [ { "if": { "bossTrait": "Patient" }, "add": 10, "why": "You plan" } ] },
-          "effects": [ { "heat": { "federal": 2 } } ],
-          "success": [ { "money": 1800 }, { "standing": 6 }, { "opinion": { "of": "capo", "toward": "boss", "by": 6, "why": "The half came up the same night" } } ],
-          "failure": [ { "standing": -4 }, { "heat": { "federal": 4 } } ],
+          "odds": {
+            "base": 65,
+            "plus": [
+              {
+                "if": {
+                  "bossTrait": "Patient"
+                },
+                "add": 10,
+                "why": "You plan"
+              }
+            ]
+          },
+          "effects": [
+            {
+              "heat": {
+                "federal": 2
+              }
+            }
+          ],
+          "success": [
+            {
+              "money": 1800
+            },
+            {
+              "standing": 6
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 6,
+                "why": "The half came up the same night"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -4
+            },
+            {
+              "heat": {
+                "federal": 4
+              }
+            }
+          ],
           "result": "Forty televisions in a garage in Cold Spring by midnight. The family's half went up before you slept.",
           "failText": "The driver lost his nerve and called the state police. You got away with nothing but a federal problem."
         },
         {
           "label": "Take it, and keep a little more than your half",
           "hint": "Everybody shaves. Nobody admits it.",
-          "odds": { "base": 45 },
-          "effects": [ { "heat": { "federal": 2 } } ],
-          "success": [ { "money": 2600 }, { "standing": 2 } ],
-          "failure": [ { "money": 1200 }, { "standing": -10 }, { "opinion": { "of": "capo", "toward": "boss", "by": -15, "why": "Shaved the family's half" } } ],
+          "odds": {
+            "base": 45
+          },
+          "effects": [
+            {
+              "heat": {
+                "federal": 2
+              }
+            }
+          ],
+          "success": [
+            {
+              "money": 2600
+            },
+            {
+              "standing": 2
+            }
+          ],
+          "failure": [
+            {
+              "money": 1200
+            },
+            {
+              "standing": -10
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -15,
+                "why": "Shaved the family's half"
+              }
+            }
+          ],
           "result": "Nobody counted the televisions but you.",
           "failText": "The fence told {capo.first} how many sets there were. {capo.first} can count."
         },
         {
           "label": "Pass. Federal is federal",
-          "effects": [ { "standing": -2 } ],
+          "effects": [
+            {
+              "standing": -2
+            }
+          ],
           "result": "{capo.first} gave it to somebody else. The somebody else is doing well this month."
         }
       ]
@@ -187,30 +610,93 @@
       "title": "Downtown by Labor Day",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["capo"] },
-      "who": { "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "capo"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "The word comes down through {capo.call}: the Don wants more of Downtown before the season ends. Not a war. More bars paying, more slips on Pacific. \"He said your name,\" {capo.first} says. \"Don't make him say it twice.\"",
       "choices": [
         {
-          "label": "Put your whole crew on it",
-          "odds": { "base": 55, "plus": [ { "if": { "bossTrait": "Ambitious" }, "add": 10, "why": "You want it" } ] },
-          "effects": [ { "heat": { "local": 3 } } ],
-          "success": [ { "standing": 8 }, { "respect": 3 } ],
-          "failure": [ { "standing": -5 }, { "crew": { "by": -3, "why": "Worked us to the bone for nothing" } } ],
-          "result": "By the end of August eleven more bars on Pacific were paying. The Don sent a bottle of anisette with no note.",
-          "failText": "Kessler's people pushed back and the bars went quiet. The Don did not send anything."
-        },
-        {
           "label": "Do it the slow way: buy drinks, make friends",
           "hint": "Less heat, less to show.",
-          "requires": { "money": 1000 },
-          "effects": [ { "money": -1000 }, { "standing": 4 } ],
+          "requires": {
+            "money": 1000
+          },
+          "effects": [
+            {
+              "money": -1000
+            },
+            {
+              "standing": 4
+            }
+          ],
           "result": "Four bars, no trouble. Not what he asked for, but nobody got hurt and nobody got arrested."
         },
         {
           "label": "Tell {capo.first} it can't be done this summer",
-          "effects": [ { "standing": -8 }, { "opinion": { "of": "capo", "toward": "boss", "by": -6, "why": "Said it can't be done" } } ],
+          "effects": [
+            {
+              "standing": -8
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -6,
+                "why": "Said it can't be done"
+              }
+            }
+          ],
           "result": "{capo.first} carried that answer upstairs. He did not come back down smiling."
+        },
+        {
+          "label": "Put your whole crew on it",
+          "odds": {
+            "base": 55,
+            "plus": [
+              {
+                "if": {
+                  "bossTrait": "Ambitious"
+                },
+                "add": 10,
+                "why": "You want it"
+              }
+            ]
+          },
+          "effects": [
+            {
+              "heat": {
+                "local": 3
+              }
+            }
+          ],
+          "success": [
+            {
+              "standing": 8
+            },
+            {
+              "respect": 3
+            }
+          ],
+          "failure": [
+            {
+              "standing": -5
+            },
+            {
+              "crew": {
+                "by": -3,
+                "why": "Worked us to the bone for nothing"
+              }
+            }
+          ],
+          "result": "By the end of August eleven more bars on Pacific were paying. The Don sent a bottle of anisette with no note.",
+          "failText": "Kessler's people pushed back and the bars went quiet. The Don did not send anything."
         }
       ]
     },
@@ -219,28 +705,106 @@
       "title": "Stay out of the Crest",
       "theme": "crew",
       "followup": true,
-      "when": { "station": ["capo"] },
-      "who": { "capo": { "pool": "chief" }, "other": { "pool": "valente", "rank": "capo" } },
+      "when": {
+        "station": [
+          "capo"
+        ]
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        },
+        "other": {
+          "pool": "valente",
+          "rank": "capo"
+        }
+      },
       "text": "One of your soldiers has a card game going in a motel in the Crest. The Crest is {other.call}'s. {capo.call} says the Don has heard about it, which means {other.first} went upstairs instead of coming to you.",
       "choices": [
         {
-          "label": "Shut the game and send {other.first} a case of Scotch",
-          "effects": [ { "money": -300 }, { "standing": 3 }, { "opinion": { "of": "other", "toward": "boss", "by": 8, "why": "Shut his game when I asked" } } ],
-          "result": "The game closed Sunday. {other.first} drank your Scotch and told people you were all right."
-        },
-        {
           "label": "Go to {other.first} and split the game with him",
           "hint": "Capos make deals. Sometimes the Don likes that.",
-          "odds": { "base": 50, "plus": [ { "if": { "role": "other", "opinionOfBoss": ">=10" }, "add": 15, "why": "{other.first} likes you" } ] },
-          "success": [ { "money": 400 }, { "standing": 2 }, { "opinion": { "of": "other", "toward": "boss", "by": 6, "why": "Came to me like a man" } } ],
-          "failure": [ { "standing": -6 }, { "opinion": { "of": "other", "toward": "boss", "by": -10, "why": "Wants a piece of my Crest" } } ],
+          "odds": {
+            "base": 50,
+            "plus": [
+              {
+                "if": {
+                  "role": "other",
+                  "opinionOfBoss": ">=10"
+                },
+                "add": 15,
+                "why": "{other.first} likes you"
+              }
+            ]
+          },
+          "success": [
+            {
+              "money": 400
+            },
+            {
+              "standing": 2
+            },
+            {
+              "opinion": {
+                "of": "other",
+                "toward": "boss",
+                "by": 6,
+                "why": "Came to me like a man"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -6
+            },
+            {
+              "opinion": {
+                "of": "other",
+                "toward": "boss",
+                "by": -10,
+                "why": "Wants a piece of my Crest"
+              }
+            }
+          ],
           "result": "Half a game is better than none. {other.first} shook on it.",
           "failText": "{other.first} told the Don you tried to buy your way into his district."
         },
         {
           "label": "Keep the game open. It's a motel, not a district",
-          "effects": [ { "standing": -10 }, { "opinion": { "of": "other", "toward": "boss", "by": -15, "why": "Kept a game in my Crest" } } ],
+          "effects": [
+            {
+              "standing": -10
+            },
+            {
+              "opinion": {
+                "of": "other",
+                "toward": "boss",
+                "by": -15,
+                "why": "Kept a game in my Crest"
+              }
+            }
+          ],
           "result": "The game stayed open. So did the question of what the Don will do about it."
+        },
+        {
+          "label": "Shut the game and send {other.first} a case of Scotch",
+          "effects": [
+            {
+              "money": -300
+            },
+            {
+              "standing": 3
+            },
+            {
+              "opinion": {
+                "of": "other",
+                "toward": "boss",
+                "by": 8,
+                "why": "Shut his game when I asked"
+              }
+            }
+          ],
+          "result": "The game closed Sunday. {other.first} drank your Scotch and told people you were all right."
         }
       ]
     },
@@ -248,32 +812,136 @@
       "id": "low_rival_credit",
       "title": "Whose idea it was",
       "theme": "crew",
-      "when": { "station": ["associate"], "week": { "min": 3 }, "chance": 0.5, "cooldown": 20, "weight": 14 },
-      "who": { "kid": { "pool": "valente", "rank": "associate" }, "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "associate"
+        ],
+        "week": {
+          "min": 3
+        },
+        "chance": 0.5,
+        "cooldown": 20,
+        "weight": 14
+      },
+      "who": {
+        "kid": {
+          "pool": "valente",
+          "rank": "associate"
+        },
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "The jukebox route on Rio Grande Avenue was your idea. You found the bar owners, you found the machines. Last night at the Shamrock, {kid.call} told {capo.first} all about his idea for a jukebox route on Rio Grande Avenue. {capo.first} liked it.",
       "choices": [
         {
           "label": "Go to {capo.first} with the names and the numbers",
           "hint": "Proof. Nobody likes a kid who keeps receipts, but they believe him.",
-          "odds": { "base": 55, "plus": [ { "if": { "role": "capo", "opinionOfBoss": ">=15" }, "add": 15, "why": "{capo.first} likes you" } ] },
-          "success": [ { "standing": 6 }, { "opinion": { "of": "kid", "toward": "boss", "by": -15, "why": "Showed me up in front of the capo" } } ],
-          "failure": [ { "standing": -4 }, { "opinion": { "of": "capo", "toward": "boss", "by": -5, "why": "Complains like a schoolboy" } } ],
+          "odds": {
+            "base": 55,
+            "plus": [
+              {
+                "if": {
+                  "role": "capo",
+                  "opinionOfBoss": ">=15"
+                },
+                "add": 15,
+                "why": "{capo.first} likes you"
+              }
+            ]
+          },
+          "success": [
+            {
+              "standing": 6
+            },
+            {
+              "opinion": {
+                "of": "kid",
+                "toward": "boss",
+                "by": -15,
+                "why": "Showed me up in front of the capo"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -4
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -5,
+                "why": "Complains like a schoolboy"
+              }
+            }
+          ],
           "result": "{capo.first} read your list twice and put it in his pocket. {kid.first} won't look at you now.",
           "failText": "\"Who cares whose idea,\" {capo.first} said. \"Bring me money, not paper.\""
         },
         {
           "label": "Find {kid.first} behind the Shamrock and settle it",
           "hint": "He isn't made either. Yet.",
-          "odds": { "base": 60, "plus": [ { "if": { "bossTrait": "Hot-headed" }, "add": 10, "why": "You hit first" } ] },
-          "effects": [ { "heat": { "local": 2 } } ],
-          "success": [ { "respect": 3 }, { "standing": 2 }, { "fear": { "of": "kid", "toward": "boss", "by": 20 } } ],
-          "failure": [ { "standing": -5 }, { "respect": -2 } ],
+          "odds": {
+            "base": 60,
+            "plus": [
+              {
+                "if": {
+                  "bossTrait": "Hot-headed"
+                },
+                "add": 10,
+                "why": "You hit first"
+              }
+            ]
+          },
+          "effects": [
+            {
+              "heat": {
+                "local": 2
+              }
+            }
+          ],
+          "success": [
+            {
+              "respect": 3
+            },
+            {
+              "standing": 2
+            },
+            {
+              "fear": {
+                "of": "kid",
+                "toward": "boss",
+                "by": 20
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -5
+            },
+            {
+              "respect": -2
+            }
+          ],
           "result": "{kid.first} told {capo.first} the next morning that the route was your idea after all.",
           "failText": "He was bigger than he looked. The whole bar heard about it."
         },
         {
           "label": "Let him have it. There will be other ideas",
-          "effects": [ { "standing": -1 }, { "memory": { "who": "kid", "about": "boss", "text": "He let me take the jukebox route and said nothing", "weight": -5 } } ],
+          "effects": [
+            {
+              "standing": -1
+            },
+            {
+              "memory": {
+                "who": "kid",
+                "about": "boss",
+                "text": "He let me take the jukebox route and said nothing",
+                "weight": -5
+              }
+            }
+          ],
           "result": "{kid.first} got the credit. You got the lesson."
         }
       ]
@@ -282,30 +950,90 @@
       "id": "low_untouchable",
       "title": "A friend of ours",
       "theme": "crew",
-      "when": { "station": ["associate"], "week": { "min": 4 }, "chance": 0.5, "cooldown": 26, "weight": 12 },
-      "who": { "made": { "pool": "valente", "rank": "soldier" } },
+      "when": {
+        "station": [
+          "associate"
+        ],
+        "week": {
+          "min": 4
+        },
+        "chance": 0.5,
+        "cooldown": 26,
+        "weight": 12
+      },
+      "who": {
+        "made": {
+          "pool": "valente",
+          "rank": "soldier"
+        }
+      },
       "text": "{made.call} is drunk at the Admiral and wants your stool, so he takes it. Then he takes your cigarettes. Then he says something about your wife to the whole counter. He is a made man. You are not. Everybody at the counter knows exactly what that means.",
       "choices": [
         {
-          "label": "Take it. Smile. Leave",
-          "hint": "The rules are the rules. They will notice that you know them.",
-          "effects": [ { "standing": 3 }, { "respect": -2 } ],
-          "result": "You paid for his coffee on the way out. Two men at the counter told the story both ways."
-        },
-        {
           "label": "Go to your capo about it",
           "hint": "The right way. It costs you a favor.",
-          "odds": { "base": 55 },
-          "success": [ { "standing": 2 }, { "opinion": { "of": "made", "toward": "boss", "by": -5, "why": "Went to his capo about me" } } ],
-          "failure": [ { "standing": -2 } ],
+          "odds": {
+            "base": 55
+          },
+          "success": [
+            {
+              "standing": 2
+            },
+            {
+              "opinion": {
+                "of": "made",
+                "toward": "boss",
+                "by": -5,
+                "why": "Went to his capo about me"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -2
+            }
+          ],
           "result": "A word was said, somewhere upstairs. {made.first} nodded to you the next time, which is as close to sorry as he gets.",
           "failText": "Your capo said a made man is a made man. Learn it."
         },
         {
           "label": "Put him on the floor",
           "hint": "You do not hit a made man. Not ever. Not without permission.",
-          "effects": [ { "standing": -20 }, { "respect": 4 }, { "opinion": { "of": "made", "toward": "boss", "by": -40, "why": "An associate put his hands on me" } }, { "heat": { "local": 2 } } ],
+          "effects": [
+            {
+              "standing": -20
+            },
+            {
+              "respect": 4
+            },
+            {
+              "opinion": {
+                "of": "made",
+                "toward": "boss",
+                "by": -40,
+                "why": "An associate put his hands on me"
+              }
+            },
+            {
+              "heat": {
+                "local": 2
+              }
+            }
+          ],
           "result": "It felt good for about an hour. Then the phone rang at your mother's house, and nobody spoke when she answered."
+        },
+        {
+          "label": "Take it. Smile. Leave",
+          "hint": "The rules are the rules. They will notice that you know them.",
+          "effects": [
+            {
+              "standing": 3
+            },
+            {
+              "respect": -2
+            }
+          ],
+          "result": "You paid for his coffee on the way out. Two men at the counter told the story both ways."
         }
       ]
     },
@@ -313,30 +1041,116 @@
       "id": "low_donson",
       "title": "The Don's son",
       "theme": "crew",
-      "when": { "station": ["associate", "soldier", "capo"], "week": { "min": 5 }, "chance": 0.4, "cooldown": 30, "weight": 10 },
-      "who": { "son": { "pool": "donSon" }, "don": { "pool": "don" } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier",
+          "capo"
+        ],
+        "week": {
+          "min": 5
+        },
+        "chance": 0.4,
+        "cooldown": 30,
+        "weight": 10
+      },
+      "who": {
+        "son": {
+          "pool": "donSon"
+        },
+        "don": {
+          "pool": "don"
+        }
+      },
       "text": "{son.call} owes a bookmaker in Atlantic City four thousand dollars and has been telling him to collect from his father. Now the bookmaker is asking around, and somebody pointed him at you. {son.first} catches you outside the Shamrock: \"Square it for me. My old man never has to know.\"",
       "choices": [
         {
           "label": "Square it quietly, out of your own money",
           "hint": "The son owes you. The father may find out anyway.",
-          "requires": { "money": 4000 },
-          "effects": [ { "money": -4000 }, { "owes": { "who": "son", "to": "boss" } }, { "opinion": { "of": "son", "toward": "boss", "by": 20, "why": "Squared my book and kept quiet" } } ],
-          "odds": { "base": 70 },
-          "success": [ { "standing": 2 } ],
-          "failure": [ { "standing": 6 }, { "opinion": { "of": "don", "toward": "boss", "by": 10, "why": "Cleaned up after my boy" } } ],
+          "requires": {
+            "money": 4000
+          },
+          "effects": [
+            {
+              "money": -4000
+            },
+            {
+              "owes": {
+                "who": "son",
+                "to": "boss"
+              }
+            },
+            {
+              "opinion": {
+                "of": "son",
+                "toward": "boss",
+                "by": 20,
+                "why": "Squared my book and kept quiet"
+              }
+            }
+          ],
+          "odds": {
+            "base": 70
+          },
+          "success": [
+            {
+              "standing": 2
+            }
+          ],
+          "failure": [
+            {
+              "standing": 6
+            },
+            {
+              "opinion": {
+                "of": "don",
+                "toward": "boss",
+                "by": 10,
+                "why": "Cleaned up after my boy"
+              }
+            }
+          ],
           "result": "The bookmaker went home happy. {son.first} calls you \"pal\" now.",
           "failText": "The Don found out, the way he finds out everything. He didn't thank you, exactly. But he knows your name now."
         },
         {
           "label": "Tell the Don",
           "hint": "Honest. His son will never forgive it.",
-          "effects": [ { "opinion": { "of": "son", "toward": "boss", "by": -30, "why": "Ran to my father" } }, { "opinion": { "of": "don", "toward": "boss", "by": 6, "why": "Told me the truth about my boy" } }, { "standing": 4 } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "son",
+                "toward": "boss",
+                "by": -30,
+                "why": "Ran to my father"
+              }
+            },
+            {
+              "opinion": {
+                "of": "don",
+                "toward": "boss",
+                "by": 6,
+                "why": "Told me the truth about my boy"
+              }
+            },
+            {
+              "standing": 4
+            }
+          ],
           "result": "The Don paid the bookmaker and slapped his son in front of the waiters at the Bolero. {son.first} will remember who told."
         },
         {
           "label": "Tell {son.first} it isn't your business",
-          "effects": [ { "opinion": { "of": "son", "toward": "boss", "by": -10, "why": "Wouldn't help me" } } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "son",
+                "toward": "boss",
+                "by": -10,
+                "why": "Wouldn't help me"
+              }
+            }
+          ],
           "result": "{son.first} found somebody else. Somebody always helps the Don's son."
         }
       ]
@@ -345,33 +1159,116 @@
       "id": "low_pickedup",
       "title": "Picked up",
       "theme": "law",
-      "when": { "station": ["associate", "soldier"], "week": { "min": 6 }, "heat": { "local": ">=15" }, "chance": 0.4, "cooldown": 30, "weight": 10 },
-      "who": { "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier"
+        ],
+        "week": {
+          "min": 6
+        },
+        "heat": {
+          "local": ">=15"
+        },
+        "chance": 0.4,
+        "cooldown": 30,
+        "weight": 10
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "Two county detectives pick you up outside the cigar store and drive you around for three hours. They know about the slips. They know about {capo.first}. They say they'll forget all of it if you remember a few things about him.",
       "choices": [
         {
-          "label": "Say nothing. Not one word, for three hours",
-          "hint": "This is the thing they will ask about you when the books open.",
-          "odds": { "base": 70, "plus": [ { "if": { "bossTrait": "Patient" }, "add": 10, "why": "You can sit" } ] },
-          "success": [ { "standing": 10 }, { "respect": 3 }, { "opinion": { "of": "capo", "toward": "boss", "by": 10, "why": "Stood up for three hours" } } ],
-          "failure": [ { "standing": 6 }, { "evidence": { "role": "boss", "by": 4 } } ],
-          "result": "They let you out on Rio Grande Avenue at two in the morning. By breakfast {capo.first} knew you stood up.",
-          "failText": "You said nothing, but they kept you overnight and wrote a report anyway. {capo.first} heard the part that matters."
-        },
-        {
           "label": "Give them something small about somebody else",
           "hint": "Nobody ever gives them something small.",
-          "odds": { "base": 40 },
-          "success": [ { "heat": { "local": -5 } } ],
-          "failure": [ { "standing": -25 }, { "opinion": { "of": "capo", "toward": "boss", "by": -30, "why": "Talked to the cops" } } ],
+          "odds": {
+            "base": 40
+          },
+          "success": [
+            {
+              "heat": {
+                "local": -5
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -25
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -30,
+                "why": "Talked to the cops"
+              }
+            }
+          ],
           "result": "They let you go. Nobody knows. You will think about it every time a car slows down.",
           "failText": "The detective has a cousin who drinks at the Shamrock. By Friday everybody knew."
         },
         {
           "label": "Ask for a lawyer and keep asking",
-          "requires": { "money": 300 },
-          "effects": [ { "money": -300 }, { "standing": 5 } ],
+          "requires": {
+            "money": 300
+          },
+          "effects": [
+            {
+              "money": -300
+            },
+            {
+              "standing": 5
+            }
+          ],
           "result": "A lawyer from Cape May Court House got you out in an hour. {capo.first} paid him back, and wrote it down."
+        },
+        {
+          "label": "Say nothing. Not one word, for three hours",
+          "hint": "This is the thing they will ask about you when the books open.",
+          "odds": {
+            "base": 70,
+            "plus": [
+              {
+                "if": {
+                  "bossTrait": "Patient"
+                },
+                "add": 10,
+                "why": "You can sit"
+              }
+            ]
+          },
+          "success": [
+            {
+              "standing": 10
+            },
+            {
+              "respect": 3
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 10,
+                "why": "Stood up for three hours"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": 6
+            },
+            {
+              "evidence": {
+                "role": "boss",
+                "by": 4
+              }
+            }
+          ],
+          "result": "They let you out on Rio Grande Avenue at two in the morning. By breakfast {capo.first} knew you stood up.",
+          "failText": "You said nothing, but they kept you overnight and wrote a report anyway. {capo.first} heard the part that matters."
         }
       ]
     },
@@ -379,24 +1276,78 @@
       "id": "low_wife_nights",
       "title": "What you do all night",
       "theme": "family",
-      "when": { "station": ["associate", "soldier"], "week": { "min": 4 }, "chance": 0.4, "cooldown": 30, "weight": 8 },
-      "who": { "wife": { "pool": "wife" } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier"
+        ],
+        "week": {
+          "min": 4
+        },
+        "chance": 0.4,
+        "cooldown": 30,
+        "weight": 8
+      },
+      "who": {
+        "wife": {
+          "pool": "wife"
+        }
+      },
       "text": "{wife.first} is awake at the kitchen table when you get in at four. \"Your mother asked me what you do. I didn't know what to tell her. So you tell me.\"",
       "choices": [
         {
           "label": "Tell her the truth. Some of it",
-          "effects": [ { "trust": { "of": "wife", "toward": "boss", "by": 10 } }, { "opinion": { "of": "wife", "toward": "boss", "by": 4, "why": "Told me the truth, or some of it" } } ],
+          "effects": [
+            {
+              "trust": {
+                "of": "wife",
+                "toward": "boss",
+                "by": 10
+              }
+            },
+            {
+              "opinion": {
+                "of": "wife",
+                "toward": "boss",
+                "by": 4,
+                "why": "Told me the truth, or some of it"
+              }
+            }
+          ],
           "result": "{wife.first} listened to all of it and then went to bed without a word. In the morning she made your eggs the way you like them."
         },
         {
           "label": "\"I work for a man who has a lot of businesses.\"",
-          "effects": [ { "opinion": { "of": "wife", "toward": "boss", "by": -3, "why": "Thinks I'm stupid" } } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "wife",
+                "toward": "boss",
+                "by": -3,
+                "why": "Thinks I'm stupid"
+              }
+            }
+          ],
           "result": "{wife.first} said that's what her father used to say, and turned out the light."
         },
         {
           "label": "Put two hundred dollars on the table",
-          "requires": { "money": 200 },
-          "effects": [ { "money": -200 }, { "opinion": { "of": "wife", "toward": "boss", "by": 2, "why": "Answers questions with money" } } ],
+          "requires": {
+            "money": 200
+          },
+          "effects": [
+            {
+              "money": -200
+            },
+            {
+              "opinion": {
+                "of": "wife",
+                "toward": "boss",
+                "by": 2,
+                "why": "Answers questions with money"
+              }
+            }
+          ],
           "result": "She took it. She didn't stop asking."
         }
       ]
@@ -405,24 +1356,94 @@
       "id": "low_recruited",
       "title": "An offer from Atlantic City",
       "theme": "rivals",
-      "when": { "station": ["associate", "soldier"], "week": { "min": 8 }, "chance": 0.3, "cooldown": 40, "weight": 8 },
-      "who": { "rival": { "pool": "rival" }, "capo": { "pool": "chief" } },
+      "when": {
+        "station": [
+          "associate",
+          "soldier"
+        ],
+        "week": {
+          "min": 8
+        },
+        "chance": 0.3,
+        "cooldown": 40,
+        "weight": 8
+      },
+      "who": {
+        "rival": {
+          "pool": "rival"
+        },
+        "capo": {
+          "pool": "chief"
+        }
+      },
       "text": "{rival.call} buys you a drink at the Riptide and doesn't waste time. His people would make you in a year, maybe less. You'd have your own corner. \"{capo.first} keeps you running slips because it suits him,\" he says. \"Think about who's going to stand up for you over there.\"",
       "choices": [
         {
           "label": "Tell {capo.first} about the offer",
           "hint": "Loyalty, said out loud.",
-          "effects": [ { "standing": 6 }, { "opinion": { "of": "capo", "toward": "boss", "by": 8, "why": "Told me when the other side came calling" } }, { "opinion": { "of": "rival", "toward": "boss", "by": -10, "why": "Ran to his capo" } } ],
+          "effects": [
+            {
+              "standing": 6
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": 8,
+                "why": "Told me when the other side came calling"
+              }
+            },
+            {
+              "opinion": {
+                "of": "rival",
+                "toward": "boss",
+                "by": -10,
+                "why": "Ran to his capo"
+              }
+            }
+          ],
           "result": "{capo.first} listened, nodded, and said your name to the right people that week."
         },
         {
           "label": "Keep it to yourself and keep the door open",
-          "effects": [ { "opinion": { "of": "rival", "toward": "boss", "by": 10, "why": "Didn't say no" } }, { "flag": "low_courted" } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "rival",
+                "toward": "boss",
+                "by": 10,
+                "why": "Didn't say no"
+              }
+            },
+            {
+              "flag": "low_courted"
+            }
+          ],
           "result": "You didn't say yes. You didn't say no. In this town that is also an answer."
         },
         {
           "label": "Throw the drink in his face",
-          "effects": [ { "respect": 2 }, { "standing": 2 }, { "opinion": { "of": "rival", "toward": "boss", "by": -25, "why": "Threw a drink in my face" } }, { "heat": { "local": 1 } } ],
+          "effects": [
+            {
+              "respect": 2
+            },
+            {
+              "standing": 2
+            },
+            {
+              "opinion": {
+                "of": "rival",
+                "toward": "boss",
+                "by": -25,
+                "why": "Threw a drink in my face"
+              }
+            },
+            {
+              "heat": {
+                "local": 1
+              }
+            }
+          ],
           "result": "The whole Riptide saw it. {capo.first} pretended to be angry about it and bought you lunch."
         }
       ]
@@ -431,28 +1452,112 @@
       "id": "low_sponsor",
       "title": "Somebody to stand up for you",
       "theme": "crew",
-      "when": { "station": ["associate"], "week": { "min": 6 }, "chance": 0.5, "cooldown": 16, "weight": 12 },
-      "who": { "made": { "pool": "valente", "rank": ["soldier", "capo"] } },
+      "when": {
+        "station": [
+          "associate"
+        ],
+        "week": {
+          "min": 6
+        },
+        "chance": 0.5,
+        "cooldown": 16,
+        "weight": 12
+      },
+      "who": {
+        "made": {
+          "pool": "valente",
+          "rank": [
+            "soldier",
+            "capo"
+          ]
+        }
+      },
       "text": "{made.call} has been watching you for a while. Over coffee at the Doo Wop he says it plainly: when the books open, somebody has to put his name on you. \"I'd do it,\" he says. \"But a man doesn't put his name on a stranger. I need something done first.\" His brother-in-law is behind on a loan to a Kessler shylock, and the shylock has started making threats.",
       "choices": [
         {
           "label": "Go see the shylock and make it go away",
-          "odds": { "base": 55, "plus": [ { "if": { "role": "made", "opinionOfBoss": ">=20" }, "add": 10, "why": "He wants this to work" } ] },
-          "effects": [ { "heat": { "local": 2 } } ],
-          "success": [ { "sponsor": "made" }, { "standing": 4 }, { "opinion": { "of": "made", "toward": "boss", "by": 10, "why": "Took care of my brother-in-law" } } ],
-          "failure": [ { "standing": -3 }, { "opinion": { "of": "made", "toward": "boss", "by": -5, "why": "Made it worse" } } ],
+          "odds": {
+            "base": 55,
+            "plus": [
+              {
+                "if": {
+                  "role": "made",
+                  "opinionOfBoss": ">=20"
+                },
+                "add": 10,
+                "why": "He wants this to work"
+              }
+            ]
+          },
+          "effects": [
+            {
+              "heat": {
+                "local": 2
+              }
+            }
+          ],
+          "success": [
+            {
+              "sponsor": "made"
+            },
+            {
+              "standing": 4
+            },
+            {
+              "opinion": {
+                "of": "made",
+                "toward": "boss",
+                "by": 10,
+                "why": "Took care of my brother-in-law"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -3
+            },
+            {
+              "opinion": {
+                "of": "made",
+                "toward": "boss",
+                "by": -5,
+                "why": "Made it worse"
+              }
+            }
+          ],
           "result": "The shylock tore up the paper. {made.first} told you, without being asked, that he'll stand for you.",
           "failText": "The shylock called Kessler. Now it is a bigger problem, and it has your name on it."
         },
         {
           "label": "Pay the brother-in-law's debt yourself ($1,500)",
-          "requires": { "money": 1500 },
-          "effects": [ { "money": -1500 }, { "sponsor": "made" }, { "standing": 2 } ],
+          "requires": {
+            "money": 1500
+          },
+          "effects": [
+            {
+              "money": -1500
+            },
+            {
+              "sponsor": "made"
+            },
+            {
+              "standing": 2
+            }
+          ],
           "result": "{made.first} took the money for his brother-in-law and gave you his word. Bought, maybe. Still his word."
         },
         {
           "label": "\"I'll earn it some other way.\"",
-          "effects": [ { "opinion": { "of": "made", "toward": "boss", "by": 2, "why": "Didn't jump" } } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "made",
+                "toward": "boss",
+                "by": 2,
+                "why": "Didn't jump"
+              }
+            }
+          ],
           "result": "{made.first} shrugged. The offer may come again. It may not."
         }
       ]
@@ -461,31 +1566,118 @@
       "id": "low_capo_skims",
       "title": "Light envelopes",
       "theme": "crew",
-      "when": { "station": ["soldier"], "week": { "min": 8 }, "chance": 0.35, "cooldown": 40, "weight": 9 },
-      "who": { "capo": { "pool": "chief" }, "ub": { "pool": "valente", "rank": "underboss" } },
+      "when": {
+        "station": [
+          "soldier"
+        ],
+        "week": {
+          "min": 8
+        },
+        "chance": 0.35,
+        "cooldown": 40,
+        "weight": 9
+      },
+      "who": {
+        "capo": {
+          "pool": "chief"
+        },
+        "ub": {
+          "pool": "valente",
+          "rank": "underboss"
+        }
+      },
       "text": "You do the arithmetic twice. What your crew brings {capo.first} and what {capo.first} sends upstairs to {ub.call} don't match, and haven't for a month. Someone is going to notice. It might be better if it was you.",
       "choices": [
         {
           "label": "Tell {ub.first}",
           "hint": "Over your capo's head. It can make you, or bury you.",
-          "odds": { "base": 45, "plus": [ { "if": { "role": "ub", "opinionOfBoss": ">=10" }, "add": 15, "why": "{ub.first} knows you" } ] },
-          "success": [ { "standing": 12 }, { "opinion": { "of": "ub", "toward": "boss", "by": 12, "why": "Brought me the truth about his capo" } }, { "opinion": { "of": "capo", "toward": "boss", "by": -30, "why": "Went over my head" } } ],
-          "failure": [ { "standing": -10 }, { "opinion": { "of": "capo", "toward": "boss", "by": -30, "why": "Went over my head" } } ],
+          "odds": {
+            "base": 45,
+            "plus": [
+              {
+                "if": {
+                  "role": "ub",
+                  "opinionOfBoss": ">=10"
+                },
+                "add": 15,
+                "why": "{ub.first} knows you"
+              }
+            ]
+          },
+          "success": [
+            {
+              "standing": 12
+            },
+            {
+              "opinion": {
+                "of": "ub",
+                "toward": "boss",
+                "by": 12,
+                "why": "Brought me the truth about his capo"
+              }
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -30,
+                "why": "Went over my head"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "standing": -10
+            },
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -30,
+                "why": "Went over my head"
+              }
+            }
+          ],
           "result": "{ub.first} looked at your numbers and said nothing. A week later {capo.first}'s envelopes were right again, and {ub.first} knew your name.",
           "failText": "{ub.first} told {capo.first} who had been counting. Now you work for a man who knows."
         },
         {
           "label": "Tell {capo.first} that you noticed",
           "hint": "Quietly. He'll owe you, or he'll hate you.",
-          "odds": { "base": 55 },
-          "success": [ { "owes": { "who": "capo", "to": "boss" } }, { "standing": 2 } ],
-          "failure": [ { "opinion": { "of": "capo", "toward": "boss", "by": -15, "why": "Counts my money" } } ],
+          "odds": {
+            "base": 55
+          },
+          "success": [
+            {
+              "owes": {
+                "who": "capo",
+                "to": "boss"
+              }
+            },
+            {
+              "standing": 2
+            }
+          ],
+          "failure": [
+            {
+              "opinion": {
+                "of": "capo",
+                "toward": "boss",
+                "by": -15,
+                "why": "Counts my money"
+              }
+            }
+          ],
           "result": "{capo.first} said it was a misunderstanding and gave you a bigger piece of the next score.",
           "failText": "{capo.first} said you must be mistaken, in the voice that means you'd better be."
         },
         {
           "label": "Say nothing. It's not your envelope",
-          "effects": [ { "standing": -1 } ],
+          "effects": [
+            {
+              "standing": -1
+            }
+          ],
           "result": "You kept your mouth shut. That is a skill too."
         }
       ]
@@ -494,28 +1686,107 @@
       "id": "low_ub_vote",
       "title": "The underboss wants your vote",
       "theme": "crew",
-      "when": { "station": ["capo"], "week": { "min": 6 }, "chance": 0.4, "cooldown": 30, "weight": 10 },
-      "who": { "ub": { "pool": "valente", "rank": "underboss" }, "don": { "pool": "don" } },
+      "when": {
+        "station": [
+          "capo"
+        ],
+        "week": {
+          "min": 6
+        },
+        "chance": 0.4,
+        "cooldown": 30,
+        "weight": 10
+      },
+      "who": {
+        "ub": {
+          "pool": "valente",
+          "rank": "underboss"
+        },
+        "don": {
+          "pool": "don"
+        }
+      },
       "text": "{ub.call} takes you for a drive along the bay. The Don is getting older, he says, and when the time comes the capos will have a say. \"I'd like to know where you'll stand. I don't forget who stood where.\"",
       "choices": [
         {
           "label": "\"With you, when the time comes.\"",
-          "effects": [ { "opinion": { "of": "ub", "toward": "boss", "by": 15, "why": "Promised me his vote" } }, { "flag": "low_ub_promised" }, { "standing": 2 } ],
+          "effects": [
+            {
+              "opinion": {
+                "of": "ub",
+                "toward": "boss",
+                "by": 15,
+                "why": "Promised me his vote"
+              }
+            },
+            {
+              "flag": "low_ub_promised"
+            },
+            {
+              "standing": 2
+            }
+          ],
           "result": "{ub.first} dropped you at the Shamrock and shook your hand for a long time."
-        },
-        {
-          "label": "\"With the Don. While he's alive, there's no time to come.\"",
-          "effects": [ { "opinion": { "of": "don", "toward": "boss", "by": 8, "why": "Loyal while I'm alive" } }, { "opinion": { "of": "ub", "toward": "boss", "by": -10, "why": "Wouldn't commit" } }, { "standing": 3 } ],
-          "result": "{ub.first} laughed, but not much. Somehow, the Don heard what you said."
         },
         {
           "label": "Tell the Don about the drive",
           "hint": "The Don will remember. So will {ub.first}.",
-          "odds": { "base": 50 },
-          "success": [ { "standing": 8 }, { "opinion": { "of": "don", "toward": "boss", "by": 12, "why": "Told me who is counting my days" } } ],
-          "failure": [ { "opinion": { "of": "ub", "toward": "boss", "by": -30, "why": "Ran to the Don about our drive" } }, { "standing": -4 } ],
+          "odds": {
+            "base": 50
+          },
+          "success": [
+            {
+              "standing": 8
+            },
+            {
+              "opinion": {
+                "of": "don",
+                "toward": "boss",
+                "by": 12,
+                "why": "Told me who is counting my days"
+              }
+            }
+          ],
+          "failure": [
+            {
+              "opinion": {
+                "of": "ub",
+                "toward": "boss",
+                "by": -30,
+                "why": "Ran to the Don about our drive"
+              }
+            },
+            {
+              "standing": -4
+            }
+          ],
           "result": "The Don thanked you with a look. {ub.first} has been very polite to you since.",
           "failText": "The Don already knew. He wanted to see who would tell him, and how fast. {ub.first} found out who did."
+        },
+        {
+          "label": "\"With the Don. While he's alive, there's no time to come.\"",
+          "effects": [
+            {
+              "opinion": {
+                "of": "don",
+                "toward": "boss",
+                "by": 8,
+                "why": "Loyal while I'm alive"
+              }
+            },
+            {
+              "opinion": {
+                "of": "ub",
+                "toward": "boss",
+                "by": -10,
+                "why": "Wouldn't commit"
+              }
+            },
+            {
+              "standing": 3
+            }
+          ],
+          "result": "{ub.first} laughed, but not much. Somehow, the Don heard what you said."
         }
       ]
     }

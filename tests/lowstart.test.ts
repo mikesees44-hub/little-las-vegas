@@ -163,10 +163,14 @@ describe('low starts: the climb', () => {
   it('the quota and the orders come down from above, and the week runs for every rank', () => {
     for (const st of LOW) {
       let s = newGameWith(`wk-${st}`, st);
-      for (let i = 0; i < 8; i++) s = advanceWeek(s, {}).state;
+      const seen: string[] = [];
+      for (let i = 0; i < 10; i++) { s = advanceWeek(s, {}).state; seen.push(...s.pendingEvents.map((e) => e.defId)); }
       const a = above(s)!;
       expect(a.lastKick).toBeDefined();
       expect(a.orders).toBeGreaterThan(0);
+      // The orders reach his desk as scenes, and no boss-only popup does.
+      expect(seen.some((d) => d.startsWith('scene_low_')), `${st}: ${seen.join(',')}`).toBe(true);
+      for (const d of seen) expect(eventAllowed(s, ev(d)), `${st}: ${d}`).toBe(true);
       expect(s.lastReport!.lines.some((l) => /Kick-up to/.test(l.label) && !/Philadelphia/.test(l.label))).toBe(true);
       expect(validateHierarchy(s)).toEqual([]);
     }
@@ -219,5 +223,40 @@ describe('low starts: the shell', () => {
     }
     expect(rankHidden(boss, 'borgata.place')).toBe(true);
     expect(rankHidden(low, 'borgata.place')).toBe(false);
+  });
+});
+
+describe('low starts: the chair', () => {
+  it('when the Don dies, an underboss takes the chair and the family becomes his; a capo gets to choose, with the odds', async () => {
+    const { chairOpen, takeTheChair } = await import('../src/engine/valente');
+    const { killCharacter } = await import('../src/engine/dynasty');
+    const { capos: caposOf } = await import('../src/engine/characters');
+    // The underboss.
+    const s = newGameWith('chair-ub', 'capo');
+    const ctx = newCtx(s);
+    pw(s).station = 'underboss';
+    const a = above(s)!;
+    const fam = a.capoIds.filter((id) => s.characters[id].alive);
+    killCharacter(ctx, a.bossId, 'a heart attack at the Bolero', 'none');
+    chairOpen(ctx);
+    expect(stationOf(s)).toBe('boss');
+    expect(above(s)).toBeUndefined();
+    expect(can(s, 'table')).toBe(true);
+    for (const id of fam) expect(s.characters[id].faction).toBe('player');
+    expect(caposOf(s).length).toBeGreaterThan(0);
+    expect(validateHierarchy(s)).toEqual([]);
+    expect(s.chronicle.some((c) => /You can now/.test(c.text))).toBe(true);
+    // The capo: an event with the claim's odds and the underboss to back.
+    const t = newGameWith('chair-capo', 'capo');
+    const c2 = newCtx(t);
+    killCharacter(c2, above(t)!.bossId, 'old age', 'none');
+    chairOpen(c2);
+    const e = t.eventQueue.find((x) => x.defId === 'low_chair')!;
+    expect(e).toBeDefined();
+    expect(e.choices.find((c) => c.id === 'claim')!.detail).toMatch(/%/);
+    applyEffects(c2, e.choices.find((c) => c.id === 'back')!.effects, { label: 'test', because: 'test' });
+    expect(stationOf(t)).toMatch(/capo|underboss/);
+    expect(t.characters[above(t)!.bossId].alive).toBe(true);
+    void takeTheChair;
   });
 });

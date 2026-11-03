@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { can } from '../../engine/rankView';
 import { DAY_NAMES, DAY_SHORT, today } from '../../engine/days';
 import {
   actLocked, BUDGET_STEPS, budgetOf, callOf, chosenOpt, DOMAIN_IDS, DOMAINS, ifSilent, LEVEL_LABEL, levelOf, lc, ltDecide, LT_SEATS, morningReport,
@@ -121,7 +122,8 @@ function ReportCard({ s, r, update, onChar }: { s: GameState; r: MorningReport; 
 
 /** The two morning reports, side by side, with "Who handles what". */
 export function MorningReports({ s, update, onChar, onSettings }: { s: GameState; update: Update; onChar?: (id: string) => void; onSettings: () => void }) {
-  if (s.gameOver) return null;
+  // Below the chair there is no underboss or consigliere of his own to report (rankView.ts).
+  if (s.gameOver || !can(s, 'council')) return null;
   const reps = LT_SEATS.map((seat) => morningReport(s, seat));
   const needs = reps.reduce((a, r) => a + r.needs.length, 0);
   return (
