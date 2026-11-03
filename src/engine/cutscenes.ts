@@ -10,6 +10,8 @@ import type { CutsceneCue, GameState } from './types';
 export const CUTSCENE_KEYS = [
   'hit_success', 'hit_botched', 'hit_witness', 'funeral', 'wedding', 'sitdown', 'succession',
   'boss_death', 'heir_rises', 'arrest_interrogation', 'betrayal_confrontation', 'made_man',
+  /** EXTRA! the week's violence on the front page (paper.ts extraToday); a seasonal set-piece (setPieces.ts). */
+  'extra', 'set_piece',
 ] as const;
 export type CutsceneKey = (typeof CUTSCENE_KEYS)[number];
 

@@ -4,6 +4,7 @@ import { urgentMeetings } from './threats';
 import { actTitle, docketOf, ifSilent, pendingAsks } from './lieutenants';
 import { openAsks, TRADES, TROUBLE_WORD, troubled } from './placeAsks';
 import { today } from './days';
+import { eventsOut } from './eventDays';
 import type { GameState, PlayerAction } from './types';
 import type { Stakes } from './attention';
 
@@ -67,7 +68,8 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
   out.push(...door.map(fromVisitor));
   const atDoor = new Set(door.map((v) => v.key));
   let envelope = false;
-  for (const ev of s.pendingEvents) {
+  // A decision comes out on its day (daily.ts): until then it is not on the desk.
+  for (const ev of eventsOut(s)) {
     if (answers[ev.iid] || atDoor.has(`ev:${ev.iid}`)) continue;
     if (ev.defId === 'tribute_audience') { envelope = true; continue; }
     out.push({ key: `ev:${ev.iid}`, kind: 'decision', tone: ev.mandatory ? 'red' : 'amber', title: ev.title, why: ev.text.length > 110 ? `${ev.text.slice(0, 109)}…` : ev.text, ref: { event: ev.iid } });

@@ -1,4 +1,4 @@
-import { HEAT_THRESHOLD } from './heat';
+import { HEAT_FULL, HEAT_THRESHOLD } from './heat';
 import { UNWASHED_SAFE } from './economy';
 import { GRAND_JURY, OPEN_FILE } from './longgame';
 import { CAPO_CUT, NO_CAPO_EFFICIENCY } from './economy';
@@ -29,17 +29,17 @@ const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
 export const GLOSSARY: GlossaryEntry[] = [
   {
     id: 'heat.local', term: 'Local heat', section: 'Pressure',
-    short: `The Wildwood police and the county Prosecutor's attention. At ${HEAT_THRESHOLD}+ they raid: a place is padlocked and cash is seized.`,
+    short: `The Wildwood police and the county Prosecutor's attention. From ${HEAT_THRESHOLD} they start to raid (more often the higher it goes, every few weeks by ${HEAT_FULL}): a warrant for a night, a place padlocked, cash seized.`,
     long: 'Shakedowns, hits, rackets and pushing into districts raise it. A quiet week cools it; envelopes downtown (the fixer, a bribed sergeant) cool it faster. Above 55 it is "hot": plan for a raid.',
   },
   {
     id: 'heat.family', term: 'Family heat', section: 'Pressure',
-    short: `Philadelphia's patience with you. At ${HEAT_THRESHOLD}+ they summon you across the bridge and take a cut of the treasury.`,
+    short: `Philadelphia's patience with you. The hotter it runs (and the richer you get), the sooner they summon you across the bridge; past ${HEAT_FULL} they simply take a cut of the treasury.`,
     long: 'Short envelopes, unsanctioned killings, wars without the Table\'s blessing and narcotics raise it. An envelope to Sal Moretti, a consigliere working the Table and a quiet season lower it.',
   },
   {
     id: 'heat.federal', term: 'Federal heat', section: 'Pressure',
-    short: `The FBI and the IRS. At ${HEAT_THRESHOLD}+ they arrest your men. Unwashed cash above ${usd(UNWASHED_SAFE)} feeds it every week.`,
+    short: `The FBI and the IRS. From ${HEAT_THRESHOLD} they start arresting your men. Unwashed cash above ${usd(UNWASHED_SAFE)} feeds it every week.`,
     long: 'Heists across state lines, bank jobs, dirty money in shoeboxes and big names in the papers raise it. It cools slowly; the fixer\'s friends at the federal building help.',
   },
   {

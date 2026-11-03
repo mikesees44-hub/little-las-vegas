@@ -35,6 +35,8 @@ export interface Settings {
   pauseOnWar?: boolean;
   /** Stop the clock when a plot against you is uncovered. */
   pauseOnPlot?: boolean;
+  /** Stop the clock when a threat strikes on its day and hour (a decision with odds, now). */
+  pauseOnStrike?: boolean;
   /** The running clock became the default for everyone once (v2): the stored turn-based setting was moved over. */
   clockV?: number;
   /** Live alerts: keep the small news out of the strip and the good news out of the pop-ups. */
@@ -94,6 +96,7 @@ export const AUTO_PAUSE: { key: keyof Settings; label: string }[] = [
   { key: 'pauseOnUrgent', label: 'Someone asks for an urgent meeting' },
   { key: 'pauseOnWar', label: 'A battle, or a war is declared' },
   { key: 'pauseOnPlot', label: 'A plot against you is uncovered' },
+  { key: 'pauseOnStrike', label: 'A threat strikes on its night (a raid, a hit): your call, now' },
   { key: 'pauseOnDecision', label: 'Any decision waiting, even a routine one (off: only red ones)' },
   { key: 'pauseOnCapo', label: 'When a capo has an urgent problem' },
   { key: 'pauseOnViolence', label: 'On a hit or a killing' },

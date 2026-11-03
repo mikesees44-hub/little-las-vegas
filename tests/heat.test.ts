@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { newGame } from '../src/engine/newGame';
 import { heat, newCtx } from '../src/engine/ledger';
-import { decayAmount, heatConsequences, heatDecay } from '../src/engine/heat';
+import { decayAmount, heatConsequences, heatDecay, heatRamp } from '../src/engine/heat';
 import { advanceWeek } from '../src/engine/engine';
 import { HEAT_BARS } from '../src/engine/types';
 
@@ -59,7 +59,7 @@ describe('heat', () => {
     expect(s.heat.local).toBeLessThan(40);
     expect(s.heat.family).toBeLessThan(40);
   });
-  it('at 80+ produces named consequences that are reported', () => {
+  it('at 80+ produces named consequences that are reported (the raid is set for a night next week)', () => {
     let sawRaid = false;
     for (let i = 0; i < 30 && !sawRaid; i++) {
       const s = newGame(`h6-${i}`);
@@ -67,8 +67,28 @@ describe('heat', () => {
       const ctx = newCtx(s);
       heatConsequences(ctx);
       const labels = ctx.lines.map((l) => l.label).join('|');
-      if (/RAID/.test(labels) && /ARREST/.test(labels)) sawRaid = true;
+      // The local raid is a ticking clock (threats.ts planHeatRaid): a warrant for a night next week, at an hour.
+      const planned = (s.threats?.threats ?? []).find((t) => t.heatRaid);
+      if ((planned || /RAID/.test(labels)) && /ARREST/.test(labels)) {
+        sawRaid = true;
+        if (planned) { expect(planned.due).toBe(s.week + 1); expect(planned.dueDay).toBeGreaterThanOrEqual(1); expect(planned.hour).toBeDefined(); }
+      }
     }
     expect(sawRaid).toBe(true);
+  });
+
+  it('ramps from 50: nothing below, full odds by 80 (DAILY_LOGIC #3)', () => {
+    expect(heatRamp(49)).toBe(0);
+    expect(heatRamp(65)).toBeCloseTo(0.5);
+    expect(heatRamp(80)).toBe(1);
+    let any = 0;
+    for (let i = 0; i < 40; i++) {
+      const s = newGame(`h7-${i}`);
+      s.heat = { local: 49, family: 49, federal: 49 };
+      const ctx = newCtx(s);
+      heatConsequences(ctx);
+      any += (s.threats?.threats ?? []).filter((t) => t.heatRaid).length + ctx.lines.filter((l) => /RAID|ARREST/.test(l.label)).length;
+    }
+    expect(any).toBe(0);
   });
 });

@@ -41,6 +41,7 @@ import { ensureCut } from './cutScore';
 import { ensureOc } from './oceanCity';
 import { migrateTrust } from './trustMigrations';
 import { keepOldDelegation } from './lieutenants';
+import { ensureDaily } from './daily';
 import type { GameState } from './types';
 
 /**
@@ -67,6 +68,8 @@ export function upgradeSave(s: GameState): GameState {
   }
   // The town's house lots (by id: a save from before them gets them on the market; who lives there comes with the next week).
   if (s.econ?.lots.length) try { ensureHousing(s); } catch { /* the weekly update will try again */ }
+  // The week lived day by day (daily.ts): a save with threats gets the daily layer, its planned moves their day and hour.
+  if (s.threats !== undefined || s.action !== undefined) try { ensureDaily(s); } catch { /* the weekly update will make it */ }
   // A days plan left from another week (the clock stopped mid-week in an older build) is dropped.
   if (s.days && s.days.week !== s.week) delete s.days;
   // The old player-run call service goes back to the Madam's network.

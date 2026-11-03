@@ -1,3 +1,4 @@
+import { ensureAction } from './actionState';
 import { perkMod } from './lifestyle';
 import { crew, displayName, isFree } from './characters';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
@@ -90,6 +91,8 @@ export function endWar(ctx: Ctx, w: War, outcome: 'won' | 'lost' | 'white', term
   const d = s.districts.find((x) => x.id === w.district);
   const label = `Peace with ${r?.shortName ?? 'the rival'}`;
   const effects: Effect[] = [];
+  // A war won is a show of strength: respect at the top holds this week (engine.ts weeklyHousekeeping).
+  if (outcome === 'won') ensureAction(s).strength = s.week;
   if (outcome === 'won' && r) {
     if (terms === 'district' && d) {
       const lost = -shiftInfluence(s, d.id, r.id, -DISTRICT_PRIZE);

@@ -1,3 +1,4 @@
+import { eventsOut } from './eventDays';
 import { todaysHeadline } from './paper';
 import { agingOf, isBlind, lvl } from './aging';
 import { docketOf, ltView, pendingAsks } from './lieutenants';
@@ -178,7 +179,7 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
   const out: OfficeVisitor[] = [];
   const seat = officeSeat(s);
   const by = seat.role !== 'none' ? shortFirst(seat.charId ? s.characters[seat.charId] : undefined) : undefined;
-  for (const ev of s.pendingEvents) {
+  for (const ev of eventsOut(s)) {
     if (answers[ev.iid] || ev.defId === 'tribute_audience') continue;
     const petition = ev.defId.startsWith('office_');
     // The boss's own matter (his birthday) is his, not the first man in the room's.

@@ -91,6 +91,8 @@ export interface PItem {
   ad?: 1;
   /** The boss's plant. */
   pl?: 1;
+  /** EXTRA! The week's violence on the front page (a card the day it comes out: extraToday). */
+  ex?: 1;
   /** Spiked by the editor (never ran). */
   sp?: 1;
   /** The boss's own place (entertainment). */
@@ -880,7 +882,7 @@ export function paperWeek(ctx: Ctx): void {
   const P = ensurePaper(s);
   settle(ctx, P);
   adsWeek(ctx, P);
-  const wire = gatherWire(s, P);
+  const wire = [...gatherWire(s, P), ...violenceWire(ctx)];
   P.plants = [];
   P.wire = [];
   const eds = setEditions(s, P, wire);
@@ -1117,4 +1119,61 @@ export function commitPaper(ctx: Ctx, a: PaperAction): void {
       return;
     }
   }
+}
+
+/* ------------------------------------------------------------------ */
+/* EXTRA! The week's violence on the front page                        */
+/* ------------------------------------------------------------------ */
+
+/**
+ * The turn's violence that touched the boss, from the week's log lines: a raid on his place, his
+ * man killed, shots at his door, his place hit, a war or a battle, an arrest. (The rivals' fights
+ * among themselves stay in the report and the blotter.)
+ */
+const VIOLENT: [RegExp, string][] = [
+  [/^RAID:/, 'COUNTY DETECTIVES RAID LOCAL BUSINESS'],
+  [/(didn't come home|found his car)/i, 'BODY FOUND; POLICE SILENT'],
+  [/(Shots through|came for you|jumped leaving a bar|Room 9 at the Starlight)/i, 'SHOTS, A BEATING: TROUBLE ON THE ISLAND'],
+  [/^\S.* hit .* \(\$[\d,]+ gone\)|firebomb a dumpster behind your/i, 'FIRE AT LOCAL BUSINESS; OWNER "HAS NO ENEMIES"'],
+  [/(went to the mattresses|declared war on you|war on you)/i, 'MERCHANTS FEAR A SUMMER OF TROUBLE'],
+  [/^ARREST:/, 'FEDERAL AGENTS MAKE AN ARREST'],
+];
+/** At most this many EXTRA front pages from one week's turn (the rest are in the report). */
+export const EXTRAS_PER_WEEK = 1;
+
+function violenceWire(ctx: Ctx): Wire[] {
+  const out: Wire[] = [];
+  const used = new Set<string>();
+  for (const l of ctx.log) {
+    if (out.length >= EXTRAS_PER_WEEK) break;
+    if (/^\(|^\[|came to nothing|crew covered it/.test(l)) continue;
+    const hit = VIOLENT.find(([rx]) => rx.test(l));
+    if (!hit || used.has(hit[1])) continue;
+    used.add(hit[1]);
+    out.push({ id: '', s: 'front', h: hit[1], b: scrub(l), p: 86, ex: 1, min: 1 + out.length });
+  }
+  return out;
+}
+
+/** A strike that landed mid-week: tomorrow's front page (or the next week's, from a Sunday). Mutates `s` (a working copy). */
+export function extraPress(s: GameState, h: string, b: string): void {
+  const P = ensurePaper(s);
+  const d = today(s) + 1;
+  const ed = d <= 6 ? P.eds.find((e) => e.kind === 'daily' && e.week === s.week && e.day === d) : undefined;
+  const it: PItem = { id: '', s: 'front', h, b: scrub(b), p: 95, ex: 1 };
+  if (ed) ed.items.unshift({ ...it, id: `${ed.id}.x${ed.items.length + 1}` });
+  else pressItem(s, it);
+}
+
+/** Today's EXTRA, if one is on the desk and its card has not been shown. */
+export function extraToday(s: GameState): PItem | undefined {
+  const seen = new Set(s.action?.extras ?? []);
+  const ed = (s.paper?.eds ?? []).find((e) => e.kind === 'daily' && e.week === s.week && e.day === today(s));
+  return ed?.items.find((x) => x.ex && !seen.has(x.id));
+}
+
+/** The EXTRA card was shown (pure). */
+export function markExtraShown(s: GameState, id: string): GameState {
+  const A = s.action ?? { v: 1 as const, raided: {}, under: 0, sp: {}, extras: [], stats: { strikes: 0, raids: 0, summons: 0, bail: 0, extras: 0, setPieces: 0 } };
+  return { ...s, action: { ...A, extras: [...A.extras, id].slice(-30), stats: { ...A.stats, extras: A.stats.extras + 1 } } };
 }

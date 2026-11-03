@@ -151,6 +151,8 @@ export type DeedOp =
   /** An authored scene: fired (cooldown/once) / a choice whose odds roll now / a follow-up / a flag. */
   | { op: 'sceneFired'; id: string }
   | { op: 'sceneRoll'; id: string; c: number; cast: Record<string, string>; p: number }
+  /** A code event's choice with odds (pressure.ts, setPieces.ts): rolled on the deeds' dice when the answer lands. */
+  | { op: 'gamble'; p: number; ok: import('../types').Effect[]; bad: import('../types').Effect[]; okText: string; badText: string; label: string }
   | { op: 'sceneNext'; id: string; after: [number, number]; cast: Record<string, string>; from: string }
   /** Run a deed between two NPCs now (from a scene). */
   | { op: 'npcDeed'; id: DeedId; a: string; t: string }

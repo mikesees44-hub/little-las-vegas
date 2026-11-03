@@ -63,12 +63,13 @@ const dayRows = [];
 const dowAll = Array.from({ length: 7 }, () => ({ n: 0, dead: 0, deadNoEve: 0, dec: 0, am: 0, pauses: 0, tips: 0 }));
 for (const r of runs) {
   const D = r.days.filter((d) => r.weeks.length && d.w <= r.weeks[r.weeks.length - 1].w);
-  const something = (d, eve) => d.dec || d.am || d.tips || d.cuts.length || d.heads.length || d.warns.length || d.now || d.pauses.length || (eve && d.eve);
+  const something = (d, eve) => d.dec || d.am || d.tips || d.cuts.length || d.heads.length || d.warns.length || d.now || d.pauses.length || d.strikes || d.quiet || d.extra || (eve && d.eve);
   const dead = D.filter((d) => !something(d, true)).length;
   const deadNoEve = D.filter((d) => !something(d, false)).length;
   const dec = D.reduce((a, d) => a + d.dec, 0);
-  const mon = D.filter((d) => d.d === 0).reduce((a, d) => a + d.dec + d.tips + d.cuts.length + d.heads.length, 0);
-  const all = D.reduce((a, d) => a + d.dec + d.tips + d.cuts.length + d.heads.length, 0);
+  const beats = (d) => d.dec + d.tips + d.cuts.length + d.heads.length + (d.strikes ?? 0) + (d.quiet ?? 0);
+  const mon = D.filter((d) => d.d === 0).reduce((a, d) => a + beats(d), 0);
+  const all = D.reduce((a, d) => a + beats(d), 0);
   // Longest run of consecutive dead days (evenings counted as something).
   let run = 0, longest = 0, runNE = 0, longestNE = 0;
   for (const d of D) { if (!something(d, true)) { run++; longest = Math.max(longest, run); } else run = 0; if (!something(d, false)) { runNE++; longestNE = Math.max(longestNE, runNE); } else runNE = 0; }
@@ -191,4 +192,26 @@ P();
 const acts = {};
 for (const r of runs) for (const w of r.weeks) for (const a of w.actions) acts[a] = (acts[a] ?? 0) + 1;
 P(`Player acts taken (policy): ${Object.entries(acts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+
+// ---------- 8. the action summary (BEFORE vs AFTER) ----------
+P('### Action summary per run');
+const sumRows = [];
+for (const r of runs) {
+  const W = r.weeks; const yrs = W.length / 52;
+  const D = r.days;
+  const raids = W.reduce((a, w) => a + w.log.filter((l) => RX.raid.test(l)).length, 0);
+  const pop = (id) => W.reduce((a, w) => a + w.popups.filter((p) => p.id === id).length, 0);
+  const summons = pop('philly_summons') + W.reduce((a, w) => a + w.log.filter((l) => RX.philly.test(l)).length, 0);
+  const sp = W.reduce((a, w) => a + w.popups.filter((p) => /^setpiece_|^scene_sp_/.test(p.id)).length, 0);
+  const strikes = D.reduce((a, d) => a + (d.strikes ?? 0), 0);
+  const quiet = D.reduce((a, d) => a + (d.quiet ?? 0), 0);
+  const extra = D.reduce((a, d) => a + (d.extra ?? 0), 0);
+  const hard = W.map((w) => { const a = weekActions(w); return HARD.some((k) => a[k]); });
+  const g = gaps(hard);
+  const resp95 = W.filter((w) => w.respect >= 95).length;
+  const at = (k) => (W[k - 1] ? `${Math.round(W[k - 1].fam / 1000)}k/R${W[k - 1].respect}` : '-');
+  sumRows.push([`${r.start}/${r.seed}`, r1(raids / yrs), r1(summons / yrs), pop('bailout'), r1(sp / yrs), r1(strikes / yrs), r1(quiet / yrs), r1(extra / yrs), g.longest, pct(resp95, W.length), at(26), at(52), at(104), at(156)]);
+}
+P(tbl(['run', 'raids/yr', 'summons/yr', 'bail-outs', 'set-pieces/yr', 'strikes (a moment)/yr', 'landed quietly/yr', 'EXTRA cards/yr', 'longest hard-dry (wks)', 'weeks respect ≥95', 'wk26 cash/resp', 'wk52', 'wk104', 'wk156'], sumRows));
+P();
 console.log(out.join('\n'));

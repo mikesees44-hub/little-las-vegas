@@ -5,14 +5,25 @@ import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { chance, pick, randInt } from './rng';
 import { HEAT_BARS, type HeatBar } from './types';
+/** The raid planner (threats.ts planHeatRaid), wired in by engine.ts so this module stays a leaf. */
+let planHeatRaid: (s: import('./types').GameState) => unknown = () => undefined;
+export function setHeatRaidPlanner(f: (s: import('./types').GameState) => unknown): void { planHeatRaid = f; }
 
 /**
  * Heat: three bars (local cops/press, the Philadelphia family, the feds),
- * each clamped 0–100 by the ledger. At 80+ each bar can trigger a named
- * consequence that also bleeds off some of the pressure.
+ * each clamped 0–100 by the ledger. From 50 each bar can trigger a named
+ * consequence, the odds ramping to full at 80 (DAILY_LOGIC #3): a local raid
+ * set for a night next week, a federal arrest. Philadelphia's summons is a
+ * decision (pressure.ts); past 80 Philadelphia simply takes its pound of flesh.
  */
 
-export const HEAT_THRESHOLD = 80;
+/** Where the bars start to bite (DAILY_LOGIC #3): the odds ramp from here up to full at HEAT_FULL. */
+export const HEAT_THRESHOLD = 50;
+export const HEAT_FULL = 80;
+/** 0-1: how hard a bar bites at this level. */
+export function heatRamp(v: number): number {
+  return Math.max(0, Math.min(1, (v - HEAT_THRESHOLD) / (HEAT_FULL - HEAT_THRESHOLD)));
+}
 /** Flat decay per week when no heat was gained on that bar this week. */
 export const QUIET_DECAY: Record<HeatBar, number> = { local: 3, family: 2, federal: 1 };
 /** Flat decay per week when the bar did gain heat this week. */
@@ -31,8 +42,10 @@ export const HEAT_LABELS: Record<HeatBar, string> = { local: 'Local', family: 'F
 
 export function heatConsequences(ctx: Ctx): void {
   const s = ctx.s;
-  // LOCAL: the Wildwood PD and the county detectives raid something.
-  if (s.heat.local >= HEAT_THRESHOLD && chance(s, 0.45)) {
+  // LOCAL: the county detectives put a warrant together: a raid on a night next week (a ticking clock: threats.ts planHeatRaid).
+  if (s.heat.local >= HEAT_THRESHOLD && chance(s, 0.45 * heatRamp(s.heat.local)) && planHeatRaid(s)) {
+    ctx.log.push('(Unknown to you, the county detectives are putting a warrant together.)');
+  } else if (s.heat.local >= HEAT_FULL && chance(s, 0.2)) {
     const open = s.businesses.filter((b) => b.owner === 'player' && !(b.closedUntil !== undefined && b.closedUntil > s.week));
     const target = open.length ? pick(s, open) : undefined;
     if (target) {
@@ -52,7 +65,7 @@ export function heatConsequences(ctx: Ctx): void {
     heat(ctx, 'local', -20, 'RAID: pressure released after the raid', 'heat');
   }
   // FEDERAL: an arrest.
-  if (s.heat.federal >= HEAT_THRESHOLD && chance(s, 0.35)) {
+  if (s.heat.federal >= HEAT_THRESHOLD && chance(s, 0.35 * heatRamp(s.heat.federal))) {
     const pool = crew(s).filter((c) => isFree(s, c) && c.rank !== 'boss');
     if (pool.length) {
       const victim = pick(s, pool);
@@ -68,8 +81,8 @@ export function heatConsequences(ctx: Ctx): void {
     booksRaid(ctx, 'fbi');
     heat(ctx, 'federal', -25, 'ARREST: feds take their headline', 'heat');
   }
-  // FAMILY: Philadelphia loses patience.
-  if (s.heat.family >= HEAT_THRESHOLD && chance(s, 0.4)) {
+  // FAMILY: Philadelphia loses patience (past the summons: pressure.ts summonsSource, a decision with odds).
+  if (s.heat.family >= HEAT_FULL && chance(s, 0.4)) {
     const fine = Math.min(Math.max(0, s.money), Math.max(2000, Math.round(s.money * 0.12)));
     if (fine > 0) money(ctx, -fine, 'SEIZED: Philadelphia takes a cut of your treasury', 'heat');
     respect(ctx, -4, 'Summoned to Philadelphia like an errand boy', 'heat');

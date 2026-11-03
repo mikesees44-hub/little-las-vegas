@@ -8,6 +8,8 @@ import { OFFICE_BY_ID } from '../../engine/polData';
 import { GROOM_PATHS } from '../../engine/heir';
 import { stageLabel } from '../../engine/longgame';
 import type { GameState } from '../../engine/types';
+import { tickingClocks } from '../../engine/threats';
+import { stormClock } from '../../engine/setPieces';
 import { MISSION_DEFS } from '../../engine/missions';
 import type { Route } from './routes';
 import type { MapFocus } from './context';
@@ -38,6 +40,13 @@ export function inMotion(s: GameState, ui: { orders: number } = { orders: 0 }): 
   const out: MotionChip[] = [];
   const name = (id?: string) => (id && s.characters[id] ? displayName(s.characters[id]) : '');
   const safe = (f: () => void) => { try { f(); } catch { /* a pillar not initialised yet */ } };
+
+  // Ticking clocks first (threats.ts): what a source said is coming, on its night, counting down; a strike happening now.
+  safe(() => {
+    const st = stormClock(s);
+    if (st) out.push({ key: 'storm', glyph: '⏱', text: st.text, tone: st.days <= 1 ? 'bad' : 'warn', noEta: true, route: { home: 'desk' } as Route });
+    for (const t of tickingClocks(s)) out.push({ key: t.key, glyph: '⏱', text: t.text, tone: t.days <= 1 ? 'bad' : 'warn', noEta: true, ...(t.charId ? { charId: t.charId } : { route: { home: 'desk' } as Route }) });
+  });
 
   for (const sc of s.schemes.filter((x) => x.owner === 'player')) {
     const t = sc.targetId ? s.characters[sc.targetId] : undefined;

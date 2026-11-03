@@ -56,7 +56,11 @@ import { noteAnswers, takeQuiet } from './storyPace';
 import { romanceMonth } from './romance';
 import { operationalHeat, recordEarnings, runEconomy } from './economy';
 import { attended, neglectWeek } from './neglect';
-import { heatConsequences, heatDecay } from './heat';
+import { heatConsequences, heatDecay, setHeatRaidPlanner } from './heat';
+import { planHeatRaid } from './threats';
+import { scheduleWeek } from './daily';
+import { bailoutSource, pressureWeek, summonsSource } from './pressure';
+import { setPieceSource, setPiecesWeek } from './setPieces';
 import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
 import { addOpinion, decayAllRelations, opinion } from './relations';
 import { chance } from './rng';
@@ -108,6 +112,13 @@ registerEventSource(deedsEventSource);
 // The NPCs' proposals with stakes (reactions/): one every few weeks at most.
 registerEventSource((s) => proposalsEventSource(s));
 registerEventSource(sceneEventSource);
+// Success draws fire, and a way back from the bottom (pressure.ts): Philadelphia's summons, the bail-out.
+registerEventSource(summonsSource);
+// The season's set-pieces (setPieces.ts): opening weekend, the Fourth, Labor Day, the September storm.
+registerEventSource(setPieceSource);
+// The heat's raids are ticking clocks (threats.ts): set for a night next week.
+setHeatRaidPlanner(planHeatRaid);
+registerEventSource(bailoutSource);
 registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
@@ -282,12 +293,18 @@ function weeklyHousekeeping(ctx: Ctx): void {
     const idle = crew(s).find((c) => c.rank === 'capo' && isFree(s, c) && !s.districts.some((x) => x.capoId === c.id));
     if (idle) d.capoId = idle.id;
   }
-  // Reputation drifts toward what the crew's real standing on the island justifies.
-  if (s.week % 2 === 0) {
+  // Reputation drifts every week toward what the crew's real standing on the island justifies,
+  // faster the further off it is; and at the top it has to be kept: above RESPECT_KEEP it slips a
+  // point a week unless the boss showed strength that week (a strike beaten off, a war won).
+  {
     const target = respectTarget(s);
     const share = Math.round(islandShare(s));
-    if (s.respect < target - 2) respect(ctx, 1, `Word on the street: you run ${share}% of the island`, 'drift');
-    else if (s.respect > target + 2) respect(ctx, -1, `Reputation settles: you run only ${share}% of the island`, 'drift');
+    const gap = target - s.respect;
+    const step = Math.ceil(Math.abs(gap) / 10);
+    const shown = s.action?.strength === s.week;
+    if (gap > 2) respect(ctx, step, `Word on the street: you run ${share}% of the island`, 'drift');
+    else if (gap < -2) respect(ctx, -step, `Reputation settles: you run only ${share}% of the island`, 'drift');
+    else if (s.respect > RESPECT_KEEP && !shown) respect(ctx, -1, 'Respect at the top has to be kept: a quiet week, and people forget', 'drift');
   }
   // The informant (starting problem) leaks to the FBI.
   if (s.flags.informant) {
@@ -303,6 +320,9 @@ export function islandShare(s: GameState): number {
   const total = s.districts.reduce((a, d) => a + d.streetBase, 0);
   return s.districts.reduce((a, d) => a + d.streetBase * (d.influence.player ?? 0), 0) / total;
 }
+
+/** Above this, respect slips a point a week unless the boss shows strength (DAILY_LOGIC #6). */
+export const RESPECT_KEEP = 90;
 
 export function respectTarget(s: GameState): number {
   const men = crew(s).filter((c) => isFree(s, c)).length;
@@ -457,6 +477,10 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     reelsWeek(ctx, input);
     recordEarnings(ctx);
     tributeWeek(ctx);
+    // A big operation costs to keep; the weeks under water are counted (pressure.ts).
+    pressureWeek(ctx);
+    // The Fourth's crowd; a storm the clock never reached (setPieces.ts).
+    setPiecesWeek(ctx);
     // Your men come up (crewXp.ts): what each man did this week, seen against the week as it began.
     xpWeek(ctx, input);
   }
@@ -481,6 +505,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     markCostlyChoices(s);
     ctx.popups = s.pendingEvents.length;
     planNextWeek(s);
+    // The week spread across the days: Monday's decisions stay on the desk, the rest come out Tuesday to Friday (daily.ts).
+    scheduleWeek(s);
   } else {
     s.pendingEvents = [];
   }

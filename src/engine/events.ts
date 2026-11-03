@@ -1,3 +1,4 @@
+import { envelopeMult } from './pressure';
 import { perkMod } from './lifestyle';
 import { ageOn, monthKey, seasonMultiplier } from './calendar';
 import { capos, crew, displayName, hasTrait, livingDynasty, makeCharacter, player, relationLabel } from './characters';
@@ -64,7 +65,8 @@ export function envelopeSize(s: GameState): number {
   const avg = recent.length ? recent.reduce((a, b) => a + b, 0) / recent.length : 2000;
   // A lost war with Philadelphia (army.ts): their man sits over you and the envelope is half again as big.
   const overseer = (s.army?.overseerUntil ?? 0) > s.week ? 1.5 : 1;
-  return Math.max(600, rnd100(s, tributeOnWeekly(avg) * 4.33 * (1 - perkMod(s, 'tribute') / 100) * overseer));
+  // Success draws fire (pressure.ts): Philadelphia's end swells with the Family's money, and with a bail-out it fronted.
+  return Math.max(600, rnd100(s, tributeOnWeekly(avg) * 4.33 * (1 - perkMod(s, 'tribute') / 100) * overseer * envelopeMult(s)));
 }
 
 /**

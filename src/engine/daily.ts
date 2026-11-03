@@ -1,0 +1,151 @@
+import { ensureAction } from './actionState';
+import { daysOf, tickDay } from './days';
+import { roll } from './roundsPersonal';
+import { liveStrikes, resolveStrike, stampWhen, strikesToday, strikeView, strikeWorthy, type StrikeOptId, type StrikeView } from './threats';
+import { resolveStorm, stormTonight, stormView, type StormOptId } from './setPieces';
+import type { NowResult } from './deeds/now';
+import { extraPress } from './paper';
+import { eventOut, eventsOut } from './eventDays';
+export { eventOut, eventsOut };
+import type { EventInstance, GameState } from './types';
+
+/**
+ * THE WEEK SPREAD ACROSS THE DAYS (DAILY_LOGIC_AND_ACTION #1, #5). The week turn still computes
+ * the week; this layer hands its results to the running clock on their days, the way the papers
+ * already come out day by day (paper.ts setEditions / isOut):
+ *
+ *  - Decisions: the money, the chair and the set-pieces are on the desk Monday; the rest come out
+ *    Tuesday to Friday (`meta.day`, round-robin by priority; mandatory ones by Wednesday). They
+ *    stay in `pendingEvents`, so the engine is unchanged: an answer is applied at the turn; skipping
+ *    the week with Advance Week brings them all out first (releaseAll), so nothing is lost.
+ *  - Urgent meetings come out on their day (threats.ts Tip.rel).
+ *  - Threats land on their day and hour (threats.ts Threat.dueDay/hour): the clock stops, the boss
+ *    answers with odds, and it is rolled in the moment (resolveStrike).
+ *
+ * Pure: every function returns a new state.
+ */
+
+/** The last day a decision comes out (Friday): it leaves him the weekend to answer. */
+export const LAST_RELEASE_DAY = 4;
+
+/** Decisions that must be on the desk the moment the week opens (the money, the chair, a summons, a set-piece). */
+const MONDAY = new Set(['tribute_audience', 'bagman', 'made_boss', 'philly_summons', 'bailout', 'making']);
+function mondayOnly(ev: EventInstance): boolean {
+  return MONDAY.has(ev.defId) || ev.defId.startsWith('setpiece_') || ev.priority >= 90 || !!ev.meta?.asked;
+}
+/** A mandatory decision that can wait a day or two comes out early in the week (it must be answered). */
+const MANDATORY_LAST = 2;
+
+/**
+ * At the end of the week turn: Monday's decisions stay as they are, the rest are given the day they
+ * come out (`meta.day`, Tuesday … Friday). Every decision stays in `pendingEvents` (the engine and
+ * an answer given early are unchanged); the screens show one only once it is out (`eventOut`).
+ * Mutates `s` (the turn's working copy).
+ */
+export function scheduleWeek(s: GameState): void {
+  if (s.gameOver || !s.pendingEvents.length) return;
+  const later = s.pendingEvents.filter((e) => !mondayOnly(e)).sort((a, b) => b.priority - a.priority || a.iid.localeCompare(b.iid));
+  const first = Math.floor(roll(`${s.seed}|${s.week}|rel`) * LAST_RELEASE_DAY);
+  later.forEach((ev, i) => {
+    const span = ev.mandatory ? MANDATORY_LAST : LAST_RELEASE_DAY;
+    ev.meta = { ...(ev.meta ?? {}), day: 1 + ((first + i) % span) };
+  });
+}
+
+/** Decisions still to come this week. */
+export function heldEvents(s: GameState): EventInstance[] {
+  return s.pendingEvents.filter((e) => !eventOut(s, e));
+}
+
+/** Everything the week still holds comes out now (Advance Week, the "Ready to advance" review). Pure. */
+export function releaseAll(s: GameState): GameState {
+  if (!heldEvents(s).length) return s;
+  return { ...s, pendingEvents: s.pendingEvents.map((e) => (eventOut(s, e) ? e : { ...e, meta: { ...(e.meta ?? {}), day: 0 } })) };
+}
+
+export interface DayResult {
+  state: GameState;
+  /** Decisions that came out this morning. */
+  released: string[];
+  /** Threats striking now that wait on the boss (the clock stops: strikeView / answerStrike). */
+  strikes: string[];
+  /** Strikes that landed on their own today (no moment to answer: a quiet move, or the week moved on). */
+  landed: NowResult[];
+}
+
+/**
+ * One day passes on the clock (Monday → … → Sunday; the caller turns the week after Sunday):
+ * the day ticks, a strike left unanswered from yesterday lands with the default, the day's held
+ * decisions come out, and today's threats strike.
+ */
+export function advanceDay(s0: GameState): DayResult {
+  let s = s0;
+  const landed: NowResult[] = [];
+  // Nobody answered yesterday's strike (the clock was not held): his people did what they could.
+  for (const t of liveStrikes(s)) {
+    const r = answerStrike(s, t.id, 'ride');
+    if (r.result.ok) { s = r.state; landed.push(r.result); }
+  }
+  if (stormTonight(s)) { const r = answerMoment(s, 'storm', 'ride'); if (r.result.ok) { s = r.state; landed.push(r.result); } }
+  if (daysOf(s).day >= 6) return { state: s, released: [], strikes: [], landed };
+  const before = new Set(eventsOut(s).map((e) => e.iid));
+  s = tickDay(s);
+  const released = eventsOut(s).filter((e) => !before.has(e.iid)).map((e) => e.iid);
+  const st = strikesToday(s);
+  s = st.state;
+  const strikes: string[] = [];
+  for (const id of st.ids) {
+    const t = s.threats!.threats.find((x) => x.id === id)!;
+    if (strikeWorthy(s, t)) { strikes.push(id); continue; }
+    // A quiet move (a man courted, a car across the street): it lands on its day, and he hears of it.
+    const r = answerStrike(s, id, 'ride');
+    if (r.result.ok) { s = r.state; landed.push(r.result); }
+  }
+  // The September storm's night (setPieces.ts): the same kind of moment.
+  if (stormTonight(s)) strikes.push('storm');
+  return { state: s, released, strikes, landed };
+}
+
+/** A moment on the clock, by id: a threat striking now, or 'storm' (the hurricane's night). */
+export function momentView(s: GameState, id: string): StrikeView | undefined {
+  if (id === 'storm') return stormView(s) as StrikeView | undefined;
+  return strikeView(s, id);
+}
+
+/** Answer a moment (a strike or the storm) in the moment; what landed goes in tomorrow's paper. */
+export function answerMoment(s: GameState, id: string, opt: string): { state: GameState; result: NowResult } {
+  if (id === 'storm') {
+    const r = resolveStorm(s, opt as StormOptId);
+    if (!r) return { state: s, result: { ok: false, error: 'It is over', title: 'The storm', tier: 'fail', headline: 'It is over', line: '', changes: [], leadsTo: [] } };
+    extraPress(r.state, r.extra.h, r.extra.b);
+    return { state: r.state, result: r.result };
+  }
+  return answerStrike(s, id, opt as StrikeOptId);
+}
+
+/** The boss answers a strike in the moment (what landed is in tomorrow's paper: EXTRA!). */
+export function answerStrike(s: GameState, id: string, opt: StrikeOptId): { state: GameState; result: NowResult } {
+  const r = resolveStrike(s, id, opt);
+  if (r.extra) extraPress(r.state, r.extra.h, r.extra.b);
+  return { state: r.state, result: r.result };
+}
+
+/** Before the week turns: strikes still waiting land with the default, and every held decision is out. */
+export function closeWeek(s0: GameState): GameState {
+  let s = s0;
+  for (const t of liveStrikes(s)) {
+    const r = answerStrike(s, t.id, 'ride');
+    if (r.result.ok) s = r.state;
+  }
+  return releaseAll(s);
+}
+
+/**
+ * upgradeSave's step for the daily layer: a save from before it gets the ActionState, and the
+ * threats already planned get their day and hour (hashed off the seed: loading never moves the dice).
+ * An old urgent meeting has no release day: it is out at once.
+ */
+export function ensureDaily(s: GameState): void {
+  ensureAction(s);
+  for (const t of s.threats?.threats ?? []) if (!t.schemeId) stampWhen(s, t);
+}

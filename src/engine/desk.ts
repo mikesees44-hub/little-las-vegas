@@ -1,3 +1,4 @@
+import { eventsOut } from './eventDays';
 import { urgentMeetings } from './threats';
 import { attackEstimate, pressurePoints } from './oldDon';
 import { deskQueue, handlerOf } from './attention';
@@ -99,7 +100,7 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     groups.needs.push(row);
   }
   // Answered this week: ticked, at the end (they don't count).
-  for (const ev of s.pendingEvents) {
+  for (const ev of eventsOut(s)) {
     const ans = answers[ev.iid];
     if (!ans) continue;
     const ch = ev.choices.find((c) => c.id === ans);
@@ -188,7 +189,7 @@ export interface ReadyReview {
 export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
   const answers = ui.answers ?? {};
   const orders = ui.orders ?? [];
-  const unanswered = s.pendingEvents.filter((e) => !answers[e.iid]).map((e) => {
+  const unanswered = eventsOut(s).filter((e) => !answers[e.iid]).map((e) => {
     const ch = e.choices.find((c) => c.id === e.defaultChoiceId && !c.disabledReason) ?? e.choices.find((c) => !c.disabledReason) ?? e.choices[0];
     return { iid: e.iid, title: e.title, becomes: ch ? ch.label : 'Nothing' };
   });
