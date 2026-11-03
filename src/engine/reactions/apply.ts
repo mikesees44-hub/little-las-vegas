@@ -1,9 +1,7 @@
 import { hasTrait } from '../characters';
 import { pushAsk } from '../deeds/npc';
 import { setTie } from '../deeds/state';
-import { applyEffects } from '../effects';
-import { cloneState } from '../engine';
-import { newCtx, type Ctx } from '../ledger';
+import type { Ctx } from '../ledger';
 import { remember } from '../minds/memory';
 import { mindOf } from '../minds/state';
 import { addOpinion, changeMeter } from '../relations';
@@ -89,7 +87,8 @@ export function landReactions(ctx: Ctx, d: Decision, list: Reaction[]): Reaction
   const t = d.t ? s.characters[d.t] : undefined;
   for (const r of items) {
     const c = s.characters[r.who];
-    if (!r.direct && r.v) addOpinion(s, r.who, B, r.why, r.v, decayOf(r.v));
+    // (r.v is what lands: a Loyal-to-a-fault man's halving is already in it, so addOpinion is handed the whole.)
+    if (!r.direct && r.v) addOpinion(s, r.who, B, r.why, r.v < 0 && hasTrait(c, 'Loyal-to-a-fault') ? r.v * 2 : r.v, decayOf(r.v));
     if (r.fear) changeMeter(s, r.who, B, 'fear', r.fear);
     const m = mindOf(s, r.who);
     if (m && Math.abs(r.v) >= 8) remember(m, { w: s.week, k: r.v > 0 ? 'favor' : 'slight', who: B, t: r.why.toLowerCase(), v: Math.round(r.v * 0.8) });
@@ -148,72 +147,6 @@ function batch(s: GameState, d: Decision, items: Reaction[]): ReactionBatch | un
   R.pops++;
   R.stats.pops++;
   return b;
-}
-
-/* ------------------------------------------------------------------ */
-/* The window's answers                                                */
-/* ------------------------------------------------------------------ */
-
-export type SmoothHow = 'gift' | 'word' | 'favor';
-
-export interface SmoothOpt { how: SmoothHow; label: string; cost: number; back: number; blocked?: string }
-
-function giftCost(s: GameState, r: Reaction): number {
-  const c = s.characters[r.who];
-  if (r.role === 'philly') return 1500;
-  if (r.role === 'family') return 1000;
-  if (r.role === 'wife') return 250;
-  return c && (c.rank === 'capo' || c.rank === 'underboss' || c.rank === 'consigliere') ? 400 : 150;
-}
-
-/** The ways to smooth one reaction over, with what each costs and gives back. */
-export function smoothOptions(s: GameState, r: Reaction): SmoothOpt[] {
-  const c = s.characters[r.who];
-  if (!c?.alive || r.v >= 0 || !r.smooth) return [];
-  const proud = hasTrait(c, 'Hot-headed') || hasTrait(c, 'Vengeful');
-  const greedy = hasTrait(c, 'Greedy');
-  const cost = giftCost(s, r);
-  const gift = Math.round(-r.v * (greedy ? 0.8 : 0.6));
-  const word = Math.max(1, Math.round(-r.v * (proud ? 0.2 : hasTrait(c, 'Charming') || hasTrait(c, 'Patient') ? 0.5 : 0.4)));
-  return [
-    { how: 'gift', label: r.role === 'wife' ? 'Flowers and something from the jeweler' : r.role === 'family' || r.role === 'philly' ? 'Send a gift, with respect' : 'A gift', cost, back: gift },
-    { how: 'word', label: 'A word, in person', cost: 0, back: word },
-    { how: 'favor', label: 'Do him a favor', cost: 0, back: -r.v, ...(s.favors < 1 ? { blocked: 'No favors to spend' } : {}) },
-  ];
-}
-
-/** Smooth one reaction over. Pure: the new state (unchanged if it can't be done). */
-export function smoothOver(input: GameState, batchId: string, who: string, how: SmoothHow): GameState {
-  const b0 = input.reactions?.q.find((x) => x.id === batchId);
-  const r0 = b0?.items.find((x) => x.who === who);
-  if (!b0 || !r0) return input;
-  const opt = smoothOptions(input, r0).find((o) => o.how === how);
-  if (!opt || opt.blocked) return input;
-  const s = cloneState(input);
-  const ctx = newCtx(s);
-  const R = ensureReactions(s);
-  const b = R.q.find((x) => x.id === batchId)!;
-  const r = b.items.find((x) => x.who === who)!;
-  const fx: Effect[] = [];
-  if (opt.cost) fx.push({ type: 'money', amount: -opt.cost, pot: 'pocket', label: `Smoothing it over with ${rxName(s, r)}` });
-  if (how === 'favor') fx.push({ type: 'favor', amount: -1 });
-  if (fx.length) applyEffects(ctx, fx, { label: `Smoothed it over with ${rxName(s, r)}`, because: `smoothed it over with ${rxName(s, r)}`, category: 'event' });
-  addOpinion(s, who, s.playerId, how === 'gift' ? 'Sent a gift to make it right' : how === 'word' ? 'Came to me in person about it' : 'Did me a favor to make it right', opt.back, 2);
-  if (r.tone === 'furious') changeMeter(s, who, s.playerId, 'grievance', -Math.round(opt.back / 2));
-  if (how !== 'word' && R.sulk[who]) delete R.sulk[who];
-  delete r.smooth;
-  r.smoothed = `${how === 'gift' ? 'A gift' : how === 'word' ? 'A word' : 'A favor'}: +${opt.back}`;
-  R.stats.smoothed++;
-  return s;
-}
-
-/** Close a window. Pure. */
-export function dismissReactions(input: GameState, batchId: string): GameState {
-  if (!input.reactions?.q.some((x) => x.id === batchId)) return input;
-  const s = cloneState(input);
-  const R = ensureReactions(s);
-  R.q = R.q.filter((x) => x.id !== batchId);
-  return s;
 }
 
 /** The next window to show. */

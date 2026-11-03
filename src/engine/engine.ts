@@ -96,14 +96,15 @@ import { mindsWeek } from './minds';
 import { deedsEventSource, deedsWeek } from './deeds';
 import { sceneEventSource } from './authored/run';
 import { capoEventSource, caposWeek } from './capos';
-import { proposalsEventSource, rxChoiceBegin, rxEnd } from './reactions';
+import { rxChoiceBegin, rxEnd } from './reactions/apply';
+import { proposalsEventSource } from './reactions/proposals';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
 // The deeds' asks at the boss's door and the authored scenes (deeds/, authored/): one candidate a week each.
 registerEventSource(deedsEventSource);
 // The NPCs' proposals with stakes (reactions/): one every few weeks at most.
-registerEventSource(proposalsEventSource);
+registerEventSource((s) => proposalsEventSource(s));
 registerEventSource(sceneEventSource);
 registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);

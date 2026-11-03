@@ -5,7 +5,7 @@ import type { Axis } from '../deeds/types';
 import { fmtMoney } from '../effects';
 import { opinion } from '../relations';
 import type { Character, Choice, Effect, EventInstance, GameState, Rival, RivalId } from '../types';
-import { leaderOf, predictLine, reactionsTo } from './compute';
+import { asLanded, leaderOf, predictLine, reactionsTo } from './compute';
 import { ensureReactions, r01 } from './state';
 import { PROPOSAL_GAP, PROPOSAL_KIND_GAP, type Decision, type ProposalKind } from './types';
 
@@ -228,7 +228,7 @@ function ubPurge(s: GameState): Built | undefined {
     text: `${displayName(U)} closes the door. "${T.firstName} ${T.lastName}. He talks about you behind your back, he's short, he's sour. Run him off the island before he does something. Say the word."`,
     options: [
       { id: 'yes', label: `Run ${T.firstName} off`, detail: 'His people will not forget it. The rest of the crew will watch.', because: `ran ${T.firstName} off on ${U.firstName}'s word`,
-        d: { k: 'punish', label: `You ran ${T.firstName} off the island`, t: T.id, v: -25, y: 'Ran me out of town', more: [[U.id, 8, 'Listened to me']] }, fx: [{ type: 'exile', charId: T.id }] },
+        d: { k: 'punish', label: `You ran ${T.firstName} off the island`, t: T.id, direct: { [T.id]: [asLanded(s, T.id, -40), 'Exiled me from Wildwood'] }, more: [[U.id, 8, 'Listened to me']] }, fx: [{ type: 'exile', charId: T.id }] },
       { id: 'no', label: 'He stays', detail: `${U.firstName} thinks you are making a mistake.`, because: `kept ${T.firstName} against ${U.firstName}'s advice`,
         d: { k: 'decline', label: `You kept ${T.firstName} against ${U.firstName}'s advice`, t: U.id, v: -8, y: 'Ignored my warning', pride: 1 }, fx: [] },
     ],
