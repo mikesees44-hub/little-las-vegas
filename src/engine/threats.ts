@@ -417,9 +417,9 @@ function planPolice(s: GameState, T: ThreatsState): Threat | undefined {
   const h = s.heat.local;
   if (h < 30 || active(T).some((x) => x.by === 'police')) return undefined;
   // A fat outfit gets the county's attention too (pressure.ts); in season the county is on the boards.
-  if (!chance(T, (h - 25) / 140 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.025 : 0))) return undefined;
+  if (!chance(T, (h - 25) / 150 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.015 : 0))) return undefined;
   const biz = raidable(s);
-  const kind: ThreatKind = h >= 35 && biz.length ? (chance(T, 0.6) ? 'raid' : 'stakeout') : chance(T, 0.25) ? 'wire' : 'stakeout';
+  const kind: ThreatKind = h >= 38 && biz.length ? (chance(T, 0.6) ? 'raid' : 'stakeout') : chance(T, 0.25) ? 'wire' : 'stakeout';
   const t: Threat = { id: nid(T, 'th'), kind, by: 'police', start: s.week, due: s.week + randInt(T, 1, 2), blunt: 0 };
   if (biz.length) { const b = pick(T, biz); t.bizId = b.id; t.district = b.districtId; }
   return t;
