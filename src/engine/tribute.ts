@@ -1,4 +1,5 @@
 import { xpCornersMult, xpHustleMult } from './crewXp';
+import { sulkOdds } from './reactions/state';
 import { capoStreetMult } from './capos';
 import { steadyMult } from './earners';
 import { spotOf, spotShortOdds, spotsTake } from './kickup';
@@ -261,6 +262,7 @@ export function shortOdds(s: GameState, c: Character): { p: number; w: Partial<R
   if (debt > 0) p += debt >= 500 ? 0.04 : 0.02;
   else if (c.wealth < 100) p += 0.01;
   if (ev >= 50) p += 0.03;
+  p += sulkOdds(s, c.id);
   if (hasTrait(c, 'Honest')) p *= 0.5;
   const w: Partial<Record<ShortReason, number>> = {
     bad_week: 3 + (off ? 2 : 0), default: 1.5, mistake: 1,

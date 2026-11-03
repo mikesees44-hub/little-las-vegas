@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PredictedReactions } from '../reactions/Reactions';
 import { recurringOfAll } from '../../engine/recurring';
 import { AdviceButton } from '../advice/AdviceButton';
 import { displayName } from '../../engine/characters';
@@ -43,7 +44,10 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
     worst: worstOfChoice(c),
     disabled: c.disabledReason,
     done: selected === c.id,
-    note: recurringOfAll(s, c.effects).map((r, j) => <span key={j} className="mt-1 block text-[11px] text-amber-200" data-testid="recurring-note">↻ {r.text}</span>),
+    note: <>
+      {!/(Accepting|Declining):/.test(c.detail ?? '') && <PredictedReactions s={s} ev={ev} ch={c} />}
+      {recurringOfAll(s, c.effects).map((r, j) => <span key={j} className="mt-1 block text-[11px] text-amber-200" data-testid="recurring-note">↻ {r.text}</span>)}
+    </>,
   }));
   return (
     <Modal onClose={onClose}>

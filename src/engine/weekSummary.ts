@@ -39,7 +39,7 @@ export interface HandledLine {
   text: string;
   tone: 'good' | 'bad' | 'plain';
   /** Where it came from (each source appears once per item). */
-  src: 'lt' | 'quiet' | 'morning';
+  src: 'lt' | 'quiet' | 'morning' | 'reaction';
 }
 
 export interface WeekBrief {
@@ -88,5 +88,11 @@ export function weekBrief(s: GameState, reports: readonly WeeklyReport[]): WeekB
   }
   for (const r of reports) for (const t of r.motion ?? []) handled.push({ who: 'Your people', text: t, tone: 'plain', src: 'quiet' });
   for (const r of reports) for (const t of r.rounds ?? []) if (/own way|settled at the table|your capos/i.test(t)) handled.push({ who: 'Your capos', text: t, tone: 'plain', src: 'morning' });
+  // How people took the boss's decisions (reactions/): the minor ones, and those held back by the window cap.
+  for (const x of s.reactions?.log ?? []) {
+    if (!weeks.has(x.w) && !weeks.has(x.w + 1)) continue;
+    const c = s.characters[x.who];
+    handled.push({ who: c ? displayName(c) : '?', byId: x.who, text: `${x.v > 0 ? '+' : '−'}${Math.abs(x.v)} “${x.why}” (${x.title.charAt(0).toLowerCase()}${x.title.slice(1)})`, tone: x.v > 0 ? 'good' : x.tone === 'furious' ? 'bad' : 'plain', src: 'reaction' });
+  }
   return { lines, handled, grew: growthLines(s, first.week) };
 }

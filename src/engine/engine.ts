@@ -96,11 +96,15 @@ import { mindsWeek } from './minds';
 import { deedsEventSource, deedsWeek } from './deeds';
 import { sceneEventSource } from './authored/run';
 import { capoEventSource, caposWeek } from './capos';
+import { rxChoiceBegin, rxEnd } from './reactions/apply';
+import { proposalsEventSource } from './reactions/proposals';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
 // The deeds' asks at the boss's door and the authored scenes (deeds/, authored/): one candidate a week each.
 registerEventSource(deedsEventSource);
+// The NPCs' proposals with stakes (reactions/): one every few weeks at most.
+registerEventSource((s) => proposalsEventSource(s));
 registerEventSource(sceneEventSource);
 registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
@@ -206,7 +210,9 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices, own = choices.actions?
     if (s.gameOver) break;
     noteChoice(s, ev, ch);
     const mark = bookMark(ctx);
+    const rx = rxChoiceBegin(s, ev, ch);
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
+    rxEnd(ctx, rx);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
     bookOrder(ctx, mark, undefined, { title: `${ev.title}: ${ch.label}`, outcome: 'done', decision: true, p: [...(ev.actors ?? []), ...(charId ? [charId] : [])], cat: classify(s, `${ev.title} ${ch.because}`, 'town') });
   }
