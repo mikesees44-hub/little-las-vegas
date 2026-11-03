@@ -95,6 +95,18 @@ function standingOf(effs: readonly Effect[], s: GameState): number {
   return v;
 }
 
+/**
+ * The money chip says the same numbers the card does: the amounts the answers move ("$3,200–$7,300 on the
+ * line" for a bagman asking $5,400, or less, or more), never the gap between them (which no card shows).
+ */
+export function moneyAtStake(ms: readonly number[]): string {
+  const amts = ms.map((m) => Math.abs(Math.round(m))).filter((m) => m > 0);
+  if (!amts.length) return 'money on the line';
+  const lo = Math.min(...amts);
+  const hi = Math.max(...amts);
+  return lo === hi ? `${money$(hi)} on the line` : `${money$(lo)}–${money$(hi)} on the line`;
+}
+
 /** What one inbox item has on the line, part by part (each part a chip). */
 export function stakesOf(s: GameState, it: InboxItem, ui: DeskQueueUi = {}): Stakes {
   const parts: Stakes['parts'] = [];
@@ -138,7 +150,7 @@ export function stakesOf(s: GameState, it: InboxItem, ui: DeskQueueUi = {}): Sta
   const ms = [...options.map(moneyOf), ...costs.map((c) => -c)];
   if (ms.length > 1 || (ms.length === 1 && ms[0] !== 0)) {
     const spread = ms.length > 1 ? Math.max(...ms) - Math.min(...ms) : Math.abs(ms[0]);
-    add('money', Math.min(30, spread / 500), `${money$(spread)} on the line`);
+    add('money', Math.min(30, spread / 500), moneyAtStake(ms));
   }
   const st = Math.max(0, ...options.map((o) => standingOf(o, s)));
   add('standing', Math.min(20, st), 'your standing');
@@ -232,7 +244,7 @@ const queues = new WeakMap<GameState, Map<string, DeskQueue>>();
 
 /** The week's desk: what needs the boss, and what is handled for him. Pure, deterministic. */
 export function deskQueue(s: GameState, ui: DeskQueueUi = {}): DeskQueue {
-  const k = JSON.stringify([ui.answers ?? {}, ui.briefSkip ?? [], ui.taken ?? []]);
+  const k = JSON.stringify([ui.answers ?? {}, ui.briefSkip ?? [], ui.taken ?? [], ui.orders ?? []]);
   let m = queues.get(s);
   if (!m) { m = new Map(); queues.set(s, m); }
   const hit = m.get(k);

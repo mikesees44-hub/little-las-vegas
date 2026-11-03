@@ -70,6 +70,7 @@ import { chance } from './rng';
 import { ORDERS } from './events';
 import { capoOf, obeyOdds, orderAgent, validCapo } from './hierarchy';
 import { FACTION_NAMES } from './world';
+import { takeLine } from './racketLife';
 import type { Effect, FactionId, GameState, LedgerCategory, OrderVia, PlayerAction, RivalId } from './types';
 
 export const PUSH_COST = 2000;
@@ -766,7 +767,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       if (def.category === 'racket' && def.heat >= 0.3) effects.push({ type: 'schedule', key: 'business_trouble', minWeeks: 2, maxWeeks: 8, chance: 0.25, hint: 'new places attract attention', label });
       return {
         title: label,
-        detail: `${def.name} in ${d?.name ?? '?'}: ~${fmtMoney(def.base * def.season[0])}/wk in season, ${fmtMoney(def.base * def.season[1])} off-season · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}${firstWinterAhead(s) ? ` · the first winter: +${fmtMoney(FIRST_WINTER_PER_NEW)}/wk to winterize it` : ''}`,
+        detail: `${def.name} in ${d?.name ?? '?'}: ${takeLine(s, a.biz, a.district)} · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}${firstWinterAhead(s) ? ` · the first winter: +${fmtMoney(FIRST_WINTER_PER_NEW)}/wk to winterize it` : ''}`,
         effects,
         cost: def.cost,
         because: `bought ${b.name}`,

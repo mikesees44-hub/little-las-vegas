@@ -47,7 +47,7 @@ He meets you after the broadcast in the Surf Ballroom's office, still in makeup.
       {
         text: `Buy the pressing plant outright. Just that. Real money, real deed.`,
         gate: { money: 3000 },
-        effects: [money(-3000), biz('add', 'vending', 'causeway'), op('host', 5), then('p2_kin_2', 3, 5, 1)],
+        effects: [money(-3000), biz('add', 'vending', 'causeway', undefined, 'Kincaid Record Pressing'), op('host', 5), then('p2_kin_2', 3, 5, 1)],
         preview: `Not a front, a purchase. Records get pressed whether the hearings come or not.`,
       },
     ],
@@ -136,7 +136,7 @@ Jerry calls you from a pay phone at Union Station. "I owe you," he says, and you
       {
         text: `Keep the record companies. Jerry can buy them back in five years, at a price.`,
         gate: { flag: 'p2_kin_front' },
-        effects: [money(2500), biz('add', 'club', 'boardwalk'), hook('host', 'He owes you his career and his companies', true), heat('federal', 3)],
+        effects: [money(2500), biz('add', 'club', 'boardwalk', undefined, 'Kincaid Records'), hook('host', 'He owes you his career and his companies', true), heat('federal', 3)],
         preview: `Three record companies and the summer's biggest stage. Every act on the shore now comes through people who owe you.`,
       },
       {
@@ -590,13 +590,13 @@ She comes to the meeting uninvited. "If you buy it, I want to run the publishing
       {
         text: `Buy it. Ruth runs publishing, in her name.`,
         gate: { money: 8000 },
-        effects: [money(-8000), unwashed(-6000), biz('add', 'club', 'downtown'), op('ruth', 25), flag('p2_sea_ruth'), then('p2_sea_2', 6, 10, 1)],
+        effects: [money(-8000), unwashed(-6000), biz('add', 'club', 'downtown', undefined, 'Seashell Records'), op('ruth', 25), flag('p2_sea_ruth'), then('p2_sea_2', 6, 10, 1)],
         preview: `A record label with a woman's name on the publishing and yours nowhere. It's the most legitimate thing you own.`,
       },
       {
         text: `Buy it. You run everything; Ruth writes songs.`,
         gate: { money: 8000 },
-        effects: [money(-8000), unwashed(-6000), biz('add', 'club', 'downtown'), op('ruth', -15), then('p2_sea_2', 6, 10, 1)],
+        effects: [money(-8000), unwashed(-6000), biz('add', 'club', 'downtown', undefined, 'Seashell Records'), op('ruth', -15), then('p2_sea_2', 6, 10, 1)],
         preview: `You own a label. Ruth Engel will be in New York by Christmas, writing hits for somebody else.`,
       },
       {

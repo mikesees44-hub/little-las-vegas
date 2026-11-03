@@ -1,5 +1,6 @@
 import { CATALOG } from './catalog';
-import { countKind, expectedTake, idleMen, owned } from './business';
+import { countKind, expectedTake, idleMen, newBusiness, owned } from './business';
+import { canHold } from './earners';
 import { isInSeason } from './calendar';
 import { LAW_DEFS as LAWS } from './polData';
 import { inForce } from './polLaws';
@@ -58,6 +59,12 @@ export function lawsFor(s: GameState, kind: BusinessKind): string[] {
   return out;
 }
 
+/** The card's two numbers: racketWeek's, after upkeep. */
+function hubTake(s: GameState, kind: BusinessKind): { inSeason: number; offSeason: number; byScore?: boolean } {
+  const w = racketWeek(s, kind);
+  return { inSeason: w.inSeason, offSeason: w.offSeason, ...(w.byScore ? { byScore: true } : {}) };
+}
+
 export function hubCards(s: GameState): HubCard[] {
   return HUB_ORDER.map((kind) => {
     const def = CATALOG[kind];
@@ -71,12 +78,36 @@ export function hubCards(s: GameState): HubCard[] {
     const locks = startLocks(s, kind);
     return {
       kind, name: def.name, line: info?.line ?? def.blurb, pays: info?.pays ?? '', cost: def.cost,
-      ...crewTake(kind, def.base * def.season[0], def.base * def.season[1]), upkeep: def.upkeep,
+      ...hubTake(s, kind), upkeep: def.upkeep,
       heat: def.heat, fed: def.fedHeat, men: def.staff, ladder: tree(kind).map((t) => t.name),
       owned: owned(s).filter((b) => b.kind === kind), locks, warns, laws: lawsFor(s, kind),
       start: kind === 'narcotics' ? undefined : START(kind),
     };
   });
+}
+
+/**
+ * THE weekly estimate of a racket, the one every screen shows (the Rackets card, the order's chips, the
+ * advisors' reads start from it): as it would run now (the best man, the best district), after upkeep,
+ * this week and in the other season. `inSeason`/`offSeason` are the same two numbers by season.
+ */
+export function racketWeek(s: GameState, kind: BusinessKind, district?: string, runnerId?: string): { weekly: number; other: number; inSeason: number; offSeason: number; byScore?: string } {
+  const def = CATALOG[kind];
+  const inS = isInSeason(s.date);
+  const out = (weekly: number, other: number, byScore?: string) => ({ weekly, other, inSeason: inS ? weekly : other, offSeason: inS ? other : weekly, ...(byScore ? { byScore } : {}) });
+  if (kind === 'jewel') return { weekly: inS ? 1200 : 480, other: inS ? 480 : 1200, inSeason: 1200, offSeason: 480, byScore: 'an average: big, rare scores' };
+  if (kind === 'bankcrew') return out(735, 735, 'an average: huge, rare scores');
+  if (kind === 'bustout') return out(0, 0, `nothing for 6 weeks, then one score of about $${Math.round(def.cost * 3.1).toLocaleString('en-US')}`);
+  if (kind === 'payoff') return out(-def.upkeep, -def.upkeep, 'a cost: every racket\'s heat runs 0.6 a week cooler');
+  const d = district ?? bestDistrict(s, kind) ?? s.districts.find((x) => (x.influence.player ?? 0) > 0)?.id ?? s.districts[0].id;
+  const b = newBusiness(s, kind, d);
+  const pick = runnerId ? s.characters[runnerId] : undefined;
+  const man = pick && !canHold(s, pick) ? pick : bestRunner(s, kind);
+  b.staffIds = def.staff ? [man?.id, ...idleMen(s).filter((c) => c.id !== man?.id).map((c) => c.id)].filter((x): x is string => !!x).slice(0, def.staff) : [];
+  const take = expectedTake(s, b);
+  const [a, z] = def.season;
+  const ratio = (inS ? z : a) / Math.max(0.01, inS ? a : z);
+  return out(Math.round(take - def.upkeep), Math.round(take * ratio - def.upkeep));
 }
 
 /** Crews that work by the score show their average week (jewel: 30% a week in season, 12% off, ~$4,000 a case; bank: 7%, ~$10,500). */

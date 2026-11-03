@@ -22,6 +22,7 @@ import { startRomance } from './romance';
 import { ensureTribute } from './tributeState';
 import { randInt } from './rng';
 import { scheduleOpening, seedOldDon } from './oldDon';
+import { orgRung } from './riseView';
 import { seedThreat } from './threats';
 import type { RivalId } from './types';
 
@@ -59,6 +60,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
   if (start === 'classic' && !charOptions) {
     repairGoals(s);
     addOpeningScene(s, start);
+    s.flags.rise_floor = orgRung(s);
     return s;
   }
   if (start === 'classic') return finish(s, start, charOptions);
@@ -79,6 +81,8 @@ function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameSt
   refreshDynastyAfterStart(s);
   repairGoals(s);
   setupHouses(s);
+  // The Rise begins where the organization stands (an old Don's borgata is not "Two crews").
+  s.flags.rise_floor = orgRung(s);
   // Re-deal the first week's cards for the new situation.
   s.cooldowns = {};
   s.eventQueue = [];
@@ -334,6 +338,24 @@ function oldDonStart(s: GameState): void {
     addOpinion(s, k.id, boss.id, 'My father', 25, 0);
   }
   const [paolo, teresa, nicky] = boss.childrenIds.map((id) => s.characters[id]);
+  // The chronicle marries Paolo (1954) and Teresa (1956): the people are there too, so nobody looks for a match for a married man.
+  const anna = makeCharacter(s, { firstName: 'Anna', gender: 'F', lastName: 'Sees', ethnicity: 'Italian', faction: 'player', dynasty: true, rank: 'civilian', age: 35, nickname: false });
+  anna.maidenName = 'Marchetti';
+  anna.traits = ['Pious', 'Patient'];
+  anna.spouseId = paolo.id;
+  paolo.spouseId = anna.id;
+  addOpinion(s, anna.id, paolo.id, 'My husband', 20, 0);
+  addOpinion(s, paolo.id, anna.id, 'My wife', 20, 0);
+  addStory(s, anna, 'Married Paolo Sees at Notre Dame de la Mer in 1954: four hundred guests.');
+  const frank = makeCharacter(s, { firstName: 'Frank', gender: 'M', lastName: 'Lombardo', ethnicity: 'Italian', faction: 'none', rank: 'civilian', age: 37, nickname: false, wealth: 12000 });
+  frank.traits = ['Honest', 'Patient'];
+  frank.spouseId = teresa.id;
+  teresa.spouseId = frank.id;
+  teresa.maidenName = 'Sees';
+  teresa.lastName = 'Lombardo';
+  addOpinion(s, frank.id, teresa.id, 'My wife', 20, 0);
+  addOpinion(s, teresa.id, frank.id, 'My husband', 20, 0);
+  addStory(s, frank, 'Married Teresa Sees in 1956; sells insurance in the Crest and never asks where the house came from.');
   addStory(s, paolo, 'His father set him up with the Sees Motor Inn on Ocean Avenue, clean books and all.');
   addStory(s, teresa, 'Her father gave her the house on Cardinal Road in the Crest when she married.');
   addStory(s, nicky, 'His father bought him a house on Glenwood Avenue and told him to stay out of the life.');

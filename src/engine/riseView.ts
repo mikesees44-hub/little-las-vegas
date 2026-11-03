@@ -185,11 +185,39 @@ export const LADDER: Rung[] = [
   },
 ];
 
+/**
+ * The rung the organization itself stands on, read off the family as it is (not the milestones won in
+ * play): a crew, two crews holding ground, made men, a borgata of a dozen with Philadelphia's notice, a
+ * full administration with a seat at the Table, the town. A start records it once (`flags.rise_floor`):
+ * the Old Don, ten years in the chair, does not begin on "Two crews".
+ */
+export function orgRung(s: GameState): number {
+  const cs = crew(s);
+  const ks = capos(s).length;
+  const has = (r: string) => cs.some((c) => c.rank === r);
+  const steps = [
+    ks >= 1 || cs.length >= 3,
+    ks >= 2 && held(s, 40) >= 2,
+    has('soldier') || has('underboss'),
+    cs.length >= 12 && s.respect >= 40,
+    has('underboss') && has('consigliere') && ks >= 3 && s.respect >= 60,
+    Object.values(s.pol?.ctl ?? {}).some((c) => !!(c as { payroll?: unknown }).payroll) && held(s, 40) >= 3,
+  ];
+  let n = 0;
+  while (n < steps.length && steps[n]) n++;
+  return Math.max(1, n);
+}
+
+/** A rung is done when it was won in play, or the family began above it. */
+export function rungDone(s: GameState, r: Rung): boolean {
+  return r.n <= (s.flags.rise_floor ?? 0) || r.done(s);
+}
+
 /** The rung the family stands on (the highest done in order) and the next one. */
 export function currentRung(s: GameState): { at: Rung; next?: Rung } {
   let i = 0;
-  while (i + 1 < LADDER.length && LADDER[i + 1].done(s) && LADDER[i].done(s)) i++;
-  if (!LADDER[0].done(s)) return { at: LADDER[0], next: LADDER[1] };
+  while (i + 1 < LADDER.length && rungDone(s, LADDER[i + 1]) && rungDone(s, LADDER[i])) i++;
+  if (!rungDone(s, LADDER[0])) return { at: LADDER[0], next: LADDER[1] };
   return { at: LADDER[i], next: LADDER[i + 1] };
 }
 

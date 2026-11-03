@@ -151,6 +151,8 @@ export interface Scene {
   theme?: SceneTheme;
   /** Only comes up as somebody's `next` (a later part of a chain). */
   followup?: boolean;
+  /** Whose matter it is on the Desk: "boss" for the boss's own (his birthday), not the first man in the cast. */
+  about?: 'boss';
   when?: When;
   who?: Record<string, Role>;
   text: string;

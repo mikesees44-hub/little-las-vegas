@@ -7,7 +7,7 @@ import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { Tip } from '../clarity';
-import { fmt$ } from '../format';
+import { fmt$, sinceWeek } from '../format';
 import { ConnectionsList } from './Connections';
 import { DatingLink } from '../dating/DatingPanel';
 
@@ -38,7 +38,7 @@ export function MadamCard({ s }: { s: GameState }) {
         <Face s={s} c={m} size={72} />
         <div className="min-w-0">
           <div className="font-display text-xl text-gold-400"><CharLink s={s} id={m.id} /></div>
-          <div className="text-xs text-stone-400">Head of {M.house} · age {ageOn(m.birth, s.date)} · since week {M.since}</div>
+          <div className="text-xs text-stone-400">Head of {M.house} · age {ageOn(m.birth, s.date)} · {sinceWeek(M.since).toLowerCase()}</div>
           <div className="text-sm text-stone-300 mt-1">
             In public: owns <b>{M.hotel}</b> and <b>{M.club}</b>, books acts through <b>{M.agency}</b>, sits on the board of {M.charity}. In private she runs most of the women who work the island's nights, and she is nobody's employee, yours included.
           </div>

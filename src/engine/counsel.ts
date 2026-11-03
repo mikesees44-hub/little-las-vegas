@@ -328,9 +328,10 @@ function evalAction(ctx: Ctx, adv: Character, ref: AdviserRef, a: PlayerAction):
     if (a.op.cmd.runner) manId = a.op.cmd.runner;
     const sum = startSummary(s, kind, a.op.cmd.runner ?? manId, district);
     const now = moneyRead(adv, `take:${kind}`, adv.attributes.business, sum.weekly);
-    const other = moneyRead(adv, `off:${kind}`, adv.attributes.business, sum.other);
+    // A steady earner pays the same all year: one read, said once.
+    const other = sum.steady ? now : moneyRead(adv, `off:${kind}`, adv.attributes.business, sum.other);
     raws.push(...effectRaws(s, [], p.cost, p.pot === 'pocket' ? 'pocket' : 'family'));
-    raws.push({ text: `About ${fmtMoney(now)}/wk now, ${fmtMoney(other)}/wk in the other season: his read${sum.steady ? ' (a steady earner: the same all year)' : ''}`, k: 'estimate', about: 'weekly', mag: clamp(Math.max(now, other) * 0.8 / 120, 0.5, 8), pro: now + other > 0 });
+    raws.push({ text: sum.steady ? `About ${fmtMoney(now)}/wk now, and the same in the other season: his read (a steady earner pays the same all year)` : `About ${fmtMoney(now)}/wk now, ${fmtMoney(other)}/wk in the other season: his read`, k: 'estimate', about: 'weekly', mag: clamp(Math.max(now, other) * 0.8 / 120, 0.5, 8), pro: now + other > 0 });
     if (def.upkeep) raws.push({ text: `Upkeep ${fmtMoney(def.upkeep)} a week, busy or slow`, k: 'known', about: 'weekly', mag: clamp(def.upkeep / 40, 0.3, 3), pro: false });
     if (p.cost > 0 && now > 0) raws.push({ text: `Pays back its ${fmtMoney(p.cost)} in about ${Math.max(1, Math.round(p.cost / Math.max(1, (now + other) / 2)))} weeks, by his read`, k: 'estimate', about: 'money', mag: clamp(8 - p.cost / Math.max(1, (now + other) / 2) / 3, 0.5, 5), pro: true });
     const hw: Record<string, number> = { none: 0, low: 0.8, some: 1.5, mid: 2.2, medium: 2.2, high: 4 };

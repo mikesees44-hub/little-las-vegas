@@ -39,7 +39,7 @@ You don't own the Rainbow. You own the supper club two doors down, where a croon
       {
         text: 'Open a teen club in an empty arcade on the pier. Soda, dancing, no liquor.',
         gate: { money: 4000 },
-        effects: [money(-4000), biz('add', 'club', 'piers'), heat('local', -2), famOp(4), flag('nd_teen'), then('nd_3', 3, 5, 1)],
+        effects: [money(-4000), biz('add', 'club', 'piers', undefined, 'The Pier Teen Club'), heat('local', -2), famOp(4), flag('nd_teen'), then('nd_3', 3, 5, 1)],
         preview: 'Clean money from a new generation. Their parents may not see it that way.',
       },
     ],
@@ -65,7 +65,7 @@ You don't own the Rainbow. You own the supper club two doors down, where a croon
       {
         text: 'Not for an envelope. For a piece of the label.',
         gate: { trait: 'Ambitious' },
-        effects: [money(-2000), biz('add', 'vending', 'pacific'), op('promo', -5), flag('own_label'), then('nd_3', 3, 5, 0.5)],
+        effects: [money(-2000), biz('add', 'vending', 'pacific', undefined, 'Pacific Avenue Records'), op('promo', -5), flag('own_label'), then('nd_3', 3, 5, 0.5)],
         preview: 'You become a record man. If a hit comes out of Philly with your money behind it...',
       },
       {

@@ -1,7 +1,7 @@
 import { LoggedCard } from '../book/TheBook';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
-  ANSWER_INFO, APPROACH_LABEL, APPROACH_TEXT, BEAT_INFO, COVER_INFO, DEST_INFO, KIND_INFO,
+  ANSWER_INFO, APPROACH_LABEL, approachText, BEAT_INFO, COVER_INFO, DEST_INFO, KIND_INFO,
   askingPrice, asksQuestion, beatFor, eveningCost, eveningKindOf, stayOdds,
   type Answer, type Approach, type Cover, type Dest, type EveningKind, type EveningPlan,
 } from '../../engine/evening';
@@ -152,7 +152,7 @@ export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onCl
           )}
           <div className="text-[11px] text-stone-400 pt-1">How you play it:</div>
           <div className="grid gap-1.5 sm:grid-cols-3">
-            {(Object.keys(APPROACH_LABEL) as Approach[]).map((a) => <Choice key={a} on={approach === a} title={APPROACH_LABEL[a]} text={APPROACH_TEXT[a]} onPick={() => setApproach(a)} testid={`flow-approach-${a}`} />)}
+            {(Object.keys(APPROACH_LABEL) as Approach[]).map((a) => <Choice key={a} on={approach === a} title={APPROACH_LABEL[a]} text={approachText(s, id, a)} onPick={() => setApproach(a)} testid={`flow-approach-${a}`} />)}
           </div>
         </Step>
 

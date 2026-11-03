@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { currentRung, LADDER, riseChart, riseSummary, type CapoNode, type RiseNode } from '../../engine/riseView';
+import { currentRung, LADDER, riseChart, rungDone, riseSummary, type CapoNode, type RiseNode } from '../../engine/riseView';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { useSheet } from '../components/People';
@@ -63,7 +63,7 @@ export function Ladder({ s, compact }: { s: GameState; compact?: boolean }) {
   return (
     <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-4 lg:grid-cols-7'}`} data-testid="rise-ladder">
       {LADDER.map((r) => {
-        const done = r.done(s) && r.n <= at.n;
+        const done = rungDone(s, r) && r.n <= at.n;
         const cur = next?.n === r.n;
         return (
           <li key={r.id} className={`rounded border px-1.5 py-1 ${done ? 'border-emerald-700/60 bg-emerald-900/10' : cur ? 'border-gold-500 bg-gold-500/10' : 'border-noir-700 opacity-70'}`} data-testid={`rise-rung-${r.n}`} title={`${r.milestone} Opens: ${r.opens}.`}>

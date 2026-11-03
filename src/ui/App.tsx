@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { acceptSettlement, mayCommit, type SettledMark } from '../engine/settle';
 import { sameOrder } from './verbs';
+import { nextConfirms } from './confirmQueue';
 import { clockSpaceAllowed, shortcutBlocked } from './keys';
 import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
@@ -158,6 +159,8 @@ export function App({ startOn = 'title' }: AppProps) {
   // morning check-ins live in the state's days plan (engine/days.ts), so a reload keeps them.
   const [briefSkip, setBriefSkip] = useState<string[]>([]);
   const [sitdown, setSitdown] = useState<'council' | 'rounds' | undefined>();
+  // The Sit-Down item a Desk row asked to hear ("Hear him out" on Paolo's future).
+  const [sitFocus, setSitFocus] = useState<string | undefined>();
   const [sitSeen, setSitSeen] = useState<string | undefined>();
   // The Boss's Office (ui/office): the room upstairs or the club from the street; Monday's arrival card;
   // visitors the boss said to see later this week (UI only: they stay on the desk).
@@ -223,7 +226,10 @@ export function App({ startOn = 'title' }: AppProps) {
   const [ltOpen, setLtOpen] = useState(false);
   const [houseSel, setHouseSel] = useState<string | undefined>();
   const [toast, setToast] = useState<ToastItem | undefined>();
-  const [confirm, setConfirm] = useState<PlayerAction | undefined>();
+  // "Are you sure?" waits in line (confirmQueue.ts): two orders given at once each get their own window.
+  const [confirms, setConfirms] = useState<PlayerAction[]>([]);
+  const confirm = confirms[0];
+  const setConfirm = useCallback((a: PlayerAction | undefined) => setConfirms((q) => nextConfirms(q, a)), []);
   const closeToast = useCallback(() => setToast(undefined), []);
   // Click feedback (components/Feedback.tsx): every decision, every change made at once, the week settling.
   const [feedback, setFeedback] = useState<Feedback | undefined>();
@@ -733,7 +739,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (h) badges[h] = (badges[h] ?? 0) + 1;
   }
   // The Desk's badge is the one count (attention.ts): what needs you.
-  { const n = deskBadge(s, { answers, briefSkip, taken: taken.week === s.week ? taken.keys : [] }).n; if (n) badges.desk = n; else delete badges.desk; }
+  { const n = deskBadge(s, { answers, briefSkip, orders, taken: taken.week === s.week ? taken.keys : [] }).n; if (n) badges.desk = n; else delete badges.desk; }
   const morningOpen = dayCheckIns(s, daysOf(s).day).filter((c) => c.problem && !daysOf(s).answers[c.key] && !daysOf(s).skipped.includes(c.day));
   const homeDoNowAll = home ? buildDoNow(s, home, { alerts: shellAlertList, opps: oppsForNav, unanswered: unanswered.length, brief: brief.items.length, morning: { open: morningOpen.length, name: morningOpen[0]?.name, urgent: morningOpen.some((c) => c.problem!.urgent) } }) : [];
   // This Week's front page is the Boss's Desk, which lists the decisions, the morning and the sit-down: said once.
@@ -761,7 +767,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const deskApi = {
     onEvent: (iid: string) => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => e.iid === iid))); },
     onDay: (day: number) => { setSpeed(0); setDayWin(day); },
-    onSitDown: () => setSitdown('council'),
+    onSitDown: (brief?: string) => { setSitFocus(brief); setSitdown('council'); },
     onCancelOrder: (i: number) => ordersApi.remove(i),
     onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
     onChar: (id: string) => setSheet(id),
@@ -797,9 +803,9 @@ export function App({ startOn = 'title' }: AppProps) {
     lieutenants: () => setLtOpen(true),
   };
   // The one count (engine/inbox.ts): Waiting on you, the desk and the door all say this number.
-  const box = deskBadge(s, { answers, briefSkip, taken: takenKeys });
+  const box = deskBadge(s, { answers, briefSkip, orders, taken: takenKeys });
   const laterKeys = later.week === s.week ? later.keys : [];
-  const officeUi = { answers, briefSkip, later: laterKeys, taken: takenKeys };
+  const officeUi = { answers, briefSkip, orders, later: laterKeys, taken: takenKeys };
   function officeDelegate(op: DelegateOp) {
     if (op.kind === 'answer') { setAnswers((a) => ({ ...a, [op.iid]: op.choiceId })); noteAnswer(op.iid, op.choiceId); }
     else if (op.kind === 'checkin') act((x) => answerCheckIn(x, op.key, op.answer), 'Answered a capo\'s check-in');
@@ -808,7 +814,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function officeInvite(v: OfficeVisitor) {
     if (v.ref.event) deskApi.onEvent(v.ref.event);
     else if (v.ref.day !== undefined) deskApi.onDay(v.ref.day);
-    else if (v.ref.brief) setSitdown('council');
+    else if (v.ref.brief) { setSitFocus(v.ref.brief); setSitdown('council'); }
     else officeApi.openCalendar();
   }
   function officeLater(v: OfficeVisitor) {
@@ -957,8 +963,8 @@ export function App({ startOn = 'title' }: AppProps) {
 
       {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={act} onClose={() => setLtOpen(false)} />}
       {sitdown && !current && !scene && (
-        <SitDown key={`${s.week}:${sitdown}`} s={s} initialTab={sitdown} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => act((x) => setWeekRounds(x, ids), 'Your evenings for the week are set')} skip={briefSkip} setSkip={setBriefSkip}
-          onTrust={(k, on) => act((x) => setTrust(x, k, on), on ? 'Trusted him with it' : 'Took it back into your own hands')} onLink={followLink} onClose={() => setSitdown(undefined)}
+        <SitDown key={`${s.week}:${sitdown}:${sitFocus ?? ''}`} s={s} initialTab={sitdown} focus={sitFocus} rounds={s.days?.week === s.week && s.days.plan ? plannedRounds(s) : undefined} setRounds={(ids) => act((x) => setWeekRounds(x, ids), 'Your evenings for the week are set')} skip={briefSkip} setSkip={setBriefSkip}
+          onTrust={(k, on) => act((x) => setTrust(x, k, on), on ? 'Trusted him with it' : 'Took it back into your own hands')} onLink={followLink} onClose={() => { setSitdown(undefined); setSitFocus(undefined); }}
           onDecisions={() => { setSitdown(undefined); setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => !answers[e.iid]))); }}
           lesson={helpLevel() === 'guided' && s.week <= 10 && goalIdx >= 0 && goalIdx < 7 ? { title: goals[goalIdx].title, hint: goals[goalIdx].hint, onShow: goals[goalIdx].show ? () => { setSitdown(undefined); showGoal(goals[goalIdx]); } : undefined } : undefined} />
       )}

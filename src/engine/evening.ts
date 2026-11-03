@@ -277,6 +277,8 @@ export function inviteAcceptance(s: GameState, c: Character, plan: EveningPlan):
     base = Math.round(herDecision(s, c, 'date').chance * 100);
     if (plan.approach === 'queen') reasons.push({ label: 'The best of everything', value: 8 });
     if (plan.approach === 'something' && (s.dating?.bonds[c.id]?.aff ?? 0) >= 40) reasons.push({ label: 'She hoped you would say that', value: 10 });
+    // A goomar of years says yes to her patron's evening far more often than a stranger would.
+    if (isGoomar(s, c.id)) reasons.push({ label: 'She is your goomar: this is your arrangement', value: 25 });
   }
   if (hasTrait(boss, 'Cruel')) reasons.push({ label: 'People say you can be cruel', value: -25 });
   if (s.heat.local >= 60 || s.heat.federal >= 50) reasons.push({ label: 'Your name is in the papers; being seen with you is a risk', value: -15 });
@@ -341,7 +343,15 @@ export function eveningBlock(s: GameState, plan: EveningPlan): string | undefine
   if (!boss.alive || !isFree(s, boss)) return 'You are not free';
   if (eveningsLeft(s) < KIND_INFO[plan.kind].evenings) return KIND_INFO[plan.kind].evenings > 1 ? `A getaway needs ${KIND_INFO[plan.kind].evenings} free evenings this week` : 'No evenings left this week';
   if (kind === 'paid' && plan.price === undefined) return 'Agree her price first';
+  // One evening with her a week: after tonight the card says so, instead of offering it again at new odds.
+  if (s.dating?.bonds[plan.id]?.last === s.week) return `You already had your evening with ${c.firstName} this week`;
   return undefined;
+}
+
+/** How you play it, said for her: "make it something" to a woman who is already your goomar is not "the road to a goomar". */
+export function approachText(s: GameState, id: string, a: Approach): string {
+  if (a === 'something' && isGoomar(s, id)) return 'Tell her she is more than an arrangement: it means something to her after all these years, and it raises her hopes (and the jealousy around you).';
+  return APPROACH_TEXT[a];
 }
 
 export function previewInvite(s: GameState, plan: EveningPlan): ActionPreview {
@@ -360,7 +370,7 @@ export function previewInvite(s: GameState, plan: EveningPlan): ActionPreview {
     title: `${info.label}, ${APPROACH_LABEL[plan.approach].toLowerCase()}: ${c.firstName}`,
     because: `took ${c.firstName} out`,
     cost: cost.total, pot: 'pocket',
-    detail: `${displayName(c)}, ${ageOn(c.birth, s.date)}. ${info.text} ${APPROACH_TEXT[plan.approach]} ${kind === 'paid' ? 'She is paid for her evening; it is an agreed arrangement between adults, and she can still say no (then nothing is paid).' : 'A personal evening: she says yes or no as herself.'}${cost.lines.length ? ` Cost: ${cost.lines.join(', ')}, from your pocket.` : ''} Takes ${info.evenings === 1 ? 'one of your evenings' : `${info.evenings} of your evenings`} (about ${info.hours} hours).${plan.kind === 'getaway' ? ` Cover story: ${COVER_INFO[plan.cover ?? 'business'].label.toLowerCase()}.` : ''}${fade}`,
+    detail: `${displayName(c)}, ${ageOn(c.birth, s.date)}. ${info.text} ${approachText(s, plan.id, plan.approach)} ${kind === 'paid' ? 'She is paid for her evening; it is an agreed arrangement between adults, and she can still say no (then nothing is paid).' : 'A personal evening: she says yes or no as herself.'}${cost.lines.length ? ` Cost: ${cost.lines.join(', ')}, from your pocket.` : ''} Takes ${info.evenings === 1 ? 'one of your evenings' : `${info.evenings} of your evenings`} (about ${info.hours} hours).${plan.kind === 'getaway' ? ` Cover story: ${COVER_INFO[plan.cover ?? 'business'].label.toLowerCase()}.` : ''}${fade}`,
     effects: [{ type: 'money', pot: 'pocket', amount: -cost.total, label: `An evening with ${c.firstName}` }, NX(op, `An evening with ${c.firstName}`)],
     acceptance: block ? undefined : inviteAcceptance(s, c, plan),
     refuseEffects: [NX({ op: 'refused', id: plan.id, what: 'the evening' }, `${c.firstName} said no`)],

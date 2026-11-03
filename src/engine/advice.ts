@@ -1,7 +1,7 @@
 import { devValue } from './develop';
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
 import { bestDistrict } from './racketLife';
-import { crewTake } from './racketHub';
+import { crewTake, racketWeek } from './racketHub';
 import { pillarBestWhen, pillarPurpose, pillarRisks, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
 import { idleMen } from './business';
 import { isInSeason, memorialDay, toDays } from './calendar';
@@ -454,7 +454,8 @@ function derived(s: GameState, a: PlayerAction, p: ActionPreview): NamedEffect[]
     case 'dev': { const u = devValue(s, a.op).upkeep; if (u) out.push(money('Upkeep', -u, -u, 'per week')); break; }
     case 'buyBusiness': {
       const d = CATALOG[a.biz];
-      if (d.base) out.push(money(`${d.name}: the take`, Math.round(d.base * d.season[1] - d.upkeep), Math.round(d.base * d.season[0] - d.upkeep), 'per week', `${fmtMoney(Math.round(d.base * d.season[1] - d.upkeep))}/wk off-season to ${fmtMoney(Math.round(d.base * d.season[0] - d.upkeep))}/wk in season, after upkeep`));
+      // The same estimate the Rackets card shows (racketHub.racketWeek), not a second one from the catalog.
+      if (d.base) { const w = racketWeek(s, a.biz, a.district); out.push(money(`${d.name}: the take`, Math.min(w.offSeason, w.inSeason), Math.max(w.offSeason, w.inSeason), 'per week', `~${fmtMoney(w.inSeason)}/wk in season, ${fmtMoney(w.offSeason)} off-season, after upkeep`)); }
       if (d.heat >= 0.3) out.push({ label: d.name, text: `+${d.heat.toFixed(1)} Local heat a week`, tone: 'bad', when: 'per week' });
       if (d.fedHeat >= 0.2) out.push({ label: d.name, text: `+${d.fedHeat.toFixed(1)} Federal heat a week`, tone: 'bad', when: 'per week' });
       break;
@@ -698,7 +699,8 @@ export function whyPick(s: GameState, ch: Choice, ex: ActionExplanation): string
   }
   if (!ranked.length) {
     const named = ch.effects.map((e) => describeEffect(s, e)).filter((x): x is string => !!x);
-    return ch.detail ?? (named.length ? `What it does: ${named.slice(0, 3).join('; ')}. No money, respect or heat moves with it.` : 'No money, respect or heat moves with it; what follows is in the story it starts.');
+    // Never the option's own description again (the card already prints it right above).
+    return named.length ? `What it does: ${named.slice(0, 3).join('; ')}. No money, respect or heat moves with it.` : 'No money, respect or heat moves with it; what follows is in the story it starts.';
   }
   if (best) {
     const d = describeEffect(s, best.e) ?? '';
@@ -706,6 +708,9 @@ export function whyPick(s: GameState, ch: Choice, ex: ActionExplanation): string
     return `Pick this if ${why}: ${d}${cheap ? ', and it costs little' : ''}.`;
   }
   const least = ranked[ranked.length - 1];
+  // A price paid for something the ledger cannot count (what you learn, a favor owed, a story it starts) is not "the cheapest way out".
+  const buys = ch.effects.some((e) => effectValue(s, e) === 0 && (e.type === 'flag' || (e.type === 'deed' && e.op.op !== 'sceneFired') || e.type === 'schedule' || e.type === 'hook'));
+  if (buys) return `It costs ${describeEffect(s, least.e) ?? 'something'}; what it buys is in the story, not in the ledger.`;
   // What it costs, said plainly (the playthrough: paying for proof was called "the cheapest way out").
   return `What it costs: ${describeEffect(s, least.e) ?? 'little'}${ex.risks.length ? '' : ', with nothing known to come back later'}.`;
 }

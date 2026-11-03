@@ -189,7 +189,7 @@ export type Fx =
   | { k: 'feud'; rival: RivalId }
   /** The Underbelly antagonist (villain-only predatory outfit). */
   | { k: 'underbelly'; op: 'strength' | 'exposure' | 'expose' | 'runout'; amount?: number }
-  | { k: 'business'; op: 'add' | 'close'; kind: BusinessKind; district?: DistrictId | '{district}'; weeks?: number }
+  | { k: 'business'; op: 'add' | 'close'; kind: BusinessKind; district?: DistrictId | '{district}'; weeks?: number; /** The place's own name, when the story names it (a pressing plant is not 'Seashore Amusement Machines'). */ name?: string }
   | { k: 'wealth'; role: string; amount: number }
   /** Political favors owed to the player. */
   | { k: 'favor'; amount: number }
@@ -269,10 +269,11 @@ export const rivRes = (rival: RivalId, o: { money?: number; muscle?: number; exp
 export const feud = (rival: RivalId): Fx => ({ k: 'feud', rival });
 export const under = (o: 'strength' | 'exposure' | 'expose' | 'runout', amount?: number): Fx =>
   amount === undefined ? { k: 'underbelly', op: o } : { k: 'underbelly', op: o, amount };
-export const biz = (o: 'add' | 'close', kind: BusinessKind, district?: DistrictId | '{district}', weeks?: number): Fx => {
+export const biz = (o: 'add' | 'close', kind: BusinessKind, district?: DistrictId | '{district}', weeks?: number, name?: string): Fx => {
   const fx: Fx = { k: 'business', op: o, kind };
   if (district) fx.district = district;
   if (weeks !== undefined) fx.weeks = weeks;
+  if (name) fx.name = name;
   return fx;
 };
 export const wealth = (role: string, amount: number): Fx => ({ k: 'wealth', role, amount });

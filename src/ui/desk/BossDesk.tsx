@@ -19,7 +19,8 @@ import { DeskClock } from '../components/DeskClock';
 export interface DeskApi {
   onEvent: (iid: string) => void;
   onDay: (day: number) => void;
-  onSitDown: () => void;
+  /** The Sit-Down, opened on one item when a row brings it (its brief id). */
+  onSitDown: (brief?: string) => void;
   onCancelOrder: (i: number) => void;
   onMoney: () => void;
   onChar: (id: string) => void;
@@ -57,7 +58,7 @@ function openItem(it: DeskItem, api: DeskApi) {
   else if (it.ref.tip && api.onUrgent) api.onUrgent(it.ref.tip);
   else if (it.ref.event) api.onEvent(it.ref.event);
   else if (it.kind === 'morning' || (it.kind === 'upcoming' && it.ref.day !== undefined)) api.onDay(it.ref.day ?? 0);
-  else if (it.kind === 'sitdown') api.onSitDown();
+  else if (it.kind === 'sitdown') api.onSitDown(it.ref.brief);
   else if (it.kind === 'lieutenant' && api.onLt) api.onLt();
   else if (it.kind === 'envelope' && api.onEnvelope) api.onEnvelope();
   else if (it.kind === 'bill' || it.kind === 'envelope') api.onMoney();
@@ -234,7 +235,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
           <div className="flex justify-between"><span className="text-stone-400">Orders</span><span>{fmt$(r.costs.orders)}</span></div>
           <div className="flex justify-between"><span className="text-stone-400">Your evenings (pocket)</span><span>{fmt$(r.costs.evenings)}</span></div>
           <div className="flex justify-between"><span className="text-stone-400">Weekly bills (payroll, upkeep, loans)</span><span>{fmt$(r.costs.bills)}</span></div>
-          <div className="mt-1 flex justify-between border-t border-noir-700 pt-1"><span className="text-stone-400">After the orders and evenings</span><span>Family {fmt$(r.costs.familyAfter)} · pocket {fmt$(r.costs.pocketAfter)}</span></div>
+          <div className="mt-1 flex justify-between border-t border-noir-700 pt-1"><span className="text-stone-400">After the orders, evenings and bills</span><span>Family {fmt$(r.costs.familyAfter)} · pocket {fmt$(r.costs.pocketAfter)}</span></div>
           <div className="text-[10px] text-stone-500">Known costs only. The week's take, the envelope and anything that happens come on top.</div>
         </div>
         {r.warnings.map((w, i) => <div key={i} className="text-[12px] text-red-300">⚠ {w}</div>)}
