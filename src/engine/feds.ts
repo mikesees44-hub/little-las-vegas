@@ -57,13 +57,13 @@ export { addFedEvidence, bossHasFlipped, ensureFeds, informantsAround, isInforma
 /* ------------------------------------------------------------------ */
 
 /** A man's file plus the heat at which he can be picked up. */
-export const PINCH_LINE = 58;
+export const PINCH_LINE = 66;
 /** Weeks between pinches (spread out). */
-export const PINCH_GAP = 6;
+export const PINCH_GAP = 12;
 /** Evidence at which a charge is serious (years, and the government's offer). */
 export const SERIOUS = 35;
 /** Wire evidence that brings an indictment wave. */
-export const WAVE_AT = 55;
+export const WAVE_AT = 90;
 /** Weeks before the government decides whether a held man has come over. */
 export const DECIDE_WEEKS = 3;
 /** Weekly chance an undercover operation starts (when the FBI is working the family). */
@@ -176,12 +176,12 @@ function pinchWeek(ctx: Ctx, F: FedsState): void {
   if (s.week - F.lastPinch >= PINCH_GAP) {
     const cands = crew(s).filter((c) => canPinch(s, c, F) && pinchScore(s, c) >= PINCH_LINE).sort((a, b) => pinchScore(s, b) - pinchScore(s, a));
     const c = cands[0];
-    if (c && fr(F) < clamp(0.05 + (pinchScore(s, c) - PINCH_LINE) / 140, 0.05, 0.35)) startPinch(s, c);
+    if (c && fr(F) < clamp(0.04 + (pinchScore(s, c) - PINCH_LINE) / 160, 0.04, 0.25)) startPinch(s, c);
   }
   // The rivals' men get picked up too (the papers).
   for (const r of s.rivals) {
     if (r.kind !== 'mob' || (r.exposure ?? 0) < 45) continue;
-    if (fr(F) > 0.012 + ((r.exposure ?? 0) - 45) / 2500) continue;
+    if (fr(F) > 0.005 + ((r.exposure ?? 0) - 45) / 4000) continue;
     const men = Object.values(s.characters).filter((x) => x.alive && x.faction === r.id && x.id !== r.leaderId && x.rank !== 'civilian' && isFree(s, x));
     const m = men[Math.floor(fr(F) * men.length)];
     if (!m) continue;
@@ -544,7 +544,7 @@ function wireWeek(ctx: Ctx, F: FedsState): void {
     addFedEvidence(s, s.playerId, 0.8, `wire: ${c.firstName} ${c.lastName}`);
     const k = capoOf(s, c);
     if (k && k.id !== c.id) addFedEvidence(s, k.id, 1, `wire: ${c.firstName} ${c.lastName}`);
-    F.wire = Math.min(200, F.wire + 1.5);
+    F.wire = Math.min(200, F.wire + 1);
   }
   // He pushes the boss to talk (a meeting at an hour); one at a time, a few weeks apart.
   const pending = scheduled(s).some((x) => x.kind === 'feds_push');
@@ -852,13 +852,13 @@ export function setBossTurns(f: typeof bossTurnsHook): void { bossTurnsHook = f;
 export function hollowFactors(s: GameState): { label: string; on: boolean }[] {
   const b = player(s);
   const ks = capos(s);
-  const sore = ks.filter((k) => grievanceLoad(s, k) > 0 || opinion(s, k.id, s.playerId) < 0 || ['hedging', 'turning'].includes(bookOf(s, k.id)?.st ?? '')).length;
+  const sore = ks.filter((k) => grievanceLoad(s, k) > 0 || opinion(s, k.id, s.playerId) < 10 || ['hedging', 'turning'].includes(bookOf(s, k.id)?.st ?? '')).length;
   const ub = crew(s).find((c) => c.rank === 'underboss' && isFree(s, c));
   const age = ageOn(b.birth, s.date);
   return [
-    { label: `Respect is low (${Math.round(s.respect)})`, on: s.respect < 45 },
+    { label: `Respect is low (${Math.round(s.respect)})`, on: s.respect < 50 },
     { label: 'A war going badly', on: s.wars.some((w) => w.score <= -25) },
-    { label: age >= 68 ? `The old man is ${age}` : b.health < 45 ? 'The boss is sick' : 'The boss is inside', on: age >= 68 || b.health < 45 || !isFree(s, b) },
+    { label: age >= 65 ? `The old man is ${age}` : b.health < 45 ? 'The boss is sick' : 'The boss is inside', on: age >= 65 || b.health < 45 || !isFree(s, b) },
     { label: `${sore} capos with grievances`, on: sore >= 2 },
     { label: ub ? `${ub.firstName}, the underboss, wants more` : 'An ambitious underboss', on: !!ub && (hasTrait(ub, 'Ambitious') || opinion(s, ub.id, s.playerId) < 0) && opinion(s, ub.id, s.playerId) < 20 },
   ];
