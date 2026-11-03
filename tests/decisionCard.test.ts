@@ -106,3 +106,26 @@ describe('the decision card (STREAMLINE §4.1)', () => {
     expect(h).toContain('data-testid="decision-primary"');
   });
 });
+
+describe('one source for a recommendation (playthrough: Red recommended it, then said "Don\'t")', () => {
+  it('the man who recommends an order at the sit-down backs it when the order is weighed', async () => {
+    const { briefing } = await import('../src/engine/briefing');
+    const { counsel } = await import('../src/engine/counsel');
+    let checked = 0;
+    for (const seed of ['rec-a', 'rec-b', 'rec-c']) {
+      let s = newGame(seed);
+      for (let w = 0; w < 3; w++) {
+        for (const it of briefing(s).items) {
+          const rec = it.options.find((o) => o.id === it.recommended);
+          if (!rec?.action) continue;
+          const v = counsel(s, { kind: 'action', action: rec.action })?.voices.find((x) => x.adviser.role === it.role);
+          if (!v) continue;
+          expect(['do', 'doBut'], `${it.id}`).toContain(v.verdict);
+          checked++;
+        }
+        s = advanceWeek(s, {}).state;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+});
