@@ -76,7 +76,49 @@ export interface HollowCrown {
   move?: number;
   /** The capo leading it. */
   leadId?: string;
+  /** The seven-day crisis (DEAD_MAN_WALKING.md): the plot against him, day by day. */
+  crisis?: Crisis;
+  /** Mercy was shown: the DEAD MAN WALKING reputation (week it began). Redeemed when the meter is won back. */
+  dmw?: number;
 }
+
+/** What each man secretly decides when the plot comes to him. */
+export type PlotStance = 'join' | 'resist' | 'inform' | 'exploit' | 'neutral';
+
+/** The seven days (hidden network; the boss learns it through what he finds out). */
+export interface Crisis {
+  /** The week the seven days run in. */
+  w: number;
+  leadId: string;
+  ubId?: string;
+  /** The underboss: with him, on the fence, or after the chair himself. */
+  ub: 'loyal' | 'wavering' | 'rival';
+  /** Each man's hidden stance. */
+  st: Record<string, PlotStance>;
+  /** Men the boss knows are in it, and men he only suspects (some of them innocent). */
+  known: string[];
+  suspected: string[];
+  /** How strong the plot is (men and money), how much of it has leaked, the boss's guard. */
+  strength: number;
+  exposure: number;
+  guard: number;
+  /** What the boss's moves took out of it (men who cooled, money it lost). */
+  drag?: number;
+  /** The last beat played (1-7). */
+  beat: number;
+  /** The money that did not come in (Wednesday's envelopes). */
+  short: number;
+  /** The young soldier with the warning, and whether he is telling the truth. */
+  warnerId?: string;
+  warnerTrue?: boolean;
+  /** How it ended. */
+  done?: 'early' | 'foiled' | 'killed' | 'judged';
+  /** The second invitation: the underboss may not step in this time. */
+  second?: 1;
+}
+
+/** A consequence set down for later (Sons of the Fallen, the capo you created, the second invitation…). */
+export interface FedsSeed { key: string; at: number; ids: string[] }
 
 /** The undercover agent (an associate with a cover story). */
 export interface Brasco {
@@ -114,6 +156,7 @@ export interface FedsStats {
   bossOffers: number; bossFlips: number;
   hollow: number; hollowEnds: Record<string, number>;
   tipoffs: number; tipTaken: number;
+  crises: number; crisisEnds: Record<string, number>; seedsFired: number;
   brasco: number; brascoFound: number; brascoPulled: number;
 }
 
@@ -140,6 +183,12 @@ export interface FedsState {
   /** Threat ids / coup ids already tipped. */
   tipped: string[];
   brasco?: Brasco;
+  /** Follow-ups that grow out of the crisis's endings. */
+  seeds: FedsSeed[];
+  /** Rebuilding after a purge: until this week the family earns this much less. */
+  rebuild?: { until: number; cut: number };
+  /** A retired Don (the old boss, his kind of retirement). */
+  retired?: { id: string; kind: 'honorable' | 'puppet' | 'isolated'; w: number };
   /** Week the last undercover operation ended. */
   brascoEnd?: number;
   stats: FedsStats;
@@ -148,7 +197,7 @@ export interface FedsState {
 function zeroStats(): FedsStats {
   return {
     pinches: 0, serious: 0, dropped: 0, rivalPinches: 0, scares: 0, flips: 0, stood: 0, homecomings: 0, clipped: 0, pushes: 0, waves: 0,
-    bossOffers: 0, bossFlips: 0, hollow: 0, hollowEnds: {}, tipoffs: 0, tipTaken: 0, brasco: 0, brascoFound: 0, brascoPulled: 0,
+    bossOffers: 0, bossFlips: 0, hollow: 0, hollowEnds: {}, tipoffs: 0, tipTaken: 0, crises: 0, crisisEnds: {}, seedsFired: 0, brasco: 0, brascoFound: 0, brascoPulled: 0,
   };
 }
 
@@ -161,16 +210,18 @@ function seedOf(s: GameState): number {
 
 /** Create or top up (upgradeSave's step: a save from before it loads without a missing field). */
 export function ensureFeds(s: GameState): FedsState {
-  const F = (s.feds ??= { v: 1, rng: seedOf(s), n: 0, pinches: [], log: [], wire: 0, lastPinch: -99, owed: 0, tipped: [], flippers: [], stats: zeroStats() });
+  const F = (s.feds ??= { v: 1, rng: seedOf(s), n: 0, pinches: [], log: [], wire: 0, lastPinch: -99, owed: 0, tipped: [], flippers: [], seeds: [], stats: zeroStats() });
   F.pinches ??= [];
   F.log ??= [];
   F.tipped ??= [];
   F.flippers ??= [];
+  F.seeds ??= [];
   F.wire ??= 0;
   F.owed ??= 0;
   F.lastPinch ??= -99;
   F.stats = { ...zeroStats(), ...(F.stats ?? {}) };
   F.stats.hollowEnds ??= {};
+  F.stats.crisisEnds ??= {};
   if (!F.rng) F.rng = seedOf(s);
   return F;
 }

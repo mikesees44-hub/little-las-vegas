@@ -15,6 +15,7 @@ import { grievanceLoad } from './heir';
 import { killCharacter } from './dynasty';
 import { tryScene } from './authored/run';
 import { buildPlantFound } from './crewEvents';
+import { crisisSeeds, crisisWeek, startCrisis, registerCrisis } from './fedsCrisis';
 import type { NowResult } from './deeds/now';
 import type { Character, Effect, EventInstance, Faction, GameState, RivalId } from './types';
 import {
@@ -84,21 +85,21 @@ export function describeFedsOp(_s: GameState, op: FedsOp): string | undefined {
 /* Small helpers                                                        */
 /* ------------------------------------------------------------------ */
 
-const nm = (c: Character | undefined) => (c ? displayName(c) : 'somebody');
-const pc = (p: number) => `${Math.round(p * 100)}%`;
-const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
-const hourText = (h: number) => (h === 0 ? 'midnight' : h === 12 ? 'noon' : h < 12 ? `${h} a.m.` : `${h - 12} p.m.`);
+export const nm = (c: Character | undefined) => (c ? displayName(c) : 'somebody');
+export const pc = (p: number) => `${Math.round(p * 100)}%`;
+export const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+export const hourText = (h: number) => (h === 0 ? 'midnight' : h === 12 ? 'noon' : h < 12 ? `${h} a.m.` : `${h - 12} p.m.`);
 
-function chron(s: GameState, text: string, kind: 'heat' | 'misc' | 'succession' | 'death' = 'heat'): void {
+export function chron(s: GameState, text: string, kind: 'heat' | 'misc' | 'succession' | 'death' = 'heat'): void {
   s.chronicle.push({ week: s.week, date: { ...s.date }, text, kind });
 }
 
-function mine(s: GameState, c: Character | undefined): c is Character {
+export function mine(s: GameState, c: Character | undefined): c is Character {
   return !!c && c.alive && c.faction === 'player' && c.id !== s.playerId;
 }
 
 /** A free day for a feds moment (one a day at most; never two of ours on the same day). */
-function freeDay(s: GameState, w: number, from: number, to: number, F: FedsState): number {
+export function freeDay(s: GameState, w: number, from: number, to: number, F: FedsState): number {
   const used = new Set(scheduled(s).filter((x) => x.w === w && x.kind.startsWith('feds_')).map((x) => x.d));
   const days: number[] = [];
   for (let d = from; d <= to; d++) if (!used.has(d)) days.push(d);
@@ -107,12 +108,12 @@ function freeDay(s: GameState, w: number, from: number, to: number, F: FedsState
 }
 
 /** Put a feds moment on the clock: `wOff` weeks ahead (at the turn the week has not moved yet: 1 = the coming week). */
-function put(s: GameState, kind: string, w: number, day: number, hour: number, payload: Record<string, unknown>): string {
+export function put(s: GameState, kind: string, w: number, day: number, hour: number, payload: Record<string, unknown>): string {
   return scheduleInto(s, { kind, w, day, hour, payload });
 }
 
 /** The week a moment set during the turn lands in (the turn has not moved the week yet). */
-function nextW(s: GameState, atTurn: boolean): number {
+export function nextW(s: GameState, atTurn: boolean): number {
   return atTurn ? s.week + 1 : s.week;
 }
 
@@ -224,7 +225,7 @@ function knockView(s: GameState, it: ScheduledItem): MomentView | undefined {
 }
 
 /** A moment answered: the common frame (clone, apply, the card, Your File). */
-function moment(
+export function moment(
   input: GameState, it: ScheduledItem, opt: string, title: string,
   run: (ctx: Ctx, F: FedsState) => { line: string; chance?: number; ok: boolean; crit?: boolean; leads?: string[]; who?: string; extra?: { h: string; b: string }; people?: string[] },
 ): { state: GameState; result: NowResult; extra?: { h: string; b: string } } {
@@ -839,7 +840,7 @@ function burnedAnswer(input: GameState, it: ScheduledItem, opt: string) {
 }
 
 /** trial.bossTurns, registered by trial.ts (the two modules import each other). */
-let bossTurnsHook: (ctx: Ctx, b: Character, path: 'heir' | 'witness', epi?: string[]) => void = () => undefined;
+export let bossTurnsHook: (ctx: Ctx, b: Character, path: 'heir' | 'witness', epi?: string[]) => void = () => undefined;
 export function setBossTurns(f: typeof bossTurnsHook): void { bossTurnsHook = f; }
 
 /* ------------------------------------------------------------------ */
@@ -881,56 +882,54 @@ function hollowWeek(ctx: Ctx, F: FedsState): void {
   const H = F.hollow;
   if (!H) {
     if (capos(s).length < 2 || s.week - (F.hollowEnd ?? -99) < 40) return;
-    const n = hollowFactors(s).filter((f) => f.on).length;
+    // DEAD_MAN_WALKING.md: he is the Don, the family is 12 or more, and at least two capos are sore.
+    if (crew(s).length < 12) return;
+    const fs = hollowFactors(s);
+    if (!fs[3].on) return;
+    const n = fs.filter((f) => f.on).length;
     const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1);
     if (!p || fr(F) > p) return;
-    const lead = capos(s).filter((k) => isFree(s, k)).sort((a, b) => opinion(s, a.id, s.playerId) - opinion(s, b.id, s.playerId))[0];
-    F.hollow = { since: s.week, boss: s.playerId, meter: Math.min(60, answersToHim(s) - 10), won: [], next: s.week + 1, ...(lead ? { leadId: lead.id } : {}) };
+    const lead = capos(s).filter((k) => isFree(s, k)).sort((a, b) => opinion(s, a.id, s.playerId) + (hasTrait(a, 'Ambitious') ? -15 : 0) - opinion(s, b.id, s.playerId) - (hasTrait(b, 'Ambitious') ? -15 : 0))[0];
+    if (!lead) return;
+    F.hollow = { since: s.week, boss: s.playerId, meter: Math.min(60, answersToHim(s) - 10), won: [], next: s.week + 8, leadId: lead.id };
     F.stats.hollow++;
-    const line = `The capos have started meeting without you. ${lead ? `${nm(lead)} runs the table.` : ''} You still have the chair; you no longer have the family.`;
+    const line = `The capos have started meeting without you. ${nm(lead)} runs the table. You still have the chair; you no longer have the family.`;
     ctx.log.push(line);
     chron(s, 'The capos began running the family without the boss: Don in name only.', 'misc');
-    if (s.cutscenes.length < 3) s.cutscenes.push({ key: 'betrayal_confrontation', title: 'The hollow crown', text: 'The Saturday table, and your chair at the head of it. They wait for you to sit before they start. Then they talk to each other.', week: s.week });
     // The existing conspiracy chain, if it can be cast now.
     try { const ev = tryScene(s, 'plot_whispers'); if (ev) s.eventQueue.push(ev); } catch { /* no scene library outside the game */ }
-    const w = nextW(s, true);
-    put(s, 'feds_crown', w, freeDay(s, w, 1, 4, F), 18, {});
-    F.hollow.next = s.week + 3;
+    // The seven days (fedsCrisis.ts): one beat a day, next week.
+    startCrisis(ctx, F, F.hollow);
     return;
   }
   // It ends on its own when the chair changes hands or he is gone.
   if (!player(s)?.alive || (H.boss && H.boss !== s.playerId)) return endHollow(ctx, F, 'succession');
   // They moved and it did not finish him (the coup failed or became a walk-out): the air clears a little.
   if (H.move && H.move < s.week && !s.scheduled.some((x) => x.key === 'coup')) { H.move = undefined; H.meter = clamp(H.meter + 12, 0, 100); }
-  H.meter = clamp(Math.round(H.meter * 0.7 + answersToHim(s, H.won) * 0.3), 0, 100);
-  if (H.meter >= 75) return endHollow(ctx, F, 'won');
-  // The envelope shrinks: the capos keep more.
-  const light = Math.round((100 - H.meter) * 12);
-  if (light > 0) applyEffects(ctx, [{ type: 'money', amount: -light, category: 'street' }], { label: 'The envelopes came in light (the hollow crown)', because: 'the capos keep more while you hold the title', category: 'street' });
+  H.meter = clamp(Math.round(H.meter * 0.7 + answersToHim(s, H.won) * 0.3 - (H.dmw ? 6 : 0)), 0, 100);
+  const live = !!H.crisis && !H.crisis.done;
+  if (H.meter >= 75 && !live) {
+    if (H.dmw) { ctx.log.push('The talk has stopped. Nobody calls you a dead man walking any more.'); F.stats.crisisEnds.redeemed = (F.stats.crisisEnds.redeemed ?? 0) + 1; }
+    return endHollow(ctx, F, H.dmw ? 'redeemed' : 'won');
+  }
+  // The envelope shrinks: the capos keep more (Dead Man Walking: tribute is a suggestion).
+  const light = Math.round((100 - H.meter) * (H.dmw ? 16 : 12));
+  if (light > 0) applyEffects(ctx, [{ type: 'money', amount: -light, category: 'street' }], { label: H.dmw ? 'The envelopes came in light (a dead man walking)' : 'The envelopes came in light (the hollow crown)', because: 'the capos keep more while you hold the title', category: 'street' });
   // Meetings without him.
   if (fr(F) < 0.35) {
     const ks = capos(s).filter((k) => !H.won.includes(k.id));
     const k = ks[Math.floor(fr(F) * ks.length)];
     if (k) journal(s, { c: 'crew', t: `The capos met at ${['the Shamrock', 'a clam bar in Rio Grande', 'a motel in Cape May', 'the back of the bakery'][Math.floor(fr(F) * 4)]} without you`, x: `${nm(k)} was there. Nobody called you.`, src: 'feds', k: 'heard', p: [k.id] });
   }
-  // The crisis meeting on the clock, every few weeks.
-  if (H.next <= s.week + 1 && !scheduled(s).some((x) => x.kind === 'feds_crown')) {
+  // After mercy: a sit-down every few weeks to win them back one at a time (the redemption).
+  if (!live && H.next <= s.week + 1 && !scheduled(s).some((x) => x.kind === 'feds_crown')) {
     const w = nextW(s, true);
     put(s, 'feds_crown', w, freeDay(s, w, 1, 5, F), 18, {});
-    H.next = s.week + 3 + Math.floor(fr(F) * 2);
-  }
-  // Too far gone: they set a date (the existing coup). The Feds may hear of it (the tip-off).
-  if (H.meter < 25 && !H.move) {
-    const f = ensureCoupFaction(s, H);
-    if (f) {
-      H.move = s.week + 3;
-      s.scheduled.push({ id: `sc${s.nextId++}`, key: 'coup', dueWeek: H.move, because: 'let the capos run the family', sourceWeek: s.week, params: { faction: f.id } });
-      ctx.log.push('Talk on the street: the capos have set a date.');
-    }
+    H.next = s.week + 4 + Math.floor(fr(F) * 3);
   }
 }
 
-function ensureCoupFaction(s: GameState, H: { leadId?: string }): Faction | undefined {
+export function ensureCoupFaction(s: GameState, H: { leadId?: string }): Faction | undefined {
   const ex = s.factions.find((f) => f.agenda === 'abdicate' || f.demand === 'abdicate' || f.demand === 'head');
   if (ex) return ex;
   const lead = H.leadId ? s.characters[H.leadId] : undefined;
@@ -941,7 +940,7 @@ function ensureCoupFaction(s: GameState, H: { leadId?: string }): Faction | unde
   return f;
 }
 
-function endHollow(ctx: Ctx, F: FedsState, how: string): void {
+export function endHollow(ctx: Ctx, F: FedsState, how: string): void {
   const s = ctx.s;
   if (!F.hollow) return;
   F.hollow = undefined;
@@ -1077,6 +1076,8 @@ function tipWeek(ctx: Ctx, F: FedsState): void {
     if (t.kind !== 'hit' || t.targetId !== s.playerId || F.tipped.includes(t.id) || t.due > s.week + 2) continue;
     dangers.push({ key: t.id, w: t.due, day: t.dueDay ?? 6, text: `${s.rivals.find((r) => r.id === t.by)?.name ?? 'Somebody'} has a contract out on you` });
   }
+  const C = F.hollow?.crisis;
+  if (C && !C.done && C.w === s.week + 1 && !F.tipped.includes(`crisis${C.w}`)) dangers.push({ key: `crisis${C.w}`, w: C.w, day: 6, text: `${nm(s.characters[C.leadId])} and some of your own people mean to kill you this weekend` });
   for (const x of s.scheduled) {
     if (x.key !== 'coup' || F.tipped.includes(x.id) || x.dueWeek > s.week + 3) continue;
     dangers.push({ key: x.id, w: x.dueWeek, day: 0, text: 'some of your own people mean to kill you' });
@@ -1097,7 +1098,8 @@ function tipWeek(ctx: Ctx, F: FedsState): void {
 
 function tipView(s: GameState, it: ScheduledItem): MomentView | undefined {
   const key = String(it.payload.key);
-  const live = (s.threats?.threats ?? []).some((t) => t.id === key) || s.scheduled.some((x) => x.id === key);
+  const C = s.feds?.hollow?.crisis;
+  const live = (s.threats?.threats ?? []).some((t) => t.id === key) || s.scheduled.some((x) => x.id === key) || (!!C && !C.done && key === `crisis${C.w}`);
   if (!live) return undefined;
   const find = clamp(0.5 + (hasTrait(player(s), 'Paranoid') ? 0.1 : 0) + (hasTrait(player(s), 'Patient') ? 0.05 : 0), 0.2, 0.8);
   return {
@@ -1118,6 +1120,7 @@ function tipAnswer(input: GameState, it: ScheduledItem, opt: string) {
     const key = String(it.payload.key);
     const t = s.threats?.threats.find((x) => x.id === key);
     const coup = s.scheduled.find((x) => x.id === key);
+    const C = F.hollow?.crisis && key === `crisis${F.hollow.crisis.w}` ? F.hollow.crisis : undefined;
     const v = tipView(input, it);
     const o = v?.options.find((x) => x.id === opt) ?? v?.options.find((x) => x.id === 'take')!;
     const ok = fr(F) < o.odds;
@@ -1133,6 +1136,7 @@ function tipAnswer(input: GameState, it: ScheduledItem, opt: string) {
       F.owed += 1;
       F.stats.tipTaken++;
       if (t) t.blunt = Math.max(t.blunt, 0.75);
+      if (C) C.guard += 0.3;
       if (coup) { s.scheduled = s.scheduled.filter((x) => x !== coup); const f = s.factions.find((x) => x.id === coup.params.faction); if (f) { f.stage = 0; f.stageWeek = s.week; } if (F.hollow) F.hollow.move = undefined; }
       if (!ok) seen();
       return { line: `You took a different car and a different road for a week.${coup ? ' The night they had picked, you were not where they planned.' : ''} The Bureau has a marker on you now.${ok ? '' : ' And somebody saw you with them.'}`, chance: o.odds, ok, leads: ['You owe the Bureau one'] };
@@ -1143,6 +1147,12 @@ function tipAnswer(input: GameState, it: ScheduledItem, opt: string) {
         t.blunt = Math.max(t.blunt, 0.55);
         const r = s.rivals.find((x) => x.id === t.by);
         return { line: `You worked it back: ${r?.name ?? 'an outfit across the water'} paid for it. Now you know where to look.`, chance: o.odds, ok: true };
+      }
+      if (C) {
+        const ins = Object.entries(C.st).filter(([id, v2]) => v2 === 'join' && !C.known.includes(id)).map(([id]) => id).slice(0, 2);
+        C.known.push(...ins);
+        C.exposure += 3;
+        return { line: `The agents would not give names, but they gave you enough: ${ins.map((id) => nm(s.characters[id])).join(' and ') || 'the back table at the Shamrock'}.`, chance: o.odds, ok: true, people: ins };
       }
       if (coup) {
         const f = s.factions.find((x) => x.id === coup.params.faction);
@@ -1464,6 +1474,8 @@ export function fedsWeek(ctx: Ctx): void {
   wireWeek(ctx, F);
   handlerWeek(ctx, F);
   hollowWeek(ctx, F);
+  crisisWeek(ctx, F);
+  crisisSeeds(ctx, F);
   tipWeek(ctx, F);
   brascoWeek(ctx, F);
 }
@@ -1482,6 +1494,7 @@ const DELIVERIES: [string, (s: GameState, it: ScheduledItem) => MomentView | und
   ['feds_brasco', brascoView, brascoAnswer],
 ];
 for (const [kind, view, answer] of DELIVERIES) registerDelivery({ kind, view, answer });
+registerCrisis();
 
 /** For tests and the screens: the moments of this module now on the clock. */
 export function fedsMoments(s: GameState): ScheduledItem[] {
