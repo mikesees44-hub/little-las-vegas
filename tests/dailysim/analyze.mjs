@@ -15,16 +15,20 @@ const tbl = (head, rows) => [`| ${head.join(' | ')} |`, `|${head.map(() => '---'
 
 // ---- action classification (per week: the turn's results land on Monday) ----
 const RX = {
-  raid: /^RAID:/,
+  raid: /(^RAID:|detectives raid|vice squad raided|padlock\S* .* for \d+ weeks|"found" a gun)/i,
   fedArrest: /^ARREST:/,
-  rivalHurt: /^\[(?!Prosecutor|Philly)\w+\].*(firebomb|torch|burn|shoot|shot|beat|smash|bomb|rob|hijack|lean on|muscle|strike|hit |ambush|break|stick up|wreck)/i,
-  rivalPush: /^\[\w+\].*(pushes into|muscles|moves in)/i,
+  attackCovered: /crew covered it/,
+  attackOnMe: /^(?!.*crew covered it)(?=.*(firebomb a dumpster behind your|hijack your|got beaten up by|got robbed by|was beaten bad|hit .* \(\$ gone\)|came for you|Shots through))/i,
+  npcWar: /^\[\w+\] .* hits .*: a card room torched/,
+  rivalPush: /(pushes into|moved men onto|pushed onto your corners)/i,
+  retaliation: /(hit back at|retaliat)/i,
   killing: /(shot dead|gunned down|was murdered|whacked|garrot|stabbed to death|made his bones on|never seen again|body was found|found in the trunk|found in the marsh|blown up)/i,
-  betrayal: /^(?!\[Prosecutor\]).*(betray|flipped|walked out|deserted|(?<!(house|place) )went over to|turned on you|took the men loyal|wearing a wire|ratted)/i,
-  score: /(heist|hijack|truckload|armored|robbery|jewel|the score|big score)/i,
+  coup: /made his play for the .* family|walked out on .* family is splitting/i,
+  betrayal: /(walked out and went over|went over to \w+\. You were warned|ratted|wearing a wire)/i,
+  score: /(heist|took the truck|took a trailer|armored car|jewel)/i,
   philly: /Philadelphia summoned you/,
-  threatFoiled: /came to nothing: you were ready/,
-  threatLanded: /(came for you|Shots through|You were warned|never came\. )/,
+  threatFoiled: /(came to nothing: you were ready|plot against .* came to nothing)/,
+  warLine: /(declared war|went to the mattresses|truce broke)/i,
 };
 
 function weekActions(w) {
@@ -41,8 +45,8 @@ function weekActions(w) {
   return a;
 }
 // "Big" action: what the brief names (violence, raids, wars, hits, arrests, betrayals, scores, deaths, successions).
-const BIG = ['threatFoiled', 'threatLanded', 'raid', 'fedArrest', 'killing', 'myManKilled', 'npcKilled', 'myArrest', 'war', 'battle', 'succession', 'betrayal', 'score', 'rivalHurt', 'plot', 'rivalBossFalls', 'philly'];
-const HARD = ['threatLanded', 'raid', 'fedArrest', 'myManKilled', 'npcKilled', 'myArrest', 'war', 'battle', 'succession', 'plot', 'rivalBossFalls'];
+const BIG = ['attackCovered', 'threatFoiled', 'attackOnMe', 'raid', 'fedArrest', 'killing', 'myManKilled', 'npcKilled', 'myArrest', 'war', 'warLine', 'battle', 'succession', 'betrayal', 'score', 'plot', 'coup', 'retaliation', 'philly'];
+const HARD = ['attackOnMe', 'raid', 'fedArrest', 'myManKilled', 'npcKilled', 'myArrest', 'war', 'warLine', 'battle', 'succession', 'betrayal', 'coup', 'score'];
 
 function gaps(flags) { // flags: bool per week -> longest run of false, mean gap
   let longest = 0, cur = 0; const gs = []; let last = -1;
@@ -129,7 +133,7 @@ for (const r of runs) {
   for (const a of A) for (const [k, v] of Object.entries(a)) catTot[k] = (catTot[k] ?? 0) + v;
   const big = gaps(A.map((a) => BIG.some((k) => a[k])));
   const hard = gaps(A.map((a) => HARD.some((k) => a[k])));
-  const mine = gaps(A.map((a) => a.myManKilled || a.myArrest || a.raid || a.fedArrest || a.war || a.battle || a.succession || a.plot));
+  const mine = gaps(A.map((a) => a.myManKilled || a.myArrest || a.raid || a.fedArrest || a.war || a.warLine || a.battle || a.succession || a.attackOnMe || a.betrayal));
   actRows.push([`${r.start}/${r.seed}`, pct(big.n, A.length), big.longest, pct(hard.n, A.length), hard.longest, r1(hard.mean), pct(mine.n, A.length), mine.longest]);
 }
 P(tbl(['run', 'weeks w/ any action', 'longest dry (wks)', 'weeks w/ hard action', 'longest hard-dry (wks)', 'mean gap hard (wks)', 'weeks it hits HIM', 'longest w/o it hitting him'], actRows));
@@ -170,10 +174,10 @@ P();
 // ---------- 7. systems that never fired ----------
 P('### Systems that fire / never fire (log keyword counts, all runs)');
 const SYS = {
-  'police raid (RAID:)': /^RAID:/, 'FBI arrest (ARREST:)': /^ARREST:/, 'Philadelphia fine': /Philadelphia summoned you/, 'urgent meeting asked': /asks for an urgent meeting/,
-  'war declared': /declare[sd]? war|war (is|was) declared|goes to war/i, 'battle': /battle/i, 'hit / murder': /murder|whack|hit on|the hit/i, 'heist / score': /heist|armored|jewel/i,
+  'police raid': /(^RAID:|detectives raid|vice squad raided|"found" a gun)/i, 'FBI arrest (ARREST:)': /^ARREST:/, 'Philadelphia fine': /Philadelphia summoned you/, 'urgent meeting asked': /asks for an urgent meeting/,
+  'war declared': /declare[sd]? war|war (is|was) declared|goes to war/i, 'battle (log words)': /battle|skirmish|street fight/i, 'hit / murder': /murder|whack|hit on|the hit/i, 'heist / score': /heist|armored|jewel/i,
   'trial / indictment': /trial|indict|grand jury/i, 'election': /elect/i, 'wedding': /wedding|married/i, 'birth': /was born|gave birth/i, 'hurricane': /hurricane/i,
-  'Fourth of July': /fourth of july|july 4/i, 'Labor Day': /labor day/i, 'desertion': /walked out|deserted|walks out/i, 'rival boss dies/falls': /new boss|takes over the|succeeds/i,
+  'Fourth of July': /fourth of july|july 4/i, 'Labor Day': /labor day/i, 'desertion': /walked out|deserted|walks out/i, 'rival coup (made his play)': /made his play for/i,
   'rival pushes in': /pushes into/i, 'rival firebomb/robbery': /firebomb|torch|rob/i, 'informant/flip': /informant|flipped|\brat\b/i, 'travel / trip': /trip|vacation|Atlantic City|Ocean City/i,
 };
 const sysC = Object.fromEntries(Object.keys(SYS).map((k) => [k, 0]));
