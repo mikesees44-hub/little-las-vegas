@@ -1,3 +1,4 @@
+import { phoneSweep } from './phone';
 import { pocketPrice } from './pocket';
 import type { ActionPreview } from './actions';
 import { noteScore } from './ledgerbook';
@@ -1263,6 +1264,8 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
         ctx.log.push('The sweep found nothing.');
         delete e.hq.rumor;
       }
+      // The phone company man checks the lines while he is there (phone.ts).
+      { const line = phoneSweep(s, SWEEP_FIND, `econ${e.hq.sweeps}`); if (line) ctx.log.push(line); }
       break;
     }
     case 'project': {

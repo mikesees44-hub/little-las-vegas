@@ -10,6 +10,7 @@ import { rivalCaps } from './rivals';
 import { awayReason, DAY_NAMES, today } from './days';
 import { noteRaided, raidedLately, ensureAction } from './actionState';
 import { journal } from './journal';
+import { wireIn } from './phoneState';
 import type { NowResult } from './deeds/now';
 import { defectTo } from './regimes';
 import { addOpinion, opinion } from './relations';
@@ -858,6 +859,7 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat, outcome?: 'foiled' | 'landed
     case 'stakeout': case 'wire': {
       const k = t.district ? s.districts.find((d) => d.id === t.district)?.capoId : undefined;
       eff([{ type: 'evidence', charId: k ?? s.playerId, amount: 8 }, { type: 'heat', bar: 'local', amount: 4 }, ...(t.kind === 'wire' ? [{ type: 'evidence', charId: s.playerId, amount: 6 } as Effect] : [])], t.kind === 'wire' ? 'the county tapped your phones' : 'the county watched your place');
+      if (t.kind === 'wire') wireIn(s, 'county');
       note(ctx, T, t.kind === 'wire' ? `The county had a tap on your phone for two weeks. They have hours of you on tape.${tag}` : `The county watched ${t.bizId ? bizName(s, t.bizId) : districtName(s, t.district)} for a week. They have plates, faces, times.${tag}`);
       return;
     }
@@ -869,6 +871,7 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat, outcome?: 'foiled' | 'landed
       const effects: Effect[] = [];
       if (t.kind === 'fed_post') effects.push({ type: 'evidence', charId: s.playerId, amount: 5 }, { type: 'heat', bar: 'federal', amount: 4 });
       if (t.kind === 'fed_wire') effects.push({ type: 'evidence', charId: s.playerId, amount: 10 }, { type: 'heat', bar: 'federal', amount: 6 });
+      if (t.kind === 'fed_wire') wireIn(s, 'fbi');
       if (t.kind === 'fed_under') { effects.push({ type: 'evidence', charId: s.playerId, amount: 6 }, { type: 'heat', bar: 'federal', amount: 5 }); const k = crew(s).find((c) => c.rank === 'capo' && isFree(s, c)); if (k) effects.push({ type: 'evidence', charId: k.id, amount: 10 }); }
       if (t.kind === 'fed_flip') effects.push({ type: 'heat', bar: 'federal', amount: 3 });
       if (t.kind === 'fed_gj') { effects.push({ type: 'evidence', charId: s.playerId, amount: 8 }, { type: 'heat', bar: 'federal', amount: 3 }); if (tgt?.alive) effects.push({ type: 'evidence', charId: tgt.id, amount: 6 }, { type: 'opinion', from: tgt.id, to: s.playerId, amount: -5, reason: 'Hauled in front of a grand jury', label: L }); }
@@ -1126,8 +1129,8 @@ function readOf(s: GameState, tip: Tip, via: MeetVia): string {
 }
 
 /** Take the meeting: yourself, or send the underboss or consigliere. Reveals what he heard. */
-export function meetTip(s: GameState, id: string, via: MeetVia): GameState {
-  if (via === 'boss' && meetBlock(s)) return s;
+export function meetTip(s: GameState, id: string, via: MeetVia, phone = false): GameState {
+  if (via === 'boss' && !phone && meetBlock(s)) return s;
   if (via !== 'boss' && !seatHolder(s, via)) return s;
   return withTip(s, id, (t) => {
     if (t.status !== 'waiting') return undefined;

@@ -59,6 +59,7 @@ import { attended, neglectWeek } from './neglect';
 import { heatConsequences, heatDecay, setHeatRaidPlanner } from './heat';
 import { planHeatRaid } from './threats';
 import { scheduleWeek } from './daily';
+import { phoneWeek } from './phone';
 import { bailoutSource, pressureWeek, summonsSource } from './pressure';
 import { setPieceSource, setPiecesWeek } from './setPieces';
 import { heat, newCtx, reconcile, respect, type Ctx } from './ledger';
@@ -507,6 +508,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     planNextWeek(s);
     // The week spread across the days: Monday's decisions stay on the desk, the rest come out Tuesday to Friday (daily.ts).
     scheduleWeek(s);
+    // The phone's week: the line clicks, the county's tap comes out, old counters go (phone.ts).
+    phoneWeek(s);
   } else {
     s.pendingEvents = [];
   }

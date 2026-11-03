@@ -71,6 +71,8 @@ export const TIME_TABLE: Record<string, number> = {
   'econ:manager': 1, 'econ:oversight': 0.5, 'econ:audit': 2, 'econ:assistant': 1,
   'econ:buyLot': 2, 'econ:leaseLot': 1, 'econ:deal': 2, 'econ:sellLot': 2, 'econ:slowRival': 0.5, 'econ:bid': 1,
   'econ:build': 2, 'econ:renovate': 1, 'econ:permits': 1, 'econ:bribeInspector': 1, 'econ:puppetPermit': 1, 'econ:fixCode': 1, 'econ:home': 2,
+  // The phone (phone.ts): a call is a quarter hour; a pay phone means a walk; going home when she calls is the evening; a meet is a sit-down.
+  'phone:call': 0.25, 'phone:pay': 0.5, 'phone:home': 2, 'phone:meet': 2,
   'econ:empire': 0.5, 'econ:bank': 1, 'econ:hq': 1, 'econ:sweep': 0.5,
   'econ:gift': 1, 'econ:invite': 3, 'econ:leverage': 1, 'econ:project': 2, 'econ:luxBuy': 2, 'econ:luxSell': 1,
   'hood:restyle': 0.5,

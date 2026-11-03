@@ -7,6 +7,8 @@ export { registerDelivery, scheduleAt, scheduleInto, type DeliveryHook, type Mom
 import { resolveStorm, stormTonight, stormView, type StormOptId } from './setPieces';
 import type { NowResult } from './deeds/now';
 import { extraPress } from './paper';
+import { phoneDay } from './phone';
+import './phoneMeet';
 import { eventOut, eventsOut } from './eventDays';
 export { eventOut, eventsOut };
 import type { EventInstance, GameState } from './types';
@@ -105,6 +107,8 @@ export function advanceDay(s0: GameState): DayResult {
   }
   // The September storm's night (setPieces.ts): the same kind of moment.
   if (stormTonight(s)) strikes.push('storm');
+  // The phone (phone.ts): an urgent meeting or a capo's urgent morning rings as a call; somebody else may call.
+  s = phoneDay(s);
   // Anything else on the day/hour schedule (schedule.ts: a phone call, a meet): a moment, or delivered quietly.
   for (const it of dueItems(s)) {
     const hook = deliveryFor(it.kind);
@@ -115,6 +119,11 @@ export function advanceDay(s0: GameState): DayResult {
     if (r.result.ok) { s = r.state; landed.push(r.result); }
   }
   return { state: s, released, strikes, landed };
+}
+
+/** Every moment waiting on the boss now (strikes first, then the scheduled calls and meets), by id. */
+export function liveMoments(s: GameState): string[] {
+  return [...liveStrikes(s).map((t) => t.id), ...liveItems(s).map((x) => `sched:${x.id}`)];
 }
 
 /** A moment on the clock, by id: a threat striking now, or 'storm' (the hurricane's night). */
