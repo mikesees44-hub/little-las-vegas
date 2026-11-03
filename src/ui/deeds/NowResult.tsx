@@ -33,3 +33,20 @@ export function NowResultHost() {
     </Overlay>
   );
 }
+
+/**
+ * The week's result cards (deeds/weekResults.ts: a dirty job, a push), one after another, after the week's
+ * scenes and before "How they took it". Escape or "Go on" shows the next one.
+ */
+export function ResultQueue({ items, onNext, onAll, blocked }: { items: readonly NowResult[]; onNext: () => void; onAll: () => void; blocked?: boolean }) {
+  useEscape(items.length > 0 && !blocked, onNext);
+  if (!items.length || blocked) return null;
+  return (
+    <Overlay z={1200} className="flex items-center justify-center bg-black/60 p-3" onClick={onNext} data-testid="week-results">
+      <div className="flex flex-col items-center gap-1">
+        <ResultCard r={items[0]} onClose={onNext} onFile={() => { onAll(); window.dispatchEvent(new Event('llv-open-file')); }} />
+        {items.length > 1 && <div className="text-[11px] text-stone-400" data-testid="week-results-count">{items.length - 1} more from this week</div>}
+      </div>
+    </Overlay>
+  );
+}

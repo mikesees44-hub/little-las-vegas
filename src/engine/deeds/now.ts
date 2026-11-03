@@ -41,6 +41,8 @@ export interface NowResult {
   remember?: string;
   /** His opinion of the boss moved by this much. */
   opinionDelta?: number;
+  /** When it was settled, for the card's header: "done now" unless it came at the week's turn. */
+  when?: string;
 }
 
 /** The tier's banner (STREAMLINE §4.3). */

@@ -20,7 +20,9 @@ import { autoPauses, DEFAULT_SPEED, firstPause, redKeys, speedKey } from './cloc
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
-import { NowResultHost, postNow } from './deeds/NowResult';
+import { NowResultHost, postNow, ResultQueue } from './deeds/NowResult';
+import { weekResultCards } from './deeds/weekResults';
+import type { NowResult } from '../engine/deeds/now';
 import { actNow, instant } from '../engine/actNow';
 import { isHeavy } from '../engine/heavy';
 import { ReactionsHost } from './reactions/Reactions';
@@ -302,6 +304,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const [cues, setCues] = useState<CutsceneCue[]>([]);
   const [night, setNight] = useState<ElectionResult[]>([]);
   const [reels, setReels] = useState<Reel[]>([]);
+  // The week's result cards (deeds/weekResults.ts), shown after its scenes.
+  const [weekResults, setWeekResults] = useState<NowResult[]>([]);
 
   // The scripted scenes (Made the boss) open by themselves, once.
   const [autoOpened, setAutoOpened] = useState<Record<string, boolean>>(() => Object.fromEntries((boot.desk?.auto ?? []).map((k) => [k, true])));
@@ -346,7 +350,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }, [s, menu, urgent]);
   const alertList = useMemo(() => computeAlerts(s), [s]);
   // "How they took it" or an argument waiting: an urgent meeting waits behind it (never under it).
-  const rxWaiting = !!nextReactions(s) || !!s.argue?.live;
+  const rxWaiting = !!nextReactions(s) || !!s.argue?.live || weekResults.length > 0;
   /** Answered: the meeting closes, and the next one still waiting on the boss (if any) takes its place. */
   const nextUrgent = (done: string) => urgentMeetings(s).find((u) => u.id !== done && (u.status === 'waiting' || !u.response))?.id;
 
@@ -373,6 +377,8 @@ export function App({ startOn = 'title' }: AppProps) {
       settledRef.current = { seed: s.seed, week: s.week };
       setS((cur) => acceptSettlement(cur, s, r.state));
       setReportLog((l) => [...l, r.report].slice(-26));
+      // The jobs and the pushes come back as result cards: the dice and what happened, not one Results line.
+      setWeekResults(weekResultCards(s, r.state, orders));
       setNight(r.state.pol?.results.filter((x) => x.week >= s.week) ?? []);
       setCues(cutscenesBetween(s, r.state).filter(cueFilter));
       setReels(r.state.mg?.reels ?? []);
@@ -502,6 +508,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setFleeFor(undefined);
     setNight([]);
     setReels([]);
+    setWeekResults([]);
     setAutoOpened({});
     // Nothing carries over from the last game: its ticker line, its clock note, its open windows.
     setTicker(undefined);
@@ -1057,7 +1064,8 @@ export function App({ startOn = 'title' }: AppProps) {
       )}
       <NowResultHost />
       {/* One queue, never stacked: a decision or a scene first, then "How they took it", then the argument it opens, then an urgent meeting. */}
-      <ReactionsHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0 || !!s.argue?.live} />
+      <ResultQueue items={weekResults} blocked={!!current || !!scene || !!reports || cues.length > 0 || night.length > 0 || reels.length > 0} onNext={() => setWeekResults((x) => x.slice(1))} onAll={() => setWeekResults([])} />
+      <ReactionsHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0 || !!s.argue?.live || weekResults.length > 0} />
       <ArgueHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0} />
       {urgent && !current && !scene && !reports && !cues.length && !rxWaiting && (
         <UrgentMeeting s={s} id={urgent} onClose={() => setUrgent(undefined)} onPick={setUrgent}

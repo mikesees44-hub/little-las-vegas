@@ -30,7 +30,7 @@ export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () =
   return (
     <div className={`panel w-full max-w-md overflow-hidden border-2 bg-noir-900 ${BORDER[r.tier] ?? 'border-gold-600/60'} shadow-2xl shadow-black/80`} role="dialog" aria-label={r.title} data-testid="now-result" onClick={(e) => e.stopPropagation()}>
       <div className={`px-4 py-2 ${BANNER_BG[r.tier] ?? ''}`} data-testid="result-banner">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-stone-400">{r.title}{r.who ? ` · ${r.who}` : ''} · done now</div>
+        <div className="text-[10px] uppercase tracking-[0.25em] text-stone-400">{r.title}{r.who ? ` · ${r.who}` : ''} · {r.when ?? 'done now'}</div>
         <div className={`font-display text-2xl ${TONE[r.tier] ?? 'text-gold-300'}`} data-testid="now-headline">{pct !== undefined ? TIER_BANNER[r.tier] : r.headline}</div>
         {pct !== undefined && <div className="text-[12px] text-stone-300">{r.headline}</div>}
       </div>

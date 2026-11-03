@@ -35,7 +35,8 @@ export function OrderToast({ s, item, onUndo, onClose, onApprove }: { s: GameSta
   }, [item.at, item.short, onClose]);
   const p = previewAction(s, item.action);
   const { verb } = verbOf(item.action, p);
-  const chips = (p.effects ?? []).slice(0, 4).map((e) => (e as { label?: string }).label).filter(Boolean) as string[];
+  // Each effect's label once, and never the title again ("Push into Downtown · Push into Downtown · …").
+  const chips = [...new Set((p.effects ?? []).map((e) => (e as { label?: string }).label).filter((x): x is string => !!x && x !== p.title))].slice(0, 4);
   return (
     <div className="fixed z-[1160] bottom-[64px] md:bottom-4 left-1/2 -translate-x-1/2 md:left-[84px] md:translate-x-0 w-[min(92vw,460px)] rounded-lg border border-gold-500 bg-noir-900/95 shadow-2xl px-4 py-3 pointer-events-none" role="status" data-testid="order-toast">
       <div className="flex items-start gap-3">
