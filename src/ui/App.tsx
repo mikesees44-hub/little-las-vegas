@@ -51,6 +51,11 @@ import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
 import { homeForKey, itemOf, KEYS_CHANGED, resolveRoute, type NavRoute } from './shell/nav';
 import { homeLock } from './shell/unlocks';
+import { can, inTheRanks } from '../engine/rankView';
+import { PlaceStrip } from './borgata/YourPlace';
+
+/** Scenes that open by themselves, once: the opening, and the low starts' making and sit-down (valente.ts). */
+const AUTO_SCENES = ['made_boss', 'low_made', 'low_callin'];
 import { HOME_IDS } from './shell/routes';
 import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
@@ -316,7 +321,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   useEffect(() => {
     if (menu || scene || cues.length || reports) return;
-    const i = s.pendingEvents.findIndex((e) => e.defId === 'made_boss' && !answers[e.iid] && !autoOpened[e.iid]);
+    const i = s.pendingEvents.findIndex((e) => AUTO_SCENES.includes(e.defId) && !answers[e.iid] && !autoOpened[e.iid]);
     if (i < 0) return;
     const ev = s.pendingEvents[i];
     const ch = ev.choices.find((c) => c.id === 'play');
@@ -681,9 +686,10 @@ export function App({ startOn = 'title' }: AppProps) {
     // Where the week starts (Settings): the office, with the man across the desk and his briefing
     // (the sit-down is one step away, at the door); the desk's list; or the map.
     const start = weekStart(s);
-    if (start === 'office') { setRoute({ home: 'desk' }); setOfficeView('office'); setMondayCard(true); return; }
-    if (start === 'desk') setRoute({ home: 'desk' });
-    if (getSettings().sitdownEachWeek !== false) setSitdown('council');
+    // Below the chair (rankView.ts) there is no Office upstairs and no council sit-down: the week starts at the Desk.
+    if (start === 'office' && can(s, 'office')) { setRoute({ home: 'desk' }); setOfficeView('office'); setMondayCard(true); return; }
+    if (start === 'desk' || (start === 'office' && !can(s, 'office'))) setRoute({ home: 'desk' });
+    if (getSettings().sitdownEachWeek !== false && can(s, 'sitdown')) setSitdown('council');
   }, [menu, s.gameOver, speed, sitSeen, sitKey, current, scene, cues.length, reels.length, night.length, reports, sheet, planner, tripPlan, fleeFor, picker, office, ctxMenu]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -830,14 +836,16 @@ export function App({ startOn = 'title' }: AppProps) {
     : undefined;
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
+      <PlaceStrip s={s} onOpen={() => openRoute({ panel: 'borgata', section: 'place' })} />
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={inTheRanks(s) ? undefined : <RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
       <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
         <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>
         <InMotionStrip chips={motion} onChip={onChip} inDesk />
       </section>
       <div className="mb-3"><MorningReports s={s} update={act} onChar={(id) => setSheet(id)} onSettings={() => setLtOpen(true)} /></div>
       <div className="grid grid-cols-3 gap-1.5">
-        <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
+        {can(s, 'sitdown') ? <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('council')} data-testid="week-sitdown">♜ The sit-down{brief.items.length ? ` (${brief.items.length})` : ''}</button>
+          : <button type="button" className="btn-ghost text-xs" onClick={() => openRoute({ panel: 'borgata', section: 'place' })} data-testid="week-place">▲ Your place</button>}
         <button type="button" className="btn-ghost text-xs" onClick={() => setSitdown('rounds')} data-testid="week-rounds">☕ Your rounds</button>
         <button type="button" className="btn-gold text-xs" onClick={() => { setRoute({}); startAdvance('week'); }} data-testid="week-advance">Advance Week ▸</button>
       </div>
@@ -852,7 +860,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const bizTop = gaps ? (
     <section className="mb-4" data-testid="biz-start">
       <div className="grid grid-cols-2 gap-2">
-        <button type="button" className="btn-gold w-full py-3 text-base" onClick={() => openRoute({ panel: 'holdings', section: 'hub' })} data-testid="biz-start-racket">♣ Start a racket</button>
+        {can(s, 'rackets') ? <button type="button" className="btn-gold w-full py-3 text-base" onClick={() => openRoute({ panel: 'holdings', section: 'hub' })} data-testid="biz-start-racket">♣ Start a racket</button>
+          : <button type="button" className="btn-ghost w-full py-3 text-base opacity-60" title="Rackets of your own open when you're a capo" onClick={() => openRoute({ panel: 'borgata', section: 'place' })} data-testid="biz-start-racket-locked">🔒 Rackets: when you're a capo</button>}
         <button type="button" className="btn-gold w-full py-3 text-base bg-red-800 border-red-500 text-red-50" onClick={() => openRoute({ panel: 'holdings', section: 'dirty' })} data-testid="biz-dirty-work">✂ Dirty work</button>
       </div>
       <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
@@ -889,7 +898,7 @@ export function App({ startOn = 'title' }: AppProps) {
             onSitDown={() => setSitdown('council')} sitCount={brief.items.filter((it) => !briefSkip.includes(it.id)).length} onDesk={() => openDesk()}
             mornings={morningOpen.length} envelope={s.tribute?.reports[s.tribute.reports.length - 1]?.status === 'presented'}
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
-            onOffice={() => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); }} officeOpen={officeView === 'office'}
+            onOffice={can(s, 'office') ? () => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); } : undefined} officeOpen={officeView === 'office'}
             onHelp={() => setHelpMenu(true)} fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}

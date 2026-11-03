@@ -1,4 +1,5 @@
 import type { Alert, AlertKind } from '../../engine/alerts';
+import { placeSummary } from '../../engine/valente';
 import { displayName } from '../../engine/characters';
 import { pwView } from '../../engine/powerState';
 import { STATION_INFO } from '../../engine/station';
@@ -58,7 +59,7 @@ export function shellAlerts(s: GameState, base: Alert[]): ShellAlert[] {
   try {
     const p = s.power ? pwView(s) : undefined;
     if (p?.crisis) out.unshift({ kind: 'heir', severity: 'danger', title: 'Succession crisis', text: `Beat ${p.crisis.beat + 1} of ${p.crisis.beats}. ${displayName(s.characters[s.playerId])} holds the chair. Cohesion ${p.crisis.meters.cohesion} · survival ${p.crisis.meters.survival}.`, key: 'crisis', group: 'crisis', route: { panel: 'house', section: 'succession' } });
-    else if (p && p.station !== 'boss') out.push({ kind: 'goal', severity: 'info', title: STATION_INFO[p.station].name, text: STATION_INFO[p.station].text, key: 'station', group: 'station', route: { panel: 'you', section: 'character' } });
+    else if (p && p.station !== 'boss') out.push({ kind: 'goal', severity: 'info', title: STATION_INFO[p.station].name, text: placeSummary(s)?.line ?? STATION_INFO[p.station].text, key: 'station', group: 'station', route: p.above ? { panel: 'borgata', section: 'place' } : { panel: 'you', section: 'character' } });
   } catch { /* no power pillar */ }
   const f = s.travel?.fugitives.find((x) => !x.end && x.personId === s.playerId);
   if (f) out.unshift({ kind: 'law', severity: 'danger', title: 'On the lam', text: `Hiding: ${FLEE_DESTS[f.dest]?.name ?? f.dest} · manhunt ${Math.round(f.manhunt)} · cover ${Math.round(f.cover * 100)}%.`, key: 'lam', group: 'law', route: { panel: 'town', section: 'case' } });

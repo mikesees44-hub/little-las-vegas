@@ -5,7 +5,7 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 import { verbOf } from '../verbs';
 import { actionFacts } from '../actionFacts';
-import { CharacterDisplayName } from './yesBoss';
+import { CharacterDisplayName, yesWord } from './yesBoss';
 import { DAY_NAMES } from '../../engine/days';
 import { formatClock, hoursLabel } from '../../engine/timeCost';
 
@@ -41,7 +41,7 @@ export function OrderToast({ s, item, onUndo, onClose, onApprove }: { s: GameSta
       <div className="flex items-start gap-3">
         <div className="text-gold-300 text-lg leading-none mt-0.5">✓</div>
         <div className="min-w-0 flex-1">
-          <div className="text-sm italic text-gold-200" data-testid="yes-boss">“Yes, boss.” <span className="not-italic text-stone-400 text-xs">— <CharacterDisplayName s={s} action={item.action} actor={actionFacts(s, item.action, p).actor} /></span></div>
+          <div className="text-sm italic text-gold-200" data-testid="yes-boss">{yesWord(s)} <span className="not-italic text-stone-400 text-xs">— <CharacterDisplayName s={s} action={item.action} actor={actionFacts(s, item.action, p).actor} /></span></div>
           <div className="text-[11px] uppercase tracking-widest text-gold-400 mt-1" data-testid="ordered-line">✓ Queued · {verb} · lands {whenOf(item)}</div>
           <div className="text-sm font-semibold text-stone-100">{p.title}</div>
           {p.detail && <div className="text-xs text-stone-400 mt-0.5 line-clamp-2">{p.detail}</div>}

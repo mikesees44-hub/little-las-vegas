@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { displayName, player } from '../../engine/characters';
 import { dateOfWeek, formatDate } from '../../engine/calendar';
-import { capoTrends, filterLines, keeper, keeperSkill, honesty, MODE_INFO, MODES, raidExposure, reconcileBooks, SECTION_LABEL, srcName, visibleWeeks, type Section } from '../../engine/ledgerbook';
+import { capoTrends, filterLines, keeper, keeperSkill, honesty, MODE_INFO, MODES, raidExposure, reconcileBooks, SECTION_LABEL, sectionLabel, srcName, visibleWeeks, type Section } from '../../engine/ledgerbook';
 import { rivalBonesOnYou } from '../../engine/bones';
 import { interactionsFor } from '../../engine/interactions';
 import { FACTION_NAMES } from '../../engine/world';
@@ -110,7 +110,7 @@ export function TheBooks({ s }: { s: GameState }) {
           <label className="flex items-center gap-1">Racket
             <select className="bg-noir-900 border border-noir-700 rounded px-1 py-0.5 max-w-[10rem]" value={section} onChange={(e) => setSection(e.target.value as Section | '')} data-testid="filter-racket">
               <option value="">All kinds</option>
-              {(Object.keys(SECTION_LABEL) as Section[]).filter((k) => all.some((x) => x.section === k)).map((k) => <option key={k} value={k}>{SECTION_LABEL[k]}</option>)}
+              {(Object.keys(SECTION_LABEL) as Section[]).filter((k) => all.some((x) => x.section === k)).map((k) => <option key={k} value={k}>{sectionLabel(s, k)}</option>)}
             </select>
           </label>
           <label className="flex items-center gap-1">Place
@@ -135,7 +135,7 @@ export function TheBooks({ s }: { s: GameState }) {
                   <td className="py-0.5 pr-1 text-stone-300 break-words">
                     {x.line.l}
                     {x.line.w && <> · <CharLink s={s} id={x.line.w} className="text-stone-400" /></>}
-                    <span className="ml-1 text-[10px] uppercase tracking-wider text-stone-600">{SECTION_LABEL[x.section]}</span>
+                    <span className="ml-1 text-[10px] uppercase tracking-wider text-stone-600">{sectionLabel(s, x.section)}</span>
                   </td>
                   <td className={`w-20 py-0.5 text-right tabular-nums ${x.line.a >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{fmt$(x.line.a)}</td>
                 </tr>

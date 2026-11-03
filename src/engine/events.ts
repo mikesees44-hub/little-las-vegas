@@ -36,7 +36,7 @@ export function registerEventSource(fn: (s: GameState) => EventInstance | undefi
   if (!EVENT_SOURCES.includes(fn)) EVENT_SOURCES.push(fn);
 }
 
-import { eventAllowed } from './rankView';
+import { eventAllowed, honestAddress, inTheRanks } from './rankView';
 
 export interface EventDef {
   id: string;
@@ -937,6 +937,8 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
   }
   // Each recurring popup is told as a scene not shown yet this game (sceneVariants.ts).
   dressScenes(s, out);
+  // Below the chair nobody calls him "boss" (rankView.ts honestAddress).
+  if (inTheRanks(s)) for (const e of out) { e.text = honestAddress(s, e.text); for (const c of e.choices) { c.label = honestAddress(s, c.label); if (c.detail) c.detail = honestAddress(s, c.detail); } }
   guardDefaults(s, out);
   recordShown(s, out);
   return out;

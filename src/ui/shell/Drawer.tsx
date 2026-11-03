@@ -7,6 +7,7 @@ import { HOMES_BY_ID, itemOf, sectionDef, type NavGroup, type NavItem } from './
 import type { HomeId } from './routes';
 import type { DoNowItem } from './doNow';
 import { useOpportunity } from './RightRail';
+import { sectionLock } from '../../engine/rankView';
 
 const glyph = (g: string) => <span aria-hidden style={{ fontVariantEmoji: 'text' } as never}>{g}&#xFE0E;</span>;
 
@@ -54,12 +55,12 @@ function DoNowStrip({ s, items, onDo }: { s: GameState; items: DoNowItem[]; onDo
 
 function ItemCard({ it, fresh, onOpen }: { it: NavItem; fresh: boolean; onOpen: () => void }) {
   return (
-    <button type="button" onClick={onOpen} data-testid={`nav-item-${it.id}`}
-      className="group relative flex w-full items-start gap-2.5 rounded-md border border-noir-700 bg-noir-800/60 px-2.5 py-2 text-left hover:border-gold-500/70 hover:bg-noir-800">
+    <button type="button" onClick={onOpen} data-testid={`nav-item-${it.id}`} data-locked={it.locked ? 'true' : undefined} title={it.locked ? `${it.label}: ${it.locked}` : undefined}
+      className={`group relative flex w-full items-start gap-2.5 rounded-md border border-noir-700 bg-noir-800/60 px-2.5 py-2 text-left hover:border-gold-500/70 hover:bg-noir-800 ${it.locked ? 'opacity-50' : ''}`}>
       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-600/50 text-base text-gold-400">{glyph(it.icon)}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-stone-100 group-hover:text-gold-300">{it.label}</span>
-        <span className="block text-[11px] leading-snug text-stone-400">{it.sub}</span>
+        <span className="block text-[11px] leading-snug text-stone-400">{it.locked ? <span className="text-amber-200">🔒 {it.locked}. </span> : null}{it.sub}</span>
       </span>
       {fresh && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-gold-400" aria-label="new" />}
     </button>
@@ -165,7 +166,11 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
               </div>
             )}
             <p className="mb-3 text-xs text-stone-500">{sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub}</p>
-            <Guard label={cur.label} resetKey={`${home}:${key}`}>{extras[key!] ?? (sec ? sec.render(s, ctx) : null)}</Guard>
+            {key && sectionLock(s, key) ? (
+              <div className="rounded border border-amber-600/50 bg-amber-900/10 p-3 text-sm text-amber-100" data-testid="rank-locked">
+                🔒 {sectionLock(s, key)}. This is a boss's business, above your rank in the family for now. It opens as you climb: Family › Your place.
+              </div>
+            ) : <Guard label={cur.label} resetKey={`${home}:${key}`}>{extras[key!] ?? (sec ? sec.render(s, ctx) : null)}</Guard>}
           </>
         )}
       </div>

@@ -23,7 +23,7 @@ const BOSS_ONLY_SECTIONS = ['borgata.council', 'borgata.chain', 'diplomacy.table
 const BOSS_ORDERS: PlayerAction[] = [
   { kind: 'appoint', seat: 'underboss', charId: 'x' },
   { kind: 'declareWar', rival: 'kessler', district: 'boardwalk' },
-  { kind: 'raiseDispute', dispute: 'territory', rival: 'kessler', district: 'boardwalk' } as PlayerAction,
+  { kind: 'raiseDispute', dispute: 'territory', rival: 'kessler', district: 'boardwalk' } as unknown as PlayerAction,
   { kind: 'edict', edict: 'omerta', on: true },
 ];
 
@@ -200,5 +200,24 @@ describe('low starts: authored scenes', () => {
       expect(stationOk(b, sc), `${id} at a boss's desk`).toBe(sc.when!.station!.includes('boss'));
     }
     expect(ids.some((id) => stationOk(s, SCENES_BY_ID[id]))).toBe(true);
+  });
+});
+
+describe('low starts: the shell', () => {
+  it('an associate\'s homes show no boss-only places; they wait greyed under "Above your rank"; a boss\'s are untouched', async () => {
+    const { splitByRank, rankHidden } = await import('../src/ui/shell/useShellState');
+    const { NAV_TREE } = await import('../src/ui/shell/nav');
+    const { HOME_IDS } = await import('../src/ui/shell/routes');
+    const low = newGameWith('shell-low', 'associate');
+    const boss = newGameWith('shell-boss', 'classic');
+    for (const h of HOME_IDS) {
+      const g = splitByRank(low, NAV_TREE[h]);
+      const open = g.filter((x) => x.title !== 'Above your rank').flatMap((x) => x.items.flatMap((it) => it.keys));
+      for (const k of BOSS_ONLY_SECTIONS) expect(open, `${h}: ${k}`).not.toContain(k);
+      for (const it of g.find((x) => x.title === 'Above your rank')?.items ?? []) expect(it.locked).toMatch(/^When you're/);
+      expect(splitByRank(boss, NAV_TREE[h])).toEqual(NAV_TREE[h].filter((x) => x.items.length));
+    }
+    expect(rankHidden(boss, 'borgata.place')).toBe(true);
+    expect(rankHidden(low, 'borgata.place')).toBe(false);
   });
 });

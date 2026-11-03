@@ -2,7 +2,34 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { sectionVisible } from './unlocks';
 import { loadGoalFlags, saveGoalFlags, type UiGoalFlags } from './goals';
-import { HOMES_BY_ID, itemOf, NAV_ONLY, NAV_TREE, REGISTRY_KEYS, type NavGroup } from './nav';
+import { HOMES_BY_ID, itemOf, NAV_ONLY, NAV_TREE, REGISTRY_KEYS, type NavGroup, type NavItem } from './nav';
+import { inTheRanks, sectionLock } from '../../engine/rankView';
+
+/**
+ * His rank (rankView.ts): a place above it is not deleted; it moves to a last group, "Above your rank",
+ * greyed, with the rung that opens it; a place with some views above his rank keeps only the others.
+ */
+export function splitByRank(s: GameState, groups: NavGroup[]): NavGroup[] {
+  const locked: NavItem[] = [];
+  const out = groups
+    .map((g) => ({ ...g, items: g.items.flatMap((it): NavItem[] => {
+      const free = it.keys.filter((k) => !sectionLock(s, k));
+      if (!free.length) { locked.push({ ...it, locked: sectionLock(s, it.keys[0]) }); return []; }
+      if (free.length === it.keys.length) return [it];
+      const views = it.views?.filter((_, i) => !sectionLock(s, it.keys[i]));
+      // Below the chair The Rise is his own climb: one place, called what it is.
+      if (free.length === 1 && free[0] === 'borgata.place') return [{ ...it, id: free[0], keys: free, views, label: 'Your place', sub: 'Where you stand in the family above you: your capo, your standing, Monday\'s number, the way up.' }];
+      return [{ ...it, id: free[0], keys: free, views }];
+    }) }))
+    .filter((g) => g.items.length > 0);
+  if (locked.length) out.push({ title: 'Above your rank', items: locked });
+  return out;
+}
+
+/** Screens only a man in the ranks has (Your place); a boss never sees them. */
+export function rankHidden(s: GameState, key: string): boolean {
+  return key === 'borgata.place' && !inTheRanks(s);
+}
 import type { HomeId } from './routes';
 
 function read<T>(key: string, dflt: T): T {
@@ -70,11 +97,14 @@ export function useShellState(s: GameState, orders: PlayerAction[], sheetId?: st
     setSeen(next);
     write(`llv-unlocked-${seed}`, next);
   };
-  const open = (k: string) => unlocked.has(k) || (NAV_ONLY as readonly string[]).includes(k);
-  /** A home's places open to this boss (an item shows when any of its views is open; a hidden view stays hidden). */
-  const groupsOf = (home: HomeId): NavGroup[] => NAV_TREE[home]
-    .map((g) => ({ ...g, items: g.items.filter((it) => it.keys.some(open)).map((it) => (it.keys.every(open) ? it : { ...it, id: it.keys.find(open)!, keys: it.keys.filter(open), views: it.views?.filter((_, i) => open(it.keys[i])) })) }))
-    .filter((g) => g.items.length > 0);
+  const open = (k: string) => (unlocked.has(k) || (NAV_ONLY as readonly string[]).includes(k)) && !rankHidden(s, k);
+  /**
+   * A home's places open to this boss (an item shows when any of its views is open; a hidden view stays hidden).
+   * His rank (rankView.ts): a place above it is not deleted; it moves to "Above your rank", greyed, with the rung that opens it.
+   */
+  const groupsOf = (home: HomeId): NavGroup[] => splitByRank(s, NAV_TREE[home]
+    .map((g) => ({ ...g, items: g.items.filter((it) => it.keys.some(open)).map((it) => (it.keys.every(open) ? it : { ...it, id: it.keys.find(open)!, keys: it.keys.filter(open), views: it.views?.filter((_, i) => open(it.keys[i])) })) })));
+
   const dots = new Set(fresh.map((k) => itemOf(k)?.home).filter((h): h is HomeId => !!h));
   return {
     snoozed,

@@ -1,4 +1,5 @@
 import { CATALOG } from './catalog';
+import { chiefOf } from './valente';
 import { isInSeason } from './calendar';
 import { shortName } from './characters';
 import { earningsBoard } from './crewPurse';
@@ -339,6 +340,12 @@ export function moneyView(s: GameState, lite = false): MoneyView {
   for (const e of outs) if (e.pot === 'pocket') base.pocketOut += e.item.amount; else base.famOut += e.item.amount;
   base.sources = stages(base.inRows, SOURCE_OF, SOURCE_LABEL, SOURCE_ROUTE);
   base.uses = stages(base.outRows, USE_OF, USE_LABEL, {});
+  // Below the chair the envelope goes up to your capo and the Don, not to Philadelphia (valente.ts).
+  if (s.power?.above && s.power.station !== 'boss') {
+    const up = `Kick-up to ${chiefOf(s)?.firstName ?? 'your chief'} and the family`;
+    for (const r of base.outRows) if (r.group === 'philly') r.label = up;
+    for (const u of base.uses) if (u.key === 'philly') u.label = up;
+  }
   base.inTotal = base.inRows.reduce((a, x) => a + x.amount, 0);
   base.outTotal = base.outRows.reduce((a, x) => a + x.amount, 0);
   base.net = base.inTotal - base.outTotal;

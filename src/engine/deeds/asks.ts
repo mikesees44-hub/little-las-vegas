@@ -29,6 +29,9 @@ export function buildAsk(s: GameState, k: Ask): EventInstance | undefined {
   const t = k.t ? s.characters[k.t] : undefined;
   const an = displayName(a);
   const n = k.n ?? 0;
+  // Her or him (playtest bug 16: women got "his hat in his hands").
+  const F = a.gender === 'F';
+  const he = F ? 'she' : 'he', He = F ? 'She' : 'He', his = F ? 'her' : 'his';
   const rival = s.rivals.find((r) => r.leaderId === a.id);
   let title = '';
   let text = '';
@@ -37,38 +40,38 @@ export function buildAsk(s: GameState, k: Ask): EventInstance | undefined {
   switch (k.d) {
     case 'askFavor':
       title = `${a.firstName} asks a favor`;
-      text = `${an} comes in with his hat in his hands. "Boss, I wouldn't ask. ${fmtMoney(n)}, and a word in the right ear: my brother-in-law's trouble with the county. I won't forget it."`;
+      text = `${an} comes in with ${his} hat in ${his} hands. "Boss, I wouldn't ask. ${fmtMoney(n)}, and a word in the right ear: my brother-in-law's trouble with the county. I won't forget it."`;
       choices = [
-        choice('grant', `Do it (${fmtMoney(n)})`, 'He owes you one, and he knows it.', `did ${a.firstName} a favor`, [{ type: 'money', amount: -n }, op(a.id, B, 12, 'The boss came through for me'), { type: 'deed', op: { op: 'owe', by: a.id, to: B, y: 'The boss came through' } }, ans(k)]),
-        choice('remind', `Do it, and remind him what it means (${fmtMoney(n)})`, 'He owes you, and he is a little afraid of how much.', `did ${a.firstName} a favor with strings`, [{ type: 'money', amount: -n }, op(a.id, B, 6, 'The boss came through, with strings'), { type: 'meter', from: a.id, to: B, meter: 'fear', amount: 6 }, { type: 'deed', op: { op: 'owe', by: a.id, to: B, y: 'A favor with strings' } }, ans(k)]),
-        choice('no', 'Not this time', 'He swallows it. He remembers.', `turned ${a.firstName} down`, [op(a.id, B, -8, 'The boss turned me down when I needed him'), ans(k)]),
+        choice('grant', `Do it (${fmtMoney(n)})`, `${He} owes you one, and ${he} knows it.`, `did ${a.firstName} a favor`, [{ type: 'money', amount: -n }, op(a.id, B, 12, 'The boss came through for me'), { type: 'deed', op: { op: 'owe', by: a.id, to: B, y: 'The boss came through' } }, ans(k)]),
+        choice('remind', `Do it, and remind him what it means (${fmtMoney(n)})`, `${He} owes you, and ${he} is a little afraid of how much.`, `did ${a.firstName} a favor with strings`, [{ type: 'money', amount: -n }, op(a.id, B, 6, 'The boss came through, with strings'), { type: 'meter', from: a.id, to: B, meter: 'fear', amount: 6 }, { type: 'deed', op: { op: 'owe', by: a.id, to: B, y: 'A favor with strings' } }, ans(k)]),
+        choice('no', 'Not this time', `${He} swallows it. ${He} remembers.`, `turned ${a.firstName} down`, [op(a.id, B, -8, 'The boss turned me down when I needed him'), ans(k)]),
       ];
       break;
     case 'askLoan':
       title = `${a.firstName} needs a loan`;
-      text = `${an} needs ${fmtMoney(n)}, he says for twelve weeks, with the usual on top. He looks like a man who has already spent it.`;
+      text = `${an} needs ${fmtMoney(n)}, ${he} says, for twelve weeks, with the usual on top. ${He} looks like ${F ? 'a woman' : 'a man'} who has already spent it.`;
       choices = [
-        choice('lend', `Lend it (${fmtMoney(n)}, back with 10% in 12 weeks)`, 'If he has it then.', `lent ${a.firstName} money`, [{ type: 'money', amount: -n }, { type: 'wealth', charId: a.id, amount: n }, { type: 'deed', op: { op: 'loan', by: B, to: a.id, amt: Math.round(n * 1.1), due: s.week + 12 } }, op(a.id, B, 10, 'Lent me money when I needed it'), ans(k)]),
+        choice('lend', `Lend it (${fmtMoney(n)}, back with 10% in 12 weeks)`, `If ${he} has it then.`, `lent ${a.firstName} money`, [{ type: 'money', amount: -n }, { type: 'wealth', charId: a.id, amount: n }, { type: 'deed', op: { op: 'loan', by: B, to: a.id, amt: Math.round(n * 1.1), due: s.week + 12 } }, op(a.id, B, 10, 'Lent me money when I needed it'), ans(k)]),
         choice('half', `Lend half (${fmtMoney(Math.round(n / 2))})`, 'Something, not everything.', `lent ${a.firstName} half`, [{ type: 'money', amount: -Math.round(n / 2) }, { type: 'wealth', charId: a.id, amount: Math.round(n / 2) }, { type: 'deed', op: { op: 'loan', by: B, to: a.id, amt: Math.round(n * 0.55), due: s.week + 12 } }, op(a.id, B, 3, 'Helped, some'), ans(k)]),
-        choice('no', 'The bank is closed', 'He will find it somewhere else, maybe somewhere worse.', `refused ${a.firstName} a loan`, [op(a.id, B, -8, 'Would not lend me a dime'), ans(k)]),
+        choice('no', 'The bank is closed', `${He} will find it somewhere else, maybe somewhere worse.`, `refused ${a.firstName} a loan`, [op(a.id, B, -8, 'Would not lend me a dime'), ans(k)]),
       ];
       break;
     case 'alliance':
       title = `${a.firstName} proposes ${rival ? 'a pact' : 'an understanding'}`;
-      text = `${an} sends word: ${rival ? `${rival.name} and your people should watch each other's backs, not each other's corners.` : 'the two of you should look out for each other.'} He is waiting for your answer.`;
+      text = `${an} sends word: ${rival ? `${rival.name} and your people should watch each other's backs, not each other's corners.` : 'the two of you should look out for each other.'} ${He} is waiting for your answer.`;
       theme = rival ? 'rivals' : 'crew';
       choices = [
         choice('yes', 'Shake on it', 'An ally. Allies get called on.', `made a pact with ${a.firstName}`, [{ type: 'deed', op: { op: 'tie', a: a.id, b: B, k: 'ally', y: 'Shook on a pact' } }, op(a.id, B, 12, 'We have an understanding'), ...(rival ? [{ type: 'rivalOpinion', rival: rival.id, amount: 15, reason: 'A pact between our houses' } as Effect] : []), ans(k)]),
         choice('no', 'Thank him, and say no', 'Politely.', `declined ${a.firstName}'s pact`, [op(a.id, B, -4, 'Turned down my hand'), ans(k)]),
-        choice('insult', 'Laugh at it', 'He will hear how you laughed.', `laughed at ${a.firstName}'s offer`, [deed('insult', B, a.id), ans(k)]),
+        choice('insult', 'Laugh at it', `${He} will hear how you laughed.`, `laughed at ${a.firstName}'s offer`, [deed('insult', B, a.id), ans(k)]),
       ];
       break;
     case 'partner':
       title = `${a.firstName} wants to go partners`;
-      text = `${an} has a deal: a vending route, a piece of a card game, his money and yours, a monthly share each for a year.`;
+      text = `${an} has a deal: a vending route, a piece of a card game, ${his} money and yours, a monthly share each for a year.`;
       choices = [
         choice('yes', 'Put up $1,500', 'About $260 a month each, for a year, if it holds.', `went partners with ${a.firstName}`, [{ type: 'money', amount: -1500 }, { type: 'wealth', charId: a.id, amount: -1500 }, { type: 'deed', op: { op: 'partner', a: a.id, b: B, n: 260 } }, op(a.id, B, 10, 'We are partners'), ans(k)]),
-        choice('no', 'You work alone', 'He shrugs.', `turned down ${a.firstName}'s deal`, [op(a.id, B, -3, 'Did not want my deal'), ans(k)]),
+        choice('no', 'You work alone', `${He} shrugs.`, `turned down ${a.firstName}'s deal`, [op(a.id, B, -3, 'Did not want my deal'), ans(k)]),
       ];
       break;
     case 'offerPiece':

@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { rankWordOf } from '../../engine/rankView';
+import { aboveLabel } from '../../engine/valente';
 import { PredictedReactions } from '../reactions/Reactions';
 import { recurringOfAll } from '../../engine/recurring';
 import { AdviceButton } from '../advice/AdviceButton';
@@ -64,7 +66,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         deadline={ev.mandatory ? 'now' : 'by the week\'s turn'}
         title={ev.title}
         faces={actors}
-        sub={actors.length > 0 ? actors.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{displayName(c)}{c.rank !== 'civilian' ? `, ${c.rank}` : c.office ? `, ${c.office}` : ''}</span>) : undefined}
+        sub={actors.length > 0 ? actors.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{displayName(c)}{aboveLabel(s, c.id) ? `, ${aboveLabel(s, c.id)}` : c.rank !== 'civilian' ? `, ${rankWordOf(s, c)}` : c.office ? `, ${c.office}` : ''}</span>) : undefined}
         stakes={stakesLine(s, ev.choices.map((c) => c.effects))}
         text={ev.text}
         extra={<>
