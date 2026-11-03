@@ -326,7 +326,11 @@ export function allTalkIds(): string[] {
 
 function choose(s: GameState, lines: Line[], c: TC, h: RngHolder): { id: string; text: string } | undefined {
   const t = s.tribute!;
-  const ok = lines.filter((l) => !l.when || l.when(c));
+  // The man holding the envelope never talks about himself in the third person ("Slim says his assessment's too
+  // high" from Slim): when the capo in question is the speaker, the lines that name him are passed over.
+  const self = !!(c.capo && c.ub && c.capo.id === c.ub.id);
+  const names = self ? [nick(c.capo), first(c.capo)].filter((x) => x && x !== 'somebody') : [];
+  const ok = lines.filter((l) => (!l.when || l.when(c)) && !(self && names.some((n) => new RegExp(`\\b${n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(l.say(c)))));
   if (!ok.length) return undefined;
   const fresh = ok.filter((l) => !t.said.includes(l.id));
   let pick: Line;

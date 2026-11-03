@@ -1,7 +1,7 @@
 import { previewAction } from './actions';
 import { explainAction, explainChoice, preSeason, type ActionExplanation } from './advice';
 import { adviceBrief, advisersFor, biasLabel, moneyRead, readSubject, type AdviceBrief, type AdviceSubject, type AdviserRef, type Certainty, type Reaction, type Stance } from './adviceBrief';
-import { briefing, type BriefItem, type BriefOption } from './briefing';
+import { briefing, speakerLabel, type BriefItem, type BriefOption } from './briefing';
 import { idleMen } from './business';
 import { isInSeason } from './calendar';
 import { rankCandidates, type Candidate, type Role } from './candidates';
@@ -427,7 +427,7 @@ function evalWait(_ctx: Ctx, adv: Character, it: BriefItem): Eval {
       { text: 'Costs nothing and commits you to nothing this week', k: 'known', about: 'money', mag: 1.2, pro: true },
       { text: 'Nothing in it the law or the other families can use', k: 'known', about: 'heat', mag: 0.8, pro: true },
       { text: `${it.topic} stays open: "${it.line.length > 90 ? `${it.line.slice(0, 89)}…` : it.line}"`, k: 'known', about: 'timing', mag: 0.5 + it.priority / 3, pro: false },
-      { text: `${it.speaker} brought it to you: putting him off is noticed`, k: 'estimate', about: 'loyalty', mag: 0.7, pro: false },
+      { text: `${(() => { const w = speakerLabel(briefing(_ctx.s), it.speaker); return w.charAt(0).toUpperCase() + w.slice(1); })()} brought it to you: putting him off is noticed`, k: 'estimate', about: 'loyalty', mag: 0.7, pro: false },
     ],
     skill: skillFor(adv, 'sitdown'),
   };
@@ -517,40 +517,60 @@ function weigh(ctx: Ctx, adv: Character, ref: AdviserRef, e: Eval, interest = 0)
 
 const LINES: Record<Stance, Record<CounselVerdict, string[]>> = {
   cautious: {
-    do: ['It\'s sound. Even I can\'t find much wrong with it.', 'I looked for the trap in it, Don. I don\'t see one.'],
-    doBut: ['It can work —', 'Yes, carefully —'],
-    wait: ['I\'d let it sit a week, Don. There\'s more we don\'t know than I like.', 'Not yet. Let\'s see who moves first.'],
-    dont: ['Leave this alone, Don. The downside is bigger than it looks.', 'With respect, no. This is how families end up in the newspapers.'],
+    do: ['It\'s sound. Even I can\'t find much wrong with it.', 'I looked for the trap in it, Don. I don\'t see one.', 'I went over it twice. It holds.', 'For once I have no objection.'],
+    doBut: ['It can work —', 'Yes, carefully —', 'All right —', 'I\'ll go along —'],
+    wait: ['I\'d let it sit a week, Don. There\'s more we don\'t know than I like.', 'Not yet. Let\'s see who moves first.', 'Give it time. Time costs us nothing here.', 'I\'d sleep on it.'],
+    dont: ['Leave this alone, Don. The downside is bigger than it looks.', 'With respect, no. This is how families end up in the newspapers.', 'No. I\'ve seen this go wrong before.', 'I can\'t put my name to this one.'],
   },
   bold: {
-    do: ['Do it, and do it this week. Nobody respects a man who waits.', 'Say the word and it\'s done, Boss.'],
-    doBut: ['Go —', 'I\'m for it —'],
-    wait: ['I want to say go. Even I see a problem here.', 'I\'d hold off. Not long.'],
-    dont: ['Even I say no to this one.', 'No. That\'s a fight we lose.'],
+    do: ['Do it, and do it this week. Nobody respects a man who waits.', 'Say the word and it\'s done, Boss.', 'Why are we still talking? Go.', 'This is what we\'re here for.'],
+    doBut: ['Go —', 'I\'m for it —', 'Do it —', 'Hit it —'],
+    wait: ['I want to say go. Even I see a problem here.', 'I\'d hold off. Not long.', 'Not this week. Next week, maybe.', 'Give me a few days on it first.'],
+    dont: ['Even I say no to this one.', 'No. That\'s a fight we lose.', 'Forget it. It\'s a loser.', 'I\'d walk away from this.'],
   },
   money: {
-    do: ['The numbers work. It pays for itself.', 'I ran it twice. It makes money.'],
-    doBut: ['The money\'s there —', 'It pays —'],
-    wait: ['The money\'s thin. I\'d wait.', 'I can\'t make it add up yet.'],
-    dont: ['It loses money, and that\'s the end of it for me.', 'You\'d be paying to have a problem.'],
+    do: ['The numbers work. It pays for itself.', 'I ran it twice. It makes money.', 'On paper it\'s good, and the paper\'s honest.', 'It earns. That\'s my whole answer.'],
+    doBut: ['The money\'s there —', 'It pays —', 'It adds up —', 'It\'s a fair price —'],
+    wait: ['The money\'s thin. I\'d wait.', 'I can\'t make it add up yet.', 'Let me see another week of the books first.', 'The numbers aren\'t there yet.'],
+    dont: ['It loses money, and that\'s the end of it for me.', 'You\'d be paying to have a problem.', 'It\'s money down a hole.', 'No. It never pays back.'],
   },
   steady: {
-    do: ['Good move. I can have it set up by tomorrow.', 'The men will like it. Let\'s go.'],
-    doBut: ['I\'m with you on it —', 'Fine by me —'],
-    wait: ['Your call, but I\'d give it a week.', 'Let me talk to people first.'],
-    dont: ['I don\'t like it. Not now, maybe not ever.', 'The men won\'t understand this one.'],
+    do: ['Good move. I can have it set up by tomorrow.', 'The men will like it. Let\'s go.', 'Makes sense to me. I\'ll see to it.', 'Yes. It\'s the right thing.'],
+    doBut: ['I\'m with you on it —', 'Fine by me —', 'Sure —', 'I\'ll back it —'],
+    wait: ['Your call, but I\'d give it a week.', 'Let me talk to people first.', 'Not yet. Let it settle.', 'I\'d wait and see.'],
+    dont: ['I don\'t like it. Not now, maybe not ever.', 'The men won\'t understand this one.', 'It\'s not us. Leave it.', 'No. It sits wrong with me.'],
   },
 };
 
-function says(adv: Character, ref: AdviserRef, op: CounselOpinion, key: string, backsLabel?: string): string {
+/** The reason he gives, said his way (so two men backing the same thing don't sound like one). */
+const LIKE = ['What I like is', 'For me it comes down to', 'The thing that sells me is', 'Mostly it\'s'];
+const WORRY = ['My worry is', 'What bothers me is', 'I keep coming back to', 'The trouble is'];
+
+/** One or two sentences in his voice. `taken`: lines already said at this table, so no two men say the same words. */
+function says(adv: Character, ref: AdviserRef, op: CounselOpinion, key: string, backsLabel?: string, taken?: Set<string>): string {
   const opts = LINES[ref.stance][op.verdict];
-  let line = opts[hashSeed(`${adv.id}|${key}`) % opts.length];
-  if (op.verdict === 'doBut' && op.but) line = `${line} ${op.but}.`;
-  const top = op.verdict === 'do' || op.verdict === 'doBut' ? op.pros[0] : op.cons[0];
-  const tail = top ? (op.verdict === 'do' || op.verdict === 'doBut' ? ` What I like is ${ABOUT_WORD[top.about]}.` : ` My worry is ${ABOUT_WORD[top.about]}.`) : '';
+  const h = hashSeed(`${adv.id}|${key}`);
+  const good = op.verdict === 'do' || op.verdict === 'doBut';
+  const top = good ? op.pros[0] : op.cons[0];
   const flavor = hasTrait(adv, 'Hot-headed') ? ' Let\'s stop talking.' : hasTrait(adv, 'Pious') && op.verdict === 'dont' ? ' God forgive me for saying it plain.' : hasTrait(adv, 'Paranoid') && op.verdict !== 'do' ? ' Somebody always talks.' : '';
-  const pick = backsLabel ? (op.verdict === 'do' || op.verdict === 'doBut' ? ` I'd go with “${backsLabel}”.` : ` If you must pick one, “${backsLabel}”.`) : '';
-  return `"${line}${pick}${tail}${flavor}"`;
+  const pick = backsLabel ? (good ? ` I'd go with “${backsLabel}”.` : ` If you must pick one, “${backsLabel}”.`) : '';
+  const build = (i: number, j: number) => {
+    let line = opts[(h + i) % opts.length];
+    if (op.verdict === 'doBut' && op.but) line = `${line} ${op.but}.`;
+    const lead = (good ? LIKE : WORRY)[(h + j) % LIKE.length];
+    const tail = top ? ` ${lead} ${ABOUT_WORD[top.about]}.` : '';
+    return `"${line}${pick}${tail}${flavor}"`;
+  };
+  let out = build(0, 0);
+  if (taken) {
+    // Another opener first, then another way to give the reason: the first combination nobody has said yet.
+    search: for (let j = 0; j < LIKE.length; j++) for (let i = 0; i < opts.length; i++) {
+      const c = build(i, j);
+      if (!taken.has(c)) { out = c; break search; }
+    }
+    taken.add(out);
+  }
+  return out;
 }
 
 function blindOf(ref: AdviserRef, adv: Character, brief?: AdviceBrief): string {
@@ -668,7 +688,7 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
     extra.dflt = dflt;
   } else if (sub.kind === 'brief') {
     const it = briefing(s).items.find((x) => x.id === sub.itemId)!;
-    title = `${it.topic} (${it.speaker})`;
+    title = `${it.topic} (${speakerLabel(briefing(s), it.speaker)})`;
     opts = it.options.filter((o: BriefOption) => o.action || o.id === 'wait').map((o) => (o.id === 'wait' ? { id: o.id, label: o.label, wait: { item: it } } : { id: o.id, label: o.label, action: o.action, disabled: o.action ? previewAction(s, o.action).disabledReason : undefined }));
   } else if (roleOf(sub)) {
     const role = roleOf(sub)!;
@@ -759,6 +779,8 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
 
   // ---- voices ----
   const multi = opts.length > 1;
+  // No two men at the table say the same words (the playthrough heard three identical lines).
+  const said = new Set<string>();
   const voices: Voice[] = men.map(({ ref, adv }, i) => {
     const mine = grid.map((g) => ({ opt: g.opt, x: g.ops[i] }));
     const live = mine.filter((m2) => !m2.opt.disabled);
@@ -767,7 +789,7 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
     const backsLabel = multi ? bestM.opt.label : undefined;
     const v: Voice = {
       ...op, adviser: ref,
-      says: says(adv, ref, op, key, backsLabel),
+      says: says(adv, ref, op, key, backsLabel, said),
       bias: (op as CounselOpinion & { bias?: string }).bias,
       backs: multi ? bestM.opt.id : undefined, backsLabel,
       blind: blindOf(ref, adv, bestM.x.e.brief),
@@ -794,12 +816,31 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
       }
     }
   }
+  // The man who brought a sit-down item says at the table what he said at the sit-down: he backs his own recommendation
+  // (the playthrough: Carlo pitched the push and, on the same card, told the boss to leave it).
+  if (sub.kind === 'brief' && multi) {
+    let b: ReturnType<typeof briefing> | undefined;
+    try { b = briefing(s); } catch { b = undefined; }
+    const it = b?.items.find((x) => x.id === sub.itemId);
+    const who = it ? b!.seats.find((x) => x.key === it.speaker)?.charId : undefined;
+    const v = who ? voices.find((x) => x.adviser.charId === who) : undefined;
+    const rec = it ? opts.find((o) => o.id === it.recommended) : undefined;
+    if (it && v && rec && v.backs !== rec.id) {
+      v.backs = rec.id;
+      v.backsLabel = rec.label;
+      v.verdict = 'do';
+      v.label = VERDICT_LABEL.do;
+      v.instead = undefined;
+      v.says = `"${it.reason.replace(/^.*? says:?\s*/, '').replace(/^./, (c) => c.toUpperCase())}"`;
+    }
+  }
   // On a decision, a man who backs another option says so as his "instead" on each option he passes over.
   const options: CounselOption[] | undefined = multi ? grid.map((g) => {
+    const saidHere = new Set<string>();
     const vs: Voice[] = g.ops.map((x, i) => {
       const v = voices[i];
       void v;
-      return { ...x.op, adviser: x.ref, says: says(x.adv, x.ref, x.op, `${key}|${g.opt.id}`), bias: (x.op as CounselOpinion & { bias?: string }).bias, blind: blindOf(x.ref, x.adv, x.e.brief) };
+      return { ...x.op, adviser: x.ref, says: says(x.adv, x.ref, x.op, `${key}|${g.opt.id}`, undefined, saidHere), bias: (x.op as CounselOpinion & { bias?: string }).bias, blind: blindOf(x.ref, x.adv, x.e.brief) };
     });
     return { id: g.opt.id, label: g.opt.label, disabled: g.opt.disabled, action: g.opt.action, choiceId: g.opt.choice?.id, voices: vs, tally: tallyOf(vs), backers: voices.filter((v) => v.backs === g.opt.id).length };
   }) : undefined;

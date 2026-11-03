@@ -1,3 +1,4 @@
+import { genderize } from './pronouns';
 import { actionSurrenders } from './handover';
 import { previewAction } from './actions';
 import { shadowDrafts } from './shadowBrief';
@@ -306,6 +307,8 @@ interface Draft {
   topic: string;
   /** The fact, in his voice (variants). */
   says: string[];
+  /** Said instead when his own read is to wait (a man never pitches a thing and advises against it in one breath). */
+  saysIfWait?: string[];
   opts: (OptSpec | undefined)[];
   routine?: boolean;
   open?: BriefItem['open'];
@@ -759,6 +762,7 @@ function capoItems(s: GameState, k: Character): Draft[] {
       out.push({
         id: `push:${d.id}`, priority: 280 + (rivalIn[1] ?? 0) * 4, topic: `${d.name}`,
         says: [`${r?.shortName ?? 'They'} still hold ${Math.round(rivalIn[1] ?? 0)}% of ${d.name}. Give me the money and I'll take it.`, `There's ground to take in ${d.name}. ${r?.shortName ?? 'They'} are soft right now.`, `My corners in ${d.name} could be twice what they are.`],
+        saysIfWait: [`${r?.shortName ?? 'They'} still hold ${Math.round(rivalIn[1] ?? 0)}% of ${d.name}. I looked at pushing in. I don't think it's time.`, `There's ground in ${d.name} we could take. I'm not sure it's worth the fight yet.`],
         opts: [{ id: 'push', label: 'Push in', action: { kind: 'pushDistrict', district: d.id }, why: 'more corners, more take', self: 300 }, wait('Hold what we have.')],
         open: { label: 'Show on the map', link: { tab: 'map' } },
       });
@@ -834,13 +838,23 @@ function decide(s: GameState, sp: Seat0, d: Draft, opts: (BriefOption & { self: 
     if (v > top) { top = v; chosen = o; }
   }
   const biased = chosen.id !== best.id;
-  const tell = biased ? (w >= 0.4 && opts.some((o) => o.self !== 0) ? pick(s, `tell:${d.id}`, TELLS_SELF) : pick(s, `tellw:${d.id}`, TELLS_WEAK)) : undefined;
+  const tell0 = biased ? (w >= 0.4 && opts.some((o) => o.self !== 0) ? pick(s, `tell:${d.id}`, TELLS_SELF) : pick(s, `tellw:${d.id}`, TELLS_WEAK)) : undefined;
+  // The wife's tell is hers: "She isn't sure, and it shows."
+  const tell = tell0 ? genderize(tell0, c) : undefined;
   return { rec: chosen, biased, tell };
 }
 
 /* ------------------------------------------------------------------ */
 /* Building the briefing                                               */
 /* ------------------------------------------------------------------ */
+
+/** The man behind a speaker key ("capo:c21" → "Carlo Marino"): a seat key never reaches the screen. */
+export function speakerLabel(b: Pick<Briefing, 'seats'>, key: string): string {
+  const sp = b.seats.find((x) => x.key === key);
+  if (sp && !sp.empty && sp.name) return sp.name;
+  if (key.startsWith('capo:')) return 'your capo';
+  return key ? `your ${key}` : 'somebody';
+}
 
 /** Per speaker and in all. */
 export const MAX_PER_SPEAKER = 2;
@@ -904,7 +918,7 @@ export function briefing(s: GameState): Briefing {
       let line = '';
       for (let i = 0; i < 6; i++) {
         const op = pick(s, `${d.id}|o${i}`, OPENERS[reg]);
-        const fact = pick(s, `${d.id}|f${i}`, d.says);
+        const fact = pick(s, `${d.id}|f${i}`, rec.id === 'wait' && d.saysIfWait?.length ? d.saysIfWait : d.says);
         line = `${op ? `${op} ` : ''}${fact}`.trim();
         if (!usedLines.has(line)) break;
       }

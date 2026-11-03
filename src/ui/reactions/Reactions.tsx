@@ -2,6 +2,7 @@ import { Portrait } from '../portrait/Portrait';
 import { FACTION_TINT } from '../components/People';
 import { SideChip } from '../components/Side';
 import { useEscape } from '../keys';
+import { Overlay } from '../components/Modal';
 import { useShell } from '../shell/context';
 import { predictChoice, rxName, smoothOptions, smoothOver, dismissReactions, nextReactions, ROLE_LABEL, type Reaction, type ReactionBatch, type SmoothHow } from '../../engine/reactions';
 import type { Choice, EventInstance, GameState } from '../../engine/types';
@@ -114,10 +115,11 @@ export function ReactionsHost({ s, blocked }: { s: GameState; blocked?: boolean 
   useEscape(!!b && !blocked, close);
   if (!b || blocked || !shell.update) return null;
   return (
-    <div className="fixed inset-0 z-[1150] flex items-center justify-center bg-black/60 p-3" onClick={close} data-testid="reactions-host">
+    // On the one overlay stack (Modal.tsx): it opens above whatever is already up, never underneath it.
+    <Overlay z={1150} className="flex items-center justify-center bg-black/60 p-3" onClick={close} data-testid="reactions-host">
       <ReactionsWindow s={s} b={b} onClose={close} onSmooth={(who, how) => shell.update!((x) => smoothOver(x, b.id, who, how))}
         onArgue={(spec) => shell.update!((x) => openArgument(dismissReactions(x, b.id), spec))} />
-    </div>
+    </Overlay>
   );
 }
 

@@ -3,6 +3,7 @@ import { todaysHeadline } from './paper';
 import { agingOf, isBlind, lvl } from './aging';
 import { docketOf, ltView, pendingAsks } from './lieutenants';
 import { briefing } from './briefing';
+import { counsel } from './counsel';
 import { datingPhone } from './dating';
 import { capos, displayName, isFree, player } from './characters';
 import { weekCheckIns } from './checkins';
@@ -172,6 +173,21 @@ function personIn(s: GameState, actors: readonly string[] | undefined): Characte
   return undefined;
 }
 
+/** The option this man backs on a decision when the table is asked (counsel.ts), if it is open to the boss. */
+function hisPick(s: GameState, iid: string, charId: string | undefined) {
+  if (!charId) return undefined;
+  const ev = s.pendingEvents.find((e) => e.iid === iid);
+  let id: string | undefined;
+  try { id = counsel(s, { kind: 'event', iid })?.voices.find((v) => v.adviser.charId === charId)?.backs; } catch { id = undefined; }
+  return id ? ev?.choices.find((c) => c.id === id && !c.disabledReason) : undefined;
+}
+
+/** A seat key as words ("capo:c21" never reaches the screen). */
+function speakerWord(key: string): string {
+  if (key.startsWith('capo:')) return 'Your capo';
+  return key ? `Your ${key}` : 'Somebody';
+}
+
 /** The visitors outside the door: real items only, in the order the desk lists them. */
 export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[] {
   const answers = ui.answers ?? {};
@@ -186,7 +202,8 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
     const own = !!ev.meta?.aboutBoss;
     const who = own ? s.characters[s.playerId] : personIn(s, ev.actors);
     if (!who && !petition) continue;
-    const def = ev.choices.find((c) => c.id === ev.defaultChoiceId && !c.disabledReason);
+    // "Ask X to handle it" carries X's own pick at the table (the option his advice names), else the default.
+    const def = (by ? hisPick(s, ev.iid, seat.charId) : undefined) ?? ev.choices.find((c) => c.id === ev.defaultChoiceId && !c.disabledReason);
     out.push({
       key: `ev:${ev.iid}`, kind: petition ? 'petition' : 'decision',
       name: own ? ev.title : who ? displayName(who) : 'Somebody from town', charId: who?.id,
@@ -218,12 +235,14 @@ export function officeVisitors(s: GameState, ui: OfficeUi = {}): OfficeVisitor[]
     if (ui.briefSkip?.includes(it.id) || proposed.has(it.id)) continue;
     if (ui.orders?.length && it.options.some((o) => o.action && ui.orders!.some((x) => sameOrd(x, o.action!)))) continue;
     const rec = it.options.find((o) => o.id === it.recommended);
-    const who = it.charId ? s.characters[it.charId] : it.role === 'underboss' || it.role === 'consigliere' ? holder(s, it.role) : undefined;
+    // The man the item is about, else the man who brought it (a capo's item is keyed "capo:<id>": never shown raw).
+    const sp = b.seats.find((x) => x.key === it.speaker);
+    const who = it.charId ? s.characters[it.charId] : it.role === 'underboss' || it.role === 'consigliere' ? holder(s, it.role) : sp?.charId ? s.characters[sp.charId] : undefined;
     out.push({
-      key: `sd:${it.id}`, kind: 'sitdown', name: who ? displayName(who) : it.speaker, charId: who?.id,
+      key: `sd:${it.id}`, kind: 'sitdown', name: who ? displayName(who) : sp && !sp.empty ? sp.name : speakerWord(it.speaker), charId: who?.id,
       why: `${it.topic}: ${clip(it.line)}`,
       ref: { brief: it.id },
-      delegate: rec?.action && rec.id !== 'wait' ? { label: `Do what ${who ? shortFirst(who) : it.speaker} recommends`, does: rec.label, op: { kind: 'order', action: rec.action } } : undefined,
+      delegate: rec?.action && rec.id !== 'wait' ? { label: `Do what ${who ? shortFirst(who) : sp && !sp.empty ? sp.name : speakerWord(it.speaker)} recommends`, does: rec.label, op: { kind: 'order', action: rec.action } } : undefined,
     });
   }
   const lawyer = personalRounds(s, undefined).find((r) => r.id === 'self:lawyer');

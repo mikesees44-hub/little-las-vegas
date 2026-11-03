@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import { autoFinish, minigameDef, sessionOptions, startSession, stepSession, type MgSession, type MinigameId } from '../../engine/minigames';
 import type { Effect, GameState } from '../../engine/types';
 import { Chips } from '../components/Chips';
-import { prefersReducedMotion, useTypewriter } from '../cutscene/Cutscene';
+import { prefersReducedMotion, sceneCps, useTypewriter } from '../cutscene/Cutscene';
 import { MgStill } from './MgStill';
 import { NewspaperReel, type ReelPhoto } from './NewspaperReel';
 import { TrialPanel } from './TrialPanel';
@@ -73,7 +73,7 @@ export function MinigameScreen({ s, game, iid, params, parts, onDone, onCancel, 
   }, [ses.moves.length]);
   const [epi, setEpi] = useState(0);
   const reduced = prefersReducedMotion();
-  const [introText, introDone, finishIntro] = useTypewriter(stage === 'intro' ? ses.intro.text : '', 42, reduced);
+  const [introText, introDone, finishIntro] = useTypewriter(stage === 'intro' ? ses.intro.text : '', sceneCps(42), reduced);
   const logRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });

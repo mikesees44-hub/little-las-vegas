@@ -1,3 +1,4 @@
+import { genderize } from './pronouns';
 import { actionSurrenders } from './handover';
 import { previewAction, resolveActions } from './actions';
 import { explainAction } from './advice';
@@ -699,7 +700,7 @@ function plan(s: GameState): LtAct[] {
       out.push({
         id: `${seat}:${c.id}`, seat, byId: p.c.id, domain: c.domain, topic: c.topic, line: c.says[lineSeed] ?? c.says[0] ?? c.topic,
         options: c.opts, pick: ch.pick.id, best: ch.best.id, why: ch.pick.why, ...(ch.motive ? { motive: ch.motive } : {}),
-        ...(ch.motive && ch.motive !== 'guess' ? { tell: TELLS[ch.motive][Math.floor(h01(`${s.seed}|${c.id}|tell`) * 2)] } : ch.motive === 'guess' && p.competence < 0.45 ? { tell: TELLS.guess[Math.floor(h01(`${s.seed}|${c.id}|tell`) * 2)] } : {}),
+        ...(ch.motive && ch.motive !== 'guess' ? { tell: genderize(TELLS[ch.motive][Math.floor(h01(`${s.seed}|${c.id}|tell`) * 2)], p.c) } : ch.motive === 'guess' && p.competence < 0.45 ? { tell: genderize(TELLS.guess[Math.floor(h01(`${s.seed}|${c.id}|tell`) * 2)], p.c) } : {}),
         day, mode, ...(over ? { needsOk: true } : {}), ...(bigStep(ch.pick.action, ch.pick.cost) ? { waits: true } : {}), hours: hrs, priority: Math.round(c.priority), ...(c.charId ? { charId: c.charId } : {}),
       });
     }

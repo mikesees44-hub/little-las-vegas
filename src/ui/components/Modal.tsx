@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type MouseEventHandler, type ReactNode } from 'react';
+import { useEscape } from '../keys';
 
 /**
  * ONE OVERLAY STACK (STREAMLINE §6.3). Every full-screen layer (a modal, a
@@ -56,6 +57,8 @@ export function Overlay({ z, className = '', children, onClick, onContextMenu, s
 
 /** The one modal: a bottom sheet on phones (90% of the height, a grab bar), centred on wider screens. */
 export function Modal({ children, onClose, wide, xwide }: { children: ReactNode; onClose?: () => void; wide?: boolean; xwide?: boolean }) {
+  // Escape closes the modal on top (keys.ts: the nearest surface), like its ✕ and its backdrop.
+  useEscape(!!onClose, () => onClose?.());
   return (
     <Overlay z={1170} className="flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4" onClick={onClose} role="dialog" aria-modal="true" data-testid="modal">
       <div

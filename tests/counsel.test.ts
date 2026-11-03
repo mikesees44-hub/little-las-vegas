@@ -278,3 +278,19 @@ describe('The Table: the panel', () => {
     expect(one).toContain('Give the order');
   });
 });
+
+describe('advisers mean what they say (deep-dive playthrough)', () => {
+  it('no two men at the table say the identical words, on the decision or on any one option', () => {
+    for (const seed of ['olddon-q1', 'olddon-q2', 'rise-q3']) {
+      const { s, ev } = withDecision(newGame(seed));
+      const c = counsel(s, { kind: 'event', iid: ev.iid });
+      if (!c) continue;
+      const says = c.voices.map((v) => v.says);
+      expect(new Set(says).size, seed).toBe(says.length);
+      for (const o of c.options ?? []) {
+        const os = o.voices.map((v) => v.says);
+        expect(new Set(os).size, `${seed} ${o.id}`).toBe(os.length);
+      }
+    }
+  });
+});

@@ -67,6 +67,11 @@ export interface DirtyResult {
   text: string;
   /** He talked (a rat). */
   rat?: boolean;
+  /** The odds it went clean (0..1) and the roll (0..99, under the odds wins): the result card shows the dice. */
+  odds?: number;
+  roll?: number;
+  /** Who did it, for the card ("You" or his name), and the job's title with its target. */
+  label?: string;
 }
 
 export interface DirtyState {
@@ -769,7 +774,7 @@ export function commitDirty(ctx: Ctx, a: DirtyAction): void {
   const text = `${j.title}${tName ? ` (${tName})` : ''}, ${boss ? 'you' : c.firstName}: ${how}.${money}${extra}`;
   ctx.log.push(`Dirty work — ${text}`);
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${boss ? 'You' : displayName(c)} ${outcome === 'clean' || outcome === 'messy' ? 'pulled off' : 'tried'} a job: ${j.title.toLowerCase()}${tName ? ` (${tName})` : ''}${outcome === 'pinched' ? ', and was picked up' : ''}.`, kind: outcome === 'pinched' ? 'heat' : 'decision' });
-  d.log.push({ week: s.week, job: a.job, who: c.id, ...(a.target ? { target: a.target } : {}), outcome, take, text, ...(rat ? { rat } : {}) });
+  d.log.push({ week: s.week, job: a.job, who: c.id, ...(a.target ? { target: a.target } : {}), outcome, take, text, ...(rat ? { rat } : {}), odds, roll: Math.min(99, Math.floor(roll * 100)), label: `${j.title}${tName ? ` (${tName})` : ''}` });
   if (d.log.length > 12) d.log = d.log.slice(-12);
   d.stats.jobs++; d.stats[outcome]++; d.stats.take += take; if (rat) d.stats.rats++;
   // He learns from it, whichever way it went (crewXp.ts).

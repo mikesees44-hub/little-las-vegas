@@ -120,7 +120,8 @@ export function pausesOn(key: keyof Settings): boolean {
 
 const KEY = 'llv.settings';
 export const DEFAULT_SETTINGS: Settings = { reducedMotion: false, textSpeed: 'normal', pauseOnDecision: false, pauseOnWarning: true, clockV: 2 };
-export const TEXT_CPS: Record<TextSpeed, number> = { slow: 22, normal: 38, fast: 80, instant: 10000 };
+// Faster than it was (the playthrough timed ~30 s for the three-line intro at 38): normal reads at a brisk pace, a click finishes the line.
+export const TEXT_CPS: Record<TextSpeed, number> = { slow: 30, normal: 70, fast: 140, instant: 10000 };
 
 let cached: Settings | undefined;
 

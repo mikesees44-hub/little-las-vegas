@@ -1,3 +1,4 @@
+import { bossWord, genderize } from '../pronouns';
 import { displayName, hasTrait, isFree } from '../characters';
 import { applyEffects } from '../effects';
 import { cloneState } from '../engine';
@@ -47,7 +48,14 @@ function names(s: GameState, A: Argument, w?: string) {
 }
 
 function say(s: GameState, G: ArgueState, A: Argument, by: string, pool: readonly string[], extra: Partial<ArgLine> = {}, w?: string): ArgLine {
-  const l: ArgLine = { by, t: fillLine(gpick(G, pool), names(s, A, w)), ...extra };
+  let text = fillLine(gpick(G, pool), names(s, A, w));
+  const c = s.characters[A.t];
+  if (c && by === A.t) {
+    // His own son or daughter, his wife: "Pop", "Ma" or his name, never "boss".
+    const word = bossWord(s, c);
+    if (word !== 'Boss') text = text.replace(/,\s*boss\b/gi, `, ${word}`).replace(/^Boss,/, `${word},`);
+  } else if (c && !by) text = genderize(text, c);
+  const l: ArgLine = { by, t: text, ...extra };
   A.log.push(l);
   return l;
 }
@@ -196,7 +204,7 @@ function settle(ctx: Ctx, G: ArgueState, A: Argument): void {
   const nm = names(s, A);
   const narr = end === 'reconciled' ? NARR.hug : end === 'truce' ? NARR.truce : end === 'walkout' ? NARR.walk : end === 'split' ? NARR.split : NARR.plot;
   if (A.ev < EVENT_BUDGET + 2) say(s, G, A, '', narr);
-  const doneText = fillLine(gpick(G, DONE[end]), nm);
+  const doneText = genderize(fillLine(gpick(G, DONE[end]), nm), c);
   if (c?.alive) {
     const OP: Record<ArgEnd, [number, string]> = {
       reconciled: [6, 'Made it right with me, face to face'], truce: [-4, 'Had words with me'], walkout: [-10, 'We had it out and I walked'],

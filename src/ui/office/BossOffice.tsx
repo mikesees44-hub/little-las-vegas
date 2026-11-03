@@ -52,14 +52,67 @@ export interface BossOfficeProps {
 const chip = 'inline-flex items-center gap-1 rounded border border-gold-600/50 bg-noir-950/85 px-1.5 py-0.5 text-[10px] leading-none text-gold-200 shadow shadow-black/60';
 
 /** When the painting cannot load (local preview, offline): a dark panelled room so the objects still read. */
+/**
+ * When the painting can't load (the single-file build, a slow line): a drawn office in the same frame
+ * (1697 × 927), its objects under the hotspots: the map on the wall, the photographs on the credenza,
+ * the door with its frosted glass, the walnut desk with the phone, the paper, the ledger and the envelope,
+ * the chair across. No empty boxes.
+ */
 function PaintedFallback() {
+  const X = (pct: number) => (pct / 100) * 1697;
+  const Y = (pct: number) => (pct / 100) * 927;
+  const r = (id: string) => HOTSPOTS.find((h) => h.id === id)!.rect;
+  const map = r('map'); const photos = r('photos'); const door = r('door'); const phone = r('phone'); const paper = r('newspaper'); const ledger = r('ledger'); const env = r('envelope'); const chair = r('chair'); const cal = r('calendar');
   return (
-    <div className="absolute inset-0" aria-hidden data-testid="office-fallback"
-      style={{ background: 'linear-gradient(180deg, #2a1a10 0%, #3b2416 55%, #4a2c18 56%, #2b190e 100%)' }}>
-      {HOTSPOTS.map((h) => (
-        <div key={h.id} className="absolute rounded border border-amber-200/10 bg-amber-100/5" style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }} />
+    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1697 927" preserveAspectRatio="xMidYMid slice" aria-hidden data-testid="office-fallback">
+      <defs>
+        <linearGradient id="of-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a1c12" /><stop offset="1" stopColor="#3a2617" /></linearGradient>
+        <linearGradient id="of-desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5a3820" /><stop offset="1" stopColor="#2c1a0e" /></linearGradient>
+        <radialGradient id="of-lamp" cx="0.42" cy="0.55" r="0.55"><stop offset="0" stopColor="#f3c97a" stopOpacity="0.22" /><stop offset="1" stopColor="#f3c97a" stopOpacity="0" /></radialGradient>
+        <pattern id="of-blinds" width="12" height="14" patternUnits="userSpaceOnUse"><rect width="12" height="9" fill="#d9c9a0" opacity="0.18" /></pattern>
+      </defs>
+      <rect width="1697" height="927" fill="url(#of-wall)" />
+      {/* wainscot */}
+      <rect y={Y(48)} width="1697" height={Y(8)} fill="#24170e" />
+      <line x1="0" x2="1697" y1={Y(48)} y2={Y(48)} stroke="#6b4a2a" strokeWidth="3" />
+      {/* the window with blinds, right of the door */}
+      <rect x={X(72)} y={Y(6)} width={X(12)} height={Y(30)} fill="#0e141c" stroke="#5b3f24" strokeWidth="6" />
+      <rect x={X(72)} y={Y(6)} width={X(12)} height={Y(30)} fill="url(#of-blinds)" />
+      {/* the map on the wall */}
+      <rect x={X(map.x + 1)} y={Y(map.y + 3)} width={X(map.w - 2)} height={Y(map.h - 6)} fill="#c9b78a" opacity="0.85" stroke="#6b4a2a" strokeWidth="8" />
+      <path d={`M${X(map.x + 6)} ${Y(map.y + 8)} q ${X(4)} ${Y(6)} ${X(2)} ${Y(12)} t ${X(5)} ${Y(9)}`} fill="none" stroke="#5a7a8a" strokeWidth="5" opacity="0.8" />
+      <circle cx={X(map.x + 14)} cy={Y(map.y + 20)} r="7" fill="#9b2c2c" />
+      {/* the credenza and the photographs */}
+      <rect x={X(photos.x)} y={Y(photos.y + 7)} width={X(photos.w)} height={Y(photos.h - 5)} fill="#3e2615" stroke="#24170e" strokeWidth="3" />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <rect key={i} x={X(photos.x + 2 + i * 6.3)} y={Y(photos.y + 1)} width={X(4.2)} height={Y(6.5)} fill="#d8d0bc" opacity="0.75" stroke="#8a6a3a" strokeWidth="3" />
       ))}
-    </div>
+      {/* the door, frosted glass */}
+      <rect x={X(door.x)} y={Y(door.y)} width={X(door.w)} height={Y(door.h)} fill="#3b2516" stroke="#1e130b" strokeWidth="6" />
+      <rect x={X(door.x + 1.8)} y={Y(door.y + 3)} width={X(door.w - 3.6)} height={Y(door.h * 0.42)} fill="#cfc6a8" opacity="0.28" />
+      <circle cx={X(door.x + door.w - 2)} cy={Y(door.y + door.h * 0.6)} r="7" fill="#b8913f" />
+      {/* the desk */}
+      <rect x={X(1)} y={Y(54)} width={X(70)} height={Y(46)} fill="url(#of-desk)" />
+      <rect x={X(1)} y={Y(54)} width={X(70)} height={Y(3)} fill="#6e4628" />
+      <rect width="1697" height="927" fill="url(#of-lamp)" />
+      {/* the phone */}
+      <rect x={X(phone.x + 3)} y={Y(phone.y + 5)} width={X(phone.w - 6)} height={Y(phone.h - 12)} rx="14" fill="#111" />
+      <rect x={X(phone.x + 2)} y={Y(phone.y + 3)} width={X(phone.w - 4)} height={Y(4)} rx="10" fill="#1b1b1b" />
+      <circle cx={X(phone.x + phone.w / 2)} cy={Y(phone.y + 12)} r={X(2)} fill="#2a2a2a" stroke="#555" strokeWidth="2" />
+      {/* the paper */}
+      <rect x={X(paper.x + 1)} y={Y(paper.y + 1)} width={X(paper.w - 2)} height={Y(paper.h - 2)} fill="#e6dfcb" opacity="0.85" transform={`rotate(-4 ${X(paper.x + paper.w / 2)} ${Y(paper.y + paper.h / 2)})`} />
+      {[0, 1, 2].map((i) => <rect key={i} x={X(paper.x + 2)} y={Y(paper.y + 2.5 + i * 2.4)} width={X(paper.w - 4)} height="4" fill="#3a3a3a" opacity="0.5" />)}
+      {/* the ledger */}
+      <rect x={X(ledger.x + 2)} y={Y(ledger.y + 1.5)} width={X(ledger.w - 4)} height={Y(ledger.h - 3)} fill="#3d1f1a" stroke="#1d0f0c" strokeWidth="3" />
+      <line x1={X(ledger.x + ledger.w / 2)} x2={X(ledger.x + ledger.w / 2)} y1={Y(ledger.y + 1.5)} y2={Y(ledger.y + ledger.h - 1.5)} stroke="#b8913f" strokeWidth="3" />
+      {/* the envelope */}
+      <rect x={X(env.x + 1.5)} y={Y(env.y + 1.5)} width={X(env.w - 3)} height={Y(env.h - 3)} fill="#d9c79c" />
+      <path d={`M${X(env.x + 1.5)} ${Y(env.y + 1.5)} L${X(env.x + env.w / 2)} ${Y(env.y + env.h / 2)} L${X(env.x + env.w - 1.5)} ${Y(env.y + 1.5)}`} fill="none" stroke="#9c8a5f" strokeWidth="3" />
+      {/* the appointment book */}
+      <rect x={X(cal.x + 1)} y={Y(cal.y + 0.5)} width={X(cal.w - 2)} height={Y(cal.h - 1)} fill="#22301f" stroke="#111" strokeWidth="2" />
+      {/* the chair across */}
+      <path d={`M${X(chair.x + 2)} ${Y(chair.y + chair.h)} L${X(chair.x + 2)} ${Y(chair.y + 2)} Q${X(chair.x + chair.w / 2)} ${Y(chair.y - 3)} ${X(chair.x + chair.w - 2)} ${Y(chair.y + 2)} L${X(chair.x + chair.w - 2)} ${Y(chair.y + chair.h)} Z`} fill="#4a1f1a" stroke="#1d0d0b" strokeWidth="4" />
+    </svg>
   );
 }
 

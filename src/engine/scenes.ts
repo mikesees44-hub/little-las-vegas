@@ -230,7 +230,8 @@ function madeBossStep(s: GameState, ses: SS, move: string): void {
   const d = ses.d;
   const p = player(s);
   const fx = (d as SceneData & { chairFx: Record<string, Effect[]> }).chairFx;
-  const label = 'Made the boss';
+  // The chips' label: the Old Don's night is "Ten summers" (he was made boss ten years ago).
+  const label = String(ses.params.variant ?? '') === 'olddon' ? 'Ten summers' : 'Made the boss';
   const add = (xs: Effect[]) => d.fx.push(...xs.map((e) => ({ ...e, label })));
   if (move !== 'next') d.picks.push(move);
   switch (move) {
@@ -269,10 +270,26 @@ function madeBossStep(s: GameState, ses: SS, move: string): void {
   }
   if (move.startsWith('w_') || d.i + 1 >= d.beats.length) {
     const tone = move === 'w_fear' ? 'fear' : move === 'w_generous' ? 'generosity' : 'respect';
-    beat(ses, `${displayName(p)}. Head of the House of ${s.houseName}. Wildwood, New Jersey. ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][s.date.m - 1]} ${s.date.d}, ${s.date.y}.`, 'quote');
+    // The Old Don has sat in the chair ten years: his night is not "Made the boss", and the recap says what he did
+    // in the room (beat 3) and to the family in the morning (beat 5), not only the closing line.
+    const oldDon = String(ses.params.variant ?? '') === 'olddon';
+    if (oldDon) {
+      const OD: Record<string, string> = {
+        od_toast: 'At the Bolero you stood and toasted them all: "Ten more years."',
+        od_watch: 'At the Bolero you said little and watched who didn\'t clap.',
+        od_future: 'At the Bolero you told them you were thinking about the future, out loud.',
+        w_fear: 'In the morning, to the family: "Nothing moves on this island without my say. Still."',
+        w_respect: 'In the morning, to the family: "Ten years of peace. We keep it. We keep each other."',
+        w_generous: 'In the morning, to the family: "Everybody eats this summer. Everybody."',
+      };
+      for (const id of d.picks) if (OD[id]) beat(ses, OD[id]);
+    }
+    beat(ses, `${displayName(p)}. Head of the House of ${s.houseName}${oldDon ? ', ten years in the chair' : ''}. Wildwood, New Jersey. ${['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][s.date.m - 1]} ${s.date.d}, ${s.date.y}.`, 'quote');
     ses.done = true;
     ses.phase = 'end';
-    ses.outcome = { title: 'Made the boss', text: `${displayName(p)} sits in the chair. The tone of the reign: ${tone}.`, tone: 'good', effects: d.fx };
+    ses.outcome = oldDon
+      ? { title: 'Ten summers', text: `${displayName(p)} holds the room, ten years in the chair. The tone of his last summers: ${tone}.`, tone: 'good', effects: d.fx }
+      : { title: 'Made the boss', text: `${displayName(p)} sits in the chair. The tone of the reign: ${tone}.`, tone: 'good', effects: d.fx };
     return;
   }
   advance(ses);
