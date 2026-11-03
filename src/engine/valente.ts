@@ -307,7 +307,7 @@ export function describeLowOp(s: GameState, o: LowOp): string | undefined {
     case 'forgive': return 'What you owe is forgiven';
     case 'promote': return `You become ${aStation(o.to)}`;
     case 'booksAsked': return undefined;
-    case 'callIn': return 'A sit-down with the boss';
+    case 'callIn': return stationOf(s) === 'associate' ? 'Your name goes up when the books open' : 'A sit-down with the boss';
     case 'chair': return 'You take the chair';
     case 'succeed': return o.backed ? 'The underboss takes the chair, and remembers you backed him' : 'The underboss takes the chair';
     case 'exile': return 'Florida, until it is safe';
