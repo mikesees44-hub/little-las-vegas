@@ -986,6 +986,8 @@ export interface GameState {
   threats?: import('./threats').ThreatsState;
   /** The week lived day by day: decisions held for later days, raid cooldowns, the weeks under water, the set-pieces (actionState.ts; optional). */
   action?: import('./actionState').ActionState;
+  /** The phone (phone.ts): missed calls, the call log, a wire on the line (phoneState.ts; optional, made by the first call). */
+  phone?: import('./phoneState').PhoneState;
   /** The boss's hours today: what his orders have spent, what is booked ahead, late nights and missed dinners (timeCost.ts; optional, starts when used). */
   hours?: import('./timeCost').HoursState;
   /** Cutting up the big scores (cutScore.ts; optional, made by the first offer). */

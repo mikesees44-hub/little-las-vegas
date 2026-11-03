@@ -17,7 +17,10 @@ import { cutscenesBetween } from '../engine/cutscenes';
 import { CutscenePlayer } from './cutscene/Cutscene';
 import { morningStop, newWarnings, tickerLine, useClock, weekHeadlines, type Speed } from './clock';
 import { autoPauses, budgetPause, dayKey, DEFAULT_SPEED, firstPause, IMMEDIATE, redKeys, speedKey, type PauseLedger } from './clockPolicy';
-import { advanceDay, answerMoment, eventOut, eventsOut, releaseAll } from '../engine/daily';
+import { advanceDay, answerMoment, eventOut, eventsOut, liveMoments, releaseAll } from '../engine/daily';
+import { callBack, callBackView, markMissedSeen, momentKicker, phoneBadge, ringing, tipOfMoment } from '../engine/phone';
+import { dial } from '../engine/phoneMeet';
+import { PhoneButton, PhoneWindow } from './phone/PhoneWindow';
 import { StrikeCard } from './components/StrikeCard';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
@@ -102,7 +105,7 @@ import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import { RiseColumn } from './borgata/TheRise';
 import { ChairCard, useChairView } from './power/ChairCard';
 import { readyReview } from '../engine/desk';
-import { ignoreTip, liveStrikes, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
+import { ignoreTip, markTipsSeen, meetTip, respondTip, unseenUrgent, urgentCount, urgentMeetings } from '../engine/threats';
 import { UrgentMeeting } from './components/UrgentMeeting';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
@@ -298,6 +301,9 @@ export function App({ startOn = 'title' }: AppProps) {
   const [strike, setStrike] = useState<string | undefined>();
   // The first week's Sunday stop has been made (once per game).
   const firstWeekNoted = useRef(false);
+  // The phone (phone.ts): its window, and a call being returned from the missed list.
+  const [phoneOpen, setPhoneOpen] = useState(false);
+  const [backId, setBackId] = useState<string | undefined>();
   const cardOpenRef = useRef(false);
   const ackNowRef = useRef<() => void>(() => {});
   // The running clock's day: the evening scenes that just happened, the day window.
@@ -678,7 +684,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   const overlayOpen = cityOpen || vacOpen || goTo !== undefined || finding || !!ready || dayWin !== undefined || !!sitdown || ltOpen || !!office || !!ctxMenu || !!current || !!scene || !!sheet || !!planner || !!tripPlan || !!fleeFor || !!reports || !!picker || advice || !!help || helpMenu || cues.length > 0 || reels.length > 0 || night.length > 0;
   // Only a decision card holds the clock (clockPolicy.ts): the menus, sheets, drawers and the office do not.
-  const busy = !!menu || !!current || !!ready || !!sitdown || !!scene || !!urgent || !!strike || !!confirm || dayWin !== undefined || cues.length > 0 || reels.length > 0 || night.length > 0;
+  const busy = !!menu || !!current || !!ready || !!sitdown || !!scene || !!urgent || !!strike || !!backId || !!confirm || dayWin !== undefined || cues.length > 0 || reels.length > 0 || night.length > 0;
   /** One day on the clock: tonight's evening becomes a scene, then the next morning (or, after Sunday, the week turns through run()). */
   function stepDay() {
     const d = daysOf(s).day;
@@ -704,7 +710,8 @@ export function App({ startOn = 'title' }: AppProps) {
     const whys: { cat: string; text: string }[] = [];
     if (day.strikes.length) {
       setStrike(day.strikes[0]);
-      whys.push({ cat: 'strike', text: 'it is happening now' });
+      const k = momentKicker(next, day.strikes[0]);
+      whys.push({ cat: 'strike', text: k ? (k === 'The meet' ? 'your meet' : 'the phone is ringing') : 'it is happening now' });
     }
     const w = autoWhy(s, next);
     if (w) whys.push(w);
@@ -1011,6 +1018,7 @@ export function App({ startOn = 'title' }: AppProps) {
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={can(s, 'office') ? () => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); } : undefined} officeOpen={officeView === 'office'}
             chair={chair?.pressure} onChair={() => openSuccession()}
+            phone={<PhoneButton missed={phoneBadge(s)} ringing={ringing(s).length > 0} onOpen={() => { setPhoneOpen(true); setS((x) => markMissedSeen(x)); }} />}
             onHelp={() => setHelpMenu(true)} fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}
@@ -1136,13 +1144,35 @@ export function App({ startOn = 'title' }: AppProps) {
           onRespond={(id, r) => { act((x) => respondTip(x, id, r), 'You gave your answer to the warning'); setUrgent(nextUrgent(id)); }} />
       )}
       {strike && !current && !scene && (
-        <StrikeCard s={s} id={strike} onChoose={(o) => {
+        <StrikeCard s={s} id={strike} kicker={momentKicker(s, strike)} onChoose={(o) => {
+          const tip = tipOfMoment(s, strike);
           const r = answerMoment(s, strike, o);
           if (r.result.ok) setS(r.state);
-          // Two at once on the same night: the next one, then the clock goes on.
-          setStrike(r.result.ok ? liveStrikes(r.state)[0]?.id : undefined);
+          // Two at once on the same night: the next one (a strike, a call, a meet), then the clock goes on.
+          setStrike(r.result.ok ? liveMoments(r.state)[0] : undefined);
+          postNow(r.result);
+          // He heard the warning on the phone: the meeting card opens for his answer.
+          const t2 = tip ? r.state.threats?.tips.find((x) => x.id === tip) : undefined;
+          if (t2 && (t2.status === 'met' || t2.status === 'sent') && !t2.response) setUrgent(tip);
+        }} />
+      )}
+      {backId && !strike && !current && !scene && callBackView(s, backId) && (
+        <StrikeCard s={s} id={`back:${backId}`} view={callBackView(s, backId)} kicker="You call back" onChoose={(o) => {
+          const r = callBack(s, backId, o);
+          if (r.result.ok) setS(r.state);
+          setBackId(undefined);
           postNow(r.result);
         }} />
+      )}
+      {phoneOpen && !strike && !current && !backId && (
+        <PhoneWindow s={s} onClose={() => setPhoneOpen(false)}
+          onCallBack={(id) => { setPhoneOpen(false); setBackId(id); }}
+          onDial={(spec) => {
+            const r = dial(s, spec);
+            if (r.result.ok) setS(r.state);
+            setPhoneOpen(false);
+            postNow(r.result);
+          }} />
       )}
       {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}

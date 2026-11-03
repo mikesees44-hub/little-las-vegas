@@ -44,6 +44,7 @@ import { migrateTrust } from './trustMigrations';
 import { keepOldDelegation } from './lieutenants';
 import { ensureDaily } from './daily';
 import { ensureAbove } from './valente';
+import { ensurePhoneSave } from './phoneState';
 import type { GameState } from './types';
 
 /**
@@ -72,6 +73,8 @@ export function upgradeSave(s: GameState): GameState {
   if (s.econ?.lots.length) try { ensureHousing(s); } catch { /* the weekly update will try again */ }
   // The week lived day by day (daily.ts): a save with threats gets the daily layer, its planned moves their day and hour.
   if (s.threats !== undefined || s.action !== undefined) try { ensureDaily(s); } catch { /* the weekly update will make it */ }
+  // The phone (phone.ts): a save with one gets its fields filled in; a save without one gets it with the first call.
+  if (s.phone !== undefined) try { ensurePhoneSave(s); } catch { /* the first call will make it */ }
   // A days plan left from another week (the clock stopped mid-week in an older build) is dropped.
   if (s.days && s.days.week !== s.week) delete s.days;
   // The old player-run call service goes back to the Madam's network.
