@@ -6,6 +6,7 @@ import { ltView } from '../../engine/lieutenants';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
 import { Fragment, useState, type ReactNode } from 'react';
+import { DoneMark } from '../components/Layout';
 import { DeskClock } from '../components/DeskClock';
 
 /**
@@ -88,13 +89,13 @@ function WhyChips({ why }: { why?: string[] }) {
 function NeedRow({ it, api }: { it: DeskItem; api: DeskApi }) {
   const verb = verbOf(it);
   return (
-    <li className={`flex items-start gap-2 rounded border px-2 py-1.5 ${it.urgent ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-noir-700 opacity-70' : 'border-noir-700 bg-noir-900/60'}`} data-testid={`desk-item-${it.kind}`}>
-      <span className="mt-0.5 w-4 shrink-0 text-center text-stone-500" aria-hidden>{it.done ? '✓' : ICON[it.kind]}</span>
+    <li className={`flex items-start gap-2 rounded-md border px-2.5 py-2 ${it.urgent && !it.done ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-noir-700 bg-noir-900/60'}`} data-testid={`desk-item-${it.kind}`} data-done={it.done ? 'true' : undefined}>
+      <span className={`mt-0.5 w-4 shrink-0 text-center ${it.done ? 'text-emerald-400' : 'text-stone-500'}`} aria-hidden>{it.done ? '✓' : ICON[it.kind]}</span>
       <div className="min-w-0 flex-1">
-        <div className="text-[12px] font-semibold text-stone-100">{it.title}{it.urgent && <span className="ml-1 rounded bg-red-500/80 px-1 text-[9px] font-bold uppercase text-white">urgent</span>}</div>
-        <div className="text-[11px] text-stone-400">{it.detail}</div>
+        <div className="text-[13px] font-semibold text-stone-100">{it.title}{it.urgent && !it.done && <span className="ml-1 rounded bg-red-500/80 px-1 text-[10px] font-bold uppercase text-white">urgent</span>}{it.done && <DoneMark className="ml-1.5 align-middle">Answered</DoneMark>}</div>
+        <div className={`text-[12px] leading-snug ${it.done ? 'text-stone-400' : 'text-stone-300'}`}>{it.detail}</div>
         {!it.done && <WhyChips why={it.why} />}
-        {it.ifNothing && !it.done && <div className="text-[10px] text-stone-500">If you leave it: {it.ifNothing}</div>}
+        {it.ifNothing && !it.done && <div className="mt-0.5 text-[11px] text-stone-500">If you leave it: {it.ifNothing}</div>}
       </div>
       {verb && <button type="button" className={`${it.done ? 'btn-secondary' : 'btn-primary'} btn-sm shrink-0`} onClick={() => openItem(it, api)}>{verb} ▸</button>}
     </li>
@@ -179,12 +180,17 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
       <div className={`mt-1.5 grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
         <div className="min-w-0 space-y-2">
           <div data-testid="desk-group-needs">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>
+            <div className="llv-section-title mb-1 text-[14px]">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>
+            {needs && needs.items.length > 0 && needs.items.every((x) => x.done) && (
+              <div className="mb-1.5 flex flex-wrap items-center gap-2 rounded-md border border-emerald-800/60 bg-emerald-950/30 px-2.5 py-1.5 text-[12px] text-emerald-200" data-testid="desk-all-answered">
+                <DoneMark>All answered</DoneMark> Everything that needed you this week has your answer. Advance the week when you are ready.
+              </div>
+            )}
             {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow it={it} api={api} />} /> : <p className="mt-1 text-[12px] text-stone-500">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
           </div>
           {handled && handled.items.length > 0 && (
             <div data-testid="desk-group-handled">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Handled for you ({handled.items.length})</div>
+              <div className="llv-section-title mb-1 text-[14px]">Handled for you ({handled.items.length})</div>
               <Fold g={handled} n={3} render={(it) => <HandledRow it={it} api={api} />} />
             </div>
           )}
@@ -192,7 +198,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
             <div className="grid gap-2 sm:grid-cols-2">
               {rest.map((g) => (
                 <div key={g.kind} data-testid={`desk-group-${g.kind}`}>
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{g.title} ({g.items.length}){g.kind === 'bill' ? ` · ${fmt$(g.items.reduce((a, x) => a + (x.cost ?? 0), 0))}` : ''}</div>
+                  <div className="llv-section-title mb-1 text-[14px]">{g.title} ({g.items.length}){g.kind === 'bill' ? ` · ${fmt$(g.items.reduce((a, x) => a + (x.cost ?? 0), 0))}` : ''}</div>
                   <Fold g={g} n={2} render={(it) => <SmallRow it={it} api={api} />} />
                 </div>
               ))}
