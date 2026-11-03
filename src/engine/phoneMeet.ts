@@ -261,7 +261,9 @@ function result(s: GameState, before: { money: number; respect: number; heat: Ga
   if (money !== before.money) changes.push(`Money ${money > before.money ? '+' : '−'}$${Math.abs(money - before.money).toLocaleString('en-US')}`);
   if (s.respect !== before.respect) changes.push(`Respect ${sgn(s.respect - before.respect)}`);
   for (const k of ['local', 'family', 'federal'] as const) if (s.heat[k] !== before.heat[k]) changes.push(`${k[0].toUpperCase()}${k.slice(1)} heat ${sgn(s.heat[k] - before.heat[k])}`);
-  return { ok: true, title, ...(who ? { who } : {}), chance: odds, roll: Math.floor(rv * 100), tier: ok ? (rv < odds * 0.3 ? 'crit' : 'success') : 'fail', headline: `${Math.round(odds * 100)}% — ${ok ? 'it went your way' : 'it did not'}`, line, changes, leadsTo: [] };
+  // A sure thing (no odds to speak of) shows no roll.
+  if (odds >= 0.995) return { ok: true, title, ...(who ? { who } : {}), tier: 'success', headline: 'Done', line: line.replace(/\.\.+/g, '.'), changes: [...changes], leadsTo: [] };
+  return { ok: true, title, ...(who ? { who } : {}), chance: odds, roll: Math.floor(rv * 100), tier: ok ? (rv < odds * 0.3 ? 'crit' : 'success') : 'fail', headline: `${Math.round(odds * 100)}% — ${ok ? 'it went your way' : 'it did not'}`, line: line.replace(/\.\.+/g, '.'), changes, leadsTo: [] };
 }
 
 /* ------------------------------------------------------------------ */

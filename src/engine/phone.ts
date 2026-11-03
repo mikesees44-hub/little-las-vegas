@@ -144,12 +144,12 @@ function candidates(s: GameState, P: PhoneState): { key: string; w: number; p: C
   // The goomar: when will she see him?
   for (const g of activeGoomars(s)) {
     const c = s.characters[g.id];
-    if (!c?.alive || cool(`g:${g.id}`, 3)) continue;
+    if (!c?.alive || cool(`g:${g.id}`, 5)) continue;
     out.push({ key: `g:${g.id}`, w: 3, p: { k: 'goomar', who: c.id, name: displayName(c), role: 'Your goomar' }, hours: [13, 15, 21, 22] });
   }
   // The wife: he is late again.
   const wife = wifeOf(s);
-  if (wife && !cool('wife', 3) && ((s.hours?.late ?? 0) > 0 || (s.hours?.missed ?? 0) > 0 || activeGoomars(s).length > 0)) {
+  if (wife && !cool('wife', 4) && ((s.hours?.late ?? 0) > 0 || (s.hours?.missed ?? 0) > 0 || activeGoomars(s).length > 0)) {
     out.push({ key: 'wife', w: 2, p: { k: 'wife', who: wife.id, name: displayName(wife), role: 'Your wife' }, hours: [19, 20, 21, 22] });
   }
   // Philadelphia: the island is in the papers.
@@ -251,8 +251,8 @@ function rememberEffects(s: GameState, p: CallPayload): Effect[] {
   const op = (amount: number, reason: string): Effect[] => (p.who && s.characters[p.who]?.alive ? [{ type: 'opinion', from: p.who, to: s.playerId, amount, reason, label: reason }] : []);
   switch (p.k) {
     case 'capo': return op(-2, 'The boss never called me back');
-    case 'goomar': return op(-3, 'He never called me back');
-    case 'wife': return op(-2, 'He never called back');
+    case 'goomar': return op(-2, 'He never called me back');
+    case 'wife': return op(-1, 'He never called back');
     case 'rival': return [...op(-2, 'He would not take my call'), ...(p.rival ? [{ type: 'rivalOpinion', rival: p.rival as RivalId, amount: -1, reason: 'He would not take the call' } as Effect] : [])];
     case 'philly': return [{ type: 'heat', bar: 'family', amount: 3, label: 'Philadelphia does not call twice' }];
     case 'tip': return op(-1, 'He never called me back');
@@ -503,7 +503,9 @@ function nowResult(s: GameState, before: { money: number; respect: number; heat:
   if (money !== before.money) changes.push(`Money ${money > before.money ? '+' : '−'}$${Math.abs(money - before.money).toLocaleString('en-US')}`);
   if (s.respect !== before.respect) changes.push(`Respect ${sgn(s.respect - before.respect)}`);
   for (const k of ['local', 'family', 'federal'] as const) if (s.heat[k] !== before.heat[k]) changes.push(`${k[0].toUpperCase()}${k.slice(1)} heat ${sgn(s.heat[k] - before.heat[k])}`);
-  return { ok: true, title, ...(who ? { who } : {}), chance: odds, roll: Math.floor(rv * 100), tier: ok ? (rv < odds * 0.3 ? 'crit' : 'success') : 'fail', headline: `${Math.round(odds * 100)}% — ${ok ? 'it went your way' : 'it did not'}`, line, changes: [...changes, ...extra], leadsTo: [] };
+  // A sure thing (no odds to speak of) shows no roll.
+  if (odds >= 0.995) return { ok: true, title, ...(who ? { who } : {}), tier: 'success', headline: 'Done', line: line.replace(/\.\.+/g, '.'), changes: [...changes, ...extra], leadsTo: [] };
+  return { ok: true, title, ...(who ? { who } : {}), chance: odds, roll: Math.floor(rv * 100), tier: ok ? (rv < odds * 0.3 ? 'crit' : 'success') : 'fail', headline: `${Math.round(odds * 100)}% — ${ok ? 'it went your way' : 'it did not'}`, line: line.replace(/\.\.+/g, '.'), changes: [...changes, ...extra], leadsTo: [] };
 }
 
 /** Answer a call (or return one). Pure. */
