@@ -724,6 +724,13 @@ export function App({ startOn = 'title' }: AppProps) {
     return () => window.removeEventListener('keydown', onKey);
   }, [menu, overlayOpen]);
 
+  // The result card's "In Your File ▸".
+  useEffect(() => {
+    const on = () => { setOfficeView(undefined); markFileSeen(); go('book'); };
+    window.addEventListener('llv-open-file', on);
+    return () => window.removeEventListener('llv-open-file', on);
+  });
+
   if (menu) {
     return (
       <StartMenu key={menu} initial={menu} inGame={!s.gameOver && !!loadSlot(slot)} seedHint={seedInput.trim() || undefined}
@@ -760,12 +767,6 @@ export function App({ startOn = 'title' }: AppProps) {
     'nav.settings': <SettingsPanel />,
     'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
   };
-  // The result card's "In Your File ▸".
-  useEffect(() => {
-    const on = () => { setOfficeView(undefined); markFileSeen(); go('book'); };
-    window.addEventListener('llv-open-file', on);
-    return () => window.removeEventListener('llv-open-file', on);
-  });
   const deskApi = {
     onEvent: (iid: string) => { setAdvancing(false); setEventIdx(Math.max(0, s.pendingEvents.findIndex((e) => e.iid === iid))); },
     onDay: (day: number) => { setSpeed(0); setDayWin(day); },
