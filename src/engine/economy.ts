@@ -23,6 +23,7 @@ import { ensureEcon } from './econState';
 import { kickupMonth } from './kickup';
 import { placeAsksWeek } from './placeAsks';
 import { capoSkimAdd } from './capos';
+import { cutSkim, offerCut } from './cutScore';
 
 /**
  * The weekly economy. ONE ledger, applied once per week, in a fixed order:
@@ -121,6 +122,8 @@ export function skimRate(s: GameState, c: Character): number {
   r += greedSkim(s);
   // A capo hedging his bets helps himself a little more (capos.ts).
   r += capoSkimAdd(s, c);
+  // A boss who ate the lion's share of a big score lately (cutScore.ts).
+  r += cutSkim(s);
   if (op > 40) r *= 0.5;
   r *= 1 - 0.4 * Math.min(1.5, activeTask(s, 'bag_tax'));
   const fear = s.relations[`${c.id}>${s.playerId}`]?.fear ?? 0;
@@ -364,6 +367,8 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
       // A losing week (the book paid out) is a loss, not negative gross.
       const got = Math.max(0, money(ctx, Math.round(amt), label, 'business'));
       tagLast(ctx, er?.who ?? b.staffIds?.[0], b.id);
+      // A racket's big score (a bust-out folding, the bank crew, the jewel crew): the boss cuts it up (cutScore.ts).
+      if (!er && label.startsWith('Score:')) offerCut(s, got, `${b.name}'s score`, b.staffIds?.[0]);
       gross += got;
       if (def.category === 'front') clean += got;
     }

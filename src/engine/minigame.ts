@@ -1,4 +1,5 @@
 import { applyEffects } from './effects';
+import { offerCut } from './cutScore';
 import { hashSeed, rand, type RngHolder } from './rng';
 import type { Choice, Effect, EventInstance, GameState } from './types';
 import type { Ctx } from './ledger';
@@ -317,6 +318,12 @@ export function applyMinigameEffect(ctx: Ctx, e: Extract<Effect, { type: 'miniga
   const o = ses.outcome!;
   if (o.effects.length) applyEffects(ctx, o.effects.map((x) => (x.label ? x : { ...x, label: o.title })), { label: o.title, because: o.title.toLowerCase(), category: 'event' });
   minigameDef(e.game).apply?.(ctx, ses);
+  // A heist that came off: the boss cuts up the take (cutScore.ts).
+  if (o.tone === 'good' && e.game === 'heist') {
+    const take = o.effects.reduce((a, x) => a + (x.type === 'money' && x.amount > 0 && !x.pot ? x.amount : 0), 0);
+    const lead = (ses.d as { agents?: { id: string }[] } | undefined)?.agents?.[0]?.id;
+    if (take > 0) offerCut(s, take, o.title.replace(/^Heist: (.*)$/, (_m, n: string) => `the ${n.toLowerCase()} job`), lead);
+  }
   const mg = mgOf(s);
   mg.history.push({ week: s.week, game: e.game, title: o.title, text: o.text, tone: o.tone, headline: o.headline?.headline, personId: ses.params.defendant ? String(ses.params.defendant) : undefined });
   if (mg.history.length > 40) mg.history = mg.history.slice(-40);

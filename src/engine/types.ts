@@ -580,7 +580,9 @@ export type Effect =
   /** Honey (honey.ts): dares, women working the boss, mistresses' demands, the scorned. */
   | ({ type: 'honey'; op: import('./honey').HoneyOp } & EffectBase)
   /** The capos (capos.ts): answers to their requests, a man on one of them, having it out with him. */
-  | ({ type: 'capo'; op: import('./caposState').CapoOp } & EffectBase);
+  | ({ type: 'capo'; op: import('./caposState').CapoOp } & EffectBase)
+  /** Cutting up a big score (cutScore.ts): the boss's cut, the envelopes, the party. */
+  | ({ type: 'cut'; op: import('./cutScore').CutOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -980,6 +982,8 @@ export interface GameState {
   threats?: import('./threats').ThreatsState;
   /** The boss's hours today: what his orders have spent, what is booked ahead, late nights and missed dinners (timeCost.ts; optional, starts when used). */
   hours?: import('./timeCost').HoursState;
+  /** Cutting up the big scores (cutScore.ts; optional, made by the first offer). */
+  cut?: import('./cutScore').CutState;
   /** Dirty work: one-off jobs, their cooldowns and results (dirtyWork.ts; optional, starts when used). */
   dirty?: import('./dirtyWork').DirtyState;
   /** Family development: technology, connections, crew equipment, the other families' progress (devState.ts; optional for old saves). */
