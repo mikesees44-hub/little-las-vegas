@@ -333,13 +333,13 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   return (
     <header className="relative z-[1150] border-b border-noir-700 bg-noir-900/95 px-2 sm:px-3 py-1.5 shadow-lg shadow-black/50" data-testid="topbar">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-        <div className="flex items-center gap-2 min-w-0 order-1">
+        <div className="flex items-center gap-2 min-w-0 flex-1 sm:flex-initial order-1">
           <span className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full border border-gold-600/70 bg-noir-800 font-display text-gold-300" aria-hidden>♛</span>
           <div className="min-w-0">
             {/* Phones: the house and the clock's word take the brand's line (the bar was four rows, 180 px of 844). */}
             <h1 className="sr-only sm:not-sr-only font-display text-base sm:text-lg text-gold-400 leading-none whitespace-nowrap">Little Las Vegas</h1>
-            <p className="text-[11px] text-stone-300 sm:text-stone-400 truncate max-w-[52vw] sm:max-w-[16rem]">House of {s.houseName} · {displayName(boss)}</p>
-            {note && !s.gameOver && <p className="sm:hidden text-[11px] leading-tight text-amber-300 line-clamp-2 max-w-[52vw]" title={note}>{note}</p>}
+            <p className="text-[11px] text-stone-300 sm:text-stone-400 truncate sm:max-w-[16rem]">House of {s.houseName} · {displayName(boss)}</p>
+            {note && !s.gameOver && <p className="sm:hidden text-[11px] leading-tight text-amber-300 line-clamp-2" title={note}>{note}</p>}
           </div>
         </div>
         <div className="order-3 sm:order-2 flex w-full sm:w-auto items-center gap-1 overflow-x-auto sm:overflow-visible pb-0.5 sm:pb-0" data-testid="resources">
@@ -347,7 +347,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           <StandingStrip s={s} />
           <ArmyChip s={s} />
         </div>
-        <div className="order-2 sm:order-3 ml-auto text-right leading-tight">
+        <div className="order-2 sm:order-3 ml-auto shrink-0 text-right leading-tight">
           <div className="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="topbar-date">
             <FlipClock s={s} testid="topbar-clock" />
             <span className="text-[10px] sm:text-[11px] text-stone-400">Wk {s.week}</span>

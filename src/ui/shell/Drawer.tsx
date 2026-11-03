@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useEscape } from '../keys';
 import type { GameState } from '../../engine/types';
 import type { SectionCtx } from './panels';
@@ -53,6 +53,18 @@ function DoNowStrip({ s, items, onDo }: { s: GameState; items: DoNowItem[]; onDo
       )}
       {items.length > 3 && <p className="mt-1 text-[11px] text-stone-500">and {items.length - 3} more in the alerts.</p>}
     </section>
+  );
+}
+
+/** The section's one-line description: two lines on a phone, the rest a tap away. */
+function Blurb({ text }: { text: string }) {
+  const [all, setAll] = useState(false);
+  const long = text.length > 110;
+  return (
+    <div className="mb-3" data-testid="section-blurb">
+      <p className={`llv-pagehead-sub text-stone-500 ${long && !all ? 'line-clamp-2 sm:line-clamp-none' : ''}`}>{text}</p>
+      {long && !all && <button type="button" className="sm:hidden text-[11px] text-gold-400" onClick={() => setAll(true)}>Read more</button>}
+    </div>
   );
 }
 
@@ -140,7 +152,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
           ))}
         </nav>
       )}
-      <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-16 sm:p-4 md:pb-4" data-testid={cur ? `section-${key}` : 'home-landing'}>
+      <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-6 sm:p-4" data-testid={cur ? `section-${key}` : 'home-landing'}>
         {!cur ? (
           <>
             {/* The Desk speaks for itself (a calm home screen): no blurb, and "Do this now" only when there is something. */}
@@ -168,7 +180,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
                 ))}
               </div>
             )}
-            <p className="llv-pagehead-sub mb-3 text-stone-500">{sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub}</p>
+            <Blurb key={key} text={sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub} />
             {key && sectionLock(s, key) ? (
               <div className="rounded border border-amber-600/50 bg-amber-900/10 p-3 text-sm text-amber-100" data-testid="rank-locked">
                 🔒 {sectionLock(s, key)}. This is a boss's business, above your rank in the family for now. It opens as you climb: Family › Your place.
