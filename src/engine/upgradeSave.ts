@@ -39,6 +39,7 @@ import { ensureReactions } from './reactions/state';
 import { ensureArgue } from './argue/state';
 import { ensureCut } from './cutScore';
 import { ensureOc } from './oceanCity';
+import { ensureFeds } from './fedsState';
 import { migrateTrust } from './trustMigrations';
 import { keepOldDelegation } from './lieutenants';
 import { ensureDaily } from './daily';
@@ -54,7 +55,7 @@ export function upgradeSave(s: GameState): GameState {
   // created by the weekly update itself, so loading never changes the dice.
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
-    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos], ['reactions', ensureReactions], ['argue', ensureArgue], ['cut', ensureCut], ['oc', ensureOc],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos], ['reactions', ensureReactions], ['argue', ensureArgue], ['cut', ensureCut], ['oc', ensureOc], ['feds', ensureFeds],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;

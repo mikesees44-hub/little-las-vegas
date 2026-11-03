@@ -1,3 +1,4 @@
+import { hollowMeter } from './fedsState';
 import { devObeyBonus } from './devState';
 import { ageOn } from './calendar';
 import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
@@ -444,8 +445,11 @@ export function obeyOdds(s: GameState, agent: Character): { obey: number; distor
   if (hasTrait(agent, 'Ambitious') && op < 20) obey -= 0.08;
   obey -= messengerPenalty(s);
   obey += devObeyBonus(s);
+  // The hollow crown (feds.ts): the capos answer to each other, and orders are quietly ignored.
+  const hollow = (100 - hollowMeter(s)) / 100;
+  obey -= hollow * 0.45;
   obey = Math.max(0.15, Math.min(0.95, obey));
-  const disobey = Math.max(0.02, Math.min(0.4, (1 - obey) * (op < 0 ? 0.6 : 0.3)));
+  const disobey = Math.max(0.02, Math.min(0.6, Math.max((1 - obey) * (op < 0 ? 0.6 : 0.3), hollow * 0.55)));
   return { obey, distort: Math.max(0, 1 - obey - disobey) };
 }
 

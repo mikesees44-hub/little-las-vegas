@@ -584,7 +584,9 @@ export type Effect =
   /** Cutting up a big score (cutScore.ts): the boss's cut, the envelopes, the party. */
   | ({ type: 'cut'; op: import('./cutScore').CutOp } & EffectBase)
   /** Ocean City, the dry town (oceanCity.ts): the raid, the rival families. */
-  | ({ type: 'oc'; op: import('./oceanCity').OcOp } & EffectBase);
+  | ({ type: 'oc'; op: import('./oceanCity').OcOp } & EffectBase)
+  /** Feds and flipping (feds.ts). */
+  | ({ type: 'feds'; op: import('./feds').FedsOp } & EffectBase);
 
 export interface Choice {
   id: string;
@@ -1022,6 +1024,8 @@ export interface GameState {
   oldDon?: import('./oldDon').OldDonState;
   /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */
   capos?: import('./caposState').CaposState;
+  /** Feds and flipping: pinches, flips, the boss's deal, the hollow crown, the tip-off, the undercover (feds.ts). */
+  feds?: import('./fedsState').FedsState;
 }
 
 export interface PlayerChoices {

@@ -92,6 +92,7 @@ import { hoursWeek } from './timeCost';
 import { bookMark, bookOrder, bookWeek, classify } from './journal';
 import { checkinPlan, checkinsWeek } from './checkins';
 import { threatsAnswer, threatsWeek } from './threats';
+import { fedsWeek } from './feds';
 import { intrigueResolve, intrigueWeek } from './intrigue';
 import { armyResolve, armyWeek } from './army';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
@@ -458,6 +459,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     rivalDisputes(ctx);
     tableWeek(ctx);
     threatsWeek(ctx);
+    // Feds and flipping: pinches at an hour, the government's offer, the wire, the hollow crown, the tip-off, the undercover (feds.ts).
+    fedsWeek(ctx);
     // The dynamics layer reads the week's real events: eras, spies, lies, plots (intrigue.ts).
     intrigueWeek(ctx);
     // The Old Don start: the hidden hands, the opening weeks, the first year's verdict (oldDon.ts).

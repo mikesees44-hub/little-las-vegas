@@ -1,3 +1,4 @@
+import { hollowMeter } from './fedsState';
 import { noteOrder, previewMen } from './myMen';
 import { rxActionBegin, rxEnd } from './reactions/apply';
 import { bookMark, bookOrder } from './journal';
@@ -230,7 +231,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
         title: `${ch.label} (through ${agent ? agent.firstName : 'nobody'})`,
         detail: `${ch.detail ? ch.detail + ' ' : ''}${VIA_INFO[a.via].text}`,
         effects: [{ type: 'schedule', key: 'delegated_order', minWeeks: 1 + messengerDelay(s), maxWeeks: 1 + messengerDelay(s), chance: 1, hint: messengerDelay(s) ? `A messenger carries it; ${agent?.firstName ?? 'he'} acts in ${1 + messengerDelay(s)} weeks` : `${agent?.firstName ?? 'He'} carries it out next week`, params: { key: a.key, via: a.via, agent: agent?.id ?? '' }, label }],
-        odds: { chance: odds.obey, reasons: [{ label: `Done as told`, value: Math.round(odds.obey * 100) }, { label: 'Done his way', value: Math.round(odds.distort * 100) }, { label: 'Ignored', value: -Math.round((1 - odds.obey - odds.distort) * 100) }] },
+        odds: { chance: odds.obey, reasons: [{ label: `Done as told`, value: Math.round(odds.obey * 100) }, { label: 'Done his way', value: Math.round(odds.distort * 100) }, { label: 'Ignored', value: -Math.round((1 - odds.obey - odds.distort) * 100) }, ...(hollowMeter(s) < 100 ? [{ label: `The hollow crown: only ${hollowMeter(s)}% of the family answers to you`, value: -Math.round((100 - hollowMeter(s)) * 0.45) }] : [])] },
         warning: `What it would do: ${ch.effects.map((e) => e.type === 'money' ? `${e.amount > 0 ? '+' : ''}${fmtMoney(e.amount)}` : e.type).filter((x) => x !== 'schedule').slice(0, 4).join(', ')}`,
         cost: 0, because: `${ch.because} (through ${agent?.firstName ?? 'the chain'})`, disabledReason: why, category: 'event',
       };

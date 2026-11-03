@@ -1,3 +1,4 @@
+import { brascoChecked, isBrasco } from './feds';
 import { seasonMultiplier } from './calendar';
 import { displayName, hasTrait, isFree, player } from './characters';
 import { buildPlantFound } from './crewEvents';
@@ -203,6 +204,9 @@ export const CREW_HANDLERS: Record<string, Handler> = {
     const c = s.characters[String(sc.params.charId)];
     if (!c?.alive || c.faction !== 'player') return undefined;
     c.checkedWeek = s.week;
+    if (isBrasco(s, c.id)) {
+      return brascoChecked(ctx, 0.2, true) ? { text: `the background check on ${c.firstName} ${c.lastName} turned up an uncle in ${s.feds?.brasco?.town ?? 'his home town'} who does not exist` } : { text: `the background check on ${c.firstName} ${c.lastName} came back clean, more or less`, effects: [{ type: 'story', charId: c.id, text: 'A background check came back clean.' }] };
+    }
     if (c.informantFor) {
       s.eventQueue.push(buildPlantFound(s, c));
       return { text: `the background check on ${c.firstName} ${c.lastName} turned something up` };
