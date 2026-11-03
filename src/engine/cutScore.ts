@@ -181,7 +181,7 @@ export function buildCutEvent(s: GameState, total: number, what: string, by?: st
   const c = by ? s.characters[by] : undefined;
   const who = c ? `${shortName(c)} brought it in. ` : '';
   return {
-    iid, defId: 'cut_score', title: 'Cut up the score', week: s.week, mandatory: false, priority: 33, actors: c ? [c.id] : [], meta: c ? { charId: c.id, cut: total } : { cut: total },
+    iid, defId: 'cut_score', title: 'Cut up the score', week: s.week, mandatory: true, priority: 33, actors: c ? [c.id] : [], meta: c ? { charId: c.id, cut: total } : { cut: total },
     text: `${what}: ${$(total)} came into Family money. ${who}The whole family knows the number. How you cut it up is what they will remember: your end is bigger or smaller depending on how you do it.`,
     choices: CUT_WAYS.map((w) => cutChoice(s, w, total, what, key, by)),
     defaultChoiceId: 'book',
