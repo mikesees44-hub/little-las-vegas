@@ -6,6 +6,7 @@ import { fmt$ } from '../format';
 import { ActionCard, useOrders } from '../components/Orders';
 import { useShell } from '../shell/context';
 import { BigPots, MoveMoney } from './MoneyPots';
+import { DoneMark } from '../components/Layout';
 
 /**
  * THE MONEY SCREEN, one page, top to bottom:
@@ -294,15 +295,20 @@ function Levers({ s }: { s: GameState }) {
             <input type="range" min={0} max={20} step={5} value={aside} onChange={(e) => setAside(Number(e.target.value))} className="w-full accent-emerald-500" aria-label="Kept for lawyers and emergencies, percent" data-testid="money-aside-slider" />
           </div>
         )}
-        <button type="button" className="btn-gold text-xs mt-1" disabled={!changed} data-testid="money-cut-apply"
-          onClick={() => queue({ kind: 'tribute', op: { op: 'policy', split: normSplit({ personal: cut * 100, reserve: aside * 100 }) } })}>
-          {changed ? `Make it ${cut}%${aside ? ` (+${aside}% kept for emergencies)` : ''} from next week` : queued ? 'Changes when you advance' : 'Your cut stands'}
-        </button>
+        {/* A change is a button; no change is a status, not a greyed-out button. */}
+        <div className="mt-2 flex justify-end">
+          {changed ? (
+            <button type="button" className="btn-primary text-xs" data-testid="money-cut-apply"
+              onClick={() => queue({ kind: 'tribute', op: { op: 'policy', split: normSplit({ personal: cut * 100, reserve: aside * 100 }) } })}>
+              {`Make it ${cut}%${aside ? ` (+${aside}% kept for emergencies)` : ''} from next week`}
+            </button>
+          ) : queued ? <DoneMark>Ordered: changes when you advance</DoneMark> : <span className="text-[11px] text-stone-500" data-testid="money-cut-apply">Your cut stands. Move the slider to change it.</span>}
+        </div>
       </div>
       <div className="border-t border-noir-700 pt-2">
         <p className="text-[11px] text-stone-400">Need more this week? Rackets, places, kick-ups, rents and loan interest come in on their own. You hold {heldDistricts(s)} district{heldDistricts(s) === 1 ? '' : 's'} (corners pay ×{territoryMult(s).toFixed(2)}); your rackets feed each other (×{racketNetMult(s).toFixed(2)}).</p>
         <div className="mt-1.5"><ActionCard s={s} action={{ kind: 'tribute', op: { op: 'squeeze' } }} compact /></div>
-        {sq && <p className="text-[10px] text-stone-500 mt-0.5">{sq}.</p>}
+        {sq && <p className="text-[11px] text-stone-500 mt-0.5">{sq}.</p>}
       </div>
     </div>
   );

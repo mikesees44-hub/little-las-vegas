@@ -15,6 +15,7 @@ import { SteadyEarners } from './SteadyEarners';
 import { QuickRacket, SetUpAllSuggested, SetUpsPanel } from './SetUps';
 import { DirtyWork } from './DirtyWork';
 import { OceanCityPanel } from './OceanCity';
+import { StatChip } from '../components/Layout';
 import { isInSeason } from '../../engine/calendar';
 
 /**
@@ -37,10 +38,10 @@ export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
   const ownedBiz = running.flatMap((c) => c.owned);
   return (
     <div className="space-y-4" data-testid="racket-hub">
-      <div className="flex flex-wrap gap-1" role="tablist" aria-label="Rackets">
+      <div className="llv-seg tabbar !mb-0" role="tablist" aria-label="Rackets">
         {HUB_TABS.map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} data-testid={`hub-tab-${id}`}
-            className={`rounded border px-2.5 py-1 text-xs font-semibold ${tab === id ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+            className={`llv-seg-tab ${tab === id ? 'llv-seg-on' : ''}`}>
             {label}{id === 'ops' ? ` (${ownedBiz.length})` : ''}
           </button>
         ))}
@@ -97,9 +98,15 @@ export function RacketHub({ s, initial }: { s: GameState; initial?: HubTab }) {
 function EstimateNote({ s }: { s: GameState }) {
   const inS = isInSeason(s.date);
   return (
-    <p className="text-[11px] text-stone-500" data-testid="estimate-note">
-      Takes are estimates: what a racket is expected to bring this week from your hold on its district, the man who runs it, his capo and the season. Real weeks swing. {inS ? 'It is the Season now (Memorial Day to Labor Day): the boardwalk money is at its peak; most rackets pay far less once the summer people go home.' : 'It is the off-season: most rackets pay far less until Memorial Day brings the summer people back; the numbers rackets and the book hold up best.'}
-    </p>
+    // One line by default (it was three lines over every tab); the whole explanation opens on a tap.
+    <details className="text-[11.5px] text-stone-400" data-testid="estimate-note">
+      <summary className="cursor-pointer select-none list-none">
+        <span className={inS ? 'text-gold-300' : 'text-sky-300'}>{inS ? 'The Season: rackets pay their most.' : 'The off-season: most rackets pay far less.'}</span> Takes are estimates. <span className="text-gold-400 underline decoration-dotted underline-offset-2">How they're figured</span>
+      </summary>
+      <p className="llv-prose mt-1 text-[12px] text-stone-400">
+        Takes are estimates: what a racket is expected to bring this week from your hold on its district, the man who runs it, his capo and the season. Real weeks swing. {inS ? 'It is the Season now (Memorial Day to Labor Day): the boardwalk money is at its peak; most rackets pay far less once the summer people go home.' : 'It is the off-season: most rackets pay far less until Memorial Day brings the summer people back; the numbers rackets and the book hold up best.'}
+      </p>
+    </details>
   );
 }
 
@@ -129,13 +136,7 @@ function OpCard({ s, b }: { s: GameState; b: Business }) {
 }
 
 function Stat({ label, value, sub }: { label: string; value: string; sub: string }) {
-  return (
-    <div className="rounded-md border border-noir-700 bg-noir-800/60 px-3 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-stone-500">{label}</div>
-      <div className="text-lg font-semibold text-stone-100 tabular-nums">{value}</div>
-      <div className="text-[11px] text-stone-500">{sub}</div>
-    </div>
-  );
+  return <StatChip label={label} value={value} sub={sub} />;
 }
 
 /** "Which racket should I start?": the best three for right now, with reasons, and Start on the best. */
@@ -281,7 +282,7 @@ function MadamCard({ s, c }: { s: GameState; c: HubCard }) {
   const M = s.ears?.madam;
   const mc = M ? s.characters[M.id] : undefined;
   return (
-    <article className="rounded-md border border-noir-700 bg-noir-800/60 p-3" data-testid="racket-card" data-kind="madam">
+    <article className="rounded-md border border-noir-700 bg-noir-800/60 p-3 lg:col-span-2" data-testid="racket-card" data-kind="madam">
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-semibold text-stone-100">🕶 {c.name}</div>

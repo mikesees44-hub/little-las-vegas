@@ -73,10 +73,10 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
   const a = accountsView(s);
   return (
     <div className="space-y-3" data-testid="weekly-take">
-      <div className="flex flex-wrap gap-1" role="tablist" aria-label="The envelope">
+      <div className="llv-seg tabbar !mb-0" role="tablist" aria-label="The envelope">
         {GROUPS.map((g) => (
           <button key={g.id} type="button" role="tab" aria-selected={group === g.id} onClick={() => setGroup(g.id)} data-testid={`take-group-${g.id}`}
-            className={`rounded border px-2.5 py-1 text-xs font-semibold ${group === g.id ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>{g.label}</button>
+            className={`llv-seg-tab ${group === g.id ? 'llv-seg-on' : ''}`}>{g.label}</button>
         ))}
       </div>
       <Guard label="This page of the envelope" resetKey={`${group}:${s.week}`}>
