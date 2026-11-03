@@ -821,7 +821,7 @@ export function App({ startOn = 'title' }: AppProps) {
     : undefined;
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
-      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={<RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} />} /></div>
       <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
         <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>
         <InMotionStrip chips={motion} onChip={onChip} inDesk />

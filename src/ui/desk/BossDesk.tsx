@@ -141,7 +141,7 @@ function SmallRow({ it, api }: { it: DeskItem; api: DeskApi }) {
   );
 }
 
-export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode }) {
+export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode; /** In the Desk drawer (its header already says "The Desk"): no second title, no second clock. */ inDrawer?: boolean }) {
   const [filter, setFilter] = useState<DeskFilter>(filter0);
   const all = bossDesk(s, ui);
   // The one count: Needs you of the same queue the rows come from.
@@ -156,10 +156,10 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side }: { s: Gam
     <section className="rounded-md border border-gold-600/50 bg-noir-800/50 p-2.5" data-testid="boss-desk">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="panel-title text-base">The Desk</div>
+          {!inDrawer && <div className="panel-title text-base">The Desk</div>}
           <div className="text-[11px] text-stone-400" data-testid="desk-count">{waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : 'Nothing needs you'}{handled?.items.length ? ` · ${get('handled')!.items.length} handled for you` : ''} · week {s.week}</div>
         </div>
-        <div className="hidden sm:block"><DeskClock s={s} className="text-[11px] sm:text-[13px]" /></div>
+        {!inDrawer && <div className="hidden sm:block"><DeskClock s={s} className="text-[11px] sm:text-[13px]" /></div>}
       </div>
       {ltView(s).offer && api.onOffer && (
         <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded border border-gold-600/60 bg-gold-500/10 px-2 py-1.5 text-[12px] text-stone-200" data-testid="desk-offer">
