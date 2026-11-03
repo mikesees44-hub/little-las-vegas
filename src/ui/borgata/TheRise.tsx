@@ -61,7 +61,7 @@ function CapoCard({ k }: { k: CapoNode }) {
 export function Ladder({ s, compact }: { s: GameState; compact?: boolean }) {
   const { at, next } = currentRung(s);
   return (
-    <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-2 min-[480px]:grid-cols-4 lg:grid-cols-7'}`} data-testid="rise-ladder">
+    <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-2 min-[480px]:grid-cols-4 lg:grid-cols-7 items-start'}`} data-testid="rise-ladder">
       {LADDER.map((r) => {
         const done = rungDone(s, r) && r.n <= at.n;
         const cur = next?.n === r.n;
