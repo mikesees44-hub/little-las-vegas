@@ -1,3 +1,4 @@
+import { addFedEvidence } from './fedsState';
 import { ableness, frailtyAgainst } from './aging';
 import { manMod, perkMod } from './lifestyle';
 import { bonesFromScheme } from './bones';
@@ -399,9 +400,10 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
         }
         if (witness) {
           eff.push({ type: 'heat', bar: 'local', amount: 8 }, { type: 'heat', bar: 'federal', amount: 4 });
-          for (const a of agents) a.evidence = Math.min(100, (a.evidence ?? 0) + 25);
+          for (const a of agents) addFedEvidence(s, a.id, 25, 'a murder');
           cue(s, 'hit_witness', 'A witness', `Someone saw the car. A waitress, a shoeshine boy — somebody who will remember a face.`);
-        } else cue(s, 'hit_success', pub ? 'A message' : 'Gone', pub ? `${name} was found at ${loc.name.toLowerCase()}. Everyone on the island knows what it means.` : `${name} went out for cigarettes and never came back.`);
+        } else for (const a of agents) addFedEvidence(s, a.id, pub ? 10 : 6, 'a murder');
+        if (!witness) cue(s, 'hit_success', pub ? 'A message' : 'Gone', pub ? `${name} was found at ${loc.name.toLowerCase()}. Everyone on the island knows what it means.` : `${name} went out for cigarettes and never came back.`);
         const war = s.wars.find((w) => w.rival === t.faction);
         if (war) eff.push({ type: 'warScore', warId: war.id, amount: s.rivals.some((r) => r.leaderId === t.id) ? 40 : 15 });
         apply(ctx, label, sc.because, eff);

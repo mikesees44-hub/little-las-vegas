@@ -1,3 +1,4 @@
+import { addFedEvidence, ensureFeds } from './fedsState';
 import { isOperating } from './placeEligibility';
 import { offerCut } from './cutScore';
 import { isInSeason } from './calendar';
@@ -177,6 +178,11 @@ export const JOBS: JobDef[] = [
   J({ id: 'dope', tile: 'goods', icon: '☠', title: 'A dope shipment (the forbidden one)', line: 'One load through the docks to outside buyers. The most money on the island, and Philadelphia forbids it.', fit: 'business', cost: 6000, take: [16000, 30000], odds: 72, witness: 0.1, arrest: 0.45, heat: { federal: 7, family: 3 }, evidence: 12, cool: 6, objects: 'Philadelphia, your own old-timers, federal narcotics agents', risk: 'a rat, a reckoning', philly: 'Forbidden. If word reaches Philadelphia there is a reckoning.' }),
   J({ id: 'fence', tile: 'goods', icon: '🎁', title: 'Fence a hot load', line: 'Buy what fell off somebody else\'s truck cheap, sell it far away.', fit: 'business', cost: 1000, take: [1800, 4200], odds: 74, witness: 0.1, arrest: 0.3, heat: { local: 2 }, evidence: 5, cool: 3, objects: 'The state police (stings)', risk: 'a sting' }),
 ];
+
+/** The serious acts (the charge they bring, feds.ts). */
+export const SERIOUS_JOBS: Partial<Record<DirtyJobId, string>> = {
+  hijack: 'a truck hijacking', torch: 'arson', warehouse: 'a warehouse burglary', guns: 'gun running', dope: 'narcotics trafficking', booze: 'running untaxed liquor', juror: 'jury tampering', cardgame: 'armed robbery',
+};
 
 export const JOBS_BY_ID = Object.fromEntries(JOBS.map((j) => [j.id, j])) as Record<DirtyJobId, JobDef>;
 
@@ -696,6 +702,9 @@ export function commitDirty(ctx: Ctx, a: DirtyAction): void {
   } else if (outcome === 'clean' && j.tile !== 'fixes') fx.push({ type: 'respect', amount: 1 });
   if (outcome === 'messy' || outcome === 'pinched') fx.push({ type: 'evidence', charId: c.id, amount: Math.round((outcome === 'pinched' ? j.evidence * 1.5 : j.evidence) * xpEvidenceMult(s, c)) });
   if (boss && outcome === 'clean' && j.evidence) fx.push({ type: 'evidence', charId: c.id, amount: Math.round(j.evidence / 3) });
+  // A serious act leaves something on the men who did it, clean or not (feds.ts: the pinch line).
+  if (!boss && outcome === 'clean' && SERIOUS_JOBS[a.job]) addFedEvidence(s, c.id, Math.max(2, Math.round(j.evidence / 3)), SERIOUS_JOBS[a.job]!);
+  else if (!boss && (outcome === 'messy' || outcome === 'pinched') && SERIOUS_JOBS[a.job]) ensureFeds(s).log.push({ w: s.week, id: c.id, a: j.evidence, why: SERIOUS_JOBS[a.job]! });
   if (outcome === 'pinched' && !boss) {
     const weeks = Math.round(4 + rand(r) * (j.heat.federal ? 14 : 8));
     fx.push({ type: 'imprison', charId: c.id, weeks });

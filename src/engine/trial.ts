@@ -15,6 +15,7 @@ import {
   makePool, npcFlipReasons, pickJudge, SEATS, sumP, type Angle, type CaseItem, type Judge, type Juror, type OddsInput,
 } from './trialCase';
 import type { Character, Effect, EventInstance, GameState, RivalId } from './types';
+import { bossCooperates, bossHasFlipped, setBossTurns } from './feds';
 
 /**
  * TRIAL MODE. A courtroom drama in eight acts, played as a mini-game:
@@ -72,7 +73,7 @@ export interface TrialData {
   sentence?: number;
   sentenceNote?: string;
   fixerJudge?: 'ok' | 'caught' | 'failed';
-  path?: 'heir' | 'witness';
+  path?: 'heir' | 'witness' | 'informant';
   exposed?: boolean;
   /** Crew: the time he was looking at when arrested. */
   weeks: number;
@@ -316,7 +317,7 @@ function opts(s: GameState, ses: TS): MgOption[] {
       if (d.mode === 'boss') {
         return [
           { id: 'standup', label: 'Stand up', detail: '"I got nothing to say to you."' },
-          { id: 'flip', label: 'Call the U.S. Attorney', detail: 'Become a cooperating witness: little or no time, a new name somewhere far away. The family will know. You are marked.', drastic: true, tone: 'dirty' },
+          { id: 'flip', label: 'Call the U.S. Attorney', detail: 'Cooperate: witness protection and a new name, the heir under a cloud, or — the secret — keep the chair and wear their wire. A man only gets to do this once.', drastic: true, tone: 'dirty', disabled: bossHasFlipped(s) ? 'You already made your deal with them once' : undefined },
         ];
       }
       const p = sumP(d.flipReasons ?? []);
@@ -332,6 +333,7 @@ function opts(s: GameState, ses: TS): MgOption[] {
       return [
         { id: 'path_heir', label: heir ? `Play on as ${heir.firstName} ${heir.lastName}, the heir` : 'No heir can take the chair', detail: 'The house survives the betrayal. Everyone will be watching the son of a rat.', disabled: heir ? undefined : 'No eligible heir', drastic: true },
         { id: 'path_witness', label: 'Play on as the rat in hiding', detail: 'A new name in a desert town. A short epilogue, and the end of the House.', drastic: true },
+        { id: 'path_informant', label: 'Keep the chair, and wear their wire', detail: 'The case goes away. Nobody knows. Every month the Bureau wants names, and every meet is a risk: if it comes out, it is your life or your chair.', drastic: true },
       ];
     }
     case 'lawyer':
@@ -379,7 +381,7 @@ function opts(s: GameState, ses: TS): MgOption[] {
       return [
         { id: 'fight', label: 'Fight on', detail: `As it stands: ${pct(trialOdds(ses).p)} to convict.` },
         { id: 'deal_plea', label: `Take the plea: one count, ${Math.round(pleaW / 4.3)} months`, detail: 'Keough wants the conviction more than the years.', tone: 'safe' },
-        { id: 'flip', label: 'Cooperate', detail: 'Give them everybody. Walk out with a new name. The family will know.', drastic: true, tone: 'dirty' },
+        { id: 'flip', label: 'Cooperate', detail: 'Give them everybody: a new name, or keep the chair and wear their wire. Only once.', drastic: true, tone: 'dirty', disabled: bossHasFlipped(s) ? 'You already made your deal with them once' : undefined },
       ];
     }
     case 'defense': {
@@ -676,7 +678,11 @@ function stepTrial(s: GameState, ses: TS, move: string, arraignmentOnly: boolean
       }
       return;
     case 'path':
-      d.path = move === 'path_heir' ? 'heir' : 'witness';
+      d.path = move === 'path_heir' ? 'heir' : move === 'path_informant' ? 'informant' : 'witness';
+      if (d.path === 'informant') {
+        beat(ses, 'The U.S. Attorney tears the indictment in half where you can see it. Special Agent Halloran gives you a phone number to memorize. "Once a month. Don\'t be late."', 'bad');
+        return endSession(s, ses);
+      }
       if (d.path === 'heir') {
         const heir = chooseHeir(s, s.characters[d.defendantId]).heir;
         beat(ses, `${heir ? heir.firstName : 'The heir'} hears it from a cousin, then from the papers. The chair is his now — and so is the shame.`, 'bad');
@@ -1146,7 +1152,10 @@ function applyBoss(ctx: Ctx, ses: TS, b: Character): void {
       s.chronicle.push({ week: s.week, date: { ...s.date }, text: `Mistrial: a juror in the case against ${displayName(b)} was approached. An obstruction count is added.`, kind: 'heat' });
       break;
     case 'flipped':
-      bossTurns(ctx, b, d.path ?? 'heir', ses.outcome?.epilogue);
+      if (bossHasFlipped(s)) break;
+      bossCooperates(ctx, d.path ?? 'heir');
+      if (d.path === 'informant') { b.imprisonedUntil = undefined; Object.assign(l, { stage: 'quiet', defense: 0, since: s.week, next: undefined, bail: undefined }); break; }
+      bossTurns(ctx, b, d.path === 'witness' ? 'witness' : 'heir', ses.outcome?.epilogue);
       break;
   }
 }
@@ -1243,6 +1252,7 @@ export const TRIAL: MinigameDef<TrialData> = {
 };
 
 registerMinigame(ARRAIGNMENT);
+setBossTurns(bossTurns);
 registerMinigame(TRIAL);
 
 /* ---------------------------------------------------------------- */

@@ -258,7 +258,9 @@ describe.skipIf(!ON)('daily sim', () => {
         actions: actLog, bad,
       });
     }
-    const out = { start: START, seed: SEED, years: YEARS, gameOver: s.gameOver ?? null, finalWeek: s.week, errors, days, weeks };
+    const out = { start: START, seed: SEED, years: YEARS, gameOver: s.gameOver ?? null, finalWeek: s.week, errors, days, weeks, feds: s.feds?.stats ?? null };
+    // eslint-disable-next-line no-console
+    console.log(`[dailysim] feds ${JSON.stringify(s.feds?.stats ?? null)}`);
     if (OUT) writeFileSync(OUT, JSON.stringify(out));
     // eslint-disable-next-line no-console
     console.log(`[dailysim] ${START}/${SEED}: ${weeks.length} weeks, ${days.length} days, errors ${errors.length}${s.gameOver ? `, game over ${JSON.stringify(s.gameOver).slice(0, 120)}` : ''}`);
