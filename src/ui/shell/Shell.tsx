@@ -63,11 +63,14 @@ export function Shell({ top, rail, map, drawer, overlay, right, rightIcons, bott
           </div>
         )}
       </div>
-      {bottom ? <div className="shrink-0 border-t border-noir-700 bg-noir-900/95 mb-[52px] md:mb-0">{bottom}</div> : <div className="h-[52px] shrink-0 md:hidden" aria-hidden />}
+      {bottom ? <div className={`shrink-0 border-t border-noir-700 bg-noir-900/95 ${danger ? 'mb-[80px]' : 'mb-[52px]'} md:mb-0`}>{bottom}</div> : <div className={`${danger ? 'h-[80px]' : 'h-[52px]'} shrink-0 md:hidden`} aria-hidden />}
       {/* Phones: alerts as a bottom sheet. */}
-      <button type="button" onClick={() => setSheet(true)} data-testid="alerts-phone"
-        className={`${danger ? '' : 'hidden'} md:hidden fixed right-2 bottom-[96px] z-[1140] rounded-full border-2 px-3 py-1.5 text-xs font-semibold shadow-lg shadow-black/70 ${danger ? 'border-red-300 bg-blood-500/90 text-white llv-ring' : 'border-gold-500 bg-noir-900/95 text-gold-300'}`}>
-        Alerts ({alertCount})
+      {/* Phones: a slim strip docked on the tab bar, with room made for it, so it never sits on content
+          (it was a pill floating over cards and buttons on every screen). */}
+      <button type="button" onClick={() => setSheet(true)} data-testid="alerts-phone" aria-label={`Alerts (${alertCount})`}
+        className={`${danger ? 'flex' : 'hidden'} md:hidden fixed inset-x-0 bottom-[52px] z-[1140] h-7 items-center justify-center gap-2 border-t border-red-400/60 bg-blood-500/90 text-[12px] font-semibold text-white shadow-lg shadow-black/70`}>
+        <span aria-hidden className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-white px-1 text-[10px] font-bold text-blood-500">{alertCount}</span>
+        Alerts ({alertCount}): something needs you. Tap to see.
       </button>
       {sheet && (
         <Overlay z={1165} className="md:hidden bg-black/60" onClick={() => setSheet(false)}>

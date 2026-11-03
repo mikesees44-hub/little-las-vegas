@@ -169,8 +169,8 @@ export function AdviceButton({ s, subject, onChoose, auto = true, label = 'Ask f
   const autoNote = short && (mode === 'all' || short.major) ? short : undefined;
   return (
     <>
-      <button type="button" className="text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen('one'); }} data-testid="ask-advice">☏ {label}</button>
-      {table && <button type="button" className="text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen('table'); }} data-testid="ask-table">⚖ Ask the table</button>}
+      <button type="button" className="mr-3 whitespace-nowrap text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen('one'); }} data-testid="ask-advice">☏ {label}</button>
+      {table && <button type="button" className="mr-3 whitespace-nowrap text-[11px] text-gold-300 underline decoration-dotted underline-offset-2 hover:text-gold-200" onClick={(e) => { e.stopPropagation(); setOpen('table'); }} data-testid="ask-table">⚖ Ask the table</button>}
       {autoNote && (
         <span className="text-[11px] text-stone-400" data-testid="auto-brief">
           <span className="text-stone-500">{autoNote.adviser.role === 'capo' ? autoNote.adviser.name.split(' ')[0] : `The ${autoNote.adviser.role}`}:</span> {autoNote.verdict.text.toLowerCase()}{autoNote.recommendation?.charId ? `; he'd use ${s.characters[autoNote.recommendation.charId]?.firstName}` : ''}{autoNote.bias ? ' (possible bias)' : ''}.

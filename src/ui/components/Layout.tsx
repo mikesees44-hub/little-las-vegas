@@ -1,0 +1,166 @@
+import { useEffect, useRef, type ReactNode } from 'react';
+
+/**
+ * THE LAYOUT KIT (LAYOUT_AUDIT.md). One way to build a screen inside a drawer:
+ *
+ *   <PageHeader title sub primary more />   a title row with at most ONE primary action and a More menu
+ *   (the drawer's "Do this now" strip)      what needs you, on each home's front page (shell/Drawer.tsx)
+ *   <Section title aside>…</Section>         a block with the one section-header style
+ *   <Card tone>…</Card>                      a card: plain, attention (gold), done (emerald) or danger
+ *   <ActionMenu>…buttons…</ActionMenu>       secondary actions folded into "More ▾"
+ *   <StatChip label value />                 a number with its label
+ *   <DoneMark>Ordered</DoneMark>             the same "✓ Done" everywhere
+ *
+ * The menu is a native <details>: its buttons are always in the page (tests and screen readers find
+ * them, test ids are kept), folded until opened. Nothing here removes an option; it only groups them.
+ */
+
+/** A screen's title row: the title, one line under it, the one primary action, and a More menu. */
+export function PageHeader({ title, sub, primary, more, testid }: {
+  title: ReactNode;
+  sub?: ReactNode;
+  /** The one thing this screen most wants you to do (a btn-primary). */
+  primary?: ReactNode;
+  /** Everything else: buttons, folded into "More ▾". */
+  more?: ReactNode;
+  testid?: string;
+}) {
+  return (
+    <header className="llv-pagehead" data-testid={testid}>
+      <div className="min-w-0 flex-1">
+        <h3 className="llv-pagehead-title">{title}</h3>
+        {sub && <p className="llv-pagehead-sub">{sub}</p>}
+      </div>
+      {(primary || more) && (
+        <div className="flex shrink-0 items-center gap-1.5">
+          {more && <ActionMenu>{more}</ActionMenu>}
+          {primary}
+        </div>
+      )}
+    </header>
+  );
+}
+
+/** A section with the one header style: display serif, a short line under it, actions on the right. */
+export function Section({ title, sub, aside, children, className = '', testid }: {
+  title?: ReactNode;
+  sub?: ReactNode;
+  /** Right side of the header: a count, a quiet link, a menu. */
+  aside?: ReactNode;
+  children?: ReactNode;
+  className?: string;
+  testid?: string;
+}) {
+  return (
+    <section className={`llv-section ${className}`} data-testid={testid}>
+      {(title || aside) && (
+        <div className="llv-section-head">
+          <div className="min-w-0">
+            {title && <h4 className="llv-section-title">{title}</h4>}
+            {sub && <p className="llv-section-sub">{sub}</p>}
+          </div>
+          {aside && <div className="ml-auto flex shrink-0 items-center gap-1.5 text-[11px] text-stone-400">{aside}</div>}
+        </div>
+      )}
+      {children}
+    </section>
+  );
+}
+
+export type CardTone = 'plain' | 'attention' | 'done' | 'danger';
+
+/** A card. "done" carries the corner badge, so a finished thing reads as finished at a glance. */
+export function Card({ tone = 'plain', children, className = '', testid, doneLabel = 'Done' }: {
+  tone?: CardTone;
+  children?: ReactNode;
+  className?: string;
+  testid?: string;
+  doneLabel?: string;
+}) {
+  return (
+    <div className={`llv-card-box llv-card-${tone} ${className}`} data-testid={testid}>
+      {tone === 'done' && <span className="llv-card-donebadge"><DoneMark>{doneLabel}</DoneMark></span>}
+      {children}
+    </div>
+  );
+}
+
+/** "✓ Done", "✓ Ordered", "✓ Sent": the one finished mark. */
+export function DoneMark({ children = 'Done', className = '' }: { children?: ReactNode; className?: string }) {
+  return <span className={`llv-done ${className}`} data-done="true"><span aria-hidden>✓</span> {children}</span>;
+}
+
+/** A number with its label, the same everywhere (top of a page, a man's card). */
+export function StatChip({ label, value, sub, tone, testid }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'warn'; testid?: string }) {
+  const t = tone === 'good' ? 'text-emerald-300' : tone === 'bad' ? 'text-red-300' : tone === 'warn' ? 'text-amber-200' : 'text-stone-100';
+  return (
+    <div className="llv-stat" data-testid={testid}>
+      <div className="llv-stat-label">{label}</div>
+      <div className={`llv-stat-value ${t}`}>{value}</div>
+      {sub && <div className="llv-stat-sub">{sub}</div>}
+    </div>
+  );
+}
+
+/**
+ * Secondary actions folded into one "More ▾" button. The children are ordinary buttons (keep their
+ * test ids); a click on one closes the menu. Escape and a click outside close it too.
+ */
+export function ActionMenu({ label = 'More', children, align = 'right', testid, className = '' }: {
+  label?: ReactNode;
+  children: ReactNode;
+  align?: 'left' | 'right';
+  testid?: string;
+  className?: string;
+}) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const away = (e: Event) => { if (el.open && !el.contains(e.target as Node)) el.open = false; };
+    const key = (e: KeyboardEvent) => { if (e.key === 'Escape' && el.open) { el.open = false; e.stopPropagation(); } };
+    document.addEventListener('pointerdown', away);
+    el.addEventListener('keydown', key);
+    return () => { document.removeEventListener('pointerdown', away); el.removeEventListener('keydown', key); };
+  }, []);
+  return (
+    <details ref={ref} className={`llv-menu ${className}`} data-testid={testid}>
+      <summary className="llv-menu-btn" aria-haspopup="menu">{label} <span aria-hidden className="text-stone-500">▾</span></summary>
+      <div className={`llv-menu-panel ${align === 'left' ? 'left-0' : 'right-0'}`} role="menu"
+        onClick={(e) => { if ((e.target as HTMLElement).closest('button:not([disabled])')) ref.current?.removeAttribute('open'); }}>
+        {children}
+      </div>
+    </details>
+  );
+}
+
+/** Screen-level tabs: an underlined segmented row, visibly not a row of action buttons. */
+export function SubTabs<T extends string>({ tabs, value, onChange, testid, label }: {
+  tabs: { id: T; label: ReactNode; testid?: string; badge?: ReactNode }[];
+  value: T;
+  onChange: (v: T) => void;
+  testid?: string;
+  label?: string;
+}) {
+  return (
+    <div className="llv-seg tabbar" role="tablist" aria-label={label} data-testid={testid}>
+      {tabs.map((t) => (
+        <button key={t.id} type="button" role="tab" aria-selected={t.id === value} data-testid={t.testid}
+          className={`llv-seg-tab ${t.id === value ? 'llv-seg-on' : ''}`} onClick={() => onChange(t.id)}>
+          {t.label}{t.badge}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** When a list is empty: say so, and say what to do. */
+export function Empty({ title, children, action }: { title: ReactNode; children?: ReactNode; action?: ReactNode }) {
+  return (
+    <div className="llv-empty" role="status">
+      <div className="font-semibold text-stone-200">{title}</div>
+      {children && <div className="mt-0.5 text-stone-400">{children}</div>}
+      {action && <div className="mt-2">{action}</div>}
+    </div>
+  );
+}

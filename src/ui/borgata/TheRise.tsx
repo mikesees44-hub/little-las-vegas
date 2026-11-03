@@ -61,15 +61,15 @@ function CapoCard({ k }: { k: CapoNode }) {
 export function Ladder({ s, compact }: { s: GameState; compact?: boolean }) {
   const { at, next } = currentRung(s);
   return (
-    <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-4 lg:grid-cols-7'}`} data-testid="rise-ladder">
+    <ol className={`grid gap-1 ${compact ? 'grid-cols-7' : 'grid-cols-2 min-[480px]:grid-cols-4 lg:grid-cols-7 items-start'}`} data-testid="rise-ladder">
       {LADDER.map((r) => {
         const done = rungDone(s, r) && r.n <= at.n;
         const cur = next?.n === r.n;
         return (
-          <li key={r.id} className={`rounded border px-1.5 py-1 ${done ? 'border-emerald-700/60 bg-emerald-900/10' : cur ? 'border-gold-500 bg-gold-500/10' : 'border-noir-700 opacity-70'}`} data-testid={`rise-rung-${r.n}`} title={`${r.milestone} Opens: ${r.opens}.`}>
-            <div className="text-[10px] text-stone-500">{done ? '✓' : r.n}</div>
-            {!compact && <div className="text-[10px] font-semibold leading-tight text-stone-100 sm:text-[11px]">{r.title}</div>}
-            {!compact && <div className="hidden text-[9px] leading-tight text-stone-500 sm:block">Opens: {r.opens}</div>}
+          <li key={r.id} className={`rounded-md border ${compact ? 'px-1.5 py-1' : 'px-2 py-1.5'} ${done ? 'border-emerald-700/60 bg-emerald-900/10' : cur ? 'border-gold-500 bg-gold-500/10' : 'border-noir-700 opacity-70'}`} data-testid={`rise-rung-${r.n}`} title={`${r.milestone} Opens: ${r.opens}.`}>
+            <div className={`text-[11px] ${done ? 'font-semibold text-emerald-400' : cur ? 'text-gold-300' : 'text-stone-500'}`}>{done ? '✓ Done' : cur ? `${r.n} · now` : r.n}</div>
+            {!compact && <div className="text-[12px] font-semibold leading-tight text-stone-100">{r.title}</div>}
+            {!compact && <div className={`mt-0.5 text-[10.5px] leading-snug text-stone-400 ${cur ? '' : 'hidden sm:block'}`}>Opens: {r.opens}</div>}
             {cur && <Bar frac={r.progress(s)} className="w-full" />}
           </li>
         );
@@ -86,24 +86,24 @@ export function TheRise({ s }: { s: GameState }) {
     <div className="space-y-3" data-testid="the-rise">
       <section>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="panel-title">The Rise</div>
+          <h4 className="llv-section-title">The ladder</h4>
           <div className="text-[11px] text-stone-400">Rung {sum.rung.n}: {sum.rung.title}{sum.next ? ` · next: ${sum.next.title}` : ' · the top'}</div>
         </div>
         <Ladder s={s} />
-        {sum.next && <div className="mt-1 text-[11px] text-stone-400">{sum.next.milestone} {sum.steps.length ? <span className="text-amber-200">Next: {sum.steps.join('; ')}.</span> : null}</div>}
+        {sum.next && <div className="mt-1.5 text-[12px] text-stone-300">{sum.next.milestone} {sum.steps.length ? <span className="text-amber-200">Next: {sum.steps.join('; ')}.</span> : null}</div>}
       </section>
       <section className="rounded-md border border-gold-600/50 bg-noir-900/60 p-2">
         <NodeLine n={chart.boss} />
         {chart.admin.length > 0 && <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{chart.admin.map((n) => <NodeLine key={n.id} n={n} />)}</div>}
       </section>
       <section>
-        <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Your capos run the street</div>
+        <h4 className="llv-section-title">Your capos run the street</h4>
         <div className="mt-1 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{chart.capos.map((k) => <CapoCard key={k.id} k={k} />)}</div>
         {!chart.capos.length && <p className="text-[12px] text-stone-500">No capos yet. Push a district to 40% and your best soldier steps up to run it.</p>}
       </section>
       {chart.direct.length > 0 && (
         <section>
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Report straight to you</div>
+          <h4 className="llv-section-title">Report straight to you</h4>
           <ul className="mt-1 grid gap-1 sm:grid-cols-2">{chart.direct.map((n) => <li key={n.id}><NodeLine n={n} small /></li>)}</ul>
         </section>
       )}

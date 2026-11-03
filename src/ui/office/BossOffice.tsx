@@ -9,6 +9,7 @@ import { latestReport } from '../../engine/tribute';
 import type { GameState } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { FACTION_TINT, useSheet } from '../components/People';
+import { ActionMenu } from '../components/Layout';
 import { useOffice } from '../desk/officeApi';
 import { useShell } from '../shell/context';
 import { useOpenDating } from '../dating/DatingPanel';
@@ -289,12 +290,15 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table
           {brief.lines.map((l, i) => <p key={i} className="text-[13px] leading-snug text-stone-200">{i === 0 && c ? '"' : ''}{l}{i === brief.lines.length - 1 && c ? '"' : ''}</p>)}
         </div>
       </div>
+      {/* One primary (the count), one secondary (the door); the rest are quiet links, so the next step is plain. */}
       <div className="mt-2 grid grid-cols-2 gap-1.5">
         <button type="button" className="btn-primary text-xs" onClick={onEnvelope} data-testid="office-hear-count">{brief.count !== undefined ? 'Hear the count' : 'The envelope pages'}</button>
         <button type="button" className="btn-secondary text-xs" onClick={onDoor} data-testid="office-see-waiting">See who's waiting</button>
-        <button type="button" className="btn-secondary text-xs" onClick={onDesk} data-testid="office-review-desk">Review the desk</button>
-        <button type="button" className="btn-secondary text-xs" onClick={onDone} data-testid="office-something-else">{monday ? 'Start with something else' : 'Thanks, that\'s all'}</button>
-        {table && <button type="button" className="btn-secondary col-span-2 text-xs" disabled={!table.onOpen} onClick={table.onOpen} title={table.about ? `Everyone's view on: ${table.about}` : 'Nothing waiting at the door to weigh'} data-testid="office-table">⚖ {table.label}{table.about ? <span className="text-stone-500"> — on {table.about.length > 38 ? `${table.about.slice(0, 37)}…` : table.about}</span> : <span className="text-stone-500"> (nothing waiting to weigh)</span>}</button>}
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px]">
+        <button type="button" className="btn-quiet" onClick={onDesk} data-testid="office-review-desk">Review the desk</button>
+        {table && <button type="button" className="btn-quiet max-w-full truncate" disabled={!table.onOpen} onClick={table.onOpen} title={table.about ? `Everyone's view on: ${table.about}` : 'Nothing waiting at the door to weigh'} data-testid="office-table">⚖ {table.label}{table.about ? <span className="text-stone-500"> on {table.about.length > 30 ? `${table.about.slice(0, 29)}…` : table.about}</span> : <span className="text-stone-500"> (nothing to weigh)</span>}</button>}
+        <button type="button" className="btn-quiet ml-auto text-stone-400" onClick={onDone} data-testid="office-something-else">{monday ? 'Start with something else' : 'Thanks, that\'s all'}</button>
       </div>
     </section>
   );
@@ -319,11 +323,13 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: 
                   <div className="text-[11px] leading-snug text-stone-400">{v.why}</div>
                 </div>
               </div>
-              <div className="mt-1 flex flex-wrap gap-1">
+              <div className="mt-1 flex flex-wrap items-center gap-1">
                 <button type="button" className="btn-primary px-2 py-0.5 text-[11px]" onClick={() => onInvite(v)} data-testid="office-invite">Invite in</button>
                 {v.delegate && <button type="button" className="btn-secondary px-2 py-0.5 text-[11px]" title={v.delegate.does} onClick={() => onDelegate(v.delegate!.op)} data-testid="office-delegate">{v.delegate.label} <span className="text-stone-500">({v.delegate.does})</span></button>}
-                <button type="button" className="btn-secondary px-2 py-0.5 text-[11px]" onClick={() => onLater(v)} data-testid="office-later">Schedule for later</button>
-                {v.ref.event && <TableButton s={s} subject={{ kind: 'event', iid: v.ref.event }} onChoose={(choiceId) => onDelegate({ kind: 'answer', iid: v.ref.event!, choiceId })} className="btn-secondary px-2 py-0.5 text-[11px]" testid="office-visitor-table" />}
+                <ActionMenu className="[&_.llv-menu-btn]:h-6 [&_.llv-menu-btn]:px-2 [&_.llv-menu-btn]:text-[11px]">
+                  <button type="button" onClick={() => onLater(v)} data-testid="office-later">Schedule for later</button>
+                  {v.ref.event && <TableButton s={s} subject={{ kind: 'event', iid: v.ref.event }} onChoose={(choiceId) => onDelegate({ kind: 'answer', iid: v.ref.event!, choiceId })} className="btn-secondary px-2 py-0.5 text-[11px]" testid="office-visitor-table" />}
+                </ActionMenu>
               </div>
             </li>
           );

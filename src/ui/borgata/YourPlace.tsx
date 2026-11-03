@@ -1,8 +1,9 @@
 import { displayName } from '../../engine/characters';
 import { aStation, CAP_INFO, STATION_CAPS, stationOf, unlocksBetween } from '../../engine/rankView';
-import { above, aboveChart, CALLIN_STANDING, callInOdds, MADE_STANDING, placeSummary, quotaNow, standingWord, vouchCandidates, vouchOdds, type ChartNode } from '../../engine/valente';
+import { above, aboveChart, CALLIN_STANDING, callInOdds, MADE_STANDING, placeSummary, quotaNow, standingWord, vouchCandidates, type ChartNode } from '../../engine/valente';
 import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
+import { ActionRow } from '../components/ActionRow';
 import { useSheet } from '../components/People';
 import { fmt$ } from '../format';
 
@@ -54,7 +55,7 @@ export function YourPlace({ s }: { s: GameState }) {
   return (
     <div className="grid gap-3" data-testid="your-place">
       <section className="rounded border border-gold-600/50 bg-noir-800/60 p-3">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Your place in the {a.name} family</div>
+        <div className="text-[11px] text-stone-400">Your place in the {a.name} family</div>
         <div className="font-display text-xl text-gold-300" data-testid="place-line">{p.line}</div>
         <p className="mt-1 text-xs text-stone-400">
           You answer to {p.chief ? <button type="button" className="text-gold-300 hover:underline" onClick={() => open(p.chief!.id)}>{displayName(p.chief)}</button> : 'nobody'}
@@ -64,14 +65,14 @@ export function YourPlace({ s }: { s: GameState }) {
       </section>
 
       <section className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded border border-noir-700 p-2.5">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Standing</div>
+        <div className="rounded-lg border border-noir-700 bg-noir-800/40 p-3">
+          <div className="llv-section-title mb-1">Standing</div>
           <div className="flex items-center gap-2"><Bar v={p.standing} mark={need} /><span className="tabular-nums text-stone-200">{p.standing}</span><span className="text-xs text-stone-400">{p.word}</span></div>
           <p className="mt-1 text-[11px] text-stone-500">{st === 'associate' ? `They put a name up at ${MADE_STANDING}.` : st === 'underboss' ? 'The chair opens when the Don goes.' : `The boss hears a man ask at ${CALLIN_STANDING}.`} Met quotas, orders done well and a closed mouth raise it; short Mondays and excuses lower it.</p>
           {!!a.log.length && <ul className="mt-1 text-[11px] text-stone-400">{a.log.slice(-4).reverse().map((l, i) => <li key={i}><span className={l.d > 0 ? 'text-emerald-300' : 'text-red-300'}>{l.d > 0 ? '+' : ''}{l.d}</span> {l.t}</li>)}</ul>}
         </div>
-        <div className="rounded border border-noir-700 p-2.5" data-testid="place-quota">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Monday's envelope</div>
+        <div className="rounded-lg border border-noir-700 bg-noir-800/40 p-3" data-testid="place-quota">
+          <div className="llv-section-title mb-1">Monday's envelope</div>
           {a.quota > 0 ? (
             <>
               <div className="text-stone-200">{p.chief?.firstName ?? 'Your chief'} expects <b className="text-gold-300">{fmt$(want)}</b>{want !== a.quota ? ` (the winter number; ${fmt$(a.quota)} in season)` : ''}.</div>
@@ -83,23 +84,22 @@ export function YourPlace({ s }: { s: GameState }) {
       </section>
 
       {st === 'associate' && (
-        <section className="rounded border border-noir-700 p-2.5" data-testid="place-books">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Getting made</div>
+        <section className="rounded-lg border border-noir-700 bg-noir-800/40 p-3" data-testid="place-books">
+          <div className="llv-section-title mb-1">Getting made</div>
           <p className="text-xs text-stone-400">An associate needs a made man to vouch for him; his name goes up when the books open; then the ceremony. If he goes bad, it is on the man who vouched.</p>
           <div className="mt-1 text-sm text-stone-200">The books are <b className={p.booksOpen ? 'text-emerald-300' : 'text-stone-400'}>{p.booksOpen ? 'OPEN' : 'closed'}</b>. Vouching for you: {p.sponsors.length ? p.sponsors.map((c) => c.firstName).join(', ') : <span className="text-amber-200">nobody yet</span>}.</div>
-          <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
+          {/* One line per man (who, the odds, one button); tap a line for the whole card. */}
+          <div className="mt-2 grid gap-1.5" data-testid="place-vouchers">
             {vouchCandidates(s).slice(0, 4).map((c) => (
-              <div key={c.id}>
-                <ActionCard s={s} compact action={{ kind: 'power', op: { op: 'low', a: { op: 'askVouch', id: c.id } } }} />
-                <div className="text-[10px] text-stone-500">{Math.round(vouchOdds(s, c).chance * 100)}% he says yes</div>
-              </div>
+              <ActionRow key={c.id} s={s} label={`Ask ${displayName(c)} to vouch for you`} action={{ kind: 'power', op: { op: 'low', a: { op: 'askVouch', id: c.id } } }} />
             ))}
           </div>
+          <p className="mt-1 text-[11px] text-stone-500">Each line shows his odds of saying yes; tap it for every reason.</p>
         </section>
       )}
 
-      <section className="rounded border border-noir-700 p-2.5" data-testid="place-climb">
-        <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">The way up</div>
+      <section className="rounded-lg border border-noir-700 bg-noir-800/40 p-3" data-testid="place-climb">
+        <div className="llv-section-title mb-1">The way up</div>
         {p.next ? (
           <>
             <div className="text-sm text-stone-200">Next rung: <b className="text-gold-300">{p.next}</b>. {p.callIn ? <span className="text-amber-200">{p.callIn}.</span> : <span className="text-emerald-300">You can ask now: {Math.round(odds.chance * 100)}%.</span>}</div>
@@ -108,21 +108,21 @@ export function YourPlace({ s }: { s: GameState }) {
             <div className="mt-2"><ActionCard s={s} action={{ kind: 'power', op: { op: 'low', a: { op: 'callIn' } } }} /></div>
           </>
         ) : <div className="text-sm text-stone-300">The chair. It opens when the Don goes.</div>}
-        <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
-          {[p.chief, p.don].filter((c, i, xs): c is NonNullable<typeof c> => !!c?.alive && xs.findIndex((x) => x?.id === c.id) === i).map((c) => <ActionCard key={c.id} s={s} compact action={{ kind: 'power', op: { op: 'low', a: { op: 'coffee', id: c.id } } }} />)}
+        <div className="mt-2 grid gap-1.5">
+          {[p.chief, p.don].filter((c, i, xs): c is NonNullable<typeof c> => !!c?.alive && xs.findIndex((x) => x?.id === c.id) === i).map((c) => <ActionRow key={c.id} s={s} action={{ kind: 'power', op: { op: 'low', a: { op: 'coffee', id: c.id } } }} />)}
         </div>
       </section>
 
       {chart && (
-        <section className="rounded border border-noir-700 p-2.5" data-testid="place-chart">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">The {a.name} family</div>
+        <section className="rounded-lg border border-noir-700 bg-noir-800/40 p-3" data-testid="place-chart">
+          <div className="llv-section-title mb-1">The {a.name} family</div>
           <ul><Node s={s} n={chart} /></ul>
         </section>
       )}
 
       {!!closed.length && (
-        <section className="rounded border border-noir-700 p-2.5 text-[11px] text-stone-500" data-testid="place-closed">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Above your rank (for now)</div>
+        <section className="rounded-lg border border-noir-700 bg-noir-800/40 p-3 text-[11px] text-stone-500" data-testid="place-closed">
+          <div className="llv-section-title mb-1">Above your rank (for now)</div>
           {closed.map((k) => CAP_INFO[k].name).join(' · ')}
         </section>
       )}
@@ -137,7 +137,7 @@ export function AboveChart({ s, title }: { s: GameState; title?: string }) {
   if (!chart || !a) return null;
   return (
     <section className="rounded border border-gold-600/40 bg-noir-800/50 p-2.5" data-testid="above-chart">
-      <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{title ?? `The ${a.name} family, and where you stand in it`}</div>
+      <div className="llv-section-title mb-1">{title ?? `The ${a.name} family, and where you stand in it`}</div>
       <ul><Node s={s} n={chart} /></ul>
     </section>
   );
@@ -149,7 +149,7 @@ export function PlaceStrip({ s, onOpen }: { s: GameState; onOpen: () => void }) 
   if (!p) return null;
   return (
     <button type="button" onClick={onOpen} data-testid="place-strip" className="mb-3 flex w-full items-center gap-2 rounded border border-gold-600/50 bg-noir-800/70 px-2.5 py-1.5 text-left hover:border-gold-500">
-      <span className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Your place</span>
+      <span className="text-[11px] font-semibold text-gold-400">Your place</span>
       <span className="min-w-0 flex-1 truncate text-xs text-stone-200">{p.line}</span>
       <span className="shrink-0 text-[11px] text-stone-400">standing {p.standing} · {standingWord(p.standing).toLowerCase()}</span>
       <span className="shrink-0 text-gold-300">▸</span>

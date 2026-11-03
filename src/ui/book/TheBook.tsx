@@ -224,7 +224,10 @@ export function TheBook({ s }: { s: GameState }) {
           <Chip on={!!f.money} onClick={() => set({ money: !f.money || undefined })} testid="book-moneyonly">$ Money only</Chip>
           {JCATS.filter((c) => counts.c.get(c)).map((c) => <Chip key={c} on={!!f.cats?.includes(c)} onClick={() => toggleCat(c)} testid={`book-cat-${c}`}>{JCAT_INFO[c].glyph} {JCAT_INFO[c].label} <span className="text-stone-500">{counts.c.get(c)}</span></Chip>)}
         </div>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        {/* Who, where and when fold under one line (the File opened on three rows of controls). */}
+        <details className="group" open={f.person || f.place || f.from !== undefined || f.to !== undefined ? true : undefined} data-testid="book-more-filters">
+          <summary className="cursor-pointer select-none list-none text-[11.5px] text-gold-400 hover:text-gold-300">Filter by person, place or weeks <span className="text-stone-500 group-open:hidden">▸</span><span className="hidden text-stone-500 group-open:inline">▾</span></summary>
+        <div className="mt-1.5 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <select value={f.person ?? ''} onChange={(e) => set({ person: e.target.value || undefined })} className="min-w-0 rounded border border-noir-600 bg-noir-800 px-1.5 py-1 text-xs text-stone-200" data-testid="book-person-filter" aria-label="A person">
             <option value="">Anyone</option>
             {counts.p.map(([id, n]) => <option key={id} value={id}>{nameOf(s, id)} ({n})</option>)}
@@ -242,6 +245,7 @@ export function TheBook({ s }: { s: GameState }) {
             {wks.map((w) => <option key={w} value={w}>To wk {w}</option>)}
           </select>
         </div>
+        </details>
         {(any || thread) && (
           <div className="flex flex-wrap items-center gap-2 text-[11px] text-stone-400">
             {thread && <span className="text-amber-200">The thread from “{thread.t}” (wk {thread.w})</span>}

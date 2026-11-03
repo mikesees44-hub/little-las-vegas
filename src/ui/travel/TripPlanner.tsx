@@ -88,7 +88,7 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
             <h2 className="font-display text-2xl text-gold-400 leading-tight">{d?.name ?? 'Somewhere'}</h2>
             {d && <p className="text-xs text-stone-400 italic max-w-prose">{d.blurb}</p>}
           </div>
-          <button className="text-xs text-stone-500 hover:text-gold-300" onClick={onClose}>Close ✕</button>
+          <button className="btn-secondary h-8 w-8 shrink-0 px-0 py-0" onClick={onClose} aria-label="Close">✕</button>
         </div>
 
         <section className="grid gap-3 sm:grid-cols-2">
@@ -253,11 +253,13 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
           </div>
           {q.block && <div className="text-xs text-red-400">{q.block}</div>}
           <TripWhy s={s} action={{ kind: 'travel', op: { type: 'trip', plan } }} />
-          <div className="flex justify-end gap-2">
-            <button className="btn-ghost text-sm" onClick={onClose}>Cancel</button>
-            <button className="btn-gold text-sm" data-testid="trip-order" disabled={!!q.block} onClick={() => { queue({ kind: 'travel', op: { type: 'trip', plan } }); onClose(); }}>Order the trip</button>
-          </div>
         </section>
+        {/* The order stays in sight at the foot of the planner (it sat under the guest list, below the fold). */}
+        <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 flex items-center gap-2 border-t border-gold-600/40 bg-noir-900/95 px-4 sm:px-5 py-2.5 backdrop-blur-sm" data-testid="trip-footer">
+          <span className="min-w-0 flex-1 truncate text-[12px] text-stone-300"><b className="tabular-nums text-gold-300">{fmt$(q.cost)}</b> · {q.weeks} week{q.weeks > 1 ? 's' : ''} away{q.block ? <span className="text-red-300"> · {q.block}</span> : ''}</span>
+          <button className="btn-secondary text-sm" onClick={onClose}>Cancel</button>
+          <button className="btn-primary text-sm" data-testid="trip-order" disabled={!!q.block} onClick={() => { queue({ kind: 'travel', op: { type: 'trip', plan } }); onClose(); }}>Order the trip</button>
+        </div>
       </div>
     </Modal>
   );
