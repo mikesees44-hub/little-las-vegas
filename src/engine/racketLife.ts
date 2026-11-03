@@ -9,7 +9,7 @@ import { chance, hashSeed, rand, randInt, type RngHolder } from './rng';
 import { RACKETS, r50, racketInfo, type Fit, type RacketInfo, type SitCtx, type Situation } from './racketData';
 import type { Dial, DialOpt, RacketCmd, RacketOp, RacketOutcome } from './racketState';
 import { racketOf, racketMut, applyTreeHeat } from './rackets';
-import { whichRacket } from './racketHub';
+import { racketWeek, whichRacket } from './racketHub';
 import { dressScene, registerFamily, sceneCtx } from './sceneVariants';
 import type { ActionPreview } from './actions';
 import { canHold, earnerOf, earnerPreview, earnersMonth, holders, setEarner, suggestFor } from './earners';
@@ -499,7 +499,7 @@ export function previewRacket(s: GameState, cmd: RacketCmd): ActionPreview {
       const capo = d?.capoId ? s.characters[d.capoId] : undefined;
       return {
         title: label,
-        detail: `${racketInfo(cmd.kind)?.line ?? def.blurb} ~${fmt(def.base * def.season[0])}/wk in season, ${fmt(def.base * def.season[1])} off · upkeep ${fmt(def.upkeep)}/wk${capo?.alive ? ` · under ${capo.firstName} ${capo.lastName}` : ''}.`,
+        detail: `${racketInfo(cmd.kind)?.line ?? def.blurb} ${takeLine(s, cmd.kind, district, cmd.runner)} · upkeep ${fmt(def.upkeep)}/wk${capo?.alive ? ` · under ${capo.firstName} ${capo.lastName}` : ''}.`,
         effects, cost: def.cost, because: `started ${b.name}`, disabledReason: locks[0]?.why, category: 'event',
       };
     }
@@ -643,3 +643,9 @@ export function crewFree(s: GameState): number {
 }
 
 export type { RacketInfo };
+
+/** The order's money line: racketWeek's numbers, the same as the Rackets card and the advisors start from. */
+export function takeLine(s: GameState, kind: BusinessKind, district?: string, runnerId?: string): string {
+  const w = racketWeek(s, kind, district, runnerId);
+  return `~$${Math.round(w.inSeason).toLocaleString('en-US')}/wk in season, $${Math.round(w.offSeason).toLocaleString('en-US')} off, after upkeep`;
+}

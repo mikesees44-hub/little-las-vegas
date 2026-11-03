@@ -163,3 +163,21 @@ describe('Playtest fixes: answered is answered', () => {
     expect(inbox(s, { orders: [o.action!] }).some((x) => x.ref.brief === item!.id)).toBe(false);
   });
 });
+
+describe('Playtest fixes: one estimate for a racket', () => {
+  it('the Rackets card, the start order and the buy order quote the same weekly numbers', async () => {
+    const { racketWeek, hubCards } = await import('../src/engine/racketHub');
+    const { previewAction } = await import('../src/engine/actions');
+    const s = newGameWith(SEED, 'olddon');
+    const w = racketWeek(s, 'cardgame');
+    const card = hubCards(s).find((c) => c.kind === 'cardgame')!;
+    expect([card.inSeason, card.offSeason]).toEqual([w.inSeason, w.offSeason]);
+    const money = (n: number) => `$${n.toLocaleString('en-US')}`;
+    const start = previewAction(s, { kind: 'econ', op: { type: 'racket', cmd: { c: 'start', kind: 'cardgame' } } } as never);
+    expect(start.detail).toContain(`~${money(w.inSeason)}/wk in season, ${money(w.offSeason)} off`);
+    const d = s.districts.find((x) => (x.influence.player ?? 0) > 0)!.id;
+    const wd = racketWeek(s, 'cardgame', d);
+    const buy = previewAction(s, { kind: 'buyBusiness', biz: 'cardgame', district: d });
+    expect(buy.detail).toContain(`~${money(wd.inSeason)}/wk in season, ${money(wd.offSeason)} off`);
+  });
+});

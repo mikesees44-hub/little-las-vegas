@@ -1,10 +1,10 @@
 import { CATALOG, seasonalMult } from './catalog';
 import { isInSeason } from './calendar';
-import { countKind, expectedTake, idleMen, isBusy, newBusiness, owned } from './business';
+import { countKind, idleMen, isBusy, owned } from './business';
 import { capos, isFree } from './characters';
 import { CUT_INFO, type CutTier } from './earsState';
 import { canHold, earnerOf, EARNER_STEADY, steadyWord, yearMult } from './earners';
-import { lawsFor } from './racketHub';
+import { lawsFor, racketWeek } from './racketHub';
 import { bestDistrict, bestRunner, startLocks } from './racketLife';
 import { racketInfo, type Fit } from './racketData';
 import { opinion } from './relations';
@@ -116,23 +116,10 @@ function row(s: GameState, m: MenuItemDef): MenuRow {
   return { ...m, cost: def.cost, weekly: estimate(s, m.key).weekly, steady: steadyWord(m.key) === 'steady', heat: heatWord(def.heat + def.fedHeat), locked: locks[0]?.why, running: countKind(s, m.key) };
 }
 
-/** What it would make a week now, as it would run (the best man, the best district), and in the other season. */
+/** What it would make a week now, as it would run (the best man, the best district), and in the other season: racketWeek (racketHub.ts), the one estimate. */
 export function estimate(s: GameState, kind: BusinessKind, district?: string, runnerId?: string): { weekly: number; other: number; byScore?: string } {
-  const def = CATALOG[kind];
-  if (kind === 'jewel') return { weekly: 1200, other: 480, byScore: 'an average: big, rare scores' };
-  if (kind === 'bankcrew') return { weekly: 735, other: 735, byScore: 'an average: huge, rare scores' };
-  if (kind === 'bustout') return { weekly: 0, other: 0, byScore: `nothing for 6 weeks, then one score of about $${Math.round(def.cost * 3.1).toLocaleString('en-US')}` };
-  if (kind === 'payoff') return { weekly: -def.upkeep, other: -def.upkeep, byScore: `a cost: every racket's heat runs 0.6 a week cooler` };
-  const d = district ?? bestDistrict(s, kind) ?? s.districts.find((x) => (x.influence.player ?? 0) > 0)?.id ?? s.districts[0].id;
-  const b = newBusiness(s, kind, d);
-  const pick = runnerId ? s.characters[runnerId] : undefined;
-  const man = pick && !canHold(s, pick) ? pick : bestRunner(s, kind);
-  b.staffIds = def.staff ? [man?.id, ...idleMen(s).filter((c) => c.id !== man?.id).map((c) => c.id)].filter((x): x is string => !!x).slice(0, def.staff) : [];
-  const now = expectedTake(s, b) - def.upkeep;
-  const [a, z] = def.season;
-  const inS = isInSeason(s.date);
-  const ratio = (inS ? z : a) / Math.max(0.01, inS ? a : z);
-  return { weekly: Math.round(now), other: Math.round(expectedTake(s, b) * ratio - def.upkeep) };
+  const w = racketWeek(s, kind, district, runnerId);
+  return { weekly: w.weekly, other: w.other, ...(w.byScore ? { byScore: w.byScore } : {}) };
 }
 
 /* ------------------------------------------------------------------ */

@@ -1,7 +1,7 @@
 import { devValue } from './develop';
 import { previewAction, VIA_INFO, type ActionPreview } from './actions';
 import { bestDistrict } from './racketLife';
-import { crewTake } from './racketHub';
+import { crewTake, racketWeek } from './racketHub';
 import { pillarBestWhen, pillarPurpose, pillarRisks, pillarUnlocks, pillarValue, ROMANCE_PURPOSE } from './advicePillars';
 import { idleMen } from './business';
 import { isInSeason, memorialDay, toDays } from './calendar';
@@ -454,7 +454,8 @@ function derived(s: GameState, a: PlayerAction, p: ActionPreview): NamedEffect[]
     case 'dev': { const u = devValue(s, a.op).upkeep; if (u) out.push(money('Upkeep', -u, -u, 'per week')); break; }
     case 'buyBusiness': {
       const d = CATALOG[a.biz];
-      if (d.base) out.push(money(`${d.name}: the take`, Math.round(d.base * d.season[1] - d.upkeep), Math.round(d.base * d.season[0] - d.upkeep), 'per week', `${fmtMoney(Math.round(d.base * d.season[1] - d.upkeep))}/wk off-season to ${fmtMoney(Math.round(d.base * d.season[0] - d.upkeep))}/wk in season, after upkeep`));
+      // The same estimate the Rackets card shows (racketHub.racketWeek), not a second one from the catalog.
+      if (d.base) { const w = racketWeek(s, a.biz, a.district); out.push(money(`${d.name}: the take`, Math.min(w.offSeason, w.inSeason), Math.max(w.offSeason, w.inSeason), 'per week', `~${fmtMoney(w.inSeason)}/wk in season, ${fmtMoney(w.offSeason)} off-season, after upkeep`)); }
       if (d.heat >= 0.3) out.push({ label: d.name, text: `+${d.heat.toFixed(1)} Local heat a week`, tone: 'bad', when: 'per week' });
       if (d.fedHeat >= 0.2) out.push({ label: d.name, text: `+${d.fedHeat.toFixed(1)} Federal heat a week`, tone: 'bad', when: 'per week' });
       break;
