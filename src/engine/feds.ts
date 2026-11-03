@@ -69,7 +69,7 @@ export const DECIDE_WEEKS = 3;
 /** Weekly chance an undercover operation starts (when the FBI is working the family). */
 export const BRASCO_CHANCE = 0.006;
 /** Weekly chance the hollow crown sets in when enough lines up. */
-export const HOLLOW_CHANCE = [0, 0, 0, 0.06, 0.16, 0.3];
+export const HOLLOW_CHANCE = [0, 0, 0.02, 0.08, 0.2, 0.35];
 
 /** What the Feds care about (a op is just a note: the real work is in the standard effects). */
 export type FedsOp = { op: 'note'; text: string };
