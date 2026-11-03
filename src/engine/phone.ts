@@ -2,8 +2,6 @@ import { crew, displayName, isFree, player } from './characters';
 import { holder as seatHolder } from './council';
 import { applyEffects, fmtMoney } from './effects';
 import { newCtx, type Ctx } from './ledger';
-// The state copy that keeps the big copy-on-write parts shared (houses, politics, the Book): the screens' caches stay warm.
-import { cloneState } from './engine';
 import { journal, type JCat } from './journal';
 import { opinion } from './relations';
 import { answerCheckIn, daysOf, DAY_NAMES, today } from './days';
@@ -46,17 +44,24 @@ import type { Character, Effect, GameState, PlayerAction, RivalId } from './type
 export { wireIn };
 
 /**
- * The copy a call works on: cloneState, keeping the parts no call ever touches (the city, the
- * neighborhoods, the night life, the ears) as they were, so the map and the screens keep their caches.
- * A call moves money, respect, heat, opinions, evidence, a rival's standing, the day's hours and the
- * phone's own records, nothing else.
+ * The copy a call works on. A call moves money, respect, heat, opinions, evidence, a rival's standing,
+ * the day's hours, the paper and the phone's own records; it never touches the city, the
+ * neighborhoods, the night life, the houses or politics. Those stay as they were (shared, like
+ * engine.ts cloneState shares its copy-on-write parts), so the map and the screens keep their caches.
+ * (Not cloneState itself: phone.ts is imported under the engine, and the engine must not be.)
  */
-const UNTOUCHED = ['econ', 'hood', 'nightlife', 'dating', 'ears', 'districts', 'businesses', 'empire', 'towns'] as const;
+const SHARED = new Set(['econ', 'hood', 'nightlife', 'dating', 'ears', 'districts', 'businesses', 'empire', 'towns', 'pol', 'lineage', 'ledgerBook', 'lastReport', 'dynastyHistory', 'journal', 'chronicle', 'news']);
 export function phoneClone(s: GameState): GameState {
-  const c = cloneState(s) as unknown as Record<string, unknown>;
   const src = s as unknown as Record<string, unknown>;
-  for (const k of UNTOUCHED) if (k in src) c[k] = src[k];
-  return c as unknown as GameState;
+  const rest: Record<string, unknown> = {};
+  const keep: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(src)) (SHARED.has(k) ? keep : rest)[k] = v;
+  const c = Object.assign(structuredClone(rest), keep) as unknown as GameState;
+  // The lists a call appends to are copied (the Book's entries are never changed in place).
+  if (s.journal) c.journal = { ...s.journal, e: s.journal.e.slice(), old: s.journal.old.slice() };
+  c.chronicle = s.chronicle.slice();
+  if (s.news) c.news = s.news.slice();
+  return c;
 }
 
 export function roll(str: string): number {
