@@ -9,6 +9,7 @@ import { STORE_TAB_BLURB, STORE_TAB_LABEL, STORE_TABS } from '../../engine/store
 import { pocketCash } from '../../engine/tributeState';
 import type { BusinessKind, GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
+import { ActionMenu } from '../components/Layout';
 import { fmt$ } from '../format';
 import { EasyVacation } from './EasyVacation';
 import { ShareWealth } from './ShareWealth';
@@ -68,7 +69,7 @@ export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
 
       {mode === 'shop' && (
         <>
-          <div className="flex flex-wrap gap-1" role="tablist" data-testid="store-tabs">
+          <div className="llv-seg tabbar" role="tablist" data-testid="store-tabs">
             {(['luxury', ...STORE_TABS] as StoreView[]).map((v) => (
               <button key={v} role="tab" data-testid={`store-tab-${v}`} aria-selected={view === v} className={`tab ${view === v ? 'tab-active' : ''}`} onClick={() => setView(v)}>
                 {VIEW_LABEL(v)} <span className="text-stone-500">({lists[v].filter((it) => !gone(it)).length + (v === 'property' ? LINKED_BIZ.length : 0)})</span>
@@ -143,7 +144,7 @@ function Card({ s, it }: { s: GameState; it: SpendItem }) {
   const agreed = reply?.ok ? reply.price : undefined;
   const Field = ({ k, v }: { k: string; v?: string }) => (v ? <div><span className="text-stone-500">{k}</span> <span className="text-stone-200">{v}</span></div> : null);
   return (
-    <li className="rounded border border-noir-700 bg-noir-800/50 p-2" data-testid="store-card" data-item={it.id}>
+    <li className="rounded-lg border border-noir-700 bg-noir-800/50 p-3" data-testid="store-card" data-item={it.id}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <span className={`font-semibold ${c.block ? 'text-stone-500' : 'text-stone-100'}`}>{it.name}</span>
         <span className="text-sm tabular-nums text-gold-300">{fmt$(agreed ?? c.price)}{agreed !== undefined && agreed < c.price ? <span className="ml-1 text-[11px] text-emerald-400">(was {fmt$(c.price)})</span> : null}</span>
@@ -167,12 +168,15 @@ function Card({ s, it }: { s: GameState; it: SpendItem }) {
         {c.requirements.length > 0 && <Field k="Requires" v={c.requirements.join(' · ')} />}
       </div>
       {c.block && <div className="mt-1 text-[11px] text-stone-500">{c.block}</div>}
-      <div className="mt-2 flex flex-wrap gap-1" data-testid="store-card-actions">
-        <button className="btn-ghost px-2 py-1 text-xs" onClick={() => toggle('inspect')}>Inspect</button>
-        <button className="btn-ghost px-2 py-1 text-xs" onClick={() => toggle('adviser')}>Ask adviser</button>
-        <button className="btn-ghost px-2 py-1 text-xs" disabled={!c.negotiable} title={c.negotiable ? undefined : 'Not something you haggle over'} onClick={() => toggle('negotiate')}>Negotiate</button>
-        <button className="btn-gold px-2 py-1 text-xs" onClick={() => toggle('buy')}>Buy</button>
-        <button className="btn-ghost px-2 py-1 text-xs" disabled={!c.finance} title={c.finance ? undefined : 'Cash only'} onClick={() => toggle('finance')}>Finance</button>
+      {/* One primary (Buy), its alternative (Finance), and the looking-and-asking folded into More. */}
+      <div className="mt-2 flex flex-wrap items-center justify-end gap-1.5" data-testid="store-card-actions">
+        <ActionMenu label={open === 'inspect' || open === 'adviser' || open === 'negotiate' ? (open === 'inspect' ? 'Inspecting' : open === 'adviser' ? 'Adviser' : 'Negotiating') : 'More'}>
+          <button type="button" onClick={() => toggle('inspect')}>Inspect</button>
+          <button type="button" onClick={() => toggle('adviser')}>Ask adviser</button>
+          <button type="button" disabled={!c.negotiable} title={c.negotiable ? undefined : 'Not something you haggle over'} onClick={() => toggle('negotiate')}>Negotiate</button>
+        </ActionMenu>
+        <button type="button" className={`btn-secondary h-8 px-2.5 py-0 text-xs ${open === 'finance' ? 'border-gold-500 text-gold-300' : ''}`} disabled={!c.finance} title={c.finance ? undefined : 'Cash only'} onClick={() => toggle('finance')}>Finance</button>
+        <button type="button" className="btn-primary h-8 px-3 py-0 text-xs" onClick={() => toggle('buy')}>Buy</button>
       </div>
       {open === 'inspect' && (
         <div className="mt-2 space-y-1 text-[12px] text-stone-300" data-testid="store-inspect">

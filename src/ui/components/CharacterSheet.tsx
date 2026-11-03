@@ -127,10 +127,10 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
 
         {c.alive && !s.gameOver && <QuickActions s={s} c={c} onAll={() => setTab('actions')} />}
 
-        <nav className="mt-3 flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label={`${c.firstName}'s sheet`} data-testid="sheet-tabs">
+        <nav className="llv-seg tabbar mt-3 !mb-0" role="tablist" aria-label={`${c.firstName}'s sheet`} data-testid="sheet-tabs">
           {SHEET_TABS.filter(([k]) => (k !== 'card' || age >= 18) && (k !== 'book' || !isBoss)).map(([k, label]) => (
             <button key={k} type="button" role="tab" aria-selected={tab === k} onClick={() => setTab(k)} data-testid={`sheet-tab-${k}`}
-              className={`rounded px-2 py-1 text-xs font-semibold ${tab === k ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300 hover:border-gold-500'}`}>{k === 'actions' ? (isBoss ? 'Your own business' : `Deal with ${c.firstName}`) : k === 'book' ? `Between you & ${c.gender === 'F' ? 'her' : 'him'}` : label}</button>
+              className={`llv-seg-tab ${tab === k ? 'llv-seg-on' : ''}`}>{k === 'actions' ? (isBoss ? 'Your own business' : `Deal with ${c.firstName}`) : k === 'book' ? `Between you & ${c.gender === 'F' ? 'her' : 'him'}` : label}</button>
           ))}
         </nav>
 
@@ -153,19 +153,19 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         )}
 
         {tab === 'overview' && (
-        <div className="mt-3 grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs" data-testid="sheet-skill-strip">
+        <div className="mt-3 grid grid-cols-2 min-[400px]:grid-cols-3 gap-1.5 text-xs" data-testid="sheet-skill-strip">
           {SKILLS.map((k) => (
-            <div key={k} className="rounded bg-noir-800/60 border border-noir-700 px-2 py-0.5" title={SKILL_HELP[k]}>
-              <span className="text-stone-500">{SKILL_LABEL[k]}</span> <span className="tabular-nums text-stone-100 font-semibold">{c.attributes[k]}</span>
+            <div key={k} className="flex items-baseline justify-between gap-2 rounded bg-noir-800/60 border border-noir-700 px-2.5 py-1" title={SKILL_HELP[k]}>
+              <span className="truncate text-stone-400">{SKILL_LABEL[k]}</span> <span className="tabular-nums text-stone-100 text-sm font-semibold">{c.attributes[k]}</span>
             </div>
           ))}
         </div>
         )}
 
         {tab === 'overview' && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
-            <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Particulars</div>
+        <div className="mt-3 grid items-start gap-3 sm:grid-cols-2">
+          <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3">
+            <h4 className="llv-section-title">Particulars</h4>
             <div className="text-xs text-stone-300 mt-1 space-y-0.5">
               {!c.goal && <div>Ambition: <span className="text-stone-100">{c.ambition}</span></div>}
               <OwnMoneyLines s={s} c={c} />
@@ -179,8 +179,8 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
           </section>
           {!isBoss ? (
             <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
-              <div className="flex justify-between text-[10px] uppercase tracking-[0.25em] text-stone-500">
-                <span>What {c.firstName} thinks of you</span>
+              <div className="flex items-baseline justify-between gap-2">
+                <h4 className="llv-section-title">What {c.firstName} thinks of you</h4>
                 <span className={`text-sm font-semibold ${total >= 25 ? 'text-emerald-400' : total <= -25 ? 'text-red-400' : 'text-stone-200'}`}>{signed(total)}</span>
               </div>
               {mods.length === 0 && <div className="text-xs text-stone-500 mt-1">No strong feelings either way.</div>}
@@ -198,7 +198,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
             </section>
           ) : (
             <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
-              <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">The house</div>
+              <h4 className="llv-section-title">The house</h4>
               <div className="text-xs text-stone-300 mt-1">Respect {s.respect} · Family money {fmt$(s.money)} (the Family's, not yours) · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
             </section>
           )}

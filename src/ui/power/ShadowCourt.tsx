@@ -12,6 +12,7 @@ import { storyName } from '../../engine/shadowStories';
 import { claimStrengths } from '../../engine/oldDon';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard, useOrders } from '../components/Orders';
+import { ActionMenu } from '../components/Layout';
 import { CharLink, Face } from '../components/People';
 import { Num } from '../shell/Num';
 
@@ -37,7 +38,14 @@ function Know({ lvl, via }: { lvl: KnowLvl | 'unknown'; via?: string }) {
 }
 
 /** A small button that queues an order (or says why it can't). */
-function OrderBtn({ s, a, label }: { s: GameState; a: ShadowAction; label: string }) {
+/** Is this order already on the week's list? */
+function useQueued(): (a: ShadowAction) => boolean {
+  const { orders } = useOrders();
+  const keys = new Set(orders.map((o) => JSON.stringify(o)));
+  return (a) => keys.has(JSON.stringify(act(a)));
+}
+
+function OrderBtn({ s, a, label, strong }: { s: GameState; a: ShadowAction; label: string; /** The row's main move: a bigger outline button. */ strong?: boolean }) {
   const { orders, queue } = useOrders();
   const action = act(a);
   const p = previewAction(s, action);
@@ -46,10 +54,26 @@ function OrderBtn({ s, a, label }: { s: GameState; a: ShadowAction; label: strin
   const why = p.disabledReason;
   const odds = p.acceptance ? ` (${Math.round(p.acceptance.chance * 100)}%)` : '';
   return (
-    <button type="button" className={`rounded border px-1.5 py-0.5 text-[10px] ${queued ? 'border-gold-400 text-gold-300' : why ? 'border-noir-700 text-stone-600 cursor-not-allowed' : 'border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-200'}`}
-      disabled={!!why || queued} title={why ?? `${p.title}${odds}${p.detail ? ` — ${p.detail}` : ''}`} onClick={() => queue(action)}>
-      {queued ? `${label} ✓` : label}
+    <button type="button" className={`rounded border ${strong ? 'h-7 px-2.5 text-[11.5px] font-semibold' : 'px-1.5 py-0.5 text-[11px]'} ${queued ? 'border-emerald-700/70 bg-emerald-900/30 text-emerald-300' : why ? 'border-noir-700 text-stone-600 cursor-not-allowed' : strong ? 'border-gold-600 text-gold-300 hover:bg-gold-500/10' : 'border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-200'}`}
+      disabled={!!why || queued} title={why ?? `${p.title}${odds}${p.detail ? ` — ${p.detail}` : ''}`} onClick={() => queue(action)} data-done={queued ? 'true' : undefined}>
+      {queued ? `✓ ${label}` : label}
     </button>
+  );
+}
+
+/** A row's main move, and the rest folded into More (the More button says when one of them is ordered). */
+function RowActions({ s, main, rest }: { s: GameState; main: [ShadowAction, string]; rest: [ShadowAction, string][] }) {
+  const isQ = useQueued();
+  const any = rest.some(([a]) => isQ(a));
+  return (
+    <div className="ml-auto flex shrink-0 items-center gap-1">
+      <OrderBtn s={s} a={main[0]} label={main[1]} strong />
+      {rest.length > 0 && (
+        <ActionMenu label={any ? <span className="text-emerald-300">More ✓</span> : 'More'} className="[&_.llv-menu-btn]:h-7 [&_.llv-menu-btn]:px-2 [&_.llv-menu-btn]:text-[11px]">
+          {rest.map(([a, l]) => <OrderBtn key={l} s={s} a={a} label={l} />)}
+        </ActionMenu>
+      )}
+    </div>
   );
 }
 
@@ -59,9 +83,9 @@ function Meter({ v, tone }: { v: number; tone: string }) {
 
 function H({ children, sub }: { children: string; sub?: string }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-2">
-      <h3 className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{children}</h3>
-      {sub && <span className="text-[10px] text-stone-600">{sub}</span>}
+    <div className="llv-section-head flex-wrap !items-baseline">
+      <h3 className="llv-section-title">{children}</h3>
+      {sub && <span className="ml-auto text-[11px] text-stone-500">{sub}</span>}
     </div>
   );
 }
@@ -155,11 +179,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
                     <Meter v={c.total} tone={c.id === heir?.id ? 'bg-gold-500' : 'bg-stone-500'} />
                     <span className="w-7 text-right tabular-nums text-stone-100">{c.total}</span>
                   </div>
-                  <div className="flex gap-1">
-                    <OrderBtn s={live} a={{ op: 'reward', charId: c.id }} label="Buy support" />
-                    <OrderBtn s={live} a={{ op: 'sideline', charId: c.id }} label="Sideline" />
-                    {!ch.dynasty && <OrderBtn s={live} a={{ op: 'remove', charId: c.id }} label="Remove…" />}
-                  </div>
+                  <RowActions s={live} main={[{ op: 'reward', charId: c.id }, 'Buy support']}
+                    rest={[[{ op: 'sideline', charId: c.id }, 'Sideline'], ...(!ch.dynasty ? [[{ op: 'remove', charId: c.id }, 'Remove…'] as [ShadowAction, string]] : [])]} />
                 </li>
               );
             })}
@@ -185,11 +206,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
                   {v ? <span className="text-stone-200">{v.prefer ? (v.prefer === m.id ? 'himself' : nameOf(s, v.prefer)) : 'nobody yet'}{v.goal ? <span className="text-stone-500"> · {GOAL_TEXT[v.goal]}</span> : null}</span> : <span className="text-stone-600">don't know</span>}
                   {' '}<Know lvl={v?.lvl ?? 'unknown'} via={v?.via} />
                 </div>
-                <div className="flex gap-1">
-                  <OrderBtn s={live} a={{ op: 'meet', charId: m.id }} label="Meet" />
-                  <OrderBtn s={live} a={{ op: 'test', charId: m.id }} label="Test" />
-                  <OrderBtn s={live} a={{ op: 'reward', charId: m.id }} label="Reward" />
-                </div>
+                <RowActions s={live} main={[{ op: 'meet', charId: m.id }, 'Meet']}
+                  rest={[[{ op: 'test', charId: m.id }, 'Test'], [{ op: 'reward', charId: m.id }, 'Reward']]} />
               </li>
             );
           })}
