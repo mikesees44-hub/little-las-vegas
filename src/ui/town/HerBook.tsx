@@ -47,7 +47,7 @@ export function HerBook({ s }: { s: GameState }) {
         </div>
         {path !== 'all' && path !== 'mine' && <p className="mt-1 text-[11.5px] text-stone-400" data-testid="her-path-blurb">{PATHS[path].blurb} The rungs: {PATHS[path].rungs.join(' → ')}.</p>}
       </Section>
-      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3" data-testid="her-list">
+      <ul className="grid gap-3 md:grid-cols-2" data-testid="her-list">
         {list.map((r) => <HerCard key={r.id} s={s} r={r} />)}
       </ul>
       {!list.length && <p className="text-center text-[13px] text-stone-500">Nobody on that path right now.</p>}
