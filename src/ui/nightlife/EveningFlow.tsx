@@ -1,7 +1,7 @@
 import { LoggedCard } from '../book/TheBook';
 import { useMemo, useState, type ReactNode } from 'react';
 import {
-  ANSWER_INFO, APPROACH_LABEL, approachText, BEAT_INFO, COVER_INFO, DEST_INFO, KIND_INFO,
+  ANSWER_INFO, APPROACH_LABEL, approachText, BEAT_INFO, COVER_INFO, DEST_INFO, KIND_INFO, MOTEL_ROOM,
   askingPrice, asksQuestion, beatFor, eveningCost, eveningKindOf, stayOdds,
   type Answer, type Approach, type Cover, type Dest, type EveningKind, type EveningPlan,
 } from '../../engine/evening';
@@ -99,7 +99,7 @@ export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onCl
   const who = eveningKindOf(s, id);
   const paid = who === 'paid';
   const [kind, setKind] = useState<EveningKind>(paid ? 'release' : 'town');
-  const [at, setAt] = useState<'office' | 'hotel'>('hotel');
+  const [at, setAt] = useState<'office' | 'hotel' | 'motel'>('hotel');
   const [dest, setDest] = useState<Dest>('capemay');
   const [cover, setCover] = useState<Cover>('business');
   const [approach, setApproach] = useState<Approach>(paid ? 'night' : 'something');
@@ -142,7 +142,7 @@ export function EveningFlow({ s, id, onClose }: { s: GameState; id: string; onCl
           <div className="grid gap-1.5 sm:grid-cols-2">
             {(Object.keys(KIND_INFO) as EveningKind[]).map((k) => <Choice key={k} on={kind === k} title={KIND_INFO[k].label} text={KIND_INFO[k].text} onPick={() => { setKind(k); resetPrice(); }} testid={`flow-kind-${k}`} />)}
           </div>
-          {kind === 'release' && <div className="flex flex-wrap gap-1.5">{(['hotel', 'office'] as const).map((x) => <button key={x} type="button" onClick={() => setAt(x)} aria-pressed={at === x} className={`rounded-full px-2 py-0.5 text-[11px] ${at === x ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300'}`}>{x === 'hotel' ? 'A room at the Royal Palm ($35)' : 'Your office, after hours'}</button>)}</div>}
+          {kind === 'release' && <div className="flex flex-wrap gap-1.5">{(['hotel', 'motel', 'office'] as const).map((x) => <button key={x} type="button" onClick={() => setAt(x)} aria-pressed={at === x} className={`rounded-full px-2 py-0.5 text-[11px] ${at === x ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300'}`}>{x === 'hotel' ? 'A room at the Royal Palm ($35)' : x === 'motel' ? `A motel room on Route 9 ($${MOTEL_ROOM})` : 'Your office, after hours'}</button>)}</div>}
           {kind === 'getaway' && (
             <div className="space-y-1">
               <div className="flex flex-wrap gap-1.5">{(Object.keys(DEST_INFO) as Dest[]).map((x) => <button key={x} type="button" onClick={() => setDest(x)} aria-pressed={dest === x} className={`rounded-full px-2 py-0.5 text-[11px] ${dest === x ? 'bg-gold-500 text-noir-950' : 'border border-noir-600 text-stone-300'}`}>{DEST_INFO[x].label} ({fmt$(DEST_INFO[x].cost)})</button>)}</div>

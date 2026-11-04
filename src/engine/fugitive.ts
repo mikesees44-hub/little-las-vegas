@@ -11,6 +11,7 @@ import { BAIL, GJ_WEEKS, legalOf, stageLabel, TRIAL_WEEKS } from './longgame';
 import { BULLETIN, LEADER } from './newspaper';
 import { addOpinion, opinion } from './relations';
 import { rand } from './rng';
+import { ownsFloridaPlace } from './spendState';
 import { journal, T } from './trips';
 import { FLEE_DESTS, FLEE_IDS, fare, legDays, MODES, modeBlock } from './travelDests';
 import {
@@ -65,6 +66,12 @@ export function wantedPeople(s: GameState): Character[] {
   return Object.values(s.characters).filter((c) => c.alive && isFree(s, c) && !fugitiveOf(s, c.id) && !!wantedFor(s, c.id));
 }
 
+/** A week's keep in hiding: half, with no rent, when the boss lies low in his own place in Florida. */
+export function fleeDrain(s: GameState, dest: FugitiveDest, personId: string): number {
+  const d = FLEE_DESTS[dest];
+  return dest === 'florida' && personId === s.playerId && ownsFloridaPlace(s) ? Math.round(d.drain / 2) : d.drain;
+}
+
 export function cover(s: GameState, plan: FleePlan): { value: number; reasons: { label: string; value: number }[] } {
   const d = FLEE_DESTS[plan.dest];
   const reasons: { label: string; value: number }[] = [{ label: d.name, value: d.cover }];
@@ -73,6 +80,7 @@ export function cover(s: GameState, plan: FleePlan): { value: number; reasons: {
     reasons.push({ label: `${h ? h.firstName + '\'s' : 'A'} safehouse`, value: 0.1 + (h && opinion(s, h.id, plan.personId) >= 30 ? 0.05 : 0) });
   }
   if (plan.papers) reasons.push({ label: 'New papers', value: 0.1 });
+  if (plan.dest === 'florida' && plan.personId === s.playerId && ownsFloridaPlace(s)) reasons.push({ label: 'Your own place down there (no landlord, no register)', value: 0.05 });
   if ((plan.dest === 'montreal' && s.flags.lam_montreal) || (plan.dest === 'mexico' && s.flags.lam_mexico)) reasons.push({ label: 'Friends there (met on a trip)', value: 0.1 });
   if (MODES[plan.mode].conspicuous >= 0.8) reasons.push({ label: `${MODES[plan.mode].name}: the airports are watched`, value: -0.05 });
   const value = Math.max(0.05, Math.min(0.9, reasons.reduce((a, r) => a + r.value, 0)));
@@ -104,11 +112,12 @@ export function fleeQuote(s: GameState, plan: FleePlan): FleeQuote {
   lines.push({ label: `${MODES[plan.mode].name} to ${d.name}`, amount: fare(plan.mode, d.miles, 'modest') });
   if (plan.papers) lines.push({ label: s.characters[forgerOf(s) ?? '']?.alive ? 'New papers (your forger)' : 'New papers (bought)', amount: forgerOf(s) ? 0 : PAPERS_COST });
   if (plan.safehouseId) lines.push({ label: 'Setting up the safehouse', amount: SAFEHOUSE_COST });
-  lines.push({ label: 'The first week\'s keep', amount: d.drain });
+  const drain = fleeDrain(s, plan.dest, plan.personId);
+  lines.push({ label: drain < d.drain ? 'The first week\'s keep (your own place: no rent)' : 'The first week\'s keep', amount: drain });
   const cov = cover(s, plan);
   const q: FleeQuote = {
     cost: lines.reduce((a, l) => a + l.amount, 0), lines, days: legDays(plan.mode, d.miles), manhunt: startManhunt(s, plan), cover: cov.value, coverReasons: cov.reasons,
-    extradition: d.extradition, drain: d.drain,
+    extradition: d.extradition, drain,
   };
   q.block = fleeBlock(s, plan, q.cost);
   return q;
@@ -334,7 +343,7 @@ export function fugitiveWeek(ctx: Ctx): void {
     const label = bossLabel(s, f);
     const arrived = !t || t.arriveDay <= today(s) + 6;
     // The cost of hiding, and the isolation.
-    money(ctx, -(c.id === s.playerId ? d.drain : Math.round(d.drain / 2)), `${label}: rent, food, and a man who brings the papers`, 'cost');
+    money(ctx, -(c.id === s.playerId ? fleeDrain(s, f.dest, c.id) : Math.round(d.drain / 2)), `${label}: rent, food, and a man who brings the papers`, 'cost');
     addStress(s, c.id, d.isolation + (s.week - f.since > 26 ? 1 : 0), 'paranoia');
     // The manhunt.
     f.manhunt = Math.max(0, Math.min(100, Math.round((f.manhunt + manhuntGrowth(s, f)) * 10) / 10));

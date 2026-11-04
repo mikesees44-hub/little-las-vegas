@@ -57,8 +57,8 @@ export type BeatId = 'capowife' | 'photo' | 'rival' | 'asks';
 export interface EveningPlan {
   id: string;
   kind: EveningKind;
-  /** Just the release: where. */
-  at?: 'office' | 'hotel';
+  /** Just the release: where (a motel on Route 9: a room for the night, cheap, and nobody asks). */
+  at?: 'office' | 'hotel' | 'motel';
   dest?: Dest;
   cover?: Cover;
   approach: Approach;
@@ -73,6 +73,9 @@ export interface EveningPlan {
   pick?: string;
   stay: boolean;
 }
+
+/** A motel room on Route 9 for the night (1960 dollars): cash, a key on a plastic diamond, no questions. */
+export const MOTEL_ROOM = 12;
 
 export const KIND_INFO: Record<EveningKind, { label: string; text: string; hours: number; evenings: number }> = {
   release: { label: 'Just the release', text: 'A quiet night in: no dinner, no talk. The most stress off you, the cheapest, the shortest (about 2 hours). Little attachment.', hours: 2, evenings: 1 },
@@ -248,6 +251,7 @@ export function eveningCost(s: GameState, plan: EveningPlan): { total: number; l
   const extra = Math.round((paid ? { queen: 250, night: 0, something: 120 } : { queen: 250, night: 40, something: 90 })[plan.approach] * k);
   if (extra) { total += extra; lines.push(`${plan.approach === 'queen' ? 'champagne and a gift' : 'dinner and drinks'} ${$(extra)}`); }
   if (plan.kind === 'release' && plan.at === 'hotel') { total += 35; lines.push('the room $35'); }
+  if (plan.kind === 'release' && plan.at === 'motel') { total += MOTEL_ROOM; lines.push(`a motel room ${$(MOTEL_ROOM)}`); }
   if (plan.kind === 'town') { total += 60; lines.push('the clubs $60'); }
   if (plan.kind === 'getaway') { const d = DEST_INFO[plan.dest ?? 'capemay']; total += d.cost; lines.push(`${d.label.toLowerCase()} ${$(d.cost)}`); }
   if (plan.beat && plan.pick) { const pk = BEAT_INFO[plan.beat].picks.find((x) => x.id === plan.pick); if (pk?.cost) { total += pk.cost; lines.push(`${pk.label.toLowerCase()}`); } }
@@ -284,6 +288,7 @@ export function inviteAcceptance(s: GameState, c: Character, plan: EveningPlan):
   if (s.heat.local >= 60 || s.heat.federal >= 50) reasons.push({ label: 'Your name is in the papers; being seen with you is a risk', value: -15 });
   if (plan.kind === 'club') reasons.push({ label: 'In front of your people: not every woman wants that', value: -15 });
   if (plan.kind === 'release' && plan.at === 'office') reasons.push({ label: 'Your office: not her idea of a night', value: -6 });
+  if (plan.kind === 'release' && plan.at === 'motel' && plan.approach === 'queen') reasons.push({ label: 'The best of everything, at a motel?', value: -4 });
   if (plan.kind === 'getaway' && p?.fam.kids.some((k) => s.date.y - k.y < 14)) reasons.push({ label: 'Her kids: two days away is hard', value: -15 });
   if (plan.kind === 'getaway' && (p?.fam.st === 'married' || p?.fam.st === 'steady') && p.fam.knows !== 'accepts') reasons.push({ label: 'Two days away: her husband would ask', value: -15 });
   const b = s.dating?.bonds[c.id];
@@ -311,7 +316,7 @@ export function stayOdds(s: GameState, c: Character, plan: Pick<EveningPlan, 'id
 
 function wifeOdds(s: GameState, plan: EveningPlan, stayed: boolean): number {
   const boss = player(s);
-  const v = { release: 0.04, town: 0.16, getaway: 0.06, club: 0.85 }[plan.kind] * (plan.approach === 'something' ? 1.3 : 1) * (stayed ? 1.4 : 1) * (hasTrait(boss, 'Womanizer') ? 1.2 : 1);
+  const v = ({ release: 0.04, town: 0.16, getaway: 0.06, club: 0.85 }[plan.kind] + (plan.kind === 'release' && plan.at === 'motel' ? 0.02 : 0)) * (plan.approach === 'something' ? 1.3 : 1) * (stayed ? 1.4 : 1) * (hasTrait(boss, 'Womanizer') ? 1.2 : 1);
   return Math.min(0.9, v);
 }
 
@@ -324,6 +329,7 @@ export function eveningRisks(s: GameState, c: Character, plan: EveningPlan): str
   if (plan.kind === 'town') out.push('gossip; the other families and the cops notice who you are seen with');
   if (plan.kind === 'club') out.push('the old-school capos and the consigliere think less of you; the other families learn your weakness');
   if (plan.kind === 'release' && plan.at === 'hotel') out.push('a vice cop or a federal man may see her leave the hotel');
+  if (plan.kind === 'release' && plan.at === 'motel') out.push('the night clerk knows your car');
   out.push('you never really know who she talks to');
   return out;
 }
@@ -367,7 +373,7 @@ export function previewInvite(s: GameState, plan: EveningPlan): ActionPreview {
   const op: NightOp = { op: 'invite', plan: { ...plan, stay: plan.stay && stayP > 0 } };
   return {
     ...base,
-    title: `${info.label}, ${APPROACH_LABEL[plan.approach].toLowerCase()}: ${c.firstName}`,
+    title: plan.kind === 'release' && plan.at === 'motel' ? `A room for the night: ${c.firstName}` : `${info.label}, ${APPROACH_LABEL[plan.approach].toLowerCase()}: ${c.firstName}`,
     because: `took ${c.firstName} out`,
     cost: cost.total, pot: 'pocket',
     detail: `${displayName(c)}, ${ageOn(c.birth, s.date)}. ${info.text} ${approachText(s, plan.id, plan.approach)} ${kind === 'paid' ? 'She is paid for her evening; it is an agreed arrangement between adults, and she can still say no (then nothing is paid).' : 'A personal evening: she says yes or no as herself.'}${cost.lines.length ? ` Cost: ${cost.lines.join(', ')}, from your pocket.` : ''} Takes ${info.evenings === 1 ? 'one of your evenings' : `${info.evenings} of your evenings`} (about ${info.hours} hours).${plan.kind === 'getaway' ? ` Cover story: ${COVER_INFO[plan.cover ?? 'business'].label.toLowerCase()}.` : ''}${fade}`,
@@ -425,7 +431,7 @@ export function applyInvite(ctx: Ctx, N: NightlifeState, plan: EveningPlan): voi
   const stress = (n: number, label: string) => { if (s.dyn) fx([{ type: 'dyn', op: { op: 'stress', charId: boss.id, amount: -n, source: 'domestic' }, label } as Effect], label); };
 
   // The kind of evening.
-  const where = plan.kind === 'release' ? (plan.at === 'office' ? 'your office, after the building emptied' : 'a room at the Royal Palm') : plan.kind === 'town' ? 'dinner at the Admiral, the Rhumba Terrace, the boardwalk after' : plan.kind === 'getaway' ? DEST_INFO[plan.dest ?? 'capemay'].label.toLowerCase() : 'the social club, your people at every table';
+  const where = plan.kind === 'release' ? (plan.at === 'office' ? 'your office, after the building emptied' : plan.at === 'motel' ? 'a room for the night at a motel on Route 9, paid in cash' : 'a room at the Royal Palm') : plan.kind === 'town' ? 'dinner at the Admiral, the Rhumba Terrace, the boardwalk after' : plan.kind === 'getaway' ? DEST_INFO[plan.dest ?? 'capemay'].label.toLowerCase() : 'the social club, your people at every table';
   if (plan.kind === 'release') { stress(14, 'A quiet night in'); lines.push(`A quiet night in, ${where}.`); }
   if (plan.kind === 'town') { stress(10, 'A night on the town'); lines.push(`A night on the town with ${c.firstName}: ${where}.`); }
   if (plan.kind === 'getaway') { stress(10, 'Away from the island'); if (p) p.attach = clamp(p.attach + 20); b.aff = clamp(b.aff + 10); lines.push(`Two days away with ${c.firstName}: ${where}.`); N.companions ??= {}; N.companions[plan.id] = s.week + 8; }

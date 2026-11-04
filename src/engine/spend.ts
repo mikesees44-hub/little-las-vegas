@@ -7,7 +7,9 @@ import { legitIncome } from './develop';
 import { fmtMoney } from './effects';
 import { addStress } from './familyStress';
 import { owned as ownedLux, LUX_BY_ID } from './goodlife';
-import { activeGoomars } from './goomar';
+import { adultOn, ensureDating } from './datingState';
+import { activeGoomars, goomarOf } from './goomar';
+import { activeRomances, kin, partnerOf } from './romance';
 import { heat, money, type Ctx } from './ledger';
 import { earnPocket, pocketPrice, spendPocket } from './pocket';
 import { inflation } from './property';
@@ -106,6 +108,88 @@ function recipients(s: GameState, it: SpendItem, target?: Character): Character[
   if (g === 'son') return reqTargets(s, 'son16').slice(0, 1);
   if (g === 'mother') return reqTargets(s, 'parent').sort((a, b) => (a.gender === 'F' ? -1 : 0) - (b.gender === 'F' ? -1 : 0)).slice(0, 1);
   return reqTargets(s, 'spouse');
+}
+
+/* ------------------------------------------------------------------ */
+/* Presents for somebody in particular (Your Pocket: "for her")         */
+/* ------------------------------------------------------------------ */
+
+/** Who a present can be for: his wife, a goomar, a woman he is seeing, a daughter, a son. */
+export type GiftKind = 'wife' | 'goomar' | 'lover' | 'daughter' | 'son';
+export interface GiftTarget { id: string; kind: GiftKind; name: string }
+
+export const GIFT_KIND_LABEL: Record<GiftKind, string> = { wife: 'Your wife', goomar: 'Your goomar', lover: 'A woman you are seeing', daughter: 'Your daughter', son: 'Your son' };
+
+/**
+ * The people the boss can give a present to, in order: his wife, his goomars (only with Mature content
+ * on), the women he is seeing (a courtship or an affair, adults only), his daughters, his sons.
+ */
+export function giftTargets(s: GameState): GiftTarget[] {
+  const b = bossOf(s);
+  if (!b?.alive) return [];
+  const out: GiftTarget[] = [];
+  const add = (c: Character | undefined, kind: GiftKind) => { if (c?.alive && !out.some((x) => x.id === c.id)) out.push({ id: c.id, kind, name: c.firstName }); };
+  const w = b.spouseId ? s.characters[b.spouseId] : undefined;
+  add(w, 'wife');
+  const adultC = (c: Character | undefined): c is Character => !!c?.alive && age(s, c) >= 18 && age(s, b) >= 18 && !kin(b, c);
+  if (adultOn(s)) for (const g of activeGoomars(s)) { const c = s.characters[g.id]; if (adultC(c)) add(c, 'goomar'); }
+  for (const r of activeRomances(s, b.id)) { const c = s.characters[partnerOf(r, b.id)]; if (adultC(c) && c.id !== b.spouseId) add(c, 'lover'); }
+  for (const k of kids(s)) add(k, k.gender === 'F' ? 'daughter' : 'son');
+  return out;
+}
+
+/** What a mother would not want her daughter to have from her father (the romantic stones). */
+const NOT_FOR_KIDS = new Set(['sp_anniv', 'st_weddingband', 'st_diamondnecklace', 'st_gown', 'st_designerdress']);
+const GIVE_CATS = new Set<SpendCat>(['jewelry', 'style', 'gifts', 'cars', 'boats', 'home']);
+
+/** Why this can't be bought as a present for this person (undefined: it can). */
+export function giftBlock(s: GameState, it: SpendItem, to: GiftTarget | undefined): string | undefined {
+  if (!to) return 'Nobody to give it to';
+  if (!it.gift || it.each || it.per) return 'Not a present';
+  if ((it.mature || it.gift === 'goomar' || to.kind === 'goomar') && !adultOn(s)) return 'Mature content is Off (Settings)';
+  if (it.req === 'goomar' && to.kind !== 'goomar') return 'That is for a goomar';
+  switch (to.kind) {
+    case 'wife': return it.gift === 'wife' || it.gift === 'goomar' || it.gift === 'anyone' ? undefined : 'Not for your wife';
+    case 'goomar': case 'lover': {
+      if (it.req === 'goomar') return undefined;
+      const ok = (it.gift === 'wife' || it.gift === 'goomar' || it.gift === 'anyone') && GIVE_CATS.has(it.cat) && it.cat !== 'home';
+      return ok ? undefined : `Not something for ${to.name}`;
+    }
+    case 'daughter': return it.gift === 'daughter' || it.gift === 'anyone' || (it.cat === 'jewelry' && it.gift === 'wife' && !NOT_FOR_KIDS.has(it.id) && !it.risk) ? undefined : 'Not for your daughter';
+    case 'son': return it.gift === 'son' || it.gift === 'anyone' ? undefined : 'Not for your son';
+  }
+}
+
+/** The chance (and the cost) that his wife finds out about a present for somebody else. */
+export function giftRisk(s: GameState, it: SpendItem, to: GiftTarget | undefined): SpendItem['risk'] {
+  if (!to) return it.risk;
+  if (to.kind !== 'goomar' && to.kind !== 'lover') return undefined;
+  if (!reqTargets(s, 'spouse').length) return undefined;
+  if (it.risk) return it.risk;
+  return { p: Math.round(Math.min(0.3, 0.05 + it.flash * 0.03) * 100) / 100, wife: -(6 + it.flash), text: `Your wife found out about ${lower(it.name.replace(/ for (your|the) .*$/, '').replace(/^An? /, 'the '))}, and who it was for.` };
+}
+
+/** How much a present moves the person it is for (an item's own number, or one from its price). */
+function giftAmount(s: GameState, it: SpendItem, c: Character, value: number): number {
+  const base = it.wife ?? Math.max(2, Math.min(14, Math.round(Math.sqrt(Math.max(0, value)) / 6)));
+  return Math.round(base * giftFit(s, it, c).mult);
+}
+
+/** His wife found out: her opinion, and the island's talk; a goomar's secret is out. */
+function wifeFinds(ctx: Ctx, risk: NonNullable<SpendItem['risk']>, about?: Character): void {
+  const s = ctx.s;
+  const w = reqTargets(s, 'spouse')[0];
+  if (!w) return;
+  addOpinion(s, w.id, s.playerId, risk.text, risk.wife, 0.5);
+  ctx.log.push(risk.text);
+  slog(s, risk.text);
+  if (about) {
+    const g = goomarOf(s, about.id);
+    if (g) g.wifeKnows = true;
+    const D = ensureDating(s);
+    D.rumors.push({ week: s.week, text: `${w.firstName} knows about the presents for ${about.firstName}.`, about: s.playerId, heard: [w.id], true: true });
+    if (D.rumors.length > 40) D.rumors.splice(0, D.rumors.length - 40);
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -338,17 +422,25 @@ const MOD_TEXT: Record<string, (v: number) => string> = {
 const MONTH = ['', 'January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 /** Why it can't be had right now, money aside (undefined: it can). */
-export function spendBlock(s: GameState, it: SpendItem): string | undefined {
+export function spendBlock(s: GameState, it: SpendItem, opts: { to?: string } = {}): string | undefined {
   const y = s.date.y;
+  if ((it.mature || it.gift === 'goomar' || it.req === 'goomar') && !adultOn(s)) return 'Mature content is Off (Settings)';
   if ((it.minYear ?? 0) > y) return `Not before ${it.minYear}`;
   if ((it.maxYear ?? 9999) < y) return `Gone after ${it.maxYear}`;
   if (it.months && !it.months.includes(s.date.m)) return `Only in ${it.months.map((m) => MONTH[m]).join(', ')}`;
   const tags = spendTags(s);
   const missing = (it.needs ?? []).filter((n) => !tags.has(n));
   if (missing.length) return `Needs ${missing.map((n) => TAG_TEXT[n] ?? n).join(' and ')}`;
-  if (it.req && !reqTargets(s, it.req).length) return REQ_TEXT[it.req];
-  if (it.each && !nextTarget(s, it)) return 'Done for every one of them';
-  if (it.kind !== 'once' && ownedCount(s, it.id) >= (it.limit ?? 1)) return it.kind === 'svc' ? 'Already on the payroll' : 'You already have it';
+  if (opts.to) {
+    // A present for somebody in particular: who it is for decides, not the catalog's default.
+    const why = giftBlock(s, it, giftTargets(s).find((x) => x.id === opts.to));
+    if (why) return why;
+    if (it.kind !== 'once' && spendOwned(s).filter((o) => o.id === it.id && o.holder === opts.to).length >= (it.limit ?? 1)) return `${s.characters[opts.to]?.firstName ?? 'She'} already has one`;
+  } else {
+    if (it.req && !reqTargets(s, it.req).length) return REQ_TEXT[it.req];
+    if (it.each && !nextTarget(s, it)) return 'Done for every one of them';
+    if (it.kind !== 'once' && ownedCount(s, it.id) >= (it.limit ?? 1)) return it.kind === 'svc' ? 'Already on the payroll' : 'You already have it';
+  }
   const left = stockLeft(s, it);
   if (left === 0) return 'Sold out: there are no more on the island';
   const last = s.spend?.last[it.id];
@@ -377,6 +469,7 @@ export function previewSpend(s: GameState, a: SpendAction): ActionPreview {
   if (a.op === 'buy') return previewBuy(s, a);
   if (a.op === 'race') return previewRace(s, a.uid, a.race);
   if (a.op === 'share') return previewShare(s, a);
+  if (a.op === 'give') return previewGive(s, a.uid, a.to);
   return previewSell(s, a.uid);
 }
 
@@ -397,11 +490,13 @@ function previewBuy(s: GameState, a: Extract<SpendAction, { op: 'buy' }>): Actio
   const price = deal.price;
   const fin = a.finance ? financeTerms(s, it, price) : undefined;
   const pay = fin ? fin.down : price;
-  const target = it.each ? nextTarget(s, it) : undefined;
+  const to = a.to ? giftTargets(s).find((x) => x.id === a.to) : undefined;
+  const target = it.each ? nextTarget(s, it) : to ? s.characters[to.id] : undefined;
   const forName = target ? ` (${target.firstName})` : '';
-  const title = `${it.name}${forName}`;
+  const title = to ? `${it.name.replace(/ for (your|the) (wife|goomar|daughters?|son|mother)$/, '')}, for ${target!.firstName}` : `${it.name}${forName}`;
   const effects: Effect[] = [];
-  let why = spendBlock(s, it) ?? deal.why;
+  let why = (a.to && !to ? 'Not somebody you can give that to' : undefined) ?? spendBlock(s, it, { to: a.to }) ?? deal.why;
+  if (a.to && (it.each || a.finance)) why ??= 'Not as a present';
   if (a.finance && !fin) why ??= 'Nobody finances that';
   const payTitle = fin ? `${title}: the down payment` : title;
   if (it.pot === 'pocket') {
@@ -414,7 +509,11 @@ function previewBuy(s: GameState, a: Extract<SpendAction, { op: 'buy' }>): Actio
   }
   if (it.respect) effects.push({ type: 'respect', amount: it.respect, label: title });
   if (it.fam) effects.push({ type: 'familyOpinion', amount: it.fam, reason: it.fam > 0 ? 'Provides for the family' : 'The house is full of his men again', label: title });
-  if (it.wife) for (const c of recipients(s, it, target)) {
+  if (to && target) {
+    // A present for somebody in particular: it lands with her (store.ts giftFit), whatever the catalog's default.
+    const amt = giftAmount(s, it, target, price);
+    if (amt) effects.push({ type: 'opinion', from: target.id, to: s.playerId, amount: amt, reason: `${it.name.replace(/ for (your|the) .*$/, '')}`, label: title });
+  } else if (it.wife) for (const c of recipients(s, it, target)) {
     // A present lands differently with different people (store.ts giftFit).
     const fit = it.gift ? giftFit(s, it, c) : { mult: 1 };
     const amt = Math.round(it.wife * fit.mult);
@@ -439,7 +538,9 @@ function previewBuy(s: GameState, a: Extract<SpendAction, { op: 'buy' }>): Actio
   if (irs.pressure) notes.push(`IRS audit pressure +${irs.pressure}`);
   if (it.irsRelief) notes.push(`IRS audit pressure −${it.irsRelief}`);
   if (it.gamble) notes.push(`${Math.round(it.gamble.p * 100)}% to win ${$(price * it.gamble.win)}`);
-  if (it.risk) notes.push(`${Math.round(it.risk.p * 100)}% your wife finds out`);
+  const risk = giftRisk(s, it, to);
+  if (risk) notes.push(`${Math.round(risk.p * 100)}% your wife finds out (${risk.wife} with her)`);
+  if (to && it.kind === 'own') notes.push(`It is ${target!.firstName}'s: not yours to sell`);
   const left = stockLeft(s, it);
   if (left !== undefined && left > 0) notes.push(left === 1 ? 'The last one on the island' : `${left} left on the island`);
   if (notes.length) effects.push({ type: 'econ', op: { op: 'note', text: notes.join(' · ') }, label: title } as Effect);
@@ -472,6 +573,48 @@ function previewSell(s: GameState, uid: string): ActionPreview {
   };
 }
 
+/** The categories of his own things he can hand to somebody (a watch, a car, the summer house); never a business or a share. */
+const REGIFT_CATS = new Set<SpendCat>(['cars', 'boats', 'style', 'jewelry', 'gifts', 'home']);
+
+/** Why he can't give this away to this person (undefined: he can). */
+export function giveBlock(s: GameState, uid: string, to: string): string | undefined {
+  const o = spendOwned(s).find((x) => x.uid === uid);
+  const it = o ? SPEND_BY_ID[o.id] : undefined;
+  if (!o || !it) return 'Not yours';
+  if (o.holder && o.holder !== s.playerId) return `It's ${s.characters[o.holder]?.firstName ?? 'somebody else'}'s already`;
+  if (it.kind !== 'own' || o.pot !== 'pocket' || !REGIFT_CATS.has(it.cat)) return 'Not something you hand to somebody';
+  if (s.spend?.loans?.some((l) => l.uid === uid)) return 'Still owed on: pay it off first';
+  const t = giftTargets(s).find((x) => x.id === to);
+  if (!t) return 'Not somebody you can give that to';
+  if (t.kind === 'goomar' && !adultOn(s)) return 'Mature content is Off (Settings)';
+  return undefined;
+}
+
+function previewGive(s: GameState, uid: string, to: string): ActionPreview {
+  const o = spendOwned(s).find((x) => x.uid === uid);
+  const it = o ? SPEND_BY_ID[o.id] : undefined;
+  const c = s.characters[to];
+  if (!o || !it || !c) return { title: 'Give it away', effects: [], cost: 0, because: '', disabledReason: 'Not yours', category: 'event' };
+  const t = giftTargets(s).find((x) => x.id === to);
+  const v = spendResale(s, o);
+  const name = lower(it.name.replace(/^An? /, 'your ').replace(/ for (your|the) .*$/, ''));
+  const title = `Give ${name} to ${c.firstName}`;
+  const effects: Effect[] = [];
+  const amt = giftAmount(s, it, c, Math.max(v, o.paid * 0.5));
+  if (amt) effects.push({ type: 'opinion', from: c.id, to: s.playerId, amount: amt, reason: `${it.name.replace(/ for (your|the) .*$/, '')}, from him`, label: title });
+  const notes: string[] = [`It is ${c.firstName}'s now: no longer yours to sell (worth ${$(v)})`];
+  const up = spendUpkeep(s, it);
+  if (up) notes.push(`No more upkeep for you (${$(up)}/wk)`);
+  const risk = giftRisk(s, it, t);
+  if (risk) notes.push(`${Math.round(risk.p * 100)}% your wife finds out (${risk.wife} with her)`);
+  effects.push({ type: 'econ', op: { op: 'note', text: notes.join(' · ') }, label: title } as Effect);
+  return {
+    title, detail: `${it.blurb} Paid ${$(o.paid)} in ${o.year}.`, effects, cost: 0,
+    because: `gave ${name} to ${c.firstName}`, category: 'event', verb: `Give to ${c.firstName}`,
+    disabledReason: giveBlock(s, uid, to),
+  };
+}
+
 function slog(s: GameState, text: string): void {
   const sp = ensureSpend(s);
   sp.log.push([s.week, text]);
@@ -494,21 +637,40 @@ export function commitSpend(ctx: Ctx, a: SpendAction): void {
   }
   if (a.op === 'race') { commitRace(ctx, a.uid, a.race); return; }
   if (a.op === 'share') { commitShare(ctx, a); return; }
+  if (a.op === 'give') {
+    if (giveBlock(s, a.uid, a.to)) return;
+    const o = sp.owned.find((x) => x.uid === a.uid)!;
+    const it = SPEND_BY_ID[o.id];
+    const c = s.characters[a.to];
+    const t = giftTargets(s).find((x) => x.id === a.to);
+    sp.owned = sp.owned.filter((x) => x !== o);
+    (sp.given ??= []).push([s.week, o.id, a.to, spendResale(s, o)]);
+    if (sp.given.length > 20) sp.given.splice(0, sp.given.length - 20);
+    const g = ((sp.gifts ??= {})[a.to] ??= []);
+    g.push(s.week);
+    if (g.length > 10) g.splice(0, g.length - 10);
+    const risk = giftRisk(s, it, t);
+    if (risk && rand(sp) < risk.p) wifeFinds(ctx, risk, c);
+    slog(s, `Gave ${lower(it.name.replace(/^An? /, 'your '))} to ${c?.firstName ?? 'somebody'}.`);
+    return;
+  }
   const it = SPEND_BY_ID[a.item];
   if (!it) return;
   const price = dealPrice(s, it, a.offer).price;
   const fin = a.finance ? financeTerms(s, it, price) : undefined;
-  const target = it.each ? nextTarget(s, it) : undefined;
+  const to = a.to ? giftTargets(s).find((x) => x.id === a.to) : undefined;
+  if (a.to && (!to || spendBlock(s, it, { to: a.to }))) return;
+  const target = it.each ? nextTarget(s, it) : to ? s.characters[to.id] : undefined;
   const irs = irsCost(s, it);
   if (it.kind !== 'once') {
     const uid = `sp${sp.nextId++}`;
     // A present that is hers stays hers (the wife's jewelry is not the boss's to sell).
-    const holder = ownershipOf(it) === 'recipient' ? (target ?? recipients(s, it, target)[0])?.id : undefined;
+    const holder = to ? to.id : ownershipOf(it) === 'recipient' ? (target ?? recipients(s, it, target)[0])?.id : undefined;
     sp.owned.push({ uid, id: it.id, paid: price, pot: it.pot, week: s.week, year: s.date.y, ...(holder ? { holder } : {}) });
     if (fin) (sp.loans ??= []).push({ uid, item: it.id, pot: it.pot, pay: fin.pay, left: fin.total, missed: 0, lender: fin.lender });
   }
   sp.last[it.id] = s.week;
-  if (it.gift && it.wife) for (const c of recipients(s, it, target)) {
+  if (it.gift && (it.wife || to)) for (const c of to && target ? [target] : recipients(s, it, target)) {
     const g = ((sp.gifts ??= {})[c.id] ??= []);
     g.push(s.week);
     if (g.length > 10) g.splice(0, g.length - 10);
@@ -534,14 +696,8 @@ export function commitSpend(ctx: Ctx, a: SpendAction): void {
       slog(s, `${it.name}: you lost ${$(price)}.`);
     }
   }
-  if (it.risk && rand(sp) < it.risk.p) {
-    const w = reqTargets(s, 'spouse')[0];
-    if (w) {
-      addOpinion(s, w.id, s.playerId, it.risk.text, it.risk.wife, 0.5);
-      ctx.log.push(it.risk.text);
-      slog(s, it.risk.text);
-    }
-  }
+  const risk = giftRisk(s, it, to);
+  if (risk && rand(sp) < risk.p) wifeFinds(ctx, risk, to ? target : it.gift === 'goomar' || it.req === 'goomar' ? recipients(s, it)[0] : undefined);
   slog(s, `${verbFor(it) === 'Hire' ? 'Hired' : verbFor(it) === 'Play' ? 'Played' : verbFor(it) === 'Pay for' ? 'Paid for' : 'Bought'}: ${lower(it.name)}${target ? ` (${target.firstName})` : ''}, ${$(price)}.`);
 }
 
@@ -566,6 +722,11 @@ export function spendWeek(ctx: Ctx): void {
     if (it.kind === 'svc' && it.req && !reqTargets(s, it.req).length && it.req !== 'fallen') {
       sp.owned = sp.owned.filter((x) => x !== o);
       slog(s, `No more need for ${lower(it.name)}: let go.`);
+    }
+    // Her place (a better apartment for a goomar): when it ends, the lease is hers and the rent stops.
+    if (it.req === 'goomar' && it.kind === 'own' && o.holder && !goomarOf(s, o.holder)) {
+      sp.owned = sp.owned.filter((x) => x !== o);
+      slog(s, `${s.characters[o.holder]?.firstName ?? 'She'} kept the apartment; the rent is no longer yours.`);
     }
   }
   // Upkeep, by pot.

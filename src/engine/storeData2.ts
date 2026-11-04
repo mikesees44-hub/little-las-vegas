@@ -147,6 +147,16 @@ export const STORE_ITEMS_2: SpendItem[] = [
   X('services', 'services', 'once', 'st_inspection', 'A property inspection', 150, 0, "An engineer walks every building you own and writes down what will fall down first.", { flash: 0, cd: 26, mods: {}, relief: 1, advice: "Cheap, and it tells us where the next big bill is coming from." }),
   X('services', 'services', 'once', 'st_mediator', 'A professional mediator for a business dispute', 500, 0, "A retired judge who settles things between partners without anybody going to court.", { flash: 0, cd: 13, g: { pols: 1 } }),
   X('services', 'services', 'once', 'st_valuation', 'A business valuation', 300, 0, "An accountant from Philadelphia puts a number on everything you own.", { flash: 0, cd: 26, relief: 1 }),
+  // ---------- Your pocket: the gaps the owner asked for (a Florida condo, a better place for her) ----------
+  P('st_miamicondo', 'A condo on Collins Avenue, Miami Beach', 16000, 15, "Two bedrooms on the ninth floor of a new tower, a balcony over the ocean, a doorman who never saw you. The winter, or a few quiet weeks when home gets hot.", {
+    fam: 6, relief: 8, respect: 2, flash: 4, resale: 0.9, drift: 0.04, unl: ['florida'], g: { philly: 2 }, where: 'Miami Beach, Florida',
+    advice: 'A place of our own down there: no hotel register with your name in it. When the heat is on up here, that matters more than the view.', hooks: ['A Philadelphia man two floors down', 'A hurricane season'],
+  }),
+  L('home', 'own', 'st_goomar_flat', 'A better apartment for her (a garden flat in the Crest)', 2500, 15, "Her own door, a garden, a quiet street, the lease in her name. The extra rent comes from your pocket every week.", {
+    wife: 10, relief: 2, flash: 2, req: 'goomar', gift: 'goomar', owner: 'recipient', mature: true, limit: 1,
+    risk: { p: 0.12, wife: -12, text: 'Your wife saw the lease on a garden flat in the Crest. Her name was not on it.' },
+    advice: 'She will love it. The more you spend on her, the more there is to find.',
+  }),
   // ---------- Licensed people the professions need ----------
   H('st_cpa', 'A certified public accountant', 150, 80, "A CPA with his license on the wall, so the bookkeeping firm can sign returns.", { unl: ['cpa'], mods: { irsShield: 5 }, hire: { skill: 75, rep: 'Ten years with a Philadelphia firm', avail: 'Now' } }),
   H('st_mortician', 'A licensed funeral director', 120, 70, "State-licensed, soft-spoken, the only person who can sign for a burial.", { unl: ['mortician'], hire: { skill: 70, rep: 'Trained in Philadelphia', avail: 'Now' } }),

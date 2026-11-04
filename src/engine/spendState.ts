@@ -55,6 +55,8 @@ export interface SpendState {
   gifts?: Record<string, number[]>;
   /** The week the boss was last told he can't keep up the upkeep. */
   strained?: number;
+  /** Things of his he gave away (Your Pocket: re-gifting): [week, item id, to (a character id), what it was worth]. Last 20 kept. */
+  given?: [number, string, string, number][];
 }
 
 /** A purchase financed at the store: what is left to pay and the weekly payment. */
@@ -88,9 +90,11 @@ export interface StoreNpcState {
 }
 
 export type SpendAction =
-  /** Buy. `finance`: a quarter down and weekly payments. `offer`: a price the seller agreed to (store.ts counterOffer). */
-  | { op: 'buy'; item: string; finance?: boolean; offer?: number }
+  /** Buy. `finance`: a quarter down and weekly payments. `offer`: a price the seller agreed to (store.ts counterOffer). `to`: who a present is for (Your Pocket picks her). */
+  | { op: 'buy'; item: string; finance?: boolean; offer?: number; to?: string }
   | { op: 'sell'; uid: string }
+  /** Give one of his own things to somebody (Your Pocket: re-gifting a watch, a car). It becomes theirs. */
+  | { op: 'give'; uid: string; to: string }
   /** Enter a racehorse or a race car you own in a race (store.ts RACES). */
   | { op: 'race'; uid: string; race: string }
   /** Share the wealth (storeShare.ts): a sum spread over the crew, the widows, the church and the neighborhood. */
@@ -145,4 +149,13 @@ export function armoryBonus(s: GameState): number {
 /** The perk-style modifiers (lifestyle.perkMod adds these): bodyguards guard, a captain on the pad cools local heat… */
 export function spendPerk(s: GameState, key: PerkKey): number {
   return spendMod(s, key) + (key === 'hitPower' ? armoryBonus(s) : 0);
+}
+
+/**
+ * A place of his own in Florida (the Collins Avenue condo, the Bay Harbor house, the Good Life's
+ * Surfside ranch house): a trip down there needs no hotel, and lying low there costs less and hides better.
+ */
+export function ownsFloridaPlace(s: GameState): boolean {
+  if ((s.spend?.owned ?? []).some((o) => !o.holder && SPEND_BY_ID[o.id]?.unl?.includes('florida'))) return true;
+  return (s.econ?.goodLife ?? []).some((o) => o.id === 'florida');
 }

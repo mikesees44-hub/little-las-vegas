@@ -124,6 +124,8 @@ export interface StoreFields {
   fut?: string;
   /** Speed bonus for every horse in the barn (a trainer, a jockey, the farm). */
   horseBoost?: number;
+  /** Mature content (a mistress's things): hidden and blocked when the Mature setting is Off. */
+  mature?: boolean;
 }
 
 type O = Partial<Omit<SpendItem, 'id' | 'name' | 'cat' | 'price' | 'up' | 'blurb'>>;

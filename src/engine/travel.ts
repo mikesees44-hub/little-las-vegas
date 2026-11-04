@@ -1,4 +1,5 @@
 import { pocketPrice } from './pocket';
+import { ownsFloridaPlace } from './spendState';
 import type { ActionPreview } from './actions';
 import { guestGroup } from './activities';
 import { addDays, ageOn, dateOfWeek, formatDate, isInSeason, monthName } from './calendar';
@@ -181,7 +182,10 @@ export function quoteTrip(s: GameState, plan: TripPlan): TripQuote {
     lines.push({ label: `${o.mode === 'plane' || o.mode === 'ship' ? o.name : `${MODES[o.mode].name} (${o.name.toLowerCase()})`} fares, round trip (${travellers} × ${fmtMoney(2 * optFare(o, d, plan.tier))})`, amount: travellers * 2 * optFare(o, d, plan.tier) });
   }
   const rooms = travellers + (plan.discreet && (plan.companionId || plan.newCompanion) ? 1 : 0);
-  if (stay) lines.push({ label: `${d.hotels[plan.tier === 'modest' ? 0 : plan.tier === 'first' ? 1 : 2]}, ${stay} night${stay > 1 ? 's' : ''}${season === 'peak' ? ' (high season)' : season === 'off' ? ' (off season)' : ''}`, amount: Math.round(stay * rooms * tier.hotel * d.price * sMult) });
+  // His own place in Florida (Your Pocket: the condo, the Bay Harbor house): no hotel, no register with his name in it.
+  const ownPlace = stay > 0 && d.region === 'Florida' && plan.leaderId === s.playerId && ownsFloridaPlace(s);
+  if (stay && ownPlace) lines.push({ label: `Your own place in Florida, ${stay} night${stay > 1 ? 's' : ''} (no hotel: groceries and the maid)`, amount: Math.round(stay * 6 * Math.max(1, Math.ceil(rooms / 2))) });
+  else if (stay) lines.push({ label: `${d.hotels[plan.tier === 'modest' ? 0 : plan.tier === 'first' ? 1 : 2]}, ${stay} night${stay > 1 ? 's' : ''}${season === 'peak' ? ' (high season)' : season === 'off' ? ' (off season)' : ''}`, amount: Math.round(stay * rooms * tier.hotel * d.price * sMult) });
   const actCost = plan.days.reduce((a, id) => a + (d.activities.find((x) => x.id === id)?.cost ?? 0), 0);
   if (actCost) lines.push({ label: 'The itinerary (shows, tables, charters, dinners)', amount: Math.round(actCost * travellers * tier.mult) });
   if (plan.entertainer) lines.push({ label: ENTERTAINERS[plan.entertainer].name, amount: Math.round(ENTERTAINERS[plan.entertainer].fee * (plan.tier === 'lavish' ? 2 : plan.tier === 'first' ? 1.4 : 1)) });
