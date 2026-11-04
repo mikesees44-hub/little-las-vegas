@@ -127,6 +127,22 @@ export function birthForAge(h: RngHolder, today: GameDate, age: number): GameDat
   return addDays(base, -randInt(h, 0, 364));
 }
 
+/**
+ * B7: a child of the house is not given the first name of a living member of the house (two or three
+ * Pasquale Scalias alive at once made the tree and the history read wrong). One draw, as before; on a
+ * clash the next free name in the list.
+ */
+function freshFirstName(s: GameState, list: readonly string[], house: string | undefined): string {
+  const first = pick(s, list as string[]);
+  if (!house) return first;
+  const taken = new Set<string>();
+  for (const c of Object.values(s.characters)) if (c.alive && c.dynasty && c.lastName === house) taken.add(c.firstName);
+  if (!taken.has(first)) return first;
+  const i = list.indexOf(first);
+  for (let k = 1; k < list.length; k++) { const n = list[(i + k) % list.length]; if (!taken.has(n)) return n; }
+  return first;
+}
+
 export function makeCharacter(s: GameState, opts: MakeCharOpts = {}): Character {
   const gender = opts.gender ?? 'M';
   const eth = opts.ethnicity ?? (pick(s, ['Italian', 'Italian', 'Italian', 'Italian', 'Irish', 'Jewish']) as Ethnicity);
@@ -136,7 +152,7 @@ export function makeCharacter(s: GameState, opts: MakeCharOpts = {}): Character 
   const faction = opts.faction ?? 'none';
   const c: Character = {
     id: newId(s, 'c'),
-    firstName: opts.firstName ?? pick(s, gender === 'M' ? MALE_FIRST[eth] : FEMALE_FIRST[eth]),
+    firstName: opts.firstName ?? freshFirstName(s, gender === 'M' ? MALE_FIRST[eth] : FEMALE_FIRST[eth], opts.dynasty ? opts.lastName : undefined),
     lastName: opts.lastName ?? pick(s, SURNAMES[eth]),
     gender,
     ethnicity: eth,

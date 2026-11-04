@@ -142,3 +142,15 @@ describe('B8: widows and widowers are free to marry again', () => {
     expect(up.characters[wife.id].spouseId).toBeUndefined();
   });
 });
+
+describe('B7: a child of the house does not take a living kinsman\'s first name', () => {
+  it('births never duplicate a living first name in the house', async () => {
+    const s = newGameWith('b7-names', 'olddon');
+    const boss = s.characters[s.playerId];
+    for (let i = 0; i < 25; i++) makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 0 });
+    const names = Object.values(s.characters).filter((c) => c.alive && c.dynasty && c.lastName === boss.lastName && c.gender === 'M').map((c) => c.firstName);
+    const born = names.slice(-25);
+    // Every newborn's name is unique among the living house (until the list runs out).
+    expect(new Set(born).size).toBe(born.length);
+  });
+});
