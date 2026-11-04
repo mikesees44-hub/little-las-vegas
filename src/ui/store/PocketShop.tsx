@@ -133,7 +133,7 @@ function NightsWithHer({ s }: { s: GameState }) {
   const women = nightWomen(s);
   const { go } = useShell();
   if (!women.length) return (
-    <p className="text-[12px] text-stone-400" data-testid="pocket-nights-none">The dinners and shows below are for anybody. A room for the night or a suite needs a woman who is already seeing you, and her yes. <button type="button" className="text-gold-400 hover:text-gold-300" onClick={() => go('you.dating')}>Relationships &amp; Dating ▸</button></p>
+    <p className="text-[12px] text-stone-400" data-testid="pocket-nights-none">The dinners and shows below are with your wife. A room for the night or a suite needs a woman who is already seeing you, and her yes. <button type="button" className="text-gold-400 hover:text-gold-300" onClick={() => go('you.dating')}>Relationships &amp; Dating ▸</button></p>
   );
   return (
     <Section title="With a woman you are seeing" sub={adultOn(s) ? 'She decides. A room for the night fades to morning; your wife may hear.' : 'Mature content is Off: dinners and nights out only.'} domain="romance" testid="pocket-nights">
