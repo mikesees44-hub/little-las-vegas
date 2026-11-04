@@ -50,3 +50,23 @@ describe('B1: a Dead Man Walking call outlives its crisis', () => {
     expect(answerItem(s, id, 'summon')).toBeUndefined();
   });
 });
+
+describe('B2: district influence never sums over 100', () => {
+  it("a rival's man among the tenants takes his foothold from someone, not from nowhere", async () => {
+    const { myPlaces, placeAsksWeek, TRADES } = await import('../src/engine/placeAsks');
+    const { ensureEcon } = await import('../src/engine/econState');
+    const s = newGameWith('b2-infl', 'olddon');
+    const p = myPlaces(s)[0];
+    expect(p).toBeDefined();
+    const d = s.districts.find((x) => x.id === p.district)!;
+    const R = s.rivals[0];
+    const man = Object.values(s.characters).find((c) => c.alive && c.faction === R.id)!;
+    d.influence = { player: 70, [R.id]: 30, none: 0 } as typeof d.influence;
+    const E = ensureEcon(s);
+    E.tenants = { t1: { name: man.firstName, who: man.id, rival: R.id, trade: Object.keys(TRADES)[0] as never, place: p.id, placeName: p.name, cut: 20, gross: 300, w: s.week, claim: R.id, trouble: { k: 'claim', w: s.week - 10 } } } as never;
+    s.date = { ...s.date, d: 3 };
+    for (let i = 0; i < 3; i++) { placeAsksWeek(newCtx(s)); s.week++; }
+    const sum = Object.values(d.influence).reduce((a, b) => a + (b ?? 0), 0);
+    expect(sum).toBeLessThanOrEqual(100.0001);
+  });
+});
