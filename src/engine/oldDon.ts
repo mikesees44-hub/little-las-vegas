@@ -1,4 +1,5 @@
 import { ageOn } from './calendar';
+import { courtWord } from './matchmakers';
 import { capos, crew, displayName, isFree, player } from './characters';
 import { buildFactionDemand } from './crewlife';
 import { applyEffects } from './effects';
@@ -390,6 +391,8 @@ export function claimStrengths(s: GameState): Claim[] {
       { label: 'Money', value: Math.round(money * 0.1) },
       { label: 'Respect in the family', value: Math.round(resp * 0.2) },
       ...(side ? [{ label: 'Put out to pasture', value: -25 }] : []),
+      // The women's side of the court (matchmakers.ts): a mother with standing speaks for her own.
+      ...(courtWord(s, id) ? [{ label: 'His mother\'s circle', value: courtWord(s, id) }] : []),
     ];
     out.push({ id, name: displayName(c), total: clamp(parts.reduce((a, p) => a + p.value, 0)), parts, sidelined: side });
   }

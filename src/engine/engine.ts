@@ -113,6 +113,7 @@ import { proposalsEventSource } from './reactions/proposals';
 import { knobs } from './difficulty';
 import { pruneSave } from './prune';
 import { heirSeatSource, matchOfferSource } from './generations';
+import { matchmakersWeek, momKnowsBestSource } from './matchmakers';
 import { CAPO_SEAT_MIN } from './regimes';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
@@ -131,6 +132,7 @@ setHeatRaidPlanner(planHeatRaid);
 registerEventSource(bailoutSource);
 registerEventSource(heirSeatSource);
 registerEventSource(matchOfferSource);
+registerEventSource(momKnowsBestSource);
 registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
@@ -451,6 +453,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     womenWeek(ctx);
     honeyWeek(ctx);
     bondsWeek(ctx);
+    // The women arrange the matches (matchmakers.ts): her proposal, her silence taken as a yes.
+    matchmakersWeek(ctx);
     myMenWeek(ctx);
     spendWeek(ctx);
     storeWeek(ctx);

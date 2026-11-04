@@ -6,6 +6,7 @@ import { LEGACY_TRACKS, nextPerkCost } from './familyLegacy';
 import { fam } from './familyState';
 import { stressLevel } from './familyStress';
 import type { Alert } from './alerts';
+import { proposalView } from './matchmakers';
 import type { GameState } from './types';
 
 /** Alert-rail items from the dynasty layer (pure). */
@@ -15,6 +16,8 @@ export function familyAlerts(s: GameState): Alert[] {
   const boss = player(s);
   const st = fam(s, boss.id).stress;
   if (stressLevel(st) >= 2) out.push({ kind: 'family', severity: 'warn', title: 'The pressure is showing', text: `Your stress is ${st}. Host something, or it will break you.`, tab: 'family' });
+  const pv = proposalView(s);
+  if (pv) out.push({ kind: 'family', severity: 'warn', title: `${pv.by.firstName} has a match for ${pv.member.firstName}`, text: `${pv.spouse.firstName} ${pv.spouse.lastName} of ${pv.house.name}. Bless it, grumble, veto, or name your own.`, tab: 'house.marriages' });
   const heir = chooseHeir(s, boss).heir;
   if (heir && !heir.spouseId && ageOn(heir.birth, s.date) >= 21 && fam(s, heir.id).path !== 'priest') out.push({ kind: 'family', severity: 'info', title: `${heir.firstName} needs a match`, text: 'Your heir is unmarried. A strong house is an alliance.', tab: 'family' });
   const wed = honoreeOptions(s, 'wedding')[0];

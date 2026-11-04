@@ -21,6 +21,7 @@ import type { ActionPreview } from './actions';
 import type { Acceptance, Reason } from './interactions';
 import type { Ctx } from './ledger';
 import type { Character, Effect, GameState, PlayerAction } from './types';
+import { applyMatchOp, describeMatchOp, previewMatchmaker, proposalView, type MatchAction, type MatchOp } from './matchmakers';
 
 /**
  * YOUR PEOPLE: the deep relationships of the boss's life.
@@ -84,9 +85,11 @@ export type BondAction =
   | { op: 'settle'; id: string; other: string; side: 'him' | 'other' | 'split' }
   | { op: 'test'; id: string }
   | { op: 'confide'; id: string }
-  | { op: 'peace'; id: string };
+  | { op: 'peace'; id: string }
+  /** The matchmakers (matchmakers.ts): her match, his answer; her favors. */
+  | MatchAction;
 
-export type BondOp = BondAction | { op: 'refused'; id: string; what: string };
+export type BondOp = BondAction | { op: 'refused'; id: string; what: string } | MatchOp;
 
 /* ------------------------------------------------------------------ */
 /* Gifts: the shop catalog's presents (spend.ts giftableItems)         */
@@ -609,6 +612,8 @@ export function gesturesFor(s: GameState, id: string): PlayerAction[] {
   switch (t.role) {
     case 'wife': {
       if (separated(s, id)) { out.push({ kind: 'dating', op: { op: 'reconcile', id } }); break; }
+      // Her match waiting on his answer (matchmakers.ts).
+      if (proposalView(s)?.by.id === id) out.push(b({ op: 'match', id, answer: 'bless' }), b({ op: 'match', id, answer: 'grumble' }), b({ op: 'match', id, answer: 'veto' }));
       if (t.confront !== undefined) out.push(b({ op: 'confess', id }), b({ op: 'deny', id }));
       if (anniversaryNow(s, id) && t.annivYear !== annivOcc(s, id)) out.push(b({ op: 'anniversary', id }));
       out.push(b({ op: 'date', id }));
@@ -674,6 +679,7 @@ export const BOND_TITLE: Record<BondAction['op'], string> = {
   gift: 'A gift', kids: 'The kids\' future', ambition: 'Her own ambition', kidTime: 'An afternoon together', attention: 'An evening at her place', reassure: 'Reassure her',
   ultimatum: 'Her ultimatum', baby: 'The baby', herFamily: 'Help her family', drink: 'Have a drink', fishing: 'Go fishing', cards: 'The card game', godfather: 'Ask him to stand godfather',
   lend: 'Lend him money', settle: 'Settle a beef', test: 'Test his loyalty', confide: 'Confide in him', peace: 'Clear the air',
+  match: 'Her match', herFavor: 'Call in a favor',
 };
 
 function acc(base: number, reasons: Reason[], lo = 0.05, hi = 0.95): Acceptance {
@@ -704,6 +710,7 @@ function wifeScore(s: GameState, t: Tie, how: 'confess' | 'deny' | 'silence'): n
 }
 
 export function previewBond(s: GameState, a: BondAction): ActionPreview {
+  if (a.op === 'match' || a.op === 'herFavor') return previewMatchmaker(s, a);
   const c = s.characters[a.id];
   const boss = s.characters[s.playerId];
   const t = peekTie(s, a.id);
@@ -916,6 +923,7 @@ export function bondBlock(s: GameState, a: BondAction, c: Character, t: Tie): st
 const ROLE_LABEL_LOWER: Record<BondRole, string> = { wife: 'your wife', goomar: 'your goomar', lover: 'her', kid: 'your child', friend: 'a friend', crew: 'your crew', rival: 'an enemy' };
 
 export function describeBondOp(s: GameState, o: BondOp): string | undefined {
+  if (o.op === 'match' || o.op === 'herFavor' || o.op === 'matchNo' || o.op === 'knewBest') return describeMatchOp(s, o);
   const c = s.characters[o.id];
   if (!c) return undefined;
   if (o.op === 'refused') return `${c.firstName} said no`;
@@ -938,6 +946,7 @@ function attend(s: GameState, t: Tie): void {
 }
 
 export function applyBondOp(ctx: Ctx, o: BondOp): void {
+  if (o.op === 'match' || o.op === 'herFavor' || o.op === 'matchNo' || o.op === 'knewBest') { applyMatchOp(ctx, o); return; }
   const s = ctx.s;
   const B = ensureBonds(s);
   const c = s.characters[o.id];

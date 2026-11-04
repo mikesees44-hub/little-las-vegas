@@ -136,10 +136,23 @@ function diff(s: GameState, a: Snap, b: Snap, t?: string): { changes: string[]; 
 }
 
 /** Critical ends of the old verbs (interactions.ts, women, dating, nightlife, bonds, gifts): the teeth. */
+/** The matchmaker's card (matchmakers.ts). */
+function matchCard(a: PlayerAction): boolean {
+  return a.kind === 'bond' && (a.op.op === 'match' || a.op.op === 'herFavor');
+}
+
+/** The last line the order wrote to Your File (the matchmaker's own words for the result card). */
+function lastLine(s: GameState): string | undefined {
+  const e = s.journal?.e[s.journal.e.length - 1];
+  return e && e.w === s.week && e.src === 'order' ? e.r?.filter((x) => !/^The answer was no\.$/.test(x)).slice(-1)[0] : undefined;
+}
+
 function legacyCrit(s: GameState, a: PlayerAction, t: string, tier: Tier): { fx: Effect[]; line?: string } {
   const c = s.characters[t];
   const B = s.playerId;
   if (!c) return { fx: [] };
+  // The matchmaker's card: the roll is the families' and the young person's answer, not hers; her feelings are in the op.
+  if (matchCard(a)) return { fx: [] };
   const n = c.firstName;
   const mem = (txt: string, v: number): Effect => ({ type: 'deed', op: { op: 'mem', who: t, about: B, t: txt, v } });
   if (tier === 'crit') return { fx: [{ type: 'opinion', from: t, to: B, amount: 10, reason: 'It went better than I hoped', decay: 1 }, mem('the boss did right by him', 8)], line: `${n} will talk about this one for a while, kindly.` };
@@ -211,6 +224,8 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
       accepted = r < acc.chance;
       // The critical ends: the best 15% of a yes, the worst 25% of a no.
       tier = accepted ? (r < acc.chance * 0.15 ? 'crit' : 'success') : (r >= acc.chance + (1 - acc.chance) * 0.75 ? 'critFail' : 'fail');
+      // Her card: the families and the young person answer, not she; a no is just a no.
+      if (matchCard(action)) { mode = 'odds'; if (tier === 'critFail') tier = 'fail'; }
     } else if (r < 0.1) tier = 'crit';
     settleOrderNow(ctx, action, accepted);
     const extra = t ? legacyCrit(s, action, t, tier) : { fx: [] };
@@ -221,6 +236,7 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
       if (last && last.src === 'order' && last.w === s.week) last.r = [...(last.r ?? []), extra.line];
       else s.chronicle.push({ week: s.week, date: { ...s.date }, text: extra.line, kind: 'decision' });
     }
+    if (matchCard(action)) line = lastLine(s) ?? line;
   }
   const after = snap(s, t);
   const d = diff(s, before, after, t);
