@@ -35,14 +35,16 @@ import { familyCash, pocketCash } from '../../src/engine/tributeState';
 import { chooseHeir } from '../../src/engine/dynasty';
 import { ageOn } from '../../src/engine/calendar';
 import { opinion } from '../../src/engine/relations';
-import { stationOf } from '../../src/engine/rankView';
+import { stationOf, inTheRanks } from '../../src/engine/rankView';
+import { above, vouchCandidates } from '../../src/engine/valente';
 import type { GameState, PlayerAction, PlayerChoices } from '../../src/engine/types';
 
 const ON = process.env.DECADESIM === '1';
 const START = (process.env.SIM_START ?? 'olddon') as StartId;
 const SEED = process.env.SIM_SEED ?? 'a';
 const YEARS = Number(process.env.SIM_YEARS ?? '10');
-const POLICY = (process.env.SIM_POLICY ?? 'reasonable') as 'reasonable' | 'passive';
+const POLICY = (process.env.SIM_POLICY ?? 'reasonable') as 'reasonable' | 'passive' | 'climber';
+const CLIMBER = POLICY === 'climber';
 const OUT = process.env.SIM_OUT ?? '';
 const ACT_RATE = Number(process.env.SIM_ACT ?? '0.33');
 const PASSIVE = POLICY === 'passive';
@@ -85,6 +87,7 @@ function integrity(s: GameState): string[] {
       if (boss.faction !== 'player') out.push(`player faction=${boss.faction}`);
       if (!boss.dynasty) out.push('player not in the dynasty');
       if (stationOf(s) === 'boss' && boss.rank !== 'boss') out.push(`station boss but rank=${boss.rank}`);
+      if (stationOf(s) !== 'boss' && boss.rank === 'boss') out.push(`station ${stationOf(s)} but rank=boss`);
     }
   }
   let dangling = 0; let deadCapoRef = 0; let nanChar = 0; let negWealth = 0;
@@ -202,7 +205,13 @@ describe.skipIf(!ON)('decade sim', () => {
       const chars = Object.values(s.characters);
       // Biggest top-level keys of the save.
       const keys = Object.entries(s as unknown as Record<string, unknown>).map(([k, v]) => [k, JSON.stringify(v ?? null).length] as [string, number]).sort((a, b) => b[1] - a[1]).slice(0, 12);
-      snaps.push({ label, w: s.week - startWeek, bytes: json.length, serMs: Math.round(ser), heapMB: Math.round(process.memoryUsage().heapUsed / 1e6), rssMB: Math.round(process.memoryUsage().rss / 1e6), chars: chars.length, alive: chars.filter((c) => c.alive).length, relations: Object.keys(s.relations).length, chronicle: s.chronicle.length, news: s.news.length, keys });
+      // One level down in the biggest growers (which list is the one that grows).
+      const sub: Record<string, [string, number][]> = {};
+      for (const [k] of keys.slice(0, 8)) {
+        const v = (s as unknown as Record<string, unknown>)[k];
+        if (v && typeof v === 'object' && !Array.isArray(v) && k !== 'characters' && k !== 'relations') sub[k] = Object.entries(v as Record<string, unknown>).map(([a, b]) => [a, JSON.stringify(b ?? null).length] as [string, number]).sort((a, b) => b[1] - a[1]).slice(0, 5);
+      }
+      snaps.push({ label, sub, w: s.week - startWeek, bytes: json.length, serMs: Math.round(ser), heapMB: Math.round(process.memoryUsage().heapUsed / 1e6), rssMB: Math.round(process.memoryUsage().rss / 1e6), chars: chars.length, alive: chars.filter((c) => c.alive).length, relations: Object.keys(s.relations).length, chronicle: s.chronicle.length, news: s.news.length, keys });
     };
     snapshot('start');
 
@@ -216,8 +225,9 @@ describe.skipIf(!ON)('decade sim', () => {
       const strikeLines: string[] = [];
       const actDay = !PASSIVE && h32(`${SEED}:${wk}:actday`) < ACT_RATE ? Math.floor(h32(`${SEED}:${wk}:dd`) * 7) : -1;
       let dayMs = 0;
-      try {
-        for (let d = 0; d < 7; d++) {
+      let dayCrash = false;
+      for (let d = 0; d < 7; d++) {
+        try {
           if (s.gameOver) break;
           answerOut();
           const dPrev = s;
@@ -240,6 +250,21 @@ describe.skipIf(!ON)('decade sim', () => {
               }
             }
           } else cnt.tips += unseenUrgent(s).length;
+          // The climber: works the ladder every week on day 1 (a sponsor, coffee with his chief, the call-in when it opens).
+          if (CLIMBER && d === 1 && inTheRanks(s)) {
+            const a = above(s);
+            const tries: PlayerAction[] = [{ kind: 'power', op: { op: 'climb' } } as PlayerAction];
+            if (a && stationOf(s) === 'associate' && !a.sponsors.some((id) => s.characters[id]?.alive)) { const v = vouchCandidates(s)[0]; if (v) tries.push({ kind: 'power', op: { op: 'low', a: { op: 'askVouch', id: v.id } } } as PlayerAction); }
+            const chief = a?.myCapoId ?? a?.capoIds[0];
+            if (chief) tries.push({ kind: 'power', op: { op: 'low', a: { op: 'coffee', id: chief } } } as PlayerAction);
+            for (const x of tries) {
+              try {
+                if (previewAction(s, x).disabledReason) continue;
+                if (instant(s, x)) { s = actNow(s, x).state; cnt.now++; } else { actions.push(x); cnt.queued++; }
+                break;
+              } catch (e) { if (lastActFail++ < 5) errors.push(`wk${wk} climb: ${(e as Error).message.slice(0, 200)}`); }
+            }
+          }
           if (d === actDay) {
             try {
               const a = recommendedActions(s, undefined, actions)[0]?.action;
@@ -272,8 +297,16 @@ describe.skipIf(!ON)('decade sim', () => {
             if (ex) { s = markExtraShown(s, ex.id); cnt.extra++; }
             checkBoss(prevDay, s, `day${d + 1}`);
           }
+        } catch (e) {
+          // Record it, then drop the day's due and live scheduled items (the usual culprit) and go on, so the decade still runs.
+          errors.push(`CRASH-DAY wk${wk} (+${wk - startWeek}) d${d}: ${(e as Error).message.slice(0, 300)} @ ${(e as Error).stack?.split('\n').slice(1, 4).join(' | ')}`);
+          dayCrash = true;
+          const A = s.action;
+          if (A?.sched) s = { ...s, action: { ...A, sched: A.sched.filter((x) => x.w > s.week || (x.w === s.week && x.d > daysOf(s).day)) } };
+          if (errors.filter((x) => x.startsWith('CRASH')).length > 20) break;
         }
-      } catch (e) { errors.push(`CRASH-DAY wk${wk}: ${(e as Error).message.slice(0, 300)} @ ${(e as Error).stack?.split('\n').slice(1, 4).join(' | ')}`); break; }
+      }
+      if (errors.filter((x) => x.startsWith('CRASH')).length > 20) break;
       if (s.gameOver) { persist(false, wi); break; }
       s = closeWeek(s);
       answerOut();
@@ -302,6 +335,11 @@ describe.skipIf(!ON)('decade sim', () => {
       for (const c of Object.values(s.characters)) {
         const was = weekStart.characters[c.id];
         if (!was && c.dynasty && ageOn(c.birth, s.date) < 1) births++;
+        // A child born more than 10 months after his father died (or his mother).
+        if (!was && ageOn(c.birth, s.date) < 1) for (const pid of [c.fatherId, c.motherId]) {
+          const p = pid ? s.characters[pid] : undefined;
+          if (p && !p.alive && p.death && s.week - p.death.week > 43) { const key = `posthumous birth (${pid === c.fatherId ? 'father' : 'mother'} dead > 43 wks)`; const e = integ[key]; if (e) e.n++; else integ[key] = { first: s.week - startWeek, n: 1, sample: `wk${s.week - startWeek} ${c.id} ${nm(s, c.id)} born; ${nm(s, pid)} died wk${p.death.week - startWeek}` }; }
+        }
         if (was?.alive && !c.alive && (c.faction === 'player' || c.dynasty)) { myDeaths++; if (c.death?.killer && c.death.killer !== 'none') myViolent++; if (c.dynasty) dynDeaths++; }
         if (was && c.alive && c.faction === 'player' && (c.imprisonedUntil ?? 0) > s.week && !((was.imprisonedUntil ?? 0) > weekStart.week)) arrests++;
       }
@@ -328,7 +366,7 @@ describe.skipIf(!ON)('decade sim', () => {
       const H = s.feds?.hollow;
       const rec = {
         w: s.week - startWeek, date: iso(s), ms: Math.round(ms), dayMs: Math.round(dayMs),
-        boss: s.playerId, bossAge: boss ? ageOn(boss.birth, s.date) : null, bossHealth: boss?.health, bossJailed: boss ? (boss.imprisonedUntil ?? 0) > s.week : null, station: st,
+        boss: s.playerId, bossAge: boss ? ageOn(boss.birth, s.date) : null, bossHealth: boss?.health, bossJailed: boss ? (boss.imprisonedUntil ?? 0) > s.week : null, station: st, rank: boss?.rank, standing: s.power?.above?.standing,
         money: Math.round(s.money), fam: familyCash(s), pocket: Math.round(pocketCash(s)), bossWealth: Math.round(boss?.wealth ?? 0), gross: Math.round(res.report.grossIncome), income: Math.round(income), spend: Math.round(spend), upkeep,
         respect: s.respect, heat: { l: s.heat.local, f: s.heat.family, x: s.heat.federal },
         crew: crewOf(s).length, made: crewOf(s).filter((c) => c.rank !== 'associate').length, capos: cap.length, jailed: crewOf(s).filter((c) => (c.imprisonedUntil ?? 0) > s.week).length,
@@ -336,7 +374,7 @@ describe.skipIf(!ON)('decade sim', () => {
         heir: heirInfo(s), dyn: dyn.length, dynAdult: dyn.filter((c) => ageOn(c.birth, s.date) >= 16).length, dynMinor: dyn.filter((c) => ageOn(c.birth, s.date) < 16).length,
         births, myDeaths, myViolent, dynDeaths, arrests, newWars, wars: s.wars.length, factions: (s.factions ?? []).length,
         hollow: H ? (H.dmw ? 'dmw' : 'hollow') : null, legal: s.legal?.stage ?? null,
-        tpl: s.pendingEvents.map((e) => templateOf(e)), cnt, hits,
+        tpl: s.pendingEvents.map((e) => templateOf(e)), cnt, hits, dayCrash,
         chars: Object.keys(s.characters).length, bad: ib.slice(0, 4),
       };
       if (OUT) appendFileSync(`${OUT}.weeks.jsonl`, `${JSON.stringify(rec)}\n`);
