@@ -49,7 +49,7 @@ export function audienceWanted(s: GameState, rep: TributeReport): { want: boolea
   if (!t.policy.auto) {
     const last = lastShown(s, AUDIENCE_ID);
     const gap = last === undefined ? Infinity : s.week - last;
-    const want = isQuietWeek(rep) ? gap >= (settled ? QUARTER : ASKED_GAP) : gap >= (settled ? AUDIENCE_GAP * 2 : 0);
+    const want = settled ? gap >= QUARTER : isQuietWeek(rep) ? gap >= ASKED_GAP : true;
     return { want, mandatory: false, asked: want, why: want ? 'asked' : '' };
   }
   if (t.ub.stage === 3) return { want: true, mandatory: true, asked: false, why: 'crisis' };
