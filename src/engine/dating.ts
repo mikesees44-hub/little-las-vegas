@@ -1,4 +1,5 @@
 import { fertility } from './aging';
+import { allure } from './looks';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { earOf, madamOf } from './ears';
@@ -257,7 +258,10 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
   const reasons: Reason[] = [];
   const base = what === 'talk' ? 70 : what === 'date' ? 20 : what === 'askOut' ? 10 : what === 'reconcile' ? 10 : 5;
   if (what !== 'talk' && what !== 'reconcile') {
-    for (const r of attraction(s, c, boss).reasons) if (r.label !== 'Likes them' && r.label !== 'Dislikes them') reasons.push({ label: r.label, value: Math.round(r.value * 0.5) });
+    // Looks, charm, a ladies' man's practice and appetite at full weight (looks.ts allure); the rest of attraction at half.
+    const al = allure(s, boss, c);
+    for (const r of al.reasons) reasons.push(r);
+    for (const r of attraction(s, c, boss).reasons) if (r.label !== 'Likes them' && r.label !== 'Dislikes them' && !/Charming|roving eye|type|looks|eye/i.test(r.label)) reasons.push({ label: r.label, value: Math.round(r.value * 0.5) });
   }
   reasons.push({ label: `Her feelings: ${affectionWord(aff)}`, value: Math.round((aff - 20) * (what === 'talk' ? 0.3 : 0.6)) });
   if (op) reasons.push({ label: op > 0 ? 'Thinks well of you' : 'Thinks little of you', value: Math.round(op * 0.2) });
@@ -298,7 +302,6 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
     if (ear?.boundaries.includes('no_married') && married(s, boss)) reasons.push({ label: 'Will not see a married man', value: -40 });
   }
   if (b?.no && s.week - b.no.week < 3) reasons.push({ label: `You asked ${s.week - b.no.week === 0 ? 'this' : s.week - b.no.week === 1 ? 'last' : 'two weeks ago, a'} week`, value: -15 });
-  if (hasTrait(boss, 'Charming')) reasons.push({ label: 'You are Charming', value: 8 });
   if (hasTrait(boss, 'Cruel')) reasons.push({ label: 'People say you have a cruel streak', value: -10 });
   const sum = reasons.reduce((a, r) => a + r.value, base);
   const cap = what === 'talk' ? 0.95 : 0.9;
