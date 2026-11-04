@@ -1242,6 +1242,8 @@ export interface StrikeView {
   warned: boolean;
   options: StrikeOption[];
   def: StrikeOptId;
+  /** A cutscene clip key (CutClip). */
+  clip?: string;
 }
 
 interface OptSpec { id: StrikeOptId; label: string; hint: string; bonus: number; cost: Effect[]; win?: Effect[]; blocked?: string }
@@ -1339,7 +1341,7 @@ export function strikeView(s: GameState, id: string): StrikeView | undefined {
   const pend = pendingBlunt(s, T, t);
   const tt = { ...t, blunt: pend };
   const options = strikeSpecs(s, t).map((o) => ({ id: o.id, label: o.label, hint: o.hint, odds: Math.round(foilOdds(s, tt, o.bonus) * 100) / 100, ...(o.blocked ? { blocked: o.blocked } : {}) }));
-  return { id, kind: t.kind, title: strikeTitle(s, t), text: strikeText(s, t), when: whenText(t.dueDay, t.hour), warned: warned(T, t), options, def: 'ride' };
+  return { id, kind: t.kind, title: strikeTitle(s, t), text: strikeText(s, t), when: whenText(t.dueDay, t.hour), warned: warned(T, t), options, def: 'ride', ...(t.kind === 'hit' || t.kind === 'setup' ? { clip: 'headlights' } : t.kind === 'raid' ? { clip: 'feds_door' } : {}) };
 }
 
 /** The blunting a threat will have once the answers already given at the meetings are carried out (for the odds on the card). */

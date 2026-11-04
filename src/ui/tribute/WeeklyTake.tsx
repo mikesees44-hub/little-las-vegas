@@ -1,6 +1,7 @@
 import { seenWealth } from '../../engine/crewFinance';
 import { useState, type ReactNode } from 'react';
 import { FirstSettlement } from '../components/EmptyState';
+import { CutClip } from '../components/CutClip';
 import { Guard } from '../components/Guard';
 import { agreementHistoryLine, agreementName } from '../../engine/agreements';
 import { getSettings } from '../settings';
@@ -75,6 +76,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
   const a = accountsView(s);
   return (
     <div className="space-y-3" data-testid="weekly-take">
+      <div className="overflow-hidden rounded-xl"><CutClip k="envelope" once={`envelope-${s.week}`} /></div>
       <div className="llv-seg tabbar !mb-0" role="tablist" aria-label="The envelope">
         {GROUPS.map((g) => (
           <button key={g.id} type="button" role="tab" aria-selected={group === g.id} onClick={() => setGroup(g.id)} data-testid={`take-group-${g.id}`}

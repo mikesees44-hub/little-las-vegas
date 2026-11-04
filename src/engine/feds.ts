@@ -208,7 +208,7 @@ function knockView(s: GameState, it: ScheduledItem): MomentView | undefined {
   const what = p.serious ? `The charge: ${p.crime}. He is looking at ${p.years} years.` : `The charge: ${p.crime}. A small one: a good lawyer can make it go away.`;
   const can = (n: number) => (s.money >= n ? undefined : `Needs $${n.toLocaleString('en-US')}`);
   return {
-    id: `sched:${it.id}`, title: `The knock: ${nm(c)}`, when: `${DAY_NAMES[it.d]}, ${hourText(it.h)}`, warned: false,
+    id: `sched:${it.id}`, title: `The knock: ${nm(c)}`, when: `${DAY_NAMES[it.d]}, ${hourText(it.h)}`, warned: false, clip: 'feds_door',
     text: `${who} at ${c!.firstName}'s door. ${c!.household?.wife ? `${c!.household.wife} in her robe on the stairs.` : 'The neighbors\' lights come on.'} ${what} His one phone call is to you.`,
     options: p.serious
       ? [
@@ -622,7 +622,7 @@ function waveView(s: GameState, it: ScheduledItem): MomentView | undefined {
   if (!F) return undefined;
   const can = (n: number) => (s.money >= n ? undefined : `Needs $${n.toLocaleString('en-US')}`);
   return {
-    id: `sched:${it.id}`, title: 'Indictments', when: `${DAY_NAMES[it.d]}, ${hourText(it.h)}`, warned: false,
+    id: `sched:${it.id}`, title: 'Indictments', when: `${DAY_NAMES[it.d]}, ${hourText(it.h)}`, warned: false, clip: 'feds_door',
     text: `${it.payload.why === 'brasco' ? 'The man you knew as a jewel fence was a federal agent. Today the Bureau pulled him out, and ' : ''}A federal grand jury in Camden has handed up indictments. Agents are knocking on doors all over the island at once. Your phone will not stop ringing.`,
     options: [
       { id: 'lawyers', label: 'Every lawyer you know, on retainer, now (−$5,000)', hint: 'Each man\'s odds of making bail', odds: 0.65, blocked: can(5000) },

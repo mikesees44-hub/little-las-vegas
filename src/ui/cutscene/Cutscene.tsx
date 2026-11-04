@@ -1,3 +1,4 @@
+import { CLIP_URLS } from '../components/CutClip';
 import { useEffect, useState } from 'react';
 import { getSettings, TEXT_CPS } from '../settings';
 import type { CutsceneCue } from '../../engine/types';
@@ -15,8 +16,11 @@ const OFFICE = '/_blob/46a7b354dd048daa000e67374ee4b0f7'; // the boss's office: 
 export const CUTSCENE_VIDEOS: Partial<Record<string, string>> = {
   opening: CHURCH,
   funeral: CHURCH,
-  boss_death: CHURCH,
-  succession: OFFICE,
+  // The owner's montage shots (CutClip.tsx).
+  succession: CLIP_URLS.take_chair,
+  heir_rises: CLIP_URLS.take_chair,
+  boss_death: CLIP_URLS.funeral_cars,
+  arrest_interrogation: CLIP_URLS.feds_door,
   sitdown: OFFICE,
   betrayal_confrontation: OFFICE,
 };
@@ -93,7 +97,7 @@ export function CutscenePlayer({ cues, onDone }: { cues: CutsceneCue[]; onDone: 
       <div className="relative flex-1 overflow-hidden">
         <div className={`absolute inset-0 ${reduced ? '' : pan}`} key={`${cue.key}${i}`}>
           {video ? (
-            <video src={video} autoPlay={!reduced} muted playsInline loop className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }} />
+            <video src={video} autoPlay={!reduced} muted playsInline loop onLoadedMetadata={(e) => { const v = e.currentTarget; if (v.duration < 3) v.playbackRate = 0.6; }} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }} />
           ) : CUTSCENE_ART[cue.key] ? (
             // The user's painting of the place, graded noir; the drawn still when it can't load.
             <AssetImg k={CUTSCENE_ART[cue.key]} alt="" className="w-full h-full object-cover" style={{ filter: NOIR_GRADE }} fallback={<NoirStill cue={cue.key} seed={cue.week + i} />} />
