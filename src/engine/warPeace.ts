@@ -1,11 +1,10 @@
-import { opinion } from './relations';
 import type { GameState, RivalId } from './types';
 
 /**
  * PEACE PRESSURE (DECADE_BALANCE Top 10 #10: 1.4–3.7 new wars a year was too many for a decade).
  *  - A rival who just ended a war with you stays quiet for WAR_QUIET weeks.
  *  - A third war on you within WAR_WINDOW weeks needs a casus belli: a feud, a legitimate grievance
- *    (you killed a made man without the Table), or a rival who hates you.
+ *    (you killed a made man without the Table).
  * The player's own declarations are never limited here (no option is removed).
  */
 export const WAR_QUIET = 26;
@@ -20,7 +19,7 @@ export function warPeace(s: GameState, rival: RivalId): boolean {
     const r = s.rivals.find((x) => x.id === rival);
     if (!r) return false;
     const legit = (s.power?.legit?.[rival] ?? 0) >= s.week;
-    if (!(r.feud || legit || opinion(s, r.leaderId, s.playerId) <= -60)) return false;
+    if (!(r.feud || legit)) return false;
   }
   return true;
 }
