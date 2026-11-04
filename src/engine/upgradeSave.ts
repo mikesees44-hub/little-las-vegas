@@ -49,6 +49,9 @@ import { ensurePhoneSave } from './phoneState';
 import { ensurePlanner } from './planner/state';
 import { ensureAmbitions } from './ambitions';
 import { ensureDelegation } from './delegation';
+import { freeWidows } from './dynasty';
+import { capArchives } from './prune';
+import { startComeback } from './station';
 import type { GameState } from './types';
 
 /**
@@ -95,6 +98,14 @@ export function upgradeSave(s: GameState): GameState {
   if ((s.schema ?? 0) < 2) try { keepOldDelegation(s); } catch { /* nobody seated yet: the new defaults apply */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
+  // Balance 2: the difficulty preset (absent = Don) and the save's archives held to their windows
+  // (a 36-month venue history, an uncapped Book) the moment an older save loads.
+  if (!s.difficulty) s.difficulty = 'don';
+  // B4: a save left as an independent crew gets its comeback chapter (a year to take ground back).
+  if (s.power?.station === 'independent' && !s.power.comeback) try { startComeback(s); } catch { /* the month will start it */ }
+  try { capArchives(s); } catch { /* the next prune will */ }
+  // B8: widows and widowers of an older save stop being married to the dead.
+  try { freeWidows(s); } catch { /* nothing to free */ }
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }
   // A save from before the family above (a low start, or a fallen boss in someone's ranks): the Valente family, once.
   try { ensureAbove(s); } catch { /* the station still works without it */ }

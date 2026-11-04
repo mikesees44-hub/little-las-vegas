@@ -19,10 +19,13 @@ import { crisisSeeds, crisisWeek, retributionDeters, startCrisis, registerCrisis
 export { survivorFound };
 import type { NowResult } from './deeds/now';
 import type { Character, Effect, EventInstance, Faction, GameState, RivalId } from './types';
+import { knobs } from './difficulty';
 import {
   addFedEvidence, bossHasFlipped, ensureFeds, fid, fr, informantsAround, isInformant,
   type Brasco, type FedsState, type Pinch,
 } from './fedsState';
+import { buildGrandJury, GJ_WEEKS, legalOf } from './longgame';
+import { momentClone } from './momentClone';
 
 export { addFedEvidence, bossHasFlipped, ensureFeds, informantsAround, isInformant };
 
@@ -63,7 +66,10 @@ export const PINCH_GAP = 12;
 /** Evidence at which a charge is serious (years, and the government's offer). */
 export const SERIOUS = 35;
 /** Wire evidence that brings an indictment wave. */
-export const WAVE_AT = 90;
+export const WAVE_AT = 70;
+/** Brasco (Top 10 #8): the weekly chance per tell that he is found out; the Bureau pulls him (and the wave comes) after this many weeks (was 44–60). */
+export const BRASCO_TELL_FOUND = 0.027;
+export const BRASCO_PULL = 30;
 /** Weeks before the government decides whether a held man has come over. */
 export const DECIDE_WEEKS = 3;
 /** Weekly chance an undercover operation starts (when the FBI is working the family). */
@@ -225,12 +231,17 @@ function knockView(s: GameState, it: ScheduledItem): MomentView | undefined {
   };
 }
 
+/** A moment whose cause is gone (the crown passed with the chair): nothing happens. */
+export function momentOver(s: GameState, title: string): { state: GameState; result: NowResult } {
+  return { state: s, result: { ok: false, error: 'It is over', title, tier: 'fail', headline: 'It is over', line: '', changes: [], leadsTo: [] } };
+}
+
 /** A moment answered: the common frame (clone, apply, the card, Your File). */
 export function moment(
   input: GameState, it: ScheduledItem, opt: string, title: string,
   run: (ctx: Ctx, F: FedsState) => { line: string; chance?: number; ok: boolean; crit?: boolean; leads?: string[]; who?: string; extra?: { h: string; b: string }; people?: string[] },
 ): { state: GameState; result: NowResult; extra?: { h: string; b: string } } {
-  const s = structuredClone(input) as GameState;
+  const s = momentClone(input);
   const F = ensureFeds(s);
   const ctx = newCtx(s);
   const before = { money: s.money, respect: s.respect, heat: { ...s.heat } };
@@ -341,11 +352,13 @@ export function flipReasons(s: GameState, p: Pick<Pinch, 'charId' | 'years' | 'c
   const care = [...new Set([...p.care, ...extra])];
   for (const k of care) if (CARE[k]) out.push(CARE[k]);
   if (!care.length) out.push({ label: 'Nobody from the family has come', value: 0.08 });
+  // Top 10 #8: a long stretch and no lawyer, no envelope for his wife: the family failed him.
+  if (p.years >= 5 && !care.includes('lawyer') && !care.includes('envelope')) out.push({ label: `${p.years} years, and no lawyer or envelope from the family`, value: 0.08 });
   return out;
 }
 
 export function flipOdds(s: GameState, p: Pick<Pinch, 'charId' | 'years' | 'care'>, extra: string[] = []): number {
-  return sumP(flipReasons(s, p, extra), 0.02, 0.85);
+  return Math.min(0.85, sumP(flipReasons(s, p, extra), 0.02, 0.85) * knobs(s).flip);
 }
 
 function visitView(s: GameState, it: ScheduledItem): MomentView | undefined {
@@ -679,6 +692,17 @@ export function indictmentWave(ctx: Ctx, F: FedsState, why: string, how = 'ride'
   const worst = F.pinches.filter((p) => ids.includes(p.charId) && p.stage === 'held').sort((a, b) => flipOdds(s, b) - flipOdds(s, a))[0];
   if (worst) put(s, 'feds_visit', s.week + 1, freeDay(s, s.week + 1, 1, 4, F), 14, { pid: worst.id });
   addFedEvidence(s, s.playerId, why === 'brasco' ? 22 : 14, 'the grand jury');
+  // Top 10 #8: a wave pulls in the boss's own file when it is serious: his grand jury sits now (the trial path, the deal).
+  if ((player(s).evidence ?? 0) >= SERIOUS) {
+    const l = legalOf(s);
+    if (l.stage === 'quiet' || l.stage === 'investigation') {
+      l.stage = 'grandjury';
+      l.since = s.week;
+      l.next = s.week + GJ_WEEKS;
+      s.eventQueue.push(buildGrandJury(s));
+      chron(s, `The grand jury that indicted the men is hearing about ${player(s).firstName} ${player(s).lastName} now.`);
+    }
+  }
   applyEffects(ctx, [{ type: 'heat', bar: 'federal', amount: 8 }, { type: 'respect', amount: -3 }], { label: 'Indictments', because: 'the government indicted your people', category: 'event' });
   // The wired man is pulled out: a witness now, in the open.
   if (why === 'wire') {
@@ -888,7 +912,7 @@ function hollowWeek(ctx: Ctx, F: FedsState): void {
     const fs = hollowFactors(s);
     if (!fs[3].on) return;
     const n = fs.filter((f) => f.on).length;
-    const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1) * retributionDeters(s);
+    const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1) * retributionDeters(s) * knobs(s).hollow;
     if (!p || fr(F) > p) return;
     const lead = capos(s).filter((k) => isFree(s, k)).sort((a, b) => opinion(s, a.id, s.playerId) + (hasTrait(a, 'Ambitious') ? -15 : 0) - opinion(s, b.id, s.playerId) - (hasTrait(b, 'Ambitious') ? -15 : 0))[0];
     if (!lead) return;
@@ -946,6 +970,8 @@ export function endHollow(ctx: Ctx, F: FedsState, how: string): void {
   if (!F.hollow) return;
   F.hollow = undefined;
   F.hollowEnd = s.week;
+  // Its calls on the clock (the crown, the Dead Man Walking beats) end with it.
+  if (s.action?.sched?.some((x) => x.kind === 'feds_crown' || x.kind === 'feds_dmw')) s.action = { ...s.action, sched: s.action.sched.filter((x) => x.kind !== 'feds_crown' && x.kind !== 'feds_dmw') };
   F.stats.hollowEnds[how] = (F.stats.hollowEnds[how] ?? 0) + 1;
   const line = how === 'won' ? 'The capos come to you again. The crown has weight in it.' : how === 'purge' ? 'The table is quiet now. Nobody meets without you.' : how === 'stepped' ? 'You stepped aside.' : 'The hollow crown passed with the chair.';
   ctx.log.push(line);
@@ -990,6 +1016,7 @@ function purgeOdds(s: GameState): number {
 }
 
 function crownAnswer(input: GameState, it: ScheduledItem, opt: string) {
+  if (!input.feds?.hollow) return momentOver(input, 'The hollow crown');
   return moment(input, it, opt, 'The hollow crown', (ctx, F) => {
     const s = ctx.s;
     const H = F.hollow!;
@@ -1203,7 +1230,7 @@ export function startBrasco(ctx: Ctx, F: FedsState): void {
   c.capoId = k.id;
   c.craft = 'earner';
   addStory(s, c, `Came in through ${v.firstName} ${v.lastName}: ${cv.cover}, from ${cv.town}.`);
-  F.brasco = { id: c.id, cover: cv.cover, town: cv.town, uncle: UNCLES[Math.floor(fr(F) * UNCLES.length)], voucherId: v.id, since: s.week, stage: 0, tells: [], pull: s.week + 44 + Math.floor(fr(F) * 16), take: 0 };
+  F.brasco = { id: c.id, cover: cv.cover, town: cv.town, uncle: UNCLES[Math.floor(fr(F) * UNCLES.length)], voucherId: v.id, since: s.week, stage: 0, tells: [], pull: s.week + BRASCO_PULL + Math.floor(fr(F) * 10), take: 0 };
   F.stats.brasco++;
   addOpinion(s, k.id, c.id, 'Earns, and knows how to sit at a table', 15, 1);
   const line = `${nm(v)} brought a man around: ${nm(c)}, ${cv.cover} from ${cv.town}. He vouches for him.`;
@@ -1224,6 +1251,10 @@ function brascoWeek(ctx: Ctx, F: FedsState): void {
   if (!c?.alive || c.faction !== 'player') { B.end = 'pulled'; F.brascoEnd = s.week; return; }
   if (B.found) return;
   const age = s.week - B.since;
+  // Top 10 #8: every tell the street noticed is a chance somebody puts it together (about 8% a week with three).
+  if (B.tells.length && fr(F) < BRASCO_TELL_FOUND * B.tells.length) {
+    if (brascoChecked(ctx, 1, true)) { ctx.log.push(`Somebody put it together about ${c.firstName}: the stories do not add up.`); return; }
+  }
   // A great earner, well liked.
   applyEffects(ctx, [{ type: 'money', amount: 250 + Math.floor(fr(F) * 350), category: 'street' }], { label: `${c.firstName}'s jewelry business`, because: `${c.firstName} earns`, category: 'street' });
   const k = capoOf(s, c);

@@ -17,8 +17,12 @@ import { addOpinion, opinion, relKey } from './relations';
 import { chance, rand } from './rng';
 import type { Character, EventInstance, FactionId, GameState, SuccessionLaw } from './types';
 import { addStory, heirFromRegime, tidyRegimes, transferRegime } from './hierarchy';
+import { CAPO_SEAT_MIN } from './regimes';
+import { famMut } from './familyState';
 
 export const ADULT_AGE = 16;
+/** Past this age a man of the house is sorted behind the younger grown men (Top 10 #6). */
+export const OLD_HEIR = 60;
 
 export const SUCCESSION_LAWS: Record<SuccessionLaw, { name: string; text: string }> = {
   blood: { name: 'Blood', text: 'The eldest son inherits; then brothers, nephews, and the rest of the house.' },
@@ -46,12 +50,21 @@ export function bloodLine(s: GameState, from: Character): Character[] {
     if (from.spouseId === c.id) return 5;
     return 4;
   };
+  // Top 10 #6 / B6: the grown men under OLD_HEIR first, then the women born to the house, then the
+  // men past it, then a woman who married out of the house, then the minors. Chains of 70-year-old
+  // heads who died within months (Rocco 71, Concetta 69) came from "older first".
   const tier = (c: Character): number => {
-    const adult = ageOn(c.birth, s.date) >= ADULT_AGE;
-    if (adult && c.gender === 'M') return 0;
-    if (adult) return 1;
-    return 2;
+    const a = ageOn(c.birth, s.date);
+    if (a < ADULT_AGE) return 4;
+    const marriedOut = c.gender === 'F' && !!c.maidenName && c.maidenName === s.houseName && c.lastName !== s.houseName;
+    // A spouse who came into the house (a wife, or a husband who married in) is not of the blood.
+    const marriedIn = !!s.dyn?.people[c.id]?.matrilineal || (c.gender === 'F' && !!c.maidenName && c.maidenName !== s.houseName);
+    if (c.gender === 'M' && !marriedIn) return a < OLD_HEIR ? 0 : 2;
+    if (marriedOut) return 3;
+    if (marriedIn) return 3;
+    return a < OLD_HEIR ? 1 : 2;
   };
+  const ranked = (c: Character) => (c.rank !== 'civilian' && c.faction === 'player' ? 0 : 1);
   // A boss who retired to Florida is the last resort, never the next in line (a family bot handed the
   // chair back and forth between two retired Dominics twenty-one times in a year).
   const retired = (c: Character) => (s.dyn?.people[c.id]?.retired !== undefined ? 1 : 0);
@@ -64,7 +77,10 @@ export function bloodLine(s: GameState, from: Character): Character[] {
     if (cl) return cl;
     const dis = lineOrder(s, a) - lineOrder(s, b);
     if (dis) return dis;
-    return toOrd(a) - toOrd(b); // older first
+    // A man who has held a rank before one who never did; then sons eldest first, everyone else younger first.
+    const rk = ranked(a) - ranked(b);
+    if (rk) return rk;
+    return closeness(a) === 0 ? toOrd(a) - toOrd(b) : toOrd(b) - toOrd(a);
   });
 }
 
@@ -184,6 +200,7 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
   if (!c.alive) return undefined;
   c.alive = false;
   c.death = { week: s.week, date: { ...s.date }, cause, killer };
+  widow(s, c);
   lineageDeath(ctx, c.id, cause, killer);
   const ageAt = age(s, c);
   const name = displayName(c);
@@ -220,6 +237,20 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
   return c;
 }
 
+/**
+ * B8: the survivor of a marriage is a widow (or widower) and free to marry again. The dead keep their
+ * spouseId (the tree and the history read it); births already require a living father.
+ */
+export function widow(s: GameState, dead: Character): void {
+  const sp = dead.spouseId ? s.characters[dead.spouseId] : undefined;
+  if (sp && sp.spouseId === dead.id) sp.spouseId = undefined;
+}
+
+/** Saves from before B8: every living survivor still married to the dead is freed (upgradeSave). */
+export function freeWidows(s: GameState): void {
+  for (const c of Object.values(s.characters)) if (!c.alive) widow(s, c);
+}
+
 /** Fill a vacated capo/underboss slot from the best soldier. */
 function promoteReplacement(ctx: Ctx, dead: Character): void {
   const s = ctx.s;
@@ -244,7 +275,7 @@ function promoteReplacement(ctx: Ctx, dead: Character): void {
     best.capoId = undefined;
     transferRegime(s, deadId, best.id);
     addStory(s, best, `Took over the crew of ${displayName(dead)}.`);
-    const free = s.districts.find((d) => !d.capoId && (d.influence.player ?? 0) >= 40);
+    const free = s.districts.find((d) => !d.capoId && (d.influence.player ?? 0) >= CAPO_SEAT_MIN);
     if (free) free.capoId = best.id;
     addOpinion(s, best.id, s.playerId, 'Made me a capo', 20, 1);
     ctx.log.push(`${displayName(best)} is promoted to capo${free ? ` of ${free.name}` : ''}.`);
@@ -273,6 +304,8 @@ export function succeed(ctx: Ctx, deceased: Character): void {
   }
   for (const d of s.districts) if (d.capoId === heir.id) d.capoId = undefined;
   const wasUnderboss = heir.rank === 'underboss';
+  // He held a rank in the family (Top 10 #6): the men know him; it offsets "untested".
+  const wasRanked = heir.faction === 'player' && heir.rank !== 'civilian' && heir.rank !== 'boss';
   heir.rank = 'boss';
   heir.faction = 'player';
   heir.imprisonedUntil = undefined;
@@ -301,6 +334,7 @@ export function succeed(ctx: Ctx, deceased: Character): void {
     addOpinion(s, m.id, heir.id, young ? 'A kid in the chair' : 'New boss, untested', young ? -15 : -5, 1);
     if (heir.attributes.leadership >= 65) addOpinion(s, m.id, heir.id, 'Born leader', 10, 0);
     if (wasUnderboss) addOpinion(s, m.id, heir.id, 'Earned the chair', 8, 1);
+    else if (wasRanked) addOpinion(s, m.id, heir.id, 'He came up in the family', 10, 1);
   }
   respect(ctx, -8, `Succession: ${displayName(heir)} takes over (${method})`, 'event');
   const text = `${displayName(heir)} became head of the house of ${s.houseName} ${method}, aged ${ageOn(heir.birth, s.date)}.`;
@@ -370,6 +404,7 @@ export function monthlyLife(ctx: Ctx): MonthlyResult {
   for (const c of living) if (c.alive && c.warnedWeek !== undefined && c.health >= 60 && s.week - c.warnedWeek > 26) c.warnedWeek = undefined;
 
   agingMonth(ctx);
+  freeWidows(s);
   births(ctx);
   marriages(ctx);
   return { warnings };
@@ -384,7 +419,7 @@ function births(ctx: Ctx): void {
     const a = ageOn(mother.birth, s.date);
     if (a < 18 || a > 42) continue;
     const kids = mother.childrenIds.length;
-    const p = 0.022 * (kids >= 4 ? 0.3 : 1) * (a > 36 ? 0.5 : 1) * fertility(s, father) * fertility(s, mother);
+    const p = BIRTH_P * (kids >= 4 ? 0.3 : 1) * (a > 36 ? 0.5 : 1) * fertility(s, father) * fertility(s, mother);
     if (!chance(s, p)) continue;
     // Twins, now and then (their own dice, so a family without twins rolls the same as before).
     const n = chance(ensureAging(s), 0.012) ? 2 : 1;
@@ -393,7 +428,8 @@ function births(ctx: Ctx): void {
       const child = makeCharacter(s, {
         gender,
         ethnicity: father.ethnicity,
-        lastName: father.lastName,
+        // A husband who married in (matrilineal): the children take the house's name.
+        lastName: s.dyn?.people[father.id]?.matrilineal ? mother.lastName : father.lastName,
         age: 0,
         rank: 'civilian',
         faction: father.faction === 'player' ? 'player' : 'none',
@@ -417,13 +453,19 @@ function births(ctx: Ctx): void {
   }
 }
 
+/** Monthly odds (Top 10 #7): a birth for a married woman of the house (was 0.022), a man of the house marrying (was 0.015), a daughter of the house marrying in. */
+export const BIRTH_P = 0.03;
+export const MARRY_P = 0.025;
+export const MARRY_IN_P = 0.012;
+
 function marriages(ctx: Ctx): void {
   const s = ctx.s;
   for (const c of Object.values(s.characters)) {
-    if (!c.alive || !c.dynasty || c.spouseId || c.gender !== 'M') continue;
+    if (!c.alive || !c.dynasty || c.spouseId) continue;
+    if (c.gender === 'F') { marryIn(ctx, c); continue; }
     const a = ageOn(c.birth, s.date);
     if (a < 21 || a > 45) continue;
-    if (!chance(s, 0.015)) continue;
+    if (!chance(s, MARRY_P)) continue;
     const bride = makeCharacter(s, {
       gender: 'F',
       age: Math.max(18, a - Math.floor(rand(s) * 5)),
@@ -442,6 +484,29 @@ function marriages(ctx: Ctx): void {
     s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text });
     ctx.log.push(text);
   }
+}
+
+/**
+ * A daughter of the house (born to it, unmarried, 20–35) marries a local man who comes into the house
+ * (matrilineal: the children are of the blood). A widow who married in is not ours to give.
+ */
+function marryIn(ctx: Ctx, c: Character): void {
+  const s = ctx.s;
+  if (c.maidenName && c.maidenName !== c.lastName) return;
+  if (c.lastName !== s.houseName) return;
+  const a = ageOn(c.birth, s.date);
+  if (a < 20 || a > 35) return;
+  if (s.dyn?.people[c.id]?.path === 'priest') return;
+  if (!chance(s, MARRY_IN_P)) return;
+  const groom = makeCharacter(s, { gender: 'M', ethnicity: c.ethnicity, age: Math.min(45, a + Math.floor(rand(s) * 5)), rank: 'civilian', faction: 'player', dynasty: true, nickname: false });
+  groom.spouseId = c.id;
+  c.spouseId = groom.id;
+  famMut(s, groom.id).matrilineal = true;
+  addOpinion(s, groom.id, c.id, 'My wife', 25, 0);
+  addOpinion(s, c.id, groom.id, 'My husband', 25, 0);
+  const text = `${displayName(c)} married ${groom.firstName} ${groom.lastName}, who came into the house.`;
+  s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text });
+  ctx.log.push(text);
 }
 
 /** For UI/tests: check the player character is a valid boss. */

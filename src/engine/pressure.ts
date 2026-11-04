@@ -5,6 +5,7 @@ import { heat, money, type Ctx } from './ledger';
 import { opinion } from './relations';
 import { familyCash } from './tributeState';
 import type { Effect, EventInstance, GameState } from './types';
+import { knobs } from './difficulty';
 
 /**
  * SUCCESS DRAWS FIRE, AND A WAY BACK FROM THE BOTTOM (DAILY_LOGIC_AND_ACTION #9, #10, B3, B4).
@@ -25,7 +26,7 @@ import type { Effect, EventInstance, GameState } from './types';
 
 /** 0-1: how much the Family's money draws attention. */
 export function wealthPressure(s: GameState): number {
-  return Math.max(0, Math.min(1, (familyCash(s) - 60000) / 340000));
+  return Math.max(0, Math.min(1, ((familyCash(s) - 60000) / 340000) * knobs(s).fire));
 }
 
 /** Weeks in a row under water before the bail-out is offered. */
@@ -57,8 +58,36 @@ export function pressureWeek(ctx: Ctx): void {
     const cost = Math.min(s.money, Math.round(((cash - BRAKE_FROM) * BRAKE_RATE) / 10) * 10);
     if (cost > 0) money(ctx, -cost, 'The upkeep of a big operation: lawyers on retainer, payoffs up the line, the people who smell money', 'event');
   }
+  // THE FLOOR (Top 10 #5b): a year under water and Philadelphia steps in. It takes the debt and a fifth of the
+  // take for a year: a new chapter (the family as Philadelphia's ward), not a decade at −$300k.
+  if (A.under >= RESCUE_WEEKS && (s.flags.philly_took === undefined || s.week - s.flags.philly_took >= 104)) phillyTakes(ctx);
+  if (s.flags.philly_took !== undefined && s.week - s.flags.philly_took < 52) {
+    const gross = s.incomeHistory?.[s.incomeHistory.length - 1] ?? 0;
+    const cut = Math.round((Math.max(0, gross) * 0.2) / 10) * 10;
+    if (cut > 0) money(ctx, -cut, 'Philadelphia\'s cut: a fifth of the take, for the year they carry your debt', 'tribute');
+  }
   // The federal government reads tax returns: a fat outfit warms the federal bar.
   if (cash > 200000 && s.week % 3 === 0) heat(ctx, 'federal', 1, 'Somebody at the IRS is reading your tax returns', 'heat');
+}
+
+/** A year under water: Philadelphia takes the debt (and a fifth of the take for a year). */
+export const RESCUE_WEEKS = 52;
+/** After this many weeks under water the bail-out's default is selling the worst place. */
+export const SELL_DEFAULT_WEEKS = 26;
+
+function phillyTakes(ctx: Ctx): void {
+  const s = ctx.s;
+  const A = ensureAction(s);
+  s.flags.philly_took = s.week;
+  const debt = Math.max(0, -s.money);
+  money(ctx, debt + 5000, 'Philadelphia takes your debt: the shylocks and the suppliers are paid, and five thousand to go on with', 'event');
+  heat(ctx, 'family', 10, 'Philadelphia carries your debt: they watch everything now', 'heat');
+  A.under = 0;
+  const text = `Philadelphia stepped in. ${fmt(debt)} of debt is theirs now, and so is a fifth of every week's take for a year. The family goes on, as somebody's ward.`;
+  ctx.log.push(text);
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text, kind: 'misc' });
+  s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text: `Broke: ${text}` });
+  if (s.cutscenes.length < 2) s.cutscenes.push({ key: 'sitdown', title: 'Philadelphia\'s ward', text, week: s.week });
 }
 
 /* ------------------------------------------------------------------ */
@@ -67,7 +96,7 @@ export function pressureWeek(ctx: Ctx): void {
 
 export function bailoutSource(s: GameState): EventInstance | undefined {
   const A = s.action;
-  if (!A || s.gameOver || A.under < BAIL_WEEKS || (A.bail !== undefined && s.week - A.bail < 26)) return undefined;
+  if (!A || s.gameOver || A.under < knobs(s).bailWeeks || (A.bail !== undefined && s.week - A.bail < 26)) return undefined;
   A.bail = s.week;
   A.stats.bail++;
   const need = Math.max(15000, Math.min(60000, Math.ceil((-s.money + 10000) / 1000) * 1000));
@@ -102,8 +131,9 @@ export function bailoutSource(s: GameState): EventInstance | undefined {
   ];
   return {
     iid: `ev${s.nextId++}`, defId: 'bailout', title: 'Under water',
-    text: `The Family has been in the red ${A.under} weeks running (${fmt(s.money)}). The men are paid late or not at all, and everybody on the island knows it. There are ways back. None of them are cheap.`,
-    week: s.week, choices, defaultChoiceId: 'ride', mandatory: true, priority: 85, meta: { theme: 'business' },
+    text: `The Family has been in the red ${A.under} weeks running (${fmt(s.money)}). The men are paid late or not at all, and everybody on the island knows it. There are ways back. None of them are cheap.${A.under >= RESCUE_WEEKS - 13 ? ` In ${Math.max(1, RESCUE_WEEKS - A.under)} weeks Philadelphia stops asking and steps in.` : ''}`,
+    // Riding it out is never the default (Top 10 #5b): Philadelphia's money first; after half a year, sell the worst place.
+    week: s.week, choices, defaultChoiceId: A.under >= SELL_DEFAULT_WEEKS && sell ? 'sell' : pOdds >= 50 || !sell ? 'philly' : 'shark', mandatory: true, priority: 85, meta: { theme: 'business' },
   };
 }
 

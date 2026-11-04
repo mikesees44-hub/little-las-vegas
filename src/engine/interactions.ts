@@ -12,6 +12,7 @@ import type { Character, Effect, GameState, Hook, InteractionId } from './types'
 import { previewRomance } from './romance';
 import { seatPreview } from './eligibility';
 import { spotRecruitReasons } from './kickup';
+import { CAPO_SEAT_MIN } from './regimes';
 
 /**
  * Character interactions (the CK-style right-click menu). Each interaction
@@ -347,7 +348,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
     case 'promote': {
       if (rel !== 'crew' || (c.rank !== 'soldier' && c.rank !== 'capo')) return undefined;
       if (c.rank === 'soldier') {
-        const d = s.districts.find((x) => (!x.capoId || !s.characters[x.capoId]?.alive) && (x.influence.player ?? 0) >= 40);
+        const d = s.districts.find((x) => (!x.capoId || !s.characters[x.capoId]?.alive) && (x.influence.player ?? 0) >= CAPO_SEAT_MIN);
         const label = `Promoted ${first} to capo`;
         return {
           id, title: `Make ${first} a capo${d ? ` of ${d.name}` : ''}`, detail: d ? 'He runs the district and kicks up to you.' : 'No district needs a capo right now.', cost: 0,

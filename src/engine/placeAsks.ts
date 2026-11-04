@@ -2,6 +2,7 @@ import { isInSeason } from './calendar';
 import { crew, isFree } from './characters';
 import { ensureEcon } from './econState';
 import { heat, type Ctx } from './ledger';
+import { shiftInfluence } from './effects';
 import { addOpinion, opinion } from './relations';
 import { hashSeed } from './rng';
 import { xfer } from './tribute';
@@ -250,7 +251,7 @@ function tenantsWeek(ctx: Ctx): void {
       if (t.cop && s.heat.local > 0) heat(ctx, 'local', -1, `${t.name}'s brother-in-law at the precinct keeps the beat cops off ${t.placeName}`, 'heat');
       if (t.rival && c) {
         const d = s.districts.find((x) => x.id === p.district);
-        if (d) d.influence[t.rival] = Math.min(100, (d.influence[t.rival] ?? 0) + 1);
+        if (d) shiftInfluence(s, d.id, t.rival, 1);
         const R = s.rivals.find((x) => x.id === t.rival);
         if (R && hashSeed(`${s.seed}|tenantears|${s.week}|${id}`) / 4294967296 < 0.25) {
           addOpinion(s, R.leaderId, s.playerId, 'Our man hears things in his place', 2, 1);
@@ -274,7 +275,7 @@ function troubleMonth(ctx: Ctx, id: string, t: Tenant): void {
     if (k === 'claim' && t.claim) {
       const p = placeById(s, t.place);
       const d = p ? s.districts.find((x) => x.id === p.district) : undefined;
-      if (d) d.influence[t.claim] = Math.min(100, (d.influence[t.claim] ?? 0) + 2);
+      if (d) shiftInfluence(s, d.id, t.claim, 2);
       const R = s.rivals.find((x) => x.id === t.claim);
       if (R) addOpinion(s, R.leaderId, s.playerId, 'Ignored our claim on the place', -4, 1);
     }

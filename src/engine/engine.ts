@@ -110,6 +110,10 @@ import { sceneEventSource } from './authored/run';
 import { capoEventSource, caposWeek } from './capos';
 import { rxChoiceBegin, rxEnd } from './reactions/apply';
 import { proposalsEventSource } from './reactions/proposals';
+import { knobs } from './difficulty';
+import { pruneSave } from './prune';
+import { heirSeatSource, matchOfferSource } from './generations';
+import { CAPO_SEAT_MIN } from './regimes';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -125,6 +129,8 @@ registerEventSource(setPieceSource);
 // The heat's raids are ticking clocks (threats.ts): set for a night next week.
 setHeatRaidPlanner(planHeatRaid);
 registerEventSource(bailoutSource);
+registerEventSource(heirSeatSource);
+registerEventSource(matchOfferSource);
 registerEventSource(storyPoolSource);
 registerEventSource(arcEventSource);
 registerEventSource(econEventSource);
@@ -190,6 +196,8 @@ function payTheDrop(ctx: Ctx): void {
   if (!d?.drop) return;
   const env = d.drop;
   d.drop = undefined;
+  // Top 10 #8: an envelope that goes through the drop with nothing in the treasury behind it is unpaid tribute, and Philadelphia knows.
+  if (ctx.s.money < env) applyEffects(ctx, [{ type: 'heat', bar: 'family', amount: 10, label: 'The envelope came up empty' }, { type: 'flag', key: 'bag_short', value: 1, label: 'Philadelphia will want to see you' }], { label: 'The envelope', because: 'the treasury could not cover the envelope', category: 'tribute' });
   applyEffects(ctx, [{ type: 'money', amount: -env, category: 'tribute', label: 'Tribute to Philadelphia (through the drop)' }], { label: 'The envelope', because: 'sent Philadelphia its envelope through the drop', category: 'tribute' });
 }
 
@@ -265,12 +273,13 @@ function monthlyTick(ctx: Ctx): void {
       defect(ctx, m, 'desert');
       if (wasCapo) {
         const replacement = crew(s).filter((c) => c.rank === 'soldier' && isFree(s, c)).sort((a, b) => b.attributes.leadership - a.attributes.leadership)[0];
-        const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= 40);
-        if (replacement && d) {
+        const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= CAPO_SEAT_MIN);
+        // B5: the deserter's crew is taken over with or without a district to seat him on.
+        if (replacement) {
           replacement.rank = 'capo';
-          d.capoId = replacement.id;
+          if (d) d.capoId = replacement.id;
           addOpinion(s, replacement.id, boss.id, 'Made me a capo', 20, 1);
-          ctx.log.push(`${displayName(replacement)} takes over ${d.name}.`);
+          ctx.log.push(`${displayName(replacement)} takes over ${d ? d.name : `${displayName(m)}'s crew`}.`);
           tidyRegimes(s);
         }
       }
@@ -287,7 +296,7 @@ function weeklyHousekeeping(ctx: Ctx): void {
       if (c.faction === 'player') {
         ctx.log.push(`${displayName(c)} is out of jail.`);
         if (c.rank === 'capo' || c.rank === 'underboss') {
-          const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= 40);
+          const d = s.districts.find((x) => !x.capoId && (x.influence.player ?? 0) >= CAPO_SEAT_MIN);
           if (c.rank === 'capo' && d) d.capoId = c.id;
         }
       }
@@ -295,7 +304,7 @@ function weeklyHousekeeping(ctx: Ctx): void {
   }
   // Fill empty capo seats in districts we control with a capo who has no district.
   for (const d of s.districts) {
-    if (d.capoId || (d.influence.player ?? 0) < 40) continue;
+    if (d.capoId || (d.influence.player ?? 0) < CAPO_SEAT_MIN) continue;
     const idle = crew(s).find((c) => c.rank === 'capo' && isFree(s, c) && !s.districts.some((x) => x.capoId === c.id));
     if (idle) d.capoId = idle.id;
   }
@@ -310,7 +319,7 @@ function weeklyHousekeeping(ctx: Ctx): void {
     const shown = s.action?.strength === s.week;
     if (gap > 2) respect(ctx, step, `Word on the street: you run ${share}% of the island`, 'drift');
     else if (gap < -2) respect(ctx, -step, `Reputation settles: you run only ${share}% of the island`, 'drift');
-    else if (s.respect > RESPECT_KEEP && !shown) respect(ctx, -1, 'Respect at the top has to be kept: a quiet week, and people forget', 'drift');
+    else if (s.respect > knobs(s).respectKeep && !shown) respect(ctx, -1, 'Respect at the top has to be kept: a quiet week, and people forget', 'drift');
   }
   // The informant (starting problem) leaks to the FBI.
   if (s.flags.informant) {
@@ -476,6 +485,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     heatConsequences(ctx);
     heatDecay(ctx);
     weeklyHousekeeping(ctx);
+    // The save on a diet (prune.ts): twice a year, the long dead and the old archives.
+    pruneSave(s);
     runGoals(ctx);
     riseGoalsWeek(ctx);
     // Three goals at a time: met ones pay and are replaced (ambitions.ts).

@@ -9,6 +9,7 @@ import { today } from './days';
 import type { NowResult } from './deeds/now';
 import type { MomentView } from './schedule';
 import type { Effect, EventInstance, GameDate, GameState, RivalId } from './types';
+import { momentClone } from './momentClone';
 
 /**
  * THE SEASON'S SET-PIECES (DAILY_LOGIC_AND_ACTION #4): four guaranteed peaks a year, each a
@@ -242,7 +243,7 @@ function stormAshore(ctx: Ctx, optId: StormOptId, r: number): { line: string; ok
 /** The boss's answer the night she comes ashore: rolled in the moment (pure). */
 export function resolveStorm(input: GameState, optId: StormOptId): { state: GameState; result: NowResult; extra: { h: string; b: string } } | undefined {
   if (!stormTonight(input)) return undefined;
-  const s = structuredClone(input) as GameState;
+  const s = momentClone(input);
   const ctx = newCtx(s);
   const m0 = s.money;
   const r0 = s.respect;

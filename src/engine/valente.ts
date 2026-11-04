@@ -55,6 +55,8 @@ export interface AboveFamily {
   missed: number;
   /** Last week's kick-up. */
   lastKick?: number;
+  /** The last in-season kick-ups (the quota is sized to them: Top 10 #4b). */
+  kicks?: number[];
   /** When the next order comes down. */
   nextOrder: number;
   /** Orders that came down so far. */
@@ -68,9 +70,17 @@ export interface AboveFamily {
 }
 
 /** The quota at each rung (a base; it rises with a good record). */
-export const QUOTA: Partial<Record<Station, number>> = { associate: 300, soldier: 400, capo: 600, underboss: 0 };
+/** The weekly kick-up the chief expects, by rung (Top 10 #4b: the associate's was 300, missed 17 times a year). */
+export const QUOTA: Partial<Record<Station, number>> = { associate: 150, soldier: 400, capo: 600, underboss: 0 };
+/** The most standing a short Monday costs (was 3). */
+export const SHORT_LOSS = 2;
+/** The quota never goes below this; a short chief settles for this share of the man's average in-season kick. */
+export const QUOTA_MIN = 30;
+export const QUOTA_FAIR = 0.8;
+/** After this many "Short on Monday" cards with the debt still open, no more cards: the debt stands on its own. */
+export const SHORT_CARDS = 3;
 /** The standing an associate needs before his name can go up. */
-export const MADE_STANDING = 45;
+export const MADE_STANDING = 35;
 /** The standing a man needs before the boss will hear him ask to move up. */
 export const CALLIN_STANDING = 55;
 
@@ -539,7 +549,9 @@ export function promote(ctx: Ctx, to: Station, why: string): void {
   const me = player(s);
   if (a) {
     a.rungSince = s.week;
-    a.quota = QUOTA[to] ?? 0;
+    // The new rung's number, but no more than half again what he has been bringing (Top 10 #4b).
+    const avgKick = a.kicks?.length ? a.kicks.reduce((x, y) => x + y, 0) / a.kicks.length : undefined;
+    a.quota = QUOTA[to] ? Math.min(QUOTA[to]!, avgKick !== undefined ? Math.max(QUOTA_MIN, Math.round((avgKick * 1.5) / 10) * 10) : QUOTA[to]!) : 0;
     a.streak = 0;
     a.owed = 0;
     a.booksAsked = undefined;
@@ -593,7 +605,7 @@ const fmt$ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 export function quotaNow(s: GameState): number {
   const a = above(s);
   if (!a || a.quota <= 0) return 0;
-  return isInSeason(s.date) ? a.quota : Math.max(20, Math.round((a.quota * 0.1) / 10) * 10);
+  return isInSeason(s.date) ? a.quota : Math.max(10, Math.round((a.quota * 0.1) / 10) * 10);
 }
 
 /** Monday: the kick-up against the quota (station.ts stationWeek passes the kick). */
@@ -604,7 +616,17 @@ export function quotaWeek(ctx: Ctx, kick: number): void {
   // The first Monday sets the number: what he brings, a little more, never above the rung's number.
   if (!s.flags.low_quota_set) {
     s.flags.low_quota_set = 1;
-    a.quota = Math.max(150, Math.min(a.quota, Math.round((kick * 0.7) / 50) * 50));
+    a.quota = Math.max(QUOTA_MIN, Math.min(a.quota, Math.round((kick * 0.7) / 10) * 10));
+  }
+  // The quota is sized to what he really brings (Top 10 #4b): in season, every four weeks, a chief who keeps
+  // hearing "short" settles for most of what the man has been bringing (never above the rung's number).
+  if (isInSeason(s.date)) {
+    a.kicks = [...(a.kicks ?? []), kick].slice(-8);
+    if (s.week % 4 === 0 && a.kicks.length >= 4) {
+      const avg = a.kicks.reduce((x, y) => x + y, 0) / a.kicks.length;
+      const fair = Math.max(QUOTA_MIN, Math.round((avg * QUOTA_FAIR) / 10) * 10);
+      if (fair < a.quota) a.quota = Math.min(QUOTA[stationOf(s)] ?? a.quota, fair);
+    }
   }
   if (s.flags.low_quota_up) {
     s.flags.low_quota_up = 0;
@@ -627,13 +649,14 @@ export function quotaWeek(ctx: Ctx, kick: number): void {
   a.streak = 0;
   a.missed++;
   a.owed += short;
-  shiftStanding(s, -3, `Came up ${fmt$(short)} short with ${who}`);
+  shiftStanding(s, -SHORT_LOSS, `Came up ${fmt$(short)} short with ${who}`);
   if (chief) addOpinion(s, chief.id, s.playerId, 'Came up short on a Monday', -4, 1);
   ctx.log.push(`Your kick-up to ${who} came up ${fmt$(short)} short of the ${fmt$(want)} he expects. You owe him ${fmt$(a.owed)}.`);
   // He says something about it when it adds up, not every Monday.
   const queued = s.eventQueue.some((e) => e.defId === 'low_short') || s.pendingEvents.some((e) => e.defId === 'low_short');
-  if (!queued && a.owed >= want && s.week - (s.flags.low_short_week ?? -99) >= 3) {
+  if (!queued && a.owed >= want && s.week - (s.flags.low_short_week ?? -99) >= 3 && (s.flags.low_short_n ?? 0) < SHORT_CARDS) {
     s.flags.low_short_week = s.week;
+    s.flags.low_short_n = (s.flags.low_short_n ?? 0) + 1;
     s.eventQueue.push(buildShort(s, short));
   }
 }
@@ -693,6 +716,14 @@ export function aboveWeek(ctx: Ctx, schedule: (id: string, cast: Record<string, 
   if (!s.books?.open) s.flags.low_books_told = 0;
   // Standing drifts toward the middle when nothing happens (a family forgets).
   if (s.week % 4 === 0 && a.standing > 60) shiftStanding(s, -1, 'Out of sight, out of mind');
+  // A clean month (no short Monday, not picked up): the family notices (Top 10 #4c).
+  if (s.week % 4 === 0) {
+    const jailed = (s.characters[s.playerId]?.imprisonedUntil ?? 0) > s.week;
+    if (a.missed === (s.flags.low_clean_missed ?? a.missed) && !jailed && a.standing < 60) shiftStanding(s, 1, 'A clean month: every envelope right, no trouble');
+    s.flags.low_clean_missed = a.missed;
+  }
+  // The debt paid off: the "Short on Monday" cards may come again.
+  if (a.owed <= 0) s.flags.low_short_n = 0;
 }
 
 /** Summary for the screens and the Desk strip. */

@@ -26,6 +26,22 @@ import {
 } from './armyState';
 import type { ActionPreview } from './actions';
 import type { Character, Effect, EventInstance, FactionId, GameState, PlayerChoices, RivalId, War } from './types';
+import { knobs } from './difficulty';
+import { spareFromWars } from './rankView';
+import { noteRivalWar, warPeace } from './warPeace';
+
+/** The boss's risk when a battle breaks through at home (Don; × difficulty.ts battleDeath). Was 0.04 / 0.01, cap 0.3. */
+export const BOSS_CORE_HIT = 0.012;
+export const BOSS_EDGE_HIT = 0.004;
+export const BOSS_RISK_CAP = 0.08;
+/** A breakthrough that reaches him within this many weeks of the last wound kills. */
+export const BOSS_WOUND_MEMORY = 52;
+
+/** No breakthrough reaches the boss: the safehouses or mattresses are on, bodyguards on him, or he is not a family's boss. */
+export function bossSheltered(s: GameState): boolean {
+  if (s.army?.safehouses || s.power?.mattresses || s.power?.bodyguards) return true;
+  return (s.power?.station ?? 'boss') !== 'boss';
+}
 
 /**
  * THE ARMY — CK levies for the mob (design: "raise the troops").
@@ -426,8 +442,11 @@ export function battlePlan(s: GameState, b: BattleSpot, how: BattleHow): BattleP
   const safe = s.army?.safehouses ? 0.7 : 1;
   const deathIfLost = (big ? 0.15 : 0.08) * support * safe;
   const commanderRisk = clamp((1 - odds) * deathIfLost + odds * 0.02, 0, 0.6);
-  const coreHit = CORE.includes(b.district) ? 0.04 : 0.01;
-  const bossRisk = how === 'lead' ? commanderRisk : clamp((1 - odds) * coreHit * support * (s.army?.safehouses ? 0.35 : 1) * (big ? 1.3 : 1), 0, 0.3);
+  // The boss at home (DECADE_BALANCE Top 10 #3): a breakthrough is rarely his death. Nil when he is
+  // sheltered (the safehouses, the mattresses, bodyguards) or not the boss of a family at all.
+  const coreHit = CORE.includes(b.district) ? BOSS_CORE_HIT : BOSS_EDGE_HIT;
+  const dk = knobs(s).battleDeath;
+  const bossRisk = how === 'lead' ? clamp(commanderRisk * dk, 0, 0.6) : bossSheltered(s) ? 0 : clamp((1 - odds) * coreHit * support * (big ? 1.3 : 1) * dk, 0, BOSS_RISK_CAP);
   return { how, ours: r1(ours), ourMen, theirs: r1(theirs), theirMen, est: { lo: est.lo, hi: est.hi, fogged: est.fogged }, odds, big, commanderRisk, bossRisk, commander: cmd, factors, allies };
 }
 
@@ -516,9 +535,21 @@ export function resolveBattle(ctx: Ctx, b: PendingBattle, how: BattleHow, roll?:
     if (y < cmdDeath) effects.push({ type: 'kill', charId: cmd.id, cause: `killed leading the men at ${dn}`, killer: rival, label });
     else if (!won && y < cmdDeath + 0.3) cmd.health = Math.max(5, cmd.health - 30);
   }
-  if (!bossLeads && !won) {
+  if (!bossLeads && !won && plan.bossRisk > 0) {
     const pBoss = plan.bossRisk / Math.max(0.03, 1 - plan.odds);
-    if (rand(A) < pBoss) effects.push({ type: 'kill', charId: s.playerId, cause: `killed when ${theyName} broke through at ${dn}`, killer: rival, label });
+    if (rand(A) < pBoss) {
+      // The first time they reach him he is hit, not killed: a wound, a headline, a warning.
+      const boss = s.characters[s.playerId];
+      const lastWound = A.bossWound ?? -999;
+      if (boss && s.week - lastWound > BOSS_WOUND_MEMORY) {
+        A.bossWound = s.week;
+        boss.health = Math.max(10, boss.health - 40);
+        const hit = `${theyName} broke through at ${dn} and reached the boss. ${boss.firstName} was hit: he lives, but the next time they may not miss.`;
+        ctx.log.push(hit);
+        s.chronicle.push({ week: s.week, date: { ...s.date }, text: hit, kind: 'rival' });
+        if (s.cutscenes.length < 2) s.cutscenes.push({ key: 'sitdown', title: 'The boss was hit', text: `${hit} Go to the mattresses, or put bodyguards on him.`, week: s.week });
+      } else effects.push({ type: 'kill', charId: s.playerId, cause: `killed when ${theyName} broke through at ${dn}`, killer: rival, label });
+    }
   }
   // The ground and the score.
   const swing = plan.big ? 20 : 12;
@@ -776,11 +807,12 @@ export const GOAL_LABEL: Record<WarGoal, string> = {
 export function startCampaign(ctx: Ctx, rival: RivalId, goal: WarGoal, why: string): War | undefined {
   const s = ctx.s;
   const r = s.rivals.find((x) => x.id === rival);
-  if (!r || s.wars.some((w) => w.rival === rival)) return undefined;
+  if (!r || s.wars.some((w) => w.rival === rival) || spareFromWars(s) || !warPeace(s, rival)) return undefined;
   const path = pathFor(s, rival);
   const target = path.find((d) => (s.districts.find((x) => x.id === d)?.influence.player ?? 0) >= 20) ?? path[path.length - 1] ?? 'downtown';
   const w: War = { id: `w${s.nextId++}`, rival, district: target, cb: 'grievance', sanctioned: rival === 'philly', score: 0, startWeek: s.week, by: rival };
   s.wars.push(w);
+  noteRivalWar(s);
   r.war = true;
   const A = ensureArmy(s);
   const c = ensureCampaign(s, w);
@@ -944,6 +976,11 @@ export function armyWeek(ctx: Ctx): void {
   // Philadelphia's lean: once a month, even with no army layer yet.
   if (s.week % 4 === 2 && s.week >= 20 && !s.gameOver) phillyLean(ctx);
   if (!s.army && !s.wars.length) return;
+  // A man who is no family's boss (B3: in the ranks, in exile, an independent crew) is not at war: the shooting stops.
+  if (spareFromWars(s) && s.wars.length) {
+    for (const w of [...s.wars]) endWar(ctx, w, 'white', 'white');
+    ctx.log.push('You are nobody\'s boss now: the families have no war with you.');
+  }
   const A = ensureArmy(s);
   upkeepWeek(ctx, A);
   for (const w of s.wars) campaignWeek(ctx, A, w);

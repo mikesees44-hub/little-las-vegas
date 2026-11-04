@@ -1,4 +1,5 @@
 import type { GameState, HeatBar, LedgerCategory, ReportLine, Stat } from './types';
+import { knobs } from './difficulty';
 
 /**
  * THE ledger. Every change to money, respect or a heat bar anywhere in the
@@ -58,6 +59,15 @@ export function post(ctx: Ctx, stat: Stat, requested: number, label: string, cat
     applied = s.respect - before;
   } else {
     const bar = stat.slice(5) as HeatBar;
+    // The heat ramp (difficulty.ts): gains scale by the preset; the fraction carries to the next gain.
+    const m = knobs(s).heatGain;
+    if (requested > 0 && m !== 1) {
+      const key = `heatCarry_${bar}`;
+      const raw = requested * m + (s.flags?.[key] ?? 0);
+      requested = Math.floor(raw);
+      if (s.flags) s.flags[key] = Math.round((raw - requested) * 100) / 100;
+      if (requested === 0) return 0;
+    }
     const before = s.heat[bar];
     s.heat[bar] = clamp(before + requested, 0, 100);
     applied = s.heat[bar] - before;

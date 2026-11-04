@@ -88,10 +88,10 @@ export type PauseCatKey = (typeof PAUSE_CATS)[number]['key'];
  */
 export const IMMEDIATE: ReadonlySet<string> = new Set<string>(['red', 'urgent', 'war', 'death', 'strike']);
 export interface PauseLedger { key: string; n: number }
-export function budgetPause(l: PauseLedger | undefined, dayKey: string, cat: string): { ok: boolean; ledger: PauseLedger } {
+export function budgetPause(l: PauseLedger | undefined, dayKey: string, cat: string, max = DAY_PAUSES): { ok: boolean; ledger: PauseLedger } {
   const cur = l && l.key === dayKey ? l : { key: dayKey, n: 0 };
   if (IMMEDIATE.has(cat)) return { ok: true, ledger: { key: dayKey, n: cur.n + 1 } };
-  if (cur.n >= DAY_PAUSES) return { ok: false, ledger: cur };
+  if (cur.n >= max) return { ok: false, ledger: cur };
   return { ok: true, ledger: { key: dayKey, n: cur.n + 1 } };
 }
 

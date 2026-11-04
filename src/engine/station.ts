@@ -115,11 +115,53 @@ export function takeoverOdds(s: GameState): Acceptance {
   return { chance: Math.max(0.05, Math.min(0.8, reasons.reduce((a, r) => a + r.value, 0) / 100)), reasons };
 }
 
+/** Weeks the deposed boss has to take ground back before his crew folds into a family (Top 10 #9). */
+export const COMEBACK_WEEKS = 52;
+/** Holding this share of a district (and more than anybody) is a family again. */
+export const COMEBACK_HOLD = 35;
+
+/** Start the comeback chapter: the family is lost, the game is not (B4). */
+export function startComeback(s: GameState): void {
+  const p = pw(s);
+  if (p.comeback) return;
+  p.comeback = { since: s.week, until: s.week + COMEBACK_WEEKS, kind: 'deposed' };
+  const text = `Deposed. ${displayName(player(s))} has a crew and no family. A year to take ground back: hold a district, or take the chair, and the family is his again. If not, the crew folds into somebody's ranks and the climb starts over.`;
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text, kind: 'succession' });
+  s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text: `${displayName(player(s))} lost the family and went on with an independent crew.` });
+  if (s.cutscenes.length < 2) s.cutscenes.push({ key: 'sitdown', title: 'Deposed', text, week: s.week });
+}
+
+/** The ground the comeback needs: a district held (COMEBACK_HOLD and more than anybody). */
+export function comebackGround(s: GameState): string | undefined {
+  return s.districts.find((d) => { const me = d.influence.player ?? 0; return me >= COMEBACK_HOLD && Object.entries(d.influence).every(([f, v]) => f === 'player' || f === 'none' || (v ?? 0) < me); })?.name;
+}
+
+/** Monthly: the comeback is won (ground held), or its year runs out and the crew folds into the ranks. Play goes on either way. */
+function comebackMonth(ctx: Ctx): void {
+  const s = ctx.s;
+  const p = pw(s);
+  if (p.station !== 'independent') { if (p.comeback && p.station === 'boss') p.comeback = undefined; return; }
+  if (!p.comeback) startComeback(s);
+  const cb = p.comeback!;
+  const ground = comebackGround(s);
+  if (ground) {
+    p.comeback = undefined;
+    setStation(ctx, 'boss', `The comeback: ${ground} is his again, and the men who left came back with it.`);
+    s.dynastyHistory.push({ week: s.week, date: { ...s.date }, text: `${displayName(player(s))} took back ${ground} and the family with it.` });
+    return;
+  }
+  if (s.week >= cb.until) {
+    p.comeback = undefined;
+    setStation(ctx, 'soldier', 'The year ran out. The crew folded into the family as a soldier\'s crew: the climb starts over.');
+  }
+}
+
 function setStation(ctx: Ctx, st: Station, why: string): void {
   const s = ctx.s;
   const p = pw(s);
   const was = p.station;
   p.station = st;
+  if (st === 'independent' && was !== 'independent') startComeback(s);
   const boss = player(s);
   if (st === 'boss') {
     if (p.fell) p.stats.comebacks++;
@@ -268,6 +310,7 @@ export function chooseStation(ctx: Ctx, st: Station): void {
 export function stationMonth(ctx: Ctx): void {
   const s = ctx.s;
   const p = pw(s);
+  comebackMonth(ctx);
   if (p.station === 'boss') return;
   const over = overBoss(s);
   // In the ranks of a real family (valente.ts): the family decides who sits in the chair.

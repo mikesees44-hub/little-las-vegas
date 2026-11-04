@@ -58,6 +58,7 @@ export function recommendedStart(): StartId {
 export function newGameWith(seed: string, start: StartId = 'classic', charOptions?: CharOptions): GameState {
   // The houses are built once the start (and the creator) has shaped the family.
   const s = newGame(seed, { skipHouses: start !== 'classic' || !!charOptions });
+  s.difficulty = 'don';
   if (start === 'classic' && !charOptions) {
     repairGoals(s);
     addOpeningScene(s, start);

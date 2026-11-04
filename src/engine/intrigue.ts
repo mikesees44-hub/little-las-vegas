@@ -12,6 +12,8 @@ import {
   ensureIntrigue, ERA_LABEL, ERA_ORDER, pairKey, type Era, type EraTrack, type Intel, type IntelKind, type IntrigueState, type Lie, type Plot, type Spy, type WarLedger,
 } from './intrigueState';
 import type { Character, Choice, EventInstance, FactionId, GameState, PlayerChoices, Rival, RivalId, War } from './types';
+import { spareFromWars } from './rankView';
+import { noteRivalWar, warPeace } from './warPeace';
 
 /**
  * THE DYNAMICS LAYER: drama, intrigue, lies, spies, wars and peace between
@@ -1063,7 +1065,7 @@ function erasWeek(ctx: Ctx): void {
       const next = nextEraByTension(t);
       if (next !== t.era) setEra(ctx, t, next, t.cause);
       // NPC ambition: a cold war becomes a shooting war.
-      if (t.era === 'cold' && s.week - t.since >= 6 && t.tension >= 85 && dice(s, `declare:${r.id}`) < INTRIGUE_DECIDERS.declareWar(s, r, t)) rivalDeclares(ctx, r, t);
+      if (t.era === 'cold' && s.week - t.since >= 6 && t.tension >= 85 && !spareFromWars(s) && warPeace(s, r.id) && dice(s, `declare:${r.id}`) < INTRIGUE_DECIDERS.declareWar(s, r, t)) rivalDeclares(ctx, r, t);
     } else {
       // Two families: war at the top, a truce after.
       const next: Era = t.era === 'war' ? (t.tension < 70 ? 'truce' : 'war') : t.era === 'truce' ? (s.week - t.since >= 8 ? (t.tension >= 42 ? 'tension' : 'peace') : 'truce') : t.tension >= 88 ? 'war' : t.tension >= 65 ? 'cold' : t.tension >= 40 ? 'tension' : 'peace';
@@ -1078,6 +1080,7 @@ function rivalDeclares(ctx: Ctx, r: Rival, t: EraTrack): void {
   const d = contested[0] ?? s.districts.find((x) => x.id === r.homeDistrict) ?? s.districts[0];
   const w: War = { id: `w${s.nextId++}`, rival: r.id, district: d.id, cb: 'feud', sanctioned: false, score: 0, startWeek: s.week, by: r.id };
   s.wars.push(w);
+  noteRivalWar(s);
   r.war = true;
   ensureLedger(s, w);
   const text = `${displayName(s.characters[r.leaderId])} went to the mattresses: ${r.name} is at war with you over ${d.name}.`;

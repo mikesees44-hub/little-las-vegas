@@ -30,6 +30,7 @@ import { forecast } from './table';
 import { FACTION_NAMES } from './world';
 import { previewAction } from './actions';
 import type { Attributes, Character, GameState, PlayerAction, RivalId, SchemeKind, SchemeOptions, Seat } from './types';
+import { CAPO_SEAT_MIN } from './regimes';
 
 /**
  * Picking a person (CK's "who should I send?"). One function ranks the
@@ -313,7 +314,7 @@ function seatRole(s: GameState, seat: Seat, pool: Character[]): Raw[] {
 /** The district a new capo would take (the same rule as the promotion). */
 export function capoDistrict(s: GameState, district?: string) {
   if (district) return s.districts.find((d) => d.id === district);
-  return s.districts.find((x) => (!x.capoId || !s.characters[x.capoId]?.alive) && (x.influence.player ?? 0) >= 40);
+  return s.districts.find((x) => (!x.capoId || !s.characters[x.capoId]?.alive) && (x.influence.player ?? 0) >= CAPO_SEAT_MIN);
 }
 
 /** What a capo with this business skill would kick up a week from the district, after his share and his skim. */

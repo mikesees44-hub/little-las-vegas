@@ -369,7 +369,7 @@ export function registerBookSource(src: BookSource): void {
   else SOURCES.push(src);
 }
 
-const nameOf = (s: GameState, id: string) => { const c = s.characters[id]; return c ? `${c.firstName} ${c.lastName}` : 'Someone'; };
+const nameOf = (s: GameState, id: string) => { const c = s.characters[id]; return c ? `${c.firstName} ${c.lastName}` : s.departed?.find((d) => d.id === id)?.n ?? 'Someone'; };
 
 registerBookSource({ id: 'nightlife', read: (s, since) => {
   const N = s.nightlife;

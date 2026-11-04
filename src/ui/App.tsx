@@ -73,6 +73,7 @@ import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
 import { SettingsPanel } from './menu/StartMenu';
+import { knobs, setDifficulty } from '../engine/difficulty';
 import { whatShouldIDo } from '../engine/opportunities';
 import { Providers } from './shell/Providers';
 import type { MapFocus, ShellApi } from './shell/context';
@@ -747,7 +748,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function pauseOnce(at: GameState, whys: { cat: string; text: string }[]): boolean {
     if (!whys.length) return false;
     const top = whys.find((x) => IMMEDIATE.has(x.cat)) ?? whys[0];
-    const b = budgetPause(pauseLedgerRef.current, dayKey(at), top.cat);
+    const b = budgetPause(pauseLedgerRef.current, dayKey(at), top.cat, knobs(at).dayPauses);
     if (!b.ok) return false;
     pauseLedgerRef.current = b.ledger;
     setSpeed(0);
@@ -756,7 +757,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   /** Stop the clock, within the day's pause budget (clockPolicy.ts budgetPause): red, urgent, war, death and a strike always stop it. */
   function pauseFor(at: GameState, cat: string, text: string) {
-    const b = budgetPause(pauseLedgerRef.current, dayKey(at), cat);
+    const b = budgetPause(pauseLedgerRef.current, dayKey(at), cat, knobs(at).dayPauses);
     if (!b.ok) return;
     pauseLedgerRef.current = b.ledger;
     setSpeed(0);
@@ -902,7 +903,7 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (a.kind === 'alert') onAlert(a.alert);
   }
   const navExtras = {
-    'nav.settings': <SettingsPanel game={{ s, update: (f, what) => act(f, what) }} />,
+    'nav.settings': <SettingsPanel game={{ s, update: (f, what) => act(f, what) }} difficulty={s.difficulty} onDifficulty={(d) => setS(setDifficulty(s, d))} />,
     'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
   };
   const deskApi = {

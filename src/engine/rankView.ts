@@ -71,6 +71,15 @@ export function inTheRanks(s: GameState): boolean {
   return st === 'associate' || st === 'soldier' || st === 'capo' || st === 'underboss';
 }
 
+/**
+ * The rival families do not wage war on him (DECADE_BALANCE B3, Top 10 #4a): a man in somebody's
+ * ranks, an exile or an independent crew is no family's boss. His enemies are his rival for the slot
+ * and the cops; no war is declared on him, no campaign or blitz comes, no army battle reaches him.
+ */
+export function spareFromWars(s: GameState): boolean {
+  return stationOf(s) !== 'boss';
+}
+
 export function can(s: GameState, cap: Cap): boolean {
   return STATION_CAPS[stationOf(s)].includes(cap);
 }

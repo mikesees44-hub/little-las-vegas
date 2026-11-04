@@ -14,7 +14,7 @@ import { holder as seatHolder } from './council';
 import type { Character, EventInstance, GameState } from './types';
 import { ensureFeds, fr, bossHasFlipped, type Crisis, type FedsState, type HollowCrown, type PlotStance } from './fedsState';
 import {
-  bossCooperates, bossTurnsHook, chron, clamp, endHollow, mine, moment, nm, pc, put,
+  bossCooperates, bossTurnsHook, chron, clamp, endHollow, mine, moment, momentOver, nm, pc, put,
 } from './feds';
 
 /**
@@ -275,6 +275,7 @@ function early(s: GameState, C: Crisis, F: FedsState): boolean {
 }
 
 function dmwAnswer(input: GameState, it: ScheduledItem, opt: string) {
+  if (!input.feds?.hollow?.crisis) return momentOver(input, 'The plot');
   const beat = Number(it.payload.beat);
   return moment(input, it, opt, ['', 'The insult', 'The secret supper', 'The missing envelopes', 'The warning', 'The family divides', 'They come for you', 'The judgment'][beat] ?? 'The plot', (ctx, F) => {
     const s = ctx.s;

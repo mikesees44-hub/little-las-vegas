@@ -606,6 +606,9 @@ export function revenueOf(st: WeekStat): number {
   return st.rev.rooms + st.rev.dining + st.rev.bar + st.rev.club + st.rev.other;
 }
 
+/** Months of history a venue keeps (then its years). */
+export const VENUE_MONTHS = 13;
+
 /** Rolls a week into the month and the year. */
 export function rollup(s: GameState, v: Venue, st: WeekStat, yearsOnly = false): void {
   const add = (list: PeriodStat[], key: string, max: number) => {
@@ -622,7 +625,8 @@ export function rollup(s: GameState, v: Venue, st: WeekStat, yearsOnly = false):
     p.sat = (p.sat * p.weeks + st.sat) / (p.weeks + 1);
     p.weeks++;
   };
-  if (!yearsOnly) add(v.months, monthKey(s.date), 36);
+  // The last year by month, then the years (DECADE_BALANCE Top 10 #1: was 36 months a venue).
+  if (!yearsOnly) add(v.months, monthKey(s.date), VENUE_MONTHS);
   add(v.years, String(s.date.y), 30);
 }
 

@@ -27,6 +27,8 @@ import { honoreeOptions, suggestGuests } from './activities';
 import { LIFESTYLE_IDS, LIFESTYLES } from './lifestyle';
 import type { AlertKind } from './alerts';
 import type { Character, GameState, PlayerAction, PlayerChoices, RivalId, Seat } from './types';
+import { above, callInBlock, vouchCandidates } from './valente';
+import { inTheRanks } from './rankView';
 
 /**
  * The Sit-Down: the weekly council briefing.
@@ -958,6 +960,8 @@ export function recommendedActions(s: GameState, b: Briefing = briefing(s), queu
   const out: { item: BriefItem; option: BriefOption; action: PlayerAction }[] = [];
   const seen = new Set(queued.map((a) => JSON.stringify(a)));
   let money = s.money - queued.reduce((a, x) => a + previewAction(s, x).cost, 0);
+  // A man in the ranks (Top 10 #4d): the climb comes first when it is open, or only a sponsor is missing.
+  for (const r of ladderRecs(s)) { const k = JSON.stringify(r.action); if (!seen.has(k)) { seen.add(k); out.push(r); } }
   for (const it of b.items) {
     if (skip.includes(it.id)) continue;
     const o = it.options.find((x) => x.id === it.recommended);
@@ -969,6 +973,27 @@ export function recommendedActions(s: GameState, b: Briefing = briefing(s), queu
     seen.add(k);
     money -= o.cost;
     out.push({ item: it, option: o, action: o.action });
+  }
+  return out;
+}
+
+/** The ladder's next step for a man in the ranks: ask a made man to vouch, or have your name put up. */
+export function ladderRecs(s: GameState): { item: BriefItem; option: BriefOption; action: PlayerAction }[] {
+  if (!inTheRanks(s)) return [];
+  const block = callInBlock(s);
+  const a = above(s);
+  if (!a) return [];
+  const mk = (id: string, topic: string, label: string, why: string, action: PlayerAction) => {
+    if (previewAction(s, action).disabledReason) return undefined;
+    const option: BriefOption = { id: 'go', label, action, chips: [], cost: 0, why, value: 100 };
+    const item: BriefItem = { id, speaker: 'ladder', role: 'capo', priority: 900, topic, line: why, options: [option], recommended: 'go', reason: why, biased: false, routine: false, covers: [] };
+    return { item, option, action };
+  };
+  const out: { item: BriefItem; option: BriefOption; action: PlayerAction }[] = [];
+  if (!block) { const r = mk('ladder:climb', 'Your name', 'Ask to have your name put up', 'The way is open: ask for the sit-down.', { kind: 'power', op: { op: 'climb' } } as PlayerAction); if (r) out.push(r); }
+  else if (/vouch/i.test(block)) {
+    const v = vouchCandidates(s)[0];
+    if (v) { const r = mk(`ladder:vouch:${v.id}`, 'A sponsor', `Ask ${v.firstName} to vouch for you`, 'Nobody gets made without a made man to vouch for him.', { kind: 'power', op: { op: 'low', a: { op: 'askVouch', id: v.id } } } as PlayerAction); if (r) out.push(r); }
   }
   return out;
 }
