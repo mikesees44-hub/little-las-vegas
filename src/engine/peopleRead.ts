@@ -250,7 +250,7 @@ export function readsWeek(ctx: Ctx): void {
     const after = addSuspicion(s, f.id, f.k, f.a, f.why, f.src);
     // Crossing into "suspected": the boss notes it in his file.
     if (before < SUSPECT && after >= SUSPECT) {
-      journal(s, { c: 'intrigue', t: `You have your doubts about ${nm(s, f.id)}`, x: `${f.k === 'flip' ? 'Is he talking?' : 'Is he stealing?'} ${f.why}`, p: [f.id], src: 'reads', ln: 'people' });
+      journal(s, { c: 'intrigue', t: `You have your doubts about ${nm(s, f.id)}`, x: `${f.k === 'flip' ? 'Is he talking?' : 'Is he stealing?'} ${f.why}`, p: [f.id], src: 'reads' });
     }
   }
 }
@@ -611,7 +611,7 @@ export function readAct(s0: GameState, id: string, op: ReadOp): { state: GameSta
   const r = (R.p[id] ??= { f: 0, st: 0, ev: [] });
   const who = displayName(c);
   const he = c.gender === 'F' ? 'she' : 'he';
-  const fileIt = (t: string, x: string) => journal(s, { c: 'intrigue', t, x, p: [id], src: 'reads', mine: 1, ln: 'people' });
+  const fileIt = (t: string, x: string) => journal(s, { c: 'intrigue', t, x, p: [id], src: 'reads', mine: 1 });
   if (op === 'clear') {
     const was = `${Math.round(r.f)}/${Math.round(r.st)}`;
     r.f = 0;
@@ -718,4 +718,20 @@ export function registerLedgerAction(def: LedgerActionDef): void {
 }
 export function ledgerActions(): readonly LedgerActionDef[] {
   return EXTRA;
+}
+
+/** The hit picker's targets, grouped like the ledger (your family first, then each family, the law and the town). */
+export function hitTargetGroups(s: GameState): { group: PeopleGroup; label: string; ids: string[]; protectedIds: string[] }[] {
+  const leaders = new Set(s.rivals.map((r) => r.leaderId));
+  const by = new Map<PeopleGroup, string[]>();
+  for (const id of peopleKnown(s)) {
+    const c = s.characters[id];
+    if (s.date.y - c.birth.y < 18) continue;
+    const g = groupOf(s, id);
+    (by.get(g) ?? by.set(g, []).get(g)!).push(id);
+  }
+  return GROUP_ORDER.filter((g) => by.has(g)).map((g) => {
+    const ids = by.get(g)!.sort((a, b) => Number(leaders.has(b)) - Number(leaders.has(a)) || (RANK_ORD[s.characters[a].rank] ?? 9) - (RANK_ORD[s.characters[b].rank] ?? 9) || s.characters[a].lastName.localeCompare(s.characters[b].lastName));
+    return { group: g, label: s.rivals.find((r) => r.id === g)?.name ?? GROUP_NAME[g], ids, protectedIds: ids.filter((id) => !!s.characters[id].office || s.characters[id].faction === 'law') };
+  });
 }

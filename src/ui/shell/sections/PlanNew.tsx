@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { hitTargetGroups } from '../../../engine/peopleRead';
+import { openPeople, OwnHitConfirm } from '../../people/PeopleLedger';
 import { displayName } from '../../../engine/characters';
 import { SCHEME_INFO } from '../../../engine/schemes';
 import { knownSecrets } from '../../../engine/secrets';
@@ -44,8 +46,12 @@ export function PlanNew({ s }: { s: GameState }) {
 
 function PlanCard({ s, kind }: { s: GameState; kind: SchemeKind }) {
   const { plan } = usePlanner();
-  const targets = UNTARGETED.has(kind) ? [] : schemeTargets(s, kind);
-  const [t, setT] = useState(targets[0]?.id ?? '');
+  // A hit: everyone, grouped by family with your own as its own section (peopleRead.ts); the rest as before.
+  const groups = useMemo(() => (kind === 'murder' ? hitTargetGroups(s) : undefined), [kind, s]);
+  const targets = UNTARGETED.has(kind) ? [] : groups ? groups.flatMap((g) => g.ids.filter((id) => !g.protectedIds.includes(id))).map((id) => s.characters[id]) : schemeTargets(s, kind);
+  // Never your own man by default: he is there to be chosen, not to be landed on.
+  const [t, setT] = useState(targets.find((c) => c.faction !== 'player')?.id ?? targets[0]?.id ?? '');
+  const [ownConfirm, setOwnConfirm] = useState(false);
   const info = SCHEME_INFO[kind];
   const blocked = !UNTARGETED.has(kind) && targets.length === 0;
   return (
@@ -55,14 +61,20 @@ function PlanCard({ s, kind }: { s: GameState; kind: SchemeKind }) {
       <div className="mt-1.5 flex gap-1.5 items-center">
         {!UNTARGETED.has(kind) && (
           <select className="min-w-0 flex-1 rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={t} onChange={(e) => setT(e.target.value)} aria-label={`${info.name} target`} disabled={blocked}>
-            {targets.map((c) => <option key={c.id} value={c.id}>{displayName(c)} — {c.office ?? FACTION_NAMES[c.faction]}</option>)}
+            {groups ? groups.map((g) => (
+              <optgroup key={g.group} label={g.label}>
+                {g.ids.map((id) => { const c = s.characters[id]; const prot = g.protectedIds.includes(id); return <option key={id} value={id} disabled={prot}>{displayName(c)} — {c.office ?? (c.rank !== 'civilian' ? c.rank : FACTION_NAMES[c.faction])}{prot ? ' (protected: Philadelphia\'s rule)' : ''}</option>; })}
+              </optgroup>
+            )) : targets.map((c) => <option key={c.id} value={c.id}>{displayName(c)} — {c.office ?? FACTION_NAMES[c.faction]}</option>)}
             {blocked && <option value="">nobody yet</option>}
           </select>
         )}
-        <button type="button" className={`${info.hostile ? 'btn border border-blood-500 text-red-300 hover:bg-blood-500/20' : 'btn-ghost'} text-xs py-1 shrink-0 ${UNTARGETED.has(kind) ? 'ml-auto' : ''}`} disabled={blocked} onClick={() => plan(kind, UNTARGETED.has(kind) ? undefined : t || undefined)}>
+        {kind === 'murder' && <button type="button" className="btn-ghost text-xs py-1 shrink-0" onClick={() => openPeople('hit')} data-testid="plan-hitlist" title="Everyone by family, with your read on each and the odds and heat of a hit">Hit list…</button>}
+        <button type="button" className={`${info.hostile ? 'btn border border-blood-500 text-red-300 hover:bg-blood-500/20' : 'btn-ghost'} text-xs py-1 shrink-0 ${UNTARGETED.has(kind) ? 'ml-auto' : ''}`} disabled={blocked} onClick={() => (kind === 'murder' && s.characters[t]?.faction === 'player' ? setOwnConfirm(true) : plan(kind, UNTARGETED.has(kind) ? undefined : t || undefined))}>
           Plan…
         </button>
       </div>
+      {ownConfirm && <OwnHitConfirm s={s} id={t} onNo={() => setOwnConfirm(false)} onYes={() => { setOwnConfirm(false); plan('murder', t); }} />}
     </div>
   );
 }
