@@ -9,6 +9,7 @@ import type { Ctx } from './ledger';
 import { addOpinion, opinion } from './relations';
 import { pick, rand, shuffle, weightedPick } from './rng';
 import type { Character, Choice, Effect, EventInstance, GameState } from './types';
+import { lastShown } from './storyDirector';
 
 /**
  * Hosted activities (CK feasts and hunts): a wedding, a christening, a wake,
@@ -129,6 +130,9 @@ interface Outcome {
   weight: (s: GameState, a: ActiveActivity) => number;
   build: (s: GameState, a: ActiveActivity) => EventInstance | undefined;
 }
+
+/** Weeks before the same kind of party scene can come again. */
+export const ACT_REPEAT = 8;
 
 function guestsOf(s: GameState, a: ActiveActivity): Character[] {
   return a.guests.map((id) => s.characters[id]).filter((c): c is Character => !!c?.alive);
@@ -398,7 +402,8 @@ export function finishActivity(ctx: Ctx): EventInstance[] {
   const out: EventInstance[] = [];
   const used = new Set<OutcomeKey>();
   for (let i = 0; i < n; i++) {
-    const avail = OUTCOMES.filter((o) => !used.has(o.key));
+    // Top 10 #10: the same kind of scene (an insult at the table…) not twice inside eight weeks.
+    const avail = OUTCOMES.filter((o) => !used.has(o.key) && s.week - (lastShown(s, `act_${o.key}`) ?? -99) >= ACT_REPEAT);
     const o: Outcome | undefined = weightedPick(d, shuffle(d, avail), (x) => x.weight(s, a));
     if (!o) break;
     used.add(o.key);

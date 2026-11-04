@@ -414,7 +414,8 @@ export function raiseWrong(ctx: Ctx, c: Character, by: WrongBy, kind: WrongKind,
   }[kind];
   if (fx.length) applyEffects(ctx, fx, { label: w.text, because: w.text, category: 'event' });
   m.wrongs.push(w);
-  s.eventQueue.push(buildWrongEvent(s, w));
+  // Top 10 #10: at most one "your man was wronged" card a month; the rest wait in My Men (the underboss handles them when due).
+  if (s.week - (s.flags.wrongCard ?? -99) >= 4) { s.flags.wrongCard = s.week; s.eventQueue.push(buildWrongEvent(s, w)); }
   ctx.log.push(`${w.text}.`);
   return w;
 }

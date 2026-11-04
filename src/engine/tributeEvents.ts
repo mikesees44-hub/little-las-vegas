@@ -32,6 +32,9 @@ export const AUDIENCE_ID = 'tribute_audience';
 
 /** Weeks between optional audiences (issues), unless asked or in a crisis. */
 const AUDIENCE_GAP = 3;
+/** After this many weeks the audience settles to a season's cadence (QUARTER). */
+const ESTABLISHED_WEEKS = 104;
+const QUARTER = 13;
 /** Weeks between in-person audiences on quiet weeks when the Don holds them every week (the others wait on the desk). */
 const ASKED_GAP = 8;
 
@@ -41,14 +44,17 @@ export function audienceWanted(s: GameState, rep: TributeReport): { want: boolea
   // see you only when something is wrong (a shortfall that matters, a dispute, a petition), or a crisis.
   // Held every week at his word: a quiet week's envelope waits on his desk (no popup); he is shown in
   // person when something is off, the first time, and about every other month (the story director's cap).
+  // Top 10 #10: once the family has run two years, a quiet audience comes about once a season, not once a month.
+  const settled = s.week > ESTABLISHED_WEEKS;
   if (!t.policy.auto) {
     const last = lastShown(s, AUDIENCE_ID);
-    const want = !isQuietWeek(rep) || last === undefined || s.week - last >= ASKED_GAP;
+    const gap = last === undefined ? Infinity : s.week - last;
+    const want = isQuietWeek(rep) ? gap >= (settled ? QUARTER : ASKED_GAP) : gap >= (settled ? AUDIENCE_GAP * 2 : 0);
     return { want, mandatory: false, asked: want, why: want ? 'asked' : '' };
   }
   if (t.ub.stage === 3) return { want: true, mandatory: true, asked: false, why: 'crisis' };
   const last = t.held[t.held.length - 1] ?? -99;
-  if (!isQuietWeek(rep) && rep.week - last >= AUDIENCE_GAP) return { want: true, mandatory: false, asked: false, why: 'issues' };
+  if (!isQuietWeek(rep) && rep.week - last >= (settled ? QUARTER : AUDIENCE_GAP)) return { want: true, mandatory: false, asked: false, why: 'issues' };
   return { want: false, mandatory: false, asked: false, why: '' };
 }
 
