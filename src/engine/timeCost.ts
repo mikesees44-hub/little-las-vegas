@@ -154,6 +154,7 @@ export const TIME_TABLE: Record<string, number> = {
   'bond:gift': 1, 'bond:kids': 1, 'bond:ambition': 1, 'bond:kidTime': 3, 'bond:attention': 4, 'bond:reassure': 1,
   'bond:ultimatum': 2, 'bond:baby': 2, 'bond:herFamily': 1, 'bond:drink': 1.5, 'bond:fishing': 5, 'bond:cards': 3,
   'bond:godfather': 3, 'bond:lend': 0.5, 'bond:settle': 2, 'bond:test': 1, 'bond:confide': 1, 'bond:peace': 2,
+  'bond:match': 1, 'bond:herFavor': 0.5,
   // Spend: buying a thing is an hour; an occasion is an evening and a trip a day (spendHours, with the state).
   'spend:buy': 1, 'spend:sell': 0.5,
   // My Men (myMen.ts): an envelope is a quarter of an hour; a sit-down is an afternoon; a jail visit, the drive to Cape May county.

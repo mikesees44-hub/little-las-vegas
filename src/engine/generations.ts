@@ -3,6 +3,7 @@ import { crew, displayName, player } from './characters';
 import { chooseHeir } from './dynasty';
 import { fam } from './familyState';
 import { marriageAcceptance, marriageEffects, matchCandidates, ourMarriageable } from './familyMarriage';
+import { matronOf } from './matchmakers';
 import { CAPO_SEAT_MIN } from './regimes';
 import type { Effect, EventInstance, GameState } from './types';
 
@@ -11,6 +12,8 @@ import type { Effect, EventInstance, GameState } from './types';
  *  - HEIR SEAT: the heir, grown (21–45) and never ranked, is offered a crew of his own (or a soldier's
  *    button first). 31 of 32 heirs in the decade test had never held a rank.
  *  - A MATCH: an unmarried son of the house (20–35) is offered a match by another house, about 15% a
+ *    year each, when no woman of the house is there to arrange it (matchmakers.ts does, otherwise);
+ *    originally:
  *    year each, so the old-don houses stop thinning.
  * Both are offers: "not now" is always there, and nothing is taken from the boss.
  * Every roll is hashed off the seed and the week (never the game's dice).
@@ -74,6 +77,9 @@ export function heirSeatSource(s: GameState): EventInstance | undefined {
 /** A house offers a match for one of the unmarried young men of ours. */
 export function matchOfferSource(s: GameState): EventInstance | undefined {
   if (s.gameOver || s.week < 8 || !s.dyn?.houses?.length) return undefined;
+  // The women of the house arrange the matches (matchmakers.ts): the houses' offers go to her.
+  // Without a wife, a mother or a woman of the house, they still come to the boss.
+  if (matronOf(s)) return undefined;
   if (s.flags.matchOffer !== undefined && s.week - s.flags.matchOffer < 13) return undefined;
   const young = ourMarriageable(s).filter((c) => { const a = ageOn(c.birth, s.date); return c.gender === 'M' && a >= MATCH_AGE[0] && a <= MATCH_AGE[1]; });
   if (!young.length) return undefined;
