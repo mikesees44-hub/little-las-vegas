@@ -19,6 +19,7 @@ import { challengePressure, successionCandidates } from './heir';
 import { regime } from './hierarchy';
 import { OPEN_FILE } from './longgame';
 import { openGrievances } from './grievances';
+import { PETITION_IDS } from './office';
 import { whichRacket } from './racketHub';
 import { earnerAction, hasEarner, kindWord, suggestFor } from './earners';
 import { getRelation, opinion } from './relations';
@@ -642,7 +643,7 @@ function consigliereItems(s: GameState, cons: Character | undefined): Draft[] {
     });
   }
   // Office hours: the town comes to ask (now and then, when the door can open).
-  if (s.week % 4 === 2 && !s.pendingEvents.some((e) => e.defId.startsWith('office_') || e.defId.startsWith('audience')) && !previewAction(s, { kind: 'officeHours' }).disabledReason) {
+  if (s.week % 4 === 2 && !s.pendingEvents.some((e) => PETITION_IDS.includes(e.defId) || e.defId.startsWith('audience')) && !previewAction(s, { kind: 'officeHours' }).disabledReason) {
     out.push({
       id: 'court', priority: 230, topic: 'Office hours', routine: true,
       says: ['There are people in town who need things. Let them ask you, not the priest.', 'Half the island wants a favor. Hold office hours; we\'ll know who owes us.', 'The barber, the widow, the man with the liquor license — they\'d like a word.'],

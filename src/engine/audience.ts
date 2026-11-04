@@ -201,12 +201,12 @@ export function audienceWeek(s: GameState, force = false): EventInstance | undef
   // The same slot, sometimes filled from the town's petitioners (petitions.ts): the widow, the barber, the
   // fisherman. No extra interruption: it takes the place of a draft. Holding court (force) with no draft
   // from the crew still gets somebody from the town at the door.
+  const ds = drafts(s);
+  if (!ds.length) return force ? buildTownPetition(s, undefined, 'audience') : undefined;
   if (petitionRoll(s, 'aud') < AUD_TOWN_SHARE) {
     const ev = buildTownPetition(s, undefined, 'audience');
     if (ev) return ev;
   }
-  const ds = drafts(s);
-  if (!ds.length) return force ? buildTownPetition(s, undefined, 'audience') : undefined;
   return buildAudience(s, pick(p, ds));
 }
 

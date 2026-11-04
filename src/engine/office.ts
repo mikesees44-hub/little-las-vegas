@@ -1,6 +1,6 @@
 import { player } from './characters';
 import { MALE_FIRST, FEMALE_FIRST, SURNAMES } from './names';
-import { chance, pick } from './rng';
+import { chance, pick, rand } from './rng';
 import { buildTownPetition, petitionRoll } from './petitions';
 import { PETITION_TEMPLATES } from './petitionData';
 import type { Choice, Effect, Ethnicity, EventInstance, GameState } from './types';
@@ -129,6 +129,8 @@ export function buildPetition(s: GameState, id?: string): EventInstance | undefi
   const pool = PETITIONS.filter((p) => (!id || p.id === id) && (!p.when || p.when(s)) && s.flags[`office_${p.id}`] === undefined);
   if (!id && (!pool.length || petitionRoll(s, 'old') >= OLD_SHARE)) {
     const ev = buildTownPetition(s, undefined, 'office');
+    // The same dice as an original petition draws (the pick and the name), so the rest of the week plays as before.
+    if (ev) for (let i = 0; i < 4; i++) rand(s);
     if (ev || !pool.length) return ev;
   }
   if (!pool.length) return undefined;
