@@ -116,12 +116,13 @@ function Bar({ d, label, v, word, testid }: { d: Domain; label: string; v: numbe
   return (
     <div className={`${domClass(d)} min-w-0`} data-testid={testid} title={`${label}: ${word}`}>
       <div className="flex items-baseline justify-between gap-1 text-[10px] leading-tight">
-        <span className="truncate uppercase tracking-wider text-stone-500">{label}</span>
-        <span className="truncate text-[rgb(var(--d-ink))]">{word}</span>
+        <span className="truncate uppercase tracking-wide text-stone-500 sm:tracking-wider">{label}</span>
+        <span className="hidden truncate text-[rgb(var(--d-ink))] sm:inline">{word}</span>
       </div>
       <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-noir-700" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(w)} aria-valuetext={word}>
         <div className="h-full rounded-full bg-[rgb(var(--d))]" style={{ width: `${w}%` }} />
       </div>
+      <div className="truncate text-[10px] leading-tight text-[rgb(var(--d-ink))] sm:hidden">{word}</div>
     </div>
   );
 }
