@@ -7,6 +7,7 @@ import type { Acceptance, Reason } from './interactions';
 import { opinion } from './relations';
 import { chance, pick } from './rng';
 import { pw, type PetitionKind, type PetitionRec } from './powerState';
+import { buildTownPetition, petitionRoll } from './petitions';
 import type { Character, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -190,12 +191,22 @@ export function buildAudience(s: GameState, d: Draft): EventInstance {
   };
 }
 
+/** The share of the audience slot that goes to a petitioner from the town. */
+export const AUD_TOWN_SHARE = 0.3;
+
 /** Weekly: maybe someone comes to the back room with a real problem. */
 export function audienceWeek(s: GameState, force = false): EventInstance | undefined {
   const p = pw(s);
   if (!force && !chance(p, audienceChance(s))) return undefined;
+  // The same slot, sometimes filled from the town's petitioners (petitions.ts): the widow, the barber, the
+  // fisherman. No extra interruption: it takes the place of a draft. Holding court (force) with no draft
+  // from the crew still gets somebody from the town at the door.
+  if (petitionRoll(s, 'aud') < AUD_TOWN_SHARE) {
+    const ev = buildTownPetition(s, undefined, 'audience');
+    if (ev) return ev;
+  }
   const ds = drafts(s);
-  if (!ds.length) return undefined;
+  if (!ds.length) return force ? buildTownPetition(s, undefined, 'audience') : undefined;
   return buildAudience(s, pick(p, ds));
 }
 

@@ -1,6 +1,8 @@
 import { player } from './characters';
 import { MALE_FIRST, FEMALE_FIRST, SURNAMES } from './names';
 import { chance, pick } from './rng';
+import { buildTownPetition, petitionRoll } from './petitions';
+import { PETITION_TEMPLATES } from './petitionData';
 import type { Choice, Effect, Ethnicity, EventInstance, GameState } from './types';
 
 /**
@@ -122,7 +124,13 @@ function petitioner(s: GameState, female = false): string {
 }
 
 export function buildPetition(s: GameState, id?: string): EventInstance | undefined {
+  // The deep bed (petitionData.ts): a named template, or most unnamed draws.
+  if (id && PETITION_TEMPLATES.some((t) => t.id === id)) return buildTownPetition(s, id);
   const pool = PETITIONS.filter((p) => (!id || p.id === id) && (!p.when || p.when(s)) && s.flags[`office_${p.id}`] === undefined);
+  if (!id && (!pool.length || petitionRoll(s, 'old') >= OLD_SHARE)) {
+    const ev = buildTownPetition(s, undefined, 'office');
+    if (ev || !pool.length) return ev;
+  }
   if (!pool.length) return undefined;
   const p = pick(s, pool);
   const who = petitioner(s, p.id === 'rent' || p.id === 'harbor');
@@ -136,6 +144,9 @@ export function buildPetition(s: GameState, id?: string): EventInstance | undefi
     actors: [player(s).id],
   };
 }
+
+/** The share of unnamed office draws that go to the original eight (the rest come from the deep bed). */
+const OLD_SHARE = 0.12;
 
 /** Weekly: sometimes somebody comes to the back room; office hours guarantee it. */
 export function officeWeek(s: GameState): void {
