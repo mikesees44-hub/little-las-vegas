@@ -5,6 +5,7 @@ import { heat, money, type Ctx } from './ledger';
 import { opinion } from './relations';
 import { familyCash } from './tributeState';
 import type { Effect, EventInstance, GameState } from './types';
+import { knobs } from './difficulty';
 
 /**
  * SUCCESS DRAWS FIRE, AND A WAY BACK FROM THE BOTTOM (DAILY_LOGIC_AND_ACTION #9, #10, B3, B4).
@@ -25,7 +26,7 @@ import type { Effect, EventInstance, GameState } from './types';
 
 /** 0-1: how much the Family's money draws attention. */
 export function wealthPressure(s: GameState): number {
-  return Math.max(0, Math.min(1, (familyCash(s) - 60000) / 340000));
+  return Math.max(0, Math.min(1, ((familyCash(s) - 60000) / 340000) * knobs(s).fire));
 }
 
 /** Weeks in a row under water before the bail-out is offered. */
@@ -67,7 +68,7 @@ export function pressureWeek(ctx: Ctx): void {
 
 export function bailoutSource(s: GameState): EventInstance | undefined {
   const A = s.action;
-  if (!A || s.gameOver || A.under < BAIL_WEEKS || (A.bail !== undefined && s.week - A.bail < 26)) return undefined;
+  if (!A || s.gameOver || A.under < knobs(s).bailWeeks || (A.bail !== undefined && s.week - A.bail < 26)) return undefined;
   A.bail = s.week;
   A.stats.bail++;
   const need = Math.max(15000, Math.min(60000, Math.ceil((-s.money + 10000) / 1000) * 1000));

@@ -19,6 +19,7 @@ import { crisisSeeds, crisisWeek, retributionDeters, startCrisis, registerCrisis
 export { survivorFound };
 import type { NowResult } from './deeds/now';
 import type { Character, Effect, EventInstance, Faction, GameState, RivalId } from './types';
+import { knobs } from './difficulty';
 import {
   addFedEvidence, bossHasFlipped, ensureFeds, fid, fr, informantsAround, isInformant,
   type Brasco, type FedsState, type Pinch,
@@ -350,7 +351,7 @@ export function flipReasons(s: GameState, p: Pick<Pinch, 'charId' | 'years' | 'c
 }
 
 export function flipOdds(s: GameState, p: Pick<Pinch, 'charId' | 'years' | 'care'>, extra: string[] = []): number {
-  return sumP(flipReasons(s, p, extra), 0.02, 0.85);
+  return Math.min(0.85, sumP(flipReasons(s, p, extra), 0.02, 0.85) * knobs(s).flip);
 }
 
 function visitView(s: GameState, it: ScheduledItem): MomentView | undefined {
@@ -893,7 +894,7 @@ function hollowWeek(ctx: Ctx, F: FedsState): void {
     const fs = hollowFactors(s);
     if (!fs[3].on) return;
     const n = fs.filter((f) => f.on).length;
-    const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1) * retributionDeters(s);
+    const p = HOLLOW_CHANCE[Math.min(5, n)] * (s.oldDon ? 1.5 : 1) * retributionDeters(s) * knobs(s).hollow;
     if (!p || fr(F) > p) return;
     const lead = capos(s).filter((k) => isFree(s, k)).sort((a, b) => opinion(s, a.id, s.playerId) + (hasTrait(a, 'Ambitious') ? -15 : 0) - opinion(s, b.id, s.playerId) - (hasTrait(b, 'Ambitious') ? -15 : 0))[0];
     if (!lead) return;

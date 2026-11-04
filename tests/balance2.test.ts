@@ -70,3 +70,57 @@ describe('B2: district influence never sums over 100', () => {
     expect(sum).toBeLessThanOrEqual(100.0001);
   });
 });
+
+describe('B3 / Top 10 #4a: no full wars on a man in the ranks', () => {
+  it('no campaign, no blitz, no army risk to an associate', async () => {
+    const { startCampaign, battlePlan, bossSheltered } = await import('../src/engine/army');
+    const { launchBlitz } = await import('../src/engine/blitz');
+    const { spareFromWars } = await import('../src/engine/rankView');
+    const s = newGameWith('b3-ranks', 'associate');
+    expect(spareFromWars(s)).toBe(true);
+    const rid = s.rivals.find((r) => r.kind === 'mob')!.id;
+    expect(startCampaign(newCtx(s), rid, 'districts', 'test')).toBeUndefined();
+    expect(launchBlitz(newCtx(s), rid, 'player', 50, true)).toBeUndefined();
+    expect(bossSheltered(s)).toBe(true);
+    // Even a war left over from before (a fallen boss): it ends at the week's army step.
+    const boss = newGameWith('b3-ranks', 'classic');
+    const w = startCampaign(newCtx(boss), rid, 'districts', 'test')!;
+    expect(w).toBeDefined();
+    const plan = battlePlan(boss, { warId: w.id, district: 'downtown', attacker: rid, enemyMen: 30 }, 'meet');
+    expect(plan.bossRisk).toBeLessThanOrEqual(0.08);
+  });
+
+  it('a fallen boss in the ranks is out of the wars at the next army step', async () => {
+    const { startCampaign, armyWeek } = await import('../src/engine/army');
+    const s = newGameWith('b3-fall', 'classic');
+    const rid = s.rivals.find((r) => r.kind === 'mob')!.id;
+    startCampaign(newCtx(s), rid, 'districts', 'test');
+    expect(s.wars.length).toBeGreaterThan(0);
+    s.power = { ...(s.power ?? {}), station: 'soldier' } as never;
+    armyWeek(newCtx(s));
+    expect(s.wars.length).toBe(0);
+  });
+});
+
+describe('Top 10 #3: the boss at home is wounded first, not killed', () => {
+  it('the first breakthrough that reaches him wounds him; the second within a year kills', async () => {
+    const { startCampaign, resolveBattle } = await import('../src/engine/army');
+    const s = newGameWith('t3-wound', 'classic');
+    const rid = s.rivals.find((r) => r.kind === 'mob')!.id;
+    const w = startCampaign(newCtx(s), rid, 'districts', 'test')!;
+    const boss = s.characters[s.playerId];
+    boss.health = 90;
+    // Force his risk: no shelter, a hopeless fight in the core.
+    let wounded = false; let killed = false;
+    for (let i = 0; i < 400 && !killed; i++) {
+      const b = { id: `pb${i}`, warId: w.id, district: 'downtown', attacker: rid, enemyMen: 200, week: s.week } as never;
+      s.army!.pending.push(b);
+      const ctx = newCtx(s);
+      resolveBattle(ctx, b, 'meet', 0.999);
+      if (s.army!.bossWound !== undefined && !wounded) { wounded = true; expect(s.characters[s.playerId].alive).toBe(true); expect(s.characters[s.playerId].health).toBeLessThan(90); }
+      if (!s.characters[s.playerId]?.alive || s.playerId !== boss.id) killed = true;
+      if (!s.wars.length) break;
+    }
+    expect(wounded).toBe(true);
+  });
+});

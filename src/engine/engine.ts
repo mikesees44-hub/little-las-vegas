@@ -106,6 +106,7 @@ import { sceneEventSource } from './authored/run';
 import { capoEventSource, caposWeek } from './capos';
 import { rxChoiceBegin, rxEnd } from './reactions/apply';
 import { proposalsEventSource } from './reactions/proposals';
+import { knobs } from './difficulty';
 
 // The story pillar feeds the one popup pipeline (one candidate a week each).
 registerEventSource(storyEventSource);
@@ -306,7 +307,7 @@ function weeklyHousekeeping(ctx: Ctx): void {
     const shown = s.action?.strength === s.week;
     if (gap > 2) respect(ctx, step, `Word on the street: you run ${share}% of the island`, 'drift');
     else if (gap < -2) respect(ctx, -step, `Reputation settles: you run only ${share}% of the island`, 'drift');
-    else if (s.respect > RESPECT_KEEP && !shown) respect(ctx, -1, 'Respect at the top has to be kept: a quiet week, and people forget', 'drift');
+    else if (s.respect > knobs(s).respectKeep && !shown) respect(ctx, -1, 'Respect at the top has to be kept: a quiet week, and people forget', 'drift');
   }
   // The informant (starting problem) leaks to the FBI.
   if (s.flags.informant) {

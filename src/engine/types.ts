@@ -831,6 +831,8 @@ export interface GameState {
   version: 2;
   /** Save migrations applied (trustMigrations.ts SCHEMA); absent in older saves. */
   schema?: number;
+  /** Difficulty preset (difficulty.ts): absent in older saves = 'don'. */
+  difficulty?: import('./difficulty').Difficulty;
   seed: string;
   rng: number;
   nextId: number;

@@ -236,6 +236,8 @@ export interface PowerState {
   prep: BlitzPrep;
   mattresses?: number;
   bodyguards?: number;
+  /** The week a blitz's hit last reached the boss and only wounded him (blitz.ts: a kill needs a second strike within 8 weeks). */
+  bossStruck?: number;
   /** A rival may legitimately come for you until this week (you killed a made man without the Table). */
   legit: Partial<Record<RivalId, number>>;
   /** Rivals warned you of (an informant's tip): their surprise is gone. */

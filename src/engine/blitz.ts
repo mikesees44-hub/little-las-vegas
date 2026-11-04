@@ -14,6 +14,11 @@ import { protectionFor } from './protect';
 import { playerMuscle } from './war';
 import { FACTION_NAMES } from './world';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalId } from './types';
+import { knobs } from './difficulty';
+import { spareFromWars } from './rankView';
+
+/** A blitz kills the boss only on a second strike within this many weeks of the first (which wounds). */
+export const BOSS_SECOND_STRIKE = 8;
 
 /**
  * BLITZ — "going to the mattresses" (design item 2).
@@ -141,6 +146,7 @@ export function blitzDisabled(s: GameState, rivalId: RivalId): string | undefine
 export function launchBlitz(ctx: Ctx, attacker: FactionId, defender: FactionId, momentum: number, surprise: boolean, odds?: number): Blitz | undefined {
   const s = ctx.s;
   const p = pw(s);
+  if (defender === 'player' && attacker !== 'player' && spareFromWars(s)) return undefined;
   const targets = defender === 'player' ? playerTargets(s) : rivalTargets(s, s.rivals.find((r) => r.id === defender)!);
   if (!targets.length) return undefined;
   const b: Blitz = { id: `bz${s.nextId++}`, attacker, defender, targets, idx: 0, momentum, surprise, start: s.week, kills: [], misses: [], odds };
@@ -218,10 +224,25 @@ export function blitzStep(ctx: Ctx, b: Blitz): void {
     return;
   }
   const base = b.attacker === 'player' ? 0.35 + (b.odds ?? 0.4) * 0.5 : 0.5;
-  const pHit = Math.max(0.08, Math.min(0.9, base + b.momentum / 250 + (b.surprise && b.idx === 0 ? 0.15 : 0) - defense(s, b, t)));
+  let pHit = Math.max(0.08, Math.min(0.9, base + b.momentum / 250 + (b.surprise && b.idx === 0 ? 0.15 : 0) - defense(s, b, t)));
   const p = pw(s);
+  const onBoss = b.defender === 'player' && t.id === s.playerId;
+  if (onBoss) pHit = Math.min(0.9, pHit * knobs(s).battleDeath);
   const an = b.attacker === 'player' ? 'your crews' : FACTION_NAMES[b.attacker];
-  if (chance(p, pHit)) {
+  // The first hit that reaches the boss wounds him; only a second strike within 8 weeks kills (DECADE_BALANCE Top 10 #3).
+  const landed = chance(p, pHit);
+  if (landed && onBoss && s.week - (p.bossStruck ?? -999) > BOSS_SECOND_STRIKE) {
+    p.bossStruck = s.week;
+    t.health = Math.max(10, t.health - 40);
+    b.misses.push(t.id);
+    const hit = `Blitz, hit ${b.idx + 1} of ${b.targets.length}: they reached ${displayName(t)}. He was hit and lives; the next time they may not miss.`;
+    ctx.log.push(hit);
+    s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${FACTION_NAMES[b.attacker]} reached the boss. ${t.firstName} was hit and lived.`, kind: 'rival' });
+    b.idx++;
+    if (b.idx >= b.targets.length) { b.stopped = 'The list ran out: the boss was hit and the family went to ground.'; finish(ctx, b); }
+    return;
+  }
+  if (landed) {
     const cause = b.attacker === 'player' ? 'killed in your blitz' : `killed in the ${FACTION_NAMES[b.attacker]} blitz`;
     const wasBoss = t.id === s.playerId;
     killCharacter(ctx, t.id, cause, b.attacker);
@@ -317,7 +338,7 @@ export function buildBlitzCutIn(s: GameState, b: Blitz): EventInstance {
 export function rivalBlitzMonth(ctx: Ctx): void {
   const s = ctx.s;
   const p = pw(s);
-  if (activeBlitz(s)) return;
+  if (activeBlitz(s) || spareFromWars(s)) return;
   if ((s.flags.blitzQuietUntil ?? 0) > s.week) return;
   const me = playerMuscle(s);
   for (const r of s.rivals.filter((x) => x.kind === 'mob')) {
@@ -337,7 +358,7 @@ export function rivalBlitzMonth(ctx: Ctx): void {
     const strong = ratio >= 0.8;
     if (!strong) score *= 0.25; // a weaker family needs surprise
     if (ageOn(leader.birth, s.date) > 65) score *= 0.6;
-    const pr = (score / 100) * (strong ? 0.07 : 0.03);
+    const pr = (score / 100) * (strong ? 0.07 : 0.03) * knobs(s).aggression;
     if (score < 25 || !chance(p, pr)) continue;
     const surprise = (p.warned[r.id] ?? 0) < s.week;
     const b = launchBlitz(ctx, r.id, 'player', strong ? 40 + Math.round(ratio * 10) : 30, surprise);

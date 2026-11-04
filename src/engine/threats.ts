@@ -21,6 +21,8 @@ import { protectFoiled, protectionFor } from './protect';
 import { wealthPressure } from './pressure';
 import { noteThreatPlan, threatLean } from './minds/planner';
 import type { Character, Effect, GameState, Rival, RivalId } from './types';
+import { knobs } from './difficulty';
+import { spareFromWars } from './rankView';
 
 /**
  * THREATS AND URGENT MEETINGS.
@@ -293,6 +295,8 @@ export function aggression(s: GameState, r: Rival): { chance: number; reasons: {
   const fat = wealthPressure(s);
   if (fat > 0) mul('You are getting fat: everybody wants a piece', 1 + 0.6 * fat);
   if (s.week < graceWeeks(s)) { p = 0; reasons.push({ label: 'Too early: they are still sizing you up', value: -100 }); }
+  const dk = knobs(s).aggression;
+  if (dk !== 1 && p > 0) mul(`Difficulty: ${knobs(s).label}`, dk);
   return { chance: Math.max(0, Math.min(0.4, p)), reasons };
 }
 
@@ -414,11 +418,17 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
   return t;
 }
 
+/** The police's weekly chance of a move (raid, stakeout, wire) at this heat. */
+export function policeChance(s: GameState): number {
+  const h = s.heat.local;
+  return ((h - 25) / 150 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.015 : 0)) * knobs(s).police;
+}
+
 function planPolice(s: GameState, T: ThreatsState): Threat | undefined {
   const h = s.heat.local;
   if (h < 30 || active(T).some((x) => x.by === 'police')) return undefined;
   // A fat outfit gets the county's attention too (pressure.ts); in season the county is on the boards.
-  if (!chance(T, (h - 25) / 150 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.015 : 0))) return undefined;
+  if (!chance(T, policeChance(s))) return undefined;
   const biz = raidable(s);
   const kind: ThreatKind = h >= 38 && biz.length ? (chance(T, 0.6) ? 'raid' : 'stakeout') : chance(T, 0.25) ? 'wire' : 'stakeout';
   const t: Threat = { id: nid(T, 'th'), kind, by: 'police', start: s.week, due: s.week + randInt(T, 1, 2), blunt: 0 };
@@ -999,6 +1009,8 @@ export function threatsWeek(ctx: Ctx): void {
   for (const r of s.rivals) {
     if (room() <= 0) break;
     if (r.kind !== 'mob' || T.threats.some((x) => x.by === r.id && !x.schemeId)) continue;
+    // A man in the ranks is no family's target (B3): only now and then does a rival crew lean on him.
+    if (spareFromWars(s) && !chance(T, 0.25)) continue;
     if (!chance(T, aggression(s, r).chance)) continue;
     const t = planRival(s, T, r);
     if (t) { planned.push(t); noteThreatPlan(s, r, t.kind, t.targetId); }

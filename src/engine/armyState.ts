@@ -141,6 +141,8 @@ export interface ArmyState {
   hired: Hired[];
   /** Safehouses: the mattresses are out. */
   safehouses: boolean;
+  /** The week a breakthrough last reached the boss and only wounded him (army.ts). */
+  bossWound?: number;
   safehousesSince?: number;
   /** 0..100: how tired the men under arms are. */
   weariness: number;

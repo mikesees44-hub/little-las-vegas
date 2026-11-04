@@ -88,6 +88,7 @@ export function endWar(ctx: Ctx, w: War, outcome: 'won' | 'lost' | 'white', term
   const r = s.rivals.find((x) => x.id === w.rival);
   s.wars = s.wars.filter((x) => x !== w);
   if (r) r.war = s.wars.some((x) => x.rival === r.id);
+  s.flags[`warEnd_${w.rival}`] = s.week;
   const d = s.districts.find((x) => x.id === w.district);
   const label = `Peace with ${r?.shortName ?? 'the rival'}`;
   const effects: Effect[] = [];
