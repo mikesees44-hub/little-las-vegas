@@ -1,3 +1,4 @@
+import { assignFaces } from './faces';
 import { startPocket } from './tributeState';
 import { ensureProviders } from './dating';
 import { ensureDating } from './datingState';
@@ -353,5 +354,6 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   ensureHousing(s);
   // Nightlife: the night's cast, the madams' houses (its own dice; after everything else so the other ids stay put).
   ensureNightlife(s);
+  assignFaces(s);
   return s;
 }
