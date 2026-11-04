@@ -104,12 +104,12 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
     if (out.result.ok && out.open) go(out.open.tip ? { tip: out.open.tip } : out.open.event ? { event: out.open.event } : out.open.day !== undefined ? { day: out.open.day } : out.open.brief ? { brief: out.open.brief } : {});
   };
   const act = (f: (x: GameState) => GameState, what: string) => (shell.act ? shell.act(f, what) : update(f));
-  const tabs: { id: PlannerTab; label: string; n?: number }[] = [
-    { id: 'brief', label: inTheRanks(s) ? 'The word' : 'The brief' },
-    ...(inTheRanks(s) ? [] : [{ id: 'audience' as const, label: 'Audience', n: reqs.filter((r) => !r.booked).length }]),
-    { id: 'datebook', label: 'Datebook' },
-    { id: 'book', label: 'Black book' },
-    { id: 'orders', label: 'Standing orders' },
+  const tabs: { id: PlannerTab; label: string; short: string; n?: number }[] = [
+    { id: 'brief', label: inTheRanks(s) ? 'The word' : 'The brief', short: inTheRanks(s) ? 'Word' : 'Brief' },
+    ...(inTheRanks(s) ? [] : [{ id: 'audience' as const, label: 'Audience', short: 'Audience', n: reqs.filter((r) => !r.booked).length }]),
+    { id: 'datebook', label: 'Datebook', short: 'Datebook' },
+    { id: 'book', label: 'Black book', short: 'Rolodex' },
+    { id: 'orders', label: 'Standing orders', short: 'Orders' },
   ];
 
   return (
@@ -121,7 +121,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
               <div className="llv-tabs-book" role="tablist" aria-label="The Don's book">
                 {tabs.map((t) => (
                   <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className="llv-tab-book" onClick={() => setTab(t.id)} data-testid={`planner-tab-${t.id}`}>
-                    {t.label}{t.n ? <span className="ml-1 rounded-full bg-[#a3271d] px-1.5 text-[10px] text-white">{t.n}</span> : null}
+                    <span className="sm:hidden">{t.short}</span><span className="hidden sm:inline">{t.label}</span>{t.n ? <span className="ml-1 rounded-full bg-[#a3271d] px-1.5 text-[10px] text-white">{t.n}</span> : null}
                   </button>
                 ))}
               </div>

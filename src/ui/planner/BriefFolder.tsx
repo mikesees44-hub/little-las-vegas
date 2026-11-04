@@ -40,7 +40,7 @@ export function BriefFolder({ s, b, old, onGo, onOld }: { s: GameState; b: Daily
           </div>
           <span className="llv-stamp text-[12px] sm:text-[14px]" data-testid="brief-stamp">{b.stamp}</span>
         </div>
-        <div className="grid gap-x-6 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-6 sm:grid-cols-2">
           <div>
             {sec('Situation', b.situation, 'situation')}
             {sec('Threats', b.threats, 'threats')}

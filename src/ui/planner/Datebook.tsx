@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import type { AudienceReq, Slot } from '../../engine/planner/audience';
 import { absOf, absOfDate, cancelCost, dateOf, dayPage, eveningPicks, monthPage, PAGE_HOURS, planPeople, weekPage, wdOf, type BookEntry, type DayPage } from '../../engine/planner/datebook';
-import { nowHour, PLAN_HOURS, slotBlock } from '../../engine/planner/hours';
+import { hoursWord, nowHour, PLAN_HOURS, slotBlock } from '../../engine/planner/hours';
 import type { Go } from '../../engine/planner/intel';
 import { DAY_SHORT } from '../../engine/days';
-import { absDay, formatClock, hoursLabel } from '../../engine/timeCost';
+import { absDay, formatClock } from '../../engine/timeCost';
 import type { DialSpec } from '../../engine/phoneMeet';
 import type { GameState } from '../../engine/types';
 import { ConfStamp, InkDot } from './ink';
@@ -46,7 +46,7 @@ export function Datebook({ s, reqs, api }: { s: GameState; reqs: AudienceReq[]; 
     <div className="llv-leather mx-auto max-w-[1100px] p-2 sm:p-3" data-testid="datebook">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-1 text-[#e9d6b0]">
         <div className="flex items-center gap-1" role="tablist" aria-label="Datebook pages">{seg('day', 'Day')}{seg('week', 'Week')}{seg('month', 'Month')}</div>
-        <div className="text-[12px]" data-testid="book-hours"><b>{hoursLabel(page.today ? page.free : wk.days.find((x) => x.today)?.free ?? 0)}</b> left today · <b>{hoursLabel(weekPage(s, s.week).left)}</b> this week</div>
+        <div className="text-[12px]" data-testid="book-hours"><b>{hoursWord(page.today ? page.free : wk.days.find((x) => x.today)?.free ?? 0)}</b> left today · <b>{hoursWord(weekPage(s, s.week).left)}</b> this week</div>
       </div>
       <div className="grid gap-2 lg:grid-cols-2">
         <div className={view === 'day' ? '' : 'hidden lg:block'}>
@@ -90,7 +90,7 @@ function DayView({ s, page, reqs, api, onNav, onToday }: { s: GameState; page: D
         <button type="button" className="llv-ink-btn px-2" onClick={() => onNav(-1)} aria-label="The day before" data-testid="book-prev">‹</button>
         <div className="min-w-0 text-center">
           <div className="font-display text-[17px] leading-tight">{page.label}</div>
-          <div className="text-[11px] text-[#6b5a44]">{page.past ? 'Gone: what happened' : `${hoursLabel(page.free)} free`}{!page.today && <button type="button" className="ml-2 underline" onClick={onToday} data-testid="book-today">today</button>}</div>
+          <div className="text-[11px] text-[#6b5a44]">{page.past ? 'Gone: what happened' : `${hoursWord(page.free)} free`}{!page.today && <button type="button" className="ml-2 underline" onClick={onToday} data-testid="book-today">today</button>}</div>
         </div>
         <button type="button" className="llv-ink-btn px-2" onClick={() => onNav(1)} aria-label="The day after" data-testid="book-next">›</button>
       </header>
@@ -113,13 +113,13 @@ function DayView({ s, page, reqs, api, onNav, onToday }: { s: GameState; page: D
                           {e.count && <span className="shrink-0 text-[10.5px] font-bold text-[#a3271d]">{e.count}</span>}
                           <ConfStamp conf={e.conf} />
                         </span>
-                        {e.dur > 0 && <span className="block text-[10.5px] text-[#6b5a44]">{formatClock(e.h)} – {formatClock(e.h + e.dur)}</span>}
+                        {e.dur > 0 && <span className="block text-[10.5px] text-[#6b5a44]">{formatClock(e.h)} – {formatClock(e.h + e.dur)}{e.clash && <span className="ml-1 font-semibold text-[#a3271d]" data-testid="book-clash">· clashes with {e.clash}</span>}</span>}
                       </button>
                       {sel?.entry === e.id && <EntryCard s={s} e={e} api={api} onClose={() => setSel(undefined)} />}
                     </div>
                   ))}
                   {!es.length && !gone && (
-                    <button type="button" className="llv-hour-slot text-[11px] text-transparent hover:text-[#8a7a62] focus-visible:text-[#8a7a62]" onClick={() => setSel(open ? undefined : { hour: h })} aria-label={`Plan something at ${formatClock(h)}`} data-testid={`book-slot-${h}`}>+ plan</button>
+                    <button type="button" className="llv-hour-slot text-[11px] text-[#2a2118]/15 hover:text-[#8a7a62] focus-visible:text-[#8a7a62]" onClick={() => setSel(open ? undefined : { hour: h })} aria-label={`Plan something at ${formatClock(h)}`} data-testid={`book-slot-${h}`}>+ plan</button>
                   )}
                   {open && <PlanCard s={s} w={page.w} d={page.d} h={h} reqs={reqs} api={api} onClose={() => setSel(undefined)} />}
                 </div>
@@ -208,7 +208,7 @@ function PlanCard({ s, w, d, h, reqs, api, onClose }: { s: GameState; w: number;
             <option value="">{what === 'dinner' ? 'Dinner with…' : 'Call on…'}</option>
             {people.map((p) => <option key={p.id} value={p.id}>{p.name} · {p.role}</option>)}
           </select>
-          <button type="button" className="llv-ink-btn llv-ink-btn-primary" disabled={!who || !!block} title={block} onClick={() => { onClose(); api.onPlan(what, who, sl); }} data-testid="plan-book">{block ?? `Book it (${hoursLabel(hrs)})`}</button>
+          <button type="button" className="llv-ink-btn llv-ink-btn-primary" disabled={!who || !!block} title={block} onClick={() => { onClose(); api.onPlan(what, who, sl); }} data-testid="plan-book">{block ?? `Book it (${hoursWord(hrs)})`}</button>
         </div>
       )}
       {what === 'evening' && (
@@ -236,7 +236,7 @@ function WeekView({ s, w, cur, onDay, onNav }: { s: GameState; w: number; cur: n
     <section className="llv-paper-plain min-h-[420px] rounded-sm p-2" data-testid="book-week">
       <header className="mb-1 flex items-center justify-between">
         <button type="button" className="llv-ink-btn px-2" onClick={() => onNav(-1)} aria-label="The week before">‹</button>
-        <div className="text-center"><div className="font-display text-[16px]">The week of {wk.label}</div>{w >= s.week && <div className="text-[11px] text-[#6b5a44]">{hoursLabel(wk.left)} free</div>}</div>
+        <div className="text-center"><div className="font-display text-[16px]">The week of {wk.label}</div>{w >= s.week && <div className="text-[11px] text-[#6b5a44]">{hoursWord(wk.left)} free</div>}</div>
         <button type="button" className="llv-ink-btn px-2" onClick={() => onNav(1)} aria-label="The week after">›</button>
       </header>
       <ul className="divide-y divide-[#2a2118]/15">
@@ -245,7 +245,7 @@ function WeekView({ s, w, cur, onDay, onNav }: { s: GameState; w: number; cur: n
           return (
             <li key={p.abs}>
               <button type="button" onClick={() => onDay(p.abs)} className={`grid w-full grid-cols-[3.4rem_1fr] gap-2 py-1.5 text-left hover:bg-[#fffaf0]/70 ${p.abs === cur ? 'bg-[#fffaf0]/80' : ''} ${p.past ? 'opacity-70' : ''}`} data-testid={`book-week-day-${p.d}`}>
-                <span className="leading-tight"><b className={p.today ? 'text-[#a3271d]' : ''}>{p.short}</b><span className="block text-[10px] text-[#6b5a44]">{p.past ? 'gone' : `${hoursLabel(p.free)}`}</span></span>
+                <span className="leading-tight"><b className={p.today ? 'text-[#a3271d]' : ''}>{p.short}</b><span className="block text-[10px] text-[#6b5a44]">{p.past ? 'gone' : `${hoursWord(p.free)}`}</span></span>
                 <span className="min-w-0 space-y-0.5 text-[12px]">
                   {!es.length && <span className="text-[#8a7a62]">{p.past ? '' : 'Open'}</span>}
                   {es.slice(0, 4).map((e) => (

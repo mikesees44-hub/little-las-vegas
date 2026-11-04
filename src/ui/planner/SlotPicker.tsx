@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DAY_NAMES } from '../../engine/days';
 import { absOf } from '../../engine/planner/datebook';
-import { freeOn, nowHour, slotBlock } from '../../engine/planner/hours';
-import { absDay, DAY_HOURS, DAY_START, formatClock, hoursLabel } from '../../engine/timeCost';
+import { freeOn, hoursWord, nowHour, slotBlock } from '../../engine/planner/hours';
+import { absDay, DAY_HOURS, DAY_START, formatClock } from '../../engine/timeCost';
 import type { GameState } from '../../engine/types';
 
 export interface PickSlot { w: number; d: number; h: number }
@@ -43,19 +43,19 @@ export function SlotPicker({ s, hours, initial, label = 'Book it', onPick, onNow
     <div className="llv-pop mt-1 space-y-2 p-2 text-[12px]" data-testid={`${testid}-picker`}>
       {onNow && (
         <button type="button" className="llv-ink-btn llv-ink-btn-primary w-full justify-center" onClick={onNow} disabled={!!nowBlock} title={nowBlock} data-testid={`${testid}-now`}>
-          {nowBlock ?? nowLabel ?? 'Now'} {nowBlock ? '' : `· ${hoursLabel(hours)}`}
+          {nowBlock ?? nowLabel ?? 'Now'} {nowBlock ? '' : `· ${hoursWord(hours)}`}
         </button>
       )}
       <div className="grid grid-cols-[1fr_auto] gap-1.5">
         <select className="rounded border border-[#2a2118]/40 bg-[#fffaf0] px-1 py-1" value={di} onChange={(e) => { const i = Number(e.target.value); setDi(i); const nd = days[i]; setH((x) => Math.max(x, firstOpen(nd.w, nd.d))); }} aria-label="Day" data-testid={`${testid}-day`}>
-          {days.map((x, i) => <option key={`${x.w}:${x.d}`} value={i}>{x.label} · {hoursLabel(freeOn(s, absOf(x.w, x.d)))} free</option>)}
+          {days.map((x, i) => <option key={`${x.w}:${x.d}`} value={i}>{x.label} · {hoursWord(freeOn(s, absOf(x.w, x.d)))} free</option>)}
         </select>
         <select className="rounded border border-[#2a2118]/40 bg-[#fffaf0] px-1 py-1" value={h} onChange={(e) => setH(Number(e.target.value))} aria-label="Hour" data-testid={`${testid}-hour`}>
           {hoursOf.map((x) => <option key={x} value={x}>{formatClock(x)}</option>)}
         </select>
       </div>
       <button type="button" className="llv-ink-btn w-full justify-center" disabled={!!block} title={block} onClick={() => onPick({ w: day.w, d: day.d, h })} data-testid={`${testid}-book`}>
-        {block ?? `${label}: ${day.label.toLowerCase()}, ${formatClock(h)} (${hoursLabel(hours)})`}
+        {block ?? `${label}: ${day.label.toLowerCase()}, ${formatClock(h)} (${hoursWord(hours)})`}
       </button>
     </div>
   );

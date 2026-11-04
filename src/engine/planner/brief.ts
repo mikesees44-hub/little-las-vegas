@@ -11,14 +11,14 @@ import { inTheRanks } from '../rankView';
 import { opinion } from '../relations';
 import { stormClock } from '../setPieces';
 import { aggression } from '../threats';
-import { absDay, formatClock, hoursLabel, hoursLeft } from '../timeCost';
+import { absDay, formatClock, hoursLeft } from '../timeCost';
 import { latestReport } from '../tribute';
 import { above, chiefOf, quotaNow } from '../valente';
 import type { JCat } from '../journal';
 import type { Character, GameState } from '../types';
 import { audienceRequests, gatekeeper, type AudienceReq } from './audience';
 import { dayEntries } from './datebook';
-import { weekLeft } from './hours';
+import { hoursWord, weekLeft } from './hours';
 import { byName, knownTips, tipConfidence, tipLine, type Conf, type Go } from './intel';
 
 /**
@@ -81,6 +81,8 @@ export function oddsWord(p: number): string {
 }
 
 const fm = (n: number) => fmtMoney(Math.round(n));
+/** End a clause with one full stop ("3 p.m." already has one). */
+const dot = (x: string) => (/[.!?]$/.test(x) ? x : `${x}.`);
 
 /* ------------------------------------------------------------------ */
 /* Sections                                                            */
@@ -96,7 +98,7 @@ function situation(s: GameState): BriefLine[] {
   }));
   if (!out.length) out.push({ id: 'sit:quiet', text: 'A quiet night. Nothing came over the wire.', go: { file: true } });
   const book = dayEntries(s, s.week, d).filter((e) => e.kind !== 'done' && e.kind !== 'saint');
-  if (book.length) out.push({ id: 'sit:book', text: `On the book today: ${book.length} ${book.length === 1 ? 'thing' : 'things'}, first ${book[0].title.toLowerCase()} at ${formatClock(book[0].h)}.`, go: { datebook: true } });
+  if (book.length) out.push({ id: 'sit:book', text: `On the book today: ${book.length} ${book.length === 1 ? 'thing' : 'things'}, first: ${book[0].title}, ${formatClock(book[0].h)}.`, go: { datebook: true } });
   return out;
 }
 
@@ -180,7 +182,7 @@ export function recommendations(s: GameState, ui: OfficeUi = {}, reqs?: Audience
   for (const t of knownTips(s).filter((x) => x.status === 'waiting')) {
     const l = tipLine(s, t);
     const r = tipConfidence(s, t);
-    out.push({ id: `r:tip:${t.id}`, title: `Hear ${t.sourceName} out`, why: `${l.text}, ${l.when}. ${r.conf === 'rumor' ? 'Maybe nothing, but a warning with a deadline is heard before it lands.' : 'If it is true, the time to act is before it lands.'}`, cta: 'Hear him', go: { tip: t.id }, score: 92 - Math.min(20, (l.days ?? 7) * 2) });
+    out.push({ id: `r:tip:${t.id}`, title: `Hear ${t.sourceName} out`, why: `${dot(`${l.text}, ${l.when}`)} ${r.conf === 'rumor' ? 'Maybe nothing, but a warning with a deadline is heard before it lands.' : 'If it is true, the time to act is before it lands.'}`, cta: 'Hear him', go: { tip: t.id }, score: 92 - Math.min(20, (l.days ?? 7) * 2) });
   }
   for (const ev of eventsOut(s)) {
     if (answers[ev.iid] || !ev.mandatory) continue;
@@ -212,7 +214,7 @@ export function oldManPick(s: GameState, ui: OfficeUi = {}): OldMan {
   const rec = recommendations(s, ui)[0];
   if (!rec) return { voice: 'The old man would sit tight. Nothing on the desk is worth a move today.', by, byId: who?.id };
   const odds = rec.odds !== undefined ? ` It is ${oddsWord(rec.odds)}, ${Math.round(rec.odds * 100)}%.` : '';
-  return { voice: `The old man? He would ${rec.cta.toLowerCase()}: ${rec.title.charAt(0).toLowerCase()}${rec.title.slice(1)}. ${rec.why}${odds}`, by, byId: who?.id, rec };
+  return { voice: `The old man? He would ${rec.cta.toLowerCase()}: ${dot(rec.title)} ${dot(rec.why)}${odds}`, by, byId: who?.id, rec };
 }
 
 /* ------------------------------------------------------------------ */
@@ -235,7 +237,7 @@ export function dailyBrief(s: GameState, ui: OfficeUi = {}): DailyBrief {
     from,
     fromId: low ? chief?.id : g.id,
     date: `${DAY_NAMES[d]} morning, week ${s.week}`,
-    hours: `${hoursLabel(hoursLeft(s))} left today · ${hoursLabel(weekLeft(s))} this week`,
+    hours: `${hoursWord(hoursLeft(s))} left today · ${hoursWord(weekLeft(s))} this week`,
     situation: situation(s),
     threats: threats(s, low),
     money: money(s, low),

@@ -60,6 +60,8 @@ export interface BookEntry {
   count?: string;
   conf?: Conf;
   done?: { r: string; jid?: string };
+  /** It overlaps another block of time that day (the other's title). */
+  clash?: string;
   /** A scheduled item that can be moved or cancelled. */
   sid?: string;
   move?: true;
@@ -207,7 +209,14 @@ export function dayEntries(s: GameState, w: number, d: number): BookEntry[] {
     try { ls = whosPlaying(s, w).filter((x) => !x.film); } catch { ls = []; }
     if (ls.length) out.push({ id: `paper:${w}`, kind: 'paper', w, d, h: 21, dur: 0, title: `In town: ${ls[0].act} at ${ls[0].room}`, sub: ls.slice(1, 3).map((x) => `${x.act} at ${x.room}`).join(' · ') || undefined, dom: 'romance', go: { tab: 'chronicle.papers' } });
   }
-  return out.sort((a, b) => a.h - b.h || (a.kind === 'done' ? 1 : 0) - (b.kind === 'done' ? 1 : 0) || a.id.localeCompare(b.id));
+  out.sort((a, b) => a.h - b.h || (a.kind === 'done' ? 1 : 0) - (b.kind === 'done' ? 1 : 0) || a.id.localeCompare(b.id));
+  // Two blocks of time that overlap: both say so (he can only be in one place).
+  const blocks = out.filter((e) => e.dur > 0 && !e.done && !e.hidden);
+  for (const e of blocks) {
+    const o = blocks.find((x) => x !== e && x.h < e.h + e.dur && e.h < x.h + x.dur);
+    if (o) e.clash = o.title;
+  }
+  return out;
 }
 
 function countdown(days: number): string {
@@ -329,7 +338,7 @@ export function planWith(s: GameState, kind: 'dinner' | 'visit', who: string, sl
   const x = phoneClone(bookHours(s, absOf(slot.w, slot.d), hours));
   const title = kind === 'dinner' ? `Dinner with ${displayName(c)}` : `Call on ${displayName(c)}`;
   scheduleInto(x, { kind: 'plan', day: slot.d, hour: slot.h, w: slot.w, payload: { pk: kind, who, name: displayName(c), title, hours } });
-  const jid = journal(x, { d: today(x), c: c.dynasty ? 'family' : c.faction === 'player' ? 'crew' : 'rivals', t: `On your book: ${title.toLowerCase()}, ${DAY_NAMES[slot.d]} ${formatClock(slot.h)}`, src: 'planner', mine: 1, p: [who] });
+  const jid = journal(x, { d: today(x), c: c.dynasty ? 'family' : c.faction === 'player' ? 'crew' : 'rivals', t: `On your book: ${title}, ${DAY_NAMES[slot.d]} ${formatClock(slot.h)}`, src: 'planner', mine: 1, p: [who] });
   void jid;
   return { state: x, result: { ok: true, title: 'In the datebook', who: displayName(c), tier: 'success', headline: 'Done', line: `${title}, ${DAY_NAMES[slot.d]}${slot.w > s.week ? ' next week' : ''} at ${formatClock(slot.h)}. ${hoursLabel(hours)} of that day are spoken for.`, changes: [], leadsTo: [] } };
 }
@@ -354,7 +363,7 @@ export function moveEntry(s: GameState, e: BookEntry, slot: { w: number; d: numb
     const id = weekPlan(s)[e.d];
     if (!id || slot.w !== s.week) return s;
     const x = setEvening(setEvening(s, e.d, null), slot.d, id);
-    return x === s ? s : journalPlan(x, `Moved ${e.title.toLowerCase()} to ${DAY_NAMES[slot.d]}`);
+    return x === s ? s : journalPlan(x, `Moved ${e.title} to ${DAY_NAMES[slot.d]}`);
   }
   if (!e.sid) return s;
   const it = sched(s).find((x) => x.id === e.sid);
@@ -365,14 +374,14 @@ export function moveEntry(s: GameState, e: BookEntry, slot: { w: number; d: numb
   let x = bookHours(freed, absOf(slot.w, slot.d), hours);
   x = { ...x, action: { ...x.action!, sched: sched(x).map((q) => (q.id === it.id ? { ...q, w: slot.w, d: slot.d, h: Math.min(23, slot.h) } : q)) } };
   if (e.who && it.kind === 'meet') x = withOpinion(x, e.who, -2, 'Moved our meet around');
-  return journalPlan(x, `Moved ${e.title.toLowerCase()} to ${DAY_NAMES[slot.d]}${slot.w > s.week ? ' next week' : ''}, ${formatClock(slot.h)}`, e.who);
+  return journalPlan(x, `Moved ${e.title} to ${DAY_NAMES[slot.d]}${slot.w > s.week ? ' next week' : ''}, ${formatClock(slot.h)}`, e.who);
 }
 
 /** Cancel an entry: its hours come back; whoever was expecting him notices. */
 export function cancelEntry(s: GameState, e: BookEntry): GameState {
   if (e.kind === 'evening') {
     const x = setEvening(s, e.d, null);
-    return x === s ? s : journalPlan(x, `Called off ${e.title.toLowerCase()} (${DAY_NAMES[e.d]})`);
+    return x === s ? s : journalPlan(x, `Called off ${e.title} (${DAY_NAMES[e.d]})`);
   }
   if (!e.sid) return s;
   const it = sched(s).find((x) => x.id === e.sid);
@@ -380,7 +389,7 @@ export function cancelEntry(s: GameState, e: BookEntry): GameState {
   let x = bookHours(s, absOf(it.w, it.d), -e.dur);
   x = { ...x, action: { ...x.action!, sched: sched(x).filter((q) => q.id !== it.id) } };
   if (e.who) x = withOpinion(x, e.who, it.kind === 'meet' ? -4 : -3, it.kind === 'meet' ? 'Called off our meet' : 'Cancelled on me');
-  return journalPlan(x, `Called off: ${e.title.toLowerCase()}`, e.who);
+  return journalPlan(x, `Called off: ${e.title}`, e.who);
 }
 
 /** The cost of cancelling, in words (shown before the click). */

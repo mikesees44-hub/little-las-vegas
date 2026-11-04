@@ -1,5 +1,10 @@
-import { absDay, DAY_HOURS, DAY_START, hoursUsed, TIME_TABLE, type HoursState } from '../timeCost';
+import { absDay, DAY_HOURS, DAY_START, hoursLabel, hoursUsed, TIME_TABLE, type HoursState } from '../timeCost';
 import type { GameState } from '../types';
+
+/** "18 hours", "2½ hours", "45 minutes" (hoursLabel calls ten hours or more "a day": a budget is counted in hours). */
+export function hoursWord(h: number): string {
+  return h >= 10 ? `${Math.round(h * 4) / 4} hours`.replace('.25', '¼').replace('.75', '¾').replace('.5', '½') : hoursLabel(h);
+}
 
 /**
  * The datebook's hours: the same budget as every order (timeCost.ts: the day runs 8 AM to 2 AM, 18 hours).

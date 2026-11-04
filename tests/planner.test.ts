@@ -231,6 +231,15 @@ describe('the datebook', () => {
     expect(week.left).toBeGreaterThan(0);
   });
 
+  it('says when two things on a day clash', () => {
+    const s = game('book-clash');
+    const day = weekPage(s, s.week).days.find((p) => p.d > 0 && p.entries.some((e) => e.kind === 'evening'))!;
+    scheduleInto(s, { kind: 'meet', day: day.d, hour: 21, payload: { who: capos(s)[0].id, place: 'diner', purpose: 'meet' } });
+    const es = dayEntries(s, s.week, day.d);
+    expect(es.find((e) => e.kind === 'meet')!.clash).toBeTruthy();
+    expect(es.find((e) => e.kind === 'evening')!.clash).toMatch(/Meet/);
+  });
+
   it('a threat nobody warned him about stays off the book', () => {
     const s = game('book2');
     const T = ensureThreats(s);
