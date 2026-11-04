@@ -12,7 +12,7 @@ import { domainOf, domainOfText, domClass, DOMAINS, type Domain } from '../domai
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
 function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
-  return domainOf(it.kind) ?? domainOfText(s, `${it.title} ${it.detail ?? ''}`);
+  return domainOfText(s, `${it.title} ${it.detail ?? ''}`) ?? domainOf(it.kind);
 }
 
 /**

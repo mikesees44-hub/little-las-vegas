@@ -15,7 +15,7 @@
   --d-law: 74 124 176;        --d-law-ink: 156 194 232;      /* cold steel blue */
   --d-rivals: 184 52 44;      --d-rivals-ink: 242 142 130;   /* blood red */
   --d-romance: 214 82 152;    --d-romance-ink: 250 164 208;  /* rose neon */
-  --d-politics: 78 98 158;    --d-politics-ink: 226 219 200; /* navy, marble ink */
+  --d-politics: 92 116 186;   --d-politics-ink: 226 219 200; /* navy, marble ink */
   --d-church: 214 196 160;    --d-church-ink: 242 230 204;   /* candle ivory */
   --d-shore: 38 150 150;      --d-shore-ink: 128 216 210;    /* sea teal */
   --d: var(--d-crew);
@@ -32,8 +32,8 @@
 .llv-d-shore { --d: var(--d-shore); --d-ink: var(--d-shore-ink); }
 /* The treatments: an edge band, a faint tint, a tinted header strip, the ink, a dot, an icon chip. Never a full saturated fill. */
 .llv-dom-edge { border-left: 3px solid rgb(var(--d)) !important; }
-.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.13), rgb(var(--d) / 0.035) 55%, transparent); }
-.llv-dom-strip { background: linear-gradient(90deg, rgb(var(--d) / 0.28), rgb(var(--d) / 0.06)); border-bottom: 1px solid rgb(var(--d) / 0.5); }
+.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.17), rgb(var(--d) / 0.05) 55%, transparent); }
+.llv-dom-strip { background: linear-gradient(90deg, rgb(var(--d) / 0.36), rgb(var(--d) / 0.08)); border-bottom: 1px solid rgb(var(--d) / 0.6); }
 .llv-dom-ink { color: rgb(var(--d-ink)); }
 .llv-dom-border { border-color: rgb(var(--d) / 0.6) !important; }
 .llv-dom-dot { display: inline-block; width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: rgb(var(--d)); box-shadow: 0 0 0 1px rgb(var(--d-ink) / 0.45); }
