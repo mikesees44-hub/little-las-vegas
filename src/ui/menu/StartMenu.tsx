@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { newGameWith, recommendedStart, STARTS, type StartId } from '../../engine/starts';
+import { DIFFICULTIES, DIFFICULTY, setDifficulty, type Difficulty } from '../../engine/difficulty';
 import type { GameState } from '../../engine/types';
 import { musicPlaying, savePref, startMusic, stopMusic } from '../audio';
 import { NoirStill } from '../cutscene/NoirStill';
@@ -61,6 +62,7 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
   const [screen, setScreen] = useState<MenuScreen>(initial);
   const [start, setStart] = useState<StartId>(() => recommendedStart());
   const [seed, setSeed] = useState(() => seedHint || freshSeed());
+  const [diff, setDiff] = useState<Difficulty>('don');
   const [slots, setSlots] = useState<(SlotMeta | undefined)[]>(() => listSlots());
   const latest = useMemo(() => slots.filter((m): m is SlotMeta => !!m).sort((a, b) => b.savedAt - a.savedAt)[0], [slots]);
 
@@ -115,7 +117,8 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <label className="text-xs text-stone-500">Seed <input value={seed} onChange={(e) => setSeed(e.target.value)} className="ml-1 rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200 w-32" /></label>
             <button className="btn-ghost text-xs py-1" onClick={() => setSeed(freshSeed())}>Reroll</button>
-            <button className="btn-ghost ml-auto" data-testid="start-as-written" title="Start with the character the story was written for: no choices, straight to Memorial Day" onClick={() => onStart(newGameWith(seed || 'llv', start), freeSlot())}>Play as written ▸</button>
+            <DifficultyPicker value={diff} onChange={setDiff} />
+            <button className="btn-ghost ml-auto" data-testid="start-as-written" title="Start with the character the story was written for: no choices, straight to Memorial Day" onClick={() => onStart(setDifficulty(newGameWith(seed || 'llv', start), diff), freeSlot())}>Play as written ▸</button>
             <button className="btn-gold" data-testid="start-next" onClick={() => setScreen('create')}>Create your character →</button>
           </div>
         </div>
@@ -130,7 +133,7 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
           slot={freeSlot()}
           slots={slots}
           onBack={() => setScreen('start')}
-          onConfirm={(opts, slot) => onStart(newGameWith(seed || 'llv', start, opts), slot)}
+          onConfirm={(opts, slot) => onStart(setDifficulty(newGameWith(seed || 'llv', start, opts), diff), slot)}
         />
       )}
 
@@ -192,7 +195,20 @@ export function SlotList({ slots, onLoad, onDelete }: { slots: (SlotMeta | undef
   );
 }
 
-export function SettingsPanel() {
+/** Story / Don / Grand Strategy (engine/difficulty.ts): a small radio row. */
+export function DifficultyPicker({ value, onChange }: { value: Difficulty; onChange: (d: Difficulty) => void }) {
+  return (
+    <div className="flex items-center gap-1" role="radiogroup" aria-label="Difficulty" data-testid="start-difficulty">
+      <span className="text-xs text-stone-500 mr-1">Difficulty</span>
+      {DIFFICULTIES.map((d) => (
+        <button key={d} type="button" role="radio" aria-checked={value === d} title={DIFFICULTY[d].blurb} onClick={() => onChange(d)} data-testid={`difficulty-${d}`}
+          className={`rounded border px-2 py-0.5 text-xs ${value === d ? 'border-gold-400 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400 hover:border-gold-600'}`}>{DIFFICULTY[d].label}</button>
+      ))}
+    </div>
+  );
+}
+
+export function SettingsPanel({ difficulty, onDifficulty }: { difficulty?: Difficulty; onDifficulty?: (d: Difficulty) => void } = {}) {
   const [st, setSt] = useState<Settings>(() => getSettings());
   const [music, setMusic] = useState(() => musicPlaying());
   const upd = (p: Partial<Settings>) => setSt(setSettings(p));
@@ -203,6 +219,12 @@ export function SettingsPanel() {
   const row = 'panel p-3 flex items-center justify-between gap-3';
   return (
     <div className="space-y-2 text-sm" data-testid="settings">
+      {onDifficulty && (
+        <div className="panel p-3 space-y-1.5" data-testid="setting-difficulty">
+          <DifficultyPicker value={difficulty ?? 'don'} onChange={onDifficulty} />
+          <div className="text-xs text-stone-500">{DIFFICULTY[difficulty ?? 'don'].blurb} Saved with this game; nothing is ever taken off the table.</div>
+        </div>
+      )}
       <div className={row}><span>Music (doo-wop, 1960)</span><button className={music ? 'btn-gold text-xs py-1' : 'btn-ghost text-xs py-1'} onClick={toggleMusic}>{music ? 'On' : 'Off'}</button></div>
       <div className="panel p-3 space-y-1.5" data-testid="setting-help-level">
         <div className="text-stone-300">Help</div>

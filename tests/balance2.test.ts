@@ -383,3 +383,35 @@ describe('B4 / Top 10 #9: losing the family is a chapter, not a dead stop', () =
     expect(s.gameOver).toBeUndefined();
   });
 });
+
+describe('Difficulty presets (EASIER_NOT_SHALLOWER #1)', () => {
+  it('one table of knobs; Story is gentler and Grand Strategy harsher than Don; stored in the save', async () => {
+    const { DIFFICULTY, setDifficulty, knobs } = await import('../src/engine/difficulty');
+    const { policeChance, aggression } = await import('../src/engine/threats');
+    const { flipOdds } = await import('../src/engine/feds');
+    const { heat } = await import('../src/engine/ledger');
+    expect(Object.keys(DIFFICULTY)).toEqual(['story', 'don', 'grand']);
+    for (const k of ['heatGain', 'hollow', 'flip', 'aggression', 'fire', 'police', 'battleDeath'] as const) {
+      expect(DIFFICULTY.story[k]).toBeLessThan(DIFFICULTY.don[k]);
+      expect(DIFFICULTY.grand[k]).toBeGreaterThan(DIFFICULTY.don[k]);
+    }
+    expect(DIFFICULTY.story.bailWeeks).toBeLessThan(DIFFICULTY.don.bailWeeks);
+    const base = newGameWith('diff', 'olddon');
+    base.heat.local = 60; base.week = 80;
+    const story = setDifficulty(base, 'story');
+    const grand = setDifficulty(base, 'grand');
+    expect(story.difficulty).toBe('story');
+    expect(knobs(base).label).toBe('Don');
+    expect(policeChance(story)).toBeLessThan(policeChance(base));
+    expect(policeChance(grand)).toBeGreaterThan(policeChance(base));
+    const r = base.rivals.find((x) => x.kind === 'mob')!;
+    expect(aggression(story, r).chance).toBeLessThanOrEqual(aggression(base, r).chance);
+    const c = crew(base).find((x) => x.rank === 'soldier')!;
+    expect(flipOdds(story, { charId: c.id, years: 8, care: [] })).toBeLessThan(flipOdds(grand, { charId: c.id, years: 8, care: [] }));
+    // The heat ramp: four +1s are three on Story (the fraction carries).
+    const s2 = structuredClone(story); s2.heat.local = 10;
+    const ctx = newCtx(s2);
+    for (let i = 0; i < 4; i++) heat(ctx, 'local', 1, 't', 'heat');
+    expect(s2.heat.local).toBe(13);
+  });
+});
