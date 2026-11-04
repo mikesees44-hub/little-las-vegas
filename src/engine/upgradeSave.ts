@@ -47,6 +47,7 @@ import { ensureAbove } from './valente';
 import { ensurePhoneSave } from './phoneState';
 import { freeWidows } from './dynasty';
 import { capArchives } from './prune';
+import { startComeback } from './station';
 import type { GameState } from './types';
 
 /**
@@ -92,6 +93,8 @@ export function upgradeSave(s: GameState): GameState {
   // Balance 2: the difficulty preset (absent = Don) and the save's archives held to their windows
   // (a 36-month venue history, an uncapped Book) the moment an older save loads.
   if (!s.difficulty) s.difficulty = 'don';
+  // B4: a save left as an independent crew gets its comeback chapter (a year to take ground back).
+  if (s.power?.station === 'independent' && !s.power.comeback) try { startComeback(s); } catch { /* the month will start it */ }
   try { capArchives(s); } catch { /* the next prune will */ }
   // B8: widows and widowers of an older save stop being married to the dead.
   try { freeWidows(s); } catch { /* nothing to free */ }

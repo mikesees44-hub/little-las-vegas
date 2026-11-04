@@ -354,3 +354,32 @@ describe('Top 10 #1: the save on a diet', () => {
     expect(up.difficulty).toBe('don');
   });
 });
+
+describe('B4 / Top 10 #9: losing the family is a chapter, not a dead stop', () => {
+  it('an independent crew gets a year to take ground back; holding a district makes it a family again', async () => {
+    const { chooseStation, stationMonth, COMEBACK_HOLD } = await import('../src/engine/station');
+    const s = newGameWith('t9-deposed', 'classic');
+    chooseStation(newCtx(s), 'independent');
+    for (const d of s.districts) { const me = d.influence.player ?? 0; d.influence.player = Math.min(me, 10); d.influence.none = (d.influence.none ?? 0) + me - (d.influence.player ?? 0); }
+    stationMonth(newCtx(s));
+    expect(s.power!.comeback).toBeDefined();
+    expect(s.gameOver).toBeUndefined();
+    const d = s.districts[0];
+    d.influence = { player: COMEBACK_HOLD + 5, none: 100 - COMEBACK_HOLD - 5 } as typeof d.influence;
+    stationMonth(newCtx(s));
+    expect(s.power!.station).toBe('boss');
+    expect(s.power!.comeback).toBeUndefined();
+  });
+
+  it('the year runs out: the crew folds into the ranks and play goes on', async () => {
+    const { chooseStation, stationMonth } = await import('../src/engine/station');
+    const s = newGameWith('t9-fold', 'classic');
+    chooseStation(newCtx(s), 'independent');
+    for (const d of s.districts) { d.influence = { ...d.influence, none: (d.influence.none ?? 0) + (d.influence.player ?? 0), player: 0 }; }
+    stationMonth(newCtx(s));
+    s.week = s.power!.comeback!.until;
+    stationMonth(newCtx(s));
+    expect(s.power!.station).toBe('soldier');
+    expect(s.gameOver).toBeUndefined();
+  });
+});
