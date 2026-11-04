@@ -683,7 +683,8 @@ function build(s: GameState, sub: CounselSubject, key: string): Counsel | undefi
     const ev = s.pendingEvents.find((e) => e.iid === sub.iid);
     if (!ev) return undefined;
     title = ev.title;
-    opts = ev.choices.map((c) => ({ id: c.id, label: c.label, choice: c, disabled: c.disabledReason }));
+    // The price of a favor (payroll.ts 'payjob') is the boss's own call: nobody answers it for him.
+    opts = ev.choices.filter((c) => c.id !== 'payjob').map((c) => ({ id: c.id, label: c.label, choice: c, disabled: c.disabledReason }));
     dflt = ev.choices.find((c) => c.id === ev.defaultChoiceId)?.label;
     extra.dflt = dflt;
   } else if (sub.kind === 'brief') {

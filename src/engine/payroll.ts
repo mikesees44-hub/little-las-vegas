@@ -1032,7 +1032,8 @@ export function favorJobChoice(s: GameState, ev: EventInstance): Choice | undefi
     he = who.f ? 'she' : 'he';
   }
   const pct = Math.round(chance * 100);
-  const keepFx = grant.effects.filter((e) => !(e.type === 'deed' && (e.op as { op?: string }).op === 'owe'));
+  // Copies, never the grant's own objects (a save round-trip must play the same).
+  const keepFx = (JSON.parse(JSON.stringify(grant.effects)) as Effect[]).filter((e) => !(e.type === 'deed' && (e.op as { op?: string }).op === 'owe'));
   return {
     id: 'payjob',
     label: job === 'hush' ? `Do it, and in return ${he} keeps you informed (a quiet envelope)` : `Do it, and in return ${he} works for you (${JOBS[job].label.toLowerCase()})`,
