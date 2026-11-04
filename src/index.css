@@ -33,6 +33,10 @@ body {
   .btn-primary {
     @apply btn bg-gold-500 text-noir-950 hover:bg-gold-400;
   }
+  /* A primary that cannot be pressed yet ("Pick one" before a pick) must not look gold and ready. */
+  .btn-primary:disabled {
+    @apply border border-dashed border-noir-600 bg-noir-800 text-stone-500 opacity-100 hover:bg-noir-800;
+  }
   .btn-secondary {
     @apply btn border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300;
   }
