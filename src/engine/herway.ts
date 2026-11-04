@@ -563,6 +563,8 @@ export function previewHer(s: GameState, a: HerAction): ActionPreview {
 /** Every order the boss can give about her (never removed: a reason when not now). The street: her house's own deals. */
 export function herActionsFor(s: GameState, id: string): PlayerAction[] {
   const e = earnerOf(s, id);
+  // A madam is Nightlife's: her house's deals (protection, partnership, release, standing by her).
+  if (!e && s.nightlife?.houses[id]) return adultOn(s) ? nightActionsFor(s, id).filter((a) => a.kind === 'nightlife' && (a.op.op === 'deal' || a.op.op === 'back')) : [];
   if (!e || e.status !== 'active') return [];
   if (e.path === 'street') return adultOn(s) ? nightActionsFor(s, id).filter((a) => a.kind === 'nightlife' && (a.op.op === 'deal' || a.op.op === 'back')) : [];
   const ops: HerAction['op'][] = ['partner', 'protect', 'hire', 'lend', 'back', 'ears', 'squeeze', 'leave'];
@@ -1017,7 +1019,9 @@ export function herRows(s: GameState): HerRow[] {
       rival: false, hist: (s.nightlife.people[h.id]?.hist ?? []).slice(-6),
     });
   }
-  return out.sort((a, b) => PATH_ORDER.indexOf(a.path) - PATH_ORDER.indexOf(b.path) || b.income - a.income || (a.id < b.id ? -1 : 1));
+  // The day's trades first, the madams' houses after (their own screen is Nightlife).
+  const rank = (p: HerPath) => (p === 'street' ? 99 : PATH_ORDER.indexOf(p));
+  return out.sort((a, b) => rank(a.path) - rank(b.path) || b.income - a.income || (a.id < b.id ? -1 : 1));
 }
 
 /** The women's town in numbers: how many, what they make, what comes to you. */

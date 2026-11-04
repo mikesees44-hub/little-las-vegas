@@ -135,6 +135,8 @@ describe('her way: women earners', () => {
   it('the street path (the madams) is hidden with mature content Off', () => {
     const s = newGame('her-mature');
     expect(herRows(s).some((r) => r.path === 'street')).toBe(true);
+    const madam = herRows(s).find((r) => r.path === 'street' && r.side !== 'player')!;
+    expect(herActionsFor(s, madam.id).some((a) => a.kind === 'nightlife')).toBe(true);
     ensureDating(s).settings.mature = 'off';
     expect(herRows(s).some((r) => r.path === 'street')).toBe(false);
   });
