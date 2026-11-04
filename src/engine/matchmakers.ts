@@ -346,8 +346,8 @@ export const FAVOR_TEXT: Record<FavorKind, { label: string; detail: string }> = 
   word: { label: 'What the wives say', detail: 'Kitchen talk about their husband: something you can use.' },
 };
 
-// The chip says it all (describeMatchOp): no label to repeat after it.
-const X = (op: MatchOp, _label: string): Effect => ({ type: 'bond', op, label: '' }) as Effect;
+// The chip says it all (describeMatchOp names her): the label is her name, so it is not repeated.
+const X = (op: MatchOp, who: string): Effect => ({ type: 'bond', op, label: who }) as Effect;
 
 /** Which match an answer is about: the open proposal, or his own pick. */
 function subject(s: GameState, a: Extract<MatchAction, { op: 'match' }>): { member?: Character; spouse?: Character; weigh: Weigh; prop?: Proposal } {
@@ -385,7 +385,7 @@ export function previewMatchmaker(s: GameState, a: MatchAction): ActionPreview {
   if (a.answer === 'veto') {
     return {
       ...base, title,
-      effects: [X(a, title), ...(s.characters[house.headId]?.alive ? [{ type: 'opinion', from: house.headId, to: s.playerId, amount: -4, reason: 'Turned down our child', decay: 1, label: title } as Effect] : [])],
+      effects: [X(a, by.firstName), ...(s.characters[house.headId]?.alive ? [{ type: 'opinion', from: house.headId, to: s.playerId, amount: -4, reason: 'Turned down our child', decay: 1, label: title } as Effect] : [])],
       detail: `No roll: it is your house. ${by.firstName} will not forget it, and by Sunday every kitchen on Pacific Avenue knows you overruled her. Her standing takes a hit; ${member.firstName} stays single for now.`,
       because: `overruled ${by.firstName} on ${member.firstName}'s match`,
       verb: 'Veto it',
@@ -393,7 +393,7 @@ export function previewMatchmaker(s: GameState, a: MatchAction): ActionPreview {
   }
   const matri = a.answer === 'own' && !!a.matrilineal && member.gender === 'F';
   const dowry = coffeeDowry(s, member, house, by.id, matri);
-  const effects: Effect[] = [X(a, title), { type: 'dyn', op: { op: 'marry', memberId: member.id, spouseId: spouse.id, matrilineal: matri }, label }];
+  const effects: Effect[] = [X(a, by.firstName), { type: 'dyn', op: { op: 'marry', memberId: member.id, spouseId: spouse.id, matrilineal: matri }, label }];
   if (dowry) effects.push({ type: 'money', amount: dowry, label: `${label}: dowry ${dowry > 0 ? 'received' : 'paid'}` });
   const acc = matchOdds(s, by, member, spouse, a.answer, weigh);
   const coffee = `Coffee in ${motherName(s, mother)}'s kitchen settles the terms: ${dowry > 0 ? `they pay a dowry of $${dowry.toLocaleString('en-US')}` : dowry < 0 ? `we pay $${(-dowry).toLocaleString('en-US')}` : 'no dowry'}, the church, the date.`;
@@ -408,7 +408,7 @@ export function previewMatchmaker(s: GameState, a: MatchAction): ActionPreview {
     detail: `${coffee} ${words[a.answer]} ${member.firstName} decides too: nobody is married against their will.`,
     acceptance: acc,
     oddsLabel: 'They all say yes',
-    refuseEffects: [X({ op: 'matchNo', id: by.id, answer: a.answer, memberId: member.id, spouseId: spouse.id }, `${pair}: no`)],
+    refuseEffects: [X({ op: 'matchNo', id: by.id, answer: a.answer, memberId: member.id, spouseId: spouse.id }, by.firstName)],
     disabledReason: dowry < 0 && s.money < -dowry ? `Needs $${(-dowry).toLocaleString('en-US')} for the dowry` : undefined,
     because: a.answer === 'own' ? `asked ${by.firstName} to arrange ${member.firstName} and ${spouse.firstName}` : `${a.answer === 'bless' ? 'blessed' : 'grumbled at, and accepted,'} ${by.firstName}'s match for ${member.firstName}`,
     verb: a.answer === 'bless' ? 'Bless it' : a.answer === 'grumble' ? 'Grumble, accept' : 'Ask her',
@@ -426,7 +426,7 @@ function previewFavor(s: GameState, a: Extract<MatchAction, { op: 'herFavor' }>,
   const head = s.characters[house.headId];
   const title = `${FAVOR_TEXT[a.kind].label}: ${f.from}`;
   const label = `${by.firstName} calls in a favor`;
-  const fx: Effect[] = [X(a, title)];
+  const fx: Effect[] = [X(a, by.firstName)];
   const rival = house.faction && house.faction !== 'player' && house.faction !== 'none' && house.faction !== 'law' ? house.faction as RivalId : undefined;
   if (a.kind === 'peace') {
     if (!head?.alive) return { ...base, title, disabledReason: 'Nobody at the head of that house' };
