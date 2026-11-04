@@ -5,18 +5,21 @@ import { owedBy } from './deeds/state';
 import { applyEffects, fmtMoney } from './effects';
 import { addFedEvidence, isInformant } from './fedsState';
 import { journal } from './journal';
-import { heat, money, type Ctx } from './ledger';
+import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, getRelation, opinion } from './relations';
 import { hashSeed } from './rng';
+import { getPerson } from './polPeople';
+import { mutP } from './polState';
 import { addSecret } from './secrets';
 import { ensureRomance } from './storyState';
 import { ensureThreats, isPoliceKind, KIND_LABEL, tipFromOutside, type Threat, type TipTruth } from './threats';
-import { ADULT_ROLES, ROLE_LABEL, type NightRole } from './nightlifeState';
+import { ADULT_ROLES, ROLE_LABEL } from './nightlifeState';
 
-const NIGHT_WORK: NightRole[] = ['escort', 'callgirl', 'street', 'dancer', 'singer'];
-import { kickbackRate, protectionOf } from './nightlife';
+import { applyNightOp, dealAcceptance, kickbackRate, nightBlock, payrollAcceptance as nightAcceptance, protectionOf } from './nightlife';
+import { holder } from './council';
+import { capos as allCapos, crew } from './characters';
 import {
-  ensurePayroll, JOB_ORDER, JOBS, type Conf, type Hire, type Hush, type HushItem, type PayJob, type PayOp, type PayrollAction, type PayrollState,
+  ensurePayroll, JOB_ORDER, JOBS, PAY_INFO, type PayLevel, type Conf, type Hire, type Hush, type HushItem, type PayJob, type PayOp, type PayrollAction, type PayrollState,
 } from './payrollState';
 import type { ActionPreview } from './actions';
 import type { Acceptance, Reason } from './interactions';
@@ -56,6 +59,7 @@ const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, Math.ro
 const roll = (k: string) => (hashSeed(k) % 100003) / 100003;
 const POLICE = /police|patrolman|sergeant|detective|trooper|sheriff|constable|captain/i;
 const OFFICIAL = /mayor|council|commission|senator|assembl|freeholder|clerk|governor|chairman|politic|ward|treasurer|board/i;
+const CLUB_KINDS = ['club', 'supperclub', 'gentsclub', 'hoodclub', 'afterhours', 'bar'];
 const HONEST_NO: PayJob[] = ['cop', 'politician', 'bookie', 'runner', 'fence', 'hush', 'attendant', 'bookkeeper'];
 
 /* ------------------------------------------------------------------ */
@@ -80,6 +84,14 @@ function mobOf(s: GameState, f: FactionId | undefined) {
 
 function polOf(s: GameState, charId: string) {
   return Object.values(s.pol?.people ?? {}).find((p) => p.charId === charId && p.alive && !p.retired);
+}
+
+const STAR_WORK = /crooner|comic|singer|bandleader|headliner|revue|actress|actor|entertainer|band\b|hoofer|musician/i;
+/** Somebody with a name in show business: a world-pack entertainer, a showbiz house's people, a singer of the clubs. */
+export function isStar(s: GameState, c: Character): boolean {
+  if ((polOf(s, c.id)?.fame ?? 0) >= 20) return true;
+  if (s.nightlife?.people[c.id]?.role === 'singer') return true;
+  return STAR_WORK.test(c.office ?? '');
 }
 
 const isCop = (c: Character) => c.outside === 'cop' || POLICE.test(c.office ?? '');
@@ -146,7 +158,9 @@ export function jobsFor(s: GameState, c: Character): PayJob[] {
   const n = s.nightlife?.people[c.id];
   const mature = adultOn(s);
   if (hushTarget(s, c)) out.push('hush');
-  if (n && n.status === 'active' && mature && NIGHT_WORK.includes(n.role)) out.push('girl');
+  if (isStar(s, c)) out.push('celebrity');
+  if (n && n.status === 'active' && mature && ['escort', 'callgirl', 'street'].includes(n.role)) out.push('girl');
+  if (n && n.status === 'active' && mature && n.role === 'dancer') out.push('dancer');
   if (n && n.role === 'madam' && s.nightlife?.houses[c.id] && mature) out.push('madam');
   if (isCop(c)) out.push('cop');
   if (isPol(s, c) && !isCop(c)) out.push('politician');
@@ -204,6 +218,12 @@ export function hireAcceptance(s: GameState, c: Character, job: PayJob, favor = 
   if (hasTrait(c, 'Honest') && HONEST_NO.includes(job)) r.push({ label: 'An honest sort', value: -20 });
   if (hasTrait(c, 'Greedy')) r.push({ label: 'Likes money', value: 10 });
   if (job === 'cop' || job === 'politician') r.push({ label: 'Has a badge or an office to lose', value: -10 });
+  if (job === 'celebrity') {
+    const fame = polOf(s, c.id)?.fame ?? 40;
+    r.push({ label: 'A name to protect from the papers', value: -10 });
+    if (fame >= 60) r.push({ label: 'Big enough not to need you', value: -10 });
+    if (s.businesses.some((b) => b.owner === 'player' && CLUB_KINDS.includes(b.kind))) r.push({ label: 'You have a stage to offer', value: 12 });
+  }
   if (job === 'hush') {
     const t = hushTarget(s, c);
     if (t) {
@@ -229,9 +249,10 @@ export function yieldText(job: PayJob, wage?: number): string {
   if (j.ears) bits.push(j.ears >= 2 ? 'good ears' : 'ears');
   if (j.tips) bits.push('raid tip-offs');
   if (j.cover) bits.push(j.coverBar === 'federal' ? 'clean books (federal cover)' : 'cover');
-  if (j.votes) bits.push('a vote at City Hall');
+  if (j.votes && job !== 'celebrity') bits.push('a vote at City Hall');
   if (job === 'hush') bits.push('what her husband\'s side really knows and plans');
-  if (job === 'girl') bits.push('a cut of what she makes (she keeps the rest)');
+  if (job === 'celebrity') bits.push('respect, a draw for your club, introductions to people in power');
+  if (job === 'girl' || job === 'dancer') bits.push('a cut of what she makes (she keeps the rest)');
   if (job === 'madam') bits.push('protection money from her house');
   const w = wage ?? j.wage;
   return `${bits.join(', ') || 'a friend'}${w ? ` · wage ${fmtMoney(w)}/wk` : ''}`;
@@ -240,19 +261,104 @@ export function yieldText(job: PayJob, wage?: number): string {
 export function riskText(job: PayJob): string {
   if (job === 'cop') return 'He can be caught taking it; the county comes looking.';
   if (job === 'politician') return 'An investigator can follow the money to you.';
+  if (job === 'celebrity') return 'Bad press, and the federal kind of attention that comes of being photographed with you.';
   if (job === 'hush') return 'Her husband may find out: a grudge, a warning to his side, and she may get hurt (offstage).';
   if (job === 'girl') return 'Vice heat; she keeps her share and can quit any time.';
+  if (job === 'dancer') return 'A raid on the club; she keeps her share and can quit any time.';
   if (job === 'madam') return 'Raids; a rival family may squeeze her house.';
   return JOBS[job].risk >= 20 ? 'Knows enough to hurt you if the law pinches him.' : 'Little: a civilian who sees a few things.';
 }
 
 /** The order that offers this person this job, wherever that payroll lives (the nightlife's, City Hall's, or this one). */
-export function hireAction(s: GameState, id: string, job: PayJob): PlayerAction {
-  if (job === 'girl' && s.nightlife?.people[id]) return { kind: 'nightlife', op: { op: 'payroll', id } };
-  if (job === 'madam' && s.nightlife?.houses[id]) return { kind: 'nightlife', op: { op: 'deal', house: id, deal: 'protect' } };
+export function hireAction(s: GameState, id: string, job: PayJob, pay?: PayLevel, via?: string): PlayerAction {
   const p = polOf(s, id);
   if (p && (job === 'cop' || job === 'politician')) return { kind: 'pol', op: { op: 'payroll', id: p.id, on: true } };
-  return { kind: 'payroll', op: { op: 'hire', id, job } };
+  return { kind: 'payroll', op: { op: 'hire', id, job, ...(pay && pay !== 'fair' ? { pay } : {}), ...(via ? { via } : {}) } };
+}
+
+/* ------------------------------------------------------------------ */
+/* Who asks, and how much: the offer                                   */
+/* ------------------------------------------------------------------ */
+
+export interface Asker { id?: string; label: string; rank: 'boss' | 'underboss' | 'consigliere' | 'capo' | 'soldier' | 'associate' }
+
+/** Who can make the offer: the boss in person (it takes his hour), or one of his men (a quarter of an hour). */
+export function askers(s: GameState): Asker[] {
+  const out: Asker[] = [{ label: 'You, in person', rank: 'boss' }];
+  const ub = holder(s, 'underboss');
+  const cons = holder(s, 'consigliere');
+  const free = (c?: Character) => !!c && c.alive && c.id !== s.playerId && isFree(s, c);
+  if (free(ub)) out.push({ id: ub!.id, label: `${displayName(ub!)}, your underboss`, rank: 'underboss' });
+  if (free(cons)) out.push({ id: cons!.id, label: `${displayName(cons!)}, your consigliere`, rank: 'consigliere' });
+  const k = allCapos(s).filter((c) => c.faction === 'player' && free(c) && c.id !== ub?.id && c.id !== cons?.id).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
+  if (k) out.push({ id: k.id, label: `${displayName(k)}, a capo`, rank: 'capo' });
+  const so = crew(s).filter((c) => c.rank === 'soldier' && free(c)).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
+  if (so) out.push({ id: so.id, label: `${displayName(so)}, a soldier`, rank: 'soldier' });
+  const as = crew(s).filter((c) => c.rank === 'associate' && free(c) && !c.specialty).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
+  if (as) out.push({ id: as.id, label: `${displayName(as)}, an associate`, rank: 'associate' });
+  return out;
+}
+
+const RANK_ODDS: Record<Asker['rank'], number> = { boss: 15, underboss: 10, consigliere: 10, capo: 7, soldier: 3, associate: 0 };
+
+/** The asker's weight: his place in the Family, and the Family's respect. */
+export function askerReason(s: GameState, via?: string): Reason {
+  const c = via ? s.characters[via] : undefined;
+  const rk: Asker['rank'] = !c ? 'boss' : c.id === holder(s, 'underboss')?.id ? 'underboss' : c.id === holder(s, 'consigliere')?.id ? 'consigliere' : c.rank === 'capo' ? 'capo' : c.rank === 'soldier' ? 'soldier' : 'associate';
+  const resp = Math.round((s.respect - 50) / (rk === 'boss' ? 8 : 16));
+  const label = !c ? 'Asked by the boss himself' : `Asked by ${displayName(c)} (${rk})`;
+  return { label: resp ? `${label}, with the Family's respect behind it` : label, value: RANK_ODDS[rk] + resp };
+}
+
+/** The offer's size against what they need and expect: diminishing for the comfortable and the famous. */
+export function payReason(_s: GameState, c: Character | undefined, pay: PayLevel = 'fair', fame = 0): Reason | undefined {
+  const v = PAY_INFO[pay].odds;
+  if (!v) return undefined;
+  const need = !c ? 1 : c.wealth < 600 || c.debtTo ? 1.3 : c.wealth > 20000 ? 0.5 : c.wealth > 6000 ? 0.75 : 1;
+  const f = v > 0 ? need * (fame >= 60 ? 0.6 : 1) : 1 / need;
+  return { label: `${PAY_INFO[pay].label} offer`, value: Math.round(v * f) };
+}
+
+/** Money cannot buy a man truly loyal to another family away from it. */
+function loyaltyCap(s: GameState, c: Character | undefined): { cap: number; why?: string } {
+  if (!c) return { cap: 0.9 };
+  const rv = mobOf(s, c.faction);
+  if (rv) {
+    const love = opinion(s, c.id, rv.leaderId);
+    return love >= 40 ? { cap: 0.2, why: `Loyal to the ${rv.shortName} family, heart and soul` } : { cap: 0.35, why: `Loyal to the ${rv.shortName} family` };
+  }
+  return { cap: 0.9 };
+}
+
+/** Puts the asker and the amount on top of the person's own odds, and caps what money can do. */
+function withOffer(s: GameState, c: Character | undefined, acc: Acceptance, pay: PayLevel | undefined, via: string | undefined, fame = 0): Acceptance {
+  if (acc.chance <= 0) return acc;
+  const extra = [askerReason(s, via), payReason(s, c, pay, fame)].filter((x): x is Reason => !!x && x.value !== 0);
+  const reasons = [...acc.reasons, ...extra];
+  const lc = loyaltyCap(s, c);
+  const sum = reasons.reduce((a, r) => a + r.value, 0) / 100;
+  const chance = Math.max(0.05, Math.min(lc.cap, sum));
+  return { chance, reasons: lc.cap < 0.9 && sum > lc.cap ? [...reasons, { label: `${lc.why}: no amount buys more`, value: Math.round((lc.cap - sum) * 100) }] : reasons };
+}
+
+/** The odds of an offer as the card shows them, every reason (the person's own, who asks, how much). */
+export function offerAcceptance(s: GameState, c: Character, job: PayJob, opts: { pay?: PayLevel; via?: string; favor?: boolean } = {}): Acceptance {
+  let acc: Acceptance;
+  const n = s.nightlife?.people[c.id];
+  const h = s.nightlife?.houses[c.id];
+  if ((job === 'girl' || job === 'dancer') && n) acc = nightAcceptance(s, n, c);
+  else if (job === 'madam' && h) acc = dealAcceptance(s, h, 'protect');
+  else acc = hireAcceptance(s, c, job, opts.favor);
+  return withOffer(s, c, acc, opts.pay, opts.via, polOf(s, c.id)?.fame ?? 0);
+}
+
+/** The wage (or, for the night's women, the signing envelope) at a pay level. */
+export function offerMoney(job: PayJob, pay: PayLevel = 'fair'): { wage: number; sign: number } {
+  const m = PAY_INFO[pay].mult;
+  const j = JOBS[job];
+  if (job === 'girl' || job === 'dancer') return { wage: 0, sign: Math.round(200 * m / 10) * 10 };
+  if (job === 'madam') return { wage: 0, sign: Math.round(300 * m / 10) * 10 };
+  return { wage: Math.round(j.wage * m / 5) * 5, sign: 0 };
 }
 
 const PX = (op: PayOp, label: string): Effect => ({ type: 'payroll', op, label }) as Effect;
@@ -262,9 +368,10 @@ function base(title: string, because: string): ActionPreview {
 }
 
 export function previewPayroll(s: GameState, a: PayrollAction): ActionPreview {
-  const c = s.characters[a.id];
+  const aid = a.op === 'star' ? '' : a.id;
+  const c = s.characters[aid];
   const P = s.payroll;
-  const h = P?.hires[a.id];
+  const h = P?.hires[aid];
   const nm = c ? c.firstName : 'Nobody';
   switch (a.op) {
     case 'hire': {
@@ -273,20 +380,25 @@ export function previewPayroll(s: GameState, a: PayrollAction): ActionPreview {
       const on = c ? onAnyPayroll(s, c.id) : undefined;
       const fits = c ? jobsFor(s, c).includes(a.job) : false;
       const t = c && a.job === 'hush' ? hushTarget(s, c) : undefined;
-      const title = a.job === 'hush' ? `A quiet envelope for ${nm}` : `Offer ${nm} a job: ${j.label.toLowerCase()}`;
+      const night = a.job === 'girl' || a.job === 'dancer' || a.job === 'madam';
+      const om = offerMoney(a.job, a.pay);
+      const up = om.wage || om.sign;
+      const asker = a.via ? s.characters[a.via] : undefined;
+      const title = `${a.job === 'hush' ? `A quiet envelope for ${nm}` : a.job === 'madam' ? `Offer ${nm}'s house the Family's protection` : `Offer ${nm} a job: ${j.label.toLowerCase()}`}${a.pay && a.pay !== 'fair' ? ` (${PAY_INFO[a.pay].label.toLowerCase()})` : ''}${asker ? `, through ${asker.firstName}` : ''}`;
       const p: ActionPreview = {
         ...base(title, a.job === 'hush' ? `offered ${nm} a quiet envelope` : `offered ${nm} a job (${j.label.toLowerCase()})`),
-        cost: j.wage, category: 'cost',
+        cost: up, category: 'cost',
         detail: c ? `${displayName(c)}, ${ageOn(c.birth, s.date)}. ${j.blurb}.${t ? ` She would tell you what her ${t.rel}, ${displayName(t.on)}, hears and plans (${t.side === 'rival' ? `${mobOf(s, t.on.faction)?.shortName} family` : t.side === 'crew' ? 'one of your own' : t.side === 'cop' ? 'a cop' : 'City Hall'}).` : ''} Brings: ${yieldText(a.job)}. Risk: ${riskText(a.job)} The first week's envelope now; a civilian, not made. ${c.gender === 'F' ? 'She' : 'He'} decides.` : '',
-        effects: [{ type: 'money', amount: -j.wage, category: 'cost', label: `${nm}: the first envelope` }, PX({ op: 'hire', id: a.id, job: a.job, wage: j.wage }, `${nm} on the payroll`)],
-        acceptance: c ? hireAcceptance(s, c, a.job) : undefined,
+        effects: [{ type: 'money', amount: -up, category: 'cost', label: night ? `${nm}: a signing envelope` : `${nm}: the first envelope` }, PX({ op: 'hire', id: a.id, job: a.job, wage: om.wage, ...(om.sign ? { sign: om.sign } : {}) }, `${nm} on the payroll`)],
+        acceptance: c ? offerAcceptance(s, c, a.job, { pay: a.pay, via: a.via }) : undefined,
         refuseEffects: [PX({ op: 'refused', id: a.id, job: a.job }, `${nm} said no`)],
         oddsLabel: c?.gender === 'F' ? 'She says yes' : 'He says yes',
         warning: a.job === 'hush' ? 'If she says no, she may tell her husband.' : c && mobOf(s, c.faction) ? 'The other family will take it as poaching if they hear.' : undefined,
-        disabledReason: blk ?? on ?? (!fits ? (JOBS[a.job].mature && !adultOn(s) ? 'Mature content is Off in Settings' : 'Not a job that fits') : undefined) ?? (c && !isFree(s, c) ? 'In jail' : undefined) ?? (s.money < j.wage ? `Needs ${fmtMoney(j.wage)}` : undefined),
+        disabledReason: blk ?? on ?? (!fits ? (JOBS[a.job].mature && !adultOn(s) ? 'Mature content is Off in Settings' : 'Not a job that fits') : undefined) ?? (c && !isFree(s, c) ? 'In jail' : undefined) ?? (s.money < up ? `Needs ${fmtMoney(up)}` : undefined) ?? (a.via && !askers(s).some((x) => x.id === a.via) ? 'He cannot make the offer now' : undefined),
       };
-      // The night's women and madams, and City Hall: their own payrolls take the order.
-      if (a.job === 'girl' || a.job === 'madam') p.disabledReason ??= 'Her payroll is the night\'s (Nightlife)';
+      // The night's women decide by the night's own rules too (her bounds, her house, adults only, Mature content).
+      if (night && c) p.disabledReason = nightBlock(s, c.id) ?? p.disabledReason;
+      if (night) p.detail = `${p.detail} The night's payroll: she keeps her share and kicks back a cut for the protection, and she can quit any time.`;
       return p;
     }
     case 'fire':
@@ -303,6 +415,22 @@ export function previewPayroll(s: GameState, a: PayrollAction): ActionPreview {
         detail: up ? 'More loyal, and they remember who was good to them.' : 'Cheaper. Squeezed people remember too, and some of them turn.',
         effects: [PX({ op: 'raise', id: a.id, amount: a.amount }, up ? `A raise for ${nm}` : `${nm}'s envelope cut`)],
         disabledReason: !h ? 'Not on this payroll' : h.wage + a.amount < 10 ? 'Already as low as it goes' : h.wage + a.amount > 400 ? 'That is more than the job is worth' : undefined,
+      };
+    }
+    case 'star': {
+      const st = starOf(s, a.ref);
+      const j = JOBS.celebrity;
+      const fame = st?.fame ?? 40;
+      const om = offerMoney('celebrity', a.pay);
+      const reasons: Reason[] = [{ label: 'A name to protect from the papers', value: -10 }];
+      if (fame >= 60) reasons.push({ label: 'Big enough not to need you', value: -10 });
+      if (s.businesses.some((b) => b.owner === 'player' && CLUB_KINDS.includes(b.kind))) reasons.push({ label: 'You have a stage to offer', value: 12 });
+      return {
+        ...base(`${st?.name ?? 'A star'}: a friend of the family${a.pay && a.pay !== 'fair' ? ` (${PAY_INFO[a.pay].label.toLowerCase()})` : ''}`, `offered ${st?.name ?? 'a star'} a retainer`), cost: om.wage, category: 'cost',
+        detail: st ? `${st.name}, ${st.title}. ${j.blurb}. Brings: ${yieldText('celebrity')}. Risk: ${riskText('celebrity')} The first week's retainer now. ${st.sex === 'F' ? 'She' : 'He'} decides.` : '',
+        effects: [{ type: 'money', amount: -om.wage, category: 'cost', label: `${st?.name ?? 'A star'}: the first retainer` }, PX({ op: 'star', ref: a.ref, wage: om.wage }, `${st?.name ?? 'A star'}: a friend of the family`)],
+        acceptance: withOffer(s, undefined, capAcc(40, reasons), a.pay, a.via, fame), oddsLabel: st?.sex === 'F' ? 'She says yes' : 'He says yes',
+        disabledReason: !st ? 'Nobody by that name' : st.age < ADULT ? 'Adults only' : Object.values(s.payroll?.hires ?? {}).some((h) => h.ref === a.ref) ? 'Already a friend of the family' : s.money < om.wage ? `Needs ${fmtMoney(om.wage)}` : undefined,
       };
     }
     case 'main':
@@ -323,6 +451,7 @@ export function describePayOp(s: GameState, o: PayOp): string | undefined {
     case 'fire': return `${n(o.id)} off the payroll`;
     case 'raise': return `${n(o.id)}'s envelope ${o.amount > 0 ? '+' : ''}${fmtMoney(o.amount)}/wk`;
     case 'main': return `${n(o.id)} is your main earner`;
+    case 'star': return `${starOf(s, o.ref)?.name ?? 'A star'} becomes a friend of the family`;
     case 'favor': return `In return, ${o.name ?? n(o.id)} works for you (${JOBS[o.job].label.toLowerCase()}, ${Math.round(o.chance * 100)}% yes)`;
     case 'protect': return `${n(o.id)}: ${o.how === 'move' ? 'moved out' : o.how === 'relocate' ? 'relocated' : 'you denied it'}`;
   }
@@ -358,7 +487,7 @@ export function hire(s: GameState, id: string, job: PayJob, opts: { wage?: numbe
   if (!c?.alive || !adult(s, c) || inFamily(s, c)) return undefined;
   if (JOBS[job].mature && !adultOn(s)) return undefined;
   const n = s.nightlife?.people[id];
-  if (job === 'girl' && n) { n.payroll ??= { since: s.week, paid: 0 }; n.side = 'player'; n.met = true; return undefined; }
+  if ((job === 'girl' || job === 'dancer') && n) { n.payroll ??= { since: s.week, paid: 0 }; n.side = 'player'; n.met = true; return undefined; }
   const hh = s.nightlife?.houses[id];
   if (job === 'madam' && hh) { hh.deal = 'protect'; hh.with = 'player'; return undefined; }
   const P = ensurePayroll(s);
@@ -405,6 +534,9 @@ export function applyPayOp(ctx: Ctx, o: PayOp): void {
   const B = s.playerId;
   switch (o.op) {
     case 'hire': {
+      // The night's women and madams: the night's own payroll and protection (poaching, her loyalty) take it.
+      if ((o.job === 'girl' || o.job === 'dancer') && s.nightlife?.people[o.id]) { applyNightOp(ctx, { op: 'payroll', id: o.id }); return; }
+      if (o.job === 'madam' && s.nightlife?.houses[o.id]) { applyNightOp(ctx, { op: 'deal', house: o.id, deal: 'protect' }); return; }
       const h = hire(s, o.id, o.job, { wage: o.wage, fav: !!o.fav });
       const c = s.characters[o.id];
       if (h && c) {
@@ -457,6 +589,13 @@ export function applyPayOp(ctx: Ctx, o: PayOp): void {
       if (h) h.loyalty = clamp(h.loyalty + 6);
       const n = s.nightlife?.people[o.id];
       if (n) n.loyalty = clamp(n.loyalty + 6);
+      return;
+    }
+    case 'star': {
+      const c = starBody(s, o.ref);
+      if (!c) return;
+      const h = hire(s, c.id, 'celebrity', { wage: o.wage });
+      if (h) { h.ref = o.ref; addOpinion(s, c.id, B, 'A friend of the family', 6, 1); ctx.log.push(`${displayName(c)} is a friend of the family now.`); }
       return;
     }
     case 'favor': {
@@ -749,6 +888,20 @@ export function payrollWeek(ctx: Ctx): void {
       }
     }
     if (h.unpaid === 0) { cover[j.coverBar ?? 'local'] += j.cover; votes += j.votes; }
+    // A friend of the family: the draw at your club, the respect of being seen together, and the papers.
+    if (h.job === 'celebrity' && h.unpaid === 0) {
+      const club = s.businesses.find((b) => b.owner === 'player' && CLUB_KINDS.includes(b.kind));
+      if (club && isInSeason(s.date)) {
+        const draw = Math.round((60 + (polOf(s, c.id)?.fame ?? 40)) * (0.85 + roll(`${key}|draw`) * 0.3));
+        money(ctx, draw, `${nm} drew a crowd at ${club.name}`, 'business');
+        h.made += draw;
+        P.stats.yield += draw;
+      }
+      if (s.week % 4 === 0) {
+        respect(ctx, j.respect ?? 1, `Seen with ${nm}`, 'event');
+        if (roll(`${key}|press`) < (j.press ?? 0)) heat(ctx, 'federal', 1, `The papers ran a picture of ${nm} with you`, 'heat');
+      }
+    }
     // Loyalty and what they know.
     if (h.unpaid === 0 && (h.squeezed === undefined || s.week - h.squeezed > 12) && s.week % 4 === 0) h.loyalty = clamp(h.loyalty + 1 + (main ? 1 : 0));
     if (h.squeezed !== undefined && s.week - h.squeezed <= 12 && s.week % 4 === 0) h.loyalty = clamp(h.loyalty - 2);
@@ -879,7 +1032,7 @@ export function payrollRoster(s: GameState): PayRow[] {
     if (adultRole && !mature) continue;
     const k = Math.round(p.earn * kickbackRate(p.earn));
     out.push({
-      id: p.id, charId: p.id, name: displayName(c), job: adultRole ? 'girl' : 'bartender', title: ROLE_LABEL[p.role], source: 'night', wage: 0,
+      id: p.id, charId: p.id, name: displayName(c), job: adultRole ? 'girl' : p.role === 'dancer' ? 'dancer' : 'celebrity', title: ROLE_LABEL[p.role], source: 'night', wage: 0,
       yields: `kicks back ${Math.round(kickbackRate(p.earn) * 100)}% (~${fmtMoney(k)} last week); she keeps the rest`, money: k, loyalty: p.loyalty, risk: clamp(p.role === 'street' ? 45 : 25 + (100 - p.discretion) / 4),
       main: main === p.id, fire: { kind: 'nightlife', op: { op: 'release', id: p.id } }, makeMain: PA({ op: 'main', id: p.id }), note: 'She can quit any time',
     });
@@ -988,6 +1141,141 @@ export function socialCircle(s: GameState): { rings: Ring[]; total: number; dept
 }
 
 /* ------------------------------------------------------------------ */
+/* The night people: working girls, dancers, celebrities, madams       */
+/* ------------------------------------------------------------------ */
+
+export interface Star { name: string; sex: 'M' | 'F'; born: number; age: number; eth: Character['ethnicity']; title: string; fame: number }
+
+/** A star by world record ('pol:<id>' a world-pack entertainer, 'lin:<id>' a showbiz house's person). */
+export function starOf(s: GameState, ref: string): Star | undefined {
+  if (ref.startsWith('pol:')) {
+    const p = getPerson(s, ref.slice(4));
+    if (!p?.alive) return undefined;
+    return { name: `${p.first} ${p.last}`, sex: p.sex, born: p.born, age: s.date.y - p.born, eth: p.eth, title: p.title, fame: p.fame ?? 30 };
+  }
+  if (ref.startsWith('lin:')) {
+    const p = s.lineage?.people[ref.slice(4)];
+    if (!p || p.dy) return undefined;
+    const h = p.house ? s.lineage?.houses[p.house] : undefined;
+    return { name: `${p.first} ${p.last}`, sex: p.g, born: p.by, age: s.date.y - p.by, eth: p.eth, title: p.titles?.[0] ?? (h ? `of the ${h.name} family of show business` : 'In show business'), fame: 50 };
+  }
+  return undefined;
+}
+
+/** The star's engine body (made the first time the boss puts them on a retainer). */
+function starBody(s: GameState, ref: string): Character | undefined {
+  const st = starOf(s, ref);
+  if (!st || st.age < ADULT) return undefined;
+  const pid = ref.slice(4);
+  if (ref.startsWith('pol:')) { const cid = getPerson(s, pid)?.charId; if (cid && s.characters[cid]?.alive) return s.characters[cid]; }
+  if (ref.startsWith('lin:') && s.characters[pid]?.alive) return s.characters[pid];
+  const done = Object.values(s.payroll?.hires ?? {}).find((h) => h.ref === ref);
+  if (done && s.characters[done.id]?.alive) return s.characters[done.id];
+  const h = hashSeed(ref);
+  const c: Character = {
+    id: `c${s.nextId++}`, firstName: st.name.split(' ')[0], lastName: st.name.split(' ').slice(1).join(' ') || st.name, gender: st.sex, ethnicity: st.eth,
+    birth: { y: st.born, m: 1 + (h % 12), d: 1 + ((h >> 4) % 28) }, health: 90, conditions: [],
+    attributes: { leadership: 8, business: 9, diplomacy: 14, intrigue: 9, force: 4, discipline: 10 }, traits: ['Ambitious'],
+    ambition: 'Top billing, and to stay there', rank: 'civilian', faction: 'none', wealth: 6000 + st.fame * 200, dynasty: false, childrenIds: [], alive: true, office: st.title,
+  };
+  s.characters[c.id] = c;
+  if (ref.startsWith('pol:') && s.pol?.people[pid]) mutP(s, pid)!.charId = c.id;
+  return c;
+}
+
+export type NightKind = 'girl' | 'dancer' | 'celebrity' | 'madam';
+export const NIGHT_KIND_LABEL: Record<NightKind, string> = { girl: 'Working girls', dancer: 'Dancers', celebrity: 'Celebrities', madam: 'Madams & houses' };
+
+export interface NightRow {
+  /** The character id, or 'pol:<id>' / 'lin:<id>' for a star without an engine body yet. */
+  id: string;
+  charId?: string;
+  kind: NightKind;
+  name: string;
+  /** Where she works or he plays. */
+  where: string;
+  house?: string;
+  /** 'player' (yours: your payroll or a house you protect), a rival family's id, or 'self' (her own). */
+  employer: string;
+  employerName: string;
+  onPayroll: boolean;
+  earns: string;
+  /** The offer (her decision), when there is one to make. */
+  action?: PlayerAction;
+  note?: string;
+}
+
+const NIGHT_KIND_OF: Partial<Record<string, NightKind>> = { escort: 'girl', callgirl: 'girl', street: 'girl', dancer: 'dancer', singer: 'celebrity', madam: 'madam' };
+
+/**
+ * Everyone of the night the boss can find: the working girls, the dancers at
+ * the clubs, the celebrities playing them this season (the world pack's
+ * entertainers, the showbiz houses, the singers of the clubs), the madams and
+ * their houses. Adults only. Mature content Off hides the girls, the dancers
+ * and the madams; celebrities always show. The honey trap and the payroll
+ * read this one list.
+ */
+export function nightPeople(s: GameState, kind?: NightKind): NightRow[] {
+  const out: NightRow[] = [];
+  const mature = adultOn(s);
+  const N = s.nightlife;
+  const fam = (f: FactionId) => s.rivals.find((r) => r.id === f)?.shortName;
+  for (const p of Object.values(N?.people ?? {})) {
+    const c = s.characters[p.id];
+    const k = NIGHT_KIND_OF[p.role];
+    if (!k || p.status !== 'active' || !c?.alive || !adult(s, c)) continue;
+    if (k !== 'celebrity' && !mature) continue;
+    if (kind && k !== kind) continue;
+    const h = p.house ? N?.houses[p.house] : k === 'madam' ? N?.houses[p.id] : undefined;
+    const mine = !!p.payroll || (k === 'madam' && !!h && h.with === 'player' && h.deal !== 'none');
+    const rival = !mine && p.side !== 'player' && p.side !== 'none' ? p.side : undefined;
+    const prot = !mine && !rival && h?.with === 'player';
+    const employer = mine || prot ? 'player' : rival ?? 'self';
+    const employerName = mine ? (k === 'madam' ? `Her house pays you (${h?.deal === 'partner' ? 'partners' : 'protection'})` : 'On your payroll') : rival ? `The ${fam(rival) ?? 'other'} family` : prot ? 'Works a house you protect' : 'Her own';
+    const earns = k === 'madam' ? `her house took ~${fmtMoney(h?.take ?? 0)} last week` : p.earn ? `~${fmtMoney(p.earn)} last week` : p.price ? `${fmtMoney(p.price)} an evening` : 'between bookings';
+    const action: PlayerAction | undefined = mine || s.payroll?.hires[p.id] ? undefined : k === 'madam' ? (h ? hireAction(s, h.id, 'madam') : undefined) : hireAction(s, p.id, k === 'celebrity' ? 'celebrity' : k);
+    out.push({
+      id: p.id, charId: p.id, kind: k, name: displayName(c), where: h ? `${h.name}${k === 'madam' ? ` · ${h.front}` : ''}` : p.venue, house: h?.name,
+      employer, employerName, onPayroll: mine, earns, action, note: N?.goomars[p.id] && !N.goomars[p.id].ended ? 'Your goomar' : p.bounds.includes('no_payroll') ? 'Works for herself, on nobody\'s payroll' : undefined,
+    });
+  }
+  if (!kind || kind === 'celebrity') {
+    const P = s.payroll;
+    const hired = (charId?: string, ref?: string) => Object.values(P?.hires ?? {}).find((h) => (charId && h.id === charId) || (ref && h.ref === ref));
+    const stars = Object.values(s.pol?.people ?? {}).filter((p) => p.alive && !p.retired && (p.fame ?? 0) >= 20 && s.date.y - p.born >= ADULT).sort((a, b) => (b.fame ?? 0) - (a.fame ?? 0)).slice(0, 40);
+    for (const p of stars) {
+      const cid = p.charId && s.characters[p.charId]?.alive ? p.charId : undefined;
+      const ref = `pol:${p.id}`;
+      const h = hired(cid, ref);
+      out.push({
+        id: cid ?? ref, charId: h?.id ?? cid, kind: 'celebrity', name: `${p.first} ${p.last}`, where: p.title, employer: h ? 'player' : 'self', employerName: h ? 'A friend of the family (your retainer)' : 'Independent',
+        onPayroll: !!h, earns: `fame ${p.fame}`, action: h ? undefined : cid ? hireAction(s, cid, 'celebrity') : { kind: 'payroll', op: { op: 'star', ref } },
+      });
+    }
+    for (const hs of Object.values(s.lineage?.houses ?? {})) {
+      if (hs.type !== 'showbiz' || hs.extinct || !hs.headId) continue;
+      const lp = s.lineage!.people[hs.headId];
+      if (!lp || lp.dy || s.date.y - lp.by < ADULT || out.some((r) => r.name === `${lp.first} ${lp.last}`)) continue;
+      const ref = `lin:${lp.id}`;
+      const cid = s.characters[lp.id]?.alive ? lp.id : undefined;
+      const h = hired(cid, ref);
+      out.push({
+        id: cid ?? ref, charId: h?.id ?? cid, kind: 'celebrity', name: `${lp.first} ${lp.last}`, where: lp.titles?.[0] ?? `The ${hs.name} family · ${hs.seat}`, house: hs.name,
+        employer: h ? 'player' : 'self', employerName: h ? 'A friend of the family (your retainer)' : 'Independent', onPayroll: !!h, earns: 'plays the clubs this season',
+        action: h ? undefined : cid ? hireAction(s, cid, 'celebrity') : { kind: 'payroll', op: { op: 'star', ref } },
+      });
+    }
+  }
+  const ord: NightKind[] = ['girl', 'dancer', 'celebrity', 'madam'];
+  return out.sort((a, b) => ord.indexOf(a.kind) - ord.indexOf(b.kind) || Number(b.onPayroll) - Number(a.onPayroll) || a.name.localeCompare(b.name));
+}
+
+/** The working women (girls and madams), for the honey trap and the payroll: who, her house, on your payroll, who she works for. Empty when Mature content is Off. */
+export function workingWomen(s: GameState): { id: string; house?: string; onPayroll: boolean; employer: string }[] {
+  return nightPeople(s).filter((r) => (r.kind === 'girl' || r.kind === 'madam') && r.charId).map((r) => ({ id: r.charId!, house: r.house, onPayroll: r.onPayroll, employer: r.employer }));
+}
+
+/* ------------------------------------------------------------------ */
 /* "I'll do it, and in return you work for me": the favor asks         */
 /* ------------------------------------------------------------------ */
 
@@ -1020,9 +1308,9 @@ export function favorJobChoice(s: GameState, ev: EventInstance): Choice | undefi
     const c = who.c;
     if (offerBlock(s, c) || onAnyPayroll(s, c.id)) return undefined;
     job = bestJob(s, c);
-    if (!job || job === 'girl' || job === 'madam') job = jobsFor(s, c).find((j) => j !== 'girl' && j !== 'madam');
+    if (!job || job === 'girl' || job === 'dancer' || job === 'madam') job = jobsFor(s, c).find((j) => j !== 'girl' && j !== 'dancer' && j !== 'madam');
     if (!job) return undefined;
-    const acc = hireAcceptance(s, c, job, true);
+    const acc = offerAcceptance(s, c, job, { favor: true });
     chance = acc.chance;
     nm = c.firstName;
     he = c.gender === 'F' ? 'she' : 'he';
@@ -1030,7 +1318,7 @@ export function favorJobChoice(s: GameState, ev: EventInstance): Choice | undefi
     if (top) reasons = ` Mostly: ${top.label.toLowerCase()} (${top.value > 0 ? '+' : ''}${top.value}).`;
   } else {
     job = who.f ? 'cook' : (['barber', 'bartender', 'parking', 'driver'] as PayJob[])[hashSeed(key) % 4];
-    chance = 0.6;
+    chance = Math.min(0.9, 0.6 + askerReason(s).value / 100);
     nm = who.name!.split(' ')[0];
     he = who.f ? 'she' : 'he';
   }

@@ -17,7 +17,7 @@ import type { GameState } from './types';
 
 export type PayJob =
   | 'barber' | 'cook' | 'attendant' | 'parking' | 'bartender' | 'driver' | 'clerk' | 'bookkeeper'
-  | 'cop' | 'politician' | 'wife' | 'girl' | 'madam' | 'bookie' | 'runner' | 'fence' | 'hush';
+  | 'cop' | 'politician' | 'wife' | 'girl' | 'madam' | 'bookie' | 'runner' | 'fence' | 'hush' | 'celebrity' | 'dancer';
 
 export interface JobInfo {
   label: string;
@@ -43,6 +43,10 @@ export interface JobInfo {
   risk: number;
   /** Adult work: hidden when Mature content is Off. */
   mature?: boolean;
+  /** Respect a month, of being seen with them (celebrities). */
+  respect?: number;
+  /** Bad press: the chance a month the papers make something of it (federal heat, Kefauver-style). */
+  press?: number;
   /** Who it suits. */
   who: 'any' | 'man' | 'woman' | 'cop' | 'pol' | 'wife' | 'night' | 'madam' | 'kin';
 }
@@ -60,14 +64,16 @@ export const JOBS: Record<PayJob, JobInfo> = {
   politician: { label: 'Politician on the pad', group: 'Politicians on the pad', blurb: 'His vote, his phone calls, his signature', wage: 100, money: 0, ears: 1, cover: 1, votes: 2, tips: 0, risk: 25, who: 'pol' },
   wife: { label: 'A made man\'s wife', group: 'The wives\' table', blurb: 'Runs the wives\' table at the social club and hears everything at the christenings', wage: 30, money: 0, ears: 2, cover: 1, votes: 0, tips: 0, risk: 8, who: 'wife' },
   girl: { label: 'Working girl', group: 'Working girls', blurb: 'Works for herself, keeps her share, kicks back a cut for the protection; quits any time', wage: 0, money: 0, ears: 1, cover: 0, votes: 0, tips: 0, risk: 25, mature: true, who: 'night' },
+  dancer: { label: 'Dancer', group: 'Dancers', blurb: 'Dances at the clubs, keeps her share, kicks back a cut for the protection; quits any time', wage: 0, money: 0, ears: 1, cover: 0, votes: 0, tips: 0, risk: 15, mature: true, who: 'night' },
   madam: { label: 'Madam / house manager', group: 'Madams & house managers', blurb: 'Runs her own house; pays for the Family\'s protection', wage: 0, money: 0, ears: 2, cover: 0, votes: 0, tips: 0, risk: 30, mature: true, who: 'madam' },
   bookie: { label: 'Bookie', group: 'Bookies', blurb: 'Takes action on the horses and the fights; the Family takes its end', wage: 50, money: 140, ears: 1, cover: 0, votes: 0, tips: 0, risk: 25, who: 'any' },
   runner: { label: 'Numbers runner', group: 'Numbers runners', blurb: 'Carries the slips up the avenue every afternoon', wage: 30, money: 80, ears: 1, cover: 0, votes: 0, tips: 0, risk: 20, who: 'any' },
   fence: { label: 'Fence', group: 'Fences', blurb: 'Moves whatever fell off a truck', wage: 40, money: 100, ears: 0, cover: 0, votes: 0, tips: 0, risk: 25, who: 'man' },
+  celebrity: { label: 'Friend of the family', group: 'Celebrities', blurb: 'A retainer: appearances at your club, a favor owed, an introduction to people in power', wage: 150, money: 0, ears: 0, cover: 0, votes: 1, tips: 0, risk: 15, respect: 1, press: 0.2, who: 'any' },
   hush: { label: 'Quiet envelope', group: 'Quiet envelopes', blurb: 'A wife (or a close relative) who tells you what her husband\'s side knows and plans. Nobody else knows', wage: 60, money: 0, ears: 0, cover: 0, votes: 0, tips: 0, risk: 20, who: 'kin' },
 };
 
-export const JOB_ORDER: PayJob[] = ['hush', 'girl', 'madam', 'cop', 'politician', 'bookie', 'attendant', 'runner', 'fence', 'bartender', 'barber', 'cook', 'parking', 'driver', 'clerk', 'bookkeeper', 'wife'];
+export const JOB_ORDER: PayJob[] = ['hush', 'celebrity', 'girl', 'dancer', 'madam', 'cop', 'politician', 'bookie', 'attendant', 'runner', 'fence', 'bartender', 'barber', 'cook', 'parking', 'driver', 'clerk', 'bookkeeper', 'wife'];
 
 /** The quiet envelope's own record: who she reports on, and how good she is at it. */
 export interface Hush {
@@ -106,6 +112,8 @@ export interface Hire {
   /** What they brought in, all told. */
   made: number;
   hush?: Hush;
+  /** A celebrity's world record ('pol:<id>' or 'lin:<id>'). */
+  ref?: string;
 }
 
 export type Conf = 'confirmed' | 'likely' | 'rumor';
@@ -155,20 +163,33 @@ export function ensurePayroll(s: GameState): PayrollState {
   return P;
 }
 
-/** Orders (the PlayerAction). */
+/** How much the offer is: below what they expect, fair, generous, or whatever they ask. */
+export type PayLevel = 'low' | 'fair' | 'generous' | 'top';
+export const PAY_LEVELS: PayLevel[] = ['low', 'fair', 'generous', 'top'];
+export const PAY_INFO: Record<PayLevel, { label: string; mult: number; odds: number }> = {
+  low: { label: 'Low', mult: 0.75, odds: -10 },
+  fair: { label: 'Fair', mult: 1, odds: 0 },
+  generous: { label: 'Generous', mult: 1.5, odds: 12 },
+  top: { label: 'Name your price', mult: 2.25, odds: 20 },
+};
+
+/** Orders (the PlayerAction). `via`: the man who makes the offer (absent: the boss in person). */
 export type PayrollAction =
-  | { op: 'hire'; id: string; job: PayJob }
+  | { op: 'hire'; id: string; job: PayJob; pay?: PayLevel; via?: string }
   | { op: 'fire'; id: string }
   | { op: 'raise'; id: string; amount: number }
-  | { op: 'main'; id: string };
+  | { op: 'main'; id: string }
+  /** A star who has no engine body yet (a world-pack entertainer, a showbiz house's head): 'pol:<id>' or 'lin:<id>'. */
+  | { op: 'star'; ref: string; pay?: PayLevel; via?: string };
 
 /** Effect ops. */
 export type PayOp =
-  | { op: 'hire'; id: string; job: PayJob; wage: number; fav?: 1 }
+  | { op: 'hire'; id: string; job: PayJob; wage: number; fav?: 1; sign?: number }
   | { op: 'refused'; id: string; job: PayJob }
   | { op: 'fire'; id: string }
   | { op: 'raise'; id: string; amount: number }
   | { op: 'main'; id: string }
+  | { op: 'star'; ref: string; wage: number }
   /** "I'll do it, and in return you work for me": rolled when the favor is granted. `name` makes a person of a petitioner who was only a name. */
   | { op: 'favor'; id?: string; name?: string; f?: 1; job: PayJob; chance: number; key: string }
   /** He found out about the quiet envelope: the boss's answer. */

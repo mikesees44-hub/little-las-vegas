@@ -213,6 +213,8 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
   }
   if (a.kind === 'spend' && a.op.op === 'buy') return spendHours(a.op.item);
   if (a.kind === 'work') return workHours(a.op, s?.playerId);
+  // An offer made by one of his men takes the boss a quarter of an hour; in person, the hour.
+  if (a.kind === 'payroll' && (a.op.op === 'hire' || a.op.op === 'star') && a.op.via) return 0.25;
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];
   if (a.kind in TIME_TABLE) return TIME_TABLE[a.kind];
   return DEFAULT_COST;

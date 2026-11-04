@@ -12,8 +12,10 @@ import { previewAction } from '../src/engine/actions';
 import { ensureThreats } from '../src/engine/threats';
 import { buildAsk } from '../src/engine/deeds/asks';
 import {
-  applyPayOp, favorJobChoice, hire, hireAction, hushItem, hushTarget, jobsFor, payrollRoster, payrollWeek, socialCircle, withFavorJobs,
+  applyPayOp, askers, favorJobChoice, hire, hireAction, hushItem, hushTarget, jobsFor, nightPeople, offerAcceptance, payrollRoster, payrollWeek, socialCircle, withFavorJobs, workingWomen,
 } from '../src/engine/payroll';
+import { addOpinion } from '../src/engine/relations';
+import { timeCost } from '../src/engine/timeCost';
 import type { Character, GameState } from '../src/engine/types';
 
 const weeks = (s: GameState, n: number) => { for (let i = 0; i < n && !s.gameOver; i++) s = advanceWeek(s, {}).state; return s; };
@@ -218,5 +220,69 @@ describe('"I\'ll do it, and in return you work for me"', () => {
     const capo = Object.values(s.characters).find((x) => x.alive && x.faction === 'player' && x.rank === 'capo')!;
     const ev = buildAsk(s, { id: 'ak3', d: 'askFavor', a: capo.id, w: s.week, p: 50, n: 400 })!;
     expect(favorJobChoice(s, ev)).toBeUndefined();
+  });
+});
+
+describe('who asks, and how much', () => {
+  it('the boss in person beats a man of lower rank, and a generous offer beats a low one', () => {
+    const s = newGame('payroll-odds');
+    const c = civilian(s);
+    s.respect = 50;
+    const men = askers(s);
+    const assoc = men.find((m) => m.rank === 'associate') ?? men[men.length - 1];
+    const boss = offerAcceptance(s, c, 'bartender', {});
+    const low = offerAcceptance(s, c, 'bartender', { via: assoc.id });
+    expect(boss.chance).toBeGreaterThan(low.chance);
+    expect(boss.reasons.some((r) => r.label.startsWith('Asked by the boss himself'))).toBe(true);
+    const cheap = offerAcceptance(s, c, 'bartender', { pay: 'low', via: assoc.id });
+    const rich = offerAcceptance(s, c, 'bartender', { pay: 'generous', via: assoc.id });
+    const top = offerAcceptance(s, c, 'bartender', { pay: 'top', via: assoc.id });
+    expect(rich.chance).toBeGreaterThan(cheap.chance);
+    expect(top.chance).toBeGreaterThanOrEqual(rich.chance);
+    // The wage follows the amount; a man sent costs the boss a quarter of an hour, in person the hour.
+    const pv = previewAction(s, { kind: 'payroll', op: { op: 'hire', id: c.id, job: 'bartender', pay: 'generous' } });
+    expect(pv.cost).toBeGreaterThan(previewAction(s, { kind: 'payroll', op: { op: 'hire', id: c.id, job: 'bartender' } }).cost);
+    expect(timeCost({ kind: 'payroll', op: { op: 'hire', id: c.id, job: 'bartender', via: assoc.id } }, s)).toBeLessThan(timeCost({ kind: 'payroll', op: { op: 'hire', id: c.id, job: 'bartender' } }, s));
+  });
+
+  it('heavy loyalty to a rival caps what money and rank can do', () => {
+    const s = newGame('payroll-cap');
+    const rv = s.rivals.find((r) => r.kind === 'mob')!;
+    const m = makeCharacter(s, { gender: 'M', age: 33, rank: 'soldier', faction: rv.id, nickname: false });
+    addOpinion(s, m.id, rv.leaderId, 'Made me', 60, 0);
+    s.respect = 100;
+    const acc = offerAcceptance(s, m, 'bartender', { pay: 'top' });
+    expect(acc.chance).toBeLessThanOrEqual(0.2);
+    expect(acc.reasons.some((r) => /no amount buys more/.test(r.label))).toBe(true);
+  });
+});
+
+describe('the night people', () => {
+  it('girls, dancers, celebrities and madams in one finder; Mature Off leaves only the celebrities', () => {
+    let s = newGame('payroll-night');
+    ensureNightlife(s);
+    const all = nightPeople(s);
+    for (const k of ['girl', 'dancer', 'celebrity', 'madam']) expect(all.some((r) => r.kind === k), k).toBe(true);
+    for (const r of all) if (r.charId) expect(s.date.y - s.characters[r.charId].birth.y).toBeGreaterThanOrEqual(18);
+    const ww = workingWomen(s);
+    expect(ww.length).toBeGreaterThan(3);
+    expect(ww.every((w) => typeof w.onPayroll === 'boolean' && !!w.employer)).toBe(true);
+    // Offer a girl a job through the payroll: the night's own payroll records it.
+    const g = all.find((r) => r.kind === 'girl' && !r.onPayroll && r.action && !r.note)!;
+    const pv = previewAction(s, g.action!);
+    expect(pv.acceptance!.chance).toBeGreaterThan(0);
+    applyEffects(newCtx(s), pv.effects, { label: 'x', because: 'x', category: 'cost' });
+    expect(s.nightlife!.people[g.charId!].payroll).toBeDefined();
+    // A star without a body gets one on the retainer.
+    const star = all.find((r) => r.kind === 'celebrity' && r.action?.kind === 'payroll' && r.action.op.op === 'star');
+    if (star) {
+      const sp = previewAction(s, star.action!);
+      applyEffects(newCtx(s), sp.effects, { label: 'x', because: 'x', category: 'cost' });
+      expect(Object.values(s.payroll!.hires).some((h) => h.job === 'celebrity' && h.ref === (star.action as { op: { ref: string } }).op.ref)).toBe(true);
+    }
+    s = setDatingSettings(s, { mature: 'off' });
+    const off = nightPeople(s);
+    expect(off.every((r) => r.kind === 'celebrity')).toBe(true);
+    expect(workingWomen(s)).toEqual([]);
   });
 });

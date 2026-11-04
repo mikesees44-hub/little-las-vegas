@@ -2,9 +2,14 @@ import { useMemo, useState } from 'react';
 import { previewAction } from '../../engine/actions';
 import { fmtMoney } from '../../engine/effects';
 import {
-  hireAcceptance, hireAction, jobsFor, payrollGroups, payrollTotals, recentIntel, socialCircle, JOBS,
-  type PayRow, type RingId,
+  askers, hireAcceptance, hireAction, jobsFor, nightPeople, payrollGroups, payrollTotals, recentIntel, socialCircle, JOBS, NIGHT_KIND_LABEL,
+  type NightKind, type NightRow, type PayRow, type RingId,
 } from '../../engine/payroll';
+import { PAY_INFO, PAY_LEVELS, type PayLevel } from '../../engine/payrollState';
+import { oddsWord } from '../../engine/decide';
+import { adultOn } from '../../engine/datingState';
+import { ActionCard } from '../components/Orders';
+import { SubTabs } from '../components/Layout';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
 import { PlayCard, Section, StatChip } from '../components/Layout';
@@ -83,8 +88,12 @@ function Candidates({ s }: { s: GameState }) {
   );
 }
 
+const NIGHT_JOBS = ['girl', 'dancer', 'madam'];
+
 export function PayrollSection({ s }: { s: GameState }) {
-  const groups = useMemo(() => payrollGroups(s), [s]);
+  const all = useMemo(() => payrollGroups(s), [s]);
+  const [only, setOnly] = useState<'all' | 'girls'>('all');
+  const groups = only === 'girls' ? all.filter((g) => NIGHT_JOBS.includes(g.job)) : all;
   const t = useMemo(() => payrollTotals(s), [s]);
   const intel = recentIntel(s, 4);
   return (
@@ -96,6 +105,11 @@ export function PayrollSection({ s }: { s: GameState }) {
         <StatChip label="They bring in" value={fmtMoney(t.money)} sub="a week, about" tone={t.money >= t.wages ? 'good' : 'warn'} domain="money" />
         <StatChip label="Main earner" value={t.main ?? '—'} domain="money" />
       </div>
+      {adultOn(s) && (
+        <div className="mb-1 flex flex-wrap gap-1 text-[11px]" role="radiogroup" aria-label="Show" data-testid="payroll-filters">
+          {([['all', 'Everyone'], ['girls', 'Working girls']] as const).map(([f, label]) => <button key={f} type="button" role="radio" aria-checked={only === f} onClick={() => setOnly(f)} data-testid={`payroll-filter-${f}`} className={`rounded border px-2 py-0.5 ${only === f ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>{label}</button>)}
+        </div>
+      )}
       {!groups.length && <p className="text-[12px] text-stone-400" data-testid="payroll-empty">Nobody outside the Family is on your payroll yet. A barber, a bartender, a cop: open anyone's sheet and offer a job.</p>}
       {groups.map((g) => (
         <div key={g.job} className="mt-2" data-testid={`payroll-group-${g.job}`}>
@@ -160,6 +174,92 @@ export function SocialCircle({ s }: { s: GameState }) {
           {!ring.ids.length && <li className="text-[12px] text-stone-500">Nobody yet.</li>}
         </ul>
       )}
+    </Section>
+  );
+}
+
+/** One-shot request from another screen (Nightlife, Find): open the night people on this tab. */
+let wantNight: NightKind | undefined;
+export function focusNight(k: NightKind = 'girl'): void { wantNight = k; }
+
+/**
+ * THE OFFER: who asks (the boss in person, or one of his men) and how much (Low, Fair, Generous, Name your
+ * price), the odds breakdown in plain words before it is sent, then the order card that settles it on the spot.
+ */
+export function OfferCard({ s, action }: { s: GameState; action: PlayerAction }) {
+  const [pay, setPay] = useState<PayLevel>('fair');
+  const [via, setVia] = useState<string>('');
+  const who = useMemo(() => askers(s), [s]);
+  if (action.kind !== 'payroll' || (action.op.op !== 'hire' && action.op.op !== 'star')) return <ActionCard s={s} action={action} compact />;
+  const a: PlayerAction = { kind: 'payroll', op: { ...action.op, ...(pay !== 'fair' ? { pay } : { pay: undefined }), ...(via ? { via } : { via: undefined }) } as never };
+  const p = previewAction(s, a);
+  const acc = p.acceptance;
+  const reasons = (acc?.reasons ?? []).filter((r) => r.label !== 'Base').sort((x, y) => Math.abs(y.value) - Math.abs(x.value));
+  return (
+    <div className="space-y-1.5 rounded border border-noir-700 bg-noir-900/70 p-2 text-stone-200" data-testid="offer-card">
+      <div className="flex flex-wrap items-center gap-1 text-[11px]">
+        <span className="text-stone-400">Who asks</span>
+        <select value={via} onChange={(e) => setVia(e.target.value)} className="max-w-full rounded border border-noir-600 bg-noir-950 px-1 py-0.5 text-[11px]" aria-label="Who makes the offer" data-testid="offer-via">
+          {who.map((w) => <option key={w.id ?? 'boss'} value={w.id ?? ''}>{w.label}{w.id ? ' (¼ hour)' : ' (1 hour)'}</option>)}
+        </select>
+      </div>
+      <div className="flex flex-wrap items-center gap-1 text-[11px]" role="radiogroup" aria-label="How much">
+        <span className="text-stone-400">How much</span>
+        {PAY_LEVELS.map((l) => (
+          <button key={l} type="button" role="radio" aria-checked={pay === l} onClick={() => setPay(l)} data-testid={`offer-pay-${l}`}
+            className={`rounded border px-1.5 py-0.5 ${pay === l ? 'border-gold-400 bg-gold-500 text-noir-950' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>{PAY_INFO[l].label}</button>
+        ))}
+      </div>
+      {acc && (
+        <p className="text-[11.5px]" data-testid="offer-odds">
+          <b className="text-stone-100">{Math.round(acc.chance * 100)}%, {oddsWord(acc.chance)}</b>
+          <span className="text-stone-400"> · {reasons.slice(0, 5).map((r) => `${r.label} ${r.value > 0 ? '+' : '−'}${Math.abs(r.value)}`).join(', ')}</span>
+        </p>
+      )}
+      <ActionCard s={s} action={a} compact />
+    </div>
+  );
+}
+
+const EMP_TONE = (r: NightRow) => (r.employer === 'player' ? 'text-emerald-300' : r.employer === 'self' ? 'text-stone-300' : 'text-red-300');
+
+function NightCard({ s, r }: { s: GameState; r: NightRow }) {
+  const c = r.charId ? s.characters[r.charId] : undefined;
+  const [open, setOpen] = useState(false);
+  const d: Domain = r.kind === 'celebrity' ? 'shore' : 'romance';
+  return (
+    <PlayCard as="li" d={d} testid="night-person" dataAttrs={{ 'data-kind': r.kind, 'data-employer': r.employer }} className={open ? 'sm:col-span-2' : ''}
+      art={c ? <Face s={s} c={c} size={52} /> : undefined} artClassName="!min-h-[64px]"
+      title={c ? <CharLink s={s} id={c.id} /> : r.name} lines={[r.where, r.earns]}>
+      <p className={`mt-0.5 text-[11px] ${EMP_TONE(r)}`}>{r.employerName}{r.note ? <span className="text-stone-400"> · {r.note}</span> : null}</p>
+      {r.action && (
+        <div className="mt-1">
+          <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="night-offer">{open ? 'Close ▴' : r.kind === 'celebrity' ? 'A friend of the family… ▾' : r.kind === 'madam' ? 'Offer protection… ▾' : 'Offer a job… ▾'}</button>
+          {open && <div className="mt-1"><OfferCard s={s} action={r.action} /></div>}
+        </div>
+      )}
+    </PlayCard>
+  );
+}
+
+/**
+ * THE NIGHT PEOPLE: one place to find everyone of the night, by tab: working girls, dancers, celebrities,
+ * madams and their houses. Where each works, who she is with (your payroll, a rival's, her own), and the
+ * offer (her decision). Mature content Off: only the celebrities.
+ */
+export function NightPeople({ s }: { s: GameState }) {
+  const mature = adultOn(s);
+  const kinds: NightKind[] = mature ? ['girl', 'dancer', 'celebrity', 'madam'] : ['celebrity'];
+  const [k, setK] = useState<NightKind>(() => { const w = wantNight && kinds.includes(wantNight) ? wantNight : kinds[0]; wantNight = undefined; return w; });
+  const all = useMemo(() => nightPeople(s), [s]);
+  const tab = kinds.includes(k) ? k : kinds[0];
+  const rows = all.filter((r) => r.kind === tab);
+  return (
+    <Section title="The night people" domain="romance" testid="night-people"
+      sub={mature ? 'Everyone of the night you can find: who she works for, where, what she makes. Every offer is her decision; she keeps her share and can quit any time.' : 'Mature content is Off: the celebrities playing the clubs this season.'}>
+      <SubTabs tabs={kinds.map((x) => ({ id: x, label: `${NIGHT_KIND_LABEL[x]} ${all.filter((r) => r.kind === x).length}`, testid: `night-tab-${x}` }))} value={tab} onChange={setK} label="Who" testid="night-tabs" />
+      <ul className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{rows.map((r) => <NightCard key={r.id} s={s} r={r} />)}</ul>
+      {!rows.length && <p className="mt-2 text-[12px] text-stone-400">Nobody here yet.</p>}
     </Section>
   );
 }

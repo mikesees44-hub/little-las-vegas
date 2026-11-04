@@ -5,7 +5,7 @@ import type { DialSpec } from '../../engine/phoneMeet';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { weekLabel } from '../../engine/journal';
 import { Face } from './ink';
-import { ActionCard } from '../components/Orders';
+import { OfferCard } from '../borgata/Payroll';
 
 const GROUP_DOM: Record<BookGroup, string> = { men: 'crew', family: 'family', law: 'law', rivals: 'rivals', women: 'romance', business: 'money' };
 const DOM_RGB: Record<string, string> = { crew: 'var(--d-crew)', family: 'var(--d-family)', law: 'var(--d-law)', rivals: 'var(--d-rivals)', romance: 'var(--d-romance)', money: 'var(--d-money)' };
@@ -72,7 +72,7 @@ function Card({ s, c, onChar, onPhone, onOrder }: { s: GameState; c: Contact; on
           {c.pay?.on && <span className="text-[11px] text-[#1d5b33]" data-testid="bb-onpay">{c.pay.on}</span>}
           {gift && <button type="button" className="llv-ink-btn px-2 py-0.5" disabled={!!pv?.disabledReason} title={pv?.disabledReason ?? `A gift: ${pv?.cost ? `$${pv.cost.toLocaleString('en-US')}` : ''}`} onClick={() => onOrder(gift)} data-testid="bb-gift">Gift{pv?.cost ? ` $${pv.cost}` : ''}{pv?.acceptance ? ` · ${Math.round(pv.acceptance.chance * 100)}%` : ''}</button>}
         </div>
-        {offer && c.pay?.offer && <div className="mt-1 text-stone-200" data-testid="bb-hire-card"><ActionCard s={s} action={c.pay.offer} compact /></div>}
+        {offer && c.pay?.offer && <div className="mt-1 text-stone-200" data-testid="bb-hire-card"><OfferCard s={s} action={c.pay.offer} /></div>}
       </div>
     </li>
   );

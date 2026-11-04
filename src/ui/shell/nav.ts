@@ -84,7 +84,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   org: [
     { items: [
       { keys: ['borgata.rise', 'borgata.progress', 'borgata.membership', 'borgata.place'], icon: '▲', label: 'The Rise', sub: 'Grow the family: the ladder, your capos and their men, levels and focus, who is ready for more, getting made.', views: ['The Rise', 'Coming up', 'Getting made', 'Your place'] },
-      { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen', 'borgata.protect'], icon: '⚑', label: 'Your men', sub: 'The chart, the capos and their men, taking care of each one, and who guards whom.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them', 'Guards & inquiries'] },
+      { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen', 'borgata.protect', 'borgata.night'], icon: '⚑', label: 'Your men', sub: 'The chart, the capos and their men, taking care of each one, who guards whom, and the civilians on the payroll and the night people.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them', 'Guards & inquiries', 'The night people'] },
       { keys: ['borgata.council', 'borgata.chain'], icon: '♜', label: 'Council & chain of command', sub: 'Five seats, one job each; and who handles what on their own: the underboss, the consigliere, each capo.', views: ['The seats', 'Who handles what'] },
       { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
       { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
