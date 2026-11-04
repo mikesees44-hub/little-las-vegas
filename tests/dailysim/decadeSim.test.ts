@@ -87,7 +87,8 @@ function integrity(s: GameState): string[] {
       if (boss.faction !== 'player') out.push(`player faction=${boss.faction}`);
       if (!boss.dynasty) out.push('player not in the dynasty');
       if (stationOf(s) === 'boss' && boss.rank !== 'boss') out.push(`station boss but rank=${boss.rank}`);
-      if (stationOf(s) !== 'boss' && boss.rank === 'boss') out.push(`station ${stationOf(s)} but rank=boss`);
+      // (A man in the ranks keeps rank 'boss' of his own HOUSE by design, station.ts; B3 was the rivals warring on him: rankView.spareFromWars.)
+      if (stationOf(s) !== 'boss' && s.wars.some((w) => w.by !== 'player')) out.push(`station ${stationOf(s)} but at war with a family`);
     }
   }
   let dangling = 0; let deadCapoRef = 0; let nanChar = 0; let negWealth = 0;
@@ -382,6 +383,7 @@ describe.skipIf(!ON)('decade sim', () => {
         hollow: H ? (H.dmw ? 'dmw' : 'hollow') : null, legal: s.legal?.stage ?? null,
         tpl: s.pendingEvents.map((e) => templateOf(e)), cnt, hits, dayCrash,
         chars: Object.keys(s.characters).length, bad: ib.slice(0, 4),
+        wounded: (s.army?.bossWound === s.week || s.power?.bossStruck === s.week) ? 1 : 0, comeback: s.power?.comeback ? 1 : 0, ward: s.flags.philly_took === s.week ? 1 : 0,
       };
       if (OUT) appendFileSync(`${OUT}.weeks.jsonl`, `${JSON.stringify(rec)}\n`);
       const wdone = wi + 1;
