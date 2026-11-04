@@ -15,6 +15,7 @@ import { commitHood, hoodActions, previewHood } from './hood';
 import { previewLiving } from './livingAsk';
 import { previewDating } from './dating';
 import { previewNight } from './nightlife';
+import { previewHer } from './herway';
 import { noteAttention, previewBond } from './bonds';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
@@ -343,6 +344,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** Nightlife (nightlife.ts, goomar.ts): payroll, promises, goomars, the madams' houses. She decides. */
   nightlife: {
     preview: (s, a) => previewNight(s, a.op),
+  },
+  /** Her way (herway.ts): the women earners of the town. She decides. */
+  herway: {
+    preview: (s, a) => previewHer(s, a.op),
   },
   /** Your People (bonds.ts): the wife, the goomars, the kids, friends and enemies. They decide. */
   bond: {

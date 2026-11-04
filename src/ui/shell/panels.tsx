@@ -60,6 +60,7 @@ import { MissionBoard, PactsPanel } from '../hood/MissionBoard';
 import { EmpireSection } from '../empire/EmpireSection';
 import { NightPanel } from '../ears/EarsPanel';
 import { NightlifePanel } from '../nightlife/NightlifePanel';
+import { HerBook } from '../town/HerBook';
 import { DatingPanel } from '../dating/DatingPanel';
 import { YourPeople } from '../bonds/YourPeople';
 import { AttachmentBoard } from '../ears/Connections';
@@ -220,6 +221,7 @@ export const PANELS: PanelDef[] = [
       { id: 'underbelly', label: 'The Underbelly', render: (s) => <UnderbellyPanel s={s} /> },
       { id: 'night', label: 'The Night', blurb: 'The Madam, the Ears who hear everything, and the men who exploit women. Set-ups and reports only; she always decides.', render: (s) => <NightPanel s={s} /> },
       { id: 'nightlife', label: 'Nightlife', blurb: 'The people of the night (the young and mature high-end lists, call girls, the street, dancers, singers, bar regulars, the clubs), the madams\' houses, promises and goomars. Adults only; she always decides.', render: (s) => <NightlifePanel s={s} /> },
+      { id: 'women', label: 'Women of the town', blurb: 'The women who earn their own way: the numbers, the books, fronts, politics, the switchboard, and the madams\' houses. Partner, protect, hire, lend, back, listen, squeeze or leave her be. She always decides.', render: (s) => <HerBook s={s} /> },
       { id: 'attached', label: 'Who\'s attached to whom', blurb: 'The connection web: who is sweet on whom, who is a regular, who keeps someone on the side. The Ears reveal the rest.', render: (s) => <AttachmentBoard s={s} /> },
       { id: 'patronage', label: 'Patronage', render: (s) => <PatronagePanel s={s} /> },
     ],

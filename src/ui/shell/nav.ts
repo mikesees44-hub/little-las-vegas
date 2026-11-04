@@ -104,7 +104,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   ],
   map: [
     { items: [
-      { keys: ['town.happening', 'town.attached'], icon: '☷', label: 'The street', sub: 'The Boardwalk\'s people on their own: stories, the talk, and who\'s with whom.', views: ['What\'s happening', 'Who\'s with whom'] },
+      { keys: ['town.happening', 'town.attached', 'town.women'], icon: '☷', label: 'The street', sub: 'The Boardwalk\'s people on their own: stories, the talk, who\'s with whom, and the women who earn.', views: ['What\'s happening', 'Who\'s with whom', 'Women of the town'] },
       { keys: ['you.walk'], icon: '⇢', label: 'Walk the boardwalk', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.' },
       { keys: ['town.hoods'], icon: '⌂', label: 'Neighborhoods', sub: 'Each neighborhood: who lives and works there, who owns what, the police.' },
       { keys: ['town.nightlife', 'town.night'], icon: '☾', label: 'Nightlife & the Ears', sub: 'The people of the night, the madams\' houses, evenings, promises, goomars, and the Ears. She always decides.', views: ['Nightlife', 'The Ears & the Madam'] },

@@ -24,6 +24,7 @@ import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
 import { addMore } from './menuMore';
 import { nightActionsFor } from '../../engine/nightlife';
+import { herActionsFor } from '../../engine/herway';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
 import { capoActionsFor } from '../../engine/capos';
@@ -249,6 +250,8 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   // Their calling card (adults), the goomar (CK's concubine: only someone you are already seeing, and she decides), the night's orders.
   if (isAdult(s, c)) add('talk', { key: 'card', open: { type: 'card' }, label: `${c.firstName}'s calling card…`, text: 'Who they are at a glance: looks, personality, skills, family, money as known, you, rumors.' });
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id) && s.characters[s.playerId]?.spouseId !== c.id) add('romance', { key: 'goomar', action: { kind: 'nightlife', op: { op: 'goomar', id: c.id } }, label: `Make ${c.firstName} your goomar` });
+  // Her way (herway.ts): a woman earner's career: partner, protect, hire, lend, back her run, her ears, squeeze, leave her be.
+  for (const a of herActionsFor(s, c.id)) if (a.kind === 'herway') add('business', { key: `her:${a.op.op}`, action: a });
   for (const a of nightActionsFor(s, c.id)) if (a.kind === 'nightlife' && a.op.op !== 'goomar') add(a.op.op === 'endGoomar' ? 'romance' : 'nightlife', { key: `nl:${JSON.stringify(a.op)}`, action: a });
 
   // Romance and marriage of the house's people.

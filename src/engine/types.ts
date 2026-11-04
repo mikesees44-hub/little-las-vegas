@@ -569,6 +569,8 @@ export type Effect =
   | ({ type: 'dating'; op: import('./dating').DatingOp } & EffectBase)
   /** Nightlife: payroll, promises, the goomar, houses (nightlife.ts). */
   | ({ type: 'nightlife'; op: import('./nightlife').NightOp } & EffectBase)
+  /** Her way: the women earners (herway.ts). */
+  | ({ type: 'herway'; op: import('./herway').HerOp } & EffectBase)
   /** Your People: the deep relationships (bonds.ts). */
   | ({ type: 'bond'; op: import('./bonds').BondOp } & EffectBase)
   /** My Men (myMen.ts): taking care of the crew, and the crew watching how. */
@@ -970,6 +972,8 @@ export interface GameState {
   dating?: import('./datingState').DatingState;
   /** Nightlife: the cast of the night, the madams' houses, promises, goomars, stored looks (nightlifeState.ts; optional for old saves). */
   nightlife?: import('./nightlifeState').NightlifeState;
+  /** Her way: women earners of the town, their careers, rise and fall, and the boss's deals with them (herway.ts; optional for old saves). */
+  herway?: import('./herway').HerWayState;
   /** Your People: axes, memories and stages of the boss's closest ties (bondsState.ts; optional for old saves). */
   bonds?: import('./bondsState').BondsState;
   /** My Men (myMen.ts): the "Does the boss have our back?" meter, the wrongs done to the men, protection (optional for old saves). */
@@ -1125,6 +1129,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'dating'; op: import('./dating').DatingAction }
   /** Nightlife (nightlife.ts): payroll, promises, the goomar, the madams' protection. She decides. */
   | { kind: 'nightlife'; op: import('./nightlife').NightAction }
+  /** Her way (herway.ts): the women earners: partner, protect, hire, lend, back her run, her ears, squeeze, leave her be. She decides. */
+  | { kind: 'herway'; op: import('./herway').HerAction }
   /** Your People (bonds.ts): your wife, your goomars, your kids, your friends, your enemies. They decide. */
   | { kind: 'bond'; op: import('./bonds').BondAction }
   /** My Men (myMen.ts): money, protection, his back, discipline, for one man or all of them. */

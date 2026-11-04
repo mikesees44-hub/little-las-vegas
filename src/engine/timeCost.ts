@@ -148,6 +148,8 @@ export const TIME_TABLE: Record<string, number> = {
   // Intrigue: a word in the right ear is an hour; a sit-down is an evening; questioning a man takes the afternoon.
   'intrigue:plant': 1, 'intrigue:turn': 2, 'intrigue:recall': 0.5, 'intrigue:canary': 1, 'intrigue:question': 2, 'intrigue:moleFate': 1,
   'intrigue:rumor': 1, 'intrigue:forge': 1, 'intrigue:sabotage': 0.5, 'intrigue:proxy': 1, 'intrigue:sitdown': 3, 'intrigue:front': 0.5,
+  // Her way (herway.ts): a deal is a meeting; a loan or a word is quick; a campaign is an afternoon.
+  'herway:partner': 2, 'herway:protect': 1, 'herway:hire': 1, 'herway:lend': 0.5, 'herway:back': 2, 'herway:ears': 1, 'herway:squeeze': 1, 'herway:leave': 0.25,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
   // Your People (bonds.ts): an evening with your wife, an afternoon with a kid, a day fishing.
   'bond:date': 4, 'bond:anniversary': 4, 'bond:apologize': 1, 'bond:confess': 1, 'bond:deny': 0.5, 'bond:vacation': TRAVEL_DAY,

@@ -70,7 +70,7 @@ export function personOf(s: GameState, a: PlayerAction): string | undefined {
 }
 
 /** Kinds that are settled in the moment (person to person). */
-const NOW_KINDS = new Set(['deed', 'interact', 'women', 'dating', 'nightlife', 'bond']);
+const NOW_KINDS = new Set(['deed', 'interact', 'women', 'dating', 'nightlife', 'bond', 'herway']);
 const NOW_ECON = new Set(['gift', 'invite', 'leverage']);
 
 export function settlesNow(s: GameState, a: PlayerAction): boolean {

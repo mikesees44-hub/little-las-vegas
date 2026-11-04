@@ -82,6 +82,7 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   women: ['women.ts', 'WomenAction', 'op'],
   honey: ['honey.ts', 'HoneyAction', 'op'],
   capo: ['caposState.ts', 'CapoAction', 'op'],
+  herway: ['herway.ts', 'HerAction', 'op'],
 };
 
 const SPECIAL_AT = new Set(['person', 'place', 'map', 'office', 'event']);

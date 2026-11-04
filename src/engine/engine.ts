@@ -83,6 +83,7 @@ import './delegation';
 import { earsWeek } from './ears';
 import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
+import { herwayWeek } from './herway';
 import { bondsWeek } from './bonds';
 import { spendWeek } from './spend';
 import { storeWeek } from './store';
@@ -448,6 +449,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     earsWeek(ctx);
     datingWeek(ctx);
     nightlifeWeek(ctx);
+    herwayWeek(ctx);
     womenWeek(ctx);
     honeyWeek(ctx);
     bondsWeek(ctx);
