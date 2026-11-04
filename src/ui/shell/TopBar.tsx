@@ -168,11 +168,13 @@ function MoneyChips({ s }: { s: GameState }) {
         <Chip label="Family money" short="Family" value={fmt$(m.family)} num={m.family} icon="$" iconTone="green" d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash after={p.familyAfter} />
         <span data-testid="topbar-pocket"><Chip label="Your pocket" short="Pocket" value={fmt$(m.pocket)} num={m.pocket} icon="♠" iconTone="gold" d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash after={p.pocketAfter} /></span>
       </button>
+      <button type="button" className="hidden md:inline-flex h-[42px] items-center rounded-md border border-amber-500/40 bg-noir-800/70 px-2 text-[11px] font-semibold text-amber-200 hover:border-gold-400 hover:text-gold-300" onClick={() => go('you.pocket')} title="Spend your pocket on yourself: homes, the Florida condo, cars, the watch, jewelry for her, nights out" data-testid="topbar-spend">Spend<span className="ml-0.5 text-stone-500">▸</span></button>
       {open && (
         <div className="fixed left-2 right-2 top-[7.5rem] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 z-[1200] sm:w-[440px] max-h-[75vh] overflow-y-auto panel p-2 space-y-2" data-testid="money-popover">
           <BigPots s={s} compact />
           <div className="text-[12px] text-stone-300"><WeekPotsLine s={s} /></div>
           <MoveMoney s={s} />
+          <button type="button" className="btn-secondary llv-d-money llv-dom-btn w-full text-xs" onClick={() => { setOpen(false); go('you.pocket'); }} data-testid="money-popover-spend">Spend your pocket: homes, cars, the watch, something for her ▸</button>
           <button type="button" className="btn-primary w-full text-xs" onClick={() => { setOpen(false); go('holdings.money'); }} data-testid="money-popover-open">Open the Money screen: where every dollar came from and went ▸</button>
         </div>
       )}

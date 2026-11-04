@@ -157,3 +157,18 @@ describe('Your Pocket: the shop', () => {
     expect(p.warning).toMatch(/night clerk/);
   });
 });
+
+describe('Your Pocket: the screen', () => {
+  it('renders the shop (homes first, the Florida condo on the shelf) and the sheet lists what he owns', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { PocketShop } = await import('../src/ui/store/PocketShop');
+    let s = rich('pk-ui');
+    s = advanceWeek(s, { actions: [buy('sp_rolex')] }).state;
+    const html = renderToString(createElement(PocketShop, { s }));
+    expect(html).toContain('data-testid="pocket-shop"');
+    expect(html).toContain('Collins Avenue');
+    expect(html).toContain('What you own');
+    expect(html).toContain('Rolex Datejust');
+  });
+});

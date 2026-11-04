@@ -37,6 +37,8 @@ import { DatingSection } from '../dating/DatingPanel';
 import { BonesFacts } from '../books/BonesFacts';
 import { PurseSection } from '../tribute/PurseSection';
 import { wealthOf } from '../../engine/wealth';
+import { pocketGiven, pocketOwned } from '../../engine/pocketShop';
+import { useShell } from '../shell/context';
 import { useState } from 'react';
 import { QuickActions } from '../sheet/QuickActions';
 import { AgingSection } from '../sheet/AgingSection';
@@ -279,7 +281,27 @@ function OwnMoneyLines({ s, c }: { s: GameState; c: Character }) {
       {w.savings > 0 && <div className="text-stone-400">Savings put away: <span className="text-stone-200" data-testid="sheet-savings">{fmt$(w.savings)}</span> <span className="text-stone-500">(not in the pocket; passes to your heir)</span></div>}
       {w.possessions > 0 && <div className="text-stone-400">Homes, cars & things: <span className="text-stone-200">{fmt$(w.possessions)}</span> <span className="text-stone-500">(if sold)</span></div>}
       <div className="text-stone-400">Net worth: <span className="text-stone-200" data-testid="sheet-net-worth">{fmt$(w.net)}</span> <span className="text-stone-500">(Family money not included)</span></div>
+      <WhatHeOwns s={s} />
     </>
+  );
+}
+
+/** The boss's things, bought from his pocket (Your Pocket): what each is worth and costs a week; one tap to the shop. */
+function WhatHeOwns({ s }: { s: GameState }) {
+  const { go } = useShell();
+  const rows = pocketOwned(s);
+  const given = pocketGiven(s);
+  return (
+    <details className="pt-1" data-testid="sheet-owns" open={rows.length > 0 && rows.length <= 4}>
+      <summary className="cursor-pointer text-[10px] uppercase tracking-widest text-stone-500">What he owns <span className="normal-case tracking-normal text-stone-600">({rows.length || 'nothing yet'}) · More…</span></summary>
+      {rows.length > 0 && (
+        <ul className="mt-0.5">
+          {rows.map((o) => <li key={o.uid} className="text-xs text-stone-300">{o.name}{o.holder && s.characters[o.holder] ? <span className="text-rose-200"> ({s.characters[o.holder].firstName}'s)</span> : null} <span className="text-stone-500 tabular-nums">· worth {fmt$(o.worth)}{o.upkeep ? ` · ${fmt$(o.upkeep)}/wk` : ''}</span></li>)}
+        </ul>
+      )}
+      {given.length > 0 && <div className="text-[11px] text-stone-500">Gave away: {given.slice(0, 4).map((g) => `${g.name.replace(/^An? /, 'a ').toLowerCase()} to ${g.to}`).join(' · ')}</div>}
+      <button type="button" className="mt-0.5 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => go('you.pocket')} data-testid="sheet-owns-spend">Spend your pocket ▸</button>
+    </details>
   );
 }
 

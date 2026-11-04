@@ -124,7 +124,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
     { items: [
       { keys: ['you.character'], icon: '☺', label: 'Your sheet', sub: 'Your skills, health, traits and standing.' },
       { keys: ['you.people', 'you.dating'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel, remember, want. Dates and adult services.', views: ['Your people', 'Relationships & Dating'] },
-      { keys: ['you.store', 'you.spend', 'you.possessions', 'you.lifestyle'], icon: '♠', label: 'The Store', sub: 'Everything money buys, from a flop house to a yacht. Share the wealth; take the whole family on vacation.', views: ['The Store', 'Everything, as a list', 'The good life (yours)', 'How you rule'] },
+      { keys: ['you.store', 'you.pocket', 'you.spend', 'you.possessions', 'you.lifestyle'], icon: '♠', label: 'The Store', sub: 'Everything money buys, from a flop house to a yacht. Spend your pocket on yourself; share the wealth; take the whole family on vacation.', views: ['The Store', 'Your pocket', 'Everything, as a list', 'The good life (yours)', 'How you rule'] },
       { keys: ['house.tree', 'house.houses'], icon: '♔', label: 'Your house', sub: 'Your wife, your children, your house, and every family\'s tree back to the old country.', views: ['Family tree', 'Every house'] },
       { keys: ['house.marriages'], icon: '♥', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
       { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'] },

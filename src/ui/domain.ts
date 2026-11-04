@@ -50,7 +50,7 @@ const MAP: Record<string, Domain> = {
   'town.case': 'law', 'town.cityhall': 'politics', 'town.patronage': 'politics', 'town.underbelly': 'crew', 'town.hoods': 'shore',
   'town.night': 'romance', 'town.nightlife': 'romance', 'town.attached': 'romance', 'town.happening': 'shore',
   'diplomacy.table': 'politics', 'diplomacy.pacts': 'politics', 'ops.travel': 'shore', 'you.walk': 'shore', 'you.dating': 'romance',
-  'you.store': 'money', 'you.spend': 'money', 'you.possessions': 'money', 'house.court': 'family', 'house.succession': 'family',
+  'you.store': 'money', 'you.pocket': 'money', 'you.spend': 'money', 'you.possessions': 'money', 'house.court': 'family', 'house.succession': 'family',
   'borgata.earnings': 'money', 'borgata.take': 'money', 'ops.missions': 'crew',
   // The Store's tabs (engine/storeData.ts STORE_TABS), namespaced: what the thing bought is part of
   'store.luxury': 'money', 'store.property': 'money', 'store.vehicles': 'shore', 'store.services': 'crew', 'store.equipment': 'money',
