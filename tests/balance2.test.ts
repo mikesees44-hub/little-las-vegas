@@ -213,6 +213,8 @@ describe('Top 10 #7: marriages and births renew the line', () => {
     ensureDynState(s);
     const boss = s.characters[s.playerId];
     makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 24, faction: 'player' });
+    // With a woman of the house, she arranges the match (matchmakers.ts); without one the houses come to the boss.
+    for (const c of Object.values(s.characters)) if (c.gender === 'F' && (c.dynasty || c.id === boss.spouseId || c.id === boss.motherId)) c.alive = false;
     let ev;
     for (let w = 0; w < 3000 && !ev; w++) { s.week++; ev = matchOfferSource(s); }
     if (!s.dyn?.houses?.length) return; // a start without the houses layer: nothing to offer

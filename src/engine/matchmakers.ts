@@ -551,7 +551,7 @@ export function applyMatchOp(ctx: Ctx, o: MatchOp): void {
 /* The week                                                            */
 /* ------------------------------------------------------------------ */
 
-export const PROPOSAL_YEARLY = 0.35;
+export const PROPOSAL_YEARLY = 0.6;
 export const PROPOSAL_GAP = 8;
 /** Weeks of silence before she goes ahead on her own. */
 export const SILENCE_WEEKS = 6;
