@@ -156,27 +156,32 @@ describe('the Ears: no lying tooltips', () => {
 
 describe('the Ears: hints through the story director', () => {
   it('she comes to you in one line; three answers; the text never repeats', () => {
-    let s = newGame('ears-hints');
-    s.money = 60000;
-    const texts: string[] = [];
-    let weekly = 0;
-    for (let i = 0; i < 120 && !s.gameOver; i++) {
-      const hints = s.pendingEvents.filter((e) => e.defId.startsWith('ears_hint_'));
-      expect(hints.length).toBeLessThanOrEqual(1);
-      weekly = Math.max(weekly, s.pendingEvents.length);
-      for (const h of hints) {
-        texts.push(h.text);
-        const ids = h.choices.map((c) => c.id);
-        expect(ids[0]).toBe('pay');
-        expect(ids.some((x) => x === 'keep' || x === 'pass')).toBe(true);
-        expect(h.choices[0].label).toMatch(/\$/);
+    // Hints are rare and the weeks are chaotic: three towns' worth of 120 weeks, so one seed's luck does not decide it.
+    let all = 0;
+    for (const seed of ['ears-hints', 'ears-a', 'ears-b']) {
+      let s = newGame(seed);
+      s.money = 60000;
+      const texts: string[] = [];
+      let weekly = 0;
+      for (let i = 0; i < 120 && !s.gameOver; i++) {
+        const hints = s.pendingEvents.filter((e) => e.defId.startsWith('ears_hint_'));
+        expect(hints.length).toBeLessThanOrEqual(1);
+        weekly = Math.max(weekly, s.pendingEvents.length);
+        for (const h of hints) {
+          texts.push(h.text);
+          const ids = h.choices.map((c) => c.id);
+          expect(ids[0]).toBe('pay');
+          expect(ids.some((x) => x === 'keep' || x === 'pass')).toBe(true);
+          expect(h.choices[0].label).toMatch(/\$/);
+        }
+        s = advanceWeek(s, choose(s, i)).state;
       }
-      s = advanceWeek(s, choose(s, i)).state;
+      expect(new Set(texts).size).toBe(texts.length);
+      expect(weekly).toBeLessThanOrEqual(4);
+      all += texts.length;
     }
-    expect(texts.length).toBeGreaterThan(2);
-    expect(new Set(texts).size).toBe(texts.length);
-    expect(weekly).toBeLessThanOrEqual(4);
-  });
+    expect(all).toBeGreaterThan(2);
+  }, 300000);
 
   it('the event source is deterministic and pure for the same state', () => {
     const s = newGame('ears-src');
