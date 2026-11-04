@@ -9,6 +9,7 @@ import type { DoNowItem } from './doNow';
 import { useOpportunity } from './RightRail';
 import { sectionLock } from '../../engine/rankView';
 import { DoneMark } from '../components/Layout';
+import { domainOf, domClass } from '../domain';
 
 const glyph = (g: string) => <span aria-hidden style={{ fontVariantEmoji: 'text' } as never}>{g}&#xFE0E;</span>;
 
@@ -69,10 +70,12 @@ function Blurb({ text }: { text: string }) {
 }
 
 function ItemCard({ it, fresh, onOpen }: { it: NavItem; fresh: boolean; onOpen: () => void }) {
+  // Each place carries the colour of its part of the Don's life (ui/domain.ts): the icon chip and the edge.
+  const d = domainOf(it.keys[0]) ?? domainOf(it.id);
   return (
-    <button type="button" onClick={onOpen} data-testid={`nav-item-${it.id}`} data-locked={it.locked ? 'true' : undefined} title={it.locked ? `${it.label}: ${it.locked}` : undefined}
-      className={`group relative flex w-full items-start gap-2.5 rounded-md border border-noir-700 bg-noir-800/60 px-2.5 py-2 text-left hover:border-gold-500/70 hover:bg-noir-800 ${it.locked ? 'opacity-50' : ''}`}>
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gold-600/50 text-base text-gold-400">{glyph(it.icon)}</span>
+    <button type="button" onClick={onOpen} data-testid={`nav-item-${it.id}`} data-locked={it.locked ? 'true' : undefined} data-domain={d} title={it.locked ? `${it.label}: ${it.locked}` : undefined}
+      className={`group relative flex w-full items-start gap-2.5 rounded-md border border-noir-700 bg-noir-800/60 px-2.5 py-2 text-left hover:border-gold-500/70 hover:bg-noir-800 ${d ? `${domClass(d)} llv-dom-edge` : ''} ${it.locked ? 'opacity-50' : ''}`}>
+      <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-base ${d ? 'llv-dom-chip !rounded-full' : 'border border-gold-600/50 text-gold-400'}`}>{glyph(it.icon)}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-stone-100 group-hover:text-gold-300">{it.label}</span>
         <span className="block text-[11px] leading-snug text-stone-400">{it.locked ? <span className="text-amber-200">🔒 {it.locked}. </span> : null}{it.sub}</span>
@@ -125,7 +128,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   const sec = key ? sectionDef(key) : undefined;
   return (
     <section className={`absolute inset-y-0 left-0 z-[1100] flex w-full ${cur?.wide || (home === 'desk' && !cur) ? 'md:w-[min(1080px,calc(100%-24px))]' : 'md:w-[min(680px,calc(100%-24px))]'} flex-col border-r border-gold-600/30 bg-noir-900 shadow-2xl shadow-black/70 llv-slide-left`} data-testid={`drawer-${home}`} aria-label={def.label}>
-      <header className="flex items-center gap-2 border-b border-noir-700 px-3 py-2">
+      <header className={`flex items-center gap-2 border-b px-3 py-2 ${cur && (domainOf(key) ?? domainOf(cur.id)) ? `${domClass(domainOf(key) ?? domainOf(cur.id))} llv-dom-strip` : 'border-noir-700'}`} data-domain={cur ? domainOf(key) ?? domainOf(cur.id) : undefined}>
         {cur ? (
           <button type="button" onClick={() => onOpen(undefined)} data-testid="drawer-back" aria-label={`Back to ${def.label}`}
             className="flex min-w-0 items-center gap-1.5 rounded px-1 text-gold-400 hover:text-gold-300">
@@ -146,13 +149,14 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
           {tabs.map((x) => (
             <button key={x.id} type="button" data-tab={x.id} data-testid={`nav-tab-${x.id}`} onClick={() => onOpen(x.id)} aria-current={x === cur ? 'page' : undefined}
               className={`relative tab whitespace-nowrap text-xs px-2.5 py-2 ${x === cur ? 'tab-active' : ''}`}>
-              <span className="mr-1 text-gold-500/80">{glyph(x.icon)}</span>{x.label}
+              <span className={`mr-1 ${domClass(domainOf(x.keys[0]) ?? domainOf(x.id))} llv-dom-ink`}>{glyph(x.icon)}</span>{x.label}
               {isFresh(x) && <span className="absolute right-0.5 top-1 h-1.5 w-1.5 rounded-full bg-gold-400" aria-label="new" />}
             </button>
           ))}
         </nav>
       )}
-      <div ref={body} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-6 sm:p-4" data-testid={cur ? `section-${key}` : 'home-landing'}>
+      {/* The open section sets its domain's colours for everything inside: section headers take them (index.css .llv-dom-scope). */}
+      <div ref={body} className={`min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-6 sm:p-4 ${cur && (domainOf(key) ?? domainOf(cur.id)) ? `${domClass(domainOf(key) ?? domainOf(cur.id))} llv-dom-scope` : ''}`} data-testid={cur ? `section-${key}` : 'home-landing'}>
         {!cur ? (
           <>
             {/* The Desk speaks for itself (a calm home screen): no blurb, and "Do this now" only when there is something. */}
@@ -174,7 +178,8 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
               <div className="mb-2 flex flex-wrap gap-1" data-testid="views" role="tablist">
                 {cur.keys.map((k, i) => (
                   <button key={k} type="button" role="tab" aria-selected={k === key} onClick={() => onOpen(k)} data-testid={`view-${k}`}
-                    className={`rounded-full border px-2.5 py-0.5 text-xs ${k === key ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs ${k === key ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-noir-600 text-stone-400 hover:text-gold-300'}`}>
+                    {domainOf(k) && <span className={`${domClass(domainOf(k))} llv-dom-dot`} aria-hidden />}
                     {cur.views?.[i] ?? sectionDef(k)?.label ?? k}
                   </button>
                 ))}

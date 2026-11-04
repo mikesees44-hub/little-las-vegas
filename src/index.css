@@ -120,8 +120,9 @@ body {
   .llv-pagehead-sub { @apply mt-0.5 text-[12px] leading-snug text-stone-400; max-width: 72ch; }
   .llv-section { @apply mb-4; }
   .llv-section-head { @apply mb-2 flex items-end gap-2 border-b border-noir-700/80 pb-1; }
-  .llv-section-head.llv-dom { border-bottom-color: rgb(var(--d) / 0.55); }
-  .llv-section-head.llv-dom .llv-section-title { color: rgb(var(--d-ink)); }
+  .llv-section-head.llv-dom, .llv-dom-scope .llv-section-head { border-bottom-color: rgb(var(--d) / 0.55); }
+  .llv-dom-scope .llv-section-title, .llv-dom-scope .panel-title { color: rgb(var(--d-ink)); }
+  .llv-section-head.llv-dom .llv-section-title, .llv-dom-scope .llv-section.llv-dom-own .llv-section-title { color: rgb(var(--d-ink)); }
   .llv-section-title { @apply font-display text-[15px] sm:text-base leading-tight text-gold-300; }
   .llv-section-sub { @apply text-[11.5px] leading-snug text-stone-400; max-width: 72ch; }
   .llv-card-box { @apply relative rounded-lg border p-3; }
