@@ -184,6 +184,7 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
   if (!c.alive) return undefined;
   c.alive = false;
   c.death = { week: s.week, date: { ...s.date }, cause, killer };
+  widow(s, c);
   lineageDeath(ctx, c.id, cause, killer);
   const ageAt = age(s, c);
   const name = displayName(c);
@@ -218,6 +219,20 @@ export function killCharacter(ctx: Ctx, charId: string, cause: string, killer?: 
   tidyRegimes(s);
   for (const h of DEATH_HANDLERS) h(ctx, charId, cause, c);
   return c;
+}
+
+/**
+ * B8: the survivor of a marriage is a widow (or widower) and free to marry again. The dead keep their
+ * spouseId (the tree and the history read it); births already require a living father.
+ */
+export function widow(s: GameState, dead: Character): void {
+  const sp = dead.spouseId ? s.characters[dead.spouseId] : undefined;
+  if (sp && sp.spouseId === dead.id) sp.spouseId = undefined;
+}
+
+/** Saves from before B8: every living survivor still married to the dead is freed (upgradeSave). */
+export function freeWidows(s: GameState): void {
+  for (const c of Object.values(s.characters)) if (!c.alive) widow(s, c);
 }
 
 /** Fill a vacated capo/underboss slot from the best soldier. */
@@ -370,6 +385,7 @@ export function monthlyLife(ctx: Ctx): MonthlyResult {
   for (const c of living) if (c.alive && c.warnedWeek !== undefined && c.health >= 60 && s.week - c.warnedWeek > 26) c.warnedWeek = undefined;
 
   agingMonth(ctx);
+  freeWidows(s);
   births(ctx);
   marriages(ctx);
   return { warnings };

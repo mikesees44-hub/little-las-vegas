@@ -124,3 +124,21 @@ describe('Top 10 #3: the boss at home is wounded first, not killed', () => {
     expect(wounded).toBe(true);
   });
 });
+
+describe('B8: widows and widowers are free to marry again', () => {
+  it('a death frees the survivor; an old save is freed at load', async () => {
+    const { killCharacter } = await import('../src/engine/dynasty');
+    const { upgradeSave } = await import('../src/engine/upgradeSave');
+    const s = newGameWith('b8-widow', 'olddon');
+    const husband = Object.values(s.characters).find((c) => c.alive && c.dynasty && c.gender === 'M' && c.spouseId && s.characters[c.spouseId]?.alive && c.id !== s.playerId)!;
+    expect(husband).toBeDefined();
+    const wife = s.characters[husband.spouseId!];
+    killCharacter(newCtx(s), husband.id, 'a heart attack');
+    expect(wife.spouseId).toBeUndefined();
+    expect(husband.spouseId).toBe(wife.id); // the dead keep it for the tree
+    // An older save: still married to the dead.
+    wife.spouseId = husband.id;
+    const up = upgradeSave(s);
+    expect(up.characters[wife.id].spouseId).toBeUndefined();
+  });
+});

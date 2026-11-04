@@ -45,6 +45,7 @@ import { keepOldDelegation } from './lieutenants';
 import { ensureDaily } from './daily';
 import { ensureAbove } from './valente';
 import { ensurePhoneSave } from './phoneState';
+import { freeWidows } from './dynasty';
 import type { GameState } from './types';
 
 /**
@@ -87,6 +88,8 @@ export function upgradeSave(s: GameState): GameState {
   if ((s.schema ?? 0) < 2) try { keepOldDelegation(s); } catch { /* nobody seated yet: the new defaults apply */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
+  // B8: widows and widowers of an older save stop being married to the dead.
+  try { freeWidows(s); } catch { /* nothing to free */ }
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }
   // A save from before the family above (a low start, or a fallen boss in someone's ranks): the Valente family, once.
   try { ensureAbove(s); } catch { /* the station still works without it */ }
