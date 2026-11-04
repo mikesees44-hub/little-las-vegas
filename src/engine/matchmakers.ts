@@ -346,7 +346,8 @@ export const FAVOR_TEXT: Record<FavorKind, { label: string; detail: string }> = 
   word: { label: 'What the wives say', detail: 'Kitchen talk about their husband: something you can use.' },
 };
 
-const X = (op: MatchOp, label: string): Effect => ({ type: 'bond', op, label }) as Effect;
+// The chip says it all (describeMatchOp): no label to repeat after it.
+const X = (op: MatchOp, _label: string): Effect => ({ type: 'bond', op, label: '' }) as Effect;
 
 /** Which match an answer is about: the open proposal, or his own pick. */
 function subject(s: GameState, a: Extract<MatchAction, { op: 'match' }>): { member?: Character; spouse?: Character; weigh: Weigh; prop?: Proposal } {
@@ -443,10 +444,16 @@ function previewFavor(s: GameState, a: Extract<MatchAction, { op: 'herFavor' }>,
 export function describeMatchOp(s: GameState, o: MatchOp): string | undefined {
   const by = s.characters[o.id];
   if (!by) return undefined;
-  if (o.op === 'herFavor') return `${by.firstName} calls in a favor`;
-  if (o.op === 'matchNo') return `${by.firstName}'s match falls through`;
-  if (o.op === 'knewBest') return o.good ? `${by.firstName} was right about the match` : `${by.firstName}'s standing`;
-  return `${by.firstName}: ${ANSWER_TITLE[o.answer].toLowerCase()}`;
+  const n = by.firstName;
+  if (o.op === 'herFavor') return `${n} spends a favor owed to her`;
+  if (o.op === 'matchNo') return `Someone says no: ${n}'s standing barely moves, and nobody is forced`;
+  if (o.op === 'knewBest') return o.good ? `${n}'s standing rises: the match was a good one` : `${n}'s standing`;
+  switch (o.answer) {
+    case 'bless': return `${n}'s standing +8 · she is pleased · a favor owed to her`;
+    case 'grumble': return `${n}'s standing +6 · she heard you grumble, and thinks a little less of you`;
+    case 'veto': return `${n}'s standing −6 · she is hurt · the women talk`;
+    case 'own': return `${n}'s standing +3 · a favor owed to her`;
+  }
 }
 
 function mlog(s: GameState, text: string): void {
