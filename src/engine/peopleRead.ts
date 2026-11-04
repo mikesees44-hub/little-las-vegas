@@ -1,5 +1,6 @@
 import { crew, displayName, hasTrait, isFree } from './characters';
 import { holder } from './council';
+import { honeyWeek } from './hitHoney';
 import { purseFlags } from './crewPurse';
 import { journal } from './journal';
 import type { Ctx } from './ledger';
@@ -61,6 +62,8 @@ export interface ReadsState {
   p: Record<string, PersonRead>;
   /** Evidence keys already counted (bounded). */
   seen: string[];
+  /** Honey-trap witnesses (hitHoney.ts): the woman, the target, the week, the boss's answer, when it ended. */
+  hw?: { id: string; t: string; w: number; fate?: 'florida' | 'payroll' | 'left'; done?: number; pay?: 'low' | 'fair' | 'generous' | 'name' }[];
 }
 
 export const EV_CAP = 8;
@@ -227,6 +230,7 @@ function clip(t: string, n = 110): string {
 /** The week's read: new evidence counted once, every suspicion fades a little. Runs at the end of the week. */
 export function readsWeek(ctx: Ctx): void {
   const s = ctx.s;
+  honeyWeek(ctx);
   if (s.reads) {
     for (const [id, r] of Object.entries(s.reads.p)) {
       if (!s.characters[id]?.alive) { delete s.reads.p[id]; continue; }

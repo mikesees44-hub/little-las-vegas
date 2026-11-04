@@ -197,6 +197,9 @@ export function hasTimeCost(kind: string, op?: string): boolean {
  * Hours the boss spends on an order. With the state, a trip he doesn't go on
  * himself is only an order (a quarter of an hour to send them off).
  */
+/** Hours the boss spends asking a woman himself to set up a hit (hitHoney.ts). */
+export const HONEY_ASK_HOURS = 1.5;
+
 export function timeCost(a: PlayerAction, s?: GameState): number {
   const op = opName(a);
   if (a.kind === 'talk' && a.op.t === 'ask') {
@@ -210,6 +213,8 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
     const d = DESTS[p.destId];
     if (d && p.transport) return departureHours(resolveTransport(p.mode, p.tier, d, p.transport), d, TRAVEL_DAY);
   }
+  // A hit's honey trap asked by the boss in person: an evening of his own (hitHoney.ts).
+  if (a.kind === 'scheme' && a.opts.honey && (!a.opts.honeyAsk || a.opts.honeyAsk === s?.playerId)) return TIME_TABLE.scheme + HONEY_ASK_HOURS;
   if (a.kind === 'spend' && a.op.op === 'buy') return spendHours(a.op.item);
   if (a.kind === 'work') return workHours(a.op, s?.playerId);
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];

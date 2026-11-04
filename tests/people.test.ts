@@ -172,3 +172,60 @@ describe('close people (the ★)', () => {
     if (auto[0]) expect(isPinned(togglePin(back, auto[0]), auto[0])).toBe(true);
   });
 });
+
+describe('the honey trap in a planned hit', () => {
+  it('appears only with Mature content on and a candidate; raises the odds; who asks and how much matter', async () => {
+    const H = await import('../src/engine/hitHoney');
+    const s = newGame('people-honey');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    const t = Object.values(s.characters).find((c) => c.alive && c.faction === 'manno' && c.id !== r.leaderId && c.rank !== 'civilian')!;
+    const women = H.honeyCandidates(s, t.id);
+    expect(women.length).toBeGreaterThan(0);
+    const off = { ...s, dating: { ...s.dating!, settings: { ...s.dating!.settings, mature: 'off' as const } } };
+    expect(H.honeyCandidates(off, t.id)).toEqual([]);
+    const noNight = { ...s, nightlife: { ...s.nightlife!, people: {} } };
+    expect(H.honeyCandidates(noNight, t.id)).toEqual([]);
+    const team = hitLine(s, t.id).team;
+    const base = schemeOdds(s, 'murder', t.id, team, { depth: 'planned' });
+    const w = women[0].id;
+    const withHer = schemeOdds(s, 'murder', t.id, team, { depth: 'planned', honey: w });
+    expect(withHer.chance).toBeGreaterThan(base.chance);
+    expect(withHer.cost).toBeGreaterThan(base.cost);
+    expect(schemeOdds(off, 'murder', t.id, team, { depth: 'planned', honey: w }).chance).toBe(base.chance);
+    // The boss asking, and a generous offer, raise her odds; generous lowers the tip-off.
+    const soldierAsk = crew(s).find((c) => c.rank === 'soldier')!;
+    const lowSoldier = H.honeyOdds(s, w, t.id, { by: soldierAsk.id, pay: 'low' });
+    const fairBoss = H.honeyOdds(s, w, t.id, { pay: 'fair' });
+    const genBoss = H.honeyOdds(s, w, t.id, { pay: 'generous' });
+    const nameBoss = H.honeyOdds(s, w, t.id, { pay: 'name' });
+    expect(fairBoss.yes).toBeGreaterThan(lowSoldier.yes);
+    expect(genBoss.yes).toBeGreaterThanOrEqual(fairBoss.yes);
+    expect(genBoss.warn).toBeLessThan(fairBoss.warn);
+    expect(nameBoss.yes - genBoss.yes).toBeLessThanOrEqual(genBoss.yes - fairBoss.yes + 1e-9);
+    expect(fairBoss.reasons.map((x) => x.label).join(' ')).toMatch(/boss/);
+    // Heavy fear of the target caps her.
+    const scared = JSON.parse(JSON.stringify(s));
+    scared.relations[`${w}>${t.id}`] = { from: w, to: t.id, modifiers: [], fear: 80, trust: 30, grievance: 0 };
+    expect(H.honeyOdds(scared, w, t.id, { pay: 'name' }).yes).toBeLessThanOrEqual(0.35);
+  });
+
+  it('her answer is rolled: yes, a refusal, a tip-off and cold feet all happen', async () => {
+    const H = await import('../src/engine/hitHoney');
+    const o = { yes: 0.5, warn: 0.1, nerve: 0.1 };
+    const got = new Set([0.05, 0.3, 0.55, 0.65, 0.95].map((r) => H.honeyAnswer(o, r)));
+    expect([...got].sort()).toEqual(['nerve', 'no', 'warn', 'yes']);
+    // And in a real game: across many jobs, some say no and some warn him.
+    const s = newGame('people-honey-roll');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    const t = Object.values(s.characters).find((c) => c.alive && c.faction === 'manno' && c.id !== r.leaderId && c.rank !== 'civilian')!;
+    const w = H.honeyCandidates(s, t.id)[0].id;
+    const seen = new Set<string>();
+    for (let i = 0; i < 400; i++) {
+      const a = H.rollHoney(s, { id: `sc${i}`, kind: 'murder', owner: 'player', ownerId: s.playerId, targetId: t.id, agents: [], opts: { depth: 'planned', honey: w, honeyPay: 'low' }, progress: 100, startWeek: 0, discovered: false, because: '' });
+      if (a) seen.add(a);
+    }
+    expect(seen.has('no')).toBe(true);
+    expect(seen.has('warn')).toBe(true);
+    expect(seen.has('yes')).toBe(true);
+  });
+});

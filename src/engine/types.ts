@@ -634,6 +634,11 @@ export interface SchemeOptions {
   heist?: HeistKind;
   city?: string;
   district?: string;
+  /** A hit's honey trap: the working woman paid to get him alone (hitHoney.ts; Mature content only). */
+  honey?: string;
+  /** Who asks her (a character id; absent = the boss in person) and what she is offered. */
+  honeyAsk?: string;
+  honeyPay?: 'low' | 'fair' | 'generous' | 'name';
 }
 
 /** A plan in motion (CK scheme): agents, weekly progress, secrecy, a final roll. */
