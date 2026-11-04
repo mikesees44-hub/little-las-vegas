@@ -9,7 +9,8 @@ import { latestReport } from '../../engine/tribute';
 import type { GameState } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { FACTION_TINT, useSheet } from '../components/People';
-import { ActionMenu } from '../components/Layout';
+import { ActionMenu, DomainChip } from '../components/Layout';
+import { domainOf, domainOfText, domClass, type Domain } from '../domain';
 import { useOffice } from '../desk/officeApi';
 import { useShell } from '../shell/context';
 import { useOpenDating } from '../dating/DatingPanel';
@@ -51,6 +52,14 @@ export interface BossOfficeProps {
 }
 
 const chip = 'inline-flex items-center gap-1 rounded border border-gold-600/50 bg-noir-950/85 px-1.5 py-0.5 text-[10px] leading-none text-gold-200 shadow shadow-black/60';
+/** Each object in the room belongs to a part of the Don's life (ui/domain.ts): the envelope money, the phone the law, the photographs the family. */
+const spotDomain = (id: Hotspot['id']): Domain => domainOf(`office.${id}`) ?? 'crew';
+/** The list under the room, grouped: what is on the desk this week, the calls and the word, home and the way out. */
+const SPOT_GROUPS: { title: string; ids: Hotspot['id'][] }[] = [
+  { title: 'On the desk this week', ids: ['door', 'envelope', 'chair', 'ledger'] },
+  { title: 'Calls and the word', ids: ['phone', 'calendar', 'newspaper'] },
+  { title: 'Home, and the way out', ids: ['photos', 'map'] },
+];
 
 /** When the painting cannot load (local preview, offline): a dark panelled room so the objects still read. */
 /**
@@ -158,6 +167,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     map: 'Go out: Wildwood and beyond',
   };
 
+  // The focal point: people at the door first (urgent or not), else an envelope on the desk waiting to be heard.
+  const lead: Hotspot['id'] | undefined = box.n && box.tone === 'red' ? 'door' : envelopeWaiting ? 'envelope' : box.n ? 'door' : undefined;
   const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} onDesk={() => api.openDesk('people')} />
     : panel === 'phone' ? <PhonePanel s={s} />
     : panel === 'week' ? <WeekSchedule s={s} />
@@ -210,8 +221,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                 <button key={h.id} type="button" onClick={() => act(h)} data-testid={`office-spot-${h.id}`} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${status[h.id]}`}
                   className="group absolute rounded-md border border-transparent transition-colors hover:border-gold-400/80 hover:bg-gold-300/10 focus-visible:border-gold-300 focus-visible:bg-gold-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300"
                   style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }}>
-                  <span className={`${chip} absolute left-0.5 ${h.id === 'chair' ? 'bottom-0.5' : 'top-0.5'}`}>
-                    <span aria-hidden>{h.icon}</span>
+                  <span className={`${chip} ${domClass(spotDomain(h.id))} llv-dom-border absolute left-0.5 ${h.id === 'chair' ? 'bottom-0.5' : 'top-0.5'}`}>
+                    <span aria-hidden className="llv-dom-ink">{h.icon}</span>
                     <span className="hidden sm:inline">{h.label}</span>
                     {badge(h.id)}
                   </span>
@@ -233,24 +244,54 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
             )}
         </div>
         <div className="mt-2 flex justify-center sm:hidden" style={{ fontSize: '11px' }}><DeskClock s={s} onOpen={() => setPanel('week')} /></div>
-        <ul className="mt-2 grid gap-1 sm:grid-cols-2 xl:grid-cols-3" data-testid="office-list" aria-label="What is in the office">
-          {(['chair', 'envelope', 'door', 'ledger', 'phone', 'calendar', 'newspaper', 'photos', 'map'] as Hotspot['id'][]).map((id) => {
-            const h = HOTSPOTS.find((x) => x.id === id)!;
-            return (
-              <li key={id}>
-                <button type="button" onClick={() => act(h)} data-testid={`office-item-${id}`}
-                  className="flex w-full items-start gap-2 rounded border border-noir-700 bg-noir-900/70 px-2 py-1.5 text-left hover:border-gold-500 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300">
-                  <span className="w-5 shrink-0 text-center text-gold-300" aria-hidden>{h.icon}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-semibold text-stone-100">{h.label} {badge(id)}</span>
-                    <span className="block truncate text-[11px] text-stone-400">{status[id]}</span>
-                  </span>
-                  <span className="shrink-0 text-[11px] text-gold-300">▸</span>
-                </button>
-              </li>
-            );
-          })}
-          <li className="grid grid-cols-2 gap-1.5 sm:col-span-2 xl:col-span-3 xl:grid-cols-4 pt-1">
+        {/* The one thing this room most wants of you, big and first (the door when people wait, else the count on the desk). */}
+        {lead && (() => {
+          const h = HOTSPOTS.find((x) => x.id === lead)!;
+          const d = spotDomain(lead);
+          const first = lead === 'door' ? visitors[0] : undefined;
+          const fc = first?.charId ? s.characters[first.charId] : undefined;
+          return (
+            <button type="button" onClick={() => act(h)} data-testid="office-lead" data-domain={d}
+              className={`llv-card-box llv-card-attention llv-slide-up mt-2 flex w-full items-center gap-3 text-left ${domClass(d)} llv-dom-edge llv-dom-tint hover:border-gold-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300`}>
+              {fc ? <span className="shrink-0 rounded-md ring-2 ring-gold-500/60"><Portrait c={fc} seed={s.seed} date={s.date} size={64} tint={FACTION_TINT[fc.faction]} /></span> : <DomainChip d={d} glyph={h.icon} size={44} />}
+              <span className="min-w-0 flex-1">
+                <span className="llv-kicker block">{lead === 'door' ? (box.tone === 'red' ? 'Urgent · outside the door' : 'Outside the door') : 'On the desk'}</span>
+                <span className="block font-display text-xl leading-tight text-stone-100 sm:text-2xl">{lead === 'door' ? `${box.n} waiting on you` : `${fmt$(rep!.reported)} in the envelope`}</span>
+                <span className="block truncate text-[12px] text-stone-300">{lead === 'door' ? (first ? `${first.name}: ${first.why}` : status.door) : 'Hear the count and take your cut.'}</span>
+              </span>
+              <span className="btn-primary hidden shrink-0 text-xs sm:inline-flex">{lead === 'door' ? 'See who\'s waiting' : 'Hear the count'} ▸</span>
+              <span className="shrink-0 text-gold-300 sm:hidden" aria-hidden>▸</span>
+            </button>
+          );
+        })()}
+        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,0.8fr)]" data-testid="office-list" role="list" aria-label="What is in the office">
+          {SPOT_GROUPS.map((g) => (
+            <section key={g.title} className="min-w-0" aria-label={g.title}>
+              <div className="llv-kicker mb-1">{g.title}</div>
+              <ul className={`grid gap-1.5 ${g.ids.length > 3 ? 'sm:grid-cols-2' : g.ids.length > 2 ? 'sm:grid-cols-3 lg:grid-cols-1' : 'sm:grid-cols-2 lg:grid-cols-1'}`}>
+                {g.ids.map((id) => {
+                  const h = HOTSPOTS.find((x) => x.id === id)!;
+                  const d = spotDomain(id);
+                  return (
+                    <li key={id} role="listitem">
+                      <button type="button" onClick={() => act(h)} data-testid={`office-item-${id}`} data-domain={d}
+                        className={`flex w-full items-center gap-2.5 rounded-md border border-noir-700 bg-noir-900/70 px-2.5 py-2 text-left llv-dom-row ${domClass(d)} hover:border-gold-500 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300`}>
+                        <DomainChip d={d} glyph={h.icon} size={28} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-semibold text-stone-100">{h.label} {badge(id)}</span>
+                          <span className="block truncate text-[11px] text-stone-400">{status[id]}</span>
+                        </span>
+                        <span className="shrink-0 text-[11px] llv-dom-ink" aria-hidden>▸</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
+        <ul className="mt-3 border-t border-noir-700 pt-3">
+          <li className="grid grid-cols-2 gap-1.5 xl:grid-cols-4">
             <button type="button" className="btn-secondary text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
             <button type="button" className="btn-secondary text-xs" onClick={() => api.openDesk()} data-testid="office-desk">▤ The desk's list</button>
             <button type="button" className="btn-primary col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
@@ -281,11 +322,11 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table
 }) {
   const c = brief.seat.charId ? s.characters[brief.seat.charId] : undefined;
   return (
-    <section className="rounded-md border border-gold-500/70 bg-noir-900/95 p-2.5 shadow-lg shadow-black/60" data-testid={monday ? 'office-monday' : 'office-brief'}>
-      <div className="flex items-start gap-2">
-        {c && <span className="shrink-0 rounded-md ring-1 ring-gold-600/60"><Portrait c={c} seed={s.seed} date={s.date} size={52} tint={FACTION_TINT[c.faction]} /></span>}
+    <section className={`llv-slide-up rounded-md border border-gold-500/70 bg-noir-900/95 p-2.5 shadow-lg shadow-black/60 ${domClass('crew')} llv-dom-edge`} data-testid={monday ? 'office-monday' : 'office-brief'} data-domain="crew">
+      <div className="flex items-start gap-2.5">
+        {c && <span className="shrink-0 rounded-md ring-2 ring-gold-600/60"><Portrait c={c} seed={s.seed} date={s.date} size={64} tint={FACTION_TINT[c.faction]} /></span>}
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{monday ? 'Monday morning' : 'Across the desk'} · {brief.seat.title}</div>
+          <div className="llv-kicker">{monday ? 'Monday morning' : 'Across the desk'} · {brief.seat.title}</div>
           <div className="font-semibold text-gold-300">{c ? displayName(c) : brief.seat.name}</div>
           {brief.lines.map((l, i) => <p key={i} className="text-[13px] leading-snug text-stone-200">{i === 0 && c ? '"' : ''}{l}{i === brief.lines.length - 1 && c ? '"' : ''}</p>)}
         </div>
@@ -314,10 +355,11 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: 
       <ul className="mt-1.5 space-y-1.5">
         {visitors.map((v) => {
           const c = v.charId ? s.characters[v.charId] : undefined;
+          const d: Domain = domainOfText(s, v.why) ?? (v.kind === 'lawyer' ? 'law' : 'crew');
           return (
-            <li key={v.key} className={`rounded border px-2 py-1.5 ${v.urgent ? 'border-red-400/70 bg-blood-500/10' : 'border-noir-700 bg-noir-950/60'}`} data-testid="office-visitor">
+            <li key={v.key} className={`rounded-md border px-2 py-1.5 llv-dom-row ${domClass(v.urgent ? 'rivals' : d)} ${v.urgent ? 'border-red-400/70 bg-blood-500/10' : 'border-noir-700 bg-noir-950/60'}`} data-testid="office-visitor" data-domain={v.urgent ? 'rivals' : d}>
               <div className="flex items-start gap-2">
-                {c && <span className="shrink-0"><Portrait c={c} seed={s.seed} date={s.date} size={36} tint={FACTION_TINT[c.faction]} /></span>}
+                {c && <span className="shrink-0"><Portrait c={c} seed={s.seed} date={s.date} size={44} tint={FACTION_TINT[c.faction]} /></span>}
                 <div className="min-w-0 flex-1">
                   <div className="text-[12px] font-semibold text-stone-100">{v.name} <span className="font-normal text-stone-500">· {KIND_WORD[v.kind]}</span>{v.urgent && <span className="ml-1 rounded bg-red-500/80 px-1 text-[9px] font-bold uppercase text-white">urgent</span>}</div>
                   <div className="text-[11px] leading-snug text-stone-400">{v.why}</div>
@@ -340,6 +382,9 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: 
   );
 }
 
+/** Who is on the other end: the lawyer is the law, your people the crew, the other bosses rivals, the women romance. */
+const PHONE_DOMAIN: Record<string, Domain> = { lawyer: 'law', crew: 'crew', rival: 'rivals', dating: 'romance', company: 'romance' };
+
 function PhonePanel({ s }: { s: GameState }) {
   const api = useOffice();
   const sheet = useSheet();
@@ -354,8 +399,9 @@ function PhonePanel({ s }: { s: GameState }) {
       <div className="panel-title text-base">The telephone</div>
       <ul className="mt-1.5 space-y-1">
         {book.map((p) => (
-          <li key={p.key} className="rounded border border-noir-700 bg-noir-950/60 px-2 py-1.5" data-testid={`office-call-${p.kind}`}>
+          <li key={p.key} className={`rounded-md border border-noir-700 bg-noir-950/60 px-2 py-1.5 llv-dom-row ${domClass(PHONE_DOMAIN[p.kind] ?? 'crew')}`} data-testid={`office-call-${p.kind}`} data-domain={PHONE_DOMAIN[p.kind] ?? 'crew'}>
             <div className="flex items-center gap-2">
+              <DomainChip d={PHONE_DOMAIN[p.kind] ?? 'crew'} size={22} />
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-semibold text-stone-100">{p.name}</div>
                 <div className="text-[11px] text-stone-400">{p.role}{p.blocked ? ` · ${p.blocked}` : ''}</div>

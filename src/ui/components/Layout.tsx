@@ -1,5 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { DOMAIN_IDS, DOMAINS, domClass, type Domain } from '../domain';
+import { AssetImg } from '../hood/AssetImg';
+import type { AssetKey } from '../hood/art/assetUrls';
 
 /**
  * THE LAYOUT KIT (LAYOUT_AUDIT.md). One way to build a screen inside a drawer:
@@ -14,6 +16,8 @@ import { DOMAIN_IDS, DOMAINS, domClass, type Domain } from '../domain';
  *   domain="money" on Section / Card        the part of the Don's life it belongs to (ui/domain.ts):
  *                                           a coloured edge, tint, header and dot over the noir
  *   <DomainDot d /> <DomainChip d />         the domain's dot and its icon chip; <DomainLegend /> the key
+ *   <CardHead d title sub aside />           a card's own header: the domain chip and the title in its ink
+ *   domStat(d) / .llv-dom-btn / .llv-dom-row a stat box, a button, a list row wearing a domain
  *
  * The menu is a native <details>: its buttons are always in the page (tests and screen readers find
  * them, test ids are kept), folded until opened. Nothing here removes an option; it only groups them.
@@ -93,16 +97,70 @@ export function Card({ tone = 'plain', children, className = '', testid, doneLab
   );
 }
 
+/**
+ * A card's own header: the domain's icon chip (or a glyph of its own), the title in the domain's ink,
+ * a line under it, and a right side (a figure, a count, a quiet link). Colour is never the only signal:
+ * the chip carries an icon and the title its words.
+ */
+export function CardHead({ d, title, sub, aside, glyph, className = '', testid }: {
+  d?: Domain;
+  title: ReactNode;
+  sub?: ReactNode;
+  aside?: ReactNode;
+  /** The chip's icon (defaults to the domain's glyph). */
+  glyph?: ReactNode;
+  className?: string;
+  testid?: string;
+}) {
+  return (
+    <div className={`llv-cardhead ${domClass(d)} ${className}`} data-testid={testid}>
+      {d && <DomainChip d={d} glyph={glyph} size={24} className="mt-px" />}
+      <div className="min-w-0 flex-1">
+        <div className={`llv-cardhead-title ${d ? 'llv-dom-ink' : ''}`}>{title}</div>
+        {sub && <p className="llv-section-sub mt-0.5">{sub}</p>}
+      </div>
+      {aside && <div className="ml-auto flex shrink-0 items-center gap-1.5 text-[11px] text-stone-400">{aside}</div>}
+    </div>
+  );
+}
+
+/**
+ * A place's banner: the painting of the place (the asset store) under a dark wash, the title over it in the
+ * domain's ink. Without the painting (offline, the single file) a drawn wash in the domain's colour, so it never
+ * reads as an empty box. Decorative: the title and line carry the meaning.
+ */
+export function PlaceBanner({ art, d, title, sub, aside, testid }: { art: AssetKey | AssetKey[]; d: Domain; title: ReactNode; sub?: ReactNode; aside?: ReactNode; testid?: string }) {
+  return (
+    <div className={`llv-banner ${domClass(d)}`} data-testid={testid} data-domain={d}>
+      <AssetImg k={art} alt="" className="llv-banner-img" fallback={<span className="llv-banner-fallback" aria-hidden />} />
+      <div className="llv-banner-wash" aria-hidden />
+      <div className="relative flex h-full items-end gap-2 p-3">
+        <DomainChip d={d} size={26} />
+        <div className="min-w-0 flex-1">
+          <div className="font-display text-lg leading-tight llv-dom-ink sm:text-xl">{title}</div>
+          {sub && <div className="text-[12px] leading-snug text-stone-200">{sub}</div>}
+        </div>
+        {aside && <div className="flex shrink-0 flex-wrap justify-end gap-1.5">{aside}</div>}
+      </div>
+    </div>
+  );
+}
+
 /** "✓ Done", "✓ Ordered", "✓ Sent": the one finished mark. */
 export function DoneMark({ children = 'Done', className = '' }: { children?: ReactNode; className?: string }) {
   return <span className={`llv-done ${className}`} data-done="true"><span aria-hidden>✓</span> {children}</span>;
 }
 
+/** The stat box's domain treatment (an edge and a faint wash), for hand-built stat boxes too. */
+export function domStat(d: Domain | undefined): string {
+  return d ? `${domClass(d)} llv-dom-edge` : '';
+}
+
 /** A number with its label, the same everywhere (top of a page, a man's card). */
-export function StatChip({ label, value, sub, tone, testid }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'warn'; testid?: string }) {
+export function StatChip({ label, value, sub, tone, testid, domain, className = '' }: { label: ReactNode; value: ReactNode; sub?: ReactNode; tone?: 'good' | 'bad' | 'warn'; testid?: string; domain?: Domain; className?: string }) {
   const t = tone === 'good' ? 'text-emerald-300' : tone === 'bad' ? 'text-red-300' : tone === 'warn' ? 'text-amber-200' : 'text-stone-100';
   return (
-    <div className="llv-stat" data-testid={testid}>
+    <div className={`llv-stat ${domStat(domain)} ${className}`} data-testid={testid} data-domain={domain}>
       <div className="llv-stat-label">{label}</div>
       <div className={`llv-stat-value ${t}`}>{value}</div>
       {sub && <div className="llv-stat-sub">{sub}</div>}

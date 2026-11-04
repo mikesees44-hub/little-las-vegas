@@ -16,6 +16,8 @@ import { treeMarks } from '../family/DynastyTree';
 import { MoreButton } from '../sheet/MoreButton';
 import { Num } from '../shell/Num';
 import { sectionVisible } from '../shell/unlocks';
+import { CardHead } from '../components/Layout';
+import { domCard } from '../domain';
 
 function Bar({ sc, tone, label }: { sc: Score; tone: string; label: string }) {
   return (
@@ -55,23 +57,26 @@ export function Succession({ s: live, pendingLaw, pendingHeir, onLaw, onHeir }: 
   const detail = sectionVisible(live, 'house.succession');
   const placed = Object.entries(p.placements);
   return (
-    <div className="space-y-4" data-testid="succession">
+    <div className="space-y-3" data-testid="succession">
       <PowerPart s={live} part="crisis" />
-      <section className="grid gap-2 sm:grid-cols-2">
+      <section className={`llv-card-box llv-card-plain ${domCard('family')}`} data-testid="succession-law" data-domain="family">
+        <CardHead d="family" glyph="§" title="The law of the house" sub="Who follows you, and how the heir is named." />
+        <div className="grid gap-2 sm:grid-cols-2">
         <label className="block text-xs">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Law</span>
+          <span className="llv-kicker">Law</span>
           <select className="mt-0.5 w-full rounded bg-noir-900 border border-noir-600 p-1.5 text-sm" value={law} onChange={(e) => onLaw(e.target.value as SuccessionLaw)} data-testid="law-pick" title={SUCCESSION_LAWS[law].text}>
             {(Object.keys(SUCCESSION_LAWS) as SuccessionLaw[]).map((l) => <option key={l} value={l}>{SUCCESSION_LAWS[l].name}</option>)}
           </select>
-          <span className="mt-0.5 block text-[11px] text-stone-500">{SUCCESSION_LAWS[law].text}</span>
+          <span className="mt-0.5 block text-[11px] text-stone-400">{SUCCESSION_LAWS[law].text}</span>
         </label>
         <label className="block text-xs">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">How the heir is named</span>
+          <span className="llv-kicker">How the heir is named</span>
           <select className="mt-0.5 w-full rounded bg-noir-900 border border-noir-600 p-1.5 text-sm" value={mode} onChange={(e) => setMode(e.target.value as DesignationMode)} data-testid="designation-pick">
             {DESIGNATION_MODES.map((m) => <option key={m} value={m}>{DESIGNATION_INFO[m].name}{m === d.mode ? ' (now)' : ''}</option>)}
           </select>
-          <span className="mt-0.5 block text-[11px] text-stone-500">{DESIGNATION_INFO[mode].text}</span>
+          <span className="mt-0.5 block text-[11px] text-stone-400">{DESIGNATION_INFO[mode].text}</span>
         </label>
+        </div>
       </section>
       {law === 'appointed' && (
         <label className="block text-xs">
@@ -97,8 +102,8 @@ export function Succession({ s: live, pendingLaw, pendingHeir, onLaw, onHeir }: 
       {(pendingLaw || pendingHeir !== undefined) && <p className="text-xs text-amber-400">The new law takes effect when you advance.</p>}
 
       <section className="grid gap-2 sm:grid-cols-2">
-        <div className="rounded-md border border-gold-600/50 bg-noir-800/60 p-2.5" data-testid="heir-card">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Heir</div>
+        <div className={`llv-card-box llv-card-plain p-2.5 ${domCard('family')}`} data-testid="heir-card" data-domain="family">
+          <div className="llv-kicker"><span aria-hidden>♔ </span>Heir</div>
           {heir ? (
             <div className="mt-1 flex gap-2">
               <Face s={live} c={heir.c} size={48} />
@@ -113,22 +118,19 @@ export function Succession({ s: live, pendingLaw, pendingHeir, onLaw, onHeir }: 
             </div>
           ) : preview.heir ? <div className="mt-1 text-sm"><CharLink s={live} id={preview.heir.id} /> <span className="text-xs text-stone-500">({preview.method})</span></div> : <div className="mt-1 text-sm text-red-400">No heir: the house would fall.</div>}
         </div>
-        <div className="rounded-md border border-noir-700 bg-noir-800/60 p-2.5 text-xs" data-testid="if-you-died">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">If you died today</div>
+        <div className={`llv-card-box ${preview.heir ? 'llv-card-plain' : 'llv-card-danger'} p-2.5 text-xs ${domCard(passed.length ? 'rivals' : 'family')}`} data-testid="if-you-died" data-domain={passed.length ? 'rivals' : 'family'}>
+          <div className="llv-kicker"><span aria-hidden>✝ </span>If you died today</div>
           <p className="mt-1 text-sm">{preview.heir ? <><span className="text-gold-300">{displayName(preview.heir)}</span> takes the chair <span className="text-stone-500">({preview.method})</span>.</> : <span className="text-red-400">Nobody takes the chair. The house dies with you.</span>}</p>
           {passed.length > 0 && <p className="mt-1 text-amber-200">Passed over: {passed.map((r, i) => <span key={r.c.id}>{i ? ', ' : ''}<CharLink s={live} id={r.c.id} /> ({Math.round(r.cap.score)}/{Math.round(r.pr.score)})</span>)} → grievance.</p>}
           <p className="mt-1 text-stone-400">Claimants: {claimants.length ? claimants.map((c, i) => <span key={c.id}>{i ? ', ' : ''}<CharLink s={live} id={c.id} /></span>) : 'none'}</p>
         </div>
       </section>
 
-      <section>
-        <div className="flex items-baseline justify-between gap-2">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Candidates · danger first (capability × pressure)</div>
-          <span className="hidden sm:inline text-[10px] text-stone-600">hover a bar for the reasons · ⋯ for what you can do</span>
-        </div>
+      <section className={`llv-card-box llv-card-plain ${domCard('family')}`} data-domain="family" data-testid="succession-candidates">
+        <CardHead d="family" glyph="♕" title="Candidates" sub="Danger first (capability × pressure)." aside={<span className="hidden sm:inline">hover a bar for the reasons · ⋯ for what you can do</span>} className="!mb-1" />
         <div className="mt-1 overflow-x-auto">
           <table className="w-full text-xs" data-testid="candidates-table">
-            <thead><tr className="text-left text-[10px] uppercase tracking-wider text-stone-500"><th className="py-1 pr-2" colSpan={2}>Name</th><th className="pr-2">Capability</th><th className="pr-2">Pressure</th><th className="pr-2">Wants</th><th /></tr></thead>
+            <thead><tr className="text-left text-[10px] uppercase tracking-wider text-stone-400"><th className="py-1 pr-2" colSpan={2}>Name</th><th className="pr-2">Capability</th><th className="pr-2">Pressure</th><th className="pr-2">Wants</th><th /></tr></thead>
             <tbody>
               {rows.map(({ c, cap, pr, a }) => (
                 <tr key={c.id} className={`border-t border-noir-800 ${c.id === heirId ? 'bg-gold-500/5' : ''}`} data-testid="candidate">
@@ -147,8 +149,8 @@ export function Succession({ s: live, pendingLaw, pendingHeir, onLaw, onHeir }: 
       </section>
 
       {detail && (
-        <section className="text-xs">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Protégés</div>
+        <section className={`llv-card-box llv-card-plain text-xs ${domCard('crew')}`} data-domain="crew" data-testid="succession-proteges">
+          <CardHead d="crew" glyph="☞" title="Protégés" sub="Young men placed where they learn." className="!mb-1" />
           {placed.length === 0 ? <p className="text-stone-500 mt-0.5">None placed. Put a young man where he learns: ⋯ on his row › Heirs & Grooming.</p> : (
             <ul className="mt-0.5 space-y-0.5">{placed.map(([id, pl]) => <li key={id} className="flex items-center gap-2"><CharLink s={live} id={id} /> → {POSTS[pl.post]?.name.toLowerCase()} (wk {s.week - pl.since}){pl.mentorId ? <> under <CharLink s={live} id={pl.mentorId} /></> : null}<MoreButton id={id} category="heirs" label="change" /></li>)}</ul>
           )}

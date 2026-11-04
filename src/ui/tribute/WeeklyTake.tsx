@@ -18,6 +18,8 @@ import { CrewTable } from './AudienceScene';
 import { useTributeUi } from './context';
 import { useShell } from '../shell/context';
 import { EarningsBoard } from './EarningsBoard';
+import { CardHead, StatChip } from '../components/Layout';
+import { domCard, type Domain } from '../domain';
 
 const TABS = [
   ['audience', 'Underboss Audience'], ['envelope', 'Envelope'], ['earnings', 'The Family\'s Earnings'], ['crews', 'Crew Contributions'], ['obligations', 'Obligations'],
@@ -36,12 +38,12 @@ const GROUPS: { id: TakeGroup; label: string; tabs: TakeTab[] }[] = [
 ];
 const groupOf = (t: TakeTab | TakeGroup): TakeGroup => (GROUPS.some((g) => g.id === t) ? (t as TakeGroup) : GROUPS.find((g) => g.tabs.includes(t as TakeTab))!.id);
 
-function Box({ title, note, children, id }: { title: string; note?: string; children: ReactNode; id?: string }) {
+/** One page block of the envelope, wearing the part of the Don's life it is about (money, the crews, the other families). */
+function Box({ title, note, children, id, d = 'money', glyph }: { title: string; note?: string; children: ReactNode; id?: string; d?: Domain; glyph?: string }) {
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid={id}>
-      <div className="panel-title">{title}</div>
-      {note && <p className="text-[11px] text-stone-500 mt-0.5">{note}</p>}
-      <div className="mt-2">{children}</div>
+    <section className={`llv-card-box llv-card-plain min-w-0 ${domCard(d)}`} data-testid={id} data-domain={d}>
+      <CardHead d={d} glyph={glyph} title={title} sub={note} />
+      <div>{children}</div>
     </section>
   );
 }
@@ -83,17 +85,17 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
       {group === 'week' && rep && <ThisWeekBox s={s} rep={rep} />}
       {(show('audience') || show('crews') || show('envelope')) && !rep && <FirstSettlement what={group === 'week' ? 'The underboss\'s audience' : 'What each crew sent up'} week={s.week} />}
       {show('audience') && rep && (
-        <Box title="The Underboss Audience" note="Every Monday the underboss brings the take. Quiet weeks go by your standing split; he asks to see you when something needs you." id="take-audience">
+        <Box d="crew" glyph="♜" title="The Underboss Audience" note="Every Monday the underboss brings the take. Quiet weeks go by your standing split; he asks to see you when something needs you." id="take-audience">
           <AudienceSummary s={s} rep={rep} pending={!!pend} />
           <button type="button" className="btn-gold mt-2 text-xs" onClick={() => ui.openAudience(rep.id)} data-testid="open-office">{pend ? 'He is waiting: open the office' : 'Open the office (this week\'s report)'}</button>
         </Box>
       )}
       {show('envelope') && rep && (
-        <Box title="The Envelope" note="What reached you each week and where it went." id="take-envelope">
+        <Box glyph="✉" title="The Envelope" note="What reached you each week and where it went." id="take-envelope">
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[440px]">
-            <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Week</th><th className="text-right">Presented</th><th className="text-right">You</th><th className="text-right">Family</th><th className="text-right">Reserve</th><th>How</th></tr></thead>
+            <thead><tr className="text-[10px] uppercase tracking-widest text-stone-400 text-left [&>th]:px-2 [&>th]:pb-1"><th>Week</th><th className="text-right">Presented</th><th className="text-right">You</th><th className="text-right">Family</th><th className="text-right">Reserve</th><th>How</th></tr></thead>
             <tbody>{t.reports.slice().reverse().map((r) => (
-              <tr key={r.id} className="border-t border-noir-800"><td>wk {r.week}</td><td className="text-right tabular-nums text-gold-300">{fmt$(r.presented)}</td>
+              <tr key={r.id} className="border-t border-noir-800 [&>td]:px-2 [&>td]:py-0.5"><td>wk {r.week}</td><td className="text-right tabular-nums text-gold-300">{fmt$(r.presented)}</td>
                 <td className="text-right tabular-nums">{r.alloc ? fmt$(r.alloc.personal) : '—'}</td><td className="text-right tabular-nums">{r.alloc ? fmt$(r.alloc.treasury) : '—'}</td><td className="text-right tabular-nums">{r.alloc ? fmt$(r.alloc.reserve) : '—'}</td>
                 <td className="text-stone-400">{r.alloc ? (r.alloc.by === 'quiet' ? 'standing split' : r.alloc.by === 'his' ? 'his advice' : r.alloc.by === 'custom' ? 'your own split' : 'the usual') : 'waiting for you'}</td></tr>
             ))}</tbody>
@@ -103,12 +105,12 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
         </Box>
       )}
       {show('earnings') && (
-        <Box title="The Family's Earnings" note="Everyone in the family: what each man earned this week, kicked up and kept, his trend, and his own money. Click a name for his sheet." id="take-earnings">
+        <Box d="crew" title="The Family's Earnings" note="Everyone in the family: what each man earned this week, kicked up and kept, his trend, and his own money. Click a name for his sheet." id="take-earnings">
           <EarningsBoard s={s} />
         </Box>
       )}
       {show('crews') && rep && (
-        <Box title="Crew Contributions" note={`Week ${rep.week}. Click a crew for its accounts: every man's agreement, what was due and paid, and why anybody came up short — what he said, what the underboss believes, and the truth once it is known.`} id="take-crews">
+        <Box d="crew" title="Crew Contributions" note={`Week ${rep.week}. Click a crew for its accounts: every man's agreement, what was due and paid, and why anybody came up short — what he said, what the underboss believes, and the truth once it is known.`} id="take-crews">
           <CrewView s={s} rep={rep} />
           <div className="mt-2 flex flex-wrap gap-1">
             {capos(s).filter((k) => isFree(s, k)).map((k) => <button key={k.id} type="button" className="btn-ghost text-[11px]" onClick={() => queue({ kind: 'tribute', op: { op: 'audit', capoId: k.id } })}>Audit {k.firstName}'s books ($200)</button>)}
@@ -117,7 +119,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
         </Box>
       )}
       {show('obligations') && (
-        <Box title="Outstanding Obligations" note="What the family owes, what is owed to it, and what comes due." id="take-obligations">
+        <Box glyph="⚖" title="Outstanding Obligations" note="What the family owes, what is owed to it, and what comes due." id="take-obligations">
           <ul className="text-[12px] space-y-0.5">{obligations(s).map((o, i) => <li key={i} className="flex justify-between gap-2 border-t border-noir-800 py-0.5"><span className={o.kind === 'receivable' ? 'text-emerald-300' : 'text-stone-300'}>{o.what}</span><span className="tabular-nums text-stone-400">{fmt$(o.amount)}{o.weekly ? '/wk' : o.due !== undefined ? ` in ${o.due} wk` : ''}</span></li>)}</ul>
           <div className="mt-2 text-[10px] uppercase tracking-widest text-stone-500">Who owes the family (arrears)</div>
           <ul className="text-[12px]">{Object.entries(t.arrears).filter(([id]) => s.characters[id]?.alive).map(([id, v]) => (
@@ -129,7 +131,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
         </Box>
       )}
       {show('accounts') && (
-        <Box title="Accounts" note="Family money runs the business; your pocket pays for your house, cars, fun and family. Moving money between them is never income." id="take-accounts">
+        <Box glyph="▤" title="Accounts" note="Family money runs the business; your pocket pays for your house, cars, fun and family. Moving money between them is never income." id="take-accounts">
           <BigPots s={s} compact />
           {a.envelope > 0 && <div className="mt-1 text-[11px] text-amber-300" data-testid="acct-envelope">{ACCT_LABEL.envelope}: {fmt$(a.envelope)} (split at your cut when you advance)</div>}
           <div className="mt-2"><MoveMoney s={s} /></div>
@@ -145,14 +147,14 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
       )}
       {show('agreements') && <Agreements s={s} />}
       {show('investments') && (
-        <Box title="Investments" note="Pitched by the capos in the audience, paid from Family money. Their returns come up with the envelope." id="take-investments">
+        <Box glyph="↗" title="Investments" note="Pitched by the capos in the audience, paid from Family money. Their returns come up with the envelope." id="take-investments">
           {t.investments.length === 0 ? <p className="text-[12px] text-stone-500">No investments yet. A capo with a head for business will pitch one.</p> : (
             <ul className="text-[12px]">{t.investments.slice().reverse().map((i) => <li key={i.id} className="flex justify-between gap-2 border-t border-noir-800 py-0.5"><span><CharLink s={s} id={i.byId} />: {i.what}</span><span className="tabular-nums text-stone-400">{fmt$(i.amount)} · {i.status === 'funded' ? `${fmt$(i.weekly)}/wk till wk ${i.until}` : i.status}</span></li>)}</ul>
           )}
         </Box>
       )}
       {show('disputes') && (
-        <Box title="Financial Disputes" id="take-disputes">
+        <Box d="crew" glyph="✕" title="Financial Disputes" id="take-disputes">
           {t.disputes.length === 0 ? <p className="text-[12px] text-stone-500">Nobody has disputed his number.</p> : (
             <ul className="text-[12px]">{t.disputes.slice().reverse().map((d) => <li key={d.id} className="border-t border-noir-800 py-1"><CharLink s={s} id={d.capoId} /> (wk {d.week}) — {fmt$(d.amount)}: <i className="text-stone-400">"{d.claim}"</i> <span className={d.status === 'open' ? 'text-amber-300' : 'text-stone-500'}>{d.status}</span></li>)}</ul>
           )}
@@ -162,7 +164,7 @@ export function WeeklyTake({ s, initial }: { s: GameState; initial?: TakeTab | T
       )}
       {show('ledger') && <Ledger s={s} />}
       {show('rivals') && (
-        <Box title="The Other Families' Books" note="They run the same way: capos keep their end, the boss takes his, a reserve for the bad week. A family can run dry, or split." id="take-rivals">
+        <Box d="rivals" title="The Other Families' Books" note="They run the same way: capos keep their end, the boss takes his, a reserve for the bad week. A family can run dry, or split." id="take-rivals">
           <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[480px]">
             <thead><tr className="text-[10px] uppercase tracking-widest text-stone-500 text-left"><th>Family</th><th className="text-right">Family money</th><th className="text-right">Kept for emergencies</th><th className="text-right">Boss's pocket</th><th className="text-right">Last week up</th><th>Capos</th></tr></thead>
             <tbody>{rivalBooksView(s).map((r) => (
@@ -189,12 +191,8 @@ function ThisWeekBox({ s, rep }: { s: GameState; rep: TributeReport }) {
   ];
   return (
     <section className="grid grid-cols-2 sm:grid-cols-5 gap-1.5" data-testid="take-this-week">
-      {cells.map(([a, b, c]) => (
-        <div key={a} className="rounded border border-noir-700 bg-noir-800/60 px-2 py-1.5">
-          <div className="text-[10px] uppercase tracking-wider text-stone-500">{a}</div>
-          <div className="text-base font-semibold tabular-nums text-gold-300">{b}</div>
-          {c && <div className="text-[10px] text-stone-500">{c}</div>}
-        </div>
+      {cells.map(([a, b, c], i) => (
+        <StatChip key={a} domain={i === 0 ? 'crew' : 'money'} label={a} value={<span className="text-gold-300">{b}</span>} sub={c} className={i === 0 ? 'col-span-2 sm:col-span-1' : ''} />
       ))}
     </section>
   );
@@ -227,7 +225,7 @@ function Agreements({ s }: { s: GameState }) {
     <td className="text-stone-200 pr-2" data-agreement={id}>{agreementName(s, id).title}{dev && <span className="ml-1 text-stone-600 text-[10px]" data-testid="dev-id">{id}</span>}</td>
   );
   return (
-    <Box title="Financial Agreements" note="Every standing deal the family has. Capos: their share of their district (the contract). Men: a share of their hustle (or a flat figure, an exemption, an extension). The family's own businesses pay their profit (after upkeep) into Family money. Investments: a weekly return into the take." id="take-agreements">
+    <Box glyph="✍" title="Financial Agreements" note="Every standing deal the family has. Capos: their share of their district (the contract). Men: a share of their hustle (or a flat figure, an exemption, an extension). The family's own businesses pay their profit (after upkeep) into Family money. Investments: a weekly return into the take." id="take-agreements">
       <div className="overflow-x-auto"><table className="w-full text-[12px] min-w-[460px]"><tbody>
         {ks.map((k) => <tr key={k.id} className="border-t border-noir-800"><Title id={`agr:capo:${k.id}`} /><td><CharLink s={s} id={k.id} /></td><td className="text-stone-300">keeps {Math.round((k.keep ?? 0.3) * 100)}% of his district, sends up {100 - Math.round((k.keep ?? 0.3) * 100)}%</td></tr>)}
         {men.slice(0, 40).map((c) => <tr key={c.id} className="border-t border-noir-800"><Title id={`agr:member:${c.id}`} /><td><CharLink s={s} id={c.id} /></td><td className="text-stone-300">{memberTerms(s, c).text}{c.capoId ? ` · through ${s.characters[c.capoId]?.firstName ?? '?'}` : ' · direct to the underboss'}</td></tr>)}
@@ -246,7 +244,7 @@ function Ledger({ s }: { s: GameState }) {
   if (!b) return <Box title="Historical Ledger"><FirstSettlement what="The ledger" week={s.week} /></Box>;
   const keys = ['treasury', 'personal', 'reserve', 'envelope', 'clearing'];
   return (
-    <Box title="Historical Ledger" note="Every transfer between accounts, week by week, and the balances it reconciles to." id="take-ledger">
+    <Box glyph="✍" title="Historical Ledger" note="Every transfer between accounts, week by week, and the balances it reconciles to." id="take-ledger">
       <select value={b.week} onChange={(e) => setWk(Number(e.target.value))} className="rounded border border-noir-600 bg-noir-950 text-[12px]" aria-label="Week">{t.books.slice().reverse().map((x) => <option key={x.week} value={x.week}>Week {x.week}</option>)}</select>
       <div className="mt-1 grid grid-cols-2 sm:grid-cols-5 gap-1 text-[11px]">{keys.map((k) => <div key={k} className="rounded border border-noir-700 px-1.5 py-0.5"><div className="text-stone-500">{ACCT_LABEL[k]}</div><div className="tabular-nums">{fmt$(b.start[k] ?? 0)} → <span className="text-gold-300">{fmt$(b.end[k] ?? 0)}</span></div></div>)}</div>
       <div className="mt-2 max-h-80 overflow-y-auto overflow-x-auto"><table className="w-full text-[11px] min-w-[480px]"><tbody>

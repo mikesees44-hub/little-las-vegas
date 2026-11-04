@@ -7,6 +7,8 @@ import { ActionCard } from '../components/Orders';
 import { TransportPicker } from '../travel/TransportPicker';
 import { fmt$ } from '../format';
 import type { TransportId } from '../../engine/transport';
+import { CardHead } from '../components/Layout';
+import { domCard, domClass } from '../domain';
 
 /**
  * THE EASY VACATION PLANNER: one screen. Where, when, how, how fancy; who
@@ -38,8 +40,9 @@ export function EasyVacation({ s }: { s: GameState }) {
   };
   const whole = () => setPicks(groupIds(s, WHOLE_FAMILY));
   return (
-    <section className="space-y-3 rounded border border-sky-500/40 bg-noir-800/60 p-3" data-testid="easy-vacation">
-      <div className="panel-title">Plan a vacation</div>
+    <section className={`llv-card-box llv-card-plain space-y-3 ${domCard('shore')}`} data-testid="easy-vacation" data-domain="shore">
+      <CardHead d="shore" glyph="✈" title="Plan a vacation" className="!mb-0" sub="Where, when, how and how fancy; who comes; who minds the store. One button books it." />
+      <div className="llv-kicker">1 · Where and when</div>
       <div className="grid gap-2 text-[12px] sm:grid-cols-5">
         <label className="space-y-0.5 sm:col-span-2"><span className="text-stone-400">Where</span>
           <select aria-label="Destination" className="inp text-sm" value={destId} onChange={(e) => { setDest(e.target.value); setMode(undefined); setTransport(undefined); }}>
@@ -67,6 +70,7 @@ export function EasyVacation({ s }: { s: GameState }) {
       </div>
       <TransportPicker dest={d} mode={plan.mode} tier={tier} date={s.date} value={transport} onPick={setTransport} />
 
+      <div className="llv-kicker">2 · Who comes</div>
       <div className="flex flex-wrap items-center gap-2">
         <button className="btn-gold px-2 py-1 text-xs" data-testid="easy-whole-family" onClick={whole}>Bring the whole family</button>
         <button className="btn-ghost px-2 py-1 text-xs" onClick={() => setPicks(groupIds(s, ['wife', 'kids']))}>Just the wife and kids</button>
@@ -75,7 +79,7 @@ export function EasyVacation({ s }: { s: GameState }) {
       </div>
       <div className="grid gap-2 sm:grid-cols-2" data-testid="easy-groups">
         {ENTOURAGE_GROUPS.filter((g) => groups[g].length).map((g) => (
-          <div key={g} className="rounded border border-noir-700 p-2">
+          <div key={g} className={`rounded-md border border-noir-700 bg-noir-900/40 p-2 llv-dom-row ${domClass(g === 'brass' || g === 'capos' || g === 'soldiers' ? 'crew' : g === 'goomar' ? 'romance' : 'family')}`}>
             <label className="flex items-center gap-1 text-[12px] font-semibold text-stone-200">
               <input type="checkbox" checked={groups[g].every((m) => picks.includes(m.id))} onChange={() => toggleGroup(g)} data-testid={`easy-group-${g}`} /> {GROUP_TEXT[g]} ({groups[g].length})
             </label>
@@ -92,18 +96,19 @@ export function EasyVacation({ s }: { s: GameState }) {
       </div>
 
       {wild && (
-        <div className="rounded border border-amber-600/50 bg-amber-900/20 p-2 text-[12px] text-amber-200" data-testid="easy-wild">
-          Your wife <b>and</b> your goomar on the same vacation. It can get wild: the pool, the room next door, the same dress, who sees whom, the wives at breakfast.
+        <div className={`llv-card-box llv-card-plain p-2 text-[12px] text-stone-200 ${domCard('romance')}`} data-testid="easy-wild" data-domain="romance">
+          <span className="llv-dom-ink font-semibold">☾ </span>Your wife <b>and</b> your goomar on the same vacation. It can get wild: the pool, the room next door, the same dress, who sees whom, the wives at breakfast.
           <label className="ml-2 text-stone-300"><input type="checkbox" checked={discreet} onChange={(e) => setDiscreet(e.target.checked)} /> Put her in another hotel (calmer)</label>
         </div>
       )}
 
-      <div className="rounded border border-noir-700 p-2 text-[12px]" data-testid="easy-home">
-        <div className="text-stone-400">Minding the store while you're gone</div>
+      <div className={`llv-card-box llv-card-plain p-2 text-[12px] ${domCard('crew')}`} data-testid="easy-home" data-domain="crew">
+        <div className="llv-kicker mb-0.5">⚑ Minding the store while you're gone</div>
         {watch.lines.map((l, i) => <div key={i} className={i === watch.lines.length - 1 && watch.risk >= 0.25 ? 'text-red-300' : 'text-stone-300'}>{l}</div>)}
       </div>
 
-      <div className="text-[12px] text-stone-300" data-testid="easy-quote">
+      <div className="llv-kicker">3 · What it costs</div>
+      <div className="rounded-md border border-noir-700 bg-noir-900/40 p-2 text-[12px] text-stone-300" data-testid="easy-quote">
         {quote.lines.map((l, i) => <div key={i} className="flex justify-between gap-2"><span className="text-stone-400">{l.label}</span><span className="tabular-nums">{fmt$(l.amount)}</span></div>)}
         <div className="flex justify-between gap-2 border-t border-noir-700 pt-1 font-semibold"><span>{quote.people} people, {quote.out} day{quote.out === 1 ? '' : 's'} each way, {quote.stay} nights</span><span className="tabular-nums text-gold-300">{fmt$(quote.cost)}</span></div>
       </div>

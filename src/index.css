@@ -38,6 +38,36 @@
 .llv-dom-border { border-color: rgb(var(--d) / 0.6) !important; }
 .llv-dom-dot { display: inline-block; width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: rgb(var(--d)); box-shadow: 0 0 0 1px rgb(var(--d-ink) / 0.45); }
 .llv-dom-chip { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 6px; border: 1px solid rgb(var(--d) / 0.55); background: rgb(var(--d) / 0.18); color: rgb(var(--d-ink)); }
+/*
+ * MATERIALS: each domain's card is a period object, not only a colour. Faint, dark-on-dark textures under the tint
+ * (text sits on noir at well over 7:1 either way): money the ledger's green ruling and red margin, law a manila folder's
+ * typed grid, family cream stationery's soft laid lines, rivals newsprint halftone, crew a matchbook's striker,
+ * romance a neon glow off the edge, politics marble veining, church a candle's warm glow, the shore a faint swell.
+ */
+.llv-d-money.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.15), rgb(var(--d) / 0.04) 55%, transparent), linear-gradient(90deg, transparent 22px, rgb(190 60 60 / 0.16) 22px, rgb(190 60 60 / 0.16) 23px, transparent 23px), repeating-linear-gradient(180deg, transparent 0 21px, rgb(var(--d) / 0.13) 21px 22px); }
+.llv-d-law.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.15), rgb(var(--d) / 0.04) 55%, transparent), linear-gradient(180deg, rgb(200 170 110 / 0.07), transparent 40%), repeating-linear-gradient(90deg, transparent 0 13px, rgb(var(--d-ink) / 0.035) 13px 14px), repeating-linear-gradient(180deg, transparent 0 17px, rgb(var(--d-ink) / 0.04) 17px 18px); }
+.llv-d-family.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.16), rgb(var(--d) / 0.04) 55%, transparent), radial-gradient(120% 80% at 0% 0%, rgb(240 228 200 / 0.07), transparent 60%), repeating-linear-gradient(180deg, transparent 0 3px, rgb(240 228 200 / 0.022) 3px 4px); }
+.llv-d-rivals.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.17), rgb(var(--d) / 0.04) 55%, transparent), radial-gradient(rgb(230 220 200 / 0.06) 0.8px, transparent 1.2px); background-size: auto, 5px 5px; }
+.llv-d-crew.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.16), rgb(var(--d) / 0.04) 55%, transparent), repeating-linear-gradient(135deg, rgb(var(--d) / 0.10) 0 2px, transparent 2px 6px); background-size: auto, 10px 100%; background-repeat: no-repeat; background-position: 0 0, 0 0; }
+.llv-d-romance.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.17), rgb(var(--d) / 0.04) 55%, transparent); box-shadow: inset 3px 0 12px -6px rgb(var(--d) / 0.8); }
+.llv-d-politics.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.17), rgb(var(--d) / 0.04) 55%, transparent), linear-gradient(115deg, transparent 40%, rgb(var(--d-ink) / 0.04) 46%, transparent 52%, transparent 70%, rgb(var(--d-ink) / 0.03) 74%, transparent 78%); }
+.llv-d-church.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.12), rgb(var(--d) / 0.03) 55%, transparent), radial-gradient(90% 120% at 0% 0%, rgb(245 190 100 / 0.10), transparent 55%); }
+.llv-d-shore.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.16), rgb(var(--d) / 0.04) 55%, transparent), radial-gradient(60% 14px at 50% 100%, rgb(var(--d) / 0.12), transparent); }
+/* A place's banner (Layout.tsx PlaceBanner): the painting, a dark wash, the title in the domain's ink. */
+.llv-banner { position: relative; min-height: 104px; overflow: hidden; border-radius: 0.5rem; border: 1px solid rgb(var(--d) / 0.55); border-left: 3px solid rgb(var(--d)); background: #141210; }
+.llv-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; }
+.llv-banner-fallback { position: absolute; inset: 0; background: radial-gradient(120% 140% at 85% 0%, rgb(var(--d) / 0.45), transparent 60%), linear-gradient(160deg, rgb(var(--d) / 0.25), #141210 70%), repeating-linear-gradient(180deg, transparent 0 9px, rgb(var(--d-ink) / 0.05) 9px 10px); }
+.llv-banner-wash { position: absolute; inset: 0; background: linear-gradient(0deg, rgb(12 10 9 / 0.92) 0%, rgb(12 10 9 / 0.55) 55%, rgb(12 10 9 / 0.15) 100%); }
+/* Inside a domain card the card's own titles and small caps take its ink (the card sets --d / --d-ink). */
+.llv-dom-tint .panel-title, .llv-dom-tint .llv-cardhead-title, .llv-dom-tint .llv-kicker { color: rgb(var(--d-ink)); }
+.llv-dom-tint .llv-kicker { opacity: 0.85; }
+/* A domain stat box: the kit's stat with the domain's edge and a faint wash. */
+.llv-stat.llv-dom-edge { background-image: linear-gradient(90deg, rgb(var(--d) / 0.16), rgb(var(--d) / 0.04) 60%, transparent); }
+/* A domain button (Share the wealth, Plan a vacation): a secondary button wearing its domain's edge and ink. */
+.llv-dom-btn { border-color: rgb(var(--d) / 0.6) !important; background-image: linear-gradient(90deg, rgb(var(--d) / 0.2), rgb(var(--d) / 0.06)); color: rgb(var(--d-ink)) !important; }
+.llv-dom-btn:hover:not(:disabled), .llv-dom-btn[aria-pressed='true'] { border-color: rgb(var(--d-ink) / 0.8) !important; background-image: linear-gradient(90deg, rgb(var(--d) / 0.34), rgb(var(--d) / 0.12)); }
+/* A list row with a domain: an edge and a faint tint (lighter than a card). */
+.llv-dom-row { border-left: 3px solid rgb(var(--d)); background-image: linear-gradient(90deg, rgb(var(--d) / 0.12), transparent 70%); }
 
 body {
   @apply bg-noir-950 text-stone-200 font-body antialiased;
@@ -131,6 +161,11 @@ body {
   .llv-card-done { @apply border-emerald-700/60 bg-emerald-950/20; }
   .llv-card-danger { @apply border-red-500/60 bg-blood-500/10; }
   .llv-card-donebadge { @apply absolute right-2 top-2; }
+  /* A card's own header row (Layout.tsx CardHead): the domain chip, a title, a line, and a right side. */
+  .llv-cardhead { @apply mb-2 flex items-start gap-2; }
+  .llv-cardhead-title { @apply font-display text-[15px] leading-tight text-gold-300; }
+  /* Small caps over a block ("HIS MEN", "IF YOU DIED TODAY"): one style. */
+  .llv-kicker { @apply text-[10px] font-semibold uppercase tracking-[0.18em] text-stone-400; }
   .llv-done { @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-emerald-700/60 bg-emerald-900/30 px-2 py-0.5 text-[11px] font-semibold text-emerald-300; }
   .llv-stat { @apply min-w-0 rounded-md border border-noir-700 bg-noir-800/50 px-2.5 py-1.5; }
   .llv-stat-label { @apply truncate text-[11px] text-stone-400; }
@@ -279,6 +314,12 @@ body {
 .llv-slide-right { animation: llv-slide-right 0.18s ease-out; }
 @keyframes llv-slide-left { from { transform: translateX(-24px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes llv-slide-right { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+/* A card arriving (the office's focal card, the brief): a short rise. A stamp landing: a short press. Both off under reduced motion. */
+.llv-slide-up { animation: llv-slide-up 0.22s ease-out both; }
+@keyframes llv-slide-up { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
+.llv-stamp-in { animation: llv-stamp-in 0.28s cubic-bezier(.2,1.6,.4,1) both; }
+@keyframes llv-stamp-in { from { transform: scale(1.35) rotate(-6deg); opacity: 0; } to { transform: scale(1) rotate(var(--stamp-rot, -3deg)); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .llv-slide-up, .llv-stamp-in, .llv-slide-left, .llv-slide-right { animation: none !important; } }
 .llv-pulse { animation: llv-pulse 1.6s ease-in-out infinite; }
 @keyframes llv-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217, 183, 95, 0.0); } 50% { box-shadow: 0 0 0 5px rgba(217, 183, 95, 0.45); } }
 .llv-ring { animation: llv-ring 1.4s ease-out infinite; }
@@ -394,8 +435,11 @@ button.llv-hour-slot:hover, button.llv-hour-slot:focus-visible { background: rgb
 .llv-tick { color: #1d5b33; font-weight: 700; }
 .llv-tabs-book { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .llv-tabs-book::-webkit-scrollbar { display: none; }
-.llv-tab-book { flex-shrink: 0; padding: 6px 7px 5px; border-radius: 8px 8px 0 0; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; color: #e9d6b0; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(214, 170, 110, 0.25); border-bottom: none; }
-@media (min-width: 640px) { .llv-tab-book { padding: 6px 12px 5px; font-size: 12px; } }
+.llv-tabs-book { min-width: 0; flex: 1 1 auto; padding-top: 7px; }
+/* A phone: the five tabs share the row evenly (no scrolling, the last one never cut off); the count rides the corner. */
+.llv-tab-book { position: relative; flex: 1 1 0; min-width: 0; white-space: nowrap; text-align: center; padding: 6px 2px 5px; border-radius: 8px 8px 0 0; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; color: #e9d6b0; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(214, 170, 110, 0.25); border-bottom: none; }
+@media (min-width: 640px) { .llv-tabs-book { flex: 0 1 auto; } .llv-tab-book { flex: 0 0 auto; padding: 6px 12px 5px; font-size: 12px; } }
+.llv-tab-book-n { position: absolute; top: -7px; right: 1px; min-width: 16px; padding: 0 4px; border-radius: 999px; background: #a3271d; color: #fff; font-size: 10px; line-height: 15px; letter-spacing: 0; box-shadow: 0 0 0 1.5px #1a1410; }
 .llv-tab-book[aria-selected='true'] { color: #2a2118; background: #f4ecd8; }
 .llv-ink-btn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 3px; border: 1px solid rgba(42, 33, 24, 0.55); color: #2a2118; background: rgba(255, 252, 240, 0.6); font-size: 12px; font-weight: 600; }
 .llv-ink-btn:hover:not(:disabled), .llv-ink-btn:focus-visible { background: #fffaf0; border-color: #2a2118; outline: none; }

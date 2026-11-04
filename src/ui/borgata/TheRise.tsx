@@ -4,6 +4,8 @@ import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { useSheet } from '../components/People';
 import type { GuidedGoal } from '../shell/goals';
+import { Section } from '../components/Layout';
+import { domCard } from '../domain';
 
 /**
  * THE RISE (engine/riseView.ts): grow the family. The ladder across the top
@@ -40,7 +42,8 @@ function NodeLine({ n, small }: { n: RiseNode; small?: boolean }) {
 function CapoCard({ k }: { k: CapoNode }) {
   const { open } = useSheet();
   return (
-    <article className="rounded-md border border-gold-700/50 bg-noir-800/70 p-2" data-testid="rise-capo">
+    // A capo is crew (brass); one with a rival pushing into his district wears the rivals' red, and says so (⚠).
+    <article className={`llv-card-box llv-card-plain p-2.5 ${domCard(k.threat ? 'rivals' : 'crew')}`} data-testid="rise-capo" data-domain={k.threat ? 'rivals' : 'crew'}>
       <NodeLine n={k} />
       <div className="mt-1 grid grid-cols-2 gap-x-2 text-[11px] text-stone-400">
         <div>{k.district ? <>⌂ {k.district.name}</> : <span className="text-amber-300">No district</span>}</div>
@@ -49,8 +52,8 @@ function CapoCard({ k }: { k: CapoNode }) {
         <div className="text-right">{k.threat ? <span className="text-red-300">⚠ {k.threat.rival} {k.threat.influence}%</span> : <span className="text-stone-500">no threat</span>}</div>
       </div>
       {k.ambition && <div className="mt-0.5 truncate text-[10px] text-amber-200/80" title={k.ambition}>Wants: {k.ambition}</div>}
-      <div className="mt-1 border-t border-noir-700 pt-1">
-        <div className="text-[9px] uppercase tracking-[0.2em] text-stone-500">His men ({k.men.length})</div>
+      <div className="mt-1.5 border-t border-noir-700 pt-1.5">
+        <div className="llv-kicker">His men ({k.men.length})</div>
         <ul className="mt-0.5 space-y-0.5">{k.men.slice(0, 8).map((m) => <li key={m.id}><NodeLine n={m} small /></li>)}</ul>
         {k.men.length > 8 && <button type="button" className="text-[10px] text-gold-400" onClick={() => open(k.id)}>+{k.men.length - 8} more</button>}
       </div>
@@ -84,28 +87,24 @@ export function TheRise({ s }: { s: GameState }) {
   const sum = useMemo(() => riseSummary(s), [s]);
   return (
     <div className="space-y-3" data-testid="the-rise">
-      <section>
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h4 className="llv-section-title">The ladder</h4>
-          <div className="text-[11px] text-stone-400">Rung {sum.rung.n}: {sum.rung.title}{sum.next ? ` · next: ${sum.next.title}` : ' · the top'}</div>
-        </div>
+      <Section title="The ladder" domain="crew" aside={<span>Rung {sum.rung.n}: {sum.rung.title}{sum.next ? ` · next: ${sum.next.title}` : ' · the top'}</span>}>
         <Ladder s={s} />
         {sum.next && <div className="mt-1.5 text-[12px] text-stone-300">{sum.next.milestone} {sum.steps.length ? <span className="text-amber-200">Next: {sum.steps.join('; ')}.</span> : null}</div>}
-      </section>
-      <section className="rounded-md border border-gold-600/50 bg-noir-900/60 p-2">
-        <NodeLine n={chart.boss} />
-        {chart.admin.length > 0 && <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{chart.admin.map((n) => <NodeLine key={n.id} n={n} />)}</div>}
-      </section>
-      <section>
-        <h4 className="llv-section-title">Your capos run the street</h4>
-        <div className="mt-1 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{chart.capos.map((k) => <CapoCard key={k.id} k={k} />)}</div>
+      </Section>
+      <Section title="At the top" domain="family" sub="You, and the two men beside the chair.">
+        <div className={`llv-card-box llv-card-plain p-2.5 ${domCard('family')}`} data-domain="family" data-testid="rise-top">
+          <NodeLine n={chart.boss} />
+          {chart.admin.length > 0 && <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">{chart.admin.map((n) => <NodeLine key={n.id} n={n} />)}</div>}
+        </div>
+      </Section>
+      <Section title="Your capos run the street" domain="crew" sub="Brass is a capo holding his own; red, a rival pushing into his district (⚠)." aside={<span>{chart.capos.length}</span>}>
+        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{chart.capos.map((k) => <CapoCard key={k.id} k={k} />)}</div>
         {!chart.capos.length && <p className="text-[12px] text-stone-500">No capos yet. Push a district to 40% and your best soldier steps up to run it.</p>}
-      </section>
+      </Section>
       {chart.direct.length > 0 && (
-        <section>
-          <h4 className="llv-section-title">Report straight to you</h4>
-          <ul className="mt-1 grid gap-1 sm:grid-cols-2">{chart.direct.map((n) => <li key={n.id}><NodeLine n={n} small /></li>)}</ul>
-        </section>
+        <Section title="Report straight to you" domain="crew">
+          <ul className="grid gap-1 sm:grid-cols-2">{chart.direct.map((n) => <li key={n.id} className="rounded-md border border-noir-700 bg-noir-800/40 px-2 py-1"><NodeLine n={n} small /></li>)}</ul>
+        </Section>
       )}
       <p className="text-[11px] text-stone-500">Every man grows on his own along his focus; skills tick up and perks come by themselves. Open a man to set his focus or pin a branch, if you want to.</p>
     </div>
@@ -118,7 +117,7 @@ export function RiseColumn({ s, goals, onShow, onRise }: { s: GameState; goals?:
   const { open } = useSheet();
   const cur = goals?.find((g) => !g.done);
   return (
-    <section className="rounded-md border border-gold-600/40 bg-noir-900/70 p-2 text-[12px]" data-testid="rise-column">
+    <section className={`llv-card-box llv-card-plain p-2 text-[12px] ${domCard('crew')}`} data-testid="rise-column" data-domain="crew">
       <div className="flex items-baseline justify-between gap-2">
         <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">The Rise · rung {sum.rung.n} of 7</div>
         {onRise && <button type="button" className="text-[10px] text-gold-400 hover:text-gold-300" onClick={onRise} data-testid="rise-open">Open ▸</button>}

@@ -1,4 +1,6 @@
 import { BookAbout } from '../book/TheBook';
+import { CardHead } from './Layout';
+import { domCard, type Domain } from '../domain';
 import { CallingCard } from '../nightlife/CallingCard';
 import { canHold } from '../../engine/earners';
 import { EarnerRow } from '../econ/SteadyEarners';
@@ -82,11 +84,13 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
   const hooks = s.hooks.filter((h) => h.holder === 'player' && h.targetId === c.id);
   const showsLife = (c.faction === 'player' || !!c.outside) && !isBoss;
   const side = sideOf(s, c.id);
+  // His part of the Don's life: blood is the family (wine), your men the crew (brass), the other families rivals (red), the law the law.
+  const pd: Domain = c.dynasty || isBoss ? 'family' : c.faction === 'player' ? 'crew' : c.faction === 'law' ? 'law' : c.faction === 'none' ? 'shore' : c.faction === 'philly' ? 'politics' : 'rivals';
 
   return (
     <SheetFrame onClose={onClose} embedded={embedded}>
       <div className="p-4 sm:p-5" data-testid="character-sheet">
-        <div className="flex justify-between items-start gap-3">
+        <div className={`llv-card-box llv-card-plain flex justify-between items-start gap-3 ${domCard(pd)}`} data-testid="sheet-head" data-domain={pd}>
           <div className="flex gap-3 min-w-0">
             <span className="relative shrink-0 self-start rounded-md" style={{ outline: `3px solid ${side.color}`, outlineOffset: '-1px' }}>
               <Portrait c={c} seed={s.seed} date={s.date} size={104} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && !isBoss ? total : undefined} />
@@ -164,12 +168,12 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
 
         {tab === 'overview' && (
         <div className="mt-3 grid items-start gap-3 sm:grid-cols-2">
-          <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3">
-            <h4 className="llv-section-title">Particulars</h4>
-            <div className="text-xs text-stone-300 mt-1 space-y-0.5">
+          <section className={`llv-card-box llv-card-plain ${domCard('money')}`} data-domain="money">
+            <CardHead d="money" glyph="§" title="Particulars" sub="His ambition, his money, his record." className="!mb-1" />
+            <div className="text-xs text-stone-300 space-y-0.5">
               {!c.goal && <div>Ambition: <span className="text-stone-100">{c.ambition}</span></div>}
               <OwnMoneyLines s={s} c={c} />
-              {canHold(s, c) && <div className="pt-1"><div className="text-[10px] uppercase tracking-wider text-stone-500">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
+              {canHold(s, c) && <div className="pt-1"><div className="llv-kicker">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
               {c.imprisonedUntil && c.imprisonedUntil > s.week && <div className="text-red-300">In jail until week {c.imprisonedUntil}</div>}
               {!showsLife && (c.record ?? 0) > 0 && <div>Record: {c.record} arrest{c.record! > 1 ? 's' : ''}</div>}
               {!showsLife && (isBoss || (c.evidence ?? 0) > 0) && <EvidenceLine s={s} c={c} />}
@@ -178,11 +182,9 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
             </div>
           </section>
           {!isBoss ? (
-            <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
-              <div className="flex items-baseline justify-between gap-2">
-                <h4 className="llv-section-title">What {c.firstName} thinks of you</h4>
-                <span className={`text-sm font-semibold ${total >= 25 ? 'text-emerald-400' : total <= -25 ? 'text-red-400' : 'text-stone-200'}`}>{signed(total)}</span>
-              </div>
+            <section className={`llv-card-box llv-card-plain p-2.5 ${domCard(pd)}`} data-domain={pd}>
+              <CardHead d={pd} glyph="♥" title={`What ${c.firstName} thinks of you`} className="!mb-1"
+                aside={<span className={`font-display text-lg ${total >= 25 ? 'text-emerald-400' : total <= -25 ? 'text-red-400' : 'text-stone-200'}`}>{signed(total)}</span>} />
               {mods.length === 0 && <div className="text-xs text-stone-500 mt-1">No strong feelings either way.</div>}
               <ul className="mt-1">
                 {mods.map((m) => (
@@ -197,9 +199,9 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
               )}
             </section>
           ) : (
-            <section className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5">
-              <h4 className="llv-section-title">The house</h4>
-              <div className="text-xs text-stone-300 mt-1">Respect {s.respect} · Family money {fmt$(s.money)} (the Family's, not yours) · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
+            <section className={`llv-card-box llv-card-plain p-2.5 ${domCard('family')}`} data-domain="family">
+              <CardHead d="family" title="The house" className="!mb-1" />
+              <div className="text-xs text-stone-300">Respect {s.respect} · Family money {fmt$(s.money)} (the Family's, not yours) · {Object.values(s.characters).filter((x) => x.alive && x.dynasty).length} living members of the house</div>
             </section>
           )}
         </div>
@@ -215,16 +217,16 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         </>}
 
         {tab === 'work' && <>
-        <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5 text-xs text-stone-300 space-y-0.5" data-testid="sheet-money">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Money</div>
+        <section className={`llv-card-box llv-card-plain mt-3 p-2.5 text-xs text-stone-300 space-y-0.5 ${domCard('money')}`} data-testid="sheet-money" data-domain="money">
+          <CardHead d="money" title="Money" className="!mb-1" />
           <OwnMoneyLines s={s} c={c} />
-          {canHold(s, c) && <div className="pt-1"><div className="text-[10px] uppercase tracking-wider text-stone-500">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
+          {canHold(s, c) && <div className="pt-1"><div className="llv-kicker">Steady earner</div><ul className="mt-0.5"><EarnerRow s={s} c={c} /></ul></div>}
         </section>
         <BonesFacts s={s} c={c} />
         <PurseSection s={s} c={c} />
         <ProtectSection s={s} c={c} />
         {showsLife && <HisLife s={s} c={c} part="work" />}
-        {showsLife && c.faction === 'player' && c.id !== s.playerId && <div className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5"><FinancialLife s={s} c={c} /></div>}
+        {showsLife && c.faction === 'player' && c.id !== s.playerId && <div className={`llv-card-box llv-card-plain mt-3 p-2.5 ${domCard('money')}`} data-domain="money"><FinancialLife s={s} c={c} /></div>}
         <PoliticsSection s={s} c={c} />
         </>}
 
@@ -234,8 +236,8 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         <Relationships s={s} c={c} />
         <DatingSection s={s} id={c.id} />
 
-        <section className="mt-3">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Secrets & hooks</div>
+        <section className={`llv-card-box llv-card-plain mt-3 p-2.5 ${domCard('rivals')}`} data-domain="rivals" data-testid="sheet-secrets">
+          <CardHead d="rivals" glyph="⚿" title="Secrets & hooks" className="!mb-1" />
           {secrets.length === 0 && hooks.length === 0 && <div className="text-xs text-stone-500 mt-1">Nothing known. Set your consigliere to dig for secrets.</div>}
           <ul className="text-xs mt-1 space-y-0.5">
             {secrets.map((x) => <li key={x.id} className="text-amber-200">Secret: {x.text}.</li>)}
@@ -331,8 +333,8 @@ function HisLife({ s, c, part }: { s: GameState; c: Character; part: 'life' | 'w
   const life = part === 'life';
   const work = part === 'work';
   return (
-    <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="his-life">
-      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{life ? 'His life' : 'His work'}</div>
+    <section className={`llv-card-box llv-card-plain mt-3 p-2.5 ${domCard(life ? 'family' : 'crew')}`} data-testid="his-life" data-domain={life ? 'family' : 'crew'}>
+      <CardHead d={life ? 'family' : 'crew'} title={life ? 'His life' : 'His work'} className="!mb-1" />
       <div className="mt-1 grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 text-xs text-stone-300">
           {c.rank === 'capo' ? (
@@ -379,8 +381,8 @@ function HisLife({ s, c, part }: { s: GameState; c: Character; part: 'life' | 'w
 function HisHistory({ s, c }: { s: GameState; c: Character }) {
   const story = (c.story ?? []).slice().reverse();
   return (
-    <section className="mt-3 rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="sheet-history">
-      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{c.id === s.playerId ? 'Your chronicle' : 'His chronicle'}</div>
+    <section className={`llv-card-box llv-card-plain mt-3 p-2.5 ${domCard('politics')}`} data-testid="sheet-history" data-domain="politics">
+      <CardHead d="politics" glyph="✎" title={c.id === s.playerId ? 'Your chronicle' : 'His chronicle'} className="!mb-1" />
       {c.madeWeek !== undefined && <div className="mt-1 text-xs text-gold-300">Made in week {c.madeWeek}.</div>}
       {!c.alive && c.death && <div className="mt-1 text-xs text-stone-300">Died {formatDate(c.death.date)}: {c.death.cause}.</div>}
       {story.length === 0 ? <p className="mt-1 text-xs text-stone-500">Nothing on record yet. What he does from here is written down here.</p> : (

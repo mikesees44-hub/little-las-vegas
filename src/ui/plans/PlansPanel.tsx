@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useMemo, useState } from 'react';
 import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
@@ -76,7 +77,7 @@ export function PlansPanel({ s, onClose }: { s: GameState; onClose: () => void }
   useEscape(true, onClose);
   return (
     <Overlay z={1170} className="bg-black/50" onClick={onClose}>
-      <aside className="absolute right-0 top-0 bottom-0 w-full sm:w-[480px] overflow-y-auto border-l border-gold-600/40 bg-noir-900 p-3 space-y-3 shadow-2xl llv-slide-right" onClick={(e) => e.stopPropagation()} data-testid="plans-panel" role="dialog" aria-label="Plans in motion">
+      <aside className="absolute right-0 top-0 bottom-0 w-full sm:w-[480px] overflow-y-auto overscroll-contain border-l border-gold-600/40 bg-noir-900 p-3 pb-[max(1.5rem,env(safe-area-inset-bottom))] space-y-3 shadow-2xl llv-slide-right" onClick={(e) => e.stopPropagation()} data-testid="plans-panel" role="dialog" aria-label="Plans in motion">
         <div className="flex items-start justify-between gap-2">
           <div>
             <div className="panel-title text-base">Everything going on</div>
@@ -109,7 +110,7 @@ export function PlansButton({ s }: { s: GameState }) {
         className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${c.danger ? 'border-red-500 text-red-300 bg-red-500/10' : c.motion ? 'border-gold-600 text-gold-300' : 'border-noir-600 text-stone-400'}`}>
         ◐<span className="hidden sm:inline"> Plans</span> <span className={`rounded-full px-1.5 text-[10px] ${c.danger ? 'bg-red-500 text-white' : 'bg-noir-700 text-stone-200'}`} data-testid="plans-count">{c.motion}</span>
       </button>
-      {open && <PlansPanel s={s} onClose={() => setOpen(false)} />}
+      {open && typeof document !== 'undefined' && createPortal(<PlansPanel s={s} onClose={() => setOpen(false)} />, document.body)}
     </>
   );
 }

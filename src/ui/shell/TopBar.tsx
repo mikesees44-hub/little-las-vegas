@@ -110,7 +110,7 @@ function OrdersPane({ s, onClose }: { s: GameState; onClose: () => void }) {
   useEscape(true, onClose);
   return (
     <Overlay z={1170} onClick={onClose}>
-      <div className="absolute left-2 right-2 top-[7.5rem] sm:left-auto sm:right-2 sm:top-14 sm:w-[min(440px,94vw)] max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="orders-popover">
+      <div className="absolute left-2 right-2 top-[7.5rem] sm:left-auto sm:right-2 sm:top-14 sm:w-[min(440px,94vw)] max-h-[calc(100dvh-7.5rem-1rem-env(safe-area-inset-bottom))] sm:max-h-[70vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()} data-testid="orders-popover">
         <div className="flex justify-end"><button type="button" className="btn-quiet text-xs" onClick={onClose} aria-label="Close">close ×</button></div>
         {orders.length ? <OrdersTray s={s} /> : (
           <div className="panel p-3 text-xs text-stone-400">No orders this week. Every "Order" button on a sheet, a card or a drawer adds one here; they are carried out when you advance.</div>
@@ -427,8 +427,9 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                 )}
               </Popover>
             </div>
-            {pane === 'orders' && <OrdersPane s={s} onClose={() => setPane(undefined)} />}
-            {pane === 'plans' && <PlansPanel s={s} onClose={() => setPane(undefined)} />}
+            {/* Out of the bar's stacking context too, so on a phone the tab bar never covers the orders or the plans. */}
+            {pane === 'orders' && typeof document !== 'undefined' && createPortal(<OrdersPane s={s} onClose={() => setPane(undefined)} />, document.body)}
+            {pane === 'plans' && typeof document !== 'undefined' && createPortal(<PlansPanel s={s} onClose={() => setPane(undefined)} />, document.body)}
             {/* Out of the bar's stacking context (z 1150), so the sheet sits over the phone's tab bar. */}
             {report !== undefined && typeof document !== 'undefined' && createPortal(<ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />, document.body)}
           </div>

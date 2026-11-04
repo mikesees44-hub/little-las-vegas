@@ -12,7 +12,8 @@ import { storyName } from '../../engine/shadowStories';
 import { claimStrengths } from '../../engine/oldDon';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard, useOrders } from '../components/Orders';
-import { ActionMenu } from '../components/Layout';
+import { ActionMenu, CardHead } from '../components/Layout';
+import { domCard, type Domain } from '../domain';
 import { CharLink, Face } from '../components/People';
 import { Num } from '../shell/Num';
 
@@ -81,14 +82,12 @@ function Meter({ v, tone }: { v: number; tone: string }) {
   return <span className="h-1.5 flex-1 rounded bg-noir-700 overflow-hidden"><span className={`block h-full ${tone}`} style={{ width: `${Math.max(0, Math.min(100, v))}%` }} /></span>;
 }
 
-function H({ children, sub }: { children: string; sub?: string }) {
-  return (
-    <div className="llv-section-head flex-wrap !items-baseline">
-      <h3 className="llv-section-title">{children}</h3>
-      {sub && <span className="ml-auto text-[11px] text-stone-500">{sub}</span>}
-    </div>
-  );
+/** A block's header: the domain chip and the title in its ink (the house wine, the crews brass, the other families red). */
+function H({ children, sub, d = 'family', glyph }: { children: string; sub?: string; d?: Domain; glyph?: string }) {
+  return <CardHead d={d} glyph={glyph} title={children} aside={sub ? <span className="text-right">{sub}</span> : undefined} className="!mb-1 flex-wrap" />;
 }
+/** A block of the court: a card wearing its part of the Don's life. */
+const box = (d: Domain) => `llv-card-box llv-card-plain ${domCard(d)}`;
 
 export function ShadowCourt({ s: live }: { s: GameState }) {
   const s = useMemo(() => cloneState(live), [live]);
@@ -118,19 +117,20 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
   const claims = claimStrengths(s);
   const pl = sh.plant && !sh.plant.blown && sh.plant.until >= s.week ? sh.plant : undefined;
   return (
-    <div className="space-y-5" data-testid="shadow-court">
+    <div className="space-y-3" data-testid="shadow-court">
       {/* The heir question */}
-      <section className="rounded-md border border-gold-600/40 bg-noir-800/60 p-3 space-y-2" data-testid="succession-outlook">
+      <section className={`${box('family')} space-y-2`} data-testid="succession-outlook" data-domain="family">
+        <H glyph="♔">The chair, and who is thinking past you</H>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex min-w-[12rem] flex-1 items-center gap-2">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-stone-500 w-20 shrink-0">Pressure</span>
+            <span className="llv-kicker w-20 shrink-0">Pressure</span>
             <Num v={pr.score} reasons={pr.reasons} title="Succession pressure: how much the men are thinking past you (not a countdown)" format={(x) => `${Math.round(x)}`}>
               <span className="tabular-nums text-lg text-stone-100 cursor-help w-8 text-right" data-testid="pressure">{pr.score}</span>
             </Num>
             <Meter v={pr.score} tone={pr.score >= 60 ? 'bg-blood-400' : pr.score >= 40 ? 'bg-amber-500' : 'bg-emerald-600'} />
           </div>
           <div className="flex min-w-[12rem] flex-1 items-center gap-2">
-            <span className="text-[10px] uppercase tracking-[0.2em] text-stone-500 w-20 shrink-0">You're there</span>
+            <span className="llv-kicker w-20 shrink-0">You're there</span>
             <Num v={inv.score} reasons={inv.reasons} title="How present you are in your own family" format={(x) => `${Math.round(x)}`}>
               <span className="tabular-nums text-lg text-stone-100 cursor-help w-8 text-right">{inv.score}</span>
             </Num>
@@ -141,18 +141,18 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
           {displayName(boss)}, {ageOn(boss.birth, s.date)}, health {boss.health}. {pr.score >= 60 ? 'The men are thinking about the day after you, out loud.' : pr.score >= 40 ? 'Some of the men are quietly thinking about who comes next.' : 'Nobody is counting the days.'}
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
-          <div className="flex items-center gap-2 rounded border border-noir-700 p-2" data-testid="heir-backing">
+          <div className="flex items-center gap-2 rounded-md border border-noir-700 bg-noir-900/50 p-2" data-testid="heir-backing">
             {heir ? <Face s={live} c={heir} size={40} /> : null}
             <div className="min-w-0 text-xs">
-              <div className="text-[10px] uppercase tracking-wider text-stone-500">The heir</div>
+              <div className="llv-kicker">The heir</div>
               {heir ? <div className="text-sm"><CharLink s={live} id={heir.id} /> <span className="text-stone-500">{ageOn(heir.birth, s.date)}</span></div> : <div className="text-sm text-red-300">Nobody anyone can name</div>}
               {heir && <div className="text-stone-400">Known backing: <span className="text-stone-100 tabular-nums">{heirKnown}%</span> of the family</div>}
             </div>
           </div>
-          <div className="flex items-center gap-2 rounded border border-noir-700 p-2">
+          <div className="flex items-center gap-2 rounded-md border border-noir-700 bg-noir-900/50 p-2">
             {ub ? <Face s={live} c={ub} size={40} /> : null}
             <div className="min-w-0 text-xs">
-              <div className="text-[10px] uppercase tracking-wider text-stone-500">The underboss</div>
+              <div className="llv-kicker">The underboss</div>
               {ub ? <div className="text-sm"><CharLink s={live} id={ub.id} /> <span className="text-stone-500">{ageOn(ub.birth, s.date)}</span></div> : <div className="text-sm text-stone-500">Nobody</div>}
               {ub && <div className="text-stone-400">{ub.id === heir?.id ? 'He is also the heir.' : <>Known backing: <span className="text-stone-100 tabular-nums">{ubKnown}%</span></>} · authority: <span className="text-stone-200" title={AUTH_TEXT[auth]}>{auth}</span></div>}
             </div>
@@ -163,8 +163,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
 
       {/* The claimants: who could sit in the chair, and how strong each claim is */}
       {claims.length > 0 && (
-        <section className="space-y-1" data-testid="claimants">
-          <H sub="blood · the capos · Philadelphia · money · respect">The claimants</H>
+        <section className={`${box('family')} space-y-1`} data-testid="claimants" data-domain="family">
+          <H glyph="♕" sub="blood · the capos · Philadelphia · money · respect">The claimants</H>
           <ul className="divide-y divide-noir-800">
             {claims.map((c) => {
               const ch = s.characters[c.id];
@@ -190,8 +190,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
       )}
 
       {/* Who backs whom */}
-      <section className="space-y-1" data-testid="crew-support">
-        <H sub="only what has reached you">Who backs whom</H>
+      <section className={`${box('crew')} space-y-1`} data-testid="crew-support" data-domain="crew">
+        <H d="crew" sub="only what has reached you">Who backs whom</H>
         <ul className="divide-y divide-noir-800">
           {shown.map((m) => {
             const v = sh.views[m.id];
@@ -216,8 +216,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
       </section>
 
       {/* Who do people go to */}
-      <section className="space-y-1" data-testid="audience">
-        <H sub="last 8 weeks">Who do the men go to?</H>
+      <section className={`${box('crew')} space-y-1`} data-testid="audience" data-domain="crew">
+        <H d="crew" glyph="☞" sub="last 8 weeks">Who do the men go to?</H>
         {([['You', aud.don, 'exact'], [ub ? `${nameOf(s, ub.id)} (underboss)` : 'The underboss', aud.ubKnown, aud.ubKnown ? `at least · ${aud.ubSessions} meeting${aud.ubSessions === 1 ? '' : 's'} you know of` : 'you have not heard'], [cons ? `${nameOf(s, cons.id)} (consigliere)` : 'The consigliere', aud.cons, 'he tells you'], ['The capos', aud.capos, 'they tell you']] as [string, number, string][]).map(([label, n, note]) => (
           <div key={label} className="flex items-center gap-2 text-xs">
             <span className="w-32 shrink-0 truncate text-stone-300">{label}</span>
@@ -229,8 +229,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
       </section>
 
       {/* The underboss's court */}
-      <section className="space-y-2" data-testid="ub-decisions">
-        <H sub={pl ? `${nameOf(s, pl.id)} is listening for you · ${pl.reports} report${pl.reports === 1 ? '' : 's'}` : undefined}>The underboss's known decisions</H>
+      <section className={`${box('crew')} space-y-2`} data-testid="ub-decisions" data-domain="crew">
+        <H d="crew" glyph="♜" sub={pl ? `${nameOf(s, pl.id)} is listening for you · ${pl.reports} report${pl.reports === 1 ? '' : 's'}` : undefined}>The underboss's known decisions</H>
         {ub && (
           <div className="flex flex-wrap items-center gap-1 text-[11px] text-stone-400">
             <span className="mr-1">His authority:</span>
@@ -260,8 +260,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
       </section>
 
       {/* Promises */}
-      <section className="space-y-1" data-testid="known-promises">
-        <H>Promises you've heard of</H>
+      <section className={`${box('family')} space-y-1`} data-testid="known-promises" data-domain="family">
+        <H glyph="✍">Promises you've heard of</H>
         {promises.length === 0 ? <p className="text-xs text-stone-500">None that reached you.</p> : (
           <ul className="space-y-1">
             {promises.slice(0, 10).map(({ p, b }) => (
@@ -277,8 +277,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
       </section>
 
       {/* What you can do */}
-      <section className="space-y-2" data-testid="succession-actions">
-        <H>Moves</H>
+      <section className={`${box('family')} space-y-2`} data-testid="succession-actions" data-domain="family">
+        <H glyph="▶">Moves</H>
         <div className="grid gap-2 sm:grid-cols-2">
           {ub && <ActionCard s={live} action={act({ op: 'report' })} compact />}
           {ub && <ActionCard s={live} action={act({ op: 'confront' })} compact />}
@@ -307,8 +307,8 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
 
       {/* Rivals */}
       {rivals.length > 0 && (
-        <section className="space-y-1" data-testid="rival-reads">
-          <H>The other families</H>
+        <section className={`${box('rivals')} space-y-1`} data-testid="rival-reads" data-domain="rivals">
+          <H d="rivals">The other families</H>
           <ul className="space-y-0.5 text-xs">
             {rivals.map(({ r, rv }) => (
               <li key={rv!.id} className="text-stone-300">{rv!.name}: {({ steady: 'content with things as they are', probe: 'asking questions about your health', renegotiate: 'revisiting old agreements', court: 'courting a successor', recruit: 'making offers to your men', warn: 'warned you about your own people' } as const)[r.stance]}{r.favor ? <> · their favorite: <CharLink s={live} id={r.favor} /></> : null} <Know lvl={r.known!} /></li>
@@ -319,16 +319,16 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
 
       {/* Stories and history */}
       {stories.length > 0 && (
-        <section className="space-y-1" data-testid="succession-stories">
-          <H>Stories in the family</H>
+        <section className={`${box('family')} space-y-1`} data-testid="succession-stories" data-domain="family">
+          <H glyph="✎">Stories in the family</H>
           <ul className="space-y-1 text-xs">
             {stories.map((st) => <li key={st.id}><span className="text-gold-200">{storyName(st.tpl)}</span> <span className="text-stone-500">{when(st.since)}</span>{st.outcome ? <span className="text-stone-400"> — {st.log[st.log.length - 1]?.text}</span> : <span className="text-amber-300"> — still playing out</span>}</li>)}
           </ul>
         </section>
       )}
       {sh.successions.length > 0 && (
-        <section className="space-y-1">
-          <H>Successions</H>
+        <section className={`${box('family')} space-y-1`} data-domain="family">
+          <H glyph="♔">Successions</H>
           <ul className="space-y-0.5 text-xs text-stone-400">{[...sh.successions].reverse().map((x, i) => <li key={i}>{when(x.week)} · {x.text}</li>)}</ul>
         </section>
       )}

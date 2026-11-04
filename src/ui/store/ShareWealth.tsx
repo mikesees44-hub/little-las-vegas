@@ -5,6 +5,8 @@ import { inflation } from '../../engine/property';
 import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { fmt$ } from '../format';
+import { CardHead } from '../components/Layout';
+import { domCard } from '../domain';
 
 /**
  * SHARE THE WEALTH: pick a sum, how to split it (the men, the widows, the
@@ -23,13 +25,14 @@ export function ShareWealth({ s }: { s: GameState }) {
   const set = (k: keyof ShareSplit, v: number) => { setPreset(''); setSplit({ ...split, [k]: Math.max(0, Math.min(100, v)) }); };
   const chip = (v: number, label: string, good = v > 0) => (v ? <span className={good ? 'chip-good' : 'chip-bad'}>{label} {v > 0 ? '+' : ''}{v}</span> : null);
   return (
-    <section className="space-y-3 rounded border border-gold-500/40 bg-noir-800/60 p-3" data-testid="share-wealth">
-      <div className="panel-title">Share the wealth</div>
-      <p className="text-[12px] text-stone-400">A boss who shares is a boss men die for. Envelopes for the crew, the widows of the men who did die for you, the church, turkeys on every stoop.</p>
+    <section className={`llv-card-box llv-card-plain space-y-3 ${domCard('church')}`} data-testid="share-wealth" data-domain="church">
+      <CardHead d="church" glyph="♥" title="Share the wealth" className="!mb-0" sub="A boss who shares is a boss men die for. Envelopes for the crew, the widows of the men who did die for you, the church, turkeys on every stoop." />
+      <div className="llv-kicker">1 · How much</div>
       <div className="flex flex-wrap gap-1" data-testid="share-amounts">
         {SHARE_AMOUNTS.map((a) => { const v = Math.round(a * infl / 100) * 100; return <button key={a} className={`${total === v ? 'btn-gold' : 'btn-ghost'} px-2 py-1 text-xs`} onClick={() => setTotal(v)}>{fmt$(v)}</button>; })}
         <input aria-label="Amount" type="number" min={100} step={100} className="inp w-28 text-sm" value={total} onChange={(e) => setTotal(Math.max(0, Math.round(Number(e.target.value) || 0)))} />
       </div>
+      <div className="llv-kicker">2 · Who gets it</div>
       <div className="flex flex-wrap gap-1" data-testid="share-presets">
         {SHARE_PRESETS.map((x) => <button key={x.id} title={x.text} className={`${preset === x.id ? 'btn-gold' : 'btn-ghost'} px-2 py-1 text-xs`} onClick={() => { setPreset(x.id); setSplit(x.split); }}>{x.label}</button>)}
       </div>
@@ -41,7 +44,8 @@ export function ShareWealth({ s }: { s: GameState }) {
           </label>
         ))}
       </div>
-      <div className="flex flex-wrap gap-3 text-[12px] text-stone-300">
+      <div className="llv-kicker">3 · How it is cut, and from which pot</div>
+      <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-stone-300">
         <label><input type="radio" checked={by === 'rank'} onChange={() => setBy('rank')} /> By rank</label>
         <label><input type="radio" checked={by === 'merit'} onChange={() => setBy('merit')} /> By merit (what each man brought in)</label>
         <span className="text-stone-600">|</span>
@@ -58,7 +62,7 @@ export function ShareWealth({ s }: { s: GameState }) {
         {p.seen > 0 && <span className="chip-neutral">The IRS sees {fmt$(p.seen)}</span>}
         {p.turkeys > 0 && <span className="chip-neutral">{p.turkeys.toLocaleString('en-US')} turkeys</span>}
       </div>
-      <ul className="max-h-56 divide-y divide-noir-800 overflow-y-auto text-[12px]" data-testid="share-lines">
+      <ul className="max-h-56 divide-y divide-noir-800 overflow-y-auto rounded-md border border-noir-700 bg-noir-900/50 px-2 text-[12px]" data-testid="share-lines">
         {p.lines.map((l, i) => (
           <li key={i} className="flex justify-between gap-2 py-0.5">
             <span className="text-stone-300">{l.name}{l.note ? <span className="text-amber-400"> · {l.note}</span> : null}</span>
