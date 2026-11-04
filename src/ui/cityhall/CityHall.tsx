@@ -16,6 +16,7 @@ import { ActionCard } from '../components/Orders';
 import { Portrait } from '../portrait/Portrait';
 import { FACTION_TINT, useSheet } from '../components/People';
 import { OfficialPicker } from '../clarity/Pickers';
+import { Empty, Section } from '../components/Layout';
 
 /** A world person as a portrait sitter (engine characters use their own record). */
 export function sitter(s: GameState, p: PolPerson): Character {
@@ -57,23 +58,23 @@ const SUBS: { id: Sub; label: string }[] = [
 export function CityHall({ s }: { s: GameState }) {
   const [sub, setSub] = useState<Sub>('offices');
   const { open: setOpen } = useSheet();
-  if (!s.pol) return <p className="text-sm text-stone-500" data-testid="cityhall">City Hall opens next week.</p>;
+  if (!s.pol) return <div data-testid="cityhall"><Empty title="City Hall opens next week">The seats, the races and the bills show up here once the week turns.</Empty></div>;
   const pol = s.pol;
   const crack = pol.crackdown && s.week < pol.crackdown.until;
   return (
     <div className="space-y-4" data-testid="cityhall">
+      {/* The drawer already says "City Hall": one line of what this is, the state of things, then the tabs. */}
       <div>
-        <h2 className="font-display text-2xl text-gold-400">City Hall</h2>
-        <p className="text-sm text-stone-400">Who holds every seat that matters, from the Wildwood commission to Trenton and Washington. Influence is not control: an official you put in office can still refuse you, resign, report you or turn. Your reach stops at the Governor and the congressmen.</p>
-        <div className="mt-1 flex flex-wrap gap-1 text-[11px]">
+        <p className="llv-prose">Who holds every seat that matters, from the Wildwood commission to Trenton and Washington. Influence is not control: an official you put in office can still refuse you, resign, report you or turn. Your reach stops at the Governor and the congressmen.</p>
+        <div className="mt-1.5 flex flex-wrap gap-1 text-[11px]">
           <span className="chip-neutral">Shore economy {economy(s)}</span>
           <span className="chip-neutral">{population(s).total} people in the world ({population(s).full} fully simulated)</span>
           {crack && <span className="chip-bad">War on organized crime: {pol.crackdown!.reason}</span>}
         </div>
       </div>
-      <div className="flex flex-wrap gap-1" data-testid="cityhall-subs">
+      <div className="llv-seg tabbar" role="tablist" aria-label="City Hall" data-testid="cityhall-subs">
         {SUBS.map((x) => (
-          <button key={x.id} data-sub={x.id} className={`text-xs px-2 py-1 rounded border ${sub === x.id ? 'border-gold-500 text-gold-300 bg-noir-800' : 'border-noir-700 text-stone-400 hover:text-stone-200'}`} onClick={() => setSub(x.id)}>{x.label}</button>
+          <button key={x.id} type="button" role="tab" aria-selected={sub === x.id} data-sub={x.id} className={`llv-seg-tab ${sub === x.id ? 'llv-seg-on' : ''}`} onClick={() => setSub(x.id)}>{x.label}</button>
         ))}
       </div>
       {sub === 'offices' && <Offices s={s} onOpen={setOpen} />}
@@ -97,15 +98,14 @@ function Offices({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }) 
   return (
     <div className="space-y-4" data-testid="offices">
       {LEVELS.map((lv) => (
-        <section key={lv.id}>
-          <div className="panel-title text-base">{lv.label}</div>
+        <Section title={lv.label} key={lv.id}>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {OFFICE_DEFS.filter((d) => d.level === lv.id).map((d) => {
               const o = pol.offices[d.id];
               const active = officeActive(s, d);
               const next = o.next.filter((x) => x > 0).sort((a, b) => a - b)[0];
               return (
-                <div key={d.id} className={`rounded-md border border-noir-700 bg-noir-800/60 p-2 ${active ? '' : 'opacity-50'}`}>
+                <div key={d.id} className={`llv-card-box llv-card-plain min-w-0 p-2.5 ${active ? '' : 'opacity-50'}`}>
                   <div className="flex items-baseline justify-between gap-2">
                     <div className="text-sm font-semibold text-stone-100">{d.title}</div>
                     <div className="text-[10px] text-stone-500 whitespace-nowrap">{JURIS_NAME[d.juris]}</div>
@@ -132,7 +132,7 @@ function Offices({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }) 
               );
             })}
           </div>
-        </section>
+        </Section>
       ))}
     </div>
   );
@@ -146,8 +146,7 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
   const races = pol.elections.filter((e) => e.candidates.length);
   return (
     <div className="space-y-5" data-testid="elections">
-      <section>
-        <div className="panel-title text-base">Races open now</div>
+      <Section title="Races open now">
         {!races.length && <p className="text-xs text-stone-500">No race is open. Campaigns open three months before election day.</p>}
         {races.map((e) => {
           const def = OFFICE_DEFS.find((d) => d.id === e.office)!;
@@ -195,9 +194,8 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
             </div>
           );
         })}
-      </section>
-      <section>
-        <div className="panel-title text-base">Election calendar</div>
+      </Section>
+      <Section title="Election calendar">
         <table className="w-full text-xs" data-testid="calendar">
           <tbody>
             {cal.slice(0, 24).map((c, i) => (
@@ -209,9 +207,8 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
             ))}
           </tbody>
         </table>
-      </section>
-      <section>
-        <div className="panel-title text-base">Past results</div>
+      </Section>
+      <Section title="Past results">
         {!pol.results.length && <p className="text-xs text-stone-500">No votes counted yet.</p>}
         <ul className="space-y-1 text-xs">
           {pol.results.slice(-12).reverse().map((r) => (
@@ -221,7 +218,7 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
             </li>
           ))}
         </ul>
-      </section>
+      </Section>
     </div>
   );
 }
@@ -240,9 +237,7 @@ function Laws({ s }: { s: GameState }) {
   const proposable = LAW_DEFS.filter((l) => l.friendly && !l.anchor && pol.laws[l.id] === undefined && !open.some((b) => b.law === l.id));
   return (
     <div className="space-y-5" data-testid="laws">
-      <section>
-        <div className="panel-title text-base">Bills before the bodies</div>
-        <p className="text-xs text-stone-500">Problem → bill → debate → vote → signature or veto → implementation → court challenge → consequences. A city cannot override the state.</p>
+      <Section title="Bills before the bodies" sub="Problem → bill → debate → vote → signature or veto → implementation → court challenge → consequences. A city cannot override the state.">
         {!open.length && <p className="text-xs text-stone-500 mt-1">Nothing on the docket.</p>}
         {open.map((b) => {
           const l = LAW_BY_ID[b.law];
@@ -265,9 +260,8 @@ function Laws({ s }: { s: GameState }) {
             </div>
           );
         })}
-      </section>
-      <section>
-        <div className="panel-title text-base">Laws in force</div>
+      </Section>
+      <Section title="Laws in force">
         {!inForce.length && <p className="text-xs text-stone-500">Only the old laws.</p>}
         <ul className="space-y-1">
           {inForce.map((l) => (
@@ -277,16 +271,14 @@ function Laws({ s }: { s: GameState }) {
             </li>
           ))}
         </ul>
-      </section>
-      <section>
-        <div className="panel-title text-base">Have a friend introduce a bill</div>
+      </Section>
+      <Section title="Have a friend introduce a bill">
         <div className="grid gap-1.5 sm:grid-cols-2">{proposable.map((l) => <ActionCard key={l.id} s={s} action={pa({ op: 'propose', law: l.id })} />)}</div>
-      </section>
+      </Section>
       {done.length > 0 && (
-        <section>
-          <div className="panel-title text-base">Recently decided</div>
+        <Section title="Recently decided">
           <ul className="text-xs space-y-0.5">{done.map((b) => <li key={b.id} className="text-stone-400"><span className="text-stone-200">{LAW_BY_ID[b.law]?.name}</span>: {STAGE_LABEL[b.stage]}{b.note && b.stage === 'struck' ? ` — ${b.note}` : ''}</li>)}</ul>
-        </section>
+        </Section>
       )}
     </div>
   );
