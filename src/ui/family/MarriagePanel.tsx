@@ -23,14 +23,14 @@ export function MarriagePanel({ s }: { s: GameState }) {
   return (
     <div className="space-y-5" data-testid="marriage-panel">
       <DatingLink s={s} tab="family" text="your own: dates, pregnancies you know of, children by blood, the talk" />
-      <Section title="Arranged marriages" aside={singles.length ? `${singles.length} free to marry` : undefined}
+      <Section domain="family" title="Arranged marriages" aside={singles.length ? `${singles.length} free to marry` : undefined}
         sub="A marriage between houses makes an alliance for as long as it stands: they won't move against you, they send men to your wars, and their votes at the Table lean your way. The bride's family pays the dowry.">
         {singles.length === 0 && <Empty title="No one to marry off">No one in the house is of marrying age and free.</Empty>}
         <div className="grid gap-3 lg:grid-cols-2">
           {singles.map((m) => <MatchCard key={m.id} s={s} m={m} />)}
         </div>
       </Section>
-      <Section title="Children & wards" aside={kids.length ? `${kids.length} in the house` : undefined}
+      <Section domain="family" title="Children & wards" aside={kids.length ? `${kids.length} in the house` : undefined}
         sub="Who raises a child decides what comes home at sixteen: an education, a temperament, and the path the child will want.">
         {kids.length === 0 && <Empty title="No children in the house" />}
         <div className="grid gap-3 lg:grid-cols-2">
@@ -126,7 +126,7 @@ function Houses({ s }: { s: GameState }) {
   const houses = s.dyn?.houses ?? [];
   const allies = activeAlliances(s);
   return (
-    <Section title="Houses of the shore" aside={allies.length ? `${allies.length} allied` : undefined} sub="Rival crews, the Philadelphia families, political families and the legitimate families of Wildwood.">
+    <Section domain="family" title="Houses of the shore" aside={allies.length ? `${allies.length} allied` : undefined} sub="Rival crews, the Philadelphia families, political families and the legitimate families of Wildwood.">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {houses.map((h) => {
           const head = s.characters[h.headId];

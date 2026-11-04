@@ -7,6 +7,7 @@ import { DAY_NAMES } from '../../engine/days';
 import { hourText } from '../../engine/threats';
 import { Modal } from '../components/Modal';
 import { Empty } from '../components/Layout';
+import { domainOfText, domClass } from '../domain';
 
 /**
  * THE PHONE (PHONE.md): one window, three tabs. Missed calls (call back), the phone book (pick a
@@ -67,8 +68,9 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
             {!missed.length && <Empty title="No missed calls" action={<button type="button" className="btn-secondary text-xs" onClick={() => setTab('dial')}>Make a call ▸</button>}>When somebody rings while you are out, it shows up here.</Empty>}
             {missed.slice().reverse().map((m) => {
               const why = canCallBack(s, m);
+              const d = domainOfText(s, `${m.p.role} ${m.p.name}`);
               return (
-                <div key={m.id} className={`llv-card-box ${m.h === 2 ? 'llv-card-danger' : 'llv-card-plain'} flex items-center justify-between gap-2 py-2`}>
+                <div key={m.id} className={`llv-card-box ${m.h === 2 ? 'llv-card-danger' : 'llv-card-plain'} ${d ? `${domClass(d)} llv-dom-edge llv-dom-tint` : ''} flex items-center justify-between gap-2 py-2`} data-domain={d}>
                   <div className="min-w-0">
                     <div className="text-sm text-stone-200 truncate">{m.p.name} <span className="text-stone-500">· {m.p.role}</span></div>
                     <div className="text-[11px] text-stone-500">{DAY_NAMES[m.d]}, {hourText(m.h)}{m.h === 2 ? ' · bad news' : ''}</div>
@@ -152,7 +154,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
               <h4 className="llv-section-title mb-1">The last calls</h4>
               {!(s.phone?.log.length) && <Empty title="Nothing yet">Calls in and out, and the meets, are logged here and in Your File.</Empty>}
               {(s.phone?.log ?? []).slice(-12).reverse().map((l, i) => (
-                <div key={i} className="border-b border-noir-800 py-1 text-xs text-stone-400">
+                <div key={i} className={`border-b border-noir-800 py-1 pl-2 text-xs text-stone-400 ${domClass(domainOfText(s, `${l.name} ${l.t}`))} ${domainOfText(s, `${l.name} ${l.t}`) ? 'llv-dom-edge' : ''}`}>
                   <span className="text-stone-500">Wk {l.w} {DAY_NAMES[l.d].slice(0, 3)} {hourText(l.h)} · {l.dir === 'in' ? 'in' : l.dir === 'out' ? 'out' : l.dir === 'meet' ? 'meet' : 'missed'}</span> <span className="text-stone-200">{l.name}</span>: {l.t}
                 </div>
               ))}

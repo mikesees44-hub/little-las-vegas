@@ -21,13 +21,13 @@ export function ActivitiesPanel({ s }: { s: GameState }) {
   return (
     <div className="space-y-3" data-testid="activities-panel">
       {active && (
-        <Card tone="attention" testid="activity-now">
+        <Card tone="attention" domain="family" testid="activity-now">
           <div className="text-[11px] uppercase tracking-[0.2em] text-gold-500">Now hosting</div>
           <div className="font-display text-lg leading-tight text-gold-300">{ACTIVITIES[active.kind].name}</div>
           <div className="text-[12.5px] text-stone-400">at {ACTIVITIES[active.kind].place} · {active.guests.length} guests · <span className="text-stone-200">{active.endWeek > s.week ? `${active.endWeek - s.week} week${active.endWeek - s.week > 1 ? 's' : ''} to go` : 'ends this week'}</span></div>
         </Card>
       )}
-      <Section title="Host something" sub="Pick the guests, pay for it, and a week or two later it plays out: guests think better of you, you unwind, the house earns renown, and something always happens. Weddings and funerals are where business gets done.">
+      <Section domain="family" title="Host something" sub="Pick the guests, pay for it, and a week or two later it plays out: guests think better of you, you unwind, the house earns renown, and something always happens. Weddings and funerals are where business gets done.">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {ACTIVITY_KINDS.map((k) => {
           const def = ACTIVITIES[k];
@@ -47,7 +47,7 @@ export function ActivitiesPanel({ s }: { s: GameState }) {
       </Section>
       {kind && <Planner key={kind} s={s} kind={kind} />}
       {s.dyn && s.dyn.activityLog.length > 0 && (
-        <Section title="Past gatherings">
+        <Section domain="family" title="Past gatherings">
           <ul className="space-y-1 text-[12.5px] text-stone-400">
             {[...s.dyn.activityLog].reverse().slice(0, 8).map((r, i) => (
               <li key={i} className="flex gap-2"><span className="text-emerald-400" aria-hidden>✓</span><span><span className="text-stone-200">{ACTIVITIES[r.kind].name}</span> (wk {r.week}, {r.guests.length} guests){r.outcomes.length ? ` — ${r.outcomes.join('; ')}` : ''}</span></li>

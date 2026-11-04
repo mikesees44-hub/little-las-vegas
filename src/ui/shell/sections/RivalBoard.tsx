@@ -35,7 +35,7 @@ export function RivalBoard({ s }: { s: GameState }) {
           if (!leader) return null;
           const war = s.wars.find((w) => w.rival === r.id);
           return (
-            <li key={r.id} className={`llv-card-box flex min-w-0 items-start gap-2.5 p-2.5 ${war || r.feud ? 'llv-card-danger' : 'llv-card-plain'}`} data-testid="rival-card">
+            <li key={r.id} className={`llv-card-box llv-d-rivals llv-dom-edge flex min-w-0 items-start gap-2.5 p-2.5 ${war || r.feud ? 'llv-card-danger' : 'llv-card-plain llv-dom-tint'}`} data-testid="rival-card" data-domain="rivals">
               <Face s={s} c={leader} size={48} />
               <div className="min-w-0 flex-1">
                 <div className="flex justify-between gap-2">

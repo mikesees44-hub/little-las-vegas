@@ -98,7 +98,7 @@ function Offices({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }) 
   return (
     <div className="space-y-4" data-testid="offices">
       {LEVELS.map((lv) => (
-        <Section title={lv.label} key={lv.id}>
+        <Section domain="politics" title={lv.label} key={lv.id}>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
             {OFFICE_DEFS.filter((d) => d.level === lv.id).map((d) => {
               const o = pol.offices[d.id];
@@ -146,7 +146,7 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
   const races = pol.elections.filter((e) => e.candidates.length);
   return (
     <div className="space-y-5" data-testid="elections">
-      <Section title="Races open now">
+      <Section domain="politics" title="Races open now">
         {!races.length && <p className="text-xs text-stone-500">No race is open. Campaigns open three months before election day.</p>}
         {races.map((e) => {
           const def = OFFICE_DEFS.find((d) => d.id === e.office)!;
@@ -195,7 +195,7 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
           );
         })}
       </Section>
-      <Section title="Election calendar">
+      <Section domain="politics" title="Election calendar">
         <table className="w-full text-xs" data-testid="calendar">
           <tbody>
             {cal.slice(0, 24).map((c, i) => (
@@ -208,7 +208,7 @@ function Elections({ s, onOpen }: { s: GameState; onOpen: (id: string) => void }
           </tbody>
         </table>
       </Section>
-      <Section title="Past results">
+      <Section domain="politics" title="Past results">
         {!pol.results.length && <p className="text-xs text-stone-500">No votes counted yet.</p>}
         <ul className="space-y-1 text-xs">
           {pol.results.slice(-12).reverse().map((r) => (
@@ -237,7 +237,7 @@ function Laws({ s }: { s: GameState }) {
   const proposable = LAW_DEFS.filter((l) => l.friendly && !l.anchor && pol.laws[l.id] === undefined && !open.some((b) => b.law === l.id));
   return (
     <div className="space-y-5" data-testid="laws">
-      <Section title="Bills before the bodies" sub="Problem → bill → debate → vote → signature or veto → implementation → court challenge → consequences. A city cannot override the state.">
+      <Section domain="politics" title="Bills before the bodies" sub="Problem → bill → debate → vote → signature or veto → implementation → court challenge → consequences. A city cannot override the state.">
         {!open.length && <p className="text-xs text-stone-500 mt-1">Nothing on the docket.</p>}
         {open.map((b) => {
           const l = LAW_BY_ID[b.law];
@@ -261,7 +261,7 @@ function Laws({ s }: { s: GameState }) {
           );
         })}
       </Section>
-      <Section title="Laws in force">
+      <Section domain="politics" title="Laws in force">
         {!inForce.length && <p className="text-xs text-stone-500">Only the old laws.</p>}
         <ul className="space-y-1">
           {inForce.map((l) => (
@@ -272,11 +272,11 @@ function Laws({ s }: { s: GameState }) {
           ))}
         </ul>
       </Section>
-      <Section title="Have a friend introduce a bill">
+      <Section domain="politics" title="Have a friend introduce a bill">
         <div className="grid gap-1.5 sm:grid-cols-2">{proposable.map((l) => <ActionCard key={l.id} s={s} action={pa({ op: 'propose', law: l.id })} />)}</div>
       </Section>
       {done.length > 0 && (
-        <Section title="Recently decided">
+        <Section domain="politics" title="Recently decided">
           <ul className="text-xs space-y-0.5">{done.map((b) => <li key={b.id} className="text-stone-400"><span className="text-stone-200">{LAW_BY_ID[b.law]?.name}</span>: {STAGE_LABEL[b.stage]}{b.note && b.stage === 'struck' ? ` — ${b.note}` : ''}</li>)}</ul>
         </Section>
       )}

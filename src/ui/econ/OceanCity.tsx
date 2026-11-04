@@ -38,11 +38,11 @@ export function OceanCityPanel({ s, open: open0 = false }: { s: GameState; open?
   const odds = o?.run ? seizeOdds(s, o.run.route) : seizeOdds(s, route);
   const raid = raidOdds(s);
   return (
-    <section className="llv-card-box llv-card-attention space-y-2" data-testid="ocean-city">
+    <section className="llv-card-box llv-card-plain llv-d-shore llv-dom-edge llv-dom-tint space-y-2" data-testid="ocean-city" data-domain="shore">
       <button type="button" className="flex w-full items-start gap-3 text-left" onClick={() => setOpen((x) => !x)} aria-expanded={open} data-testid="oc-toggle">
         <span className="min-w-0 flex-1">
           <span className="block text-[10px] uppercase tracking-[0.3em] text-stone-500">Over the bridge</span>
-          <span className="block font-display text-lg leading-tight text-gold-300">Ocean City: the dry town</span>
+          <span className="block font-display text-lg leading-tight llv-dom-ink">Ocean City: the dry town</span>
         </span>
         <span className="flex shrink-0 items-center gap-1.5">
           {(['run', 'easy', 'bought'] as const).filter((k) => (k === 'bought' ? o?.stance === 'bought' || o?.stance === 'wet' : !!o?.[k])).length > 0 && (

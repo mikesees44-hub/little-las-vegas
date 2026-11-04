@@ -27,7 +27,7 @@ export function TablePanel({ s }: { s: GameState }) {
 
   return (
     <div className="space-y-6">
-      <Section title="The Table" sub="Philadelphia's South Jersey sit-down, above a restaurant on Ninth Street. Disputes are heard here; members who are not a party vote; the chair breaks ties. A hit on a made man needs its sanction, and so does a war.">
+      <Section domain="politics" title="The Table" sub="Philadelphia's South Jersey sit-down, above a restaurant on Ninth Street. Disputes are heard here; members who are not a party vote; the chair breaks ties. A hit on a made man needs its sanction, and so does a war.">
         <div className="mt-2 flex flex-wrap gap-3">
           {members.map((m) => (
             <div key={m.id} className="llv-card-box llv-card-plain flex min-w-0 items-center gap-2 p-2">
@@ -42,7 +42,7 @@ export function TablePanel({ s }: { s: GameState }) {
         </div>
       </Section>
 
-      <Section title="Before the Table" aside={open.length ? `${open.length} pending` : undefined}>
+      <Section domain="politics" title="Before the Table" aside={open.length ? `${open.length} pending` : undefined}>
         {open.length === 0 && <Empty title="No disputes pending">Bring a matter below, or wait for one to be brought against you.</Empty>}
         {open.map((d) => {
           const leans = forecast(s, d);
@@ -75,7 +75,7 @@ export function TablePanel({ s }: { s: GameState }) {
         })}
       </Section>
 
-      <Section title="Bring a matter before the Table">
+      <Section domain="politics" title="Bring a matter before the Table">
         <div className="mt-2 flex flex-wrap gap-2 items-center text-xs">
           <select className="rounded bg-noir-900 border border-noir-600 p-1" value={rival} onChange={(e) => setRival(e.target.value as RivalId)} aria-label="Against">
             {mobs.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -103,7 +103,7 @@ export function TablePanel({ s }: { s: GameState }) {
         </div>
       </Section>
 
-      <Section title="Wars">
+      <Section domain="politics" title="Wars">
         {s.wars.length === 0 && <p className="text-xs text-stone-500">At peace. A war needs a casus belli: a claim (fabricate one through a scheme), a grievance the Table heard, a blood feud, or the Table's blessing.</p>}
         {s.wars.map((w) => (
           <div key={w.id} className="llv-card-box llv-card-danger mt-2" data-testid="war">
@@ -136,7 +136,7 @@ export function TablePanel({ s }: { s: GameState }) {
       </Section>
 
       {ruled.length > 0 && (
-        <Section title="Past rulings">
+        <Section domain="politics" title="Past rulings">
           <ul className="text-xs text-stone-400 space-y-1 mt-1">{ruled.map((d) => <li key={d.id}>Week {d.ruling!.week}: {d.ruling!.forPlayer ? 'for you' : 'against you'} — {d.claim}</li>)}</ul>
         </Section>
       )}

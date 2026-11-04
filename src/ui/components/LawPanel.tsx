@@ -63,7 +63,7 @@ export function LawPanel({ s }: { s: GameState }) {
         </div>
       </div>
 
-      <Section title="Evidence this week" aside={g.reasons.length ? undefined : 'nothing new'}>
+      <Section domain="law" title="Evidence this week" aside={g.reasons.length ? undefined : 'nothing new'}>
         <div className="flex flex-wrap gap-1 text-xs">
           {g.reasons.length === 0 && <span className="text-stone-500">Nothing new.</span>}
           {g.reasons.map((r, i) => <span key={i} className={r.value > 0 ? 'chip-bad' : 'chip-good'}>{r.value > 0 ? '+' : '−'}{Math.abs(r.value).toFixed(1)} {r.label}</span>)}
@@ -73,7 +73,7 @@ export function LawPanel({ s }: { s: GameState }) {
 
       <FugitivePanel s={s} />
 
-      <Section title="Your defense" sub="A lawyer on retainer and a quiet season are what keep the file thin.">
+      <Section domain="law" title="Your defense" sub="A lawyer on retainer and a quiet season are what keep the file thin.">
         <div className="grid gap-2 sm:grid-cols-2">
           <ActionCard s={s} action={{ kind: 'legal', op: 'retainer' }} />
           <ActionCard s={s} action={{ kind: 'legal', op: 'lielow' }} />
