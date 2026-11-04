@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
 import { seasonInfo } from '../../engine/calendar';
@@ -428,7 +429,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             </div>
             {pane === 'orders' && <OrdersPane s={s} onClose={() => setPane(undefined)} />}
             {pane === 'plans' && <PlansPanel s={s} onClose={() => setPane(undefined)} />}
-            {report !== undefined && <ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />}
+            {/* Out of the bar's stacking context (z 1150), so the sheet sits over the phone's tab bar. */}
+            {report !== undefined && typeof document !== 'undefined' && createPortal(<ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />, document.body)}
           </div>
         )}
       </div>
