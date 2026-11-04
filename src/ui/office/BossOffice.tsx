@@ -205,8 +205,8 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                 </div>
               )}
               {room.memorial && (
-                <div className="pointer-events-none absolute hidden sm:block" style={{ left: '1.5%', top: '24.5%' }} data-testid="office-memorial">
-                  <span className={`${chip} border-stone-500 text-stone-200`}>▬ In memory of {room.memorial.name}</span>
+                <div className="pointer-events-none absolute hidden sm:block" style={{ left: '0.5%', top: '24.5%' }} data-testid="office-memorial" title={`In memory of ${room.memorial.name}`}>
+                  <span className={`${chip} border-stone-500 text-stone-200`}>▬ <span className="hidden xl:inline">In memory of </span>{room.memorial.name.replace(/ ".*" /, ' ')}</span>
                 </div>
               )}
               {(room.cane || room.medicine) && (
@@ -258,14 +258,14 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
           const fc = first?.charId ? s.characters[first.charId] : undefined;
           return (
             <button type="button" onClick={() => act(h)} data-testid="office-lead" data-domain={d}
-              className={`llv-card-box llv-card-attention llv-slide-up llv-next flex w-full items-center gap-3 text-left ${domClass(d)} llv-dom-edge llv-dom-tint hover:border-gold-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300`}>
+              className={`llv-card-box llv-card-attention llv-slide-up llv-next flex w-full flex-wrap items-center gap-3 text-left ${domClass(d)} llv-dom-edge llv-dom-tint hover:border-gold-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300`}>
               {fc ? <span className="shrink-0 rounded-md ring-2 ring-gold-500/60"><Portrait c={fc} seed={s.seed} date={s.date} size={64} tint={FACTION_TINT[fc.faction]} /></span> : <DomainChip d={d} glyph={h.icon} size={44} />}
               <span className="min-w-0 flex-1">
                 <span className="llv-kicker block">{lead === 'door' ? (box.tone === 'red' ? 'Urgent · outside the door' : 'Outside the door') : 'On the desk'}</span>
                 <span className="block font-display text-xl leading-tight text-stone-100 sm:text-2xl">{lead === 'door' ? `${box.n} waiting on you` : `${fmt$(rep!.reported)} in the envelope`}</span>
                 <span className="block truncate text-[12px] text-stone-300">{lead === 'door' ? (first ? `${first.name}: ${first.why}` : status.door) : 'Hear the count and take your cut.'}</span>
               </span>
-              <span className="btn-primary hidden shrink-0 text-xs sm:inline-flex lg:hidden xl:inline-flex">{lead === 'door' ? 'See who\'s waiting' : 'Hear the count'} ▸</span>
+              <span className="btn-primary hidden w-full shrink-0 text-xs sm:inline-flex sm:w-auto lg:w-full">{lead === 'door' ? 'See who\'s waiting' : 'Hear the count'} ▸</span>
               <span className="shrink-0 text-gold-300 sm:hidden" aria-hidden>▸</span>
             </button>
           );

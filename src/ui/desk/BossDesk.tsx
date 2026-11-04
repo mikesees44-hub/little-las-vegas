@@ -187,7 +187,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
             style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${h.hint}`}
             onClick={() => (h.id === 'ledger' ? api.onMoney() : h.id === 'envelopes' ? (api.onEnvelope ?? api.onMoney)() : h.id === 'ashtray' ? api.onFile?.() : window.dispatchEvent(new Event('llv-open-phone')))}>
             <span className={`absolute ${h.at} inline-flex items-center gap-1 rounded border bg-noir-950/85 px-1.5 py-0.5 text-[10px] leading-none shadow shadow-black/60 ${domClass(h.d)} llv-dom-border`}>
-              <span aria-hidden className="llv-dom-ink">{h.icon}</span><span className="llv-spot-label text-stone-100">{h.label}</span>
+              <span aria-hidden className="llv-dom-ink">{h.icon}</span><span className="hidden text-stone-100 md:inline">{h.label}</span>
             </span>
           </button>
         ))}
