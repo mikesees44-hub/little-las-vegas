@@ -199,10 +199,10 @@ export function herScore(s: GameState, w: Weigh, member: Character, cand: Charac
   const r = s.rivals.find((x) => x.id === house.faction);
   switch (w) {
     case 'love': return { v: 30 + sweet * 45 + (same ? 8 : 0) - Math.max(0, gap - 4) * 2, why: sweet > 0.55 ? `${member.firstName} and ${cand.firstName} have been sweet on each other since the Holy Name dance` : `${cand.firstName} is kind, and ${member.firstName} laughs around ${cand.gender === 'F' ? 'her' : 'him'}` };
-    case 'money': return { v: 20 + Math.min(40, house.dowry / 100) + (house.kind === 'legit' || house.kind === 'political' ? 12 : 0), why: `${house.name} has money, and a name that opens doors on Pacific Avenue` };
-    case 'alliance': return { v: 15 + house.strength / 2 + (mobby ? 12 : 0) + (r?.war || r?.feud ? 18 : 0) + (alliedHouse(s, house.id) ? -10 : 0), why: r?.war || r?.feud ? `a wedding ends a war faster than a funeral: ${house.name} would be family` : `${house.name} would stand with us if it came to it` };
+    case 'money': return { v: 20 + Math.min(40, house.dowry / 100) + (house.kind === 'legit' || house.kind === 'political' ? 12 : 0), why: `with ${house.name} comes money, and a name that opens doors on Pacific Avenue` };
+    case 'alliance': return { v: 15 + house.strength / 2 + (mobby ? 12 : 0) + (r?.war || r?.feud ? 18 : 0) + (alliedHouse(s, house.id) ? -10 : 0), why: r?.war || r?.feud ? `a wedding ends a war faster than a funeral: make ${house.name} family` : `with ${house.name} as family, we never stand alone` };
     case 'church': return { v: 25 + (same ? 22 : 0) + (pious ? 25 : 0) + (house.kind === 'legit' ? 6 : 0), why: pious ? `${cand.firstName} never misses the nine o'clock Mass` : `the same parish, the same saints: Father will be pleased` };
-    case 'out': return { v: 30 + (house.kind === 'legit' ? 30 : house.kind === 'political' ? 12 : -28), why: house.kind === 'legit' ? `${house.name} is a decent family with a business in the daylight: ${member.firstName} gets out of this life` : `${house.name} is in politics, not in our business` };
+    case 'out': return { v: 30 + (house.kind === 'legit' ? 30 : house.kind === 'political' ? 12 : -28), why: house.kind === 'legit' ? `a decent family, ${house.name}, with a business in the daylight: ${member.firstName} gets out of this life` : `${house.name}: politics, not our business` };
   }
 }
 
@@ -246,7 +246,7 @@ function makeProposal(s: GameState, matron: Character, member: Character): Propo
   if (!pick) return undefined;
   const w = weighOf(s, matron, member);
   const why = [pick.why, `${WEIGH_TEXT[w].line}`];
-  if (pick.ok >= 0.6) why.push(`${pick.house.name} will say yes: she has already asked, the way women ask`);
+  if (pick.ok >= 0.6) why.push(`she has already asked ${pick.house.name}, the way women ask, and they lean yes`);
   return { id: `mm${s.week}_${member.id}`, week: s.week, by: matron.id, memberId: member.id, spouseId: pick.c.id, houseId: pick.house.id, weigh: w, why, mother: otherMother(s, pick.house, pick.c) };
 }
 
