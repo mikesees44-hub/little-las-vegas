@@ -1,6 +1,7 @@
 import { ageOn } from './calendar';
 import { capos, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { holder } from './council';
+import { allure } from './looks';
 import { adultOn } from './datingState';
 import { applyEffects } from './effects';
 import type { Ctx } from './ledger';
@@ -367,6 +368,17 @@ function herAcceptanceBase(s: GameState, id: string, what: HerAction['op'], via:
   if ((OFFER_OPS as readonly string[]).includes(what)) {
     // Who asks: the boss in person counts most.
     r.push({ label: VIA_WORDS[via], value: VIA_BONUS[via] });
+    // The asker's allure (looks.ts): looks, charm, a ladies' man's practice. A businesswoman weighs the money first:
+    // half weight on a partnership, a job or a campaign; full weight on the rest. His rank is counted above, not twice.
+    const man = askerOf(s, via);
+    if (man && man.gender === 'M') {
+      const w = what === 'partner' || what === 'hire' || what === 'back' ? 0.5 : 1;
+      for (const x of allure(s, man, c).reasons) {
+        if (/name opens doors|man of standing/.test(x.label)) continue;
+        const v = Math.round(x.value * w);
+        if (v) r.push({ label: `${via === 'boss' ? 'Your' : `${man.firstName}'s`} allure: ${x.label.charAt(0).toLowerCase()}${x.label.slice(1)}${w < 1 ? ' (half: business first)' : ''}`, value: v });
+      }
+    }
     // What he offers, against what she needs and expects (diminishing returns).
     const tm = termsOf(e, what, offer);
     const needs = e.savings < 1500;

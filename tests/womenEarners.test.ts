@@ -210,4 +210,24 @@ describe('her way: women earners', () => {
     expect(e.deal).toBe('protect');
     expect(e.terms?.cut).toBe(0.15);
   });
+
+  it('his allure counts in her odds: half weight in business, full weight otherwise; never a sure thing', async () => {
+    const { allure } = await import('../src/engine/looks');
+    const s = newGame('her-allure');
+    const boss = s.characters[s.playerId];
+    const e = find(s, 'fronts');
+    const her = s.characters[e.id];
+    boss.traits = [...boss.traits.filter((t) => t !== 'Charming' && t !== 'Womanizer')];
+    const plain = herAcceptance(s, e.id, 'ears').reasons.reduce((a, x) => a + x.value, 0);
+    const plainP = herAcceptance(s, e.id, 'partner').reasons.reduce((a, x) => a + x.value, 0);
+    boss.traits = [...boss.traits.slice(0, 1), 'Charming', 'Womanizer'];
+    const al = allure(s, boss, her).reasons.filter((x) => /Charming|ladies/.test(x.label)).reduce((a, x) => a + x.value, 0);
+    const charmedR = herAcceptance(s, e.id, 'ears').reasons;
+    expect(charmedR.map((x) => x.label).join(' | ')).toMatch(/Your allure: charming/);
+    expect(charmedR.reduce((a, x) => a + x.value, 0) - plain).toBeGreaterThanOrEqual(al - 1);
+    const pr = herAcceptance(s, e.id, 'partner').reasons;
+    expect(pr.map((x) => x.label).join(' | ')).toMatch(/half: business first/);
+    expect(pr.reduce((a, x) => a + x.value, 0) - plainP).toBeLessThan(al);
+    expect(herAcceptance(s, e.id, 'ears', 'boss', 'name').chance).toBeLessThan(1);
+  });
 });
