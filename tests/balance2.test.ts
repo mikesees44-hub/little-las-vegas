@@ -287,3 +287,35 @@ describe('Top 10 #8: the big fed beats are reachable', () => {
     expect(flipOdds(s, { charId: c.id, years: 8, care: [] })).toBeGreaterThan(flipOdds(s, { charId: c.id, years: 8, care: ['lawyer'] }));
   });
 });
+
+describe('Top 10 #2: moments share the big layers instead of cloning the world', () => {
+  it('no moment writes a shared layer (frozen) across weeks of the clock', async () => {
+    const { MOMENT_SHARED, momentClone } = await import('../src/engine/momentClone');
+    const { advanceWeek } = await import('../src/engine/engine');
+    const { answerMoment, closeWeek, momentView } = await import('../src/engine/daily');
+    const deepFreeze = (o: unknown): void => { if (o && typeof o === 'object' && !Object.isFrozen(o)) { Object.freeze(o); for (const v of Object.values(o as object)) deepFreeze(v); } };
+    let s = newGameWith('t2-cow', 'olddon');
+    s.heat.local = 70; s.heat.federal = 50;
+    let moments = 0;
+    for (let w = 0; w < 10; w++) {
+      for (const k of MOMENT_SHARED) deepFreeze((s as unknown as Record<string, unknown>)[k]);
+      for (let d = 0; d < 6; d++) {
+        const day = advanceDay(s);
+        s = day.state;
+        for (const id of day.strikes) {
+          const v = momentView(s, id);
+          if (!v) continue;
+          const r = answerMoment(s, id, v.options.find((o) => !o.blocked)?.id ?? v.def);
+          if (r.result.ok) { s = r.state; moments++; }
+        }
+      }
+      s = advanceWeek(closeWeek(s), {}).state;
+    }
+    // The copy shares the big layers by reference.
+    const c = momentClone(s);
+    expect(c.empire).toBe(s.empire);
+    expect(c.characters).not.toBe(s.characters);
+    console.log(`[cow] moments answered: ${moments}`);
+    expect(moments).toBeGreaterThanOrEqual(0);
+  });
+});

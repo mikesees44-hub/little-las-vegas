@@ -25,6 +25,7 @@ import {
   type Brasco, type FedsState, type Pinch,
 } from './fedsState';
 import { buildGrandJury, GJ_WEEKS, legalOf } from './longgame';
+import { momentClone } from './momentClone';
 
 export { addFedEvidence, bossHasFlipped, ensureFeds, informantsAround, isInformant };
 
@@ -240,7 +241,7 @@ export function moment(
   input: GameState, it: ScheduledItem, opt: string, title: string,
   run: (ctx: Ctx, F: FedsState) => { line: string; chance?: number; ok: boolean; crit?: boolean; leads?: string[]; who?: string; extra?: { h: string; b: string }; people?: string[] },
 ): { state: GameState; result: NowResult; extra?: { h: string; b: string } } {
-  const s = structuredClone(input) as GameState;
+  const s = momentClone(input);
   const F = ensureFeds(s);
   const ctx = newCtx(s);
   const before = { money: s.money, respect: s.respect, heat: { ...s.heat } };

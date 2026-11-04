@@ -23,6 +23,7 @@ import { noteThreatPlan, threatLean } from './minds/planner';
 import type { Character, Effect, GameState, Rival, RivalId } from './types';
 import { knobs } from './difficulty';
 import { spareFromWars } from './rankView';
+import { momentClone } from './momentClone';
 
 /**
  * THREATS AND URGENT MEETINGS.
@@ -1389,7 +1390,7 @@ export function resolveStrike(input: GameState, id: string, optId: StrikeOptId =
   const t0 = input.threats?.threats.find((x) => x.id === id);
   const fail = (error: string): { state: GameState; result: NowResult } => ({ state: input, result: { ok: false, error, title: 'The night', tier: 'fail', headline: error, line: '', changes: [], leadsTo: [] } });
   if (!t0 || input.gameOver) return fail('It is over');
-  const s = structuredClone(input) as GameState;
+  const s = momentClone(input);
   const T = s.threats!;
   const t = T.threats.find((x) => x.id === id)!;
   const ctx = newStrikeCtx(s);
