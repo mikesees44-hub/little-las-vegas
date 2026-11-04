@@ -1,4 +1,5 @@
 import { HOMES, OLD_KEYS, HOMES_BY_ID } from './nav';
+import { DomainLegend, Section } from '../components/Layout';
 
 const kbd = 'inline-flex min-w-[22px] justify-center rounded border border-noir-600 bg-noir-800 px-1 text-[11px] font-semibold text-stone-200';
 
@@ -31,6 +32,9 @@ export function HelpBody({ onAdvice, onGlossary }: { onAdvice: () => void; onGlo
         <button className="btn-ghost w-full border-gold-600 text-gold-300" data-testid="wsid-button" onClick={onAdvice}>What should I do?</button>
         <button className="btn-ghost w-full" onClick={onGlossary}>The glossary: every term in the game</button>
       </div>
+      <Section title="What the colours mean" sub="Every card, row and header carries the colour of the part of his life it belongs to; the icon and the words always say it too.">
+        <DomainLegend />
+      </Section>
       <KeysList />
     </div>
   );
