@@ -1,16 +1,18 @@
 import { TableButton } from '../advice/CounselTable';
 import { openPlanner } from '../planner/ink';
 import { bossDesk, deskHeaderCount, readyReview, type DeskGroup, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
-import type { GameState } from '../../engine/types';
+import type { Character, GameState } from '../../engine/types';
 import { DAY_NAMES } from '../../engine/days';
 import { ltView } from '../../engine/lieutenants';
 import { fmt$ } from '../format';
 import { Modal } from '../components/Modal';
 import { Fragment, useState, type ReactNode } from 'react';
-import { DoneMark } from '../components/Layout';
+import { DoneMark, PlayCard } from '../components/Layout';
+import { Face } from '../components/People';
+import { displayName } from '../../engine/characters';
 import { DeskClock } from '../components/DeskClock';
 import { AssetImg } from '../hood/AssetImg';
-import { domainOf, domainOfText, domClass, DOMAINS, type Domain } from '../domain';
+import { domainOf, domainOfText, domClass, type Domain } from '../domain';
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
 function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
@@ -89,36 +91,69 @@ function verbOf(it: DeskItem): string | undefined {
   }
 }
 
-function WhyChips({ why }: { why?: string[] }) {
-  if (!why?.length) return null;
-  return <div className="mt-0.5 flex flex-wrap gap-1">{why.slice(0, 3).map((w) => <span key={w} className="rounded bg-noir-700/80 px-1 text-[10px] text-amber-200/90">{w}</span>)}</div>;
+/** Whom a row is about: the person it names, else the first face of the decision. Undefined when it is nobody's. */
+function deskPeople(s: GameState, it: DeskItem): Character[] {
+  const ids: string[] = [];
+  if (it.ref.charId) ids.push(it.ref.charId);
+  if (it.ref.event) {
+    const ev = s.pendingEvents.find((e) => e.iid === it.ref.event);
+    for (const id of ev?.actors ?? (ev?.meta?.charId ? [String(ev.meta.charId)] : [])) if (!ids.includes(id)) ids.push(id);
+  }
+  return ids.map((id) => s.characters[id]).filter((c): c is Character => !!c).slice(0, 2);
 }
 
-function NeedRow({ s, it, api, next }: { s: GameState; it: DeskItem; api: DeskApi; /** The one recommended move: its button glows. */ next?: boolean }) {
+/** One paper that needs him, as a playing card: the person on top (else the kind of paper, lit), the title, two lines, the one verb. */
+function NeedCard({ s, it, api, next }: { s: GameState; it: DeskItem; api: DeskApi; /** The one recommended move: its button glows. */ next?: boolean }) {
   const verb = verbOf(it);
   const d = deskDomain(s, it);
+  const people = deskPeople(s, it);
+  const named = people[0] && it.title.includes(people[0].lastName);
+  const why = !it.done && it.why?.length ? it.why.slice(0, 2) : [];
   return (
-    <li className={`llv-paper flex items-start gap-2 rounded-md border px-2.5 py-2 ${it.urgent && !it.done ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-noir-700 bg-noir-900/60'} ${d && !it.done ? `${domClass(d)} llv-dom-edge${it.urgent ? '' : ' llv-dom-tint'}` : ''}`} data-testid={`desk-item-${it.kind}`} data-done={it.done ? 'true' : undefined} data-domain={d}>
-      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-center text-[12px] ${it.done ? 'text-emerald-400' : d ? 'llv-dom-chip' : 'text-stone-500'}`} aria-hidden title={d ? DOMAINS[d].label : undefined}>{it.done ? '✓' : ICON[it.kind]}</span>
-      <div className="min-w-0 flex-1">
-        <div className="text-[13px] font-semibold text-stone-100">{it.title}{it.urgent && !it.done && <span className="ml-1 rounded bg-red-500/80 px-1 text-[10px] font-bold uppercase text-white">urgent</span>}{it.done && <DoneMark className="ml-1.5 align-middle">Answered</DoneMark>}</div>
-        <div className={`text-[12px] leading-snug ${it.done ? 'text-stone-400' : 'text-stone-300'}`}>{it.detail}</div>
-        {!it.done && <WhyChips why={it.why} />}
-        {it.ifNothing && !it.done && <div className="mt-0.5 text-[11px] text-stone-500">If you leave it: {it.ifNothing}</div>}
+    <PlayCard as="li" d={d} testid={`desk-item-${it.kind}`} dataAttrs={{ 'data-done': it.done ? 'true' : undefined }}
+      tone={it.done ? 'done' : it.urgent ? 'urgent' : undefined}
+      cardTitle={[it.title, it.detail, it.ifNothing && !it.done ? `If you leave it: ${it.ifNothing}` : ''].filter(Boolean).join('\n')}
+      art={people.length ? <span className="mb-[-1px] flex items-end gap-1">{people.map((c) => <Face key={c.id} s={s} c={c} size={people.length > 1 ? 50 : 62} noSide />)}</span>
+        : <span className="llv-pc-glyph" aria-hidden>{ICON[it.kind]}</span>}
+      pip={d ? undefined : ICON[it.kind]}
+      corner={it.done ? <DoneMark className="!px-1.5 !py-0 !text-[10px]">Answered</DoneMark> : it.urgent ? <span className="llv-pc-tag llv-pc-tag-red">urgent</span> : undefined}
+      caption={people[0] && !named ? displayName(people[0]) : undefined}
+      title={it.title}
+      lines={[it.detail, it.ifNothing && !it.done ? <>If you leave it: {it.ifNothing}</> : undefined]}>
+      {why.length > 0 && <div className="mt-0.5 flex gap-1 overflow-hidden whitespace-nowrap">{why.map((w) => <span key={w} className="rounded bg-noir-700/80 px-1 text-[10px] text-amber-200/90">{w}</span>)}</div>}
+      {verb && <div className="mt-auto pt-1.5"><button type="button" className={`${it.done ? 'btn-secondary' : 'btn-primary'} btn-sm w-full justify-center ${next ? 'llv-next' : ''}`} onClick={() => openItem(it, api)} data-next={next ? 'true' : undefined}>{verb} ▸</button></div>}
+    </PlayCard>
+  );
+}
+
+/** The papers that need him, as a hand of cards: one row to slide through, or all of them laid out. */
+function Hand({ g, title, render }: { g: DeskGroup; title: ReactNode; render: (it: DeskItem) => ReactNode }) {
+  const [all, setAll] = useState(false);
+  return (
+    <>
+      <div className="mb-1 flex items-center gap-2">
+        {title}
+        {g.items.length > 3 && (
+          <button type="button" className="btn-quiet ml-auto rounded bg-noir-950/75 px-1.5 text-[11px]" onClick={() => setAll((x) => !x)} data-testid={`desk-more-${g.kind}`}>
+            {all ? 'one row ▴' : `lay out all ${g.items.length} ▾`}
+          </button>
+        )}
       </div>
-      {verb && <button type="button" className={`${it.done ? 'btn-secondary' : 'btn-primary'} btn-sm shrink-0 ${next ? 'llv-next' : ''}`} onClick={() => openItem(it, api)} data-next={next ? 'true' : undefined}>{verb} ▸</button>}
-    </li>
+      <ul className={`llv-hand ${all ? 'llv-hand-all' : ''}`} aria-label="The papers that need you">{g.items.map((it) => <Fragment key={it.key}>{render(it)}</Fragment>)}</ul>
+    </>
   );
 }
 
 function HandledRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
   const h = it.handled!;
   const d = deskDomain(s, it);
+  // The person it is about anchors the row; else the man handling it.
+  const who = deskPeople(s, it)[0] ?? (h.byId ? s.characters[h.byId] : undefined);
   return (
-    <li className={`llv-paper flex items-start gap-2 rounded border border-noir-800 px-2 py-1 ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-handled-${it.kind}`} data-domain={d}>
-      <span className="mt-0.5 w-4 shrink-0 text-center text-stone-600" aria-hidden>{ICON[it.kind]}</span>
+    <li className={`llv-paper flex items-center gap-2 rounded border border-noir-800 px-2 py-1 ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-handled-${it.kind}`} data-domain={d}>
+      {who ? <Face s={s} c={who} size={38} noSide /> : <span className="mt-0.5 w-4 shrink-0 text-center text-stone-600" aria-hidden>{ICON[it.kind]}</span>}
       <div className="min-w-0 flex-1 text-[11px]">
-        <div className="truncate text-stone-300">{it.title}</div>
+        <div className="truncate text-[12px] font-semibold text-stone-200">{it.title}</div>
         <div className="text-stone-500"><span className="text-stone-300">{h.by}</span>: {h.does}{h.day !== undefined ? ` · ${DAY_NAMES[h.day]}` : ''}{h.delegated ? ' · standing order' : ''}</div>
       </div>
       <button type="button" className="btn-secondary btn-sm shrink-0" onClick={() => { api.onTake?.(it.key); openItem(it, api); }} data-testid="desk-take-back">Take it back</button>
@@ -144,8 +179,10 @@ function Fold({ g, render, n = 3, testid }: { g: DeskGroup; render: (it: DeskIte
 
 function SmallRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
   const d = deskDomain(s, it);
+  const who = deskPeople(s, it)[0];
   return (
-    <li className={`llv-paper flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px] ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-item-${it.kind}`} data-domain={d}>
+    <li className={`llv-paper flex items-center gap-2 rounded border border-noir-800 px-2 py-1 text-[11px] ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-item-${it.kind}`} data-domain={d}>
+      {who && <Face s={s} c={who} size={32} noSide />}
       <div className="min-w-0 flex-1"><div className={it.tone === 'bad' ? 'text-amber-200' : it.tone === 'good' ? 'text-emerald-200' : 'text-stone-200'}>{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
       {it.kind === 'order' && it.ref.order !== undefined
         ? <button type="button" className="btn-secondary shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
@@ -174,6 +211,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
   const counts = FILTERS.map((f) => ({ ...f, n: all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done && inFilter(f.id, it)).length }));
   // The one recommended move: the first open paper that needs him (the red one first; the list is already in that order).
   const nextKey = needs?.items.find((x) => !x.done)?.key;
+  const needsTitle = <div className="llv-blotter-title">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>;
   const rest = (['result', 'order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
   return (
     <section className="llv-desktop" data-testid="boss-desk">
@@ -215,14 +253,14 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
       </div>
-          <div data-testid="desk-group-needs" className="mt-2">
-            <div className="llv-blotter-title mb-1">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>
+          <div data-testid="desk-group-needs" className="llv-desk-hand mt-2">
             {needs && needs.items.length > 0 && needs.items.every((x) => x.done) && (
               <div className="mb-1.5 flex flex-wrap items-center gap-2 rounded-md border border-emerald-800/60 bg-emerald-950/30 px-2.5 py-1.5 text-[12px] text-emerald-200" data-testid="desk-all-answered">
                 <DoneMark>All answered</DoneMark> Everything that needed you this week has your answer. Advance the week when you are ready.
               </div>
             )}
-            {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
+            {!needs?.items.length && needsTitle}
+            {needs?.items.length ? <Hand g={needs} title={needsTitle} render={(it) => <NeedCard s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
           </div>
       </div>
       </div>

@@ -211,13 +211,30 @@ export function DecisionCard(p: DecisionCardProps) {
     );
   }
   return (
-    <div className={`${compact ? '' : 'p-4 sm:p-5'} ${domClass(p.domain)} ${compact && p.domain ? 'llv-dom-edge pl-2' : ''}`} data-testid={p.testid ?? 'decision-card'} data-domain={p.domain}>
-      {(p.kicker || p.title) && (
-        <div className={`flex items-start gap-3 ${p.domain && !compact ? '-mx-4 -mt-4 mb-1 px-4 pb-3 pt-4 sm:-mx-5 sm:-mt-5 sm:px-5 sm:pt-5 llv-dom-strip' : ''}`}>
-          {p.faces && p.faces.length > 0 && <div className="flex shrink-0 -space-x-2">{p.faces.slice(0, 3).map((c) => <Face key={c.id} s={s} c={c} size={compact ? 36 : p.faces!.length > 1 ? 52 : 64} />)}</div>}
+    <div className={`${compact ? '' : 'llv-dc p-4 sm:p-5'} ${domClass(p.domain)} ${compact && p.domain ? 'llv-dom-edge pl-2' : ''}`} data-testid={p.testid ?? 'decision-card'} data-domain={p.domain}>
+      {(p.kicker || p.title) && !compact && (
+        /* The card's face: the people (else the domain's glyph, lit) on top, then the bold title and two short lines. */
+        <div className="-mx-4 -mt-4 mb-1 sm:-mx-5 sm:-mt-5" data-testid="decision-face">
+          <div className="llv-pc-art llv-dc-art">
+            {p.faces && p.faces.length > 0
+              ? <span className="flex items-end gap-1.5">{p.faces.slice(0, 3).map((c) => <Face key={c.id} s={s} c={c} size={p.faces!.length > 1 ? 70 : 88} />)}</span>
+              : <span className="llv-pc-glyph" aria-hidden>{p.domain ? DOMAINS[p.domain].glyph : '♠'}</span>}
+            <span className="llv-pc-pip" aria-hidden>{p.domain ? DOMAINS[p.domain].glyph : '♠'}</span>
+            {p.deadline && <span className="llv-pc-corner"><span className="rounded bg-noir-950/80 px-1.5 text-[11px] text-amber-300" data-testid="decision-deadline">⏱ {p.deadline}</span></span>}
+          </div>
+          <div className="px-4 pt-2.5 sm:px-5">
+            {p.title && <h2 className="font-display text-2xl font-extrabold leading-tight text-[#f3e6c4]">{p.title}</h2>}
+            {p.sub && <div className="mt-0.5 text-[12px] text-stone-300">{p.sub}</div>}
+            {p.kicker && <div className="mt-0.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">{p.domain && <span className="llv-dom-ink"><span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />{DOMAINS[p.domain].label} · </span>}{p.kicker}</div>}
+          </div>
+        </div>
+      )}
+      {(p.kicker || p.title) && compact && (
+        <div className="flex items-start gap-3">
+          {p.faces && p.faces.length > 0 && <div className="flex shrink-0 -space-x-2">{p.faces.slice(0, 3).map((c) => <Face key={c.id} s={s} c={c} size={44} />)}</div>}
           <div className="min-w-0 flex-1">
             {p.kicker && <div className="flex items-baseline justify-between gap-2 text-[10px] uppercase tracking-[0.3em] text-stone-500"><span>{p.domain && <span className="llv-dom-ink"><span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />{DOMAINS[p.domain].label} · </span>}{p.kicker}</span>{p.deadline && <span className="tracking-normal normal-case text-amber-300" data-testid="decision-deadline">⏱ {p.deadline}</span>}</div>}
-            {p.title && <h2 className={`font-display leading-tight text-gold-400 ${compact ? 'text-base' : 'text-2xl'}`}>{p.title}</h2>}
+            {p.title && <h2 className="font-display text-base font-bold leading-tight text-gold-400">{p.title}</h2>}
             {p.sub && <div className="mt-0.5 text-[11px] text-stone-400">{p.sub}</div>}
           </div>
         </div>

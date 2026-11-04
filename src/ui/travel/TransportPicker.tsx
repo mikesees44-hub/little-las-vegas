@@ -24,16 +24,16 @@ export function TransportPicker({ dest, mode, tier, date, value, onPick, only }:
   const cur = value && visible.includes(value) && !transportBlock(value, dest, date) ? value : visible.find((id) => !transportBlock(id, dest, date));
   return (
     <div className="mt-2 space-y-1" data-testid="transport-picker">
-      <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Which way</div>
+      <div className="llv-kicker">Which way</div>
       <div className="grid gap-1.5 sm:grid-cols-3">
         {visible.map((id) => {
           const o = TRANSPORT[id];
           const why = transportBlock(id, dest, date);
           return (
-            <button key={id} type="button" disabled={!!why} title={why ?? o.blurb} data-transport={id} onClick={() => onPick(id)}
-              className={`rounded border px-2 py-1.5 text-left text-xs disabled:opacity-40 ${cur === id ? 'border-gold-400 bg-gold-500/10 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-600'}`}>
+            <button key={id} type="button" disabled={!!why} title={why ?? o.blurb} data-transport={id} onClick={() => onPick(id)} aria-pressed={cur === id}
+              className="llv-pick text-xs">
               <span className="block font-semibold">{o.name}</span>
-              <span className="block text-[10px] text-stone-500">{why ?? `${doorToDoor(legHours(o, dest))} door to door · ${fmt$(optFare(o, dest, tier))} one way · private ${Math.round(o.privacy * 10)}/10`}</span>
+              <span className="block text-[10px] text-stone-400">{why ?? `${doorToDoor(legHours(o, dest))} door to door · ${fmt$(optFare(o, dest, tier))} one way · private ${Math.round(o.privacy * 10)}/10`}</span>
             </button>
           );
         })}

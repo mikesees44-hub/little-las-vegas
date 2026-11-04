@@ -15,6 +15,7 @@ import { Modal } from '../components/Modal';
 import { CharLink, Face } from '../components/People';
 import { ModeIcon } from './icons';
 import { ActionCard } from '../components/Orders';
+import { Card, CardHead, DomainChip, Section } from '../components/Layout';
 
 const PHASE: Record<string, string> = { booked: 'Booked', out: 'On the way', there: 'On vacation', back: 'On the way home' };
 
@@ -113,9 +114,9 @@ function Who({ s, label, people, note }: { s: GameState; label: string; people: 
   if (!people.length) return null;
   return (
     <div className="min-w-0">
-      <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{label}{note ? <span className="normal-case tracking-normal text-amber-300"> · {note}</span> : null}</div>
+      <div className="llv-kicker llv-dom-ink">{label}{note ? <span className="normal-case tracking-normal text-amber-300"> · {note}</span> : null}</div>
       <div className="mt-0.5 flex flex-wrap gap-1.5">
-        {people.map((c) => <span key={c.id} className="flex items-center gap-1 text-xs text-stone-200"><Face s={s} c={c} size={24} /><CharLink s={s} id={c.id} /></span>)}
+        {people.map((c) => <span key={c.id} className="flex items-center gap-1.5 text-xs text-stone-200"><Face s={s} c={c} size={36} /><CharLink s={s} id={c.id} /></span>)}
       </div>
     </div>
   );
@@ -135,14 +136,14 @@ function DayCard({ s, t, i, update }: { s: GameState; t: Trip; i: number; update
   const results = (t.vac?.done ?? []).filter((x) => x.day === i);
   const opts = adding && !done ? vacOptions(s, t, i) : [];
   return (
-    <li className={`rounded border px-2 py-2 ${done ? 'border-noir-700 bg-noir-900/40' : 'border-gold-700/40 bg-noir-800/60'}`} data-testid="vacation-day">
+    <li className={`llv-card-box llv-card-plain llv-dom-edge !px-2.5 !py-2 ${done ? 'opacity-75' : 'llv-dom-tint'}`} data-testid="vacation-day">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-gold-300">Day {i + 1}</span>
+        <span className="font-display text-[14px] font-bold llv-dom-ink">Day {i + 1}</span>
         <span className="text-[11px] text-stone-500">{formatDate(dayDate(t.arriveDay + i))}</span>
         <span className="text-sm text-stone-200">{head?.name ?? '—'}</span>
         <span className="ml-auto text-[11px] text-stone-400 tabular-nums" title={`${HEADLINE_HOURS}h for the day's headline; ${VAC_DAY_HOURS} waking hours`}>{used}/{VAC_DAY_HOURS}h</span>
       </div>
-      <div className="mt-1 h-1 rounded bg-noir-700 overflow-hidden"><div className="h-full bg-gold-500/70" style={{ width: `${Math.min(100, (used / VAC_DAY_HOURS) * 100)}%` }} /></div>
+      <div className="mt-1 h-1 rounded bg-noir-700 overflow-hidden"><div className="h-full" style={{ background: 'rgb(var(--d))', width: `${Math.min(100, (used / VAC_DAY_HOURS) * 100)}%` }} /></div>
       {plan.length > 0 && (
         <ul className="mt-1.5 space-y-1">
           {plan.map((id) => (
@@ -156,15 +157,15 @@ function DayCard({ s, t, i, update }: { s: GameState; t: Trip; i: number; update
       )}
       {results.length > 0 && <ul className="mt-1 space-y-0.5">{results.map((r, k) => <li key={k} className={`text-[11px] ${r.tone === 'bad' ? 'text-red-300' : r.tone === 'neutral' ? 'text-stone-400' : 'text-emerald-300'}`}>{r.text}</li>)}</ul>}
       {!done && (
-        <button type="button" className="mt-1.5 text-[11px] underline text-gold-300" onClick={() => setAdding(!adding)} data-testid="vacation-add">{adding ? 'close' : '+ something to do'}</button>
+        <button type="button" className="btn-quiet mt-1.5 text-[11px] llv-dom-ink" onClick={() => setAdding(!adding)} data-testid="vacation-add">{adding ? 'close' : '+ something to do'}</button>
       )}
       {opts.length > 0 && (
         <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2" data-testid="vacation-options">
           {opts.map((o) => (
             <button key={o.id} type="button" disabled={!!o.block} data-testid={`vac-${o.id}`} title={o.block ?? o.text}
               onClick={() => update((x) => planVac(x, t.id, i, o.id))}
-              className="rounded border border-gold-700/50 bg-noir-900 px-2 py-1.5 text-left text-[11px] text-stone-300 hover:border-gold-400 disabled:border-noir-700 disabled:opacity-50">
-              <span className="flex flex-wrap items-baseline gap-x-1.5"><b className="text-gold-200">{o.name}</b><span className="text-stone-500">{o.hours}h · {o.cost ? fmt$(o.cost) : 'free'}</span></span>
+              className="llv-pick text-[11px]">
+              <span className="flex flex-wrap items-baseline gap-x-1.5"><b className="llv-dom-ink">{o.name}</b><span className="text-stone-500">{o.hours}h · {o.cost ? fmt$(o.cost) : 'free'}</span></span>
               {o.where && <span className="block text-stone-400 italic">{o.where}</span>}
               <span className="block text-[10px] text-stone-500">{o.block ?? o.effects.join(' · ')}</span>
             </button>
@@ -199,18 +200,20 @@ export function VacationScreen({ s, update, onClose }: { s: GameState; update: (
   const month = dayDate(t.arriveDay).m;
   return (
     <Modal onClose={onClose} wide>
-      <div className="p-4 sm:p-5 space-y-4" data-testid="vacation-screen">
-        <div className="flex items-start justify-between gap-2">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">{PHASE[pos?.phase ?? 'booked']} · {monthName(month)} · {TIER_INFO[t.tier].name}</div>
-          <button className="text-xs text-stone-500 hover:text-gold-300" onClick={onClose}>Close ✕</button>
+      <div className="llv-d-shore llv-dom-scope p-4 sm:p-5 space-y-4" data-testid="vacation-screen">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2"><DomainChip d="shore" glyph="☀" size={24} /><span className="llv-kicker llv-dom-ink">{PHASE[pos?.phase ?? 'booked']} · {monthName(month)} · {TIER_INFO[t.tier].name}</span></div>
+          <button type="button" className="llv-iconbtn" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <Postcard scene={sceneOf(d)} name={d.name} sub={`${d.hotels[t.tier === 'modest' ? 0 : t.tier === 'first' ? 1 : 2]} · home ${formatDate(dayDate(t.homeDay))}`} />
         <div className="flex flex-wrap items-center gap-2 text-xs text-stone-400">
-          <ModeIcon mode={t.mode} className="text-gold-300" /> {o.name} <span className="text-stone-500">({o.carrier})</span>
+          <ModeIcon mode={t.mode} className="llv-dom-ink" /> {o.name} <span className="text-stone-500">({o.carrier})</span>
         </div>
         {(pos?.phase === 'there' || pos?.phase === 'out') && <div data-testid="vacation-come-home"><ActionCard s={s} action={{ kind: 'travel', op: { type: 'recall', tripId: t.id } }} /></div>}
 
-        <section className="grid gap-3 sm:grid-cols-2 rounded border border-noir-700 p-3" data-testid="vacation-party">
+        <Card domain="shore" testid="vacation-party">
+          <CardHead d="shore" glyph="♔" title="Who came along" />
+          <div className="grid gap-3 sm:grid-cols-2">
           <Who s={s} label="The boss" people={[s.characters[t.leaderId]].filter((c): c is Character => !!c)} />
           <Who s={s} label="His wife" people={p.wife ? [p.wife] : []} />
           <Who s={s} label="The kids" people={p.kids} />
@@ -219,21 +222,20 @@ export function VacationScreen({ s, update, onClose }: { s: GameState; update: (
           <Who s={s} label="The crew" people={p.crew} />
           <Who s={s} label="Guests" people={p.others} />
           {!p.wife && !p.kids.length && !p.goomar && !p.crew.length && !p.others.length && <div className="text-xs text-stone-500">He went alone.</div>}
-        </section>
+          </div>
+        </Card>
 
-        <section>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500 mb-1">Day by day</div>
-          <p className="text-[11px] text-stone-500 mb-1.5">Each day has {VAC_DAY_HOURS} waking hours; the itinerary takes {HEADLINE_HOURS}. Plan the rest — it happens when the week turns.</p>
+        <Section domain="shore" title="Day by day" sub={`Each day has ${VAC_DAY_HOURS} waking hours; the itinerary takes ${HEADLINE_HOURS}. Plan the rest — it happens when the week turns.`} className="!mb-0">
           <ol className="space-y-1.5">
             {t.days.map((_, i) => <DayCard key={i} s={s} t={t} i={i} update={update} />)}
           </ol>
-        </section>
+        </Section>
 
-        <section className="rounded border border-amber-800/50 bg-amber-500/5 p-3 text-xs text-amber-200 space-y-1" data-testid="vacation-home">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-amber-400/80">Back home</div>
+        <Card domain="crew" className="space-y-1 text-xs text-amber-100" testid="vacation-home">
+          <CardHead d="crew" title="Back home in Wildwood" className="!mb-1" />
           {k ? <div><CharLink s={s} id={k.id} /> runs things while {s.characters[t.leaderId]?.firstName} is away{acting ? ` (${acting.weeks} wk)` : ''}. The capos get ideas; orders go through the chain.</div> : <div>Nobody to run things: Wildwood waits.</div>}
           {acting?.deeds.slice(-3).map((x, i) => <div key={i} className="text-stone-300">· {x}</div>)}
-        </section>
+        </Card>
 
         {t.journal.length > 0 && (
           <details className="text-[11px] text-stone-400">

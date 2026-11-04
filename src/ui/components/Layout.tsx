@@ -263,3 +263,50 @@ export function DomainLegend({ compact }: { compact?: boolean }) {
     </ul>
   );
 }
+
+/**
+ * A PLAYING CARD: the game's card for one thing to decide or one person. The art on top (a portrait, a
+ * painting, else the domain's glyph lit like neon), a corner pip, then a bold title and two short lines, then
+ * whatever the card does (its buttons). Framed in its domain's colour with a card's inner line. Colour is
+ * never the only signal: the pip carries the glyph, the title the words.
+ */
+export function PlayCard({ d, art, pip, corner, caption, title, lines, children, tone, className = '', artClassName = '', testid, as = 'div', dataAttrs, cardTitle }: {
+  d?: Domain;
+  /** The top of the card: faces, a painting. Without it, the domain's glyph, big. */
+  art?: ReactNode;
+  /** The corner pip (defaults to the domain's glyph). */
+  pip?: ReactNode;
+  /** The top-right corner: an "urgent" tab, a deadline. */
+  corner?: ReactNode;
+  /** A caption across the foot of the art (the person's name). */
+  caption?: ReactNode;
+  title: ReactNode;
+  /** At most two short lines under the title. */
+  lines?: ReactNode[];
+  children?: ReactNode;
+  tone?: 'urgent' | 'done' | 'next';
+  className?: string;
+  artClassName?: string;
+  testid?: string;
+  as?: 'div' | 'li';
+  dataAttrs?: Record<string, string | undefined>;
+  /** A tooltip for the whole card (what does not fit on it). */
+  cardTitle?: string;
+}) {
+  const Tag = as;
+  return (
+    <Tag className={`llv-pc ${domClass(d)} ${tone ? `llv-pc-${tone}` : ''} ${className}`} data-testid={testid} data-domain={d} title={cardTitle} {...dataAttrs}>
+      <div className={`llv-pc-art ${artClassName}`}>
+        {art ?? <span className="llv-pc-glyph" aria-hidden>{d ? DOMAINS[d].glyph : '♠'}</span>}
+        <span className="llv-pc-pip" aria-hidden title={d ? DOMAINS[d].label : undefined}>{pip ?? (d ? DOMAINS[d].glyph : '♠')}</span>
+        {corner && <span className="llv-pc-corner">{corner}</span>}
+        {caption && <span className="llv-pc-caption">{caption}</span>}
+      </div>
+      <div className="llv-pc-body">
+        <div className="llv-pc-title">{title}</div>
+        {lines?.filter(Boolean).slice(0, 2).map((l, i) => <div key={i} className={i === 0 ? 'llv-pc-line' : 'llv-pc-line2'}>{l}</div>)}
+        {children}
+      </div>
+    </Tag>
+  );
+}

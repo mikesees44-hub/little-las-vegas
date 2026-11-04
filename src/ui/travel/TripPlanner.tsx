@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { Backdrop, tripArt } from '../hood/art/sceneArt';
+import { tripArt } from '../hood/art/sceneArt';
+import { Card, CardHead, PlaceBanner, Section } from '../components/Layout';
 import { ageOn, monthName } from '../../engine/calendar';
 import { displayName } from '../../engine/characters';
 import { guestGroup } from '../../engine/activities';
@@ -78,58 +79,54 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
     set({ cars: n, driverIds: drivers.slice(0, n).map((c) => c.id) });
   }
 
+  const kick = 'mb-1 block llv-kicker';
   return (
     <Modal onClose={onClose} wide>
-      <div className="p-4 sm:p-5 space-y-4" data-testid="trip-planner">
-        <div className="relative isolate overflow-hidden -mx-2 -mt-2 rounded px-2 pt-2 flex items-start justify-between gap-2">
-          <Backdrop k={tripArt(plan.destId, s.date.y)} opacity={0.3} className="-z-10" />
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Plan a trip</div>
-            <h2 className="font-display text-2xl text-gold-400 leading-tight">{d?.name ?? 'Somewhere'}</h2>
-            {d && <p className="text-xs text-stone-400 italic max-w-prose">{d.blurb}</p>}
-          </div>
-          <button className="btn-secondary h-8 w-8 shrink-0 px-0 py-0" onClick={onClose} aria-label="Close">✕</button>
-        </div>
+      <div className="llv-d-shore llv-dom-scope p-4 sm:p-5 space-y-4" data-testid="trip-planner">
+        <PlaceBanner art={tripArt(plan.destId, s.date.y)} d="shore" title={<>{d?.name ?? 'Somewhere'}</>}
+          sub={<><span className="llv-kicker !text-[10px] llv-dom-ink">Plan a trip · {plan.purpose === 'vacation' ? 'a vacation' : 'business'}</span>{d && <span className="block italic">{d.blurb}</span>}</>}
+          aside={<button type="button" className="llv-iconbtn bg-noir-950/70" onClick={onClose} aria-label="Close">✕</button>} />
 
-        <section className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs text-stone-400 space-y-1 block">
-            <span className="block uppercase tracking-widest text-[10px] text-stone-500">Who leads it</span>
+        <Section domain="shore" title="Who, where and when" className="!mb-0">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="text-xs text-stone-400 block">
+            <span className={kick}>Who leads it</span>
             <select className="w-full rounded bg-noir-800 border border-noir-600 px-2 py-1.5 text-sm text-stone-200" value={plan.leaderId} onChange={(e) => reset({ leaderId: e.target.value })} data-testid="trip-leader">
               {ours.map((c) => <option key={c.id} value={c.id} disabled={!!leaderBlock(s, c.id)}>{displayName(c)}{c.id === s.playerId ? ' (the boss)' : ''}{leaderBlock(s, c.id) ? ` — ${leaderBlock(s, c.id)}` : ''}</option>)}
             </select>
           </label>
-          <div className="text-xs space-y-1">
-            <span className="block uppercase tracking-widest text-[10px] text-stone-500">What for</span>
-            <div className="flex gap-1">
+          <div className="text-xs">
+            <span className={kick}>What for</span>
+            <div className="flex gap-1.5">
               {(['vacation', 'business'] as const).map((p) => (
-                <button key={p} className={`flex-1 rounded border px-2 py-1.5 text-sm ${plan.purpose === p ? 'border-gold-400 bg-gold-500/10 text-gold-300' : 'border-noir-600 text-stone-300'}`} onClick={() => reset({ purpose: p, destId: p === 'vacation' ? 'catskills' : 'philadelphia' })}>{p === 'vacation' ? 'A vacation' : 'Business'}</button>
+                <button key={p} type="button" aria-pressed={plan.purpose === p} className="llv-pick flex-1 text-center text-sm" onClick={() => reset({ purpose: p, destId: p === 'vacation' ? 'catskills' : 'philadelphia' })}>{p === 'vacation' ? '☀ A vacation' : '✈ Business'}</button>
               ))}
             </div>
           </div>
-          <label className="text-xs text-stone-400 space-y-1 block">
-            <span className="block uppercase tracking-widest text-[10px] text-stone-500">Destination</span>
+          <label className="text-xs text-stone-400 block">
+            <span className={kick}>Destination</span>
             <select className="w-full rounded bg-noir-800 border border-noir-600 px-2 py-1.5 text-sm text-stone-200" value={plan.destId} onChange={(e) => reset({ destId: e.target.value })} data-testid="trip-dest">
               {dests.map((x) => { const gone = x.id === 'havana' && !havanaOpen(departDate); return <option key={x.id} value={x.id} disabled={gone}>{x.name} — {gone ? lostDest(x.id, departDate) : x.region}{!gone && x.peak.includes(month) ? ' (high season)' : ''}</option>; })}
             </select>
           </label>
-          <label className="text-xs text-stone-400 space-y-1 block">
-            <span className="block uppercase tracking-widest text-[10px] text-stone-500">When</span>
+          <label className="text-xs text-stone-400 block">
+            <span className={kick}>When</span>
             <select className="w-full rounded bg-noir-800 border border-noir-600 px-2 py-1.5 text-sm text-stone-200" value={plan.departIn ?? 0} onChange={(e) => set({ departIn: Number(e.target.value) })}>
               {[0, 1, 2, 4, 8, 13, 26].map((w) => { const dd = dayDate((s.week + w) * 7); return <option key={w} value={w}>{w === 0 ? 'This week' : `In ${w} weeks`} — {monthName(dd.m)} {dd.y}</option>; })}
             </select>
           </label>
-        </section>
+        </div>
+        </Section>
 
-        <section>
-          <div className="uppercase tracking-widest text-[10px] text-stone-500 mb-1">How</div>
+        <Section domain="shore" title="How you travel" className="!mb-0">
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
             {MODE_IDS.map((m) => {
               const ok = d?.modes.includes(m);
               return (
-                <button key={m} disabled={!ok} title={MODES[m].blurb} data-mode={m} onClick={() => set({ mode: m, transport: d ? defaultTransport(m, plan.tier, d) : undefined, ...(m === 'cars' ? { cars: plan.cars ?? 1, driverIds: plan.driverIds?.length ? plan.driverIds : drivers.slice(0, plan.cars ?? 1).map((c) => c.id) } : {}) })}
-                  className={`rounded border px-2 py-1.5 text-left text-xs disabled:opacity-30 ${plan.mode === m ? 'border-gold-400 bg-gold-500/10 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-600'}`}>
-                  <span className="flex items-center gap-1.5 font-semibold"><ModeIcon mode={m} size={14} />{MODES[m].name}</span>
-                  <span className="block text-[10px] text-stone-500">comfort {Math.round(MODES[m].comfort * 10)}/10 · seen {Math.round(MODES[m].conspicuous * 10)}/10</span>
+                <button key={m} type="button" disabled={!ok} title={MODES[m].blurb} data-mode={m} aria-pressed={plan.mode === m} onClick={() => set({ mode: m, transport: d ? defaultTransport(m, plan.tier, d) : undefined, ...(m === 'cars' ? { cars: plan.cars ?? 1, driverIds: plan.driverIds?.length ? plan.driverIds : drivers.slice(0, plan.cars ?? 1).map((c) => c.id) } : {}) })}
+                  className="llv-pick text-xs">
+                  <span className="flex items-center gap-1.5 font-semibold"><ModeIcon mode={m} size={16} />{MODES[m].name}</span>
+                  <span className="block text-[10px] text-stone-400">comfort {Math.round(MODES[m].comfort * 10)}/10 · seen {Math.round(MODES[m].conspicuous * 10)}/10</span>
                 </button>
               );
             })}
@@ -137,25 +134,23 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
           {d && <TransportPicker dest={d} mode={plan.mode} tier={plan.tier} date={departDate} value={plan.transport as TransportId | undefined}
             onPick={(id) => set({ transport: id, ...(plan.mode === 'cars' ? (id === 'crewcar' ? { cars: plan.cars ?? 1, driverIds: plan.driverIds?.length ? plan.driverIds : drivers.slice(0, plan.cars ?? 1).map((c) => c.id) } : { cars: 1, driverIds: [] }) : {}) })} />}
           {plan.mode === 'cars' && (plan.transport ?? 'crewcar') === 'crewcar' && (
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
               <span className="text-stone-400">Convoy:</span>
-              {[1, 2, 3, 4].map((n) => <button key={n} className={`rounded border px-2 py-0.5 ${plan.cars === n ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-400'}`} onClick={() => setCars(n)}>{n} car{n > 1 ? 's' : ''}</button>)}
+              {[1, 2, 3, 4].map((n) => <button key={n} type="button" aria-pressed={plan.cars === n} className="llv-pick llv-pick-sm" onClick={() => setCars(n)}>{n} car{n > 1 ? 's' : ''}</button>)}
               <span className="text-stone-500">Drivers: {(plan.driverIds ?? []).map((id) => s.characters[id]?.firstName).join(', ') || 'none free'}{(plan.cars ?? 1) > 1 ? ' — the extra cars are bodyguards' : ''}</span>
             </div>
           )}
-        </section>
-
-        <section>
-          <div className="uppercase tracking-widest text-[10px] text-stone-500 mb-1">Budget</div>
-          <div className="flex gap-1.5">
-            {(['modest', 'first', 'lavish'] as BudgetTier[]).map((t) => (
-              <button key={t} onClick={() => set({ tier: t })} className={`flex-1 rounded border px-2 py-1.5 text-sm ${plan.tier === t ? 'border-gold-400 bg-gold-500/10 text-gold-300' : 'border-noir-600 text-stone-300'}`}>{TIER_INFO[t].name}</button>
-            ))}
+          <div className="mt-3">
+            <span className={kick}>Budget</span>
+            <div className="flex gap-1.5">
+              {(['modest', 'first', 'lavish'] as BudgetTier[]).map((t) => (
+                <button key={t} type="button" aria-pressed={plan.tier === t} onClick={() => set({ tier: t })} className="llv-pick flex-1 text-center text-sm">{t === 'lavish' ? '★ ' : ''}{TIER_INFO[t].name}</button>
+              ))}
+            </div>
           </div>
-        </section>
+        </Section>
 
-        <section>
-          <div className="uppercase tracking-widest text-[10px] text-stone-500 mb-1">Guests</div>
+        <Section domain="shore" title="Who comes along" aside={plan.guests.length ? `${plan.guests.length} invited` : undefined} className="!mb-0">
           {grouped.length === 0 && <div className="text-xs text-stone-500">Nobody free to come.</div>}
           <div className="grid gap-2 sm:grid-cols-2">
             {grouped.map(({ g, people }) => (
@@ -167,9 +162,9 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
                     const odds = guestOdds(s, plan, c.id);
                     return (
                       <li key={c.id}>
-                        <label className={`flex items-center gap-2 rounded border px-2 py-1 cursor-pointer ${on ? 'border-gold-500/70 bg-gold-500/5' : 'border-noir-700'}`}>
+                        <label className="llv-pick flex cursor-pointer items-center gap-2 !py-1" data-on={on ? 'true' : undefined}>
                           <input type="checkbox" checked={on} onChange={() => toggleGuest(c.id)} />
-                          <Face s={s} c={c} size={28} />
+                          <Face s={s} c={c} size={36} noSide />
                           <span className="text-sm text-stone-200 truncate">{displayName(c)}</span>
                           <span className={`ml-auto text-[11px] ${odds.chance >= 0.6 ? 'text-emerald-300' : odds.chance >= 0.35 ? 'text-amber-300' : 'text-red-300'}`} title={odds.reasons.map((r) => `${r.value > 0 ? '+' : ''}${r.value} ${r.label}`).join(', ')}>{pct(odds.chance)}</span>
                         </label>
@@ -180,45 +175,41 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
               </div>
             ))}
           </div>
-        </section>
+        </Section>
 
         {plan.purpose === 'vacation' && leader && (
-          <section className="rounded border border-noir-700 p-2">
-            <div className="uppercase tracking-widest text-[10px] text-stone-500 mb-1">Companion</div>
+          <Card domain="romance" className="!p-2.5">
+            <CardHead d="romance" title="A companion" sub="Who keeps him company, if anyone" />
             <div className="flex flex-wrap gap-1.5 text-xs">
-              <button className={`rounded border px-2 py-1 ${!plan.companionId && !plan.newCompanion ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-400'}`} onClick={() => set({ companionId: undefined, newCompanion: false })}>Nobody</button>
-              {lovers.map((c) => <button key={c.id} className={`rounded border px-2 py-1 ${plan.companionId === c.id ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-300'}`} onClick={() => set({ companionId: c.id, newCompanion: false })}>{displayName(c)}</button>)}
-              <button className={`rounded border px-2 py-1 ${plan.newCompanion ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-300'}`} onClick={() => set({ newCompanion: true, companionId: undefined })} data-testid="new-companion">Ask a {leader.gender === 'M' ? 'lady' : 'gentleman'} friend from the 500 Club</button>
+              <button type="button" aria-pressed={!plan.companionId && !plan.newCompanion} className="llv-pick llv-pick-sm" onClick={() => set({ companionId: undefined, newCompanion: false })}>Nobody</button>
+              {lovers.map((c) => <button key={c.id} type="button" aria-pressed={plan.companionId === c.id} className="llv-pick llv-pick-sm" onClick={() => set({ companionId: c.id, newCompanion: false })}>{displayName(c)}</button>)}
+              <button type="button" aria-pressed={!!plan.newCompanion} className="llv-pick llv-pick-sm" onClick={() => set({ newCompanion: true, companionId: undefined })} data-testid="new-companion">Ask a {leader.gender === 'M' ? 'lady' : 'gentleman'} friend from the 500 Club</button>
             </div>
             {plan.newCompanion && <AcceptanceLine a={newCompanionOdds(s, plan)} prefix="She says yes" />}
             {(plan.companionId || plan.newCompanion) && (
               <label className="mt-1.5 flex items-center gap-2 text-xs text-stone-300"><input type="checkbox" checked={!!plan.discreet} onChange={(e) => set({ discreet: e.target.checked })} />A room at another hotel (discreet: halves the risk, costs a room)</label>
             )}
             {(plan.companionId || plan.newCompanion) && leader.spouseId && plan.guests.includes(leader.spouseId) && <div className="text-[11px] text-red-300 mt-1">The wife and the other woman on the same trip. {pct(q.risks.discovery)} she finds out.</div>}
-          </section>
+          </Card>
         )}
 
         {plan.purpose === 'vacation' && (
           <section className="text-xs flex flex-wrap items-center gap-1.5">
-            <span className="uppercase tracking-widest text-[10px] text-stone-500 mr-1">Hire an act</span>
-            <button className={`rounded border px-2 py-0.5 ${!plan.entertainer ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-400'}`} onClick={() => set({ entertainer: undefined })}>None</button>
-            {(Object.keys(ENTERTAINERS) as Entertainer[]).map((e) => <button key={e} title={ENTERTAINERS[e].text} className={`rounded border px-2 py-0.5 ${plan.entertainer === e ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-300'}`} onClick={() => set({ entertainer: e })}>{ENTERTAINERS[e].name}</button>)}
+            <span className="llv-kicker mr-1">♫ Hire an act</span>
+            <button type="button" aria-pressed={!plan.entertainer} className="llv-pick llv-pick-sm" onClick={() => set({ entertainer: undefined })}>None</button>
+            {(Object.keys(ENTERTAINERS) as Entertainer[]).map((e) => <button key={e} type="button" title={ENTERTAINERS[e].text} aria-pressed={plan.entertainer === e} className="llv-pick llv-pick-sm" onClick={() => set({ entertainer: e })}>{ENTERTAINERS[e].name}</button>)}
           </section>
         )}
 
         {d && (
-          <section>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="uppercase tracking-widest text-[10px] text-stone-500">Itinerary</span>
-              {nDays.map((n) => <button key={n} className={`text-[11px] rounded border px-1.5 ${plan.days.length === n ? 'border-gold-400 text-gold-300' : 'border-noir-600 text-stone-400'}`} onClick={() => { const acts = d.activities.filter((a) => !a.months || a.months.includes(month)); set({ days: Array.from({ length: n }, (_, i) => plan.days[i] ?? acts[i % acts.length].id) }); }}>{n} day{n > 1 ? 's' : ''}</button>)}
-            </div>
+          <Section domain="shore" title="Day by day" className="!mb-0" aside={<span className="flex gap-1">{nDays.map((n) => <button key={n} type="button" aria-pressed={plan.days.length === n} className="llv-pick llv-pick-sm" onClick={() => { const acts = d.activities.filter((a) => !a.months || a.months.includes(month)); set({ days: Array.from({ length: n }, (_, i) => plan.days[i] ?? acts[i % acts.length].id) }); }}>{n} day{n > 1 ? 's' : ''}</button>)}</span>}>
             <ol className="space-y-1.5" data-testid="itinerary">
               {plan.days.map((id, i) => {
                 const a = d.activities.find((x) => x.id === id);
                 return (
-                  <li key={i} className="rounded border border-noir-700 bg-noir-800/60 px-2 py-1.5">
+                  <li key={i} className="llv-dom-row rounded px-2 py-1.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-stone-500 w-10 shrink-0">Day {i + 1}</span>
+                      <span className="w-10 shrink-0 font-display text-[13px] font-bold llv-dom-ink">Day {i + 1}</span>
                       <select className="flex-1 min-w-0 rounded bg-noir-900 border border-noir-600 px-1.5 py-1 text-sm text-stone-200" value={id} onChange={(e) => set({ days: plan.days.map((x, j) => (j === i ? e.target.value : x)) })}>
                         {d.activities.map((x) => <option key={x.id} value={x.id} disabled={!!x.months && !x.months.includes(month)}>{x.name}{x.months && !x.months.includes(month) ? ' (not this month)' : ''}</option>)}
                       </select>
@@ -228,10 +219,10 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
                 );
               })}
             </ol>
-          </section>
+          </Section>
         )}
 
-        <section className="rounded border border-gold-600/40 bg-noir-900/60 p-3 space-y-2" data-testid="trip-quote">
+        <Card domain="shore" tone="attention" className="space-y-2" testid="trip-quote">
           <div className="flex flex-wrap justify-between gap-2 text-sm">
             <span className="text-stone-300">{q.out} day{q.out > 1 ? 's' : ''} there ({doorToDoor(q.hours)} door to door{q.transport ? `, ${q.transport.name.toLowerCase()}` : ''}), {q.stay} at {d?.name}, {q.back} back · arrives {q.arriveDate} · <b>{q.weeks} week{q.weeks > 1 ? 's' : ''}</b> away</span>
             <span className="text-gold-300 font-semibold tabular-nums">{fmt$(q.cost)}</span>
@@ -253,12 +244,12 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
           </div>
           {q.block && <div className="text-xs text-red-400">{q.block}</div>}
           <TripWhy s={s} action={{ kind: 'travel', op: { type: 'trip', plan } }} />
-        </section>
+        </Card>
         {/* The order stays in sight at the foot of the planner (it sat under the guest list, below the fold). */}
-        <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 flex items-center gap-2 border-t border-gold-600/40 bg-noir-900/95 px-4 sm:px-5 py-2.5 backdrop-blur-sm" data-testid="trip-footer">
+        <div className="sticky bottom-0 z-10 -mx-4 sm:-mx-5 -mb-4 sm:-mb-5 flex items-center gap-2 border-t llv-dom-border bg-noir-900/95 px-4 sm:px-5 py-2.5 backdrop-blur-sm" data-testid="trip-footer">
           <span className="min-w-0 flex-1 truncate text-[12px] text-stone-300"><b className="tabular-nums text-gold-300">{fmt$(q.cost)}</b> · {q.weeks} week{q.weeks > 1 ? 's' : ''} away{q.block ? <span className="text-red-300"> · {q.block}</span> : ''}</span>
-          <button className="btn-secondary text-sm" onClick={onClose}>Cancel</button>
-          <button className="btn-primary text-sm" data-testid="trip-order" disabled={!!q.block} onClick={() => { queue({ kind: 'travel', op: { type: 'trip', plan } }); onClose(); }}>Order the trip</button>
+          <button type="button" className="btn-secondary text-sm" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn-primary text-sm" data-testid="trip-order" disabled={!!q.block} onClick={() => { queue({ kind: 'travel', op: { type: 'trip', plan } }); onClose(); }}>Order the trip</button>
         </div>
       </div>
     </Modal>

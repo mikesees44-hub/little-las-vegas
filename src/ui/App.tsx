@@ -104,6 +104,7 @@ import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
+import { WeekTurning } from './components/WeekTurning';
 import { RiseColumn } from './borgata/TheRise';
 import { ChairCard, useChairView } from './power/ChairCard';
 import { readyReview } from '../engine/desk';
@@ -1103,14 +1104,7 @@ export function App({ startOn = 'title' }: AppProps) {
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
-      {turning && (
-        <div className="pointer-events-none fixed inset-x-0 top-14 z-[6000] flex justify-center" role="status" aria-live="polite" data-testid="week-turning">
-          <div className="flex items-center gap-2 rounded-full border border-gold-600/70 bg-noir-900/95 px-4 py-1.5 text-sm text-gold-300 shadow-lg shadow-black/70">
-            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gold-400 border-t-transparent" aria-hidden />
-            The week is turning…
-          </div>
-        </div>
-      )}
+      {turning && <WeekTurning week={s.week} mode={mode} />}
       {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen || mondayCard} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={act} onClose={() => setLtOpen(false)} />}
