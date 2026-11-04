@@ -467,7 +467,7 @@ export function previewPayroll(s: GameState, a: PayrollAction): ActionPreview {
 export function describePayOp(s: GameState, o: PayOp): string | undefined {
   const n = (id?: string) => (id && s.characters[id] ? displayName(s.characters[id]) : 'someone');
   switch (o.op) {
-    case 'hire': return `${n(o.id)} goes on the payroll (${JOBS[o.job].label.toLowerCase()}, ${fmtMoney(o.wage)}/wk)`;
+    case 'hire': return `${n(o.id)} goes on the payroll (${JOBS[o.job].label.toLowerCase()}, ${o.wage ? `${fmtMoney(o.wage)}/wk` : o.job === 'madam' ? 'her house pays for protection' : 'she keeps her share and kicks back a cut'})`;
     case 'refused': return `${n(o.id)} turned down the job`;
     case 'fire': return `${n(o.id)} off the payroll`;
     case 'raise': return `${n(o.id)}'s envelope ${o.amount > 0 ? '+' : ''}${fmtMoney(o.amount)}/wk`;
