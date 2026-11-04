@@ -9,6 +9,7 @@ import { Modal } from '../components/Modal';
 import { Fragment, useState, type ReactNode } from 'react';
 import { DoneMark } from '../components/Layout';
 import { DeskClock } from '../components/DeskClock';
+import { AssetImg } from '../hood/AssetImg';
 import { domainOf, domainOfText, domClass, DOMAINS, type Domain } from '../domain';
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
@@ -93,11 +94,11 @@ function WhyChips({ why }: { why?: string[] }) {
   return <div className="mt-0.5 flex flex-wrap gap-1">{why.slice(0, 3).map((w) => <span key={w} className="rounded bg-noir-700/80 px-1 text-[10px] text-amber-200/90">{w}</span>)}</div>;
 }
 
-function NeedRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
+function NeedRow({ s, it, api, next }: { s: GameState; it: DeskItem; api: DeskApi; /** The one recommended move: its button glows. */ next?: boolean }) {
   const verb = verbOf(it);
   const d = deskDomain(s, it);
   return (
-    <li className={`flex items-start gap-2 rounded-md border px-2.5 py-2 ${it.urgent && !it.done ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-noir-700 bg-noir-900/60'} ${d && !it.done ? `${domClass(d)} llv-dom-edge${it.urgent ? '' : ' llv-dom-tint'}` : ''}`} data-testid={`desk-item-${it.kind}`} data-done={it.done ? 'true' : undefined} data-domain={d}>
+    <li className={`llv-paper flex items-start gap-2 rounded-md border px-2.5 py-2 ${it.urgent && !it.done ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-noir-700 bg-noir-900/60'} ${d && !it.done ? `${domClass(d)} llv-dom-edge${it.urgent ? '' : ' llv-dom-tint'}` : ''}`} data-testid={`desk-item-${it.kind}`} data-done={it.done ? 'true' : undefined} data-domain={d}>
       <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-center text-[12px] ${it.done ? 'text-emerald-400' : d ? 'llv-dom-chip' : 'text-stone-500'}`} aria-hidden title={d ? DOMAINS[d].label : undefined}>{it.done ? '✓' : ICON[it.kind]}</span>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-semibold text-stone-100">{it.title}{it.urgent && !it.done && <span className="ml-1 rounded bg-red-500/80 px-1 text-[10px] font-bold uppercase text-white">urgent</span>}{it.done && <DoneMark className="ml-1.5 align-middle">Answered</DoneMark>}</div>
@@ -105,7 +106,7 @@ function NeedRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
         {!it.done && <WhyChips why={it.why} />}
         {it.ifNothing && !it.done && <div className="mt-0.5 text-[11px] text-stone-500">If you leave it: {it.ifNothing}</div>}
       </div>
-      {verb && <button type="button" className={`${it.done ? 'btn-secondary' : 'btn-primary'} btn-sm shrink-0`} onClick={() => openItem(it, api)}>{verb} ▸</button>}
+      {verb && <button type="button" className={`${it.done ? 'btn-secondary' : 'btn-primary'} btn-sm shrink-0 ${next ? 'llv-next' : ''}`} onClick={() => openItem(it, api)} data-next={next ? 'true' : undefined}>{verb} ▸</button>}
     </li>
   );
 }
@@ -114,7 +115,7 @@ function HandledRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }
   const h = it.handled!;
   const d = deskDomain(s, it);
   return (
-    <li className={`flex items-start gap-2 rounded border border-noir-800 bg-noir-900/40 px-2 py-1 ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-handled-${it.kind}`} data-domain={d}>
+    <li className={`llv-paper flex items-start gap-2 rounded border border-noir-800 px-2 py-1 ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-handled-${it.kind}`} data-domain={d}>
       <span className="mt-0.5 w-4 shrink-0 text-center text-stone-600" aria-hidden>{ICON[it.kind]}</span>
       <div className="min-w-0 flex-1 text-[11px]">
         <div className="truncate text-stone-300">{it.title}</div>
@@ -144,7 +145,7 @@ function Fold({ g, render, n = 3, testid }: { g: DeskGroup; render: (it: DeskIte
 function SmallRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
   const d = deskDomain(s, it);
   return (
-    <li className={`flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px] ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-item-${it.kind}`} data-domain={d}>
+    <li className={`llv-paper flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px] ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-item-${it.kind}`} data-domain={d}>
       <div className="min-w-0 flex-1"><div className={it.tone === 'bad' ? 'text-amber-200' : it.tone === 'good' ? 'text-emerald-200' : 'text-stone-200'}>{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
       {it.kind === 'order' && it.ref.order !== undefined
         ? <button type="button" className="btn-secondary shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
@@ -152,6 +153,14 @@ function SmallRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) 
     </li>
   );
 }
+
+/** The objects on the painting (desk_topdown_1960, 1672 × 941), in percent: what each opens. */
+const DESK_SPOTS: { id: 'ashtray' | 'ledger' | 'phone' | 'envelopes'; label: string; hint: string; icon: string; d: Domain; at: string; rect: { x: number; y: number; w: number; h: number } }[] = [
+  { id: 'ashtray', label: 'Your File', hint: 'What happened, and what it led to', icon: '✎', d: 'politics', at: 'left-1 top-1', rect: { x: 3, y: 9, w: 16, h: 22 } },
+  { id: 'ledger', label: 'The ledger', hint: 'This week\'s money: where it came from and went', icon: '▤', d: 'money', at: 'left-1 top-1', rect: { x: 0.5, y: 33, w: 18.5, h: 46 } },
+  { id: 'phone', label: 'The phone', hint: 'Make a call, the calls you missed', icon: '☏', d: 'law', at: 'right-1 bottom-1', rect: { x: 78, y: 0.5, w: 21.5, h: 40 } },
+  { id: 'envelopes', label: 'The envelopes', hint: 'The weekly envelope: hear the count, take your cut', icon: '✉', d: 'money', at: 'right-1 top-1', rect: { x: 78, y: 42, w: 22, h: 57.5 } },
+];
 
 export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode; /** In the Desk drawer (its header already says "The Desk"): no second title, no second clock. */ inDrawer?: boolean }) {
   const [filter, setFilter] = useState<DeskFilter>(filter0);
@@ -163,10 +172,28 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
   const needs = pick(get('needs'));
   const handled = pick(get('handled'));
   const counts = FILTERS.map((f) => ({ ...f, n: all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done && inFilter(f.id, it)).length }));
+  // The one recommended move: the first open paper that needs him (the red one first; the list is already in that order).
+  const nextKey = needs?.items.find((x) => !x.done)?.key;
   const rest = (['result', 'order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
   return (
-    <section className="rounded-md border border-gold-600/50 bg-noir-800/50 p-2.5" data-testid="boss-desk">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+    <section className="llv-desktop" data-testid="boss-desk">
+      <div className="llv-desktop-grid">
+      {/* The owner's painting: his desk from above, the lamp, the ledger, the ashtray, the phone, the envelopes. The corners are
+          objects you can pick up; the papers of the week lie in the dark middle. */}
+      <div className="llv-desktop-art" data-testid="desk-art">
+        <AssetImg k="desk_topdown_1960" alt="" className="absolute inset-0 h-full w-full object-cover" fallback={<span className="llv-desktop-fallback" aria-hidden />} />
+        {DESK_SPOTS.map((h) => (
+          <button key={h.id} type="button" className="llv-spot group absolute rounded-md border border-transparent focus-visible:outline-none" data-testid={`desk-spot-${h.id}`}
+            style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${h.hint}`}
+            onClick={() => (h.id === 'ledger' ? api.onMoney() : h.id === 'envelopes' ? (api.onEnvelope ?? api.onMoney)() : h.id === 'ashtray' ? api.onFile?.() : window.dispatchEvent(new Event('llv-open-phone')))}>
+            <span className={`absolute ${h.at} inline-flex items-center gap-1 rounded border bg-noir-950/85 px-1.5 py-0.5 text-[10px] leading-none shadow shadow-black/60 ${domClass(h.d)} llv-dom-border`}>
+              <span aria-hidden className="llv-dom-ink">{h.icon}</span><span className="hidden text-stone-100 md:inline">{h.label}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="llv-desktop-center">
+      <div className="llv-blotter flex flex-wrap items-start justify-between gap-2">
         <div>
           {!inDrawer && <div className="panel-title text-base">The Desk</div>}
           <div className="text-[11px] text-stone-400" data-testid="desk-count">{waiting ? `${waiting} need${waiting === 1 ? 's' : ''} you` : 'Nothing needs you'}{handled?.items.length ? ` · ${get('handled')!.items.length} handled for you` : ''} · week {s.week}</div>
@@ -180,7 +207,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
           <button type="button" className="btn-primary py-0.5 text-[11px]" onClick={() => api.onOffer!(true)} data-testid="desk-offer-take">Let him</button>
         </div>
       )}
-      <div className="mt-1.5 flex flex-wrap gap-1" role="tablist" aria-label="Filter the desk">
+      <div className="llv-blotter mt-1.5 flex flex-wrap gap-1" role="tablist" aria-label="Filter the desk">
         {counts.filter((f) => f.id === 'all' || f.n > 0 || f.id === filter).map((f) => (
           <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)} data-testid={`desk-filter-${f.id}`}
             className={`rounded-full border px-2 py-0.5 text-[10px] ${filter === f.id ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}>{f.label}{f.id !== 'all' ? ` ${f.n}` : ''}</button>
@@ -188,17 +215,20 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
       </div>
-      <div className={`mt-1.5 grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
-        <div className="min-w-0 space-y-2">
-          <div data-testid="desk-group-needs">
-            <div className="llv-section-title mb-1 text-[14px]">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>
+          <div data-testid="desk-group-needs" className="mt-2">
+            <div className="llv-blotter-title mb-1">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>
             {needs && needs.items.length > 0 && needs.items.every((x) => x.done) && (
               <div className="mb-1.5 flex flex-wrap items-center gap-2 rounded-md border border-emerald-800/60 bg-emerald-950/30 px-2.5 py-1.5 text-[12px] text-emerald-200" data-testid="desk-all-answered">
                 <DoneMark>All answered</DoneMark> Everything that needed you this week has your answer. Advance the week when you are ready.
               </div>
             )}
-            {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow s={s} it={it} api={api} />} /> : <p className="mt-1 text-[12px] text-stone-500">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
+            {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
           </div>
+      </div>
+      </div>
+      <div className="llv-desktop-rest">
+      <div className={`grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
+        <div className="min-w-0 space-y-2">
           {handled && handled.items.length > 0 && (
             <div data-testid="desk-group-handled">
               <div className="llv-section-title mb-1 text-[14px]">Handled for you ({handled.items.length})</div>
@@ -217,6 +247,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
           )}
         </div>
         {side && <aside className="min-w-0" data-testid="desk-side">{side}</aside>}
+      </div>
       </div>
     </section>
   );

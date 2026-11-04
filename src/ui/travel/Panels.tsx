@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { CardHead, PlaceBanner } from '../components/Layout';
+import { domCard } from '../domain';
 import { displayName } from '../../engine/characters';
 import { captureChance, EXILE_WEEKS, sightingChance, wantedFor, wantedPeople } from '../../engine/fugitive';
 import { actingBoss, dayDate, travellers } from '../../engine/travel';
@@ -26,27 +28,26 @@ export function TravellersPanel({ s }: { s: GameState }) {
   const acting = s.travel?.acting ? s.characters[s.travel.acting.id] : undefined;
   const hist = s.travel?.history.slice(-3).reverse() ?? [];
   return (
-    <section className="panel p-3" data-testid="travellers">
-      <div className="flex items-center justify-between gap-2">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Travellers</div>
-        <div className="flex gap-1">
-          {!s.gameOver && !visit && go && <button className="btn-ghost text-xs py-0.5" data-testid="go-somewhere" onClick={() => go()}>Go somewhere yourself…</button>}
-          {!s.gameOver && <button className="btn-ghost text-xs py-0.5" onClick={() => plan(s.playerId)}>Plan a trip…</button>}
-        </div>
-      </div>
+    <section className="space-y-2" data-testid="travellers">
+      <PlaceBanner art={['scene_capemay_harbor', 'boardwalk_blue_hour_1958']} d="shore" title="Travellers" testid="travel-banner"
+        sub={list.length ? `${list.length} away from home` : 'Everybody is home'}
+        aside={!s.gameOver && <>
+          {!visit && go && <button className="btn-secondary h-8 bg-noir-950/70 px-2.5 py-0 text-xs" data-testid="go-somewhere" onClick={() => go()}>Go somewhere yourself…</button>}
+          <button className="btn-primary h-8 px-3 py-0 text-xs" onClick={() => plan(s.playerId)}>✈ Plan a trip…</button>
+        </>} />
       {visit && (
         <button type="button" onClick={() => city?.()} className="mt-1 w-full rounded border border-amber-700/70 bg-amber-500/5 px-2 py-1.5 text-left text-xs text-amber-200" data-testid="visit-row">
           {whereAway(s, visit)} · {visit.agenda.filter((i) => !i.done).length} on the agenda{visit.homeDay !== undefined ? ` · home ${absLabel(s, visit.homeDay)}` : ''} — open the city
         </button>
       )}
       {bossAway(s) && acting && <div className="mt-1 text-xs text-amber-300">The boss is away. <CharLink s={s} id={acting.id} /> is running things{s.travel?.acting ? ` (${s.travel.acting.weeks} wk)` : ''}.</div>}
-      {list.length === 0 && !visit && <p className="text-sm text-stone-400 mt-1">Everybody is home. The Catskills in July, Miami in February, the old country in the spring — pick a destination on the map or plan a trip.</p>}
-      <ul className="mt-1 space-y-1.5">
+      {list.length === 0 && !visit && <p className="text-[13px] text-stone-300">Everybody is home. The Catskills in July, Miami in February, the old country in the spring — pick a destination on the map or plan a trip.</p>}
+      <ul className="space-y-1.5">
         {list.map(({ trip: t, phase }) => {
           const L = s.characters[t.leaderId];
           const d = destOf(t);
           return (
-            <li key={t.id} className="rounded border border-noir-700 bg-noir-800/60 px-2 py-1.5">
+            <li key={t.id} className={`llv-card-box llv-card-plain px-2.5 py-2 ${domCard(t.purpose === 'vacation' ? 'family' : 'shore')}`} data-domain={t.purpose === 'vacation' ? 'family' : 'shore'}>
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <ModeIcon mode={t.mode} className="text-gold-300" />
                 <span className="text-stone-200">{L ? displayName(L) : '?'}</span>
@@ -96,7 +97,7 @@ function FugitiveCard({ s, f }: { s: GameState; f: Fugitive }) {
   const weeks = s.week - f.since;
   const acting = f.personId === s.playerId ? actingBoss(s) : undefined;
   return (
-    <div className="rounded-lg border border-red-900/70 bg-blood-500/5 p-3 space-y-2" data-testid="fugitive-panel">
+    <div className={`llv-card-box llv-card-danger space-y-2 ${domCard('law')}`} data-testid="fugitive-panel" data-domain="law">
       <div className="flex items-start gap-3">
         <div className="relative">
           <Face s={s} c={c} size={72} />
@@ -135,8 +136,8 @@ export function FugitivePanel({ s }: { s: GameState }) {
     <div className="space-y-3">
       {fugs.map((f) => <FugitiveCard key={f.personId} s={s} f={f} />)}
       {wanted.length > 0 && !s.gameOver && (
-        <div className="rounded border border-noir-700 p-3">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Go on the lam</div>
+        <div className={`llv-card-box llv-card-plain ${domCard('law')}`} data-domain="law">
+          <CardHead d="law" glyph="⚑" title="Go on the lam" className="!mb-1" />
           <p className="text-xs text-stone-400">Run before they come: a hideout, a way out, someone to help. The case waits while he is gone — and may fall apart.</p>
           <ul className="mt-1 space-y-1">
             {wanted.map((c) => (

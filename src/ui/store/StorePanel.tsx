@@ -9,14 +9,23 @@ import { STORE_TAB_BLURB, STORE_TAB_LABEL, STORE_TABS } from '../../engine/store
 import { pocketCash } from '../../engine/tributeState';
 import type { BusinessKind, GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
-import { ActionMenu } from '../components/Layout';
+import { ActionMenu, CardHead, DomainDot, Section, StatChip } from '../components/Layout';
+import { domainOf, domCard, domClass, type Domain } from '../domain';
 import { fmt$ } from '../format';
 import { EasyVacation } from './EasyVacation';
 import { ShareWealth } from './ShareWealth';
 
 type Mode = 'shop' | 'share' | 'vacation';
 
+/** The next Store to open starts on this mode (the office's saint opens Share the wealth; the coat rack the vacation). */
+let pendingMode: Mode | undefined;
+export function requestStoreMode(m: Mode): void { pendingMode = m; }
+function takeStoreMode(): Mode | undefined { const m = pendingMode; pendingMode = undefined; return m; }
+
 const VIEW_LABEL = (v: StoreView) => (v === 'luxury' ? 'Luxury' : STORE_TAB_LABEL[v]);
+/** The part of the Don's life a tab (or a thing in it) belongs to: a car is the shore, a gift romance, a tutor the family. */
+const viewDomain = (v: StoreView): Domain => domainOf(`store.${v}`) ?? 'money';
+const itemDomain = (it: SpendItem): Domain => viewDomain(storeTab(it));
 
 /** Search: name, blurb, what it does, who notices. */
 function matches(it: SpendItem, q: string): boolean {
@@ -34,7 +43,7 @@ function matches(it: SpendItem, q: string): boolean {
  * buttons on top: Share the wealth, and the easy vacation planner.
  */
 export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
-  const [mode, setMode] = useState<Mode>(initial ?? 'shop');
+  const [mode, setMode] = useState<Mode>(() => takeStoreMode() ?? initial ?? 'shop');
   const [view, setView] = useState<StoreView>('luxury');
   const [q, setQ] = useState('');
   const lists = useMemo(() => {
@@ -51,17 +60,16 @@ export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
 
   return (
     <div className="space-y-4" data-testid="store-panel">
-      <section className="flex flex-wrap items-stretch gap-2">
-        <div className="min-w-[10rem] flex-1 rounded border border-gold-500/40 bg-noir-800/60 px-3 py-2" data-testid="store-pocket">
-          <div className="text-[10px] uppercase tracking-wider text-stone-500">Your pocket</div>
-          <div className="text-lg tabular-nums text-gold-300">{fmt$(Math.round(pocketCash(s)))}</div>
-        </div>
-        <div className="min-w-[10rem] flex-1 rounded border border-sky-500/40 bg-noir-800/60 px-3 py-2" data-testid="store-family">
-          <div className="text-[10px] uppercase tracking-wider text-stone-500">Family money</div>
-          <div className="text-lg tabular-nums text-sky-300">{fmt$(Math.round(s.money))}</div>
-        </div>
-        <button data-testid="store-share-btn" className={mode === 'share' ? 'btn-gold' : 'btn-ghost'} onClick={() => setMode(mode === 'share' ? 'shop' : 'share')}>♥ Share the wealth</button>
-        <button data-testid="store-vacation-btn" className={mode === 'vacation' ? 'btn-gold' : 'btn-ghost'} onClick={() => setMode(mode === 'vacation' ? 'shop' : 'vacation')}>✈ Plan a vacation</button>
+      {/* What you have to spend (money), then the two big doors: sharing the wealth (church) and the vacation (the shore). */}
+      <section className="grid grid-cols-2 gap-2 lg:grid-cols-4" data-testid="store-top">
+        <StatChip domain="money" label="Your pocket" sub="what you spend" value={<span className="text-gold-300">{fmt$(Math.round(pocketCash(s)))}</span>} testid="store-pocket" />
+        <StatChip domain="money" label="Family money" sub="runs the business" value={<span className="text-sky-300">{fmt$(Math.round(s.money))}</span>} testid="store-family" />
+        <button data-testid="store-share-btn" aria-pressed={mode === 'share'} className="btn-secondary llv-d-church llv-dom-btn h-auto min-h-[3.25rem] justify-start text-left" onClick={() => setMode(mode === 'share' ? 'shop' : 'share')}>
+          <span aria-hidden className="text-lg leading-none">♥</span><span className="min-w-0"><span className="block">Share the wealth</span><span className="block text-[11px] font-normal text-stone-400">{mode === 'share' ? 'Back to the store' : 'The family, the church, the street'}</span></span>
+        </button>
+        <button data-testid="store-vacation-btn" aria-pressed={mode === 'vacation'} className="btn-secondary llv-d-shore llv-dom-btn h-auto min-h-[3.25rem] justify-start text-left" onClick={() => setMode(mode === 'vacation' ? 'shop' : 'vacation')}>
+          <span aria-hidden className="text-lg leading-none">✈</span><span className="min-w-0"><span className="block">Plan a vacation</span><span className="block text-[11px] font-normal text-stone-400">{mode === 'vacation' ? 'Back to the store' : 'The whole family, one plan'}</span></span>
+        </button>
       </section>
 
       {mode === 'share' && <ShareWealth s={s} />}
@@ -71,28 +79,27 @@ export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
         <>
           <div className="llv-seg tabbar" role="tablist" data-testid="store-tabs">
             {(['luxury', ...STORE_TABS] as StoreView[]).map((v) => (
-              <button key={v} role="tab" data-testid={`store-tab-${v}`} aria-selected={view === v} className={`tab ${view === v ? 'tab-active' : ''}`} onClick={() => setView(v)}>
-                {VIEW_LABEL(v)} <span className="text-stone-500">({lists[v].filter((it) => !gone(it)).length + (v === 'property' ? LINKED_BIZ.length : 0)})</span>
+              <button key={v} role="tab" data-testid={`store-tab-${v}`} aria-selected={view === v} className={`llv-seg-tab inline-flex items-center gap-1.5 ${view === v ? 'llv-seg-on' : ''}`} onClick={() => setView(v)}>
+                <DomainDot d={viewDomain(v)} />{VIEW_LABEL(v)} <span className="font-normal text-stone-500">{lists[v].filter((it) => !gone(it)).length + (v === 'property' ? LINKED_BIZ.length : 0)}</span>
               </button>
             ))}
           </div>
-          <p className="text-[12px] text-stone-400">
+          <p className="-mt-1 text-[12px] text-stone-400" style={{ maxWidth: '72ch' }}>
             {view === 'luxury' ? 'The showpieces: the penthouse over the water, the mansion, the yacht, the race cars, the racehorses, the stones. Everything here is seen.' : STORE_TAB_BLURB[view]}
             <span className="text-stone-600"> · {storeSize()} things in the store.</span>
           </p>
-          <input data-testid="store-search" className="w-full rounded border border-noir-700 bg-noir-900 px-2 py-1 text-sm text-stone-200 placeholder:text-stone-600" placeholder="Search: penthouse, diner, Ferrari, Rolex, bonds, tutor…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input data-testid="store-search" type="search" aria-label="Search the store" className="w-full rounded-md border border-noir-600 bg-noir-900 px-2.5 py-1.5 text-sm text-stone-200 placeholder:text-stone-500 focus:border-gold-500 focus:outline-none" placeholder="Search: penthouse, diner, Ferrari, Rolex, bonds, tutor…" value={q} onChange={(e) => setQ(e.target.value)} />
 
           {mine.length > 0 && (
-            <section data-testid="store-owned">
-              <div className="panel-title">Yours</div>
-              <ul className="divide-y divide-noir-800 text-sm">
+            <Section title="Yours" sub="What you own in this tab: sell it, race it, see what it costs." aside={<span>{mine.length}</span>} testid="store-owned" domain={viewDomain(view)}>
+              <ul className="space-y-1.5 text-sm">
                 {mine.map((o) => {
                   const it = SPEND_BY_ID[o.id];
                   const loan = loanFor(s, o.uid);
                   const run = horses.find((h) => h.uid === o.uid);
                   const rec = s.spend?.races?.[o.uid];
                   return (
-                    <li key={o.uid} className="space-y-1 py-1.5" data-testid="store-owned-row">
+                    <li key={o.uid} className={`space-y-1 rounded-md border border-noir-700 bg-noir-800/40 px-2.5 py-2 llv-dom-row ${domClass(itemDomain(it))}`} data-testid="store-owned-row">
                       <div className="flex flex-wrap items-baseline justify-between gap-2">
                         <span className="text-stone-200">{it.name}</span>
                         <span className="text-[11px] text-stone-500">
@@ -107,7 +114,7 @@ export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
                   );
                 })}
               </ul>
-            </section>
+            </Section>
           )}
 
           <ul className="space-y-2" data-testid="store-list">
@@ -115,18 +122,15 @@ export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
           </ul>
 
           {view === 'property' && (
-            <section data-testid="store-linked-biz">
-              <div className="panel-title">Open a place in a district (Rackets & Businesses)</div>
-              <p className="text-[11px] text-stone-500">These are bought the usual way, a storefront in a district you hold, and sit with your other places. The price can come down at the table.</p>
-              <ul className="mt-1 space-y-2">{LINKED_BIZ.map((k) => <BizCardRow key={k} s={s} kind={k} />)}</ul>
-            </section>
+            <Section title="Open a place in a district (Rackets & Businesses)" sub="These are bought the usual way, a storefront in a district you hold, and sit with your other places. The price can come down at the table." testid="store-linked-biz" domain="money">
+              <ul className="space-y-2">{LINKED_BIZ.map((k) => <BizCardRow key={k} s={s} kind={k} />)}</ul>
+            </Section>
           )}
 
           {flexes.length > 0 && (
-            <section data-testid="store-flexes">
-              <div className="panel-title">Around town: who bought what</div>
-              <ul className="text-[12px] text-stone-400">{flexes.map((f, i) => <li key={i}>Week {f.week}: {f.who} bought {f.item.replace(/^An? /, 'a ').toLowerCase()} ({fmt$(f.price)}).</li>)}</ul>
-            </section>
+            <Section title="Around town: who bought what" testid="store-flexes" domain="politics">
+              <ul className="space-y-0.5 text-[12px] text-stone-400">{flexes.map((f, i) => <li key={i}>Week {f.week}: {f.who} bought {f.item.replace(/^An? /, 'a ').toLowerCase()} ({fmt$(f.price)}).</li>)}</ul>
+            </Section>
           )}
         </>
       )}
@@ -142,14 +146,13 @@ function Card({ s, it }: { s: GameState; it: SpendItem }) {
   const toggle = (k: typeof open) => setOpen(open === k ? '' : k);
   const reply = offer !== undefined ? counterOffer(s, it, offer) : undefined;
   const agreed = reply?.ok ? reply.price : undefined;
-  const Field = ({ k, v }: { k: string; v?: string }) => (v ? <div><span className="text-stone-500">{k}</span> <span className="text-stone-200">{v}</span></div> : null);
+  const d = itemDomain(it);
+  const Field = ({ k, v }: { k: string; v?: string }) => (v ? <div className="min-w-0"><span className="text-stone-400">{k}</span> <span className="text-stone-100">{v}</span></div> : null);
   return (
-    <li className="rounded-lg border border-noir-700 bg-noir-800/50 p-3" data-testid="store-card" data-item={it.id}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className={`font-semibold ${c.block ? 'text-stone-500' : 'text-stone-100'}`}>{it.name}</span>
-        <span className="text-sm tabular-nums text-gold-300">{fmt$(agreed ?? c.price)}{agreed !== undefined && agreed < c.price ? <span className="ml-1 text-[11px] text-emerald-400">(was {fmt$(c.price)})</span> : null}</span>
-      </div>
-      <div className="mt-1 grid gap-x-4 gap-y-0.5 text-[12px] sm:grid-cols-3" data-testid="store-card-fields">
+    <li className={`llv-card-box llv-card-plain ${domCard(d)}`} data-testid="store-card" data-item={it.id} data-domain={d}>
+      <CardHead d={d} title={<span className={c.block ? 'text-stone-400' : ''}>{it.name}</span>} className="!mb-1.5"
+        aside={<span className="font-display text-base tabular-nums text-gold-300">{fmt$(agreed ?? c.price)}{agreed !== undefined && agreed < c.price ? <span className="ml-1 font-sans text-[11px] text-emerald-400">(was {fmt$(c.price)})</span> : null}</span>} />
+      <div className="grid gap-x-4 gap-y-0.5 text-[12px] sm:grid-cols-2 xl:grid-cols-3" data-testid="store-card-fields">
         <Field k="Purchase price" v={fmt$(agreed ?? c.price)} />
         <Field k="Down payment" v={c.finance ? fmt$(c.finance.down) : 'Cash only'} />
         <Field k="Weekly expenses" v={`${fmt$(c.weekly)}/wk${c.finance ? ` (+${fmt$(c.finance.pay)}/wk financed)` : ''}`} />
@@ -167,9 +170,9 @@ function Card({ s, it }: { s: GameState; it: SpendItem }) {
         {c.style && <Field k="Style" v={c.style} />}
         {c.requirements.length > 0 && <Field k="Requires" v={c.requirements.join(' · ')} />}
       </div>
-      {c.block && <div className="mt-1 text-[11px] text-stone-500">{c.block}</div>}
+      {c.block && <div className="mt-1.5 text-[11px] text-amber-200/90">⚠ {c.block}</div>}
       {/* One primary (Buy), its alternative (Finance), and the looking-and-asking folded into More. */}
-      <div className="mt-2 flex flex-wrap items-center justify-end gap-1.5" data-testid="store-card-actions">
+      <div className="mt-2 flex flex-wrap items-center justify-end gap-1.5 border-t border-noir-700/70 pt-2" data-testid="store-card-actions">
         <ActionMenu label={open === 'inspect' || open === 'adviser' || open === 'negotiate' ? (open === 'inspect' ? 'Inspecting' : open === 'adviser' ? 'Adviser' : 'Negotiating') : 'More'}>
           <button type="button" onClick={() => toggle('inspect')}>Inspect</button>
           <button type="button" onClick={() => toggle('adviser')}>Ask adviser</button>
@@ -211,22 +214,19 @@ function BizCardRow({ s, kind }: { s: GameState; kind: BusinessKind }) {
   const [open, setOpen] = useState('');
   const c = bizCard(s, kind);
   return (
-    <li className="rounded border border-noir-700 bg-noir-800/50 p-2" data-testid="store-biz-card" data-kind={kind}>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <span className="font-semibold text-stone-100">{c.name}</span>
-        <span className="text-sm tabular-nums text-gold-300">{fmt$(c.price)}</span>
+    <li className={`llv-card-box llv-card-plain ${domCard('money')}`} data-testid="store-biz-card" data-kind={kind} data-domain="money">
+      <CardHead d="money" glyph="⌂" title={c.name} className="!mb-1.5" aside={<span className="font-display text-base tabular-nums text-gold-300">{fmt$(c.price)}</span>} />
+      <div className="grid gap-x-4 gap-y-0.5 text-[12px] sm:grid-cols-2 xl:grid-cols-3">
+        <div><span className="text-stone-400">Weekly expenses</span> {fmt$(c.weekly)}/wk</div>
+        <div><span className="text-stone-400">Current revenue</span> {fmt$(c.revenue)}/wk</div>
+        <div><span className="text-stone-400">Estimated profit</span> {fmt$(c.profit[0])} to {fmt$(c.profit[1])}/wk</div>
+        <div><span className="text-stone-400">Manager</span> {c.manager}</div>
+        <div><span className="text-stone-400">Location</span> {c.districtName ?? 'A district you hold'}</div>
+        {c.launder > 0 && <div><span className="text-stone-400">Washes</span> {fmt$(c.launder)}/wk</div>}
       </div>
-      <div className="mt-1 grid gap-x-4 text-[12px] sm:grid-cols-3">
-        <div><span className="text-stone-500">Weekly expenses</span> {fmt$(c.weekly)}/wk</div>
-        <div><span className="text-stone-500">Current revenue</span> {fmt$(c.revenue)}/wk</div>
-        <div><span className="text-stone-500">Estimated profit</span> {fmt$(c.profit[0])} to {fmt$(c.profit[1])}/wk</div>
-        <div><span className="text-stone-500">Manager</span> {c.manager}</div>
-        <div><span className="text-stone-500">Location</span> {c.districtName ?? 'A district you hold'}</div>
-        {c.launder > 0 && <div><span className="text-stone-500">Washes</span> {fmt$(c.launder)}/wk</div>}
-      </div>
-      <div className="mt-2 flex flex-wrap gap-1">
-        <button className="btn-ghost px-2 py-1 text-xs" onClick={() => setOpen(open === 'a' ? '' : 'a')}>Ask adviser</button>
-        <button className="btn-gold px-2 py-1 text-xs" onClick={() => setOpen(open === 'b' ? '' : 'b')}>Buy · Negotiate</button>
+      <div className="mt-2 flex flex-wrap justify-end gap-1.5 border-t border-noir-700/70 pt-2">
+        <button className="btn-secondary h-8 px-2.5 py-0 text-xs" onClick={() => setOpen(open === 'a' ? '' : 'a')}>Ask adviser</button>
+        <button className="btn-primary h-8 px-3 py-0 text-xs" onClick={() => setOpen(open === 'b' ? '' : 'b')}>Buy · Negotiate</button>
       </div>
       {open === 'a' && <p className="mt-1 text-[12px] italic text-stone-300">Adviser&apos;s assessment: &ldquo;{c.adviser}&rdquo;</p>}
       {open === 'b' && (c.district ? <div className="mt-2"><ActionCard s={s} action={{ kind: 'buyBusiness', biz: kind, district: c.district }} /></div> : <p className="mt-1 text-[12px] text-stone-500">{c.block}</p>)}

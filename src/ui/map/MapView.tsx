@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { CardHead } from '../components/Layout';
+import { domCard } from '../domain';
 import type { Alert } from '../../engine/alerts';
 import { CITIES_BY_ID, GROUP_LABEL, hasPermission, needsPermission, stake, standing, type OwnerGroup } from '../../engine/cities';
 import { SCHEME_INFO } from '../../engine/schemes';
@@ -204,9 +206,9 @@ export function CityPanel({ s, id, onEnvoy }: { s: GameState; id: string; onEnvo
 export function EnvoysAbroad({ s }: { s: GameState }) {
   const out = s.schemes.filter((x) => x.owner === 'player' && x.kind === 'envoy');
   return (
-    <section className="panel p-3" data-testid="envoys-abroad">
-      <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Envoys abroad</div>
-      {out.length === 0 && s.outposts.length === 0 && <p className="text-sm text-stone-400 mt-1">Nobody is out. Pick a city on the map — or a district on the island — and send a man.</p>}
+    <section className={`llv-card-box llv-card-plain ${domCard('rivals')}`} data-testid="envoys-abroad" data-domain="rivals">
+      <CardHead d="rivals" glyph="✉" title="Envoys abroad" sub="The men you sent to other cities, and what they set up." className="!mb-1" />
+      {out.length === 0 && s.outposts.length === 0 && <p className="text-[13px] text-stone-300">Nobody is out. Pick a city on the map — or a district on the island — and send a man.</p>}
       <ul className="mt-1 space-y-1 text-sm">
         {out.map((sc) => {
           const c = CITIES_BY_ID[sc.opts.city ?? ''];

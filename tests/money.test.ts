@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import '../src/engine/engine';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { MoneyView } from '../src/ui/money/MoneyView';

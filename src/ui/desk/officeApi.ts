@@ -27,12 +27,14 @@ export interface OfficeApi {
   openFamily: () => void;
   /** The newspaper: the news and the papers. */
   openNews: () => void;
+  /** A place by its nav key ("house.court", "ops.travel"); "you.store#share" opens the Store on Share the wealth. */
+  openPlace: (key: string) => void;
   /** "Ready to advance?" review (then the week turns, if the player says so). */
   openAdvance: () => void;
 }
 
 const noop = () => {};
-export const OfficeContext = createContext<OfficeApi>({ openDesk: noop, openEnvelope: noop, openVisitors: noop, openLedger: noop, openCalendar: noop, openDatebook: noop, openDecisions: noop, openMap: noop, openFamily: noop, openNews: noop, openAdvance: noop });
+export const OfficeContext = createContext<OfficeApi>({ openDesk: noop, openEnvelope: noop, openVisitors: noop, openLedger: noop, openCalendar: noop, openDatebook: noop, openDecisions: noop, openMap: noop, openFamily: noop, openNews: noop, openPlace: noop, openAdvance: noop });
 export function useOffice(): OfficeApi {
   return useContext(OfficeContext);
 }

@@ -52,6 +52,13 @@ const MAP: Record<string, Domain> = {
   'diplomacy.table': 'politics', 'diplomacy.pacts': 'politics', 'ops.travel': 'shore', 'you.walk': 'shore', 'you.dating': 'romance',
   'you.store': 'money', 'you.spend': 'money', 'you.possessions': 'money', 'house.court': 'family', 'house.succession': 'family',
   'borgata.earnings': 'money', 'borgata.take': 'money', 'ops.missions': 'crew',
+  // The Store's tabs (engine/storeData.ts STORE_TABS), namespaced: what the thing bought is part of
+  'store.luxury': 'money', 'store.property': 'money', 'store.vehicles': 'shore', 'store.services': 'crew', 'store.equipment': 'money',
+  'store.armory': 'rivals', 'store.lifestyle': 'romance', 'store.invest': 'money', 'store.legacy': 'family',
+  // The office's objects (office/hotspots.ts)
+  'office.chair': 'crew', 'office.envelope': 'money', 'office.door': 'crew', 'office.ledger': 'money', 'office.phone': 'law',
+  'office.calendar': 'family', 'office.newspaper': 'politics', 'office.photos': 'family', 'office.map': 'shore',
+  'office.throne': 'family', 'office.church': 'church', 'office.coat': 'shore',
   // Alert / misc words
   heat: 'law', feds: 'law', fbi: 'law', war: 'rivals', army: 'rivals', strike: 'rivals', hit: 'rivals', church: 'church', priest: 'church',
   charity: 'church', funeral: 'church', goomar: 'romance', nightlife: 'romance', shore: 'shore', boardwalk: 'shore', oceancity: 'shore',

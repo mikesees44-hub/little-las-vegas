@@ -6,7 +6,8 @@ import { fmt$ } from '../format';
 import { ActionCard, useOrders } from '../components/Orders';
 import { useShell } from '../shell/context';
 import { BigPots, MoveMoney } from './MoneyPots';
-import { DoneMark } from '../components/Layout';
+import { CardHead, DoneMark } from '../components/Layout';
+import { domCard, domClass } from '../domain';
 
 /**
  * THE MONEY SCREEN, one page, top to bottom:
@@ -38,8 +39,8 @@ export function MoneyView({ s }: { s: GameState }) {
           <WeekFlow s={s} v={v} onGo={go} />
           <Chart v={v} />
           <TopEarners v={v} onGo={go} />
-          <details className="rounded-md border border-noir-700 bg-noir-800/30 min-w-0" data-testid="money-lines">
-            <summary className="cursor-pointer px-3 py-2 text-[12px] text-stone-300 hover:text-gold-300">Every line of week {v.week}</summary>
+          <details className={`rounded-md border border-noir-700 bg-noir-800/30 min-w-0 llv-dom-row ${domClass('money')}`} data-testid="money-lines">
+            <summary className="cursor-pointer px-3 py-2 text-[12px] font-semibold text-stone-200 hover:text-gold-300">▸ Every line of week {v.week} <span className="font-normal text-stone-400">· tap a bar for its items</span></summary>
             <div className="px-3 pb-3"><Flow v={v} onGo={go} /></div>
           </details>
         </>
@@ -84,12 +85,8 @@ function Bar({ r, max, tone, onGo, testid }: { r: FlowRow; max: number; tone: 'i
 function Flow({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
   const max = Math.max(1, ...v.inRows.map((r) => r.amount), ...v.outRows.map((r) => r.amount));
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid="money-flow">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">Every line, week {v.week}</div>
-        <span className="text-[10px] text-stone-500">tap a bar for every line</span>
-      </div>
-      <div className="mt-2 grid gap-3 md:grid-cols-[1fr_1fr]">
+    <section className="min-w-0" data-testid="money-flow">
+      <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
         <div className="min-w-0">
           <div className="flex justify-between text-[10px] uppercase tracking-widest text-emerald-400/80"><span>In</span><span className="tabular-nums" data-testid="money-in-total">{fmt$(v.inTotal)}</span></div>
           <ul className="mt-1 space-y-1.5">{v.inRows.map((r) => <Bar key={r.group} r={r} max={max} tone="in" onGo={onGo} testid={`money-in-${r.group}`} />)}</ul>
@@ -142,11 +139,8 @@ function WeekFlow({ s, v, onGo }: { s: GameState; v: MV; onGo: (to: string) => v
   const potTotal = Math.max(1, v.famIn + v.pocketIn);
   const famPct = Math.round((v.famIn / potTotal) * 100);
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0 space-y-2" data-testid="money-weekflow">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">Last week (week {v.week})</div>
-        <span className="text-[10px] text-stone-500">collected on its own</span>
-      </div>
+    <section className={`llv-card-box llv-card-plain min-w-0 space-y-2 ${domCard('money')}`} data-testid="money-weekflow" data-domain="money">
+      <CardHead d="money" title={`Last week (week ${v.week})`} className="!mb-0" aside={<span>collected on its own</span>} />
       <div>
         <div className="flex justify-between text-[11px] font-semibold text-emerald-300"><span>1. Came in</span><span className="tabular-nums" data-testid="money-flow-in">{fmt$(v.inTotal)}</span></div>
         {v.sources.length ? <Stack items={v.sources} tones={SOURCE_TONE} total={v.inTotal} onGo={onGo} testid="money-sources" /> : <p className="text-[11px] text-stone-500">Nothing came in.</p>}
@@ -205,7 +199,7 @@ function Chart({ v }: { v: MV }) {
   const h = v.hist.filter((x) => x.in !== undefined && x.out !== undefined);
   const W = 320, H = 120, P = 8;
   const [hover, setHover] = useState<number | undefined>(undefined);
-  if (h.length < 2) return <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 text-[11px] text-stone-500" data-testid="money-chart">The trend fills in as the weeks go by.</section>;
+  if (h.length < 2) return <section className={`llv-card-box llv-card-plain text-[11px] text-stone-400 ${domCard('money')}`} data-testid="money-chart">The trend fills in as the weeks go by.</section>;
   const hi = Math.max(1, ...h.flatMap((x) => [x.in!, x.out!]));
   const X = (i: number) => P + (i * (W - 2 * P)) / (h.length - 1);
   const Y = (y: number) => H - P - (y / hi) * (H - 2 * P);
@@ -213,11 +207,8 @@ function Chart({ v }: { v: MV }) {
   const last = h[h.length - 1];
   const at = hover !== undefined ? h[hover] : last;
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid="money-chart">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">The last {h.length} weeks</div>
-        <span className="text-[10px] text-stone-500 tabular-nums">wk {h[0].week}–{last.week}</span>
-      </div>
+    <section className={`llv-card-box llv-card-plain min-w-0 ${domCard('money')}`} data-testid="money-chart" data-domain="money">
+      <CardHead d="money" glyph="↗" title={`The last ${h.length} weeks`} className="!mb-0" aside={<span className="tabular-nums">wk {h[0].week}–{last.week}</span>} />
       <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full h-auto touch-none" role="img" aria-label={`Money in and out over ${h.length} weeks; last week in ${fmt$(last.in!)}, out ${fmt$(last.out!)}`}
         onMouseLeave={() => setHover(undefined)}>
         <line x1={P} x2={W - P} y1={Y(0)} y2={Y(0)} stroke="#44403c" strokeWidth={1} />
@@ -248,11 +239,9 @@ function Chart({ v }: { v: MV }) {
 function TopEarners({ v, onGo }: { v: MV; onGo: (to: string) => void }) {
   const max = Math.max(1, ...v.top.map((x) => x.amount));
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0" data-testid="money-top">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">Who earned it</div>
-        <button type="button" className="text-[11px] text-gold-300 hover:underline" onClick={() => onGo('borgata.earnings')} data-testid="money-earnings-link">The Family's Earnings ▸</button>
-      </div>
+    <section className={`llv-card-box llv-card-plain min-w-0 ${domCard('crew')}`} data-testid="money-top" data-domain="crew">
+      <CardHead d="crew" title="Who earned it" className="!mb-0" sub="The men and the places that brought it in."
+        aside={<button type="button" className="text-[11px] text-gold-300 hover:underline" onClick={() => onGo('borgata.earnings')} data-testid="money-earnings-link">The Family's Earnings ▸</button>} />
       <ol className="mt-1.5 space-y-1">
         {v.top.map((x, i) => (
           <li key={x.id} className="text-[12px] min-w-0">
@@ -305,7 +294,8 @@ function Levers({ s }: { s: GameState }) {
           ) : queued ? <DoneMark>Ordered: changes when you advance</DoneMark> : <span className="text-[11px] text-stone-500" data-testid="money-cut-apply">Your cut stands. Move the slider to change it.</span>}
         </div>
       </div>
-      <div className="border-t border-noir-700 pt-2">
+      <div className={`-mx-2 -mb-2 rounded-b-md border-t border-noir-700 px-2 pb-2 pt-2 llv-dom-row ${domClass('crew')}`} data-domain="crew">
+        <div className="llv-kicker mb-0.5 llv-dom-ink">⚑ Lean on the crews</div>
         <p className="text-[11px] text-stone-400">Need more this week? Rackets, places, kick-ups, rents and loan interest come in on their own. You hold {heldDistricts(s)} district{heldDistricts(s) === 1 ? '' : 's'} (corners pay ×{territoryMult(s).toFixed(2)}); your rackets feed each other (×{racketNetMult(s).toFixed(2)}).</p>
         <div className="mt-1.5"><ActionCard s={s} action={{ kind: 'tribute', op: { op: 'squeeze' } }} compact /></div>
         {sq && <p className="text-[11px] text-stone-500 mt-0.5">{sq}.</p>}

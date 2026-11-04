@@ -190,7 +190,7 @@ export const PANELS: PanelDef[] = [
       { id: 'progress', label: 'In progress', render: (s) => <SchemesPanel s={s} /> },
       { id: 'missions', label: 'Mission Board', blurb: 'The big cases, stage by stage: who is involved, what is disputed, who knows what, and your move. Talks waiting on an answer are here too.', render: (s) => <MissionBoard s={s} /> },
       { id: 'plan', label: 'Plan new…', render: (s) => <PlanNew s={s} /> },
-      { id: 'travel', label: 'Travel & Envoys', render: (s) => stack(<EnvoysAbroad key="e" s={s} />, <TravellersPanel key="t" s={s} />) },
+      { id: 'travel', label: 'Travel & Envoys', render: (s) => stack(<TravellersPanel key="t" s={s} />, <EnvoysAbroad key="e" s={s} />) },
     ],
   },
   {

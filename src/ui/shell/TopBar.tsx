@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { HudIcon, HudMeter, HudNumber } from '../components/Hud';
 import { createPortal } from 'react-dom';
 import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
@@ -52,10 +53,23 @@ function StandingStrip({ s }: { s: GameState }) {
   return (
     <Popover align="left" testid="standing-popover" button={(o, t) => (
       <button type="button" onClick={t} aria-expanded={o} data-testid="topbar-standing" title={`Respect ${s.respect} · heat: local ${s.heat.local}, family ${s.heat.family}, federal ${s.heat.federal} · favors ${s.favors} · ${era.text}. Tap for the reasons.`}
-        className="flex h-[26px] sm:h-[38px] items-center gap-2 whitespace-nowrap rounded border border-noir-700 bg-noir-800 px-2 text-[11px] tabular-nums text-stone-400 hover:border-gold-600">
-        <span>Respect <b className="text-stone-100">{s.respect}</b>{dr ? <span className={dr > 0 ? 'text-emerald-400' : 'text-red-400'}> {dr > 0 ? '+' : ''}{dr}</span> : null}</span>
-        <span>Heat {HEAT_BARS.map((b, i) => <b key={b} className={heatTone(s.heat[b])}>{i ? '·' : ''}{s.heat[b]}</b>)}</span>
-        <span className="hidden sm:inline">Favors <b className="text-stone-100">{s.favors}</b></span>
+        className="llv-hud h-[26px] sm:h-[42px] gap-2.5 whitespace-nowrap text-[11px] tabular-nums text-stone-400 hover:border-gold-500">
+        {/* Respect: a gold star, the number (counting), a meter. Heat: three bars, local · family · federal, coloured by band. */}
+        <span className="flex items-center gap-1.5">
+          <span className="hidden sm:inline-flex"><HudIcon tone="gold">★</HudIcon></span>
+          <span className="flex flex-col">
+            <span className="flex items-baseline gap-1"><span className="sm:hidden">Respect</span><span className="hidden sm:inline llv-hud-label">Respect</span> <b className="llv-hud-val text-stone-100"><HudNumber value={s.respect} /></b>{dr ? <span className={dr > 0 ? 'text-emerald-400' : 'text-red-400'}> {dr > 0 ? '+' : ''}{dr}</span> : null}</span>
+            <HudMeter v={s.respect} color="bg-gradient-to-r from-gold-600 to-gold-300" className="hidden w-16 sm:block" />
+          </span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="hidden sm:inline-flex"><HudIcon tone="red">♨</HudIcon></span>
+          <span className="flex flex-col">
+            <span className="flex items-baseline gap-1"><span className="sm:hidden">Heat</span><span className="hidden sm:inline llv-hud-label">Heat</span> {HEAT_BARS.map((b, i) => <b key={b} className={`${heatTone(s.heat[b])}`}>{i ? '·' : ''}<HudNumber value={s.heat[b]} good="down" /></b>)}</span>
+            <span className="hidden gap-0.5 sm:flex">{HEAT_BARS.map((b) => <HudMeter key={b} v={s.heat[b]} color={BAND_COLOR[heatBand(s.heat[b])]} className="w-[1.3rem]" />)}</span>
+          </span>
+        </span>
+        <span className="hidden sm:inline">Favors <b className="llv-hud-val text-stone-100">{s.favors}</b></span>
         <span className={`hidden lg:inline h-2 w-2 rounded-full ${era.era === 'war' ? 'bg-red-500' : era.era === 'peace' ? 'bg-emerald-500' : 'bg-amber-400'}`} aria-hidden />
         <span className="text-stone-500">▾</span>
       </button>
@@ -110,7 +124,7 @@ function OrdersPane({ s, onClose }: { s: GameState; onClose: () => void }) {
   useEscape(true, onClose);
   return (
     <Overlay z={1170} onClick={onClose}>
-      <div className="absolute left-2 right-2 top-[7.5rem] sm:left-auto sm:right-2 sm:top-14 sm:w-[min(440px,94vw)] max-h-[70vh] overflow-y-auto" onClick={(e) => e.stopPropagation()} data-testid="orders-popover">
+      <div className="absolute left-2 right-2 top-[7.5rem] sm:left-auto sm:right-2 sm:top-14 sm:w-[min(440px,94vw)] max-h-[calc(100dvh-7.5rem-1rem-env(safe-area-inset-bottom))] sm:max-h-[70vh] overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()} data-testid="orders-popover">
         <div className="flex justify-end"><button type="button" className="btn-quiet text-xs" onClick={onClose} aria-label="Close">close ×</button></div>
         {orders.length ? <OrdersTray s={s} /> : (
           <div className="panel p-3 text-xs text-stone-400">No orders this week. Every "Order" button on a sheet, a card or a drawer adds one here; they are carried out when you advance.</div>
@@ -151,8 +165,8 @@ function MoneyChips({ s }: { s: GameState }) {
   return (
     <div ref={ref} className="flex items-center gap-1" data-testid="topbar-money">
       <button type="button" data-tour="treasury" className="flex items-center gap-1" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={`Family money ${fmt$(m.family)}, your pocket ${fmt$(m.pocket)}: open the money`} title={statHelp('money')} data-testid="topbar-family">
-        <Chip label="Family money" short="Family" value={fmt$(m.family)} d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash after={p.familyAfter} />
-        <span data-testid="topbar-pocket"><Chip label="Your pocket" short="Pocket" value={fmt$(m.pocket)} d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash after={p.pocketAfter} /></span>
+        <Chip label="Family money" short="Family" value={fmt$(m.family)} num={m.family} icon="$" iconTone="green" d={m.familyDelta} good={(m.familyDelta ?? 0) >= 0} tone={m.family < 0 ? 'text-red-400' : 'text-gold-300'} cash after={p.familyAfter} />
+        <span data-testid="topbar-pocket"><Chip label="Your pocket" short="Pocket" value={fmt$(m.pocket)} num={m.pocket} icon="♠" iconTone="gold" d={m.pocketDelta} good={(m.pocketDelta ?? 0) >= 0} tone="text-amber-200" cash after={p.pocketAfter} /></span>
       </button>
       {open && (
         <div className="fixed left-2 right-2 top-[7.5rem] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 z-[1200] sm:w-[440px] max-h-[75vh] overflow-y-auto panel p-2 space-y-2" data-testid="money-popover">
@@ -184,17 +198,25 @@ function delta(s: GameState, k: 'money' | 'respect' | HeatBar): number | undefin
   return r.end.heat[k] - r.start.heat[k];
 }
 
-function Chip({ label, short, value, d, good, bar, barColor, tone, cash, after }: { label: string; /** Phones: one line, this word before the number. */ short?: string; value: string; d?: number; good?: boolean; bar?: number; barColor?: string; tone?: string; cash?: boolean; /** Where it lands after this week's orders. */ after?: number }) {
+/**
+ * A HUD badge: an icon coin, the label, the value in the display face (counting to a new figure, the change
+ * floating up off it), last week's change, and a meter where the stat has one.
+ */
+function Chip({ label, short, value, d, good, bar, barColor, tone, cash, after, icon, iconTone, num, up = 'up' }: { label: string; /** Phones: one line, this word before the number. */ short?: string; value: string; d?: number; good?: boolean; bar?: number; barColor?: string; tone?: string; cash?: boolean; /** Where it lands after this week's orders. */ after?: number;
+  icon?: ReactNode; iconTone?: 'gold' | 'green' | 'red' | 'steel' | 'wine'; /** The value as a number: it counts and floats its changes. */ num?: number; up?: 'up' | 'down' }) {
   return (
-    <span className={`inline-flex ${short ? 'flex-row items-baseline gap-1 sm:flex-col sm:items-stretch sm:gap-0' : 'flex-col'} rounded bg-noir-800 border border-noir-700 px-1.5 sm:px-2 py-0.5 min-w-[52px] cursor-help`}>
+    <span className="llv-hud cursor-help">
+      {icon && <span className="hidden sm:inline-flex"><HudIcon tone={iconTone}>{icon}</HudIcon></span>}
+      <span className={`inline-flex min-w-0 ${short ? 'flex-row items-baseline gap-1 sm:flex-col sm:items-stretch sm:gap-0' : 'flex-col'}`}>
       {short && <span className="sm:hidden text-[10px] text-stone-400 leading-tight whitespace-nowrap">{short}</span>}
-      <span className={`${short ? 'hidden sm:block' : ''} text-[9px] uppercase tracking-widest text-stone-500 leading-tight whitespace-nowrap`}>{label}</span>
-      <span className={`text-sm font-semibold tabular-nums leading-tight whitespace-nowrap ${tone ?? 'text-stone-100'}`}>
-        {value}
+      <span className={`${short ? 'hidden sm:block' : ''} llv-hud-label`}>{label}</span>
+      <span className={`llv-hud-val ${tone ?? 'text-stone-100'}`}>
+        {num !== undefined ? <HudNumber value={num} format={cash ? fmt$ : undefined} good={up} /> : value}
         {d !== undefined && d !== 0 && <span className={`ml-1 text-[10px] font-normal ${good ? 'text-emerald-400' : 'text-red-400'}`}>{d > 0 ? '+' : ''}{cash ? fmt$(d) : d}</span>}
       </span>
       {after !== undefined && <span className="text-[9px] leading-tight text-sky-300 tabular-nums whitespace-nowrap">→ {fmt$(after)}<span className="hidden sm:inline"> after orders</span></span>}
-      {bar !== undefined && <span className="mt-0.5 block h-0.5 rounded bg-noir-700 overflow-hidden"><span className={`block h-full ${barColor}`} style={{ width: `${Math.max(0, Math.min(100, bar))}%` }} /></span>}
+      {bar !== undefined && <HudMeter v={bar} color={barColor ?? 'bg-gold-500'} className="mt-0.5" />}
+      </span>
     </span>
   );
 }
@@ -427,8 +449,9 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                 )}
               </Popover>
             </div>
-            {pane === 'orders' && <OrdersPane s={s} onClose={() => setPane(undefined)} />}
-            {pane === 'plans' && <PlansPanel s={s} onClose={() => setPane(undefined)} />}
+            {/* Out of the bar's stacking context too, so on a phone the tab bar never covers the orders or the plans. */}
+            {pane === 'orders' && typeof document !== 'undefined' && createPortal(<OrdersPane s={s} onClose={() => setPane(undefined)} />, document.body)}
+            {pane === 'plans' && typeof document !== 'undefined' && createPortal(<PlansPanel s={s} onClose={() => setPane(undefined)} />, document.body)}
             {/* Out of the bar's stacking context (z 1150), so the sheet sits over the phone's tab bar. */}
             {report !== undefined && typeof document !== 'undefined' && createPortal(<ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />, document.body)}
           </div>

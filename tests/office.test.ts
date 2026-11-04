@@ -62,7 +62,7 @@ import { deskCount } from '../src/engine/attention';
 
 function spyApi(): { api: OfficeApi; calls: string[] } {
   const calls: string[] = [];
-  const names: (keyof OfficeApi)[] = ['openDesk', 'openEnvelope', 'openVisitors', 'openLedger', 'openCalendar', 'openDatebook', 'openDecisions', 'openMap', 'openFamily', 'openNews', 'openAdvance'];
+  const names: (keyof OfficeApi)[] = ['openDesk', 'openEnvelope', 'openVisitors', 'openLedger', 'openCalendar', 'openDatebook', 'openDecisions', 'openMap', 'openFamily', 'openNews', 'openPlace', 'openAdvance'];
   const api = Object.fromEntries(names.map((n) => [n, () => { calls.push(n); }])) as unknown as OfficeApi;
   return { api, calls };
 }
@@ -95,6 +95,7 @@ describe("the Boss's Office room", () => {
         openHotspot(h, api, { hasReport, panel: (p) => panels.push(p) });
         expect(calls.length + panels.length, h.id).toBe(1);
         if ('api' in h.entry) expect(calls[0]).toBe(h.id === 'envelope' && !hasReport ? 'openLedger' : h.entry.api);
+        else if ('go' in h.entry) expect(calls[0]).toBe('openPlace');
         else expect(['door', 'phone', 'brief']).toContain(panels[0]);
       }
     }

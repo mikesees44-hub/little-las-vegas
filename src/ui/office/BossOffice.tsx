@@ -9,7 +9,8 @@ import { latestReport } from '../../engine/tribute';
 import type { GameState } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { FACTION_TINT, useSheet } from '../components/People';
-import { ActionMenu } from '../components/Layout';
+import { ActionMenu, DomainChip } from '../components/Layout';
+import { domainOf, domainOfText, domClass, type Domain } from '../domain';
 import { useOffice } from '../desk/officeApi';
 import { useShell } from '../shell/context';
 import { useOpenDating } from '../dating/DatingPanel';
@@ -51,6 +52,14 @@ export interface BossOfficeProps {
 }
 
 const chip = 'inline-flex items-center gap-1 rounded border border-gold-600/50 bg-noir-950/85 px-1.5 py-0.5 text-[10px] leading-none text-gold-200 shadow shadow-black/60';
+/** Each object in the room belongs to a part of the Don's life (ui/domain.ts): the envelope money, the phone the law, the photographs the family. */
+const spotDomain = (id: Hotspot['id']): Domain => domainOf(`office.${id}`) ?? 'crew';
+/** The list under the room, grouped: what is on the desk this week, the calls and the word, home and the way out. */
+const SPOT_GROUPS: { title: string; ids: Hotspot['id'][] }[] = [
+  { title: 'On the desk this week', ids: ['door', 'envelope', 'chair', 'ledger'] },
+  { title: 'Calls and the word', ids: ['phone', 'calendar', 'newspaper'] },
+  { title: 'The house, the church, the way out', ids: ['throne', 'photos', 'church', 'map', 'coat'] },
+];
 
 /** When the painting cannot load (local preview, offline): a dark panelled room so the objects still read. */
 /**
@@ -60,22 +69,22 @@ const chip = 'inline-flex items-center gap-1 rounded border border-gold-600/50 b
  * the chair across. No empty boxes.
  */
 function PaintedFallback() {
-  const X = (pct: number) => (pct / 100) * 1697;
-  const Y = (pct: number) => (pct / 100) * 927;
+  const X = (pct: number) => (pct / 100) * 1672;
+  const Y = (pct: number) => (pct / 100) * 941;
   const r = (id: string) => HOTSPOTS.find((h) => h.id === id)!.rect;
   const map = r('map'); const photos = r('photos'); const door = r('door'); const phone = r('phone'); const paper = r('newspaper'); const ledger = r('ledger'); const env = r('envelope'); const chair = r('chair'); const cal = r('calendar');
   return (
-    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1697 927" preserveAspectRatio="xMidYMid slice" aria-hidden data-testid="office-fallback">
+    <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1672 941" preserveAspectRatio="xMidYMid slice" aria-hidden data-testid="office-fallback">
       <defs>
         <linearGradient id="of-wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#2a1c12" /><stop offset="1" stopColor="#3a2617" /></linearGradient>
         <linearGradient id="of-desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#5a3820" /><stop offset="1" stopColor="#2c1a0e" /></linearGradient>
         <radialGradient id="of-lamp" cx="0.42" cy="0.55" r="0.55"><stop offset="0" stopColor="#f3c97a" stopOpacity="0.22" /><stop offset="1" stopColor="#f3c97a" stopOpacity="0" /></radialGradient>
         <pattern id="of-blinds" width="12" height="14" patternUnits="userSpaceOnUse"><rect width="12" height="9" fill="#d9c9a0" opacity="0.18" /></pattern>
       </defs>
-      <rect width="1697" height="927" fill="url(#of-wall)" />
+      <rect width="1672" height="941" fill="url(#of-wall)" />
       {/* wainscot */}
-      <rect y={Y(48)} width="1697" height={Y(8)} fill="#24170e" />
-      <line x1="0" x2="1697" y1={Y(48)} y2={Y(48)} stroke="#6b4a2a" strokeWidth="3" />
+      <rect y={Y(48)} width="1672" height={Y(8)} fill="#24170e" />
+      <line x1="0" x2="1672" y1={Y(48)} y2={Y(48)} stroke="#6b4a2a" strokeWidth="3" />
       {/* the window with blinds, right of the door */}
       <rect x={X(72)} y={Y(6)} width={X(12)} height={Y(30)} fill="#0e141c" stroke="#5b3f24" strokeWidth="6" />
       <rect x={X(72)} y={Y(6)} width={X(12)} height={Y(30)} fill="url(#of-blinds)" />
@@ -95,7 +104,7 @@ function PaintedFallback() {
       {/* the desk */}
       <rect x={X(1)} y={Y(54)} width={X(70)} height={Y(46)} fill="url(#of-desk)" />
       <rect x={X(1)} y={Y(54)} width={X(70)} height={Y(3)} fill="#6e4628" />
-      <rect width="1697" height="927" fill="url(#of-lamp)" />
+      <rect width="1672" height="941" fill="url(#of-lamp)" />
       {/* the phone */}
       <rect x={X(phone.x + 3)} y={Y(phone.y + 5)} width={X(phone.w - 6)} height={Y(phone.h - 12)} rx="14" fill="#111" />
       <rect x={X(phone.x + 2)} y={Y(phone.y + 3)} width={X(phone.w - 4)} height={Y(4)} rx="10" fill="#1b1b1b" />
@@ -155,9 +164,14 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
     calendar: formatDay(s),
     newspaper: room.headline ? room.headline.text : 'Nothing in the papers yet',
     photos: `${room.photos} photograph${room.photos === 1 ? '' : 's'}${room.memorial ? ` · in memory of ${room.memorial.name}` : ''}`,
-    map: 'Go out: Wildwood and beyond',
+    map: 'The wheel outside: go out to Wildwood and beyond',
+    throne: 'Who sits in it after you · the succession',
+    church: 'The church, charity, share the wealth',
+    coat: 'A trip, a vacation, the men out of town',
   };
 
+  // The focal point: people at the door first (urgent or not), else an envelope on the desk waiting to be heard.
+  const lead: Hotspot['id'] | undefined = box.n && box.tone === 'red' ? 'door' : envelopeWaiting ? 'envelope' : box.n ? 'door' : undefined;
   const panelBody = panel === 'door' ? <DoorPanel s={s} visitors={visitors} onInvite={onInvite} onDelegate={onDelegate} onLater={onLater} onDesk={() => api.openDesk('people')} />
     : panel === 'phone' ? <PhonePanel s={s} />
     : panel === 'week' ? <WeekSchedule s={s} />
@@ -180,27 +194,29 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
         {room.absence && (
           <div className="mb-2 rounded border border-amber-500/60 bg-amber-900/20 px-2 py-1.5 text-[12px] text-amber-100" data-testid="office-absence">{room.absence.note}</div>
         )}
-        <div className="relative">
-            <div className="relative w-full overflow-hidden rounded-md border border-gold-700/50 shadow-xl shadow-black/70" style={{ aspectRatio: '1697 / 927' }} data-testid="office-stage">
-              <AssetImg k="office_interior" alt="The boss's office: a walnut desk with the envelope, the ledger, the phone and the paper; photographs on the credenza; the map on the wall; the door" className="absolute inset-0 h-full w-full object-cover" fallback={<PaintedFallback />} />
+        {/* The painting on the left, the column beside it: Monday's card and the panels never sit on the room. */}
+        <div className="grid items-start gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(320px,380px)]">
+        <div className="min-w-0">
+            <div className="relative w-full overflow-hidden rounded-md border border-gold-700/50 shadow-xl shadow-black/70" style={{ aspectRatio: '1672 / 941' }} data-testid="office-stage">
+              <AssetImg k="office_room_1960" alt="The back room of the club: the tufted chair behind the desk, the window on the neon wheel, the saint on the wall, the hat and coat on the rack, the ledger, the cash, the phone and the envelopes on the desk" className="absolute inset-0 h-full w-full object-cover" fallback={<PaintedFallback />} />
               {seatC && (
-                <div className="pointer-events-none absolute flex items-end justify-center" style={{ left: '86.5%', top: '39%', width: '12%', height: '22%' }} data-testid="office-seat-portrait">
+                <div className="pointer-events-none absolute flex items-end justify-center" style={{ left: '17%', top: '74%', width: '13%', height: '22%' }} data-testid="office-seat-portrait">
                   <span className="rounded-md ring-2 ring-gold-500/70 shadow-lg shadow-black"><Portrait c={seatC} seed={s.seed} date={s.date} size={56} tint={FACTION_TINT[seatC.faction]} /></span>
                 </div>
               )}
               {room.memorial && (
-                <div className="pointer-events-none absolute hidden sm:block" style={{ left: '30%', top: '30.5%' }} data-testid="office-memorial">
-                  <span className={`${chip} border-stone-500 text-stone-200`}>▬ In memory of {room.memorial.name}</span>
+                <div className="pointer-events-none absolute hidden sm:block" style={{ left: '0.5%', top: '24.5%' }} data-testid="office-memorial" title={`In memory of ${room.memorial.name}`}>
+                  <span className={`${chip} border-stone-500 text-stone-200`}>▬ <span className="hidden xl:inline">In memory of </span>{room.memorial.name.replace(/ ".*" /, ' ')}</span>
                 </div>
               )}
               {(room.cane || room.medicine) && (
-                <div className="pointer-events-none absolute flex gap-1" style={{ left: '58%', top: '86%' }} data-testid="office-health">
+                <div className="pointer-events-none absolute flex gap-1" style={{ left: '67%', top: '88%' }} data-testid="office-health">
                   {room.cane && <span className={chip}>A cane against the desk</span>}
                   {room.medicine && <span className={chip}>Pills from the doctor</span>}
                 </div>
               )}
               {room.headline && (
-                <div className="pointer-events-none absolute hidden md:block max-w-[34%]" style={{ left: '1.5%', top: '75%' }} data-testid="office-headline">
+                <div className="pointer-events-none absolute hidden xl:block max-w-[12%]" style={{ left: '0.5%', top: '58.5%' }} data-testid="office-headline">
                   <span className="block rounded-sm border border-stone-400/60 bg-stone-100/90 px-1.5 py-0.5 font-serif text-[10px] font-bold uppercase leading-tight text-noir-950 shadow">{room.headline.text}</span>
                 </div>
               )}
@@ -208,18 +224,21 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                 style={{ left: `${DESK_CLOCK_RECT.x}%`, top: `${DESK_CLOCK_RECT.y}%`, width: `${DESK_CLOCK_RECT.w}%`, height: `${DESK_CLOCK_RECT.h}%`, fontSize: 'clamp(6px, 0.95vw, 14px)' }} />
               {HOTSPOTS.map((h) => (
                 <button key={h.id} type="button" onClick={() => act(h)} data-testid={`office-spot-${h.id}`} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${status[h.id]}`}
-                  className="group absolute rounded-md border border-transparent transition-colors hover:border-gold-400/80 hover:bg-gold-300/10 focus-visible:border-gold-300 focus-visible:bg-gold-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300"
+                  className="llv-spot group absolute rounded-md border border-transparent focus-visible:outline-none"
                   style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }}>
-                  <span className={`${chip} absolute left-0.5 ${h.id === 'chair' ? 'bottom-0.5' : 'top-0.5'}`}>
-                    <span aria-hidden>{h.icon}</span>
-                    <span className="hidden sm:inline">{h.label}</span>
+                  <span className={`${chip} ${domClass(spotDomain(h.id))} llv-dom-border absolute left-0.5 ${h.id === 'chair' ? 'bottom-0.5' : 'top-0.5'}`}>
+                    <span aria-hidden className="llv-dom-ink">{h.icon}</span>
+                    <span className="llv-spot-label">{h.label}</span>
                     {badge(h.id)}
                   </span>
                 </button>
               ))}
             </div>
+        <div className="mt-2 flex justify-center sm:hidden" style={{ fontSize: '11px' }}><DeskClock s={s} onOpen={() => setPanel('week')} /></div>
+        </div>
+        <aside className="min-w-0 space-y-3" data-testid="office-side">
             {((monday && !panel) || panel) && (
-              <div className={`mt-2 space-y-2 md:absolute md:right-2 md:z-10 md:mt-0 md:overflow-y-auto ${panel ? 'md:top-2 md:max-h-[calc(100%-16px)] md:w-[min(400px,46%)]' : OFFICE_CARD_CLEAR}`} data-testid="office-card">
+              <div className={`space-y-2 ${OFFICE_CARD_CLEAR}`} data-testid="office-card">
                 {monday && !panel && (
                   <BriefCard s={s} brief={brief} monday onEnvelope={() => { onMondayDone(); openEnvelope(); }} onDoor={() => { onMondayDone(); setPanel('door'); }} onDesk={() => { onMondayDone(); api.openDesk(); }} onDone={onMondayDone} table={table} />
                 )}
@@ -231,31 +250,61 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
                 )}
               </div>
             )}
+                {/* The one thing this room most wants of you, big and first (the door when people wait, else the count on the desk). */}
+        {lead && (() => {
+          const h = HOTSPOTS.find((x) => x.id === lead)!;
+          const d = spotDomain(lead);
+          const first = lead === 'door' ? visitors[0] : undefined;
+          const fc = first?.charId ? s.characters[first.charId] : undefined;
+          return (
+            <button type="button" onClick={() => act(h)} data-testid="office-lead" data-domain={d}
+              className={`llv-card-box llv-card-attention llv-slide-up llv-next flex w-full flex-wrap items-center gap-3 text-left ${domClass(d)} llv-dom-edge llv-dom-tint hover:border-gold-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300`}>
+              {fc ? <span className="shrink-0 rounded-md ring-2 ring-gold-500/60"><Portrait c={fc} seed={s.seed} date={s.date} size={64} tint={FACTION_TINT[fc.faction]} /></span> : <DomainChip d={d} glyph={h.icon} size={44} />}
+              <span className="min-w-0 flex-1">
+                <span className="llv-kicker block">{lead === 'door' ? (box.tone === 'red' ? 'Urgent · outside the door' : 'Outside the door') : 'On the desk'}</span>
+                <span className="block font-display text-xl leading-tight text-stone-100 sm:text-2xl">{lead === 'door' ? `${box.n} waiting on you` : `${fmt$(rep!.reported)} in the envelope`}</span>
+                <span className="block truncate text-[12px] text-stone-300">{lead === 'door' ? (first ? `${first.name}: ${first.why}` : status.door) : 'Hear the count and take your cut.'}</span>
+              </span>
+              <span className="btn-primary hidden w-full shrink-0 text-xs sm:inline-flex sm:w-auto lg:w-full">{lead === 'door' ? 'See who\'s waiting' : 'Hear the count'} ▸</span>
+              <span className="shrink-0 text-gold-300 sm:hidden" aria-hidden>▸</span>
+            </button>
+          );
+        })()}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1" data-testid="office-list" role="list" aria-label="What is in the office">
+          {SPOT_GROUPS.map((g) => (
+            <section key={g.title} className="min-w-0" aria-label={g.title}>
+              <div className="llv-kicker mb-1">{g.title}</div>
+              <ul className="grid gap-1.5">
+                {g.ids.map((id) => {
+                  const h = HOTSPOTS.find((x) => x.id === id)!;
+                  const d = spotDomain(id);
+                  return (
+                    <li key={id} role="listitem">
+                      <button type="button" onClick={() => act(h)} data-testid={`office-item-${id}`} data-domain={d}
+                        className={`flex w-full items-center gap-2.5 rounded-md border border-noir-700 bg-noir-900/70 px-2.5 py-2 text-left llv-dom-row ${domClass(d)} hover:border-gold-500 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300`}>
+                        <DomainChip d={d} glyph={h.icon} size={28} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[13px] font-semibold text-stone-100">{h.label} {badge(id)}</span>
+                          <span className="block truncate text-[11px] text-stone-400">{status[id]}</span>
+                        </span>
+                        <span className="shrink-0 text-[11px] llv-dom-ink" aria-hidden>▸</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
         </div>
-        <div className="mt-2 flex justify-center sm:hidden" style={{ fontSize: '11px' }}><DeskClock s={s} onOpen={() => setPanel('week')} /></div>
-        <ul className="mt-2 grid gap-1 sm:grid-cols-2 xl:grid-cols-3" data-testid="office-list" aria-label="What is in the office">
-          {(['chair', 'envelope', 'door', 'ledger', 'phone', 'calendar', 'newspaper', 'photos', 'map'] as Hotspot['id'][]).map((id) => {
-            const h = HOTSPOTS.find((x) => x.id === id)!;
-            return (
-              <li key={id}>
-                <button type="button" onClick={() => act(h)} data-testid={`office-item-${id}`}
-                  className="flex w-full items-start gap-2 rounded border border-noir-700 bg-noir-900/70 px-2 py-1.5 text-left hover:border-gold-500 focus-visible:border-gold-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-300">
-                  <span className="w-5 shrink-0 text-center text-gold-300" aria-hidden>{h.icon}</span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-semibold text-stone-100">{h.label} {badge(id)}</span>
-                    <span className="block truncate text-[11px] text-stone-400">{status[id]}</span>
-                  </span>
-                  <span className="shrink-0 text-[11px] text-gold-300">▸</span>
-                </button>
-              </li>
-            );
-          })}
-          <li className="grid grid-cols-2 gap-1.5 sm:col-span-2 xl:col-span-3 xl:grid-cols-4 pt-1">
+        <ul className="border-t border-noir-700 pt-3">
+          <li className="grid grid-cols-2 gap-1.5">
             <button type="button" className="btn-secondary text-xs" disabled={!s.pendingEvents.length} onClick={api.openDecisions} data-testid="office-decisions">✉ Decisions {answered}/{s.pendingEvents.length}</button>
             <button type="button" className="btn-secondary text-xs" onClick={() => api.openDesk()} data-testid="office-desk">▤ The desk's list</button>
             <button type="button" className="btn-primary col-span-2 text-sm" onClick={api.openAdvance} data-testid="office-advance">Advance the week ▸</button>
           </li>
         </ul>
+        </aside>
+        </div>
       </div>
       {tableOpen && tableSubject && <TableModal s={s} subject={tableSubject} onClose={() => setTableOpen(false)}
         onChoose={tableSubject.kind === 'event' ? (choiceId) => onDelegate({ kind: 'answer', iid: tableSubject.iid, choiceId }) : undefined}
@@ -264,15 +313,15 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
   );
 }
 
-/** Monday's card sits in the bottom-right corner, below the chair and the door: it never covers a hotspot
- * (playtest #11: at the top right it hid the door). */
-export const OFFICE_CARD_CLEAR = 'md:bottom-2 md:top-auto md:max-h-[37%] md:w-[min(400px,41%)]';
-/** The corner it keeps to, in the scene's percent units (tests check no hotspot reaches into it). */
-export const OFFICE_CARD_RECT = { x: 58, y: 63, w: 41, h: 37 };
+/** Monday's card (and the door's, the phone's, the chair's panels) sit in the column beside the painting, never on it:
+ * it covers no hotspot (playtest #11). */
+export const OFFICE_CARD_CLEAR = '';
+/** Where it sits in the scene's percent units: outside the picture, to the right (tests check no hotspot reaches into it). */
+export const OFFICE_CARD_RECT = { x: 100, y: 0, w: 0, h: 0 };
 
 /** The flip clock and tear-off calendar on the desk, between the appointment book and the chair, above Monday's card
  * (scene percent units; tests check it touches no hotspot and stays clear of the card). */
-export const DESK_CLOCK_RECT = { x: 70, y: 44, w: 14.5, h: 17.5 };
+export const DESK_CLOCK_RECT = { x: 42.5, y: 64.5, w: 14, h: 16 };
 
 /** The man across the desk and his one or two lines. Monday's arrival has the four ways to start. */
 function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table }: {
@@ -281,11 +330,11 @@ function BriefCard({ s, brief, monday, onEnvelope, onDoor, onDesk, onDone, table
 }) {
   const c = brief.seat.charId ? s.characters[brief.seat.charId] : undefined;
   return (
-    <section className="rounded-md border border-gold-500/70 bg-noir-900/95 p-2.5 shadow-lg shadow-black/60" data-testid={monday ? 'office-monday' : 'office-brief'}>
-      <div className="flex items-start gap-2">
-        {c && <span className="shrink-0 rounded-md ring-1 ring-gold-600/60"><Portrait c={c} seed={s.seed} date={s.date} size={52} tint={FACTION_TINT[c.faction]} /></span>}
+    <section className={`llv-slide-up rounded-md border border-gold-500/70 bg-noir-900/95 p-2.5 shadow-lg shadow-black/60 ${domClass('crew')} llv-dom-edge`} data-testid={monday ? 'office-monday' : 'office-brief'} data-domain="crew">
+      <div className="flex items-start gap-2.5">
+        {c && <span className="shrink-0 rounded-md ring-2 ring-gold-600/60"><Portrait c={c} seed={s.seed} date={s.date} size={64} tint={FACTION_TINT[c.faction]} /></span>}
         <div className="min-w-0 flex-1">
-          <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{monday ? 'Monday morning' : 'Across the desk'} · {brief.seat.title}</div>
+          <div className="llv-kicker">{monday ? 'Monday morning' : 'Across the desk'} · {brief.seat.title}</div>
           <div className="font-semibold text-gold-300">{c ? displayName(c) : brief.seat.name}</div>
           {brief.lines.map((l, i) => <p key={i} className="text-[13px] leading-snug text-stone-200">{i === 0 && c ? '"' : ''}{l}{i === brief.lines.length - 1 && c ? '"' : ''}</p>)}
         </div>
@@ -314,10 +363,11 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: 
       <ul className="mt-1.5 space-y-1.5">
         {visitors.map((v) => {
           const c = v.charId ? s.characters[v.charId] : undefined;
+          const d: Domain = domainOfText(s, v.why) ?? (v.kind === 'lawyer' ? 'law' : 'crew');
           return (
-            <li key={v.key} className={`rounded border px-2 py-1.5 ${v.urgent ? 'border-red-400/70 bg-blood-500/10' : 'border-noir-700 bg-noir-950/60'}`} data-testid="office-visitor">
+            <li key={v.key} className={`rounded-md border px-2 py-1.5 llv-dom-row ${domClass(v.urgent ? 'rivals' : d)} ${v.urgent ? 'border-red-400/70 bg-blood-500/10' : 'border-noir-700 bg-noir-950/60'}`} data-testid="office-visitor" data-domain={v.urgent ? 'rivals' : d}>
               <div className="flex items-start gap-2">
-                {c && <span className="shrink-0"><Portrait c={c} seed={s.seed} date={s.date} size={36} tint={FACTION_TINT[c.faction]} /></span>}
+                {c && <span className="shrink-0"><Portrait c={c} seed={s.seed} date={s.date} size={44} tint={FACTION_TINT[c.faction]} /></span>}
                 <div className="min-w-0 flex-1">
                   <div className="text-[12px] font-semibold text-stone-100">{v.name} <span className="font-normal text-stone-500">· {KIND_WORD[v.kind]}</span>{v.urgent && <span className="ml-1 rounded bg-red-500/80 px-1 text-[9px] font-bold uppercase text-white">urgent</span>}</div>
                   <div className="text-[11px] leading-snug text-stone-400">{v.why}</div>
@@ -340,6 +390,9 @@ function DoorPanel({ s, visitors, onInvite, onDelegate, onLater, onDesk }: { s: 
   );
 }
 
+/** Who is on the other end: the lawyer is the law, your people the crew, the other bosses rivals, the women romance. */
+const PHONE_DOMAIN: Record<string, Domain> = { lawyer: 'law', crew: 'crew', rival: 'rivals', dating: 'romance', company: 'romance' };
+
 function PhonePanel({ s }: { s: GameState }) {
   const api = useOffice();
   const sheet = useSheet();
@@ -354,8 +407,9 @@ function PhonePanel({ s }: { s: GameState }) {
       <div className="panel-title text-base">The telephone</div>
       <ul className="mt-1.5 space-y-1">
         {book.map((p) => (
-          <li key={p.key} className="rounded border border-noir-700 bg-noir-950/60 px-2 py-1.5" data-testid={`office-call-${p.kind}`}>
+          <li key={p.key} className={`rounded-md border border-noir-700 bg-noir-950/60 px-2 py-1.5 llv-dom-row ${domClass(PHONE_DOMAIN[p.kind] ?? 'crew')}`} data-testid={`office-call-${p.kind}`} data-domain={PHONE_DOMAIN[p.kind] ?? 'crew'}>
             <div className="flex items-center gap-2">
+              <DomainChip d={PHONE_DOMAIN[p.kind] ?? 'crew'} size={22} />
               <div className="min-w-0 flex-1">
                 <div className="text-[12px] font-semibold text-stone-100">{p.name}</div>
                 <div className="text-[11px] text-stone-400">{p.role}{p.blocked ? ` · ${p.blocked}` : ''}</div>

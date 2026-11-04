@@ -5,6 +5,8 @@ import { dipPenalty, DIP, recentDips } from '../../engine/pocket';
 import type { GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { useOrders } from '../components/Orders';
+import { CardHead } from '../components/Layout';
+import { domCard } from '../domain';
 
 /** The two pots in plain words (one place, so every screen says the same thing). */
 export const POT = {
@@ -53,8 +55,8 @@ export function WeekPotsLine({ s, className }: { s: GameState; className?: strin
 export function BigPots({ s, compact }: { s: GameState; compact?: boolean }) {
   const p = usePots(s);
   const box = (k: 'family' | 'pocket', v: number, d: number | undefined, after: number | undefined) => (
-    <div className={`rounded-md border px-3 py-2 min-w-0 ${k === 'family' ? 'border-gold-600/50' : 'border-amber-500/50'} bg-noir-800/70`} data-testid={`pot-${k}`}>
-      <div className={`text-[11px] font-semibold ${k === 'family' ? 'text-gold-400' : 'text-amber-300'}`}>{POT[k].name}</div>
+    <div className={`llv-card-box llv-card-plain min-w-0 px-3 py-2 ${domCard('money')}`} data-testid={`pot-${k}`} data-domain="money">
+      <div className={`text-[11px] font-semibold ${k === 'family' ? 'text-gold-400' : 'text-amber-300'}`}><span aria-hidden>{k === 'family' ? '$ ' : '♠ '}</span>{POT[k].name}</div>
       <div className={`font-display ${compact ? 'text-xl' : 'text-2xl sm:text-3xl'} tabular-nums leading-tight ${v < 0 ? 'text-red-400' : k === 'family' ? 'text-gold-300' : 'text-amber-200'}`} data-testid={k === 'family' ? 'money-family' : 'money-pocket'}>{fmt$(v)}</div>
       {d !== undefined && d !== 0 && <div className={`text-[11px] tabular-nums ${d > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{sgn(d)} last week</div>}
       {after !== undefined && <div className="text-[11px] tabular-nums text-sky-300" data-testid={`pot-${k}-after`}>→ {fmt$(after)} after this week's orders</div>}
@@ -85,11 +87,8 @@ export function MoveMoney({ s }: { s: GameState }) {
   const canDraw = amt > 0 && amt <= fam;
   const canBack = amt > 0 && amt <= pk;
   return (
-    <section className="rounded-md border border-noir-700 bg-noir-800/50 p-3 min-w-0 space-y-2" data-testid="move-money">
-      <div className="flex items-baseline justify-between gap-2">
-        <div className="panel-title">Move money</div>
-        <span className="text-[10px] text-stone-500">happens when you advance the week</span>
-      </div>
+    <section className={`llv-card-box llv-card-plain min-w-0 space-y-2 ${domCard('money')}`} data-testid="move-money" data-domain="money">
+      <CardHead d="money" glyph="⇄" title="Move money" className="!mb-0" aside={<span>happens when you advance the week</span>} />
       <div className="flex flex-wrap items-center gap-1">
         {STEPS.map((x) => (
           <button key={x} type="button" className={`rounded border px-2 py-0.5 text-[12px] tabular-nums ${amt === x ? 'border-gold-400 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`} onClick={() => setAmt(x)} data-testid={`move-amt-${x}`}>{fmt$(x)}</button>
