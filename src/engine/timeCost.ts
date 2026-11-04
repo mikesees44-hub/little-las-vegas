@@ -214,6 +214,8 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
   }
   if (a.kind === 'spend' && a.op.op === 'buy') return spendHours(a.op.item);
   if (a.kind === 'work') return workHours(a.op, s?.playerId);
+  // Her way (herway.ts): an offer carried by one of his men costs the boss only the word to send him.
+  if (a.kind === 'herway' && a.op.via && a.op.via !== 'boss') return 0.25;
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];
   if (a.kind in TIME_TABLE) return TIME_TABLE[a.kind];
   return DEFAULT_COST;

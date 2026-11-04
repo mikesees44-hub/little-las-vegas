@@ -8,9 +8,10 @@ import { previewAction } from '../src/engine/actions';
 import { actNow } from '../src/engine/deeds/now';
 import { ensureDating } from '../src/engine/datingState';
 import { ageOn } from '../src/engine/calendar';
-import { applyHerOp, earnerOf, herActionsFor, herRows, herwayWeek, incomeOf, joinFamily } from '../src/engine/herway';
+import { applyHerOp, askerOf, earnerOf, herAcceptance, herActionsFor, herRows, herwayWeek, incomeOf, joinFamily } from '../src/engine/herway';
 import { newCtx } from '../src/engine/ledger';
 import { opinion } from '../src/engine/relations';
+import { timeCost } from '../src/engine/timeCost';
 import type { GameState, PlayerAction } from '../src/engine/types';
 
 const find = (s: GameState, path: string) => Object.values(s.herway!.e).find((e) => e.path === path && e.status === 'active')!;
@@ -168,5 +169,45 @@ describe('her way: women earners', () => {
     expect(html).toContain('data-testid="her-book"');
     expect(html).toContain('data-testid="her-card"');
     expect(html).toContain('data-testid="action-row"');
+  });
+
+  it('the boss in person and a bigger offer each raise her odds; the breakdown says why; her rival loyalty caps it', () => {
+    const s = newGame('her-offer');
+    const e = Object.values(s.herway!.e).find((x) => x.path === 'fronts' && x.side === 'none' && x.status === 'active')!;
+    for (const op of ['partner', 'protect', 'lend', 'ears'] as const) {
+      const boss = herAcceptance(s, e.id, op, 'boss', 'fair').chance;
+      const soldier = herAcceptance(s, e.id, op, 'soldier', 'fair').chance;
+      expect(boss, op).toBeGreaterThan(soldier);
+      const low = herAcceptance(s, e.id, op, 'boss', 'low').chance;
+      const fair = herAcceptance(s, e.id, op, 'boss', 'fair').chance;
+      const gen = herAcceptance(s, e.id, op, 'boss', 'generous').chance;
+      const name = herAcceptance(s, e.id, op, 'boss', 'name').chance;
+      expect(low, op).toBeLessThan(fair);
+      expect(gen, op).toBeGreaterThanOrEqual(fair);
+      expect(name, op).toBeGreaterThanOrEqual(gen);
+      // Diminishing returns: the last step buys less than the one before it.
+      expect(name - gen, op).toBeLessThanOrEqual(gen - fair + 1e-9);
+    }
+    const p = previewAction(s, { kind: 'herway', op: { op: 'protect', id: e.id, via: 'boss', offer: 'generous' } } as PlayerAction);
+    const labels = p.acceptance!.reasons.map((x) => x.label).join(' | ');
+    expect(labels).toMatch(/The boss himself/);
+    expect(labels).toMatch(/Generous/);
+    // Asking in person costs the boss his hours; sending a man costs a word.
+    if (askerOf(s, 'capo')) expect(timeCost({ kind: 'herway', op: { op: 'protect', id: e.id, via: 'capo' } } as PlayerAction)).toBeLessThan(timeCost({ kind: 'herway', op: { op: 'protect', id: e.id, via: 'boss' } } as PlayerAction));
+    // A woman who works for a rival family: no offer buys more than the cap, and it is never a sure thing.
+    const dot = Object.values(s.herway!.e).find((x) => x.side === 'manno')!;
+    const best = herAcceptance(s, dot.id, 'protect', 'boss', 'name');
+    expect(best.chance).toBeLessThanOrEqual(0.6);
+    expect(best.reasons.map((x) => x.label).join(' | ')).toMatch(/Works for/);
+    expect(herAcceptance(s, e.id, 'protect', 'boss', 'name').chance).toBeLessThan(1);
+  });
+
+  it('the terms she takes are the terms she keeps', () => {
+    const s = newGame('her-terms');
+    const e = find(s, 'fronts');
+    const p = previewAction(s, { kind: 'herway', op: { op: 'protect', id: e.id, offer: 'generous' } } as PlayerAction);
+    for (const f of p.effects) if (f.type === 'herway') applyHerOp(newCtx(s), f.op);
+    expect(e.deal).toBe('protect');
+    expect(e.terms?.cut).toBe(0.15);
   });
 });

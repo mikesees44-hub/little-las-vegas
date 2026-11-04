@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { adultOn } from '../../engine/datingState';
-import { herBestFirst, herLog, herRows, herSummary, PATHS, PATH_ORDER, type HerPath, type HerRow } from '../../engine/herway';
-import type { GameState } from '../../engine/types';
+import { askerOf, herBestFirst, herLog, herRows, herSummary, OFFER_LABEL, OFFER_OPS, OFFERS, PATHS, PATH_ORDER, VIA_LABEL, VIAS, type HerOffer, type HerPath, type HerRow, type HerVia } from '../../engine/herway';
+import { previewAction } from '../../engine/actions';
+import { oddsWord } from '../../engine/decide';
+import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionRow } from '../components/ActionRow';
 import { PlayCard, Section, StatChip } from '../components/Layout';
 import { CharLink, Face } from '../components/People';
@@ -65,9 +67,17 @@ function Bar({ v, tone }: { v: number; tone: string }) {
 function HerCard({ s, r }: { s: GameState; r: HerRow }) {
   const [more, setMore] = useState(false);
   const [story, setStory] = useState(false);
+  const [via, setVia] = useState<HerVia>('boss');
+  const [offer, setOffer] = useState<HerOffer>('fair');
   const c = s.characters[r.id];
   if (!c) return null;
-  const acts = herBestFirst(s, r.id);
+  // Who asks and what he offers ride on every offer (partner, protect, hire, lend, back, ears).
+  const isOffer = (a: PlayerAction) => a.kind === 'herway' && (OFFER_OPS as readonly string[]).includes(a.op.op);
+  const acts = herBestFirst(s, r.id).map((a) => (a.kind === 'herway' && isOffer(a) ? ({ ...a, op: { ...a.op, via, offer } } as PlayerAction) : a));
+  const lead = acts.find((a) => isOffer(a) && !previewAction(s, a).disabledReason) ?? acts.find(isOffer);
+  const lp = lead ? previewAction(s, lead) : undefined;
+  const acc = lp?.acceptance;
+  const breakdown = acc ? acc.reasons.filter((x) => x.label !== 'Base').map((x) => `${x.label} ${x.value > 0 ? '+' : '−'}${Math.abs(x.value)}`).join(' · ') : undefined;
   const shown = acts.slice(0, 2);
   const rest = acts.slice(2);
   const d = PATH_DOMAIN[r.path];
@@ -86,6 +96,21 @@ function HerCard({ s, r }: { s: GameState; r: HerRow }) {
         <div className="text-stone-400" data-testid="her-side">{r.sideLabel} · {r.dealLabel}</div>
         {r.risks.length > 0 && <ul className="text-red-300/90" data-testid="her-risks">{r.risks.slice(0, 3).map((x, i) => <li key={i}>⚠ {x}</li>)}</ul>}
       </div>
+      {r.path !== 'street' && (
+        <div className="mt-2 rounded border border-noir-700 bg-noir-900/40 p-1.5 text-[11px]" data-testid="her-offer">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <label className="text-stone-400">Who asks
+              <select className="ml-1 rounded border border-noir-600 bg-noir-800 px-1 py-0.5 text-stone-200" value={via} onChange={(ev) => setVia(ev.target.value as HerVia)} data-testid="her-via">
+                {VIAS.map((v) => <option key={v} value={v} disabled={!askerOf(s, v)}>{VIA_LABEL[v]}{!askerOf(s, v) ? ' (nobody free)' : ''}</option>)}
+              </select>
+            </label>
+            <span className="flex flex-wrap gap-1" role="group" aria-label="What you offer">
+              {OFFERS.map((o) => <button key={o} type="button" aria-pressed={offer === o} onClick={() => setOffer(o)} className={`rounded border px-1.5 py-0.5 ${offer === o ? 'border-gold-400 text-gold-200' : 'border-noir-600 text-stone-300'}`} data-testid={`her-offer-${o}`}>{OFFER_LABEL[o]}</button>)}
+            </span>
+          </div>
+          {acc && lp && <div className="mt-1 text-stone-400" data-testid="her-breakdown"><b className="text-stone-200">{lp.title}:</b> {Math.round(acc.chance * 100)}% <i>{oddsWord(acc.chance)}</i>{breakdown ? ` · ${breakdown}` : ''}. Her choice either way.</div>}
+        </div>
+      )}
       {shown.length > 0 && <div className="mt-2 space-y-1">{shown.map((a, i) => <ActionRow key={i} s={s} action={a} />)}</div>}
       <div className="mt-1 flex flex-wrap gap-3">
         {rest.length > 0 && <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more} data-testid="her-more">{more ? 'Fewer' : `More… (${rest.length})`}</button>}

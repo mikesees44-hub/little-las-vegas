@@ -1,5 +1,6 @@
 import { ageOn } from './calendar';
-import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
+import { capos, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
+import { holder } from './council';
 import { adultOn } from './datingState';
 import { applyEffects } from './effects';
 import type { Ctx } from './ledger';
@@ -88,6 +89,8 @@ export interface Earner {
   polId?: string;
   race?: string;
   fund?: number;
+  /** The terms she agreed to (her cut to the Family, the Family's weekly fee to her), when not the standard ones. */
+  terms?: { cut?: number; fee?: number };
   /** One of the boss's own women who chose this path. */
   own?: OwnKind;
   hist: [number, string][];
@@ -103,19 +106,30 @@ export interface HerWayState {
   stats: { rose: number; fell: number; pinched: number; squeezed: number; rivals: number; won: number };
 }
 
+/** Who carries the offer: the boss in person (his hours), his underboss or consigliere, a capo, a soldier. */
+export type HerVia = 'boss' | 'top' | 'capo' | 'soldier';
+export const VIA_LABEL: Record<HerVia, string> = { boss: 'You, in person', top: 'Your underboss or consigliere', capo: 'One of your capos', soldier: 'A soldier' };
+/** What the boss offers: measured against what she needs and expects. */
+export type HerOffer = 'low' | 'fair' | 'generous' | 'name';
+export const OFFER_LABEL: Record<HerOffer, string> = { low: 'Low', fair: 'Fair', generous: 'Generous', name: 'Name your price' };
+export const OFFERS: HerOffer[] = ['low', 'fair', 'generous', 'name'];
+export const VIAS: HerVia[] = ['boss', 'top', 'capo', 'soldier'];
+/** The orders that are an offer (who asks and how much matter); a squeeze and leaving her be are not. */
+export const OFFER_OPS = ['partner', 'protect', 'hire', 'lend', 'back', 'ears'] as const;
+
 export type HerAction =
-  | { op: 'partner'; id: string }
-  | { op: 'protect'; id: string }
-  | { op: 'hire'; id: string }
-  | { op: 'lend'; id: string }
-  | { op: 'back'; id: string }
-  | { op: 'ears'; id: string }
-  | { op: 'squeeze'; id: string }
-  | { op: 'leave'; id: string };
+  | { op: 'partner'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'protect'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'hire'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'lend'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'back'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'ears'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'squeeze'; id: string; via?: HerVia; offer?: HerOffer }
+  | { op: 'leave'; id: string; via?: HerVia; offer?: HerOffer };
 
 export type HerOp =
-  | { op: 'deal'; id: string; deal: HerDeal; stake?: number }
-  | { op: 'lend'; id: string; amount: number }
+  | { op: 'deal'; id: string; deal: HerDeal; stake?: number; cut?: number; fee?: number }
+  | { op: 'lend'; id: string; amount: number; rate?: number }
   | { op: 'back'; id: string; fund: number }
   | { op: 'squeeze'; id: string; ok: boolean; take: number }
   | { op: 'leave'; id: string }
@@ -125,6 +139,7 @@ export type HerOp =
 const HX = (op: HerOp, label: string): Effect => ({ type: 'herway', op, label }) as Effect;
 const clamp = (v: number, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
 const $ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
+const low = (x: string) => x.charAt(0).toLowerCase() + x.slice(1);
 const roll = (k: string) => (hashSeed(k) % 100003) / 100003;
 const RIVALS: RivalId[] = ['manno', 'feldstein', 'kessler'];
 
@@ -261,6 +276,63 @@ export function risksOf(s: GameState, e: Earner): string[] {
 /* The boss's orders                                                   */
 /* ------------------------------------------------------------------ */
 
+/** The Family's cut of her week and its weekly fee to her, under the terms she took. */
+export function cutOf(e: Earner): number {
+  return e.deal === 'none' ? 0 : e.terms?.cut ?? HER_CUT[e.deal];
+}
+export function feeOf(e: Earner): number {
+  return e.deal === 'none' ? 0 : e.terms?.fee ?? HER_FEE[e.deal];
+}
+
+/** The man who would carry the offer (undefined: there is nobody of that rank to send). */
+export function askerOf(s: GameState, via: HerVia): Character | undefined {
+  const free = (c: Character | undefined) => !!c && c.alive && isFree(s, c);
+  if (via === 'boss') { const b = player(s); return free(b) ? b : undefined; }
+  const crew = Object.values(s.characters).filter((c) => c.faction === 'player' && c.id !== s.playerId && free(c)).sort((a, b) => (a.id < b.id ? -1 : 1));
+  if (via === 'top') return [holder(s, 'underboss'), holder(s, 'consigliere')].find(free) ?? crew.find((c) => c.rank === 'underboss');
+  if (via === 'capo') return capos(s).filter(free).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
+  return crew.find((c) => c.rank === 'soldier');
+}
+const VIA_BONUS: Record<HerVia, number> = { boss: 15, top: 8, capo: 4, soldier: 0 };
+const VIA_WORDS: Record<HerVia, string> = { boss: 'The boss himself', top: 'Your underboss or consigliere', capo: 'A capo of yours', soldier: 'A soldier of yours' };
+
+/** The terms of an offer at each level: money up front, her cut, the fee, the loan's rate, and how it compares with what she expects (1 = fair). */
+export function termsOf(e: Earner, op: HerAction['op'], offer: HerOffer = 'fair'): { cost: number; cut?: number; fee?: number; rate?: number; fund?: number; ratio: number; text: string } {
+  const i = OFFERS.indexOf(offer);
+  // How the offer compares with what she expects, the same scale for every kind of deal (1 = fair).
+  const ratio = [0.65, 1, 1.5, 2.2][i];
+  switch (op) {
+    case 'partner': {
+      const m = [0.6, 1, 1.5, 2.2][i];
+      const stake = Math.max(300, Math.round((stakeOf(e) * m) / 100) * 100);
+      return { cost: stake, ratio, text: `${$(stake)} into her business` };
+    }
+    case 'protect': {
+      const cut = [0.25, 0.2, 0.15, 0.1][i];
+      return { cost: 0, cut, ratio, text: `${Math.round(cut * 100)}% of her week` };
+    }
+    case 'hire': {
+      const fee = [50, 75, 110, 160][i];
+      return { cost: 0, fee, ratio, text: `${$(fee)} a week` };
+    }
+    case 'ears': {
+      const fee = [25, 40, 60, 90][i];
+      return { cost: 0, fee, ratio, text: `${$(fee)} a week` };
+    }
+    case 'lend': {
+      const rate = [0.2, 0.1, 0.05, 0][i];
+      const amt = lendOf(e);
+      return { cost: amt, rate, ratio, text: rate ? `${$(amt)} at ${Math.round(rate * 100)}% on top` : `${$(amt)}, nothing on top` };
+    }
+    case 'back': {
+      const fund = [1500, 2500, 4000, 6000][i];
+      return { cost: fund, fund, ratio, text: `${$(fund)} for her campaign` };
+    }
+    default:
+      return { cost: 0, ratio: 1, text: '' };
+  }
+}
+
 function capAcc(baseV: number, reasons: Reason[], cap = 0.9): Acceptance {
   const sum = reasons.reduce((a, r) => a + r.value, baseV);
   return { chance: Math.max(0.05, Math.min(cap, sum / 100)), reasons: [{ label: 'Base', value: baseV }, ...reasons.filter((r) => r.value !== 0)] };
@@ -270,17 +342,38 @@ function common(s: GameState, e: Earner, c: Character, reasons: Reason[]): void 
   const op = opinion(s, c.id, s.playerId);
   reasons.push({ label: op >= 0 ? 'Thinks well of you' : 'Thinks little of you', value: Math.round(op * 0.4) });
   if (e.enemy !== undefined) reasons.push({ label: 'You squeezed her', value: -40 });
-  if (e.side !== 'player' && e.side !== 'none') reasons.push({ label: `Kicks up to ${sideName(s, e.side)}`, value: -20 });
+  if (e.side !== 'player' && e.side !== 'none') reasons.push({ label: `Works for ${sideName(s, e.side).replace(/^the /, '').replace(/ family$/, '')}`, value: -20 });
   if (e.own) reasons.push({ label: 'One of your own', value: 15 });
 }
 
 /** The odds she says yes, with every reason. */
-export function herAcceptance(s: GameState, id: string, what: HerAction['op']): Acceptance {
+export function herAcceptance(s: GameState, id: string, what: HerAction['op'], via: HerVia = 'boss', offer: HerOffer = 'fair'): Acceptance {
+  const a0 = herAcceptanceBase(s, id, what, via, offer);
+  const e = earnerOf(s, id);
+  if (!e || !(OFFER_OPS as readonly string[]).includes(what)) return a0;
+  // Her loyalty to a rival or her own independence caps what any offer can do. Her choice either way.
+  const cap = e.enemy !== undefined ? 0.35 : e.rival !== undefined ? 0.5 : e.side !== 'player' && e.side !== 'none' ? 0.6 : 0.9;
+  if (a0.chance <= cap) return a0;
+  const why = e.enemy !== undefined ? 'You squeezed her: no offer buys that back' : e.rival !== undefined ? 'Her own boss now: no offer buys her' : `Loyal to ${sideName(s, e.side)}: no offer buys more`;
+  return { chance: cap, reasons: [...a0.reasons, { label: `${why} (at most ${Math.round(cap * 100)}%)`, value: Math.round(cap * 100 - a0.chance * 100) }] };
+}
+
+function herAcceptanceBase(s: GameState, id: string, what: HerAction['op'], via: HerVia, offer: HerOffer): Acceptance {
   const e = earnerOf(s, id);
   const c = s.characters[id];
   if (!e || !c) return { chance: 0, reasons: [] };
   const r: Reason[] = [];
   common(s, e, c, r);
+  if ((OFFER_OPS as readonly string[]).includes(what)) {
+    // Who asks: the boss in person counts most.
+    r.push({ label: VIA_WORDS[via], value: VIA_BONUS[via] });
+    // What he offers, against what she needs and expects (diminishing returns).
+    const tm = termsOf(e, what, offer);
+    const needs = e.savings < 1500;
+    let v = Math.round(28 * Math.log2(tm.ratio) * (needs && tm.ratio > 1 ? 1.25 : 1));
+    v = Math.max(-20, Math.min(25, v));
+    r.push({ label: `${OFFER_LABEL[offer]}: ${tm.text}${needs && tm.ratio > 1 ? ' (she needs it)' : ''}`, value: v });
+  }
   switch (what) {
     case 'partner':
       if (e.standing >= 65) r.push({ label: 'Doing fine on her own', value: -10 });
@@ -292,7 +385,7 @@ export function herAcceptance(s: GameState, id: string, what: HerAction['op']): 
     case 'protect':
       if (e.heat >= 40) r.push({ label: 'The heat is on her', value: 20 });
       if (e.side === 'none' && e.rung >= 1) r.push({ label: 'Nobody stands behind her', value: 10 });
-      r.push(incomeOf(e) >= 200 ? { label: 'A fifth of a good week is real money to her', value: -5 } : { label: 'A fifth of a small week is cheap peace of mind', value: 5 });
+      r.push(incomeOf(e) >= 200 ? { label: 'Her week is real money to share', value: -5 } : { label: 'A small week: cheap peace of mind', value: 5 });
       if (e.rival !== undefined) r.push({ label: 'She means to be her own boss', value: -15 });
       if (hasTrait(c, 'Greedy')) r.push({ label: 'Greedy', value: -5 });
       return capAcc(45, r);
@@ -361,64 +454,73 @@ export function previewHer(s: GameState, a: HerAction): ActionPreview {
   const inc = incomeOf(e);
   const biz = ['numbers', 'books', 'fronts'].includes(e.path);
   const street = e.path === 'street';
+  const via: HerVia = a.via ?? 'boss';
+  const offer: HerOffer = a.offer ?? 'fair';
+  const asker = askerOf(s, via);
+  const by = via === 'boss' ? '' : asker ? ` (${asker.firstName} ${asker.lastName} asks for you)` : '';
+  const viaBlock = via !== 'boss' && !asker ? `You have no ${via === 'top' ? 'underboss or consigliere' : via} free to send` : undefined;
+  const tm = termsOf(e, a.op, offer);
+  const ofr = offer === 'fair' ? '' : ` (${OFFER_LABEL[offer].toLowerCase()})`;
+  const acc = (op: HerAction['op']) => herAcceptance(s, a.id, op, via, offer);
   const refused = (what: string): Effect[] => [HX({ op: 'refused', id: c.id, what }, `${nm} said no`)];
   switch (a.op) {
     case 'partner': {
-      const stake = stakeOf(e);
+      const stake = tm.cost;
       return {
-        ...base(`Offer ${nm} a partnership`, `went into partnership with ${nm}`), cost: stake,
-        detail: `${$(stake)} of Family money into her ${PATHS[e.path].label.toLowerCase()} (${titleOf(e)}). The Family takes 40% of her week (about ${$(Math.round(inc * 0.4))} now) and your name keeps the law and the other families gentler with her. Her pinch is your heat. She decides.`,
+        ...base(`Offer ${nm} a partnership${ofr}`, `went into partnership with ${nm}`), cost: stake,
+        detail: `${$(stake)} of Family money into her ${PATHS[e.path].label.toLowerCase()} (${titleOf(e)})${by}. The Family takes 40% of her week (about ${$(Math.round(inc * 0.4))} now) and your name keeps the law and the other families gentler with her. Her pinch is your heat. A bigger stake makes a yes likelier, never certain: she decides.`,
         effects: [{ type: 'money', amount: -stake, label: `Partnership with ${nm}` }, HX({ op: 'deal', id: c.id, deal: 'partner', stake }, `${nm}: partners with the Family`)],
-        acceptance: herAcceptance(s, a.id, 'partner'), refuseEffects: refused('a partnership'),
-        disabledReason: block ?? (street ? 'Her house\'s deal is made in Nightlife' : !biz ? 'Not a business: back her run or use her ears' : e.deal === 'partner' ? 'Partners already' : s.money < stake ? `Needs ${$(stake)}` : undefined),
+        acceptance: acc('partner'), refuseEffects: refused('a partnership'),
+        disabledReason: block ?? viaBlock ?? (street ? 'Her house\'s deal is made in Nightlife' : !biz ? 'Not a business: back her run or use her ears' : e.deal === 'partner' ? 'Partners already' : s.money < stake ? `Needs ${$(stake)}` : undefined),
       };
     }
     case 'protect':
       return {
-        ...base(`Offer ${nm} protection`, `offered ${nm} protection`),
-        detail: `She pays the Family 20% of her week (about ${$(Math.round(inc * 0.2))} now). Your people keep the other crews off her and the heat on her cools faster. She decides.`,
-        effects: [HX({ op: 'deal', id: c.id, deal: 'protect' }, `${nm}: under your protection`)],
-        acceptance: herAcceptance(s, a.id, 'protect'), refuseEffects: refused('protection'),
-        disabledReason: block ?? (street ? 'Her house\'s deal is made in Nightlife' : !biz ? 'Not a business: nothing to protect' : e.deal === 'protect' ? 'Under your protection already' : e.deal === 'partner' ? 'Partners already (protection is part of it)' : undefined),
+        ...base(`Offer ${nm} protection${ofr}`, `offered ${nm} protection`),
+        detail: `She pays the Family ${Math.round(tm.cut! * 100)}% of her week (about ${$(Math.round(inc * tm.cut!))} now)${by}. Your people keep the other crews off her and the heat on her cools faster. Better terms make a yes likelier, never certain: she decides.`,
+        effects: [HX({ op: 'deal', id: c.id, deal: 'protect', cut: tm.cut }, `${nm}: under your protection`)],
+        acceptance: acc('protect'), refuseEffects: refused('protection'),
+        disabledReason: block ?? viaBlock ?? (street ? 'Her house\'s deal is made in Nightlife' : !biz ? 'Not a business: nothing to protect' : e.deal === 'protect' ? 'Under your protection already' : e.deal === 'partner' ? 'Partners already (protection is part of it)' : undefined),
       };
     case 'hire':
       return {
-        ...base(`Hire ${nm} to keep the Family's books`, `hired ${nm} to keep the books`),
-        detail: `${$(HER_FEE.hired)} a week from the Family. Clean books: the evidence against you thins a little every month. But she learns where the money goes, and if she is ever pinched and does not think well of you, she can talk.`,
-        effects: [HX({ op: 'deal', id: c.id, deal: 'hired' }, `${nm}: keeps the Family's books`)],
-        acceptance: herAcceptance(s, a.id, 'hire'), refuseEffects: refused('the job'),
+        ...base(`Hire ${nm} to keep the Family's books${ofr}`, `hired ${nm} to keep the books`),
+        detail: `${$(tm.fee!)} a week from the Family${by}. Clean books: the evidence against you thins a little every month. But she learns where the money goes, and if she is ever pinched and does not think well of you, she can talk.`,
+        effects: [HX({ op: 'deal', id: c.id, deal: 'hired', fee: tm.fee }, `${nm}: keeps the Family's books`)],
+        acceptance: acc('hire'), refuseEffects: refused('the job'),
         warning: 'She will know where the money goes.',
-        disabledReason: block ?? (e.path !== 'books' ? 'Only a woman who keeps books' : e.deal === 'hired' ? 'She keeps your books already' : undefined),
+        disabledReason: block ?? viaBlock ?? (e.path !== 'books' ? 'Only a woman who keeps books' : e.deal === 'hired' ? 'She keeps your books already' : undefined),
       };
     case 'lend': {
-      const amt = lendOf(e);
+      const amt = tm.cost;
       return {
-        ...base(`Lend ${nm} ${$(amt)}`, `lent ${nm} ${$(amt)}`), cost: amt,
-        detail: `${$(amt)} from the Family to grow her business, paid back with a tenth on top over twelve weeks. No strings: if she can't pay, it is written off. Nobody holds a debt over her.`,
-        effects: [{ type: 'money', amount: -amt, label: `A loan to ${nm}` }, HX({ op: 'lend', id: c.id, amount: amt }, `${nm}: a loan`)],
-        acceptance: herAcceptance(s, a.id, 'lend'), refuseEffects: refused('the loan'),
-        disabledReason: block ?? (street ? 'Her house\'s money is Nightlife\'s' : e.loan ? 'She is still paying off the last one' : s.money < amt ? `Needs ${$(amt)}` : undefined),
+        ...base(`Lend ${nm} ${$(amt)}${ofr}`, `lent ${nm} ${$(amt)}`), cost: amt,
+        detail: `${$(amt)} from the Family to grow her business${by}, paid back ${tm.rate ? `with ${Math.round(tm.rate * 100)}% on top` : 'with nothing on top'} over twelve weeks. No strings: if she can't pay, it is written off. Nobody holds a debt over her.`,
+        effects: [{ type: 'money', amount: -amt, label: `A loan to ${nm}` }, HX({ op: 'lend', id: c.id, amount: amt, rate: tm.rate }, `${nm}: a loan`)],
+        acceptance: acc('lend'), refuseEffects: refused('the loan'),
+        disabledReason: block ?? viaBlock ?? (street ? 'Her house\'s money is Nightlife\'s' : e.loan ? 'She is still paying off the last one' : s.money < amt ? `Needs ${$(amt)}` : undefined),
       };
     }
     case 'back': {
       const running = e.rung >= 2;
       const race = e.race ?? openRace(s);
       const def = race ? OFFICE_BY_ID[s.pol?.elections.find((x) => x.id === race)?.office ?? ''] : undefined;
+      const fund = tm.fund!;
       return {
-        ...base(running ? `Put ${$(BACK_COST)} behind ${nm}'s campaign` : `Back ${nm}'s run for office`, `backed ${nm}'s run for office`), cost: BACK_COST,
-        detail: `${$(BACK_COST)} of Family money for her campaign${def ? ` (${def.title})` : ''}: posters, the ward captains, the Communion breakfasts. ${race ? 'The race is open: she goes on the ballot now.' : 'No race is open yet: she goes on the ballot when one opens.'} Win or lose, she will remember who stood behind her: a friend in City Hall.`,
-        effects: [{ type: 'money', amount: -BACK_COST, label: `${nm}'s campaign` }, HX({ op: 'back', id: c.id, fund: BACK_COST }, `${nm}: your money behind her`)],
-        acceptance: running ? undefined : herAcceptance(s, a.id, 'back'), refuseEffects: running ? undefined : refused('your money for a campaign'),
-        disabledReason: block ?? (e.path !== 'politics' ? 'Not in politics' : !s.pol ? 'No politics here' : e.rung === 3 && !race ? 'Her seat is not up yet' : s.money < BACK_COST ? `Needs ${$(BACK_COST)}` : undefined),
+        ...base(running ? `Put ${$(fund)} behind ${nm}'s campaign` : `Back ${nm}'s run for office${ofr}`, `backed ${nm}'s run for office`), cost: fund,
+        detail: `${$(fund)} of Family money for her campaign${def ? ` (${def.title})` : ''}${by}: posters, the ward captains, the Communion breakfasts. ${race ? 'The race is open: she goes on the ballot now.' : 'No race is open yet: she goes on the ballot when one opens.'} Win or lose, she will remember who stood behind her: a friend in City Hall.`,
+        effects: [{ type: 'money', amount: -fund, label: `${nm}'s campaign` }, HX({ op: 'back', id: c.id, fund }, `${nm}: your money behind her`)],
+        acceptance: running ? undefined : acc('back'), refuseEffects: running ? undefined : refused('your money for a campaign'),
+        disabledReason: block ?? viaBlock ?? (e.path !== 'politics' ? 'Not in politics' : !s.pol ? 'No politics here' : e.rung === 3 && !race ? 'Her seat is not up yet' : s.money < fund ? `Needs ${$(fund)}` : undefined),
       };
     }
     case 'ears':
       return {
-        ...base(`Ask ${nm} to be your ears`, `asked ${nm} to pass on what she hears`),
-        detail: `${$(HER_FEE.ears)} a week from the Family for what she hears at ${e.venue}: a raid coming, a rival's move, who is talking. ${e.path === 'info' ? 'She hears more than most.' : ''} She decides what she passes on.`,
-        effects: [HX({ op: 'deal', id: c.id, deal: 'ears' }, `${nm}: your ears`)],
-        acceptance: herAcceptance(s, a.id, 'ears'), refuseEffects: refused('passing on what she hears'),
-        disabledReason: block ?? (street ? 'The Madam\'s ears are The Night & the Ears' : e.deal === 'ears' ? 'Your ears already' : e.deal === 'partner' || e.deal === 'hired' ? 'She works with you already: she tells you what she hears' : undefined),
+        ...base(`Ask ${nm} to be your ears${ofr}`, `asked ${nm} to pass on what she hears`),
+        detail: `${$(tm.fee!)} a week from the Family for what she hears at ${e.venue}${by}: a raid coming, a rival's move, who is talking. ${e.path === 'info' ? 'She hears more than most.' : ''} She decides what she passes on.`,
+        effects: [HX({ op: 'deal', id: c.id, deal: 'ears', fee: tm.fee }, `${nm}: your ears`)],
+        acceptance: acc('ears'), refuseEffects: refused('passing on what she hears'),
+        disabledReason: block ?? viaBlock ?? (street ? 'The Madam\'s ears are The Night & the Ears' : e.deal === 'ears' ? 'Your ears already' : e.deal === 'partner' || e.deal === 'hired' ? 'She works with you already: she tells you what she hears' : undefined),
       };
     case 'squeeze': {
       const take = squeezeTake(e);
@@ -482,6 +584,7 @@ export function herBestFirst(s: GameState, id: string): PlayerAction[] {
  */
 export function joinFamily(_s: GameState, e: Earner, deal: HerDeal): void {
   e.deal = deal;
+  e.terms = undefined;
   if (deal === 'partner' || deal === 'protect' || deal === 'hired') { e.side = 'player'; e.rival = undefined; }
   if (deal === 'hired') e.knows = e.knows ?? 10;
   e.enemy = undefined;
@@ -534,13 +637,14 @@ export function applyHerOp(ctx: Ctx, o: HerOp): void {
   switch (o.op) {
     case 'deal':
       joinFamily(s, e, o.deal);
+      e.terms = o.cut !== undefined || o.fee !== undefined ? { ...(o.cut !== undefined ? { cut: o.cut } : {}), ...(o.fee !== undefined ? { fee: o.fee } : {}) } : undefined;
       if (o.stake) { e.savings += o.stake; e.standing = clamp(e.standing + 8); }
       addOpinion(s, c.id, boss, 'We have an understanding', 5, 1);
       hlog(s, H, e, `${nm}: ${HER_DEAL_LABEL[o.deal].toLowerCase()}.`);
       ctx.log.push(`${nm}: ${HER_DEAL_LABEL[o.deal].toLowerCase()}.`);
       break;
     case 'lend': {
-      const due = Math.round(o.amount * 1.1);
+      const due = Math.round(o.amount * (1 + (o.rate ?? 0.1)));
       e.loan = { left: due, weekly: Math.ceil(due / 12), missed: 0 };
       e.savings += o.amount;
       e.standing = clamp(e.standing + 5);
@@ -603,8 +707,8 @@ export function describeHerOp(s: GameState, o: HerOp): string | undefined {
   const c = s.characters[o.id];
   const nm = c?.firstName ?? 'She';
   switch (o.op) {
-    case 'deal': return `${nm}: ${HER_DEAL_LABEL[o.deal].toLowerCase()}${HER_CUT[o.deal] ? ` (the Family takes ${Math.round(HER_CUT[o.deal] * 100)}% of her week)` : HER_FEE[o.deal] ? ` (${$(HER_FEE[o.deal])} a week from the Family)` : ''}`;
-    case 'lend': return `${nm} pays it back over twelve weeks, a tenth on top; written off if she can't`;
+    case 'deal': { const cut = o.cut ?? HER_CUT[o.deal]; const fee = o.fee ?? HER_FEE[o.deal]; return `${nm}: ${HER_DEAL_LABEL[o.deal].toLowerCase()}${cut ? ` (the Family takes ${Math.round(cut * 100)}% of her week)` : fee ? ` (${$(fee)} a week from the Family)` : ''}`; }
+    case 'lend': return `${nm} pays it back over twelve weeks${o.rate === 0 ? ', nothing on top' : `, ${Math.round((o.rate ?? 0.1) * 100)}% on top`}; written off if she can't`;
     case 'back': return `${nm} runs with your money behind her; a friend in City Hall`;
     case 'squeeze': return o.ok ? `${nm} pays, and becomes your enemy` : `${nm} goes to a rival family for protection`;
     case 'leave': return `${nm} goes her own way`;
@@ -705,7 +809,7 @@ function pinch(ctx: Ctx, H: HerWayState, e: Earner, c: Character, r: number): vo
   e.standing = clamp(e.standing - 8);
   H.stats.pinched++;
   hlog(s, H, e, `${nm} was pinched (${PATHS[e.path].label.toLowerCase()}). Out of business until week ${e.pinched}.`);
-  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${nm} was pinched: ${titleOf(e).toLowerCase()} at ${e.venue}.`, kind: 'heat' });
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${nm} was pinched: ${low(titleOf(e))} at ${e.venue}.`, kind: 'heat' });
   if (e.deal === 'partner') applyEffects(ctx, [{ type: 'heat', bar: 'local', amount: 2, label: `Your partner ${c.firstName} was pinched` }], { label: 'A partner pinched', because: `partnered with ${c.firstName}`, category: 'heat' });
   if (e.deal === 'hired' && (e.knows ?? 0) >= 50) {
     if (opinion(s, c.id, s.playerId) < 40) {
@@ -736,13 +840,13 @@ export function herwayWeek(ctx: Ctx): void {
     e.heat = clamp(e.heat + P.heat[Math.min(e.rung, P.heat.length - 1)] * (covered ? 0.5 : 1) - 1);
     if (!pinched && (e.path !== 'politics' && e.path !== 'info') && r('pinch') < e.heat / 800) pinch(ctx, H, e, c, r('pdur'));
     // Money: the cut kicks up through the Family's ordinary books; her rivals' cut to them.
-    const cut = e.side === 'player' ? Math.round(e.income * HER_CUT[e.deal]) : 0;
-    if (cut > 0) money(ctx, cut, `${c.firstName} ${c.lastName} kicked up: ${titleOf(e).toLowerCase()}`, 'kickup');
+    const cut = e.side === 'player' ? Math.round(e.income * cutOf(e)) : 0;
+    if (cut > 0) money(ctx, cut, `${c.firstName} ${c.lastName} kicked up: ${low(titleOf(e))}`, 'kickup');
     if (e.side !== 'player' && e.side !== 'none' && e.income > 0) {
       const rv = s.rivals.find((x) => x.id === e.side);
       if (rv) rv.money += Math.round(e.income * 0.2);
     }
-    const fee = HER_FEE[e.deal];
+    const fee = feeOf(e);
     if (fee) money(ctx, -fee, `${c.firstName} ${c.lastName}: ${e.deal === 'hired' ? 'keeping your books' : 'what she hears'}`, 'cost');
     e.savings += Math.max(0, e.income - cut);
     // A loan: paid back from her week; never held over her (three missed weeks and it is written off).
@@ -814,11 +918,11 @@ export function herwayWeek(ctx: Ctx): void {
       e.rung++;
       e.standing = clamp(e.standing - 15);
       H.stats.rose++;
-      hlog(s, H, e, `${nm} moved up: ${titleOf(e).toLowerCase()}.`);
-      s.chronicle.push({ week: now, date: { ...s.date }, text: `${nm} moved up: ${titleOf(e).toLowerCase()}.`, kind: 'misc' });
+      hlog(s, H, e, `${nm} moved up: ${low(titleOf(e))}.`);
+      s.chronicle.push({ week: now, date: { ...s.date }, text: `${nm} moved up: ${low(titleOf(e))}.`, kind: 'misc' });
     } else if (e.standing < 15 && r('fall') < 0.1) {
       H.stats.fell++;
-      if (e.rung > 0 && !(e.path === 'politics' && e.rung >= 2)) { e.rung--; e.standing = 35; hlog(s, H, e, `${nm} came down a step: ${titleOf(e).toLowerCase()}.`); }
+      if (e.rung > 0 && !(e.path === 'politics' && e.rung >= 2)) { e.rung--; e.standing = 35; hlog(s, H, e, `${nm} came down a step: ${low(titleOf(e))}.`); }
       else if (e.path !== 'politics' || e.rung === 0) { e.status = 'out'; e.deal = 'none'; e.loan = undefined; hlog(s, H, e, `${nm} got out of it, with what she had put by.`); continue; }
     }
     // A rare one rises to rival the boss: the top of her path, and nobody's.
@@ -883,7 +987,7 @@ export function herRows(s: GameState): HerRow[] {
     const inc = incomeOf(e, s.week);
     out.push({
       id: e.id, name: displayName(c), age: ageOn(c.birth, s.date), path: e.path, pathLabel: PATHS[e.path].label, title: titleOf(e), venue: e.venue,
-      income: inc, toFamily: (e.side === 'player' ? Math.round(inc * HER_CUT[e.deal]) : 0) - HER_FEE[e.deal], standing: Math.round(e.standing), heat: Math.round(e.heat),
+      income: inc, toFamily: (e.side === 'player' ? Math.round(inc * cutOf(e)) : 0) - feeOf(e), standing: Math.round(e.standing), heat: Math.round(e.heat),
       side: e.side, sideLabel: e.path === 'politics' ? (e.fund ? 'Your money behind her' : 'Her own woman') : e.side === 'player' ? 'Kicks up to you' : e.side === 'none' ? 'Kicks up to nobody' : `Kicks up to ${sideName(s, e.side)}`,
       dealLabel: HER_DEAL_LABEL[e.deal], risks: risksOf(s, e), own: e.own, rival: e.rival !== undefined, hist: e.hist.slice(-6),
     });
