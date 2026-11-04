@@ -15,6 +15,8 @@ import { fmt$ } from '../format';
 import { Badge, BloodChips } from './bits';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { Empty, Section } from '../components/Layout';
+import { matronOf } from '../../engine/matchmakers';
+import { herFirst, Matchmakers } from './Matchmakers';
 
 /** Arranged marriages, the children's education, and the houses of the shore. */
 export function MarriagePanel({ s }: { s: GameState }) {
@@ -23,6 +25,7 @@ export function MarriagePanel({ s }: { s: GameState }) {
   return (
     <div className="space-y-5" data-testid="marriage-panel">
       <DatingLink s={s} tab="family" text="your own: dates, pregnancies you know of, children by blood, the talk" />
+      <Matchmakers s={s} />
       <Section domain="family" title="Arranged marriages" aside={singles.length ? `${singles.length} free to marry` : undefined}
         sub="A marriage between houses makes an alliance for as long as it stands: they won't move against you, they send men to your wars, and their votes at the Table lean your way. The bride's family pays the dowry.">
         {singles.length === 0 && <Empty title="No one to marry off">No one in the house is of marrying age and free.</Empty>}
@@ -49,6 +52,9 @@ function MatchCard({ s, m }: { s: GameState; m: Character }) {
   const [matri, setMatri] = useState(false);
   const [compare, setCompare] = useState(false);
   const chosen = cands.find((x) => x.c.id === pick);
+  const matron = matronOf(s);
+  const hers = matron && m.id !== boss.id && m.id !== matron.id ? matron : undefined;
+  const first = hers ? herFirst(s, m) : undefined;
   return (
     <div className="llv-card-box llv-card-plain min-w-0" data-testid="match-card">
       <div className="flex gap-2">
@@ -81,7 +87,11 @@ function MatchCard({ s, m }: { s: GameState; m: Character }) {
               {chosen.house.name} · {HOUSE_KIND_LABEL[chosen.house.kind]} · dowry {(() => { const d = dowryFor(s, m, chosen.house, matri); return d > 0 ? `they pay ${fmt$(d)}` : `you pay ${fmt$(-d)}`; })()}
             </div>
           )}
-          {pick && !s.gameOver && <div className="mt-1.5"><ActionCard s={s} action={{ kind: 'dynasty', op: { type: 'marry', memberId: m.id, spouseId: pick, matrilineal: m.gender === 'F' && matri ? true : undefined } }} compact /></div>}
+          {hers && first && <div className="mt-1 text-[11px] text-stone-400" data-testid="her-first">{hers.firstName} would pick {first.name} (she weighs {first.weigh}).</div>}
+          {pick && !s.gameOver && <div className="mt-1.5"><ActionCard s={s} action={hers
+            // The women arrange the matches (engine/matchmakers.ts): his pick goes through her.
+            ? { kind: 'bond', op: { op: 'match', id: hers.id, answer: 'own', memberId: m.id, spouseId: pick, matrilineal: m.gender === 'F' && matri ? true : undefined } }
+            : { kind: 'dynasty', op: { type: 'marry', memberId: m.id, spouseId: pick, matrilineal: m.gender === 'F' && matri ? true : undefined } }} compact /></div>}
         </>
       )}
     </div>

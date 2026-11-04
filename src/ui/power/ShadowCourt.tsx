@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { circleView, COURT_STANDING } from '../../engine/matchmakers';
 import { previewAction } from '../../engine/actions';
 import { ageOn, dateOfWeek, formatDate } from '../../engine/calendar';
 import { displayName, player } from '../../engine/characters';
@@ -115,6 +116,7 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
   const heirKnown = heir ? known.shares[heir.id] ?? 0 : 0;
   const ubKnown = ub ? known.shares[ub.id] ?? 0 : 0;
   const claims = claimStrengths(s);
+  const women = circleView(s);
   const pl = sh.plant && !sh.plant.blown && sh.plant.until >= s.week ? sh.plant : undefined;
   return (
     <div className="space-y-3" data-testid="shadow-court">
@@ -160,6 +162,15 @@ export function ShadowCourt({ s: live }: { s: GameState }) {
         </div>
         <p className="text-[11px] text-stone-500">Where {known.unknown}% of the family stands, you don't know. Name or change the heir and groom him under <span className="text-stone-300">The heir & the law</span>.</p>
       </section>
+
+      {/* The women's side of the court (engine/matchmakers.ts): the matchmaker's standing */}
+      {women && (
+        <section className={`${box('family')} space-y-1`} data-testid="women-side" data-domain="family">
+          <H glyph="♕" sub="The matches she made, the favors the other mothers owe her.">The women's side</H>
+          <div className="text-xs text-stone-300"><CharLink s={live} id={women.matron.id} />, {women.role}: standing <span className="tabular-nums text-stone-100">{women.circle.standing}</span> · {women.title} · {women.circle.favors.length} favor{women.circle.favors.length === 1 ? '' : 's'} owed.</div>
+          <p className="text-[11px] text-stone-500">{women.court ? 'Her word counts: her own children\'s claims carry her circle (see the claimants).' : `At ${COURT_STANDING} her word counts for her own children's claims.`}</p>
+        </section>
+      )}
 
       {/* The claimants: who could sit in the chair, and how strong each claim is */}
       {claims.length > 0 && (

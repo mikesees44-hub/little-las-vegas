@@ -1,4 +1,5 @@
 import { BookAbout } from '../book/TheBook';
+import { HerCircle } from '../family/Matchmakers';
 import { CardHead } from './Layout';
 import { domCard, type Domain } from '../domain';
 import { CallingCard } from '../nightlife/CallingCard';
@@ -212,6 +213,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         {tab === 'overview' && <>
         {age >= 18 && <button type="button" className="btn-secondary mt-3 px-2 py-1 text-[11px]" onClick={() => setTab('card')} data-testid="sheet-open-card">{c.firstName}'s calling card ▸ <span className="text-stone-500">looks, family, money as known, you, rumors</span></button>}
         <DynastyFacts s={s} c={c} />
+        {s.matchmakers?.circle[c.id] && <HerCircle s={s} id={c.id} sheet />}
         <PowerFacts s={s} c={c} />
         <MindSection s={s} c={c} />
         <LeansSection s={s} c={c} />

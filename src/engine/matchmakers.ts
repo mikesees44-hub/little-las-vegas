@@ -269,8 +269,8 @@ type Side = 'them' | 'young' | 'her';
 interface SideReason extends Reason { side: Side }
 
 /** Her coffee terms: she gets a better dowry than the house asks, more as her standing grows. */
-export function coffeeDowry(s: GameState, member: Character, house: House, by: string): number {
-  const base = dowryFor(s, member, house, false);
+export function coffeeDowry(s: GameState, member: Character, house: House, by: string, matrilineal = false): number {
+  const base = dowryFor(s, member, house, matrilineal);
   const st = circleOf(s, by)?.standing ?? 10;
   const k = 1 + st / 250;
   return Math.round((base > 0 ? base * k : base / k) / 100) * 100;
@@ -332,7 +332,7 @@ function whoRefused(s: GameState, by: Character, member: Character, spouse: Char
 /* ------------------------------------------------------------------ */
 
 export type MatchAction =
-  | { op: 'match'; id: string; answer: MatchAnswer; memberId?: string; spouseId?: string }
+  | { op: 'match'; id: string; answer: MatchAnswer; memberId?: string; spouseId?: string; /** His pick only: the husband joins our house. */ matrilineal?: boolean }
   | { op: 'herFavor'; id: string; kind: FavorKind; houseId: string };
 
 export type MatchOp = MatchAction
@@ -390,8 +390,9 @@ export function previewMatchmaker(s: GameState, a: MatchAction): ActionPreview {
       verb: 'Veto it',
     };
   }
-  const dowry = coffeeDowry(s, member, house, by.id);
-  const effects: Effect[] = [X(a, title), { type: 'dyn', op: { op: 'marry', memberId: member.id, spouseId: spouse.id, matrilineal: false }, label }];
+  const matri = a.answer === 'own' && !!a.matrilineal && member.gender === 'F';
+  const dowry = coffeeDowry(s, member, house, by.id, matri);
+  const effects: Effect[] = [X(a, title), { type: 'dyn', op: { op: 'marry', memberId: member.id, spouseId: spouse.id, matrilineal: matri }, label }];
   if (dowry) effects.push({ type: 'money', amount: dowry, label: `${label}: dowry ${dowry > 0 ? 'received' : 'paid'}` });
   const acc = matchOdds(s, by, member, spouse, a.answer, weigh);
   const coffee = `Coffee in ${motherName(s, mother)}'s kitchen settles the terms: ${dowry > 0 ? `they pay a dowry of $${dowry.toLocaleString('en-US')}` : dowry < 0 ? `we pay $${(-dowry).toLocaleString('en-US')}` : 'no dowry'}, the church, the date.`;
