@@ -1040,6 +1040,8 @@ export interface GameState {
   planner?: import('./planner/state').PlannerState;
   /** The boss's private read on people: suspicion they talk or steal, with the evidence (peopleRead.ts; optional, made by the first evidence). */
   reads?: import('./peopleRead').ReadsState;
+  /** Close people (the ★): the boss's own pins and the auto-pins he took off (pins.ts; optional, made by the first click). */
+  pins?: import('./pins').PinsState;
 }
 
 export interface PlayerChoices {

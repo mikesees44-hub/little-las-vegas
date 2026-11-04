@@ -1,4 +1,5 @@
 import { CallingCard } from '../nightlife/CallingCard';
+import { isPinned, togglePin } from '../../engine/pins';
 import { Overlay } from '../components/Modal';
 import { openProtectionFor } from '../borgata/Protection';
 import { previewAction } from '../../engine/actions';
@@ -73,6 +74,7 @@ function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; 
     else if (o.type === 'flee') { onDone?.(); travel.flee(c.id); }
     else if (o.type === 'marriage') { onDone?.(); openPicker({ kind: 'marriage', memberId: c.id }); }
     else if (o.type === 'go') { onDone?.(); if (o.to === 'borgata.protect') openProtectionFor(c.id); shell.go(o.to); }
+    else if (o.type === 'pin') { const on = !isPinned(s, c.id); const f = (x: GameState) => togglePin(x, c.id, on); if (shell.act) shell.act(f, on ? `${c.firstName} ${c.lastName} is one of your close people` : `${c.firstName} ${c.lastName} is off your close people`); else shell.update?.(f); onDone?.(); }
     else if (o.type === 'gifts' || o.type === 'ears' || o.type === 'dating' || o.type === 'dirty' || o.type === 'card') setGifts(true);
   };
   return (

@@ -1,4 +1,5 @@
 import { ageOn } from '../../engine/calendar';
+import { isPinned } from '../../engine/pins';
 import { capos, isFree } from '../../engine/characters';
 import { POSTS } from '../../engine/attrs';
 import { holder, SEATS, SEAT_INFO } from '../../engine/council';
@@ -85,7 +86,9 @@ export type Opener =
   /** You and her: dating, going steady, company (Relationships & Dating). */
   | { type: 'dating' }
   /** Their calling card (who they are at a glance). */
-  | { type: 'card' };
+  | { type: 'card' }
+  /** Close people (★, engine/pins.ts): keep him as a quick link, or take him off. */
+  | { type: 'pin' };
 
 export interface MenuItem {
   key: string;
@@ -247,6 +250,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id)) add('romance', { key: 'dating', open: { type: 'dating' }, label: `You and ${c.firstName}…`, text: 'Dating, going steady, gifts, company. She always decides.' });
 
   // Their calling card (adults), the goomar (CK's concubine: only someone you are already seeing, and she decides), the night's orders.
+  if (c.id !== s.playerId) add('talk', { key: 'pin', open: { type: 'pin' }, label: isPinned(s, c.id) ? `★ ${c.firstName} is a close person: unpin` : `☆ Keep ${c.firstName} close`, text: 'A quick link in the Black book\'s strip of close people, with news when something happens to them.' });
   if (isAdult(s, c)) add('talk', { key: 'card', open: { type: 'card' }, label: `${c.firstName}'s calling card…`, text: 'Who they are at a glance: looks, personality, skills, family, money as known, you, rumors.' });
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id) && s.characters[s.playerId]?.spouseId !== c.id) add('romance', { key: 'goomar', action: { kind: 'nightlife', op: { op: 'goomar', id: c.id } }, label: `Make ${c.firstName} your goomar` });
   for (const a of nightActionsFor(s, c.id)) if (a.kind === 'nightlife' && a.op.op !== 'goomar') add(a.op.op === 'endGoomar' ? 'romance' : 'nightlife', { key: `nl:${JSON.stringify(a.op)}`, action: a });

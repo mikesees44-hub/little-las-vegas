@@ -5,6 +5,7 @@ import type { DialSpec } from '../../engine/phoneMeet';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { weekLabel } from '../../engine/journal';
 import { Face } from './ink';
+import { CloseStrip, PinStar } from '../people/ClosePeople';
 import { PeopleLedger, takePendingPeople, type Mode as PeopleMode } from '../people/PeopleLedger';
 
 const GROUP_DOM: Record<BookGroup, string> = { men: 'crew', family: 'family', law: 'law', rivals: 'rivals', women: 'romance', business: 'money' };
@@ -44,6 +45,7 @@ export function BlackBook({ s, onChar, onPhone, onOrder }: { s: GameState; onCha
         {chip('all', 'Everyone', all.length)}
         {GROUPS.map((x) => chip(x, GROUP_LABEL[x], all.filter((c) => c.group === x).length))}
       </div>
+      <div className="mt-2"><CloseStrip s={s} tone="paper" /></div>
       {(fav.owed.length > 0 || fav.owing.length > 0) && (
         <p className="mt-2 text-[12px] text-[#4a3b28]" data-testid="bb-favors">Favors: <b>{fav.owed.length}</b> owed to you{fav.owed[0] ? ` (the oldest: ${fav.owed[0].c.name}, ${weekLabel(fav.owed[0].f.w)})` : ''} · you owe <b>{fav.owing.length}</b>{fav.owing[0] ? ` (${fav.owing[0].c.name} is waiting)` : ''}.</p>
       )}
@@ -64,7 +66,7 @@ function Card({ s, c, onChar, onPhone, onOrder }: { s: GameState; c: Contact; on
       <button type="button" onClick={() => c.charId && onChar(c.charId)} disabled={!c.charId} aria-label={`Open ${c.name}`}><Face s={s} id={c.charId} name={c.name} size={44} /></button>
       <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-2">
-          <b className="truncate text-[13.5px]">{c.name}</b>
+          <span className="flex min-w-0 items-center"><b className="truncate text-[13.5px]">{c.name}</b>{c.charId && <PinStar s={s} id={c.charId} />}</span>
           <span className={`shrink-0 text-[11px] font-semibold ${mood >= 30 ? 'text-[#1d5b33]' : mood <= -10 ? 'text-[#7d1d14]' : 'text-[#6b5a44]'}`} title={c.mood !== undefined ? `What he thinks of you: ${mood}` : undefined} data-testid="bb-mood">{c.moodWord}{c.mood !== undefined ? ` ${mood > 0 ? '+' : ''}${mood}` : ''}</span>
         </div>
         <div className="truncate text-[11.5px] text-[#4a3b28]">{c.role}{c.away ? ` · ${c.away}` : ''}</div>

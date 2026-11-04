@@ -146,3 +146,29 @@ describe('the ledger and its row actions', () => {
     throw new Error('no hit landed in ten tries');
   });
 });
+
+describe('close people (the ★)', () => {
+  it('wife and kids are close from the start without any state; pin and unpin round-trip through a save', async () => {
+    const { autoPins, closePeople, isPinned, pinnedIds, pinTag, togglePin } = await import('../src/engine/pins');
+    const s = newGame('people-pins');
+    expect(s.pins).toBeUndefined();
+    const auto = autoPins(s);
+    for (const id of auto) expect(isPinned(s, id)).toBe(true);
+    const boss = s.characters[s.playerId];
+    if (boss.spouseId) expect(pinTag(s, boss.spouseId)).toBe('Wife');
+    const m = soldier(s);
+    let n = togglePin(s, m.id);
+    expect(s.pins).toBeUndefined();
+    expect(isPinned(n, m.id)).toBe(true);
+    if (auto[0]) n = togglePin(n, auto[0]);
+    // Through a save.
+    const loaded = upgradeSave(JSON.parse(JSON.stringify(n)));
+    expect(isPinned(loaded, m.id)).toBe(true);
+    if (auto[0]) expect(isPinned(loaded, auto[0])).toBe(false);
+    expect(pinnedIds(loaded)).toEqual(pinnedIds(n));
+    expect(closePeople(loaded).flatMap((g) => g.people.map((p) => p.id))).toContain(m.id);
+    const back = togglePin(loaded, m.id);
+    expect(isPinned(back, m.id)).toBe(false);
+    if (auto[0]) expect(isPinned(togglePin(back, auto[0]), auto[0])).toBe(true);
+  });
+});

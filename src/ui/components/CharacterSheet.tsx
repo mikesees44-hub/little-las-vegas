@@ -1,4 +1,5 @@
 import { BookAbout } from '../book/TheBook';
+import { PinStar } from '../people/ClosePeople';
 import { CardHead } from './Layout';
 import { domCard, type Domain } from '../domain';
 import { CallingCard } from '../nightlife/CallingCard';
@@ -99,7 +100,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
               <SideBadge side={side} size={104} />
             </span>
             <div className="min-w-0">
-              <h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2>
+              <div className="flex items-center gap-1"><h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2><PinStar s={s} id={c.id} label /></div>
               <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="sheet-side">
                 <SideChip side={side} full />
                 {!isBoss && <RelationChip relation={side.relation} />}
