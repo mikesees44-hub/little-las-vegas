@@ -8,6 +8,12 @@ import { Modal } from '../components/Modal';
 import { Fragment, useState, type ReactNode } from 'react';
 import { DoneMark } from '../components/Layout';
 import { DeskClock } from '../components/DeskClock';
+import { domainOf, domainOfText, domClass, DOMAINS, type Domain } from '../domain';
+
+/** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
+function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
+  return domainOf(it.kind) ?? domainOfText(s, `${it.title} ${it.detail ?? ''}`);
+}
 
 /**
  * THE DESK: the one daily hub. One list, one count (engine/attention.ts on
@@ -86,11 +92,12 @@ function WhyChips({ why }: { why?: string[] }) {
   return <div className="mt-0.5 flex flex-wrap gap-1">{why.slice(0, 3).map((w) => <span key={w} className="rounded bg-noir-700/80 px-1 text-[10px] text-amber-200/90">{w}</span>)}</div>;
 }
 
-function NeedRow({ it, api }: { it: DeskItem; api: DeskApi }) {
+function NeedRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
   const verb = verbOf(it);
+  const d = deskDomain(s, it);
   return (
-    <li className={`flex items-start gap-2 rounded-md border px-2.5 py-2 ${it.urgent && !it.done ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-noir-700 bg-noir-900/60'}`} data-testid={`desk-item-${it.kind}`} data-done={it.done ? 'true' : undefined}>
-      <span className={`mt-0.5 w-4 shrink-0 text-center ${it.done ? 'text-emerald-400' : 'text-stone-500'}`} aria-hidden>{it.done ? '✓' : ICON[it.kind]}</span>
+    <li className={`flex items-start gap-2 rounded-md border px-2.5 py-2 ${it.urgent && !it.done ? 'border-red-400/70 bg-blood-500/10' : it.done ? 'border-emerald-800/50 bg-emerald-950/20' : 'border-noir-700 bg-noir-900/60'} ${d && !it.done ? `${domClass(d)} llv-dom-edge${it.urgent ? '' : ' llv-dom-tint'}` : ''}`} data-testid={`desk-item-${it.kind}`} data-done={it.done ? 'true' : undefined} data-domain={d}>
+      <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center text-center text-[12px] ${it.done ? 'text-emerald-400' : d ? 'llv-dom-chip' : 'text-stone-500'}`} aria-hidden title={d ? DOMAINS[d].label : undefined}>{it.done ? '✓' : ICON[it.kind]}</span>
       <div className="min-w-0 flex-1">
         <div className="text-[13px] font-semibold text-stone-100">{it.title}{it.urgent && !it.done && <span className="ml-1 rounded bg-red-500/80 px-1 text-[10px] font-bold uppercase text-white">urgent</span>}{it.done && <DoneMark className="ml-1.5 align-middle">Answered</DoneMark>}</div>
         <div className={`text-[12px] leading-snug ${it.done ? 'text-stone-400' : 'text-stone-300'}`}>{it.detail}</div>
@@ -102,10 +109,11 @@ function NeedRow({ it, api }: { it: DeskItem; api: DeskApi }) {
   );
 }
 
-function HandledRow({ it, api }: { it: DeskItem; api: DeskApi }) {
+function HandledRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
   const h = it.handled!;
+  const d = deskDomain(s, it);
   return (
-    <li className="flex items-start gap-2 rounded border border-noir-800 bg-noir-900/40 px-2 py-1" data-testid={`desk-handled-${it.kind}`}>
+    <li className={`flex items-start gap-2 rounded border border-noir-800 bg-noir-900/40 px-2 py-1 ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-handled-${it.kind}`} data-domain={d}>
       <span className="mt-0.5 w-4 shrink-0 text-center text-stone-600" aria-hidden>{ICON[it.kind]}</span>
       <div className="min-w-0 flex-1 text-[11px]">
         <div className="truncate text-stone-300">{it.title}</div>
@@ -132,9 +140,10 @@ function Fold({ g, render, n = 3, testid }: { g: DeskGroup; render: (it: DeskIte
   );
 }
 
-function SmallRow({ it, api }: { it: DeskItem; api: DeskApi }) {
+function SmallRow({ s, it, api }: { s: GameState; it: DeskItem; api: DeskApi }) {
+  const d = deskDomain(s, it);
   return (
-    <li className="flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px]" data-testid={`desk-item-${it.kind}`}>
+    <li className={`flex items-start gap-2 rounded border border-noir-800 px-2 py-1 text-[11px] ${d ? `${domClass(d)} llv-dom-edge` : ''}`} data-testid={`desk-item-${it.kind}`} data-domain={d}>
       <div className="min-w-0 flex-1"><div className={it.tone === 'bad' ? 'text-amber-200' : it.tone === 'good' ? 'text-emerald-200' : 'text-stone-200'}>{it.title}</div><div className="text-stone-500">{it.detail}</div></div>
       {it.kind === 'order' && it.ref.order !== undefined
         ? <button type="button" className="btn-secondary shrink-0 py-0.5 text-[10px]" onClick={() => api.onCancelOrder(it.ref.order!)} data-testid="desk-cancel-order">Cancel</button>
@@ -186,12 +195,12 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
                 <DoneMark>All answered</DoneMark> Everything that needed you this week has your answer. Advance the week when you are ready.
               </div>
             )}
-            {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow it={it} api={api} />} /> : <p className="mt-1 text-[12px] text-stone-500">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
+            {needs?.items.length ? <Fold g={needs} n={6} render={(it) => <NeedRow s={s} it={it} api={api} />} /> : <p className="mt-1 text-[12px] text-stone-500">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
           </div>
           {handled && handled.items.length > 0 && (
             <div data-testid="desk-group-handled">
               <div className="llv-section-title mb-1 text-[14px]">Handled for you ({handled.items.length})</div>
-              <Fold g={handled} n={3} render={(it) => <HandledRow it={it} api={api} />} />
+              <Fold g={handled} n={3} render={(it) => <HandledRow s={s} it={it} api={api} />} />
             </div>
           )}
           {rest.length > 0 && (
@@ -199,7 +208,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
               {rest.map((g) => (
                 <div key={g.kind} data-testid={`desk-group-${g.kind}`}>
                   <div className="llv-section-title mb-1 text-[14px]">{g.title} ({g.items.length}){g.kind === 'bill' ? ` · ${fmt$(g.items.reduce((a, x) => a + (x.cost ?? 0), 0))}` : ''}</div>
-                  <Fold g={g} n={2} render={(it) => <SmallRow it={it} api={api} />} />
+                  <Fold g={g} n={2} render={(it) => <SmallRow s={s} it={it} api={api} />} />
                 </div>
               ))}
             </div>
