@@ -102,6 +102,12 @@ function integrity(s: GameState): string[] {
       if (c.wealth < 0) negWealth++;
     }
   }
+  // The same person twice: a living character with the name and birthday of a dead one (a lineage copy brought back).
+  const deadKey = new Map<string, string>();
+  for (const c of Object.values(s.characters)) if (!c.alive) deadKey.set(`${c.firstName}|${c.lastName}|${c.birth.y}-${c.birth.m}-${c.birth.d}`, c.id);
+  for (const c of Object.values(s.characters)) { if (!c.alive) continue; const k = `${c.firstName}|${c.lastName}|${c.birth.y}-${c.birth.m}-${c.birth.d}`; const dd = deadKey.get(k); if (dd) out.push(`alive twin of the dead: ${c.id} = dead ${dd} (${c.firstName} ${c.lastName} b.${c.birth.y}, spouse ${c.spouseId ?? '-'})`); }
+  // A wife whose husband is dead but who is still married to him.
+  for (const c of Object.values(s.characters)) if (c.alive && c.spouseId && s.characters[c.spouseId] && !s.characters[c.spouseId].alive) { out.push(`married to the dead: ${c.id}→${c.spouseId}`); break; }
   if (dangling) out.push(`dangling family refs: ${dangling}`);
   if (deadCapoRef) out.push(`living men under a dead capo: ${deadCapoRef}`);
   if (nanChar) out.push(`NaN character fields: ${nanChar}`);

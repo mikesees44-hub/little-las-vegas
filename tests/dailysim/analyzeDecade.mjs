@@ -11,7 +11,7 @@ const runs = files.map((f) => {
   const sum = JSON.parse(readFileSync(join(dir, f), 'utf8'));
   const wf = join(dir, f.replace(/\.json$/, '.weeks.jsonl'));
   const weeks = existsSync(wf) ? readFileSync(wf, 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l)) : [];
-  return { ...sum, weeks, id: `${sum.start}/${sum.seed}/${sum.policy === 'passive' ? 'pas' : 'rsn'}` };
+  return { ...sum, weeks, id: `${sum.start}/${sum.seed}/${sum.policy === 'passive' ? 'pas' : sum.policy === 'climber' ? 'clb' : 'rsn'}` };
 });
 
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
