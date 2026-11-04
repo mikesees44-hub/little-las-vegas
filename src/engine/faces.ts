@@ -12,8 +12,8 @@ import type { Character, GameState } from './types';
 
 type Tag = 'boss' | 'capo' | 'old' | 'soldier' | 'assoc' | 'wife' | 'glam' | 'cop' | 'priest' | 'pol' | 'biz' | 'books' | 'pro';
 
-/** `irish`: preferred for an Irish sitter. `reserved`: waits for a sitter the game does not have yet (never handed out). */
-export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[]; irish?: boolean; reserved?: boolean }[] = [
+/** `eth`: preferred for a sitter of that background (and kept back from the others while any is free). `reserved`: waits for a sitter the game does not have yet (never handed out). */
+export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[]; eth?: 'Irish' | 'Jewish'; reserved?: boolean }[] = [
   { k: 'f01', m: true, age: [40, 72], tags: ['boss', 'capo'] },
   { k: 'f22', m: true, age: [55, 90], tags: ['boss', 'old'] },
   { k: 'f03', m: true, age: [50, 85], tags: ['boss', 'capo', 'old'] },
@@ -35,9 +35,40 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'f10', m: false, age: [36, 75], tags: ['wife'] },
   { k: 'f23', m: false, age: [21, 44], tags: ['glam', 'wife'] },
   { k: 'f05', m: false, age: [20, 40], tags: ['glam'] },
-  { k: 'f19', irish: true, m: false, age: [21, 44], tags: ['glam'] },
+  { k: 'f19', eth: 'Irish', m: false, age: [21, 44], tags: ['glam'] },
   { k: 'f15', m: false, age: [18, 30], tags: ['glam'] },
   // The second set: twenty women (three left out for looking like a real film star).
+  // The fourth set: thirty men, young to old.
+  { k: 'm01', m: true, age: [55, 85], tags: ['boss', 'old'] },
+  { k: 'm04', m: true, age: [55, 85], tags: ['old', 'boss'] },
+  { k: 'm27', m: true, age: [58, 88], tags: ['boss', 'old'] },
+  { k: 'm30', m: true, age: [55, 85], tags: ['old', 'boss'] },
+  { k: 'm24', m: true, age: [60, 88], tags: ['old', 'pol', 'boss'] },
+  { k: 'm13', m: true, age: [55, 82], tags: ['old', 'capo'] },
+  { k: 'm06', m: true, age: [55, 85], tags: ['old', 'books', 'boss'], eth: 'Jewish' },
+  { k: 'm21', m: true, age: [55, 85], tags: ['books', 'old', 'pol'], eth: 'Jewish' },
+  { k: 'm18', m: true, age: [55, 82], tags: ['old', 'biz'], eth: 'Jewish' },
+  { k: 'm25', m: true, age: [60, 88], tags: ['old', 'assoc'], eth: 'Irish' },
+  { k: 'm10', m: true, age: [52, 78], tags: ['cop', 'old'], eth: 'Irish' },
+  { k: 'm03', m: true, age: [40, 66], tags: ['capo', 'boss'] },
+  { k: 'm11', m: true, age: [45, 70], tags: ['boss', 'capo'] },
+  { k: 'm23', m: true, age: [45, 70], tags: ['boss', 'capo'] },
+  { k: 'm08', m: true, age: [40, 66], tags: ['capo', 'biz'] },
+  { k: 'm15', m: true, age: [45, 70], tags: ['capo', 'biz'] },
+  { k: 'm29', m: true, age: [40, 66], tags: ['capo', 'biz'] },
+  { k: 'm17', m: true, age: [35, 60], tags: ['capo', 'soldier'] },
+  { k: 'm20', m: true, age: [35, 60], tags: ['capo', 'soldier'] },
+  { k: 'm16', m: true, age: [45, 72], tags: ['biz', 'assoc'] },
+  { k: 'm09', m: true, age: [30, 55], tags: ['capo', 'soldier'] },
+  { k: 'm22', m: true, age: [28, 52], tags: ['soldier', 'capo'] },
+  { k: 'm26', m: true, age: [28, 52], tags: ['soldier', 'capo'] },
+  { k: 'm28', m: true, age: [30, 52], tags: ['soldier'] },
+  { k: 'm19', m: true, age: [30, 56], tags: ['assoc', 'biz', 'soldier'], eth: 'Irish' },
+  { k: 'm07', m: true, age: [20, 36], tags: ['soldier', 'assoc'] },
+  { k: 'm12', m: true, age: [20, 36], tags: ['assoc', 'soldier'] },
+  { k: 'm02', m: true, age: [18, 32], tags: ['assoc', 'soldier'] },
+  { k: 'm05', m: true, age: [18, 32], tags: ['assoc'] },
+  { k: 'm14', m: true, age: [18, 32], tags: ['assoc'] },
   { k: 'w08', m: false, age: [50, 85], tags: ['wife'] },
   { k: 'w20', m: false, age: [45, 80], tags: ['wife'] },
   { k: 'w05', m: false, age: [38, 68], tags: ['wife'] },
@@ -46,18 +77,18 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'w07', m: false, age: [24, 46], tags: ['wife', 'glam'] },
   { k: 'w10', m: false, age: [28, 56], tags: ['glam', 'wife'] },
   { k: 'w12', m: false, age: [24, 52], tags: ['pro', 'wife'] },
-  { k: 'w03', irish: true, m: false, age: [21, 42], tags: ['glam'] },
+  { k: 'w03', eth: 'Irish', m: false, age: [21, 42], tags: ['glam'] },
   { k: 'w04', m: false, age: [21, 42], tags: ['glam'] },
   { k: 'w06', m: false, age: [21, 40], tags: ['glam'] },
   { k: 'w13', m: false, age: [21, 42], tags: ['glam'] },
-  { k: 'w14', irish: true, m: false, age: [24, 46], tags: ['glam'] },
+  { k: 'w14', eth: 'Irish', m: false, age: [24, 46], tags: ['glam'] },
   { k: 'w19', m: false, age: [21, 40], tags: ['glam'] },
   { k: 'w16', m: false, age: [22, 46], tags: ['glam', 'pro'] },
   { k: 'w11', m: false, age: [18, 34], tags: ['glam'] },
   { k: 'w18', m: false, age: [18, 30], tags: ['glam'] },
   // The third set (two left out for looking like a real film star).
   { k: 'v01', m: false, age: [21, 40], tags: ['glam'] },
-  { k: 'v02', m: false, age: [20, 38], tags: ['glam', 'wife'], irish: true },
+  { k: 'v02', m: false, age: [20, 38], tags: ['glam', 'wife'], eth: 'Irish' },
   { k: 'v04', m: false, age: [20, 40], tags: ['pro', 'glam'] },
   { k: 'v05', m: false, age: [22, 46], tags: ['pro'] },
   { k: 'v06', m: false, age: [22, 42], tags: ['glam'] },
@@ -71,7 +102,7 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'v17', m: false, age: [26, 50], tags: ['wife'] },
   { k: 'v18', m: false, age: [18, 28], tags: ['glam'] },
   { k: 'v19', m: false, age: [22, 42], tags: ['glam'] },
-  { k: 'v20', m: false, age: [20, 40], tags: ['glam', 'wife'], irish: true },
+  { k: 'v20', m: false, age: [20, 40], tags: ['glam', 'wife'], eth: 'Irish' },
   // A club singer and a woman whose families the game does not have yet: kept for when it does.
   { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
   { k: 'v07', m: false, age: [20, 40], tags: [], reserved: true },
@@ -98,6 +129,8 @@ function wants(c: Character, s: GameState, age: number): Tag[] {
   }
 }
 
+const rankEth = (f: string | undefined, e: string | undefined) => (f === undefined ? 1 : f === e ? 0 : 2);
+
 /** Who gets a painting first (lower is sooner); undefined: not cast. */
 function priority(c: Character, s: GameState): number | undefined {
   const me = s.characters[s.playerId];
@@ -117,6 +150,9 @@ function priority(c: Character, s: GameState): number | undefined {
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.faction === me?.faction && s.characters[c.spouseId]?.rank !== 'civilian') return 10;
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.rank === 'boss') return 11;
   if (c.gender !== 'M' && (s.romance?.rels ?? []).some((r) => r.a === c.id || r.b === c.id)) return 12;
+  if (c.rank === 'capo') return 13;
+  if (c.rank === 'soldier') return 14;
+  if (c.office) return 15;
   return undefined;
 }
 
@@ -137,7 +173,7 @@ export function assignFaces(s: GameState): void {
     if (age < 18) continue;
     const male = c.gender === 'M';
     const fits = FACES.filter((f) => !f.reserved && !taken.has(f.k) && f.m === male && age >= f.age[0] - 3 && age <= f.age[1] + 5)
-      .sort((a, b) => (c.ethnicity === 'Irish' ? Number(!!b.irish) - Number(!!a.irish) : Number(!!a.irish) - Number(!!b.irish)));
+      .sort((a, b) => rankEth(a.eth, c.ethnicity) - rankEth(b.eth, c.ethnicity));
     const tags = wants(c, s, age);
     let pick: (typeof FACES)[number] | undefined;
     for (const t of tags) { pick = fits.find((f) => f.tags.includes(t)); if (pick) break; }
