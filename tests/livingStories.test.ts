@@ -51,7 +51,8 @@ describe('living storylines', () => {
     const seen: string[] = [];
     let saved: string | undefined;
     let opBefore = 0;
-    for (let w = 0; w < 30 && !s.gameOver; w++) {
+    // Forty weeks: a busy week elsewhere (a war, the town at the door) can hold a beat back a while.
+    for (let w = 0; w < 40 && !s.gameOver; w++) {
       const beat = s.pendingEvents.find((e) => e.meta?.arc === arc.id);
       if (beat) {
         seen.push(String(beat.meta!.stage));

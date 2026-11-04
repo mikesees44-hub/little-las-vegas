@@ -1026,6 +1026,8 @@ export interface GameState {
   minds?: import('./minds/types').MindsState;
   /** Deeds: the CK-style interactions between anyone (cooldowns, ties, favors owed, NPC hooks, asks at the boss's door, authored scenes' memory) (deeds/; optional: made by the weekly update). */
   deeds?: import('./deeds/types').DeedsState;
+  /** The petitioners at the boss's door (petitions.ts): recent petitions, for the variety rules. Made with the first one. */
+  petitions?: import('./petitions').PetitionsState;
   /** CK-style reactions to the boss's decisions, and the NPCs' proposals (reactions/). */
   reactions?: import('./reactions/types').ReactionsState;
   /** Arguments: a heated decision answered in the moment, the rounds after it, its witnesses, its rumors and the story seeds it leaves (argue/; optional: made by the first argument). */

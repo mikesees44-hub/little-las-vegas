@@ -18,6 +18,7 @@ import { defectTo } from './regimes';
 import { maybePlant } from './rivalcrew';
 import { deposeInsteadOfKill } from './power';
 import { packConsequence } from './storyPack';
+import { PETITION_HANDLERS } from './petitions';
 
 /**
  * Delayed consequences. A choice schedules a key + params; when the week
@@ -216,7 +217,7 @@ export function fireConsequences(ctx: Ctx): void {
   const due = s.scheduled.filter((x) => x.dueWeek <= s.week);
   s.scheduled = s.scheduled.filter((x) => x.dueWeek > s.week);
   for (const sc of due) {
-    const h = HANDLERS[sc.key] ?? (sc.key.startsWith('pack:') ? packConsequence : undefined);
+    const h = HANDLERS[sc.key] ?? PETITION_HANDLERS[sc.key] ?? (sc.key.startsWith('pack:') ? packConsequence : undefined);
     if (!h) continue;
     const before = ctx.lines.length;
     const res = h(ctx, sc);
