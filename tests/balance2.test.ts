@@ -415,3 +415,15 @@ describe('Difficulty presets (EASIER_NOT_SHALLOWER #1)', () => {
     expect(s2.heat.local).toBe(13);
   });
 });
+
+describe('Top 10 #4b: the quota is sized to what he brings', () => {
+  it('a chief who keeps hearing short settles for most of the man\'s real kick-up', async () => {
+    const V = await import('../src/engine/valente');
+    const s = newGameWith('t4-size', 'associate');
+    s.date = { ...s.date, m: 7 };
+    const a = V.above(s)!;
+    for (let i = 0; i < 12; i++) { V.quotaWeek(newCtx(s), 60); s.week++; }
+    expect(a.quota).toBeLessThanOrEqual(60);
+    expect(a.quota).toBeGreaterThanOrEqual(V.QUOTA_MIN);
+  });
+});
