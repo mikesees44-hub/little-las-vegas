@@ -58,6 +58,46 @@
 .llv-banner-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 60%; }
 .llv-banner-fallback { position: absolute; inset: 0; background: radial-gradient(120% 140% at 85% 0%, rgb(var(--d) / 0.45), transparent 60%), linear-gradient(160deg, rgb(var(--d) / 0.25), #141210 70%), repeating-linear-gradient(180deg, transparent 0 9px, rgb(var(--d-ink) / 0.05) 9px 10px); }
 .llv-banner-wash { position: absolute; inset: 0; background: linear-gradient(0deg, rgb(12 10 9 / 0.92) 0%, rgb(12 10 9 / 0.55) 55%, rgb(12 10 9 / 0.15) 100%); }
+/* THE HUD (components/Hud.tsx, the top bar): chunky badges, an icon coin, the value in the display face. */
+.llv-hud { position: relative; display: inline-flex; align-items: center; gap: 6px; min-width: 52px; border-radius: 8px; border: 1px solid rgb(196 154 58 / 0.4); background: linear-gradient(180deg, #2b251e 0%, #17140f 100%); box-shadow: inset 0 1px 0 rgb(255 240 200 / 0.08), 0 2px 0 #0b0a09; padding: 2px 8px 2px 5px; }
+.llv-hud-label { font-size: 9px; line-height: 1.1; text-transform: uppercase; letter-spacing: 0.14em; color: #a8a29e; white-space: nowrap; }
+.llv-hud-val { font-family: 'Playfair Display', Georgia, serif; font-weight: 800; font-size: 15px; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: 0.01em; }
+.llv-hud-icon { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 999px; font-size: 13px; font-weight: 800; color: #1a1208; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), inset 0 -2px 0 rgb(0 0 0 / 0.25), 0 1px 2px rgb(0 0 0 / 0.6); }
+.llv-hud-icon-gold { background: radial-gradient(circle at 35% 30%, #fbe7a6, #d9a84a 55%, #9c6d22); }
+.llv-hud-icon-green { background: radial-gradient(circle at 35% 30%, #b8f0cf, #3fa871 55%, #1f6b43); }
+.llv-hud-icon-red { background: radial-gradient(circle at 35% 30%, #ffc2b5, #d9533f 55%, #8a2015); color: #fff3ee; }
+.llv-hud-icon-steel { background: radial-gradient(circle at 35% 30%, #d7e6f7, #5f8fc4 55%, #2e4f78); }
+.llv-hud-icon-wine { background: radial-gradient(circle at 35% 30%, #f6c3d2, #b63e62 55%, #6b1a33); color: #fff0f4; }
+/* THE DESK on the owner's painting (desk/BossDesk.tsx): the desk from above; on a tablet and up the week's papers lie
+   in its dark middle (the corner objects stay free to pick up); on a phone the painting is a band over the papers.
+   Below the painting the mahogany runs on. */
+.llv-desktop { position: relative; overflow: hidden; border-radius: 10px; border: 1px solid rgb(120 62 34 / 0.65);
+  background: repeating-linear-gradient(91deg, rgb(255 200 150 / 0.022) 0 2px, transparent 2px 11px), linear-gradient(180deg, #3a170e 0%, #2a110a 45%, #1c0c07 100%);
+  box-shadow: inset 0 0 70px rgb(0 0 0 / 0.65), 0 10px 30px -12px #000; }
+.llv-desktop-grid { display: grid; }
+.llv-desktop-art { position: relative; aspect-ratio: 1672 / 941; overflow: hidden; }
+.llv-desktop-fallback { position: absolute; inset: 0; background: radial-gradient(60% 50% at 50% 12%, rgb(255 200 120 / 0.28), transparent 70%), repeating-linear-gradient(91deg, rgb(255 200 150 / 0.04) 0 2px, transparent 2px 9px), linear-gradient(180deg, #5a2414, #3a170e 60%, #2a110a); }
+.llv-desktop-center { padding: 10px; }
+.llv-desktop-rest { padding: 0 10px 10px; }
+.llv-blotter { border-radius: 6px; background: rgb(14 11 9 / 0.78); padding: 5px 8px; box-shadow: 0 4px 12px -6px #000; }
+.llv-blotter-title { display: inline-block; border-radius: 4px; background: rgb(14 11 9 / 0.78); padding: 1px 8px; font-family: 'Playfair Display', Georgia, serif; font-weight: 800; font-size: 15px; color: #ecd38f; text-shadow: 0 1px 2px #000; }
+/* A paper on the desk: opaque, a drop shadow, so text never sits on the wood. */
+.llv-paper { background-color: #1a1613 !important; box-shadow: 0 8px 16px -8px rgb(0 0 0 / 0.9), 0 1px 0 rgb(255 240 210 / 0.04) inset; }
+@media (min-width: 768px) {
+  .llv-desktop-art, .llv-desktop-center { grid-area: 1 / 1; }
+  /* The papers sit between the ledger and the envelopes, below the lamp (percent of the width: the painting's own proportions). */
+  .llv-desktop-center { position: relative; z-index: 1; padding: 9.5% 22.5% 3% 20%; pointer-events: none; }
+  .llv-desktop-center > * { pointer-events: auto; }
+  .llv-desktop-rest { padding: 12px 14px 14px; }
+}
+/* The verdict stamped on a result: a bordered, slightly turned stamp in the outcome's colour. */
+.llv-verdict { --stamp-rot: -4deg; transform: rotate(-4deg); border: 2px solid currentColor; border-radius: 6px; padding: 0 10px; letter-spacing: 0.04em; text-transform: uppercase; font-weight: 800; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.4); }
+.llv-verdict-won { background: rgb(16 80 50 / 0.25); text-shadow: 0 0 12px rgb(110 231 183 / 0.45); }
+.llv-verdict-lost { background: rgb(120 20 20 / 0.2); }
+.llv-celebration { transform: translateX(-50%); border-radius: 10px; padding: 10px 16px 12px; background: linear-gradient(180deg, rgb(28 22 16 / 0.97), rgb(14 11 9 / 0.97)); border: 1px solid; box-shadow: 0 18px 40px -10px #000, inset 0 1px 0 rgb(255 240 200 / 0.1); }
+.llv-celebration-gold { border-color: #e9c46a; color: #f6dd96; box-shadow: 0 0 0 1px rgb(233 196 106 / 0.35), 0 0 40px rgb(233 196 106 / 0.35), 0 18px 40px -10px #000; }
+.llv-celebration-green { border-color: rgb(47 143 92); color: rgb(126 214 162); }
+.llv-celebration-wine { border-color: rgb(182 62 98); color: rgb(236 150 172); box-shadow: 0 0 36px rgb(182 62 98 / 0.35), 0 18px 40px -10px #000; }
 /* Inside a domain card the card's own titles and small caps take its ink (the card sets --d / --d-ink). */
 .llv-dom-tint .panel-title, .llv-dom-tint .llv-cardhead-title, .llv-dom-tint .llv-kicker { color: rgb(var(--d-ink)); }
 .llv-dom-tint .llv-kicker { opacity: 0.85; }
@@ -93,25 +133,42 @@ body {
    * text links (details, why?, show all); danger is for the hostile and the irreversible and always
    * sits behind a confirm. btn-gold and btn-ghost stay as aliases while components migrate.
    */
+  /* Game feel: chunky, lit from above, a lip of depth underneath; it lifts on hover and presses down on a click. */
   .btn-primary {
-    @apply btn bg-gold-500 text-noir-950 hover:bg-gold-400;
+    @apply btn text-noir-950;
+    background: linear-gradient(180deg, #f0cf7a 0%, #d9a84a 48%, #b8862f 100%);
+    border: 1px solid #f3d98f;
+    box-shadow: 0 2px 0 #7a5418, 0 4px 10px -2px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 248 220 / 0.55);
+    text-shadow: 0 1px 0 rgb(255 240 200 / 0.4);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, filter 0.12s;
   }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 3px 0 #7a5418, 0 8px 16px -4px rgb(217 168 74 / 0.45), inset 0 1px 0 rgb(255 248 220 / 0.6); }
+  .btn-primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 #7a5418, 0 1px 3px rgb(0 0 0 / 0.6), inset 0 2px 4px rgb(90 60 10 / 0.45); }
   /* A primary that cannot be pressed yet ("Pick one" before a pick) must not look gold and ready. */
   .btn-primary:disabled {
     @apply border border-dashed border-noir-600 bg-noir-800 text-stone-500 opacity-100 hover:bg-noir-800;
+    background-image: none; box-shadow: none; text-shadow: none;
   }
   .btn-secondary {
-    @apply btn border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300;
+    @apply btn border border-noir-600 text-stone-200 hover:border-gold-500 hover:text-gold-300;
+    background: linear-gradient(180deg, #2a2521 0%, #1d1a17 100%);
+    box-shadow: 0 2px 0 #0b0a09, inset 0 1px 0 rgb(255 255 255 / 0.06);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out, border-color 0.12s, color 0.12s;
   }
+  .btn-secondary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 3px 0 #0b0a09, 0 6px 12px -6px rgb(217 168 74 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.08); }
+  .btn-secondary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 #0b0a09, inset 0 2px 4px rgb(0 0 0 / 0.5); }
   .btn-quiet {
     @apply inline-flex items-center gap-1 text-gold-400 underline-offset-2 hover:text-gold-300 hover:underline disabled:opacity-40 disabled:cursor-not-allowed;
   }
   .btn-danger {
     @apply btn border border-red-700 bg-red-900/40 text-red-100 hover:bg-red-800/60 hover:border-red-500;
+    box-shadow: 0 2px 0 #3b0a08, inset 0 1px 0 rgb(255 200 190 / 0.1);
+    transition: transform 0.08s ease-out, box-shadow 0.08s ease-out;
   }
-  /* A compact size for rows and chips of buttons. */
+  .btn-danger:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.5); }
+  /* A compact size for rows and chips of buttons (still chunky enough to hit). */
   .btn-sm {
-    @apply px-1.5 py-0.5 text-[11px] rounded;
+    @apply px-2 py-1 text-[11.5px] rounded;
   }
   .btn-gold {
     @apply btn-primary;
@@ -319,7 +376,35 @@ body {
 @keyframes llv-slide-up { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 .llv-stamp-in { animation: llv-stamp-in 0.28s cubic-bezier(.2,1.6,.4,1) both; }
 @keyframes llv-stamp-in { from { transform: scale(1.35) rotate(-6deg); opacity: 0; } to { transform: scale(1) rotate(var(--stamp-rot, -3deg)); opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .llv-slide-up, .llv-stamp-in, .llv-slide-left, .llv-slide-right { animation: none !important; } }
+/* The one recommended move: a slow warm glow (the Office's focal card, the Desk's first paper, Advance when all is answered). */
+.llv-next { animation: llv-next 2.4s ease-in-out infinite; }
+@keyframes llv-next { 0%, 100% { box-shadow: 0 0 0 0 rgb(217 168 74 / 0), 0 6px 18px -8px rgb(0 0 0 / 0.7); } 50% { box-shadow: 0 0 0 3px rgb(217 168 74 / 0.28), 0 0 22px 2px rgb(217 168 74 / 0.22); } }
+/* A number that changed: the +$ / −$ that floats up off a HUD badge. */
+.llv-floatup { position: absolute; right: 2px; top: -2px; pointer-events: none; font-weight: 700; font-size: 11px; white-space: nowrap; animation: llv-floatup 1.6s ease-out forwards; text-shadow: 0 1px 2px #000; }
+@keyframes llv-floatup { 0% { transform: translateY(6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-18px); opacity: 0; } }
+.llv-bump { animation: llv-bump 0.45s ease-out; }
+@keyframes llv-bump { 0% { transform: scale(1); } 35% { transform: scale(1.12); } 100% { transform: scale(1); } }
+/* A result landing: the stamp slams, a gold flash for a win, a red shake for a loss. */
+.llv-slam { animation: llv-slam 0.42s cubic-bezier(.2,1.5,.35,1) both; }
+@keyframes llv-slam { 0% { transform: scale(1.8) rotate(-12deg); opacity: 0; } 60% { transform: scale(0.94) rotate(-4deg); opacity: 1; } 100% { transform: scale(1) rotate(-4deg); } }
+.llv-flash-gold { animation: llv-flash-gold 0.9s ease-out; }
+@keyframes llv-flash-gold { 0% { box-shadow: 0 0 0 0 rgb(240 207 122 / 0.9), inset 0 0 40px rgb(240 207 122 / 0.35); } 100% { box-shadow: 0 0 0 18px rgb(240 207 122 / 0), inset 0 0 0 rgb(240 207 122 / 0); } }
+.llv-shake { animation: llv-shake 0.5s ease-in-out; }
+@keyframes llv-shake { 0%, 100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(5px); } 60% { transform: translateX(-3px); } 80% { transform: translateX(2px); } }
+/* A milestone: the banner that drops in, holds, and goes. */
+.llv-celebrate { animation: llv-celebrate 3.4s ease-in-out both; }
+@keyframes llv-celebrate { 0% { transform: translate(-50%, -24px) scale(0.92); opacity: 0; } 10% { transform: translate(-50%, 0) scale(1.03); opacity: 1; } 16% { transform: translate(-50%, 0) scale(1); } 85% { opacity: 1; } 100% { transform: translate(-50%, -12px); opacity: 0; } }
+/* The office painting's objects: a label on hover and focus, always on a touch screen; a warm glow round the object. */
+.llv-spot { transition: box-shadow 0.15s, background-color 0.15s, border-color 0.15s; }
+.llv-spot:hover, .llv-spot:focus-visible { border-color: rgb(240 207 122 / 0.85); background-color: rgb(240 207 122 / 0.08); box-shadow: 0 0 0 1px rgb(240 207 122 / 0.4), 0 0 24px rgb(240 207 122 / 0.35), inset 0 0 18px rgb(240 207 122 / 0.12); }
+.llv-spot-label { display: none; }
+.llv-spot:hover .llv-spot-label, .llv-spot:focus-visible .llv-spot-label { display: inline; }
+@media (hover: none) { .llv-spot-label { display: inline; } }
+@media (prefers-reduced-motion: reduce) {
+  .llv-slide-up, .llv-stamp-in, .llv-slide-left, .llv-slide-right, .llv-next, .llv-floatup, .llv-bump, .llv-slam, .llv-flash-gold, .llv-shake, .llv-celebrate { animation: none !important; }
+  .btn-primary, .btn-secondary, .btn-danger { transition: none; transform: none !important; }
+  .llv-floatup { display: none; }
+}
 .llv-pulse { animation: llv-pulse 1.6s ease-in-out infinite; }
 @keyframes llv-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(217, 183, 95, 0.0); } 50% { box-shadow: 0 0 0 5px rgba(217, 183, 95, 0.45); } }
 .llv-ring { animation: llv-ring 1.4s ease-out infinite; }

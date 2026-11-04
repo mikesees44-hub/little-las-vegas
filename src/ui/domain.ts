@@ -58,6 +58,7 @@ const MAP: Record<string, Domain> = {
   // The office's objects (office/hotspots.ts)
   'office.chair': 'crew', 'office.envelope': 'money', 'office.door': 'crew', 'office.ledger': 'money', 'office.phone': 'law',
   'office.calendar': 'family', 'office.newspaper': 'politics', 'office.photos': 'family', 'office.map': 'shore',
+  'office.throne': 'family', 'office.church': 'church', 'office.coat': 'shore',
   // Alert / misc words
   heat: 'law', feds: 'law', fbi: 'law', war: 'rivals', army: 'rivals', strike: 'rivals', hit: 'rivals', church: 'church', priest: 'church',
   charity: 'church', funeral: 'church', goomar: 'romance', nightlife: 'romance', shore: 'shore', boardwalk: 'shore', oceancity: 'shore',

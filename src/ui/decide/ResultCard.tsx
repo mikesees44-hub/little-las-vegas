@@ -31,19 +31,22 @@ export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () =
   const pct = r.chance !== undefined ? Math.round(r.chance * 100) : undefined;
   const roll = pct !== undefined && r.roll !== undefined ? rollLine(r.chance!, r.roll, won(r.tier)) : undefined;
   return (
-    <div className={`panel w-full max-w-md overflow-hidden border-2 bg-noir-900 ${BORDER[r.tier] ?? 'border-gold-600/60'} shadow-2xl shadow-black/80 ${dom ? `${domClass(dom)} llv-dom-edge` : ''}`} role="dialog" aria-label={r.title} data-testid="now-result" data-domain={dom} onClick={(e) => e.stopPropagation()}>
+    // A result lands: a win flashes gold, a loss shakes; the verdict is stamped on (all off under reduced motion).
+    <div className={`panel llv-slide-up w-full max-w-md overflow-hidden border-2 bg-noir-900 ${BORDER[r.tier] ?? 'border-gold-600/60'} shadow-2xl shadow-black/80 ${dom ? `${domClass(dom)} llv-dom-edge` : ''} ${pct !== undefined ? (won(r.tier) ? 'llv-flash-gold' : 'llv-shake') : ''}`} role="dialog" aria-label={r.title} data-testid="now-result" data-domain={dom} onClick={(e) => e.stopPropagation()}>
       <div className={`px-4 py-2 ${BANNER_BG[r.tier] ?? ''}`} data-testid="result-banner">
         <div className="text-[10px] uppercase tracking-[0.25em] text-stone-400">{dom && <span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />}{r.title}{r.who ? ` · ${r.who}` : ''} · {r.when ?? 'done now'}</div>
-        <div className={`font-display text-2xl ${TONE[r.tier] ?? 'text-gold-300'}`} data-testid="now-headline">{pct !== undefined ? TIER_BANNER[r.tier] : r.headline}</div>
+        <div className={`font-display text-2xl ${TONE[r.tier] ?? 'text-gold-300'}`} data-testid="now-headline">{pct !== undefined
+          ? <span className={`llv-slam llv-verdict inline-block ${won(r.tier) ? 'llv-verdict-won' : 'llv-verdict-lost'}`}><span aria-hidden>{won(r.tier) ? '★ ' : '✕ '}</span>{TIER_BANNER[r.tier]}</span>
+          : r.headline}</div>
         {pct !== undefined && <div className="text-[12px] text-stone-300">{r.headline}</div>}
       </div>
       <div className="p-4 pt-2">
         {roll && (
           <div className="mt-1" title={`The roll: ${roll.roll} against ${roll.need}`} data-testid="result-roll">
             <div className="text-[12px] font-semibold text-stone-200">{roll.text}</div>
-            <div className="relative mt-1 h-2.5 overflow-hidden rounded bg-red-900/50">
-              <div className="h-full bg-emerald-600/70" style={{ width: `${roll.need}%` }} />
-              <div className="absolute top-[-2px] h-[14px] w-[3px] bg-stone-100" style={{ left: `calc(${Math.min(99, roll.roll)}% - 1px)` }} />
+            <div className="relative mt-1 h-3.5 overflow-hidden rounded-full border border-noir-600 bg-red-900/50 shadow-inner">
+              <div className="h-full bg-gradient-to-r from-emerald-700 to-emerald-500" style={{ width: `${roll.need}%` }} />
+              <div className="absolute top-[-2px] h-[18px] w-[4px] rounded bg-stone-50 shadow-[0_0_6px_rgba(255,255,255,0.8)]" style={{ left: `calc(${Math.min(99, roll.roll)}% - 2px)` }} />
             </div>
           </div>
         )}

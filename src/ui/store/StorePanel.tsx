@@ -17,6 +17,11 @@ import { ShareWealth } from './ShareWealth';
 
 type Mode = 'shop' | 'share' | 'vacation';
 
+/** The next Store to open starts on this mode (the office's saint opens Share the wealth; the coat rack the vacation). */
+let pendingMode: Mode | undefined;
+export function requestStoreMode(m: Mode): void { pendingMode = m; }
+function takeStoreMode(): Mode | undefined { const m = pendingMode; pendingMode = undefined; return m; }
+
 const VIEW_LABEL = (v: StoreView) => (v === 'luxury' ? 'Luxury' : STORE_TAB_LABEL[v]);
 /** The part of the Don's life a tab (or a thing in it) belongs to: a car is the shore, a gift romance, a tutor the family. */
 const viewDomain = (v: StoreView): Domain => domainOf(`store.${v}`) ?? 'money';
@@ -38,7 +43,7 @@ function matches(it: SpendItem, q: string): boolean {
  * buttons on top: Share the wealth, and the easy vacation planner.
  */
 export function StorePanel({ s, initial }: { s: GameState; initial?: Mode }) {
-  const [mode, setMode] = useState<Mode>(initial ?? 'shop');
+  const [mode, setMode] = useState<Mode>(() => takeStoreMode() ?? initial ?? 'shop');
   const [view, setView] = useState<StoreView>('luxury');
   const [q, setQ] = useState('');
   const lists = useMemo(() => {

@@ -112,6 +112,8 @@ import { UrgentMeeting } from './components/UrgentMeeting';
 import { OfficeContext, type OfficeApi } from './desk/officeApi';
 import { coveredBy, SitDownCard } from './sitdown/SitDownCard';
 import { BossOffice } from './office/BossOffice';
+import { Celebration } from './components/Celebration';
+import { requestStoreMode } from './store/StorePanel';
 import { AssetImg } from './hood/AssetImg';
 import { ClubOnMap, SocialClub } from './office/SocialClub';
 import type { DelegateOp, OfficeVisitor } from '../engine/bossOffice';
@@ -853,6 +855,12 @@ export function App({ startOn = 'title' }: AppProps) {
     window.addEventListener('llv-open-file', on);
     return () => window.removeEventListener('llv-open-file', on);
   });
+  // The phone on the Desk's painting (and anywhere else that wants it): the phone window.
+  useEffect(() => {
+    const on = () => setPhoneOpen(true);
+    window.addEventListener('llv-open-phone', on);
+    return () => window.removeEventListener('llv-open-phone', on);
+  });
 
   const chair = useChairView(s);
   if (menu) {
@@ -921,6 +929,7 @@ export function App({ startOn = 'title' }: AppProps) {
     openMap: () => { setRoute({}); setOfficeView(undefined); },
     openFamily: () => openRoute({ panel: 'house', section: 'tree' }),
     openNews: () => openRoute({ panel: 'chronicle', section: 'papers' }),
+    openPlace: (key: string) => { const [k, mode] = key.split('#'); if (mode === 'share' || mode === 'vacation') requestStoreMode(mode); setOfficeView(undefined); openRoute(k); },
     openAdvance: () => startAdvance('week'),
   };
   // Plans in motion, the live alerts, the underboss's picks (ui/plans): the windows only the App opens.
@@ -1228,6 +1237,7 @@ export function App({ startOn = 'title' }: AppProps) {
       }}
         onApprove={() => { setOrders((o) => o.map((x, j) => (j === toast.index ? { ...x, fund: 'family' } : x))); setToast({ ...toast, action: { ...toast.action, fund: 'family' }, short: 0, at: Date.now() }); }} />}
       {feedback && !toast && <FeedbackToast item={feedback} onClose={closeFeedback} />}
+      {!s.gameOver && <Celebration s={s} />}
       </EmpireHost>
       </FeedbackContext.Provider>
     </Providers>
