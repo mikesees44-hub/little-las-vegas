@@ -6,6 +6,7 @@ import {
 import type { GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { fmt$ } from '../format';
+import { DoneMark } from '../components/Layout';
 
 /**
  * OCEAN CITY, THE DRY TOWN (engine/oceanCity.ts): one panel, three parts —
@@ -37,17 +38,25 @@ export function OceanCityPanel({ s, open: open0 = false }: { s: GameState; open?
   const odds = o?.run ? seizeOdds(s, o.run.route) : seizeOdds(s, route);
   const raid = raidOdds(s);
   return (
-    <section className="rounded-md border border-gold-600/40 bg-noir-800/60 p-3 space-y-2" data-testid="ocean-city">
-      <button type="button" className="flex w-full items-center justify-between text-left" onClick={() => setOpen((x) => !x)} aria-expanded={open} data-testid="oc-toggle">
-        <span className="panel-title">Ocean City: the dry town</span>
-        <span className="text-[11px] text-gold-300">{open ? 'Close ▴' : 'Open ▾'}</span>
+    <section className="llv-card-box llv-card-attention space-y-2" data-testid="ocean-city">
+      <button type="button" className="flex w-full items-start gap-3 text-left" onClick={() => setOpen((x) => !x)} aria-expanded={open} data-testid="oc-toggle">
+        <span className="min-w-0 flex-1">
+          <span className="block text-[10px] uppercase tracking-[0.3em] text-stone-500">Over the bridge</span>
+          <span className="block font-display text-lg leading-tight text-gold-300">Ocean City: the dry town</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {(['run', 'easy', 'bought'] as const).filter((k) => (k === 'bought' ? o?.stance === 'bought' || o?.stance === 'wet' : !!o?.[k])).length > 0 && (
+            <span className="hidden sm:inline text-[11px] text-emerald-300">{[o?.run && 'run', o?.easy && 'speakeasy', (o?.stance === 'bought' || o?.stance === 'wet') && 'commissioner'].filter(Boolean).join(' · ')}</span>
+          )}
+          <span className="llv-menu-btn h-7">{open ? 'Close ▴' : 'Open ▾'}</span>
+        </span>
       </button>
-      <p className="text-[12px] text-stone-400" data-testid="oc-status">{ocStatus(s)}</p>
+      <p className="llv-prose text-stone-400" data-testid="oc-status">{ocStatus(s)}</p>
       {open && (
         <div className="space-y-3">
           {/* The run */}
-          <div className="rounded border border-noir-700 p-2 space-y-1.5" data-testid="oc-run">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-stone-500">The run</div>
+          <div className={`llv-card-box ${o?.run ? 'llv-card-done' : 'llv-card-plain'} space-y-1.5`} data-testid="oc-run">
+            <PartHead n={1} title="The run" done={o?.run ? 'Running' : undefined} />
             {o?.run ? (
               <p className="text-[12px] text-stone-300">
                 {ROUTES[o.run.route].label}, run by {o.run.runner === s.playerId ? 'you' : s.characters[o.run.runner]?.firstName ?? '?'}: ~{caseCount(s, o.run.route)} cases a week at {fmt$(caseMargin(s))}. {fmt$(o.run.earned)} so far, {o.run.seized} load{o.run.seized === 1 ? '' : 's'} seized. Seized {pct(odds.p)} of weeks ({odds.reasons.slice(0, 3).map((r) => `${r.label} ${r.value >= 0 ? '+' : ''}${r.value}`).join(', ')}).
@@ -73,8 +82,8 @@ export function OceanCityPanel({ s, open: open0 = false }: { s: GameState; open?
           </div>
 
           {/* The speakeasy */}
-          <div className="rounded border border-noir-700 p-2 space-y-1.5" data-testid="oc-easy">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-stone-500">The speakeasy</div>
+          <div className={`llv-card-box ${o?.easy && !(o.easy.closedUntil && o.easy.closedUntil > s.week) ? 'llv-card-done' : o?.easy ? 'llv-card-danger' : 'llv-card-plain'} space-y-1.5`} data-testid="oc-easy">
+            <PartHead n={2} title="The speakeasy" done={o?.easy && !(o.easy.closedUntil && o.easy.closedUntil > s.week) ? 'Open' : undefined} />
             {o?.easy ? (
               <>
                 <p className="text-[12px] text-stone-300">
@@ -100,8 +109,8 @@ export function OceanCityPanel({ s, open: open0 = false }: { s: GameState; open?
           </div>
 
           {/* The commissioner */}
-          <div className="rounded border border-noir-700 p-2 space-y-1.5" data-testid="oc-batten">
-            <div className="text-[11px] uppercase tracking-[0.2em] text-stone-500">Commissioner Batten and the Camp Meeting board</div>
+          <div className={`llv-card-box ${o?.stance === 'bought' || o?.stance === 'wet' ? 'llv-card-done' : 'llv-card-plain'} space-y-1.5`} data-testid="oc-batten">
+            <PartHead n={3} title="Commissioner Batten and the Camp Meeting board" done={o?.stance === 'wet' ? 'The town went wet' : o?.stance === 'bought' ? 'On the envelope' : undefined} />
             {o?.vote && <p className="text-[12px] text-amber-200" data-testid="oc-vote">The wet referendum: support {o.vote.support}% (it wins on about those odds), {o.vote.ends - s.week} week{o.vote.ends - s.week === 1 ? '' : 's'} to the vote.</p>}
             {o?.stance === 'bought' && <p className="text-[12px] text-stone-400">He takes {fmt$(envelope(s))} a week.</p>}
             {o?.stance !== 'wet' && (
@@ -115,12 +124,23 @@ export function OceanCityPanel({ s, open: open0 = false }: { s: GameState; open?
           </div>
 
           {o?.log.length ? (
-            <ul className="text-[11px] text-stone-500 space-y-0.5" data-testid="oc-log">
+            <ul className="border-t border-noir-700 pt-2 text-[11.5px] text-stone-500 space-y-0.5" data-testid="oc-log">
               {o.log.slice(-4).reverse().map(([w, t], i) => <li key={i}>Week {w}: {t}</li>)}
             </ul>
           ) : null}
         </div>
       )}
     </section>
+  );
+}
+
+/** One part of the Ocean City panel: a number, the title, and the done mark once it is up and running. */
+function PartHead({ n, title, done }: { n: number; title: string; done?: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span aria-hidden className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-gold-600/60 text-[11px] font-semibold text-gold-300">{n}</span>
+      <h5 className="min-w-0 flex-1 text-[13px] font-semibold leading-tight text-stone-100">{title}</h5>
+      {done && <DoneMark>{done}</DoneMark>}
+    </div>
   );
 }
