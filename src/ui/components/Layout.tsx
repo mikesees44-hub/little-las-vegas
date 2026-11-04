@@ -134,13 +134,13 @@ export function PlaceBanner({ art, d, title, sub, aside, testid }: { art: AssetK
     <div className={`llv-banner ${domClass(d)}`} data-testid={testid} data-domain={d}>
       <AssetImg k={art} alt="" className="llv-banner-img" fallback={<span className="llv-banner-fallback" aria-hidden />} />
       <div className="llv-banner-wash" aria-hidden />
-      <div className="relative flex h-full items-end gap-2 p-3">
+      <div className="relative flex h-full min-h-[104px] flex-wrap items-end gap-2 p-3">
         <DomainChip d={d} size={26} />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-[10rem] flex-1">
           <div className="font-display text-lg leading-tight llv-dom-ink sm:text-xl">{title}</div>
           {sub && <div className="text-[12px] leading-snug text-stone-200">{sub}</div>}
         </div>
-        {aside && <div className="flex shrink-0 flex-wrap justify-end gap-1.5">{aside}</div>}
+        {aside && <div className="flex w-full flex-wrap gap-1.5 sm:w-auto sm:shrink-0 sm:justify-end">{aside}</div>}
       </div>
     </div>
   );
