@@ -3,6 +3,7 @@ import { displayName, isFree } from './characters';
 import { holder } from './council';
 import { counsel } from './counsel';
 import { stakesLine } from './decide';
+import { classify } from './journal';
 import { applyPreset, ltView, presetOf, setAlways, type LtPreset, type LtState } from './lieutenants';
 import type { Character, Effect, EventInstance, GameState } from './types';
 
@@ -33,7 +34,7 @@ export type AlwaysCat = keyof NonNullable<LtState['always']>;
 export const DELEGATION: Record<DelegationLevel, { name: string; blurb: string; preset: LtPreset; always: AlwaysCat[] }> = {
   hands: { name: 'Hands-on', blurb: 'You see everything. Your people propose; you say yes or no.', preset: 'hands', always: [] },
   balanced: { name: 'Balanced', blurb: 'Your people handle the routine. The lawyers, the other families, the Table and every big step wait for you.', preset: 'balanced', always: [] },
-  chairman: { name: 'Chairman', blurb: 'Your underboss and capos settle the routine with the consigliere\'s advice. Only real decisions reach you. All of it stays on the Handled for you list.', preset: 'run', always: ['envelopes', 'asks', 'mornings'] },
+  chairman: { name: 'Chairman', blurb: 'Your underboss and capos settle the routine with the consigliere\'s advice. Only real decisions reach you: a life, a war, real money, the law.', preset: 'run', always: ['envelopes', 'asks', 'mornings'] },
 };
 export const DELEGATION_IDS: DelegationLevel[] = ['hands', 'balanced', 'chairman'];
 
@@ -84,6 +85,12 @@ export function notRoutine(s: GameState, ev: EventInstance): string | undefined 
   if (ev.mandatory) return 'it lands now';
   if (ev.defId === 'tribute_audience') return 'the envelope';
   if ((ev.priority ?? 0) >= 80) return 'it is big';
+  // His own life is never the consigliere's to settle: his wife, his children, a woman (the playthrough saw advisers rule on a mistress).
+  const theme = String((ev.meta as { theme?: string } | undefined)?.theme ?? '');
+  const me = s.characters[s.playerId];
+  const kin = new Set([s.playerId, ...(me?.childrenIds ?? []), ...(me?.spouseId ? [me.spouseId] : [])]);
+  if (theme === 'romance' || theme === 'family' || (ev.actors ?? []).some((id) => kin.has(id) || s.characters[id]?.gender === 'F' || !!s.characters[id]?.dynasty)
+    || ['romance', 'family'].includes(classify(s, `${ev.title} ${ev.text}`, 'town'))) return 'your own life';
   const effs: Effect[] = ev.choices.flatMap((c) => c.effects ?? []);
   if (effs.some((e) => HEAVY.has(e.type))) return 'a life, a man\'s freedom, a war or the law';
   const money = ev.choices.map((c) => (c.effects ?? []).reduce((a, e) => a + (e.type === 'money' ? e.amount : 0), 0));
@@ -151,12 +158,12 @@ addHandlerHook((s, it) => {
     const ev = s.pendingEvents.find((e) => e.iid === it.ref.event);
     if (!delegatedAsk(s, ev)) return undefined;
     const p = consiglierePick(s, ev!);
-    return p ? { by: p.by, byId: p.byId, does: `as the consigliere says: ${p.label.toLowerCase()}`, day: 6 } : undefined;
+    return p ? { by: p.by, byId: p.byId, does: `as the consigliere says: ${p.label.charAt(0).toLowerCase()}${p.label.slice(1)}`, day: 6 } : undefined;
   }
   if (it.kind === 'envelope' && alwaysOn(s, 'envelopes')) {
     const ev = s.pendingEvents.find((e) => e.defId === 'tribute_audience');
     const his = ev?.choices.find((c) => c.id === 'his');
-    return his ? { by: 'Your underboss', does: his.label.toLowerCase(), day: 0 } : undefined;
+    return his ? { by: 'Your underboss', does: `${his.label.charAt(0).toLowerCase()}${his.label.slice(1)}`, day: 0 } : undefined;
   }
   return undefined;
 });

@@ -52,7 +52,9 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
   // hands every small ask like it to him from now on (engine/delegation.ts). A real decision keeps the hand-off.
   const routine = routineEvent(s, ev);
   const cp = routine ? consiglierePick(s, ev) : undefined;
-  const cpName = cp?.byId ? s.characters[cp.byId]?.nickname || s.characters[cp.byId]?.firstName : undefined;
+  const cpMan = cp?.byId ? s.characters[cp.byId] : undefined;
+  const cpName = cpMan?.firstName;
+  const cpWho = cpMan?.rank === 'consigliere' ? 'the consigliere' : cpName ?? 'your people';
   const options: DecisionOption[] = ev.choices.map((c) => ({
     id: c.id,
     label: c.label,
@@ -111,7 +113,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         onLater={onClose}
         laterLabel="Decide later"
         onHandOff={cp ? () => onChoose(cp.choiceId) : hand ? () => onChoose((hand.op as { choiceId: string }).choiceId) : undefined}
-        handOffLabel={cp ? `Do what ${cpName ?? 'the consigliere'} says (${cp.label})` : hand ? `${hand.label} (${hand.does})` : undefined}
+        handOffLabel={cp ? `Do what ${cpWho} says (${cp.label})` : hand ? `${hand.label} (${hand.does})` : undefined}
         advice={<AdviceButton s={s} subject={{ kind: 'event', iid: ev.iid }} onChoose={onChoose} auto={false} />}
         keys={!talk}
         optionTestId="event-choice"

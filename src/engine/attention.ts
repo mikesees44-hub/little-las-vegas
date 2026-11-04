@@ -68,6 +68,8 @@ export interface DeskQueue {
 }
 
 const CONSIGLIERE_DOMAINS = new Set(['law', 'families', 'table']);
+/** Lower-case the first letter only (names inside a label keep their capitals). */
+const lc1 = (x: string) => `${x.charAt(0).toLowerCase()}${x.slice(1)}`;
 const money$ = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 
 function effectsOf(cs: readonly { effects?: readonly Effect[] }[]): Effect[][] {
@@ -193,7 +195,7 @@ export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
     const c = weekCheckIns(s).find((x) => `am:${x.key}` === it.key);
     const own = c?.problem?.answers.find((x) => x.id === c.problem!.own);
     const k = c ? s.characters[c.capoId] : undefined;
-    return { by: k ? displayName(k) : c?.name ?? 'The capo', byId: c?.capoId, does: own ? `his way: ${own.label.toLowerCase()}` : 'his own way', day: it.ref.day };
+    return { by: k ? displayName(k) : c?.name ?? 'The capo', byId: c?.capoId, does: own ? `his way: ${lc1(own.label)}` : 'his own way', day: it.ref.day };
   }
   if (it.ref.brief) {
     const bf = briefing(s);
@@ -201,7 +203,7 @@ export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
     const rec = b?.options.find((o) => o.id === b.recommended);
     const who = b?.charId ? s.characters[b.charId] : undefined;
     const said = b ? speakerLabel(bf, b.speaker) : undefined;
-    return { by: who ? displayName(who) : said ? said.charAt(0).toUpperCase() + said.slice(1) : ub.by, byId: who?.id, does: rec && rec.id !== 'wait' ? `as he recommends: ${rec.label.toLowerCase()}` : 'it waits a week' };
+    return { by: who ? displayName(who) : said ? said.charAt(0).toUpperCase() + said.slice(1) : ub.by, byId: who?.id, does: rec && rec.id !== 'wait' ? `as he recommends: ${lc1(rec.label)}` : 'it waits a week' };
   }
   if (it.ref.event) {
     const ev = s.pendingEvents.find((e) => e.iid === it.ref.event);

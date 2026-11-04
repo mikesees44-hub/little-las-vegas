@@ -26,17 +26,19 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 function GoalCard({ g, onGo }: { g: AmbView; onGo: Go }) {
   const done = g.progress >= 1;
   return (
-    <li className={`llv-paper flex min-w-0 flex-col rounded border border-noir-800 px-2 py-1.5 ${domClass(g.domain as Domain)} llv-dom-edge`} data-testid={`goal-${g.id}`} title={g.hint}>
+    <li className={`llv-paper flex min-w-0 flex-col rounded border border-noir-800 px-2 py-1 sm:py-1.5 ${domClass(g.domain as Domain)} llv-dom-edge`} data-testid={`goal-${g.id}`} title={`${g.hint} Reward: ${g.reward}.`}>
       <div className="flex items-baseline justify-between gap-2">
         <span className="min-w-0 truncate text-[12px] font-semibold text-stone-100">{done ? '✓ ' : ''}{g.title}</span>
         {g.go && <button type="button" className="btn-quiet shrink-0 text-[10px]" onClick={() => onGo(g.go!)} data-testid="goal-show">Show me ▸</button>}
       </div>
-      <div className="mt-1 h-1.5 overflow-hidden rounded bg-noir-700" role="progressbar" aria-valuenow={Math.round(g.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={g.title}>
-        <span className={`block h-full ${done ? 'bg-emerald-500' : 'llv-dom-bg bg-gold-500'}`} style={{ width: pct(Math.max(0.03, g.progress)) }} />
-      </div>
-      <div className="mt-0.5 flex flex-wrap justify-between gap-x-2 text-[10px] text-stone-400">
-        <span className="tabular-nums">{g.progressText}</span>
-        <span className="text-gold-300/90">Reward: {g.reward}</span>
+      <div className="mt-0.5 flex items-center gap-2 sm:mt-1 sm:block">
+        <div className="h-1.5 min-w-[3rem] flex-1 overflow-hidden rounded bg-noir-700" role="progressbar" aria-valuenow={Math.round(g.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={g.title}>
+          <span className={`block h-full ${done ? 'bg-emerald-500' : 'llv-dom-bg bg-gold-500'}`} style={{ width: pct(Math.max(0.03, g.progress)) }} />
+        </div>
+        <div className="flex shrink-0 flex-wrap justify-between gap-x-2 text-[10px] text-stone-400 sm:mt-0.5">
+          <span className="tabular-nums">{g.progressText}</span>
+          <span className="hidden text-gold-300/90 sm:inline" data-testid="goal-reward">Reward: {g.reward}</span>
+        </div>
       </div>
     </li>
   );
