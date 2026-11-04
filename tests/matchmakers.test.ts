@@ -241,3 +241,23 @@ describe('her standing', () => {
     expect(matchOdds).toBeTypeOf('function');
   });
 });
+
+describe('the screens', () => {
+  it('the Marriages screen shows her match with its four answers, and her circle; her sheet shows her standing', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { MarriagePanel } = await import('../src/ui/family/MarriagePanel');
+    const { CharacterSheet } = await import('../src/ui/components/CharacterSheet');
+    const { s, wife, p } = withProposal('mm-ui');
+    const html = renderToString(createElement(MarriagePanel, { s }));
+    expect(html).toContain('data-testid="matchmakers"');
+    expect(html).toContain('data-testid="her-match"');
+    expect(html).toContain('data-testid="her-reasons"');
+    expect(html).toContain('data-testid="her-circle"');
+    expect(html).toContain('Bless');
+    settleOrderNow(newCtx(s), ans(wife.id, 'bless'), true);
+    const sheet = renderToString(createElement(CharacterSheet, { s, id: wife.id, onClose: () => {} }));
+    expect(sheet).toContain('data-testid="her-standing"');
+    void p;
+  });
+});
