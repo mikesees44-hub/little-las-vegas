@@ -27,6 +27,7 @@ import { StrikeCard } from './components/StrikeCard';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
+import { delegatedAnswers } from '../engine/delegation';
 import { NowResultHost, postNow, ResultQueue } from './deeds/NowResult';
 import { weekResultCards } from './deeds/weekResults';
 import type { NowResult } from '../engine/deeds/now';
@@ -382,7 +383,8 @@ export function App({ startOn = 'title' }: AppProps) {
   const settledRef = useRef<SettledMark | undefined>(undefined);
   function run(m: Mode, a: Record<string, string>, quiet = false, moves: Record<string, string[]> = mgMoves) {
     // The one place a week's choices are built (the clock and Advance Week alike): the days plan supplies the evenings and the mornings.
-    const choices: PlayerChoices = weekChoices(s, { choices: a, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) });
+    // What the boss's standing orders settle for him (delegation.ts: small asks by the consigliere's pick, the envelope by the underboss's advice).
+    const choices: PlayerChoices = weekChoices(s, { choices: { ...delegatedAnswers(s, a, takenKeys), ...a }, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) });
     // A ceremony the player sat through replaces the old single card.
     const sawCeremony = Object.keys(moves).some((iid) => s.pendingEvents.find((e) => e.iid === iid)?.defId === 'making');
     const cueFilter = (c: CutsceneCue) => !(sawCeremony && c.key === 'made_man');
@@ -460,7 +462,7 @@ export function App({ startOn = 'title' }: AppProps) {
     // Skipping the rest of the week brings out what it still held (daily.ts): the review lists it.
     const out = releaseAll(s);
     if (out !== s) { setS(out); setReady(m); return; }
-    if (!readyReview(s, { answers, orders, briefSkip }).clear) { setReady(m); return; }
+    if (!readyReview(s, { answers, orders, briefSkip, taken: takenKeys }).clear) { setReady(m); return; }
     setMode(m);
     setAdvancing(true);
     turnWeek(() => run(m, answers));
@@ -469,7 +471,7 @@ export function App({ startOn = 'title' }: AppProps) {
   function reviewFirst(m: Mode) {
     setReady(undefined);
     if (unanswered.length) { setMode(m); setAdvancing(true); setEventIdx(firstOpen(answers)); return; }
-    const r = readyReview(s, { answers, orders, briefSkip });
+    const r = readyReview(s, { answers, orders, briefSkip, taken: takenKeys });
     const day = r.mornings[0] ? Number(r.mornings[0].key.split(':')[0]) : undefined;
     setSpeed(0);
     setDayWin(Number.isFinite(day) ? day : daysOf(s).day);
@@ -899,7 +901,7 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (a.kind === 'alert') onAlert(a.alert);
   }
   const navExtras = {
-    'nav.settings': <SettingsPanel />,
+    'nav.settings': <SettingsPanel game={{ s, update: (f, what) => act(f, what) }} />,
     'nav.help': <HelpBody onAdvice={() => setAdvice(true)} onGlossary={() => setHelp({})} />,
   };
   const deskApi = {
@@ -1183,7 +1185,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {/* The Don's book (ui/planner): the brief, the audience, the datebook, the black book, the standing orders. */}
       {!s.gameOver && <PlannerHost s={s} ui={{ answers, briefSkip, orders }} speed={speed} note={clockNote} blocked={overlayOpen || busy || mondayCard || rxWaiting || phoneOpen}
         api={{ onEvent: deskApi.onEvent, onUrgent: (id) => setUrgent(id), onDay: deskApi.onDay, onSitDown: deskApi.onSitDown, onEnvelope: () => tributeApi.openAudience() }} />}
-      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}

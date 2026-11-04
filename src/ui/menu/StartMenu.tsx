@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { DelegationPicker } from '../planner/DelegationPicker';
 import { newGameWith, recommendedStart, STARTS, type StartId } from '../../engine/starts';
 import type { GameState } from '../../engine/types';
 import { musicPlaying, savePref, startMusic, stopMusic } from '../audio';
@@ -192,7 +193,7 @@ export function SlotList({ slots, onLoad, onDelete }: { slots: (SlotMeta | undef
   );
 }
 
-export function SettingsPanel() {
+export function SettingsPanel({ game }: { /** In a game: the delegation level is the game's own (saved with it). */ game?: { s: GameState; update: (f: (s: GameState) => GameState, what: string) => void } } = {}) {
   const [st, setSt] = useState<Settings>(() => getSettings());
   const [music, setMusic] = useState(() => musicPlaying());
   const upd = (p: Partial<Settings>) => setSt(setSettings(p));
@@ -204,6 +205,12 @@ export function SettingsPanel() {
   return (
     <div className="space-y-2 text-sm" data-testid="settings">
       <div className={row}><span>Music (doo-wop, 1960)</span><button className={music ? 'btn-gold text-xs py-1' : 'btn-ghost text-xs py-1'} onClick={toggleMusic}>{music ? 'On' : 'Off'}</button></div>
+      {game && !game.s.gameOver && (
+        <div className="panel p-3 space-y-1.5" data-testid="setting-delegation">
+          <div className="text-stone-300">Delegation <span className="text-xs text-stone-500">· how much you run yourself (this game)</span></div>
+          <DelegationPicker s={game.s} act={game.update} />
+        </div>
+      )}
       <div className="panel p-3 space-y-1.5" data-testid="setting-help-level">
         <div className="text-stone-300">Help</div>
         <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Help level">

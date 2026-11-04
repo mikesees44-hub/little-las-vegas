@@ -1,4 +1,6 @@
 import type { OfficeUi } from '../bossOffice';
+import { oddsWord as sharedOddsWord } from '../decide';
+import { stormLine, stormWarnings } from '../storms';
 import { briefing, recommendedActions } from '../briefing';
 import { crew, displayName, isFree, player } from '../characters';
 import { holder } from '../council';
@@ -76,8 +78,10 @@ export interface DailyBrief {
 }
 
 /** Plain-language odds (EASIER_NOT_SHALLOWER #13). */
+/** The odds in words: the one shared scale (decide.ts), with its article for a sentence ("It is a coin flip"). */
 export function oddsWord(p: number): string {
-  return p >= 0.9 ? 'near certain' : p >= 0.65 ? 'likely' : p >= 0.4 ? 'a coin flip' : p >= 0.2 ? 'a long shot' : 'a prayer';
+  const w = sharedOddsWord(p);
+  return w === 'long shot' || w === 'coin flip' ? `a ${w}` : w;
 }
 
 const fm = (n: number) => fmtMoney(Math.round(n));
@@ -108,6 +112,11 @@ function threats(s: GameState, low: boolean): BriefLine[] {
   const rows = tips.map((t) => ({ t, l: tipLine(s, t), r: tipConfidence(s, t) })).sort((a, b) => (a.l.days ?? 99) - (b.l.days ?? 99) || b.r.est - a.r.est);
   for (const { t, l, r } of rows.slice(0, 4)) {
     out.push({ id: `thr:${t.id}`, text: `${l.text}, ${l.when}${l.days !== undefined ? ` (${l.days <= 0 ? 'today' : l.days === 1 ? 'tomorrow' : `${l.days} days`})` : ''}`, sub: `From ${t.sourceName}${r.corroborated ? ', and a second source' : ''}.`, conf: r.conf, src: `${r.src.grade} · ${r.src.word}`, dom: t.by === 'police' || t.by === 'fbi' ? 'law' : 'rivals', tone: r.conf === 'rumor' ? 'warn' : 'bad', go: { tip: t.id } });
+  }
+  // Storm warnings (storms.ts): the big things 1-2 weeks out that no tip names, with the odds and what would help.
+  for (const x of stormWarnings(s).filter((y) => !y.id.startsWith('tip:')).slice(0, 2)) {
+    const h = x.helps[0];
+    out.push({ id: `thr:storm:${x.id}`, text: `Storm warning: ${stormLine(x)}.`, sub: `Mostly: ${x.why}.${h ? ` What would help: ${h.label.charAt(0).toLowerCase()}${h.label.slice(1)}.` : ''}`, conf: 'likely', src: 'B · what you can see', dom: x.domain === 'money' ? 'money' : x.domain === 'rivals' ? 'rivals' : 'law', tone: x.tone === 'red' ? 'bad' : 'warn', go: h?.go ? { tab: `${h.go.panel}${h.go.section ? `.${h.go.section}` : ''}` } : undefined });
   }
   const storm = stormClock(s);
   if (storm) out.push({ id: 'thr:storm', text: storm.text, conf: 'confirmed', src: 'A · the radio', dom: 'shore', tone: 'bad', go: { datebook: true } });
