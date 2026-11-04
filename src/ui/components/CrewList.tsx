@@ -16,6 +16,7 @@ import { fmt$, signed } from '../format';
 import { ActionCard, useOrders } from './Orders';
 import { CharLink, Face, TraitIcons } from './People';
 import { LooksBadge } from './LooksBadge';
+import { PlayCard } from './Layout';
 import { useClarity } from '../clarity/context';
 import { TaskAdvice } from '../clarity/TaskAdvice';
 import { capoDistrict } from '../../engine/candidates';
@@ -63,19 +64,12 @@ function Council({ s }: { s: GameState }) {
           const tasks = (Object.keys(TASKS) as CouncilTask[]).filter((t) => TASKS[t].seat === st);
           const cands = crew(s).filter((c) => isFree(s, c) && !c.specialty && c.rank !== 'associate' && c.id !== h?.id).sort((a, b) => b.attributes[info.skill] - a.attributes[info.skill]);
           return (
-            <div key={st} className="rounded-md border border-noir-700 bg-noir-800/60 p-2.5">
-              <div className="flex justify-between items-baseline">
-                <div className="font-semibold text-gold-300">{info.name}</div>
-                <div className="text-[10px] uppercase tracking-widest text-stone-500">{info.skill}</div>
-              </div>
-              <div className="mt-1 flex gap-2 items-center">
-                {h ? <Face s={s} c={h} size={40} /> : <div className="w-10 h-12 rounded bg-noir-900 border border-dashed border-noir-600" />}
-                <div className="min-w-0 text-sm">
-                  {h ? <CharLink s={s} id={h.id} /> : <span className="text-stone-500">Vacant</span>}
-                  {h && <div className="text-[11px] text-stone-400">{info.skill} {h.attributes[info.skill]} · ×{seatPower(s, st).toFixed(2)}</div>}
-                </div>
-              </div>
-              <label className="block mt-2 text-[11px] text-stone-500">Task</label>
+            <PlayCard key={st} d="crew" testid={`council-seat-${st}`}
+              art={h ? <Face s={s} c={h} size={66} /> : <span className="mb-1 h-[79px] w-[66px] rounded border border-dashed border-noir-500 bg-noir-900/70" aria-label="Vacant" />}
+              corner={<span className="rounded bg-noir-950/80 px-1 text-[10px] uppercase tracking-widest text-stone-300">{info.skill}</span>}
+              title={info.name}
+              lines={[h ? <CharLink s={s} id={h.id} /> : <span className="text-stone-500">Vacant</span>, h ? <>{info.skill} {h.attributes[info.skill]} · ×{seatPower(s, st).toFixed(2)}</> : undefined]}>
+              <label className="block mt-1.5 text-[11px] text-stone-500">Task</label>
               <select className="w-full rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={seat.task} onChange={(e) => {
                 const t = e.target.value as CouncilTask;
                 queue({ kind: 'councilTask', seat: st, task: t, target: TASKS[t].targeted ? (seat.target ?? s.rivals.find((r) => r.kind === 'mob')?.id) : undefined });
@@ -95,7 +89,7 @@ function Council({ s }: { s: GameState }) {
                   {h ? 'Compare candidates…' : `Appoint: compare ${cands.length} candidates…`}
                 </button>
               )}
-            </div>
+            </PlayCard>
           );
         })}
       </div>
@@ -115,8 +109,8 @@ function Vassals({ s }: { s: GameState }) {
           const d = s.districts.find((x) => x.capoId === c.id);
           const keep = c.keep ?? CAPO_CUT;
           return (
-            <div key={c.id} className="rounded-md border border-noir-700 bg-noir-800/60 p-2 flex flex-wrap gap-2 items-center">
-              <Face s={s} c={c} size={40} />
+            <div key={c.id} className="llv-card-box llv-card-plain llv-d-crew llv-dom-edge llv-dom-tint flex flex-wrap items-center gap-2.5 !p-2">
+              <Face s={s} c={c} size={56} />
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold"><CharLink s={s} id={c.id} /> <LooksBadge s={s} id={c.id} compact /> <span className="text-xs text-stone-500 font-normal">{d ? `holds ${d.name}` : 'no district'}</span></div>
                 <div className="text-[11px] text-stone-400">kicks up {Math.round((1 - keep) * 100)}% · keeps {Math.round(keep * 100)}% · {seenSkim(s, c, purseFlags(s, c), !!getSettings().devIds, skimRate(s, c))} · his own money {seenWealth(s, c, !!getSettings().devIds)} · {regime(s, c.id).length} men</div>

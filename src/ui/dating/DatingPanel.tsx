@@ -8,6 +8,7 @@ import { isAdult } from '../../engine/dating';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
+import { PlayCard } from '../components/Layout';
 import { useShell } from '../shell/context';
 import { fmt$ } from '../format';
 
@@ -90,22 +91,11 @@ export function PersonCard({ s, r, compact }: { s: GameState; r: PersonRow; comp
   if (!c) return null;
   const [first, ...rest] = r.actions;
   return (
-    <li className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="dating-person" data-id={r.id}>
-      <div className="flex gap-2.5">
-        <Face s={s} c={c} size={48} />
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="font-semibold text-stone-100 text-sm"><CharLink s={s} id={r.id} /></span>
-            <span className="text-[11px] text-stone-500">{r.age}</span>
-            <Stage r={r} />
-          </div>
-          <div className="text-[11px] text-stone-400">{r.via}{r.notes.length ? ` · ${r.notes.join(' · ')}` : ''}</div>
-          <div className="mt-1 flex items-center gap-2">
-            <div className="h-1.5 w-24 rounded bg-noir-700 overflow-hidden"><div className="h-full bg-rose-400" style={{ width: `${r.aff}%` }} /></div>
-            <span className="text-[11px] text-stone-300">Her feelings: {r.feelings}</span>
-          </div>
-        </div>
-      </div>
+    <PlayCard as="li" d="romance" testid="dating-person" dataAttrs={{ 'data-id': r.id }}
+      art={<Face s={s} c={c} size={compact ? 58 : 70} />}
+      corner={<Stage r={r} />}
+      title={<CharLink s={s} id={r.id} />}
+      lines={[<>{r.age} · {r.via}{r.notes.length ? ` · ${r.notes.join(' · ')}` : ''}</>, <span className="flex items-center gap-2"><span className="h-1.5 w-16 shrink-0 overflow-hidden rounded bg-noir-700"><span className="block h-full bg-rose-400" style={{ width: `${r.aff}%` }} /></span>Her feelings: {r.feelings}</span>]}>
       {first && <div className="mt-2"><ActionCard s={s} action={first} compact={compact} /></div>}
       {rest.length > 0 && (
         <div className="mt-1">
@@ -113,7 +103,7 @@ export function PersonCard({ s, r, compact }: { s: GameState; r: PersonRow; comp
           {more && <div className="mt-1 space-y-1.5">{rest.map((a, i) => <ActionCard key={i} s={s} action={a} compact />)}</div>}
         </div>
       )}
-    </li>
+    </PlayCard>
   );
 }
 
@@ -207,7 +197,7 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
       {tab === 'together' && (
         <section data-testid="dating-together">
           {v.relationships.length === 0 && <p className="text-xs text-stone-400">No one yet. Start with <button type="button" className="text-gold-400 underline" onClick={() => setTab('people')}>people you know</button>: talk first, then ask her out. Each step is hers to take.</p>}
-          <ul className="space-y-2">{v.relationships.map((r) => <PersonCard key={r.id} s={s} r={r} />)}</ul>
+          <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">{v.relationships.map((r) => <PersonCard key={r.id} s={s} r={r} />)}</ul>
         </section>
       )}
 
@@ -215,7 +205,7 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
         <section className="space-y-3" data-testid="dating-people">
           <p className="text-[11px] text-stone-400">Women you have met or can reasonably meet, all adults. The ladder: acquaintance → friends → attraction → dating → committed → marriage. She climbs it herself, or not.</p>
           {v.people.length === 0 && <p className="text-xs text-stone-500">Nobody yet. Get introduced to someone from the neighborhood below, or walk the boardwalk.</p>}
-          <ul className="space-y-2">{v.people.slice(0, 12).map((r) => <PersonCard key={r.id} s={s} r={r} compact />)}</ul>
+          <ul className="grid gap-2.5 grid-cols-2 lg:grid-cols-3">{v.people.slice(0, 12).map((r) => <PersonCard key={r.id} s={s} r={r} compact />)}</ul>
           {v.people.length > 12 && <p className="text-[11px] text-stone-500">And {v.people.length - 12} more; open anyone's sheet from the map or the walk.</p>}
           {v.intros.length > 0 && (
             <div>
