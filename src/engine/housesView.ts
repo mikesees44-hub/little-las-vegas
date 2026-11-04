@@ -154,6 +154,25 @@ export function feudsBetween(s: GameState, a: string, b: string): Grudge[] {
   return (s.lineage?.grudges ?? []).filter((g) => (g.h === a && g.vs === b) || (g.h === b && g.vs === a));
 }
 
+/** Which crew or outfit a house belongs to ("Philly crew", "New York", "Chicago", "Vegas"...). Undefined: none. */
+export function crewOfHouse(s: GameState, h: LHouse): string | undefined {
+  if (h.player) return `${s.houseName} Family (yours)`;
+  if (h.faction === 'manno') return 'Manno crew (answers to Philly)';
+  if (h.faction === 'feldstein') return 'Feldstein crew (New York ties)';
+  if (h.faction === 'kessler') return 'Kessler crew';
+  if (h.faction === 'philly') return 'Philly crew';
+  if (h.faction === 'player') return `${s.houseName} Family (yours)`;
+  if (h.type !== 'crime') return undefined;
+  const seat = h.seat;
+  if (/Philadelphia|Camden|Trenton|Atlantic City|Vineland|Salem/.test(seat)) return 'Philly crew';
+  if (/Manhattan|Brooklyn|Bronx|Queens|Staten|New York|Newark|Jersey City/.test(seat)) return 'New York';
+  if (/Chicago/.test(seat)) return 'Chicago Outfit';
+  if (/Las Vegas|Reno/.test(seat)) return 'Vegas';
+  if (/Cleveland/.test(seat)) return 'Cleveland';
+  if (/Wildwood|Cape May/.test(seat)) return 'Shore crew';
+  return 'Independent';
+}
+
 const FACTION_REL: Partial<Record<FactionId, { label: string; tone: RelTone }>> = {
   manno: { label: 'Rival crew', tone: 'bad' }, feldstein: { label: 'Rival crew', tone: 'warn' }, kessler: { label: 'Rival crew', tone: 'warn' },
   philly: { label: 'Philadelphia', tone: 'neutral' }, law: { label: 'The Law', tone: 'bad' },
