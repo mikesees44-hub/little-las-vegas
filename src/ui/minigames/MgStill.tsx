@@ -1,5 +1,10 @@
 import type { ReactNode } from 'react';
 import { NoirStill } from '../cutscene/NoirStill';
+import { AssetImg } from '../hood/AssetImg';
+import type { AssetKey } from '../hood/art/assetUrls';
+
+/** The owner's paintings that replace a drawn still (the drawn one stays as the fallback). */
+const PAINTED: Partial<Record<string, AssetKey>> = { sitdown: 'sitdown_table_1960' };
 import { CADILLAC, Man, Woman } from '../cutscene/figures';
 
 /**
@@ -188,7 +193,7 @@ export function MgStill({ scene, seed = 1 }: { scene: string; seed?: number }) {
   const draw = SCENES[scene];
   if (!draw) return <NoirStill cue={scene} seed={seed} />;
   const id = `mg-${scene}-${seed}-`;
-  return (
+  const drawn = (
     <svg viewBox="0 0 800 460" preserveAspectRatio="xMidYMid slice" className="w-full h-full block" role="img" aria-label={scene}>
       <defs><Grain id={id} /></defs>
       {draw(id)}
@@ -196,4 +201,6 @@ export function MgStill({ scene, seed = 1 }: { scene: string; seed?: number }) {
       <rect x={-20} y={-20} width={840} height={500} filter={`url(#${id}g)`} />
     </svg>
   );
+  const painted = PAINTED[scene];
+  return painted ? <AssetImg k={painted} alt="" className="block h-full w-full object-cover" fallback={drawn} /> : drawn;
 }

@@ -14,6 +14,7 @@ export const ASSET_URLS = {
   title_boardwalk_1960: '/_blob/5136d0a3b7d5ffc450344c874a8a053e',
   // The owner's Desk (top-down, empty middle for cards) and the Office room.
   desk_topdown_1960: '/_blob/d2b1807907ce9be5ab1239abe4c68bca',
+  sitdown_table_1960: '/_blob/582c91f596c1cc46b13f293c9f557f0e',
   office_room_1960: '/_blob/a19eecc4d03bf7f99ec6dd25e75330fe',
   // Already in the asset store (all 148 keys).
   lucky_sevens_arcade: '/_blob/bfd25fc16456180aed155add75bbf8f1',
