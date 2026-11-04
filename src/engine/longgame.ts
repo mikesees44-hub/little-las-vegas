@@ -281,6 +281,8 @@ export function legalWeek(ctx: Ctx): void {
         if (chance(s, indictOdds(s, l))) {
           l.stage = 'indicted';
           l.since = s.week;
+          // The arraignment puts the government's deal on the table (trial.ts): counted for the decade test.
+          if (s.feds) s.feds.stats.bossOffers++;
           s.chronicle.push({ week: s.week, date: { ...s.date }, text: `${displayName(b)} was indicted by a federal grand jury${l.rico ? ' under the racketeering law' : ''}.`, kind: 'heat' });
           if (s.cutscenes.length < 3) s.cutscenes.push({ key: 'arrest_interrogation', title: 'Indicted', text: `Marshals at the door before the coffee is poured. ${b.firstName} asks for his hat.`, week: s.week });
           s.eventQueue.push(buildIndictment(s));

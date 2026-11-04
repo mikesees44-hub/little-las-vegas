@@ -266,11 +266,49 @@ export function regimesWeek(ctx: Ctx): void {
     }
   }
   fillVacantDistricts(ctx);
+  capoFloor(ctx);
   booksWeek(ctx);
 }
 
 /** The most a man's debt to a rival shylock grows to. */
 export const SHYLOCK_DEBT_CAP = 12000;
+
+/** A capo can be seated over a district where the family has this much (B5: was 40, the capo zero lock). */
+export const CAPO_SEAT_MIN = 15;
+/** The capo floor (Top 10 #5a): under this many capos, with this many free made men waiting, one steps up. */
+export const CAPO_FLOOR = 2;
+export const CAPO_FLOOR_MEN = 4;
+export const CAPO_FLOOR_WAIT = 8;
+
+/**
+ * THE CAPO FLOOR (B5): a family that lost its capos and its ground could never make another (every
+ * path needed a district at 40%). With fewer than CAPO_FLOOR capos and CAPO_FLOOR_MEN free soldiers
+ * waiting, the best soldier steps up to a regime of his own, with or without a district.
+ */
+export function capoFloor(ctx: Ctx): void {
+  const s = ctx.s;
+  if ((s.power?.station ?? 'boss') !== 'boss' || s.gameOver) return;
+  const ks = capos(s).filter((k) => k.alive);
+  // Seasoned soldiers only (not a man made this half year), and only once the shortage has lasted CAPO_FLOOR_WAIT weeks.
+  const free = crew(s).filter((c) => c.rank === 'soldier' && !c.dynasty && !c.specialty && isFree(s, c) && s.week - (c.madeWeek ?? -999) >= 26);
+  if (ks.length >= CAPO_FLOOR || free.length < CAPO_FLOOR_MEN) { s.flags.capoFloorSince = 0; return; }
+  if (!s.flags.capoFloorSince) { s.flags.capoFloorSince = s.week; return; }
+  if (s.week - s.flags.capoFloorSince < CAPO_FLOOR_WAIT) return;
+  s.flags.capoFloorSince = 0;
+  const best = [...free].sort((a, b) => b.attributes.leadership - a.attributes.leadership || a.id.localeCompare(b.id))[0];
+  best.rank = 'capo';
+  best.capoId = undefined;
+  const d = s.districts.find((x) => (!x.capoId || !s.characters[x.capoId]?.alive) && (x.influence.player ?? 0) >= CAPO_SEAT_MIN);
+  if (d) d.capoId = best.id;
+  // Half the free soldiers go under him (his regime).
+  for (const m of free.filter((x) => x.id !== best.id).slice(0, Math.ceil((free.length - 1) / 2))) m.capoId = best.id;
+  addOpinion(s, best.id, s.playerId, 'Made me a capo', 20, 1);
+  addStory(s, best, d ? `Stepped up to run ${d.name}.` : 'Stepped up: a crew of his own, ground or no ground.');
+  const text = `${displayName(best)} stepped up as a capo${d ? ` over ${d.name}` : ', a crew of his own with no ground yet'}.`;
+  ctx.log.push(text);
+  s.chronicle.push({ week: s.week, date: { ...s.date }, text, kind: 'misc' });
+  tidyRegimes(s);
+}
 
 /**
  * A district you hold with nobody running it leaks money. After a few weeks

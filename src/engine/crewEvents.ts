@@ -14,6 +14,7 @@ import { FACTION_NAMES } from './world';
 import { freshness, markLetShown } from './storyDirector';
 import { markKinShown } from './housesEvents';
 import type { Character, Choice, Effect, EventInstance, GameState, RivalId } from './types';
+import { CAPO_SEAT_MIN } from './regimes';
 
 /**
  * Crew-driven decisions. Every week the men of the family bring things to
@@ -198,7 +199,7 @@ const promotion: CrewEventDef = {
   subjects: (s) => crew(s).filter((c) => c.rank === 'soldier' && !c.specialty && available(s, c, 10) && c.goal === 'become_capo' && c.attributes.leadership >= 45 && op(s, c, s.playerId) > -20),
   build: (s, c) => {
     const k = capoOf(s, c);
-    const free = s.districts.find((d) => (!d.capoId || !validCapo(s, d.capoId)) && (d.influence.player ?? 0) >= 40);
+    const free = s.districts.find((d) => (!d.capoId || !validCapo(s, d.capoId)) && (d.influence.player ?? 0) >= CAPO_SEAT_MIN);
     const label = `${c.firstName} asks for a crew`;
     const choices: Choice[] = [];
     if (free) {

@@ -421,7 +421,9 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
 /** The police's weekly chance of a move (raid, stakeout, wire) at this heat. */
 export function policeChance(s: GameState): number {
   const h = s.heat.local;
-  return ((h - 25) / 150 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.015 : 0)) * knobs(s).police;
+  // A family under water is not worth the vice squad's time half as often (Top 10 #5c: 25–40 raid lines a year in the spiral).
+  const broke = s.money < -10000 ? 0.5 : 1;
+  return ((h - 25) / 150 + 0.03 * wealthPressure(s) + (isInSeason(s.date) ? 0.015 : 0)) * knobs(s).police * broke;
 }
 
 function planPolice(s: GameState, T: ThreatsState): Threat | undefined {

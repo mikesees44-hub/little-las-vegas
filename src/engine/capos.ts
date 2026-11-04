@@ -24,6 +24,7 @@ import {
   type CapoAction, type CapoBook, type CapoIntel, type CapoLog, type CapoOp, type CapoPlot, type CapoReport, type CapoRequest, type CaposState,
   type IntelKind, type PlotKind, type ReqAnswer, type SignKind, type Stance,
 } from './caposState';
+import { CAPO_SEAT_MIN } from './regimes';
 
 export * from './caposState';
 
@@ -1539,7 +1540,7 @@ export function capoActionsFor(s: GameState, id: string): CapoAction[] {
   const k = isCapo(s, id);
   if (!k) return [];
   const out: CapoAction[] = [{ op: 'ask', capo: id }, { op: 'recognize', capo: id }, { op: 'reward', capo: id, amount: 1000 }, { op: 'watch', capo: id }, { op: 'confront', capo: id }, { op: 'kin', capo: id }];
-  const d = s.districts.find((x) => !isCapo(s, x.capoId) && (x.influence.player ?? 0) >= 40);
+  const d = s.districts.find((x) => !isCapo(s, x.capoId) && (x.influence.player ?? 0) >= CAPO_SEAT_MIN);
   if (d) out.push({ op: 'territory', capo: id, district: d.id });
   return out;
 }

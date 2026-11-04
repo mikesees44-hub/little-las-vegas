@@ -154,3 +154,136 @@ describe('B7: a child of the house does not take a living kinsman\'s first name'
     expect(new Set(born).size).toBe(born.length);
   });
 });
+
+describe('B5 / Top 10 #5a: the capo zero lock', () => {
+  it('a family with no capos and no district at 40% still makes one from its waiting soldiers', async () => {
+    const { regimesWeek } = await import('../src/engine/regimes');
+    const s = newGameWith('b5-lock', 'classic');
+    for (const k of capos(s)) { k.rank = 'soldier'; }
+    for (const d of s.districts) { d.capoId = undefined; const me = d.influence.player ?? 0; if (me > 20) { d.influence.player = 20; d.influence.none = (d.influence.none ?? 0) + me - 20; } }
+    while (crew(s).filter((c) => c.rank === 'soldier' && !c.dynasty).length < 6) makeCharacter(s, { rank: 'soldier', faction: 'player', age: 30 });
+    expect(capos(s).length).toBe(0);
+    for (let i = 0; i < 10; i++) { regimesWeek(newCtx(s)); s.week++; }
+    expect(capos(s).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe('B6 / Top 10 #6: a younger, ranked line', () => {
+  it('a grown son under 60 comes before a 70-year-old uncle; a ranked cousin before an unranked one', async () => {
+    const { bloodLine } = await import('../src/engine/dynasty');
+    const s = newGameWith('b6-line', 'classic');
+    const boss = s.characters[s.playerId];
+    const old = makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 71, faction: 'player' });
+    const young = makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 34, faction: 'player' });
+    const ranked = makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 45, faction: 'player', rank: 'soldier' });
+    const line = bloodLine(s, boss).map((c) => c.id);
+    expect(line.indexOf(young.id)).toBeLessThan(line.indexOf(old.id));
+    expect(line.indexOf(ranked.id)).toBeLessThan(line.indexOf(young.id));
+  });
+
+  it('a woman who married out comes after the men of the house', async () => {
+    const { bloodLine } = await import('../src/engine/dynasty');
+    const s = newGameWith('b6-out', 'classic');
+    const boss = s.characters[s.playerId];
+    const anna = makeCharacter(s, { gender: 'F', lastName: 'Doyle', dynasty: true, age: 40, faction: 'player' });
+    anna.maidenName = s.houseName;
+    const old = makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 66, faction: 'player' });
+    const line = bloodLine(s, boss).map((c) => c.id);
+    expect(line.indexOf(old.id)).toBeLessThan(line.indexOf(anna.id));
+  });
+
+  it('the grown, unranked heir is offered a crew', async () => {
+    const { heirSeatSource } = await import('../src/engine/generations');
+    const { chooseHeir } = await import('../src/engine/dynasty');
+    const s = newGameWith('t6-seat', 'olddon');
+    const heir = chooseHeir(s, s.characters[s.playerId]).heir!;
+    heir.rank = 'civilian'; heir.faction = 'player';
+    let ev;
+    for (let w = 0; w < 120 && !ev; w++) { s.week++; ev = heirSeatSource(s); }
+    expect(ev?.defId).toBe('heir_seat');
+    expect(ev!.choices.map((c) => c.id)).toEqual(['capo', 'soldier', 'later']);
+  });
+});
+
+describe('Top 10 #7: marriages and births renew the line', () => {
+  it('a house offers a match for an unmarried son', async () => {
+    const { matchOfferSource } = await import('../src/engine/generations');
+    const { ensureDynState } = await import('../src/engine/familyState');
+    const s = newGameWith('t7-match', 'classic');
+    ensureDynState(s);
+    const boss = s.characters[s.playerId];
+    makeCharacter(s, { gender: 'M', lastName: boss.lastName, dynasty: true, age: 24, faction: 'player' });
+    let ev;
+    for (let w = 0; w < 3000 && !ev; w++) { s.week++; ev = matchOfferSource(s); }
+    if (!s.dyn?.houses?.length) return; // a start without the houses layer: nothing to offer
+    expect(ev?.defId).toBe('match_offer');
+    expect(ev!.choices.at(-1)!.id).toBe('none');
+  });
+});
+
+describe('Top 10 #4: the associate can climb', () => {
+  it('the quota, the made bar and a capped short Monday', async () => {
+    const V = await import('../src/engine/valente');
+    expect(V.QUOTA.associate).toBe(150);
+    expect(V.MADE_STANDING).toBe(35);
+    const s = newGameWith('t4-short', 'associate');
+    const a = V.above(s)!;
+    const before = a.standing;
+    s.date = { ...s.date, m: 7 }; // in season
+    V.quotaWeek(newCtx(s), 0);
+    expect(before - a.standing).toBeLessThanOrEqual(V.SHORT_LOSS);
+  });
+
+  it('the Sit-Down puts the ladder first for a man in the ranks', async () => {
+    const { ladderRecs } = await import('../src/engine/briefing');
+    const s = newGameWith('t4-ladder', 'associate');
+    const r = ladderRecs(s);
+    expect(r.length).toBeGreaterThan(0);
+    expect(['ladder:climb', 'ladder:vouch']).toContain(r[0].item.id.split(':').slice(0, 2).join(':'));
+  });
+});
+
+describe('Top 10 #5: a floor under collapse', () => {
+  it('the bail-out never defaults to riding it out; a year under water and Philadelphia takes the debt', async () => {
+    const { bailoutSource, pressureWeek } = await import('../src/engine/pressure');
+    const { ensureAction } = await import('../src/engine/actionState');
+    const s = newGameWith('t5-floor', 'classic');
+    s.money = -60000;
+    const A = ensureAction(s);
+    A.under = 30;
+    const ev = bailoutSource(s)!;
+    expect(ev.defaultChoiceId).not.toBe('ride');
+    expect(ev.choices.some((c) => c.id === 'ride')).toBe(true); // the option is still there
+    A.under = 51;
+    pressureWeek(newCtx(s));
+    expect(s.money).toBeGreaterThan(0);
+    expect(s.flags.philly_took).toBe(s.week);
+  });
+
+  it('the police come half as often to a family under water', async () => {
+    const { policeChance } = await import('../src/engine/threats');
+    const s = newGameWith('t5-police', 'classic');
+    s.heat.local = 60;
+    const rich = policeChance(s);
+    s.money = -50000;
+    expect(policeChance(s)).toBeLessThan(rich);
+  });
+});
+
+describe('Top 10 #8: the big fed beats are reachable', () => {
+  it('a wave pulls the boss\'s serious file in front of the grand jury', async () => {
+    const { indictmentWave, ensureFeds, SERIOUS } = await import('../src/engine/feds');
+    const s = newGameWith('t8-wave', 'olddon');
+    s.characters[s.playerId].evidence = SERIOUS + 5;
+    indictmentWave(newCtx(s), ensureFeds(s), 'wire');
+    expect(s.legal?.stage).toBe('grandjury');
+    expect(s.eventQueue.some((e) => e.defId === 'grand_jury')).toBe(true);
+  });
+
+  it('a man facing years with no lawyer and no envelope is likelier to flip', async () => {
+    const { flipOdds } = await import('../src/engine/feds');
+    const s = newGameWith('t8-flip', 'olddon');
+    const c = crew(s).find((x) => x.rank === 'soldier')!;
+    expect(flipOdds(s, { charId: c.id, years: 8, care: [] })).toBeGreaterThan(flipOdds(s, { charId: c.id, years: 8, care: ['lawyer'] }));
+  });
+});

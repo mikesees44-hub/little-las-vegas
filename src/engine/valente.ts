@@ -68,9 +68,14 @@ export interface AboveFamily {
 }
 
 /** The quota at each rung (a base; it rises with a good record). */
-export const QUOTA: Partial<Record<Station, number>> = { associate: 300, soldier: 400, capo: 600, underboss: 0 };
+/** The weekly kick-up the chief expects, by rung (Top 10 #4b: the associate's was 300, missed 17 times a year). */
+export const QUOTA: Partial<Record<Station, number>> = { associate: 150, soldier: 400, capo: 600, underboss: 0 };
+/** The most standing a short Monday costs (was 3). */
+export const SHORT_LOSS = 2;
+/** After this many "Short on Monday" cards with the debt still open, no more cards: the debt stands on its own. */
+export const SHORT_CARDS = 3;
 /** The standing an associate needs before his name can go up. */
-export const MADE_STANDING = 45;
+export const MADE_STANDING = 35;
 /** The standing a man needs before the boss will hear him ask to move up. */
 export const CALLIN_STANDING = 55;
 
@@ -627,13 +632,14 @@ export function quotaWeek(ctx: Ctx, kick: number): void {
   a.streak = 0;
   a.missed++;
   a.owed += short;
-  shiftStanding(s, -3, `Came up ${fmt$(short)} short with ${who}`);
+  shiftStanding(s, -SHORT_LOSS, `Came up ${fmt$(short)} short with ${who}`);
   if (chief) addOpinion(s, chief.id, s.playerId, 'Came up short on a Monday', -4, 1);
   ctx.log.push(`Your kick-up to ${who} came up ${fmt$(short)} short of the ${fmt$(want)} he expects. You owe him ${fmt$(a.owed)}.`);
   // He says something about it when it adds up, not every Monday.
   const queued = s.eventQueue.some((e) => e.defId === 'low_short') || s.pendingEvents.some((e) => e.defId === 'low_short');
-  if (!queued && a.owed >= want && s.week - (s.flags.low_short_week ?? -99) >= 3) {
+  if (!queued && a.owed >= want && s.week - (s.flags.low_short_week ?? -99) >= 3 && (s.flags.low_short_n ?? 0) < SHORT_CARDS) {
     s.flags.low_short_week = s.week;
+    s.flags.low_short_n = (s.flags.low_short_n ?? 0) + 1;
     s.eventQueue.push(buildShort(s, short));
   }
 }
@@ -693,6 +699,14 @@ export function aboveWeek(ctx: Ctx, schedule: (id: string, cast: Record<string, 
   if (!s.books?.open) s.flags.low_books_told = 0;
   // Standing drifts toward the middle when nothing happens (a family forgets).
   if (s.week % 4 === 0 && a.standing > 60) shiftStanding(s, -1, 'Out of sight, out of mind');
+  // A clean month (no short Monday, not picked up): the family notices (Top 10 #4c).
+  if (s.week % 4 === 0) {
+    const jailed = (s.characters[s.playerId]?.imprisonedUntil ?? 0) > s.week;
+    if (a.missed === (s.flags.low_clean_missed ?? a.missed) && !jailed && a.standing < 60) shiftStanding(s, 1, 'A clean month: every envelope right, no trouble');
+    s.flags.low_clean_missed = a.missed;
+  }
+  // The debt paid off: the "Short on Monday" cards may come again.
+  if (a.owed <= 0) s.flags.low_short_n = 0;
 }
 
 /** Summary for the screens and the Desk strip. */
