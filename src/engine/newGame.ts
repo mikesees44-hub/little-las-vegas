@@ -1,3 +1,4 @@
+import { freeWidows } from './dynasty';
 import { assignFaces } from './faces';
 import { startPocket } from './tributeState';
 import { ensureProviders } from './dating';
@@ -354,6 +355,8 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   ensureHousing(s);
   // Nightlife: the night's cast, the madams' houses (its own dice; after everything else so the other ids stay put).
   ensureNightlife(s);
+  s.difficulty = s.difficulty ?? 'don';
+  freeWidows(s);
   assignFaces(s);
   return s;
 }
