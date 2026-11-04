@@ -1028,6 +1028,8 @@ export interface GameState {
   capos?: import('./caposState').CaposState;
   /** Feds and flipping: pinches, flips, the boss's deal, the hollow crown, the tip-off, the undercover (feds.ts). */
   feds?: import('./fedsState').FedsState;
+  /** The Don's planner: the datebook's ticks and margin notes, who was turned away at the door (planner/; optional, made by the first use). */
+  planner?: import('./planner/state').PlannerState;
 }
 
 export interface PlayerChoices {

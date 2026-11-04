@@ -9,6 +9,7 @@ import type { NowResult } from './deeds/now';
 import { extraPress } from './paper';
 import { phoneDay } from './phone';
 import './phoneMeet';
+import './planner/datebook';
 import { eventOut, eventsOut } from './eventDays';
 export { eventOut, eventsOut };
 import type { EventInstance, GameState } from './types';
