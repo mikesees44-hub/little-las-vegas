@@ -68,9 +68,9 @@ export function StartMenu({ initial = 'title', inGame, seedHint, onContinue, onB
     <div className="min-h-screen bg-noir-950" data-testid="start-menu" role="dialog" aria-modal="true" aria-label="Little Las Vegas">
       {screen === 'title' && (
         <div className="relative min-h-screen flex flex-col overflow-hidden">
-          <div className="absolute inset-0 opacity-90" aria-hidden><AssetImg k={CUTSCENE_ART.title} alt="" className="h-full w-full object-cover" style={{ filter: NOIR_GRADE }} fallback={<NoirStill cue="title" seed={7} />} /></div>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/85" />
-          <div className="relative flex-1 flex flex-col items-center justify-end sm:justify-center px-4 pb-10 pt-24 text-center">
+          <div className="absolute inset-0" aria-hidden><AssetImg k="title_boardwalk_1960" alt="" className="h-full w-full object-cover object-[45%_center]" fallback={<AssetImg k={CUTSCENE_ART.title} alt="" className="h-full w-full object-cover opacity-90" style={{ filter: NOIR_GRADE }} fallback={<NoirStill cue="title" seed={7} />} />} /></div>
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90" />
+          <div className="relative flex-1 flex flex-col items-center justify-end px-4 pb-10 pt-24 text-center">
             <div className="text-[10px] sm:text-xs uppercase tracking-[0.5em] text-stone-400">Wildwood, New Jersey · 1960</div>
             <h1 className="font-display text-5xl sm:text-7xl text-gold-300 mt-2 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]" data-testid="title">Little Las Vegas</h1>
             <p className="mt-2 text-stone-300 italic max-w-md text-sm">Nine days until the boardwalk opens. Somebody has to be running things.</p>
