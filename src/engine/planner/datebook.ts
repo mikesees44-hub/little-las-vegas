@@ -127,8 +127,13 @@ export function dayEntries(s: GameState, w: number, d: number): BookEntry[] {
   const dt = dateOf(w, d);
   const P = plannerOf(s);
   // Done: the book's own ticks for the day.
+  // (A plan is settled the morning of its day, like the week's other business; until its hour comes it reads as still ahead.)
+  const ahead = abs === now ? nowHour(s) : abs > now ? 99 : -1;
   P.done.forEach((t, i) => {
-    if (t.w === w && t.d === d) out.push({ id: `done:${i}`, kind: 'done', w, d, h: t.h, dur: 0, title: t.t, dom: t.k === 'dinner' ? 'family' : 'crew', who: t.who, done: { r: t.r, jid: t.jid }, go: { file: true } });
+    if (t.w !== w || t.d !== d) return;
+    const dom = t.k === 'dinner' ? 'family' : 'crew';
+    if (t.h >= ahead) out.push({ id: `done:${i}`, kind: t.k === 'dinner' ? 'dinner' : t.k === 'audience' ? 'audience' : 'visit', w, d, h: t.h, dur: PLAN_HOURS[t.k as PlanKind] ?? 1, title: t.t, dom, who: t.who, go: t.who ? { char: t.who } : undefined });
+    else out.push({ id: `done:${i}`, kind: 'done', w, d, h: t.h, dur: 0, title: t.t, dom, who: t.who, done: { r: t.r, jid: t.jid }, go: { file: true } });
   });
   const live = abs >= now;
   if (live) {

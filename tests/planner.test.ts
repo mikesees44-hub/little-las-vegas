@@ -19,7 +19,7 @@ import { cancelEntry, dayEntries, dayPage, moveEntry, monthPage, planWith, weekP
 import { blackBook, favorsLedger } from '../src/engine/planner/blackbook';
 import { edictOrder, splitOrder, standingOrders } from '../src/engine/planner/orders';
 import { sourceGrade, tipConfidence } from '../src/engine/planner/intel';
-import { freeOn } from '../src/engine/planner/hours';
+import { bookHours, freeOn } from '../src/engine/planner/hours';
 import { ensurePlanner, markBrief, plannerOf, setNote } from '../src/engine/planner/state';
 import type { Character, GameState } from '../src/engine/types';
 
@@ -278,6 +278,9 @@ describe('the datebook', () => {
     const op0 = opinion(s, k.id, s.playerId);
     s = planWith(s, 'dinner', k.id, { w: s.week, d: 1, h: 19 }).state;
     s = advanceDay(s).state;
+    // Settled in the morning, it reads as still ahead until its hour comes.
+    expect(dayEntries(s, s.week, 1).some((e) => e.kind === 'dinner' && !e.done)).toBe(true);
+    s = bookHours(s, absDay(s), 12);
     const done = dayEntries(s, s.week, 1).find((e) => e.kind === 'done')!;
     expect(done).toBeTruthy();
     expect(done.done!.r).toMatch(/Dinner/);

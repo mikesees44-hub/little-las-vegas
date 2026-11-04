@@ -394,8 +394,8 @@ button.llv-hour-slot:hover, button.llv-hour-slot:focus-visible { background: rgb
 .llv-tick { color: #1d5b33; font-weight: 700; }
 .llv-tabs-book { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .llv-tabs-book::-webkit-scrollbar { display: none; }
-.llv-tab-book { flex-shrink: 0; padding: 6px 8px 5px; border-radius: 8px 8px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; color: #e9d6b0; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(214, 170, 110, 0.25); border-bottom: none; }
-@media (min-width: 640px) { .llv-tab-book { padding: 6px 12px 5px; } }
+.llv-tab-book { flex-shrink: 0; padding: 6px 7px 5px; border-radius: 8px 8px 0 0; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; color: #e9d6b0; background: rgba(0, 0, 0, 0.25); border: 1px solid rgba(214, 170, 110, 0.25); border-bottom: none; }
+@media (min-width: 640px) { .llv-tab-book { padding: 6px 12px 5px; font-size: 12px; } }
 .llv-tab-book[aria-selected='true'] { color: #2a2118; background: #f4ecd8; }
 .llv-ink-btn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 3px; border: 1px solid rgba(42, 33, 24, 0.55); color: #2a2118; background: rgba(255, 252, 240, 0.6); font-size: 12px; font-weight: 600; }
 .llv-ink-btn:hover:not(:disabled), .llv-ink-btn:focus-visible { background: #fffaf0; border-color: #2a2118; outline: none; }
