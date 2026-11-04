@@ -8,6 +8,7 @@ import { journal } from './journal';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion, getRelation, opinion } from './relations';
 import { hashSeed } from './rng';
+import { allure } from './looks';
 import { getPerson } from './polPeople';
 import { mutP } from './polState';
 import { addSecret } from './secrets';
@@ -330,10 +331,30 @@ function loyaltyCap(s: GameState, c: Character | undefined): { cap: number; why?
   return { cap: 0.9 };
 }
 
+const RANK_ALLURE = /boss's name opens doors|man of standing/;
+
+/**
+ * A man asking a woman: his looks to her, his charm, a ladies' man's practice, his appetite (looks.ts allure).
+ * The asker's own when he is sent, the boss's when he goes himself. Rank is already counted (askerReason) and
+ * Charming once. It raises the odds; it never decides for her.
+ */
+export function allureReasons(s: GameState, c: Character | undefined, via: string | undefined, have: Reason[] = []): Reason[] {
+  const man = via ? s.characters[via] : player(s);
+  if (!c || !man || man.gender !== 'M' || c.gender !== 'F') return [];
+  const out = allure(s, man, c).reasons.filter((r) => !RANK_ALLURE.test(r.label) && !(r.label === 'Charming' && have.some((h) => /charming/i.test(h.label))));
+  let sum = 0;
+  return out.map((r) => {
+    const v = Math.max(-25 - sum, Math.min(40 - sum, r.value));
+    sum += v;
+    return { label: via ? `${r.label} (${man.firstName})` : r.label, value: Math.round(v) };
+  }).filter((r) => r.value !== 0);
+}
+
 /** Puts the asker and the amount on top of the person's own odds, and caps what money can do. */
 function withOffer(s: GameState, c: Character | undefined, acc: Acceptance, pay: PayLevel | undefined, via: string | undefined, fame = 0): Acceptance {
   if (acc.chance <= 0) return acc;
   const extra = [askerReason(s, via), payReason(s, c, pay, fame)].filter((x): x is Reason => !!x && x.value !== 0);
+  extra.push(...allureReasons(s, c, via, acc.reasons));
   const reasons = [...acc.reasons, ...extra];
   const lc = loyaltyCap(s, c);
   const sum = reasons.reduce((a, r) => a + r.value, 0) / 100;

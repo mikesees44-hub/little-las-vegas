@@ -286,3 +286,21 @@ describe('the night people', () => {
     expect(workingWomen(s)).toEqual([]);
   });
 });
+
+describe('looks and charm', () => {
+  it('a charming ladies\' man asking a woman raises the odds; it never forces a yes', () => {
+    const s = newGame('payroll-allure');
+    const her = civilian(s, true);
+    const boss = s.characters[s.playerId];
+    const plain = offerAcceptance(s, her, 'bartender', {});
+    boss.traits = [...boss.traits.filter((x) => x !== 'Pious'), 'Charming', 'Womanizer'] as typeof boss.traits;
+    const smooth = offerAcceptance(s, her, 'bartender', {});
+    expect(smooth.chance).toBeGreaterThan(plain.chance);
+    expect(smooth.reasons.some((r) => /ladies' man/.test(r.label))).toBe(true);
+    expect(smooth.reasons.filter((r) => r.label === 'Charming').length).toBeLessThanOrEqual(1);
+    expect(smooth.chance).toBeLessThanOrEqual(0.9);
+    // A man is not moved by the boss's looks this way.
+    const him = civilian(s);
+    expect(offerAcceptance(s, him, 'bartender', {}).reasons.some((r) => /ladies' man/.test(r.label))).toBe(false);
+  });
+});
