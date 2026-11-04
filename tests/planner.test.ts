@@ -347,3 +347,41 @@ describe('the planner in the save', () => {
     expect(ensurePlanner(none).turned).toEqual({});
   });
 });
+
+// ---- The pages render (ui/planner) ----
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { BriefFolder } from '../src/ui/planner/BriefFolder';
+import { AudienceList } from '../src/ui/planner/AudienceList';
+import { Datebook } from '../src/ui/planner/Datebook';
+import { BlackBook } from '../src/ui/planner/BlackBook';
+import { StandingOrders } from '../src/ui/planner/StandingOrders';
+import { PlannerButton } from '../src/ui/planner/PlannerHost';
+
+describe('the planner pages render', () => {
+  it('the folder, the list, the datebook, the black book and the orders', () => {
+    const s = game('ui1');
+    const [a] = men(s);
+    s.pendingEvents = [buildAsk(s, { id: 'k1', d: 'askFavor', a: a.id, n: 300, p: 50, w: s.week })!];
+    const noop = () => {};
+    const brief = renderToString(createElement(BriefFolder, { s, b: dailyBrief(s), old: oldManPick(s), onGo: noop, onOld: noop }));
+    expect(brief).toContain('EYES ONLY · THE DON');
+    expect(brief).toContain('data-testid="brief-recommended"');
+    expect(brief).toContain('data-testid="old-man"');
+    const reqs = audienceRequests(s);
+    const aud = renderToString(createElement(AudienceList, { s, reqs, keeper: gatekeeper(s), onGrant: noop, onTurn: noop, onChar: noop }));
+    expect(aud).toContain('data-testid="aud-row-0"');
+    expect(aud).toContain('Give him an hour');
+    const book = renderToString(createElement(Datebook, { s, reqs, api: { onGo: noop, onPhone: noop, onPlan: noop, onEvening: noop, onGrant: noop, onMove: noop, onCancel: noop, onNote: noop } }));
+    expect(book).toContain('data-testid="book-day"');
+    expect(book).toContain('data-testid="book-week"');
+    expect(book).toContain('The envelope');
+    const bb = renderToString(createElement(BlackBook, { s, onChar: noop, onPhone: noop, onOrder: noop }));
+    expect(bb).toContain('data-testid="bb-card"');
+    expect(bb).toContain('Cops &amp; politicians');
+    const so = renderToString(createElement(StandingOrders, { s, act: noop, onOrder: noop }));
+    expect(so).toContain('Who handles what');
+    expect(so).toContain('No Junk in Wildwood');
+    expect(renderToString(createElement(PlannerButton, { s, onOpen: noop }))).toContain('planner-dot');
+  });
+});

@@ -17,6 +17,8 @@ export interface OfficeApi {
   openLedger: () => void;
   /** The calendar: the week's days (mornings and evenings), at a day. */
   openCalendar: (day?: number) => void;
+  /** The Don's datebook (ui/planner): today hour by hour, the week, the month; the week's days are one tap inside it. */
+  openDatebook: () => void;
   /** The waiting decisions, one by one. */
   openDecisions: () => void;
   /** The map (closes the drawers). */
@@ -30,7 +32,7 @@ export interface OfficeApi {
 }
 
 const noop = () => {};
-export const OfficeContext = createContext<OfficeApi>({ openDesk: noop, openEnvelope: noop, openVisitors: noop, openLedger: noop, openCalendar: noop, openDecisions: noop, openMap: noop, openFamily: noop, openNews: noop, openAdvance: noop });
+export const OfficeContext = createContext<OfficeApi>({ openDesk: noop, openEnvelope: noop, openVisitors: noop, openLedger: noop, openCalendar: noop, openDatebook: noop, openDecisions: noop, openMap: noop, openFamily: noop, openNews: noop, openAdvance: noop });
 export function useOffice(): OfficeApi {
   return useContext(OfficeContext);
 }

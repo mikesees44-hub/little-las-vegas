@@ -21,6 +21,8 @@ import { advanceDay, answerMoment, eventOut, eventsOut, liveMoments, releaseAll 
 import { callBack, callBackView, markMissedSeen, momentKicker, phoneBadge, ringing, tipOfMoment } from '../engine/phone';
 import { dial } from '../engine/phoneMeet';
 import { PhoneButton, PhoneWindow } from './phone/PhoneWindow';
+import { PlannerButton, PlannerHost } from './planner/PlannerHost';
+import { openPlanner } from './planner/ink';
 import { StrikeCard } from './components/StrikeCard';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
@@ -914,6 +916,7 @@ export function App({ startOn = 'title' }: AppProps) {
     openVisitors: () => setSitdown('council'),
     openLedger: () => openRoute({ panel: 'holdings', section: 'take' }),
     openCalendar: (day) => { setSpeed(0); setDayWin(day ?? daysOf(s).day); },
+    openDatebook: () => openPlanner('datebook'),
     openDecisions: openDecisions,
     openMap: () => { setRoute({}); setOfficeView(undefined); },
     openFamily: () => openRoute({ panel: 'house', section: 'tree' }),
@@ -1018,7 +1021,7 @@ export function App({ startOn = 'title' }: AppProps) {
             onRounds={() => setSitdown('rounds')} onEnvelope={() => tributeApi.openAudience()} onFind={() => setFinding(true)}
             onOffice={can(s, 'office') ? () => { setRoute({}); setOfficeView((v) => (v === 'office' ? undefined : 'office')); } : undefined} officeOpen={officeView === 'office'}
             chair={chair?.pressure} onChair={() => openSuccession()}
-            phone={<PhoneButton missed={phoneBadge(s)} ringing={ringing(s).length > 0} onOpen={() => { setPhoneOpen(true); setS((x) => markMissedSeen(x)); }} />}
+            phone={<><PlannerButton s={s} onOpen={() => openPlanner()} /><PhoneButton missed={phoneBadge(s)} ringing={ringing(s).length > 0} onOpen={() => { setPhoneOpen(true); setS((x) => markMissedSeen(x)); }} /></>}
             onHelp={() => setHelpMenu(true)} fileNew={fileNew} onFile={() => { setOfficeView(undefined); markFileSeen(); go('book'); }} paperUnread={unreadCount(s)} onPaper={() => { setOfficeView(undefined); openRoute({ panel: 'chronicle', section: 'papers' }); }} />
           {!s.gameOver && <LiveAlerts s={s} running={speed > 0} />}
         </>)}
@@ -1174,6 +1177,9 @@ export function App({ startOn = 'title' }: AppProps) {
             postNow(r.result);
           }} />
       )}
+      {/* The Don's book (ui/planner): the brief, the audience, the datebook, the black book, the standing orders. */}
+      {!s.gameOver && <PlannerHost s={s} ui={{ answers, briefSkip, orders }} speed={speed} note={clockNote} blocked={overlayOpen || busy || mondayCard || rxWaiting || phoneOpen}
+        api={{ onEvent: deskApi.onEvent, onUrgent: (id) => setUrgent(id), onDay: deskApi.onDay, onSitDown: deskApi.onSitDown, onEnvelope: () => tributeApi.openAudience() }} />}
       {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}

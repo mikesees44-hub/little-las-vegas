@@ -62,7 +62,7 @@ import { deskCount } from '../src/engine/attention';
 
 function spyApi(): { api: OfficeApi; calls: string[] } {
   const calls: string[] = [];
-  const names: (keyof OfficeApi)[] = ['openDesk', 'openEnvelope', 'openVisitors', 'openLedger', 'openCalendar', 'openDecisions', 'openMap', 'openFamily', 'openNews', 'openAdvance'];
+  const names: (keyof OfficeApi)[] = ['openDesk', 'openEnvelope', 'openVisitors', 'openLedger', 'openCalendar', 'openDatebook', 'openDecisions', 'openMap', 'openFamily', 'openNews', 'openAdvance'];
   const api = Object.fromEntries(names.map((n) => [n, () => { calls.push(n); }])) as unknown as OfficeApi;
   return { api, calls };
 }

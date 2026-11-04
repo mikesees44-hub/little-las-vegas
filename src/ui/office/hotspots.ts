@@ -27,7 +27,7 @@ export const HOTSPOTS: Hotspot[] = [
   { id: 'map', label: 'Wall map', hint: 'South Jersey on the wall: go out to the map', icon: '⌖', rect: { x: 9.2, y: 0.5, w: 23.4, h: 33.5 }, entry: { api: 'openMap' } },
   { id: 'photos', label: 'Family photographs', hint: 'Your family: the tree, the heir, the house', icon: '♔', rect: { x: 4.5, y: 35.5, w: 33.5, h: 13 }, entry: { api: 'openFamily' } },
   { id: 'door', label: 'The door', hint: 'Who is waiting outside to see you', icon: '⚑', rect: { x: 55.5, y: 5.5, w: 13, h: 47 }, entry: { panel: 'door' } },
-  { id: 'calendar', label: 'Appointment book', hint: 'This week, day by day: mornings and evenings', icon: '◷', rect: { x: 51, y: 55.3, w: 18.5, h: 6 }, entry: { api: 'openCalendar' } },
+  { id: 'calendar', label: 'The datebook', hint: 'The leather datebook: today hour by hour, the week, who wants an audience', icon: '◷', rect: { x: 51, y: 55.3, w: 18.5, h: 6 }, entry: { api: 'openDatebook' } },
   { id: 'phone', label: 'Telephone', hint: 'Call your lawyer, your people, the other bosses', icon: '☏', rect: { x: 15.5, y: 56.5, w: 14, h: 18 }, entry: { panel: 'phone' } },
   { id: 'newspaper', label: 'Newspaper', hint: 'The papers and the news', icon: '✎', rect: { x: 3, y: 62, w: 12.3, h: 11 }, entry: { api: 'openNews' } },
   { id: 'ledger', label: 'Ledger', hint: 'The books: the money, the accounts, the agreements', icon: '▤', rect: { x: 32.5, y: 61.5, w: 24.5, h: 12 }, entry: { api: 'openLedger' } },

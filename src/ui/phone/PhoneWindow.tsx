@@ -21,17 +21,21 @@ const GROUPS: { id: BookEntry['group']; label: string }[] = [
   { id: 'family', label: 'Family' }, { id: 'crew', label: 'Your people' }, { id: 'outfits', label: 'The other outfits' }, { id: 'services', label: 'Services' },
 ];
 
-export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; onClose: () => void; onDial: (spec: DialSpec) => void; onCallBack: (missedId: string) => void }) {
+export function PhoneWindow({ s, onClose, onDial, onCallBack, prefill }: {
+  s: GameState; onClose: () => void; onDial: (spec: DialSpec) => void; onCallBack: (missedId: string) => void;
+  /** Opened from the datebook or the black book: the number, the purpose and the slot already filled in. */
+  prefill?: Partial<DialSpec>;
+}) {
   const missed = missedCalls(s);
-  const [tab, setTab] = useState<Tab>(missed.length ? 'missed' : 'dial');
+  const [tab, setTab] = useState<Tab>(prefill || !missed.length ? 'dial' : 'missed');
   const book = useMemo(() => phoneBook(s), [s]);
-  const [who, setWho] = useState<string | undefined>();
-  const [purpose, setPurpose] = useState<Purpose | undefined>();
+  const [who, setWho] = useState<string | undefined>(prefill?.who && book.some((e) => e.id === prefill.who) ? prefill.who : undefined);
+  const [purpose, setPurpose] = useState<Purpose | undefined>(prefill?.who && prefill.purpose ? prefill.purpose : undefined);
   const days = meetDays(s);
   const places = meetPlaces(s);
-  const [place, setPlace] = useState<PlaceId>('diner');
-  const [day, setDay] = useState(0);
-  const [hour, setHour] = useState(21);
+  const [place, setPlace] = useState<PlaceId>(prefill?.place ?? 'diner');
+  const [day, setDay] = useState(() => Math.max(0, prefill?.d !== undefined ? days.findIndex((x) => x.w === (prefill.w ?? s.week) && x.d === prefill.d) : 0));
+  const [hour, setHour] = useState(() => (prefill?.hour !== undefined ? MEET_HOURS.reduce((a, b) => (Math.abs(b - prefill.hour!) < Math.abs(a - prefill.hour!) ? b : a)) : 21));
   const [pay, setPay] = useState(false);
   const [code, setCode] = useState(false);
   const entry = book.find((e) => e.id === who);
@@ -87,7 +91,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
         {tab === 'dial' && (
           <div className="mt-3 space-y-3" data-testid="phone-dial">
             <label className="block text-xs text-stone-400"><Step n={1} on={!!entry}>Who</Step>
-              <select className="inp mt-1 w-full text-sm" value={who ?? ''} onChange={(e) => { setWho(e.target.value || undefined); setPurpose(undefined); }} data-testid="dial-who">
+              <select className="inp mt-1 w-full text-sm" value={who ?? ''} onChange={(e) => { setWho(e.target.value || undefined); setPurpose(prefill?.purpose && book.find((x) => x.id === e.target.value)?.purposes.includes(prefill.purpose) ? prefill.purpose : undefined); }} data-testid="dial-who">
                 <option value="">Pick a number…</option>
                 {GROUPS.map((g) => {
                   const xs = book.filter((e) => e.group === g.id);
