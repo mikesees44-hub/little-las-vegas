@@ -1038,6 +1038,8 @@ export interface GameState {
   feds?: import('./fedsState').FedsState;
   /** The Don's planner: the datebook's ticks and margin notes, who was turned away at the door (planner/; optional, made by the first use). */
   planner?: import('./planner/state').PlannerState;
+  /** The boss's private read on people: suspicion they talk or steal, with the evidence (peopleRead.ts; optional, made by the first evidence). */
+  reads?: import('./peopleRead').ReadsState;
 }
 
 export interface PlayerChoices {

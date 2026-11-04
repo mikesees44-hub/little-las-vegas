@@ -104,6 +104,7 @@ import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
 import { mindsWeek } from './minds';
+import { readsWeek } from './peopleRead';
 import { argueWeek } from './argue/offer';
 import { deedsEventSource, deedsWeek } from './deeds';
 import { sceneEventSource } from './authored/run';
@@ -504,6 +505,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     setPiecesWeek(ctx);
     // Your men come up (crewXp.ts): what each man did this week, seen against the week as it began.
     xpWeek(ctx, input);
+    // The boss's private read on people: the week's evidence counted, old suspicion fading (peopleRead.ts).
+    readsWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

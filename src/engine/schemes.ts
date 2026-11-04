@@ -17,6 +17,7 @@ import { FACTION_NAMES } from './world';
 import { CITIES_BY_ID, CITY_LIST, hasPermission, needsPermission, standing } from './cities';
 import { resolveEnvoy } from './envoys';
 import { protectionFor } from './protect';
+import { ownHitFallout } from './peopleRead';
 export { outpostIncome } from './envoys';
 import type { Character, Effect, EventInstance, FactionId, GameState, HeistKind, HitLocation, RivalId, Scheme, SchemeDepth, SchemeKind, SchemeOptions } from './types';
 
@@ -387,6 +388,8 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
           { type: 'respect', amount: pub ? (sc.opts.location === 'boardwalk' ? 6 : 4) : 1 },
         ];
         const victimFaction = s.rivals.find((r) => r.id === t.faction);
+        // One of his own (only ever on the boss's explicit, confirmed order): the crew, his family, a vendetta (peopleRead.ts).
+        if (t.faction === 'player') eff.push(...ownHitFallout(s, t, pub));
         if (needsSanction(s, t) && !sanctioned(s, t.id) && !(framed && frameHolds)) {
           eff.push({ type: 'heat', bar: 'family', amount: 15 }, { type: 'rivalOpinion', rival: 'philly', amount: -20, reason: 'Killed a made man without the Table' });
           if (victimFaction && victimFaction.id !== 'philly') eff.push({ type: 'feud', rival: victimFaction.id });
@@ -428,6 +431,7 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
           eff.push({ type: 'schedule', key: 'retaliation', minWeeks: 1, maxWeeks: 3, chance: 0.8, hint: `${r.shortName} will hit back`, params: { rival: r.id } });
         }
         addOpinion(s, t.id, s.playerId, 'Tried to have me killed', -60, 0);
+        if (t.faction === 'player') eff.push({ type: 'crewOpinion', amount: -5, reason: `The boss tried to have ${t.firstName} killed` });
         apply(ctx, label, sc.because, eff);
         cue(s, 'hit_botched', 'Botched', `The gun jammed. ${name} ran, bleeding, into the dark — and he saw who sent them.`);
         bonesFromScheme(ctx, sc, agents, false);
