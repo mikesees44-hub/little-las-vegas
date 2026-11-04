@@ -204,3 +204,36 @@ export function appeal(s: GameState, observer: Character, target: Character): { 
 export function impressionWord(v: number): string {
   return v >= 18 ? 'Catches your eye' : v >= 6 ? 'Easy on the eyes, to you' : v > -6 ? 'Looks are neither here nor there, to you' : 'Not your type';
 }
+
+/**
+ * APPETITE (0-100): how much a man (or a woman) goes after romance. Fixed per person from the seed,
+ * pushed up by a roving eye, down by piety. High appetite makes him bolder (he asks, and asks well);
+ * it is not charm, and it is not a promise she says yes.
+ */
+export function appetite(s: GameState, c: Character): number {
+  let v = 25 + (hashSeed(`${s.seed}:appetite:${c.id}`) % 51);
+  if (hasTrait(c, 'Womanizer')) v += 30;
+  if (hasTrait(c, 'Pious')) v -= 20;
+  if (hasTrait(c, 'Drinker')) v += 5;
+  return Math.max(0, Math.min(100, v));
+}
+
+/**
+ * ALLURE: how easily `man` gets around with `woman`, in one place, with reasons: how he looks to her
+ * (appeal), Charming, a ladies' man's practice, his appetite (boldness), and rank (the boss's name opens
+ * doors). Adults only (0 otherwise). Every offer, date, ask and honey-trap uses this so looks always count.
+ */
+export function allure(s: GameState, man: Character, woman: Character): { value: number; reasons: { label: string; value: number }[] } {
+  if (ageOn(man.birth, s.date) < 18 || ageOn(woman.birth, s.date) < 18) return { value: 0, reasons: [] };
+  const reasons: { label: string; value: number }[] = [];
+  const a = appeal(s, woman, man).value;
+  if (a) reasons.push({ label: a > 0 ? 'His looks, to her' : 'Not her type', value: a });
+  if (hasTrait(man, 'Charming')) reasons.push({ label: 'Charming', value: 10 });
+  if (hasTrait(man, 'Womanizer')) reasons.push({ label: 'A ladies\' man: he knows what to say', value: 8 });
+  const ap = appetite(s, man);
+  if (ap >= 70) reasons.push({ label: 'A big appetite: he asks, and asks well', value: Math.round((ap - 60) / 4) });
+  if (man.rank === 'boss') reasons.push({ label: 'The boss\'s name opens doors', value: 6 });
+  else if (man.rank === 'underboss' || man.rank === 'consigliere' || man.rank === 'capo') reasons.push({ label: 'A man of standing', value: 3 });
+  const value = Math.max(-25, Math.min(40, reasons.reduce((x, r) => x + r.value, 0)));
+  return { value, reasons };
+}
