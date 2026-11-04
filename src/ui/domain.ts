@@ -76,11 +76,11 @@ export function domainOf(key: string | undefined | null): Domain | undefined {
 }
 
 /** The domain of a line of text (a Desk row, a headline), through Your File's classifier. */
-export function domainOfText(s: GameState, text: string, fallback?: JCat): Domain | undefined {
+export function domainOfText(s: GameState | undefined, text: string, fallback?: JCat): Domain | undefined {
   if (/\b(church|priest|father [A-Z]|funeral|wake|charity|parish|novena|mass)\b/i.test(text)) return 'church';
   if (/\b(Ocean City|boardwalk|storm|hurricane|trip|travel)\b/i.test(text)) return 'shore';
   if (/\b(the Table|City Hall|commissioner|mayor)\b/i.test(text)) return 'politics';
   const NONE = '-' as JCat;
-  const c = classify(s, text, fallback ?? NONE);
+  const c = classify(s as GameState, text, fallback ?? NONE);
   return c === NONE ? undefined : domainOf(c);
 }

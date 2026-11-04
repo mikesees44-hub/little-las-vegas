@@ -15,6 +15,7 @@ import { faceToFace, heatedChoices } from '../../engine/argue';
 import { useShell } from '../shell/context';
 import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
 import { voicesFor } from '../decide/voices';
+import { domainOf, domainOfText } from '../domain';
 
 /**
  * A decision that came to the boss, on the one decision card (ui/decide):
@@ -63,6 +64,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
       <DecisionCard
         s={s}
         kicker={`Decision ${index + 1} of ${total}`}
+        domain={domainOf((ev.meta as { theme?: string } | undefined)?.theme) ?? domainOfText(s, `${ev.title} ${ev.text ?? ''}`)}
         deadline={ev.mandatory ? 'now' : 'by the week\'s turn'}
         title={ev.title}
         faces={actors}

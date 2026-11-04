@@ -5,6 +5,7 @@ import { Chips } from '../components/Chips';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
 import { useNumberKeys } from '../keys';
+import { DOMAINS, domClass, type Domain } from '../domain';
 
 /**
  * ONE DECISION CARD (STREAMLINE §4.1), used wherever the boss decides: a
@@ -178,6 +179,8 @@ export interface DecisionCardProps {
   testid?: string;
   primaryTestId?: string;
   primaryDisabled?: boolean;
+  /** The part of the Don's life this is (ui/domain.ts): a tinted header strip and the domain named in the kicker. */
+  domain?: Domain;
 }
 
 export function DecisionCard(p: DecisionCardProps) {
@@ -208,12 +211,12 @@ export function DecisionCard(p: DecisionCardProps) {
     );
   }
   return (
-    <div className={compact ? '' : 'p-4 sm:p-5'} data-testid={p.testid ?? 'decision-card'}>
+    <div className={`${compact ? '' : 'p-4 sm:p-5'} ${domClass(p.domain)} ${compact && p.domain ? 'llv-dom-edge pl-2' : ''}`} data-testid={p.testid ?? 'decision-card'} data-domain={p.domain}>
       {(p.kicker || p.title) && (
-        <div className="flex items-start gap-3">
+        <div className={`flex items-start gap-3 ${p.domain && !compact ? '-mx-4 -mt-4 mb-1 px-4 pb-3 pt-4 sm:-mx-5 sm:-mt-5 sm:px-5 sm:pt-5 llv-dom-strip' : ''}`}>
           {p.faces && p.faces.length > 0 && <div className="flex shrink-0 -space-x-2">{p.faces.slice(0, 3).map((c) => <Face key={c.id} s={s} c={c} size={compact ? 36 : p.faces!.length > 1 ? 52 : 64} />)}</div>}
           <div className="min-w-0 flex-1">
-            {p.kicker && <div className="flex items-baseline justify-between gap-2 text-[10px] uppercase tracking-[0.3em] text-stone-500"><span>{p.kicker}</span>{p.deadline && <span className="tracking-normal normal-case text-amber-300" data-testid="decision-deadline">⏱ {p.deadline}</span>}</div>}
+            {p.kicker && <div className="flex items-baseline justify-between gap-2 text-[10px] uppercase tracking-[0.3em] text-stone-500"><span>{p.domain && <span className="llv-dom-ink"><span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />{DOMAINS[p.domain].label} · </span>}{p.kicker}</span>{p.deadline && <span className="tracking-normal normal-case text-amber-300" data-testid="decision-deadline">⏱ {p.deadline}</span>}</div>}
             {p.title && <h2 className={`font-display leading-tight text-gold-400 ${compact ? 'text-base' : 'text-2xl'}`}>{p.title}</h2>}
             {p.sub && <div className="mt-0.5 text-[11px] text-stone-400">{p.sub}</div>}
           </div>
