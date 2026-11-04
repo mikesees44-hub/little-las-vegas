@@ -56,8 +56,11 @@ const ROWS = [['weeks', 'weeks played'], ['money', 'family cash y1 / y3 / end'],
   ['deaths', 'boss changes by cause'], ['wounds', 'boss wounded (not killed)'], ['heirs', 'new bosses: age (rank held)'], ['heirNow', 'heir at the end: age'], ['dyn', 'house alive start → end'],
   ['climb', 'associate climb'], ['standing', 'standing at the end'], ['save', 'save MB start/y1/y2/y4/y5/y6/y8/y10'], ['dayMs', 'day-step ms p50 y1 → last'], ['turnMs', 'turn ms p50 y1 → last'],
   ['rep8', '8-week repeat rate'], ['wars', 'new wars / yr'], ['raids', 'raid lines / yr'], ['feds', 'feds'], ['errors', 'errors']];
+// BEFORE is cut to the weeks AFTER played (a 3-year AFTER against a 10-year BEFORE compares the same 3 years).
+const cut = (r, n) => { if (!r || !n || r.weeks.length <= n) return r; const last = r.weeks[n - 1].w; return { ...r, weeks: r.weeks.slice(0, n), successions: r.successions.filter((x) => x.wk <= last), rungs: r.rungs.filter((x) => x.w <= last), snaps: r.snaps.filter((s) => s.w <= last) }; };
 for (const id of ids) {
-  const b = metrics(load(before, id)); const a = metrics(load(after, id));
+  const A = load(after, id);
+  const b = metrics(cut(load(before, id), A?.weeks.length)); const a = metrics(A);
   console.log(`\n**${id}**\n`);
   console.log('| metric | BEFORE | AFTER |\n|---|---|---|');
   for (const [key, label] of ROWS) console.log(`| ${label} | ${b?.[key] ?? '-'} | ${a?.[key] ?? '-'} |`);
