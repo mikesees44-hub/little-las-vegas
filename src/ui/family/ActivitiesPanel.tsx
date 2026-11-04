@@ -12,6 +12,7 @@ import { Face } from '../components/People';
 import { fmt$ } from '../format';
 import { ACTIVITY_ART, Backdrop } from '../hood/art/sceneArt';
 import { Label } from './bits';
+import { Card, Section } from '../components/Layout';
 
 /** Hosted activities (CK feasts): choose one, pick guests, order it. */
 export function ActivitiesPanel({ s }: { s: GameState }) {
@@ -20,38 +21,39 @@ export function ActivitiesPanel({ s }: { s: GameState }) {
   return (
     <div className="space-y-3" data-testid="activities-panel">
       {active && (
-        <div className="rounded-md border border-gold-600/60 bg-gold-500/10 p-3 text-sm">
-          <span className="text-gold-300 font-semibold">Now hosting: {ACTIVITIES[active.kind].name}</span>
-          <span className="text-stone-400"> at {ACTIVITIES[active.kind].place} · {active.guests.length} guests · {active.endWeek > s.week ? `${active.endWeek - s.week} week${active.endWeek - s.week > 1 ? 's' : ''} to go` : 'ends this week'}</span>
-        </div>
+        <Card tone="attention" testid="activity-now">
+          <div className="text-[11px] uppercase tracking-[0.2em] text-gold-500">Now hosting</div>
+          <div className="font-display text-lg leading-tight text-gold-300">{ACTIVITIES[active.kind].name}</div>
+          <div className="text-[12.5px] text-stone-400">at {ACTIVITIES[active.kind].place} · {active.guests.length} guests · <span className="text-stone-200">{active.endWeek > s.week ? `${active.endWeek - s.week} week${active.endWeek - s.week > 1 ? 's' : ''} to go` : 'ends this week'}</span></div>
+        </Card>
       )}
-      <p className="text-xs text-stone-400">Pick the guests, pay for it, and a week or two later it plays out: guests think better of you, you unwind, the house earns renown — and something always happens. Weddings and funerals are where business gets done.</p>
+      <Section title="Host something" sub="Pick the guests, pay for it, and a week or two later it plays out: guests think better of you, you unwind, the house earns renown, and something always happens. Weddings and funerals are where business gets done.">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {ACTIVITY_KINDS.map((k) => {
           const def = ACTIVITIES[k];
           const why = activityBlock(s, k, ['x'], undefined);
           const blocked = why && why !== 'Someone on the list can\'t come' ? why : undefined;
           return (
-            <button key={k} onClick={() => setKind(k)} data-testid={`activity-${k}`}
-              className={`text-left rounded-md border p-2.5 transition-colors ${kind === k ? 'border-gold-400 bg-gold-500/10' : 'border-noir-700 bg-noir-800/60 hover:border-gold-500'}`}>
-              <div className="font-semibold text-stone-100 text-sm">{def.name}</div>
-              <div className="text-[11px] text-stone-500">{def.place}</div>
-              <div className="text-[11px] text-stone-400 mt-0.5">{fmt$(def.baseCost)} + {fmt$(def.perGuest)}/guest · {def.weeks} wk · up to {def.maxGuests}</div>
-              {blocked && <div className="text-[11px] text-amber-400 mt-0.5">{blocked}</div>}
+            <button key={k} type="button" onClick={() => setKind(k)} data-testid={`activity-${k}`} aria-pressed={kind === k}
+              className={`flex min-h-[5.5rem] flex-col text-left rounded-lg border p-2.5 transition-colors ${kind === k ? 'border-gold-400 bg-gold-500/10' : blocked ? 'border-noir-700 bg-noir-800/30 opacity-70 hover:border-noir-500' : 'border-noir-700 bg-noir-800/60 hover:border-gold-500'}`}>
+              <span className="font-display text-[15px] leading-tight text-stone-100">{def.name}</span>
+              <span className="text-[11px] text-stone-500">{def.place}</span>
+              <span className="mt-auto pt-1 text-[11px] tabular-nums text-stone-300">{fmt$(def.baseCost)} + {fmt$(def.perGuest)}/guest · {def.weeks} wk · up to {def.maxGuests}</span>
+              {blocked && <span className="text-[11px] text-amber-400">{blocked}</span>}
             </button>
           );
         })}
       </div>
+      </Section>
       {kind && <Planner key={kind} s={s} kind={kind} />}
       {s.dyn && s.dyn.activityLog.length > 0 && (
-        <section>
-          <Label>Past gatherings</Label>
-          <ul className="mt-1 space-y-0.5 text-xs text-stone-400">
+        <Section title="Past gatherings">
+          <ul className="space-y-1 text-[12.5px] text-stone-400">
             {[...s.dyn.activityLog].reverse().slice(0, 8).map((r, i) => (
-              <li key={i}><span className="text-stone-200">{ACTIVITIES[r.kind].name}</span> (wk {r.week}, {r.guests.length} guests){r.outcomes.length ? ` — ${r.outcomes.join('; ')}` : ''}</li>
+              <li key={i} className="flex gap-2"><span className="text-emerald-400" aria-hidden>✓</span><span><span className="text-stone-200">{ACTIVITIES[r.kind].name}</span> (wk {r.week}, {r.guests.length} guests){r.outcomes.length ? ` — ${r.outcomes.join('; ')}` : ''}</span></li>
             ))}
           </ul>
-        </section>
+        </Section>
       )}
     </div>
   );
@@ -77,8 +79,8 @@ function Planner({ s, kind }: { s: GameState; kind: ActivityKind }) {
   return (
     <section className="relative isolate overflow-hidden rounded-md border border-noir-700 bg-noir-800/40 p-3" data-testid="activity-planner">
       <Backdrop k={ACTIVITY_ART[kind]} opacity={0.18} className="-z-10" contain={kind === 'sunday'} />
-      <div className="panel-title text-base">{def.name}</div>
-      <p className="text-xs text-stone-400">{def.text}</p>
+      <h4 className="llv-section-title">{def.name}</h4>
+      <p className="llv-prose mt-0.5">{def.text}</p>
       {needs && (
         <div className="mt-2">
           <Label>{kind === 'wedding' ? 'Whose wedding' : kind === 'christening' ? 'Which baby' : 'Whose wake'}</Label>
