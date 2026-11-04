@@ -12,6 +12,7 @@ import { CharLink, Face } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { plotTargets, plotWarnings, sideOf, TARGETED_SCHEMES, type SideFilter, type TargetedScheme } from '../../engine/sides';
 import { RelationChip, SideChip, SideFilterBar } from './Side';
+import { HoneyTrapRow } from '../people/HoneyTrapRow';
 
 /** Opening the scheme planner from anywhere. */
 export const PlannerContext = createContext<{ plan: (kind: SchemeKind, targetId?: string, opts?: Partial<SchemeOptions>) => void }>({ plan: () => {} });
@@ -90,6 +91,7 @@ export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: Game
               <Radio value={opts.equipment!} options={Object.keys(EQUIPMENT) as (keyof typeof EQUIPMENT)[]} label={(e) => `${EQUIPMENT[e].name}${EQUIPMENT[e].cost ? ` (${fmt$(EQUIPMENT[e].cost)})` : ''}`} onChange={(equipment) => set({ equipment })} />
               <label className="mt-1 flex items-center gap-2 text-xs text-stone-300"><input type="checkbox" checked={!!opts.alibi} onChange={(e) => set({ alibi: e.target.checked })} /> Buy alibis for the team ($800): more secrecy, fewer witnesses</label>
             </Section>
+            <HoneyTrapRow s={s} targetId={targetId} opts={opts} set={set} />
             <Section title="Frame someone">
               <select className="rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={opts.frame ?? ''} onChange={(e) => set({ frame: (e.target.value || undefined) as RivalId | undefined })}>
                 <option value="">Nobody — let them know it was us</option>

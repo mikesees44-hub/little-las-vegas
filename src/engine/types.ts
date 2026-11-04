@@ -634,6 +634,11 @@ export interface SchemeOptions {
   heist?: HeistKind;
   city?: string;
   district?: string;
+  /** A hit's honey trap: the working woman paid to get him alone (hitHoney.ts; Mature content only). */
+  honey?: string;
+  /** Who asks her (a character id; absent = the boss in person) and what she is offered. */
+  honeyAsk?: string;
+  honeyPay?: 'low' | 'fair' | 'generous' | 'name';
 }
 
 /** A plan in motion (CK scheme): agents, weekly progress, secrecy, a final roll. */
@@ -1042,6 +1047,10 @@ export interface GameState {
   feds?: import('./fedsState').FedsState;
   /** The Don's planner: the datebook's ticks and margin notes, who was turned away at the door (planner/; optional, made by the first use). */
   planner?: import('./planner/state').PlannerState;
+  /** The boss's private read on people: suspicion they talk or steal, with the evidence (peopleRead.ts; optional, made by the first evidence). */
+  reads?: import('./peopleRead').ReadsState;
+  /** Close people (the ★): the boss's own pins and the auto-pins he took off (pins.ts; optional, made by the first click). */
+  pins?: import('./pins').PinsState;
 }
 
 export interface PlayerChoices {

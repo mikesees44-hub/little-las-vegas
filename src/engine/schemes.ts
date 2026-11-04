@@ -17,6 +17,8 @@ import { FACTION_NAMES } from './world';
 import { CITIES_BY_ID, CITY_LIST, hasPermission, needsPermission, standing } from './cities';
 import { resolveEnvoy } from './envoys';
 import { protectionFor } from './protect';
+import { ownHitFallout } from './peopleRead';
+import { HONEY_PAY, honeyAfter, honeyBefore, honeyCandidates, honeyOdds, rollHoney } from './hitHoney';
 export { outpostIncome } from './envoys';
 import type { Character, Effect, EventInstance, FactionId, GameState, HeistKind, HitLocation, RivalId, Scheme, SchemeDepth, SchemeKind, SchemeOptions } from './types';
 
@@ -179,6 +181,12 @@ export function schemeOdds(s: GameState, kind: SchemeKind, targetId: string | un
         if (opts.alibi) {
           cost += 800;
           secrecy += 20;
+        }
+        // A honey trap (hitHoney.ts): she gets him alone, if she goes through with it.
+        if (opts.honey && honeyCandidates(s, t.id).some((c) => c.id === opts.honey)) {
+          const ho = honeyOdds(s, opts.honey, t.id, { by: opts.honeyAsk, pay: opts.honeyPay });
+          reasons.push({ label: `${s.characters[opts.honey].firstName} gets him alone (if she goes through with it: ${Math.round(ho.yes * 100)}%)`, value: ho.bonus });
+          cost += HONEY_PAY[opts.honeyPay ?? 'fair'].fee;
         }
       }
       weeks = 4;
@@ -367,7 +375,15 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
   const odds = schemeOdds(s, sc.kind, sc.targetId, sc.agents, sc.opts);
   const t = sc.targetId ? s.characters[sc.targetId] : undefined;
   const agents = agentChars(s, sc.agents);
-  const success = chance(s, odds.chance);
+  // A hit's honey trap: her answer first (her own dice). A warning calls the hit off; a no or cold feet takes her help away.
+  const honey = sc.kind === 'murder' ? rollHoney(s, sc) : undefined;
+  if (honey) honeyBefore(ctx, sc, honey);
+  if (honey === 'warn') {
+    const tw = sc.targetId ? s.characters[sc.targetId] : undefined;
+    if (tw) cue(s, 'hit_botched', 'Warned', `${displayName(tw)} never came up to the room. Somebody told him.`);
+    return;
+  }
+  const success = chance(s, (honey && honey !== 'yes' ? schemeOdds(s, sc.kind, sc.targetId, sc.agents, { ...sc.opts, honey: undefined }) : odds).chance);
   const name = t ? displayName(t) : '';
   const label = `${SCHEME_INFO[sc.kind].name}${t ? `: ${t.firstName} ${t.lastName}` : ''}`;
   switch (sc.kind) {
@@ -375,7 +391,7 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
       if (!t) return;
       if (success) {
         const loc = LOCATIONS[sc.opts.location ?? 'barbershop'];
-        const witness = chance(s, loc.witness * (sc.opts.disposal === 'disappear' ? 0.5 : 1) * (sc.opts.alibi ? 0.6 : 1));
+        const witness = chance(s, loc.witness * (sc.opts.disposal === 'disappear' ? 0.5 : 1) * (sc.opts.alibi ? 0.6 : 1) * (honey === 'yes' ? 0.5 : 1));
         const pub = sc.opts.disposal !== 'disappear';
         const framed = sc.opts.frame ? s.rivals.find((r) => r.id === sc.opts.frame) : undefined;
         const frameHolds = framed ? chance(s, 0.7) : false;
@@ -387,6 +403,8 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
           { type: 'respect', amount: pub ? (sc.opts.location === 'boardwalk' ? 6 : 4) : 1 },
         ];
         const victimFaction = s.rivals.find((r) => r.id === t.faction);
+        // One of his own (only ever on the boss's explicit, confirmed order): the crew, his family, a vendetta (peopleRead.ts).
+        if (t.faction === 'player') eff.push(...ownHitFallout(s, t, pub));
         if (needsSanction(s, t) && !sanctioned(s, t.id) && !(framed && frameHolds)) {
           eff.push({ type: 'heat', bar: 'family', amount: 15 }, { type: 'rivalOpinion', rival: 'philly', amount: -20, reason: 'Killed a made man without the Table' });
           if (victimFaction && victimFaction.id !== 'philly') eff.push({ type: 'feud', rival: victimFaction.id });
@@ -428,11 +446,13 @@ function resolvePlayerScheme(ctx: Ctx, sc: Scheme): void {
           eff.push({ type: 'schedule', key: 'retaliation', minWeeks: 1, maxWeeks: 3, chance: 0.8, hint: `${r.shortName} will hit back`, params: { rival: r.id } });
         }
         addOpinion(s, t.id, s.playerId, 'Tried to have me killed', -60, 0);
+        if (t.faction === 'player') eff.push({ type: 'crewOpinion', amount: -5, reason: `The boss tried to have ${t.firstName} killed` });
         apply(ctx, label, sc.because, eff);
         cue(s, 'hit_botched', 'Botched', `The gun jammed. ${name} ran, bleeding, into the dark — and he saw who sent them.`);
         bonesFromScheme(ctx, sc, agents, false);
         ctx.log.push(`The hit on ${name} was botched. He survived and he knows.`);
       }
+      if (honey === 'yes') honeyAfter(ctx, sc, agents);
       break;
     }
     case 'heist': {
