@@ -1,3 +1,4 @@
+import { TrustToggle } from '../components/TrustToggle';
 import { useEffect, useMemo, useState } from 'react';
 import { Overlay } from '../components/Modal';
 import { Backdrop } from '../hood/art/sceneArt';
@@ -188,10 +189,10 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
         </div>
       )}
       {!sp.empty && (
-        <label className="mt-auto flex items-start gap-2 border-t border-noir-800 pt-2 text-[11px] text-stone-400" title="He handles his own small things (cheap, peaceful ones) without asking. You see what he did in This Week. A long free hand builds his own following.">
-          <input type="checkbox" className="mt-0.5 accent-amber-500" checked={trusted} onChange={(e) => onTrust(sp.key, e.target.checked)} data-testid={`trust-${sp.key}`} />
-          <span>Let {shortName(c)} handle {sp.role === 'capo' ? 'his crew\'s' : sp.role === 'wife' ? 'the house\'s' : 'his'} small stuff{trusted && free >= 4 ? <span className="text-amber-300"> · free hand {free} wk</span> : null}</span>
-        </label>
+        <div className="mt-auto border-t border-noir-800 pt-2">
+          <div className="mb-1 text-[11px] text-stone-400">{shortName(c)}'s small stuff ({sp.role === 'capo' ? 'his crew' : sp.role === 'wife' ? 'the house' : 'his side'}):</div>
+          <TrustToggle name={shortName(c)} on={trusted} onChange={(v) => onTrust(sp.key, v)} free={free} compact testId={`trust-${sp.key}`} />
+        </div>
       )}
     </section>
   );

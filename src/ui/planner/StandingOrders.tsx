@@ -1,3 +1,4 @@
+import { TrustToggle } from '../components/TrustToggle';
 import { applyPreset, BUDGET_STEPS, setBudget, setCapoLevel, setLevel, type LtLevel } from '../../engine/lieutenants';
 import { setTrust } from '../../engine/briefing';
 import { edictOrder, LEVEL_LABEL, LEVELS, splitOrder, standingOrders } from '../../engine/planner/orders';
@@ -60,12 +61,12 @@ export function StandingOrders({ s, act, onOrder }: { s: GameState; act: Act; on
       )}
       {so.advisors.length > 0 && (
         <section className="mt-3">
-          <h4 className="llv-brief-h">Trusted with the small stuff</h4>
+          <h4 className="llv-brief-h">Small stuff: does he ask you, or handle it himself?</h4>
           <ul>
             {so.advisors.map((a) => (
-              <li key={a.key} className={row}>
+              <li key={a.key} className={`${row} flex-col !items-stretch gap-1`}>
                 <span><b>{a.name}</b> <span className="text-[11px] text-[#6b5a44]">· {a.title}</span></span>
-                <label className="flex items-center gap-1 text-[12px]"><input type="checkbox" checked={a.on} onChange={(e) => act((x) => setTrust(x, a.key, e.target.checked), e.target.checked ? `Standing order: ${a.name} handles his routine` : `Standing order: ${a.name} asks first`)} data-testid={`so-trust-${a.key}`} /> Handles his routine</label>
+                <TrustToggle name={a.name} on={a.on} onChange={(v) => act((x) => setTrust(x, a.key, v), v ? `Standing order: ${a.name} handles his small stuff himself` : `Standing order: ${a.name} asks you first`)} testId={`so-trust-${a.key}`} paper />
               </li>
             ))}
           </ul>
