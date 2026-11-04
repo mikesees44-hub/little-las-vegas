@@ -50,7 +50,7 @@ function RowCard({ s, r }: { s: GameState; r: PayRow }) {
       </div>
       {acts.some(([a]) => a) && (
         <div className="mt-1">
-          <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="payroll-actions">{open ? 'Close ▴' : 'Raise · cut · main · let go ▾'}</button>
+          <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" aria-expanded={open} onClick={() => setOpen(!open)} data-testid="payroll-actions">{open ? 'Close ▴' : `${[r.raise && 'Raise', r.cut && 'cut', !r.main && r.makeMain && 'main earner', r.fire && 'let go'].filter(Boolean).join(' · ')} ▾`}</button>
           {open && <div className="mt-1 space-y-1">{acts.map(([a, label]) => a && <ActionRow key={label} s={s} action={a} label={label} hostile={label === 'Let go'} />)}</div>}
         </div>
       )}
@@ -119,7 +119,7 @@ export function PayrollSection({ s }: { s: GameState }) {
 }
 
 const RING_TONE: Record<RingId, string> = {
-  blood: 'var(--d-family)', made: 'var(--d-crew)', associates: 'var(--d-crew)', payroll: 'var(--d-money)', friends: 'var(--d-politics)', acquaintances: 'var(--d-shore)',
+  blood: '--d-family', made: '--d-crew', associates: '--d-crew', payroll: '--d-money', friends: '--d-politics', acquaintances: '--d-shore',
 };
 
 /** How deep the boss's circle goes: the rings from blood outward, a count each and a depth score. */
@@ -135,7 +135,7 @@ export function SocialCircle({ s }: { s: GameState }) {
           {c.rings.slice().reverse().map((r, i) => {
             const k = c.rings.length - i;
             const pct = 100 * (k / c.rings.length);
-            return <div key={r.id} className="absolute rounded-full border" style={{ width: `${pct}%`, height: `${pct}%`, left: `${(100 - pct) / 2}%`, top: `${(100 - pct) / 2}%`, borderColor: RING_TONE[r.id], background: `color-mix(in srgb, ${RING_TONE[r.id]} ${r.count ? 14 : 4}%, transparent)` }} />;
+            return <div key={r.id} className="absolute rounded-full border" style={{ width: `${pct}%`, height: `${pct}%`, left: `${(100 - pct) / 2}%`, top: `${(100 - pct) / 2}%`, borderColor: `rgb(var(${RING_TONE[r.id]}))`, background: `rgb(var(${RING_TONE[r.id]}) / ${r.count ? 0.16 : 0.04})` }} />;
           })}
           <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-stone-100">You</div>
         </div>
@@ -144,7 +144,7 @@ export function SocialCircle({ s }: { s: GameState }) {
             <li key={r.id}>
               <button type="button" onClick={() => setPick(pick === r.id ? undefined : r.id)} aria-pressed={pick === r.id} data-testid={`ring-${r.id}`}
                 className={`flex w-full items-center gap-2 rounded border px-2 py-1 text-left text-[12px] ${pick === r.id ? 'border-gold-400' : 'border-noir-700 hover:border-noir-500'}`}>
-                <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: RING_TONE[r.id] }} />
+                <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: `rgb(var(${RING_TONE[r.id]}))` }} />
                 <span className="text-stone-500">{i + 1}</span>
                 <span className="flex-1 text-stone-200">{r.label}</span>
                 <span className="tabular-nums text-stone-100">{r.count}</span>

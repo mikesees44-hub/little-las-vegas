@@ -119,6 +119,8 @@ export function onAnyPayroll(s: GameState, id: string): string | undefined {
   const p = polOf(s, id);
   if (p && s.pol?.ctl[p.id]?.payroll) return 'On the pad at City Hall';
   if (s.econ?.jobs[id]) return 'Has a no-show job from you';
+  const c = s.characters[id];
+  if (c?.outside && c.faction === 'none' && c.capoId && s.characters[c.capoId]?.alive) return `Works with ${s.characters[c.capoId].firstName}'s crew`;
   return undefined;
 }
 
@@ -577,7 +579,8 @@ export function hushItem(s: GameState, h: Hire, key: string): HushItem | undefin
     return tip ? mk('plan', `${KIND_LABEL[tip.kind]}: ${tip.detail}`, { tip: tip.id }) : undefined;
   });
   // 2. A rival's books and its war chest (real numbers, a little off when she got it wrong).
-  if (side === 'rival' && rv) tries.push(() => {
+  const lately = (k: HushItem['kind']) => (s.payroll?.intel ?? []).some((x) => x.on === on.id && x.kind === k && s.week - x.week < 6);
+  if (side === 'rival' && rv && !lately('books') && !lately('war')) tries.push(() => {
     const f = truth === 'solid' ? 1 : truth === 'garbled' ? 1.35 : 0.6;
     const text = `The ${rv.shortName} family has about ${fmtMoney(Math.round(rv.money * f / 500) * 500)} put away and ${Math.round(rv.muscle * f)} on the muscle scale${rv.war ? '; they are counting on outlasting you' : ''}.`;
     return mk(rv.war || rv.feud ? 'war' : 'books', text);
@@ -979,7 +982,7 @@ export function socialCircle(s: GameState): { rings: Ring[]; total: number; dept
   const rings = [blood, made, assoc, pay, friends, acq];
   const total = rings.reduce((a, r) => a + r.count, 0);
   const raw = rings.reduce((a, r) => a + Math.sqrt(r.count) * RING_WEIGHT[r.id], 0);
-  const depth = clamp(raw * 2.2);
+  const depth = clamp(100 * (1 - Math.exp(-raw / 55)));
   const word = depth >= 75 ? 'The whole island owes you something' : depth >= 55 ? 'Deep: you hear things before the papers' : depth >= 35 ? 'Solid: people pick up when you call' : depth >= 15 ? 'Thin: a few people outside the Family' : 'Shallow: nobody outside the Family';
   return { rings, total, depth, word };
 }

@@ -51,7 +51,7 @@ function Card({ s, c, onChar, onPhone, onOrder }: { s: GameState; c: Contact; on
   const mood = c.mood ?? 0;
   const [offer, setOffer] = useState(false);
   return (
-    <li className="llv-card-rolo" style={{ ['--d' as string]: DOM_RGB[GROUP_DOM[c.group]] }} data-testid="bb-card" data-group={c.group}>
+    <li className={`llv-card-rolo ${offer ? 'sm:col-span-2 xl:col-span-3' : ''}`} style={{ ['--d' as string]: DOM_RGB[GROUP_DOM[c.group]] }} data-testid="bb-card" data-group={c.group}>
       <button type="button" onClick={() => c.charId && onChar(c.charId)} disabled={!c.charId} aria-label={`Open ${c.name}`}><Face s={s} id={c.charId} name={c.name} size={44} /></button>
       <div className="min-w-0">
         <div className="flex items-baseline justify-between gap-2">
