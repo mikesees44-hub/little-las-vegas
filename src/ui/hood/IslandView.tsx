@@ -102,6 +102,8 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
   const [tier, setTier] = useState(1);
   // The settled zoom in ~15% steps, for the political overlay's names (sized in screen pixels).
   const [zoomStep, setZoomStep] = useState(0);
+  // Phones: View, Show, Find, the modes and the legend fold into one "Map ▾" tray beside the zoom (they stacked down the top of the map).
+  const [tray, setTray] = useState(false);
   const [projMode, setProjMode] = useState<'iso' | 'plan'>(() => (typeof localStorage !== 'undefined' ? pref().proj : undefined) ?? 'iso');
   const [moodSet, setMoodSet] = useState<'auto' | Mood>(() => (typeof localStorage !== 'undefined' ? pref().mood : undefined) ?? 'auto');
   const [overlay, setOverlay] = useState<HoodOverlay>('none');
@@ -463,7 +465,15 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
       {scene && <div className="absolute inset-0 z-[998]"><PaintedView s={s} items={items} scene={scene} mood={mood} overlay={overlay} tint={(it) => tintOf(s, it, overlay)} sel={sel} onPick={(k) => { setSel(k); setDistricts(false); setMenu(false); }} onScene={(sc) => { setScene(sc); setDistricts(false); }} onMap={() => setScene(undefined)} onDistricts={() => { setSel(undefined); setDistricts(true); }} /></div>}
       {/* Controls: View · Show · Find, and the zoom (always). Selection survives a change of view. */}
       <div data-hv-ui className={`absolute right-2 top-[4.75rem] md:top-2 z-[1003] flex flex-col items-end gap-1.5 max-w-[70%] ${(plan && !scene) || walking ? 'hidden' : ''}`} data-testid="map-controls">
-        <div className="flex flex-wrap justify-end gap-1">
+        <div className="flex gap-1 md:order-3">
+          <button type="button" className={`hv-btn md:hidden ${tray ? 'hv-on' : ''}`} onClick={() => setTray((t) => !t)} aria-expanded={tray} aria-controls="hv-tray-body" data-testid="hv-tray">Map {tray ? '▴' : '▾'}</button>
+          <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
+          <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
+          <button type="button" className="hv-btn" onClick={whole} title="The whole island" aria-label="The whole island">⤢</button>
+          <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Recenter on the Boardwalk" data-testid="hv-recenter" aria-label="Recenter on the Boardwalk">⌂<span className="hidden md:inline"> Recenter</span></button>
+        </div>
+        <div id="hv-tray-body" className={`${tray ? 'flex' : 'hidden'} flex-col items-end gap-1.5 rounded-md bg-noir-950/40 p-1 md:contents`} data-testid="hv-tray-body">
+        <div className="flex flex-wrap justify-end gap-1 md:order-1">
           <MapMenu label={`View: ${walking ? 'Walk' : scene ? 'Street' : plan ? 'Block map' : districts ? 'Districts' : projMode === 'plan' ? 'Island plan' : 'Island'}`} testid="map-view">
             {(close) => <>
               <button type="button" role="menuitem" className="hv-mi" data-testid="hv-view-island" onClick={() => { close(); setScene(undefined); setPlan(false); setDistricts(false); setProjMode('iso'); savePref({ proj: 'iso' }); }}>Island (2.5D)</button>
@@ -489,19 +499,14 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
           </MapMenu>
           <MapFind s={s} items={items} onHood={(id) => { setScene(undefined); setPlan(false); goHood(id); }} onItem={showItem} />
         </div>
-        <MapModeToggle mode={mapMode} onMode={(m) => { setMapMode(m); savePref({ mapMode: m }); }} />
-        <div className="flex gap-1">
-          <button type="button" className="hv-btn" onClick={() => zoomBtn(1.5)} aria-label="Zoom in">+</button>
-          <button type="button" className="hv-btn" onClick={() => zoomBtn(1 / 1.5)} aria-label="Zoom out">−</button>
-          <button type="button" className="hv-btn" onClick={whole} title="The whole island" aria-label="The whole island">⤢</button>
-          <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Recenter on the Boardwalk" data-testid="hv-recenter">⌂ Recenter</button>
-        </div>
+        <div className="md:order-2"><MapModeToggle mode={mapMode} onMode={(m) => { setMapMode(m); savePref({ mapMode: m }); }} /></div>
         {legend.length > 0 && (
-          <div className="rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-[10px] text-stone-300" data-testid="hv-legend">
+          <div className="md:order-4 rounded bg-noir-900/90 border border-noir-700 px-2 py-1 text-[10px] text-stone-300" data-testid="hv-legend">
             {legend.map(([t, c]) => <div key={t} className="flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: c }} />{t}</div>)}
           </div>
         )}
-        {moodSet === 'auto' && mood !== 'day' && <div className="rounded bg-noir-900/90 border border-blood-500/60 px-2 py-1 text-[10px] text-rose-200 max-w-[220px]">The heat is on. The island looks different after dark.</div>}
+        {moodSet === 'auto' && mood !== 'day' && <div className="md:order-5 rounded bg-noir-900/90 border border-blood-500/60 px-2 py-1 text-[10px] text-rose-200 max-w-[220px]">The heat is on. The island looks different after dark.</div>}
+        </div>
       </div>
       {!scene && !plan && <div data-hv-ui className="absolute left-2 top-11 z-[999] flex flex-nowrap md:flex-wrap gap-1 overflow-x-auto max-w-[52%] md:max-w-[50%] pb-1" data-testid="hv-hoods">
         {HOODS.map((h) => <button key={h.id} type="button" onClick={() => goHood(h.id)} className={`hv-chip ${hood === h.id ? 'hv-on' : ''}`}>{h.name}</button>)}
