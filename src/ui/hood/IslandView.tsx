@@ -472,7 +472,7 @@ export function IslandView({ s, onSurvey, onHood, focusHood, land, walk, walkAt 
           <button type="button" className="hv-btn" onClick={whole} title="The whole island" aria-label="The whole island">⤢</button>
           <button type="button" className="hv-btn" onClick={() => { home(); setHood(undefined); onHood?.(undefined); }} title="Recenter on the Boardwalk" data-testid="hv-recenter" aria-label="Recenter on the Boardwalk">⌂<span className="hidden md:inline"> Recenter</span></button>
         </div>
-        <div id="hv-tray-body" className={`${tray ? 'flex' : 'hidden'} flex-col items-end gap-1.5 rounded-md bg-noir-950/40 p-1 md:contents`} data-testid="hv-tray-body">
+        <div id="hv-tray-body" className={`${tray ? 'flex' : 'hidden'} flex-col items-end gap-1.5 rounded-md border border-noir-700 bg-noir-950/85 p-1.5 shadow-lg shadow-black/60 md:contents`} data-testid="hv-tray-body">
         <div className="flex flex-wrap justify-end gap-1 md:order-1">
           <MapMenu label={`View: ${walking ? 'Walk' : scene ? 'Street' : plan ? 'Block map' : districts ? 'Districts' : projMode === 'plan' ? 'Island plan' : 'Island'}`} testid="map-view">
             {(close) => <>
