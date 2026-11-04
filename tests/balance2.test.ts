@@ -319,3 +319,38 @@ describe('Top 10 #2: moments share the big layers instead of cloning the world',
     expect(moments).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('Top 10 #1: the save on a diet', () => {
+  it('a long-dead minor character named nowhere leaves characters and relations for a stub', async () => {
+    const { pruneDead, departedName } = await import('../src/engine/prune');
+    const s = newGameWith('t1-prune', 'olddon');
+    const c = makeCharacter(s, { rank: 'soldier', faction: 'none', age: 40 });
+    addOpinion(s, c.id, s.playerId, 'test', 10, 0);
+    c.alive = false; c.death = { week: s.week, date: { ...s.date }, cause: 'a test' };
+    s.week += 200;
+    const n = pruneDead(s);
+    expect(n).toBeGreaterThanOrEqual(1);
+    expect(s.characters[c.id]).toBeUndefined();
+    expect(Object.values(s.relations).some((r) => r.from === c.id || r.to === c.id)).toBe(false);
+    expect(departedName(s, c.id)).toBe(`${c.firstName} ${c.lastName}`);
+  });
+
+  it('a dead man still named somewhere (a capo of record, a house) is kept', async () => {
+    const { pruneDead } = await import('../src/engine/prune');
+    const s = newGameWith('t1-keep', 'olddon');
+    const c = makeCharacter(s, { rank: 'soldier', faction: 'none', age: 40 });
+    c.alive = false; c.death = { week: s.week, date: { ...s.date }, cause: 'a test' };
+    s.districts[0].capoId = c.id;
+    s.week += 200;
+    pruneDead(s);
+    expect(s.characters[c.id]).toBeDefined();
+  });
+
+  it('an old save loads: archives capped, difficulty Don', async () => {
+    const { upgradeSave } = await import('../src/engine/upgradeSave');
+    const s = newGameWith('t1-load', 'olddon');
+    delete (s as { difficulty?: string }).difficulty;
+    const up = upgradeSave(s);
+    expect(up.difficulty).toBe('don');
+  });
+});

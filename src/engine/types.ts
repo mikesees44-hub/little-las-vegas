@@ -833,6 +833,8 @@ export interface GameState {
   schema?: number;
   /** Difficulty preset (difficulty.ts): absent in older saves = 'don'. */
   difficulty?: import('./difficulty').Difficulty;
+  /** Dead minor characters folded out of `characters` (prune.ts); absent in older saves. */
+  departed?: import('./prune').Departed[];
   seed: string;
   rng: number;
   nextId: number;

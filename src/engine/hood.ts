@@ -106,7 +106,7 @@ function logEvent(s: GameState, h: HoodState, hood: HoodId, kind: HoodEventKind,
 }
 
 /** Entries kept per neighborhood in the island's log (the view shows the last 30). */
-export const HOOD_LOG = 40;
+export const HOOD_LOG = 24;
 
 function pushHistory(s: GameState, l: Lot, how: 'bought' | 'sold' | 'built' | 'seized' | 'inherited', by?: string, price?: number): void {
   const hist = (l.history ??= []);

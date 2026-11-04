@@ -107,6 +107,7 @@ import { capoEventSource, caposWeek } from './capos';
 import { rxChoiceBegin, rxEnd } from './reactions/apply';
 import { proposalsEventSource } from './reactions/proposals';
 import { knobs } from './difficulty';
+import { pruneSave } from './prune';
 import { heirSeatSource, matchOfferSource } from './generations';
 import { CAPO_SEAT_MIN } from './regimes';
 
@@ -480,6 +481,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     heatConsequences(ctx);
     heatDecay(ctx);
     weeklyHousekeeping(ctx);
+    // The save on a diet (prune.ts): twice a year, the long dead and the old archives.
+    pruneSave(s);
     runGoals(ctx);
     riseGoalsWeek(ctx);
     dynastyWeek(ctx);

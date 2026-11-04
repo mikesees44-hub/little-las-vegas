@@ -235,7 +235,7 @@ export function askAround(s: GameState, L: LivingState, pid: string, via: string
 /* ------------------------------------------------------------------ */
 
 const KEEP_WEEKS = 104;
-const KEEP_MAX = 1200;
+const KEEP_MAX = 700;
 
 /** Old facts go (unless an open story still needs them); the boss's beliefs about them go too. */
 export function pruneFacts(s: GameState, L: LivingState): void {

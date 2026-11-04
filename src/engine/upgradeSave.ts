@@ -46,6 +46,7 @@ import { ensureDaily } from './daily';
 import { ensureAbove } from './valente';
 import { ensurePhoneSave } from './phoneState';
 import { freeWidows } from './dynasty';
+import { capArchives } from './prune';
 import type { GameState } from './types';
 
 /**
@@ -88,6 +89,10 @@ export function upgradeSave(s: GameState): GameState {
   if ((s.schema ?? 0) < 2) try { keepOldDelegation(s); } catch { /* nobody seated yet: the new defaults apply */ }
   // The trust pass: stale goals, the split beard/build gene, the schema stamp.
   migrateTrust(s);
+  // Balance 2: the difficulty preset (absent = Don) and the save's archives held to their windows
+  // (a 36-month venue history, an uncapped Book) the moment an older save loads.
+  if (!s.difficulty) s.difficulty = 'don';
+  try { capArchives(s); } catch { /* the next prune will */ }
   // B8: widows and widowers of an older save stop being married to the dead.
   try { freeWidows(s); } catch { /* nothing to free */ }
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }
