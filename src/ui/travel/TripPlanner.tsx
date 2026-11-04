@@ -83,9 +83,11 @@ export function TripPlanner({ s, leaderId, destId, onClose }: { s: GameState; le
   return (
     <Modal onClose={onClose} wide>
       <div className="llv-d-shore llv-dom-scope p-4 sm:p-5 space-y-4" data-testid="trip-planner">
+        <div className="relative">
         <PlaceBanner art={tripArt(plan.destId, s.date.y)} d="shore" title={<>{d?.name ?? 'Somewhere'}</>}
-          sub={<><span className="llv-kicker !text-[10px] llv-dom-ink">Plan a trip · {plan.purpose === 'vacation' ? 'a vacation' : 'business'}</span>{d && <span className="block italic">{d.blurb}</span>}</>}
-          aside={<button type="button" className="llv-iconbtn bg-noir-950/70" onClick={onClose} aria-label="Close">✕</button>} />
+          sub={<><span className="llv-kicker !text-[10px] llv-dom-ink">Plan a trip · {plan.purpose === 'vacation' ? 'a vacation' : 'business'}</span>{d && <span className="block italic">{d.blurb}</span>}</>} />
+          <button type="button" className="llv-iconbtn absolute right-2 top-2 bg-noir-950/75" onClick={onClose} aria-label="Close">✕</button>
+        </div>
 
         <Section domain="shore" title="Who, where and when" className="!mb-0">
         <div className="grid gap-3 sm:grid-cols-2">

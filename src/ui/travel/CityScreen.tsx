@@ -95,9 +95,11 @@ export function CityScreen({ s, update, onClose }: { s: GameState; update: (f: (
   return (
     <Modal onClose={onClose} xwide>
       <div className="llv-d-shore llv-dom-scope p-4 sm:p-5 space-y-4" data-testid="city-screen">
+        <div className="relative">
         <PlaceBanner art={tripArt(undefined, s.date.y)} d="shore" title={sc.name}
-          sub={<><span className="llv-kicker !text-[10px] llv-dom-ink">{whereAway(s, v)}</span><span className="block italic">{sc.blurb}</span></>}
-          aside={<button type="button" className="llv-iconbtn bg-noir-950/70" onClick={onClose} aria-label="Close">✕</button>} />
+          sub={<><span className="llv-kicker !text-[10px] llv-dom-ink">{whereAway(s, v)}</span><span className="block italic">{sc.blurb}</span></>} />
+          <button type="button" className="llv-iconbtn absolute right-2 top-2 bg-noir-950/75" onClick={onClose} aria-label="Close">✕</button>
+        </div>
         <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
           <StatChip domain="shore" label="Standing" value={standing(s, v.cityId)} />
           <StatChip domain="shore" label="The hotel" value={<span className="text-[13px]">{fmt$(sc.nightly)}/night</span>} sub={sc.hotel} />
