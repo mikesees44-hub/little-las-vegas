@@ -165,7 +165,7 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
   const trusted = !!s.briefing?.trust[sp.key];
   const free = leeway(s, sp.key);
   return (
-    <section className={`flex w-[86vw] max-w-[340px] shrink-0 snap-center flex-col rounded-lg border bg-noir-900/90 p-3 text-[12px] sm:w-auto sm:min-w-[300px] sm:max-w-[420px] sm:flex-1 ${sp.empty ? 'border-dashed border-noir-600' : sp.items.length ? 'border-noir-600' : 'border-noir-700 opacity-80'}`} data-testid={`advisor-${sp.key}`}>
+    <section className={`flex w-[86vw] max-w-[340px] shrink-0 snap-center flex-col rounded-lg border bg-noir-900/90 p-3 text-[12px] sm:w-auto sm:min-w-[300px] sm:max-w-[520px] sm:flex-1 ${sp.empty ? 'border-dashed border-noir-600' : sp.items.length ? 'border-noir-600' : 'border-noir-700 opacity-80'}`} data-testid={`advisor-${sp.key}`}>
       <div className="flex items-center gap-2">
         {c ? <Face s={s} c={c} size={52} /> : <div className="flex h-[52px] w-[52px] items-center justify-center rounded-md border border-dashed border-noir-600 text-xl text-stone-600">?</div>}
         <div className="min-w-0">
