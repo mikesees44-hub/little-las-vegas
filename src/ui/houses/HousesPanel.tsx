@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { HOUSE_TYPE_LABEL, PLAYER_HOUSE, type HouseType, type LEventKind } from '../../engine/houses';
-import { fullName, houseSummaries, houseSummary, houseTimeline, node, relationsWithYou, type HouseSummary, type RelTone } from '../../engine/housesView';
+import { crewOfHouse, fullName, houseSummaries, houseSummary, houseTimeline, node, relationsWithYou, type HouseSummary, type RelTone } from '../../engine/housesView';
 import { opinionBreakdown } from '../../engine/relations';
 import type { GameState } from '../../engine/types';
 import { signed } from '../format';
@@ -58,14 +58,14 @@ function HouseList({ s, onSelect }: { s: GameState; onSelect: (id: string) => vo
         <span /><span>House</span><span>Head</span><span>Living / dead</span><span>Founded</span><span>Seat</span><span>To you</span>
       </div>
       <ul className="divide-y divide-noir-800">
-        {list.map((x) => <HouseRow key={x.h.id} x={x} onSelect={onSelect} />)}
+        {list.map((x) => <HouseRow key={x.h.id} s={s} x={x} onSelect={onSelect} />)}
         {!list.length && <li className="py-3 text-sm text-stone-500">No house matches.</li>}
       </ul>
     </div>
   );
 }
 
-function HouseRow({ x, onSelect }: { x: HouseSummary; onSelect: (id: string) => void }) {
+function HouseRow({ s, x, onSelect }: { s: GameState; x: HouseSummary; onSelect: (id: string) => void }) {
   const { h, head } = x;
   return (
     <li>
@@ -75,6 +75,7 @@ function HouseRow({ x, onSelect }: { x: HouseSummary; onSelect: (id: string) => 
         <span className="min-w-0">
           <span className={`block truncate font-display text-base ${h.extinct ? 'text-stone-500' : 'text-stone-100'}`}>{h.title}</span>
           <span className="block text-[11px] text-stone-500">{HOUSE_TYPE_LABEL[h.type]}{h.extinct ? ` · extinct ${h.extinct}` : ''}</span>
+          {crewOfHouse(s, h) && <span className="block truncate text-[11px] text-blood-300" data-testid="house-crew">{crewOfHouse(s, h)}</span>}
         </span>
         <span className="min-w-0 truncate text-xs text-stone-300">{head ? <>{fullName(head)}{!head.alive && <span className="text-stone-500"> †</span>}</> : <span className="text-stone-600">—</span>}</span>
         <span className="text-xs tabular-nums text-stone-300"><span className="md:hidden text-stone-500">Living </span>{x.living} <span className="text-stone-600">/</span> <span className="text-stone-500">{x.dead} †</span></span>
@@ -104,6 +105,7 @@ function HousePage({ s, id, onBack }: { s: GameState; id: string; onBack: () => 
           <div className="flex flex-wrap items-baseline gap-2">
             <h2 className="font-display text-2xl leading-tight text-gold-400">{h.title}</h2>
             <Badge>{HOUSE_TYPE_LABEL[h.type]}</Badge>
+            {crewOfHouse(s, h) && <Badge tone="warn">{crewOfHouse(s, h)}</Badge>}
             <Badge tone={TONE_BADGE[x.relation.tone]}>{x.relation.label}</Badge>
             {h.extinct !== undefined && <Badge tone="bad">Extinct {h.extinct}</Badge>}
           </div>
