@@ -2,6 +2,7 @@ import { eventsOut } from './eventDays';
 import { urgentMeetings } from './threats';
 import { attackEstimate, pressurePoints } from './oldDon';
 import { deskQueue, handlerOf } from './attention';
+import { delegatedAsk } from './delegation';
 import type { InboxItem } from './inbox';
 import { previewAction, queuedMoney } from './actions';
 import { weekCheckIns, type CheckProblem } from './checkins';
@@ -189,7 +190,9 @@ export interface ReadyReview {
 export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
   const answers = ui.answers ?? {};
   const orders = ui.orders ?? [];
-  const unanswered = eventsOut(s).filter((e) => !answers[e.iid]).map((e) => {
+  // A small ask his standing order hands to the consigliere is handled, not unanswered (delegation.ts).
+  const taken = ui.taken ?? [];
+  const unanswered = eventsOut(s).filter((e) => !answers[e.iid] && (taken.includes(`ev:${e.iid}`) || !delegatedAsk(s, e))).map((e) => {
     const ch = e.choices.find((c) => c.id === e.defaultChoiceId && !c.disabledReason) ?? e.choices.find((c) => !c.disabledReason) ?? e.choices[0];
     return { iid: e.iid, title: e.title, becomes: ch ? ch.label : 'Nothing' };
   });

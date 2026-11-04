@@ -7,6 +7,7 @@
  *   <PickerModal s role onClose />         the same in a modal; or useClarity().openPicker(role)
  *   <AdvisorQuotes s ranking />            the consigliere's / underboss's (partial) advice
  *   <Tip term="heat.local">…</Tip>         hover help from the glossary, or <Tip text="…">
+ *   <Term id="respect" /> <Glossed text />  a game term with its nested definition; running text with its terms linked
  *   <WhatToDoPanel s />                    ranked opportunities and threats + the "This week" list
  *   <GlossaryOverlay /> <HelpButton />     the "?" help
  *   <TaskAdvice s seat />                  which council task is most pressing now
@@ -17,6 +18,7 @@
  * weekChecklist (opportunities.ts), GLOSSARY/statHelp/effectHelp (glossary.ts).
  */
 export { Tip } from './Tip';
+export { Glossed, Term } from './Term';
 export { ChoiceWhy, VerdictTag, WhyBody, WhyPanel } from './WhyPanel';
 export { CandidateCard, CandidatePicker, PickerModal } from './CandidatePicker';
 export { AdvisorQuotes } from './AdvisorQuote';

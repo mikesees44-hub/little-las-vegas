@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react';
+import { alwaysOn } from '../../engine/delegation';
+import { setAlways } from '../../engine/lieutenants';
 import { Overlay } from '../components/Modal';
+import { useShell } from '../shell/context';
 import { formatDate, dateOfWeek } from '../../engine/calendar';
 import { displayName } from '../../engine/characters';
 import { obligations, UB_TYPE_LABEL } from '../../engine/tribute';
@@ -117,6 +120,7 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
   onPolicy?: (split: Split, auto?: boolean) => void;
 }) {
   const t = s.tribute!;
+  const update = useShell().update;
   const ub = rep.ubId ? s.characters[rep.ubId] : undefined;
   const [open, setOpen] = useState<string | undefined>();
   const [split, setSplit] = useState<Split>(() => normSplit(rep.alloc?.split ?? t.policy));
@@ -223,7 +227,11 @@ export function AudienceScene({ s, rep, ev, onDecide, onClose, onPolicy }: {
                   <button type="button" className="btn-ghost text-xs" disabled={!ev} onClick={() => { setSplit(normSplit(rep.rec)); pick('his', normSplit(rep.rec)); }} data-testid="accept-his">His advice: a {pct(rep.rec.personal)} cut</button>
                   <button type="button" className="btn-ghost text-xs" disabled={!ev} onClick={() => { const p = normSplit(t.policy); pick('policy', p); }} data-testid="accept-usual">Your usual {pct(t.policy.personal)} cut</button>
                 </div>
-                <p className="text-[10px] text-stone-500">One number, your cut; the Family takes the rest, to the dollar, when the week turns. If you do nothing, your usual cut applies.</p>
+                {update && !alwaysOn(s, 'envelopes') && (
+                  <button type="button" className="btn-quiet text-[11px]" disabled={!ev} onClick={() => { update((x) => setAlways(x, 'envelopes', true)); setSplit(normSplit(rep.rec)); pick('his', normSplit(rep.rec)); }} data-testid="always-envelopes"
+                    title="Every week the underboss splits the envelope by his own advice, even with a short or a petition in it. It is listed under Handled for you; take it back any week.">↻ His advice, and always let him split the envelope</button>
+                )}
+                <p className="text-[10px] text-stone-500">One number, your cut; the Family takes the rest, to the dollar, when the week turns. If you do nothing, {alwaysOn(s, 'envelopes') ? 'he splits it by his advice' : 'your usual cut applies'}.</p>
               </div>
             )}
           </div>

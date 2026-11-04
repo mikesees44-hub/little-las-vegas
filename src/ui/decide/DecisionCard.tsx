@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import type { OddsView, WorstView } from '../../engine/decide';
+import { biggestReason, oddsWord, type OddsView, type WorstView } from '../../engine/decide';
 import type { Character, Effect, GameState } from '../../engine/types';
 import { Chips } from '../components/Chips';
+import { Glossed } from '../clarity/Term';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
 import { useNumberKeys } from '../keys';
@@ -66,9 +67,12 @@ export function OddsBar({ odds, compact }: { odds: OddsView; compact?: boolean }
   const pct = Math.round(odds.chance * 100);
   const tone = pct >= 60 ? 'bg-emerald-500' : pct >= 35 ? 'bg-amber-500' : 'bg-red-500';
   const text = pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300';
+  const word = oddsWord(odds.chance);
+  const why = biggestReason(odds);
   return (
-    <span className="flex shrink-0 items-center gap-1.5" data-testid="odds-bar" title={`${odds.label}: ${pct}%`}>
+    <span className="flex shrink-0 items-center gap-1.5" data-testid="odds-bar" title={`${odds.label}: ${pct}%, ${word}${why ? `. Mostly: ${why}` : ''}`}>
       <span className={`tabular-nums text-[11px] font-semibold ${text}`} data-testid="odds-label">{pct}%</span>
+      <span className={`text-[10px] italic ${text}`} data-testid="odds-word">{word}</span>
       <span className={`relative h-1.5 overflow-hidden rounded bg-noir-700 ${compact ? 'w-10' : 'w-16'}`} aria-hidden>
         <span className={`absolute inset-y-0 left-0 ${tone}`} style={{ width: `${pct}%` }} />
       </span>
@@ -79,13 +83,15 @@ export function OddsBar({ odds, compact }: { odds: OddsView; compact?: boolean }
 /** The top three reasons, one line; tap for every one. */
 export function Reasons({ odds }: { odds: OddsView }) {
   const [all, setAll] = useState(false);
+  // No numbered reasons: the one plain reason (a strike's hint), so every percentage has its why.
+  if (odds.known && !odds.reasons.length && odds.why) return <div className="mt-0.5 text-[11px] leading-snug text-stone-400" data-testid="odds-reasons"><span className="text-stone-500">Mostly: </span>{odds.why}</div>;
   if (!odds.known || !odds.reasons.length) return null;
   const list = all ? odds.reasons : odds.reasons.slice(0, 3);
   return (
     <div className="mt-0.5 text-[11px] leading-snug" data-testid="odds-reasons">
-      <span className="text-stone-500">{odds.label}: </span>
+      <span className="text-stone-500">{odds.label}, mostly: </span>
       {list.map((r, i) => (
-        <span key={i} className={`mr-2 inline-block whitespace-nowrap ${r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{r.value > 0 ? '+' : '−'}{Math.abs(r.value)} {r.label}</span>
+        <span key={i} className={`mr-2 inline-block whitespace-nowrap ${i === 0 ? 'font-semibold' : ''} ${r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{r.value > 0 ? '+' : '−'}{Math.abs(r.value)} {r.label}</span>
       ))}
       {odds.reasons.length > 3 && <button type="button" className="btn-quiet text-[11px]" onClick={(e) => { e.stopPropagation(); setAll((x) => !x); }}>{all ? 'fewer' : `all ${odds.reasons.length}`}</button>}
     </div>
@@ -242,7 +248,7 @@ export function DecisionCard(p: DecisionCardProps) {
       {p.stakes && p.stakes.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]" data-testid="stakes">
           <span className="text-stone-500">What's on the line:</span>
-          {p.stakes.map((x) => <span key={x} className="chip-bad">{x}</span>)}
+          {p.stakes.map((x) => <span key={x} className="chip-bad"><Glossed text={x} /></span>)}
         </div>
       )}
       {p.text && <div className={`mt-2 leading-relaxed text-stone-300 ${compact ? 'text-[12px]' : ''}`}>{p.text}</div>}

@@ -1028,6 +1028,8 @@ export interface GameState {
   oldDon?: import('./oldDon').OldDonState;
   /** The capos: each one's book (his tide, his signs, his ears on the street), the men they groom, their requests and reports (capos.ts; optional: made by the weekly update). */
   capos?: import('./caposState').CaposState;
+  /** Three goals at a time, CK-style ambitions (ambitions.ts; optional: made by the first week that runs). */
+  ambitions?: import('./ambitions').AmbitionsState;
   /** Feds and flipping: pinches, flips, the boss's deal, the hollow crown, the tip-off, the undercover (feds.ts). */
   feds?: import('./fedsState').FedsState;
   /** The Don's planner: the datebook's ticks and margin notes, who was turned away at the door (planner/; optional, made by the first use). */

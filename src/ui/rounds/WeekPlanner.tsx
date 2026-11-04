@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { alwaysOn } from '../../engine/delegation';
+import { setAlways } from '../../engine/lieutenants';
 import { DecisionCard } from '../decide/DecisionCard';
 import { weekCheckIns, type CheckIn } from '../../engine/checkins';
 import { awayReason, DAY_NAMES, DAY_SHORT, dayBlock, daysOf, eveningOpen, formatDay, missedMornings, setEvening, setWeekRounds, skipMorning, answerCheckIn, weekPlan } from '../../engine/days';
@@ -107,6 +109,10 @@ function Morning({ s, day, list, update, locked }: { s: GameState; day: number; 
                         onHandOff={!locked && !ans ? () => update((x) => answerCheckIn(x, c.key, c.problem!.own), `${c.name} does it his way`) : undefined}
                         handOffLabel={`His way: ${c.problem.answers.find((a) => a.id === c.problem!.own)?.label ?? 'leave it to him'}`}
                         testid={`morning-${c.key}`} />
+                      {!locked && !ans && !c.problem.urgent && !alwaysOn(s, 'mornings') && (
+                        <button type="button" className="btn-quiet mt-0.5 text-[10px]" onClick={() => update((x) => setAlways(answerCheckIn(x, c.key, c.problem!.own), 'mornings', true), 'From now on every capo settles his own morning problems')} data-testid="always-mornings"
+                          title="Every capo settles his routine morning problems his way; an urgent one still comes to you. They are listed under Handled for you.">↻ His way, and always let the capos settle their mornings</button>
+                      )}
                       {!ans && <div className="mt-0.5 text-[10px] text-stone-500">No answer: he does it his way{locked ? '.' : ' (and notices you didn\'t answer).'}</div>}
                     </div>
                   )}

@@ -205,6 +205,12 @@ export interface LtState {
   capoDefault?: LtLevel;
   /** The one-time Desk note on an old save: "Your underboss offers to handle the routine". */
   offer?: 1;
+  /**
+   * "Always do this" (delegation.ts): the routine he never wants to see again, settled by his people with
+   * the consigliere's recommendation: the envelope (the underboss's advice on the cut), the small asks
+   * (routine decisions) and the capos' morning problems. Unset: everything comes to him as before.
+   */
+  always?: Partial<Record<'envelopes' | 'asks' | 'mornings', 1>>;
   budget: Partial<Record<LtSeat, number>>;
   docket?: { week: number; acts: LtAct[] };
   /** The boss's word on this week's docket (act id -> call). */
@@ -239,7 +245,7 @@ export function ensureLt(s: GameState): LtState {
 function withLt(s: GameState, f: (lt: LtState) => void): GameState {
   const prev = s.briefing ?? { trust: {}, log: [] };
   const lt0 = prev.lt ?? fresh(s);
-  const lt: LtState = { ...lt0, levels: { ...lt0.levels }, budget: { ...lt0.budget }, calls: { ...lt0.calls }, ...(lt0.capoLevel ? { capoLevel: { ...lt0.capoLevel } } : {}) };
+  const lt: LtState = { ...lt0, levels: { ...lt0.levels }, budget: { ...lt0.budget }, calls: { ...lt0.calls }, ...(lt0.capoLevel ? { capoLevel: { ...lt0.capoLevel } } : {}), ...(lt0.always ? { always: { ...lt0.always } } : {}) };
   // The week's docket is fixed from the first word the boss gives (a level or a budget changed mid-week
   // never reshuffles the days: it is read when they act, and next week is planned with it).
   if (!lt.docket || lt.docket.week !== s.week) { lt.docket = { week: s.week, acts: docketOf(s) }; lt.calls = {}; }
@@ -296,9 +302,9 @@ export function bigStepsFree(s: GameState): boolean {
 /** The chain of command's presets (who handles what, in one tap). */
 export type LtPreset = 'hands' | 'balanced' | 'run';
 export const PRESETS: Record<LtPreset, { name: string; blurb: string; levels: Record<LtDomain, LtLevel>; capos: LtLevel; free: boolean }> = {
-  hands: { name: 'Hands-on', blurb: 'Your lieutenants and capos propose; you say yes or no to all of it.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, 'ask'])) as Record<LtDomain, LtLevel>, capos: 'ask', free: false },
+  hands: { name: 'Hands-on', blurb: 'You see everything: your lieutenants and capos propose, you say yes or no to all of it.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, 'ask'])) as Record<LtDomain, LtLevel>, capos: 'ask', free: false },
   balanced: { name: 'Balanced', blurb: 'They handle the routine; the lawyers, the other families, the Table and every big step wait for you.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, DOMAINS[d].def])) as Record<LtDomain, LtLevel>, capos: 'handle', free: false },
-  run: { name: 'Let them run it', blurb: 'They handle everything, big steps too. You hear about it after.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, 'handle'])) as Record<LtDomain, LtLevel>, capos: 'handle', free: true },
+  run: { name: 'Chairman', blurb: 'Your underboss and capos settle the routine with the consigliere\'s advice, big steps too; only real decisions reach you. All of it is listed under Handled for you.', levels: Object.fromEntries(DOMAIN_IDS.map((d) => [d, 'handle'])) as Record<LtDomain, LtLevel>, capos: 'handle', free: true },
 };
 
 /** Apply a preset: exactly its levels, its capo level for every capo, and whether big steps wait (pure). */
@@ -311,6 +317,17 @@ export function applyPreset(s: GameState, p: LtPreset): GameState {
     if (P.capos === 'handle') delete lt.capoDefault; else lt.capoDefault = P.capos;
     if (P.free) lt.free = true; else delete lt.free;
     delete lt.offer;
+  });
+}
+
+/** "Always do this" for a category of routine (delegation.ts), on or off (pure). */
+export function setAlways(s: GameState, cat: keyof NonNullable<LtState['always']>, on: boolean): GameState {
+  return withLt(s, (lt) => {
+    const a = { ...(lt.always ?? {}) };
+    if (on) a[cat] = 1; else delete a[cat];
+    if (Object.keys(a).length) lt.always = a; else delete lt.always;
+    // The capos' mornings: every capo settles his own routine (his level, the standing order's own control).
+    if (on && cat === 'mornings') { lt.capoLevel = {}; delete lt.capoDefault; }
   });
 }
 

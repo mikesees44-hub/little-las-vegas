@@ -7,6 +7,8 @@ import { AdviceButton } from '../advice/AdviceButton';
 import { displayName } from '../../engine/characters';
 import { officeVisitors } from '../../engine/bossOffice';
 import { oddsOfChoice, stakesLine, worstOfChoice } from '../../engine/decide';
+import { alwaysOn, consiglierePick, routineEvent } from '../../engine/delegation';
+import { setAlways } from '../../engine/lieutenants';
 import type { EventInstance, GameState } from '../../engine/types';
 import { Modal } from './Modal';
 import { negotiable } from '../../engine/minds/dialogue';
@@ -15,6 +17,7 @@ import { faceToFace, heatedChoices } from '../../engine/argue';
 import { useShell } from '../shell/context';
 import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
 import { voicesFor } from '../decide/voices';
+import { Glossed } from '../clarity/Term';
 import { domainOf, domainOfText } from '../domain';
 
 /**
@@ -45,6 +48,13 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
   const toFace = (choiceId: string) => { shell.update?.((x) => faceToFace(x, ev.iid, choiceId)); onClose(); };
   const dflt = ev.choices.find((c) => c.id === ev.defaultChoiceId) ?? ev.choices[0];
   const hand = officeVisitors(s).find((v) => v.ref.event === ev.iid)?.delegate;
+  // A routine decision (a small ask): one button follows the consigliere's recommendation, and one link
+  // hands every small ask like it to him from now on (engine/delegation.ts). A real decision keeps the hand-off.
+  const routine = routineEvent(s, ev);
+  const cp = routine ? consiglierePick(s, ev) : undefined;
+  const cpMan = cp?.byId ? s.characters[cp.byId] : undefined;
+  const cpName = cpMan?.firstName;
+  const cpWho = cpMan?.rank === 'consigliere' ? 'the consigliere' : cpName ?? 'your people';
   const options: DecisionOption[] = ev.choices.map((c) => ({
     id: c.id,
     label: c.label,
@@ -70,7 +80,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         faces={actors}
         sub={actors.length > 0 ? actors.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{displayName(c)}{aboveLabel(s, c.id) ? `, ${aboveLabel(s, c.id)}` : c.rank !== 'civilian' ? `, ${rankWordOf(s, c)}` : c.office ? `, ${c.office}` : ''}</span>) : undefined}
         stakes={stakesLine(s, ev.choices.map((c) => c.effects))}
-        text={ev.text}
+        text={<Glossed text={ev.text} />}
         extra={<>
           {nego && (
             <button type="button" className="btn-quiet mt-2 text-xs" onClick={() => setTalk(true)} data-testid="event-negotiate">
@@ -88,7 +98,13 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
                   <button key={ch.id} type="button" className="btn-ghost px-1.5 py-0.5 text-[11px]" onClick={() => toFace(ch.id)}>{ch.label} ({s.characters[spec.t]?.firstName})</button>
                 ))}</div>}
               </div>)}
-          {dflt && <p className="mt-1 text-[11px] text-stone-500" data-testid="event-default">If you don't decide before the week turns: <span className="text-stone-300">{dflt.label}</span>.</p>}
+          {dflt && <p className="mt-1 text-[11px] text-stone-500" data-testid="event-default">If you don't decide before the week turns: <span className="text-stone-300">{alwaysOn(s, 'asks') && cp ? `${cp.label} (the consigliere's call)` : dflt.label}</span>.</p>}
+          {cp && shell.update && !alwaysOn(s, 'asks') && (
+            <button type="button" className="btn-quiet mt-0.5 block text-[11px]" onClick={() => { shell.update?.((x) => setAlways(x, 'asks', true)); onChoose(cp.choiceId); }} data-testid="event-always-asks"
+              title="Small asks like this one: no life, no war, no real money. They go to Handled for you on the Desk, where you can take any back. Settings and Standing Orders turn it off.">
+              ↻ Do it, and always let {cpName ?? 'him'} settle small asks like this ▸
+            </button>
+          )}
         </>}
         options={options}
         voices={voicesFor(s, { kind: 'event', iid: ev.iid })}
@@ -96,8 +112,8 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         onDecide={onChoose}
         onLater={onClose}
         laterLabel="Decide later"
-        onHandOff={hand ? () => onChoose((hand.op as { choiceId: string }).choiceId) : undefined}
-        handOffLabel={hand ? `${hand.label} (${hand.does})` : undefined}
+        onHandOff={cp ? () => onChoose(cp.choiceId) : hand ? () => onChoose((hand.op as { choiceId: string }).choiceId) : undefined}
+        handOffLabel={cp ? `Do what ${cpWho} says (${cp.label})` : hand ? `${hand.label} (${hand.does})` : undefined}
         advice={<AdviceButton s={s} subject={{ kind: 'event', iid: ev.iid }} onChoose={onChoose} auto={false} />}
         keys={!talk}
         optionTestId="event-choice"

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { oddsWord } from '../../engine/decide';
 import { previewAction, queuedMoney } from '../../engine/actions';
 import { sameTarget, targetOf } from '../../engine/deals';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -67,7 +68,7 @@ export function ActionRow({ s, action, label, hostile, open: startOpen }: { s: G
           {why ? <span className="text-red-300/90" data-testid="action-row-why">{why}</span> : <>
             {p.cost > 0 && <span className={pocket ? 'text-amber-300' : 'text-gold-400'}>{fmt$(p.cost)} {pocket ? 'pocket' : 'Family'}</span>}
             {p.cost > 0 && pct !== undefined && ' · '}
-            {pct !== undefined && <span className={pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}>{p.oddsLabel === 'He says yes' ? 'yes' : p.odds ? 'success' : 'yes'} {pct}%</span>}
+            {pct !== undefined && <span className={pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}>{p.oddsLabel === 'He says yes' ? 'yes' : p.odds ? 'success' : 'yes'} {pct}% <i data-testid="odds-word">{oddsWord(pct / 100)}</i></span>}
             {!(p.cost > 0) && pct === undefined && !risk && (p.detail ? p.detail.slice(0, 90) : 'details ▸')}
             {risk && <>{(p.cost > 0 || pct !== undefined) && ' · '}<span className="text-red-300/90" data-testid="action-row-risk">⚠ {risk}</span></>}
           </>}

@@ -24,7 +24,7 @@ export function StrikeCard({ s, id, onChoose, view, kicker }: { s: GameState; id
           <DecisionCard s={s} compact keys
             options={v.options.map((o) => ({
               id: o.id, label: o.label, detail: o.hint, disabled: o.blocked, rowTestId: `strike-${o.id}`,
-              odds: { known: true, chance: o.odds, label: 'It goes your way', reasons: [] },
+              odds: { known: true, chance: o.odds, label: 'It goes your way', reasons: [], why: o.why },
             }))}
             onDecide={(oid) => onChoose(oid)}
             primaryLabel={(o) => (!o ? 'Your call' : `${o.label} ▸`)} />

@@ -1,5 +1,6 @@
 import { TrustToggle } from '../components/TrustToggle';
-import { applyPreset, BUDGET_STEPS, setBudget, setCapoLevel, setLevel, type LtLevel } from '../../engine/lieutenants';
+import { BUDGET_STEPS, setBudget, setCapoLevel, setLevel, type LtLevel } from '../../engine/lieutenants';
+import { DelegationPicker } from './DelegationPicker';
 import { setTrust } from '../../engine/briefing';
 import { edictOrder, LEVEL_LABEL, LEVELS, splitOrder, standingOrders } from '../../engine/planner/orders';
 import { setAutoBrief } from '../../engine/planner/state';
@@ -28,13 +29,9 @@ export function StandingOrders({ s, act, onOrder }: { s: GameState; act: Act; on
       <p className="text-[12px] text-[#4a3b28]">Every rule you have set, in one place. Change one here and it is changed everywhere.</p>
       {!so.low && (
         <section className="mt-3">
-          <h4 className="llv-brief-h">Who handles what</h4>
-          <div className="mt-1 flex flex-wrap gap-1" role="radiogroup" aria-label="How much you hand off">
-            {so.presets.map((p) => (
-              <button key={p.id} type="button" title={p.blurb} aria-pressed={so.preset === p.id} className={`llv-ink-btn ${so.preset === p.id ? 'llv-ink-btn-primary' : ''}`} onClick={() => act((x) => applyPreset(x, p.id), `Standing order: ${p.name}`)} data-testid={`so-preset-${p.id}`}>{p.name}</button>
-            ))}
-            {!so.preset && <span className="self-center text-[11px] text-[#6b5a44]">Your own mix</span>}
-          </div>
+          <h4 className="llv-brief-h">How much you hand off</h4>
+          <div className="mt-1"><DelegationPicker s={s} act={act} paper /></div>
+          <h4 className="llv-brief-h mt-2">Who handles what</h4>
           <ul className="mt-1">
             {so.domains.map((d) => (
               <li key={d.id} className={row} data-testid={`so-domain-${d.id}`}>
