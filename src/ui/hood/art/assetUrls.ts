@@ -10,6 +10,8 @@
  * the game picks it up. Nothing else in the code names a URL.
  */
 export const ASSET_URLS = {
+  // The owner's title painting: the boardwalk at night, 1960.
+  title_boardwalk_1960: '/_blob/5136d0a3b7d5ffc450344c874a8a053e',
   // Already in the asset store (all 148 keys).
   lucky_sevens_arcade: '/_blob/bfd25fc16456180aed155add75bbf8f1',
   anchor_tavern: '/_blob/b739dfd7f2b5a6e1a39eed183b8a9026',
