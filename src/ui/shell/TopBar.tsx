@@ -353,16 +353,19 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           <StandingStrip s={s} />
           <ArmyChip s={s} />
         </div>
-        <div className="order-2 sm:order-3 ml-auto shrink-0 text-right leading-tight">
-          <div className="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="topbar-date">
+        {/* The date sits with the money and standing chips as one more chip (it floated alone, three lines tall, in the top right). */}
+        <div className="order-2 sm:order-3 ml-auto sm:ml-0 shrink-0 text-right sm:text-left leading-tight sm:rounded-md sm:border sm:border-noir-700 sm:bg-noir-800/60 sm:px-2.5 sm:py-1" data-testid="topbar-when">
+          <div className="flex items-center justify-end sm:justify-start gap-1 whitespace-nowrap" data-testid="topbar-date">
             <FlipClock s={s} testid="topbar-clock" />
             <span className="text-[10px] sm:text-[11px] text-stone-400">Wk {s.week}</span>
           </div>
+          <div className="sm:flex sm:items-baseline sm:gap-2">
           <div className="mt-0.5 text-[10px] sm:text-[11px] text-sky-300 whitespace-nowrap" data-testid="topbar-hour" title={`The boss's day runs 8 AM to 2 AM. It is ${nowLabel(s)}; ${hoursLabel(hoursLeft(s))} left today.`}>
             {hoursLabel(hoursLeft(s))} left
             {onEndDay && !s.gameOver && <button type="button" className="ml-1 underline text-stone-400 hover:text-gold-300" onClick={onEndDay} data-testid="end-day" title="Call it a day: the world moves on to tomorrow">end day ▸</button>}
           </div>
-          <div className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden sm:inline"> · {info.countdownLabel}</span></div>
+          <div title={info.countdownLabel} className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden xl:inline"> · {info.countdownLabel}</span></div>
+          </div>
         </div>
         {!s.gameOver && (
           <div className="order-4 flex w-full lg:w-auto items-center gap-0.5 sm:gap-1.5 flex-wrap">
