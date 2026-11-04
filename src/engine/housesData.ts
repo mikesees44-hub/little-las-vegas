@@ -237,6 +237,11 @@ export const EXTRA_HOUSES: ExtraHouseDef[] = [
   { id: 'h_delvecchio', name: 'Delvecchio', type: 'showbiz', seat: 'South Philadelphia', stock: 'Neapolitan', head: { first: 'Frankie', age: 44, office: 'Crooner, headliner on Pacific Avenue' }, blurb: 'Three generations of singers out of South Philly. The clubs on Pacific Avenue book them every summer.' },
   { id: 'h_kaminsky', name: 'Kaminsky', type: 'showbiz', seat: 'Atlantic City', stock: 'Galician', head: { first: 'Morty', age: 50, office: 'Comic, the 500 Club and the Catskills' }, blurb: 'Comics from the Borscht Belt to the 500 Club.' },
   { id: 'h_flanagan', name: 'Flanagan', type: 'showbiz', seat: 'Wildwood', stock: 'Irish', head: { first: 'Kathleen', age: 47, office: 'Owner of the Flanagan Dance Revue', g: 'F' }, blurb: 'Vaudeville hoofers who settled on the island and taught half of Wildwood to tap.' },
+  // The outfits beyond the shore (fictional): New York, Chicago, Las Vegas, Cleveland.
+  { id: 'h_ruggeri', name: 'Ruggeri', type: 'crime', seat: 'Brooklyn', stock: 'Sicilian', head: { first: 'Carmine', age: 63, office: 'Boss of a Brooklyn family' }, blurb: 'One of the New York families. They send a man down every summer to see who is making money at the shore.' },
+  { id: 'h_pellegrini', name: 'Pellegrini', type: 'crime', seat: 'Chicago', stock: 'Neapolitan', head: { first: 'Salvatore', age: 58, office: 'A captain of the Chicago Outfit' }, blurb: 'The Outfit\'s men: unions, the wire, and the Teamsters\' pension money that builds the desert.' },
+  { id: 'h_adler', name: 'Adler', type: 'crime', seat: 'Las Vegas', stock: 'Galician', head: { first: 'Meyer', age: 55, office: 'Casino man on the Strip' }, blurb: 'The count room in the desert. Everyone back east has a point in a Vegas casino, and the Adlers keep the skim honest.' },
+  { id: 'h_galvani', name: 'Galvani', type: 'crime', seat: 'Cleveland', stock: 'Abruzzese', head: { first: 'Angelo', age: 61, office: 'Underboss of the Cleveland family' }, blurb: 'Lake Erie money with a hand in the Vegas casinos and the jukebox routes.' },
 ];
 
 /** Stock, seat and type for the houses the engine already creates. */
