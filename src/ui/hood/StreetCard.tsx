@@ -163,7 +163,7 @@ export function StreetCard({ s, it, mood, onClose, onShow }: { s: GameState; it:
           <div className="font-display text-xl leading-tight" style={{ color: it.sign, textShadow: `0 0 10px ${it.sign}55` }}>{it.name}</div>
           <div className="text-xs text-stone-400">{l?.address}</div>
         </div>
-        <button type="button" onClick={onClose} className="h-7 w-7 shrink-0 rounded border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300" aria-label="Close">×</button>
+        <button type="button" onClick={onClose} className="llv-iconbtn !h-7 !w-7" aria-label="Close">×</button>
       </div>
       <CardActions s={s} it={it} onBusiness={() => papers.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })} onActions={() => acts.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })}
         onOwner={(id) => sheet.open(id)} onShow={onShow} />

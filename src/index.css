@@ -112,6 +112,10 @@ body {
   /* Buttons inside a menu become full-width rows, whatever classes they brought along. */
   .llv-menu-panel > button, .llv-menu-panel > a, .llv-menu-panel > * > button { @apply w-full justify-start rounded border-0 bg-transparent px-2 py-1.5 text-left text-[12.5px] font-medium text-stone-200 hover:bg-gold-500/10 hover:text-gold-300 disabled:opacity-40; height: auto; }
   /* Screen-level tabs: underlined, never filled like an action button. */
+  /* A square icon button (close ×) and a choice pill (a radio, not an action): the two hand-rolled kinds, named once. */
+  .llv-iconbtn { @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300; }
+  .llv-choice { @apply rounded-full border border-noir-600 px-2.5 py-0.5 text-[11.5px] text-stone-300 hover:border-gold-500; }
+  .llv-choice[aria-checked='true'], .llv-choice[aria-pressed='true'] { @apply border-gold-400 bg-gold-500/15 text-gold-200; }
   .llv-seg { @apply mb-3 flex gap-1 overflow-x-auto border-b border-noir-700; }
   .llv-seg-tab { @apply -mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent px-2.5 py-1.5 text-[12.5px] font-semibold text-stone-400 hover:text-gold-300; }
   .llv-seg-on { @apply border-gold-500 text-gold-300; }

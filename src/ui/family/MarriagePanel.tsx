@@ -108,7 +108,7 @@ function WardCard({ s, c }: { s: GameState; c: Character }) {
       {/* A choice, not an action: radio pills (the order is the ActionCard below). */}
       <div className="mt-2 flex flex-wrap gap-1" role="radiogroup" aria-label={`Who raises ${c.firstName}`}>
         {EDUCATION_KINDS.filter((k) => k !== 'home').map((k) => (
-          <button key={k} type="button" role="radio" aria-checked={kind === k} className={`rounded-full border px-2.5 py-0.5 text-[11.5px] ${kind === k ? 'border-gold-400 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`} onClick={() => setKind(k)}>{EDUCATION[k].name}</button>
+          <button key={k} type="button" role="radio" aria-checked={kind === k} className="llv-choice" onClick={() => setKind(k)}>{EDUCATION[k].name}</button>
         ))}
       </div>
       {kind === 'capo' && (

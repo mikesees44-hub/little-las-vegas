@@ -55,7 +55,7 @@ export function HoodDashboard({ s, initial, compact, onClose, onFull, onStreet }
           <div className="text-[12.5px] leading-snug text-stone-400 italic">{v.blurb}</div>
         </div>
         <div className="flex flex-col items-end gap-1 shrink-0">
-          {onClose && <button type="button" className="h-7 w-7 rounded border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300" onClick={onClose} aria-label="Close">×</button>}
+          {onClose && <button type="button" className="llv-iconbtn !h-7 !w-7" onClick={onClose} aria-label="Close">×</button>}
           {onFull && <button type="button" className="btn-quiet text-[11.5px]" onClick={onFull} data-testid="hood-full">Full dashboard ▸</button>}
         </div>
       </div>

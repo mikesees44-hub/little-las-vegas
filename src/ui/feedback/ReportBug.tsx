@@ -86,7 +86,7 @@ export function ReportBug({ s, onClose, initialScreen }: { s: GameState; onClose
             <div role="radiogroup" aria-label="What is it?" className="grid grid-cols-3 gap-1.5" data-testid="feedback-type">
               {REPORT_TYPES.map((t) => (
                 <button key={t.id} type="button" role="radio" aria-checked={type === t.id} onClick={() => setType(t.id)} data-testid={`feedback-type-${t.id}`} title={t.hint}
-                  className={`rounded-md border px-2 py-2 text-[12.5px] font-semibold ${type === t.id ? 'border-gold-400 bg-gold-500/10 text-gold-300' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>
+                  className="llv-choice rounded-md py-2 text-[12.5px] font-semibold">
                   {t.label}
                 </button>
               ))}

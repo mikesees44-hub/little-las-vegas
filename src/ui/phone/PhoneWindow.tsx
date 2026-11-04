@@ -98,7 +98,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
               <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="What for" data-testid="dial-purposes">
                 {entry.purposes.map((p) => (
                   <button key={p} type="button" onClick={() => setPurpose(p)} aria-pressed={purpose === p} data-testid={`dial-purpose-${p}`}
-                    className={`rounded-full border px-2.5 py-1 text-xs ${purpose === p ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>{PURPOSE_LABEL[p]}</button>
+                    className="llv-choice py-1 text-xs">{PURPOSE_LABEL[p]}</button>
                 ))}
               </div>
             )}
