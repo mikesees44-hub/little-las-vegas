@@ -10,6 +10,7 @@ import { OpinionBadge } from './CrewList';
 import { ActionCard } from './Orders';
 import { CharLink, Face } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
+import { Empty, Section } from './Layout';
 
 export function TablePanel({ s }: { s: GameState }) {
   const members = tableMembers(s);
@@ -26,12 +27,10 @@ export function TablePanel({ s }: { s: GameState }) {
 
   return (
     <div className="space-y-6">
-      <section>
-        <div className="panel-title">The Table</div>
-        <p className="text-xs text-stone-500">Philadelphia's South Jersey sit-down, above a restaurant on Ninth Street. Disputes are heard here; members who are not a party vote; the chair breaks ties. A hit on a made man needs its sanction, and so does a war.</p>
+      <Section title="The Table" sub="Philadelphia's South Jersey sit-down, above a restaurant on Ninth Street. Disputes are heard here; members who are not a party vote; the chair breaks ties. A hit on a made man needs its sanction, and so does a war.">
         <div className="mt-2 flex flex-wrap gap-3">
           {members.map((m) => (
-            <div key={m.id} className="flex items-center gap-2 rounded-md border border-noir-700 bg-noir-800/60 p-2">
+            <div key={m.id} className="llv-card-box llv-card-plain flex min-w-0 items-center gap-2 p-2">
               <Face s={s} c={m} size={44} />
               <div className="text-sm">
                 <CharLink s={s} id={m.id} />
@@ -41,15 +40,14 @@ export function TablePanel({ s }: { s: GameState }) {
             </div>
           ))}
         </div>
-      </section>
+      </Section>
 
-      <section>
-        <div className="panel-title">Before the Table</div>
-        {open.length === 0 && <p className="text-xs text-stone-500">No disputes pending.</p>}
+      <Section title="Before the Table" aside={open.length ? `${open.length} pending` : undefined}>
+        {open.length === 0 && <Empty title="No disputes pending">Bring a matter below, or wait for one to be brought against you.</Empty>}
         {open.map((d) => {
           const leans = forecast(s, d);
           return (
-            <div key={d.id} className="mt-2 rounded-md border border-gold-600/40 bg-noir-800/60 p-3" data-testid="dispute">
+            <div key={d.id} className="llv-card-box llv-card-attention mt-2" data-testid="dispute">
               <div className="text-xs text-stone-500">Hearing in week {d.hearingWeek} · {FACTION_NAMES[d.plaintiff]} v. {d.defendant === 'player' ? 'your house' : FACTION_NAMES[d.defendant]}</div>
               <p className="text-sm text-stone-200 mt-1"><span className="text-gold-300">The claim: </span>{d.claim}</p>
               <p className="text-sm text-stone-300"><span className="text-gold-300">The answer: </span>{d.defense}</p>
@@ -75,10 +73,9 @@ export function TablePanel({ s }: { s: GameState }) {
             </div>
           );
         })}
-      </section>
+      </Section>
 
-      <section>
-        <div className="panel-title">Bring a matter before the Table</div>
+      <Section title="Bring a matter before the Table">
         <div className="mt-2 flex flex-wrap gap-2 items-center text-xs">
           <select className="rounded bg-noir-900 border border-noir-600 p-1" value={rival} onChange={(e) => setRival(e.target.value as RivalId)} aria-label="Against">
             {mobs.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -104,13 +101,12 @@ export function TablePanel({ s }: { s: GameState }) {
         <div className="mt-2 max-w-xl">
           <ActionCard s={s} action={{ kind: 'raiseDispute', dispute: kind, rival, district: kind === 'district' || kind === 'war' ? dist : undefined, targetId: kind === 'sanction' ? (theirMen.some((c) => c.id === target) ? target : theirMen[0]?.id) : undefined, warId: kind === 'peace' ? s.wars.find((w) => w.rival === rival)?.id : undefined }} />
         </div>
-      </section>
+      </Section>
 
-      <section>
-        <div className="panel-title">Wars</div>
+      <Section title="Wars">
         {s.wars.length === 0 && <p className="text-xs text-stone-500">At peace. A war needs a casus belli: a claim (fabricate one through a scheme), a grievance the Table heard, a blood feud, or the Table's blessing.</p>}
         {s.wars.map((w) => (
-          <div key={w.id} className="mt-2 rounded-md border border-blood-500/50 bg-blood-500/10 p-3" data-testid="war">
+          <div key={w.id} className="llv-card-box llv-card-danger mt-2" data-testid="war">
             <div className="flex justify-between text-sm"><span className="text-stone-100 font-semibold">War with {warName(s, w)}</span><span className="text-xs text-stone-400">{w.sanctioned ? 'sanctioned' : 'unsanctioned'} · since week {w.startWeek}</span></div>
             <div className="mt-1 relative h-3 rounded bg-noir-800 overflow-hidden">
               <div className="absolute inset-y-0 left-1/2 w-px bg-stone-500" />
@@ -126,7 +122,7 @@ export function TablePanel({ s }: { s: GameState }) {
           </div>
         ))}
         <div className="mt-3">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Declare war</div>
+          <h5 className="text-[13px] font-semibold text-stone-200">Declare war</h5>
           <div className="mt-1 grid gap-2 sm:grid-cols-2">
             {mobs.flatMap((r) => s.districts.filter((d) => (d.influence[r.id] ?? 0) > 0 && casusBelli(s, r.id, d.id)).map((d) => (
               <div key={`${r.id}${d.id}`}>
@@ -137,13 +133,12 @@ export function TablePanel({ s }: { s: GameState }) {
           </div>
           {!mobs.some((r) => s.districts.some((d) => (d.influence[r.id] ?? 0) > 0 && casusBelli(s, r.id, d.id))) && <p className="text-xs text-stone-500">No casus belli against anyone yet.</p>}
         </div>
-      </section>
+      </Section>
 
       {ruled.length > 0 && (
-        <section>
-          <div className="panel-title text-base">Past rulings</div>
+        <Section title="Past rulings">
           <ul className="text-xs text-stone-400 space-y-1 mt-1">{ruled.map((d) => <li key={d.id}>Week {d.ruling!.week}: {d.ruling!.forPlayer ? 'for you' : 'against you'} — {d.claim}</li>)}</ul>
-        </section>
+        </Section>
       )}
     </div>
   );
