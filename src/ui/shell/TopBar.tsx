@@ -22,6 +22,8 @@ import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
 import { eraHeadline } from '../../engine/intrigue';
 import { ERA_TONE } from '../intrigue/IntrigueBoard';
 import { armyMeter } from '../../engine/army';
+import { ReportBug } from '../feedback/ReportBug';
+import { currentScreen } from '../feedback/reportClient';
 
 /** The army meter in tension or war (army.ts): Raised / Available / Allies / Enemy (a guess without spies). A tap opens the Army. */
 function ArmyChip({ s }: { s: GameState }) {
@@ -323,6 +325,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   const orderCost = queuedMoney(s, orders).family;
   const plans = usePlansCount(s);
   const [pane, setPane] = useState<'orders' | 'plans' | undefined>();
+  // The playtesters' report form (feedback/ReportBug.tsx), with the screen it was opened from.
+  const [report, setReport] = useState<string | undefined>();
   // The Desk's "In motion ▸" and others open the plans from anywhere.
   useEffect(() => {
     const on = () => setPane('plans');
@@ -405,6 +409,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                     {onPaper && <button type="button" className={menuItem} onClick={() => { close(); onPaper(); }} data-testid="paper-button">▤ The paper{paperUnread > 0 && <span className="ml-1 inline-block h-2 w-2 rounded-full bg-blood-500" data-testid="paper-dot" aria-label={`${paperUnread} unread`} />}</button>}
                     <button type="button" className={`${menuItem} md:hidden`} onClick={() => { close(); window.dispatchEvent(new Event('llv-open-alerts')); }} data-testid="menu-alerts">⚑ Alerts</button>
                     {onHelp && <button type="button" className={menuItem} onClick={() => { close(); onHelp(); }} data-testid="rail-help">? What should I do</button>}
+                    <button type="button" className={menuItem} onClick={() => { const at = currentScreen(); close(); setReport(at); }} data-testid="feedback-button">✎ Report a bug or idea</button>
                     <div className="my-1 h-px bg-noir-700" />
                     <GameMenuLinks close={close} />
                     <div className="flex items-center justify-between px-2 py-1 text-sm text-stone-300">Music <MusicToggle /></div>
@@ -420,6 +425,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             </div>
             {pane === 'orders' && <OrdersPane s={s} onClose={() => setPane(undefined)} />}
             {pane === 'plans' && <PlansPanel s={s} onClose={() => setPane(undefined)} />}
+            {report !== undefined && <ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />}
           </div>
         )}
       </div>
