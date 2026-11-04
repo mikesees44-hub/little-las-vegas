@@ -41,6 +41,8 @@ export interface MomentView {
   warned: boolean;
   options: { id: string; label: string; hint: string; odds: number; blocked?: string }[];
   def: string;
+  /** A short cutscene clip key (src/ui/components/CutClip.tsx) to play at the top of the card. */
+  clip?: string;
 }
 
 export interface DeliveryHook {

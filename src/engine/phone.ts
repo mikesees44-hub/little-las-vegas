@@ -515,6 +515,8 @@ export function callView(s: GameState, id: string, p: CallPayload, d: number, h:
     warned: false,
     options: list.map((o) => ({ id: o.id, label: o.label, hint: hintOf(s, o, line), odds: oddsOf(s, o, line), ...(o.blocked ? { blocked: o.blocked } : {}) })),
     def: back ? list[list.length - 1].id : 'ring',
+    // The house phone in the dead of night gets the 2 a.m. cutscene.
+    ...(!back && h < 5 ? { clip: 'phone_2am' } : {}),
   };
 }
 
