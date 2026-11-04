@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import type { MotionChip } from './inMotion';
+import { domainOf, domClass } from '../domain';
+
+/** A chip's domain: the place it opens (its route), else the key's own prefix. */
+function chipDomain(c: MotionChip) {
+  const r = c.route;
+  return (r?.panel && r.section ? domainOf(`${r.panel}.${r.section}`) : undefined) ?? domainOf(r?.key) ?? domainOf(r?.home) ?? domainOf(c.key.split(':')[0]);
+}
 
 const TONE = {
   good: 'border-emerald-700/70 text-emerald-200',
@@ -18,8 +25,8 @@ export function InMotionStrip({ chips, onChip, inDesk }: { chips: MotionChip[]; 
       {chips.length === 0 && <span className="text-[11px] text-stone-500">Nothing under way. Plan something: the Desk › Jobs › Plan a job, or any man's sheet.</span>}
       {shown.map((c) => (
         <button key={c.key} type="button" onClick={() => onChip(c)} data-testid="motion-chip"
-          className={`relative shrink-0 rounded border px-2 py-0.5 text-[11px] hover:border-gold-500 ${TONE[c.tone]}`}>
-          <span className="mr-1" style={{ fontVariantEmoji: 'text' } as never}>{c.glyph}&#xFE0E;</span>{c.text}{c.eta !== undefined && c.eta > 0 && !c.noEta && !/ wk|in \d/.test(c.text) ? <span className="text-stone-500"> · ~{c.eta} wk</span> : null} ▸
+          className={`relative shrink-0 rounded border px-2 py-0.5 text-[11px] hover:border-gold-500 ${TONE[c.tone]} ${chipDomain(c) ? `${domClass(chipDomain(c))} llv-dom-edge` : ''}`} data-domain={chipDomain(c)}>
+          <span className={`mr-1 ${chipDomain(c) ? 'llv-dom-ink' : ''}`} style={{ fontVariantEmoji: 'text' } as never}>{c.glyph}&#xFE0E;</span>{c.text}{c.eta !== undefined && c.eta > 0 && !c.noEta && !/ wk|in \d/.test(c.text) ? <span className="text-stone-500"> · ~{c.eta} wk</span> : null} ▸
           {c.progress !== undefined && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-gold-500/70" style={{ width: `${c.progress}%` }} />}
         </button>
       ))}
