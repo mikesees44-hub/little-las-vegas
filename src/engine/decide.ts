@@ -23,6 +23,37 @@ export interface OddsView {
   label: string;
   /** The reasons behind the odds, biggest first (the card shows three; tap for all). */
   reasons: { label: string; value: number }[];
+  /** The one thing that matters most, in words, when there are no numbered reasons (a strike's hint). */
+  why?: string;
+}
+
+/**
+ * PLAIN-LANGUAGE ODDS (EASIER_NOT_SHALLOWER #13): next to every percentage, a word a player reads at a
+ * glance, and the single biggest reason. One scale everywhere: under 20% a long shot, under 40% risky,
+ * under 60% a coin flip, under 85% likely, then near certain.
+ */
+export type OddsWord = 'long shot' | 'risky' | 'coin flip' | 'likely' | 'near certain';
+export const ODDS_WORDS: { min: number; word: OddsWord }[] = [
+  { min: 85, word: 'near certain' }, { min: 60, word: 'likely' }, { min: 40, word: 'coin flip' }, { min: 20, word: 'risky' }, { min: 0, word: 'long shot' },
+];
+
+/** The word for a chance (0..1). */
+export function oddsWord(chance: number): OddsWord {
+  const pct = Math.round(Math.max(0, Math.min(1, chance)) * 100);
+  return ODDS_WORDS.find((w) => pct >= w.min)!.word;
+}
+
+/** The single biggest reason behind the odds, as a short phrase ("+20 his loyalty"), else the plain why. */
+export function biggestReason(o: Pick<OddsView, 'reasons' | 'why'>): string | undefined {
+  const r = byWeight(o.reasons)[0];
+  if (r) return `${r.value > 0 ? '+' : '−'}${Math.abs(Math.round(r.value))} ${r.label}`;
+  return o.why || undefined;
+}
+
+/** The word and the reason together, for a line of text ("likely: +20 his loyalty"). */
+export function plainOdds(o: OddsView): { pct: number; word: OddsWord; reason?: string } | undefined {
+  if (!o.known || o.chance === undefined) return undefined;
+  return { pct: Math.round(o.chance * 100), word: oddsWord(o.chance), reason: biggestReason(o) };
 }
 
 export interface WorstView {

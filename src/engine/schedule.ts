@@ -39,7 +39,7 @@ export interface MomentView {
   /** "Friday night, 2 a.m." */
   when: string;
   warned: boolean;
-  options: { id: string; label: string; hint: string; odds: number; blocked?: string }[];
+  options: { id: string; label: string; hint: string; odds: number; blocked?: string; /** The biggest part of the odds, in words. */ why?: string }[];
   def: string;
   /** A short cutscene clip key (src/ui/components/CutClip.tsx) to play at the top of the card. */
   clip?: string;

@@ -1184,6 +1184,27 @@ export interface UrgentView {
   seen: boolean;
 }
 
+/**
+ * What the boss's answer to a warning covers, as far as he can know (storm warnings, storms.ts): the
+ * answer and who carried it, never whether the tip was true or planted. 0 with no answer yet.
+ */
+export function tipCover(s: GameState, tip: Pick<Tip, 'kind' | 'response' | 'via' | 'targetId'>): number {
+  if (!tip.response || tip.response === 'nothing') return 0;
+  let eff = (EFFECT[tip.response as Exclude<ResponseId, 'nothing'>]?.[tip.kind] ?? 0) * VIA_MULT[tip.via ?? 'boss'];
+  if (tip.response === 'warn' && tip.targetId === s.playerId) eff = 0;
+  return Math.max(0, Math.min(1, eff));
+}
+
+/** The warnings he has heard out (met or sent), still to land: what they say and when (storms.ts). Pure. */
+export function heardWarnings(s: GameState): { tip: Tip; daysLeft: number; who: string }[] {
+  const T = s.threats;
+  if (!T || s.gameOver) return [];
+  const d = today(s);
+  return T.tips.filter((x) => (x.status === 'met' || x.status === 'sent') && tipOut(s, x) && x.deadline >= s.week)
+    .map((tip) => ({ tip, daysLeft: (tip.deadline - s.week) * 7 + (tip.dueDay ?? 6) - d, who: rivalName(s, tip.by) }))
+    .filter((x) => x.daysLeft >= 0 && x.daysLeft <= 14);
+}
+
 /** The urgent meetings still open this week (newest first). */
 export function urgentMeetings(s: GameState): UrgentView[] {
   const T = s.threats;
@@ -1231,6 +1252,8 @@ export interface StrikeOption {
   /** 0-1: the chance it comes to nothing if he answers this way. */
   odds: number;
   blocked?: string;
+  /** The biggest part of those odds, in words (plain-language odds). */
+  why?: string;
 }
 export interface StrikeView {
   id: string;
@@ -1340,7 +1363,15 @@ export function strikeView(s: GameState, id: string): StrikeView | undefined {
   if (!T || !t) return undefined;
   const pend = pendingBlunt(s, T, t);
   const tt = { ...t, blunt: pend };
-  const options = strikeSpecs(s, t).map((o) => ({ id: o.id, label: o.label, hint: o.hint, odds: Math.round(foilOdds(s, tt, o.bonus) * 100) / 100, ...(o.blocked ? { blocked: o.blocked } : {}) }));
+  const tgt = t.targetId ? s.characters[t.targetId] : undefined;
+  const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id, t.lure ? 'night' : 'any').cut : 0;
+  // The biggest part of each answer's odds, in words: the meeting's answers, the guards, or this answer itself.
+  const whyOf = (bonus: number): string | undefined => {
+    const parts: [number, string][] = [[pend, warned(T, t) ? 'what you did when you were warned' : 'they were already slowed down'], [guard, 'the guards on him'], [bonus, 'this answer itself']];
+    const top = parts.filter((x) => x[0] > 0.02).sort((a, b) => b[0] - a[0])[0];
+    return top ? top[1] : 'nothing on your side yet';
+  };
+  const options = strikeSpecs(s, t).map((o) => ({ id: o.id, label: o.label, hint: o.hint, odds: Math.round(foilOdds(s, tt, o.bonus) * 100) / 100, why: whyOf(o.bonus), ...(o.blocked ? { blocked: o.blocked } : {}) }));
   return { id, kind: t.kind, title: strikeTitle(s, t), text: strikeText(s, t), when: whenText(t.dueDay, t.hour), warned: warned(T, t), options, def: 'ride', ...(t.kind === 'hit' || t.kind === 'setup' ? { clip: 'headlights' } : t.kind === 'raid' ? { clip: 'feds_door' } : {}) };
 }
 

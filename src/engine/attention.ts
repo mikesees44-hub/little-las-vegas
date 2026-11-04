@@ -167,8 +167,18 @@ export function stakesOf(s: GameState, it: InboxItem, ui: DeskQueueUi = {}): Sta
   return { score, parts, why: parts.filter((p) => p.part !== 'red' && p.part !== 'taken').map((p) => p.why) };
 }
 
+/** Who settles an item a standing order hands off (delegation.ts registers its own: the consigliere's small asks). */
+export type HandlerHook = (s: GameState, it: InboxItem) => Omit<Handled, 'item'> | undefined;
+const HOOKS: HandlerHook[] = [];
+export function addHandlerHook(h: HandlerHook): void { if (!HOOKS.includes(h)) HOOKS.push(h); }
+
 /** Who handles an item the boss does not see to, and what he does. */
 export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
+  for (const h of HOOKS) {
+    let r: Omit<Handled, 'item'> | undefined;
+    try { r = h(s, it); } catch { r = undefined; }
+    if (r) return r;
+  }
   const m = envelopeMan(s).c;
   const ub = m ? { by: displayName(m), byId: m.id as string | undefined } : { by: 'Nobody', byId: undefined as string | undefined };
   if (it.ref.lt) {

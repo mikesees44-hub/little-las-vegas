@@ -31,6 +31,7 @@ import { autoStaff } from './business';
 import { dateOfWeek, monthKey, seasonInfo } from './calendar';
 import { runGoals } from './goals';
 import { riseGoalsWeek } from './riseGoals';
+import { ambitionsWeek } from './ambitions';
 import { runCouncil } from './council';
 import { crewMonth, crewWeek, defect, factionsWeek, revealIntel } from './crewlife';
 import { tidyRegimes } from './hierarchy';
@@ -77,6 +78,8 @@ import { archiveAccounts, reconcileAccounts, tributeOpen } from './tribute';
 import { recordMoneyWeek, twoPots } from './money';
 import { tributeBegin, tributeEnd, tributeWeek } from './tributeFlow';
 import './tributeEvents';
+// Delegation level and "always do this" (the Desk's Handled for you rules).
+import './delegation';
 import { earsWeek } from './ears';
 import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
@@ -475,6 +478,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     weeklyHousekeeping(ctx);
     runGoals(ctx);
     riseGoalsWeek(ctx);
+    // Three goals at a time: met ones pay and are replaced (ambitions.ts).
+    ambitionsWeek(ctx);
     dynastyWeek(ctx);
     politicsWeek(ctx);
     newsWeek(ctx);

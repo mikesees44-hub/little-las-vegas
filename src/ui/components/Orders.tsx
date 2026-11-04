@@ -1,4 +1,5 @@
 import { BookNote } from '../book/TheBook';
+import { oddsWord } from '../../engine/decide';
 import { createContext, useContext, useState } from 'react';
 import { pocketCash } from '../../engine/tributeState';
 import { sameTarget, targetOf } from '../../engine/deals';
@@ -163,7 +164,7 @@ export function AcceptanceLine({ a, prefix = 'Will accept' }: { a: Acceptance; p
   const pct = Math.round(a.chance * 100);
   return (
     <div className="mt-1.5 text-[11px]">
-      <span className={`font-semibold ${pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}`}>{prefix}: {pct}%</span>
+      <span className={`font-semibold ${pct >= 60 ? 'text-emerald-300' : pct >= 35 ? 'text-amber-300' : 'text-red-300'}`}>{prefix}: {pct}% <i className="font-normal" data-testid="odds-word">{oddsWord(a.chance)}</i></span>
       <span className="text-stone-500"> — </span>
       {a.reasons.map((r, i) => (
         <span key={i} className={`mr-2 inline-block whitespace-nowrap ${r.label === 'Base' ? 'text-stone-500' : r.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
