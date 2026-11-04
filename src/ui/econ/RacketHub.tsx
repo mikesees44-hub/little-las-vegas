@@ -282,7 +282,7 @@ function MadamCard({ s, c }: { s: GameState; c: HubCard }) {
   const M = s.ears?.madam;
   const mc = M ? s.characters[M.id] : undefined;
   return (
-    <article className="rounded-md border border-noir-700 bg-noir-800/60 p-3 lg:col-span-2" data-testid="racket-card" data-kind="madam">
+    <article className="llv-d-romance llv-dom-edge llv-dom-tint rounded-md border border-noir-700 bg-noir-800/60 p-3 lg:col-span-2" data-testid="racket-card" data-kind="madam" data-domain="romance">
       <header className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="font-semibold text-stone-100">🕶 {c.name}</div>

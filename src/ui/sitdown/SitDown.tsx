@@ -108,11 +108,11 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
             <div className="font-display text-xl text-gold-400 leading-tight">{tab === 'council' ? 'The Sit-Down' : 'Your Rounds'}</div>
             <div className="text-[11px] text-stone-500">Week {s.week} · {tab === 'council' ? (b.quiet ? 'A quiet week. Nobody has much to say.' : `${shown.size} thing${shown.size === 1 ? '' : 's'} on the table`) : 'How you spend your evenings'}</div>
           </div>
-          <nav className="flex rounded border border-noir-600 text-xs" role="tablist">
-            <button type="button" role="tab" aria-selected={tab === 'council'} data-testid="sitdown-tab-council" onClick={() => setTab('council')} className={`px-3 py-1.5 ${tab === 'council' ? 'bg-gold-500 text-noir-950 font-semibold' : 'text-stone-300'}`}>Your people</button>
-            <button type="button" role="tab" aria-selected={tab === 'rounds'} data-testid="sitdown-tab-rounds" onClick={() => setTab('rounds')} className={`px-3 py-1.5 ${tab === 'rounds' ? 'bg-gold-500 text-noir-950 font-semibold' : 'text-stone-300'}`}>Your rounds</button>
+          <nav className="llv-seg !mb-0 border-b-0" role="tablist" aria-label="The Sit-Down">
+            <button type="button" role="tab" aria-selected={tab === 'council'} data-testid="sitdown-tab-council" onClick={() => setTab('council')} className={`llv-seg-tab ${tab === 'council' ? 'llv-seg-on' : ''}`}>Your people</button>
+            <button type="button" role="tab" aria-selected={tab === 'rounds'} data-testid="sitdown-tab-rounds" onClick={() => setTab('rounds')} className={`llv-seg-tab ${tab === 'rounds' ? 'llv-seg-on' : ''}`}>Your rounds</button>
           </nav>
-          <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={onClose} data-testid="sitdown-close">close ×</button>
+          <button type="button" className="llv-iconbtn" onClick={onClose} data-testid="sitdown-close" aria-label="Close">×</button>
         </header>
 
         {tab === 'council' ? (
@@ -147,7 +147,7 @@ export function SitDown({ s, rounds, setRounds, skip, setSkip, onTrust, onLink, 
 
 function LessonCard({ lesson }: { lesson: SitDownLesson }) {
   return (
-    <section className="w-[86vw] max-w-[300px] shrink-0 snap-center rounded-md border border-gold-500/70 bg-gold-500/5 p-3 text-[12px] sm:w-[280px]" data-testid="sitdown-lesson">
+    <section className="w-[86vw] max-w-[300px] shrink-0 snap-center self-start rounded-lg border border-gold-500/70 bg-gold-500/5 p-3 text-[12px] sm:w-[260px]" data-testid="sitdown-lesson">
       <div className="text-[10px] uppercase tracking-[0.25em] text-gold-400">Your first season</div>
       <div className="mt-1 font-semibold text-stone-100 leading-snug">{lesson.title}</div>
       <p className="mt-1 text-stone-400 leading-snug">{lesson.hint}</p>
@@ -165,12 +165,12 @@ function AdvisorCard({ s, sp, skip, orders, onChoose, onLink, onTrust }: {
   const trusted = !!s.briefing?.trust[sp.key];
   const free = leeway(s, sp.key);
   return (
-    <section className={`flex w-[86vw] max-w-[340px] shrink-0 snap-center flex-col rounded-md border bg-noir-900/90 p-3 text-[12px] sm:w-[300px] ${sp.empty ? 'border-dashed border-noir-600' : 'border-noir-700'}`} data-testid={`advisor-${sp.key}`}>
+    <section className={`flex w-[86vw] max-w-[340px] shrink-0 snap-center flex-col rounded-lg border bg-noir-900/90 p-3 text-[12px] sm:w-auto sm:min-w-[300px] sm:max-w-[520px] sm:flex-1 ${sp.empty ? 'border-dashed border-noir-600' : sp.items.length ? 'border-noir-600' : 'border-noir-700 opacity-80'}`} data-testid={`advisor-${sp.key}`}>
       <div className="flex items-center gap-2">
         {c ? <Face s={s} c={c} size={52} /> : <div className="flex h-[52px] w-[52px] items-center justify-center rounded-md border border-dashed border-noir-600 text-xl text-stone-600">?</div>}
         <div className="min-w-0">
           <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">{sp.title}</div>
-          <div className="truncate font-semibold text-stone-100">{sp.name}</div>
+          <div className="truncate font-display text-[16px] leading-tight text-stone-100">{sp.name}</div>
           {!sp.empty && sp.role !== 'wife' && <span className={`text-[10px] ${sp.quality >= 0.55 ? 'text-emerald-300' : sp.quality >= 0.35 ? 'text-amber-300' : 'text-red-300'}`} title="How good his advice is: his skill for the seat and what he thinks of you">{sp.qualityWord}</span>}
         </div>
       </div>

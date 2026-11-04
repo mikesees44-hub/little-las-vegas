@@ -4,7 +4,40 @@
 
 :root {
   color-scheme: dark;
+  /*
+   * DOMAIN COLORS (ui/domain.ts): one tinted accent per part of the Don's life over the noir base.
+   * Each is an RGB triplet (for alpha): the accent (edges, dots, tints) and an ink (text; WCAG AA,
+   * at least 4.5:1, on noir-900 #141210 and noir-800 #1d1a17).
+   */
+  --d-family: 182 62 98;      --d-family-ink: 236 150 172;   /* wine */
+  --d-crew: 196 154 58;       --d-crew-ink: 236 211 143;     /* brass */
+  --d-money: 47 143 92;       --d-money-ink: 126 214 162;    /* money green */
+  --d-law: 74 124 176;        --d-law-ink: 156 194 232;      /* cold steel blue */
+  --d-rivals: 184 52 44;      --d-rivals-ink: 242 142 130;   /* blood red */
+  --d-romance: 214 82 152;    --d-romance-ink: 250 164 208;  /* rose neon */
+  --d-politics: 92 116 186;   --d-politics-ink: 226 219 200; /* navy, marble ink */
+  --d-church: 214 196 160;    --d-church-ink: 242 230 204;   /* candle ivory */
+  --d-shore: 38 150 150;      --d-shore-ink: 128 216 210;    /* sea teal */
+  --d: var(--d-crew);
+  --d-ink: var(--d-crew-ink);
 }
+.llv-d-family { --d: var(--d-family); --d-ink: var(--d-family-ink); }
+.llv-d-crew { --d: var(--d-crew); --d-ink: var(--d-crew-ink); }
+.llv-d-money { --d: var(--d-money); --d-ink: var(--d-money-ink); }
+.llv-d-law { --d: var(--d-law); --d-ink: var(--d-law-ink); }
+.llv-d-rivals { --d: var(--d-rivals); --d-ink: var(--d-rivals-ink); }
+.llv-d-romance { --d: var(--d-romance); --d-ink: var(--d-romance-ink); }
+.llv-d-politics { --d: var(--d-politics); --d-ink: var(--d-politics-ink); }
+.llv-d-church { --d: var(--d-church); --d-ink: var(--d-church-ink); }
+.llv-d-shore { --d: var(--d-shore); --d-ink: var(--d-shore-ink); }
+/* The treatments: an edge band, a faint tint, a tinted header strip, the ink, a dot, an icon chip. Never a full saturated fill. */
+.llv-dom-edge { border-left: 3px solid rgb(var(--d)) !important; }
+.llv-dom-tint { background-image: linear-gradient(90deg, rgb(var(--d) / 0.17), rgb(var(--d) / 0.05) 55%, transparent); }
+.llv-dom-strip { background: linear-gradient(90deg, rgb(var(--d) / 0.36), rgb(var(--d) / 0.08)); border-bottom: 1px solid rgb(var(--d) / 0.6); }
+.llv-dom-ink { color: rgb(var(--d-ink)); }
+.llv-dom-border { border-color: rgb(var(--d) / 0.6) !important; }
+.llv-dom-dot { display: inline-block; width: 0.5rem; height: 0.5rem; flex-shrink: 0; border-radius: 999px; background: rgb(var(--d)); box-shadow: 0 0 0 1px rgb(var(--d-ink) / 0.45); }
+.llv-dom-chip { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 6px; border: 1px solid rgb(var(--d) / 0.55); background: rgb(var(--d) / 0.18); color: rgb(var(--d-ink)); }
 
 body {
   @apply bg-noir-950 text-stone-200 font-body antialiased;
@@ -32,6 +65,10 @@ body {
    */
   .btn-primary {
     @apply btn bg-gold-500 text-noir-950 hover:bg-gold-400;
+  }
+  /* A primary that cannot be pressed yet ("Pick one" before a pick) must not look gold and ready. */
+  .btn-primary:disabled {
+    @apply border border-dashed border-noir-600 bg-noir-800 text-stone-500 opacity-100 hover:bg-noir-800;
   }
   .btn-secondary {
     @apply btn border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300;
@@ -83,6 +120,9 @@ body {
   .llv-pagehead-sub { @apply mt-0.5 text-[12px] leading-snug text-stone-400; max-width: 72ch; }
   .llv-section { @apply mb-4; }
   .llv-section-head { @apply mb-2 flex items-end gap-2 border-b border-noir-700/80 pb-1; }
+  .llv-section-head.llv-dom, .llv-dom-scope .llv-section-head { border-bottom-color: rgb(var(--d) / 0.55); }
+  .llv-dom-scope .llv-section-title, .llv-dom-scope .panel-title { color: rgb(var(--d-ink)); }
+  .llv-section-head.llv-dom .llv-section-title, .llv-dom-scope .llv-section.llv-dom-own .llv-section-title { color: rgb(var(--d-ink)); }
   .llv-section-title { @apply font-display text-[15px] sm:text-base leading-tight text-gold-300; }
   .llv-section-sub { @apply text-[11.5px] leading-snug text-stone-400; max-width: 72ch; }
   .llv-card-box { @apply relative rounded-lg border p-3; }
@@ -108,6 +148,10 @@ body {
   /* Buttons inside a menu become full-width rows, whatever classes they brought along. */
   .llv-menu-panel > button, .llv-menu-panel > a, .llv-menu-panel > * > button { @apply w-full justify-start rounded border-0 bg-transparent px-2 py-1.5 text-left text-[12.5px] font-medium text-stone-200 hover:bg-gold-500/10 hover:text-gold-300 disabled:opacity-40; height: auto; }
   /* Screen-level tabs: underlined, never filled like an action button. */
+  /* A square icon button (close ×) and a choice pill (a radio, not an action): the two hand-rolled kinds, named once. */
+  .llv-iconbtn { @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded border border-noir-600 text-stone-300 hover:border-gold-500 hover:text-gold-300; }
+  .llv-choice { @apply rounded-full border border-noir-600 px-2.5 py-0.5 text-[11.5px] text-stone-300 hover:border-gold-500; }
+  .llv-choice[aria-checked='true'], .llv-choice[aria-pressed='true'] { @apply border-gold-400 bg-gold-500/15 text-gold-300; }
   .llv-seg { @apply mb-3 flex gap-1 overflow-x-auto border-b border-noir-700; }
   .llv-seg-tab { @apply -mb-px shrink-0 whitespace-nowrap border-b-2 border-transparent px-2.5 py-1.5 text-[12.5px] font-semibold text-stone-400 hover:text-gold-300; }
   .llv-seg-on { @apply border-gold-500 text-gold-300; }

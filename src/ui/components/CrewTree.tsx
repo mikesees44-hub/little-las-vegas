@@ -25,6 +25,7 @@ import { BonesPicker } from '../clarity/Pickers';
 import { idleMen } from '../../engine/business';
 import { successionCandidates } from '../../engine/heir';
 import { DynastyTree } from '../family/DynastyTree';
+import { ActionMenu } from './Layout';
 
 /* ------------------------------------------------------------------ */
 /* Warnings and badges                                                 */
@@ -117,23 +118,30 @@ export function TreeNode({ s, c, size = 44, sub, compact }: { s: GameState; c: C
   );
 }
 
+/**
+ * Move a man to another crew: a small "⇄" menu (the kit's ActionMenu), so the select no longer takes
+ * the room his name needs in a capo's box. The order still takes effect when the week turns.
+ */
 function MoveMenu({ s, c }: { s: GameState; c: Character }) {
   const { queue, orders } = useOrders();
   const others = capos(s).filter((k) => k.id !== c.capoId);
   const pending = orders.find((o) => o.kind === 'reassign' && o.charId === c.id);
   if (!others.length || c.specialty || !(c.rank === 'soldier' || c.rank === 'associate')) return null;
+  const to = pending && pending.kind === 'reassign' ? pending.capoId : '';
   return (
-    <select
-      aria-label={`Move ${c.firstName} to another crew`}
-      title={`Move ${c.firstName} to another crew (takes effect when the week turns)`}
-      className="ml-auto h-6 max-w-[7.5rem] shrink-0 rounded border border-noir-600 bg-noir-900 px-1 text-[10px] text-stone-300 hover:border-gold-500"
-      value={pending && pending.kind === 'reassign' ? pending.capoId : ''}
-      onChange={(e) => e.target.value && queue({ kind: 'reassign', charId: c.id, capoId: e.target.value })}
-      data-testid="move-crew"
+    <ActionMenu
+      testid="move-crew"
+      className="ml-auto shrink-0 [&>summary]:h-6 [&>summary]:px-1.5 [&>summary]:text-[11px]"
+      label={to ? <span className="text-emerald-300" title={`Moving to ${s.characters[to]?.firstName ?? '…'}'s crew when the week turns`}>⇄ ✓</span> : <span title={`Move ${c.firstName} to another crew (takes effect when the week turns)`} aria-label={`Move ${c.firstName} to another crew`}>⇄</span>}
     >
-      <option value="">{pending ? `Moving to ${s.characters[(pending as { capoId: string }).capoId]?.firstName ?? '…'}` : '⇄ Move to crew…'}</option>
-      {others.map((k) => <option key={k.id} value={k.id}>Move to {k.firstName} {k.lastName}'s crew</option>)}
-    </select>
+      <div className="px-2 pt-1 text-[11px] text-stone-500">Move to crew: {c.firstName} goes when the week turns</div>
+      {others.map((k) => (
+        <button key={k.id} type="button" data-testid={`move-crew-${k.id}`} aria-pressed={to === k.id}
+          onClick={() => queue({ kind: 'reassign', charId: c.id, capoId: k.id })}>
+          {to === k.id ? '✓ ' : ''}{k.firstName} {k.lastName}'s crew
+        </button>
+      ))}
+    </ActionMenu>
   );
 }
 

@@ -15,7 +15,7 @@ export function RivalBoard({ s }: { s: GameState }) {
   const philly = s.rivals.find((r) => r.id === 'philly');
   return (
     <div className="space-y-3" data-testid="rival-board">
-      <p className="text-xs text-stone-500">Every family and power you deal with. Click a face for the man himself and everything you can do to him: gifts, sit-downs, schemes, a dispute at the Table.</p>
+      <p className="llv-prose">Every family and power you deal with. Click a face for the man himself and everything you can do to him: gifts, sit-downs, schemes, a dispute at the Table.</p>
       {/* Below the chair: your own family comes first, the one you answer to (valente.ts). */}
       {inTheRanks(s) && (
         <div data-testid="rival-board-above">
@@ -23,10 +23,10 @@ export function RivalBoard({ s }: { s: GameState }) {
         </div>
       )}
       {philly && (
-        <div className="rounded-md border border-gold-600/40 bg-noir-800/60 px-3 py-2 text-sm">
-          <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{inTheRanks(s) ? 'Philadelphia (your Don\'s bosses) knows of you' : 'Philadelphia\'s view of you'}</span>{' '}
+        <div className={`llv-card-box ${s.heat.family >= 60 ? 'llv-card-danger' : 'llv-card-attention'} flex flex-wrap items-center gap-x-3 gap-y-1 py-2`} data-testid="rival-board-philly">
+          <span className="font-display text-[15px] text-gold-300">{inTheRanks(s) ? 'Philadelphia (your Don\'s bosses) knows of you' : 'Philadelphia\'s view of you'}</span>
           <OpinionBadge v={opinion(s, philly.leaderId, s.playerId)} />
-          <span className="text-xs text-stone-400"> · family heat {s.heat.family}{s.heat.family >= 60 ? ' — they are watching' : ''}</span>
+          <span className="text-[12px] text-stone-400">family heat <b className="tabular-nums text-stone-200">{s.heat.family}</b>{s.heat.family >= 60 ? ' — they are watching' : ''}</span>
         </div>
       )}
       <ul className="grid gap-2 sm:grid-cols-2">
@@ -35,11 +35,11 @@ export function RivalBoard({ s }: { s: GameState }) {
           if (!leader) return null;
           const war = s.wars.find((w) => w.rival === r.id);
           return (
-            <li key={r.id} className={`flex gap-2 items-start rounded-md border p-2 ${war || r.feud ? 'border-blood-500/60 bg-blood-500/10' : 'border-noir-700 bg-noir-800/50'}`}>
+            <li key={r.id} className={`llv-card-box llv-d-rivals llv-dom-edge flex min-w-0 items-start gap-2.5 p-2.5 ${war || r.feud ? 'llv-card-danger' : 'llv-card-plain llv-dom-tint'}`} data-testid="rival-card" data-domain="rivals">
               <Face s={s} c={leader} size={48} />
               <div className="min-w-0 flex-1">
                 <div className="flex justify-between gap-2">
-                  <div className="text-sm font-semibold text-stone-100 truncate">{r.name}</div>
+                  <div className="font-display text-[15px] leading-tight text-stone-100 truncate">{r.name}</div>
                   <OpinionBadge v={opinion(s, r.leaderId, s.playerId)} />
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1"><SideChip s={s} id={leader.id} full /><RelationChip relation={sideOf(s, leader.id).relation} /></div>

@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { HOMES, type HomeDef } from './nav';
 import type { HomeId } from './routes';
+import { domClass, type Domain } from '../domain';
+
+/** The homes that are one part of the Don's life carry its colour on the rail (the Desk is all of them). */
+const HOME_DOMAIN: Partial<Record<HomeId, Domain>> = { org: 'crew', money: 'money', map: 'shore', rivals: 'rivals', life: 'family' };
 
 const glyph = (g: string) => <span aria-hidden style={{ fontVariantEmoji: 'text' } as never}>{g}&#xFE0E;</span>;
 
@@ -21,7 +25,8 @@ function RailButton({ h, active, badge, dot, onClick, compact, panelOpen, locked
     <button type="button" onClick={() => { setClicked(true); onClick(); }} onMouseLeave={() => setClicked(false)} data-tab={h.id} data-testid={`rail-${h.id}`} aria-pressed={active}
       title={locked ? `${h.label}: ${locked}` : compact ? `${h.label} (${h.key.toUpperCase()}) — ${h.blurb}` : undefined} aria-label={h.label} data-locked={locked ? 'true' : undefined}
       className={`group relative flex flex-col items-center justify-center rounded-md ${compact ? 'h-12 flex-1 min-w-0' : 'h-14 w-[60px]'} border text-[10px] leading-tight transition-colors ${locked && !active ? 'opacity-45 ' : ''}${active ? 'border-gold-500 bg-gold-500/15 text-gold-300' : 'border-transparent text-stone-400 hover:border-noir-600 hover:text-gold-300'}`}>
-      <span className="text-lg leading-none">{glyph(h.icon)}</span>
+      <span className={`text-lg leading-none ${HOME_DOMAIN[h.id] && !active ? `${domClass(HOME_DOMAIN[h.id])} llv-dom-ink` : ''}`}>{glyph(h.icon)}</span>
+      {HOME_DOMAIN[h.id] && <span className={`${domClass(HOME_DOMAIN[h.id])} absolute bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-[rgb(var(--d))] ${active ? 'opacity-100' : 'opacity-60'}`} aria-hidden />}
       <span className="mt-0.5 truncate max-w-full px-0.5">{h.short}</span>
       {!!badge && <span className="absolute right-0.5 top-0.5 min-w-[16px] rounded-full bg-blood-500 px-1 text-[9px] font-bold text-white">{badge}</span>}
       {dot && !badge && <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-gold-400 animate-pulse" aria-label="new" />}

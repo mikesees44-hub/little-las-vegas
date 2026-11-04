@@ -11,6 +11,7 @@ import { useSheet } from '../components/People';
 import { useShell } from '../shell/context';
 import { fmt$ } from '../format';
 import { sameOrder } from '../verbs';
+import { domainOf, domClass } from '../domain';
 
 /**
  * THE BOOK (engine/journal.ts): the one place the boss keeps track of
@@ -53,9 +54,9 @@ function EntryRow({ s, e, onThread, followers }: { s: GameState; e: JEntry; onTh
   const prior = e.re ? s.journal?.e.find((x) => x.id === e.re) : undefined;
   const openPlace = (k: string) => { const r = placeRoute(s, k); if (r.district) shell.focus({ district: r.district }); shell.go(r.route); };
   return (
-    <li className={`rounded-md border px-2.5 py-1.5 ${e.mine ? 'border-gold-500/50 bg-gold-500/5' : 'border-noir-700 bg-noir-900/40'}`} data-testid="book-entry" data-cat={e.c}>
+    <li className={`rounded-md border px-2.5 py-1.5 ${domClass(domainOf(e.c))} llv-dom-edge ${e.mine ? 'border-gold-500/50 bg-gold-500/5' : 'border-noir-700 bg-noir-900/40'}`} data-testid="book-entry" data-cat={e.c} data-domain={domainOf(e.c)}>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-        <span className="w-4 shrink-0 text-center text-gold-400/80" title={info.label} aria-hidden>{info.glyph}</span>
+        <span className="w-4 shrink-0 text-center llv-dom-ink" title={info.label} aria-hidden>{info.glyph}</span>
         <button type="button" className="min-w-0 flex-1 text-left text-[13px] font-semibold text-stone-100 hover:text-gold-300" onClick={() => shell.go(e.ln ?? info.route)} title={`Open: ${info.label}`}>{e.t}</button>
         <Deltas e={e} />
       </div>
@@ -222,7 +223,7 @@ export function TheBook({ s }: { s: GameState }) {
         <div className="flex flex-wrap gap-1">
           <Chip on={!!f.mine} onClick={() => set({ mine: !f.mine || undefined })} testid="book-mine">☰ My orders only</Chip>
           <Chip on={!!f.money} onClick={() => set({ money: !f.money || undefined })} testid="book-moneyonly">$ Money only</Chip>
-          {JCATS.filter((c) => counts.c.get(c)).map((c) => <Chip key={c} on={!!f.cats?.includes(c)} onClick={() => toggleCat(c)} testid={`book-cat-${c}`}>{JCAT_INFO[c].glyph} {JCAT_INFO[c].label} <span className="text-stone-500">{counts.c.get(c)}</span></Chip>)}
+          {JCATS.filter((c) => counts.c.get(c)).map((c) => <Chip key={c} on={!!f.cats?.includes(c)} onClick={() => toggleCat(c)} testid={`book-cat-${c}`}><span className={`${domClass(domainOf(c))} llv-dom-dot mr-1 align-middle`} aria-hidden />{JCAT_INFO[c].glyph} {JCAT_INFO[c].label} <span className="text-stone-500">{counts.c.get(c)}</span></Chip>)}
         </div>
         {/* Who, where and when fold under one line (the File opened on three rows of controls). */}
         <details className="group" open={f.person || f.place || f.from !== undefined || f.to !== undefined ? true : undefined} data-testid="book-more-filters">

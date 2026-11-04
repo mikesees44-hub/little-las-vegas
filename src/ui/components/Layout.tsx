@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
+import { DOMAIN_IDS, DOMAINS, domClass, type Domain } from '../domain';
 
 /**
  * THE LAYOUT KIT (LAYOUT_AUDIT.md). One way to build a screen inside a drawer:
@@ -10,6 +11,9 @@ import { useEffect, useRef, type ReactNode } from 'react';
  *   <ActionMenu>…buttons…</ActionMenu>       secondary actions folded into "More ▾"
  *   <StatChip label value />                 a number with its label
  *   <DoneMark>Ordered</DoneMark>             the same "✓ Done" everywhere
+ *   domain="money" on Section / Card        the part of the Don's life it belongs to (ui/domain.ts):
+ *                                           a coloured edge, tint, header and dot over the noir
+ *   <DomainDot d /> <DomainChip d />         the domain's dot and its icon chip; <DomainLegend /> the key
  *
  * The menu is a native <details>: its buttons are always in the page (tests and screen readers find
  * them, test ids are kept), folded until opened. Nothing here removes an option; it only groups them.
@@ -42,8 +46,10 @@ export function PageHeader({ title, sub, primary, more, testid }: {
 }
 
 /** A section with the one header style: display serif, a short line under it, actions on the right. */
-export function Section({ title, sub, aside, children, className = '', testid }: {
+export function Section({ title, sub, aside, children, className = '', testid, domain }: {
   title?: ReactNode;
+  /** The part of the Don's life (ui/domain.ts): the header takes its colour and dot. */
+  domain?: Domain;
   sub?: ReactNode;
   /** Right side of the header: a count, a quiet link, a menu. */
   aside?: ReactNode;
@@ -52,11 +58,11 @@ export function Section({ title, sub, aside, children, className = '', testid }:
   testid?: string;
 }) {
   return (
-    <section className={`llv-section ${className}`} data-testid={testid}>
+    <section className={`llv-section ${domClass(domain)} ${className}`} data-testid={testid} data-domain={domain}>
       {(title || aside) && (
-        <div className="llv-section-head">
+        <div className={`llv-section-head ${domain ? 'llv-dom' : ''}`}>
           <div className="min-w-0">
-            {title && <h4 className="llv-section-title">{title}</h4>}
+            {title && <h4 className="llv-section-title">{domain && <span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />}{title}</h4>}
             {sub && <p className="llv-section-sub">{sub}</p>}
           </div>
           {aside && <div className="ml-auto flex shrink-0 items-center gap-1.5 text-[11px] text-stone-400">{aside}</div>}
@@ -70,15 +76,17 @@ export function Section({ title, sub, aside, children, className = '', testid }:
 export type CardTone = 'plain' | 'attention' | 'done' | 'danger';
 
 /** A card. "done" carries the corner badge, so a finished thing reads as finished at a glance. */
-export function Card({ tone = 'plain', children, className = '', testid, doneLabel = 'Done' }: {
+export function Card({ tone = 'plain', children, className = '', testid, doneLabel = 'Done', domain }: {
   tone?: CardTone;
+  /** The part of the Don's life: an edge band and a faint tint in its colour (a done or danger tone still wins the border). */
+  domain?: Domain;
   children?: ReactNode;
   className?: string;
   testid?: string;
   doneLabel?: string;
 }) {
   return (
-    <div className={`llv-card-box llv-card-${tone} ${className}`} data-testid={testid}>
+    <div className={`llv-card-box llv-card-${tone} ${domain ? `${domClass(domain)} llv-dom-edge llv-dom-tint` : ''} ${className}`} data-testid={testid} data-domain={domain}>
       {tone === 'done' && <span className="llv-card-donebadge"><DoneMark>{doneLabel}</DoneMark></span>}
       {children}
     </div>
@@ -162,5 +170,38 @@ export function Empty({ title, children, action }: { title: ReactNode; children?
       {children && <div className="mt-0.5 text-stone-400">{children}</div>}
       {action && <div className="mt-2">{action}</div>}
     </div>
+  );
+}
+
+/** A domain's dot (with its name for screen readers: colour is never the only signal). */
+export function DomainDot({ d, className = '' }: { d: Domain | undefined; className?: string }) {
+  if (!d) return null;
+  return <span className={`${domClass(d)} llv-dom-dot ${className}`} role="img" aria-label={DOMAINS[d].label} title={DOMAINS[d].label} />;
+}
+
+/** A domain's icon chip: its glyph on a tint of its colour. */
+export function DomainChip({ d, size = 22, glyph, className = '' }: { d: Domain | undefined; size?: number; glyph?: ReactNode; className?: string }) {
+  if (!d) return null;
+  return (
+    <span className={`${domClass(d)} llv-dom-chip ${className}`} style={{ width: size, height: size, fontSize: Math.round(size * 0.55) }} title={DOMAINS[d].label} aria-hidden>
+      {glyph ?? DOMAINS[d].glyph}
+    </span>
+  );
+}
+
+/** The key to the colours: each part of the Don's life, its colour, its glyph and what it covers (Settings and Help). */
+export function DomainLegend({ compact }: { compact?: boolean }) {
+  return (
+    <ul className={`grid gap-1.5 ${compact ? 'grid-cols-2 sm:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-3'}`} data-testid="domain-legend" aria-label="What the colours mean">
+      {DOMAIN_IDS.map((d) => (
+        <li key={d} className={`${domClass(d)} llv-card-box llv-card-plain llv-dom-edge llv-dom-tint flex items-start gap-2 px-2.5 py-1.5`}>
+          <DomainChip d={d} />
+          <span className="min-w-0">
+            <span className="block text-[12.5px] font-semibold llv-dom-ink">{DOMAINS[d].label}</span>
+            {!compact && <span className="block text-[11px] leading-snug text-stone-400">{DOMAINS[d].blurb}</span>}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }

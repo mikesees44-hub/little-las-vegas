@@ -6,6 +6,8 @@ import { LINE_LABEL } from '../../engine/phone';
 import { DAY_NAMES } from '../../engine/days';
 import { hourText } from '../../engine/threats';
 import { Modal } from '../components/Modal';
+import { Empty } from '../components/Layout';
+import { domainOfText, domClass } from '../domain';
 
 /**
  * THE PHONE (PHONE.md): one window, three tabs. Missed calls (call back), the phone book (pick a
@@ -37,8 +39,8 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
   const pv = spec ? dialPreview(s, spec) : undefined;
   const ahead = meetsAhead(s);
   const tabBtn = (t: Tab, label: string, n?: number) => (
-    <button type="button" onClick={() => setTab(t)} data-testid={`phone-tab-${t}`} aria-pressed={tab === t}
-      className={`rounded px-2.5 py-1 text-xs font-semibold ${tab === t ? 'bg-gold-500 text-noir-950' : 'text-stone-300 hover:text-gold-300'}`}>
+    <button type="button" role="tab" onClick={() => setTab(t)} data-testid={`phone-tab-${t}`} aria-pressed={tab === t} aria-selected={tab === t}
+      className={`llv-seg-tab ${tab === t ? 'llv-seg-on' : ''}`}>
       {label}{n ? <span className="ml-1 rounded-full bg-blood-500 px-1.5 text-[10px] text-white">{n}</span> : null}
     </button>
   );
@@ -53,9 +55,9 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
               <div className="text-[11px] text-stone-400" data-testid="phone-line">{lineStatus(s)}</div>
             </div>
           </div>
-          <button type="button" className="btn-ghost text-xs" onClick={onClose}>Close</button>
+          <button type="button" className="btn-quiet text-xs" onClick={onClose} aria-label="Close" data-testid="phone-close">✕</button>
         </div>
-        <div className="mt-3 flex gap-1 border-b border-noir-700 pb-2">
+        <div className="llv-seg tabbar mt-3 !mb-0" role="tablist" aria-label="The phone">
           {tabBtn('missed', 'Missed', missed.length)}
           {tabBtn('dial', 'Make a call')}
           {tabBtn('log', 'Calls & meets', ahead.length)}
@@ -63,17 +65,18 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
 
         {tab === 'missed' && (
           <div className="mt-3 space-y-2" data-testid="phone-missed">
-            {!missed.length && <p className="text-sm text-stone-400">No missed calls.</p>}
+            {!missed.length && <Empty title="No missed calls" action={<button type="button" className="btn-secondary text-xs" onClick={() => setTab('dial')}>Make a call ▸</button>}>When somebody rings while you are out, it shows up here.</Empty>}
             {missed.slice().reverse().map((m) => {
               const why = canCallBack(s, m);
+              const d = domainOfText(s, `${m.p.role} ${m.p.name}`);
               return (
-                <div key={m.id} className="flex items-center justify-between gap-2 rounded border border-noir-700 bg-noir-800/60 px-3 py-2">
+                <div key={m.id} className={`llv-card-box ${m.h === 2 ? 'llv-card-danger' : 'llv-card-plain'} ${d ? `${domClass(d)} llv-dom-edge llv-dom-tint` : ''} flex items-center justify-between gap-2 py-2`} data-domain={d}>
                   <div className="min-w-0">
                     <div className="text-sm text-stone-200 truncate">{m.p.name} <span className="text-stone-500">· {m.p.role}</span></div>
                     <div className="text-[11px] text-stone-500">{DAY_NAMES[m.d]}, {hourText(m.h)}{m.h === 2 ? ' · bad news' : ''}</div>
                   </div>
-                  <button type="button" className="btn-secondary shrink-0 px-2 py-1 text-xs" disabled={!!why} title={why} onClick={() => onCallBack(m.id)} data-testid={`call-back-${m.id}`}>
-                    {why ? why : 'Call back'}
+                  <button type="button" className={`${why ? 'btn-secondary' : 'btn-primary'} shrink-0 px-2.5 py-1 text-xs`} disabled={!!why} title={why} onClick={() => onCallBack(m.id)} data-testid={`call-back-${m.id}`}>
+                    {why ? why : 'Call back ▸'}
                   </button>
                 </div>
               );
@@ -83,7 +86,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
 
         {tab === 'dial' && (
           <div className="mt-3 space-y-3" data-testid="phone-dial">
-            <label className="block text-xs text-stone-400">Who
+            <label className="block text-xs text-stone-400"><Step n={1} on={!!entry}>Who</Step>
               <select className="inp mt-1 w-full text-sm" value={who ?? ''} onChange={(e) => { setWho(e.target.value || undefined); setPurpose(undefined); }} data-testid="dial-who">
                 <option value="">Pick a number…</option>
                 {GROUPS.map((g) => {
@@ -92,14 +95,16 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
                 })}
               </select>
             </label>
+            {entry && <Step n={2} on={!!purpose}>What for</Step>}
             {entry && (
-              <div className="flex flex-wrap gap-1" data-testid="dial-purposes">
+              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="What for" data-testid="dial-purposes">
                 {entry.purposes.map((p) => (
                   <button key={p} type="button" onClick={() => setPurpose(p)} aria-pressed={purpose === p} data-testid={`dial-purpose-${p}`}
-                    className={`rounded border px-2 py-1 text-xs ${purpose === p ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-300 hover:border-gold-500'}`}>{PURPOSE_LABEL[p]}</button>
+                    className="llv-choice py-1 text-xs">{PURPOSE_LABEL[p]}</button>
                 ))}
               </div>
             )}
+            {purpose === 'meet' && <Step n={3} on>Where and when</Step>}
             {purpose === 'meet' && (
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 <label className="text-xs text-stone-400">Where
@@ -121,14 +126,14 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
               </div>
             )}
             {spec && pv && (
-              <div className="rounded border border-noir-700 bg-noir-800/60 p-3 text-sm" data-testid="dial-preview">
+              <div className="llv-card-box llv-card-attention text-sm" data-testid="dial-preview">
                 <div className="flex flex-wrap items-center gap-3 text-xs text-stone-300">
                   <label className="flex items-center gap-1"><input type="checkbox" checked={pay} onChange={(e) => setPay(e.target.checked)} data-testid="dial-pay" /> Walk to a pay phone</label>
                   <label className="flex items-center gap-1"><input type="checkbox" checked={code} onChange={(e) => setCode(e.target.checked)} data-testid="dial-code" /> Don't say it on the phone (code words)</label>
                 </div>
                 <div className="mt-2 text-stone-300">{pv.hint}</div>
                 {pv.tape && <div className="mt-1 text-[11px] text-amber-300/90">{pv.tape}</div>}
-                <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-noir-700 pt-2.5">
                   <span className="text-xs text-stone-400">On {LINE_LABEL[pv.line]} · <span className="font-semibold text-gold-300" data-testid="dial-odds">{Math.round(pv.odds * 100)}%</span> it goes your way</span>
                   <button type="button" className="btn-primary px-3 py-1 text-sm" disabled={!!pv.blocked} title={pv.blocked} onClick={() => onDial(spec)} data-testid="dial-call">{pv.blocked ?? 'Call ▸'}</button>
                 </div>
@@ -141,15 +146,15 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
           <div className="mt-3 space-y-3" data-testid="phone-log">
             {ahead.length > 0 && (
               <div>
-                <div className="panel-title text-xs">Meets on the calendar</div>
-                {ahead.map((m) => <div key={m.id} className="text-sm text-stone-300">{m.when}: {m.who}, {m.place}</div>)}
+                <h4 className="llv-section-title mb-1">Meets on the calendar</h4>
+                {ahead.map((m) => <div key={m.id} className="llv-card-box llv-card-attention mb-1 py-1.5 text-sm text-stone-200"><b className="text-gold-300">{m.when}</b>: {m.who}, {m.place}</div>)}
               </div>
             )}
             <div>
-              <div className="panel-title text-xs">The last calls</div>
-              {!(s.phone?.log.length) && <p className="text-sm text-stone-400">Nothing yet.</p>}
+              <h4 className="llv-section-title mb-1">The last calls</h4>
+              {!(s.phone?.log.length) && <Empty title="Nothing yet">Calls in and out, and the meets, are logged here and in Your File.</Empty>}
               {(s.phone?.log ?? []).slice(-12).reverse().map((l, i) => (
-                <div key={i} className="border-b border-noir-800 py-1 text-xs text-stone-400">
+                <div key={i} className={`border-b border-noir-800 py-1 pl-2 text-xs text-stone-400 ${domClass(domainOfText(s, `${l.name} ${l.t}`))} ${domainOfText(s, `${l.name} ${l.t}`) ? 'llv-dom-edge' : ''}`}>
                   <span className="text-stone-500">Wk {l.w} {DAY_NAMES[l.d].slice(0, 3)} {hourText(l.h)} · {l.dir === 'in' ? 'in' : l.dir === 'out' ? 'out' : l.dir === 'meet' ? 'meet' : 'missed'}</span> <span className="text-stone-200">{l.name}</span>: {l.t}
                 </div>
               ))}
@@ -159,6 +164,16 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack }: { s: GameState; 
         )}
       </div>
     </Modal>
+  );
+}
+
+/** A numbered step of making a call, lit once it is answered. */
+function Step({ n, on, children }: { n: number; on?: boolean; children: React.ReactNode }) {
+  return (
+    <span className="mb-1 flex items-center gap-1.5 text-[12px] font-semibold text-stone-300">
+      <span aria-hidden className={`flex h-[1.1rem] w-[1.1rem] items-center justify-center rounded-full border text-[10px] ${on ? 'border-gold-500 bg-gold-500 text-noir-950' : 'border-noir-500 text-stone-400'}`}>{on ? '✓' : n}</span>
+      {children}
+    </span>
   );
 }
 

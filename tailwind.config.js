@@ -7,6 +7,9 @@ export default {
         noir: { 950: '#0b0a09', 900: '#141210', 800: '#1d1a17', 700: '#2a2622', 600: '#3a342e' },
         gold: { 300: '#ecd38f', 400: '#d9b75f', 500: '#c49a3a', 600: '#9c7a2c' },
         blood: { 500: '#a3352b', 400: '#c4483c' },
+        // Domain colors (index.css --d-*; ui/domain.ts): bg-dom-money/20, text-domink-law, border-dom-family …
+        dom: Object.fromEntries(['family', 'crew', 'money', 'law', 'rivals', 'romance', 'politics', 'church', 'shore'].map((d) => [d, `rgb(var(--d-${d}) / <alpha-value>)`])),
+        domink: Object.fromEntries(['family', 'crew', 'money', 'law', 'rivals', 'romance', 'politics', 'church', 'shore'].map((d) => [d, `rgb(var(--d-${d}-ink) / <alpha-value>)`])),
       },
       fontFamily: {
         display: ['"Playfair Display"', 'Georgia', 'serif'],

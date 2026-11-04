@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { Overlay } from '../components/Modal';
 import { useEscape } from '../keys';
 import { seasonInfo } from '../../engine/calendar';
@@ -22,6 +23,8 @@ import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
 import { eraHeadline } from '../../engine/intrigue';
 import { ERA_TONE } from '../intrigue/IntrigueBoard';
 import { armyMeter } from '../../engine/army';
+import { ReportBug } from '../feedback/ReportBug';
+import { currentScreen } from '../feedback/reportClient';
 
 /** The army meter in tension or war (army.ts): Raised / Available / Allies / Enemy (a guess without spies). A tap opens the Army. */
 function ArmyChip({ s }: { s: GameState }) {
@@ -323,6 +326,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   const orderCost = queuedMoney(s, orders).family;
   const plans = usePlansCount(s);
   const [pane, setPane] = useState<'orders' | 'plans' | undefined>();
+  // The playtesters' report form (feedback/ReportBug.tsx), with the screen it was opened from.
+  const [report, setReport] = useState<string | undefined>();
   // The Desk's "In motion ▸" and others open the plans from anywhere.
   useEffect(() => {
     const on = () => setPane('plans');
@@ -349,16 +354,19 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           <StandingStrip s={s} />
           <ArmyChip s={s} />
         </div>
-        <div className="order-2 sm:order-3 ml-auto shrink-0 text-right leading-tight">
-          <div className="flex items-center justify-end gap-1 whitespace-nowrap" data-testid="topbar-date">
+        {/* The date sits with the money and standing chips as one more chip (it floated alone, three lines tall, in the top right). */}
+        <div className="order-2 sm:order-3 ml-auto sm:ml-0 shrink-0 text-right sm:text-left leading-tight sm:rounded-md sm:border sm:border-noir-700 sm:bg-noir-800/60 sm:px-2.5 sm:py-1" data-testid="topbar-when">
+          <div className="flex items-center justify-end sm:justify-start gap-1 whitespace-nowrap" data-testid="topbar-date">
             <FlipClock s={s} testid="topbar-clock" />
             <span className="text-[10px] sm:text-[11px] text-stone-400">Wk {s.week}</span>
           </div>
+          <div className="sm:flex sm:items-baseline sm:gap-2">
           <div className="mt-0.5 text-[10px] sm:text-[11px] text-sky-300 whitespace-nowrap" data-testid="topbar-hour" title={`The boss's day runs 8 AM to 2 AM. It is ${nowLabel(s)}; ${hoursLabel(hoursLeft(s))} left today.`}>
             {hoursLabel(hoursLeft(s))} left
             {onEndDay && !s.gameOver && <button type="button" className="ml-1 underline text-stone-400 hover:text-gold-300" onClick={onEndDay} data-testid="end-day" title="Call it a day: the world moves on to tomorrow">end day ▸</button>}
           </div>
-          <div className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden sm:inline"> · {info.countdownLabel}</span></div>
+          <div title={info.countdownLabel} className={`text-[10px] sm:text-[11px] font-semibold whitespace-nowrap ${info.inSeason ? 'text-gold-300' : 'text-sky-300'}`}>{info.label} ×{info.multiplier}<span className="hidden xl:inline"> · {info.countdownLabel}</span></div>
+          </div>
         </div>
         {!s.gameOver && (
           <div className="order-4 flex w-full lg:w-auto items-center gap-0.5 sm:gap-1.5 flex-wrap">
@@ -405,6 +413,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                     {onPaper && <button type="button" className={menuItem} onClick={() => { close(); onPaper(); }} data-testid="paper-button">▤ The paper{paperUnread > 0 && <span className="ml-1 inline-block h-2 w-2 rounded-full bg-blood-500" data-testid="paper-dot" aria-label={`${paperUnread} unread`} />}</button>}
                     <button type="button" className={`${menuItem} md:hidden`} onClick={() => { close(); window.dispatchEvent(new Event('llv-open-alerts')); }} data-testid="menu-alerts">⚑ Alerts</button>
                     {onHelp && <button type="button" className={menuItem} onClick={() => { close(); onHelp(); }} data-testid="rail-help">? What should I do</button>}
+                    <button type="button" className={menuItem} onClick={() => { const at = currentScreen(); close(); setReport(at); }} data-testid="feedback-button">✎ Report a bug or idea</button>
                     <div className="my-1 h-px bg-noir-700" />
                     <GameMenuLinks close={close} />
                     <div className="flex items-center justify-between px-2 py-1 text-sm text-stone-300">Music <MusicToggle /></div>
@@ -420,6 +429,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             </div>
             {pane === 'orders' && <OrdersPane s={s} onClose={() => setPane(undefined)} />}
             {pane === 'plans' && <PlansPanel s={s} onClose={() => setPane(undefined)} />}
+            {/* Out of the bar's stacking context (z 1150), so the sheet sits over the phone's tab bar. */}
+            {report !== undefined && typeof document !== 'undefined' && createPortal(<ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />, document.body)}
           </div>
         )}
       </div>

@@ -163,12 +163,12 @@ export function StreetCard({ s, it, mood, onClose, onShow }: { s: GameState; it:
           <div className="font-display text-xl leading-tight" style={{ color: it.sign, textShadow: `0 0 10px ${it.sign}55` }}>{it.name}</div>
           <div className="text-xs text-stone-400">{l?.address}</div>
         </div>
-        <button type="button" onClick={onClose} className="text-xs text-stone-400 hover:text-gold-300 shrink-0" aria-label="Close">close ×</button>
+        <button type="button" onClick={onClose} className="llv-iconbtn !h-7 !w-7" aria-label="Close">×</button>
       </div>
       <CardActions s={s} it={it} onBusiness={() => papers.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })} onActions={() => acts.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' })}
         onOwner={(id) => sheet.open(id)} onShow={onShow} />
       <Storefront it={it} f={f} />
-      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+      <div className="llv-card-box llv-card-plain grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 px-2.5 py-2 text-xs">
         <div className="text-stone-500">Held by</div>
         <div className="text-stone-200 flex items-center gap-1.5"><span className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: OWNER_COLOR[it.owner] ?? OWNER_COLOR.private }} />{ownerText(s, it)}</div>
         <div className="text-stone-500">Runs it</div>
@@ -180,7 +180,7 @@ export function StreetCard({ s, it, mood, onClose, onShow }: { s: GameState; it:
       </div>
       {hist.length > 0 && (
         <div>
-          <div className="text-[10px] uppercase tracking-widest text-stone-500">The deed</div>
+          <h5 className="mb-1 border-b border-noir-700/80 pb-0.5 font-display text-[14px] leading-tight text-gold-300">The deed</h5>
           <ul className="text-[11px] text-stone-400 space-y-0.5" data-testid="sv-history">
             {hist.map((h, i) => <li key={i}><span className="text-stone-500 tabular-nums">{h.year}</span> · {h.how} · {h.owner === 'private' ? h.by ?? 'a private owner' : h.owner === 'player' ? 'you' : rivalName(h.owner)}{h.price ? ` · ${fmt$(h.price)}` : ''}</li>)}
           </ul>

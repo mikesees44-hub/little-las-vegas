@@ -33,9 +33,9 @@ export function UrgentMeeting({ s, id, onMeet, onIgnore, onRespond, onPick, onCl
   const viaName = u.via === 'underboss' ? u.underboss : u.via === 'consigliere' ? u.consigliere : undefined;
   return (
     <Modal onClose={onClose}>
-      <div className="p-4 sm:p-6" data-testid="urgent-meeting">
-        <div className="flex justify-between items-center">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-red-400">Urgent meeting{all.length > 1 ? ` · ${i + 1} of ${all.length}` : ''}</div>
+      <div className="p-4 sm:p-6 llv-d-law" data-testid="urgent-meeting" data-domain="law">
+        <div className="-mx-4 -mt-4 mb-2 flex items-center justify-between px-4 py-2 sm:-mx-6 sm:-mt-6 sm:px-6 llv-dom-strip">
+          <div className="text-[10px] uppercase tracking-[0.3em] text-red-300"><span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />Urgent meeting{all.length > 1 ? ` · ${i + 1} of ${all.length}` : ''}</div>
           <button className="btn-quiet text-xs" onClick={onClose} data-testid="urgent-later" aria-label="Close">✕</button>
         </div>
         <div className="flex gap-3 items-start mt-1">
