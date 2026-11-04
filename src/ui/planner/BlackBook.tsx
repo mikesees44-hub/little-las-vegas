@@ -5,6 +5,7 @@ import type { DialSpec } from '../../engine/phoneMeet';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { weekLabel } from '../../engine/journal';
 import { Face } from './ink';
+import { ActionCard } from '../components/Orders';
 
 const GROUP_DOM: Record<BookGroup, string> = { men: 'crew', family: 'family', law: 'law', rivals: 'rivals', women: 'romance', business: 'money' };
 const DOM_RGB: Record<string, string> = { crew: 'var(--d-crew)', family: 'var(--d-family)', law: 'var(--d-law)', rivals: 'var(--d-rivals)', romance: 'var(--d-romance)', money: 'var(--d-money)' };
@@ -48,6 +49,7 @@ function Card({ s, c, onChar, onPhone, onOrder }: { s: GameState; c: Contact; on
   const gift: PlayerAction | undefined = c.charId && c.canGift ? { kind: 'interact', id: 'gift_small', target: c.charId } : undefined;
   const pv = gift ? previewAction(s, gift) : undefined;
   const mood = c.mood ?? 0;
+  const [offer, setOffer] = useState(false);
   return (
     <li className="llv-card-rolo" style={{ ['--d' as string]: DOM_RGB[GROUP_DOM[c.group]] }} data-testid="bb-card" data-group={c.group}>
       <button type="button" onClick={() => c.charId && onChar(c.charId)} disabled={!c.charId} aria-label={`Open ${c.name}`}><Face s={s} id={c.charId} name={c.name} size={44} /></button>
@@ -66,8 +68,11 @@ function Card({ s, c, onChar, onPhone, onOrder }: { s: GameState; c: Contact; on
         <div className="mt-1 flex flex-wrap gap-1">
           {c.phone && c.phone.purposes.some((p) => p !== 'meet') && <button type="button" className="llv-ink-btn px-2 py-0.5" onClick={() => onPhone({ who: c.id, purpose: c.phone!.purposes.includes('checkin') ? 'checkin' : c.phone!.purposes[0] })} data-testid="bb-call">☎ Call</button>}
           {c.phone?.purposes.includes('meet') && <button type="button" className="llv-ink-btn px-2 py-0.5" onClick={() => onPhone({ who: c.id, purpose: 'meet' })} data-testid="bb-meet">Meet</button>}
+          {c.pay?.offer && <button type="button" className="llv-ink-btn px-2 py-0.5" aria-expanded={offer} onClick={() => setOffer(!offer)} data-testid="bb-hire">{c.pay.label}</button>}
+          {c.pay?.on && <span className="text-[11px] text-[#1d5b33]" data-testid="bb-onpay">{c.pay.on}</span>}
           {gift && <button type="button" className="llv-ink-btn px-2 py-0.5" disabled={!!pv?.disabledReason} title={pv?.disabledReason ?? `A gift: ${pv?.cost ? `$${pv.cost.toLocaleString('en-US')}` : ''}`} onClick={() => onOrder(gift)} data-testid="bb-gift">Gift{pv?.cost ? ` $${pv.cost}` : ''}{pv?.acceptance ? ` · ${Math.round(pv.acceptance.chance * 100)}%` : ''}</button>}
         </div>
+        {offer && c.pay?.offer && <div className="mt-1 text-stone-200" data-testid="bb-hire-card"><ActionCard s={s} action={c.pay.offer} compact /></div>}
       </div>
     </li>
   );

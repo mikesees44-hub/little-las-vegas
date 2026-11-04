@@ -11,6 +11,7 @@ import { awayReason, DAY_NAMES, today } from './days';
 import { noteRaided, raidedLately, ensureAction } from './actionState';
 import { journal } from './journal';
 import { wireIn } from './phoneState';
+import { JOBS, payrollEars } from './payrollState';
 import type { NowResult } from './deeds/now';
 import { defectTo } from './regimes';
 import { addOpinion, opinion } from './relations';
@@ -501,6 +502,13 @@ function sourcesOf(s: GameState): Source[] {
     if (!c?.alive || !e.known || e.left || e.status === 'gone') continue;
     out.push({ id: e.id, charId: e.id, kind: 'ear', name: displayName(c), role: `From the clubs · ${e.venue}`, loyalty: Math.round(e.loyalty - 50), wits: c.attributes.intrigue, ownedBy: e.sellsTo });
   }
+  // The civilian payroll (payroll.ts): the barber, the bartender, the cop on the envelope hear things too.
+  for (const h of payrollEars(s)) {
+    const c = s.characters[h.id];
+    if (!c) continue;
+    const cop = h.job === 'cop';
+    out.push({ id: h.id, charId: h.id, kind: cop ? 'cop' : h.job === 'politician' || h.job === 'clerk' ? 'official' : 'street', name: displayName(c), role: `On your payroll · ${JOBS[h.job].label.toLowerCase()}`, loyalty: Math.round(h.loyalty - 40), wits: Math.min(80, c.attributes.intrigue + h.ears * 5) });
+  }
   const STREET: Partial<Record<string, string>> = { motel: 'the night clerk at', boarding: 'the landlady at', bar: 'the bartender at', club: 'the doorman at', restaurant: 'the maître d\' at', pizza: 'the counterman at', stand: 'the boy who works', arcade: 'the change man at', laundromat: 'the woman who runs', carlot: 'the lot man at' };
   for (const b of s.businesses) {
     if (b.owner !== 'player') continue;
@@ -624,6 +632,24 @@ function makeTip(s: GameState, T: ThreatsState, src: Source, claim: Pick<Tip, 'k
     id: nid(T, 'tip'), threatId, ...claim, sourceId: src.id, sourceKind: src.kind, sourceName: src.name, sourceRole: src.role,
     week: s.week, deadline, truth, plantedBy, hint, detail: detailText(s, claim, Math.max(1, deadline - s.week)), status: 'waiting',
   };
+}
+
+/**
+ * A warning from a source outside the usual list (payroll.ts: a wife on the
+ * quiet payroll). `truth` 'garbled' gets a detail wrong; 'false' carries no
+ * threat behind it. Undefined when that source already brought this one.
+ */
+export function tipFromOutside(s: GameState, threatId: string | undefined, claim: Pick<Tip, 'kind' | 'by' | 'targetId' | 'bizId' | 'district'>, src: { id: string; kind: SourceKind; name: string; role: string }, truth: TipTruth, deadline: number): Tip | undefined {
+  const T = ensureThreats(s);
+  if (threatId && T.tips.some((x) => x.threatId === threatId && x.sourceId === src.id)) return undefined;
+  const th = threatId ? T.threats.find((x) => x.id === threatId) : undefined;
+  const c = truth === 'garbled' && th ? garble(s, T, th) : claim;
+  const tip = makeTip(s, T, { ...src, loyalty: 0, wits: 45 }, c, deadline, truth, truth === 'false' ? undefined : threatId);
+  if (th?.dueDay !== undefined && truth === 'solid') { tip.dueDay = th.dueDay; tip.hour = th.hour; }
+  T.tips.push(tip);
+  T.stats.tips++;
+  if (truth === 'false') T.stats.falseTips++;
+  return tip;
 }
 
 /**

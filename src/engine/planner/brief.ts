@@ -13,6 +13,7 @@ import { inTheRanks } from '../rankView';
 import { opinion } from '../relations';
 import { stormClock } from '../setPieces';
 import { aggression } from '../threats';
+import { recentIntel } from '../payroll';
 import { absDay, formatClock, hoursLeft } from '../timeCost';
 import { latestReport } from '../tribute';
 import { above, chiefOf, quotaNow } from '../valente';
@@ -112,6 +113,11 @@ function threats(s: GameState, low: boolean): BriefLine[] {
   const rows = tips.map((t) => ({ t, l: tipLine(s, t), r: tipConfidence(s, t) })).sort((a, b) => (a.l.days ?? 99) - (b.l.days ?? 99) || b.r.est - a.r.est);
   for (const { t, l, r } of rows.slice(0, 4)) {
     out.push({ id: `thr:${t.id}`, text: `${l.text}, ${l.when}${l.days !== undefined ? ` (${l.days <= 0 ? 'today' : l.days === 1 ? 'tomorrow' : `${l.days} days`})` : ''}`, sub: `From ${t.sourceName}${r.corroborated ? ', and a second source' : ''}.`, conf: r.conf, src: `${r.src.grade} · ${r.src.word}`, dom: t.by === 'police' || t.by === 'fbi' ? 'law' : 'rivals', tone: r.conf === 'rumor' ? 'warn' : 'bad', go: { tip: t.id } });
+  }
+  // The quiet envelopes (payroll.ts): what the wives told, graded the way the consigliere grades any source.
+  if (!low) for (const it of recentIntel(s, 2).filter((x) => !x.tip).slice(0, 2)) {
+    const her = s.characters[it.from];
+    out.push({ id: `thr:hush:${it.id}`, text: it.text, sub: `From ${her ? displayName(her) : 'a wife'}, a wife on the quiet payroll.`, conf: it.conf, src: `${it.conf === 'confirmed' ? 'B' : it.conf === 'likely' ? 'C' : 'D'} · a wife on the quiet payroll`, dom: it.kind === 'grievance' || it.kind === 'plot' ? 'crew' : it.kind === 'raid' || it.kind === 'informant' || it.kind === 'vote' ? 'law' : 'rivals', tone: it.conf === 'rumor' ? 'warn' : 'bad', go: her ? { char: her.id } : { file: true } });
   }
   // Storm warnings (storms.ts): the big things 1-2 weeks out that no tip names, with the odds and what would help.
   for (const x of stormWarnings(s).filter((y) => !y.id.startsWith('tip:')).slice(0, 2)) {

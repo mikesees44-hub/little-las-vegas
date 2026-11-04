@@ -4,6 +4,7 @@ import { Businesses } from '../components/Businesses';
 import { CharacterSheet } from '../components/CharacterSheet';
 import { CrewListPart } from '../components/CrewList';
 import { BooksPanel, CrewTree, FactionsPanel, GeneralOrders } from '../components/CrewTree';
+import { PayrollSection, SocialCircle } from '../borgata/Payroll';
 import { LawPanel } from '../components/LawPanel';
 import { LifestylePanel } from '../components/Lifestyle';
 import { OfficePanel } from '../components/OfficePanel';
@@ -153,7 +154,7 @@ export const PANELS: PanelDef[] = [
     sections: [
       { id: 'place', label: 'Your place', wide: true, blurb: 'Where you stand in the family above you, and the way up.', render: (s) => <YourPlace s={s} /> },
       { id: 'rise', label: 'The Rise', wide: true, blurb: 'Grow the family: the ladder, your capos front and center (territory, take, mood, ambition, their men), every man\'s level, focus and newest perk, and who is ready for more.', render: (s) => <TheRise s={s} /> },
-      { id: 'chart', label: 'Org Chart', wide: true, render: (s) => <CrewTree s={s} chartOnly /> },
+      { id: 'chart', label: 'Org Chart', wide: true, render: (s) => stack(<CrewTree key="t" s={s} chartOnly />, <PayrollSection key="p" s={s} />, <SocialCircle key="c" s={s} />) },
       { id: 'take', label: 'The Weekly Take', wide: true, blurb: 'Every Monday the underboss brings the crews\' money and your cut goes in on its own: the envelope, crew accounts, agreements, disputes, the ledger.', render: (s) => <WeeklyTake s={s} /> },
       { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },

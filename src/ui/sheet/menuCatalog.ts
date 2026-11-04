@@ -24,6 +24,7 @@ import { isAdult } from '../../engine/dating';
 import { addEarsItems } from '../ears/earsMenu';
 import { addMore } from './menuMore';
 import { nightActionsFor } from '../../engine/nightlife';
+import { payrollActionsFor } from '../../engine/payroll';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
 import { capoActionsFor } from '../../engine/capos';
@@ -250,6 +251,17 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   if (isAdult(s, c)) add('talk', { key: 'card', open: { type: 'card' }, label: `${c.firstName}'s calling card…`, text: 'Who they are at a glance: looks, personality, skills, family, money as known, you, rumors.' });
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id) && s.characters[s.playerId]?.spouseId !== c.id) add('romance', { key: 'goomar', action: { kind: 'nightlife', op: { op: 'goomar', id: c.id } }, label: `Make ${c.firstName} your goomar` });
   for (const a of nightActionsFor(s, c.id)) if (a.kind === 'nightlife' && a.op.op !== 'goomar') add(a.op.op === 'endGoomar' ? 'romance' : 'nightlife', { key: `nl:${JSON.stringify(a.op)}`, action: a });
+
+  // The civilian payroll (payroll.ts): a job for anyone outside the Family, the quiet envelope, and for those on it a raise, a cut, letting go, the main earner.
+  let firstHire = true;
+  for (const a of payrollActionsFor(s, c.id)) {
+    if (a.kind !== 'payroll') continue;
+    const o = a.op;
+    const hush = o.op === 'hire' && o.job === 'hush';
+    const key = o.op === 'hire' ? (hush ? 'pay:hush' : firstHire ? 'pay:hire' : `pay:hire:${o.job}`) : `pay:${o.op}${o.op === 'raise' ? (o.amount > 0 ? '+' : '-') : ''}`;
+    if (o.op === 'hire' && !hush) firstHire = false;
+    add(hush ? 'spies' : 'business', { key, action: a });
+  }
 
   // Romance and marriage of the house's people.
   if (c.dynasty && c.faction === 'player' && !c.spouseId && ageOn(c.birth, s.date) >= 16) add('romance', { key: 'match', open: { type: 'marriage' }, label: `Arrange a match for ${c.firstName}…`, text: 'Compare the families\' sons and daughters; the match is theirs to accept.' });

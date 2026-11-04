@@ -36,6 +36,7 @@ import { applyTributeOp, describeTributeOp } from './tributeOps';
 import { applyEarsOp, describeEarsOp } from './ears';
 import { applyDatingOp, describeDatingOp } from './dating';
 import { applyNightOp, describeNightOp } from './nightlife';
+import { applyPayOp, describePayOp } from './payroll';
 import { applyBondOp, describeBondOp } from './bonds';
 import { applyXpOp, describeXpOp } from './crewXp';
 import { applyProtectOp, describeProtectOp } from './protect';
@@ -245,6 +246,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeDatingOp(s, e.op);
     case 'nightlife':
       return describeNightOp(s, e.op);
+    case 'payroll':
+      return describePayOp(s, e.op);
     case 'bond':
       return describeBondOp(s, e.op);
     case 'mymen':
@@ -917,6 +920,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'nightlife':
       applyNightOp(ctx, e.op);
+      break;
+    case 'payroll':
+      applyPayOp(ctx, e.op);
       break;
     case 'dating':
       applyDatingOp(ctx, e.op);

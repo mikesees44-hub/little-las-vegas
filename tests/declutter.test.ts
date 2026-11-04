@@ -65,6 +65,7 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   dev: ['develop.ts', 'DevAction', 't'],
   dating: ['dating.ts', 'DatingAction', 'op'],
   nightlife: ['nightlife.ts', 'NightAction', 'op'],
+  payroll: ['payrollState.ts', 'PayrollAction', 'op'],
   bond: ['bonds.ts', 'BondAction', 'op'],
   mymen: ['myMen.ts', 'MenAction', 'op'],
   dynasty: ['familyState.ts', 'DynAction', 'type'],
