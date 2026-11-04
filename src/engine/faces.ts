@@ -10,9 +10,10 @@ import type { Character, GameState } from './types';
  * person has a face it stays his for life. Everyone else keeps the procedural portrait.
  */
 
-type Tag = 'boss' | 'capo' | 'old' | 'soldier' | 'assoc' | 'wife' | 'glam' | 'cop' | 'priest' | 'pol' | 'biz' | 'books';
+type Tag = 'boss' | 'capo' | 'old' | 'soldier' | 'assoc' | 'wife' | 'glam' | 'cop' | 'priest' | 'pol' | 'biz' | 'books' | 'pro';
 
-export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[] }[] = [
+/** `irish`: preferred for an Irish sitter. `reserved`: waits for a sitter the game does not have yet (never handed out). */
+export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[]; irish?: boolean; reserved?: boolean }[] = [
   { k: 'f01', m: true, age: [40, 72], tags: ['boss', 'capo'] },
   { k: 'f22', m: true, age: [55, 90], tags: ['boss', 'old'] },
   { k: 'f03', m: true, age: [50, 85], tags: ['boss', 'capo', 'old'] },
@@ -34,8 +35,46 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[] 
   { k: 'f10', m: false, age: [36, 75], tags: ['wife'] },
   { k: 'f23', m: false, age: [21, 44], tags: ['glam', 'wife'] },
   { k: 'f05', m: false, age: [20, 40], tags: ['glam'] },
-  { k: 'f19', m: false, age: [21, 44], tags: ['glam'] },
+  { k: 'f19', irish: true, m: false, age: [21, 44], tags: ['glam'] },
   { k: 'f15', m: false, age: [18, 30], tags: ['glam'] },
+  // The second set: twenty women (three left out for looking like a real film star).
+  { k: 'w08', m: false, age: [50, 85], tags: ['wife'] },
+  { k: 'w20', m: false, age: [45, 80], tags: ['wife'] },
+  { k: 'w05', m: false, age: [38, 68], tags: ['wife'] },
+  { k: 'w15', m: false, age: [40, 72], tags: ['wife'] },
+  { k: 'w02', m: false, age: [24, 46], tags: ['wife', 'glam'] },
+  { k: 'w07', m: false, age: [24, 46], tags: ['wife', 'glam'] },
+  { k: 'w10', m: false, age: [28, 56], tags: ['glam', 'wife'] },
+  { k: 'w12', m: false, age: [24, 52], tags: ['pro', 'wife'] },
+  { k: 'w03', irish: true, m: false, age: [21, 42], tags: ['glam'] },
+  { k: 'w04', m: false, age: [21, 42], tags: ['glam'] },
+  { k: 'w06', m: false, age: [21, 40], tags: ['glam'] },
+  { k: 'w13', m: false, age: [21, 42], tags: ['glam'] },
+  { k: 'w14', irish: true, m: false, age: [24, 46], tags: ['glam'] },
+  { k: 'w19', m: false, age: [21, 40], tags: ['glam'] },
+  { k: 'w16', m: false, age: [22, 46], tags: ['glam', 'pro'] },
+  { k: 'w11', m: false, age: [18, 34], tags: ['glam'] },
+  { k: 'w18', m: false, age: [18, 30], tags: ['glam'] },
+  // The third set (two left out for looking like a real film star).
+  { k: 'v01', m: false, age: [21, 40], tags: ['glam'] },
+  { k: 'v02', m: false, age: [20, 38], tags: ['glam', 'wife'], irish: true },
+  { k: 'v04', m: false, age: [20, 40], tags: ['pro', 'glam'] },
+  { k: 'v05', m: false, age: [22, 46], tags: ['pro'] },
+  { k: 'v06', m: false, age: [22, 42], tags: ['glam'] },
+  { k: 'v09', m: false, age: [18, 34], tags: ['glam', 'pro'] },
+  { k: 'v10', m: false, age: [18, 34], tags: ['wife', 'glam'] },
+  { k: 'v11', m: false, age: [28, 52], tags: ['wife', 'glam'] },
+  { k: 'v12', m: false, age: [18, 28], tags: ['glam'] },
+  { k: 'v13', m: false, age: [20, 38], tags: ['glam'] },
+  { k: 'v15', m: false, age: [24, 46], tags: ['glam'] },
+  { k: 'v16', m: false, age: [25, 46], tags: ['wife'] },
+  { k: 'v17', m: false, age: [26, 50], tags: ['wife'] },
+  { k: 'v18', m: false, age: [18, 28], tags: ['glam'] },
+  { k: 'v19', m: false, age: [22, 42], tags: ['glam'] },
+  { k: 'v20', m: false, age: [20, 40], tags: ['glam', 'wife'], irish: true },
+  // A club singer and a woman whose families the game does not have yet: kept for when it does.
+  { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
+  { k: 'v07', m: false, age: [20, 40], tags: [], reserved: true },
 ];
 
 function wants(c: Character, s: GameState, age: number): Tag[] {
@@ -44,6 +83,7 @@ function wants(c: Character, s: GameState, age: number): Tag[] {
   if (/chief|patrol|police|detective|sergeant|captain|sheriff|trooper/.test(off)) return ['cop'];
   if (/commission|assembly|mayor|judge|senat|council|freeholder|clerk/.test(off)) return ['pol'];
   if (c.gender !== 'M') {
+    if (c.office || c.specialty) return ['pro', 'glam', 'wife'];
     const married = !!c.spouseId && !!s.characters[c.spouseId];
     return married && age >= 30 ? ['wife', 'glam'] : ['glam', 'wife'];
   }
@@ -69,10 +109,14 @@ function priority(c: Character, s: GameState): number | undefined {
   if (mine && c.rank === 'capo') return 4;
   if (c.office && /pastor|priest|chief|police|detective|commission|mayor|assembly|judge/i.test(c.office)) return 5;
   if (c.gender !== 'M' && (c.fatherId === s.playerId || c.motherId === s.playerId)) return 6;
+  if (c.gender !== 'M' && (s.romance?.rels ?? []).some((r) => (r.a === s.playerId && r.b === c.id) || (r.b === s.playerId && r.a === c.id))) return 6;
+  if (c.gender !== 'M' && s.nightlife?.goomars && Object.values(s.nightlife.goomars).some((g) => g.id === c.id)) return 6;
   if (mine && c.rank === 'soldier') return 7;
   if (c.rank === 'underboss' || c.rank === 'consigliere') return 8;
   if (mine && c.rank === 'associate') return 9;
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.faction === me?.faction && s.characters[c.spouseId]?.rank !== 'civilian') return 10;
+  if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.rank === 'boss') return 11;
+  if (c.gender !== 'M' && (s.romance?.rels ?? []).some((r) => r.a === c.id || r.b === c.id)) return 12;
   return undefined;
 }
 
@@ -82,7 +126,7 @@ export function assignFaces(s: GameState): void {
   const date = dateOfWeek(s.week ?? 0);
   const taken = new Set<string>();
   for (const c of Object.values(s.characters)) if (c.alive && c.appearance?.face) taken.add(c.appearance.face);
-  if (taken.size >= FACES.length) return;
+  if (taken.size >= FACES.filter((f) => !f.reserved).length) return;
   const cast = Object.values(s.characters)
     .filter((c) => c.alive && !c.appearance?.face)
     .map((c) => ({ c, p: priority(c, s) }))
@@ -92,7 +136,8 @@ export function assignFaces(s: GameState): void {
     const age = ageOn(c.birth, date);
     if (age < 18) continue;
     const male = c.gender === 'M';
-    const fits = FACES.filter((f) => !taken.has(f.k) && f.m === male && age >= f.age[0] - 3 && age <= f.age[1] + 5);
+    const fits = FACES.filter((f) => !f.reserved && !taken.has(f.k) && f.m === male && age >= f.age[0] - 3 && age <= f.age[1] + 5)
+      .sort((a, b) => (c.ethnicity === 'Irish' ? Number(!!b.irish) - Number(!!a.irish) : Number(!!a.irish) - Number(!!b.irish)));
     const tags = wants(c, s, age);
     let pick: (typeof FACES)[number] | undefined;
     for (const t of tags) { pick = fits.find((f) => f.tags.includes(t)); if (pick) break; }
