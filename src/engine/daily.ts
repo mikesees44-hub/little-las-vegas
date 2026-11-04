@@ -90,7 +90,10 @@ export function advanceDay(s0: GameState): DayResult {
     if (r.result.ok) { s = r.state; landed.push(r.result); }
   }
   if (stormTonight(s)) { const r = answerMoment(s, 'storm', 'ride'); if (r.result.ok) { s = r.state; landed.push(r.result); } }
-  for (const it of liveItems(s)) { const r = answerMoment(s, `sched:${it.id}`); if (r.result.ok) { s = r.state; landed.push(r.result); } }
+  for (const it of liveItems(s)) {
+    // A moment that outlived its cause (a Dead Man Walking call after the boss changed): dropped, not answered.
+    if (!deliveryFor(it.kind)?.view(s, it)) { s = dropItem(s, it.id); continue; }
+    const r = answerMoment(s, `sched:${it.id}`); if (r.result.ok) { s = r.state; landed.push(r.result); } }
   if (daysOf(s).day >= 6) return { state: s, released: [], strikes: [], landed };
   const before = new Set(eventsOut(s).map((e) => e.iid));
   s = tickDay(s);

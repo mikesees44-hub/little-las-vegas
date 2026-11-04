@@ -123,6 +123,8 @@ export function answerItem(s: GameState, id: string, opt?: string): { state: Gam
   const h = it ? HOOKS.get(it.kind) : undefined;
   if (!it || !h) return undefined;
   const v = h.view(s, it);
-  const r = h.answer(s, it, opt ?? v?.def ?? 'default');
+  // Moot (its view is gone: the crisis it belonged to ended, the man is dead): nothing to answer.
+  if (!v) return undefined;
+  const r = h.answer(s, it, opt ?? v.def ?? 'default');
   return { ...r, state: dropItem(r.state, id) };
 }

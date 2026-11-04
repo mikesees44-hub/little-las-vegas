@@ -225,6 +225,11 @@ function knockView(s: GameState, it: ScheduledItem): MomentView | undefined {
   };
 }
 
+/** A moment whose cause is gone (the crown passed with the chair): nothing happens. */
+export function momentOver(s: GameState, title: string): { state: GameState; result: NowResult } {
+  return { state: s, result: { ok: false, error: 'It is over', title, tier: 'fail', headline: 'It is over', line: '', changes: [], leadsTo: [] } };
+}
+
 /** A moment answered: the common frame (clone, apply, the card, Your File). */
 export function moment(
   input: GameState, it: ScheduledItem, opt: string, title: string,
@@ -946,6 +951,8 @@ export function endHollow(ctx: Ctx, F: FedsState, how: string): void {
   if (!F.hollow) return;
   F.hollow = undefined;
   F.hollowEnd = s.week;
+  // Its calls on the clock (the crown, the Dead Man Walking beats) end with it.
+  if (s.action?.sched?.some((x) => x.kind === 'feds_crown' || x.kind === 'feds_dmw')) s.action = { ...s.action, sched: s.action.sched.filter((x) => x.kind !== 'feds_crown' && x.kind !== 'feds_dmw') };
   F.stats.hollowEnds[how] = (F.stats.hollowEnds[how] ?? 0) + 1;
   const line = how === 'won' ? 'The capos come to you again. The crown has weight in it.' : how === 'purge' ? 'The table is quiet now. Nobody meets without you.' : how === 'stepped' ? 'You stepped aside.' : 'The hollow crown passed with the chair.';
   ctx.log.push(line);
@@ -990,6 +997,7 @@ function purgeOdds(s: GameState): number {
 }
 
 function crownAnswer(input: GameState, it: ScheduledItem, opt: string) {
+  if (!input.feds?.hollow) return momentOver(input, 'The hollow crown');
   return moment(input, it, opt, 'The hollow crown', (ctx, F) => {
     const s = ctx.s;
     const H = F.hollow!;
