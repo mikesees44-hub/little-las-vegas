@@ -48,7 +48,8 @@ export function HoneyTrapRow({ s, targetId, opts, set }: { s: GameState; targetI
         <div className="mt-1 rounded border border-noir-700 bg-noir-900/60 p-1.5 text-[11.5px] text-stone-300" data-testid="honey-odds">
           <div>She goes through with it: <b className="text-stone-100">{pct(o.yes)}</b> ({oddsWord(o.yes)}) · says no {pct(o.no)} · takes the money and warns him {pct(o.warn)} · loses her nerve {pct(o.nerve)}</div>
           <div className="mt-0.5 text-stone-400" data-testid="honey-reasons">{o.reasons.map((r) => `${r.label} ${r.value > 0 ? '+' : r.value < 0 ? '−' : '±'}${Math.abs(r.value)}`).join(' · ')}</div>
-          <div className="mt-0.5 text-stone-400">If she does: +{o.bonus} to the hit and fewer witnesses. But she is a witness herself (more on the team's file, and she can talk later; more money, less likely), and his people may come looking for her. Afterwards you decide: Florida (${FLORIDA_COST.toLocaleString('en-US')}), your payroll, or leave her be. If she warns him, the hit is off.</div>
+          <div className="mt-0.5" data-testid="honey-bait">He takes the bait: <b className="text-stone-100">{pct(o.bait)}</b> ({oddsWord(o.bait)}) <span className="text-stone-400">· {o.baitReasons.map((r) => `${r.label} ${r.value > 0 ? '+' : r.value < 0 ? '−' : '±'}${Math.abs(r.value)}`).join(' · ')}</span></div>
+          <div className="mt-0.5 text-stone-400">If she does, and he comes: +{o.bonus} to the hit (already weighed by the bait) and fewer witnesses. But she is a witness herself (more on the team's file, and she can talk later; more money, less likely), and his people may come looking for her. Afterwards you decide: Florida (${FLORIDA_COST.toLocaleString('en-US')}), your payroll, or leave her be. If she warns him, the hit is off.</div>
         </div>
       )}
     </div>

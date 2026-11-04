@@ -229,3 +229,23 @@ describe('the honey trap in a planned hit', () => {
     expect(seen.has('yes')).toBe(true);
   });
 });
+
+describe('the honey trap reads looks and appetite', () => {
+  it('a ladies\' man takes the bait more than a pious, faithful one; both show in the breakdown', async () => {
+    const H = await import('../src/engine/hitHoney');
+    const s = newGame('people-honey-bait');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    const t = Object.values(s.characters).find((c) => c.alive && c.faction === 'manno' && c.id !== r.leaderId && c.rank !== 'civilian')!;
+    const w = H.honeyCandidates(s, t.id)[0].id;
+    const rake = JSON.parse(JSON.stringify(s));
+    rake.characters[t.id].traits = [...rake.characters[t.id].traits.filter((x: string) => x !== 'Pious'), 'Womanizer'];
+    const saint = JSON.parse(JSON.stringify(s));
+    saint.characters[t.id].traits = [...saint.characters[t.id].traits.filter((x: string) => x !== 'Womanizer'), 'Pious'];
+    const a = H.honeyOdds(rake, w, t.id);
+    const b = H.honeyOdds(saint, w, t.id);
+    expect(a.bait).toBeGreaterThan(b.bait);
+    expect(a.bonus).toBeGreaterThanOrEqual(b.bonus);
+    expect(a.baitReasons.map((x) => x.label).join(' ')).toMatch(/ladies' man/);
+    expect(b.baitReasons.map((x) => x.label).join(' ')).toMatch(/Pious/);
+  });
+});

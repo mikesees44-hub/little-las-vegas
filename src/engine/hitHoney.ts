@@ -1,6 +1,7 @@
 import { ageOn } from './calendar';
 import { displayName, hasTrait } from './characters';
 import { adultOn } from './datingState';
+import { allure, appeal, appetite } from './looks';
 import { addFedEvidence } from './fedsState';
 import { journal } from './journal';
 import type { Ctx } from './ledger';
@@ -87,6 +88,9 @@ export interface HoneyOdds {
   bonus: number;
   /** She knows him. */
   knows: boolean;
+  /** Does he take the bait (his appetite, a ladies' man, her looks to him), and why. */
+  bait: number;
+  baitReasons: { label: string; value: number }[];
 }
 
 const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
@@ -100,6 +104,9 @@ export function honeyOdds(s: GameState, womanId: string, targetId: string, ask: 
   const reasons: { label: string; value: number }[] = [{ label: 'Base', value: 40 }];
   const who = askerPull(s, ask.by);
   if (who.value) reasons.push(who);
+  // The asker's own pull with her (looks.ts allure: his looks to her, charm, a ladies' man's practice). Rank is counted above.
+  const asker = s.characters[ask.by ?? s.playerId];
+  if (asker && w) for (const r of allure(s, asker, w).reasons) if (!/name opens doors|man of standing/.test(r.label)) reasons.push({ label: `${asker.id === s.playerId ? 'Your' : `${asker.firstName}'s`} ${r.label.charAt(0).toLowerCase()}${r.label.slice(1)}`, value: Math.round(r.value / 2) });
   reasons.push({ label: `${pay.label}: $${pay.fee.toLocaleString('en-US')}`, value: pay.pull });
   const fear = getRelation(s, womanId, s.playerId)?.fear ?? 0;
   if (fear >= 10) reasons.push({ label: 'She is afraid of you', value: Math.round(fear / 4) });
@@ -123,7 +130,19 @@ export function honeyOdds(s: GameState, womanId: string, targetId: string, ask: 
   const nerve = clamp(0.12 - fear / 800 - (np?.payroll ? 0.04 : 0), 0.03, 0.2);
   const yes = clamp(will - warn - nerve, 0.02, 0.9);
   const careful = t ? (t.rank === 'boss' || s.rivals.some((r) => r.leaderId === t.id) ? 10 : 0) + (hasTrait(t, 'Paranoid') ? 6 : 0) + (t.rank === 'capo' || t.rank === 'underboss' ? 6 : 0) + (hasTrait(t, 'Womanizer') ? 6 : 0) : 0;
-  return { yes, warn, nerve, no: Math.max(0, 1 - yes - warn - nerve), reasons, bonus: 14 + careful, knows };
+  // Does he take the bait: a big appetite, a ladies' man, her looks to him; a pious or faithful man rarely does.
+  const baitReasons: { label: string; value: number }[] = [{ label: 'Base', value: 45 }];
+  if (t && w) {
+    const ap = appetite(s, t);
+    if (ap !== 50) baitReasons.push({ label: ap >= 50 ? 'His appetite' : 'Not a man who strays', value: Math.round((ap - 50) / 2) });
+    if (hasTrait(t, 'Womanizer')) baitReasons.push({ label: 'A ladies\' man', value: 15 });
+    if (hasTrait(t, 'Pious')) baitReasons.push({ label: 'Pious', value: -15 });
+    const ap2 = appeal(s, t, w).value;
+    if (ap2) baitReasons.push({ label: ap2 > 0 ? 'Her looks, to him' : 'Not his type', value: ap2 });
+    if (t.spouseId && !hasTrait(t, 'Womanizer') && opinion(s, t.id, t.spouseId) >= 40) baitReasons.push({ label: 'Faithful to his wife', value: -15 });
+  }
+  const bait = clamp(baitReasons.reduce((a, r) => a + r.value, 0) / 100, 0.05, 0.95);
+  return { yes, warn, nerve, no: Math.max(0, 1 - yes - warn - nerve), reasons, bonus: Math.round((14 + careful) * bait), knows, bait, baitReasons };
 }
 
 export type HoneyAnswer = 'yes' | 'warn' | 'nerve' | 'no';
