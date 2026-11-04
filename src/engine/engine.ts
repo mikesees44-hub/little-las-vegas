@@ -1,3 +1,4 @@
+import { assignFaces } from './faces';
 import { desertMult, myMenWeek, noteChoice } from './myMen';
 import { ocWeek } from './oceanCity';
 import { econEventSource, econWeek } from './econ';
@@ -542,6 +543,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   s.lastReport = report;
   if (!s.gameOver) recordMoneyWeek(s);
   if (s.chronicle.length > 400) s.chronicle = s.chronicle.slice(-400);
+  try { assignFaces(s); } catch { /* cosmetic */ }
   tidyState(s);
   return { state: s, report, log: ctx.log };
 }

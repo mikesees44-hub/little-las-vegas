@@ -1,4 +1,5 @@
-import { memo, type ReactElement } from 'react';
+import { memo, useState, type ReactElement } from 'react';
+import { FACE_URLS } from './faceUrls';
 import { ageOn, compareDates, dateOfWeek } from '../../engine/calendar';
 import type { Character, GameDate } from '../../engine/types';
 import { expressionOf, genesOf, hash, rng, type Expression } from './genes';
@@ -71,7 +72,34 @@ function lookOf(c: Character, seed: string, date: GameDate, tint: string | undef
   };
 }
 
-function PortraitImpl({ c, seed, date, size = 64, tint, className, opinion }: PortraitProps) {
+/** The owner's painting for this person, in the same 100x120 frame; the procedural portrait if it won't load. */
+function PaintedFace({ url, c, size, className, jailed, fallback }: { url: string; c: Character; size: number; className?: string; jailed: boolean; fallback: ReactElement }) {
+  const [bad, setBad] = useState(false);
+  if (bad) return fallback;
+  const h = (size * 120) / 100;
+  return (
+    <span className={`relative inline-block overflow-hidden align-middle ${className ?? ''}`} style={{ width: size, height: h, borderRadius: Math.max(2, size / 16), boxShadow: 'inset 0 0 0 1px rgba(201,162,74,0.55), 0 1px 3px rgba(0,0,0,0.6)' }} role="img" aria-label={`Portrait of ${c.firstName} ${c.lastName}${c.alive ? '' : ' (deceased)'}`} data-face={c.appearance?.face}>
+      <img src={url} alt="" draggable={false} onError={() => setBad(true)} className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: '50% 30%', filter: c.alive ? undefined : 'grayscale(1) brightness(0.8)' }} />
+      {jailed && <span className="absolute inset-0" style={{ background: 'repeating-linear-gradient(90deg, rgba(20,20,20,0.85) 0 3px, transparent 3px 14%)' }} />}
+      {!c.alive && <span className="absolute right-0 top-0 h-[22%] w-[22%]" style={{ background: 'linear-gradient(135deg, transparent 50%, #000 50%)' }} />}
+    </span>
+  );
+}
+
+function PortraitImpl(props: PortraitProps) {
+  const { c, seed, date, size = 64, className } = props;
+  const face = c.appearance?.face;
+  const url = face ? FACE_URLS[face] : undefined;
+  const canLoad = typeof window !== 'undefined' && /^https?:/.test(window.location?.protocol ?? '');
+  if (url && canLoad) {
+    const jailed = c.alive && c.imprisonedUntil !== undefined && compareDates(dateOfWeek(c.imprisonedUntil), date) > 0;
+    return <PaintedFace url={url} c={c} size={size} className={className} jailed={jailed} fallback={<ProcPortrait {...props} />} />;
+  }
+  void seed;
+  return <ProcPortrait {...props} />;
+}
+
+function ProcPortrait({ c, seed, date, size = 64, tint, className, opinion }: PortraitProps) {
   const age = Math.max(0, ageOn(c.birth, c.death ? c.death.date : date));
   const jailed = c.alive && c.imprisonedUntil !== undefined && compareDates(dateOfWeek(c.imprisonedUntil), date) > 0;
   const key = [seed, c.id, c.fatherId ?? '', c.bioFatherId ?? '', c.motherId ?? '', c.gender, c.ethnicity, age, c.rank, c.office ?? '', c.specialty ?? '', c.alive ? 1 : 0, jailed ? 1 : 0, tint ?? '', (c.traits ?? []).join(','), c.firstName, c.lastName, moodFor(c, age, opinion), c.appearance ? JSON.stringify(c.appearance) : ''].join('|');

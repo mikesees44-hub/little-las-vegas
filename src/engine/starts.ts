@@ -1,3 +1,4 @@
+import { assignFaces } from './faces';
 import { startPocket } from './tributeState';
 import { repairGoals } from './goalRules';
 import { ageOn } from './calendar';
@@ -61,6 +62,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
     repairGoals(s);
     addOpeningScene(s, start);
     s.flags.rise_floor = orgRung(s);
+    assignFaces(s);
     return s;
   }
   if (start === 'classic') return finish(s, start, charOptions);
@@ -88,6 +90,7 @@ function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameSt
   s.eventQueue = [];
   s.pendingEvents = generateWeekEvents(s);
   addOpeningScene(s, start);
+  assignFaces(s);
   return s;
 }
 

@@ -1,3 +1,4 @@
+import { assignFaces } from './faces';
 import { ensureMyMen } from './myMen';
 import { ensureBones } from './bonesState';
 import { ensureEars } from './ears';
@@ -76,6 +77,8 @@ export function upgradeSave(s: GameState): GameState {
   if (s.threats !== undefined || s.action !== undefined) try { ensureDaily(s); } catch { /* the weekly update will make it */ }
   // The phone (phone.ts): a save with one gets its fields filled in; a save without one gets it with the first call.
   if (s.phone !== undefined) try { ensurePhoneSave(s); } catch { /* the first call will make it */ }
+  // The painted faces (faces.ts) for a save from before them.
+  try { assignFaces(s); } catch { /* cosmetic */ }
   // A days plan left from another week (the clock stopped mid-week in an older build) is dropped.
   if (s.days && s.days.week !== s.week) delete s.days;
   // The old player-run call service goes back to the Madam's network.

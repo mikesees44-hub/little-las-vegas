@@ -195,6 +195,8 @@ export interface Appearance {
   stache?: string;
   /** 'fedora' or 'none' (otherwise as his station dresses him). */
   hat?: string;
+  /** A painted face from the owner's portrait set (faces.ts), for life. */
+  face?: string;
 }
 
 export type Craft = 'muscle' | 'earner' | 'driver' | 'bookmaker' | 'collector' | 'burglar' | 'talker';
