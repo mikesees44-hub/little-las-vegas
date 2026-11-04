@@ -17,6 +17,7 @@ import { faceToFace, heatedChoices } from '../../engine/argue';
 import { useShell } from '../shell/context';
 import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
 import { voicesFor } from '../decide/voices';
+import { Glossed } from '../clarity/Term';
 import { domainOf, domainOfText } from '../domain';
 
 /**
@@ -77,7 +78,7 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
         faces={actors}
         sub={actors.length > 0 ? actors.map((c, i) => <span key={c.id}>{i > 0 && ' · '}{displayName(c)}{aboveLabel(s, c.id) ? `, ${aboveLabel(s, c.id)}` : c.rank !== 'civilian' ? `, ${rankWordOf(s, c)}` : c.office ? `, ${c.office}` : ''}</span>) : undefined}
         stakes={stakesLine(s, ev.choices.map((c) => c.effects))}
-        text={ev.text}
+        text={<Glossed text={ev.text} />}
         extra={<>
           {nego && (
             <button type="button" className="btn-quiet mt-2 text-xs" onClick={() => setTalk(true)} data-testid="event-negotiate">

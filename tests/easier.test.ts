@@ -192,3 +192,34 @@ describe('what changed', () => {
     expect(whatChanged(s0)).toEqual([]);
   });
 });
+
+describe('the screens', () => {
+  it('the Desk top, the delegation picker, a term and the odds word render', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { DeskTop } = await import('../src/ui/desk/DeskTop');
+    const { DelegationPicker } = await import('../src/ui/planner/DelegationPicker');
+    const { Term, Glossed } = await import('../src/ui/clarity/Term');
+    const { OddsBar } = await import('../src/ui/decide/DecisionCard');
+    const { termRuns } = await import('../src/engine/glossary');
+    const s0 = newGame('ui-easy');
+    const s = { ...advanceWeek(s0, {}).state };
+    s.heat = { ...s.heat, local: 75 };
+    const html = renderToString(createElement(DeskTop, { s, onGo: () => {}, onFile: () => {} })).replace(/<!-- -->/g, '');
+    expect(html).toContain('data-testid="desk-goals"');
+    expect(html).toContain('Working toward');
+    expect(html).toContain('data-testid="storm-chip"');
+    expect(html).toContain('data-testid="desk-what-changed"');
+    const pick = renderToString(createElement(DelegationPicker, { s, act: () => {} }));
+    expect(pick).toContain('data-testid="delegation-chairman"');
+    expect(pick).toContain('aria-checked="true"');
+    const term = renderToString(createElement(Term, { id: 'hollow' }));
+    expect(term).toContain('The hollow crown');
+    // Nested: the definition's own terms are terms.
+    expect(term.split('data-testid="term"').length - 1).toBeGreaterThan(1);
+    expect(termRuns('Your respect and local heat, and the envelope.').filter((r) => r.id).map((r) => r.id)).toEqual(['respect', 'heat.local', 'envelope']);
+    expect(renderToString(createElement(Glossed, { text: 'Family heat is up.' }))).toContain('data-term="heat.family"');
+    const odds = renderToString(createElement(OddsBar, { odds: { known: true, chance: 0.5, label: 'It works', reasons: [] } }));
+    expect(odds).toContain('coin flip');
+  });
+});

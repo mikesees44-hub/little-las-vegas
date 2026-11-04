@@ -27,6 +27,7 @@ import { StrikeCard } from './components/StrikeCard';
 import { SchemePlanner } from './components/Schemes';
 import { CharacterSheet } from './components/CharacterSheet';
 import { EventModal } from './components/EventModal';
+import { DeskTop } from './desk/DeskTop';
 import { delegatedAnswers } from '../engine/delegation';
 import { NowResultHost, postNow, ResultQueue } from './deeds/NowResult';
 import { weekResultCards } from './deeds/weekResults';
@@ -970,6 +971,7 @@ export function App({ startOn = 'title' }: AppProps) {
   const weekTop = home === 'desk' && !s.gameOver ? (
     <section className="mb-4" data-testid="week-routine">
       <PlaceStrip s={s} onOpen={() => openRoute({ panel: 'borgata', section: 'place' })} />
+      <DeskTop s={s} onGo={(g) => openRoute(g as Route)} onFile={() => deskApi.onFile?.()} />
       <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={inTheRanks(s) ? undefined : <><ChairCard s={s} onOpen={openSuccession} /><RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} /></>} /></div>
       <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
         <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>

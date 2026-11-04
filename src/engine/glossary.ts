@@ -43,9 +43,26 @@ export const GLOSSARY: GlossaryEntry[] = [
     long: 'Heists across state lines, bank jobs, dirty money in shoeboxes and big names in the papers raise it. It cools slowly; the fixer\'s friends at the federal building help.',
   },
   {
+    id: 'heat', term: 'Heat', section: 'Pressure',
+    short: `Attention you do not want, in three bars: local (the county), family (Philadelphia) and federal (the FBI). Past ${HEAT_THRESHOLD} each one bites; quiet weeks cool them.`,
+  },
+  {
+    id: 'storm', term: 'Storm warning', section: 'Pressure',
+    short: 'Something big that may land in the next two weeks (a raid, an arrest, an indictment, a hit, the Family running dry), with the odds, the biggest reason and what would help.',
+  },
+  {
     id: 'respect', term: 'Respect', section: 'Standing',
     short: 'Your reputation on the street (0–100). It raises the odds that people say yes to you and keeps the crew in line.',
     long: 'Winning fights, keeping your word and paying Philadelphia on time raise it; raids, refusals and being in the red lower it. Every 3 points over 40 is +1% on most acceptance odds.',
+  },
+  {
+    id: 'standing', term: 'Standing', section: 'Standing',
+    short: 'Below the chair: what the family above you thinks of you (0–100). The quota met, orders done and a made man who vouches raise it. At 45 an associate\'s name can go up to be made.',
+  },
+  {
+    id: 'hollow', term: 'The hollow crown', section: 'Standing',
+    short: 'When the capos start running the family without you: your orders go out and come back undone. Low respect, sore capos, a war going badly, a sick or aging boss and an ambitious underboss bring it on.',
+    long: 'Three or more of those signs and it can start any week. Win the capos back one at a time, make an example, or step aside for your heir.',
   },
   {
     id: 'money', term: 'Family money', section: 'Money',
@@ -63,6 +80,14 @@ export const GLOSSARY: GlossaryEntry[] = [
     id: 'kickup', term: 'Kick-up', section: 'Money',
     short: `What a capo sends up from his district. By custom he keeps ${pct(CAPO_CUT)} (his contract) and kicks up the rest — minus whatever he skims.`,
     long: `A district with no capo still pays, but badly: you collect only ${pct(NO_CAPO_EFFICIENCY)} of the street yourself. Greedy capos skim; a bagman counting the envelopes stops most of it.`,
+  },
+  {
+    id: 'envelope', term: 'The envelope', section: 'Money',
+    short: 'Every Monday the underboss brings the week\'s take from the capos. You make the split: your cut goes to your pocket, the rest to the Family. A short crew or a petition in it needs your word.',
+  },
+  {
+    id: 'tribute', term: 'Tribute', section: 'Money',
+    short: 'What goes up the line: Philadelphia\'s monthly envelope through its bagman, or, below the chair, your kick-up to the man you answer to. Short or late, and their patience (family heat) runs out.',
   },
   {
     id: 'contract', term: 'Contract', section: 'Money',
@@ -93,8 +118,12 @@ export const GLOSSARY: GlossaryEntry[] = [
     short: `What the law has on a man (0–100). The FBI opens a file on you at ${OPEN_FILE}; a grand jury sits at ${GRAND_JURY}. Orders you give yourself add to yours.`,
   },
   {
-    id: 'made', term: 'Made men and the books', section: 'People',
-    short: 'Only Philadelphia makes men, when it opens the books. An associate needs a made man to vouch for him; if he goes bad it is on the man who vouched.',
+    id: 'made', term: 'Made', section: 'People',
+    short: 'A made man has taken the oath: he cannot be touched without the Table\'s word. Only Philadelphia makes men, when it opens the books. An associate needs a made man to vouch for him; if he goes bad it is on the man who vouched.',
+  },
+  {
+    id: 'delegation', term: 'Delegation', section: 'People',
+    short: 'How much you run yourself: Hands-on (you see everything), Balanced, or Chairman (your people settle the routine with the consigliere\'s advice). Everything settled for you is under Handled for you on the Desk.',
   },
   {
     id: 'council', term: 'The administration', section: 'People',
@@ -186,4 +215,36 @@ export function effectHelp(e: Effect): string | undefined {
     case 'startScheme': return BY_ID.scheme.short;
     default: return undefined;
   }
+}
+
+/**
+ * The words that name a glossary term in running text (case-insensitive, whole words), longest first, so
+ * "local heat" wins over "heat". A Term (ui/clarity/Term.tsx) links them, the nested tooltip's own text too.
+ */
+export const TERM_WORDS: [string, string][] = ([
+  ['hollow crown', 'hollow'], ['local heat', 'heat.local'], ['family heat', 'heat.family'], ['federal heat', 'heat.federal'],
+  ['kick-up', 'kickup'], ['kicks up', 'kickup'], ['respect', 'respect'], ['heat', 'heat'], ['standing', 'standing'], ['made man', 'made'], ['made men', 'made'], ['get made', 'made'], ['getting made', 'made'], ['be made', 'made'],
+  ['envelope', 'envelope'], ['tribute', 'tribute'], ['the Table', 'table'], ['opinion', 'opinion'], ['influence', 'influence'],
+  ['storm warning', 'storm'], ['unwashed', 'unwashed'], ['favors', 'favors'],
+] as [string, string][]).sort((a, b) => b[0].length - a[0].length);
+
+/** Split text into plain runs and term runs (each term linked once). Pure. */
+export function termRuns(text: string, skip: readonly string[] = []): { t: string; id?: string }[] {
+  const seen = new Set(skip);
+  const out: { t: string; id?: string }[] = [];
+  let rest = text;
+  for (let guard = 0; rest && guard < 40; guard++) {
+    let best: { i: number; len: number; id: string } | undefined;
+    for (const [w, id] of TERM_WORDS) {
+      if (seen.has(id) || !BY_ID[id]) continue;
+      const m = new RegExp(`\\b${w.replace(/[-]/g, '\\-')}\\b`, 'i').exec(rest);
+      if (m && (!best || m.index < best.i || (m.index === best.i && w.length > best.len))) best = { i: m.index, len: m[0].length, id };
+    }
+    if (!best) { out.push({ t: rest }); break; }
+    if (best.i > 0) out.push({ t: rest.slice(0, best.i) });
+    out.push({ t: rest.slice(best.i, best.i + best.len), id: best.id });
+    seen.add(best.id);
+    rest = rest.slice(best.i + best.len);
+  }
+  return out;
 }

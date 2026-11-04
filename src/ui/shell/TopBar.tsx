@@ -76,11 +76,11 @@ function StandingStrip({ s }: { s: GameState }) {
     )}>
       {() => (
         <div className="flex max-w-[92vw] flex-wrap items-start gap-1 sm:max-w-[560px]" data-testid="resources-detail">
-          <Num v={dr ?? 0} reasons={reasonsFor(s, 'respect')} term="respect"><Chip label="Respect" value={`${s.respect}`} d={dr} good={(dr ?? 0) >= 0} bar={s.respect} barColor="bg-gold-500" /></Num>
+          <Num v={dr ?? 0} reasons={reasonsFor(s, 'respect')} term="respect" now={s.respect} from={s.lastReport ? { label: `When week ${s.lastReport.week} began`, value: s.lastReport.start.respect } : undefined}><Chip label="Respect" value={`${s.respect}`} d={dr} good={(dr ?? 0) >= 0} bar={s.respect} barColor="bg-gold-500" /></Num>
           {HEAT_BARS.map((b) => {
             const d = delta(s, b);
             return (
-              <Num key={b} v={d ?? 0} reasons={reasonsFor(s, `heat.${b}` as Stat)} term={`heat.${b}`}>
+              <Num key={b} v={d ?? 0} reasons={reasonsFor(s, `heat.${b}` as Stat)} term={`heat.${b}`} now={s.heat[b]} from={s.lastReport ? { label: `When week ${s.lastReport.week} began`, value: s.lastReport.start.heat[b] } : undefined}>
                 <Chip label={`${b[0].toUpperCase()}${b.slice(1)} heat`} value={`${s.heat[b]}`} d={d} good={(d ?? 0) <= 0} bar={s.heat[b]} barColor={BAND_COLOR[heatBand(s.heat[b])]} tone={s.heat[b] >= 80 ? 'text-red-400' : undefined} />
               </Num>
             );
@@ -173,11 +173,29 @@ function MoneyChips({ s }: { s: GameState }) {
         <div className="fixed left-2 right-2 top-[7.5rem] sm:absolute sm:left-0 sm:right-auto sm:top-full sm:mt-1 z-[1200] sm:w-[440px] max-h-[75vh] overflow-y-auto panel p-2 space-y-2" data-testid="money-popover">
           <BigPots s={s} compact />
           <div className="text-[12px] text-stone-300"><WeekPotsLine s={s} /></div>
+          <MoneyWhy s={s} />
           <MoveMoney s={s} />
           <button type="button" className="btn-secondary llv-d-money llv-dom-btn w-full text-xs" onClick={() => { setOpen(false); go('you.pocket'); }} data-testid="money-popover-spend">Spend your pocket: homes, cars, the watch, something for her ▸</button>
           <button type="button" className="btn-primary w-full text-xs" onClick={() => { setOpen(false); go('holdings.money'); }} data-testid="money-popover-open">Open the Money screen: where every dollar came from and went ▸</button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** "Why is it this?" for Family money: where the week began, the biggest lines that moved it, where it is now. */
+function MoneyWhy({ s }: { s: GameState }) {
+  const r = s.lastReport;
+  if (!r) return null;
+  const rs = reasonsFor(s, 'money').filter((x) => x.value !== 0).sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+  const shown = rs.slice(0, 6);
+  const other = Math.round(r.end.money - r.start.money - shown.reduce((a, x) => a + x.value, 0));
+  return (
+    <div className="rounded border border-noir-700 bg-noir-900/60 p-1.5 text-[11px]" data-testid="money-why">
+      <div className="text-[10px] uppercase tracking-wider text-stone-500">Why is the Family at {fmt$(r.end.money)}? (week {r.week})</div>
+      <div className="flex justify-between gap-2"><span className="text-stone-400">When the week began</span><span className="tabular-nums">{fmt$(r.start.money)}</span></div>
+      {shown.map((x) => <div key={x.label} className="flex justify-between gap-2"><span className="truncate text-stone-300">{x.label}</span><span className={`tabular-nums ${x.value > 0 ? 'text-emerald-400' : 'text-red-400'}`}>{x.value > 0 ? '+' : '−'}{fmt$(Math.abs(x.value))}</span></div>)}
+      {other !== 0 && <div className="flex justify-between gap-2"><span className="text-stone-500">Everything else</span><span className="tabular-nums text-stone-400">{other > 0 ? '+' : '−'}{fmt$(Math.abs(other))}</span></div>}
     </div>
   );
 }

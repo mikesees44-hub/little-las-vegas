@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { biggestReason, oddsWord, type OddsView, type WorstView } from '../../engine/decide';
 import type { Character, Effect, GameState } from '../../engine/types';
 import { Chips } from '../components/Chips';
+import { Glossed } from '../clarity/Term';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
 import { useNumberKeys } from '../keys';
@@ -247,7 +248,7 @@ export function DecisionCard(p: DecisionCardProps) {
       {p.stakes && p.stakes.length > 0 && (
         <div className="mt-2 flex flex-wrap items-center gap-1 text-[11px]" data-testid="stakes">
           <span className="text-stone-500">What's on the line:</span>
-          {p.stakes.map((x) => <span key={x} className="chip-bad">{x}</span>)}
+          {p.stakes.map((x) => <span key={x} className="chip-bad"><Glossed text={x} /></span>)}
         </div>
       )}
       {p.text && <div className={`mt-2 leading-relaxed text-stone-300 ${compact ? 'text-[12px]' : ''}`}>{p.text}</div>}
