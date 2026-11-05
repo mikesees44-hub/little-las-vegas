@@ -226,7 +226,8 @@ export function editAppt(s: GameState, id: string, d: Partial<ApptDraft>): { sta
   a.day = merged.cadence === 'weekly' ? merged.day! : 0;
   a.slot = merged.slot;
   if (merged.weeks === undefined) delete a.weeks;
-  else a.weeks = merged.weeks + (startWeek(a) < s.week ? s.week - startWeek(a) : 0);
+  // A new length counts from this week (the weeks already run are kept).
+  else a.weeks = 'weeks' in d ? merged.weeks + Math.max(0, s.week - startWeek(a)) : merged.weeks;
   if (merged.budget === undefined) delete a.budget; else a.budget = merged.budget;
   delete a.ended;
   return { state: reserved(x) };
