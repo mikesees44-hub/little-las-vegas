@@ -345,6 +345,12 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
             <ul className="mt-1 space-y-0.5 text-[12px]">{r.mornings.map((m) => <li key={m.key}><span className="text-stone-200">{m.title}</span> <span className="text-stone-500">→ his way:</span> <span className="text-stone-300">{m.becomes}</span></li>)}</ul>
           </div>
         )}
+        {r.lapses.length > 0 && (
+          <div data-testid="ready-lapses" className="rounded border border-amber-700/60 bg-amber-950/30 p-2">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-amber-300">⚑ Will be missed if you advance ({r.lapses.length})</div>
+            <ul className="mt-1 space-y-0.5 text-[12px]">{r.lapses.map((l) => <li key={l.key}><span className="text-stone-100">{l.title}</span> <span className="text-stone-400">· {l.what}</span></li>)}</ul>
+          </div>
+        )}
         <div data-testid="ready-orders">
           <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Orders that run ({r.orders.length})</div>
           {r.orders.length ? <ul className="mt-1 space-y-0.5 text-[12px]">{r.orders.map((o, i) => <li key={i} className="flex justify-between gap-2"><span className="text-stone-200">{o.title}</span><span className="tabular-nums text-stone-400">{o.cost ? `${fmt$(o.cost)} · ${o.pot === 'pocket' ? 'pocket' : 'Family'}` : 'free'}</span></li>)}</ul> : <p className="text-[12px] text-stone-500">None queued.</p>}
@@ -358,7 +364,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
         </div>
         {r.warnings.map((w, i) => <div key={i} className="text-[12px] text-red-300">⚠ {w}</div>)}
         <div className="flex flex-wrap gap-2 border-t border-noir-700 pt-2">
-          {(r.unanswered.length > 0 || r.mornings.length > 0) && <button type="button" className="btn-secondary text-sm" onClick={onReview} data-testid="ready-review-btn">Review first</button>}
+          {(r.unanswered.length > 0 || r.mornings.length > 0 || r.lapses.length > 0) && <button type="button" className="btn-secondary text-sm" onClick={onReview} data-testid="ready-review-btn">Review first</button>}
           <button type="button" className="btn-primary text-sm" onClick={onAdvance} data-testid="ready-advance">{r.unanswered.length ? 'Advance anyway ▸' : 'Advance ▸'}</button>
         </div>
       </div>

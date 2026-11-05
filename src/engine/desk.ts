@@ -12,6 +12,10 @@ import { roundOptions } from './rounds';
 import { SCHEME_INFO } from './schemes';
 import { obligations } from './tribute';
 import type { GameState, PlayerAction } from './types';
+import { openPitches } from './eat';
+import { FIX_WEEKS, OPEN_WEEKS, openApproachOf, openFixOf } from './single';
+import { SILENCE_WEEKS, openProposal } from './matchmakers';
+import { missedCalls } from './phone';
 
 /**
  * THE BOSS'S DESK: everything that wants the boss this week, in one place —
@@ -182,6 +186,8 @@ export interface ReadyReview {
   costs: { orders: number; evenings: number; bills: number; familyAfter: number; pocketAfter: number };
   /** Short warnings (Family money below zero, an order the pocket can't pay). */
   warnings: string[];
+  /** What lapses if he advances without seeing to it (a pitch, a woman waiting, Ma's match, a call to return). */
+  lapses: { key: string; title: string; what: string }[];
   /** Nothing waiting: the review can be skipped. */
   clear: boolean;
 }
@@ -209,10 +215,33 @@ export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
   const urgent = urgentMeetings(s).filter((u) => u.status === 'waiting');
   if (urgent.length) warnings.push(`${urgent.length === 1 ? `${urgent[0].who} is` : `${urgent.length} people are`} still waiting on an urgent meeting: what they heard lands whether you listen or not.`);
   if (q.pocketLeft - evenings < 0) warnings.push('Your evenings and pocket orders cost more than your pocket holds: the Family covers the evenings; pocket orders without your approval are skipped.');
+  const lapses = lapsesThisWeek(s);
   return {
-    unanswered, mornings, orders: os,
+    unanswered, mornings, orders: os, lapses,
     costs: { orders: os.reduce((a, o) => a + o.cost, 0), evenings, bills, familyAfter: Math.round(q.familyLeft - bills), pocketAfter: Math.round(q.pocketLeft - evenings) },
     warnings,
-    clear: !unanswered.length && !mornings.length && !warnings.length && !os.length,
+    clear: !unanswered.length && !mornings.length && !warnings.length && !os.length && !lapses.length,
   };
+}
+
+
+/** Things with a clock on them that run out when the week turns (each read off its own system; pure). */
+export function lapsesThisWeek(s: GameState): { key: string; title: string; what: string }[] {
+  const out: { key: string; title: string; what: string }[] = [];
+  const nm = (id?: string) => { const c = id ? s.characters[id] : undefined; return c ? `${c.firstName} ${c.lastName}` : 'Someone'; };
+  const next = s.week + 1;
+  // A man's pitch (Let them eat): unanswered, he takes it somewhere else.
+  for (const p of openPitches(s)) if (next >= p.due) out.push({ key: `pitch:${p.id}`, title: `${nm(p.by)}'s pitch: ${p.what}`, what: "He takes it somewhere else if you don't answer. (Crew ▸ Let them eat)" });
+  // A woman who came to him: she moves on.
+  const a = openApproachOf(s);
+  if (a && next - a.w > OPEN_WEEKS) out.push({ key: `appr:${a.id}`, title: `${nm(a.id)} is waiting to hear from you`, what: 'She moves on if you leave it another week.' });
+  // Ma's match for him: silence reads as "not now".
+  const f = openFixOf(s);
+  if (f && next - f.w >= FIX_WEEKS) out.push({ key: `fix:${f.id}`, title: `${nm(f.by)}'s match for you: ${nm(f.id)}`, what: 'Say nothing and she takes it as "not now, Ma".' });
+  // The women of the house's match for one of the Family: silence lets her go ahead.
+  const mp = openProposal(s);
+  if (mp && next - mp.week >= SILENCE_WEEKS) out.push({ key: `match:${mp.id}`, title: `${nm(mp.by)}'s match for ${nm(mp.memberId)}`, what: 'Say nothing and she goes ahead with it.' });
+  // A call to return before it goes cold.
+  for (const m of missedCalls(s)) if (!m.p.once && m.until < next * 7) out.push({ key: `call:${m.id}`, title: `Call ${m.p.name} back`, what: "After this week the call can't be returned." });
+  return out;
 }
