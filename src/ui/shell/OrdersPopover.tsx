@@ -20,7 +20,7 @@ export function OrdersButton({ s }: { s: GameState }) {
   const cost = queuedMoney(s, orders).family;
   return (
     <div className="relative" ref={ref}>
-      <button type="button" className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${orders.length ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`} onClick={() => setOpen((o) => !o)} data-testid="orders-button" aria-expanded={open} title="This week's orders">
+      <button type="button" className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${orders.length ? 'border-gold-500 text-gold-300 bg-gold-500/10' : 'border-noir-600 text-stone-400'}`} onClick={() => setOpen((o) => !o)} data-testid="orders-button" aria-expanded={open} title="Orders this week">
         ☰ {orders.length}<span className="hidden sm:inline"> order{orders.length === 1 ? '' : 's'}</span>{orders.length > 0 && cost > 0 && <span className="hidden lg:inline text-stone-400 font-normal"> · {fmt$(cost)}</span>}
       </button>
       {open && (

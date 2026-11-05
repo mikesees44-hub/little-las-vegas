@@ -18,7 +18,7 @@ export function recPick(r: Rec): FindResult {
   const go: FindResult['go'] = g.char ? { to: 'sheet', id: g.char }
     : g.tab ? { to: 'route', key: g.tab }
     : g.office ? { to: 'office' }
-    : { to: 'planner', tab: g.audience ? 'audience' : g.datebook || g.day !== undefined ? 'datebook' : 'brief' };
+    : { to: 'planner', page: g.audience ? 'audience' : g.datebook || g.day !== undefined ? 'datebook' : 'brief' };
   return { kind: 'do', id: r.id, title: r.title, sub: r.why, go, score: r.score };
 }
 
@@ -41,17 +41,20 @@ export function VerbMenu({ s, open, onPick, initialView = 'verbs' }: { s: GameSt
   const pinnedOrd = pinnedOrders(s.seed);
   const recent = recentOrders(s.seed).filter((a) => !pinnedOrd.some((p) => JSON.stringify(p) === JSON.stringify(a))).filter((a) => { try { previewAction(s, a); return true; } catch { return false; } }).slice(0, 5);
   const entryRow = (label: string) => {
-    const i = ACTION_ENTRIES.findIndex((e) => e.label === label);
+    // A pin made under an entry's old label still finds it (actionEntries `was`).
+    const i = ACTION_ENTRIES.findIndex((e) => e.label === label || e.was === label);
     if (i < 0) return null;
     const r = entryResult(i, open);
-    const pinned = pins.entries.includes(label);
+    const e = ACTION_ENTRIES[i];
+    const pinKey = pins.entries.includes(e.label) ? e.label : e.was && pins.entries.includes(e.was) ? e.was : e.label;
+    const pinned = pins.entries.includes(pinKey);
     return (
-      <li key={label} className="flex items-start gap-1">
+      <li key={e.label} className="flex items-start gap-1">
         <button type="button" className="min-w-0 flex-1 rounded px-2 py-1 text-left hover:bg-noir-800" onClick={() => onPick(r)} data-testid="goal-entry">
           <span className="block truncate text-sm text-stone-100">{r.title}</span>
           <span className="block truncate text-[11px] text-stone-500">{r.sub}</span>
         </button>
-        <button type="button" className={`shrink-0 px-1 pt-1 text-sm ${pinned ? 'text-gold-400' : 'text-stone-600 hover:text-gold-300'}`} onClick={() => togglePinEntry(label)} aria-pressed={pinned} title={pinned ? 'Unpin' : 'Pin to the top'} data-testid="pin-entry">{pinned ? '★' : '☆'}</button>
+        <button type="button" className={`shrink-0 px-1 pt-1 text-sm ${pinned ? 'text-gold-400' : 'text-stone-600 hover:text-gold-300'}`} onClick={() => togglePinEntry(pinKey)} aria-pressed={pinned} title={pinned ? 'Unpin' : 'Pin to the top'} data-testid="pin-entry">{pinned ? '★' : '☆'}</button>
       </li>
     );
   };

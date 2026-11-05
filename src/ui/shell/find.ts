@@ -24,7 +24,7 @@ export type FindGo =
   | { to: 'office' }
   | { to: 'person-hint' }
   /** The Don's book on a page (a recommendation that waits there). */
-  | { to: 'planner'; tab: 'brief' | 'audience' | 'datebook' | 'book' | 'orders' }
+  | { to: 'planner'; page: 'brief' | 'audience' | 'datebook' | 'book' | 'orders' }
   /** "pay Sal": his Deal with menu, opened on the verb's category. */
   | { to: 'menu'; id: string; category: string }
   /** "hit Kessler": the hit planner with him chosen (it asks first if he is one of yours). */
@@ -68,7 +68,7 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
 
   // Things to do (the action registry).
   for (const [i, e] of ACTION_ENTRIES.entries()) {
-    const sc = score(words, e.label, e.words);
+    const sc = score(words, e.label, `${e.words} ${e.was ?? ''}`);
     if (!sc) continue;
     out.push(entryResult(i, open, sc + 1));
   }
@@ -85,7 +85,7 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
       if (!open(k)) continue;
       const view = it.keys.length > 1 ? (it.views?.[i] ?? sectionDef(k)?.label) : undefined;
       const title = view ? `${it.label} › ${view}` : it.label;
-      const sc = score(words, title, `${it.sub} ${sectionDef(k)?.label ?? ''} ${home}`);
+      const sc = score(words, title, `${it.sub} ${sectionDef(k)?.label ?? ''} ${home} ${it.words ?? ''}`);
       if (sc) out.push({ kind: 'screen', id: `screen:${k}`, title, sub: `${home} · ${i === 0 ? it.sub : sectionDef(k)?.blurb ?? it.sub}`, go: { to: 'route', key: k }, score: sc });
     }
   }

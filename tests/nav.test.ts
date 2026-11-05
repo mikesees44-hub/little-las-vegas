@@ -189,3 +189,36 @@ describe('the chain of command is a place', () => {
     expect(resolveRoute('borgata.chain').key).toBe('borgata.chain');
   });
 });
+
+describe('naming rules (STREAMLINE_2 §3.5)', () => {
+  // Imperative verbs an action may start with: the hub's eight and the precise verbs under them.
+  const VERB = /^(Talk|Pay|Order|Plan|Buy|Travel|Hurt|Protect|Adopt|Answer|Ask|Audit|Back|Befriend|Build|Call|Charter|Check|Choose|Climb|Cultivate|Dare|Deal|Decide|Dinner|Discipline|Disinherit|Do|Equip|Find|Fund|Give|Go|Handle|Have|Hear|Hire|Hit|Hold|Host|Hunt|Keep|Lay|Learn|Lend|Let|Lobby|Make|Manage|Move|Name|Offer|Open|Partner|Plant|Push|Put|Raise|Read|Retain|Run|See|Seat|Sell|Set|Shop|Sign|Spend|Spread|Start|Take|Upgrade|Use|Watch|Work|Arrange)\b/;
+  it('every thing to do starts with an imperative verb; its old label is kept to be found', async () => {
+    const { ACTION_ENTRIES } = await import('../src/ui/shell/actionEntries');
+    for (const e of ACTION_ENTRIES) expect(e.label, e.label).toMatch(VERB);
+    const { findAll } = await import('../src/ui/shell/find');
+    const s = newGame('names-was');
+    // "Dirty work: a one-off job" is "Do dirty work: …" now; the old words still find it.
+    expect(findAll(s, 'molehunt').some((r) => r.kind === 'do' && /mole/i.test(r.title))).toBe(true);
+  });
+
+  it('places are nouns, never verbs; one name per thing', () => {
+    for (const it of NAV_ITEMS) {
+      expect(it.label, it.label).not.toMatch(VERB);
+      for (const v of it.views ?? []) expect(v, `${it.label} › ${v}`).not.toMatch(/^(Hold|Walk|Plan|Pay|Talk)\b/);
+    }
+    const labels = PANELS.flatMap((p) => p.sections.map((x) => x.label));
+    expect(labels).not.toContain('The Succession');
+    expect(labels).not.toContain('Hold court');
+    // "Ambitions" are the three CK goals only, not the house's big moves.
+    expect(NAV_ITEMS.flatMap((it) => it.views ?? [])).not.toContain('Ambitions');
+  });
+
+  it('old names still find the renamed screens', async () => {
+    const { findAll } = await import('../src/ui/shell/find');
+    const s = newGame('names-old');
+    for (const [q, key] of [['hold court', 'you.court'], ['walk the boardwalk', 'you.walk'], ['edicts', 'borgata.orders'], ['the succession', 'house.court']] as const) {
+      expect(findAll(s, q, { limit: 50 }).some((r) => r.kind === 'screen' && r.go.to === 'route' && r.go.key === key), q).toBe(true);
+    }
+  });
+});

@@ -110,17 +110,17 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
     { id: 'brief', label: inTheRanks(s) ? 'The word' : 'The brief', short: inTheRanks(s) ? 'Word' : 'Brief' },
     ...(inTheRanks(s) ? [] : [{ id: 'audience' as const, label: 'Audience', short: 'Audience', n: reqs.filter((r) => !r.booked).length }]),
     { id: 'datebook', label: 'Datebook', short: 'Datebook' },
-    { id: 'book', label: 'Black book', short: 'Rolodex' },
+    { id: 'book', label: 'People', short: 'People' },
     { id: 'orders', label: 'Standing orders', short: 'Orders' },
   ];
 
   return (
     <>
       {tab && (
-        <Overlay z={1165} className="llv-desk-set overflow-y-auto overscroll-contain" role="dialog" aria-modal="true" aria-label="The Don's book" data-testid="planner">
+        <Overlay z={1165} className="llv-desk-set overflow-y-auto overscroll-contain" role="dialog" aria-modal="true" aria-label="The datebook" data-testid="planner">
           <div className="mx-auto w-full max-w-[1120px] px-2 pb-8 pt-2 sm:px-4 sm:pt-3">
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-              <div className="llv-tabs-book" role="tablist" aria-label="The Don's book">
+              <div className="llv-tabs-book" role="tablist" aria-label="The datebook">
                 {tabs.map((t) => (
                   <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className="llv-tab-book" onClick={() => setTab(t.id)} data-testid={`planner-tab-${t.id}`}>
                     <span className="sm:hidden">{t.short}</span><span className="hidden sm:inline">{t.label}</span>{t.n ? <span className="llv-tab-book-n" aria-label={`${t.n} waiting`}>{t.n}</span> : null}
@@ -169,7 +169,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
 export function PlannerButton({ s, onOpen }: { s: GameState; onOpen: () => void }) {
   const due = briefDue(s);
   return (
-    <button type="button" onClick={onOpen} data-testid="planner-button" title="The Don's book: the morning brief, who wants an audience, the datebook, the black book, your standing orders"
+    <button type="button" onClick={onOpen} data-testid="planner-button" title="The datebook (the Don's book): the morning brief, who wants an audience, your days, People (the black book), your standing orders"
       aria-label={`The book${due ? ': today\'s brief is waiting' : ''}`}
       className={`relative h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap hover:border-gold-500 ${due ? 'border-gold-600/70 text-gold-200' : 'border-noir-600 text-stone-300'}`}>
       ▥<span className="hidden sm:inline"> Book</span>

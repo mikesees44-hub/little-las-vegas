@@ -209,7 +209,7 @@ function HirePool({ s }: { s: GameState }) {
 function Edicts({ s }: { s: GameState }) {
   return (
     <section>
-      <div className="panel-title">Edicts</div>
+      <div className="panel-title">Family rules</div>
       <p className="text-xs text-stone-500">Standing orders to the whole family.</p>
       <div className="mt-2 grid gap-2 sm:grid-cols-2">
         {(Object.keys(EDICTS) as EdictId[]).map((e) => (
