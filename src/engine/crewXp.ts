@@ -7,6 +7,7 @@ import { addStory } from './hierarchy';
 import type { Ctx } from './ledger';
 import { addOpinion, opinion, relKey } from './relations';
 import { hashSeed } from './rng';
+import { isNewSkill, NEW_SKILL_NAME, newSkillOfDeed, skillValue, type NewSkill } from './newSkillsCore';
 import type { Attributes, Character, Effect, EventInstance, GameState, RivalId } from './types';
 
 /**
@@ -48,6 +49,10 @@ import type { Attributes, Character, Effect, EventInstance, GameState, RivalId }
 
 type Skill = keyof Attributes;
 export const XP_SKILLS: Skill[] = ['leadership', 'business', 'diplomacy', 'intrigue', 'force', 'discipline'];
+/** A man's points go into the six or the five newer skills (newSkillsCore.ts). */
+export type ManSkill = Skill | NewSkill;
+/** A man's practice in a newer skill: each MAN_NS_XP of it is +1 to that skill on its own. */
+export const MAN_NS_XP = 30;
 
 export type XpPerk =
   | 'bookmaker' | 'enforcer' | 'fixer' | 'wheelman' | 'safecracker' | 'talker'
@@ -62,8 +67,10 @@ export interface XpMan {
   lvl: number;
   /** Week of the last level. */
   at?: number;
-  /** Skill points spent, per skill (each point is +2). */
-  sk?: Partial<Record<Skill, number>>;
+  /** Skill points spent, per skill (each point is +2); a newer skill's points also open its 3/6/10 tree. */
+  sk?: Partial<Record<ManSkill, number>>;
+  /** Practice in the newer skills (what his deeds' words touched), lifetime. */
+  np?: Partial<Record<NewSkill, number>>;
   perks?: XpPerk[];
   /** A point or a specialty has been waiting since this week (auto-pick after AUTO_WEEKS). */
   pend?: number;
@@ -121,7 +128,7 @@ export type XpOp =
   | { op: 'branch'; charId: string; branch: 0 | 1 | 2 | null }
   | { op: 'perk'; charId: string; perk: XpPerk }
   | { op: 'auto'; charId: string }
-  | { op: 'point'; charId: string; skill: Skill }
+  | { op: 'point'; charId: string; skill: ManSkill }
   | { op: 'recognize'; charId: string };
 
 /* ------------------------------------------------------------------ */
@@ -394,8 +401,40 @@ export function grantXp(s: GameState, charId: string, amount: number, reason: st
   x.stats.xp += n;
   // What he does along his focus teaches the focus too (half of it).
   if (m.fo && charId !== s.playerId && deedFocus(reason) === m.fo) addLxp(s, c, m, Math.round(n / 2));
+  // And a newer skill its words touch (the boss practices his own in bossSkills.ts).
+  const nk = charId !== s.playerId ? newSkillOfDeed(reason) : undefined;
+  if (nk) manPractice(s, c, nk, n);
   settle(s, c, m);
   return n;
+}
+
+/**
+ * A man's practice in a newer skill (Charm, Streetwise, Politics, Showbiz,
+ * Gambling): every MAN_NS_XP is +1 to it (written to `Character.sk`, a new
+ * object so a shallow copy of the state never shares it). Returns the points it grew.
+ */
+export function manPractice(s: GameState, c: Character, k: NewSkill, n: number): number {
+  if (!tracked(s, c) || !(n > 0) || c.id === s.playerId) return 0;
+  const m = man(s, c.id);
+  const before = m.np?.[k] ?? 0;
+  m.np = { ...m.np, [k]: before + n };
+  const up = Math.floor((before + n) / MAN_NS_XP) - Math.floor(before / MAN_NS_XP);
+  if (up > 0 && skillValue(c, k) < 100) {
+    c.sk = { ...c.sk, [k]: (c.sk?.[k] ?? 0) + up };
+    grew(s, c.id, `+${up} ${NEW_SKILL_NAME[k]}`, 'skill');
+  }
+  return up;
+}
+
+/** His practice toward the next +1 in a newer skill. */
+export function manPracticeOf(s: GameState, id: string, k: NewSkill): { x: number; of: number; total: number } {
+  const total = s.xp?.men[id]?.np?.[k] ?? 0;
+  return { x: total % MAN_NS_XP, of: MAN_NS_XP, total };
+}
+
+/** Points a man put into a skill (his newer skills' trees read these). */
+export function manInvested(s: GameState, id: string, k: ManSkill): number {
+  return s.xp?.men[id]?.sk?.[k] ?? 0;
 }
 
 /** Which focus a deed teaches (by the award's reason). */
@@ -608,11 +647,13 @@ function applyPerk(s: GameState, c: Character, p: XpPerk, auto: boolean): boolea
   return true;
 }
 
-function applyPoint(s: GameState, c: Character, k: Skill): boolean {
-  if (pointsOpen(s, c) <= 0 || c.attributes[k] >= 100) return false;
+function applyPoint(s: GameState, c: Character, k: ManSkill): boolean {
+  if (pointsOpen(s, c) <= 0 || (isNewSkill(k) ? skillValue(c, k) : c.attributes[k]) >= 100) return false;
   const m = man(s, c.id);
   (m.sk ??= {})[k] = (m.sk[k] ?? 0) + 1;
-  c.attributes[k] = Math.min(100, c.attributes[k] + 2);
+  // A newer skill grows in `sk` (a new object: the UI's copy of him shares the old one).
+  if (isNewSkill(k)) c.sk = { ...c.sk, [k]: (c.sk?.[k] ?? 0) + 2 };
+  else c.attributes[k] = Math.min(100, c.attributes[k] + 2);
   clearPend(s, c, m);
   return true;
 }
@@ -685,7 +726,7 @@ function withMan(s: GameState, id: string, f: (t: GameState, c: Character) => bo
   const x0 = s.xp ?? fresh();
   const m0 = x0.men[id];
   const x: XpState = { ...x0, men: { ...x0.men }, feed: x0.feed.slice(), stats: { ...x0.stats } };
-  if (m0) x.men[id] = { ...m0, ...(m0.sk ? { sk: { ...m0.sk } } : {}), ...(m0.perks ? { perks: m0.perks.slice() } : {}), ...(m0.log ? { log: m0.log.slice() } : {}), ...(m0.gp ? { gp: m0.gp.slice() } : {}), ...(m0.acc ? { acc: { ...m0.acc } } : {}) };
+  if (m0) x.men[id] = { ...m0, ...(m0.sk ? { sk: { ...m0.sk } } : {}), ...(m0.perks ? { perks: m0.perks.slice() } : {}), ...(m0.log ? { log: m0.log.slice() } : {}), ...(m0.gp ? { gp: m0.gp.slice() } : {}), ...(m0.acc ? { acc: { ...m0.acc } } : {}), ...(m0.np ? { np: { ...m0.np } } : {}) };
   if (x0.grew) x.grew = x0.grew.slice();
   const c: Character = { ...c0, attributes: { ...c0.attributes }, ...(c0.story ? { story: c0.story.slice() } : {}) };
   // Opinions change on a recognition or a pick (his of the boss): that relation gets its own copy.
@@ -703,7 +744,7 @@ export function pickPerk(s: GameState, id: string, p: XpPerk): GameState {
 }
 
 /** The boss puts a point into a skill (pure). */
-export function spendPoint(s: GameState, id: string, k: Skill): GameState {
+export function spendPoint(s: GameState, id: string, k: ManSkill): GameState {
   return withMan(s, id, (t, c) => applyPoint(t, c, k));
 }
 

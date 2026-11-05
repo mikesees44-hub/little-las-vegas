@@ -186,6 +186,8 @@ export interface Character {
   bones?: BonesEntry[];
   /** Chosen look (character creator): overrides the portrait genes and styles. */
   appearance?: Appearance;
+  /** The five newer skills (newSkillsCore.ts): what practice and points ADDED to the base read off him. Optional: absent = the base. */
+  sk?: Partial<Record<import('./newSkillsCore').NewSkill, number>>;
 }
 
 /** Portrait overrides: gene values 0..1 by locus, plus a hair style and moustache. */
