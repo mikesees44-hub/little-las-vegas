@@ -9,6 +9,8 @@ import { hourText } from '../../engine/threats';
 import { Modal } from '../components/Modal';
 import { Empty } from '../components/Layout';
 import { domainOfText, domClass } from '../domain';
+import { WordPanel } from '../ai/WordPanel';
+import { wordThisWeek } from '../../engine/ai/calls';
 
 /**
  * THE PHONE (PHONE.md): one window, three tabs. Missed calls (call back), the phone book (pick a
@@ -16,7 +18,7 @@ import { domainOfText, domClass } from '../domain';
  * if the line may be tapped; the odds before you dial), and the log (the meets ahead, the last calls;
  * every call is also in Your File).
  */
-type Tab = 'missed' | 'dial' | 'log';
+type Tab = 'missed' | 'word' | 'dial' | 'log';
 
 const GROUPS: { id: BookEntry['group']; label: string }[] = [
   { id: 'family', label: 'Family' }, { id: 'crew', label: 'Your people' }, { id: 'outfits', label: 'The other outfits' }, { id: 'services', label: 'Services' },
@@ -66,6 +68,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack, prefill }: {
         </div>
         <div className="llv-seg tabbar mt-3 !mb-0" role="tablist" aria-label="The phone">
           {tabBtn('missed', 'Missed', missed.length)}
+          {tabBtn('word', 'Calls & letters', wordThisWeek(s).length)}
           {tabBtn('dial', 'Make a call')}
           {tabBtn('log', 'Calls & meets', ahead.length)}
         </div>
@@ -90,6 +93,8 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack, prefill }: {
             })}
           </div>
         )}
+
+        {tab === 'word' && <div className="mt-3" data-testid="phone-word"><WordPanel s={s} /></div>}
 
         {tab === 'dial' && (
           <div className="mt-3 space-y-3" data-testid="phone-dial">

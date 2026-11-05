@@ -8,6 +8,7 @@ import { eventsOut } from './eventDays';
 import { approachView, fixView } from './single';
 import type { GameState, PlayerAction } from './types';
 import type { Stakes } from './attention';
+import { askTitle, askWhy, openAsks as familyAsks } from './minds/askView';
 
 /**
  * THE INBOX: the one list of what wants the boss right now, and its one
@@ -38,7 +39,7 @@ export interface InboxItem {
   charId?: string;
   /** What is on the line (engine/attention.ts fills it; the inbox itself never does). */
   stakes?: Stakes;
-  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string; /** Trouble at a tenant's racket (placeAsks.ts). */ trouble?: string; /** A woman who came to him, or Ma's match (single.ts). */ single?: 'come' | 'ma' };
+  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string; /** Trouble at a tenant's racket (placeAsks.ts). */ trouble?: string; /** A woman who came to him, or Ma's match (single.ts). */ single?: 'come' | 'ma'; /** A family asking for a sit-down (minds/familyAsks.ts): the family. */ family?: string };
 }
 
 export interface InboxUi {
@@ -99,6 +100,11 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
     if (a) out.push({ key: `single:${a.a.id}`, kind: 'request', tone: 'gold', title: `${a.c.firstName} ${a.c.lastName} came to you`, why: `${a.info.label}, ${a.age}. ${a.info.how}. She waits ${a.left ? `about ${a.left} more week${a.left === 1 ? '' : 's'}` : 'until the week is out'}.`, charId: a.c.id, ref: { single: 'come' } });
     const f = fixView(s);
     if (f) out.push({ key: `ma:${f.c.id}`, kind: 'request', tone: 'gold', title: `${f.call} has a girl for you: ${f.c.firstName} ${f.c.lastName}`, why: `${f.age}, ${f.house ? `of ${f.house.name}` : 'from the parish'}. Meet her, "not now, Ma", find your own, or let ${f.call} decide.`, charId: f.c.id, ref: { single: 'ma' } });
+  }
+  // A family asking for a sit-down, or Philadelphia calling to the Table (minds/familyAsks.ts).
+  for (const a of familyAsks(s)) {
+    const boss = s.rivals.find((r) => r.id === a.rival)?.leaderId;
+    out.push({ key: `fam:${a.id}`, kind: 'request', tone: 'amber', title: askTitle(a), why: askWhy(s, a), ...(boss ? { charId: boss } : {}), ref: { family: a.rival } });
   }
   const rep = latestReport(s);
   // One envelope: once the boss has taken it (the count answered in the Office or on the Desk, or a split ordered),

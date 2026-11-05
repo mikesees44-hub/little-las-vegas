@@ -10,6 +10,7 @@ import { housingWeek } from './housing';
 import { marketWeek } from './market';
 import { fbankEventSource, fbankWeek } from './familyBank';
 import { talksWeek } from './talks';
+import { familyAsksWeek } from './minds/familyAsks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
 import { travelWeek } from './travel';
@@ -437,6 +438,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     marketWeek(ctx);
     fbankWeek(ctx);
     talksWeek(ctx);
+    // The families ask for sit-downs on their own; unanswered ones lapse (minds/familyAsks.ts).
+    familyAsksWeek(ctx);
     missionsWeek(ctx);
     runCouncil(ctx);
     crewWeek(ctx);

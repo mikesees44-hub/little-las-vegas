@@ -1045,6 +1045,7 @@ export function App({ startOn = 'title' }: AppProps) {
     onCancelOrder: (i: number) => ordersApi.remove(i),
     onMoney: () => openRoute({ panel: 'holdings', section: 'money' }),
     onSingle: () => openRoute({ panel: 'you', section: 'dating' }),
+    onFamily: () => openRoute({ panel: 'diplomacy', section: 'board' }),
     onChar: (id: string) => setSheet(id),
     onLt: () => setLtOpen(true),
     onUrgent: (tip: string) => setUrgent(tip),

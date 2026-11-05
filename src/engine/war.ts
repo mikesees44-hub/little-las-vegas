@@ -23,13 +23,25 @@ export const DISTRICT_PRIZE = 25;
 
 /** The family's muscle: the crew strength assessment (strength.ts), men first, then equipment, leadership and the rest. */
 export function playerMuscle(s: GameState): number {
-  return strengthTotal(s);
+  return Math.max(0, strengthTotal(s) + lentMuscle(s, 'player'));
+}
+
+/** Muscle lent at a sit-down (talks.ts 'muscle' pacts): what a side gains (+) or has out on loan (−). Bounded by the term. */
+export function lentMuscle(s: GameState, side: string): number {
+  let n = 0;
+  for (const p of s.talks?.pacts ?? []) {
+    if (p.kind !== 'muscle' || p.until <= s.week || !p.lent) continue;
+    const to = p.payer === p.a ? p.b : p.a;
+    if (p.payer === side) n -= p.lent;
+    else if (to === side) n += p.lent;
+  }
+  return n;
 }
 
 /** A rival's muscle in a fight: its men adjusted for its equipment and development (strength.ts). */
 export function rivalMuscle(s: GameState, rival: string): number {
   const r = s.rivals.find((x) => x.id === rival);
-  return r ? rivalStrength(s, r) : 50;
+  return r ? Math.max(0, rivalStrength(s, r) + lentMuscle(s, rival)) : 50;
 }
 
 /** Which casus belli the player holds against a rival for a district, best first. */

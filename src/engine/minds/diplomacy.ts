@@ -10,13 +10,19 @@ import { hashSeed } from '../rng';
 import { rivalStrength } from '../strength';
 import { ensureTalks, logTalk, pactWith, partnerWeekly, rivalRelation, type Pact } from '../talks';
 import { spendTime, timeBlock } from '../timeCost';
-import type { Effect, GameState, PlayerAction, Rival, RivalId } from '../types';
+import type { Business, BusinessKind, Effect, GameState, PlayerAction, Rival, RivalId } from '../types';
 import { playerMuscle } from '../war';
 import { FACTION_NAMES } from '../world';
 import { toneEffect, type Dialogue, type Line, type Tone } from './dialogue';
 import { clamp } from './state';
+import { availableIn, CATALOG } from '../catalog';
+import { newBusiness } from '../business';
+import { confirmedMole, confirmMole } from '../intrigue';
+import { owedBy } from '../deeds/state';
 import { clean } from './talk';
 import { mindView } from './view';
+import { askFor, ASK_LABEL, type AskKind } from './askView';
+import { lastTimeLine, noteSit, recordSummary, trustMult, wordWith } from './familyWord';
 
 /**
  * THE SIT-DOWN WITH A FAMILY. A real back-and-forth with another family's
@@ -57,19 +63,30 @@ export const SIT_WALK = 75;
 export const SIT_OPINION_CAP = 8;
 export const MAX_TERMS = 3;
 
-export const DEAL_KINDS = ['truce', 'alliance', 'partnership', 'tribute', 'cash', 'concession', 'favor', 'handsoff'] as const;
+export const DEAL_KINDS = ['truce', 'alliance', 'partnership', 'tribute', 'cash', 'concession', 'favor', 'handsoff', 'callfavor', 'split', 'muscle', 'info', 'venture'] as const;
 export type DealKind = (typeof DEAL_KINDS)[number];
 /** Who gives: 'them' (the family pays, cedes, owes, stays out) or 'you' (the boss does). */
 export type Dir = 'them' | 'you';
 
-export interface Term { kind: DealKind; amount?: number; district?: string; weeks?: number; dir?: Dir }
+export interface Term { kind: DealKind; amount?: number; district?: string; weeks?: number; dir?: Dir; /** A split: the place whose take is shared (business id). */ biz?: string }
 
 export const KIND_LABEL: Record<DealKind, string> = {
   truce: 'Truce', alliance: 'Alliance', partnership: 'Partnership (they pay you weekly)', tribute: 'Tribute (you pay them weekly)',
   cash: 'Cash settlement', concession: 'Give up ground in a district', favor: 'A favor owed', handsoff: 'Stay out of a district',
+  callfavor: 'Call in the favor he owes',
+  split: 'A split of one place\'s take (weekly %)', muscle: 'Lend muscle in a war', info: 'Information (he tells you something real)', venture: 'Joint venture: a new place, you own it',
 };
 /** Kinds whose `dir` is chosen; the others have one direction. */
-export const HAS_DIR: Record<DealKind, boolean> = { truce: false, alliance: false, partnership: false, tribute: false, cash: true, concession: true, favor: true, handsoff: true };
+export const HAS_DIR: Record<DealKind, boolean> = { truce: false, alliance: false, partnership: false, tribute: false, cash: true, concession: true, favor: true, handsoff: true, callfavor: false, split: true, muscle: true, info: false, venture: false };
+
+/** What calling in the favor he owes is worth at the table: enough to force a concession or a modest deal, never a big one. */
+export const CALL_FAVOR_VALUE = 1800;
+
+/** Favors this family's boss owes the boss (deeds/). */
+export function favorsHeOwes(s: GameState, rival: string): number {
+  const r = rivalOf(s, rival);
+  return r ? owedBy(s, r.leaderId, s.playerId) : 0;
+}
 
 export const DIPLO_INTENTS = ['agree', 'refuse', 'threaten', 'bargain', 'deflect', 'warn', 'flatter', 'complain', 'insulted'] as const;
 export type DiploIntent = (typeof DIPLO_INTENTS)[number];
@@ -120,6 +137,8 @@ export function beginSitDown(s: GameState, rival: string): GameState {
   const next = cloneState(spendTime(s, SIT_ACTION).state);
   const t = ensureTalks(next);
   t.sat = { ...(t.sat ?? {}), [rival]: next.week };
+  // He asked for this one: the ask is answered.
+  if (t.asks?.some((a) => a.rival === rival && a.kind !== 'collect')) { t.asks = t.asks.filter((a) => a.rival !== rival || a.kind === 'collect'); if (!t.asks.length) delete t.asks; }
   t.met[rivalOf(next, rival)!.leaderId] = next.week;
   return next;
 }
@@ -138,12 +157,18 @@ function inf(s: GameState, district: string, f: string): number {
 export function allowedKinds(s: GameState, rival: string): DealKind[] {
   const r = rivalOf(s, rival);
   if (!r) return [];
-  if (r.kind === 'philly') return ['tribute', 'cash', 'favor'];
+  const owes = owedBy(s, r.leaderId, s.playerId) > 0;
+  if (r.kind === 'philly') return owes ? ['tribute', 'cash', 'favor', 'callfavor'] : ['tribute', 'cash', 'favor'];
   const war = s.wars.some((w) => w.rival === r.id);
   return DEAL_KINDS.filter((k) => {
     if (k === 'alliance') return !pactWith(s, r.id, 'alliance');
     if (k === 'partnership') return !war && !pactWith(s, r.id, 'partnership');
     if (k === 'tribute') return !pactWith(s, r.id, 'tribute');
+    if (k === 'callfavor') return owes;
+    if (k === 'split') return splitPlaces(s, rival, 'them').length > 0 || splitPlaces(s, rival, 'you').length > 0;
+    if (k === 'muscle') return !war && (muscleOk(s, rival, 'them') || muscleOk(s, rival, 'you'));
+    if (k === 'venture') return !war && districtsFor(s, rival, 'venture', 'you').length > 0;
+    if (k === 'info') return true;
     if (k === 'concession' || k === 'handsoff') return districtsFor(s, rival, k, 'them').length > 0 || districtsFor(s, rival, k, 'you').length > 0;
     return true;
   });
@@ -154,7 +179,35 @@ export function districtsFor(s: GameState, rival: string, kind: DealKind, dir: D
   const giver = dir === 'them' ? rival : 'player';
   if (kind === 'concession') return s.districts.filter((d) => (d.influence[giver as RivalId] ?? 0) >= 1).map((d) => d.id);
   if (kind === 'handsoff') return s.districts.filter((d) => (d.influence[giver as RivalId] ?? 0) < 60 && ((d.influence.player ?? 0) > 0 || (d.influence[rival as RivalId] ?? 0) > 0)).map((d) => d.id);
+  if (kind === 'venture') return s.districts.filter((d) => (d.influence.player ?? 0) >= 5).map((d) => d.id);
   return [];
+}
+
+/** Places whose take can be split: the giver's own, open, earning. */
+export function splitPlaces(s: GameState, rival: string, dir: Dir): Business[] {
+  const giver = dir === 'them' ? rival : 'player';
+  return s.businesses.filter((b) => b.owner === giver && b.weeklyBase > 0 && !b.leasedTo && (b.closedUntil ?? 0) <= s.week).sort((a, b) => b.weeklyBase - a.weeklyBase).slice(0, 8);
+}
+
+/** Lending muscle needs a fight: theirs to you while you are at war with someone else; yours to them while they have an enemy. */
+export function muscleOk(s: GameState, rival: string, dir: Dir): boolean {
+  if (dir === 'them') return s.wars.some((w) => w.rival !== rival);
+  return s.rivals.some((o) => o.id !== rival && o.kind === 'mob' && rivalRelation(s, rival as RivalId, o.id) < -25);
+}
+
+/** A joint venture's place: the kind for a district, and what it costs to open (each side puts in half). */
+export function ventureKind(s: GameState, district: string): BusinessKind {
+  const kinds = (['bar', 'restaurant', 'arcade'] as BusinessKind[]).filter((k) => availableIn(k, s.date.y));
+  return kinds[Math.floor(H(`${s.seed}|venture|${district}`) * kinds.length)] ?? 'bar';
+}
+export function ventureCost(s: GameState, district: string): number {
+  return CATALOG[ventureKind(s, district)].cost;
+}
+
+/** What one week of a split is worth, in dollars. */
+function splitWeekly(s: GameState, t: Term): number {
+  const b = s.businesses.find((x) => x.id === t.biz);
+  return b ? Math.round((b.weeklyBase * (t.amount ?? 0)) / 100) : 0;
 }
 
 /** The bounds of a term's numbers (amount, weeks) for this family now. */
@@ -179,6 +232,11 @@ export function termBounds(s: GameState, rival: string, kind: DealKind, dir: Dir
     }
     case 'handsoff': return { weeks: { lo: 8, hi: 52, def: 26 } };
     case 'favor': return {};
+    case 'callfavor': return {};
+    case 'info': return {};
+    case 'split': return { amount: { lo: 5, hi: 30, def: 15 }, weeks: { lo: 4, hi: 26, def: 12 } };
+    case 'muscle': return { amount: { lo: 5, hi: 20, def: 10 }, weeks: { lo: 2, hi: 8, def: 4 } };
+    case 'venture': return { amount: { lo: 10, hi: 40, def: 25 }, weeks: { lo: 12, hi: 52, def: 26 } };
   }
 }
 
@@ -198,10 +256,18 @@ export function validateTerm(s: GameState, rival: string, raw: unknown): Term | 
   const kind = String(o.kind ?? '') as DealKind;
   if (!(DEAL_KINDS as readonly string[]).includes(kind)) return undefined;
   if (!allowedKinds(s, rival).includes(kind)) return undefined;
-  const dir: Dir = kind === 'partnership' ? 'them' : kind === 'tribute' ? 'you' : o.dir === 'you' ? 'you' : 'them';
+  const dir: Dir = kind === 'partnership' || kind === 'callfavor' || kind === 'info' ? 'them' : kind === 'venture' ? 'you' : kind === 'tribute' ? 'you' : o.dir === 'you' ? 'you' : 'them';
   const t: Term = { kind };
   if (HAS_DIR[kind]) t.dir = dir;
-  if (kind === 'concession' || kind === 'handsoff') {
+  if (kind === 'muscle' && !muscleOk(s, rival, dir)) return undefined;
+  if (kind === 'split') {
+    const ok = splitPlaces(s, rival, dir);
+    const want = typeof o.biz === 'string' ? o.biz : typeof o.place === 'string' ? o.place : '';
+    const b = want ? ok.find((x) => x.id === want || x.name.toLowerCase() === want.toLowerCase()) : ok[0];
+    if (!b) return undefined;
+    t.biz = b.id;
+  }
+  if (kind === 'concession' || kind === 'handsoff' || kind === 'venture') {
     const ok = districtsFor(s, rival, kind, dir);
     const d = typeof o.district === 'string' ? o.district : '';
     const byName = s.districts.find((x) => x.id === d || x.name.toLowerCase() === d.toLowerCase())?.id;
@@ -212,7 +278,7 @@ export function validateTerm(s: GameState, rival: string, raw: unknown): Term | 
   if (b.amount) {
     const a = num(o.amount) ?? b.amount.def;
     const v = clamp(a, b.amount.lo, b.amount.hi);
-    t.amount = kind === 'concession' ? Math.round(v) : kind === 'cash' ? r50(v) : r10(v);
+    t.amount = kind === 'concession' || kind === 'split' || kind === 'venture' || kind === 'muscle' ? Math.round(v) : kind === 'cash' ? r50(v) : r10(v);
     t.amount = clamp(t.amount, b.amount.lo, b.amount.hi);
   }
   if (b.weeks) t.weeks = Math.round(clamp(num(o.weeks) ?? b.weeks.def, b.weeks.lo, b.weeks.hi));
@@ -284,6 +350,8 @@ export function stanceOf(s: GameState, rival: string): Stance | undefined {
   if (r.kind !== 'philly' && ph) reasons.push({ label: ph >= 0 ? 'Philadelphia thinks well of you' : 'Philadelphia thinks little of you', value: Math.round(-ph * 10) });
   const heat = Math.round((s.heat.local + s.heat.federal) / 2);
   if (heat > 50) reasons.push({ label: 'You bring heat', value: (heat - 50) * 25 });
+  const word = wordWith(s, r.id).score;
+  if (word !== 50) reasons.push({ label: word > 50 ? `Your word is good with them (${word})` : `Your word is ${word < 25 ? 'worthless' : 'shaky'} with them (${word})`, value: Math.round((50 - word) * 15) });
   if (hasTrait(c, 'Greedy')) reasons.push({ label: 'Greedy', value: 600 });
   if (hasTrait(c, 'Patient')) reasons.push({ label: 'Patient', value: -200 });
   if (hasTrait(c, 'Hot-headed')) reasons.push({ label: 'Hot-headed', value: 300 });
@@ -342,18 +410,31 @@ export function termValue(s: GameState, rival: string, t: Term): number {
       const fair = partnerWeekly(s, r.id as RivalId);
       return Math.round((fair - amt) * wk * 0.6 + (op > 0 ? op * 10 : op * 20) + 200 - (heat > 40 ? (heat - 40) * 15 : 0));
     }
-    case 'tribute': return Math.round(amt * wk * 0.8);
+    case 'tribute': return Math.round(amt * wk * 0.8 * trustMult(s, r.id));
     case 'cash': return t.dir === 'you' ? amt : -Math.round(amt * (amt > Math.max(0, r.money) * 0.5 ? 1.6 : 1.1));
     case 'concession': {
       const home = t.district === r.homeDistrict;
       return t.dir === 'you' ? amt * 400 : -amt * 450 * (home ? 2 : 1);
     }
-    case 'favor': return t.dir === 'you' ? 800 : -900;
+    case 'favor': return t.dir === 'you' ? Math.round(800 * trustMult(s, r.id)) : -900;
+    case 'callfavor': return CALL_FAVOR_VALUE;
+    case 'info': return -500;
+    case 'split': {
+      const v = splitWeekly(s, t) * wk;
+      return Math.round(t.dir === 'you' ? v * 0.8 * trustMult(s, r.id) : -v * 0.95);
+    }
+    case 'muscle': return Math.round(t.dir === 'you' ? amt * 80 * (wk / 4) * trustMult(s, r.id) : -amt * 90 * (wk / 4));
+    case 'venture': {
+      const d = t.district ?? '';
+      const kind = ventureKind(s, d);
+      const share = (CATALOG[kind].base * amt) / 100;
+      return Math.round(share * wk * 0.85 * trustMult(s, r.id) - CATALOG[kind].cost / 2 + 150);
+    }
     case 'handsoff': {
       const d = t.district ?? '';
       const contested = inf(s, d, 'player') >= 8 && inf(s, d, r.id) >= 8;
       return Math.round(t.dir === 'you'
-        ? (250 + 30 * inf(s, d, 'player') + (contested ? 400 : 0)) * (wk / 26)
+        ? (250 + 30 * inf(s, d, 'player') + (contested ? 400 : 0)) * (wk / 26) * trustMult(s, r.id)
         : -(300 + 40 * inf(s, d, r.id) + (contested ? 400 : 0)) * (wk / 26));
     }
   }
@@ -365,9 +446,9 @@ export function dealValue(s: GameState, rival: string, deal: readonly Term[]): n
 }
 
 /** What this sit-down needs from a deal now: the stance, shaded by the room (warmth bends, anger stiffens). */
-export function needNow(st: Stance, sd?: Pick<SitDown, 'warmth' | 'anger'>): number {
+export function needNow(st: Stance, sd?: Pick<SitDown, 'warmth' | 'anger' | 'lev'>): number {
   if (!sd) return st.need;
-  return Math.round(st.need - (sd.warmth - 50) * 12 + Math.max(0, sd.anger - 20) * 25);
+  return Math.round(st.need - (sd.warmth - 50) * 12 + Math.max(0, sd.anger - 20) * 25 + (sd.lev ?? 0));
 }
 
 /** A deal the family would take is worth at least this much less than `need` (small give, so a fair offer lands). */
@@ -444,6 +525,14 @@ export function describeTerm(s: GameState, rival: string, t: Term): string {
     case 'concession': return t.dir === 'you' ? `you give up ${t.amount} points of ${d}` : `${fam} gives up ${t.amount} points of ${d}`;
     case 'favor': return t.dir === 'you' ? `you owe ${fam} a favor` : `${fam} owes you a favor`;
     case 'handsoff': return t.dir === 'you' ? `you stay out of ${d} for ${t.weeks} weeks` : `${fam} stays out of ${d} for ${t.weeks} weeks`;
+    case 'callfavor': return `you call in the favor ${fam} owes you`;
+    case 'info': return `${fam} tells you something you can use`;
+    case 'split': {
+      const b = s.businesses.find((x) => x.id === t.biz);
+      return t.dir === 'you' ? `you give ${fam} ${t.amount}% of ${b?.name ?? 'a place'}'s take for ${t.weeks} weeks` : `${fam} gives you ${t.amount}% of ${b?.name ?? 'a place'}'s take for ${t.weeks} weeks`;
+    }
+    case 'muscle': return t.dir === 'you' ? `your men count on ${fam}'s side (strength ${t.amount}) for ${t.weeks} weeks` : `${fam}'s men count on your side (strength ${t.amount}) for ${t.weeks} weeks`;
+    case 'venture': return `a joint venture: a new ${CATALOG[ventureKind(s, t.district ?? '')].name.toLowerCase()} in ${d}, ${fmtMoney(ventureCost(s, t.district ?? '') / 2)} each, you own it, ${fam} takes ${t.amount}% of its take for ${t.weeks} weeks`;
   }
 }
 
@@ -472,6 +561,11 @@ export interface SitDown {
   deal?: Term[];
   /** Times the boss insulted him (each counts double on the anger meter). */
   insults: number;
+  /** He asked for this sit-down (minds/familyAsks.ts): what about. */
+  agenda?: { kind: AskKind; text: string };
+  /** Leverage played (once each): the cards, and how far they moved what he needs (negative: he bends). */
+  played?: { card: LeverCard; won: boolean }[];
+  lev?: number;
 }
 
 /** Open the sit-down: the room's temperature from what he thinks of the boss; his opening ask on the table. */
@@ -481,17 +575,32 @@ export function openSitDown(s: GameState, rival: string): SitDown | undefined {
   const c = s.characters[st.boss];
   const warmth = Math.round(clamp(45 + st.opinion / 2, 5, 90));
   const anger = Math.round(clamp(Math.max(0, -st.opinion / 3) + (st.war ? 15 : 0) + (s.rivals.find((r) => r.id === rival)?.feud ? 15 : 0), 0, 60));
-  const sd: SitDown = { rival: st.rival, boss: st.boss, round: 0, max: SIT_TURNS, warmth, anger, w0: warmth, log: [], insults: 0 };
-  sd.log.push({ who: 'narrator', text: `${c ? displayName(c) : 'He'} sits across from you. ${st.war ? 'There is a war on, and both of you know the score.' : 'Coffee, nobody else at the table.'}` });
-  // Their ask, read against the room they walked into.
-  const base = openingAsk(s, st);
+  const fa0 = askFor(s, rival);
+  const fa = fa0?.kind === 'collect' ? undefined : fa0;
+  const sd: SitDown = { rival: st.rival, boss: st.boss, round: 0, max: SIT_TURNS, warmth, anger, w0: warmth, log: [], insults: 0, ...(fa ? { agenda: { kind: fa.kind, text: fa.text } } : {}) };
+  sd.log.push({ who: 'narrator', text: `${c ? displayName(c) : 'He'} sits across from you. ${fa ? `He asked for this one: ${ASK_LABEL[fa.kind]}.` : st.war ? 'There is a war on, and both of you know the score.' : 'Coffee, nobody else at the table.'}` });
+  // Their ask (the agenda he came with, else his usual opening), read against the room they walked into.
+  const agendaOffer = fa ? validateDeal(s, rival, fa.offer) : [];
+  const base = agendaOffer.length ? agendaOffer : openingAsk(s, st);
   const ask = base.length ? counterTo(s, st, base, needNow(st, sd), true) : undefined;
   if (ask) sd.table = { terms: ask, by: 'them', ok: true };
-  sd.log.push({ who: 'them', text: openingLine(s, st, ask) });
+  sd.log.push({ who: 'them', text: fa ? agendaLine(s, st, fa.text, ask) : openingLine(s, st, ask) });
   return sd;
 }
 
 function openingLine(s: GameState, st: Stance, ask: Term[] | undefined): string {
+  const last = lastTimeLine(s, st.rival);
+  const head = openingHead(s, st, ask);
+  return last ? `${last} ${head}` : head;
+}
+
+function agendaLine(s: GameState, st: Stance, text: string, ask: Term[] | undefined): string {
+  const last = lastTimeLine(s, st.rival);
+  const want = ask?.length ? ` Here's what I want: ${describeDeal(s, st.rival, ask)}.` : '';
+  return `${last ? `${last} ` : ''}${text}${want}`;
+}
+
+function openingHead(s: GameState, st: Stance, ask: Term[] | undefined): string {
   const want = ask?.length ? ` Here's what I want: ${describeDeal(s, st.rival, ask)}.` : '';
   if (st.war) return st.war.score < -20 ? `You're losing, and you know it.${want}` : st.war.score > 20 ? `All right. Nobody's making money with this going on.${want}` : `This thing between us costs everybody.${want}`;
   if (st.opinion >= 25) return `Good to see you. Sit, sit.${want}`;
@@ -699,6 +808,7 @@ function scriptedLine(s: GameState, st: Stance, sd: SitDown, move: BossMove, wor
   if (move.tone === 'stall') return pick(['Think fast. My patience has a bottom.', 'Take your time. Not too much.'], key);
   if (/\b(war|fight|shooting|peace|truce)\b/.test(t)) return st.war ? (st.war.score < 0 ? 'You want peace? Peace costs. You\'re the one bleeding.' : 'Nobody likes a war. Least of all the people paying for it.') : 'There\'s no war. Let\'s keep it that way.';
   if (/\b(money|pay|cash|cut|envelope|weekly)\b/.test(t)) return st.ratio >= 1 ? 'Money talks. Yours is whispering.' : 'Money I understand. Make me an offer.';
+  if (/\b(word|promise|trust|last time)\b/.test(t)) { const w = wordWith(s, st.rival).score; return w >= 58 ? 'Your word\'s been good with me. That counts for something here.' : w < 35 ? 'Your word? I\'ve seen what your word is worth.' : 'I don\'t know your word yet. Today we find out.'; }
   if (/\b(philly|philadelphia|the table)\b/.test(t)) return philly(s) >= 20 ? 'I know Philadelphia likes you. You don\'t have to remind me.' : 'Philadelphia don\'t sit at this table. We do.';
   if (/\b(district|ground|corner|boardwalk|street|territory)\b/.test(t)) return st.contested.length ? 'We both want the same corners. That\'s the whole problem.' : 'I got my corners, you got yours.';
   if (sd.anger >= 50) return pick(['I\'m losing my patience.', 'Get to the point.'], key);
@@ -723,7 +833,7 @@ Rules:
 
 Reply with ONLY one JSON object, no other text:
 {"reply": string, "intent": one of "agree"|"refuse"|"threaten"|"bargain"|"deflect"|"warn"|"flatter"|"complain"|"insulted", "opinion_delta": integer -5..5, "deal": null or a list of 1 to 3 terms, "deal_status": "proposing"|"accepting"|"rejecting"|"none"}
-A term: {"kind": one of the menu kinds, "amount"?: number, "district"?: district id, "weeks"?: number, "dir"?: "them"|"you"} ("them": your family gives/pays/owes/stays out; "you": the boss does).
+A term: {"kind": one of the menu kinds, "amount"?: number, "district"?: district id, "weeks"?: number, "dir"?: "them"|"you", "biz"?: place id (a split)} ("them": your family gives/pays/owes/stays out/lends; "you": the boss does). Lending muscle means men stand on a side for some weeks; nobody is handed over or hurt.
 deal_status: "proposing" when you put your own deal (in "deal") on the table; "accepting" when you take the deal on the table as it is; "rejecting" when you turn it down; "none" otherwise.
 opinion_delta: how this exchange changes what you think of the boss (respect raises it, insults lower it).`;
 
@@ -738,6 +848,7 @@ export function diploPersona(s: GameState, rival: string, sd?: SitDown): string 
   lines.push(`YOU ARE: ${displayName(c)}, boss of the ${FACTION_NAMES[r.id]} ${r.kind === 'philly' ? 'family in Philadelphia, who sits over the Shore' : 'family'}. Traits: ${c.traits.join(', ') || 'none in particular'}.${v ? ` Mood: ${v.moodText}.` : ''}`);
   lines.push(`Your family: money ${fmtMoney(r.money)}, muscle ${r.muscle}/100; your strength is ${st.ratio >= 1.15 ? 'greater than' : st.ratio <= 0.87 ? 'less than' : 'about even with'} his. You want to ${r.goal}.`);
   lines.push(`What you think of the boss across the table: ${st.opinion >= 0 ? '+' : ''}${st.opinion} (-100 hate .. +100 friend).`);
+  lines.push(`Your record with him: ${recordSummary(s, r.id)}. Bring up the last sit-down and whether he kept his word, if there is one.`);
   if (st.war) lines.push(`You are AT WAR with him over ${s.districts.find((d) => d.id === st.war!.district)?.name ?? 'a district'}; war score ${st.war.score} (negative: you are winning).`);
   if (r.feud) lines.push('There is a blood feud between your families.');
   const pacts = (s.talks?.pacts ?? []).filter((p) => p.until > s.week && ((p.a === 'player' && p.b === r.id) || (p.b === 'player' && p.a === r.id)));
@@ -746,6 +857,8 @@ export function diploPersona(s: GameState, rival: string, sd?: SitDown): string 
   const ph = philly(s);
   if (r.kind !== 'philly' && ph) lines.push(`Philadelphia thinks ${ph >= 20 ? 'well' : ph <= -20 ? 'poorly' : 'little either way'} of him.`);
   lines.push(`How far you bend: ${st.bend}. What you came wanting: ${st.wantText}`);
+  if (sd?.agenda) lines.push(`YOU asked for this sit-down: ${ASK_LABEL[sd.agenda.kind]}. Your agenda: "${sd.agenda.text}"`);
+  if (sd?.played?.length) lines.push(`Leverage he laid on the table: ${sd.played.map((p) => `${LEVER_LABEL[p.card]} (${p.won ? 'it landed: you must give more' : 'you shrugged it off'})`).join('; ')}.`);
   if (sd) lines.push(`The room now: your warmth ${sd.warmth}/100, your anger ${sd.anger}/100 (at ${SIT_WALK} you walk out). Exchange ${sd.round + 1} of ${sd.max}.${sd.table ? ` On the table (${sd.table.by === 'boss' ? 'his offer' : 'your offer'}): ${describeDeal(s, rival, sd.table.terms)}.` : ' Nothing on the table.'}`);
   lines.push(`DEAL MENU (only these, within these bounds):\n${dealMenu(s, rival).join('\n')}`);
   lines.push(`Districts (ids): ${s.districts.map((d) => `${d.id} = ${d.name} (his ${Math.round(d.influence.player ?? 0)}, yours ${Math.round(d.influence[r.id] ?? 0)})`).join('; ')}.`);
@@ -759,10 +872,14 @@ export function dealMenu(s: GameState, rival: string): string[] {
     const dirs: Dir[] = HAS_DIR[k] ? ['them', 'you'] : [k === 'tribute' ? 'you' : 'them'];
     for (const dir of dirs) {
       const b = termBounds(s, rival, k, dir);
-      const ds = k === 'concession' || k === 'handsoff' ? districtsFor(s, rival, k, dir) : [];
-      if ((k === 'concession' || k === 'handsoff') && !ds.length) continue;
-      const bits = [`- ${k}${HAS_DIR[k] ? ` dir "${dir}"` : ''}: ${describeTerm(s, rival, { kind: k, dir, amount: b.amount?.def, weeks: b.weeks?.def, district: ds[0] }).replace(/^a /, '')}`];
-      if (b.amount) bits.push(`amount ${b.amount.lo}..${b.amount.hi}${k === 'concession' ? ' influence points (at most what the giver holds there)' : k === 'cash' ? ' dollars once' : ' dollars a week'}`);
+      const ds = k === 'concession' || k === 'handsoff' || k === 'venture' ? districtsFor(s, rival, k, dir) : [];
+      if ((k === 'concession' || k === 'handsoff' || k === 'venture') && !ds.length) continue;
+      if (k === 'muscle' && !muscleOk(s, rival, dir)) continue;
+      const places = k === 'split' ? splitPlaces(s, rival, dir) : [];
+      if (k === 'split' && !places.length) continue;
+      const bits = [`- ${k}${HAS_DIR[k] ? ` dir "${dir}"` : ''}: ${describeTerm(s, rival, { kind: k, dir, amount: b.amount?.def, weeks: b.weeks?.def, district: ds[0], biz: places[0]?.id }).replace(/^a /, '')}`];
+      if (b.amount) bits.push(`amount ${b.amount.lo}..${b.amount.hi}${k === 'concession' ? ' influence points (at most what the giver holds there)' : k === 'cash' ? ' dollars once' : k === 'split' || k === 'venture' ? ' percent' : k === 'muscle' ? ' strength points' : ' dollars a week'}`);
+      if (places.length) bits.push(`biz one of: ${places.map((x) => `${x.id} = ${x.name}`).join(', ')}`);
       if (b.weeks) bits.push(`weeks ${b.weeks.lo}..${b.weeks.hi}`);
       if (ds.length) bits.push(`district one of: ${ds.join(', ')}`);
       out.push(bits.join('; '));
@@ -808,10 +925,11 @@ export function canShake(s: GameState, sd: SitDown): { ok: boolean; why?: string
   if (terms.length !== sd.table.terms.length) return { ok: false, why: 'The terms no longer hold' };
   const st = stanceOf(s, sd.rival);
   if (!st || needNow(st, sd) - dealValue(s, sd.rival, terms) > SLACK) return { ok: false, why: 'He would not shake on that now' };
-  const cash = terms.filter((t) => t.kind === 'cash' && t.dir === 'you').reduce((a, t) => a + (t.amount ?? 0), 0);
+  const half = terms.filter((t) => t.kind === 'venture').reduce((a, t) => a + Math.round(ventureCost(s, t.district ?? '') / 2), 0);
+  const cash = terms.filter((t) => t.kind === 'cash' && t.dir === 'you').reduce((a, t) => a + (t.amount ?? 0), 0) + half;
   if (cash > s.money) return { ok: false, why: `Needs ${fmtMoney(cash)} of Family money` };
   const r = rivalOf(s, sd.rival)!;
-  const theirs = terms.filter((t) => t.kind === 'cash' && t.dir === 'them').reduce((a, t) => a + (t.amount ?? 0), 0);
+  const theirs = terms.filter((t) => t.kind === 'cash' && t.dir === 'them').reduce((a, t) => a + (t.amount ?? 0), 0) + half;
   if (theirs > Math.max(0, r.money)) return { ok: false, why: `${FACTION_NAMES[r.id]} does not have ${fmtMoney(theirs)}` };
   return { ok: true };
 }
@@ -884,6 +1002,42 @@ export function shakeOn(input: GameState, sd: SitDown): ShakeResult {
         if (x.dir === 'you') { eff.push({ type: 'deed', op: { op: 'owe', by: s.playerId, to: r.leaderId, y: `a sit-down with ${fam}` } }); changes.push(`You owe ${displayName(c)} a favor`); }
         else { eff.push({ type: 'deed', op: { op: 'owe', by: r.leaderId, to: s.playerId, y: `a sit-down with ${fam}` } }); changes.push(`${displayName(c)} owes you a favor`); }
         break;
+      case 'info': {
+        const got = giveInfo(s, ctx, r.id);
+        changes.push(got);
+        break;
+      }
+      case 'split': {
+        const b = s.businesses.find((y) => y.id === x.biz);
+        const payer = x.dir === 'you' ? 'player' : r.id;
+        pact('split', w, `${x.dir === 'you' ? `your house gives ${fam}` : `${fam} gives you`} ${x.amount}% of ${b?.name ?? 'a place'}'s take for ${w} weeks`, { biz: x.biz, pct: x.amount, payer });
+        changes.push(x.dir === 'you' ? `You give ${fam} ${x.amount}% of ${b?.name}'s take for ${w} weeks` : `${fam} gives you ${x.amount}% of ${b?.name}'s take for ${w} weeks`);
+        break;
+      }
+      case 'muscle': {
+        const payer = x.dir === 'you' ? 'player' : r.id;
+        pact('muscle', w, `${x.dir === 'you' ? `your men count on ${fam}'s side` : `${fam}'s men count on your side`} (strength ${x.amount}) for ${w} weeks`, { lent: x.amount, payer });
+        changes.push(x.dir === 'you' ? `Your strength −${x.amount} for ${w} weeks: it counts for ${fam} (nobody of yours is handed over)` : `Your strength +${x.amount} for ${w} weeks from ${fam}'s men`);
+        break;
+      }
+      case 'venture': {
+        const kind = ventureKind(s, x.district!);
+        const cost = CATALOG[kind].cost;
+        const h2 = Math.round(cost / 2);
+        money(ctx, -h2, `${label}: your half of the joint venture`, 'event');
+        r.money -= h2;
+        const b = newBusiness(s, kind, x.district!);
+        b.id = `b${s.nextId++}`;
+        b.cost = cost;
+        s.businesses.push(b);
+        pact('split', w, `the joint venture: ${fam} takes ${x.amount}% of ${b.name}'s take for ${w} weeks`, { biz: b.id, pct: x.amount, payer: 'player' });
+        changes.push(`${b.name} opens in ${s.districts.find((d) => d.id === x.district)?.name}: yours (${fmtMoney(h2)} each); ${fam} takes ${x.amount}% of its take for ${w} weeks`);
+        break;
+      }
+      case 'callfavor':
+        eff.push({ type: 'deed', op: { op: 'spendOwed', by: r.leaderId, to: s.playerId } });
+        changes.push(`You called in the favor ${displayName(c)} owed you`);
+        break;
       case 'handsoff': {
         const bound = x.dir === 'you' ? 'player' : r.id;
         const dn = s.districts.find((d) => d.id === x.district)?.name ?? x.district;
@@ -897,9 +1051,36 @@ export function shakeOn(input: GameState, sd: SitDown): ShakeResult {
   const said = describeDeal(s, r.id, terms);
   const text = `You and ${displayName(c)} shook on it: ${said}.`;
   logTalk(s, text, 'pact', c.id);
+  noteSit(s, r.id, { how: 'deal', terms: said, ...(sd.insults ? { insults: sd.insults } : {}), ...(sd.agenda ? { agenda: sd.agenda.text } : {}) });
   journal(s, { t: `Sat down with ${fam} and shook on a deal`, x: `${said}. ${sd.round} exchanges across the table with ${displayName(c)}.`, p: [c.id], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts', mine: 1, m: s.money - m0, r: changes });
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `A sit-down with ${fam}: ${said}.`, kind: 'rival' });
   return { state: s, ok: true, text, changes };
+}
+
+/**
+ * Information he gives across the table: something real when the intrigue
+ * layers hold it (a man of yours who talks to a third family, a secret they
+ * know about someone else), else a tip worth money (through the books).
+ */
+export function giveInfo(s: GameState, ctx: ReturnType<typeof newCtx>, rival: RivalId): string {
+  const fam = FACTION_NAMES[rival];
+  const mole = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.informantFor && c.informantFor !== 'player' && c.informantFor !== rival && c.informantFor !== 'law' && !confirmedMole(s, c.id)).sort((a, b) => (a.id < b.id ? -1 : 1))[0];
+  if (mole) {
+    confirmMole(s, mole);
+    const text = `${fam} told you ${displayName(mole)} talks to ${FACTION_NAMES[mole.informantFor as RivalId] ?? 'another family'}`;
+    journal(s, { t: `${fam} gave you a name: ${displayName(mole)}`, x: `${displayName(mole)} informs for ${FACTION_NAMES[mole.informantFor as RivalId] ?? 'another family'}. What you do about it is up to you.`, p: [mole.id], c: 'rivals', src: 'talk', mine: 1 });
+    return text;
+  }
+  const sec = s.secrets.find((x) => x.knownBy.includes(rival) && !x.knownBy.includes('player') && s.characters[x.ownerId]?.alive && s.characters[x.ownerId]?.faction !== rival && s.characters[x.ownerId]?.faction !== 'player');
+  if (sec) {
+    sec.knownBy.push('player');
+    const who = s.characters[sec.ownerId];
+    journal(s, { t: `${fam} told you a secret about ${displayName(who)}`, x: sec.text, p: [who.id], c: 'rivals', src: 'talk', mine: 1 });
+    return `${fam} told you a secret about ${displayName(who)}`;
+  }
+  const tip = 600 + Math.round(H(`${s.seed}|${s.week}|tip|${rival}`) * 8) * 100;
+  money(ctx, tip, `A tip from ${fam}`, 'event');
+  return `${fam} gave you a tip worth ${fmtMoney(tip)}`;
 }
 
 /**
@@ -918,6 +1099,8 @@ export function closeSitDown(input: GameState, sd: SitDown): GameState {
   if (op) addOpinion(s, c.id, s.playerId, op > 0 ? 'A good sit-down' : 'A bad sit-down', op, 1);
   const how = sd.end === 'walkout' ? `${c.firstName} walked out` : sd.end === 'left' ? 'you walked out' : 'no deal';
   const text = `A sit-down with ${displayName(c)} of ${fam}: ${how}.`;
+  ensureTalks(s);
+  noteSit(s, r.id, { how: sd.end === 'walkout' ? 'walkout' : sd.end === 'left' ? 'left' : 'done', ...(sd.insults ? { insults: sd.insults } : {}), ...(sd.agenda ? { agenda: sd.agenda.text } : {}) });
   logTalk(s, text, 'talk', c.id);
   journal(s, { t: `Sat down with ${fam}: ${how}`, x: `${sd.round} exchanges.${op ? ` His opinion of you ${op > 0 ? '+' : ''}${op}.` : ''}${sd.insults ? ' He will remember the insults.' : ''}`, p: [c.id], c: 'rivals', src: 'talk', mine: 1 });
   return s;
@@ -927,5 +1110,114 @@ export function closeSitDown(input: GameState, sd: SitDown): GameState {
 export function sitHeader(s: GameState, sd: SitDown): string {
   const st = stanceOf(s, sd.rival);
   if (!st) return '';
-  return `Thinks ${st.opinion >= 0 ? '+' : ''}${st.opinion} of you · bends ${st.bend}${st.war ? ` · war score ${st.war.score}` : ''} · ${st.ratio >= 1.15 ? 'stronger than you' : st.ratio <= 0.87 ? 'weaker than you' : 'about your strength'}`;
+  const w = wordWith(s, sd.rival);
+  return `Thinks ${st.opinion >= 0 ? '+' : ''}${st.opinion} of you · your word ${w.score} (${w.text}) · bends ${st.bend}${st.war ? ` · war score ${st.war.score}` : ''} · ${st.ratio >= 1.15 ? 'stronger than you' : st.ratio <= 0.87 ? 'weaker than you' : 'about your strength'}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Leverage: once per sit-down each, only cards the boss really holds   */
+/* ------------------------------------------------------------------ */
+
+export type LeverCard = 'dirt' | 'philly' | 'strength';
+export const LEVER_LABEL: Record<LeverCard, string> = { dirt: 'Bring dirt', philly: 'Philadelphia\'s backing', strength: 'A show of strength' };
+
+export interface Lever {
+  card: LeverCard;
+  label: string;
+  /** Why the boss holds it (the secret, Philadelphia's view, the numbers). */
+  basis: string;
+  /** Chance it lands. */
+  odds: number;
+  /** What it does: his need moves (negative: he bends) and his anger. */
+  win: { need: number; anger: number };
+  lose: { need: number; anger: number };
+}
+
+/** The dirt the boss really holds on this family: a secret about the boss or his people, or a hook on him. */
+export function dirtOn(s: GameState, rival: string): { text: string; strong: boolean } | undefined {
+  const r = rivalOf(s, rival);
+  if (!r) return undefined;
+  const hook = s.hooks.find((h) => h.holder === 'player' && h.targetId === r.leaderId);
+  if (hook) return { text: hook.reason, strong: hook.strong };
+  const sec = s.secrets.find((x) => x.knownBy.includes('player') && (x.ownerId === r.leaderId || s.characters[x.ownerId]?.faction === r.id) && s.characters[x.ownerId]?.alive);
+  return sec ? { text: sec.text, strong: sec.ownerId === r.leaderId } : undefined;
+}
+
+/** The leverage cards the boss can play at this sit-down now (only real ones; each once). */
+export function leverCards(s: GameState, sd: SitDown): Lever[] {
+  const st = stanceOf(s, sd.rival);
+  const c = s.characters[sd.boss];
+  if (!st || !c || sd.end) return [];
+  const played = new Set((sd.played ?? []).map((p) => p.card));
+  const out: Lever[] = [];
+  const hot = hasTrait(c, 'Hot-headed') ? 1 : 0;
+  const dirt = dirtOn(s, sd.rival);
+  if (dirt && !played.has('dirt')) {
+    out.push({ card: 'dirt', label: LEVER_LABEL.dirt, basis: dirt.text, odds: clamp(0.6 + (dirt.strong ? 0.15 : 0) - hot * 0.1 + (hasTrait(c, 'Cowardly') ? 0.1 : 0), 0.15, 0.9), win: { need: -1800, anger: 8 }, lose: { need: 400, anger: 25 + hot * 8 } });
+  }
+  const ph = philly(s);
+  if (st.rival !== 'philly' && ph >= 30 && !played.has('philly')) {
+    out.push({ card: 'philly', label: LEVER_LABEL.philly, basis: `Philadelphia thinks well of you (+${ph})`, odds: clamp(0.45 + (ph - 30) / 120, 0.15, 0.85), win: { need: -1200, anger: 4 }, lose: { need: 0, anger: 12 + hot * 6 } });
+  }
+  const winning = (st.war?.score ?? 0) >= 20;
+  if ((st.ratio <= 0.85 || winning) && !played.has('strength')) {
+    out.push({ card: 'strength', label: LEVER_LABEL.strength, basis: winning ? `You are winning the war (score ${st.war!.score})` : 'You are the stronger family', odds: clamp(0.4 + (1 - Math.min(1, st.ratio)) * 0.8 + Math.max(0, st.war?.score ?? 0) / 200 + (hasTrait(c, 'Cowardly') ? 0.15 : 0) - hot * 0.1, 0.15, 0.9), win: { need: -1400, anger: 10 }, lose: { need: 500, anger: 22 + hot * 8 } });
+  }
+  return out;
+}
+
+const LEVER_LINE: Record<LeverCard, string> = {
+  dirt: 'Before we go on: I know some things. Things your people would not want said out loud.',
+  philly: 'You know who I had dinner with last week. Philadelphia likes how I run things.',
+  strength: 'Look around. Count my men, count yours. Then make me an offer.',
+};
+const LEVER_WON: Record<LeverCard, readonly string[]> = {
+  dirt: ['...All right. Let\'s keep this between us. What do you want?', 'You made your point. Lower your voice.'],
+  philly: ['I hear you. Nobody wants Philadelphia unhappy.', 'Fine. Philadelphia\'s friend gets a better price.'],
+  strength: ['All right, all right. Nobody needs a war.', 'I can count. Let\'s be reasonable.'],
+};
+const LEVER_LOST: Record<LeverCard, readonly string[]> = {
+  dirt: ['You come to my table with that? Everybody has a story. Careful with yours.', 'That\'s old news. And now I know what kind of man you are.'],
+  philly: ['Philadelphia isn\'t sitting at this table. I am.', 'Philadelphia likes whoever pays. Don\'t lean on them with me.'],
+  strength: ['You think I scare? I\'ve buried bigger men than you.', 'Muscle. Okay. Mine doesn\'t count itself.'],
+};
+
+/** Play a card: the roll (odds shown before), the room moves, the table is read again by the engine. Pure. */
+export function playLever(s: GameState, sd0: SitDown, card: LeverCard): SitStep & { won?: boolean; odds?: number } {
+  const lv = leverCards(s, sd0).find((x) => x.card === card);
+  if (!lv) return { sd: sd0, line: '' };
+  const st = stanceOf(s, sd0.rival)!;
+  const sd: SitDown = { ...sd0, log: sd0.log.slice(), played: [...(sd0.played ?? [])], ...(sd0.table ? { table: { ...sd0.table, terms: sd0.table.terms.map((t) => ({ ...t })) } } : {}) };
+  const key = `${s.seed}|${s.week}|lever|${sd.rival}|${card}|${sd.round}`;
+  const won = H(key) < lv.odds;
+  const fx = won ? lv.win : lv.lose;
+  sd.played!.push({ card, won });
+  sd.lev = (sd.lev ?? 0) + fx.need;
+  sd.anger = Math.round(clamp(sd.anger + fx.anger, 0, 100));
+  sd.round++;
+  sd.log.push({ who: 'boss', text: LEVER_LINE[card] });
+  const first = s.characters[sd.boss]?.firstName ?? 'He';
+  let line = pick(won ? LEVER_WON[card] : LEVER_LOST[card], key);
+  if (sd.anger >= SIT_WALK) {
+    sd.end = 'walkout';
+    sd.table = undefined;
+    sd.log.push({ who: 'narrator', text: `${LEVER_LABEL[card]}: ${Math.round(lv.odds * 100)}% it would land. It did not.` });
+    sd.log.push({ who: 'them', text: line });
+    sd.log.push({ who: 'narrator', text: `${first} walks out. His patience ran out.` });
+    return { sd, line, won, odds: lv.odds };
+  }
+  const need = needNow(st, sd);
+  if (sd.table) {
+    const fair = need - dealValue(s, sd.rival, sd.table.terms) <= SLACK;
+    if (sd.table.by === 'boss') sd.table.ok = fair;
+    else if (!fair) {
+      const ct = counterTo(s, st, sd.table.terms, need);
+      sd.table = ct ? { terms: ct, by: 'them', ok: true } : undefined;
+      if (ct) line += ` ${counterLine(s, sd.rival, ct, key)}`;
+    }
+  }
+  sd.log.push({ who: 'narrator', text: `${LEVER_LABEL[card]}: ${Math.round(lv.odds * 100)}% it would land. ${won ? `It landed: ${first} needs less from you now.` : `It did not: ${first} digs in.`}` });
+  sd.log.push({ who: 'them', text: line });
+  if (!sd.end && sd.round >= sd.max) sd.end = 'done';
+  return { sd, line, won, odds: lv.odds };
 }

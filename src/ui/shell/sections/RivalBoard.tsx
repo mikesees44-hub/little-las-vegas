@@ -13,7 +13,12 @@ import { usePlanner } from '../../components/Schemes';
 import { useState } from 'react';
 import { useShell } from '../../shell/context';
 import { canSitDown, rivalOf } from '../../../engine/minds/diplomacy';
+import { recordOf, wordWith } from '../../../engine/minds/familyWord';
+import { askFor, askTitle, ignoreText } from '../../../engine/minds/askView';
+import { canHonor, favorTerms, honorFavor, refuseFavor } from '../../../engine/minds/familyAsks';
+import { postNow } from '../../deeds/NowResult';
 import { FamilyTalk } from '../../minds/FamilyTalk';
+import { RivalMind } from '../../ai/RivalMind';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
@@ -58,7 +63,35 @@ export function RivalBoard({ s }: { s: GameState }) {
                 <div className="text-[11px] text-stone-500">Wants to <span className="text-stone-300">{r.goal}</span> · muscle {r.muscle}{r.kind === 'mob' ? ` · ${fmt$(r.money)}` : ''}</div>
                 {war && <div className="text-[11px] text-red-300">At war · score {war.score}</div>}
                 {r.feud && <div className="text-[11px] text-red-300">Blood feud</div>}
+                {rivalOf(s, r.id) && (() => {
+                  const w = wordWith(s, r.id);
+                  const rec = recordOf(s, r.id);
+                  const sit = rec?.sits[rec.sits.length - 1];
+                  return (
+                    <div className="text-[11px] text-stone-400" data-testid={`word-${r.id}`} title={w.parts.map((p) => `${p.label}: ${p.value > 0 ? '+' : ''}${p.value}`).join('\n') || 'No record either way yet'}>
+                      Your word with them: <b className={w.score >= 58 ? 'text-emerald-300' : w.score < 43 ? 'text-red-300' : 'text-stone-200'}>{w.score} ({w.text})</b>
+                      {rec && (rec.kept || rec.broken || rec.refused) ? <span> · kept {rec.kept}, broken {rec.broken}{rec.refused ? `, refused ${rec.refused}` : ''}</span> : null}
+                      {sit && <span> · last sit-down wk {sit.w}: {sit.how === 'deal' ? 'a deal' : sit.how === 'walkout' ? 'he walked out' : sit.how === 'left' ? 'you walked out' : 'no deal'}</span>}
+                    </div>
+                  );
+                })()}
                 {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
+                {(() => {
+                  const a = askFor(s, r.id);
+                  if (!a) return null;
+                  const can = canSitDown(s, r.id);
+                  return (
+                    <div className="mt-1 rounded border border-amber-400/40 bg-amber-500/10 p-1.5 text-[11px]" data-testid={`famask-${r.id}`}>
+                      <div className="text-amber-200">{askTitle(a)}</div>
+                      <div className="text-stone-300 italic">"{a.text}"</div>
+                      {a.offerText && <div className="text-stone-400">Their opening: {a.offerText}.</div>}
+                      <div className="text-stone-500">Waits until the week turns. If you ignore it: {ignoreText(s, a)}.</div>
+                      {a.kind === 'collect' && shell.update && <FavorAnswer s={s} id={a.id} update={shell.update} />}
+                      {a.kind !== 'collect' && shell.update && <button type="button" className="btn-gold mt-1 px-2 py-0.5 text-[11px]" disabled={!can.ok} title={can.ok ? 'Opens the sit-down with his agenda on the table.' : can.why} onClick={() => setSit(r.id)} data-testid={`famask-open-${r.id}`}>Hear him out</button>}
+                    </div>
+                  );
+                })()}
+                {r.kind !== 'law' && leader.alive && <RivalMind s={s} rival={r.id} />}
                 {shell.update && rivalOf(s, r.id) && leader.alive && (() => {
                   const can = canSitDown(s, r.id);
                   return (
@@ -72,6 +105,40 @@ export function RivalBoard({ s }: { s: GameState }) {
         })}
       </ul>
       {sit && shell.update && <FamilyTalk s={s} rival={sit} update={shell.update} onClose={() => setSit(undefined)} />}
+    </div>
+  );
+}
+
+/** A favor they came to collect: the boss's explicit yes (spelled out) or no (it costs your word). */
+function FavorAnswer({ s, id, update }: { s: GameState; id: string; update: (f: (s: GameState) => GameState) => void }) {
+  const [confirm, setConfirm] = useState(false);
+  const a = askFor(s, s.talks?.asks?.find((x) => x.id === id)?.rival ?? '');
+  if (!a || a.id !== id) return null;
+  const can = canHonor(s, a);
+  const terms = favorTerms(s, a);
+  return (
+    <div className="mt-1 space-y-1" data-testid={`favor-${a.rival}`}>
+      <ul className="list-disc pl-4 text-stone-300">{terms.map((x) => <li key={x}>{x}</li>)}</ul>
+      <div className="text-stone-500">Doing it spends the favor and keeps your word. Saying no costs your word with them (and he thinks much less of you); you still owe it.</div>
+      {!confirm ? (
+        <div className="flex gap-1.5">
+          <button type="button" className="btn-gold px-2 py-0.5 text-[11px]" disabled={!can.ok} title={can.why} onClick={() => setConfirm(true)} data-testid={`favor-yes-${a.rival}`}>Do the favor…</button>
+          <button type="button" className="btn-ghost border-red-400/40 px-2 py-0.5 text-[11px]" onClick={() => update((g) => refuseFavor(g, id))} data-testid={`favor-no-${a.rival}`}>Refuse</button>
+        </div>
+      ) : (
+        <div className="rounded border border-gold-500/50 p-1.5">
+          <div className="text-stone-200">Your word on it: {terms.join(' ')}</div>
+          <div className="mt-1 flex gap-1.5">
+            <button type="button" className="btn-gold px-2 py-0.5 text-[11px]" onClick={() => {
+              const res = honorFavor(s, id);
+              if (!res.ok) return;
+              update((g) => { const r2 = honorFavor(g, id); return r2.ok ? r2.state : g; });
+              postNow({ ok: true, title: 'A favor paid', tier: 'success', headline: 'You kept your word', line: res.changes.join(' '), changes: res.changes, leadsTo: ['In Your File.'] });
+            }} data-testid={`favor-confirm-${a.rival}`}>Yes, do it</button>
+            <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => setConfirm(false)}>Not yet</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

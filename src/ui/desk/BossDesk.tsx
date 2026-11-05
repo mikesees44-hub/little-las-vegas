@@ -1,4 +1,5 @@
 import { TableButton } from '../advice/CounselTable';
+import { AskButton } from '../ai/AskCounsel';
 import { openPlanner } from '../planner/ink';
 import { bossDesk, deskHeaderCount, readyReview, type DeskGroup, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
 import type { Character, GameState } from '../../engine/types';
@@ -67,6 +68,8 @@ export interface DeskApi {
   onWeekDoneClose?: () => void;
   /** Let them eat (a man's pitch). */
   onEat?: () => void;
+  /** A family asking for a sit-down (minds/familyAsks.ts): the Board, where the sit-down opens with their agenda. */
+  onFamily?: (rival: string) => void;
 }
 
 export type DeskFilter = 'all' | 'decisions' | 'capos' | 'lieutenants' | 'money' | 'people';
@@ -94,6 +97,7 @@ export function openItem(it: DeskItem, api: DeskApi) {
   else if (it.kind === 'envelope' && api.onEnvelope) api.onEnvelope();
   else if (it.kind === 'bill' || it.kind === 'envelope') api.onMoney();
   else if (it.ref.single && api.onSingle) api.onSingle();
+  else if (it.ref.family && api.onFamily) api.onFamily(it.ref.family);
   else if (it.ref.charId) api.onChar(it.ref.charId);
   else api.onSitDown();
 }
@@ -107,7 +111,7 @@ function verbOf(it: DeskItem): string | undefined {
     case 'lieutenant': return 'Your word';
     case 'envelope': return 'Split it';
     case 'bill': return 'Money';
-    case 'request': return it.ref.single ? 'See her' : 'Open';
+    case 'request': return it.ref.single ? 'See her' : it.ref.family ? 'Hear him out' : 'Open';
     case 'order': return undefined;
     default: return 'Open';
   }
@@ -298,7 +302,8 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
           <button key={h} type="button" role="tab" aria-selected={dom === h} onClick={() => setDom(dom === h ? undefined : h)} data-testid={`desk-dom-${h}`} title={`Only what is about ${DOM_LABEL[h]}`}
             className={`btn-sm rounded-full border px-2 py-0.5 text-[10px] ${domClass(HOME_DOMAIN[h])} ${dom === h ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}><span className="llv-dom-ink">{DOM_LABEL[h]}</span> {n}</button>
         ))}
-        <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
+        <AskButton s={s} className="ml-auto" />
+        <button type="button" className="btn-quiet text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
         <ViewToggle screen="desk" view={view} onChange={setView} />
         {api.onHandleWeek && <button type="button" className="btn-primary py-0.5 text-[11px]" onClick={api.onHandleWeek} data-testid="desk-handle-week" title="Your people settle every routine item their way; a life, a man, the law, a war or real money stays yours. Each one can be taken back until the week turns.">Handle the week for me ▸</button>}
