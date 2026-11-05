@@ -13,7 +13,9 @@ import { displayName } from '../../engine/characters';
 import { consiglierePick, counselor, notRoutine } from '../../engine/delegation';
 import { DeskClock } from '../components/DeskClock';
 import { AssetImg } from '../hood/AssetImg';
-import { domainOf, domainOfText, domClass, type Domain } from '../domain';
+import { domainOf, domainOfText, domClass, HOME_DOMAIN, type Domain } from '../domain';
+import { DOMAIN_HOMES, homeOfDeskItem } from '../shell/homeDomain';
+type DomainHome = (typeof DOMAIN_HOMES)[number];
 import { deskBundles, type WeekPlanRow } from '../../engine/bundles';
 import { BundleCard, WeekDoneList, type SettledRow, type WeekDone } from './Bundles';
 import { useViewMode, ViewToggle } from '../components/ViewToggle';
@@ -76,11 +78,13 @@ const FILTERS: { id: DeskFilter; label: string; kinds: DeskKind[] }[] = [
   { id: 'money', label: '$ Money', kinds: ['envelope', 'request', 'bill'] },
   { id: 'people', label: '☏ At the door', kinds: ['decision', 'petition', 'morning', 'sitdown', 'lawyer', 'urgent', 'request'] },
 ];
+/** The domain chips' words (the homes' names; shell/nav.ts cannot be imported here). */
+export const DOM_LABEL: Record<DomainHome, string> = { house: 'Family', org: 'Crew', money: 'Money', law: 'Law', rivals: 'Rivals', town: 'Town' };
 const inFilter = (f: DeskFilter, it: DeskItem) => f === 'all' || FILTERS.find((x) => x.id === f)!.kinds.includes(it.kind);
 
 const ICON: Record<DeskKind, string> = { decision: '✉', petition: '☏', urgent: '⚠', morning: '☕', sitdown: '♜', lieutenant: '♜', request: '♣', envelope: '$', lawyer: '§', order: '☰', bill: '$', upcoming: '◷', result: '✓' };
 
-function openItem(it: DeskItem, api: DeskApi) {
+export function openItem(it: DeskItem, api: DeskApi) {
   if (it.kind === 'result' && api.onFile) api.onFile(it.ref.entry);
   else if (it.ref.tip && api.onUrgent) api.onUrgent(it.ref.tip);
   else if (it.ref.event) api.onEvent(it.ref.event);
@@ -223,14 +227,17 @@ const DESK_SPOTS: { id: 'ashtray' | 'ledger' | 'phone' | 'envelopes'; label: str
 
 export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode; /** In the Desk drawer (its header already says "The Desk"): no second title, no second clock. */ inDrawer?: boolean }) {
   const [filter, setFilter] = useState<DeskFilter>(filter0);
+  // The second row of chips (STREAMLINE_2 §3.3, EASIER #12): one part of his life at a time. The kind chips stay.
+  const [dom, setDom] = useState<DomainHome | undefined>();
+  const inDom = (it: DeskItem) => !dom || homeOfDeskItem(s, it) === dom;
   const [view, setView] = useViewMode('desk', s);
   const all = bossDesk(s, ui);
   // The one count: Needs you of the same queue the rows come from.
   const waiting = deskHeaderCount(s, ui);
   const get = (k: DeskGroup['kind']) => all.find((g) => g.kind === k);
-  const pick = (g?: DeskGroup): DeskGroup | undefined => (g ? { ...g, items: g.items.filter((it) => inFilter(filter, it)) } : undefined);
+  const pick = (g?: DeskGroup): DeskGroup | undefined => (g ? { ...g, items: g.items.filter((it) => inFilter(filter, it) && inDom(it)) } : undefined);
   // Same-kind small items as one card each (Settle all N the consigliere's way); their single cards fold into it.
-  const bundles = api.onSettle && filter === 'all' ? deskBundles(s, ui) : [];
+  const bundles = api.onSettle && filter === 'all' && !dom ? deskBundles(s, ui) : [];
   const bundled = new Set(bundles.flatMap((b) => b.items.map((x) => x.key)));
   const needs0 = pick(get('needs'));
   const needs = needs0 ? { ...needs0, items: needs0.items.filter((x) => x.done || !bundled.has(x.key)) } : undefined;
@@ -242,6 +249,8 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
     else if (key === 'envelope') api.onEnvelope?.();
   };
   const handled = pick(get('handled'));
+  const open = all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done);
+  const domCounts = DOMAIN_HOMES.map((h) => ({ h, n: open.filter((it) => homeOfDeskItem(s, it) === h).length }));
   const counts = FILTERS.map((f) => ({ ...f, n: all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done && inFilter(f.id, it)).length }));
   // The one recommended move: the first open paper that needs him (the red one first; the list is already in that order).
   const nextKey = bundles.length ? undefined : needs?.items.find((x) => !x.done)?.key;
@@ -284,6 +293,10 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         {counts.filter((f) => f.id === 'all' || f.n > 0 || f.id === filter).map((f) => (
           <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)} data-testid={`desk-filter-${f.id}`}
             className={`rounded-full border px-2 py-0.5 text-[10px] ${filter === f.id ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}>{f.label}{f.id !== 'all' ? ` ${f.n}` : ''}</button>
+        ))}
+        {domCounts.filter((d) => d.n > 0 || d.h === dom).map(({ h, n }) => (
+          <button key={h} type="button" role="tab" aria-selected={dom === h} onClick={() => setDom(dom === h ? undefined : h)} data-testid={`desk-dom-${h}`} title={`Only what is about ${DOM_LABEL[h]}`}
+            className={`btn-sm rounded-full border px-2 py-0.5 text-[10px] ${domClass(HOME_DOMAIN[h])} ${dom === h ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}><span className="llv-dom-ink">{DOM_LABEL[h]}</span> {n}</button>
         ))}
         <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}

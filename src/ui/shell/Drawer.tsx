@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useEscape } from '../keys';
 import type { GameState } from '../../engine/types';
 import type { SectionCtx } from './panels';
@@ -10,6 +10,10 @@ import { useOpportunity } from './RightRail';
 import { sectionLock } from '../../engine/rankView';
 import { DoneMark } from '../components/Layout';
 import { domainOf, domClass } from '../domain';
+import type { DeskItem, DeskUi } from '../../engine/desk';
+import type { FindResult } from './find';
+import { needsFor } from './placeFront';
+import { ActionsBand, NeedRows, PeopleBand, RecBand } from './FrontBands';
 
 const glyph = (g: string) => <span aria-hidden style={{ fontVariantEmoji: 'text' } as never}>{g}&#xFE0E;</span>;
 
@@ -21,16 +25,20 @@ const TONE = {
 } as const;
 const DOT = { danger: 'bg-red-400', warn: 'bg-amber-400', good: 'bg-emerald-400', info: 'bg-gold-400' } as const;
 
-/** The front page's "Do this now" strip: up to three things, each one click from its answer. */
-function DoNowStrip({ s, items, onDo }: { s: GameState; items: DoNowItem[]; onDo: (d: DoNowItem) => void }) {
+/**
+ * Band 2, "Needs you here": the Desk's papers that belong to this home (placeFront.needsFor), then the
+ * home's own "Do this now" (doNow.ts), up to three, each one click from its answer.
+ */
+function DoNowStrip({ s, items, onDo, needs = [], onNeed }: { s: GameState; items: DoNowItem[]; onDo: (d: DoNowItem) => void; needs?: DeskItem[]; onNeed?: (it: DeskItem) => void }) {
   const opp = useOpportunity();
   const shown = items.slice(0, 3);
   return (
-    <section className="mb-4" data-testid="do-now" aria-label="Do this now">
-      <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">Do this now</div>
-      {!shown.length ? (
+    <section className="mb-4" data-testid="do-now" aria-label="Needs you here">
+      <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">{needs.length ? 'Needs you here' : 'Do this now'}</div>
+      <NeedRows needs={needs} onNeed={onNeed} />
+      {!shown.length ? (needs.length ? null : (
         <p className="rounded border border-noir-700 px-3 py-2 text-xs text-stone-400" data-testid="do-now-empty">Nothing urgent here. Look around, or close this and advance the week.</p>
-      ) : (
+      )) : (
         <ul className="grid gap-1.5">
           {shown.map((d) => {
             const queued = d.act.kind === 'opp' && opp.queued(s, d.act.opp);
@@ -93,7 +101,21 @@ function ItemCard({ it, fresh, onOpen }: { it: NavItem; fresh: boolean; onOpen: 
  * Esc or × closes. 640px wide (1080 for the wide screens); on phones it
  * takes the whole map area.
  */
-export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled, fresh, doNow, onDo, extras, top }: {
+/** What the front page's bands need from the shell (all optional: without it the bands still render, inert). */
+export interface FrontApi {
+  /** The Desk's UI state (answers, orders…), so "Needs you here" matches the Desk. */
+  ui?: DeskUi;
+  /** Open a Desk paper the way the Desk does. */
+  onNeed?: (it: DeskItem) => void;
+  /** Carry out a pick (a recommendation, a thing to do), as Find does. */
+  onPick?: (r: FindResult) => void;
+  /** Which places are open to this boss (Find's `open`). */
+  open?: (key: string) => boolean;
+  /** "Everyone ▸": the black book. */
+  onEveryone?: () => void;
+}
+
+export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled, fresh, doNow, onDo, extras, top, front = {} }: {
   s: GameState;
   home: HomeId;
   /** The open section (a canonical key), or undefined for the front page. */
@@ -111,6 +133,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   extras: Record<string, ReactNode>;
   /** Extra front-page block under "Do this now" (This Week: the routine). */
   top?: ReactNode;
+  front?: FrontApi;
 }) {
   const def = HOMES_BY_ID[home];
   const items = groups.flatMap((g) => g.items);
@@ -126,6 +149,8 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
   // The places to switch between: the whole home when it is short, else the open place's group.
   const tabs = !cur ? [] : items.length <= 6 ? items : groups.find((g) => g.items.includes(cur))?.items ?? items;
   const sec = key ? sectionDef(key) : undefined;
+  const front0 = !cur && home !== 'desk';
+  const needs = useMemo(() => (front0 ? needsFor(s, home, front.ui ?? {}) : []), [front0, s, home, front.ui]);
   return (
     <section className={`absolute inset-y-0 left-0 z-[1100] flex w-full ${cur?.wide || (home === 'desk' && !cur) ? 'md:w-[min(1080px,calc(100%-24px))]' : 'md:w-[min(680px,calc(100%-24px))]'} flex-col border-r border-gold-600/30 bg-noir-900 shadow-2xl shadow-black/70 llv-slide-left`} data-testid={`drawer-${home}`} aria-label={def.label}>
       <header className={`flex items-center gap-2 border-b px-3 py-2 ${cur && (domainOf(key) ?? domainOf(cur.id)) ? `${domClass(domainOf(key) ?? domainOf(cur.id))} llv-dom-strip` : 'border-noir-700'}`} data-domain={cur ? domainOf(key) ?? domainOf(cur.id) : undefined}>
@@ -159,10 +184,15 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
       <div ref={body} className={`min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 pb-6 sm:p-4 ${cur && (domainOf(key) ?? domainOf(cur.id)) ? `${domClass(domainOf(key) ?? domainOf(cur.id))} llv-dom-scope` : ''}`} data-testid={cur ? `section-${key}` : 'home-landing'}>
         {!cur ? (
           <>
-            {/* The Desk speaks for itself (a calm home screen): no blurb, and "Do this now" only when there is something. */}
+            {/* The five bands (STREAMLINE_2 §3.3): Recommended, Needs you here, Your people, Do something, the places.
+                The Desk speaks for itself (a calm home screen): no blurb, its papers are the Desk below, and "Do this now" only when there is something. */}
             {home !== 'desk' && <p className="llv-pagehead-sub mb-3">{def.blurb}</p>}
-            {(home !== 'desk' || doNow.length > 0) && <DoNowStrip s={s} items={doNow} onDo={onDo} />}
+            <RecBand s={s} home={home} ui={front.ui} onPick={front.onPick} />
+            {(home !== 'desk' || doNow.length > 0) && <DoNowStrip s={s} items={doNow} onDo={onDo} needs={needs} onNeed={front.onNeed} />}
             {top}
+            <PeopleBand s={s} home={home} onEveryone={front.onEveryone} />
+            <ActionsBand s={s} home={home} open={front.open} onPick={front.onPick} />
+            <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500" data-testid="front-records">Places</div>
             {groups.map((g, i) => (
               <section key={g.title ?? i} className="mb-4">
                 {g.title && <div className="mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500">{g.title}</div>}

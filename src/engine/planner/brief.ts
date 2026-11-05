@@ -200,7 +200,12 @@ function people(s: GameState, low: boolean): BriefLine[] {
 /* Recommended, and "what would the old man do?"                       */
 /* ------------------------------------------------------------------ */
 
-export function recommendations(s: GameState, ui: OfficeUi = {}, reqs?: AudienceReq[]): Rec[] {
+/**
+ * The consigliere's picks, best first (three). With `keep` (a home's front page, STREAMLINE_2 §3.3):
+ * a wider pool of candidates, only those `keep` accepts, `n` of them (default three).
+ */
+export function recommendations(s: GameState, ui: OfficeUi = {}, reqs?: AudienceReq[], opts: { keep?: (r: Rec) => boolean; n?: number } = {}): Rec[] {
+  const wide = !!opts.keep;
   const out: Rec[] = [];
   const answers = ui.answers ?? {};
   for (const t of knownTips(s).filter((x) => x.status === 'waiting')) {
@@ -214,18 +219,19 @@ export function recommendations(s: GameState, ui: OfficeUi = {}, reqs?: Audience
   }
   try {
     const b = briefing(s);
-    for (const x of recommendedActions(s, b, ui.orders ?? [], ui.briefSkip ?? []).slice(0, 2)) {
+    for (const x of recommendedActions(s, b, ui.orders ?? [], ui.briefSkip ?? []).slice(0, wide ? 10 : 2)) {
       out.push({ id: `r:br:${x.item.id}`, title: `${x.item.topic}: ${x.option.label}`, why: x.item.reason || x.option.why, odds: x.option.chance, cta: 'Do it', go: { order: x.action }, score: 30 + Math.min(55, x.item.priority / 50) });
     }
   } catch { /* nobody seated */ }
   const top = (reqs ?? audienceRequests(s, ui)).find((r) => !r.booked && r.desp.v >= 40);
   if (top) out.push({ id: `r:aud:${top.key}`, title: `Give ${top.name} an hour`, why: `${top.desp.why.slice(0, 2).join('; ')}. A man in that kind of trouble who cannot get in to see you finds somebody else to see.`, cta: 'See him', go: { audience: true }, score: 40 + top.desp.v / 4 });
   try {
-    const o = whatShouldIDo(s, 3)[0];
-    if (o) out.push({ id: `r:op:${o.id}`, title: o.title, why: o.text, cta: o.cta.replace(/\s*[→▸]$/, ''), go: o.link.action ? { order: o.link.action } : o.link.charId ? { char: o.link.charId } : { tab: o.link.tab ?? 'desk' }, score: 28 + Math.min(40, o.score / 60) });
+    for (const o of whatShouldIDo(s, wide ? 12 : 3).slice(0, wide ? 12 : 1)) out.push({ id: `r:op:${o.id}`, title: o.title, why: o.text, cta: o.cta.replace(/\s*[→▸]$/, ''), go: o.link.action ? { order: o.link.action } : o.link.charId ? { char: o.link.charId } : { tab: o.link.tab ?? 'desk' }, score: 28 + Math.min(40, o.score / 60) });
   } catch { /* nothing to suggest */ }
   const seen = new Set<string>();
-  return out.filter((r) => (seen.has(r.title) ? false : (seen.add(r.title), true))).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 3);
+  const keep = opts.keep ?? (() => true);
+  return out.filter((r) => (seen.has(r.title) ? false : (seen.add(r.title), true))).filter((r) => { try { return keep(r); } catch { return false; } })
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, opts.n ?? 3);
 }
 
 export interface OldMan { voice: string; by: string; byId?: string; rec?: Rec }

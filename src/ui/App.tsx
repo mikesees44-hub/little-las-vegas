@@ -81,7 +81,7 @@ import type { MapFocus, ShellApi } from './shell/context';
 import { Shell } from './shell/Shell';
 import { TopBar } from './shell/TopBar';
 import { LeftRail } from './shell/LeftRail';
-import { Drawer } from './shell/Drawer';
+import { Drawer, type FrontApi } from './shell/Drawer';
 import { FindPalette } from './shell/Find';
 import type { FindResult } from './shell/find';
 import { AlertsPanel, GoalsCard, StreetFeedCard, ThisWeekCard } from './shell/RightRail';
@@ -107,7 +107,7 @@ import { extraToday, markExtraShown, unreadCount } from '../engine/paper';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
-import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
+import { BossDesk, openItem, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import type { SettledRow, WeekDone } from './desk/Bundles';
 import { handleWeekPlan, type WeekPlanRow } from '../engine/bundles';
 import { WeekTurning } from './components/WeekTurning';
@@ -961,6 +961,9 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   const weekDoneNow = weekDone?.week === s.week ? weekDone : undefined;
   const deskApi2 = { ...deskApi, onSettle: giveAnswers, onHandleWeek: handleWeek, weekDone: weekDoneNow, onUndo: undoSettled, onWeekDoneClose: () => setWeekDone(undefined), onEat: () => openRoute({ panel: 'borgata', section: 'eat' }) };
+  // A home's front page (Drawer's five bands): the Desk's papers for that home open as on the Desk; picks go as in Find.
+  const frontUi = { answers, orders, briefSkip, taken: takenKeys };
+  const frontApi: FrontApi = { ui: frontUi, onNeed: (it) => openItem(it, deskApi2), onPick: onFind, open: shellUi.open, onEveryone: () => openPlanner('book') };
   const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'desk' }); };
   const officeApi: OfficeApi = {
     openDesk: (f?: DeskFilter) => openDesk(f),
@@ -1140,7 +1143,7 @@ export function App({ startOn = 'title' }: AppProps) {
         drawer={home && (
           <Drawer s={s} home={home} sel={route.key} groups={homeGroups} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
             onOpen={(key) => openRoute({ home, key })} onClose={() => setRoute({})}
-            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop ?? bizTop ?? youTop} />
+            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop ?? bizTop ?? youTop} front={frontApi} />
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
