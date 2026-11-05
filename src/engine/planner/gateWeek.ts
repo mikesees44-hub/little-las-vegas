@@ -181,6 +181,14 @@ function tellsWeek(s: GameState): void {
     const speaker = w && w.id !== g.id && opinion(s, w.id, s.playerId) >= 10 ? w : capos(s).filter((c) => isFree(s, c) && c.id !== g.id && !turn.with.includes(c.id) && opinion(s, c.id, s.playerId) >= 40).sort((a, b) => opinion(s, b.id, s.playerId) - opinion(s, a.id, s.playerId))[0];
     if (speaker) tell(s, g, speaker.id === w?.id ? `${speaker.firstName}, over the dishes: "${g.firstName} never looks at me when he says you are busy."` : `${speaker.firstName}, on the way out: "Boss, I tried to get in to see you for two weeks. ${g.firstName} is a wall."`, 10);
   }
+  // Meets at odd places: the place and hour he put down (meetDefault), two or more of them on the book.
+  if (g && turn) {
+    const odd = (s.action?.sched ?? []).filter((it) => it.kind === 'meet' && it.payload.by === g.id && (it.payload.place === 'hotel' || it.h >= 23 || it.h < 6));
+    if (odd.length >= 2 && !(P.xc?.odd !== undefined && s.week - P.xc.odd < 4) && h01(s, `oddmeet|${s.week}|${g.id}`) < 0.3 + see * 0.5) {
+      (P.xc ??= {}).odd = s.week;
+      tell(s, g, `${odd.length} meetings on your book at odd places and late hours, and ${g.firstName} set every one of them.`, 10);
+    }
+  }
   // Enough of it, and the boss puts it together.
   if (g && turn && !(P.gx && P.gx.id === g.id) && (readOf(s, g.id)?.f ?? 0) >= 75) discoverGate(s, g.id, 'It all adds up');
 }

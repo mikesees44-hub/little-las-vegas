@@ -387,12 +387,12 @@ export function decideGate(s: GameState, id: GateChoiceId, sure = false): { stat
 /* ------------------------------------------------------------------ */
 
 /** The place and hour the gatekeeper puts down for a meet (the phone pre-fills them; the boss can change both). */
-export function meetDefault(s: GameState, who?: string): { place: PlaceId; hour: number; by?: string } {
+export function meetDefault(s: GameState, who?: string): { place: PlaceId; hour: number; by?: string; byId?: string } {
   const g = gateHolder(s)?.c;
   if (!g) return { place: 'diner', hour: 21 };
   const a = armedTurn(s);
-  if (a && h01(s, `meetdef|${s.week}|${who ?? ''}|${g.id}`) < gateOdds(s, a.c)) return { place: 'hotel', hour: 23, by: displayName(g) };
-  return { place: 'diner', hour: 21, by: displayName(g) };
+  if (a && h01(s, `meetdef|${s.week}|${who ?? ''}|${g.id}`) < gateOdds(s, a.c)) return { place: 'hotel', hour: 23, by: displayName(g), byId: g.id };
+  return { place: 'diner', hour: 21, by: displayName(g), byId: g.id };
 }
 
 /* ------------------------------------------------------------------ */

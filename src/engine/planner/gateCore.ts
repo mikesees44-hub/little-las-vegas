@@ -4,6 +4,8 @@ import { hashSeed } from '../rng';
 import type { Character, GameState, RivalId } from '../types';
 import type { Tip } from '../threats';
 import { ensurePlanner } from './state';
+import { journal } from '../journal';
+import { today } from '../days';
 
 /**
  * THE GATEKEEPER, the core (CONSIGLIERE_GATEKEEPER.md). The consigliere keeps the boss's book: he ranks the
@@ -153,5 +155,6 @@ export function discoverGate(s: GameState, id: string, how: string): boolean {
   if (P.gx && P.gx.id === id && !P.gx.how) return false;
   P.gx = { id, w: s.week, why: turn.text };
   noteTell(s, `${how}: ${displayName(c)} ${turn.text}.`);
+  journal(s, { d: today(s), c: 'intrigue', t: `Found out: ${displayName(c)}, who keeps your door`, x: `${how}: he ${turn.text}. What happens to him is yours to say (the Audience page).`, p: [id], src: 'gate', mine: 1 });
   return true;
 }

@@ -42,7 +42,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack, prefill }: {
   const [pay, setPay] = useState(false);
   const [code, setCode] = useState(false);
   const entry = book.find((e) => e.id === who);
-  const spec: DialSpec | undefined = entry && purpose ? { who: entry.id, purpose, pay, code, ...(purpose === 'meet' && days[day] ? { place, w: days[day].w, d: days[day].d, hour } : {}) } : undefined;
+  const spec: DialSpec | undefined = entry && purpose ? { who: entry.id, purpose, pay, code, ...(purpose === 'meet' && days[day] ? { place, w: days[day].w, d: days[day].d, hour, ...(dflt.byId && !prefill?.place && place === dflt.place && hour === dflt.hour ? { by: dflt.byId } : {}) } : {}) } : undefined;
   const pv = spec ? dialPreview(s, spec) : undefined;
   const ahead = meetsAhead(s);
   const tabBtn = (t: Tab, label: string, n?: number) => (

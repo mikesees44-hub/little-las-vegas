@@ -152,9 +152,9 @@ export function dayEntries(s: GameState, w: number, d: number): BookEntry[] {
       if (it.w !== w || it.d !== d) continue;
       if (it.kind === 'plan') out.push(planEntry(s, it));
       else if (it.kind === 'meet') {
-        const p = it.payload as { who: string; place: string };
+        const p = it.payload as { who: string; place: string; by?: string };
         const c = s.characters[p.who];
-        out.push({ id: `sched:${it.id}`, kind: 'meet', w, d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: PLAN_HOURS.meet, title: `Meet ${c ? displayName(c) : 'him'}`, sub: `At ${placeOf(s, p.place).name}. Set by phone.`, by: 'you', dom: c && s.rivals.some((r) => r.leaderId === c.id) ? 'rivals' : 'crew', who: c?.id, sid: it.id, move: true, cancel: true, go: c ? { char: c.id } : undefined });
+        out.push({ id: `sched:${it.id}`, kind: 'meet', w, d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: PLAN_HOURS.meet, title: `Meet ${c ? displayName(c) : 'him'}`, sub: `At ${placeOf(s, p.place).name}. Set by phone.`, by: bookedBy(s, p.by) ?? 'you', dom: c && s.rivals.some((r) => r.leaderId === c.id) ? 'rivals' : 'crew', who: c?.id, sid: it.id, move: true, cancel: true, go: c ? { char: c.id } : undefined });
       } else if (it.kind === 'feds_handler') {
         out.push({ id: `sched:${it.id}`, kind: 'handler', w, d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: 2, title: 'A drive to Cape May', sub: 'The men from Newark. Nobody else may read this line.', dom: 'law', hidden: true });
       }

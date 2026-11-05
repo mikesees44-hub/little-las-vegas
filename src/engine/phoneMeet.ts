@@ -128,6 +128,8 @@ export interface DialSpec {
   w?: number;
   d?: number;
   hour?: number;
+  /** Who put the place and hour down (the gatekeeper's id, when the boss kept his default): "booked by" in the datebook. */
+  by?: string;
 }
 
 interface DialOpt { p: number; biz: boolean; hint: string; cost?: Effect[]; ok: Effect[]; bad: Effect[]; okText: string; badText: string; blocked?: string; then?: (x: GameState, ok: boolean, ctx: Ctx) => string | void }
@@ -230,7 +232,7 @@ export function dial(input: GameState, sp: DialSpec): { state: GameState; result
   if (more) lines.push(more);
   if (sp.purpose === 'meet') {
     const pl = placeOf(s, sp.place!);
-    scheduleInto(s, { kind: 'meet', day: sp.d!, hour: sp.hour!, w: sp.w ?? s.week, payload: { who: sp.who, place: pl.id, purpose: 'meet' } });
+    scheduleInto(s, { kind: 'meet', day: sp.d!, hour: sp.hour!, w: sp.w ?? s.week, payload: { who: sp.who, place: pl.id, purpose: 'meet', ...(sp.by ? { by: sp.by } : {}) } });
     lines[0] = `${s.characters[sp.who].firstName} will meet you at ${pl.name}, ${whenText(sp.d!, sp.hour!)}${(sp.w ?? s.week) > s.week ? ' next week' : ''}.`;
   }
   if (o.biz && tapped(s, line) && roll(`${s.seed}|${key}|tape`) < tapeRisk(s, line, !!sp.code)) lines.push(onTape(s, ctx, sp.who, !!sp.code));
