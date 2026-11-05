@@ -649,7 +649,7 @@ function bossLine(tone: DateTone, dt: DateTalk): string {
   switch (tone) {
     case 'charm': return 'You know, this place got a lot better when you walked in.';
     case 'listen': return dt.open ? `You asked about ${TOPIC_TEXT[dt.open] ?? dt.open}. All right, I'll tell you.` : 'Tell me about you. The real stuff.';
-    case 'joke': return 'A fella walks into the Starlight with a lobster on a leash...';
+    case 'joke': return 'A fella walks into a joint on the Boulevard with a lobster on a leash...';
     case 'compliment': return 'That color suits you. I mean it.';
     case 'business': return 'Things are moving on the island. A man has to keep up.';
     case 'honest': return 'I\'ll be straight with you. I\'m not a simple man, and my life isn\'t simple.';
