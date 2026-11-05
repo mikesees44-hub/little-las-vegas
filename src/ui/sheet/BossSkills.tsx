@@ -1,4 +1,5 @@
-import { allocBlock, allocatePoint, bskOf, BSK_WEEK_CAP, focusSkill, nextPerk, PT_XP, setSkillFocus, SKILL_NAME, SKILL_PERKS, SKILLS, type Skill } from '../../engine/bossSkills';
+import { allocBlock, allocatePoint, bossSkillValue, bskOf, BSK_WEEK_CAP, focusSkill, nextPerk, PT_XP, setSkillFocus, SKILL_NAME, SKILL_PERKS, SKILLS, type AnySkill } from '../../engine/bossSkills';
+import { NEW_SKILL_HELP, NEW_SKILLS } from '../../engine/newSkillsCore';
 import type { GameState } from '../../engine/types';
 import { CardHead } from '../components/Layout';
 import { domCard } from '../domain';
@@ -41,6 +42,10 @@ export function BossSkills({ s }: { s: GameState }) {
       <ul className="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3" aria-label="The six skills">
         {SKILLS.map((k) => <SkillCard key={k} s={s} k={k} focus={foc === k} />)}
       </ul>
+      <div className="mt-2 text-[10px] uppercase tracking-[0.25em] text-stone-500">The life's other skills</div>
+      <ul className="mt-1 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3" aria-label="The five other skills" data-testid="bsk-new">
+        {NEW_SKILLS.map((k) => <SkillCard key={k} s={s} k={k} focus={foc === k} help={NEW_SKILL_HELP[k]} />)}
+      </ul>
 
       {b && b.lg.length > 0 && (
         <div className="mt-2" data-testid="bsk-log">
@@ -54,10 +59,10 @@ export function BossSkills({ s }: { s: GameState }) {
   );
 }
 
-function SkillCard({ s, k, focus }: { s: GameState; k: Skill; focus: boolean }) {
+function SkillCard({ s, k, focus, help }: { s: GameState; k: AnySkill; focus: boolean; help?: string }) {
   const { update } = useShell();
   const b = bskOf(s);
-  const v = s.characters[s.playerId].attributes[k];
+  const v = bossSkillValue(s, k);
   const inv = b?.inv[k] ?? 0;
   const px = b?.px[k] ?? 0;
   const block = allocBlock(s, k);
@@ -68,6 +73,7 @@ function SkillCard({ s, k, focus }: { s: GameState; k: Skill; focus: boolean }) 
         <span className="font-semibold text-stone-100">{SKILL_NAME[k]}{focus && <span className="ml-1 text-[10px] text-gold-300">FOCUS</span>}</span>
         <span className="font-display text-lg tabular-nums text-stone-100">{v}</span>
       </div>
+      {help && <div className="text-[10.5px] text-stone-400">{help}</div>}
       <div className="text-[10.5px] text-stone-500">{px} practice · {inv} point{inv === 1 ? '' : 's'} put in{nx ? ` · ${nx.at - inv} more for ${nx.name}` : ' · tree complete'}</div>
       <ol className="mt-1 space-y-0.5" aria-label={`${SKILL_NAME[k]} perks`}>
         {SKILL_PERKS[k].map((p) => {

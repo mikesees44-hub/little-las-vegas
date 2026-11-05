@@ -4,6 +4,7 @@ import {
   spendPoint, suggestPerks, titleOf, tracked, XP_HOWTO, XP_SKILLS, xpOf, xpWants, PERK_LEVELS, type BoardSort, type XpPerk,
 } from '../../engine/crewXp';
 import { displayName } from '../../engine/characters';
+import { NEW_SKILL_NAME, NEW_SKILLS, skillValue } from '../../engine/newSkillsCore';
 import type { Character, GameState } from '../../engine/types';
 import { fmt$, signed } from '../format';
 import { CharLink, Face } from '../components/People';
@@ -92,6 +93,10 @@ export function XpSection({ s, c }: { s: GameState; c: Character }) {
             {XP_SKILLS.map((k) => (
               <button key={k} type="button" className="rounded border border-noir-600 px-1.5 py-0.5 hover:border-gold-500 disabled:opacity-40" disabled={c.attributes[k] >= 100 || !update}
                 onClick={() => update?.((cur) => spendPoint(cur, c.id, k))} data-testid={`xp-point-${k}`}>+2 {SKILL_LABEL[k]} ({c.attributes[k]})</button>
+            ))}
+            {NEW_SKILLS.map((k) => (
+              <button key={k} type="button" className="rounded border border-noir-600 px-1.5 py-0.5 hover:border-gold-500 disabled:opacity-40" disabled={skillValue(c, k) >= 100 || !update}
+                onClick={() => update?.((cur) => spendPoint(cur, c.id, k))} data-testid={`xp-point-${k}`}>+2 {NEW_SKILL_NAME[k]} ({skillValue(c, k)})</button>
             ))}
           </div>
         </div>

@@ -53,6 +53,7 @@ import { RelationsWeb } from '../deeds/RelationsWeb';
 import { DeedFeed } from '../deeds/DeedFeed';
 import { CrewBadge, LoyaltyMeter } from './Loyalty';
 import { BossSkills } from '../sheet/BossSkills';
+import { ManNewSkills } from '../sheet/NewSkills';
 import { GodfatherSection } from '../sheet/GodfatherSection';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
@@ -161,6 +162,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
             <ul className="text-[11px] text-stone-400 space-y-0.5">{SKILLS.map((k) => <li key={k}><span className="text-stone-200">{SKILL_LABEL[k]} {c.attributes[k]}:</span> {SKILL_HELP[k]}</li>)}</ul>
             <div className="mt-1.5"><TraitIcons c={c} labels /></div>
             <ul className="text-[11px] text-stone-500">{c.traits.map((t) => <li key={t}><span className="text-stone-300">{t}:</span> {TRAIT_INFO[t]}</li>)}</ul>
+            <ManNewSkills s={s} c={c} />
             <XpSection s={s} c={c} />
             <AgingSection s={s} c={c} />
           </section>
