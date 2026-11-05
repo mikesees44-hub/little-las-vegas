@@ -30,6 +30,7 @@ import { EventModal } from './components/EventModal';
 import { DeskTop } from './desk/DeskTop';
 import { delegatedAnswers } from '../engine/delegation';
 import { NowResultHost, postNow, ResultQueue } from './deeds/NowResult';
+import { LoyaltyFloaters } from './components/Loyalty';
 import { weekResultCards } from './deeds/weekResults';
 import type { NowResult } from '../engine/deeds/now';
 import { actNow, instant } from '../engine/actNow';
@@ -1145,6 +1146,7 @@ export function App({ startOn = 'title' }: AppProps) {
         <EventModal key={current.iid} s={s} ev={current} index={Math.max(0, outEvents.indexOf(current))} total={outEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       <NowResultHost />
+      <LoyaltyFloaters s={s} />
       {/* One queue, never stacked: a decision or a scene first, then "How they took it", then the argument it opens, then an urgent meeting. */}
       <ResultQueue items={weekResults} blocked={!!current || !!scene || !!reports || cues.length > 0 || night.length > 0 || reels.length > 0} onNext={() => setWeekResults((x) => x.slice(1))} onAll={() => setWeekResults([])} />
       <ReactionsHost s={s} blocked={!!current || !!scene || !!reports || cues.length > 0 || !!s.argue?.live || weekResults.length > 0} />

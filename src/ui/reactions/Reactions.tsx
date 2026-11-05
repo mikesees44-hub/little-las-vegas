@@ -6,6 +6,7 @@ import { Overlay } from '../components/Modal';
 import { useShell } from '../shell/context';
 import { predictChoice, rxName, smoothOptions, smoothOver, dismissReactions, nextReactions, ROLE_LABEL, type Reaction, type ReactionBatch, type SmoothHow } from '../../engine/reactions';
 import type { Choice, EventInstance, GameState } from '../../engine/types';
+import { opinion } from '../../engine/relations';
 import { argueFromBatch, openArgument } from '../../engine/argue';
 
 /**
@@ -130,12 +131,33 @@ export function ReactionsHost({ s, blocked }: { s: GameState; blocked?: boolean 
  */
 export function PredictedReactions({ s, ev, ch, max = 3 }: { s: GameState; ev: EventInstance; ch: Choice; max?: number }) {
   const list = predictChoice(s, ev, ch).slice(0, max);
-  if (!list.length) return null;
+  // Loyalty that moves (GODFATHER §C): the choice's own opinion changes toward you count too, with where his meter lands.
+  const shown = new Set(list.map((r) => r.who));
+  const direct: { who: string; v: number }[] = [];
+  for (const e of ch.effects) {
+    if (e.type !== 'opinion' || e.to !== s.playerId || shown.has(e.from) || !s.characters[e.from]) continue;
+    const d = direct.find((x) => x.who === e.from);
+    if (d) d.v += e.amount;
+    else direct.push({ who: e.from, v: e.amount });
+  }
+  const extra = direct.filter((x) => x.v).slice(0, Math.max(0, max - list.length + 1));
+  if (!list.length && !extra.length) return null;
+  const lands = (who: string, v: number) => {
+    const c = s.characters[who];
+    if (!c || !v) return '';
+    const cur = opinion(s, who, s.playerId);
+    return ` (${cur > 0 ? '+' : ''}${cur} → ${Math.max(-100, Math.min(100, cur + v)) > 0 ? '+' : ''}${Math.max(-100, Math.min(100, cur + v))})`;
+  };
   return (
     <div className="mt-0.5 flex flex-wrap gap-x-2 text-[11px]" data-testid="predicted-reactions">
       {list.map((r) => (
         <span key={r.who} className={TONE[r.tone].text}>
-          {rxName(s, r)} {r.v ? sgn(r.v) : `fear +${r.fear}`}{r.tone === 'furious' ? ', furious' : ''}{r.trait && r.v < 0 ? ` (${r.trait})` : ''}
+          {rxName(s, r)} {r.v ? sgn(r.v) : `fear +${r.fear}`}{r.tone === 'furious' ? ', furious' : ''}{r.trait && r.v < 0 ? ` (${r.trait})` : ''}<span className="text-stone-500">{lands(r.who, r.v)}</span>
+        </span>
+      ))}
+      {extra.map((x) => (
+        <span key={x.who} className={x.v > 0 ? 'text-emerald-300' : 'text-red-300'} data-testid="predicted-loyalty">
+          {s.characters[x.who]!.firstName} {sgn(x.v)}<span className="text-stone-500">{lands(x.who, x.v)}</span>
         </span>
       ))}
     </div>
