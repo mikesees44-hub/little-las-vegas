@@ -260,7 +260,7 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
   const aff = b?.aff ?? clamp(10 + Math.round(op / 4), 0, 40);
   const reasons: Reason[] = [];
   // Easier, by the owner's ask (2026-11-05): a date and asking her out start well up from where they did.
-  const base = what === 'talk' ? 75 : what === 'date' ? 35 : what === 'askOut' ? 22 : what === 'reconcile' ? 18 : 12;
+  const base = what === 'talk' ? 78 : what === 'date' ? 48 : what === 'askOut' ? 35 : what === 'reconcile' ? 28 : what === 'steady' ? 28 : 22;
   if (what !== 'talk' && what !== 'reconcile') {
     // Looks, charm, a ladies' man's practice and appetite at full weight (looks.ts allure); the rest of attraction at half.
     const al = allure(s, boss, c);
@@ -268,7 +268,7 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
     for (const r of attraction(s, c, boss).reasons) if (r.label !== 'Likes them' && r.label !== 'Dislikes them' && !/Charming|roving eye|type|looks|eye/i.test(r.label)) reasons.push({ label: r.label, value: Math.round(r.value * 0.5) });
   }
   reasons.push({ label: `Her feelings: ${affectionWord(aff)}`, value: Math.round((aff - 20) * (what === 'talk' ? 0.3 : 0.6)) });
-  if (op) reasons.push({ label: op > 0 ? 'Thinks well of you' : 'Thinks little of you', value: Math.round(op * 0.2) });
+  if (op) reasons.push({ label: op > 0 ? 'Thinks well of you' : 'Thinks little of you', value: Math.round(op * (op > 0 ? 0.2 : 0.4)) });
   const st = stageOf(s, c.id);
   if (what === 'date') {
     const bonus: Partial<Record<Stage, number>> = { friends: 5, attracted: 10, dating: 20, committed: 25 };
@@ -289,14 +289,14 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
   if (what !== 'talk' && what !== 'reconcile') {
     const sp = married(s, c);
     if (sp) {
-      reasons.push({ label: `Married to ${sp.firstName}`, value: -30 });
+      reasons.push({ label: `Married to ${sp.firstName}`, value: -22 });
       const o = opinion(s, c.id, sp.id);
       if (o < 0) reasons.push({ label: 'An unhappy marriage', value: Math.min(25, Math.round(-o / 2)) });
     }
     const other = seeingSomeoneElse(s, c);
     if (other) reasons.push({ label: `Seeing ${other.firstName} ${other.lastName}`, value: -20 });
     if (married(s, boss)) {
-      reasons.push({ label: 'You are a married man, and she knows it', value: -15 });
+      reasons.push({ label: 'You are a married man, and she knows it', value: -8 });
       if (hasTrait(c, 'Pious')) reasons.push({ label: 'Pious', value: -20 });
       if (hasTrait(c, 'Honest')) reasons.push({ label: 'Honest', value: -10 });
     }
@@ -305,10 +305,17 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
     if (ear && (ear.goal === 'own_place' || ear.goal === 'vegas') && what === 'askOut') reasons.push({ label: 'Keeps her mind on her plans', value: -8 });
     if (ear?.boundaries.includes('no_married') && married(s, boss)) reasons.push({ label: 'Will not see a married man', value: -40 });
   }
-  if (b?.no && s.week - b.no.week < 3) reasons.push({ label: `You asked ${s.week - b.no.week === 0 ? 'this' : s.week - b.no.week === 1 ? 'last' : 'two weeks ago, a'} week`, value: -15 });
+  if (b?.no && s.week - b.no.week < 2) reasons.push({ label: `You asked ${s.week - b.no.week === 0 ? 'this' : 'last'} week`, value: -10 });
+  if (what !== 'talk') {
+    // Power and money: the man who runs the town, and spends like it.
+    const pw = Math.max(0, Math.min(12, Math.round((s.respect - 40) / 4)));
+    if (pw) reasons.push({ label: 'He runs this town, and she knows it', value: pw });
+    const pocket = s.tribute?.acct.personal ?? 0;
+    if (pocket >= 20000) reasons.push({ label: 'He spends like a boss', value: pocket >= 100000 ? 8 : 5 });
+  }
   if (hasTrait(boss, 'Cruel')) reasons.push({ label: 'People say you have a cruel streak', value: -10 });
   const sum = reasons.reduce((a, r) => a + r.value, base);
-  const cap = what === 'talk' ? 0.95 : 0.9;
+  const cap = what === 'talk' ? 0.95 : 0.93;
   return { chance: Math.max(0.05, Math.min(cap, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons.filter((r) => r.value !== 0)] };
 }
 

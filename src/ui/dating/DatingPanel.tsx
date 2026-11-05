@@ -12,6 +12,27 @@ import { PlayCard } from '../components/Layout';
 import { useShell } from '../shell/context';
 import { fmt$ } from '../format';
 import { SingleCards } from './SingleCards';
+import { bestChances } from '../../engine/datingPicks';
+
+/** Your best chances (engine/datingPicks.ts): the women most likely to say yes to the next step, each one tap. */
+function BestChances({ s }: { s: GameState }) {
+  const picks = bestChances(s);
+  if (!picks.length) return null;
+  return (
+    <div className="rounded-md border border-rose-700/40 bg-noir-900/60 p-2.5" data-testid="dating-best">
+      <div className="text-[10px] uppercase tracking-[0.2em] text-rose-300">Your best chances</div>
+      <p className="mb-1 text-[11px] text-stone-500">Who is most likely to say yes to the next step. She still decides.</p>
+      <ul className="space-y-1">
+        {picks.map((p) => (
+          <li key={p.row.id} className="text-xs" data-testid="dating-best-row">
+            <div className="flex flex-wrap items-baseline gap-x-2"><CharLink s={s} id={p.row.id} /><span className="text-stone-500">{p.row.age} · {p.row.stageLabel}</span><span className="tabular-nums text-emerald-300">{Math.round(p.chance * 100)}%</span></div>
+            <ActionCard s={s} action={p.action} compact />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 /**
  * RELATIONSHIPS & DATING: one screen for the boss's love life and the paid
@@ -186,6 +207,7 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
       </div>
       {showSettings && <DatingSettings s={s} />}
       <SingleCards s={s} />
+      <BestChances s={s} />
 
       <nav className="flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label="Relationships & Dating" data-testid="dating-tabs">
         {TABS.map(([k, label]) => (
