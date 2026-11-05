@@ -10,7 +10,7 @@ import { activeAssignments } from './protect';
 import { addOpinion, changeMeter, getRelation, opinion, opinionBreakdown } from './relations';
 import { hashSeed } from './rng';
 import { needsSanction, sanctioned, schemeOdds } from './schemes';
-import { sideOf, type Side } from './sides';
+import { groupOf, GROUP_NAME, GROUP_ORDER, sideOf, type PeopleGroup, type Side } from './sides';
 import type { Character, Effect, GameState, SchemeOptions } from './types';
 
 /**
@@ -291,20 +291,8 @@ export interface PersonView {
   cleared?: number;
 }
 
-/** The family/faction group of a person, in the ledger's order. */
-export const GROUP_ORDER = ['yours', 'manno', 'feldstein', 'kessler', 'philly', 'law', 'town', 'other'] as const;
-export type PeopleGroup = (typeof GROUP_ORDER)[number];
-export const GROUP_NAME: Record<PeopleGroup, string> = {
-  yours: 'Your family', manno: 'The Manno family', feldstein: 'The Feldstein family', kessler: 'The Kessler family', philly: 'Philadelphia',
-  law: 'The law', town: 'The town: officials, the night, civilians', other: 'Others',
-};
-
-export function groupOf(s: GameState, id: string, side = sideOf(s, id)): PeopleGroup {
-  if (side.kind === 'yours') return 'yours';
-  if (side.kind === 'rival' || side.kind === 'philly') return (GROUP_ORDER as readonly string[]).includes(side.factionId) ? side.factionId as PeopleGroup : 'other';
-  if (side.kind === 'law') return 'law';
-  return 'town';
-}
+/** The family/faction group of a person, in the ledger's order (sides.ts holds it: the hit picker groups the same way). */
+export { GROUP_ORDER, GROUP_NAME, groupOf, type PeopleGroup } from './sides';
 
 function rankWord(s: GameState, c: Character): string {
   if (s.rivals.some((r) => r.leaderId === c.id)) return 'Boss';

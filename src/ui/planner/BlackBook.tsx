@@ -39,7 +39,7 @@ export function BlackBook({ s, onChar, onPhone, onOrder }: { s: GameState; onCha
     <div className="llv-paper-plain mx-auto max-w-[1100px] rounded p-3 sm:p-4" data-testid="black-book">
       {pages}
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-display text-xl">The black book</h3>
+        <h3 className="font-display text-xl">People <span className="text-sm opacity-60">(the black book)</span></h3>
         <input className="w-40 rounded border border-[#2a2118]/40 bg-[#fffaf0] px-2 py-1 text-[12px]" placeholder="Find a name…" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Find a name" data-testid="bb-search" />
       </div>
       <div className="mt-2 flex flex-wrap gap-1" role="group" aria-label="Who">

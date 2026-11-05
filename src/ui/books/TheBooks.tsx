@@ -99,7 +99,7 @@ export function TheBooks({ s }: { s: GameState }) {
         )}
       </Panel>
 
-      <Panel title="Envelopes" note={`Every money line of the ledger, week by week, as posted. ${weeks.length} week${weeks.length === 1 ? '' : 's'} in the books.`} id="books-envelopes">
+      <Panel title="Ledger by week" note={`Every money line of the ledger, week by week, as posted (the weekly envelope itself is Money › The envelope). ${weeks.length} week${weeks.length === 1 ? '' : 's'} in the books.`} id="books-envelopes">
         <div className="flex flex-wrap gap-2 text-xs">
           <label className="flex items-center gap-1">Person
             <select className="bg-noir-900 border border-noir-700 rounded px-1 py-0.5 max-w-[10rem]" value={who} onChange={(e) => setWho(e.target.value)} data-testid="filter-person">

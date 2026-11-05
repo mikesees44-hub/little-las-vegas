@@ -624,6 +624,9 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (g.to === 'sheet') setSheet(g.id);
     else if (g.to === 'map') { setRoute({}); focusMap({ level: 'wildwood', ...(g.district ? { district: g.district } : {}) }); }
     else if (g.to === 'office') { setRoute({}); setOfficeView('office'); }
+    else if (g.to === 'planner') window.dispatchEvent(new CustomEvent('llv-open-planner', { detail: { tab: g.page } }));
+    else if (g.to === 'menu') setCtxMenu({ id: g.id, category: g.category, x: 80, y: 120 });
+    else if (g.to === 'hit') plannerApi.plan('murder', g.id);
     // Done to a person: the family's chart, where every face opens "Deal with…".
     else openRoute({ panel: 'borgata', section: 'chart' });
   }

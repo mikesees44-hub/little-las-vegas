@@ -17,6 +17,7 @@ import { postNow } from '../deeds/NowResult';
 import { useEscape } from '../keys';
 import { PhoneWindow } from '../phone/PhoneWindow';
 import { useShell } from '../shell/context';
+import { wherePath } from '../shell/nav';
 import { AudienceList } from './AudienceList';
 import { BlackBook } from './BlackBook';
 import { BriefFolder } from './BriefFolder';
@@ -110,17 +111,17 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
     { id: 'brief', label: inTheRanks(s) ? 'The word' : 'The brief', short: inTheRanks(s) ? 'Word' : 'Brief' },
     ...(inTheRanks(s) ? [] : [{ id: 'audience' as const, label: 'Audience', short: 'Audience', n: reqs.filter((r) => !r.booked).length }]),
     { id: 'datebook', label: 'Datebook', short: 'Datebook' },
-    { id: 'book', label: 'Black book', short: 'Rolodex' },
+    { id: 'book', label: 'People', short: 'People' },
     { id: 'orders', label: 'Standing orders', short: 'Orders' },
   ];
 
   return (
     <>
       {tab && (
-        <Overlay z={1165} className="llv-desk-set overflow-y-auto overscroll-contain" role="dialog" aria-modal="true" aria-label="The Don's book" data-testid="planner">
+        <Overlay z={1165} className="llv-desk-set overflow-y-auto overscroll-contain" role="dialog" aria-modal="true" aria-label="The datebook" data-testid="planner">
           <div className="mx-auto w-full max-w-[1120px] px-2 pb-8 pt-2 sm:px-4 sm:pt-3">
             <div className="flex items-center justify-between gap-1.5 sm:gap-2">
-              <div className="llv-tabs-book" role="tablist" aria-label="The Don's book">
+              <div className="llv-tabs-book" role="tablist" aria-label="The datebook">
                 {tabs.map((t) => (
                   <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className="llv-tab-book" onClick={() => setTab(t.id)} data-testid={`planner-tab-${t.id}`}>
                     <span className="sm:hidden">{t.short}</span><span className="hidden sm:inline">{t.label}</span>{t.n ? <span className="llv-tab-book-n" aria-label={`${t.n} waiting`}>{t.n}</span> : null}
@@ -131,6 +132,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
             </div>
             <div className="pt-0">
               {tab === 'brief' && brief && old && <BriefFolder s={s} b={brief} old={old} onGo={go} onOld={doRec} />}
+              {tab === 'audience' && <p className="mx-auto max-w-[900px] px-1 pb-1 text-right text-[11.5px] text-[#e9d6b0]/80" data-testid="audience-place">The same people are on <button type="button" className="underline-offset-2 hover:underline" onClick={() => { close(); shell.go('you.court'); }}>{wherePath('you.court')} ▸</button></p>}
               {tab === 'audience' && <AudienceList s={s} reqs={reqs} keeper={gatekeeper(s)} gate={gate} onGrant={grant} onTurn={(r) => land(turnAway(s, r))} onChar={(id) => sheet.open(id)}
                 gateApi={{
                   onRole: (role, compare) => act((x) => setGateRole(x, role, !!compare), compare ? 'For a month, somebody else keeps your door' : 'Standing order: who keeps your door'),
@@ -152,7 +154,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
                 }} />
               )}
               {tab === 'book' && <BlackBook s={s} onChar={(id) => sheet.open(id)} onPhone={(p) => setPhone(p)} onOrder={(a) => orders.queue(a)} />}
-              {tab === 'orders' && <StandingOrders s={s} act={act} onOrder={(a) => orders.queue(a)} />}
+              {tab === 'orders' && <StandingOrders s={s} act={act} onOrder={(a) => orders.queue(a)} onPlace={(k) => { close(); shell.go(k); }} />}
             </div>
           </div>
         </Overlay>
@@ -169,7 +171,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
 export function PlannerButton({ s, onOpen }: { s: GameState; onOpen: () => void }) {
   const due = briefDue(s);
   return (
-    <button type="button" onClick={onOpen} data-testid="planner-button" title="The Don's book: the morning brief, who wants an audience, the datebook, the black book, your standing orders"
+    <button type="button" onClick={onOpen} data-testid="planner-button" title="The datebook (the Don's book): the morning brief, who wants an audience, your days, People (the black book), your standing orders"
       aria-label={`The book${due ? ': today\'s brief is waiting' : ''}`}
       className={`relative h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap hover:border-gold-500 ${due ? 'border-gold-600/70 text-gold-200' : 'border-noir-600 text-stone-300'}`}>
       ▥<span className="hidden sm:inline"> Book</span>

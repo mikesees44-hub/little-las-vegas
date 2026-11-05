@@ -17,7 +17,7 @@ export function TakeLine({ s }: { s: GameState }) {
     <div className={`mt-1.5 rounded border px-1.5 py-1 ${pending ? 'border-amber-500/70 bg-amber-900/10' : 'border-noir-700'}`} data-testid="take-line">
       <div className="flex items-baseline justify-between gap-2">
         <span className="text-[10px] uppercase tracking-widest text-gold-400/80">The envelope</span>
-        <button type="button" className="text-[10px] text-gold-300 hover:underline" onClick={() => ui.openAudience(rep.id)} data-testid="take-open">{pending ? 'he is waiting ▸' : 'the office ▸'}</button>
+        <button type="button" className="text-[10px] text-gold-300 hover:underline" onClick={() => ui.openAudience(rep.id)} data-testid="take-open" title="Opens the envelope meeting; the envelope's own page is Money › The envelope">{pending ? 'he is waiting ▸' : 'the office ▸'}</button>
       </div>
       <div className="leading-snug text-stone-300">
         {ub ? ub.firstName : 'The count'} brought <b className="text-gold-300 tabular-nums">{fmt$(rep.presented)}</b>

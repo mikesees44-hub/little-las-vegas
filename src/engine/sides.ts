@@ -224,6 +224,23 @@ export function groupBySide(s: GameState, ids: readonly string[]): SideGroup[] {
   return [...groups.values()].sort((a, b) => KIND_ORDER[a.side.kind] - KIND_ORDER[b.side.kind] || a.label.localeCompare(b.label));
 }
 
+/* ---------------- grouping by family (the people ledger, the hit picker) ---------------- */
+
+/** The family/faction group of a person, in the ledger's order (PEOPLE_LEDGER §1). */
+export const GROUP_ORDER = ['yours', 'manno', 'feldstein', 'kessler', 'philly', 'law', 'town', 'other'] as const;
+export type PeopleGroup = (typeof GROUP_ORDER)[number];
+export const GROUP_NAME: Record<PeopleGroup, string> = {
+  yours: 'Your family', manno: 'The Manno family', feldstein: 'The Feldstein family', kessler: 'The Kessler family', philly: 'Philadelphia',
+  law: 'The law', town: 'The town: officials, the night, civilians', other: 'Others',
+};
+
+export function groupOf(s: GameState, id: string, side = sideOf(s, id)): PeopleGroup {
+  if (side.kind === 'yours') return 'yours';
+  if (side.kind === 'rival' || side.kind === 'philly') return (GROUP_ORDER as readonly string[]).includes(side.factionId) ? side.factionId as PeopleGroup : 'other';
+  if (side.kind === 'law') return 'law';
+  return 'town';
+}
+
 /* ---------------- plotting warnings ---------------- */
 
 export interface PlotWarning { tone: 'bad' | 'warn'; text: string; who?: string }
@@ -285,4 +302,40 @@ export function plotTargets(s: GameState, kind: TargetedScheme, filter: SideFilt
   const RANK_ORDER: Record<string, number> = { boss: 0, underboss: 1, consigliere: 2, capo: 3, soldier: 4, associate: 5, civilian: 6 };
   ids.sort((a, b) => RANK_ORDER[s.characters[a].rank] - RANK_ORDER[s.characters[b].rank] || s.characters[a].lastName.localeCompare(s.characters[b].lastName));
   return groupBySide(s, ids);
+}
+
+export interface FamilyGroup {
+  key: PeopleGroup;
+  label: string;
+  /** The side of the group's first man (its colour and emblem). */
+  side: Side;
+  ids: string[];
+  /** For a hit: officials and the law, off limits by Philadelphia's rule (shown, not offered). */
+  protectedIds: string[];
+}
+
+/**
+ * THE HIT PICKER's targets (STREAMLINE_2 §3.4): the same people as
+ * plotTargets, grouped by family in a fixed order: Your Family, Manno,
+ * Feldstein, Kessler, Philadelphia, the law, the town, others.
+ */
+export function plotTargetsByFamily(s: GameState, kind: TargetedScheme, filter: SideFilter = 'all'): FamilyGroup[] {
+  const by = new Map<PeopleGroup, string[]>();
+  for (const g of plotTargets(s, kind, filter)) {
+    for (const id of g.ids) {
+      const k = groupOf(s, id);
+      (by.get(k) ?? by.set(k, []).get(k)!).push(id);
+    }
+  }
+  const leaders = new Set(s.rivals.map((r) => r.leaderId));
+  return GROUP_ORDER.filter((k) => by.has(k)).map((k) => {
+    const ids = by.get(k)!.sort((a, b) => Number(leaders.has(b)) - Number(leaders.has(a)));
+    return {
+      key: k,
+      label: s.rivals.find((r) => r.id === k)?.name ?? GROUP_NAME[k],
+      side: sideOf(s, ids[0]),
+      ids,
+      protectedIds: kind === 'murder' ? ids.filter((id) => !!s.characters[id].office || s.characters[id].faction === 'law') : [],
+    };
+  });
 }

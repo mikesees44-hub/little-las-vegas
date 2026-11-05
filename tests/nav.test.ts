@@ -48,6 +48,34 @@ describe('the menus: six homes, every screen in exactly one', () => {
     expect(resolveRoute({ panel: 'borgata', section: 'take' })).toEqual({ home: 'money', key: 'holdings.take' });
   });
 
+  it('a duplicate is one place plus links: Who handles what, the standing orders, the audience, the books', async () => {
+    const { wherePath } = await import('../src/ui/shell/nav');
+    expect(wherePath('borgata.chain')).toBe('Family › Council & chain of command › Who handles what');
+    expect(wherePath('holdings.take')).toMatch(/^Money › The envelope/);
+    const { CHAIN_PATH } = await import('../src/ui/lieutenants/Lieutenants');
+    const { ORDERS_PATH } = await import('../src/ui/planner/StandingOrders');
+    expect(CHAIN_PATH).toBe(wherePath('borgata.chain'));
+    expect(ORDERS_PATH).toBe(wherePath('borgata.orders'));
+    const s = newGame('nav-dupes');
+    // The modal is the same component as the place, and says where the place is.
+    const { WhoHandlesWhat, ChainOfCommandPlace } = await import('../src/ui/lieutenants/Lieutenants');
+    const modal = renderToString(createElement(WhoHandlesWhat, { s, update: () => {}, onClose: () => {} }));
+    const place = renderToString(createElement(ChainOfCommandPlace, { s }));
+    expect(modal).toContain('data-testid="lt-settings-place"');
+    expect(modal).toContain(wherePath('borgata.chain')!.replace(/&/g, '&amp;'));
+    const firstId = /data-testid="([^"]+)"/.exec(place)![1];
+    expect(modal).toContain(`data-testid="${firstId}"`);
+    // The book's Standing orders page links to the Family's pages.
+    const { StandingOrders } = await import('../src/ui/planner/StandingOrders');
+    const so = renderToString(createElement(StandingOrders, { s, act: () => {}, onOrder: () => {}, onPlace: () => {} }));
+    expect(so).toContain('data-testid="so-place-chain"');
+    expect(so).toContain('data-testid="so-place-orders"');
+    // The books' per-week money lines are the ledger, not "the envelope".
+    const books = readFileSync(join(__dirname, '../src/ui/books/TheBooks.tsx'), 'utf8');
+    expect(books).toContain('title="Ledger by week"');
+    expect(books).toContain('id="books-envelopes"');
+  });
+
   it('every place has a name, an icon and a one-line subtitle; names are unique', () => {
     const labels = NAV_ITEMS.map((it) => it.label);
     expect(new Set(labels).size).toBe(labels.length);
@@ -187,5 +215,38 @@ describe('the chain of command is a place', () => {
     expect(items.length).toBe(1);
     expect(items[0].keys[0]).toBe('borgata.council');
     expect(resolveRoute('borgata.chain').key).toBe('borgata.chain');
+  });
+});
+
+describe('naming rules (STREAMLINE_2 §3.5)', () => {
+  // Imperative verbs an action may start with: the hub's eight and the precise verbs under them.
+  const VERB = /^(Talk|Pay|Order|Plan|Buy|Travel|Hurt|Protect|Adopt|Answer|Ask|Audit|Back|Befriend|Build|Call|Charter|Check|Choose|Climb|Cultivate|Dare|Deal|Decide|Dinner|Discipline|Disinherit|Do|Equip|Find|Fund|Give|Go|Handle|Have|Hear|Hire|Hit|Hold|Host|Hunt|Keep|Lay|Learn|Lend|Let|Lobby|Make|Manage|Move|Name|Offer|Open|Partner|Plant|Push|Put|Raise|Read|Retain|Run|See|Seat|Sell|Set|Shop|Sign|Spend|Spread|Start|Take|Upgrade|Use|Watch|Work|Arrange)\b/;
+  it('every thing to do starts with an imperative verb; its old label is kept to be found', async () => {
+    const { ACTION_ENTRIES } = await import('../src/ui/shell/actionEntries');
+    for (const e of ACTION_ENTRIES) expect(e.label, e.label).toMatch(VERB);
+    const { findAll } = await import('../src/ui/shell/find');
+    const s = newGame('names-was');
+    // "Dirty work: a one-off job" is "Do dirty work: …" now; the old words still find it.
+    expect(findAll(s, 'molehunt').some((r) => r.kind === 'do' && /mole/i.test(r.title))).toBe(true);
+  });
+
+  it('places are nouns, never verbs; one name per thing', () => {
+    for (const it of NAV_ITEMS) {
+      expect(it.label, it.label).not.toMatch(VERB);
+      for (const v of it.views ?? []) expect(v, `${it.label} › ${v}`).not.toMatch(/^(Hold|Walk|Plan|Pay|Talk)\b/);
+    }
+    const labels = PANELS.flatMap((p) => p.sections.map((x) => x.label));
+    expect(labels).not.toContain('The Succession');
+    expect(labels).not.toContain('Hold court');
+    // "Ambitions" are the three CK goals only, not the house's big moves.
+    expect(NAV_ITEMS.flatMap((it) => it.views ?? [])).not.toContain('Ambitions');
+  });
+
+  it('old names still find the renamed screens', async () => {
+    const { findAll } = await import('../src/ui/shell/find');
+    const s = newGame('names-old');
+    for (const [q, key] of [['hold court', 'you.court'], ['walk the boardwalk', 'you.walk'], ['edicts', 'borgata.orders'], ['the succession', 'house.court']] as const) {
+      expect(findAll(s, q, { limit: 50 }).some((r) => r.kind === 'screen' && r.go.to === 'route' && r.go.key === key), q).toBe(true);
+    }
   });
 });

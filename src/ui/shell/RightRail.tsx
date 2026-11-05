@@ -139,7 +139,7 @@ export function GoalsCard({ goals, onShow }: { goals: GuidedGoal[]; onShow: (g: 
   return (
     <section className="rounded-md border border-gold-600/40 bg-noir-900/80 p-2 text-[12px]" data-testid="goals-card">
       <div className="flex items-baseline justify-between">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Goals · {label}</div>
+        <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">First steps · {label}</div>
         <button type="button" className="text-[10px] text-stone-400 hover:text-gold-300" onClick={() => setList((l) => !l)}>{done}/{goals.length} {list ? '▴' : '▸'}</button>
       </div>
       {cur ? (

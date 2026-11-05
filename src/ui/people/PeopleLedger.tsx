@@ -2,16 +2,15 @@ import { pregnancyKnown } from '../../engine/dating';
 import { useMemo, useState } from 'react';
 import type { NowResult } from '../../engine/deeds/now';
 import {
-  BEEF_LABEL, GROUP_NAME, GROUP_ORDER, hitLine, ledgerActions, ownHitConsequences, peopleLedger, readAct, sitOdds, SUSPECT, testOdds,
+  BEEF_LABEL, GROUP_NAME, GROUP_ORDER, hitLine, ledgerActions, peopleLedger, readAct, sitOdds, SUSPECT, testOdds,
   type BeefLevel, type Meter, type PeopleFilter, type PeopleGroup, type PersonView, type ReadOp,
 } from '../../engine/peopleRead';
 import { candidatesFor, inquiryView, sleuth } from '../../engine/protect';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { Empty, PageHeader, Section } from '../components/Layout';
-import { Modal } from '../components/Modal';
 import { useOrders } from '../components/Orders';
 import { Face } from '../components/People';
-import { usePlanner } from '../components/Schemes';
+import { OwnHitConfirm, usePlanner } from '../components/Schemes';
 import { postNow } from '../deeds/NowResult';
 import { domClass, type Domain } from '../domain';
 import { useShell } from '../shell/context';
@@ -57,7 +56,6 @@ export function PeopleLedger({ s, initialMode = 'read' }: { s: GameState; initia
   const [mode, setMode] = useState<Mode>(initialMode);
   const [open, setOpen] = useState<string | undefined>();
   const [more, setMore] = useState<Record<string, boolean>>({});
-  const [confirm, setConfirm] = useState<string | undefined>();
   const { plan } = usePlanner();
   const filter: PeopleFilter = { q, group, suspected, fight };
   const all = useMemo(() => peopleLedger(s), [s]);
@@ -65,7 +63,8 @@ export function PeopleLedger({ s, initialMode = 'read' }: { s: GameState; initia
   const total = all.reduce((a, g) => a + g.rows.length, 0);
   const nSusp = all.reduce((a, g) => a + g.rows.filter((v) => Math.max(v.flip.v, v.steal.v) >= SUSPECT).length, 0);
   const nFight = all.reduce((a, g) => a + g.rows.filter((v) => v.beef.level !== 'none').length, 0);
-  const hit = (id: string) => (s.characters[id]?.faction === 'player' ? setConfirm(id) : plan('murder', id));
+  // One flow: the planner opens on him, and asks first if he is one of your own (SchemePlanner).
+  const hit = (id: string) => plan('murder', id);
 
   return (
     <div className="rounded-lg border border-noir-700 bg-noir-900 p-3 text-stone-200 sm:p-4" data-testid="people-ledger">
@@ -101,7 +100,6 @@ export function PeopleLedger({ s, initialMode = 'read' }: { s: GameState; initia
           );
         })}
       </div>
-      {confirm && <OwnHitConfirm s={s} id={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const id = confirm; setConfirm(undefined); plan('murder', id); }} />}
     </div>
   );
 }
@@ -259,24 +257,5 @@ function Detail({ s, v, onHit }: { s: GameState; v: PersonView; onHit: () => voi
   );
 }
 
-/** The confirm before a hit on one of your own: what it costs, said plainly. Nobody of yours dies without your word. */
-export function OwnHitConfirm({ s, id, onYes, onNo }: { s: GameState; id: string; onYes: () => void; onNo: () => void }) {
-  const c = s.characters[id];
-  const h = hitLine(s, id);
-  return (
-    <Modal onClose={onNo}>
-      <div className="space-y-2 p-4" data-testid="own-hit-confirm">
-        <div className="text-[10px] uppercase tracking-[0.3em] text-red-300">One of your own</div>
-        <h2 className="font-display text-xl text-gold-300">Plan a hit on {c?.firstName} {c?.lastName}?</h2>
-        <p className="text-[12.5px] text-stone-300">Nobody of yours dies unless you choose it. If you go on, the planner opens: you still pick the team and the place, and the order is not given until you give it there. Odds with your two best free men: {Math.round(h.chance * 100)}%; heat {h.heat}.</p>
-        <ul className="list-disc space-y-0.5 pl-5 text-[12px] text-stone-300">
-          {ownHitConsequences(s, id).map((x, i) => <li key={i}>{x}</li>)}
-        </ul>
-        <div className="flex justify-end gap-2 pt-1">
-          <button type="button" className="btn-ghost text-xs" onClick={onNo} data-testid="own-hit-no">No</button>
-          <button type="button" className="btn border border-blood-500 text-xs text-red-300 hover:bg-blood-500/20" onClick={onYes} data-testid="own-hit-yes">Yes, plan it</button>
-        </div>
-      </div>
-    </Modal>
-  );
-}
+/** The confirm before a hit on one of your own lives with the hit picker (components/Schemes.tsx). */
+export { OwnHitConfirm };

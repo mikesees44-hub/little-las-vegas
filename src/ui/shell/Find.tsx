@@ -3,7 +3,7 @@ import { Overlay } from '../components/Modal';
 import type { GameState } from '../../engine/types';
 import { SideChip, SideFilterBar } from '../components/Side';
 import { sideMatches, type SideFilter } from '../../engine/sides';
-import { GoalMenu } from '../plans/GoalMenu';
+import { VerbMenu } from '../plans/GoalMenu';
 import { FIND_KIND_LABEL, findAll, type FindResult } from './find';
 
 const ICON = { do: '✦', screen: '▤', person: '☺', place: '⌖' } as const;
@@ -33,14 +33,14 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
       <div className="panel w-full max-w-xl overflow-hidden border-gold-600/60 shadow-2xl shadow-black/80" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Find">
         <div className="flex items-center gap-2 border-b border-noir-700 px-3 py-2">
           <span className="text-gold-400" aria-hidden>⌕</span>
-          <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} placeholder="Find a person, a place, a screen, or what you want to do…"
+          <input ref={input} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} placeholder="Do something (“pay Sal”), or find a person, a place, a screen…"
             className="min-w-0 flex-1 bg-transparent text-sm text-stone-100 outline-none placeholder:text-stone-500" aria-label="Find" data-testid="find-input" />
           {q.trim().length >= 2 && <SideFilterBar value={who} onChange={setWho} />}
           <button type="button" className="text-xs text-stone-400 hover:text-gold-300" onClick={onClose}>Esc</button>
         </div>
         <div className="max-h-[60vh] overflow-y-auto p-1.5" role="listbox">
           {q.trim().length < 2 ? (
-            <GoalMenu s={s} open={open} onPick={onPick} />
+            <VerbMenu s={s} open={open} onPick={onPick} />
           ) : !hits.length ? (
             <p className="px-2 py-3 text-xs text-stone-400">Nothing by that name. Try another word.</p>
           ) : hits.map((r, i) => {
@@ -53,7 +53,7 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
                   className={`flex w-full items-start gap-2 rounded px-2 py-1.5 text-left ${i === sel ? 'bg-gold-500/15' : 'hover:bg-noir-800'}`}>
                   <span className="mt-0.5 w-4 shrink-0 text-center text-gold-500" aria-hidden>{ICON[r.kind]}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-sm text-stone-100">{r.title}</span>{r.side && <SideChip side={r.side} />}</span>
+                    <span className="flex min-w-0 items-center gap-1.5"><span className="truncate text-sm text-stone-100">{r.title}</span>{r.verb && <span className="shrink-0 rounded border border-gold-600/50 px-1 text-[10px] text-gold-300" data-testid="find-verb">{r.verb}</span>}{r.side && <SideChip side={r.side} />}</span>
                     <span className="block truncate text-[11px] text-stone-500">{r.sub}</span>
                   </span>
                 </button>

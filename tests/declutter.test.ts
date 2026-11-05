@@ -326,3 +326,49 @@ describe('declutter: a calm frame', () => {
     expect(html.split('data-testid="club-on-map"').length).toBe(2);
   });
 });
+
+describe('declutter: Do something… by verb (STREAMLINE_2 §3.4)', () => {
+  it('every thing to do has exactly one verb, and every verb has at least three', async () => {
+    const { entriesByVerb, verbOfEntry, VERBS } = await import('../src/ui/plans/actionVerbs');
+    const by = entriesByVerb();
+    expect(Object.values(by).reduce((a, x) => a + x.length, 0)).toBe(ACTION_ENTRIES.length);
+    for (const e of ACTION_ENTRIES) expect(VERBS.some((v) => v.id === verbOfEntry(e)), e.label).toBe(true);
+    for (const v of VERBS) expect(by[v.id].length, v.id).toBeGreaterThanOrEqual(3);
+    expect(VERBS.map((v) => v.label)).toEqual(['Talk', 'Pay', 'Order', 'Plan', 'Buy', 'Travel', 'Hurt', 'Protect']);
+    // The goals are kept beside the verbs: the same entries, another sort.
+    const { entriesByGoal } = await import('../src/ui/plans/actionGoals');
+    expect(Object.values(entriesByGoal()).reduce((a, x) => a + x.length, 0)).toBe(ACTION_ENTRIES.length);
+  });
+
+  it('a verb and a name ("pay sal") finds the man with his menu open on that verb', async () => {
+    const { newGame } = await import('../src/engine/newGame');
+    const { findAll } = await import('../src/ui/shell/find');
+    const s = newGame('declutter-verbs');
+    const ub = Object.values(s.characters).find((c) => c.alive && c.rank === 'underboss')!;
+    const pay = findAll(s, `pay ${ub.firstName}`);
+    expect(pay[0].kind).toBe('person');
+    expect(pay[0].go).toEqual({ to: 'menu', id: ub.id, category: 'business' });
+    expect(pay[0].verb).toBe('pay');
+    const hit = findAll(s, `whack ${ub.lastName}`);
+    expect(hit.some((r) => r.go.to === 'menu' && r.go.id === ub.id && r.go.category === 'pressure')).toBe(true);
+    // A plain word is still a plain search.
+    expect(findAll(s, 'lend').every((r) => !r.verb)).toBe(true);
+  });
+
+  it('the front page shows Recommended now, the eight verb tabs, and the goals one tap away', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { newGame } = await import('../src/engine/newGame');
+    const { VerbMenu } = await import('../src/ui/plans/GoalMenu');
+    const { VERBS } = await import('../src/ui/plans/actionVerbs');
+    const { GOALS } = await import('../src/ui/plans/actionGoals');
+    const s = newGame('declutter-verbmenu');
+    const html = renderToString(createElement(VerbMenu, { s, onPick: () => {} }));
+    expect(html).toContain('data-testid="verb-menu"');
+    for (const v of VERBS) expect(html).toContain(`data-testid="verb-tab-${v.id}"`);
+    expect(html).toContain('data-testid="menu-view-goals"');
+    expect(html).toContain('data-testid="verb-list-talk"');
+    const goals = renderToString(createElement(VerbMenu, { s, onPick: () => {}, initialView: 'goals' }));
+    for (const g of GOALS) expect(goals).toContain(`data-testid="goal-tab-${g.id}"`);
+  }, 60_000);
+});

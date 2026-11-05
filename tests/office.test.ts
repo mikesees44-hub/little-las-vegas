@@ -246,3 +246,23 @@ describe("the Boss's Office room", () => {
     }
   });
 });
+
+describe('the Office: every object is a door to a place, and says which (STREAMLINE_2 §4)', () => {
+  it('every hotspot that leads to a place opens one resolveRoute finds, and its tooltip names it', async () => {
+    const { hotspotKey, hotspotOpens } = await import('../src/ui/office/hotspots');
+    const { resolveRoute, wherePath } = await import('../src/ui/shell/nav');
+    let places = 0;
+    for (const h of HOTSPOTS) {
+      const k = hotspotKey(h);
+      expect(hotspotOpens(h), h.id).toMatch(/^Opens /);
+      if (!k) continue;
+      places++;
+      const r = resolveRoute(k);
+      expect(r.home, `${h.id} → ${k}`).toBeDefined();
+      expect(r.key, `${h.id} → ${k}`).toBeDefined();
+      expect(hotspotOpens(h)).toContain(wherePath(k)!);
+    }
+    expect(places).toBeGreaterThanOrEqual(6);
+    expect(hotspotOpens(HOTSPOTS.find((h) => h.id === 'envelope')!)).toMatch(/Money › The envelope/);
+  });
+});

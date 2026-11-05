@@ -257,6 +257,10 @@ describe('easier options', () => {
     const { FindPalette } = await import('../src/ui/shell/Find');
     const f = renderToString(createElement(FindPalette, { s, onPick: () => {}, onClose: () => {} }));
     expect(f).toContain('data-testid="goal-menu"');
-    for (const g of GOALS) expect(f).toContain(`data-testid="goal-tab-${g.id}"`);
+    // The five goals are kept: "What do you want?" beside the verb tabs.
+    expect(f).toContain('data-testid="menu-view-goals"');
+    const { VerbMenu } = await import('../src/ui/plans/GoalMenu');
+    const g5 = renderToString(createElement(VerbMenu, { s, onPick: () => {}, initialView: 'goals' }));
+    for (const g of GOALS) expect(g5).toContain(`data-testid="goal-tab-${g.id}"`);
   }, 60_000);
 });

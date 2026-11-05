@@ -183,7 +183,7 @@ export function OrdersTray({ s }: { s: GameState }) {
   return (
     <div className="panel p-3" data-testid="orders-tray">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="panel-title text-base">This week's orders</div>
+        <div className="panel-title text-base">Orders this week</div>
         <div className="text-xs text-stone-400 tabular-nums">
           After them: Family money <span className={q.familyLeft < 0 ? 'text-red-400' : 'text-gold-300'}>{fmt$(q.familyLeft)}</span> · your pocket <span className="text-amber-200">{fmt$(q.pocketLeft)}</span>
         </div>

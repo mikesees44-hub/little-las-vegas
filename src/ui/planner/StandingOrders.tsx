@@ -7,6 +7,10 @@ import { setAutoBrief } from '../../engine/planner/state';
 import { setGateRole } from '../../engine/planner/gate';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
+import { CHAIN_PATH } from '../lieutenants/Lieutenants';
+
+/** Where the Family's standing orders page lives (nav.ts wherePath). */
+export const ORDERS_PATH = 'Family › Standing orders';
 
 type Act = (f: (s: GameState) => GameState, what: string) => void;
 
@@ -15,7 +19,7 @@ type Act = (f: (s: GameState) => GameState, what: string) => void;
  * system that owns it (lieutenants, the trusted advisors, the envelope's split, the edicts, the brief); the
  * split and the edicts are orders like anywhere else (they take hold when the week turns).
  */
-export function StandingOrders({ s, act, onOrder }: { s: GameState; act: Act; onOrder: (a: PlayerAction) => void }) {
+export function StandingOrders({ s, act, onOrder, onPlace }: { s: GameState; act: Act; onOrder: (a: PlayerAction) => void; onPlace?: (key: string) => void }) {
   const so = standingOrders(s);
   const sel = 'rounded border border-[#2a2118]/40 bg-[#fffaf0] px-1 py-0.5 text-[12px]';
   const row = 'flex flex-wrap items-center justify-between gap-2 border-b border-dashed border-[#2a2118]/20 py-1.5';
@@ -28,6 +32,13 @@ export function StandingOrders({ s, act, onOrder }: { s: GameState; act: Act; on
     <div className="llv-paper-plain mx-auto max-w-[900px] rounded p-3 sm:p-5 text-[13px]" data-testid="standing-orders">
       <h3 className="font-display text-xl">Standing orders</h3>
       <p className="text-[12px] text-[#4a3b28]">Every rule you have set, in one place. Change one here and it is changed everywhere.</p>
+      {onPlace && (
+        <p className="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#6b5a44]" data-testid="so-places">
+          <span>Also on the Family's pages:</span>
+          <button type="button" className="underline-offset-2 hover:underline" onClick={() => onPlace('borgata.chain')} data-testid="so-place-chain">{CHAIN_PATH} ▸</button>
+          <button type="button" className="underline-offset-2 hover:underline" onClick={() => onPlace('borgata.orders')} data-testid="so-place-orders">{ORDERS_PATH} ▸</button>
+        </p>
+      )}
       {!so.low && (
         <section className="mt-3">
           <h4 className="llv-brief-h">How much you hand off</h4>

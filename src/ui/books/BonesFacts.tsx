@@ -1,9 +1,11 @@
 import { bonesLine, hasBones, JOB_INFO, needsBones } from '../../engine/bones';
 import type { Character, GameState } from '../../engine/types';
 import { ActionCard } from '../components/Orders';
+import { usePlanner } from '../components/Schemes';
 
 /** "Made his bones: 1961, the Garden Pier job" — and, for a prospect, the jobs that would get him there. */
 export function BonesFacts({ s, c }: { s: GameState; c: Character }) {
+  const { plan } = usePlanner();
   const job = s.bones?.jobs.find((j) => j.prospectId === c.id);
   const favor = s.bones?.waived[c.id] !== undefined;
   const prospect = c.faction === 'player' && c.rank === 'associate' && !c.specialty;
@@ -25,7 +27,8 @@ export function BonesFacts({ s, c }: { s: GameState; c: Character }) {
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <ActionCard s={s} action={{ kind: 'bones', op: { op: 'assign', charId: c.id, kind: 'heist' } }} />
           <ActionCard s={s} action={{ kind: 'bones', op: { op: 'assign', charId: c.id, kind: 'collection' } }} />
-          {s.schemes.some((x) => x.owner === 'player' && x.kind === 'murder') && <ActionCard s={s} action={{ kind: 'bones', op: { op: 'assign', charId: c.id, kind: 'hit' } }} />}
+          {s.schemes.some((x) => x.owner === 'player' && x.kind === 'murder') ? <ActionCard s={s} action={{ kind: 'bones', op: { op: 'assign', charId: c.id, kind: 'hit' } }} />
+            : <button type="button" className="btn-ghost text-left text-xs" onClick={() => plan('murder')} data-testid="bones-plan-hit" title="Opens the hit planner (targets by family). Once the hit is under way, put him on the team here.">Plan a hit first, then put him on the team…</button>}
           <ActionCard s={s} action={{ kind: 'bones', op: { op: 'favor', charId: c.id } }} />
         </div>
       )}

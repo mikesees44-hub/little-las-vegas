@@ -37,6 +37,8 @@ export interface NavItemDef {
   sub: string;
   /** Labels for the views (defaults to the registry labels). */
   views?: string[];
+  /** Old names and other words players type for it (§3.5: labels change, ids don't; Find still matches). */
+  words?: string;
 }
 
 export interface NavGroupDef {
@@ -76,9 +78,9 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   // The front page of the Desk is the one list (App.tsx: BossDesk): what needs you, what is handled. Below it, three places.
   desk: [
     { items: [
-      { keys: ['ops.progress', 'ops.missions', 'ops.plan'], icon: '⚙', label: 'Jobs', sub: 'What your people are working on, the big cases stage by stage, and planning a new job.', views: ['Under way', 'The big cases', 'Plan a job'] },
+      { keys: ['ops.progress', 'ops.missions', 'ops.plan'], icon: '⚙', label: 'Jobs', sub: 'What your people are working on, the big cases stage by stage, and planning a new job.', views: ['Under way', 'The big cases', 'A new job'], words: 'plan a job plan new schemes plans operations' },
       { keys: ['chronicle.book', 'chronicle.all', 'chronicle.mine', 'chronicle.street', 'chronicle.family', 'chronicle.papers', 'chronicle.stories', 'chronicle.reports'], icon: '✎', label: 'The news', sub: 'Your story, the street, the family, the papers, the storylines and each week\'s report.', views: ['Your File', 'Everything', 'Yours', 'The street', 'Family', 'The papers', 'Storylines', 'Weekly reports'] },
-      { keys: ['you.court'], icon: '☏', label: 'Hold court', sub: 'Office hours: the people who come to see the boss.' },
+      { keys: ['you.court'], icon: '☏', label: 'Audience', sub: 'Office hours: the people who come to see the boss.', words: 'hold court office hours who wants to see you the door visitors' },
     ] },
   ],
   org: [
@@ -86,7 +88,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['borgata.rise', 'borgata.progress', 'borgata.membership', 'borgata.place'], icon: '▲', label: 'The Rise', sub: 'Grow the family: the ladder, your capos and their men, levels and focus, who is ready for more, getting made.', views: ['The Rise', 'Coming up', 'Getting made', 'Your place'] },
       { keys: ['borgata.chart', 'borgata.capos', 'borgata.mymen', 'borgata.eat', 'borgata.protect', 'borgata.night'], icon: '⚑', label: 'Your men', sub: 'The chart, the capos and their men, who is hungry for work, who guards whom, the civilian payroll and the night people.', views: ['Who\'s who', 'Capos & soldiers', 'Take care of them', 'Let them eat', 'Guards & inquiries', 'The night people'] },
       { keys: ['borgata.council', 'borgata.chain'], icon: '♜', label: 'Council & chain of command', sub: 'Five seats, one job each; and who handles what on their own: the underboss, the consigliere, each capo.', views: ['The seats', 'Who handles what'] },
-      { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Rules for the whole family, and orders you give yourself.' },
+      { keys: ['borgata.orders'], icon: '☰', label: 'Standing orders', sub: 'Family rules for everyone, and the standing orders you give yourself.', words: 'edicts rules orders' },
       { keys: ['borgata.grievances', 'diplomacy.front'], icon: '☍', label: 'Trouble inside', sub: 'Who feels passed over, who is ganging up, and the front boss when there is one.', views: ['Grudges & factions', 'The front boss'] },
     ] },
   ],
@@ -105,7 +107,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   map: [
     { items: [
       { keys: ['town.happening', 'town.attached', 'town.women'], icon: '☷', label: 'The street', sub: 'The Boardwalk\'s people on their own: stories, the talk, who\'s with whom, and the women who earn.', views: ['What\'s happening', 'Who\'s with whom', 'Women of the town'] },
-      { keys: ['you.walk'], icon: '⇢', label: 'Walk the boardwalk', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.' },
+      { keys: ['you.walk'], icon: '⇢', label: 'The boardwalk on foot', sub: 'Go out as yourself: walk into any place, buy it or run it, meet people.', words: 'walk the boardwalk walk the town go out' },
       { keys: ['town.hoods'], icon: '⌂', label: 'Neighborhoods', sub: 'Each neighborhood: who lives and works there, who owns what, the police.' },
       { keys: ['town.nightlife', 'town.showbiz', 'town.night'], icon: '☾', label: 'Nightlife, showbiz & the Ears', sub: 'The people of the night, the madams\' houses, your acts and your label, and the Ears. Everyone decides for themselves.', views: ['Nightlife', 'Showbiz', 'The Ears & the Madam'] },
       { keys: ['town.underbelly'], icon: '⚓', label: 'The underbelly', sub: 'Outfits that prey on people, and what you do about them.' },
@@ -127,9 +129,9 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
       { keys: ['you.store', 'you.pocket', 'you.spend', 'you.possessions', 'you.lifestyle'], icon: '♠', label: 'The Store', sub: 'Everything money buys, from a flop house to a yacht. Spend your pocket on yourself; share the wealth; take the whole family on vacation.', views: ['The Store', 'Your pocket', 'Everything, as a list', 'The good life (yours)', 'How you rule'] },
       { keys: ['house.tree', 'house.houses'], icon: '♔', label: 'Your house', sub: 'Your wife, your children, your house, and every family\'s tree back to the old country.', views: ['Family tree', 'Every house'] },
       { keys: ['house.marriages'], icon: '♥', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
-      { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'] },
+      { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'], words: 'the succession heir shadow court' },
       { keys: ['house.activities'], icon: '✦', label: 'Dinners & outings', sub: 'Host a dinner, a feast, a trip: the guests think better of you.' },
-      { keys: ['house.decisions', 'house.legacy'], icon: '★', label: 'The house\'s name', sub: 'Big moves for the house, what it is known for, and renown to spend.', views: ['Ambitions', 'Legacy & renown'] },
+      { keys: ['house.decisions', 'house.legacy'], icon: '★', label: 'The house\'s name', sub: 'Big moves for the house, what it is known for, and renown to spend.', views: ['Big moves', 'Legacy & renown'], words: 'decisions ambitions' },
       { keys: ['nav.settings', 'nav.help'], icon: '⚙', label: 'Settings & help', sub: 'Motion, text speed, when the game pauses; what should I do, the glossary, the keys.', views: ['Settings', 'Help & keys'] },
     ] },
   ],
@@ -193,6 +195,16 @@ for (const it of NAV_ITEMS) for (const k of [...it.keys, ...(it.aliases ?? [])])
 /** The item a key (or an alias of it) lives in. */
 export function itemOf(key: string): NavItem | undefined {
   return BY_KEY[key];
+}
+
+/** "Money › The envelope › This week's envelope": where a key lives, home first (the "Opens …" of a link). */
+export function wherePath(key: string): string | undefined {
+  const k = canonicalKey(key.split('#')[0]);
+  const it = k ? BY_KEY[k] : undefined;
+  if (!it || !k) return undefined;
+  const i = it.keys.indexOf(k);
+  const view = it.keys.length > 1 ? it.views?.[i] ?? sectionDef(k)?.label : undefined;
+  return [HOMES_BY_ID[it.home].short, it.label, view].filter(Boolean).join(' › ');
 }
 
 /** Registry keys an item shows (aliases resolve to the item's first key). */
