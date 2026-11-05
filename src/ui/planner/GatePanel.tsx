@@ -83,7 +83,7 @@ export function GatePanel({ s, v, api }: { s: GameState; v: GateView; api: GateA
       <details className="mt-1.5 border-t border-dashed border-[#2a2118]/25 pt-1" data-testid="gate-checks">
         <summary className="cursor-pointer text-[12px] font-semibold text-[#4a3b28]">Cross-check the man at your door</summary>
         <div className="mt-1 grid gap-2 sm:grid-cols-3">
-          <div>
+          <div className="min-w-0">
             <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#6b5a44]">Ask another source · 1 hour</div>
             {v.sources.length ? (
               <ul className="space-y-1">
@@ -96,12 +96,12 @@ export function GatePanel({ s, v, api }: { s: GameState; v: GateView; api: GateA
               </ul>
             ) : <p className="text-[11.5px] text-[#6b5a44]">Nobody else to ask.</p>}
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#6b5a44]">A quiet envelope on his wife</div>
             <p className="text-[11.5px]" data-testid="gate-wife">{v.wife.text}</p>
             {v.wife.id && <button type="button" className="llv-ink-btn mt-0.5 !px-2 !py-0.5 text-[11.5px]" onClick={() => api.onChar(v.wife.id!)} data-testid="gate-wife-open">Her card ▸</button>}
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="text-[10.5px] uppercase tracking-[0.14em] text-[#6b5a44]">Somebody else, a month, then compare</div>
             {v.compare.running ? (
               <p className="text-[11.5px]" data-testid="gate-compare-running">{v.compare.running.name}'s book against the new one: {v.compare.running.left ? `${v.compare.running.left} more week${v.compare.running.left === 1 ? '' : 's'}` : 'settles at the week\'s turn'}.</p>
