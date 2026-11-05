@@ -92,6 +92,8 @@ describe('the houses at the start', () => {
     // The nightlife cast (and their households) roll their own dice after the houses too.
     const night = new Set<string>(Object.keys(plain.nightlife?.people ?? {}));
     for (const id of [...night]) { const w = plain.characters[id]; const fam = plain.nightlife?.people[id]?.fam; if (fam?.partnerId) night.add(fam.partnerId); if (w?.spouseId) night.add(w.spouseId); for (const k of w?.childrenIds ?? []) night.add(k); }
+    // The showbiz bench (showbiz.ts) is made last, on its own dice too.
+    for (const id of Object.keys(plain.showbiz?.acts ?? {})) night.add(id);
     for (const c of Object.values(plain.characters)) if (c.childrenIds?.some((k) => night.has(k)) || (c.spouseId && night.has(c.spouseId))) night.add(c.id);
     for (const c of Object.values(plain.characters).filter((x) => !roster.has(x.id) && !night.has(x.id))) {
       const now = s.characters[c.id];
