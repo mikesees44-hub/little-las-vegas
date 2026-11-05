@@ -1,5 +1,6 @@
 import { assignFaces } from './faces';
 import { desertMult, myMenWeek, noteChoice } from './myMen';
+import { eatWeek } from './eat';
 import { ocWeek } from './oceanCity';
 import { econEventSource, econWeek } from './econ';
 import { hoodWeek } from './hood';
@@ -471,6 +472,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     // The women arrange the matches (matchmakers.ts): her proposal, her silence taken as a yes.
     matchmakersWeek(ctx);
     myMenWeek(ctx);
+    // Let them eat (eat.ts): who is hungry, the pitches they bring, the fed and the starving.
+    eatWeek(ctx);
     spendWeek(ctx);
     storeWeek(ctx);
     ocWeek(ctx);
