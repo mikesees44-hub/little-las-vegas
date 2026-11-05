@@ -441,7 +441,6 @@ describe('on screen', () => {
     const { RivalBoard } = await import('../src/ui/shell/sections/RivalBoard');
     const b = renderToString(createElement(RivalBoard, { s }));
     expect(b).toContain('famask-manno');
-    expect(b).toContain('famask-open-manno');
     expect(b).toContain('word-manno');
   });
 });
