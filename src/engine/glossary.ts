@@ -29,7 +29,7 @@ const usd = (n: number) => `$${n.toLocaleString('en-US')}`;
 export const GLOSSARY: GlossaryEntry[] = [
   {
     id: 'heat.local', term: 'Local heat', section: 'Pressure',
-    short: `The Wildwood police and the county Prosecutor's attention. From ${HEAT_THRESHOLD} they start to raid (more often the higher it goes, every few weeks by ${HEAT_FULL}): a warrant for a night, a place padlocked, cash seized.`,
+    short: `The Wildwood police and the county Prosecutor's attention. At ${HEAT_THRESHOLD}+ they start to raid (more often the higher it goes, every few weeks by ${HEAT_FULL}): a warrant for a night, a place padlocked, cash seized.`,
     long: 'Shakedowns, hits, rackets and pushing into districts raise it. A quiet week cools it; envelopes downtown (the fixer, a bribed sergeant) cool it faster. Above 55 it is "hot": plan for a raid.',
   },
   {
@@ -39,7 +39,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   },
   {
     id: 'heat.federal', term: 'Federal heat', section: 'Pressure',
-    short: `The FBI and the IRS. From ${HEAT_THRESHOLD} they start arresting your men. Unwashed cash above ${usd(UNWASHED_SAFE)} feeds it every week.`,
+    short: `The FBI and the IRS. At ${HEAT_THRESHOLD}+ they start arresting your men. Unwashed cash above ${usd(UNWASHED_SAFE)} feeds it every week.`,
     long: 'Heists across state lines, bank jobs, dirty money in shoeboxes and big names in the papers raise it. It cools slowly; the fixer\'s friends at the federal building help.',
   },
   {
