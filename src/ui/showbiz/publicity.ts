@@ -8,6 +8,7 @@
  * pg01-pg10: the color glamour shots (singers and dancers first; pg02 left out for looking like a real star).
  * pw01-pw24: the boardwalk snapshots (pw02 left out for the same reason; pw09 goes with the sepia set).
  * vg_stage: the painted vocal group at the mike, the banner for a vocal group's big-room gig.
+ * bs_stage: the sepia still of a Black woman singer at a club mike, the banner for a Black woman singer's big-room gig.
  */
 export const PUBLICITY_URLS: Record<string, string | undefined> = {
   pb01: undefined, pb02: undefined, pb03: undefined, pb04: undefined, pb05: undefined, pb06: undefined,
@@ -18,7 +19,7 @@ export const PUBLICITY_URLS: Record<string, string | undefined> = {
   pw08: undefined, pw09: undefined, pw10: undefined, pw11: undefined, pw12: undefined, pw13: undefined,
   pw14: undefined, pw15: undefined, pw16: undefined, pw17: undefined, pw18: undefined, pw19: undefined,
   pw20: undefined, pw21: undefined, pw22: undefined, pw23: undefined, pw24: undefined,
-  vg_stage: undefined,
+  vg_stage: undefined, bs_stage: undefined,
 };
 
 export function publicityUrl(k: string | undefined): string | undefined {

@@ -154,9 +154,12 @@ function GigsTab({ s }: { s: GameState }) {
   const playing = acts.filter((a) => a.gig);
   const group = playing.find((a) => a.k === 'group' && a.gig!.r >= 1 && s.characters[a.id]?.ethnicity !== 'Black');
   const vg = publicityUrl('vg_stage');
+  const diva = playing.find((a) => a.k === 'singer' && a.gig!.r >= 1 && s.characters[a.id]?.gender === 'F' && s.characters[a.id]?.ethnicity === 'Black');
+  const bs = publicityUrl('bs_stage');
   return (
     <div className="space-y-3">
       {group && vg && <img src={vg} alt={`${billOf(s, group)} at ${group.gig!.room}`} className="max-h-48 w-full rounded object-cover" data-testid="showbiz-group-banner" />}
+      {diva && bs && <img src={bs} alt={`${billOf(s, diva)} at ${diva.gig!.room}`} className="max-h-48 w-full rounded object-cover" data-testid="showbiz-singer-banner" />}
       <Section title="Playing now" testid="showbiz-playing">
         {playing.length ? (
           <ul className="space-y-1 text-[12px]">{playing.map((a) => <li key={a.id}><b className="text-stone-100">{billOf(s, a)}</b> at {a.gig!.room} ({RUNGS[a.gig!.r].name}), to week {a.gig!.until}{a.wk ? ` · grossing ${fmtMoney(a.wk)} a week` : ''}</li>)}</ul>
