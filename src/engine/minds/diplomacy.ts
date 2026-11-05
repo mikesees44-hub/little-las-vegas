@@ -17,6 +17,7 @@ import { toneEffect, type Dialogue, type Line, type Tone } from './dialogue';
 import { clamp } from './state';
 import { clean } from './talk';
 import { mindView } from './view';
+import { lastTimeLine, noteSit, recordSummary, trustMult, wordWith } from './familyWord';
 
 /**
  * THE SIT-DOWN WITH A FAMILY. A real back-and-forth with another family's
@@ -284,6 +285,8 @@ export function stanceOf(s: GameState, rival: string): Stance | undefined {
   if (r.kind !== 'philly' && ph) reasons.push({ label: ph >= 0 ? 'Philadelphia thinks well of you' : 'Philadelphia thinks little of you', value: Math.round(-ph * 10) });
   const heat = Math.round((s.heat.local + s.heat.federal) / 2);
   if (heat > 50) reasons.push({ label: 'You bring heat', value: (heat - 50) * 25 });
+  const word = wordWith(s, r.id).score;
+  if (word !== 50) reasons.push({ label: word > 50 ? `Your word is good with them (${word})` : `Your word is ${word < 25 ? 'worthless' : 'shaky'} with them (${word})`, value: Math.round((50 - word) * 15) });
   if (hasTrait(c, 'Greedy')) reasons.push({ label: 'Greedy', value: 600 });
   if (hasTrait(c, 'Patient')) reasons.push({ label: 'Patient', value: -200 });
   if (hasTrait(c, 'Hot-headed')) reasons.push({ label: 'Hot-headed', value: 300 });
@@ -342,18 +345,18 @@ export function termValue(s: GameState, rival: string, t: Term): number {
       const fair = partnerWeekly(s, r.id as RivalId);
       return Math.round((fair - amt) * wk * 0.6 + (op > 0 ? op * 10 : op * 20) + 200 - (heat > 40 ? (heat - 40) * 15 : 0));
     }
-    case 'tribute': return Math.round(amt * wk * 0.8);
+    case 'tribute': return Math.round(amt * wk * 0.8 * trustMult(s, r.id));
     case 'cash': return t.dir === 'you' ? amt : -Math.round(amt * (amt > Math.max(0, r.money) * 0.5 ? 1.6 : 1.1));
     case 'concession': {
       const home = t.district === r.homeDistrict;
       return t.dir === 'you' ? amt * 400 : -amt * 450 * (home ? 2 : 1);
     }
-    case 'favor': return t.dir === 'you' ? 800 : -900;
+    case 'favor': return t.dir === 'you' ? Math.round(800 * trustMult(s, r.id)) : -900;
     case 'handsoff': {
       const d = t.district ?? '';
       const contested = inf(s, d, 'player') >= 8 && inf(s, d, r.id) >= 8;
       return Math.round(t.dir === 'you'
-        ? (250 + 30 * inf(s, d, 'player') + (contested ? 400 : 0)) * (wk / 26)
+        ? (250 + 30 * inf(s, d, 'player') + (contested ? 400 : 0)) * (wk / 26) * trustMult(s, r.id)
         : -(300 + 40 * inf(s, d, r.id) + (contested ? 400 : 0)) * (wk / 26));
     }
   }
@@ -492,6 +495,12 @@ export function openSitDown(s: GameState, rival: string): SitDown | undefined {
 }
 
 function openingLine(s: GameState, st: Stance, ask: Term[] | undefined): string {
+  const last = lastTimeLine(s, st.rival);
+  const head = openingHead(s, st, ask);
+  return last ? `${last} ${head}` : head;
+}
+
+function openingHead(s: GameState, st: Stance, ask: Term[] | undefined): string {
   const want = ask?.length ? ` Here's what I want: ${describeDeal(s, st.rival, ask)}.` : '';
   if (st.war) return st.war.score < -20 ? `You're losing, and you know it.${want}` : st.war.score > 20 ? `All right. Nobody's making money with this going on.${want}` : `This thing between us costs everybody.${want}`;
   if (st.opinion >= 25) return `Good to see you. Sit, sit.${want}`;
@@ -699,6 +708,7 @@ function scriptedLine(s: GameState, st: Stance, sd: SitDown, move: BossMove, wor
   if (move.tone === 'stall') return pick(['Think fast. My patience has a bottom.', 'Take your time. Not too much.'], key);
   if (/\b(war|fight|shooting|peace|truce)\b/.test(t)) return st.war ? (st.war.score < 0 ? 'You want peace? Peace costs. You\'re the one bleeding.' : 'Nobody likes a war. Least of all the people paying for it.') : 'There\'s no war. Let\'s keep it that way.';
   if (/\b(money|pay|cash|cut|envelope|weekly)\b/.test(t)) return st.ratio >= 1 ? 'Money talks. Yours is whispering.' : 'Money I understand. Make me an offer.';
+  if (/\b(word|promise|trust|last time)\b/.test(t)) { const w = wordWith(s, st.rival).score; return w >= 58 ? 'Your word\'s been good with me. That counts for something here.' : w < 35 ? 'Your word? I\'ve seen what your word is worth.' : 'I don\'t know your word yet. Today we find out.'; }
   if (/\b(philly|philadelphia|the table)\b/.test(t)) return philly(s) >= 20 ? 'I know Philadelphia likes you. You don\'t have to remind me.' : 'Philadelphia don\'t sit at this table. We do.';
   if (/\b(district|ground|corner|boardwalk|street|territory)\b/.test(t)) return st.contested.length ? 'We both want the same corners. That\'s the whole problem.' : 'I got my corners, you got yours.';
   if (sd.anger >= 50) return pick(['I\'m losing my patience.', 'Get to the point.'], key);
@@ -738,6 +748,7 @@ export function diploPersona(s: GameState, rival: string, sd?: SitDown): string 
   lines.push(`YOU ARE: ${displayName(c)}, boss of the ${FACTION_NAMES[r.id]} ${r.kind === 'philly' ? 'family in Philadelphia, who sits over the Shore' : 'family'}. Traits: ${c.traits.join(', ') || 'none in particular'}.${v ? ` Mood: ${v.moodText}.` : ''}`);
   lines.push(`Your family: money ${fmtMoney(r.money)}, muscle ${r.muscle}/100; your strength is ${st.ratio >= 1.15 ? 'greater than' : st.ratio <= 0.87 ? 'less than' : 'about even with'} his. You want to ${r.goal}.`);
   lines.push(`What you think of the boss across the table: ${st.opinion >= 0 ? '+' : ''}${st.opinion} (-100 hate .. +100 friend).`);
+  lines.push(`Your record with him: ${recordSummary(s, r.id)}. Bring up the last sit-down and whether he kept his word, if there is one.`);
   if (st.war) lines.push(`You are AT WAR with him over ${s.districts.find((d) => d.id === st.war!.district)?.name ?? 'a district'}; war score ${st.war.score} (negative: you are winning).`);
   if (r.feud) lines.push('There is a blood feud between your families.');
   const pacts = (s.talks?.pacts ?? []).filter((p) => p.until > s.week && ((p.a === 'player' && p.b === r.id) || (p.b === 'player' && p.a === r.id)));
@@ -897,6 +908,7 @@ export function shakeOn(input: GameState, sd: SitDown): ShakeResult {
   const said = describeDeal(s, r.id, terms);
   const text = `You and ${displayName(c)} shook on it: ${said}.`;
   logTalk(s, text, 'pact', c.id);
+  noteSit(s, r.id, { how: 'deal', terms: said, ...(sd.insults ? { insults: sd.insults } : {}) });
   journal(s, { t: `Sat down with ${fam} and shook on a deal`, x: `${said}. ${sd.round} exchanges across the table with ${displayName(c)}.`, p: [c.id], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts', mine: 1, m: s.money - m0, r: changes });
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `A sit-down with ${fam}: ${said}.`, kind: 'rival' });
   return { state: s, ok: true, text, changes };
@@ -918,6 +930,8 @@ export function closeSitDown(input: GameState, sd: SitDown): GameState {
   if (op) addOpinion(s, c.id, s.playerId, op > 0 ? 'A good sit-down' : 'A bad sit-down', op, 1);
   const how = sd.end === 'walkout' ? `${c.firstName} walked out` : sd.end === 'left' ? 'you walked out' : 'no deal';
   const text = `A sit-down with ${displayName(c)} of ${fam}: ${how}.`;
+  ensureTalks(s);
+  noteSit(s, r.id, { how: sd.end === 'walkout' ? 'walkout' : sd.end === 'left' ? 'left' : 'done', ...(sd.insults ? { insults: sd.insults } : {}) });
   logTalk(s, text, 'talk', c.id);
   journal(s, { t: `Sat down with ${fam}: ${how}`, x: `${sd.round} exchanges.${op ? ` His opinion of you ${op > 0 ? '+' : ''}${op}.` : ''}${sd.insults ? ' He will remember the insults.' : ''}`, p: [c.id], c: 'rivals', src: 'talk', mine: 1 });
   return s;
@@ -927,5 +941,6 @@ export function closeSitDown(input: GameState, sd: SitDown): GameState {
 export function sitHeader(s: GameState, sd: SitDown): string {
   const st = stanceOf(s, sd.rival);
   if (!st) return '';
-  return `Thinks ${st.opinion >= 0 ? '+' : ''}${st.opinion} of you · bends ${st.bend}${st.war ? ` · war score ${st.war.score}` : ''} · ${st.ratio >= 1.15 ? 'stronger than you' : st.ratio <= 0.87 ? 'weaker than you' : 'about your strength'}`;
+  const w = wordWith(s, sd.rival);
+  return `Thinks ${st.opinion >= 0 ? '+' : ''}${st.opinion} of you · your word ${w.score} (${w.text}) · bends ${st.bend}${st.war ? ` · war score ${st.war.score}` : ''} · ${st.ratio >= 1.15 ? 'stronger than you' : st.ratio <= 0.87 ? 'weaker than you' : 'about your strength'}`;
 }

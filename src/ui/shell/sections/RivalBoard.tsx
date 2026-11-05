@@ -13,6 +13,7 @@ import { usePlanner } from '../../components/Schemes';
 import { useState } from 'react';
 import { useShell } from '../../shell/context';
 import { canSitDown, rivalOf } from '../../../engine/minds/diplomacy';
+import { recordOf, wordWith } from '../../../engine/minds/familyWord';
 import { FamilyTalk } from '../../minds/FamilyTalk';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
@@ -58,6 +59,18 @@ export function RivalBoard({ s }: { s: GameState }) {
                 <div className="text-[11px] text-stone-500">Wants to <span className="text-stone-300">{r.goal}</span> · muscle {r.muscle}{r.kind === 'mob' ? ` · ${fmt$(r.money)}` : ''}</div>
                 {war && <div className="text-[11px] text-red-300">At war · score {war.score}</div>}
                 {r.feud && <div className="text-[11px] text-red-300">Blood feud</div>}
+                {rivalOf(s, r.id) && (() => {
+                  const w = wordWith(s, r.id);
+                  const rec = recordOf(s, r.id);
+                  const sit = rec?.sits[rec.sits.length - 1];
+                  return (
+                    <div className="text-[11px] text-stone-400" data-testid={`word-${r.id}`} title={w.parts.map((p) => `${p.label}: ${p.value > 0 ? '+' : ''}${p.value}`).join('\n') || 'No record either way yet'}>
+                      Your word with them: <b className={w.score >= 58 ? 'text-emerald-300' : w.score < 43 ? 'text-red-300' : 'text-stone-200'}>{w.score} ({w.text})</b>
+                      {rec && (rec.kept || rec.broken || rec.refused) ? <span> · kept {rec.kept}, broken {rec.broken}{rec.refused ? `, refused ${rec.refused}` : ''}</span> : null}
+                      {sit && <span> · last sit-down wk {sit.w}: {sit.how === 'deal' ? 'a deal' : sit.how === 'walkout' ? 'he walked out' : sit.how === 'left' ? 'you walked out' : 'no deal'}</span>}
+                    </div>
+                  );
+                })()}
                 {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
                 {shell.update && rivalOf(s, r.id) && leader.alive && (() => {
                   const can = canSitDown(s, r.id);
