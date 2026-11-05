@@ -10,6 +10,7 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { DoneMark, PlayCard } from '../components/Layout';
 import { Face } from '../components/People';
 import { displayName } from '../../engine/characters';
+import { consiglierePick, counselor, notRoutine } from '../../engine/delegation';
 import { DeskClock } from '../components/DeskClock';
 import { AssetImg } from '../hood/AssetImg';
 import { domainOf, domainOfText, domClass, type Domain } from '../domain';
@@ -294,6 +295,15 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
 /** "Ready to advance?": what is unanswered and what it becomes, the orders that run, what is known to cost. */
 export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onAnswer }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean; onAnswer?: (iid: string, choiceId: string) => void }) {
   const r = readyReview(s, ui);
+  // Who settles what's left: the consigliere (or the underboss), on the small things; the big ones stay the boss's.
+  const man = counselor(s);
+  const handOff = r.unanswered.map((u) => {
+    const ev = s.pendingEvents.find((e) => e.iid === u.iid);
+    const why = ev ? notRoutine(s, ev) : 'it is gone';
+    const pick = ev && !why ? consiglierePick(s, ev) : undefined;
+    return { iid: u.iid, why, pick };
+  });
+  const settleable = handOff.filter((h) => h.pick);
   return (
     <Modal onClose={onClose}>
       <div className="p-4 sm:p-5 space-y-3" data-testid="ready-review">
@@ -304,12 +314,30 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
         {r.unanswered.length > 0 && (
           <div data-testid="ready-unanswered">
             <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Not decided — this is what happens</div>
-            <ul className="mt-1 space-y-0.5 text-[12px]">{r.unanswered.map((u) => <li key={u.iid}><span className="text-stone-200">{u.title}</span> <span className="text-stone-500">→</span> <span className="text-amber-200">{u.becomes}</span> <TableButton s={s} subject={{ kind: 'event', iid: u.iid }} onChoose={onAnswer ? (c) => onAnswer(u.iid, c) : undefined} testid="ready-table" /></li>)}</ul>
+            {onAnswer && settleable.length > 0 && (
+              <button type="button" className="btn-gold mt-1 w-full text-sm" data-testid="ready-settle-all"
+                onClick={() => { for (const h of settleable) onAnswer(h.iid, h.pick!.choiceId); }}>
+                Let {man ? man.firstName : 'your people'} settle the {settleable.length} small {settleable.length === 1 ? 'one' : 'ones'} ▸
+              </button>
+            )}
+            <ul className="mt-1 space-y-1 text-[12px]">{r.unanswered.map((u) => {
+              const h = handOff.find((x) => x.iid === u.iid);
+              return (
+                <li key={u.iid}>
+                  <span className="text-stone-200">{u.title}</span> <span className="text-stone-500">→</span> <span className="text-amber-200">{u.becomes}</span> <TableButton s={s} subject={{ kind: 'event', iid: u.iid }} onChoose={onAnswer ? (c) => onAnswer(u.iid, c) : undefined} testid="ready-table" />
+                  <div className="text-[11px]">
+                    {h?.pick && onAnswer
+                      ? <button type="button" className="text-gold-300 underline decoration-dotted" onClick={() => onAnswer(u.iid, h.pick!.choiceId)} data-testid="ready-settle">Let {h.pick.by} settle it: "{h.pick.label}"</button>
+                      : <span className="text-stone-500">Yours to decide{h?.why ? `: ${h.why}` : ''}.</span>}
+                  </div>
+                </li>
+              );
+            })}</ul>
           </div>
         )}
         {r.mornings.length > 0 && (
           <div data-testid="ready-mornings">
-            <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Capos' requests you haven't answered</div>
+            <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Capos' requests you haven't answered: if you advance, each capo settles it his own way</div>
             <ul className="mt-1 space-y-0.5 text-[12px]">{r.mornings.map((m) => <li key={m.key}><span className="text-stone-200">{m.title}</span> <span className="text-stone-500">→ his way:</span> <span className="text-stone-300">{m.becomes}</span></li>)}</ul>
           </div>
         )}
