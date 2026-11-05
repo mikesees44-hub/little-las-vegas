@@ -113,7 +113,7 @@ function DayView({ s, page, reqs, api, onNav, onToday }: { s: GameState; page: D
                           {e.count && <span className="shrink-0 text-[10.5px] font-bold text-[#a3271d]">{e.count}</span>}
                           <ConfStamp conf={e.conf} />
                         </span>
-                        {e.dur > 0 && <span className="block text-[10.5px] text-[#6b5a44]">{formatClock(e.h)} – {formatClock(e.h + e.dur)}{e.clash && <span className="ml-1 font-semibold text-[#a3271d]" data-testid="book-clash">· clashes with {e.clash}</span>}</span>}
+                        {e.dur > 0 && <span className="block text-[10.5px] text-[#6b5a44]">{formatClock(e.h)} – {formatClock(e.h + e.dur)}{e.by && <span className="ml-1" data-testid="book-by">· booked by {e.by}</span>}{e.clash && <span className="ml-1 font-semibold text-[#a3271d]" data-testid="book-clash">· clashes with {e.clash}</span>}</span>}
                       </button>
                       {sel?.entry === e.id && <EntryCard s={s} e={e} api={api} onClose={() => setSel(undefined)} />}
                     </div>
@@ -158,6 +158,7 @@ function EntryCard({ s, e, api, onClose }: { s: GameState; e: BookEntry; api: Da
       <div className="flex items-start gap-1.5"><InkDot dom={e.dom} /><b className={e.hidden ? 'llv-hidden-ink' : ''} data-shown="1">{e.title}</b></div>
       {e.sub && <p className={`text-[12px] text-[#4a3b28] ${e.hidden ? 'llv-hidden-ink' : ''}`} data-shown="1">{e.sub}</p>}
       {e.hidden && <p className="text-[11px] italic text-[#3d2a7a]">Written in the ink only you can read.</p>}
+      {e.by && <p className="text-[11px] text-[#6b5a44]" data-testid="entry-by">Booked by {e.by}.</p>}
       {e.count && <p className="text-[11.5px] text-[#a3271d]">It lands {e.count}.{e.conf ? ` The house rates it: ${e.conf}.` : ''}</p>}
       {e.done && <p className="text-[12px]"><span className="llv-tick">✓</span> {e.done.r}</p>}
       <div className="mt-1.5 flex flex-wrap justify-end gap-1.5">

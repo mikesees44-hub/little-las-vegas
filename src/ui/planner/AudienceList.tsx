@@ -6,6 +6,8 @@ import { formatClock } from '../../engine/timeCost';
 import type { GameState } from '../../engine/types';
 import { Face, InkBar } from './ink';
 import { SlotPicker } from './SlotPicker';
+import { GatePanel, type GateApi } from './GatePanel';
+import type { GateView } from '../../engine/planner/gate';
 
 const C_CLOSE = '#7a4a8c';
 const C_DESP = '#a3271d';
@@ -17,10 +19,12 @@ const C_MONEY = '#2f7a4c';
  * and two buttons: give him an hour (now, or a slot in the datebook) or turn him away (what he will do
  * about it is said before the click).
  */
-export function AudienceList({ s, reqs, keeper, onGrant, onTurn, onChar }: {
+export function AudienceList({ s, reqs, keeper, gate, gateApi, onGrant, onTurn, onChar }: {
   s: GameState;
   reqs: AudienceReq[];
   keeper: Gatekeeper;
+  gate?: GateView;
+  gateApi?: GateApi;
   onGrant: (r: AudienceReq, at: Slot | 'now') => void;
   onTurn: (r: AudienceReq) => void;
   onChar: (id: string) => void;
@@ -32,13 +36,14 @@ export function AudienceList({ s, reqs, keeper, onGrant, onTurn, onChar }: {
         <h3 className="font-display text-xl">Requests for an audience</h3>
         <span className="text-[12px] text-[#6b5a44]">{reqs.length} waiting · an hour each</span>
       </div>
+      {gate && gateApi && <div className="mt-2"><GatePanel s={s} v={gate} api={gateApi} /></div>}
       <p className="text-[12.5px] text-[#4a3b28]" data-testid="audience-keeper">{keeper.line} The order is his: <b style={{ color: C_CLOSE }}>closeness</b>, <b style={{ color: C_DESP }}>desperation</b> and <b style={{ color: C_MONEY }}>money</b>, and his own thumb on the scale.</p>
       {!reqs.length && <p className="mt-4 text-center text-[13px] text-[#6b5a44]">Nobody at the door. Enjoy the quiet.</p>}
       <ol className="mt-3 space-y-2">
         {reqs.map((r, i) => {
           const o = open?.key === r.key ? open.what : undefined;
           return (
-            <li key={r.key} className="rounded border border-[#2a2118]/20 bg-[#fffaf0]/70 p-2" data-testid={`aud-row-${i}`} data-key={r.key} data-score={r.score}>
+            <li key={r.key} className={`rounded border p-2 ${r.held ? 'border-[#a3271d]/50 bg-[#fbe9e2]/80' : 'border-[#2a2118]/20 bg-[#fffaf0]/70'}`} data-testid={`aud-row-${i}`} data-key={r.key} data-score={r.score} data-held={r.held ? 1 : undefined}>
               <div className="flex items-start gap-2">
                 <span className="w-5 pt-1 text-right font-display text-[15px] text-[#6b5a44]">{i + 1}</span>
                 <button type="button" onClick={() => r.charId && onChar(r.charId)} disabled={!r.charId} aria-label={`Open ${r.name}`}><Face s={s} id={r.charId} name={r.name} size={38} /></button>
@@ -48,6 +53,7 @@ export function AudienceList({ s, reqs, keeper, onGrant, onTurn, onChar }: {
                     <span className="text-[11px] text-[#6b5a44]">{r.role}</span>
                     {r.urgent && <span className="text-[10px] font-bold uppercase tracking-wider text-[#a3271d]">urgent</span>}
                     {r.refused > 0 && <span className="text-[10px] text-[#a3271d]" data-testid="aud-refused">turned away {r.refused}×</span>}
+                    {r.held && <span className="text-[10px] font-bold uppercase tracking-wider text-[#a3271d]" data-testid="aud-held">held back by {s.characters[r.held]?.firstName ?? 'the door'}</span>}
                   </div>
                   <p className="line-clamp-2 text-[12.5px] text-[#3a2d1e]">{r.why}</p>
                   <div className="mt-1 flex items-center gap-2">

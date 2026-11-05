@@ -4,6 +4,7 @@ import { briefDue, dailyBrief, oldManPick, type Rec } from '../../engine/planner
 import { cancelEntry, moveEntry, planEvening, planWith, type BookEntry } from '../../engine/planner/datebook';
 import type { Go } from '../../engine/planner/intel';
 import { markBrief, setNote } from '../../engine/planner/state';
+import { askAnother, decideGate, gateView, readFullList, setGateRole } from '../../engine/planner/gate';
 import { dial, type DialSpec } from '../../engine/phoneMeet';
 import { inTheRanks } from '../../engine/rankView';
 import { absDay } from '../../engine/timeCost';
@@ -77,6 +78,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
   const reqs = useMemo(() => (open ? audienceRequests(s, officeUi) : []), [open, s, officeUi]);
   const brief = useMemo(() => (tab === 'brief' ? dailyBrief(s, officeUi) : undefined), [tab, s, officeUi]);
   const old = useMemo(() => (tab === 'brief' ? oldManPick(s, officeUi) : undefined), [tab, s, officeUi]);
+  const gate = useMemo(() => (tab === 'audience' && !inTheRanks(s) ? gateView(s) : undefined), [tab, s]);
   if (!tab && !phone) return null;
 
   const close = () => setTab(undefined);
@@ -129,7 +131,14 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
             </div>
             <div className="pt-0">
               {tab === 'brief' && brief && old && <BriefFolder s={s} b={brief} old={old} onGo={go} onOld={doRec} />}
-              {tab === 'audience' && <AudienceList s={s} reqs={reqs} keeper={gatekeeper(s)} onGrant={grant} onTurn={(r) => land(turnAway(s, r))} onChar={(id) => sheet.open(id)} />}
+              {tab === 'audience' && <AudienceList s={s} reqs={reqs} keeper={gatekeeper(s)} gate={gate} onGrant={grant} onTurn={(r) => land(turnAway(s, r))} onChar={(id) => sheet.open(id)}
+                gateApi={{
+                  onRole: (role, compare) => act((x) => setGateRole(x, role, !!compare), compare ? 'For a month, somebody else keeps your door' : 'Standing order: who keeps your door'),
+                  onFull: () => land(readFullList(s)),
+                  onAsk: (id) => land(askAnother(s, id)),
+                  onDecide: (id, sure) => land(decideGate(s, id, sure)),
+                  onChar: (id) => sheet.open(id),
+                }} />}
               {tab === 'datebook' && (
                 <Datebook s={s} reqs={reqs} api={{
                   onGo: go,

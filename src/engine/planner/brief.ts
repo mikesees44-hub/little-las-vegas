@@ -183,6 +183,15 @@ function people(s: GameState, low: boolean): BriefLine[] {
   }
   const loyal = men.filter((x) => x.faction === 'player').map((x) => ({ x, o: opinion(s, x.id, B) })).sort((a, b) => b.o - a.o)[0];
   if (loyal && loyal.o >= 50 && out.length < 4) out.push({ id: `p:l:${loyal.x.id}`, text: `${displayName(loyal.x)} would walk through a wall for you (+${loyal.o}).`, dom: 'crew', tone: 'good', go: { char: loyal.x.id } });
+  // The door (planner/gate.ts): a decision waiting on the man found out, and what the boss noticed lately.
+  if (!low) {
+    const P = s.planner;
+    const gx = P?.gx;
+    const gc = gx && !gx.how ? s.characters[gx.id] : undefined;
+    if (gc?.alive) out.unshift({ id: `p:gate:${gc.id}`, text: `You know what ${displayName(gc)} is: ${gx!.why}. What happens to him is yours to say.`, dom: 'intrigue', tone: 'bad', go: { audience: true } });
+    const tl = (P?.tl ?? []).filter((x) => s.week - x.w <= 1).slice(-1)[0];
+    if (tl) out.splice(gc ? 1 : 0, 0, { id: `p:tell:${tl.w}`, text: tl.t, sub: 'About the man at your door.', dom: 'intrigue', tone: 'warn', go: { audience: true } });
+  }
   if (!out.length) out.push({ id: 'p:none', text: 'Nobody in trouble, nobody sore. Enjoy it.' });
   return out.slice(0, 4);
 }
