@@ -12,6 +12,8 @@ import { CharLink, Face } from '../components/People';
 import { sameOrder } from '../verbs';
 import { moneyWord, whoNeedsMoney, type MoneyNeed } from '../../engine/moneyNeed';
 import { fmt$ } from '../format';
+import { deskBundles } from '../../engine/bundles';
+import { BundleCard } from '../desk/Bundles';
 
 /**
  * LET THEM EAT (engine/eat.ts), in Your men: who is hungry, idle, overworked
@@ -125,6 +127,14 @@ function FeedAll({ s, jobs }: { s: GameState; jobs: OpenJob[] }) {
   );
 }
 
+/** Two or more pitches: one card, "Settle all N the consigliere's way", each still changeable beneath (engine/bundles.ts). */
+function PitchBundle({ s }: { s: GameState }) {
+  const { orders, queue } = useOrders();
+  const b = deskBundles(s, { orders }, ['pitches'])[0];
+  if (!b) return null;
+  return <BundleCard s={s} b={b} onSettle={(rows) => { for (const r of rows) if (r.answer.kind === 'order') queue(r.answer.action, true); }} />;
+}
+
 /** Who needs money: every man running low or broke, why, and the one best way to help, ready to give. */
 function NeedsMoney({ s }: { s: GameState }) {
   const { orders, queue } = useOrders();
@@ -196,6 +206,7 @@ export function LetThemEat({ s }: { s: GameState }) {
 
       {pitches.length > 0 && (
         <Section domain="crew" title="Pitches waiting" sub="Their own thing, brought to you. Their capo brings it to a morning too; answer here or there." testid="eat-pitches">
+          <PitchBundle s={s} />
           <div className="grid gap-2">{pitches.map((p) => <PitchCard key={p.id} s={s} p={p} />)}</div>
         </Section>
       )}

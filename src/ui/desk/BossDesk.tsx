@@ -14,6 +14,8 @@ import { consiglierePick, counselor, notRoutine } from '../../engine/delegation'
 import { DeskClock } from '../components/DeskClock';
 import { AssetImg } from '../hood/AssetImg';
 import { domainOf, domainOfText, domClass, type Domain } from '../domain';
+import { deskBundles, type WeekPlanRow } from '../../engine/bundles';
+import { BundleCard, WeekDoneList, type SettledRow, type WeekDone } from './Bundles';
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
 function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
@@ -52,6 +54,16 @@ export interface DeskApi {
   onSingle?: () => void;
   /** An old save's one-time offer: let the underboss handle the routine (true) or keep it as it was. */
   onOffer?: (take: boolean) => void;
+  /** Bundled small decisions (engine/bundles.ts): give these answers through their own paths. */
+  onSettle?: (rows: SettledRow[]) => void;
+  /** "Handle the week for me": settle every routine item by the delegation level and the consigliere's advice. */
+  onHandleWeek?: () => void;
+  /** What "Handle the week" did this week (UI-only), and taking one back. */
+  weekDone?: WeekDone;
+  onUndo?: (r: WeekPlanRow) => void;
+  onWeekDoneClose?: () => void;
+  /** Let them eat (a man's pitch). */
+  onEat?: () => void;
 }
 
 export type DeskFilter = 'all' | 'decisions' | 'capos' | 'lieutenants' | 'money' | 'people';
@@ -211,12 +223,24 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
   const waiting = deskHeaderCount(s, ui);
   const get = (k: DeskGroup['kind']) => all.find((g) => g.kind === k);
   const pick = (g?: DeskGroup): DeskGroup | undefined => (g ? { ...g, items: g.items.filter((it) => inFilter(filter, it)) } : undefined);
-  const needs = pick(get('needs'));
+  // Same-kind small items as one card each (Settle all N the consigliere's way); their single cards fold into it.
+  const bundles = api.onSettle && filter === 'all' ? deskBundles(s, ui) : [];
+  const bundled = new Set(bundles.flatMap((b) => b.items.map((x) => x.key)));
+  const needs0 = pick(get('needs'));
+  const needs = needs0 ? { ...needs0, items: needs0.items.filter((x) => x.done || !bundled.has(x.key)) } : undefined;
+  const openKey = (key: string) => {
+    if (key.startsWith('pitch:')) { api.onEat?.(); return; }
+    const it = all.flatMap((g) => g.items).find((x) => x.key === key);
+    if (it) openItem(it, api);
+    else if (key.startsWith('ev:')) api.onEvent(key.slice(3));
+    else if (key === 'envelope') api.onEnvelope?.();
+  };
   const handled = pick(get('handled'));
   const counts = FILTERS.map((f) => ({ ...f, n: all.filter((g) => g.kind === 'needs' || g.kind === 'handled').flatMap((g) => g.items).filter((it) => !it.done && inFilter(f.id, it)).length }));
   // The one recommended move: the first open paper that needs him (the red one first; the list is already in that order).
-  const nextKey = needs?.items.find((x) => !x.done)?.key;
-  const needsTitle = <div className="llv-blotter-title">Needs you ({needs?.items.filter((x) => !x.done).length ?? 0})</div>;
+  const nextKey = bundles.length ? undefined : needs?.items.find((x) => !x.done)?.key;
+  const bundledN = bundles.reduce((a, b) => a + b.items.length, 0);
+  const needsTitle = <div className="llv-blotter-title">Needs you ({(needs?.items.filter((x) => !x.done).length ?? 0) + bundledN})</div>;
   const rest = (['result', 'order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
   return (
     <section className="llv-desktop" data-testid="boss-desk">
@@ -257,15 +281,18 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         ))}
         <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
+        {api.onHandleWeek && <button type="button" className="btn-primary py-0.5 text-[11px]" onClick={api.onHandleWeek} data-testid="desk-handle-week" title="Your people settle every routine item their way; a life, a man, the law, a war or real money stays yours. Each one can be taken back until the week turns.">Handle the week for me ▸</button>}
       </div>
+      {api.weekDone && api.weekDone.week === s.week && <div className="mt-1.5"><WeekDoneList s={s} done={api.weekDone} ui={ui} onUndo={(r) => api.onUndo?.(r)} onOpen={openKey} onClose={api.onWeekDoneClose} /></div>}
           <div data-testid="desk-group-needs" className="llv-desk-hand mt-2">
-            {needs && needs.items.length > 0 && needs.items.every((x) => x.done) && (
+            {needs && needs.items.length > 0 && needs.items.every((x) => x.done) && !bundles.length && (
               <div className="mb-1.5 flex flex-wrap items-center gap-2 rounded-md border border-emerald-800/60 bg-emerald-950/30 px-2.5 py-1.5 text-[12px] text-emerald-200" data-testid="desk-all-answered">
                 <DoneMark>All answered</DoneMark> Everything that needed you this week has your answer. Advance the week when you are ready.
               </div>
             )}
-            {!needs?.items.length && needsTitle}
-            {needs?.items.length ? <Hand g={needs} title={needsTitle} render={(it) => <NeedCard s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
+            {bundles.length > 0 && <div data-testid="desk-bundles">{!needs?.items.length && needsTitle}{bundles.map((b) => <BundleCard key={b.kind} s={s} b={b} onSettle={api.onSettle!} onOpen={openKey} />)}</div>}
+            {!needs?.items.length && !bundles.length && needsTitle}
+            {needs?.items.length ? <Hand g={needs} title={needsTitle} render={(it) => <NeedCard s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing {bundles.length ? 'else ' : ''}needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
           </div>
       </div>
       </div>
@@ -297,7 +324,9 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
 }
 
 /** "Ready to advance?": what is unanswered and what it becomes, the orders that run, what is known to cost. */
-export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onAnswer }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean; onAnswer?: (iid: string, choiceId: string) => void }) {
+export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onAnswer, onHandleWeek, weekDone, onUndo }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean; onAnswer?: (iid: string, choiceId: string) => void;
+  /** "Handle the week for me" (engine/bundles.ts), and what it did, each answer takeable back. */
+  onHandleWeek?: () => void; weekDone?: WeekDone; onUndo?: (r: WeekPlanRow) => void }) {
   const r = readyReview(s, ui);
   // Who settles what's left: the consigliere (or the underboss), on the small things; the big ones stay the boss's.
   const man = counselor(s);
@@ -315,6 +344,13 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
           <h2 className="font-display text-2xl text-gold-400">Ready to advance{month ? ' the month' : ''}?</h2>
           <button type="button" className="btn-secondary text-xs" onClick={onClose}>Cancel</button>
         </div>
+        {onHandleWeek && (r.unanswered.length > 0 || r.mornings.length > 0 || r.lapses.length > 0) && (
+          <button type="button" className="btn-primary w-full text-sm" onClick={onHandleWeek} data-testid="ready-handle-week"
+            title="Every routine item settled by your people's advice; a life, a man, the law, a war or real money stays yours.">
+            Handle the week for me ▸
+          </button>
+        )}
+        {weekDone && weekDone.week === s.week && <WeekDoneList s={s} done={weekDone} ui={ui} onUndo={(x) => onUndo?.(x)} />}
         {r.unanswered.length > 0 && (
           <div data-testid="ready-unanswered">
             <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Not decided — this is what happens</div>

@@ -108,6 +108,8 @@ import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
+import type { SettledRow, WeekDone } from './desk/Bundles';
+import { handleWeekPlan, type WeekPlanRow } from '../engine/bundles';
 import { WeekTurning } from './components/WeekTurning';
 import { RiseColumn } from './borgata/TheRise';
 import { ChairCard, useChairView } from './power/ChairCard';
@@ -160,6 +162,8 @@ export function App({ startOn = 'title' }: AppProps) {
   registerAppearances(s.seed, s.characters);
   const [answers, setAnswers] = useState<Record<string, string>>(() => boot.desk?.answers ?? {});
   const [mgMoves, setMgMoves] = useState<Record<string, string[]>>(() => boot.desk?.moves ?? {});
+  /** What "Handle the week for me" settled this week (UI-only; gone when the week turns). */
+  const [weekDone, setWeekDone] = useState<WeekDone | undefined>();
   /** A scene left half-way (a reload, Back to the decision): its moves so far, so it resumes there. */
   const [mgPartial, setMgPartial] = useState<Record<string, string[]>>(() => boot.desk?.partial ?? {});
   const [scene, setScene] = useState<{ iid: string; choiceId: string; m: NonNullable<ReturnType<typeof minigameOf>> } | null>(null);
@@ -924,6 +928,34 @@ export function App({ startOn = 'title' }: AppProps) {
     onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
   const takenKeys = taken.week === s.week ? taken.keys : [];
+  /** Bundled answers (engine/bundles.ts), each through its own path: the decision's answer, the capo's check-in, the order. */
+  function giveAnswers(rows: readonly Pick<SettledRow, 'title' | 'label' | 'answer'>[]) {
+    if (!rows.length) return;
+    const ev: Record<string, string> = {};
+    const am: [string, string][] = [];
+    for (const r of rows) {
+      if (r.answer.kind === 'event') ev[r.answer.iid] = r.answer.choiceId;
+      else if (r.answer.kind === 'checkin') am.push([r.answer.key, r.answer.answer]);
+      else ordersApi.queue(r.answer.action, true);
+    }
+    if (Object.keys(ev).length) setAnswers((a) => ({ ...a, ...ev }));
+    if (am.length) setS((cur) => am.reduce((x, [k, v]) => answerCheckIn(x, k, v), cur));
+    feedbackApi.notify({ kind: 'decided', title: rows.length === 1 ? `${rows[0].title}: ${rows[0].label}` : `${rows.length} settled the consigliere's way`, when: 'when the week turns; each outcome lands in Your File' });
+  }
+  function handleWeek() {
+    const p = handleWeekPlan(s, { answers, orders, taken: takenKeys });
+    giveAnswers(p.settle);
+    setWeekDone({ week: s.week, rows: p.settle, yours: p.yours, cost: p.cost, odds: p.odds });
+  }
+  function undoSettled(r: WeekPlanRow) {
+    const a = r.answer;
+    if (a.kind === 'event') setAnswers((x) => { const n = { ...x }; delete n[a.iid]; return n; });
+    else if (a.kind === 'checkin') setS((cur) => answerCheckIn(cur, a.key, undefined));
+    else { const i = orders.findIndex((o) => sameOrder(o, a.action)); if (i >= 0) ordersApi.remove(i); }
+    setWeekDone((w) => w && { ...w, rows: w.rows.filter((x) => x.key !== r.key), cost: w.cost - r.cost, yours: [...w.yours, { key: r.key, title: r.title, why: 'you took it back' }] });
+  }
+  const weekDoneNow = weekDone?.week === s.week ? weekDone : undefined;
+  const deskApi2 = { ...deskApi, onSettle: giveAnswers, onHandleWeek: handleWeek, weekDone: weekDoneNow, onUndo: undoSettled, onWeekDoneClose: () => setWeekDone(undefined), onEat: () => openRoute({ panel: 'borgata', section: 'eat' }) };
   const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'desk' }); };
   const officeApi: OfficeApi = {
     openDesk: (f?: DeskFilter) => openDesk(f),
@@ -975,7 +1007,7 @@ export function App({ startOn = 'title' }: AppProps) {
     <section className="mb-4" data-testid="week-routine">
       <PlaceStrip s={s} onOpen={() => openRoute({ panel: 'borgata', section: 'place' })} />
       <DeskTop s={s} onGo={(g) => openRoute(g as Route)} onFile={() => deskApi.onFile?.()} />
-      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi} filter={deskFilter} side={inTheRanks(s) ? undefined : <><ChairCard s={s} onOpen={openSuccession} /><RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} /></>} /></div>
+      <div className="mb-3"><BossDesk key={`${s.week}:${deskFilter}`} inDrawer s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} api={deskApi2} filter={deskFilter} side={inTheRanks(s) ? undefined : <><ChairCard s={s} onOpen={openSuccession} /><RiseColumn s={s} goals={goals} onShow={showGoal} onRise={() => openRoute({ panel: 'borgata', section: 'rise' })} /></>} /></div>
       <section className="mb-3" data-testid="desk-motion" aria-label="In motion">
         <div className="mb-1 text-[10px] uppercase tracking-[0.25em] text-stone-500">In motion</div>
         <InMotionStrip chips={motion} onChip={onChip} inDesk />
@@ -1191,7 +1223,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {/* The Don's book (ui/planner): the brief, the audience, the datebook, the black book, the standing orders. */}
       {!s.gameOver && <PlannerHost s={s} ui={{ answers, briefSkip, orders }} speed={speed} note={clockNote} blocked={overlayOpen || busy || mondayCard || rxWaiting || phoneOpen}
         api={{ onEvent: deskApi.onEvent, onUrgent: (id) => setUrgent(id), onDay: deskApi.onDay, onSitDown: deskApi.onSitDown, onEnvelope: () => tributeApi.openAudience() }} />}
-      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} />}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} onHandleWeek={handleWeek} weekDone={weekDoneNow} onUndo={undoSettled} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}
