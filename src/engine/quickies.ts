@@ -1,3 +1,4 @@
+import { maybeConceive } from './dating';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, player } from './characters';
 import { herDecision } from './dating';
@@ -133,6 +134,8 @@ export function applyCar(ctx: Ctx, N: NightlifeState, id: string, price?: number
   if (roll(`${key}|cop`) < 0.08) { applyEffects(ctx, [{ type: 'heat', bar: 'local', amount: 1, label: 'A beat cop\'s flashlight' }], { label: 'A flashlight', because: 'stepped outside', category: 'event' }); lines.push('A beat cop\'s flashlight on the window; he knew whose car it was.'); }
   if (roll(`${key}|rival`) < 0.06) { const rv = s.rivals.find((x) => x.kind === 'mob'); if (rv) { const sec = addSecret(s, boss, 'affair', [rv.id as FactionId]); if (!sec.knownBy.includes(rv.id as FactionId)) sec.knownBy.push(rv.id as FactionId); lines.push(`One of the ${rv.shortName} men was smoking in the lot.`); } }
   if (roll(`${key}|gossip`) < 0.15) D.rumors.push({ week: s.week, text: `The boss stepped out to his car with ${c.firstName} ${c.lastName}.`, about: boss.id, heard: ['island'], true: true });
+  // A night in the car can start a pregnancy too (lower odds; a careful girl lower still).
+  maybeConceive(s, D, c, 'car', s.nightlife?.people[id]?.bounds.includes('careful') ? 0.25 : 0.5);
   const line = lines.join(' ');
   nlog(N, s, line);
   ctx.log.push(line);

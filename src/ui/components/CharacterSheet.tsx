@@ -1,3 +1,4 @@
+import { pregnancyKnown } from '../../engine/dating';
 import { BookAbout } from '../book/TheBook';
 import { HerCircle } from '../family/Matchmakers';
 import { PinStar } from '../people/ClosePeople';
@@ -104,7 +105,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
               <SideBadge side={side} size={104} />
             </span>
             <div className="min-w-0">
-              <div className="flex items-center gap-1"><h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2><PinStar s={s} id={c.id} label /></div>
+              <div className="flex items-center gap-1"><h2 className="font-display text-2xl text-gold-400 leading-tight">{displayName(c)}</h2><PinStar s={s} id={c.id} label />{(() => { const pg = c.alive ? pregnancyKnown(s, c.id) : undefined; return pg ? <span className="ml-1 rounded-full border border-rose-400/60 bg-rose-500/15 px-2 py-0.5 text-[11px] text-rose-200" data-testid="sheet-pregnant">Pregnant · due in {Math.max(1, pg.dueWeek - s.week)} wk</span> : null; })()}</div>
               <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="sheet-side">
                 <SideChip side={side} full />
                 {!isBoss && <RelationChip relation={side.relation} />}

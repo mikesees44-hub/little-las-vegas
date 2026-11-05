@@ -1,3 +1,4 @@
+import { pregnancyKnown } from '../../engine/dating';
 import { useMemo, useState } from 'react';
 import type { NowResult } from '../../engine/deeds/now';
 import {
@@ -143,7 +144,7 @@ function Row({ s, v, mode, open, onToggle, onHit }: { s: GameState; v: PersonVie
         <Face s={s} c={c} size={40} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline gap-x-2">
-            <button type="button" className="truncate text-left text-[13px] font-semibold text-stone-100 hover:text-gold-300" onClick={onToggle} aria-expanded={open} data-testid="people-name">{v.name}</button>
+            <button type="button" className="truncate text-left text-[13px] font-semibold text-stone-100 hover:text-gold-300" onClick={onToggle} aria-expanded={open} data-testid="people-name">{v.name}</button>{pregnancyKnown(s, v.id) && <span className="ml-1 rounded-full bg-rose-500/20 px-1.5 text-[10px] text-rose-200">Pregnant</span>}
             <PinStar s={s} id={v.id} />
             {c.alive && <CrewBadge s={s} c={c} />}
             <span className="truncate text-[11px] text-stone-400">{v.rank}<span style={{ color: v.side.color }} className="sr-only"> · {v.side.emblem} {fam}</span>{v.district ? ` · ${v.district}` : ''}</span>

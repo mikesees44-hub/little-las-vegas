@@ -684,18 +684,30 @@ export function conceptionOdds(s: GameState, c: Character): number {
   const boss = player(s);
   const odds = PREGNANCY_ODDS[datingSettings(s).pregnancy];
   if (!odds) return 0;
+  // Inside a relationship at the full odds; a casual night (no romance) at a little over half.
   const r = romanceBetween(s, boss.id, c.id);
-  if (!r) return 0;
+  const casual = r ? 1 : 0.6;
   const woman = c.gender === 'F' ? c : boss.gender === 'F' ? boss : undefined;
   const man = woman === c ? boss : c;
   if (!woman || man.gender !== 'M' || woman.gender !== 'F') return 0;
   const a = ageOfChar(s, woman);
   if (a < ADULT || a > 42 || !isAdult(s, man)) return 0;
   if ((s.romance?.pregnancies ?? []).some((p) => p.motherId === woman.id)) return 0;
-  return odds * fertility(s, man) * fertility(s, woman);
+  return odds * casual * fertility(s, man) * fertility(s, woman);
 }
 
-/** An evening together inside a relationship: the only way a pregnancy begins here (`mult` < 1: she is careful). */
+/** She is pregnant and it shows or she has told (the label on her sheet and in the lists). */
+export function pregnancyKnown(s: GameState, id: string): { dueWeek: number; father?: string } | undefined {
+  const p = (s.romance?.pregnancies ?? []).find((x) => x.motherId === id);
+  if (!p) return undefined;
+  const k = s.dating?.preg.find((x) => x.id === p.id);
+  const since = k ? s.week - k.week : 99;
+  const told = !k || s.week >= k.tellAt || k.knownBy.includes(s.playerId);
+  if (!told && since < 14) return undefined;
+  return { dueWeek: p.dueWeek, ...(p.fatherId === s.playerId ? { father: 'you' } : {}) };
+}
+
+/** An evening together (a relationship's at full odds, a casual night's lower) (`mult` < 1: she is careful). */
 export function maybeConceive(s: GameState, D: DatingState, c: Character, key: string, mult = 1): void {
   const odds = conceptionOdds(s, c) * mult;
   if (!odds || roll(`${s.seed}|${s.week}|conceive|${key}|${c.id}`) >= odds) return;
@@ -836,6 +848,8 @@ export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
       p.visits = [...p.visits.filter((w) => s.week - w < 52), s.week];
       useEvening(s, D);
       D.stats.paid++;
+      // A paid night can start a pregnancy too (low: she is careful for a living).
+      maybeConceive(s, D, c, 'paid', 0.3);
       // No affection, no relationship, no standing access: only the evening, and what may come of it.
       const mature = datingSettings(s).mature;
       const scene = mature === 'standard'

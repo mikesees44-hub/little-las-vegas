@@ -211,21 +211,20 @@ describe('4. no minor in any choice', () => {
   });
 });
 
-describe('5. pregnancy only from an eligible relationship and an evening together', () => {
-  it('never from talks, gifts, introductions or paid company; at the setting from dates', () => {
+describe('5. pregnancy from evenings together (casual and paid nights at lower odds)', () => {
+  it('never from talks, gifts or introductions; lower for paid company; at the setting from dates', () => {
     const s = setDatingSettings(fresh(), { pregnancy: 'normal' });
     const c = woman(s, 26);
     const R = ensureRomance(s);
     startRomance(s, s.playerId, c.id);
     const p = street(s);
-    expect(conceptionOdds(s, s.characters[p.id])).toBe(0);
+    // A casual or paid night is possible but less likely than a relationship's (owner, 2026-11-05).
+    expect(conceptionOdds(s, s.characters[p.id])).toBeLessThan(conceptionOdds(s, c));
     for (let w = 0; w < 120; w++) {
       s.week++;
       const ctx = newCtx(s);
       applyDatingOp(ctx, { op: 'talk', id: c.id });
       applyDatingOp(ctx, { op: 'gift', id: c.id, tier: 'flowers' });
-      s.dating!.providers[p.id].visits = [];
-      applyDatingOp(ctx, { op: 'paid', id: p.id, price: p.price });
     }
     expect(R.pregnancies.length).toBe(0);
     // A date inside the relationship is the appropriate event.
