@@ -46,6 +46,9 @@ function score(words: string[], title: string, rest = ''): number {
   return 1 + (t.startsWith(q) ? 4 : 0) + (t.includes(q) ? 2 : 0) + words.filter((w) => t.includes(w)).length;
 }
 
+/** Words that find the night people. */
+const NIGHT_WORDS = ['girls', 'escorts', 'hookers', 'call girls', 'strippers', 'dancers', 'burlesque', 'celebrities', 'stars', 'singers', 'houses', 'madams', 'night people', 'working girls'];
+
 export function findAll(s: GameState, query: string, opts: { open?: (key: string) => boolean; limit?: number } = {}): FindResult[] {
   const words = norm(query).split(/\s+/).filter((w) => w.length > 0);
   if (!words.length || words.join('').length < 2) return [];
@@ -58,6 +61,11 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
     const sc = score(words, e.label, e.words);
     if (!sc) continue;
     out.push(entryResult(i, open, sc + 1));
+  }
+
+  // The night people (payroll.ts): the girls, the escorts, the strippers and dancers, the celebrities and stars, the houses.
+  if (words.some((w) => NIGHT_WORDS.some((n) => n.startsWith(w) && w.length >= 3)) && open('borgata.night')) {
+    out.push({ kind: 'screen', id: 'screen:night-people', title: 'The night people', sub: 'Your men · working girls, dancers, celebrities, madams and their houses', go: { to: 'route', key: 'borgata.night' }, score: 4 });
   }
 
   // Screens: every place and every view.

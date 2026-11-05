@@ -15,6 +15,7 @@ import { useShell } from '../shell/context';
 import { CallingCard } from './CallingCard';
 import { LooksBadge } from '../components/LooksBadge';
 import { WomenSection } from './WomenSection';
+import { focusNight } from '../borgata/Payroll';
 
 /**
  * NIGHTLIFE: the hub for the island's night (engine/nightlife.ts). Summary
@@ -137,6 +138,7 @@ export function NightlifePanel({ s }: { s: GameState }) {
         <b>{sum.people}</b> people of the night you could know · <b>{sum.payroll}</b> on your payroll (~{fmt$(sum.kickback)}/wk kickback) · <b>{sum.yours}</b> of {sum.houses} houses under your protection (~{fmt$(sum.protection)}/wk)
         {sum.squeezed > 0 && <span className="text-red-300"> · {sum.squeezed} being squeezed</span>}
         {sum.seeking > 0 && <span className="text-gold-300"> · {sum.seeking} looking for work</span>}
+        {' '}<button type="button" className="ml-1 text-[12px] text-gold-400 hover:text-gold-300" data-testid="nightlife-night-people" onClick={() => { focusNight(on ? 'girl' : 'celebrity'); shell.go('borgata.night'); }}>The night people: girls, dancers, celebrities, houses ▸</button>
         {sum.promises > 0 && <span className="text-amber-200"> · {sum.promises} promise{sum.promises === 1 ? '' : 's'} to keep</span>}
         {sum.goomars > 0 && <span className="text-rose-200"> · {sum.goomars} goomar{sum.goomars === 1 ? '' : 's'}</span>}
         <p className="mt-1 text-[11px] text-stone-500">Everyone here is an adult. She decides every time: work, deals, promises, the goomar. Nothing is shown; reports only.{!on && ' Mature content is Off: escorts, call girls, street workers and adult pictures are not shown anywhere.'}</p>

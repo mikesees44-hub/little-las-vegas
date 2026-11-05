@@ -144,6 +144,8 @@ export function buildPetition(s: GameState, id?: string): EventInstance | undefi
     choices: p.choices(who, s),
     defaultChoiceId: p.choices(who, s).at(-1)!.id,
     actors: [player(s).id],
+    // The petitioner by name (payroll.ts offers him a job as the price of the favor).
+    meta: { who, ...(p.id === 'rent' || p.id === 'harbor' ? { whoF: 1 } : {}) },
   };
 }
 

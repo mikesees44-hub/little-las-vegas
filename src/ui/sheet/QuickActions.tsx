@@ -14,7 +14,7 @@ const PREFER: Record<'crew' | 'rival' | 'kin' | 'other' | 'boss', string[]> = {
   crew: ['i:dinner', 't:business', 't:advice', 't:grievance', 'i:gift_small', 'i:promote', 't:succession'],
   kin: ['i:dinner', 't:succession', 't:advice', 'i:gift_small', 'i:bringIn'],
   rival: ['t:meeting', 't:business', 't:negotiate', 't:partner', 'i:gift_small'],
-  other: ['t:social', 't:business', 'i:gift_small', 'i:bribe', 't:job'],
+  other: ['pay:hush', 'pay:hire', 't:social', 't:business', 'i:gift_small', 'i:bribe', 't:job'],
   boss: ['office'],
 };
 

@@ -83,6 +83,7 @@ import './delegation';
 import { earsWeek } from './ears';
 import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
+import { payrollWeek, withFavorJobs } from './payroll';
 import { bondsWeek } from './bonds';
 import { spendWeek } from './spend';
 import { storeWeek } from './store';
@@ -451,6 +452,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     earsWeek(ctx);
     datingWeek(ctx);
     nightlifeWeek(ctx);
+    payrollWeek(ctx);
     womenWeek(ctx);
     honeyWeek(ctx);
     bondsWeek(ctx);
@@ -526,6 +528,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     const errs = validatePlayer(s);
     if (errs.length) throw new Error(`Invalid player after week ${weekOf}: ${errs.join('; ')}`);
     s.pendingEvents = generateWeekEvents(s);
+    // A favor asked of the boss can carry a price: "and in return you work for me" (payroll.ts).
+    s.pendingEvents = withFavorJobs(s, s.pendingEvents);
     payTheDrop(ctx);
     motion = payQuiet(ctx);
     tributeEnd(ctx);

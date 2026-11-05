@@ -7,7 +7,8 @@ import { phoneBook, type BookEntry } from '../phoneMeet';
 import { opinion } from '../relations';
 import { aboveIds, aboveLabel, chiefOf } from '../valente';
 import { wifeOf } from '../bonds';
-import type { Character, GameState } from '../types';
+import { bestJob, hireAction, JOBS, onAnyPayroll, payrollRoster } from '../payroll';
+import type { Character, GameState, PlayerAction } from '../types';
 
 /**
  * THE BLACK BOOK (the Rolodex): everyone the boss knows, with his face, what he is to him, his mood
@@ -42,6 +43,8 @@ export interface Contact {
   phone?: Pick<BookEntry, 'purposes'>;
   canGift: boolean;
   away?: string;
+  /** The payroll (payroll.ts): what they are on it, or the job you could offer them now. */
+  pay?: { on?: string; offer?: PlayerAction; label: string };
 }
 
 export function moodWord(v: number | undefined): string {
@@ -115,6 +118,8 @@ export function blackBook(s: GameState): Contact[] {
     const mood = Math.round((ctl.financial + ctl.personal) / 2 - ctl.resentment);
     out.push({ id: k, name: `${p.first} ${p.last}`, role: p.title, group: 'law', mood, moodWord: ctl.payroll ? `On the pad · ${moodWord(mood)}` : moodWord(mood), owesMe: [], iOwe: [], canGift: false });
   }
+  // The civilian payroll (payroll.ts): everyone on it, read where it lives.
+  for (const r of payrollRoster(s)) if (r.charId) add(s.characters[r.charId], r.job === 'cop' || r.job === 'politician' ? 'law' : r.job === 'girl' || r.job === 'madam' || r.job === 'hush' ? 'women' : 'business', `${r.title} · on your payroll`);
   // Anyone else he has dealt with lately (a business owner, a man in town): from his own doings in Your File.
   for (const e of (s.journal?.e ?? []).slice(-200)) {
     if (!e.mine) continue;
@@ -123,6 +128,15 @@ export function blackBook(s: GameState): Contact[] {
       if (!c || seen.has(c.id) || !c.alive) continue;
       add(c, c.gender === 'F' ? 'women' : 'business', c.faction === 'player' ? 'One of yours' : 'Somebody you know');
     }
+  }
+  // The payroll line on every card: on it, or the job you could offer (the odds on the card when it opens).
+  for (const c of out) {
+    if (!c.charId) continue;
+    const on = onAnyPayroll(s, c.charId);
+    if (on) { c.pay = { on, label: on }; continue; }
+    const ch = s.characters[c.charId];
+    const j = ch ? bestJob(s, ch) : undefined;
+    if (ch && j) c.pay = { offer: hireAction(s, c.charId, j), label: j === 'hush' ? 'A quiet envelope' : `Offer a job: ${JOBS[j].label.toLowerCase()}` };
   }
   return out;
 }
