@@ -17,6 +17,9 @@ import { isFree } from './characters';
 import { FIX_WEEKS, OPEN_WEEKS, openApproachOf, openFixOf } from './single';
 import { SILENCE_WEEKS, openProposal } from './matchmakers';
 import { missedCalls } from './phone';
+import { askLapses } from './minds/askView';
+import { heardOnDesk } from './ai/rivalMinds';
+import { wordThisWeek } from './ai/calls';
 
 /**
  * THE BOSS'S DESK: everything that wants the boss this week, in one place —
@@ -57,7 +60,7 @@ export interface DeskItem {
   /** Where it goes: an event iid, a morning's day, a sit-down item, an order index, a lieutenant's job, a tip, a place ask. */
   /** A result's tone (how it went). */
   tone?: 'good' | 'bad';
-  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string; single?: 'come' | 'ma' };
+  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string; single?: 'come' | 'ma'; /** A family asking for a sit-down (minds/familyAsks.ts). */ family?: string };
 }
 
 export interface DeskGroup { kind: DeskGroupKind; title: string; items: DeskItem[] }
@@ -146,6 +149,11 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     groups.upcoming.push({ key: 'od:move', kind: 'upcoming', title: `The coming move: ${est.lo}–${est.hi} men, by the talk`, detail: `How sure you are: ${est.intel}%. Rumors run hot; names and proof narrow it.`, urgent: true, ref: {} });
     for (const p of pts.slice(0, 5)) groups.upcoming.push({ key: `od:${p.role}`, kind: 'upcoming', title: p.title, detail: p.detail, ref: {} });
   }
+  // Heard through a way into a rival boss's head: a move aimed at you, before it lands (ai/rivalMinds.ts).
+  groups.upcoming.push(...heardOnDesk(s));
+  // Calls and letters waiting this week (ai/calls.ts): on the phone.
+  const word = wordThisWeek(s);
+  if (word.length) groups.upcoming.push({ key: 'word', kind: 'upcoming', title: `Word from ${word.map((w) => w.name.split(' ')[0]).join(', ')}`, detail: `${word.length === 1 ? 'A call or a letter' : `${word.length} calls and letters`} waiting: on the phone, Calls & letters.`, ref: {} });
   for (const sc of s.schemes.filter((x) => x.owner === 'player').slice(0, 4)) {
     groups.upcoming.push({ key: `sch:${sc.id}`, kind: 'upcoming', title: `${SCHEME_INFO[sc.kind].name} under way`, detail: `${sc.progress}% along`, ref: { charId: sc.targetId } });
   }
@@ -247,5 +255,7 @@ export function lapsesThisWeek(s: GameState): { key: string; title: string; what
   if (mp && next - mp.week >= SILENCE_WEEKS) out.push({ key: `match:${mp.id}`, title: `${nm(mp.by)}'s match for ${nm(mp.memberId)}`, what: 'Say nothing and she goes ahead with it.' });
   // A call to return before it goes cold.
   for (const m of missedCalls(s)) if (!m.p.once && m.until < next * 7) out.push({ key: `call:${m.id}`, title: `Call ${m.p.name} back`, what: "After this week the call can't be returned." });
+  // A family that asked for a sit-down (minds/familyAsks.ts): ignored, it has a consequence.
+  out.push(...askLapses(s));
   return out;
 }

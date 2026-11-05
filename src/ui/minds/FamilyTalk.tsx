@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { displayName } from '../../engine/characters';
 import {
   allowedKinds, beginSitDown, buildDiploPrompt, canShake, canSitDown, closeSitDown, describeDeal, describeTerm, dialogueOf, districtsFor, HAS_DIR, KIND_LABEL,
-  openSitDown, readDeal, shakeOn, SIT_HOURS, sitHeader, sitStep, stanceOf, termBounds, validateDiplo, validateTerm,
-  type BossMove, type DealKind, type DiploAi, type Dir, type SitDown, type Term,
+  leverCards, openSitDown, playLever, readDeal, shakeOn, SIT_HOURS, sitHeader, sitStep, splitPlaces, stanceOf, termBounds, validateDiplo, validateTerm,
+  type BossMove, type LeverCard, type DealKind, type DiploAi, type Dir, type SitDown, type Term,
 } from '../../engine/minds/diplomacy';
 import type { Tone } from '../../engine/minds/dialogue';
 import type { GameState } from '../../engine/types';
@@ -80,6 +80,14 @@ export function FamilyTalk({ s, rival, update, onClose }: { s: GameState; rival:
     if (r.sd.end && r.sd.end !== 'done') finish(r.sd);
   }
 
+  function lever(card: LeverCard) {
+    if (!sd || busy || sd.end || !begin()) return;
+    const r = playLever(live.current, sd, card);
+    setSd(r.sd);
+    setHideTable(false);
+    if (r.sd.end && r.sd.end !== 'done') finish(r.sd);
+  }
+
   function shake() {
     if (!sd) return;
     const chk = canShake(live.current, sd);
@@ -108,6 +116,7 @@ export function FamilyTalk({ s, rival, update, onClose }: { s: GameState; rival:
       onClose={() => { if (started && sd.end !== 'deal') finish(sd.end ? sd : { ...sd, end: 'left' }); onClose(); }}
       footer={(
         <div className="space-y-2" data-testid="family-talk">
+          {sd.agenda && <div className="rounded border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-100" data-testid="sit-agenda">He asked for this sit-down: <i>"{sd.agenda.text}"</i></div>}
           {table && !hideTable && sd.end !== 'deal' && (
             <div className={`rounded-md border p-2 text-[12px] ${table.ok ? 'border-gold-500/60 bg-gold-500/10' : 'border-noir-600 bg-noir-800/60'}`} data-testid="deal-card">
               <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">On the table · {table.by === 'them' ? 'their offer' : 'your offer'}</div>
@@ -123,6 +132,23 @@ export function FamilyTalk({ s, rival, update, onClose }: { s: GameState; rival:
               {shakeable && !shakeable.ok && table.ok && <div className="mt-1 text-[11px] text-amber-300">{shakeable.why}</div>}
             </div>
           )}
+          {!over && live$ && sd.end !== 'done' && (() => {
+            const cards = leverCards(s, sd);
+            if (!cards.length) return null;
+            return (
+              <div className="rounded-md border border-noir-700 p-2 text-[12px]" data-testid="sit-levers">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Leverage (once each)</div>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {cards.map((l) => (
+                    <button key={l.card} type="button" className="btn-ghost px-2 py-0.5 text-xs" disabled={busy}
+                      title={`${l.basis}. ${Math.round(l.odds * 100)}%: he bends (needs about $${-l.win.need} less), anger +${l.win.anger}. Otherwise he digs in: anger +${l.lose.anger}${l.lose.need ? `, needs $${l.lose.need} more` : ''}.`}
+                      onClick={() => lever(l.card)} data-testid={`lever-${l.card}`}>{l.label} · {Math.round(l.odds * 100)}%</button>
+                  ))}
+                </div>
+                <div className="mt-0.5 text-[11px] text-stone-500">{cards.map((l) => `${l.label}: ${l.basis}`).join(' · ')}</div>
+              </div>
+            );
+          })()}
           {!over && live$ && sd.end !== 'done' && <DealBuilder s={s} sd={sd} busy={busy} onPropose={(terms) => void exchange({ propose: terms })} />}
           {st && (
             <details className="text-[11px] text-stone-400" data-testid="sit-stance">
@@ -144,6 +170,9 @@ function DealBuilder({ s, sd, busy, onPropose }: { s: GameState; sd: SitDown; bu
   const [kind, setKind] = useState<DealKind>(kinds[0] ?? 'truce');
   const [dir, setDir] = useState<Dir>('them');
   const dists = districtsFor(s, sd.rival, kind, dir);
+  const places = kind === 'split' ? splitPlaces(s, sd.rival, dir) : [];
+  const [biz, setBiz] = useState<string>('');
+  const bb = places.some((x) => x.id === biz) ? biz : places[0]?.id;
   const [district, setDistrict] = useState<string>('');
   const dd = dists.includes(district) ? district : dists[0];
   const b = termBounds(s, sd.rival, kind, dir, dd);
@@ -152,13 +181,15 @@ function DealBuilder({ s, sd, busy, onPropose }: { s: GameState; sd: SitDown; bu
   const [draft, setDraft] = useState<Term[]>([]);
   useEffect(() => { setAmount(undefined); setWeeks(undefined); }, [kind, dir]);
   if (!kinds.length) return null;
-  const term = validateTerm(s, sd.rival, { kind, dir, district: dd, amount: amount ?? b.amount?.def, weeks: weeks ?? b.weeks?.def });
+  const term = validateTerm(s, sd.rival, { kind, dir, district: dd, biz: bb, amount: amount ?? b.amount?.def, weeks: weeks ?? b.weeks?.def });
   const read = draft.length ? readDeal(s, sd, draft) : undefined;
   const fam = FACTION_NAMES[sd.rival];
   const dirLabel = (x: Dir) => {
     if (kind === 'cash') return x === 'them' ? `${fam} pays you` : `You pay ${fam}`;
     if (kind === 'concession') return x === 'them' ? `${fam} gives up ground` : 'You give up ground';
     if (kind === 'favor') return x === 'them' ? `${fam} owes you` : `You owe ${fam}`;
+    if (kind === 'split') return x === 'them' ? `${fam} gives you a share` : `You give ${fam} a share`;
+    if (kind === 'muscle') return x === 'them' ? `${fam} lends you men` : `You lend ${fam} men`;
     return x === 'them' ? `${fam} stays out` : 'You stay out';
   };
   const field = 'rounded border border-noir-600 bg-noir-900 px-1.5 py-0.5 text-[12px] text-stone-100';
@@ -174,13 +205,18 @@ function DealBuilder({ s, sd, busy, onPropose }: { s: GameState; sd: SitDown; bu
             {(['them', 'you'] as Dir[]).map((x) => <option key={x} value={x}>{dirLabel(x)}</option>)}
           </select>
         )}
-        {(kind === 'concession' || kind === 'handsoff') && (
+        {kind === 'split' && (
+          <select className={field} value={bb ?? ''} onChange={(e) => setBiz(e.target.value)} aria-label="Place" data-testid="deal-biz">
+            {places.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
+          </select>
+        )}
+        {(kind === 'concession' || kind === 'handsoff' || kind === 'venture') && (
           <select className={field} value={dd ?? ''} onChange={(e) => setDistrict(e.target.value)} aria-label="District" data-testid="deal-district">
             {dists.map((x) => <option key={x} value={x}>{s.districts.find((y) => y.id === x)?.name ?? x}</option>)}
           </select>
         )}
         {b.amount && (
-          <label className="flex items-center gap-1 text-[11px] text-stone-400">{kind === 'concession' ? 'points' : kind === 'cash' ? '$' : '$/wk'}
+          <label className="flex items-center gap-1 text-[11px] text-stone-400">{kind === 'concession' ? 'points' : kind === 'cash' ? '$' : kind === 'split' || kind === 'venture' ? '%' : kind === 'muscle' ? 'strength' : '$/wk'}
             <input type="number" inputMode="numeric" className={`${field} w-20`} min={b.amount.lo} max={b.amount.hi} value={amount ?? b.amount.def}
               onChange={(e) => setAmount(e.target.value === '' ? undefined : Number(e.target.value))} aria-label="Amount" data-testid="deal-amount" />
             <span className="text-stone-500">{b.amount.lo}–{b.amount.hi}</span>

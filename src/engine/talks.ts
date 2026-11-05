@@ -11,6 +11,8 @@ import { addOpinion, getRelation, opinion } from './relations';
 import { chance, hashSeed, pick, rand, randInt } from './rng';
 import type { Character, Effect, FactionId, GameState, RivalId, Trait } from './types';
 import { FACTION_NAMES } from './world';
+import { noteBroken, noteKept, noteTheyBroke, type FamRecord } from './minds/familyWord';
+import type { FamAsk } from './minds/askView';
 
 /**
  * Talks: the extended person interactions (request a meeting, offer a job,
@@ -30,7 +32,7 @@ import { FACTION_NAMES } from './world';
 
 export type TalkId = 'meeting' | 'job' | 'business' | 'partner' | 'advice' | 'grievance' | 'social' | 'negotiate' | 'succession';
 
-export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff';
+export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff' | 'split' | 'muscle';
 
 /** Pacts that keep a family from moving on the other side (a hands-off term binds one district only). */
 export const PEACE_PACTS: ReadonlySet<PactKind> = new Set<PactKind>(['alliance', 'truce', 'partnership', 'tribute']);
@@ -50,6 +52,12 @@ export interface Pact {
   district?: string;
   bound?: FactionId;
   base?: number;
+  /** A split (minds/diplomacy.ts): who pays ('player' or the family), a share of one named place's take, or a flat weekly. */
+  payer?: FactionId;
+  biz?: string;
+  pct?: number;
+  /** Lent muscle (minds/diplomacy.ts): strength points the payer's men add to the other side (war.ts playerMuscle). */
+  lent?: number;
 }
 
 export interface PendingTalk {
@@ -83,6 +91,12 @@ export interface TalkState {
   lastMonth?: string;
   /** Sit-downs with a family (minds/diplomacy.ts): family → the week the boss last sat down with them. */
   sat?: Record<string, number>;
+  /** Each family's record of the boss (minds/familyWord.ts). */
+  rec?: Record<string, FamRecord>;
+  /** Times the boss broke a pact on purpose: every family marks it down (minds/familyWord.ts). */
+  wordAll?: number;
+  /** Families asking the boss for a sit-down, or coming to collect a favor (minds/familyAsks.ts). */
+  asks?: FamAsk[];
 }
 
 export type TalkOp = { t: 'ask'; talk: TalkId; target: string } | { t: 'answer'; id: string; yes: boolean };
@@ -474,6 +488,7 @@ export function talksWeek(ctx: Ctx): void {
   for (const p of tt.pacts) {
     if (p.until <= s.week || p.a !== 'player') continue;
     if (p.kind === 'handsoff') { handsOffWeek(ctx, tt, p); continue; }
+    if (p.kind === 'split') { splitWeek(ctx, tt, p); continue; }
     if (!p.weekly) continue;
     const r = s.rivals.find((x) => x.id === p.b);
     if (!r || !s.characters[r.leaderId]?.alive) { p.until = s.week; log(s, tt, `The ${p.kind} with ${FACTION_NAMES[p.b]} died with its boss.`, 'pact'); continue; }
@@ -482,6 +497,7 @@ export function talksWeek(ctx: Ctx): void {
       if (s.money < p.weekly) {
         p.until = s.week - 1;
         addOpinion(s, r.leaderId, s.playerId, 'Stopped paying tribute', -20, 1);
+        noteBroken(s, r.id, 'you missed the tribute');
         const text = `You missed the tribute to ${FACTION_NAMES[p.b]}: the deal is off, and they are not happy.`;
         log(s, tt, text, 'pact', r.leaderId);
         journal(s, { t: `Missed the tribute to ${FACTION_NAMES[p.b]}`, x: 'Not enough Family money for the week\'s payment. The pact is broken.', p: [r.leaderId], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts' });
@@ -494,12 +510,42 @@ export function talksWeek(ctx: Ctx): void {
     }
     money(ctx, p.weekly, `Partnership with ${FACTION_NAMES[p.b]}`, 'business');
   }
+  for (const p of tt.pacts) if (p.until === s.week && p.a === 'player' && !(p.kind === 'handsoff' && p.bound !== 'player')) noteKept(s, p.b, `the ${p.kind === 'handsoff' ? 'hands-off promise' : p.kind} ran its full term`);
   for (const p of tt.pacts) if (p.until === s.week) log(s, tt, `The ${p.kind === 'handsoff' ? 'hands-off pact' : p.kind} between ${p.a === 'player' ? 'your house' : FACTION_NAMES[p.a]} and ${FACTION_NAMES[p.b]} ran out.`, 'pact');
   tt.pacts = tt.pacts.filter((p) => p.until > s.week - 52);
   const mk = `${s.date.y}-${s.date.m}`;
   if (tt.lastMonth !== mk) {
     if (tt.lastMonth) rivalDiplomacy(ctx);
     tt.lastMonth = mk;
+  }
+}
+
+/** What a split pays this week: a share of the named place's take (nothing while it is closed), else the flat weekly. */
+export function splitAmount(s: GameState, p: Pact): number {
+  if (p.biz) {
+    const b = s.businesses.find((x) => x.id === p.biz);
+    if (!b || (b.closedUntil ?? 0) > s.week) return 0;
+    return Math.max(0, Math.round((b.weeklyBase * (p.pct ?? 0)) / 100));
+  }
+  return p.weekly ?? 0;
+}
+
+/** A split: the payer's share goes across through the books. */
+function splitWeek(ctx: Ctx, tt: TalkState, p: Pact): void {
+  const s = ctx.s;
+  const r = s.rivals.find((x) => x.id === p.b);
+  if (!r || !s.characters[r.leaderId]?.alive) { p.until = s.week; return; }
+  if (p.biz && !s.businesses.some((x) => x.id === p.biz)) { p.until = s.week - 1; log(s, tt, `The split with ${FACTION_NAMES[p.b]} ended: the place is gone.`, 'pact'); return; }
+  const amt = splitAmount(s, p);
+  if (!amt) return;
+  if (p.payer === 'player') {
+    money(ctx, -amt, `${FACTION_NAMES[p.b]}'s split`, 'cost');
+    r.money += amt;
+  } else {
+    const pay = Math.min(amt, Math.max(0, r.money));
+    if (!pay) return;
+    money(ctx, pay, `Split from ${FACTION_NAMES[p.b]}`, 'business');
+    r.money -= pay;
   }
 }
 
@@ -515,6 +561,7 @@ function handsOffWeek(ctx: Ctx, tt: TalkState, p: Pact): void {
   p.until = s.week - 1;
   if (p.bound === 'player') {
     addOpinion(s, r.leaderId, s.playerId, `Broke his word about ${d.name}`, -20, 1);
+    noteBroken(s, r.id, `you moved into ${d.name} after promising to stay out`);
     const text = `Your people moved into ${d.name} after you gave ${FACTION_NAMES[p.b]} your word: they call it a broken promise.`;
     log(s, tt, text, 'pact', r.leaderId);
     journal(s, { t: `You broke your word to ${FACTION_NAMES[p.b]} about ${d.name}`, x: 'Your ground there grew after you promised to stay out. They will remember.', p: [r.leaderId], pl: [`d:${d.id}`], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts' });
@@ -522,6 +569,7 @@ function handsOffWeek(ctx: Ctx, tt: TalkState, p: Pact): void {
   } else {
     // Their broken word is a grievance: a cause for war (war.ts casusBelli).
     s.flags[`grievance_${r.id}`] = Math.max(1, s.week);
+    noteTheyBroke(s, r.id);
     const text = `${FACTION_NAMES[p.b]} moved into ${d.name} after giving you their word. You have a grievance: a cause for war.`;
     log(s, tt, text, 'pact', r.leaderId);
     journal(s, { t: `${FACTION_NAMES[p.b]} broke their word about ${d.name}`, x: 'They gave their word to stay out, and moved in anyway. You hold a grievance against them (a cause for war).', p: [r.leaderId], pl: [`d:${d.id}`], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts' });
