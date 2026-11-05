@@ -4,7 +4,7 @@ import { floaterText, loyaltyTrend, type LoyalFeed } from '../../engine/loyalty'
 import { opinion } from '../../engine/relations';
 import { sideOf } from '../../engine/sides';
 import type { Character, GameState } from '../../engine/types';
-import { Face, useSheet } from './People';
+import { CharLink, Face, useSheet } from './People';
 
 /**
  * LOYALTY YOU CAN SEE MOVE (GODFATHER_LOYALTY_SKILLS.md §B, §C): a man's meter
@@ -124,7 +124,7 @@ export function MenByCapo({ s }: { s: GameState }) {
               <li key={c.id} className="flex items-center gap-2">
                 <Face s={s} c={c} size={28} />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-[12px] text-stone-100">{c.firstName} {c.lastName} <span className="text-[10.5px] text-stone-500">{c.rank}</span></div>
+                  <div className="truncate text-[12px] text-stone-100"><CharLink s={s} id={c.id} className="hover:text-gold-300">{c.firstName} {c.lastName}</CharLink> <span className="text-[10.5px] text-stone-500">{c.rank}</span></div>
                   <LoyaltyMeter s={s} id={c.id} />
                 </div>
               </li>

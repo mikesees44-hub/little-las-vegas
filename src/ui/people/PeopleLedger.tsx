@@ -146,7 +146,7 @@ function Row({ s, v, mode, open, onToggle, onHit }: { s: GameState; v: PersonVie
             <button type="button" className="truncate text-left text-[13px] font-semibold text-stone-100 hover:text-gold-300" onClick={onToggle} aria-expanded={open} data-testid="people-name">{v.name}</button>
             <PinStar s={s} id={v.id} />
             {c.alive && <CrewBadge s={s} c={c} />}
-            <span className="truncate text-[11px] text-stone-400">{v.rank} · <span style={{ color: v.side.color }} className="sr-only">{v.side.emblem} {fam}</span>{v.district ? ` · ${v.district}` : ''}</span>
+            <span className="truncate text-[11px] text-stone-400">{v.rank}<span style={{ color: v.side.color }} className="sr-only"> · {v.side.emblem} {fam}</span>{v.district ? ` · ${v.district}` : ''}</span>
             {v.watched && <span className="text-[10.5px] text-sky-300" title={v.watched}>◉ watched</span>}
             {v.cleared !== undefined && <span className="text-[10.5px] text-emerald-300">✓ cleared</span>}
           </div>

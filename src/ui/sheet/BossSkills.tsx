@@ -26,8 +26,8 @@ export function BossSkills({ s }: { s: GameState }) {
       <CardHead d="family" glyph="✦" title="Your skills grow" className="!mb-1"
         sub="Every order, every answer and every week teaches you something. Practice becomes points; put each point where you want it."
         aside={<span className={`font-semibold ${pts ? 'text-emerald-300' : 'text-stone-400'}`} data-testid="bsk-points">{pts} point{pts === 1 ? '' : 's'} to put in</span>} />
-      <div className="mt-1 flex items-center gap-2">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-noir-700" role="meter" aria-label="Practice toward the next point" aria-valuemin={0} aria-valuemax={PT_XP} aria-valuenow={x}>
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+        <div className="h-1.5 min-w-[8rem] flex-1 overflow-hidden rounded-full bg-noir-700" role="meter" aria-label="Practice toward the next point" aria-valuemin={0} aria-valuemax={PT_XP} aria-valuenow={x}>
           <div className="h-full rounded-full bg-gold-500 transition-[width] duration-700" style={{ width: `${(x / PT_XP) * 100}%` }} />
         </div>
         <span className="whitespace-nowrap tabular-nums text-stone-400">{x}/{PT_XP} to the next point · {thisWeek}/{BSK_WEEK_CAP} this week</span>
