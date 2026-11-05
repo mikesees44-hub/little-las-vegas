@@ -990,7 +990,7 @@ export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
         maybeConceive(s, D, c, 'weekend', personal ? 1 : 0.3);
       } else if (o.what === 'hostess') {
         fx.push({ type: 'favor', amount: 1, label: `${c.firstName} hostessed your game: the guests owe you` }, { type: 'money', amount: Math.round(o.price * 0.6), label: `Your card game ran sweeter (${c.firstName} hostessed)` });
-        line = `${c.firstName} hostessed your card game: the drinks kept coming, the guests stayed late and lost happy, and two of them owe you a favor.`;
+        line = `${c.firstName} hostessed your card game: the drinks kept coming, the guests stayed late and lost happy, and one of them owes you a favor.`;
       } else {
         b.aff = clamp(b.aff + 15);
         b.pro = undefined;
