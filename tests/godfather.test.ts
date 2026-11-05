@@ -35,6 +35,7 @@ describe('new state stays optional', () => {
     const s = newGame('gf-fresh');
     expect(s.gf).toBeUndefined();
     expect(s.bsk).toBeUndefined();
+    expect(s.loyal).toBeUndefined(); // the opinions dealt at the start are not news
     const raw = JSON.stringify(s);
     expect(JSON.stringify(upgradeSave(JSON.parse(raw)))).toBe(raw);
     const played = weeks(s, 3);

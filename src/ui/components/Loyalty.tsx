@@ -104,8 +104,8 @@ export function CrewStrip({ s, title = true }: { s: GameState; title?: boolean }
   return (
     <section className="rounded-md border border-noir-700 bg-noir-800/40 p-2" data-testid="crew-strip">
       {title && <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2"><span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">The crews, and where you stand</span><span className="text-[10.5px] text-stone-500">Tap one for why</span></div>}
-      {yours.length > 0 && <ul className="flex flex-wrap gap-1.5" aria-label="Your crews">{yours.map((x) => <StandingCard key={x.key} s={s} x={x} />)}</ul>}
-      {fams.length > 0 && <ul className="mt-1.5 flex flex-wrap gap-1.5" aria-label="The other families">{fams.map((x) => <StandingCard key={x.key} s={s} x={x} />)}</ul>}
+      {yours.length > 0 && <ul className="flex flex-wrap items-start gap-1.5" aria-label="Your crews">{yours.map((x) => <StandingCard key={x.key} s={s} x={x} />)}</ul>}
+      {fams.length > 0 && <ul className="mt-1.5 flex flex-wrap items-start gap-1.5" aria-label="The other families">{fams.map((x) => <StandingCard key={x.key} s={s} x={x} />)}</ul>}
     </section>
   );
 }

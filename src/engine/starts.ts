@@ -1,3 +1,4 @@
+import { forgetSetup } from './loyalty';
 import { assignFaces } from './faces';
 import { startPocket } from './tributeState';
 import { repairGoals } from './goalRules';
@@ -64,6 +65,7 @@ export function newGameWith(seed: string, start: StartId = 'classic', charOption
     addOpeningScene(s, start);
     s.flags.rise_floor = orgRung(s);
     assignFaces(s);
+    forgetSetup(s);
     return s;
   }
   if (start === 'classic') return finish(s, start, charOptions);
@@ -92,6 +94,7 @@ function finish(s: GameState, start: StartId, charOptions?: CharOptions): GameSt
   s.pendingEvents = generateWeekEvents(s);
   addOpeningScene(s, start);
   assignFaces(s);
+  forgetSetup(s);
   return s;
 }
 

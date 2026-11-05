@@ -109,3 +109,8 @@ export function loyaltyMonth(s: GameState): void {
   if (!L) return;
   for (const id of Object.keys(L.h)) if (!watchedLoyalty(s, id) || s.week - (L.h[id][L.h[id].length - 1]?.[0] ?? 0) > 104) delete L.h[id];
 }
+
+/** The opinions dealt while a new game is built are where he starts, not news: the history begins with the first week. */
+export function forgetSetup(s: GameState): void {
+  delete s.loyal;
+}
