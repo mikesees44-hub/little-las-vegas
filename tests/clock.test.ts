@@ -128,7 +128,9 @@ describe('a week on the clock is the same week as Advance Week', () => {
 
 
 describe('the clock runs (CK style)', () => {
-  it('running is the default, at a moving speed; an old turn-based player is moved over once', async () => {
+  // Narrowed on purpose (STREAMLINE_2 §5.3): running is the default on Don (and Grand Strategy); a new Story player who never
+  // picked starts turn-based (tests/turn.test.ts "who plays in turns"). Nobody who picked a mode is ever moved.
+  it('running is the default on Don, at a moving speed; an old turn-based player is moved over once', async () => {
     const { DEFAULT_SPEED, CLOCK_MS } = await import('../src/ui/clockPolicy');
     const { migrateClock } = await import('../src/ui/settings');
     expect(DEFAULT_SPEED).toBeGreaterThan(0);
@@ -139,6 +141,8 @@ describe('the clock runs (CK style)', () => {
     expect(old.pauseOnDecision).toBe(false);
     // After the move, a player who picks turn-based again keeps it.
     expect(migrateClock({ ...old, timeMode: 'turns' }).timeMode).toBe('turns');
+    const { newGameTimeMode } = await import('../src/ui/settings');
+    expect(newGameTimeMode('don')).toBe('clock');
   });
   it('auto-pauses for red on the Desk, an urgent meeting, war, a death in the house and a plot; not for routine', async () => {
     const { autoPauses, firstPause } = await import('../src/ui/clockPolicy');

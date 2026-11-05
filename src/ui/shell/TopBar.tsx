@@ -306,7 +306,9 @@ function WaitingButton({ count, tone, onDesk, onReview }: {
  * reasons on hover, date and season, the clock, Advance (week, or month in
  * the split menu), the decisions and orders counters, and the game menu.
  */
-export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen, chair, onChair, phone }: {
+const spanWords = (n: 1 | 2 | 4) => (n === 1 ? '1 week' : n === 2 ? '2 weeks' : 'a month (4 weeks)');
+
+export function TopBar({ s, inboxN, inboxTone, clockMode = false, turn, speed, setSpeed, note, onAdvance, onReview, ticker, onNewGame, onMainMenu, seedInput, setSeedInput, slot, pulse, onDesk, onOffice, officeOpen, onFind, onEndDay, paperUnread = 0, onPaper, fileNew = 0, onFile, onHelp, menuOpen, chair, onChair, phone }: {
   s: GameState;
   /** The succession pressure, for the starts where the chair is the game (power/ChairCard.tsx), and its opener. */
   chair?: number;
@@ -318,10 +320,12 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   onEndDay?: () => void;
   /** Running clock (days tick by) rather than turn-based (settings). */
   clockMode?: boolean;
+  /** A turn (STREAMLINE_2 §5): its span (1, 2 or 4 weeks) and the picker. In turn mode the big button is End turn. */
+  turn?: { span: 1 | 2 | 4; onSpan: (n: 1 | 2 | 4) => void };
   speed: Speed;
   setSpeed: (v: Speed) => void;
   note?: string;
-  onAdvance: (m: 'week' | 'month' | 'season') => void;
+  onAdvance: (m: 'week' | 'month' | 'season' | 'turn') => void;
   pending: number;
   answered: number;
   onReview: () => void;
@@ -420,11 +424,24 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
           <div className="order-4 flex w-full lg:w-auto items-center gap-0.5 sm:gap-1.5 flex-wrap">
             {clockMode && <ClockCompact speed={speed} setSpeed={setSpeed} />}
             <div className="flex">
-              <button className={`btn-primary h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance('week')} data-testid="advance-week" title={clockMode ? 'Play out the rest of the week now' : undefined}>{clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : 'Advance Week ▸'}</button>
+              {/* Turn-based: the same button (advance-week) ends the turn, its span from the ▾ (1, 2 or 4 weeks; it stops for a crisis). */}
+              <button className={`btn-primary h-8 py-0 px-1.5 sm:px-3 text-xs sm:text-sm rounded-r-none ${pulse ? 'llv-pulse' : ''}`} onClick={() => onAdvance(!clockMode && turn ? 'turn' : 'week')} data-testid="advance-week" data-span={!clockMode && turn ? turn.span : undefined}
+                title={clockMode ? 'Play out the rest of the week now' : turn ? `End the turn: ${spanWords(turn.span)}. It stops early for a crisis (a strike, a war, a death, the Feds, a storm), and says why.` : undefined}>
+                {clockMode ? <><span className="sm:hidden">Week ▸▸</span><span className="hidden sm:inline">Advance Week ▸</span></> : turn ? <>End turn<span className="hidden sm:inline"> · {turn.span === 4 ? 'a month' : `${turn.span} wk`}</span> ▸</> : 'Advance Week ▸'}
+              </button>
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-primary h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
                 {(close) => <>
                   {onEndDay && <button className={menuItem} onClick={() => { close(); onEndDay(); }} data-testid="skip-morning">Skip to the next morning</button>}
                   <button className={menuItem} onClick={() => { close(); onAdvance('week'); }} data-testid="skip-week">Skip to next week</button>
+                  {turn && <>
+                    <div className="px-3 pt-1.5 text-[10px] uppercase tracking-[0.2em] text-stone-500" data-testid="turn-span-picker">A turn: stops for a crisis{clockMode ? '' : ' (End turn)'}</div>
+                    {([1, 2, 4] as const).map((n) => (
+                      <button key={n} className={menuItem} role="menuitemradio" aria-checked={turn.span === n} onClick={() => { close(); turn.onSpan(n); if (clockMode) onAdvance('turn'); }} data-testid={`turn-span-${n}`}
+                        title={clockMode ? `Play ${spanWords(n)} now, as one turn` : `End turn plays ${spanWords(n)} from now on`}>
+                        {turn.span === n && !clockMode ? '● ' : ''}{clockMode ? `Play ${spanWords(n)} as one turn` : `End turn: ${spanWords(n)}`}
+                      </button>
+                    ))}
+                  </>}
                   <button className={menuItem} onClick={() => { close(); onAdvance('month'); }} data-testid="advance-month">Advance Month (4 weeks)</button>
                   <button className={menuItem} onClick={() => { close(); onAdvance('season'); }} data-testid="advance-season" title="Thirteen weeks; your men handle what you leave unanswered. Stops if the chair changes hands.">Advance a Season (13 weeks)</button>
                 </>}

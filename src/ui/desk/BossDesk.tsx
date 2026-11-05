@@ -344,7 +344,9 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
 }
 
 /** "Ready to advance?": what is unanswered and what it becomes, the orders that run, what is known to cost. */
-export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onAnswer, onHandleWeek, weekDone, onUndo }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean; onAnswer?: (iid: string, choiceId: string) => void;
+export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onAnswer, onHandleWeek, weekDone, onUndo, turn }: { s: GameState; ui: DeskUi; onReview: () => void; onAdvance: () => void; onClose: () => void; month?: boolean; onAnswer?: (iid: string, choiceId: string) => void;
+  /** A turn (STREAMLINE_2 §5): its weeks, and the Round's stops not looked at (each settled for him, never a block). */
+  turn?: { weeks: number; unvisited: { stop: string; label: string; open: number }[] };
   /** "Handle the week for me" (engine/bundles.ts), and what it did, each answer takeable back. */
   onHandleWeek?: () => void; weekDone?: WeekDone; onUndo?: (r: WeekPlanRow) => void }) {
   const r = readyReview(s, ui);
@@ -361,7 +363,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
     <Modal onClose={onClose}>
       <div className="p-4 sm:p-5 space-y-3" data-testid="ready-review">
         <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-2xl text-gold-400">Ready to advance{month ? ' the month' : ''}?</h2>
+          <h2 className="font-display text-2xl text-gold-400">{turn ? `Ready to end the turn${turn.weeks > 1 ? ` (${turn.weeks} weeks)` : ''}?` : `Ready to advance${month ? ' the month' : ''}?`}</h2>
           <button type="button" className="btn-secondary text-xs" onClick={onClose}>Cancel</button>
         </div>
         {onHandleWeek && (r.unanswered.length > 0 || r.mornings.length > 0 || r.lapses.length > 0) && (
@@ -369,6 +371,12 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
             title="Every routine item settled by your people's advice; a life, a man, the law, a war or real money stays yours.">
             Handle the week for me ▸
           </button>
+        )}
+        {turn && turn.unvisited.length > 0 && (
+          <div className="rounded border border-noir-700 px-2.5 py-1.5 text-[12px] text-stone-300" data-testid="ready-round">
+            <span className="text-stone-400">Not looked at this turn: </span>{turn.unvisited.map((u) => `${u.label}${u.open ? ` (${u.open} waiting)` : ''}`).join(', ')}.
+            <span className="block text-stone-500">Your standing orders and the delegation level settle what they can there; the rest takes each event's default. Weeks after the first run the same way.</span>
+          </div>
         )}
         {weekDone && weekDone.week === s.week && <WeekDoneList s={s} done={weekDone} ui={ui} onUndo={(x) => onUndo?.(x)} />}
         {r.unanswered.length > 0 && (

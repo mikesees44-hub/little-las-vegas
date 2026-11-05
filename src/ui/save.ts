@@ -216,6 +216,8 @@ export interface DeskState {
   partial?: Record<string, string[]>;
   /** Event iids whose scene already opened by itself (Made the boss): never again on Continue. */
   auto: string[];
+  /** The Round (turn mode): the homes whose front page he looked at this week. */
+  visited?: string[];
 }
 const DESK = (n: number) => `little-las-vegas:slotdesk:${n}`;
 

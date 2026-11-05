@@ -119,3 +119,25 @@ export function ActionsBand({ s, home, open, onPick }: { s: GameState; home: Hom
     </section>
   );
 }
+
+const STOP_LABEL: Record<string, string> = { needs: 'Needs you', house: 'Family', org: 'Crew', money: 'Money', law: 'Law', rivals: 'Rivals', town: 'Town' };
+
+/**
+ * The Round strip (turn mode, on the map where the clock's Today strip sits): seven stops, each a tap
+ * from its front page, ticked as he looks at each part of his life; "4 of 7". Never forced.
+ */
+export function RoundStrip({ rows, onStop }: { rows: { stop: string; ticked: boolean; open: number; quiet: boolean }[]; onStop: (stop: string) => void }) {
+  const done = rows.filter((r) => r.ticked).length;
+  return (
+    <div className="pointer-events-auto flex min-w-0 items-center gap-1 overflow-x-auto rounded-full border border-gold-600/50 bg-noir-900/95 px-2 py-1 shadow-lg shadow-black/60" data-testid="round-strip" aria-label="This turn's round">
+      <span className="shrink-0 text-[10px] uppercase tracking-[0.2em] text-stone-500" data-testid="round-count">Round {done} of {rows.length}</span>
+      {rows.map((r) => (
+        <button key={r.stop} type="button" onClick={() => onStop(r.stop)} data-testid={`round-stop-${r.stop}`} data-ticked={r.ticked ? 'true' : undefined}
+          title={r.quiet ? 'Quiet: nothing waits here' : r.open ? `${r.open} waiting on you` : r.ticked ? 'Seen' : 'Not looked at this turn'}
+          className={`btn-quiet shrink-0 whitespace-nowrap rounded-full px-1.5 text-[11px] no-underline ${r.ticked ? 'text-stone-500' : 'text-gold-300'}`}>
+          {r.ticked ? '✓' : r.open ? <span className="text-red-300">{r.open}</span> : '○'} {STOP_LABEL[r.stop] ?? r.stop}{r.quiet ? <span className="text-stone-600"> · quiet</span> : null}
+        </button>
+      ))}
+    </div>
+  );
+}
