@@ -1,3 +1,4 @@
+import { wherePath } from '../shell/nav';
 import { useState } from 'react';
 import { can } from '../../engine/rankView';
 import { DAY_NAMES, DAY_SHORT, today } from '../../engine/days';
@@ -231,6 +232,7 @@ export function ChainOfCommandPlace({ s }: { s: GameState }) {
 
 /** "Who handles what": the chain of command in a window (from the Desk and the morning reports). */
 export function WhoHandlesWhat({ s, update, onClose }: { s: GameState; update: Update; onClose: () => void }) {
+  const shell = useShell();
   return (
     <Modal onClose={onClose} wide>
       <div className="p-4 sm:p-5 space-y-3" data-testid="lt-settings">
@@ -238,6 +240,8 @@ export function WhoHandlesWhat({ s, update, onClose }: { s: GameState; update: U
           <h2 className="font-display text-2xl text-gold-400">Who handles what</h2>
           <button type="button" className="btn-secondary text-xs" onClick={onClose} data-testid="lt-settings-close">Done</button>
         </div>
+        <p className="text-[11px] text-stone-500">The same page as {wherePath('borgata.chain')}: change it here or there.{' '}
+          <button type="button" className="text-gold-300 underline-offset-2 hover:underline" onClick={() => { onClose(); shell.go('borgata.chain'); }} data-testid="lt-settings-place">Open it there ▸</button></p>
         <ChainOfCommand s={s} update={update} />
       </div>
     </Modal>

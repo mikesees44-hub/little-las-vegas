@@ -152,7 +152,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
                 }} />
               )}
               {tab === 'book' && <BlackBook s={s} onChar={(id) => sheet.open(id)} onPhone={(p) => setPhone(p)} onOrder={(a) => orders.queue(a)} />}
-              {tab === 'orders' && <StandingOrders s={s} act={act} onOrder={(a) => orders.queue(a)} />}
+              {tab === 'orders' && <StandingOrders s={s} act={act} onOrder={(a) => orders.queue(a)} onPlace={(k) => { close(); shell.go(k); }} />}
             </div>
           </div>
         </Overlay>

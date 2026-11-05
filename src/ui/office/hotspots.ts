@@ -1,4 +1,5 @@
 import type { OfficeApi } from '../desk/officeApi';
+import { wherePath } from '../shell/nav';
 
 /**
  * The Boss's Office picture (office_room_1960, the owner's painting, 1672 × 941: the back room of the club,
@@ -51,6 +52,30 @@ export function openHotspot(h: Hotspot, api: OfficeApi, o: { hasReport: boolean;
   if (h.id === 'envelope' && !o.hasReport) { api.openLedger(); return; }
   const f = api[h.entry.api] as () => void;
   f();
+}
+
+/**
+ * The place each object opens (STREAMLINE_2 §4: every door to a thing that has a home says so): a
+ * registry key, or undefined for the office's own windows and the map. The door's visitors are the
+ * Desk's Audience; the envelope opens the envelope meeting when the count is in, else its page.
+ */
+const API_PLACE: Partial<Record<string, string>> = { openLedger: 'holdings.take', openEnvelope: 'holdings.take', openFamily: 'house.tree', openNews: 'chronicle.papers' };
+const PANEL_PLACE: Partial<Record<OfficePanel, string>> = { door: 'you.court' };
+const OWN: Record<string, string> = { openMap: 'the map', openDatebook: 'the datebook', phone: 'the telephone', brief: 'the week\'s briefing', week: 'the week' };
+
+export function hotspotKey(h: Hotspot): string | undefined {
+  if ('go' in h.entry) return h.entry.go.split('#')[0];
+  if ('panel' in h.entry) return PANEL_PLACE[h.entry.panel];
+  return API_PLACE[h.entry.api];
+}
+
+/** "Opens Money › The envelope" for the tooltip. */
+export function hotspotOpens(h: Hotspot): string {
+  const k = hotspotKey(h);
+  const where = k ? wherePath(k) : undefined;
+  if (where) return `Opens ${where}${'panel' in h.entry ? ' (here, at the door)' : h.id === 'envelope' ? ' (the count itself when it is in)' : ''}`;
+  const own = 'api' in h.entry ? OWN[h.entry.api] : 'panel' in h.entry ? OWN[h.entry.panel] : undefined;
+  return `Opens ${own ?? 'it'}`;
 }
 
 export const HOTSPOT_BY_ID = Object.fromEntries(HOTSPOTS.map((h) => [h.id, h])) as Record<Hotspot['id'], Hotspot>;

@@ -197,6 +197,16 @@ export function itemOf(key: string): NavItem | undefined {
   return BY_KEY[key];
 }
 
+/** "Money › The envelope › This week's envelope": where a key lives, home first (the "Opens …" of a link). */
+export function wherePath(key: string): string | undefined {
+  const k = canonicalKey(key.split('#')[0]);
+  const it = k ? BY_KEY[k] : undefined;
+  if (!it || !k) return undefined;
+  const i = it.keys.indexOf(k);
+  const view = it.keys.length > 1 ? it.views?.[i] ?? sectionDef(k)?.label : undefined;
+  return [HOMES_BY_ID[it.home].short, it.label, view].filter(Boolean).join(' › ');
+}
+
 /** Registry keys an item shows (aliases resolve to the item's first key). */
 export function canonicalKey(key: string): string | undefined {
   const it = BY_KEY[key];

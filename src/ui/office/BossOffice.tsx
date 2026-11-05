@@ -17,7 +17,7 @@ import { useOpenDating } from '../dating/DatingPanel';
 import { fmt$ } from '../format';
 import { AssetImg } from '../hood/AssetImg';
 import { Portrait } from '../portrait/Portrait';
-import { HOTSPOTS, openHotspot, type Hotspot, type OfficePanel } from './hotspots';
+import { HOTSPOTS, hotspotOpens, openHotspot, type Hotspot, type OfficePanel } from './hotspots';
 import { holder } from '../../engine/council';
 import { briefing } from '../../engine/briefing';
 import type { CounselSubject } from '../../engine/counsel';
@@ -223,7 +223,7 @@ export function BossOffice({ s, ui, monday, onMondayDone, onInvite, onDelegate, 
               <DeskClock s={s} onOpen={() => setPanel('week')} className="absolute hidden sm:flex items-end justify-center"
                 style={{ left: `${DESK_CLOCK_RECT.x}%`, top: `${DESK_CLOCK_RECT.y}%`, width: `${DESK_CLOCK_RECT.w}%`, height: `${DESK_CLOCK_RECT.h}%`, fontSize: 'clamp(6px, 0.95vw, 14px)' }} />
               {HOTSPOTS.map((h) => (
-                <button key={h.id} type="button" onClick={() => act(h)} data-testid={`office-spot-${h.id}`} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${status[h.id]}`}
+                <button key={h.id} type="button" onClick={() => act(h)} data-testid={`office-spot-${h.id}`} aria-label={`${h.label}: ${h.hint}`} title={`${h.label}: ${status[h.id]} · ${hotspotOpens(h)}`}
                   className="llv-spot group absolute rounded-md border border-transparent focus-visible:outline-none"
                   style={{ left: `${h.rect.x}%`, top: `${h.rect.y}%`, width: `${h.rect.w}%`, height: `${h.rect.h}%` }}>
                   <span className={`${chip} ${domClass(spotDomain(h.id))} llv-dom-border absolute left-0.5 ${h.id === 'chair' ? 'bottom-0.5' : 'top-0.5'}`}>
