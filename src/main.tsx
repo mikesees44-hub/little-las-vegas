@@ -1,3 +1,4 @@
+import { startArt } from './ui/importArt/artStore';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
@@ -11,3 +12,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </Guard>
   </React.StrictMode>,
 );
+
+// The owner's imported art (artifact db), if any.
+startArt();

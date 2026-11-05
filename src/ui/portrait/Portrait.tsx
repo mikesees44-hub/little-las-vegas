@@ -1,4 +1,5 @@
-import { memo, useState, type ReactElement } from 'react';
+import { memo, useState, useSyncExternalStore, type ReactElement } from 'react';
+import { artVersion, faceOverride, subscribeArt } from '../importArt/artStore';
 import { FACE_URLS } from './faceUrls';
 import { ageOn, compareDates, dateOfWeek } from '../../engine/calendar';
 import type { Character, GameDate } from '../../engine/types';
@@ -88,12 +89,14 @@ function PaintedFace({ url, c, size, className, jailed, fallback }: { url: strin
 
 function PortraitImpl(props: PortraitProps) {
   const { c, seed, date, size = 64, className } = props;
+  useSyncExternalStore(subscribeArt, artVersion, artVersion);
   const face = c.appearance?.face;
-  const url = face ? FACE_URLS[face] : undefined;
+  // The owner's own import for this person wins, then the painted set.
+  const url = faceOverride(c.id) ?? (face ? FACE_URLS[face] : undefined);
   const canLoad = typeof window !== 'undefined' && /^https?:/.test(window.location?.protocol ?? '');
   if (url && canLoad) {
     const jailed = c.alive && c.imprisonedUntil !== undefined && compareDates(dateOfWeek(c.imprisonedUntil), date) > 0;
-    return <PaintedFace url={url} c={c} size={size} className={className} jailed={jailed} fallback={<ProcPortrait {...props} />} />;
+    return <PaintedFace key={url} url={url} c={c} size={size} className={className} jailed={jailed} fallback={<ProcPortrait {...props} />} />;
   }
   void seed;
   return <ProcPortrait {...props} />;

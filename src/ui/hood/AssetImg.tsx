@@ -1,4 +1,5 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react';
+import { artVersion, subscribeArt } from '../importArt/artStore';
 import { assetUrl, type AssetKey } from './art/assetUrls';
 
 /** URLs that failed once this session: skip straight to the fallback next time (no flicker). */
@@ -19,6 +20,7 @@ export function sourcesOf(keys: AssetKey | AssetKey[] | undefined, inline?: stri
  * left, renders `fallback` (the SVG art). Use for every asset-store image.
  */
 export function useAssetSrc(keys: AssetKey | AssetKey[] | undefined, inline?: string) {
+  useSyncExternalStore(subscribeArt, artVersion, artVersion);
   const [bad, setBad] = useState<string[]>([]);
   const src = sourcesOf(keys, inline).find((u) => !bad.includes(u));
   return {

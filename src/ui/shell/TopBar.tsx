@@ -1,3 +1,5 @@
+import { ImportArt } from '../importArt/ImportArt';
+import { isOwnerHere } from '../importArt/artStore';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { HudIcon, HudMeter, HudNumber } from '../components/Hud';
 import { createPortal } from 'react-dom';
@@ -370,6 +372,10 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
   const [pane, setPane] = useState<'orders' | 'plans' | undefined>();
   // The playtesters' report form (feedback/ReportBug.tsx), with the screen it was opened from.
   const [report, setReport] = useState<string | undefined>();
+  // The owner's Import art (artifact owner only; nothing anywhere else).
+  const [owner, setOwner] = useState(false);
+  const [importing, setImporting] = useState(false);
+  useEffect(() => { let live = true; void isOwnerHere().then((v) => { if (live) setOwner(v); }); return () => { live = false; }; }, []);
   // The Desk's "In motion ▸" and others open the plans from anywhere.
   useEffect(() => {
     const on = () => setPane('plans');
@@ -456,6 +462,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
                     <button type="button" className={`${menuItem} md:hidden`} onClick={() => { close(); window.dispatchEvent(new Event('llv-open-alerts')); }} data-testid="menu-alerts">⚑ Alerts</button>
                     {onHelp && <button type="button" className={menuItem} onClick={() => { close(); onHelp(); }} data-testid="rail-help">? What should I do</button>}
                     <button type="button" className={menuItem} onClick={() => { const at = currentScreen(); close(); setReport(at); }} data-testid="feedback-button">✎ Report a bug or idea</button>
+                    {owner && <button type="button" className={menuItem} onClick={() => { close(); setImporting(true); }} data-testid="import-art-button">⇪ Import art <span className="text-stone-500">· only you</span></button>}
                     <div className="my-1 h-px bg-noir-700" />
                     <GameMenuLinks close={close} />
                     <div className="flex items-center justify-between px-2 py-1 text-sm text-stone-300">Music <MusicToggle /></div>
@@ -473,6 +480,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             {pane === 'orders' && typeof document !== 'undefined' && createPortal(<OrdersPane s={s} onClose={() => setPane(undefined)} />, document.body)}
             {pane === 'plans' && typeof document !== 'undefined' && createPortal(<PlansPanel s={s} onClose={() => setPane(undefined)} />, document.body)}
             {/* Out of the bar's stacking context (z 1150), so the sheet sits over the phone's tab bar. */}
+            {importing && typeof document !== 'undefined' && createPortal(<ImportArt s={s} onClose={() => setImporting(false)} />, document.body)}
             {report !== undefined && typeof document !== 'undefined' && createPortal(<ReportBug s={s} initialScreen={report} onClose={() => setReport(undefined)} />, document.body)}
           </div>
         )}
