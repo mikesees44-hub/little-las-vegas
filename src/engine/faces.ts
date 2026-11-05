@@ -187,7 +187,8 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'q10', m: false, age: [21, 34], tags: ['star', 'glam'] },
   { k: 'q11', m: false, age: [21, 38], tags: ['star', 'glam'] },
   { k: 'q12', m: false, age: [22, 46], tags: ['pro'], eth: 'Irish' },
-  { k: 'q04', m: false, age: [22, 42], tags: [], reserved: true },
+  // The Black woman singer in white feathers: the showbiz bench's Black women only.
+  { k: 'q04', m: false, age: [22, 42], tags: ['star', 'glam'], eth: 'Black' },
   { k: 'q08', m: false, age: [21, 38], tags: [], reserved: true },
   // A club singer and a woman whose families the game does not have yet: kept for when it does.
   { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
