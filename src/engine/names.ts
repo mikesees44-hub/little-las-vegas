@@ -20,6 +20,11 @@ export const MALE_FIRST: Record<Ethnicity, string[]> = {
     'Jacob', 'Nathan', 'Solomon', 'Sidney', 'Max', 'Milton', 'Seymour', 'Bernard', 'Saul', 'Julius',
     'Emanuel', 'Leonard', 'Murray', 'Norman', 'Reuben', 'Sheldon', 'Stanley', 'Arnold', 'David',
   ],
+  Black: [
+    'Calvin', 'Clarence', 'Otis', 'Willie', 'Leroy', 'Curtis', 'Earl', 'Harold', 'Lester', 'Roosevelt',
+    'Marvin', 'Booker', 'Cleveland', 'Ellis', 'Floyd', 'Jesse', 'Lionel', 'Melvin', 'Nathaniel', 'Odell',
+    'Percy', 'Reginald', 'Sylvester', 'Theodore', 'Walter', 'Alvin', 'Cornelius', 'Herman', 'Julius', 'Rufus',
+  ],
 };
 
 export const FEMALE_FIRST: Record<Ethnicity, string[]> = {
@@ -35,6 +40,10 @@ export const FEMALE_FIRST: Record<Ethnicity, string[]> = {
   Jewish: [
     'Esther', 'Ruth', 'Sarah', 'Rose', 'Miriam', 'Rachel', 'Sylvia', 'Pearl', 'Frances', 'Gertrude',
     'Hannah', 'Ida', 'Lillian', 'Minnie', 'Naomi', 'Shirley', 'Sophie', 'Thelma', 'Bessie', 'Dorothy',
+  ],
+  Black: [
+    'Lorraine', 'Bettye', 'Gwendolyn', 'Hattie', 'Mattie', 'Odessa', 'Pearl', 'Ruby', 'Della', 'Ernestine',
+    'Geraldine', 'Inez', 'Juanita', 'Loretta', 'Mavis', 'Nettie', 'Ola Mae', 'Rosetta', 'Thelma', 'Vernice',
   ],
 };
 
@@ -56,6 +65,11 @@ export const SURNAMES: Record<Ethnicity, string[]> = {
     'Cohen', 'Levy', 'Goldberg', 'Shapiro', 'Rosen', 'Katz', 'Friedman', 'Weiss', 'Kaplan', 'Stein',
     'Bernstein', 'Greenbaum', 'Horowitz', 'Lieberman', 'Mandel', 'Nussbaum', 'Perlman', 'Rubin', 'Schwartz', 'Silver',
     'Adler', 'Blum', 'Feld', 'Gold', 'Halpern', 'Jacobs', 'Kessler', 'Lerner', 'Mintz', 'Pincus',
+  ],
+  Black: [
+    'Jackson', 'Johnson', 'Freeman', 'Washington', 'Carter', 'Brooks', 'Hill', 'Gaines', 'Reed', 'Mitchell',
+    'Coleman', 'Harris', 'Hayes', 'Simms', 'Lassiter', 'Dunbar', 'Wingate', 'Satterfield', 'Holloway', 'Tate',
+    'Pettiford', 'Greer', 'Bynum', 'Dorsey', 'Whitfield', 'McNair', 'Overton', 'Speight', 'Toliver', 'Mabry',
   ],
 };
 

@@ -17,6 +17,7 @@ import { previewDating } from './dating';
 import { previewNight } from './nightlife';
 import { previewPayroll } from './payroll';
 import { previewHer } from './herway';
+import { previewShowbiz } from './showbiz';
 import { noteAttention, previewBond } from './bonds';
 import { commitTalk, previewTalk, talkActions } from './talks';
 import { commitMission, missionActions, previewMission } from './missions';
@@ -353,6 +354,10 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   /** Her way (herway.ts): the women earners of the town. She decides. */
   herway: {
     preview: (s, a) => previewHer(s, a.op),
+  },
+  /** Showbiz (showbiz.ts): the acts, the rooms, the label. They decide. */
+  showbiz: {
+    preview: (s, a) => previewShowbiz(s, a.op),
   },
   /** Your People (bonds.ts): the wife, the goomars, the kids, friends and enemies. They decide. */
   bond: {

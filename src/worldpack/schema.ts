@@ -57,7 +57,7 @@ export const OPPOSED_TRAITS: [WorldTrait, WorldTrait][] = [
 ];
 
 export type GameRank = 'boss' | 'underboss' | 'consigliere' | 'capo' | 'soldier' | 'associate' | 'civilian';
-export type GameEthnicity = 'Italian' | 'Irish' | 'Jewish';
+export type GameEthnicity = 'Italian' | 'Irish' | 'Jewish' | 'Black';
 export type GameFaction = 'player' | 'manno' | 'feldstein' | 'kessler' | 'philly' | 'law' | 'none';
 
 /** llv-crew Vice. */
@@ -82,7 +82,7 @@ export type Origin = 'Italian' | 'Irish' | 'Jewish' | 'Polish' | 'Black' | 'WASP
 
 /** The engine only knows three ethnicities; this is the lossy fallback until it is widened. */
 export const ORIGIN_TO_GAME: Record<Origin, GameEthnicity> = {
-  Italian: 'Italian', Irish: 'Irish', Jewish: 'Jewish', Polish: 'Irish', Black: 'Irish', WASP: 'Irish', Greek: 'Italian',
+  Italian: 'Italian', Irish: 'Irish', Jewish: 'Jewish', Polish: 'Irish', Black: 'Black', WASP: 'Irish', Greek: 'Italian',
   PuertoRican: 'Italian', German: 'Irish',
 };
 

@@ -85,6 +85,7 @@ import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
 import { payrollWeek, withFavorJobs } from './payroll';
 import { herwayWeek } from './herway';
+import { showbizWeek } from './showbiz';
 import { bondsWeek } from './bonds';
 import { spendWeek } from './spend';
 import { storeWeek } from './store';
@@ -455,6 +456,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     nightlifeWeek(ctx);
     payrollWeek(ctx);
     herwayWeek(ctx);
+    // Showbiz (showbiz.ts): the acts' gigs and notices, their contracts and their moods, the label's records.
+    showbizWeek(ctx);
     womenWeek(ctx);
     honeyWeek(ctx);
     bondsWeek(ctx);
