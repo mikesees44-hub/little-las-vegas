@@ -90,7 +90,7 @@ function PitchCard({ s, p }: { s: GameState; p: Pitch }) {
           {p.stake > 0 && <p className="text-[11px] text-stone-500">Stake {`$${p.stake.toLocaleString('en-US')}`}; each answer shows its odds and what comes back.</p>}
         </div>
       </div>
-      <div className="mt-2 grid gap-1 sm:grid-cols-2">
+      <div className="mt-2 grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
         {hows(p).map((how) => <ActionRow key={how} s={s} action={A(how)} hostile={how === 'no'} />)}
       </div>
     </Card>
@@ -145,7 +145,7 @@ export function LetThemEat({ s }: { s: GameState }) {
 
       {pitches.length > 0 && (
         <Section domain="crew" title="Pitches waiting" sub="Their own thing, brought to you. Their capo brings it to a morning too; answer here or there." testid="eat-pitches">
-          <div className="grid gap-2 lg:grid-cols-2">{pitches.map((p) => <PitchCard key={p.id} s={s} p={p} />)}</div>
+          <div className="grid gap-2">{pitches.map((p) => <PitchCard key={p.id} s={s} p={p} />)}</div>
         </Section>
       )}
 

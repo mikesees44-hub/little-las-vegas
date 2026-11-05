@@ -489,18 +489,18 @@ export function previewPitch(s: GameState, pid: string, how: PitchHow): ActionPr
   const odds = how === 'no' ? undefined : pitchOdds(s, p, how, o ?? c);
   const take = pitchTake(p, how);
   const pct = odds ? `${Math.round(odds.chance * 100)}%` : '';
-  const title = how === 'back' ? `Back ${nm}: ${fmtMoney(p.stake)} on ${p.what}`
-    : how === 'piece' ? `Back ${nm} for a piece of ${p.what}`
-      : how === 'join' ? `Go in with ${nm} on ${p.what} (${fmtMoney(p.stake)})`
-        : how === 'other' ? `Give ${p.what} to ${o?.firstName ?? 'somebody else'} (${fmtMoney(p.stake)})`
-          : `Tell ${nm} no on ${p.what}`;
+  const title = how === 'back' ? `Back ${nm} (${fmtMoney(p.stake)})`
+    : how === 'piece' ? `Back ${nm} for a piece`
+      : how === 'join' ? `Go in with ${nm} (${fmtMoney(p.stake)})`
+        : how === 'other' ? `Give it to ${o?.firstName ?? 'somebody else'} (${fmtMoney(p.stake)})`
+          : `Tell ${nm} no`;
   const detail = how === 'no' ? `He goes back to the street with nothing. Hungry men remember.`
     : how === 'piece' ? `No money from you: he does it his way and the Family takes half his end. Comes off ${pct}: about ${fmtMoney(take)} to the Family. If it goes wrong, a little heat.`
       : how === 'join' ? `The Family's ${fmtMoney(p.stake)} and your name on it: better odds, a bigger end, and your fingerprints. Comes off ${pct}: ${fmtMoney(take)} back.`
         : how === 'other' ? `${o?.firstName ?? 'Somebody else'} does ${nm}'s thing. Comes off ${pct}: ${fmtMoney(take)} back. ${nm} will remember who got it.`
           : `The Family's ${fmtMoney(p.stake)}. Comes off ${pct}: ${fmtMoney(take)} back; if it goes wrong, the money is gone.`;
   return {
-    title, detail, effects: [X()], cost: stake, because: how === 'no' ? `told ${nm} no` : `answered ${nm}'s pitch`, category: 'event',
+    title, detail, effects: [X()], cost: stake, because: how === 'no' ? `told ${nm} no on ${p.what}` : `answered ${nm}'s pitch: ${p.what}`, category: 'event',
     ...(odds ? { odds } : {}),
     disabledReason: block ?? (how === 'other' && !o ? 'Nobody else for it' : stake > 0 && s.money < stake ? `Needs ${fmtMoney(stake)}` : undefined),
   };
