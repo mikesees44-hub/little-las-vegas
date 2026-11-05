@@ -2,7 +2,8 @@ import type { ActionPreview } from './actions';
 import { ageOn } from './calendar';
 import { displayName, hasTrait } from './characters';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
-import { askForPlace } from './eat';
+import { askForPitch, askForPlace } from './eat';
+import { journal } from './journal';
 import { ensureHood } from './hoodState';
 import type { Acceptance, Reason } from './interactions';
 import { money, type Ctx } from './ledger';
@@ -80,7 +81,7 @@ export type TalkOp = { t: 'ask'; talk: TalkId; target: string } | { t: 'answer';
 export const TALKS: Record<TalkId, { label: string; verb: string; base: number; counter: boolean; blurb: string }> = {
   meeting: { label: 'Request a meeting', verb: 'asked for a sit-down with', base: 45, counter: true, blurb: 'A table, coffee, nobody else. Opens the door to partnerships and settlements.' },
   job: { label: 'Offer employment', verb: 'offered a job to', base: 38, counter: true, blurb: 'A paycheck from one of your places. People on your payroll remember who signs it.' },
-  business: { label: 'Discuss business', verb: 'talked business with', base: 42, counter: true, blurb: 'Who is selling, who is overextended, where the money is going. Your own made man asks for a place to make money, and you help him open it.' },
+  business: { label: 'Discuss business', verb: 'talked business with', base: 42, counter: true, blurb: 'Who is selling, who is overextended, where the money is going. One of your men brings you a score, or a made man asks for a place to make money; anyone else has a tip or a better price.' },
   partner: { label: 'Form a partnership', verb: 'proposed a partnership to', base: 22, counter: true, blurb: 'A joint venture for a year: a weekly share, and a family that will not move on you.' },
   advice: { label: 'Ask for advice', verb: 'asked the advice of', base: 72, counter: false, blurb: 'People like being asked. Sometimes they are even right.' },
   grievance: { label: 'Discuss a grievance', verb: 'heard out', base: 45, counter: true, blurb: 'Let him say it to your face, before he says it to someone else.' },
@@ -166,7 +167,7 @@ export function talkOdds(s: GameState, talk: TalkId, c: Character): TalkOdds {
   const crew = c.faction === 'player' && c.rank !== 'civilian';
   const boss = rivalLed(s, c);
   if (crew) reasons.push({ label: 'He is one of yours', value: 15 });
-  if (crew && talk === 'business' && (c.rank === 'soldier' || c.rank === 'capo')) reasons.push({ label: 'A made man of yours: he has been waiting to ask for a place', value: 30 });
+  if (crew && talk === 'business' && (c.rank === 'soldier' || c.rank === 'capo' || c.rank === 'associate')) reasons.push({ label: 'One of yours: he has been waiting to bring you something', value: 30 });
   else if (c.dynasty) reasons.push({ label: 'Family', value: 18 });
   else if (boss || s.rivals.some((r) => r.id === c.faction)) reasons.push({ label: 'Another family', value: -12 });
   const r = boss ? s.rivals.find((x) => x.id === boss) : undefined;
@@ -253,11 +254,19 @@ function agreeEffects(ctx: Ctx, talk: TalkId, c: Character, terms?: { weekly?: n
       break;
     }
     case 'business': {
-      // Your own made man: he asks for a place to make money, and you help him open it.
-      const ask = c.faction === 'player' ? askForPlace(s, c) : undefined;
-      if (ask) {
-        text = `${displayName(c)} wants a place of his own: ${ask.what}. Help him open it (Crew ▸ Let them eat).`;
-        eff.push({ type: 'opinion', from: c.id, to: s.playerId, amount: 4, reason: 'Talked business', decay: 1 });
+      // One of your own: a made man asks for a place to make money; anyone of yours brings a score of his own.
+      const mine = c.faction === 'player' && c.id !== s.playerId;
+      const place = mine ? askForPlace(s, c) : undefined;
+      const score = mine && !place ? askForPitch(s, c) : undefined;
+      eff.push({ type: 'opinion', from: c.id, to: s.playerId, amount: 4, reason: 'Talked business', decay: 1 });
+      if (place) {
+        text = `${displayName(c)} wants a place of his own: ${place.what}. Help him open it (Crew ▸ Let them eat).`;
+        journal(s, { t: `Talked business with ${displayName(c)}: he wants ${place.what}`, x: `${fmtMoney(place.stake)} to open it; he runs it. Answer him in Crew ▸ Let them eat.`, p: [c.id], c: 'crew', src: 'talk', ln: 'borgata.eat', mine: 1 });
+        break;
+      }
+      if (score) {
+        text = `${displayName(c)} brought you a score of his own: ${score.what}. Back him or not (Crew ▸ Let them eat).`;
+        journal(s, { t: `Talked business with ${displayName(c)}: ${score.what}`, x: `${score.text} ${score.stake ? `He needs ${fmtMoney(score.stake)}.` : ''} Answer him in Crew ▸ Let them eat.`, p: [c.id], c: 'crew', src: 'talk', ln: 'borgata.eat', mine: 1 });
         break;
       }
       const h = ensureHood(s);
@@ -267,8 +276,14 @@ function agreeEffects(ctx: Ctx, talk: TalkId, c: Character, terms?: { weekly?: n
         l.price = Math.round(l.price * 0.88 / 50) * 50;
         text = `${displayName(c)} knows the owner of ${l.name ?? l.address}: the price came down to ${fmtMoney(l.price)}.`;
         if (h) h.log.push({ y: s.date.y, m: s.date.m, hood: 'boardwalk', kind: 'owner', text: `${l.name ?? l.address}: the asking price came down (${displayName(c)} put in a word).`, lotId: l.id });
-      } else text = `${displayName(c)} told you who is overextended this season.`;
-      eff.push({ type: 'opinion', from: c.id, to: s.playerId, amount: 4, reason: 'Talked business', decay: 1 });
+      } else {
+        // A tip you can bank: who is overextended, a load coming in, a deal before it is public.
+        const tip = Math.round((150 + Math.min(900, (c.wealth ?? 0) / 40) + randInt(t, 0, 300)) / 50) * 50;
+        const what = pick(t, ['a load coming in off the Parkway', 'a motel owner who has to sell before the season', 'a land deal in Rio Grande before it is in the paper', 'which jukebox route is behind on its notes', 'a bookmaker in Cape May who is overextended']);
+        eff.push({ type: 'money', amount: tip, label: `Talked business with ${c.firstName}: a tip on ${what}`, category: 'event' } as Effect);
+        text = `${displayName(c)} gave you a tip on ${what}: ${fmtMoney(tip)} for the Family.`;
+      }
+      journal(s, { t: `Talked business with ${displayName(c)}`, x: text, p: [c.id], c: 'crew', src: 'talk', mine: 1 });
       break;
     }
     case 'partner': {

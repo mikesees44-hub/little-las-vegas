@@ -1,3 +1,4 @@
+import { NeedsMoney } from './LetThemEat';
 import { useState } from 'react';
 import { crew } from '../../engine/characters';
 import {
@@ -192,6 +193,7 @@ export function MyMen({ s }: { s: GameState }) {
   return (
     <div className="space-y-3" data-testid="mymen">
       <Meter s={s} />
+      <NeedsMoney s={s} />
       <Wrongs s={s} />
       <Bulk s={s} picked={picked} clear={() => setPicked([])} />
       <section className="space-y-1.5">

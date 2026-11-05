@@ -658,6 +658,18 @@ function placePitch(s: GameState, c: Character, id: string, due = 4): Pitch | un
     text: `"Boss, I need a place to make money. Help me open ${what}. ${PLACE_WORDS[pl.kind] ?? 'I run it, the Family gets its end.'}"` };
 }
 
+/** He brings a score now (Discuss business with one of your own): a pitch for you to back. Undefined if he already has one. */
+export function askForPitch(s: GameState, c: Character): Pitch | undefined {
+  const e = ensureEat(s);
+  if (c.faction !== 'player' || c.id === s.playerId || !(c.rank === 'soldier' || c.rank === 'associate' || c.rank === 'capo')) return undefined;
+  if (e.pitches.some((p) => p.by === c.id)) return undefined;
+  const p = draftPitch(s, c, `pi${e.next++}`);
+  p.due = s.week + 6;
+  e.pitches.push(p);
+  e.last[c.id] = s.week;
+  return p;
+}
+
 /** He asks now (Discuss business with your own made man). Returns the pitch, or undefined if there is no room or he already has one. */
 export function askForPlace(s: GameState, c: Character): Pitch | undefined {
   const e = ensureEat(s);

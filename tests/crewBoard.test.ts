@@ -49,3 +49,30 @@ describe('who is earning', () => {
     expect(s.eat?.own?.[r.c.id]?.w).toBe(s.week - 1);
   });
 });
+
+import { mensMoney } from '../src/engine/mensMoney';
+import { NeedsMoney } from '../src/ui/borgata/LetThemEat';
+describe("your men's money and talking business", () => {
+  it('the money report lists every man, the ones who need help first, and renders', () => {
+    let s = newGameWith('mm-1', 'olddon');
+    for (let w = 0; w < 3; w++) s = advanceWeek(s, {}).state;
+    const r = mensMoney(s);
+    expect(r.rows.length).toBeGreaterThan(3);
+    const ord = ['broke', 'tight', 'ok', 'flush'];
+    for (let i = 1; i < r.rows.length; i++) expect(ord.indexOf(r.rows[i].level)).toBeGreaterThanOrEqual(ord.indexOf(r.rows[i - 1].level));
+    expect(r.rows.some((x) => x.earned > 0 || x.up > 0)).toBe(true);
+    const html = renderToString(createElement(NeedsMoney, { s }));
+    expect(html).toContain("Your men&#x27;s money");
+  });
+  it('Discuss business with one of your own always comes to something: a score, a place, a tip or a better price', () => {
+    let hits = 0;
+    for (let i = 0; i < 6; i++) {
+      let s = newGameWith(`biz-${i}`, 'olddon');
+      const c = Object.values(s.characters).filter((x) => x.alive && x.faction === 'player' && (x.rank === 'soldier' || x.rank === 'associate'))[i % 3];
+      const before = s.journal?.e.length ?? 0;
+      s = advanceWeek(s, { actions: [{ kind: 'talk', op: { t: 'ask', talk: 'business', target: c.id } } as PlayerAction] }).state;
+      if ((s.journal?.e ?? []).slice(before).some((x) => /Talked business/.test(x.t))) hits++;
+    }
+    expect(hits).toBeGreaterThan(2);
+  });
+});

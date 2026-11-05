@@ -10,7 +10,8 @@ import { Card, CardHead, PageHeader, PlayCard, Section, StatChip } from '../comp
 import { useOrders } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { sameOrder } from '../verbs';
-import { moneyWord, whoNeedsMoney, type MoneyNeed } from '../../engine/moneyNeed';
+import { moneyWord } from '../../engine/moneyNeed';
+import { mensMoney } from '../../engine/mensMoney';
 import { fmt$ } from '../format';
 import { deskBundles } from '../../engine/bundles';
 import { BundleCard } from '../desk/Bundles';
@@ -138,48 +139,67 @@ function PitchBundle({ s }: { s: GameState }) {
 }
 
 /** Who needs money: every man running low or broke, why, and the one best way to help, ready to give. */
-function NeedsMoney({ s }: { s: GameState }) {
+const LEVEL_INK: Record<string, string> = { broke: 'text-red-300', tight: 'text-amber-300', ok: 'text-stone-300', flush: 'text-emerald-300' };
+
+/** Your men's money (engine/mensMoney.ts): one easy report, the men who need help first, each with the best way to help. */
+export function NeedsMoney({ s }: { s: GameState }) {
   const { orders, queue } = useOrders();
   const [asking, setAsking] = useState(false);
-  const need = useMemo(() => whoNeedsMoney(s), [s]);
-  const todo = need.filter((n) => n.fix && !orders.some((o) => sameOrder(o, n.fix!.action)));
-  const total = todo.reduce((a, n) => a + (n.fix?.cost ?? 0), 0);
-  if (!need.length) return <Card domain="money"><CardHead d="money" title="Who needs money" /><p className="text-xs text-stone-400">Nobody is short right now. Every man is getting by.</p></Card>;
+  const [all, setAll] = useState(false);
+  const rep = useMemo(() => mensMoney(s), [s]);
+  const need = rep.rows.filter((r) => r.level === 'broke' || r.level === 'tight');
+  const todo = need.filter((r) => r.need.fix && !orders.some((o) => sameOrder(o, r.need.fix!.action)));
+  const total = todo.reduce((a, r) => a + (r.need.fix?.cost ?? 0), 0);
+  const shown = all ? rep.rows : need;
   return (
-    <Card domain="money">
-      <CardHead d="money" title={`Who needs money (${need.length})`} />
-      <p className="mb-2 text-[11px] text-stone-400">Men running low or who can't earn. The best way to help each one is already picked.</p>
-      {todo.length > 0 && (
-        <div className="mb-2">
-          <button type="button" className="btn-gold text-xs" onClick={() => setAsking(true)} data-testid="money-help-all">Take care of all {todo.length}{total ? ` · ${fmt$(total)}` : ''}</button>
-          {asking && (
-            <div className="mt-1 rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm" data-testid="money-help-confirm">
-              <ul className="mb-2 space-y-0.5 text-stone-300">{todo.map((n) => <li key={n.c.id}>• {n.c.firstName} {n.c.lastName}: {n.fix!.label}{n.fix!.cost ? ` (${fmt$(n.fix!.cost)})` : ''}</li>)}</ul>
-              <div className="flex gap-1.5">
-                <button type="button" className="btn-primary text-xs" onClick={() => { for (const n of todo) queue(n.fix!.action, true); setAsking(false); }} data-testid="money-help-yes">Give the orders</button>
-                <button type="button" className="btn-ghost text-xs" onClick={() => setAsking(false)}>Not now</button>
-              </div>
-            </div>
-          )}
+    <Card domain="money" testid="mens-money">
+      <CardHead d="money" title="Your men's money" sub="What each man has, earns, kicks up, keeps and spends a week (his last four weeks), what he owes, and which way it is going." />
+      <div className="mb-2 flex flex-wrap gap-1.5 text-[11px]" data-testid="mens-money-sum">
+        <span className={`rounded border px-2 py-0.5 ${rep.total.broke ? 'border-red-500/60 text-red-300' : 'border-noir-600 text-stone-400'}`}>{rep.total.broke} broke</span>
+        <span className={`rounded border px-2 py-0.5 ${rep.total.tight ? 'border-amber-500/60 text-amber-300' : 'border-noir-600 text-stone-400'}`}>{rep.total.tight} tight</span>
+        <span className="rounded border border-noir-600 px-2 py-0.5 text-stone-300">{rep.rows.length - rep.total.broke - rep.total.tight} doing fine</span>
+        <span className="rounded border border-noir-600 px-2 py-0.5 text-stone-300">they hold {fmt$(rep.total.has)}</span>
+        <span className="rounded border border-noir-600 px-2 py-0.5 text-stone-300">kick up ~{fmt$(rep.total.up)}/wk</span>
+        {rep.total.owes > 0 && <span className="rounded border border-red-500/40 px-2 py-0.5 text-red-200">owe {fmt$(rep.total.owes)}</span>}
+      </div>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        {todo.length > 0 && <button type="button" className="btn-primary text-xs" onClick={() => setAsking(true)} data-testid="money-help-all">Take care of all {todo.length}{total ? ` · ${fmt$(total)}` : ''}</button>}
+        <button type="button" className="btn-secondary text-xs" onClick={() => setAll((v) => !v)} data-testid="mens-money-all">{all ? 'Only who needs help' : `Every man (${rep.rows.length})`}</button>
+      </div>
+      {asking && (
+        <div className="mb-2 rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm" data-testid="money-help-confirm">
+          <ul className="mb-2 space-y-0.5 text-stone-300">{todo.map((r) => <li key={r.c.id}>• {r.c.firstName} {r.c.lastName}: {r.need.fix!.label}{r.need.fix!.cost ? ` (${fmt$(r.need.fix!.cost)})` : ''}</li>)}</ul>
+          <div className="flex gap-1.5">
+            <button type="button" className="btn-primary text-xs" onClick={() => { for (const r of todo) queue(r.need.fix!.action, true); setAsking(false); }} data-testid="money-help-yes">Give the orders</button>
+            <button type="button" className="btn-secondary text-xs" onClick={() => setAsking(false)}>Not now</button>
+          </div>
         </div>
       )}
-      <ul className="space-y-1.5">
-        {need.map((n: MoneyNeed) => {
-          const queued = n.fix ? orders.some((o) => sameOrder(o, n.fix!.action)) : false;
-          return (
-            <li key={n.c.id} className="flex items-start gap-2" data-testid="money-need" data-level={n.level}>
-              <Face s={s} c={n.c} size={30} />
-              <div className="min-w-0 flex-1 text-xs">
-                <div className="flex flex-wrap items-baseline gap-x-2"><CharLink s={s} id={n.c.id} /><span className={n.level === 'broke' ? 'text-red-300' : 'text-amber-300'}>{moneyWord(n.level)}</span><span className="text-stone-500">{n.c.rank}</span></div>
-                <p className="text-[11px] text-stone-400">{n.why.join(' · ')}</p>
-              </div>
-              {n.fix
-                ? <button type="button" className="btn-primary shrink-0 text-xs" disabled={queued} onClick={() => queue(n.fix!.action, true)} data-testid="money-help">{queued ? 'Queued' : `${n.fix.label}${n.fix.cost ? ` · ${fmt$(n.fix.cost)}` : ''}`}</button>
-                : <span className="shrink-0 text-[11px] text-stone-500">Nothing to give right now</span>}
-            </li>
-          );
-        })}
-      </ul>
+      {shown.length === 0 ? <p className="text-xs text-stone-400">Nobody is short right now. Every man is getting by.</p> : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-[11px] tabular-nums" data-testid="mens-money-table">
+            <thead><tr className="text-stone-500"><th className="text-left font-normal">Man</th><th className="text-right font-normal">Has</th><th className="text-right font-normal">Earns/wk</th><th className="text-right font-normal">Kicks up</th><th className="text-right font-normal">Keeps</th><th className="text-right font-normal">Spends</th><th className="text-right font-normal">Owes</th><th className="text-right font-normal">4 wks</th><th /></tr></thead>
+            <tbody>
+              {shown.map((r) => {
+                const queued = r.need.fix ? orders.some((o) => sameOrder(o, r.need.fix!.action)) : false;
+                return (
+                  <tr key={r.c.id} className="border-t border-noir-800 align-top" data-testid="money-need" data-level={r.level}>
+                    <td className="py-1 pr-2"><div className="flex flex-wrap items-baseline gap-x-1.5"><CharLink s={s} id={r.c.id} /><span className="text-stone-500">{r.c.rank}</span><span className={LEVEL_INK[r.level]}>{moneyWord(r.level)}</span></div>{r.need.why.length > 0 && <div className="text-[10px] text-stone-500">{r.need.why.join(' · ')}</div>}</td>
+                    <td className={`text-right ${r.has < 150 ? 'text-red-300' : 'text-stone-200'}`}>{fmt$(r.has)}</td>
+                    <td className="text-right text-stone-300">{fmt$(r.earned)}</td>
+                    <td className="text-right text-stone-300">{fmt$(r.up)}</td>
+                    <td className="text-right text-stone-300">{fmt$(r.kept)}</td>
+                    <td className="text-right text-stone-300">{fmt$(r.spent)}</td>
+                    <td className={`text-right ${r.owes ? 'text-red-300' : 'text-stone-500'}`}>{r.owes ? fmt$(r.owes) : '—'}</td>
+                    <td className={`text-right ${r.trend < 0 ? 'text-red-300' : r.trend > 0 ? 'text-emerald-300' : 'text-stone-500'}`}>{r.trend > 0 ? '▲' : r.trend < 0 ? '▼' : '·'} {r.trend ? fmt$(Math.abs(r.trend)) : ''}</td>
+                    <td className="pl-2 text-right">{r.need.fix && (r.level === 'broke' || r.level === 'tight') ? <button type="button" className="btn-primary text-[11px]" disabled={queued} onClick={() => queue(r.need.fix!.action, true)} data-testid="money-help">{queued ? 'Queued' : `${r.need.fix.label}${r.need.fix.cost ? ` · ${fmt$(r.need.fix.cost)}` : ''}`}</button> : null}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </Card>
   );
 }
