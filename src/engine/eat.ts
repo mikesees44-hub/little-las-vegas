@@ -281,7 +281,7 @@ function rankPicks(s: GameState, pool: Character[], need: JobNeed, mk: (c: Chara
   return out.sort((a, b) => b.fit.score - a.fit.score || (a.id < b.id ? -1 : 1)).slice(0, 3);
 }
 
-const RACKET_NEED = (kind: string): JobNeed => {
+export const RACKET_NEED = (kind: string): JobNeed => {
   if (/numbers|book|policy|card|dice|bingo|court/.test(kind)) return { crafts: ['bookmaker', 'earner'], attrs: ['business', 'discipline'] };
   if (/loan|protection|collect|labor|waste/.test(kind)) return { crafts: ['collector', 'muscle'], attrs: ['force', 'discipline'] };
   if (/hijack|truck|cigar|bootleg|fence|cars/.test(kind)) return { crafts: ['driver', 'burglar'], attrs: ['intrigue', 'force'] };
