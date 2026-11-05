@@ -194,10 +194,13 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
 ];
 
 const STAGE = /singer|crooner|comic|comedian|headliner|bandleader|band|actor|performer|revue|entertainer|dancer|piano|trumpet|emcee/i;
-const isStage = (s: GameState, c: Character) => STAGE.test(c.office ?? '') || s.nightlife?.people[c.id]?.role === 'singer';
+const STAGE_ROLES = new Set(['singer', 'dancer', 'recording', 'actress']);
+const nightRole = (s: GameState, c: Character) => s.nightlife?.people[c.id]?.role as string | undefined;
+const isStage = (s: GameState, c: Character) => STAGE.test(c.office ?? '') || STAGE_ROLES.has(nightRole(s, c) ?? '');
 
 function wants(c: Character, s: GameState, age: number): Tag[] {
   if (isStage(s, c)) return c.gender === 'M' ? ['star'] : ['star', 'glam'];
+  if (nightRole(s, c) === 'madam' || nightRole(s, c) === 'owner') return ['pro', 'glam', 'wife'];
   const off = (c.office ?? '').toLowerCase();
   if (/pastor|priest|church|monsignor/.test(off)) return ['priest'];
   if (/chief|patrol|police|detective|sergeant|captain|sheriff|trooper/.test(off)) return ['cop'];
@@ -240,6 +243,8 @@ function priority(c: Character, s: GameState): number | undefined {
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.rank === 'boss') return 11;
   if (c.gender !== 'M' && (s.romance?.rels ?? []).some((r) => r.a === c.id || r.b === c.id)) return 12;
   if (isStage(s, c)) return 9;
+  // The women of the night the boss deals with: dancers, girls, madams.
+  if (c.gender !== 'M' && nightRole(s, c) && nightRole(s, c) !== 'retired') return 11;
   if (c.rank === 'capo') return 13;
   if (c.rank === 'soldier') return 14;
   if (c.office) return 15;
