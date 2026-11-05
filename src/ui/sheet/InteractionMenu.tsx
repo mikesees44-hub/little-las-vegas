@@ -5,6 +5,8 @@ import { openProtectionFor } from '../borgata/Protection';
 import { previewAction } from '../../engine/actions';
 import { useEscape } from '../keys';
 import { useMemo, useRef, useState } from 'react';
+import { useViewMode, ViewToggle } from '../components/ViewToggle';
+import { recentOrders } from '../plans/orderMarks';
 import { displayName } from '../../engine/characters';
 import { GIFT_CAT_LABEL } from '../../engine/gifts';
 import type { Character, GameState } from '../../engine/types';
@@ -152,16 +154,25 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
   const want = toCategory(initial);
   const [cur, setCur] = useState<MenuCategoryId | undefined>(want && cats.some((x) => x.id === want && x.items.length) ? want : cats.find((x) => x.items.length)?.id);
   const [q, setQ] = useState('');
+  const [view, setView] = useViewMode('menu', s);
+  const [more, setMore] = useState(false);
   if (!cats.some((x) => x.items.length)) return null;
   const cat = cats.find((x) => x.id === cur) ?? cats[0];
   const total = base.reduce((n, x) => n + x.items.length, 0);
   const query = q.trim().toLowerCase();
+  // Simple view: the five he uses most (his recent orders first, then Best now), everything else one tap away.
+  const simple = view === 'simple' && !more && !query;
+  const recent = simple ? recentOrders(s.seed).map((a) => JSON.stringify(a)) : [];
+  const pool = simple ? [...(cats.find((x) => x.id === 'best')?.items ?? cats.find((x) => x.items.length)!.items)] : [];
+  if (simple) for (const it of base.flatMap((x) => x.items)) if (it.action && recent.includes(JSON.stringify(it.action)) && !pool.some((p) => p.key === it.key)) pool.push(it);
+  const rank = (it: MenuItem) => { const i = it.action ? recent.indexOf(JSON.stringify(it.action)) : -1; return i < 0 ? 99 : i; };
+  const five = simple ? pool.map((it, i) => ({ it, i })).sort((a, b) => rank(a.it) - rank(b.it) || a.i - b.i).slice(0, 5).map((x) => x.it) : [];
   const hits = query ? base.flatMap((x) => x.items.map((it) => ({ it, cat: x }))).filter(({ it }) => query.split(/\s+/).every((w) => itemText(s, it).includes(w) || CATEGORY_LABEL[base.find((y) => y.items.includes(it))!.id].toLowerCase().includes(w))) : [];
   return (
     <section className="mt-4" data-testid="interaction-menu">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="panel-title text-base flex flex-wrap items-center gap-1.5">{c.id === s.playerId ? 'Your own business' : `Deal with ${c.firstName}`}{c.id !== s.playerId && <><SideChip s={s} id={c.id} /><RelationChip relation={sideOf(s, c.id).relation} /></>}</div>
-        <span className="text-[11px] text-stone-500">{total} things you can do · talk, favors and asks settle on the spot; jobs land when the week turns</span>
+        <span className="flex items-center gap-2 text-[11px] text-stone-500">{total} things you can do · talk, favors and asks settle on the spot; jobs land when the week turns <ViewToggle screen="menu" view={view} onChange={(v) => { setMore(false); setView(v); }} /></span>
       </div>
       {total > 6 && (
         <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Find an action… (gift, dinner, hit, promote)`} aria-label="Find an action"
@@ -171,6 +182,11 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
         <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5" data-testid="menu-find-hits">
           {!hits.length && <p className="text-xs text-stone-500">Nothing by that name for {c.firstName}. Try another word, or Find… in the top bar.</p>}
           {sortItems(s, hits.map((h) => h.it)).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}
+        </div>
+      ) : simple ? (
+        <div data-testid="menu-simple">
+          <Grouped s={s} c={c} items={five} onDone={onDone} sub={false} openFirst />
+          <button type="button" className="btn-secondary btn-sm mt-1.5" onClick={() => setMore(true)} data-testid="menu-simple-more">More… (all {total}) ▾</button>
         </div>
       ) : (
         <>

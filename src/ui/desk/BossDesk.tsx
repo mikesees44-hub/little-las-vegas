@@ -16,6 +16,7 @@ import { AssetImg } from '../hood/AssetImg';
 import { domainOf, domainOfText, domClass, type Domain } from '../domain';
 import { deskBundles, type WeekPlanRow } from '../../engine/bundles';
 import { BundleCard, WeekDoneList, type SettledRow, type WeekDone } from './Bundles';
+import { useViewMode, ViewToggle } from '../components/ViewToggle';
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
 function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
@@ -144,19 +145,23 @@ function NeedCard({ s, it, api, next }: { s: GameState; it: DeskItem; api: DeskA
 }
 
 /** The papers that need him, as a hand of cards: one row to slide through, or all of them laid out. */
-function Hand({ g, title, render }: { g: DeskGroup; title: ReactNode; render: (it: DeskItem) => ReactNode }) {
+function Hand({ g, title, render, simple }: { g: DeskGroup; title: ReactNode; render: (it: DeskItem) => ReactNode; /** Simple view: the top three, "More…" one tap away. */ simple?: boolean }) {
   const [all, setAll] = useState(false);
+  const [more, setMore] = useState(false);
+  const cut = simple && !more && g.items.length > 3;
+  const items = cut ? g.items.slice(0, 3) : g.items;
   return (
     <>
       <div className="mb-1 flex items-center gap-2">
         {title}
-        {g.items.length > 3 && (
+        {cut && <button type="button" className="btn-quiet ml-auto rounded bg-noir-950/75 px-1.5 text-[11px]" onClick={() => setMore(true)} data-testid="desk-simple-more">More… ({g.items.length - 3}) ▾</button>}
+        {!cut && g.items.length > 3 && (
           <button type="button" className="btn-quiet ml-auto rounded bg-noir-950/75 px-1.5 text-[11px]" onClick={() => setAll((x) => !x)} data-testid={`desk-more-${g.kind}`}>
             {all ? 'one row ▴' : `lay out all ${g.items.length} ▾`}
           </button>
         )}
       </div>
-      <ul className={`llv-hand ${all ? 'llv-hand-all' : ''}`} aria-label="The papers that need you">{g.items.map((it) => <Fragment key={it.key}>{render(it)}</Fragment>)}</ul>
+      <ul className={`llv-hand ${all ? 'llv-hand-all' : ''}`} aria-label="The papers that need you">{items.map((it) => <Fragment key={it.key}>{render(it)}</Fragment>)}</ul>
     </>
   );
 }
@@ -218,6 +223,7 @@ const DESK_SPOTS: { id: 'ashtray' | 'ledger' | 'phone' | 'envelopes'; label: str
 
 export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }: { s: GameState; ui: DeskUi; api: DeskApi; filter?: DeskFilter; /** The side column (The Rise). */ side?: ReactNode; /** In the Desk drawer (its header already says "The Desk"): no second title, no second clock. */ inDrawer?: boolean }) {
   const [filter, setFilter] = useState<DeskFilter>(filter0);
+  const [view, setView] = useViewMode('desk', s);
   const all = bossDesk(s, ui);
   // The one count: Needs you of the same queue the rows come from.
   const waiting = deskHeaderCount(s, ui);
@@ -281,6 +287,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         ))}
         <button type="button" className="btn-quiet ml-auto text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
+        <ViewToggle screen="desk" view={view} onChange={setView} />
         {api.onHandleWeek && <button type="button" className="btn-primary py-0.5 text-[11px]" onClick={api.onHandleWeek} data-testid="desk-handle-week" title="Your people settle every routine item their way; a life, a man, the law, a war or real money stays yours. Each one can be taken back until the week turns.">Handle the week for me ▸</button>}
       </div>
       {api.weekDone && api.weekDone.week === s.week && <div className="mt-1.5"><WeekDoneList s={s} done={api.weekDone} ui={ui} onUndo={(r) => api.onUndo?.(r)} onOpen={openKey} onClose={api.onWeekDoneClose} /></div>}
@@ -292,7 +299,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
             )}
             {bundles.length > 0 && <div data-testid="desk-bundles">{!needs?.items.length && needsTitle}{bundles.map((b) => <BundleCard key={b.kind} s={s} b={b} onSettle={api.onSettle!} onOpen={openKey} />)}</div>}
             {!needs?.items.length && !bundles.length && needsTitle}
-            {needs?.items.length ? <Hand g={needs} title={needsTitle} render={(it) => <NeedCard s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing {bundles.length ? 'else ' : ''}needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
+            {needs?.items.length ? <Hand g={needs} title={needsTitle} simple={view === 'simple'} render={(it) => <NeedCard s={s} it={it} api={api} next={it.key === nextKey} />} /> : <p className="llv-paper mt-1 rounded-md px-2.5 py-2 text-[12px] text-stone-300">Nothing {bundles.length ? 'else ' : ''}needs you{filter !== 'all' ? ' here' : ''}. Your people have the rest; plan an evening, grow the family, or advance the week.</p>}
           </div>
       </div>
       </div>

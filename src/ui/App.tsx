@@ -47,7 +47,7 @@ import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadDesk, loadSlot, saveDesk, saveSlot, setCurrentSlot, type DeskState } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, OPENING_SEEN_FLAG, pausesOn, timeMode, weekStart } from './settings';
+import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, OPENING_SEEN_FLAG, SIMPLE_VIEW_FLAG, pausesOn, timeMode, weekStart } from './settings';
 import { GoThere } from './travel/GoThere';
 import { CityScreen, VisitPill } from './travel/CityScreen';
 import { VacationPill, VacationScreen } from './travel/VacationScreen';
@@ -579,6 +579,8 @@ export function App({ startOn = 'title' }: AppProps) {
     settledRef.current = undefined;
     // New games start each week in the Boss's Office (the setting can change it; older saves keep the desk).
     next.flags[OFFICE_HOME_FLAG] = 1;
+    // New games open in Simple view (the setting, or a screen's own switch, still wins).
+    next.flags[SIMPLE_VIEW_FLAG] = 1;
     setCurrentSlot(n);
     setSlot(n);
     setS(next);

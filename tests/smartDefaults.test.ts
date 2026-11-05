@@ -77,3 +77,46 @@ describe('smart defaults: pickers open on the recommended choice, never given', 
     expect(h).toContain('data-testid="action-row-open"');
   });
 });
+
+describe('Simple / Full view (nothing removed)', () => {
+  it('Story difficulty and new games default to Simple; older saves to Full; one screen can override the global', async () => {
+    const { viewMode, setViewMode, setSettings, SIMPLE_VIEW_FLAG } = await import('../src/ui/settings');
+    setSettings({ view: undefined, viewBy: {} });
+    const s = newGame('view-a');
+    expect(viewMode('desk', s)).toBe('full');
+    expect(viewMode('desk', { ...s, difficulty: 'story' })).toBe('simple');
+    expect(viewMode('desk', { ...s, flags: { ...s.flags, [SIMPLE_VIEW_FLAG]: 1 } })).toBe('simple');
+    setViewMode('menu', 'simple');
+    expect(viewMode('menu', s)).toBe('simple');
+    expect(viewMode('desk', s)).toBe('full');
+    setViewMode(undefined, 'simple');
+    expect(viewMode('menu', s)).toBe('simple');
+    expect(viewMode('desk', s)).toBe('simple');
+    setSettings({ view: undefined, viewBy: {} });
+  });
+
+  it('Simple Desk shows the top three with "More…"; the person menu shows five with "More…"', async () => {
+    const { setSettings } = await import('../src/ui/settings');
+    const { BossDesk } = await import('../src/ui/desk/BossDesk');
+    const s0 = newGame('view-b');
+    const extra = [1, 2, 3, 4, 5].map((n) => ({ ...ev(s0), iid: `evV${n}`, title: `Ask ${n}`, choices: [{ id: 'a', label: 'Go', because: 'x', effects: [{ type: 'money', amount: -9000, label: 'x' }] }, { id: 'b', label: 'No', because: 'x', effects: [] }] } as EventInstance));
+    const s = { ...s0, pendingEvents: [...s0.pendingEvents, ...extra] };
+    const api = { onEvent: () => {}, onDay: () => {}, onSitDown: () => {}, onCancelOrder: () => {}, onMoney: () => {}, onChar: () => {} };
+    setSettings({ view: 'simple', viewBy: {} });
+    const simple = html(createElement(BossDesk, { s, ui: {}, api }));
+    expect(simple).toContain('data-testid="view-toggle-desk"');
+    expect(simple).toContain('data-testid="desk-simple-more"');
+    const c = capos(s0)[0];
+    if (c) {
+      const m = html(createElement(InteractionMenu, { s: s0, c }));
+      expect(m).toContain('data-testid="menu-simple"');
+      expect(m).toContain('data-testid="menu-simple-more"');
+      expect((m.match(/data-testid="action-row(-open)?"/g) ?? []).length).toBeLessThanOrEqual(5);
+    }
+    setSettings({ view: 'full', viewBy: {} });
+    const full = html(createElement(BossDesk, { s, ui: {}, api }));
+    expect(full).not.toContain('desk-simple-more');
+    if (c) expect(html(createElement(InteractionMenu, { s: s0, c }))).not.toContain('menu-simple"');
+    setSettings({ view: undefined, viewBy: {} });
+  });
+});

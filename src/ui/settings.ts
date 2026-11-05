@@ -55,6 +55,26 @@ export interface Settings {
   mapLighting?: 'day' | 'dusk' | 'night' | 'auto';
   /** Where each week starts: the Boss's Office, the Desk, or the map. Unset: Office for new games, Desk for older saves. */
   weekStart?: WeekStart;
+  /** Simple or Full view, for every screen (unset: Simple for Story difficulty and new games, Full for older saves). */
+  view?: ViewMode;
+  /** One screen's own Simple / Full, over the global one. */
+  viewBy?: Record<string, ViewMode>;
+}
+/** Simple: the consigliere's top 3 and the 5 most-used actions, "More…" one tap away. Full: everything, as before. Nothing is removed. */
+export type ViewMode = 'simple' | 'full';
+/** The flag a new game carries (set when it is created) so it opens in Simple view. */
+export const SIMPLE_VIEW_FLAG = 'simpleView';
+
+/** The view for one screen: its own setting, else the global one, else Simple for Story and new games. */
+export function viewMode(screen: string, s?: { difficulty?: string; flags?: Record<string, number> }): ViewMode {
+  const st = getSettings();
+  return st.viewBy?.[screen] ?? st.view ?? (s && (s.difficulty === 'story' || s.flags?.[SIMPLE_VIEW_FLAG]) ? 'simple' : 'full');
+}
+
+/** Set the view: for one screen (it overrides the global one), or for all (screen undefined: clears the per-screen ones). */
+export function setViewMode(screen: string | undefined, v: ViewMode): void {
+  if (!screen) { setSettings({ view: v, viewBy: {} }); return; }
+  setSettings({ viewBy: { ...(getSettings().viewBy ?? {}), [screen]: v } });
 }
 export type WeekStart = 'office' | 'desk' | 'map';
 
