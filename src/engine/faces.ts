@@ -231,7 +231,7 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'j17', m: false, age: [24, 44], tags: ['glam'], eth: 'Jewish' },
   { k: 'j18', m: true, age: [20, 38], tags: ['assoc', 'biz'], eth: 'Jewish' },
   // A club singer and a woman whose families the game does not have yet: kept for when it does.
-  { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
+  { k: 'v03', m: false, age: [21, 40], tags: ['star'], eth: 'Black' },
   { k: 'v07', m: false, age: [20, 40], tags: [], reserved: true },
 ];
 
