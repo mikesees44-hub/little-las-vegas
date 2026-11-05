@@ -360,3 +360,32 @@ describe('the ladder and the boss\'s evenings', () => {
     expect(roundSlots(s).slots).toBe(w0 - 1);
   });
 });
+
+describe('more with a working woman (owner, 2026-11-05)', () => {
+  it('on your arm, a weekend away, hostess, help: each priced from your pocket, she can say no, and each lands', () => {
+    const s = fresh('dating-pro');
+    s.tribute!.acct.personal = 50000;
+    const p = Object.values(s.dating!.providers).find((x) => x.status === 'working' && x.offers)!;
+    for (const what of ['arm', 'weekend', 'hostess', 'help'] as const) {
+      const pv = previewDating(s, { op: 'pro', id: p.id, what });
+      expect(pv.cost).toBeGreaterThan(0);
+      expect(pv.pot).toBe('pocket');
+      expect(pv.acceptance!.chance).toBeGreaterThan(0.5);
+    }
+    const favors = s.favors;
+    accept(s, { op: 'pro', id: p.id, what: 'hostess' });
+    expect(s.favors).toBe(favors + 1);
+    accept(s, { op: 'pro', id: p.id, what: 'help' });
+    expect(opinion(s, p.id, s.playerId)).toBeGreaterThan(10);
+  });
+  it('a regular is easier to ask out as yourself, and she is intrigued by a man people whisper about', () => {
+    const s = fresh('dating-pro2');
+    const p = Object.values(s.dating!.providers).find((x) => x.status === 'working' && x.offers)!;
+    const c = s.characters[p.id];
+    const before = herDecision(s, c, 'askOut').chance;
+    p.visits = [s.week - 3, s.week - 2, s.week - 1];
+    expect(herDecision(s, c, 'askOut').chance).toBeGreaterThan(before);
+    s.respect = 80;
+    expect(herDecision(s, c, 'askOut').reasons.some((r) => /Intrigued/.test(r.label))).toBe(true);
+  });
+});

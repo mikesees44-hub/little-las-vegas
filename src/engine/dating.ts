@@ -94,7 +94,11 @@ export type DatingAction =
   | { op: 'meet'; tp: string }
   | { op: 'paid'; id: string }
   | { op: 'askOut'; id: string }
+  /** More with a working woman (adults; mature content on; she decides): on your arm, a weekend away, hostess a game, help her out. */
+  | { op: 'pro'; id: string; what: ProExtra }
   | SingleAction;
+
+export type ProExtra = 'arm' | 'weekend' | 'hostess' | 'help';
 
 export type DatingOp =
   | { op: 'talk'; id: string }
@@ -106,6 +110,7 @@ export type DatingOp =
   | { op: 'meet'; tp: string }
   | { op: 'paid'; id: string; price: number }
   | { op: 'askOut'; id: string }
+  | { op: 'pro'; id: string; what: ProExtra; price: number }
   | { op: 'refused'; id: string; what: string }
   | SingleOp;
 
@@ -314,6 +319,21 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
     if (pocket >= 20000) reasons.push({ label: 'He spends like a boss', value: pocket >= 100000 ? 8 : 5 });
   }
   if (hasTrait(boss, 'Cruel')) reasons.push({ label: 'People say you have a cruel streak', value: -10 });
+  // Intrigue: a man people whisper about. Some women are drawn to it.
+  {
+    let v = Math.max(0, Math.min(8, Math.round((s.respect - 30) / 6)));
+    for (const tr of ['Ambitious', 'Gambler', 'Greedy', 'Womanizer', 'Hot-headed'] as const) if (hasTrait(c, tr)) v += 3;
+    if (hasTrait(c, 'Pious') || hasTrait(c, 'Cowardly')) v -= 4;
+    if (s.dating?.providers[c.id]) v += 4;
+    v = Math.max(0, Math.min(15, v));
+    if (v) reasons.push({ label: 'Intrigued by him: a man people whisper about', value: what === 'talk' ? Math.round(v / 2) : v });
+  }
+  // A working woman he has been good to: she already knows him, and the money was never a problem.
+  const prov = s.dating?.providers[c.id];
+  if (prov && what !== 'talk') {
+    if (prov.visits.length) reasons.push({ label: `A regular: ${prov.visits.length} evening${prov.visits.length === 1 ? '' : 's'}, always a gentleman`, value: Math.min(20, prov.visits.length * 5) });
+    reasons.push({ label: 'Men like you are her world; you pay well', value: prov.kind === 'escort' ? 10 : 8 });
+  }
   const sum = reasons.reduce((a, r) => a + r.value, base);
   const cap = what === 'talk' ? 0.95 : 0.93;
   return { chance: Math.max(0.05, Math.min(cap, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons.filter((r) => r.value !== 0)] };
@@ -491,7 +511,7 @@ export function previewDating(s: GameState, a: DatingAction): ActionPreview {
   const cost = p.cost ? ` — ${$(p.cost)}` : '';
   const words: Record<DatingAction['op'], string> = {
     talk: `Talk to ${n}`, invite: a.op === 'invite' ? `Ask ${n} to ${a.date === 'coffee' ? 'coffee' : a.date === 'dinner' ? 'dinner' : 'a night out'}` : '', gift: `Send the gift`, steady: `Ask ${n}`, commit: `Ask ${n}`,
-    reconcile: `Ask ${n} to come home`, meet: 'Arrange the introduction', paid: `Ask ${n} for the evening`, askOut: `Ask ${n} out`, come: '', ma: '',
+    reconcile: `Ask ${n} to come home`, meet: 'Arrange the introduction', paid: `Ask ${n} for the evening`, askOut: `Ask ${n} out`, pro: `Ask ${n}`, come: '', ma: '',
   };
   return { ...p, verb: `${words[a.op]}${cost}` };
 }
@@ -577,6 +597,7 @@ function previewDating0(s: GameState, a: DatingAction): ActionPreview {
       };
     }
     case 'paid': return previewPaid(s, c);
+    case 'pro': return previewPro(s, c, a.what);
     case 'askOut': {
       const p = D?.providers[c.id];
       const pursue = pursueChance(s, c);
@@ -595,7 +616,9 @@ function previewDating0(s: GameState, a: DatingAction): ActionPreview {
 function pursueChance(s: GameState, c: Character): number {
   const att = attraction(s, c, player(s)).value;
   const ear = earOf(s, c.id);
-  return clamp(0.3 + att / 100 + (ear?.goal === 'marry' ? 0.15 : 0) - (ear && (ear.goal === 'own_place' || ear.goal === 'vegas') ? 0.1 : 0), 0.05, 0.85);
+  const p = s.dating?.providers[c.id];
+  const regular = p ? Math.min(0.2, p.visits.length * 0.05) + (p.kind === 'escort' ? 0.05 : 0) : 0;
+  return clamp(0.35 + att / 100 + regular + (ear?.goal === 'marry' ? 0.15 : 0) - (ear && (ear.goal === 'own_place' || ear.goal === 'vegas') ? 0.1 : 0), 0.05, 0.9);
 }
 
 function paidAcceptance(s: GameState, c: Character, p: Provider): Acceptance {
@@ -609,8 +632,8 @@ function paidAcceptance(s: GameState, c: Character, p: Provider): Acceptance {
   if (ear?.boundaries.includes('no_rough') && hasTrait(boss, 'Cruel')) return { chance: 0, reasons: [{ label: 'Will not see a man known to get rough', value: -100 }] };
   const other = seeingSomeoneElse(s, c);
   if (other) reasons.push({ label: `Seeing ${other.firstName} now`, value: -25 });
-  if (p.visits.length) reasons.push({ label: 'You were a gentleman last time', value: 5 });
-  const base = 80;
+  if (p.visits.length) reasons.push({ label: 'You were a gentleman last time', value: Math.min(10, p.visits.length * 3) });
+  const base = 88;
   const sum = reasons.reduce((a, r) => a + r.value, base);
   return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons] };
 }
@@ -633,6 +656,48 @@ function previewPaid(s: GameState, c: Character): ActionPreview {
     warning: risks.length ? `What can go wrong: ${risks.map((r) => `${Math.round(r.chance * 100)}% ${r.text}`).join(' · ')}` : undefined,
     disabledReason: providerBlock(s, p) ?? (evenings <= 0 ? 'No evenings left this week' : undefined),
   };
+}
+
+/* ------------------------------------------------------------------ */
+/* More with a working woman: on your arm, a weekend away, hostess, help */
+/* ------------------------------------------------------------------ */
+
+export const PRO_EXTRA: Record<ProExtra, { label: string; mult: number; add: number; odds: number; blurb: string }> = {
+  arm: { label: 'On your arm for a night out', mult: 1, add: 150, odds: 0, blurb: 'Dinner and a show at a club, her on your arm where everybody can see. Nothing more is promised. The town talks; some of it is respect.' },
+  weekend: { label: 'A weekend away in Cape May', mult: 3, add: 400, odds: -8, blurb: 'Two days, a hotel on the beach, nobody who knows you. She decides whether it is business or something more.' },
+  hostess: { label: 'Hostess your card game', mult: 1.5, add: 0, odds: -4, blurb: 'She keeps the drinks coming and the guests happy at your game for the night: a better table, a little more owed to you. Company only; she sets her own terms.' },
+  help: { label: 'Help her out: a fresh start', mult: 0, add: 1500, odds: 6, blurb: 'Pay off what she owes, or set her up with something of her own. No strings; she decides what it means.' },
+};
+
+function proPrice(p: Provider, what: ProExtra): number {
+  const x = PRO_EXTRA[what];
+  return Math.round((p.price * x.mult + x.add) / 50) * 50;
+}
+
+function previewPro(s: GameState, c: Character, what: ProExtra): ActionPreview {
+  const D = s.dating;
+  const p = D?.providers[c.id];
+  const x = PRO_EXTRA[what];
+  const first = c.firstName;
+  const price = p ? proPrice(p, what) : 0;
+  const acc0 = p ? paidAcceptance(s, c, p) : undefined;
+  const acc = acc0 ? { chance: Math.max(0.05, Math.min(0.95, acc0.chance + x.odds / 100)), reasons: [...acc0.reasons, ...(x.odds ? [{ label: x.label, value: x.odds }] : [])] } : undefined;
+  const evenings = eveningsLeft(s);
+  const needsEvening = what !== 'help';
+  return {
+    ...base(`${x.label}: ${first} (${$(price)})`, what === 'help' ? `helped ${first} out` : `${x.label.toLowerCase()} with ${first}`), cost: price, pot: 'pocket',
+    detail: `${x.blurb} ${$(price)} from your pocket.${needsEvening ? ` Takes one of your evenings (${Math.max(0, evenings)} left).` : ''}`,
+    effects: [{ type: 'money', pot: 'pocket', amount: -price, label: `${x.label} (${first})` }, X({ op: 'pro', id: c.id, what, price }, `${x.label} (${first})`)],
+    acceptance: acc, refuseEffects: [X({ op: 'refused', id: c.id, what: x.label.toLowerCase() }, `${first} said no`)],
+    warning: p && what !== 'help' ? (() => { const r = paidRisks(s, p); return r.length ? `What can go wrong: ${r.map((q) => `${Math.round(q.chance * (what === 'arm' ? 1.6 : 1) * 100)}% ${q.text}`).join(' · ')}` : undefined; })() : undefined,
+    disabledReason: proBlock(s, p, what) ?? (needsEvening && evenings <= 0 ? 'No evenings left this week' : undefined),
+  };
+}
+
+/** Booked this week stops another evening, not a helping hand. */
+function proBlock(s: GameState, p: Provider | undefined, what: ProExtra): string | undefined {
+  const b = providerBlock(s, p);
+  return what === 'help' && b === 'Already booked this week' ? undefined : b;
 }
 
 /** Townswomen you could be introduced to (the living district's single adult women, a few a month). */
@@ -854,7 +919,7 @@ export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
         ctx.log.push(`Dinner with ${c.firstName}, off the clock. She wants to see you again.`);
         maybeConceive(s, D, c, 'askOut');
       } else {
-        b.pro = s.week + 12;
+        b.pro = s.week + 6;
         b.aff = clamp(b.aff + 2);
         log(D, s, `Dinner with ${c.firstName}. She was lovely, and she was clear: business is business. She keeps it professional.`, 'date', c.id);
         ctx.log.push(`${c.firstName} had dinner with you and kept it professional.`);
@@ -896,6 +961,48 @@ export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
       }
       break;
     }
+    case 'pro': {
+      const p = D.providers[c.id];
+      if (!p) break;
+      const x = PRO_EXTRA[o.what];
+      if (proBlock(s, p, o.what)) break;
+      const b = ensureBond(s, D, c.id, `${PROVIDER_LABEL[p.kind]}, ${p.venue}`);
+      if (o.what !== 'help') { useEvening(s, D); p.visits = [...p.visits.filter((w) => s.week - w < 52), s.week]; }
+      const fx: Effect[] = [];
+      let line = '';
+      if (o.what === 'arm') {
+        b.aff = clamp(b.aff + 4);
+        fx.push({ type: 'respect', amount: 1, label: `${c.firstName} on your arm` });
+        line = `${c.firstName} on your arm at the club: every head turned, and she knew how to let them. The night ended at her door.`;
+        if (married(s, boss) && roll(`${s.seed}|${s.week}|arm|${c.id}`) < 0.25) {
+          const w = married(s, boss)!;
+          fx.push({ type: 'opinion', from: w.id, to: boss.id, amount: -10, reason: 'He was seen out with another woman', decay: 1 });
+          rumor(s, D, boss.id, `The boss was out at the club with ${c.firstName} on his arm.`, true, [w.id]);
+        }
+      } else if (o.what === 'weekend') {
+        b.aff = clamp(b.aff + 10);
+        b.dates++;
+        b.last = s.week;
+        const personal = roll(`${s.seed}|${s.week}|wk|${c.id}`) < pursueChance(s, c) + 0.1;
+        if (personal) { b.pro = undefined; b.ended = undefined; if (b.rung === 'acquaintance') b.rung = 'friends'; }
+        line = personal ? `Two days in Cape May with ${c.firstName}. Somewhere on the second day it stopped being business. She wants to see you again, as herself.` : `Two days in Cape May with ${c.firstName}: the beach, the hotel, good company. On the drive home she was gracious, and clear: it was business.`;
+        fx.push({ type: 'dyn', op: { op: 'stress', charId: boss.id, amount: -20, source: 'domestic' }, label: 'A weekend away' } as Effect);
+        maybeConceive(s, D, c, 'weekend', personal ? 1 : 0.3);
+      } else if (o.what === 'hostess') {
+        fx.push({ type: 'favor', amount: 1, label: `${c.firstName} hostessed your game: the guests owe you` }, { type: 'money', amount: Math.round(o.price * 0.6), label: `Your card game ran sweeter (${c.firstName} hostessed)` });
+        line = `${c.firstName} hostessed your card game: the drinks kept coming, the guests stayed late and lost happy, and two of them owe you a favor.`;
+      } else {
+        b.aff = clamp(b.aff + 15);
+        b.pro = undefined;
+        addOpinion(s, c.id, boss.id, 'He helped me, no strings', 20, 0.5);
+        line = `You paid off what ${c.firstName} owed and asked for nothing. She did not know what to say. She will remember it.`;
+        if (s.ears?.ears[c.id]) fx.push({ type: 'ears', op: { op: 'loyalty', earId: c.id, amount: 8 }, label: 'Helped her out' } as Effect);
+      }
+      if (fx.length) applyEffects(ctx, fx.filter((e) => e.type !== 'dyn' || !!s.dyn), { label: x.label, because: `${x.label.toLowerCase()} with ${c.firstName}`, category: 'event' });
+      log(D, s, line, o.what === 'help' ? 'date' : 'paid', c.id);
+      ctx.log.push(line);
+      break;
+    }
     case 'refused': {
       const b = ensureBond(s, D, c.id, 'You have met');
       b.no = { week: s.week, what: o.what };
@@ -922,6 +1029,7 @@ export function describeDatingOp(s: GameState, o: DatingOp): string | undefined 
     case 'reconcile': return `${first} comes home`;
     case 'paid': return 'One evening, agreed and paid. No feelings, no relationship, no standing arrangement';
     case 'askOut': return `A personal evening with ${first}: she may keep it professional`;
+    case 'pro': return `${PRO_EXTRA[o.what].label} with ${first}`;
     case 'refused': return undefined;
   }
 }

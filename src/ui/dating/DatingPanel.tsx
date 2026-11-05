@@ -135,6 +135,7 @@ function ProviderCard({ s, p }: { s: GameState; p: ProviderRow }) {
   if (!c) return null;
   const paid: PlayerAction = { kind: 'dating', op: { op: 'paid', id: p.id } };
   const ask: PlayerAction = { kind: 'dating', op: { op: 'askOut', id: p.id } };
+  const extras: PlayerAction[] = (['arm', 'weekend', 'hostess', 'help'] as const).map((what) => ({ kind: 'dating', op: { op: 'pro', id: p.id, what } }));
   return (
     <li className="rounded-md border border-noir-700 bg-noir-800/50 p-2.5" data-testid="dating-provider" data-kind={p.kind}>
       <div className="flex gap-2.5">
@@ -151,8 +152,8 @@ function ProviderCard({ s, p }: { s: GameState; p: ProviderRow }) {
         </div>
       </div>
       <div className="mt-2"><ActionCard s={s} action={paid} compact /></div>
-      <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more}>{more ? 'Less' : 'More… (ask her out as yourself)'}</button>
-      {more && <div className="mt-1"><ActionCard s={s} action={ask} compact /></div>}
+      <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more}>{more ? 'Less' : 'More… (ask her out as yourself, a night on your arm, a weekend away, hostess your game, help her out)'}</button>
+      {more && <div className="mt-1 space-y-1.5" data-testid="dating-provider-more"><ActionCard s={s} action={ask} compact />{extras.map((a, i) => <ActionCard key={i} s={s} action={a} compact />)}</div>}
     </li>
   );
 }
