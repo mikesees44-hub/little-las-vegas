@@ -149,7 +149,8 @@ export function toneOptions(s: GameState, d: Dialogue): { tone: Tone; label: str
     if (t === 'walk') bits.push('ends it');
     else if (t === 'accept') bits.push(d.stake ? `agree at ${fmt(d.stake, d.stake.pos)}` : 'agree');
     else {
-      if (e.i >= 6) bits.push('warms her'); else if (e.i <= -6) bits.push('cools her');
+      const obj = s.characters[d.id]?.gender === 'F' ? 'her' : 'him';
+      if (e.i >= 6) bits.push(`warms ${obj}`); else if (e.i <= -6) bits.push(`cools ${obj}`);
       if (e.a >= 15) bits.push('risks a blow-up'); else if (e.a >= 6) bits.push('annoys'); else if (e.a <= -6) bits.push('calms');
       if (d.stake && e.bend >= 0.05) bits.push('may move the price');
       if (t === 'negotiate' || t === 'raise') bits.push(t === 'raise' ? 'more on the table' : 'counter the figure');
