@@ -76,7 +76,7 @@ export function personOf(s: GameState, a: PlayerAction): string | undefined {
 }
 
 /** Kinds that are settled in the moment (person to person). */
-const NOW_KINDS = new Set(['deed', 'interact', 'women', 'dating', 'nightlife', 'bond', 'payroll', 'herway']);
+const NOW_KINDS = new Set(['deed', 'interact', 'women', 'dating', 'nightlife', 'bond', 'payroll', 'herway', 'talk']);
 const NOW_ECON = new Set(['gift', 'invite', 'leverage']);
 
 export function settlesNow(s: GameState, a: PlayerAction): boolean {
@@ -220,6 +220,13 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
     practiceDeed(s, `${action.id} ${pd.title}`);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: line, kind: 'decision' });
     bookOrder(ctx, mark, action, { title: pd.title, outcome: tier === 'fail' || tier === 'critFail' ? 'refused' : 'done' });
+  } else if (action.kind === 'talk') {
+    // A talk answers itself (talks.ts: agree, counter, think it over, refuse): one roll, his, and his words are the result.
+    const n0 = ctx.log.length;
+    settleOrderNow(ctx, action, true);
+    const said = ctx.log.slice(n0).filter((x) => !/^You /.test(x));
+    line = said[said.length - 1] ?? 'Done.';
+    tier = /said no|refused/i.test(line) ? 'fail' : 'success';
   } else {
     const p = previewAction(s, action) as ActionPreview;
     const acc = p.acceptance ?? p.odds;

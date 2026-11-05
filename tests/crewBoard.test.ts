@@ -76,3 +76,17 @@ describe("your men's money and talking business", () => {
     expect(hits).toBeGreaterThan(2);
   });
 });
+
+import { actNow, settlesNow } from '../src/engine/deeds/now';
+describe('talking business settles in the moment', () => {
+  it('a talk is decided now, with his own words as the result', () => {
+    const s = newGameWith('now-talk', 'olddon');
+    const c = Object.values(s.characters).find((x) => x.alive && x.faction === 'player' && x.rank === 'soldier')!;
+    const a = { kind: 'talk', op: { t: 'ask', talk: 'business', target: c.id } } as PlayerAction;
+    expect(settlesNow(s, a)).toBe(true);
+    const r = actNow(s, a);
+    expect(r.result.ok).not.toBe(false);
+    expect(r.result.line.length).toBeGreaterThan(5);
+    expect(r.result.line).not.toMatch(/^Done/);
+  });
+});
