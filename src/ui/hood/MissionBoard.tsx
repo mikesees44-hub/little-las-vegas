@@ -133,7 +133,7 @@ export function PactsPanel({ s }: { s: GameState }) {
     <div className="space-y-4" data-testid="pacts-panel">
       <section>
         <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Pacts</div>
-        {pacts.length === 0 && <p className="text-xs text-stone-500">No pacts. Sit down with a boss (right-click him, Talk) to open the door to a truce or a partnership.</p>}
+        {pacts.length === 0 && <p className="text-xs text-stone-500">No pacts. Sit down with a family (Rivals ▸ The Board, or a boss's Talk & Favors) and shake on a truce, an alliance, a partnership, tribute or a hands-off term.</p>}
         <ul className="text-sm space-y-1">{pacts.map((p) => <li key={p.id}><span className="text-gold-300 capitalize">{p.kind}</span> · {name(p.a)} & {name(p.b)} <span className="text-stone-500 text-xs">— {p.terms}{p.weekly ? ` (${fmt$(p.weekly)}/wk)` : ''} · until week {p.until}</span></li>)}</ul>
       </section>
       {mobs.length > 1 && (
