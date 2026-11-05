@@ -94,6 +94,7 @@ import { workWeek } from './bizRacket';
 import { protectWeek } from './protect';
 import { womenWeek } from './women';
 import { honeyWeek } from './honey';
+import { singleWeek } from './single';
 import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
@@ -471,6 +472,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     bondsWeek(ctx);
     // The women arrange the matches (matchmakers.ts): her proposal, her silence taken as a yes.
     matchmakersWeek(ctx);
+    // The women who come to a single boss, and Ma's match for him (single.ts).
+    singleWeek(ctx);
     myMenWeek(ctx);
     // Let them eat (eat.ts): who is hungry, the pitches they bring, the fed and the starving.
     eatWeek(ctx);

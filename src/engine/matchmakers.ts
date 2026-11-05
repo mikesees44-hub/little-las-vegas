@@ -163,6 +163,13 @@ function ensureCircle(s: GameState, id: string): Circle {
   return M.circle[id];
 }
 
+/** Move a woman's standing among the women of the shore (single.ts: the boss's own match). */
+export function bumpStanding(s: GameState, id: string, d: number): number {
+  const c = ensureCircle(s, id);
+  c.standing = clamp(c.standing + d);
+  return c.standing;
+}
+
 export function standingTitle(n: number): string {
   return n >= 60 ? 'Queen mother of the shore' : n >= 40 ? 'The women listen to her' : n >= 20 ? 'Her circle is growing' : 'A wife of the house';
 }

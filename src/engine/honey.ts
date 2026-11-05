@@ -25,6 +25,7 @@ import {
   $, addSign, adultC, clamp, closeLately, fn, honeyBlock, hlog, hpick, hroll, involvedWith, manOf, marriedOf, nm, pct, perception, watchFor,
 } from './honeyCore';
 import { CLOSE_INFO, END_TEXT, runDare, type DareAt, type DareMove } from './honeyScript';
+import { approachSlotFree, isSingle, takeHoneyApproach } from './single';
 import {
   AGENT_TEXT, ensureHoney, LEVER_TEXT, WANT_COST, WANT_TEXT,
   type Agent, type AgentKind, type Claim, type HoneyState, type Lever, type Mistress, type Scorn, type SettleHow, type Want,
@@ -795,6 +796,9 @@ function approachWeek(ctx: Ctx, H: HoneyState): void {
   if (s.eventQueue.some((e) => e.defId.startsWith('honey_')) || s.pendingEvents.some((e) => e.defId.startsWith('honey_'))) return;
   const boss = player(s);
   if (!boss.alive || !isFree(s, boss) || !adultC(s, boss)) return;
+  // A single boss gets her as his card (single.ts), not a popup: only when the card is free.
+  const single = isSingle(s) && boss.gender === 'M';
+  if (single && !approachSlotFree(s)) return;
   const hostile = hostileRival(s);
   const fed = (s.threats?.fed.stage ?? 0) >= 1;
   if (hroll(s, `appr:${s.week}`) >= 0.15 + (hostile ? 0.12 : 0) + (fed ? 0.05 : 0)) return;
@@ -807,7 +811,8 @@ function approachWeek(ctx: Ctx, H: HoneyState): void {
     H.agents[c.id] = { id: c.id, kind, master: kind === 'fbi' ? 'law' : hostile!, since: s.week, status: 'working', intel: 0 };
     H.stats.agents++;
   }
-  queue(s, approachEvent(s, c));
+  if (single) takeHoneyApproach(s, c, !!kind);
+  else queue(s, approachEvent(s, c));
 }
 
 function approachAnswer(ctx: Ctx, id: string, how: 'office' | 'motel' | 'drink' | 'probe'): void {
