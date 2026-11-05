@@ -927,7 +927,8 @@ export function generateWeekEvents(s: GameState): EventInstance[] {
       continue;
     }
     // The same man never brings two things in one week (mandatory events always fit).
-    const clash = !ev.mandatory && !!ev.meta?.crew && (ev.actors ?? []).some((a) => actors.has(a));
+    // ...and does not bring the same kind of thing back within the subject cooldown (crewEvents.ts SUBJECT_COOLDOWN), whatever system drafted it.
+    const clash = !ev.mandatory && !!ev.meta?.crew && ((ev.actors ?? []).some((a) => actors.has(a)) || (!!ev.meta.charId && !subjectOk(s, ev.defId, ev.meta.charId as string)));
     if (out.length < MAX_POPUPS && (ev.mandatory || !!ev.meta?.asked || optShown < optional) && !(fam && family >= MAX_FAMILY_POPUPS) && !clash && !themeFull(ev, out)) {
       out.push(ev);
       if (!ev.mandatory) optShown++;

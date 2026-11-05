@@ -693,11 +693,13 @@ export function monthEat(ctx: Ctx, men = eaters(ctx.s)): string[] {
   for (const c of men) {
     const h = hungerOf(s, c, men);
     const rel = s.relations[`${c.id}>${B}`];
+    // A capo's own loyalty to a steady earner is earners.ts's: here only the street men.
+    if (c.rank === 'capo') continue;
     if (h.load >= 1 && h.v < 35 && h.load < 3) {
       const m = addOpinion(s, c.id, B, R_FED, 2, 0);
       if (m) m.value = Math.min(m.value, 6);
       if (rel) rel.modifiers = rel.modifiers.filter((x) => x.reason !== R_STARVE);
-      extra += c.rank === 'capo' ? 60 : c.rank === 'soldier' ? 30 : 15;
+      extra += c.rank === 'soldier' ? 30 : 15;
       fedN++;
       continue;
     }
@@ -708,7 +710,7 @@ export function monthEat(ctx: Ctx, men = eaters(ctx.s)): string[] {
       if (s.week - (e.hit[c.id] ?? -99) < 4) continue;
       const r = roll(s, `starve:${c.id}`);
       const nm = displayName(c);
-      if (r < 0.3 && c.rank !== 'capo') {
+      if (r < 0.3) {
         const amt = Math.min(200, 40 + Math.round(h.v));
         applyEffects(ctx, [{ type: 'money', amount: -amt, label: `${c.firstName} skimmed: nobody gives him work` }], { label: `${c.firstName} skimmed`, because: 'starved him of work', category: 'event' });
         addSuspicion(s, c.id, 'steal', 10, `${c.firstName} was short on the street money, and he has had no work in weeks`, 'eat');
