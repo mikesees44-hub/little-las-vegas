@@ -26,6 +26,12 @@ export interface AskTurn { q: string; a: CounselAnswer; picks: PlayerAction[]; b
 const visit = new Map<string, AskTurn[]>();
 const turnsOf = (s: GameState) => visit.get(s.seed) ?? [];
 export function clearAskHistory(): void { visit.clear(); }
+/** Keep a turn in this visit's talk (the last eight). */
+export function rememberTurn(s: GameState, turn: AskTurn): AskTurn[] {
+  const next = [...turnsOf(s), turn].slice(-8);
+  visit.set(s.seed, next);
+  return next;
+}
 
 /** One answer, Claude's if he answers in time and passes the checks, else his notes. Never throws. */
 export async function answerQuestion(s: GameState, q: string, history: readonly CounselTurn[]): Promise<AskTurn> {
@@ -61,9 +67,7 @@ export function AskPanel({ s, initialQ, autoAsk }: { s: GameState; initialQ?: st
     setQ('');
     const prior = turnsOf(s);
     const turn = await answerQuestion(s, t, prior.map((x) => ({ q: x.q, a: x.a })));
-    const next = [...prior, turn].slice(-8);
-    visit.set(s.seed, next);
-    setTurns(next);
+    setTurns(rememberTurn(s, turn));
     setBusy(false);
   }
 
