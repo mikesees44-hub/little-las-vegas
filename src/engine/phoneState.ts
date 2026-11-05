@@ -80,6 +80,14 @@ export interface PhoneState {
   /** People he talked to on the phone this week (no second check-in the same week). */
   talked: Record<string, number>;
   stats: { in: number; out: number; picked: number; rang: number; msg: number; meets: number; noShow: number; setups: number; taped: number; code: number; found: number };
+  /** Word from people (ai/calls.ts): optional, made on the first answer. */
+  word?: WordState;
+}
+
+/** Calls and letters answered: [week, word id] (this week and last), and the cooldowns (word id -> week answered). */
+export interface WordState {
+  done: [number, string][];
+  cd: Record<string, number>;
 }
 
 export function ensurePhone(s: GameState): PhoneState {
