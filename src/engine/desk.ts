@@ -17,6 +17,8 @@ import { isFree } from './characters';
 import { FIX_WEEKS, OPEN_WEEKS, openApproachOf, openFixOf } from './single';
 import { SILENCE_WEEKS, openProposal } from './matchmakers';
 import { missedCalls } from './phone';
+import { heardOnDesk } from './ai/rivalMinds';
+import { wordThisWeek } from './ai/calls';
 
 /**
  * THE BOSS'S DESK: everything that wants the boss this week, in one place —
@@ -146,6 +148,11 @@ export function bossDesk(s: GameState, ui: DeskUi = {}): DeskGroup[] {
     groups.upcoming.push({ key: 'od:move', kind: 'upcoming', title: `The coming move: ${est.lo}–${est.hi} men, by the talk`, detail: `How sure you are: ${est.intel}%. Rumors run hot; names and proof narrow it.`, urgent: true, ref: {} });
     for (const p of pts.slice(0, 5)) groups.upcoming.push({ key: `od:${p.role}`, kind: 'upcoming', title: p.title, detail: p.detail, ref: {} });
   }
+  // Heard through a way into a rival boss's head: a move aimed at you, before it lands (ai/rivalMinds.ts).
+  groups.upcoming.push(...heardOnDesk(s));
+  // Calls and letters waiting this week (ai/calls.ts): on the phone.
+  const word = wordThisWeek(s);
+  if (word.length) groups.upcoming.push({ key: 'word', kind: 'upcoming', title: `Word from ${word.map((w) => w.name.split(' ')[0]).join(', ')}`, detail: `${word.length === 1 ? 'A call or a letter' : `${word.length} calls and letters`} waiting: on the phone, Calls & letters.`, ref: {} });
   for (const sc of s.schemes.filter((x) => x.owner === 'player').slice(0, 4)) {
     groups.upcoming.push({ key: `sch:${sc.id}`, kind: 'upcoming', title: `${SCHEME_INFO[sc.kind].name} under way`, detail: `${sc.progress}% along`, ref: { charId: sc.targetId } });
   }

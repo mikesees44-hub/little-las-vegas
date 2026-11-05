@@ -120,9 +120,6 @@ function maOf(s: GameState): Character | undefined {
   return m?.alive ? m : undefined;
 }
 
-function fugitiveOf(s: GameState, id: string) {
-  return (s.travel?.fugitives ?? []).find((f) => f.personId === id && !f.end);
-}
 
 const LAM_PLACE: Record<string, string> = { vineland: 'a farm near Vineland', florida: 'Florida', montreal: 'Montreal', mexico: 'Mexico', oldcountry: 'the old country' };
 

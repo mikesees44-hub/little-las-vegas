@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { useShell } from '../../shell/context';
 import { canSitDown, rivalOf } from '../../../engine/minds/diplomacy';
 import { FamilyTalk } from '../../minds/FamilyTalk';
+import { RivalMind } from '../../ai/RivalMind';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
@@ -59,6 +60,7 @@ export function RivalBoard({ s }: { s: GameState }) {
                 {war && <div className="text-[11px] text-red-300">At war · score {war.score}</div>}
                 {r.feud && <div className="text-[11px] text-red-300">Blood feud</div>}
                 {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
+                {r.kind !== 'law' && leader.alive && <RivalMind s={s} rival={r.id} />}
                 {shell.update && rivalOf(s, r.id) && leader.alive && (() => {
                   const can = canSitDown(s, r.id);
                   return (
