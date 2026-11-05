@@ -20,7 +20,10 @@ const BAND = 'mb-1.5 text-[10px] uppercase tracking-[0.25em] text-stone-500';
 
 /** Band 1: the consigliere's picks for this home (at most three), each with Do it and Why?. */
 export function RecBand({ s, home, ui, onPick }: { s: GameState; home: HomeId; ui?: DeskUi; onPick?: (r: FindResult) => void }) {
-  const recs = useMemo(() => recsFor(s, home, ui ?? {}), [s, home, ui]);
+  // The Desk's UI state arrives as a fresh object each render: key the memo on its parts (state refs) and the taken keys' text.
+  const takenKey = (ui?.taken ?? []).join('|');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const recs = useMemo(() => recsFor(s, home, ui ?? {}), [s, home, ui?.answers, ui?.orders, ui?.briefSkip, takenKey]);
   const [why, setWhy] = useState<string | undefined>();
   if (!recs.length) return null;
   return (
