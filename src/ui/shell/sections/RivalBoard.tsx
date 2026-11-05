@@ -10,10 +10,16 @@ import { CharLink, Face } from '../../components/People';
 import { RelationChip, SideChip } from '../../components/Side';
 import { sideOf } from '../../../engine/sides';
 import { usePlanner } from '../../components/Schemes';
+import { useState } from 'react';
+import { useShell } from '../../shell/context';
+import { canSitDown, rivalOf } from '../../../engine/minds/diplomacy';
+import { FamilyTalk } from '../../minds/FamilyTalk';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
   const { plan } = usePlanner();
+  const shell = useShell();
+  const [sit, setSit] = useState<string | undefined>();
   const philly = s.rivals.find((r) => r.id === 'philly');
   return (
     <div className="space-y-3" data-testid="rival-board">
@@ -53,11 +59,19 @@ export function RivalBoard({ s }: { s: GameState }) {
                 {war && <div className="text-[11px] text-red-300">At war · score {war.score}</div>}
                 {r.feud && <div className="text-[11px] text-red-300">Blood feud</div>}
                 {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
+                {shell.update && rivalOf(s, r.id) && leader.alive && (() => {
+                  const can = canSitDown(s, r.id);
+                  return (
+                    <button type="button" className="btn-ghost mt-1 px-2 py-0.5 text-[11px]" disabled={!can.ok} title={can.ok ? 'A real back-and-forth: what they want, your offer, shake on it. About two hours.' : can.why}
+                      onClick={() => setSit(r.id)} data-testid={`sitdown-${r.id}`}>Sit down with {leader.firstName}</button>
+                  );
+                })()}
               </div>
             </li>
           );
         })}
       </ul>
+      {sit && shell.update && <FamilyTalk s={s} rival={sit} update={shell.update} onClose={() => setSit(undefined)} />}
     </div>
   );
 }

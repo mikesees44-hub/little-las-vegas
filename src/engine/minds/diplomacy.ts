@@ -277,7 +277,7 @@ export function stanceOf(s: GameState, rival: string): Stance | undefined {
   const ratio = Math.round((theirs / mine) * 100) / 100;
   const reasons: Reason[] = [];
   reasons.push({ label: 'What he thinks of you', value: Math.round(-op * 20) });
-  reasons.push({ label: ratio >= 1 ? 'They are stronger than you' : 'You are stronger than they are', value: Math.round(clamp((ratio - 1) * 2000, -1500, 3000)) });
+  reasons.push({ label: ratio >= 1 ? 'They are stronger than you' : 'You are stronger than they are', value: Math.round(clamp((ratio - 1) * 1200, -1200, 2000)) });
   if (w) reasons.push({ label: w.score < 0 ? 'They are winning the war' : w.score > 0 ? 'You are winning the war' : 'The war is even', value: Math.round(w.score < 0 ? -w.score * 30 : -w.score * 20) });
   if (r.feud) reasons.push({ label: 'Blood feud', value: 1500 });
   const ph = philly(s);

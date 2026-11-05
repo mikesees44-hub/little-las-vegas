@@ -19,6 +19,7 @@ import { useTravel } from '../travel/context';
 import { useShell } from '../shell/context';
 import { CATEGORY_LABEL, GROUP_LABEL, menuFor, rankedGifts, toCategory, type MenuCategory, type MenuCategoryId, type MenuItem } from './menuCatalog';
 import { EarsPicker } from '../ears/EarsPicker';
+import { FamilyTalk } from '../minds/FamilyTalk';
 import { ActionRow } from '../components/ActionRow';
 import { DatingSection } from '../dating/DatingPanel';
 import { DirtyOnPerson } from '../econ/DirtyWork';
@@ -68,6 +69,7 @@ function Item({ s, c, it, onDone, open }: { s: GameState; c: Character; it: Menu
     const more = <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" onClick={() => { onDone?.(); shell.go('you.dating'); }}>Relationships & Dating ▸</button>;
     return <div className="sm:col-span-2 rounded-md border border-noir-700 p-2"><DatingSection s={s} id={c.id} fallback={<div className="text-xs text-stone-400">Nothing between you yet. {more}</div>} /></div>;
   }
+  if (o.type === 'sitdown' && gifts && shell.update) return <FamilyTalk s={s} rival={o.rival} update={shell.update} onClose={() => setGifts(false)} />;
   if (o.type === 'card' && gifts) return <div className="sm:col-span-2 rounded-md border border-noir-700 p-2"><CallingCard s={s} id={c.id} /></div>;
   if (o.type === 'ears' && gifts) return <div className="sm:col-span-2 rounded-md border border-noir-700 p-2">{o.mode === 'web' ? <ConnectionsList s={s} id={c.id} compact /> : <EarsPicker s={s} target={c} mode={o.mode} />}</div>;
   const run = () => {
@@ -77,7 +79,7 @@ function Item({ s, c, it, onDone, open }: { s: GameState; c: Character; it: Menu
     else if (o.type === 'marriage') { onDone?.(); openPicker({ kind: 'marriage', memberId: c.id }); }
     else if (o.type === 'go') { onDone?.(); if (o.to === 'borgata.protect') openProtectionFor(c.id); shell.go(o.to); }
     else if (o.type === 'pin') { const on = !isPinned(s, c.id); const f = (x: GameState) => togglePin(x, c.id, on); if (shell.act) shell.act(f, on ? `${c.firstName} ${c.lastName} is one of your close people` : `${c.firstName} ${c.lastName} is off your close people`); else shell.update?.(f); onDone?.(); }
-    else if (o.type === 'gifts' || o.type === 'ears' || o.type === 'dating' || o.type === 'dirty' || o.type === 'card') setGifts(true);
+    else if (o.type === 'gifts' || o.type === 'ears' || o.type === 'dating' || o.type === 'dirty' || o.type === 'card' || o.type === 'sitdown') setGifts(true);
   };
   return (
     <button type="button" onClick={run} className={`w-full rounded-md border px-3 py-2 text-left ${it.hostile ? 'border-blood-500/50 hover:bg-blood-500/10' : 'border-noir-700 bg-noir-800/70 hover:border-gold-500'}`}>

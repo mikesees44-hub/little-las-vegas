@@ -18,6 +18,8 @@ import { knownSecrets } from '../../engine/secrets';
 import { tableMembers } from '../../engine/table';
 import { casusBelli } from '../../engine/war';
 import { TALK_IDS, talkApplies } from '../../engine/talks';
+import { familyLedBy } from '../../engine/minds/diplomacy';
+import { FACTION_NAMES } from '../../engine/world';
 import { pwView } from '../../engine/powerState';
 import { wantedFor } from '../../engine/fugitive';
 import { jobsForPerson } from '../../engine/dirtyWork';
@@ -90,7 +92,9 @@ export type Opener =
   /** Their calling card (who they are at a glance). */
   | { type: 'card' }
   /** Close people (★, engine/pins.ts): keep him as a quick link, or take him off. */
-  | { type: 'pin' };
+  | { type: 'pin' }
+  /** A sit-down with the family he runs (minds/diplomacy.ts): the two-way window with a deal on the table. */
+  | { type: 'sitdown'; rival: RivalId };
 
 export interface MenuItem {
   key: string;
@@ -297,6 +301,10 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
       for (const t of ['white', 'tribute', 'district'] as const) add('table', { key: `terms:${w.id}:${t}`, action: { kind: 'terms', warId: w.id, terms: t } });
     }
   }
+
+  // The sit-down with his family (minds/diplomacy.ts): a real back-and-forth, a deal on the table.
+  const fam = familyLedBy(s, c.id);
+  if (fam && c.alive) add('talk', { key: 'sitdown', open: { type: 'sitdown', rival: fam }, label: `Sit down with ${c.firstName}…`, text: `The ${FACTION_NAMES[fam]} family across the table: what they want, your offer, shake on it. About two hours; once a week.` });
 
   // Talks: he may agree, refuse, ask for time, counter, or go his own way (talks.ts).
   for (const id of TALK_IDS) if (!talkApplies(s, id, c)) add('talk', { key: `t:${id}`, action: { kind: 'talk', op: { t: 'ask', talk: id, target: c.id } } });
