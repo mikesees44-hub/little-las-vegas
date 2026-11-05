@@ -50,6 +50,8 @@ export interface NowResult {
   when?: string;
   /** A picture for the card's top (ui/decide/ResultCard.tsx RESULT_ART). */
   art?: string;
+  /** She said yes to an evening: the card offers to spend it talking (dateTalk.ts). */
+  dateWith?: string;
 }
 
 /** The tier's banner (STREAMLINE §4.3). */
@@ -269,6 +271,6 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
   const headline = pct !== undefined ? `${pct}% — ${verdict(tier, mode, she)}` : verdict(tier, 'order', she) === 'done' ? 'Done' : verdict(tier, mode, she);
   return {
     state: s,
-    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}), ...(ripple.length ? { ripple } : {}), ...(art ? { art } : {}) },
+    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}), ...(ripple.length ? { ripple } : {}), ...(art ? { art } : {}), ...(t && action.kind === 'dating' && ['invite', 'askOut'].includes((action.op as { op?: string }).op ?? '') && (tier === 'success' || tier === 'crit') ? { dateWith: t } : {}) },
   };
 }

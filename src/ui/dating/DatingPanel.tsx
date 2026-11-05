@@ -13,6 +13,8 @@ import { useShell } from '../shell/context';
 import { fmt$ } from '../format';
 import { SingleCards } from './SingleCards';
 import { bestChances } from '../../engine/datingPicks';
+import { canDateTalk, dateStepFor, stepOf } from '../../engine/dateTalk';
+import { DateTalkButton } from './DateTalk';
 
 /** Your best chances (engine/datingPicks.ts): the women most likely to say yes to the next step, each one tap. */
 function BestChances({ s }: { s: GameState }) {
@@ -27,6 +29,7 @@ function BestChances({ s }: { s: GameState }) {
           <li key={p.row.id} className="text-xs" data-testid="dating-best-row">
             <div className="flex flex-wrap items-baseline gap-x-2"><CharLink s={s} id={p.row.id} /><span className="text-stone-500">{p.row.age} · {p.row.stageLabel}</span><span className="tabular-nums text-emerald-300">{Math.round(p.chance * 100)}%</span></div>
             <ActionCard s={s} action={p.action} compact />
+            {(() => { const st = stepOf(p.action); return st ? <DateTalkButton s={s} id={st.id} step={st.step} date={st.date} /> : null; })()}
           </li>
         ))}
       </ul>
@@ -119,6 +122,7 @@ export function PersonCard({ s, r, compact }: { s: GameState; r: PersonRow; comp
       title={<CharLink s={s} id={r.id} />}
       lines={[<>{r.age} · {r.via}{r.notes.length ? ` · ${r.notes.join(' · ')}` : ''}</>, <span className="flex items-center gap-2"><span className="h-1.5 w-16 shrink-0 overflow-hidden rounded bg-noir-700"><span className="block h-full bg-rose-400" style={{ width: `${r.aff}%` }} /></span>Her feelings: {r.feelings}</span>]}>
       {first && <div className="mt-2"><ActionCard s={s} action={first} compact={compact} /></div>}
+      <DateTalkFor s={s} r={r} />
       {rest.length > 0 && (
         <div className="mt-1">
           <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more} data-testid="dating-more">{more ? 'Less' : `More… (${rest.length})`}</button>
@@ -127,6 +131,15 @@ export function PersonCard({ s, r, compact }: { s: GameState; r: PersonRow; comp
       )}
     </PlayCard>
   );
+}
+
+/** On her card: the evening as a talk (the first date-like step; a talk with his wife; or just "Talk with her"). */
+function DateTalkFor({ s, r }: { s: GameState; r: PersonRow }) {
+  const st = dateStepFor(s, r.id, r.actions);
+  if (st) return <DateTalkButton s={s} id={r.id} step={st.step} date={st.date} />;
+  if (canDateTalk(s, r.id, 'after').ok) return <DateTalkButton s={s} id={r.id} step="after" />;
+  if (canDateTalk(s, r.id, 'talk').ok) return <DateTalkButton s={s} id={r.id} step="talk" />;
+  return null;
 }
 
 function ProviderCard({ s, p }: { s: GameState; p: ProviderRow }) {
@@ -152,6 +165,7 @@ function ProviderCard({ s, p }: { s: GameState; p: ProviderRow }) {
         </div>
       </div>
       <div className="mt-2"><ActionCard s={s} action={paid} compact /></div>
+      <DateTalkButton s={s} id={p.id} step="paid" />
       <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more}>{more ? 'Less' : 'More… (ask her out as yourself, a night on your arm, a weekend away, hostess your game, help her out)'}</button>
       {more && <div className="mt-1 space-y-1.5" data-testid="dating-provider-more"><ActionCard s={s} action={ask} compact />{extras.map((a, i) => <ActionCard key={i} s={s} action={a} compact />)}</div>}
     </li>
