@@ -6,6 +6,8 @@ import { FACTION_NAMES } from '../../engine/world';
 import type { GameState } from '../../engine/types';
 import { ACTION_ENTRIES, AT_LABEL } from './actionEntries';
 import { HOMES_BY_ID, NAV_ITEMS, sectionDef } from './nav';
+import { CATEGORY_LABEL } from '../sheet/menuCatalog';
+import { VERB_BY_ID, verbOfWord, type Verb } from '../plans/actionVerbs';
 
 /**
  * FIND…: one box for the whole game (Ctrl+K, "/", the top bar's ⌕). Pure:
@@ -20,7 +22,11 @@ export type FindGo =
   | { to: 'sheet'; id: string }
   | { to: 'map'; district?: string }
   | { to: 'office' }
-  | { to: 'person-hint' };
+  | { to: 'person-hint' }
+  /** The Don's book on a page (a recommendation that waits there). */
+  | { to: 'planner'; tab: 'brief' | 'audience' | 'datebook' | 'book' | 'orders' }
+  /** "pay Sal": his Deal with menu, opened on the verb's category. */
+  | { to: 'menu'; id: string; category: string };
 
 export interface FindResult {
   kind: FindKind;
@@ -31,6 +37,8 @@ export interface FindResult {
   score: number;
   /** A person result: whose side he is on (sides.ts). */
   side?: Side;
+  /** A verb typed with the name ("pay Sal"): the verb it was read as. */
+  verb?: Verb;
 }
 
 export const FIND_KIND_LABEL: Record<FindKind, string> = { do: 'Things to do', screen: 'Screens', person: 'People', place: 'Places' };
@@ -80,6 +88,23 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
     }
   }
 
+  // A verb and a name ("pay Sal", "phone Mousey", "hit Kessler"): the man, with his Deal with menu open on that verb.
+  const verb = words.length >= 2 ? verbOfWord(words[0]) : undefined;
+  if (verb) {
+    const rest = words.slice(1);
+    const v = VERB_BY_ID[verb];
+    let n = 0;
+    for (const c of Object.values(s.characters)) {
+      if (!c.alive || c.id === s.playerId || n >= limit) continue;
+      const name = displayName(c);
+      const sc = score(rest, name, `${c.firstName} ${c.lastName} ${c.nickname ?? ''}`);
+      if (!sc) continue;
+      n++;
+      const side = sideOf(s, c.id);
+      out.push({ kind: 'person', id: `verb:${verb}:${c.id}`, title: `${v.label}: ${name}…`, sub: `Deal with › ${CATEGORY_LABEL[v.cat]} · ${side.full}`, go: { to: 'menu', id: c.id, category: v.cat }, score: sc + 20, side, verb });
+    }
+  }
+
   // People.
   let people = 0;
   for (const c of Object.values(s.characters)) {
@@ -116,7 +141,8 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
   }
 
   // Best first within each kind, a few of each kind.
-  const kinds: FindKind[] = ['do', 'screen', 'person', 'place'];
+  // A verb typed with a name puts the people first.
+  const kinds: FindKind[] = out.some((r) => r.verb) ? ['person', 'do', 'screen', 'place'] : ['do', 'screen', 'person', 'place'];
   return kinds.flatMap((k) => out.filter((r) => r.kind === k).sort((a, b) => b.score - a.score).slice(0, limit));
 }
 

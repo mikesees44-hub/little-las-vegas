@@ -433,8 +433,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, speed, setSpee
             <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />
             {phone}
             {onFind && (
-              <button type="button" onClick={onFind} data-testid="find-button" title="Find a person, a place, a screen or something to do (Ctrl+K or /)"
-                className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Find</span></button>
+              <button type="button" onClick={onFind} data-testid="find-button" title="Do something (talk, pay, order, plan, buy, travel, hurt, protect) or find a person, a place, a screen (Ctrl+K or /)"
+                className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Do / Find</span></button>
             )}
             {chair !== undefined && onChair && (
               <button type="button" onClick={onChair} data-testid="chair-chip" title="The succession: who comes after you, who backs whom, and your moves"
