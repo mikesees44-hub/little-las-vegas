@@ -31,7 +31,7 @@ describe('stage faces', () => {
     const stars = FACES.filter((f) => f.tags.includes('star' as never)).map((f) => f.k);
     for (const c of Object.values(s.characters)) {
       if (c.alive && c.appearance?.face && stars.includes(c.appearance.face)) {
-        expect(c.gender).toBe('M');
+        expect(['M', 'F']).toContain(c.gender);
       }
     }
   });

@@ -114,6 +114,19 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 's11', m: true, age: [22, 42], tags: ['star'] },
   { k: 's05', m: true, age: [20, 40], tags: [], reserved: true },
   { k: 's08', m: true, age: [24, 48], tags: [], reserved: true },
+  // The sixth set: the women of the town, girl to grandmother.
+  { k: 'x01', m: false, age: [18, 30], tags: ['glam'] },
+  { k: 'x02', m: false, age: [18, 34], tags: ['pro', 'glam'] },
+  { k: 'x03', m: false, age: [22, 42], tags: ['star', 'glam'] },
+  { k: 'x04', m: false, age: [24, 46], tags: ['glam'], eth: 'Irish' },
+  { k: 'x05', m: false, age: [28, 50], tags: ['wife'] },
+  { k: 'x06', m: false, age: [22, 46], tags: ['pro'] },
+  { k: 'x07', m: false, age: [55, 85], tags: ['wife'] },
+  { k: 'x08', m: false, age: [28, 50], tags: ['glam', 'wife'] },
+  { k: 'x09', m: false, age: [45, 72], tags: ['wife'] },
+  { k: 'x10', m: false, age: [24, 46], tags: ['pro', 'wife'] },
+  { k: 'x11', m: false, age: [18, 24], tags: ['glam'] },
+  { k: 'x12', m: false, age: [65, 95], tags: ['wife'] },
   // A club singer and a woman whose families the game does not have yet: kept for when it does.
   { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
   { k: 'v07', m: false, age: [20, 40], tags: [], reserved: true },
@@ -123,7 +136,7 @@ const STAGE = /singer|crooner|comic|comedian|headliner|bandleader|band|actor|per
 const isStage = (s: GameState, c: Character) => STAGE.test(c.office ?? '') || s.nightlife?.people[c.id]?.role === 'singer';
 
 function wants(c: Character, s: GameState, age: number): Tag[] {
-  if (c.gender === 'M' && isStage(s, c)) return ['star'];
+  if (isStage(s, c)) return c.gender === 'M' ? ['star'] : ['star', 'glam'];
   const off = (c.office ?? '').toLowerCase();
   if (/pastor|priest|church|monsignor/.test(off)) return ['priest'];
   if (/chief|patrol|police|detective|sergeant|captain|sheriff|trooper/.test(off)) return ['cop'];
@@ -165,7 +178,7 @@ function priority(c: Character, s: GameState): number | undefined {
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.faction === me?.faction && s.characters[c.spouseId]?.rank !== 'civilian') return 10;
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.rank === 'boss') return 11;
   if (c.gender !== 'M' && (s.romance?.rels ?? []).some((r) => r.a === c.id || r.b === c.id)) return 12;
-  if (c.gender === 'M' && isStage(s, c)) return 9;
+  if (isStage(s, c)) return 9;
   if (c.rank === 'capo') return 13;
   if (c.rank === 'soldier') return 14;
   if (c.office) return 15;
