@@ -1,4 +1,6 @@
 import { fundingBlock, previewAction, settleOrderNow, type ActionPreview } from '../actions';
+import { floaterText, loyaltyMark, loyaltySince } from '../loyalty';
+import { practiceDeed } from '../bossSkills';
 import { displayName } from '../characters';
 import { applyEffects } from '../effects';
 import { cloneState } from '../engine';
@@ -42,6 +44,8 @@ export interface NowResult {
   remember?: string;
   /** His opinion of the boss moved by this much. */
   opinionDelta?: number;
+  /** The ripple: everyone else whose loyalty moved ("+5 Sal (you backed him)"), loyalty.ts. */
+  ripple?: string[];
   /** When it was settled, for the card's header: "done now" unless it came at the week's turn. */
   when?: string;
 }
@@ -192,6 +196,7 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
   s = spendTime(s, action).state;
   const ctx: Ctx = newCtx(s);
   const before = snap(s, t);
+  const lmark = loyaltyMark(s);
   const D = ensureDeeds(s);
   D.now = D.now && D.now.w === s.week ? D.now : { w: s.week, k: [] };
   D.now.k.push(nowKey(action));
@@ -210,6 +215,7 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
     if (pd.acceptance) { chance = pd.chance; roll = Math.floor(r * 100); }
     const mark = bookMark(ctx);
     line = applyDeed(ctx, pd, tier);
+    practiceDeed(s, `${action.id} ${pd.title}`);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: line, kind: 'decision' });
     bookOrder(ctx, mark, action, { title: pd.title, outcome: tier === 'fail' || tier === 'critFail' ? 'refused' : 'done' });
   } else {
@@ -246,9 +252,12 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
   const mems = t ? (mindOf(s, t)?.mem ?? []).slice(mem0).filter((m) => !m.who || m.who === s.playerId) : [];
   const remember = mems.length ? mems[mems.length - 1].t : undefined;
   const opinionDelta = before.op !== undefined && after.op !== undefined && after.op !== before.op ? after.op - before.op : undefined;
+  const moved = loyaltySince(s, lmark).filter((f) => f[1] !== t);
+  const ripple = moved.slice(-4).map((f) => floaterText(s, f));
+  if (moved.length > 4) ripple.push(`and ${moved.length - 4} more`);
   const headline = pct !== undefined ? `${pct}% — ${verdict(tier, mode, she)}` : verdict(tier, 'order', she) === 'done' ? 'Done' : verdict(tier, mode, she);
   return {
     state: s,
-    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}) },
+    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}), ...(ripple.length ? { ripple } : {}) },
   };
 }

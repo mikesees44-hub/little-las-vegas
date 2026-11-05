@@ -106,6 +106,9 @@ import { armyResolve, armyWeek } from './army';
 import { docketOf, lieutenantsWeek, ltView, planNextWeek } from './lieutenants';
 import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
+import { bossSkillsWeek, practiceDeed } from './bossSkills';
+import { loyaltyMonth } from './loyalty';
+import { gfEventSource } from './godfather';
 import { mindsWeek } from './minds';
 import { readsWeek } from './peopleRead';
 import { gateWeek } from './planner/gateWeek';
@@ -149,6 +152,7 @@ registerEventSource(fbankEventSource);
 registerEventSource(xpEventSource);
 // The capos' requests, the word from their streets, a capo the boss has found out (capos.ts): one candidate a week.
 registerEventSource(capoEventSource);
+registerEventSource(gfEventSource);
 
 /**
  * The simulation entry points. Both are pure with respect to their input:
@@ -243,6 +247,7 @@ function resolveChoices(ctx: Ctx, choices: PlayerChoices, own = choices.actions?
     if (charId === s.playerId && ev.defId !== 'health_warning') continue;
     if (s.gameOver) break;
     noteChoice(s, ev, ch);
+    practiceDeed(s, `${ev.title} ${ch.label} ${ch.because}`, 2);
     const mark = bookMark(ctx);
     const rx = rxChoiceBegin(s, ev, ch);
     applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: ev.defId === 'bagman' ? 'tribute' : 'event' });
@@ -268,6 +273,7 @@ function monthlyTick(ctx: Ctx): void {
   if (!s.gameOver) housesMonth(ctx);
   if (!s.gameOver) romanceMonth(ctx);
   lifestyleMonth(ctx);
+  loyaltyMonth(s);
   regimesMonth(ctx);
   // Disloyal men may walk out (a capo takes the men loyal to him).
   const boss = player(s);
@@ -517,6 +523,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     setPiecesWeek(ctx);
     // Your men come up (crewXp.ts): what each man did this week, seen against the week as it began.
     xpWeek(ctx, input);
+    bossSkillsWeek(ctx, input);
     // The boss's private read on people: the week's evidence counted, old suspicion fading (peopleRead.ts).
     readsWeek(ctx);
     // The man at the door (planner/gateWeek.ts): a turned gatekeeper's week, the tells, the boss's cross-checks that take a month.

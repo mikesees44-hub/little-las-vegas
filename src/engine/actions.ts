@@ -1,4 +1,5 @@
 import { hollowMeter } from './fedsState';
+import { practiceDeed } from './bossSkills';
 import { noteOrder, previewMen } from './myMen';
 import { rxActionBegin, rxEnd } from './reactions/apply';
 import { bookMark, bookOrder } from './journal';
@@ -1029,6 +1030,8 @@ export function resolveActions(ctx: Ctx, actions: readonly PlayerAction[], opts:
     rxEnd(ctx, rx);
     noteAttention(s, a);
     noteOrder(s, a);
+    // The boss learns from what he does (bossSkills.ts).
+    practiceDeed(s, `${a.kind} ${p.title} ${p.because}`);
     if (a.kind === 'interact' || a.kind === 'deed') {
       const t = s.characters[a.target];
       if (t) {
@@ -1065,6 +1068,7 @@ export function settleOrderNow(ctx: Ctx, a: PlayerAction, accepted: boolean): Ac
   rxEnd(ctx, rx);
   noteAttention(s, a);
   noteOrder(s, a);
+  practiceDeed(s, `${a.kind} ${p.title} ${p.because}`);
   if (a.kind === 'interact' || a.kind === 'deed') {
     const t = s.characters[a.target];
     if (t) { t.neglect = 0; t.defectStage = 0; }

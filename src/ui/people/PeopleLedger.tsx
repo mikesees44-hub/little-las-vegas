@@ -15,6 +15,7 @@ import { postNow } from '../deeds/NowResult';
 import { domClass, type Domain } from '../domain';
 import { useShell } from '../shell/context';
 import { CloseStrip, PinStar } from './ClosePeople';
+import { CrewBadge, CrewStrip, LoyaltyMeter } from '../components/Loyalty';
 
 /**
  * THE PEOPLE LEDGER (imports/queue/PEOPLE_LEDGER.md): one list of everyone the boss knows, grouped by
@@ -69,6 +70,7 @@ export function PeopleLedger({ s, initialMode = 'read' }: { s: GameState; initia
     <div className="rounded-lg border border-noir-700 bg-noir-900 p-3 text-stone-200 sm:p-4" data-testid="people-ledger">
       <PageHeader title="The people" sub={`Everyone you know of, by family: ${total}. What you believe about each one, and why. Belief is not proof: a loyal man can look like a rat, and a rat can look clean.`} />
       <div className="mb-2"><CloseStrip s={s} /></div>
+      <div className="mb-2"><CrewStrip s={s} /></div>
       <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filter the people">
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a name, a rank, a district…" aria-label="Find a person" data-testid="people-search"
           className="min-w-0 flex-1 basis-40 rounded border border-noir-600 bg-noir-950 px-2 py-1 text-[12.5px] text-stone-100 placeholder:text-stone-500" />
@@ -143,7 +145,8 @@ function Row({ s, v, mode, open, onToggle, onHit }: { s: GameState; v: PersonVie
           <div className="flex flex-wrap items-baseline gap-x-2">
             <button type="button" className="truncate text-left text-[13px] font-semibold text-stone-100 hover:text-gold-300" onClick={onToggle} aria-expanded={open} data-testid="people-name">{v.name}</button>
             <PinStar s={s} id={v.id} />
-            <span className="truncate text-[11px] text-stone-400">{v.rank} · <span style={{ color: v.side.color }}>{v.side.emblem} {fam}</span>{v.district ? ` · ${v.district}` : ''}</span>
+            {c.alive && <CrewBadge s={s} c={c} />}
+            <span className="truncate text-[11px] text-stone-400">{v.rank}<span style={{ color: v.side.color }} className="sr-only"> · {v.side.emblem} {fam}</span>{v.district ? ` · ${v.district}` : ''}</span>
             {v.watched && <span className="text-[10.5px] text-sky-300" title={v.watched}>◉ watched</span>}
             {v.cleared !== undefined && <span className="text-[10.5px] text-emerald-300">✓ cleared</span>}
           </div>
@@ -209,7 +212,10 @@ function Detail({ s, v, onHit }: { s: GameState; v: PersonView; onHit: () => voi
         <Why d="crew" title={`Trust: ${v.trust.label}`} extra={`${v.trust.v}/100`} m={v.trust} />
         <Why d="law" title={`Flipped? ${v.flip.label}`} extra={`${v.flip.v}/100`} m={v.flip} />
         <Why d="money" title={`Stealing? ${v.steal.label}`} extra={`${v.steal.v}/100`} m={v.steal} />
-        <Why d="crew" title={`Loyalty: ${v.loyalty.label}`} extra={`${v.loyalty.v > 0 ? '+' : ''}${v.loyalty.v}`} m={v.loyalty} />
+        <div className="min-w-0">
+          <Why d="crew" title={`Loyalty: ${v.loyalty.label}`} extra={`${v.loyalty.v > 0 ? '+' : ''}${v.loyalty.v}`} m={v.loyalty} />
+          {c?.alive && <LoyaltyMeter s={s} id={v.id} why className="mt-1 px-2" />}
+        </div>
         <Why d="rivals" title={`Fear: ${v.fear.label}`} extra={`· favors: owes you ${v.favors.owesMe}, you owe ${v.favors.iOwe}`} m={{ why: [...v.fear.why, ...v.favors.why] }} />
       </div>
       <div className="mt-2 grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3" role="group" aria-label={`What to do about ${v.name}`}>

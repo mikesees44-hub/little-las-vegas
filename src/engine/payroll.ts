@@ -1,4 +1,5 @@
 import { ageOn, isInSeason } from './calendar';
+import { perkMod } from './lifestyle';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { adultOn } from './datingState';
 import { owedBy } from './deeds/state';
@@ -576,7 +577,8 @@ export function applyPayOp(ctx: Ctx, o: PayOp): void {
       const t = hushTarget(s, c);
       if (!t) return;
       // She may tell him (her call, her nerves): a grudge, and a warning to his side.
-      const tell = 0.3 + (opinion(s, c.id, t.on.id) > 20 ? 0.25 : 0) + (hasTrait(c, 'Honest') ? 0.15 : 0);
+      // The quiet envelope (bossSkills.ts, Intrigue 10): asked the right way, she keeps it to herself more often.
+      const tell = Math.max(0.05, 0.3 + (opinion(s, c.id, t.on.id) > 20 ? 0.25 : 0) + (hasTrait(c, 'Honest') ? 0.15 : 0) - perkMod(s, 'quietEnv') / 100);
       if (roll(`${s.seed}|${s.week}|hushtell|${c.id}`) >= tell) { plog(P, s, `${c.firstName} said no to the envelope, and kept it to herself.`); return; }
       const fx: Effect[] = [{ type: 'opinion', from: t.on.id, to: B, amount: -15, reason: `Tried to buy my ${t.rel === 'husband' ? 'wife' : 'family'}`, decay: 1, label: `${c.firstName} told her ${t.rel}` }];
       const rv = mobOf(s, t.on.faction);

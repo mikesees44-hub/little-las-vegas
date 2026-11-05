@@ -274,6 +274,9 @@ export function shortOdds(s: GameState, c: Character): { p: number; w: Partial<R
   };
   // His own spot (kickup.ts): talked to, he is careful; a big earner kept waiting helps himself.
   p = spotShortOdds(s, c, p, w);
+  // Nobody skims under him (bossSkills.ts, Discipline 10).
+  const sk = perkMod(s, 'skim');
+  if (sk) p *= 1 - sk / 100;
   return { p: Math.min(0.25, p), w };
 }
 

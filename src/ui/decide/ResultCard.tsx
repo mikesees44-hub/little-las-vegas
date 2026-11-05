@@ -63,6 +63,12 @@ export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () =
             {r.opinionDelta ? <span className={r.opinionDelta > 0 ? 'text-emerald-400' : 'text-red-400'}> · opinion {r.opinionDelta > 0 ? '+' : '−'}{Math.abs(r.opinionDelta)}</span> : null}
           </div>
         )}
+        {r.ripple && r.ripple.length > 0 && (
+          <div className="mt-2 text-[12px]" data-testid="result-ripple">
+            <span className="text-[10px] uppercase tracking-wider text-stone-500">The ripple · </span>
+            {r.ripple.map((x, i) => <span key={i} className={x.startsWith('+') ? 'text-emerald-300' : x.startsWith('−') ? 'text-red-300' : 'text-stone-400'}>{i ? ' · ' : ''}{x}</span>)}
+          </div>
+        )}
         {r.leadsTo.length > 0 && (
           <div className="mt-2" data-testid="result-follow">
             <div className="text-[10px] uppercase tracking-wider text-stone-500">What follows</div>

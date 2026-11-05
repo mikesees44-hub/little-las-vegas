@@ -559,6 +559,16 @@ const MEN: PTpl[] = [
     ],
   },
   {
+    id: 'm_father_wedding', role: 'Father of the bride', gender: 'M', age: [44, 66], bg: ['Italian', 'Irish', 'Polish', 'Jewish'], size: 'small', low: true, title: 'A father and his daughter\'s wedding', offer: 'loyalty',
+    problem: (v) => `${v.w} drives a bread truck for the Italian bakery on Pacific Avenue. His daughter ${brideOf(v)} marries in June, and the Dorset wants half the hall money by Friday. "Thirty years I never asked anybody for anything, ${v.addr}. She's my only girl."`,
+    answers: (v) => [
+      A('payall', 'grant', '"The wedding is on me. All of it. You walk her down the aisle."', `${v.$(1200)}: the hall, the band, the cake. He owes you, and the whole parish knows who paid.`, `paid for ${v.f}'s daughter's wedding`, [v.pay(1200), v.resp(3), v.op(20, 'Paid for my daughter\'s wedding'), v.owe('Paid for his daughter\'s wedding'), { type: 'gf', op: { op: 'pay', who: v.who.id, nm: brideOf(v), scope: 'all' }, ...(v.resp(0).label ? { label: v.resp(0).label } : {}) } as Effect], favorBack('\'s nephew at the bakery told you which truck carries the Manno numbers slips', (x) => [x.gain(300)], 0.5, [6, 16])),
+      A('loan', 'price', '"I\'ll lend you the hall money. Easy terms, between us."', `${v.$(500)} now. He pays it back from the truck, a little every week.`, `lent ${v.f} the hall money`, [v.pay(500), v.op(8, 'Lent me the hall money'), v.owe('Lent him the hall money')]),
+      A('gift', 'grant', '"Here\'s for the bride. Tell her it\'s from a friend."', `${v.$(150)} in an envelope.`, `gave ${v.f} a wedding envelope`, [v.pay(150), v.op(6, 'Gave my girl an envelope')]),
+      no(v, '"A man pays for his own daughter\'s wedding."', `sent ${v.f} away`, 'downtown', 0.1),
+    ],
+  },
+  {
     id: 'm_widower_funeral', role: 'Widower', gender: 'M', age: [50, 80], bg: ['Italian', 'Irish', 'Polish', 'Jewish'], size: 'desperate', low: true, title: 'A widower and the undertaker', offer: 'respect',
     problem: (v) => `${v.w} buried his wife Saturday, or would have: the undertaker on New Jersey Avenue won't release her without $400 down. Forty-four years married. "I sold the car. I sold her ring. I can't sell the house; she's in it, still, everywhere."`,
     answers: (v) => [
@@ -887,3 +897,11 @@ const MEN: PTpl[] = [
 
 /** The deep bed: the women and the men. */
 export const PETITION_TEMPLATES: PTpl[] = [...WOMEN, ...MEN];
+
+/** The bride's name, steady for the petitioner (godfather.ts reads it as the wedding's). */
+function brideOf(v: PV): string {
+  const names = ['Rosemarie', 'Theresa', 'Angela', 'Carol', 'Joan', 'Margaret', 'Dolores', 'Frances'];
+  let h = 0;
+  for (const ch of v.who.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return names[h % names.length];
+}

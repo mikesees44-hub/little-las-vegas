@@ -1,4 +1,5 @@
 import { displayName, hasTrait, player } from './characters';
+import { perkMod } from './lifestyle';
 import { registerEventSource } from './events';
 import { beat, between, clamp, hit, mgEffect, mgOf, registerAttacher, registerMinigame, roll, usd, type MgOption, type MgSession, type MinigameDef } from './minigame';
 import { opinion } from './relations';
@@ -187,7 +188,8 @@ export const SITDOWN: MinigameDef<SitdownData> = {
     let patience = 4;
     if (other && hasTrait(other, 'Patient')) patience += 2;
     if (other && hasTrait(other, 'Hot-headed')) patience -= 1;
-    const reserve = clamp(Math.round(48 + op / 8 + (s.respect - 50) / 10 + between(ses, -8, 8)), 25, 80);
+    // A sit-down man (bossSkills.ts, Diplomacy 10): the other side settles a little closer to you.
+    const reserve = clamp(Math.round(48 + op / 8 + (s.respect - 50) / 10 + between(ses, -8, 8) + perkMod(s, 'sitdown')), 25, 80);
     const d: SitdownData = { kind, other: name, otherFirst: other?.firstName ?? name.split(' ')[0], otherId: other?.id, ask: 75, offer: clamp(reserve - between(ses, 18, 28), 5, 60), reserve, patience, patienceMax: patience, read: 0.5, sweetened: 0, round: 0, base: Number(ses.params.base ?? 0) };
     beat(ses, `${d.otherFirst} speaks first, which is a mistake. He opens at ${d.offer}. You want ${d.ask}.`, 'quote');
     return { d, phase: 'talk', intro: { title: kind === 'hearing' ? 'The Table sits' : kind === 'points' ? 'Points' : 'The sit-down', kicker: 'A round table in a closed restaurant', text: `A round table in a closed restaurant; the hands stay on the table. ${name} speaks first, which is a mistake.`, scene: 'sitdown' } };

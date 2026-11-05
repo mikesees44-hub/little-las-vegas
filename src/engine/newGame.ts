@@ -1,3 +1,4 @@
+import { forgetSetup } from './loyalty';
 import { freeWidows } from './dynasty';
 import { assignFaces } from './faces';
 import { startPocket } from './tributeState';
@@ -364,5 +365,6 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   s.difficulty = s.difficulty ?? 'don';
   freeWidows(s);
   assignFaces(s);
+  forgetSetup(s);
   return s;
 }

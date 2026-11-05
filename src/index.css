@@ -427,6 +427,9 @@ body {
 .llv-floatup { position: absolute; right: 2px; top: -2px; pointer-events: none; font-weight: 700; font-size: 11px; white-space: nowrap; animation: llv-floatup 1.6s ease-out forwards; text-shadow: 0 1px 2px #000; }
 @keyframes llv-floatup { 0% { transform: translateY(6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-18px); opacity: 0; } }
 .llv-bump { animation: llv-bump 0.45s ease-out; }
+/* A loyalty floater: rises a little, holds, fades (loyalty.ts). */
+.llv-loyal-float { animation: llv-loyal-float 2.6s ease-out forwards; }
+@keyframes llv-loyal-float { 0% { transform: translateY(8px); opacity: 0; } 12% { transform: translateY(0); opacity: 1; } 80% { opacity: 1; } 100% { transform: translateY(-10px); opacity: 0; } }
 @keyframes llv-bump { 0% { transform: scale(1); } 35% { transform: scale(1.12); } 100% { transform: scale(1); } }
 /* A result landing: the stamp slams, a gold flash for a win, a red shake for a loss. */
 .llv-slam { animation: llv-slam 0.42s cubic-bezier(.2,1.5,.35,1) both; }
@@ -445,7 +448,7 @@ body {
 .llv-spot:hover .llv-spot-label, .llv-spot:focus-visible .llv-spot-label { display: inline; }
 @media (hover: none) { .llv-spot-label { display: inline; } }
 @media (prefers-reduced-motion: reduce) {
-  .llv-slide-up, .llv-stamp-in, .llv-slide-left, .llv-slide-right, .llv-next, .llv-floatup, .llv-bump, .llv-slam, .llv-flash-gold, .llv-shake, .llv-celebrate { animation: none !important; }
+  .llv-slide-up, .llv-stamp-in, .llv-slide-left, .llv-slide-right, .llv-next, .llv-floatup, .llv-bump, .llv-loyal-float, .llv-slam, .llv-flash-gold, .llv-shake, .llv-celebrate { animation: none !important; }
   .btn-primary, .btn-secondary, .btn-danger { transition: none; transform: none !important; }
   .llv-floatup { display: none; }
 }

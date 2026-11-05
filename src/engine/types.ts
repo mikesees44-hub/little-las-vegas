@@ -593,6 +593,7 @@ export type Effect =
   | ({ type: 'cut'; op: import('./cutScore').CutOp } & EffectBase)
   /** Ocean City, the dry town (oceanCity.ts): the raid, the rival families. */
   | ({ type: 'oc'; op: import('./oceanCity').OcOp } & EffectBase)
+  | ({ type: 'gf'; op: import('./godfather').GfOp } & EffectBase)
   /** Feds and flipping (feds.ts). */
   | ({ type: 'feds'; op: import('./feds').FedsOp } & EffectBase);
 
@@ -1031,6 +1032,12 @@ export interface GameState {
   intrigue?: import('./intrigueState').IntrigueState;
   /** Your men come up (crewXp.ts): XP, levels, specialties. Optional; made by the weekly update. */
   xp?: import('./crewXp').XpState;
+  /** Loyalty that moves: the last reasons per person and the floaters' feed (loyalty.ts). Optional. */
+  loyal?: import('./loyalty').LoyalState;
+  /** The boss's skills: practice, points to put in, a focus (bossSkills.ts). Optional. */
+  bsk?: import('./bossSkills').BskState;
+  /** Weddings and christenings: offers, godchildren (godfather.ts). Optional. */
+  gf?: import('./godfather').GfState;
   /** Protection & intelligence (protect.ts): guards, inquiries, their reports and who may read them. */
   protect?: import('./protect').ProtectState;
   /** The women (women.ts): careers and arcs, affairs, office requests, talent, hooks (adults only; mature content). */
