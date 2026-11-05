@@ -18,6 +18,7 @@ import { askFor, askTitle, ignoreText } from '../../../engine/minds/askView';
 import { canHonor, favorTerms, honorFavor, refuseFavor } from '../../../engine/minds/familyAsks';
 import { postNow } from '../../deeds/NowResult';
 import { FamilyTalk } from '../../minds/FamilyTalk';
+import { RivalMind } from '../../ai/RivalMind';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
@@ -90,6 +91,7 @@ export function RivalBoard({ s }: { s: GameState }) {
                     </div>
                   );
                 })()}
+                {r.kind !== 'law' && leader.alive && <RivalMind s={s} rival={r.id} />}
                 {shell.update && rivalOf(s, r.id) && leader.alive && (() => {
                   const can = canSitDown(s, r.id);
                   return (
