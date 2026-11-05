@@ -73,6 +73,8 @@ export function ensureGfSave(s: GameState): GfState | undefined {
 function hroll(str: string): number {
   let h = 2166136261;
   for (let i = 0; i < str.length; i++) h = Math.imul(h ^ str.charCodeAt(i), 16777619);
+  // A finalizer: keys that differ only at the end (the week) must not roll alike.
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
   return (h >>> 0) / 4294967296;
 }
 
@@ -202,6 +204,8 @@ function offers(s: GameState): Offer[] {
 /* ------------------------------------------------------------------ */
 
 const DAY = 5; // Saturday
+/** High enough to reach the desk in a busy week (the owner asked for these); the director's novelty still spaces them. */
+const GF_PRIORITY = 58;
 
 function fx(label: string, ...xs: Effect[]): Effect[] {
   return xs.map((e) => ({ ...e, label }));
@@ -262,11 +266,11 @@ export function buildOffer(s: GameState, o: Offer): EventInstance {
     const text = fr
       ? `${who}'s daughter ${o.nm} marries Saturday at ${where}, reception at the Hotel Dorset. Half the island is invited, and so are you. Paying for the reception would be noticed in every family in South Jersey.`
       : `${who}'s daughter ${o.nm} marries Saturday at ${where}. ${o.circle === 'payroll' ? `${c.gender === 'F' ? 'She' : 'He'} is on your payroll and doesn't have that kind of money.` : `${c.firstName} has been putting money aside for years, and it isn't enough.`} The hall, the band, the cake: somebody has to pay.`;
-    return { iid, defId: 'gf_wedding', week: s.week, mandatory: false, priority: 44, title: `${o.nm}'s wedding`, text, choices: weddingChoices(s, c, o.nm, fr), defaultChoiceId: fr ? 'stay' : 'envelope', meta, actors: [c.id] };
+    return { iid, defId: 'gf_wedding', week: s.week, mandatory: false, priority: GF_PRIORITY, title: `${o.nm}'s wedding`, text, choices: weddingChoices(s, c, o.nm, fr), defaultChoiceId: fr ? 'stay' : 'envelope', meta, actors: [c.id] };
   }
   const grand = o.circle === 'crew';
   const text = `${grand ? `${who} is a grandfather: his daughter had a ${o.male ? 'boy' : 'girl'}, ${o.nm}.` : `${who} has a new ${o.male ? 'son' : 'daughter'}, ${o.nm}.`} The christening is Saturday at ${where}, and ${c.firstName} asks you to stand at the font.${fr ? ` From another family's man, that is a hand held out.` : ''} In this life a godfather is for life.`;
-  return { iid, defId: 'gf_baptism', week: s.week, mandatory: false, priority: 44, title: `A christening: ${o.nm}`, text, choices: baptismChoices(s, c, o.nm, o.male, fr), defaultChoiceId: 'gift', meta, actors: [c.id] };
+  return { iid, defId: 'gf_baptism', week: s.week, mandatory: false, priority: GF_PRIORITY, title: `A christening: ${o.nm}`, text, choices: baptismChoices(s, c, o.nm, o.male, fr), defaultChoiceId: 'gift', meta, actors: [c.id] };
 }
 
 /** The weekly offer (a candidate among the week's events; no dice from the main stream). */
@@ -274,7 +278,7 @@ export function gfEventSource(s: GameState): EventInstance | undefined {
   if (s.gameOver || s.week < 6 || inTheRanks(s)) return undefined;
   if (s.gf?.cd !== undefined && s.week - s.gf.cd < GF_GAP) return undefined;
   if (s.pendingEvents.some((e) => e.defId === 'gf_wedding' || e.defId === 'gf_baptism')) return undefined;
-  if (hroll(`${s.seed}|gfwk|${s.week}`) > 0.3) return undefined;
+  if (hroll(`${s.seed}|gfwk|${s.week}`) > 0.4) return undefined;
   const os = offers(s);
   if (!os.length) return undefined;
   // Your own people first, then the payroll and the pad, then the other families.
