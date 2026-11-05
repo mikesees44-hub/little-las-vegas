@@ -48,6 +48,8 @@ export interface NowResult {
   ripple?: string[];
   /** When it was settled, for the card's header: "done now" unless it came at the week's turn. */
   when?: string;
+  /** A picture for the card's top (ui/decide/ResultCard.tsx RESULT_ART). */
+  art?: string;
 }
 
 /** The tier's banner (STREAMLINE §4.3). */
@@ -255,9 +257,11 @@ export function actNow(input0: GameState, action: PlayerAction): { state: GameSt
   const moved = loyaltySince(s, lmark).filter((f) => f[1] !== t);
   const ripple = moved.slice(-4).map((f) => floaterText(s, f));
   if (moved.length > 4) ripple.push(`and ${moved.length - 4} more`);
+  // The night in the car, when she said yes: the owner's still of the car at night.
+  const art = action.kind === 'nightlife' && (action.op as { op?: string }).op === 'car' && tier !== 'fail' ? 'car_night' : undefined;
   const headline = pct !== undefined ? `${pct}% — ${verdict(tier, mode, she)}` : verdict(tier, 'order', she) === 'done' ? 'Done' : verdict(tier, mode, she);
   return {
     state: s,
-    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}), ...(ripple.length ? { ripple } : {}) },
+    result: { ok: true, title: p0.title, ...(t ? { who: displayName(s.characters[t]) } : {}), ...(chance !== undefined ? { chance, roll } : {}), tier, headline, line, changes: d.changes, leadsTo: d.leadsTo, ...(remember ? { remember } : {}), ...(opinionDelta !== undefined ? { opinionDelta } : {}), ...(ripple.length ? { ripple } : {}), ...(art ? { art } : {}) },
   };
 }

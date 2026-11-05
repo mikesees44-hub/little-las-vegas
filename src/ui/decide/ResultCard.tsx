@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { TIER_BANNER, type NowResult } from '../../engine/deeds/now';
 import { domainOfText, domClass } from '../domain';
 
@@ -25,6 +26,16 @@ export function rollLine(chance: number, roll01: number, won: boolean): { need: 
 
 const won = (tier: string) => tier === 'crit' || tier === 'success';
 
+/** Pictures a result can carry (the owner's art in the asset store; none of it shows off claude.ai). */
+const RESULT_ART: Record<string, string> = { car_night: '/_blob/2806b80eef487e0629195050ec2e5df7' };
+
+function ResultArt({ k }: { k: string }) {
+  const [gone, setGone] = useState(false);
+  const url = RESULT_ART[k];
+  if (!url || gone || typeof window === 'undefined' || !/^https?:/.test(window.location?.protocol ?? '')) return null;
+  return <img src={url} alt="" className="block max-h-56 w-full object-cover" onError={() => setGone(true)} data-testid={`result-art-${k}`} />;
+}
+
 export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () => void; onFile?: () => void }) {
   // The part of the Don's life it belongs to, read off its words (ui/domain.ts): the card's edge and a dot.
   const dom = domainOfText(undefined, `${r.title} ${r.headline ?? ''}`);
@@ -33,6 +44,7 @@ export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () =
   return (
     // A result lands: a win flashes gold, a loss shakes; the verdict is stamped on (all off under reduced motion).
     <div className={`panel llv-slide-up w-full max-w-md overflow-hidden border-2 bg-noir-900 ${BORDER[r.tier] ?? 'border-gold-600/60'} shadow-2xl shadow-black/80 ${dom ? `${domClass(dom)} llv-dom-edge` : ''} ${pct !== undefined ? (won(r.tier) ? 'llv-flash-gold' : 'llv-shake') : ''}`} role="dialog" aria-label={r.title} data-testid="now-result" data-domain={dom} onClick={(e) => e.stopPropagation()}>
+      {r.art && <ResultArt k={r.art} />}
       <div className={`px-4 py-2 ${BANNER_BG[r.tier] ?? ''}`} data-testid="result-banner">
         <div className="text-[10px] uppercase tracking-[0.25em] text-stone-400">{dom && <span className="llv-dom-dot mr-1.5 align-middle" aria-hidden />}{r.title}{r.who ? ` · ${r.who}` : ''} · {r.when ?? 'done now'}</div>
         <div className={`font-display text-2xl ${TONE[r.tier] ?? 'text-gold-300'}`} data-testid="now-headline">{pct !== undefined
