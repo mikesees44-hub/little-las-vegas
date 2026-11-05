@@ -1,4 +1,5 @@
 import { previewAction } from './actions';
+import { FIRST_WINTER_PER_NEW, firstWinterAhead } from './economy';
 import { newBusiness, owned, playerSlots } from './business';
 import { CATALOG, availableIn } from './catalog';
 import { canHold, earnerOf, earnerWeekly, freeEarners, holderOf, suggestFor, yearMult } from './earners';
@@ -12,7 +13,7 @@ import type { Business, BusinessKind, Character, GameState, PlayerAction } from 
  * itself. Pure: it only reads, and every line carries the existing order.
  */
 
-export interface BuyIdea { kind: BusinessKind; district: string; name: string; where: string; cost: number; weekly: number; payback: number; action: PlayerAction; why?: string; staff: number }
+export interface BuyIdea { kind: BusinessKind; district: string; name: string; where: string; cost: number; weekly: number; payback: number; action: PlayerAction; why?: string; staff: number; winter: number }
 export interface Held { b: Business; weekly: number; upkeep: number; net: number; cost: number; weeks: number; earned: number; paidBack: number; holder?: string }
 export interface EarnIdea { c: Character; b: Business; weekly: number; action: PlayerAction }
 
@@ -36,12 +37,22 @@ export function buyIdeas(s: GameState, limit = 6): BuyIdea[] {
       const action: PlayerAction = { kind: 'buyBusiness', biz: kind, district: d.id } as PlayerAction;
       const why = previewAction(s, action).disabledReason;
       if (why && !/^Needs \$/.test(why)) continue;
-      const idea: BuyIdea = { kind, district: d.id, name: def.name, where: d.name, cost: def.cost, weekly: net, payback: paybackWeeks(def.cost, net), action, why, staff: def.staff ?? 0 };
+      // A place bought before the first winter costs extra to winterize through it (economy.ts FIRST_WINTER_PER_NEW): count it.
+      const winter = firstWinterAhead(s) ? FIRST_WINTER_PER_NEW * 30 : 0;
+      const idea: BuyIdea = { kind, district: d.id, name: def.name, where: d.name, cost: def.cost, weekly: net, payback: paybackWeeks(def.cost + winter, net), action, why, staff: def.staff ?? 0, winter };
       const cur = best.get(kind);
       if (!cur || idea.payback < cur.payback) best.set(kind, idea);
     }
   }
   return [...best.values()].filter((x) => Number.isFinite(x.payback)).sort((a, b) => a.payback - b.payback || a.cost - b.cost).slice(0, limit);
+}
+
+/** Why he can't buy anything at all right now (his rank), or undefined. */
+export function buyBlock(s: GameState): string | undefined {
+  const d = s.districts[0];
+  if (!d) return undefined;
+  const why = previewAction(s, { kind: 'buyBusiness', biz: 'pizza', district: d.id } as PlayerAction).disabledReason;
+  return why && /rank|capo|made|boss/i.test(why) ? why : undefined;
 }
 
 /** What each place you own has done for you: its net a week, and how much of its price it has paid back. */

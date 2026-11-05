@@ -10,7 +10,7 @@ import { today, DAY_NAMES } from './days';
 import { fmtMoney } from './effects';
 import { honesty } from './ledgerbook';
 import { money, respect, type Ctx } from './ledger';
-import { proofs } from './paper';
+import { killCost, proofs, storyHarm } from './paper';
 import { addOpinion, opinion } from './relations';
 import { hashSeed } from './rng';
 import { timeCost } from './timeCost';
@@ -502,7 +502,8 @@ function extraCands(s: GameState, seatOf: (d: LtDomain) => boolean): LtCand[] {
   };
   // The papers: a story about us that has not run yet.
   try {
-    for (const { it } of proofs(s).slice(0, 1)) {
+    // Only a story worth the envelope: what it would do if it ran outweighs what the editor costs.
+    for (const { it } of proofs(s).filter((p) => storyHarm(p.it) >= killCost(s, p.it) * 0.8).slice(0, 1)) {
       mk('consigliere', 'press', `press:${it.id}`, 'A story about us', [`The Tide has something on us for later this week: "${(it.h ?? it.b).slice(0, 60)}". The night editor takes envelopes.`, 'There\'s a story in the galleys with our name in it. I can make it go away.'], 520,
         [{ id: 'kill', label: 'Spike the story', action: { kind: 'paper', op: { op: 'kill', item: it.id } }, why: 'it never runs', bonus: 900 }]);
     }

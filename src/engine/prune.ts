@@ -123,7 +123,9 @@ export function capArchives(s: GameState): void {
 
 /** Twice a year from the week turn. */
 export function pruneSave(s: GameState): void {
+  // The archive caps every week (cheap, and what loading a save does), so a save is always in its final form.
+  try { capArchives(s); } catch { /* a prune is never worth a crash */ }
   if (s.week % 26 !== 0) return;
-  try { pruneDead(s); } catch { /* a prune is never worth a crash */ }
+  try { pruneDead(s); } catch { /* idem */ }
   try { capArchives(s); } catch { /* idem */ }
 }

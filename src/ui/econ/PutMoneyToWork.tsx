@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { buyIdeas, earnIdeas, heldReturns, pitchIdeas, workIdeas } from '../../engine/invest';
+import { buyBlock, buyIdeas, earnIdeas, heldReturns, pitchIdeas, workIdeas } from '../../engine/invest';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { Card, CardHead } from '../components/Layout';
 import { ActionCard, useOrders } from '../components/Orders';
@@ -70,11 +70,11 @@ export function PutMoneyToWork({ s }: { s: GameState }) {
           {buys.length ? (
             <ul className="space-y-1">{buys.slice(0, open ? 99 : 4).map((x) => (
               <li key={x.kind} className="text-xs" data-testid="invest-buy-row">
-                <div className="flex flex-wrap justify-between gap-x-2"><span className="text-stone-200">{x.name} · {x.where}</span><span className="tabular-nums text-stone-400">{fmt$(x.cost)} → ~{fmt$(x.weekly)}/wk · pays back in {weeksWord(x.payback)}{x.staff ? ` · needs ${x.staff} man` : ''}</span></div>
+                <div className="flex flex-wrap justify-between gap-x-2"><span className="text-stone-200">{x.name} · {x.where}</span><span className="tabular-nums text-stone-400">{fmt$(x.cost)} → ~{fmt$(x.weekly)}/wk · pays back in {weeksWord(x.payback)}{x.winter ? ` (counting ~${fmt$(x.winter)} to winterize it)` : ''}{x.staff ? ` · needs ${x.staff} man` : ''}</span></div>
                 <ActionCard s={s} action={x.action} compact />
               </li>
             ))}</ul>
-          ) : <p className="text-[11px] text-stone-500">No storefront free in a neighborhood you hold 20% of. Push into a district first.</p>}
+          ) : <p className="text-[11px] text-stone-500" data-testid="invest-buy-none">{buyBlock(s) ? `${buyBlock(s)}. Until then: earn on the street, back your men's ideas, and rise (Crew ▸ The Rise shows what it takes).` : 'No storefront free in a neighborhood you hold 20% of. Push into a district first.'}</p>}
         </div>
         {ideas.length > 0 && (
           <div data-testid="invest-pitches">

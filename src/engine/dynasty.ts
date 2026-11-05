@@ -1,3 +1,5 @@
+import { assignFaces } from './faces';
+import { capArchives } from './prune';
 import { agingFor, agingMonth, deathMult, ensureAging, fertility, lineOrder, successionBar } from './aging';
 import { ageOn, formatDate } from './calendar';
 import {
@@ -407,6 +409,8 @@ export function monthlyLife(ctx: Ctx): MonthlyResult {
   freeWidows(s);
   births(ctx);
   marriages(ctx);
+  // Monthly housekeeping, as loading a save does: faces for the newborn and the newly arrived, the archives held to their window.
+  try { assignFaces(s); capArchives(s); } catch { /* never worth a crash */ }
   return { warnings };
 }
 

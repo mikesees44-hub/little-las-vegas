@@ -979,6 +979,19 @@ export type PaperAction =
 
 export const PLANT_COST: Record<PlantKind, number> = { puff: 800, smear: 1500, notice: 100 };
 
+/** What a story would cost the family if it ran, in dollars of trouble (to weigh against the editor's envelope). */
+export function storyHarm(it: PItem): number {
+  const f = it.fx;
+  if (!f) return 0;
+  let h = 0;
+  for (const [bar, n] of f.heat ?? []) if (n > 0) h += n * (bar === 'federal' ? 300 : 150);
+  if ((f.resp ?? 0) < 0) h += -(f.resp ?? 0) * 300;
+  if ((f.wife ?? 0) < 0) h += -(f.wife ?? 0) * 40;
+  if (f.goomar) h += 1500;
+  if (f.ctl && f.ctl[1] > 0) h += f.ctl[1] * 60;
+  return h;
+}
+
 export function killCost(s: GameState, it: PItem): number {
   if (s.paper?.owned !== undefined) return 0;
   const base = it.s === 'front' ? 2500 : it.s === 'spout' ? 600 : 1000;
