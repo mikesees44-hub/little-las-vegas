@@ -985,6 +985,8 @@ export interface GameState {
   ears?: EarsState;
   /** Relationships & Dating: bonds, providers, rumors, content settings (datingState.ts; optional for old saves). */
   dating?: import('./datingState').DatingState;
+  /** Standing appointments (apptsState.ts): dates and meetings that fill the boss's days. Optional: most saves have none. */
+  appts?: import('./apptsState').ApptState;
   /** Nightlife: the cast of the night, the madams' houses, promises, goomars, stored looks (nightlifeState.ts; optional for old saves). */
   nightlife?: import('./nightlifeState').NightlifeState;
   /** The civilian payroll: barbers, cooks, attendants, cops, quiet envelopes (payroll.ts; optional: made with the first hire). */

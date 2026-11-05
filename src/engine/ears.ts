@@ -488,6 +488,71 @@ function motelOwned(s: GameState): boolean {
 }
 
 /** Every order of the Ears layer previews as named chips with odds and reasons. */
+/** Meets with her in a week that bring news (the first); the rest are a coffee and her company. */
+export const MEETS_A_WEEK = 7;
+/** What a meet costs: the coffee and the cab (the news is paid on top, at her price). */
+export const MEET_FEE = 100;
+export const MEET_FEE_AGAIN = 50;
+
+/** Why he can't sit down with her now (undefined: he can). Burned: she sells to a rival and does not trust him. */
+export function meetBlock(s: GameState, ear: Ear | undefined): string | undefined {
+  const c = ear ? s.characters[ear.id] : undefined;
+  if (!ear || !c?.alive || ear.status === 'gone') return 'She is gone';
+  if (!ear.known) return 'You don\'t know she listens yet';
+  if (ear.sellsTo && ear.loyalty < 25) return `She has been trading with ${s.rivals.find((r) => r.id === ear.sellsTo)?.shortName ?? 'the other side'}: a meet now would burn you both`;
+  if (ear.meetW === s.week && (ear.meetN ?? 0) >= MEETS_A_WEEK) return 'You have met her every day this week';
+  return undefined;
+}
+
+/** The news she has for him at a meet (the likeliest thing she heard that she has not told him in two months). */
+function meetNews(s: GameState, E: EarsState, ear: Ear): HintPick | undefined {
+  const heard = ear.heard ?? {};
+  const fresh = hintCandidates(s, E).filter((h) => s.week - (heard[`${h.subject}:${h.target.id}`] ?? -99) >= 8);
+  return fresh.sort((a, b) => b.w - a.w || a.target.id.localeCompare(b.target.id))[0];
+}
+
+function previewMeet(s: GameState, E: EarsState, earId: string): ActionPreview {
+  const ear = E.ears[earId];
+  const c = s.characters[earId];
+  const first = c?.firstName ?? '?';
+  const label = `A meet with ${first}`;
+  const block = meetBlock(s, ear);
+  if (block || !ear || !c) return { title: `Meet ${first}: what she hears`, effects: [], cost: 0, because: '', disabledReason: block ?? 'She is gone', category: 'event' };
+  const again = ear.meetW === s.week && (ear.meetN ?? 0) >= 1;
+  if (again) {
+    return {
+      title: `Meet ${first} again: what she hears`, cost: MEET_FEE_AGAIN, because: `met ${first} for coffee`, category: 'event',
+      detail: `${earLine(s, ear)}. You saw her already this week: a coffee and what is new on the floor. Talking often keeps her close; the news comes once a week.`,
+      effects: [{ type: 'money', amount: -MEET_FEE_AGAIN, label }, X({ op: 'loyalty', earId: c.id, amount: 1 }, label), X({ op: 'met', earId: c.id }, label)],
+      disabledReason: s.money < MEET_FEE_AGAIN ? `Needs ${$(MEET_FEE_AGAIN)}` : undefined,
+    };
+  }
+  const news = meetNews(s, E, ear);
+  if (!news) {
+    return {
+      title: `Meet ${first}: what she hears`, cost: MEET_FEE, because: `met ${first} to hear what she hears`, category: 'event',
+      detail: `${earLine(s, ear)}. A table in the back of ${ear.venue}. Nothing worth paying for this week; the coffee and the cab are on you, and she remembers you came.`,
+      effects: [{ type: 'money', amount: -MEET_FEE, label }, X({ op: 'paid', earId: c.id, amount: MEET_FEE }, label), X({ op: 'met', earId: c.id }, label), X({ op: 'note', text: `${first}: nothing new on the floor this week.` }, label)],
+      disabledReason: s.money < MEET_FEE ? `Needs ${$(MEET_FEE)}` : undefined,
+    };
+  }
+  const kind = SUBJECT_KIND[news.subject];
+  const price = r50(hintPrice(s, E, ear, news.subject, false) * 0.8);
+  const cost = MEET_FEE + price;
+  const t = news.target;
+  return {
+    title: `Meet ${first}: what she hears`, cost, because: `met ${first} and paid for what she heard about ${t.firstName}`, category: 'event',
+    detail: `${earLine(s, ear)}. A table in the back of ${ear.venue}: she has heard something about ${t.firstName} ${t.lastName}. ${$(MEET_FEE)} for the meet and ${$(price)} for what she heard (a regular's price). Paying builds trust.`,
+    effects: [
+      { type: 'money', amount: -cost, label }, X({ op: 'paid', earId: c.id, amount: cost }, label),
+      ...intelEffects(s, c.id, kind, t, false, label),
+      X({ op: 'met', earId: c.id, heard: `${news.subject}:${t.id}` }, label),
+      X({ op: 'note', text: `${first} on ${t.firstName}: ${fill(REPORT_LINES[kind][(s.week + t.id.length) % REPORT_LINES[kind].length], { him: title(s, t), rival: s.rivals.find((r) => r.id === t.faction)?.shortName ?? 'the other side', op: E.ops[t.id] ? callName(t) : '', place: ear.venue })}` }, label),
+    ],
+    disabledReason: s.money < cost ? `Needs ${$(cost)}` : undefined,
+  };
+}
+
 export function previewEars(s: GameState, a: EarsAction): ActionPreview {
   const E = s.ears;
   const no = (title0: string, why: string): ActionPreview => ({ title: title0, effects: [], cost: 0, because: '', disabledReason: why, category: 'event' });
@@ -540,6 +605,7 @@ export function previewEars(s: GameState, a: EarsAction): ActionPreview {
         disabledReason: !ear || !c?.alive || ear.status === 'gone' ? 'She is gone' : !ear.known ? 'You don\'t know her yet' : ear.lastGift !== undefined && s.week - ear.lastGift < 8 ? 'You took care of her recently' : s.money < amt ? `Needs ${$(amt)}` : undefined,
       };
     }
+    case 'meet': return previewMeet(s, E, a.earId);
     case 'protect': {
       const ear = E.ears[a.earId];
       const c = s.characters[a.earId];
@@ -708,6 +774,7 @@ export function describeEarsOp(s: GameState, o: EarsOp): string | undefined {
     case 'newEar': return o.loyalty ? `${nm(o.earId)} becomes one of your Ears` : undefined;
     case 'leave': return `${nm(o.earId)} leaves the life`;
     case 'retain': return `${nm(o.earId)}'s trust +10`;
+    case 'met': return undefined;
     case 'network': return `The network ${o.amount >= 0 ? '+' : '−'}${Math.abs(o.amount)}`;
     case 'madam':
       if (o.field === 'cut') return `Her cut: ${CUT_INFO[(o.value ?? 0) as CutTier].name.toLowerCase()} (${$(CUT_INFO[(o.value ?? 0) as CutTier].weekly)}/wk)`;
@@ -933,6 +1000,15 @@ export function applyEarsOp(ctx: Ctx, o: EarsOp, label?: string): void {
     }
     case 'note':
       note(s, E, o.text);
+      break;
+    case 'met':
+      if (ear) {
+        ear.known = true;
+        ear.meetN = ear.meetW === s.week ? (ear.meetN ?? 0) + 1 : 1;
+        ear.meetW = s.week;
+        ear.brushed = 0;
+        if (o.heard) ear.heard = { ...(ear.heard ?? {}), [o.heard]: s.week };
+      }
       break;
   }
   void label;

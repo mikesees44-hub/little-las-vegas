@@ -83,6 +83,7 @@ import './tributeEvents';
 // Delegation level and "always do this" (the Desk's Handled for you rules).
 import './delegation';
 import { earsWeek } from './ears';
+import { apptsWeek, holdApptHours } from './appointments';
 import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
 import { payrollWeek, withFavorJobs } from './payroll';
@@ -410,6 +411,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   // A trusted advisor acting on his own has the boss's standing permission to use Family money.
   resolveChoices(ctx, delegated.length ? { ...choices, actions: [...(choices.actions ?? []), ...delegated.map((d) => ({ ...d.action, fund: 'family' as const }))] } : choices, choices.actions?.length ?? 0);
   if (!s.gameOver) recordDelegation(s, weekOf, delegated);
+  // Standing appointments (appointments.ts): the week's dates and meetings, given like his own orders.
+  const apptLines = !s.gameOver ? apptsWeek(ctx) : [];
   // The underboss and the consigliere do their side of the business (their own hours, the Family's money within budget).
   const ltLines = !s.gameOver ? lieutenantsWeek(ctx, ltDocket, ltCalls, [...(choices.actions ?? []), ...delegated.map((d) => d.action)]) : [];
   // The answers given at this week's urgent meetings are carried out before anything lands.
@@ -547,6 +550,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   if (!s.gameOver && monthKey(s.date) !== prevMonth) monthlyTick(ctx);
 
   if (!s.gameOver) powerWeek(ctx);
+  // The new week's standing appointments hold their hours on the book.
+  if (!s.gameOver) holdApptHours(s);
   if (!s.gameOver) {
     tidyRegimes(s);
     const errs = validatePlayer(s);
@@ -571,7 +576,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
 
   const report: WeeklyReport = {
     ...(motion.length ? { motion } : {}),
-    ...(delegated.length || roundLines.length ? { rounds: [...delegated.map((d) => d.text + '.'), ...roundLines] } : {}),
+    ...(delegated.length || roundLines.length || apptLines.length ? { rounds: [...delegated.map((d) => d.text + '.'), ...apptLines, ...roundLines] } : {}),
     ...(ltLines.length ? { lieutenants: ltLines } : {}),
     week: weekOf,
     date: dateOf,

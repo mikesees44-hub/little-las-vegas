@@ -65,6 +65,11 @@ export interface Ear {
   lastGift?: number;
   /** An operator leaning on her (she may come for protection). */
   underOp?: string;
+  /** Meets with the boss this week (`meetW` the week, `meetN` how many). */
+  meetW?: number;
+  meetN?: number;
+  /** What she has already told him at a meet ("subject:target" → week). */
+  heard?: Record<string, number>;
 }
 
 export interface Operator {
@@ -231,6 +236,8 @@ export interface EarsState {
 export type EarsAction =
   | { op: 'ask'; earId: string; targetId: string; mode: JobMode; generous?: boolean }
   | { op: 'retain'; earId: string }
+  /** Meet her and hear what she has (a standing meet makes it routine: appointments.ts). */
+  | { op: 'meet'; earId: string }
   | { op: 'protect'; earId: string }
   | { op: 'madamCall' }
   | { op: 'madamCut'; tier: CutTier }
@@ -260,6 +267,8 @@ export type EarsOp =
   | { op: 'newEar'; earId: string; network: 'madam' | 'independent'; loyalty: number }
   | { op: 'leave'; earId: string; why: string }
   | { op: 'retain'; earId: string }
+  /** A meet kept: counted for the week; what she told him is not sold to him twice. */
+  | { op: 'met'; earId: string; heard?: string }
   | { op: 'network'; amount: number }
   | { op: 'madam'; field: 'cut' | 'intel' | 'venture' | 'favors' | 'squeeze' | 'ally' | 'call' | 'network'; value?: number; kind?: string; rival?: RivalId }
   | { op: 'operator'; opId: string; field: 'strength' | 'exposure'; amount: number }
