@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { hitTargetGroups } from '../../../engine/peopleRead';
-import { openPeople, OwnHitConfirm } from '../../people/PeopleLedger';
+import { openPeople } from '../../people/PeopleLedger';
 import { displayName } from '../../../engine/characters';
 import { SCHEME_INFO } from '../../../engine/schemes';
 import { knownSecrets } from '../../../engine/secrets';
@@ -51,7 +51,6 @@ function PlanCard({ s, kind }: { s: GameState; kind: SchemeKind }) {
   const targets = UNTARGETED.has(kind) ? [] : groups ? groups.flatMap((g) => g.ids.filter((id) => !g.protectedIds.includes(id))).map((id) => s.characters[id]) : schemeTargets(s, kind);
   // Never your own man by default: he is there to be chosen, not to be landed on.
   const [t, setT] = useState(targets.find((c) => c.faction !== 'player')?.id ?? targets[0]?.id ?? '');
-  const [ownConfirm, setOwnConfirm] = useState(false);
   const info = SCHEME_INFO[kind];
   const blocked = !UNTARGETED.has(kind) && targets.length === 0;
   return (
@@ -70,11 +69,10 @@ function PlanCard({ s, kind }: { s: GameState; kind: SchemeKind }) {
           </select>
         )}
         {kind === 'murder' && <button type="button" className="btn-ghost text-xs py-1 shrink-0" onClick={() => openPeople('hit')} data-testid="plan-hitlist" title="Everyone by family, with your read on each and the odds and heat of a hit">Hit list…</button>}
-        <button type="button" className={`${info.hostile ? 'btn border border-blood-500 text-red-300 hover:bg-blood-500/20' : 'btn-ghost'} text-xs py-1 shrink-0 ${UNTARGETED.has(kind) ? 'ml-auto' : ''}`} disabled={blocked} onClick={() => (kind === 'murder' && s.characters[t]?.faction === 'player' ? setOwnConfirm(true) : plan(kind, UNTARGETED.has(kind) ? undefined : t || undefined))}>
+        <button type="button" className={`${info.hostile ? 'btn border border-blood-500 text-red-300 hover:bg-blood-500/20' : 'btn-ghost'} text-xs py-1 shrink-0 ${UNTARGETED.has(kind) ? 'ml-auto' : ''}`} disabled={blocked} onClick={() => plan(kind, UNTARGETED.has(kind) ? undefined : t || undefined)}>
           Plan…
         </button>
       </div>
-      {ownConfirm && <OwnHitConfirm s={s} id={t} onNo={() => setOwnConfirm(false)} onYes={() => { setOwnConfirm(false); plan('murder', t); }} />}
     </div>
   );
 }

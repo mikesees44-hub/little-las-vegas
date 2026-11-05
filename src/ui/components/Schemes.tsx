@@ -10,7 +10,8 @@ import { Modal } from './Modal';
 import { ActionCard } from './Orders';
 import { CharLink, Face } from './People';
 import { CandidatePicker } from '../clarity/CandidatePicker';
-import { plotTargets, plotWarnings, sideOf, TARGETED_SCHEMES, type SideFilter, type TargetedScheme } from '../../engine/sides';
+import { plotTargetsByFamily, plotWarnings, sideOf, TARGETED_SCHEMES, type SideFilter, type TargetedScheme } from '../../engine/sides';
+import { hitLine, ownHitConsequences } from '../../engine/peopleRead';
 import { RelationChip, SideChip, SideFilterBar } from './Side';
 import { HoneyTrapRow } from '../people/HoneyTrapRow';
 
@@ -20,7 +21,13 @@ export function usePlanner() {
   return useContext(PlannerContext);
 }
 
-export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: GameState; kind: SchemeKind; targetId?: string; initial?: Partial<SchemeOptions>; onClose: () => void }) {
+export function SchemePlanner({ s, kind, targetId: preset, initial, onClose }: { s: GameState; kind: SchemeKind; targetId?: string; initial?: Partial<SchemeOptions>; onClose: () => void }) {
+  // The target: preselected by the door that opened the planner (a face, the hit list, Find), changeable here in the one hit picker.
+  const [targetId, setTargetId] = useState<string | undefined>(preset);
+  const [choosing, setChoosing] = useState(false);
+  // Nobody of yours dies without the boss's word: a hit on one of your own asks first, whichever door it came through.
+  const [ownOk, setOwnOk] = useState<string | undefined>();
+  const targeted = (TARGETED_SCHEMES as readonly string[]).includes(kind);
   const t = targetId ? s.characters[targetId] : undefined;
   const busy = new Set(s.schemes.filter((x) => x.owner === 'player').flatMap((x) => x.agents));
   const family = kind === 'envoy' ? Object.values(s.characters).filter((c) => c.alive && c.dynasty && c.faction === 'player' && c.rank === 'civilian' && ageOn(c.birth, s.date) >= 18 && !busy.has(c.id)) : [];
@@ -38,6 +45,9 @@ export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: Game
   const toggle = (id: string) => setAgents((a) => (a.includes(id) ? a.filter((x) => x !== id) : a.length >= 4 ? a : [...a, id]));
   const info = SCHEME_INFO[kind];
   const odds = schemeOdds(s, kind, targetId, agents, opts);
+  if (kind === 'murder' && t && sideOf(s, t.id).kind === 'yours' && ownOk !== t.id) {
+    return <OwnHitConfirm s={s} id={t.id} onYes={() => setOwnOk(t.id)} onNo={() => (t.id === preset ? onClose() : setTargetId(undefined))} />;
+  }
   return (
     <Modal onClose={onClose} wide>
       <div className="p-4 sm:p-5 space-y-3" data-testid="scheme-planner">
@@ -59,6 +69,20 @@ export function SchemePlanner({ s, kind, targetId, initial, onClose }: { s: Game
           <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
         </div>
         <PlotWarnings s={s} hostile={info.hostile} targetId={targetId} agents={agents} />
+
+        {targeted && (
+          <Section title={kind === 'murder' ? 'The target' : 'Aimed at'}>
+            {t && !choosing ? (
+              <div className="flex items-center gap-2 text-xs" data-testid="planner-target">
+                <span className="text-stone-200">{displayName(t)}</span>
+                <SideChip s={s} id={t.id} />
+                <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => setChoosing(true)} data-testid="planner-target-change">Change…</button>
+              </div>
+            ) : (
+              <HitPicker s={s} kind={kind as TargetedScheme} lockKind preselect={targetId} onPick={(_, id) => { setTargetId(id); setChoosing(false); set({ secretId: knownSecrets(s, id)[0]?.id }); }} />
+            )}
+          </Section>
+        )}
 
         <Section title={`${kind === 'envoy' ? 'The envoy' : kind === 'murder' ? 'The hit team' : 'Agents'} (${agents.length}/4)`}>
           {agents.length > 0 && (
@@ -241,58 +265,115 @@ export function PlotWarnings({ s, hostile, targetId, agents }: { s: GameState; h
 
 const PER_GROUP = 8;
 
-/** Pick whom to plot against: grouped by side, with headers, Mine / Theirs / Everyone. */
-export function TargetPicker({ s }: { s: GameState }) {
+/**
+ * THE HIT PICKER (STREAMLINE_2 §3.4, PEOPLE_LEDGER §1): pick whom to plot
+ * against, grouped by family: Your Family, Manno, Feldstein, Kessler,
+ * Philadelphia, the law, the town, others. Every door that plans a hit opens
+ * it (in the planner, with the target already chosen). A hit shows its odds
+ * and heat on each row; one of your own asks for your word first. Mine /
+ * Theirs / Everyone stays as a chip.
+ */
+export function HitPicker({ s, kind: kind0 = 'murder', preselect, lockKind, onPick }: {
+  s: GameState;
+  kind?: TargetedScheme;
+  preselect?: string;
+  /** Opened inside the planner: the kind is already chosen. */
+  lockKind?: boolean;
+  /** Default: open the planner on him. */
+  onPick?: (kind: TargetedScheme, id: string) => void;
+}) {
   const { plan } = usePlanner();
-  const [kind, setKind] = useState<TargetedScheme>('murder');
-  const [filter, setFilter] = useState<SideFilter>('theirs');
+  const [kind, setKind] = useState<TargetedScheme>(kind0);
+  const [filter, setFilter] = useState<SideFilter>('all');
   const [q, setQ] = useState('');
   const [more, setMore] = useState<Record<string, boolean>>({});
+  const [confirm, setConfirm] = useState<string | undefined>();
   const query = q.trim().toLowerCase();
-  const groups = plotTargets(s, kind, filter)
+  const groups = plotTargetsByFamily(s, kind, filter)
     .map((g) => ({ ...g, ids: query ? g.ids.filter((id) => displayName(s.characters[id]).toLowerCase().includes(query)) : g.ids }))
     .filter((g) => g.ids.length);
+  const hostile = SCHEME_INFO[kind].hostile;
+  const go = (id: string) => (onPick ? onPick(kind, id) : plan(kind, id));
+  // Inside the planner the planner itself asks before a hit on your own; on its own the picker asks.
+  const pick = (id: string) => (hostile && !onPick && sideOf(s, id).kind === 'yours' ? setConfirm(id) : go(id));
   return (
     <div className="mt-3 rounded-md border border-noir-700 bg-noir-900/50 p-2.5" data-testid="target-picker">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Plot against someone</span>
-        <select className="rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={kind} onChange={(e) => setKind(e.target.value as TargetedScheme)} aria-label="Scheme">
-          {TARGETED_SCHEMES.map((k) => <option key={k} value={k}>{SCHEME_INFO[k].name}</option>)}
-        </select>
+      <div className="flex flex-wrap items-center gap-2" data-testid="hit-picker">
+        <span className="text-[10px] uppercase tracking-[0.25em] text-stone-500">{kind === 'murder' ? 'Plan a hit on…' : 'Plot against someone'}</span>
+        {!lockKind && (
+          <select className="rounded bg-noir-900 border border-noir-600 p-1 text-xs" value={kind} onChange={(e) => setKind(e.target.value as TargetedScheme)} aria-label="Scheme">
+            {TARGETED_SCHEMES.map((k) => <option key={k} value={k}>{SCHEME_INFO[k].name}</option>)}
+          </select>
+        )}
         <SideFilterBar value={filter} onChange={setFilter} />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Name…" aria-label="Filter by name" className="w-28 rounded border border-noir-600 bg-noir-900 px-1.5 py-0.5 text-xs text-stone-200" />
       </div>
       {!groups.length && <p className="mt-2 text-xs text-stone-500">{kind === 'blackmail' ? 'You know no secret about anyone here.' : 'Nobody here.'}</p>}
       <div className="mt-2 space-y-2">
         {groups.map((g) => {
-          const shown = more[g.key] ? g.ids : g.ids.slice(0, PER_GROUP);
+          const pre = preselect && g.ids.includes(preselect) ? [preselect] : [];
+          const rest = g.ids.filter((id) => id !== preselect);
+          const shown = [...pre, ...(more[g.key] ? rest : rest.slice(0, PER_GROUP - pre.length))];
           return (
             <div key={g.key} data-testid="target-group" data-side={g.side.kind} data-group={g.key}>
               <div className="mb-1 flex items-center gap-1.5 border-b pb-0.5 text-[11px] font-semibold uppercase tracking-wider" style={{ color: g.side.color, borderColor: `${g.side.color}55` }} data-testid="target-group-header">
                 <span aria-hidden>{g.side.emblem}</span>{g.label}<span className="font-normal text-stone-500">({g.ids.length})</span>
                 <RelationChip relation={g.side.relation} className="normal-case tracking-normal" />
+                {g.key === 'yours' && hostile && <span className="font-normal normal-case tracking-normal text-red-300/80">only on your word</span>}
               </div>
               <div className="grid gap-1 sm:grid-cols-2">
-                {shown.map((id) => {
-                  const c = s.characters[id];
-                  const sd = sideOf(s, id);
-                  return (
-                    <div key={id} role="button" tabIndex={0} onClick={() => plan(kind, id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); plan(kind, id); } }} data-testid="target-row" data-side={sd.kind}
-                      className="flex min-w-0 cursor-pointer items-center gap-2 rounded border border-noir-700 bg-noir-800/60 px-1.5 py-1 text-left hover:border-gold-600">
-                      <Face s={s} c={c} size={28} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs text-stone-100">{displayName(c)}</span>
-                        <span className="flex min-w-0 flex-wrap items-center gap-1 text-[10px] text-stone-500"><span className="truncate">{c.office ?? (c.rank !== 'civilian' ? c.rank : c.outside ?? 'civilian')}</span><SideChip side={sd} /></span>
-                      </span>
-                    </div>
-                  );
-                })}
+                {shown.map((id) => <HitRow key={id} s={s} id={id} kind={kind} chosen={id === preselect} off={g.protectedIds.includes(id)} onPick={() => pick(id)} />)}
               </div>
               {g.ids.length > PER_GROUP && <button type="button" className="mt-0.5 text-[11px] text-stone-400 hover:text-gold-300" onClick={() => setMore((m) => ({ ...m, [g.key]: !m[g.key] }))}>{more[g.key] ? 'Fewer' : `All ${g.ids.length}`}</button>}
             </div>
           );
         })}
       </div>
+      {confirm && <OwnHitConfirm s={s} id={confirm} onNo={() => setConfirm(undefined)} onYes={() => { const id = confirm; setConfirm(undefined); go(id); }} />}
     </div>
+  );
+}
+
+/** The old name: the Schemes tab's picker is the hit picker. */
+export const TargetPicker = HitPicker;
+
+function HitRow({ s, id, kind, chosen, off, onPick }: { s: GameState; id: string; kind: TargetedScheme; chosen: boolean; off: boolean; onPick: () => void }) {
+  const c = s.characters[id];
+  const sd = sideOf(s, id);
+  const h = kind === 'murder' && !off ? hitLine(s, id) : undefined;
+  return (
+    <div role="button" tabIndex={off ? -1 : 0} aria-disabled={off} onClick={() => !off && onPick()} onKeyDown={(e) => { if (!off && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onPick(); } }} data-testid="target-row" data-side={sd.kind} data-chosen={chosen || undefined}
+      title={off ? 'Off limits: Philadelphia\'s rule (no cops, no officials)' : undefined}
+      className={`flex min-w-0 items-center gap-2 rounded border px-1.5 py-1 text-left ${off ? 'cursor-not-allowed border-noir-800 opacity-50' : chosen ? 'cursor-pointer border-gold-500 bg-gold-500/10' : 'cursor-pointer border-noir-700 bg-noir-800/60 hover:border-gold-600'}`}>
+      <Face s={s} c={c} size={28} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-xs text-stone-100">{displayName(c)}</span>
+        <span className="flex min-w-0 flex-wrap items-center gap-1 text-[10px] text-stone-500"><span className="truncate">{c.office ?? (c.rank !== 'civilian' ? c.rank : c.outside ?? 'civilian')}</span><SideChip side={sd} /></span>
+      </span>
+      {h && <span className="shrink-0 text-right text-[10px] leading-tight text-stone-400" data-testid="target-odds">{h.blocked ? <span className="text-red-300">{h.blocked}</span> : <><span className="tabular-nums text-gold-300">{Math.round(h.chance * 100)}%</span><br />heat {h.heat}</>}</span>}
+      {off && <span className="shrink-0 text-[10px] text-stone-500">off limits</span>}
+    </div>
+  );
+}
+
+/** The confirm before a hit on one of your own: what it costs, said plainly. Nobody of yours dies without your word. */
+export function OwnHitConfirm({ s, id, onYes, onNo }: { s: GameState; id: string; onYes: () => void; onNo: () => void }) {
+  const c = s.characters[id];
+  const h = hitLine(s, id);
+  return (
+    <Modal onClose={onNo}>
+      <div className="space-y-2 p-4" data-testid="own-hit-confirm">
+        <div className="text-[10px] uppercase tracking-[0.3em] text-red-300">One of your own</div>
+        <h2 className="font-display text-xl text-gold-300">Plan a hit on {c?.firstName} {c?.lastName}?</h2>
+        <p className="text-[12.5px] text-stone-300">Nobody of yours dies unless you choose it. If you go on, the planner opens: you still pick the team and the place, and the order is not given until you give it there. Odds with your two best free men: {Math.round(h.chance * 100)}%; heat {h.heat}.</p>
+        <ul className="list-disc space-y-0.5 pl-5 text-[12px] text-stone-300">
+          {ownHitConsequences(s, id).map((x, i) => <li key={i}>{x}</li>)}
+        </ul>
+        <div className="flex justify-end gap-2 pt-1">
+          <button type="button" className="btn-ghost text-xs" onClick={onNo} data-testid="own-hit-no">No</button>
+          <button type="button" className="btn border border-blood-500 text-xs text-red-300 hover:bg-blood-500/20" onClick={onYes} data-testid="own-hit-yes">Yes, plan it</button>
+        </div>
+      </div>
+    </Modal>
   );
 }
