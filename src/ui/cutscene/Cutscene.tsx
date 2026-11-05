@@ -97,7 +97,10 @@ export function CutscenePlayer({ cues, onDone }: { cues: CutsceneCue[]; onDone: 
       <div className="relative flex-1 overflow-hidden">
         <div className={`absolute inset-0 ${reduced ? '' : pan}`} key={`${cue.key}${i}`}>
           {video ? (
-            <video src={video} autoPlay={!reduced} muted playsInline loop onLoadedMetadata={(e) => { const v = e.currentTarget; if (v.duration < 3) v.playbackRate = 0.6; }} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }} />
+            <video src={video} autoPlay={!reduced} muted playsInline
+              // Play once and hold on the last clear frame: a clip that loops dips to black at its ends and reads as flicker.
+              onLoadedMetadata={(e) => { const v = e.currentTarget; if (v.duration < 3) v.playbackRate = 0.6; }}
+              onTimeUpdate={(e) => { const v = e.currentTarget; if (v.duration && v.currentTime >= v.duration - 0.6) v.pause(); }} className="w-full h-full object-cover" onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }} />
           ) : CUTSCENE_ART[cue.key] ? (
             // The user's painting of the place, graded noir; the drawn still when it can't load.
             <AssetImg k={CUTSCENE_ART[cue.key]} alt="" className="w-full h-full object-cover" style={{ filter: NOIR_GRADE }} fallback={<NoirStill cue={cue.key} seed={cue.week + i} />} />

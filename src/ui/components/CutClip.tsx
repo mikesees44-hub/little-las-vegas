@@ -44,6 +44,7 @@ export function CutClip({ k, once }: { k: string; once?: string }) {
   return (
     <div className="relative overflow-hidden rounded-t-xl bg-black" data-testid={`clip-${k}`}>
       <video ref={ref} src={url} playsInline preload="auto" className="block aspect-video w-full object-cover"
+        onTimeUpdate={(e) => { const v = e.currentTarget; if (HOLD.has(k) && v.duration && v.currentTime >= v.duration - 0.25) v.pause(); }}
         onEnded={() => { if (!HOLD.has(k)) setGone(true); }} onError={() => setGone(true)} onClick={() => setGone(true)} aria-label="Cutscene" />
       <div className="absolute bottom-2 right-2 flex gap-2">
         {muted && !HOLD.has(k) && <button type="button" className="rounded bg-black/70 px-2 py-1 text-xs text-stone-200" onClick={() => { const v = ref.current; if (v) { v.muted = false; setMuted(false); } }}>🔊 Sound</button>}
