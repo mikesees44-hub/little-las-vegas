@@ -215,7 +215,7 @@ describe('the gatekeeper', () => {
     let seen = false;
     for (let k = 0; k < 12 && !seen; k++) {
       s.week++;
-      for (const it of s.action!.sched) if (it.kind === 'meet') it.w = s.week + 1;
+      for (const it of s.action!.sched ?? []) if (it.kind === 'meet') it.w = s.week + 1;
       gateWeek(newCtx(s));
       seen = (s.planner?.tl ?? []).some((x) => /odd places/.test(x.t));
     }
