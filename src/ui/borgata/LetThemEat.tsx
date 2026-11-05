@@ -10,6 +10,8 @@ import { Card, CardHead, PageHeader, PlayCard, Section, StatChip } from '../comp
 import { useOrders } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { sameOrder } from '../verbs';
+import { moneyWord, whoNeedsMoney, type MoneyNeed } from '../../engine/moneyNeed';
+import { fmt$ } from '../format';
 
 /**
  * LET THEM EAT (engine/eat.ts), in Your men: who is hungry, idle, overworked
@@ -123,6 +125,53 @@ function FeedAll({ s, jobs }: { s: GameState; jobs: OpenJob[] }) {
   );
 }
 
+/** Who needs money: every man running low or broke, why, and the one best way to help, ready to give. */
+function NeedsMoney({ s }: { s: GameState }) {
+  const { orders, queue } = useOrders();
+  const [asking, setAsking] = useState(false);
+  const need = useMemo(() => whoNeedsMoney(s), [s]);
+  const todo = need.filter((n) => n.fix && !orders.some((o) => sameOrder(o, n.fix!.action)));
+  const total = todo.reduce((a, n) => a + (n.fix?.cost ?? 0), 0);
+  if (!need.length) return <Card domain="money"><CardHead d="money" title="Who needs money" /><p className="text-xs text-stone-400">Nobody is short right now. Every man is getting by.</p></Card>;
+  return (
+    <Card domain="money">
+      <CardHead d="money" title={`Who needs money (${need.length})`} />
+      <p className="mb-2 text-[11px] text-stone-400">Men running low or who can't earn. The best way to help each one is already picked.</p>
+      {todo.length > 0 && (
+        <div className="mb-2">
+          <button type="button" className="btn-gold text-xs" onClick={() => setAsking(true)} data-testid="money-help-all">Take care of all {todo.length}{total ? ` · ${fmt$(total)}` : ''}</button>
+          {asking && (
+            <div className="mt-1 rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm" data-testid="money-help-confirm">
+              <ul className="mb-2 space-y-0.5 text-stone-300">{todo.map((n) => <li key={n.c.id}>• {n.c.firstName} {n.c.lastName}: {n.fix!.label}{n.fix!.cost ? ` (${fmt$(n.fix!.cost)})` : ''}</li>)}</ul>
+              <div className="flex gap-1.5">
+                <button type="button" className="btn-primary text-xs" onClick={() => { for (const n of todo) queue(n.fix!.action, true); setAsking(false); }} data-testid="money-help-yes">Give the orders</button>
+                <button type="button" className="btn-ghost text-xs" onClick={() => setAsking(false)}>Not now</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      <ul className="space-y-1.5">
+        {need.map((n: MoneyNeed) => {
+          const queued = n.fix ? orders.some((o) => sameOrder(o, n.fix!.action)) : false;
+          return (
+            <li key={n.c.id} className="flex items-start gap-2" data-testid="money-need" data-level={n.level}>
+              <Face s={s} c={n.c} size={30} />
+              <div className="min-w-0 flex-1 text-xs">
+                <div className="flex flex-wrap items-baseline gap-x-2"><CharLink s={s} id={n.c.id} /><span className={n.level === 'broke' ? 'text-red-300' : 'text-amber-300'}>{moneyWord(n.level)}</span><span className="text-stone-500">{n.c.rank}</span></div>
+                <p className="text-[11px] text-stone-400">{n.why.join(' · ')}</p>
+              </div>
+              {n.fix
+                ? <button type="button" className="btn-primary shrink-0 text-xs" disabled={queued} onClick={() => queue(n.fix!.action, true)} data-testid="money-help">{queued ? 'Queued' : `${n.fix.label}${n.fix.cost ? ` · ${fmt$(n.fix.cost)}` : ''}`}</button>
+                : <span className="shrink-0 text-[11px] text-stone-500">Nothing to give right now</span>}
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
+  );
+}
+
 export function LetThemEat({ s }: { s: GameState }) {
   const board = useMemo(() => hungerBoard(s), [s]);
   const jobs = useMemo(() => openJobs(s), [s]);
@@ -134,6 +183,7 @@ export function LetThemEat({ s }: { s: GameState }) {
   return (
     <div className="space-y-4" data-testid="eat">
       <PageHeader title="Let them eat" sub={`Your men want work, and some bring their own. ${k ? `${k.firstName}, your consigliere,` : 'With no consigliere, your own read'} ranks the men for every open job.`} />
+      <NeedsMoney s={s} />
       <FeedAll s={s} jobs={jobs} />
       <div className="flex flex-wrap gap-1.5">
         <StatChip domain="crew" label="Starving" value={count(['starving'])} tone={count(['starving']) ? 'bad' : undefined} />

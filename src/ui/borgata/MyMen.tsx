@@ -11,6 +11,7 @@ import { CharLink, Face } from '../components/People';
 import { SideChip } from '../components/Side';
 import { sameOrder } from '../verbs';
 import { hungerOf } from '../../engine/eat';
+import { moneyNeedOf, moneyWord } from '../../engine/moneyNeed';
 import { HungerBar } from './LetThemEat';
 
 const eats = (c: { id: string; rank: string; specialty?: string }) => !c.specialty && (c.rank === 'soldier' || c.rank === 'associate' || c.rank === 'capo');
@@ -119,6 +120,7 @@ function ManCard({ s, r, picked, onPick }: { s: GameState; r: ManRow; picked: bo
             <span className="text-[11px] text-stone-500">{r.side}</span>
             {r.status.map((t) => <span key={t} className="rounded border border-sky-700/60 px-1 text-[10px] text-sky-200">{t}</span>)}
             {eats(c) && <HungerBar h={hungerOf(s, c)} />}
+            {eats(c) && (() => { const n = moneyNeedOf(s, c); return n.level === 'broke' || n.level === 'tight' ? <span className={`text-[11px] ${n.level === 'broke' ? 'text-red-300' : 'text-amber-300'}`} title={n.why.join(' · ')} data-testid="money-badge">$ {moneyWord(n.level)}{n.fix ? ` · best help: ${n.fix.label.toLowerCase()}` : ''}</span> : null; })()}
           </div>
           <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
             <Stat label="cash" value={r.cash} />
