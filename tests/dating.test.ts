@@ -81,7 +81,7 @@ describe('1. she accepts or declines from her own state', () => {
   it('a no costs nothing and is remembered', () => {
     const s = fresh();
     const c = woman(s);
-    addOpinion(s, c.id, s.playerId, 'test', -20, 0);
+    addOpinion(s, c.id, s.playerId, 'test', -35, 0);
     c.traits = ['Pious'];
     const pocket = s.tribute!.acct.personal;
     let refused = 0;
