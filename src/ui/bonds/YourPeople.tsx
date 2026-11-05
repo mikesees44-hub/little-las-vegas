@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { StandingButton, StandingList } from '../appts/Standing';
 import { bondGroups, bondsLog, MOOD_TEXT, type BondCard, type BondGroupId } from '../../engine/bonds';
 import { ROLE_LABEL } from '../../engine/bondsState';
 import type { GameState } from '../../engine/types';
@@ -69,6 +70,7 @@ function Card({ s, card, open, onToggle }: { s: GameState; card: BondCard; open:
         {gestures.map((a, i) => <ActionRow key={i} s={s} action={a} />)}
       </div>
       <div className="mt-1 flex gap-3 text-[11px]">
+        <StandingButton who={c.id} label="Make it standing…" className="text-gold-400 hover:text-gold-300" testid="bond-standing" />
         {card.gestures.length > 3 && <button type="button" className="text-gold-400 hover:text-gold-300" onClick={() => setAll((x) => !x)}>{all ? 'Fewer ▴' : `All ${card.gestures.length} gestures ▾`}</button>}
         <button type="button" className="text-stone-400 hover:text-stone-200" onClick={onToggle} aria-expanded={open} data-testid="bond-more">{open ? 'Less ▴' : 'What they want, what they remember ▾'}</button>
       </div>
@@ -118,6 +120,7 @@ export function YourPeople({ s }: { s: GameState }) {
           {log.map(([w, t], i) => <li key={i}><span className="text-stone-500">wk {w}:</span> {t}</li>)}
         </ul>
       )}
+      <StandingList s={s} />
       {!shown.length && <div className="text-xs text-stone-500">Nobody close to you yet.</div>}
       {shown.map((g) => (
         <section key={g.id} data-testid={`bond-group-${g.id}`}>

@@ -1,4 +1,5 @@
 import { TableButton } from '../advice/CounselTable';
+import { overbook, weekAppts } from '../../engine/appointments';
 import { AskButton } from '../ai/AskCounsel';
 import { openPlanner } from '../planner/ink';
 import { bossDesk, deskHeaderCount, readyReview, type DeskGroup, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
@@ -419,6 +420,13 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
           <div data-testid="ready-lapses" className="rounded border border-amber-700/60 bg-amber-950/30 p-2">
             <div className="text-[10px] uppercase tracking-[0.2em] text-amber-300">⚑ Will be missed if you advance ({r.lapses.length})</div>
             <ul className="mt-1 space-y-0.5 text-[12px]">{r.lapses.map((l) => <li key={l.key}><span className="text-stone-100">{l.title}</span> <span className="text-stone-400">· {l.what}</span></li>)}</ul>
+          </div>
+        )}
+        {weekAppts(s).length > 0 && (
+          <div data-testid="ready-standing">
+            <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Standing appointments this week ({weekAppts(s).length}): given like your own orders; she still decides</div>
+            <ul className="mt-1 space-y-0.5 text-[12px]">{weekAppts(s).map((x) => <li key={x.id} className="text-stone-200">{x.text}</li>)}</ul>
+            {overbook(s).map((w, i) => <div key={i} className="text-[11px] text-amber-300">⚑ {w}</div>)}
           </div>
         )}
         <div data-testid="ready-orders">

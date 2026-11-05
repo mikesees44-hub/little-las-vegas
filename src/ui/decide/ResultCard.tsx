@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { DateAfterButton } from '../dating/DateTalk';
+import { StandingButton } from '../appts/Standing';
 import { TIER_BANNER, type NowResult } from '../../engine/deeds/now';
 import { domainOfText, domClass } from '../domain';
 
@@ -89,6 +90,7 @@ export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () =
           </div>
         )}
         {r.dateWith && <DateAfterButton id={r.dateWith} onOpen={onClose} />}
+        {r.again && <div className="mt-2"><StandingButton who={r.again.who} action={r.again.action} onOpen={onClose} label="Same time next week? Make it standing…" testid="result-standing" /></div>}
         <div className="mt-3 flex items-center gap-2">
           {onFile && <button type="button" className="btn-secondary text-xs" onClick={onFile} data-testid="result-file">In Your File ▸</button>}
           <button type="button" className="btn-primary ml-auto text-sm" onClick={onClose} data-testid="now-close">Go on</button>

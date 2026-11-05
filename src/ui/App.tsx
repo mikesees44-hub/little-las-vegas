@@ -142,6 +142,8 @@ import { UnderbossSuggests } from './plans/Suggests';
 import { absDay } from '../engine/timeCost';
 import { FeedbackContext, FeedbackToast, type Feedback } from './components/Feedback';
 import { journalNow, seqOf } from '../engine/journal';
+import { StandingDialog, type StandingAsk } from './appts/Standing';
+import { canStand, personOfAct } from '../engine/appointments';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
@@ -250,7 +252,11 @@ export function App({ startOn = 'title' }: AppProps) {
       if (instant(s, a)) {
         const r = actNow(s, a);
         if (r.result.ok) setS(r.state);
-        postNow(r.result);
+        // A date, a meet, a sit-down that can be made routine: the card offers "Same time next week?".
+        const who = r.result.ok ? personOfAct(s, a) : undefined;
+        let again = false;
+        try { again = !!who && canStand(s, a); } catch { again = false; }
+        postNow(again && who ? { ...r.result, again: { who, action: a } } : r.result);
         return;
       }
       // A pocket order the pocket can't cover (after this week's orders) needs the player's word for Family money:
@@ -299,6 +305,8 @@ export function App({ startOn = 'title' }: AppProps) {
     setS((cur) => { const n = f(cur); return what && n !== cur ? journalNow(n, { t: what }) : n; });
     feedbackApi.notify({ kind: 'done', title: what ?? 'Done: it takes effect now.' });
   }, [feedbackApi]);
+  // A standing appointment being made or changed (ui/appts/Standing.tsx).
+  const [standing, setStanding] = useState<StandingAsk | undefined>();
   const [ctxMenu, setCtxMenu] = useState<{ id: string; x: number; y: number; category?: string } | undefined>();
   const sheetApi = useMemo(() => ({
     open: (id: string) => { setCtxMenu(undefined); setSheet(id); },
@@ -800,7 +808,7 @@ export function App({ startOn = 'title' }: AppProps) {
   }, [fileKey]);
   const markFileSeen = () => { setFileSeen(fileTop); try { localStorage.setItem(fileKey, String(fileTop)); } catch { /* private window */ } };
   const fileNew = Math.max(0, (s.journal?.e ?? []).filter((e) => e.mine || e.src !== 'ledger').filter((e) => seqOf(e.id) > fileSeen).length);
-  const shellApi: ShellApi = { go, focus: focusMap, update: setS, act };
+  const shellApi: ShellApi = { go, focus: focusMap, update: setS, act, standing: (who, action) => { setSheet(undefined); setCtxMenu(undefined); setStanding({ who, action }); }, standingEdit: (id) => setStanding({ who: '', edit: id }) };
   const tributeApi: TributeUiApi = {
     envelope, setEnvelope,
     openAudience: (id) => {
@@ -1318,6 +1326,7 @@ export function App({ startOn = 'title' }: AppProps) {
         <EventModal key={current.iid} s={s} ev={current} index={Math.max(0, outEvents.indexOf(current))} total={outEvents.length} selected={answers[current.iid]} onChoose={choose} onClose={() => { setEventIdx(null); setAdvancing(false); }} />
       )}
       <NowResultHost />
+      {standing && <StandingDialog s={s} ask={standing} onClose={() => setStanding(undefined)} onSave={(f, what) => act(f, what)} />}
       <DateTalkHost s={s} />
       <LoyaltyFloaters s={s} />
       {/* One queue, never stacked: a decision or a scene first, then "How they took it", then the argument it opens, then an urgent meeting. */}

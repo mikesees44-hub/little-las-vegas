@@ -94,7 +94,9 @@ export type Opener =
   /** Close people (★, engine/pins.ts): keep him as a quick link, or take him off. */
   | { type: 'pin' }
   /** A sit-down with the family he runs (minds/diplomacy.ts): the two-way window with a deal on the table. */
-  | { type: 'sitdown'; rival: RivalId };
+  | { type: 'sitdown'; rival: RivalId }
+  /** A standing date or meeting with him or her (ui/appts/Standing.tsx): every week or every day, on the book. */
+  | { type: 'standing' };
 
 export interface MenuItem {
   key: string;
@@ -256,6 +258,8 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id)) add('romance', { key: 'dating', open: { type: 'dating' }, label: `You and ${c.firstName}…`, text: 'Dating, going steady, gifts, company. She always decides.' });
 
   // Their calling card (adults), the goomar (CK's concubine: only someone you are already seeing, and she decides), the night's orders.
+  // A standing appointment (engine/appointments.ts): a date, a dinner, a meet, a sit-down that fills his days on its own.
+  if (c.id !== s.playerId) add('talk', { key: 'standing', open: { type: 'standing' }, label: 'Make it a standing date/meeting…', text: `See ${c.firstName} every week or every day, at a time you set: it goes on your book and happens on its own. ${c.gender === 'F' ? 'She' : 'He'} still decides each time.` });
   if (c.id !== s.playerId) add('talk', { key: 'pin', open: { type: 'pin' }, label: isPinned(s, c.id) ? `★ ${c.firstName} is a close person: unpin` : `☆ Keep ${c.firstName} close`, text: 'A quick link in the Black book\'s strip of close people, with news when something happens to them.' });
   if (isAdult(s, c)) add('talk', { key: 'card', open: { type: 'card' }, label: `${c.firstName}'s calling card…`, text: 'Who they are at a glance: looks, personality, skills, family, money as known, you, rumors.' });
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id) && s.characters[s.playerId]?.spouseId !== c.id) add('romance', { key: 'goomar', action: { kind: 'nightlife', op: { op: 'goomar', id: c.id } }, label: `Make ${c.firstName} your goomar` });
