@@ -9,6 +9,7 @@ import type { GameState, PlayerAction } from '../../engine/types';
 import { ActionCard, useOrders } from '../components/Orders';
 import { Newspapers } from '../components/Newspaper';
 import { useShell } from '../shell/context';
+import { PaperVoice } from './PaperVoice';
 
 /**
  * The town papers on the boss's desk: the Wildwood Daily Tide every morning
@@ -56,6 +57,7 @@ export function PaperReader({ s }: { s: GameState }) {
           </select>
         )}
       </div>
+      {kind !== 'bulletin' && ed && <PaperVoice s={s} week={ed.week} />}
       {kind === 'bulletin' ? <Newspapers s={s} /> : ed ? <Broadsheet s={s} ed={ed} /> : (
         <div className="mx-auto max-w-3xl rounded-sm p-6 text-center italic shadow-lg shadow-black/50" style={{ background: PAPER_BG, color: INK, fontFamily: SERIF }}>
           The presses run Sunday night. The first {kind === 'daily' ? 'Daily Tide lands on your desk Monday morning' : 'Weekly Leader comes out Thursday'}, once a week has been played.
