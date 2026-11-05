@@ -245,10 +245,46 @@ describe('sit-down: scripted (no Claude), deals land', () => {
     atWar(s, 'manno', -40);
     const sd = openSitDown(s, 'manno')!;
     expect(sd.log.some((l) => l.who === 'them' && /want/.test(l.text))).toBe(true);
-    if (sd.table) {
-      expect(sd.table.ok).toBe(true);
-      expect(sd.table.terms.some((t) => t.kind === 'truce')).toBe(true);
-      expect(canShake(s, sd).ok).toBe(true);
-    }
+    expect(sd.table?.ok).toBe(true);
+    expect(sd.table!.terms.some((t) => t.kind === 'truce')).toBe(true);
+    expect(canShake(s, sd).ok).toBe(true);
+    // Claude's lines: a fair offer he accepts goes on the table as a yes; his own fair proposal too.
+    const fairAi = validateDiplo(s, 'manno', { reply: 'All right.', intent: 'agree', deal: null, deal_status: 'accepting' })!;
+    const yes = sitStep(s, sd, { propose: sd.table!.terms }, fairAi);
+    expect(yes.overridden).toBeFalsy();
+    expect(yes.sd.table).toMatchObject({ by: 'boss', ok: true });
+    const own = validateDiplo(s, 'manno', { reply: 'Here is my price.', intent: 'bargain', deal: sd.table!.terms, deal_status: 'proposing' })!;
+    const p = sitStep(s, sd, { say: 'What will it take?' }, own);
+    expect(p.sd.table).toMatchObject({ by: 'them', ok: true });
+    expect(p.sd.log[p.sd.log.length - 1].text).toBe('Here is my price.');
+    // And the war ends when the boss shakes.
+    const res = shakeOn(s, yes.sd);
+    expect(res.ok).toBe(true);
+    expect(res.state.wars.some((w) => w.rival === 'manno')).toBe(false);
+  });
+});
+
+describe('sit-down: on screen', () => {
+  it('the window renders their ask as a card, the deal builder, and the menu offers the sit-down on a rival boss', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { FamilyTalk } = await import('../src/ui/minds/FamilyTalk');
+    const { menuFor } = await import('../src/ui/sheet/menuCatalog');
+    const s = game('diplo-ui');
+    atWar(s, 'manno', -30);
+    const html = renderToString(createElement(FamilyTalk, { s, rival: 'manno', update: () => undefined, onClose: () => undefined }));
+    expect(html).toContain('dialogue-window');
+    expect(html).toContain('family-talk');
+    expect(html).toContain('deal-card');
+    expect(html).toContain('deal-shake');
+    expect(html).toContain('deal-builder');
+    expect(html).toContain('Sit down with');
+    const boss = s.characters[s.rivals.find((r) => r.id === 'manno')!.leaderId];
+    const items = menuFor(s, boss).flatMap((c) => c.items);
+    const it = items.find((x) => x.key === 'sitdown');
+    expect(it?.open).toEqual({ type: 'sitdown', rival: 'manno' });
+    // Not on a man who runs no family.
+    const soldier = Object.values(s.characters).find((c) => c.alive && c.faction === 'manno' && c.id !== boss.id)!;
+    expect(menuFor(s, soldier).flatMap((c) => c.items).some((x) => x.key === 'sitdown')).toBe(false);
   });
 });
