@@ -2,8 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { displayName } from '../../engine/characters';
 import {
   allowedKinds, beginSitDown, buildDiploPrompt, canShake, canSitDown, closeSitDown, describeDeal, describeTerm, dialogueOf, districtsFor, HAS_DIR, KIND_LABEL,
-  openSitDown, readDeal, shakeOn, SIT_HOURS, sitHeader, sitStep, splitPlaces, stanceOf, termBounds, validateDiplo, validateTerm,
-  type BossMove, type DealKind, type DiploAi, type Dir, type SitDown, type Term,
+  leverCards, openSitDown, playLever, readDeal, shakeOn, SIT_HOURS, sitHeader, sitStep, splitPlaces, stanceOf, termBounds, validateDiplo, validateTerm,
+  type BossMove, type LeverCard, type DealKind, type DiploAi, type Dir, type SitDown, type Term,
 } from '../../engine/minds/diplomacy';
 import type { Tone } from '../../engine/minds/dialogue';
 import type { GameState } from '../../engine/types';
@@ -80,6 +80,14 @@ export function FamilyTalk({ s, rival, update, onClose }: { s: GameState; rival:
     if (r.sd.end && r.sd.end !== 'done') finish(r.sd);
   }
 
+  function lever(card: LeverCard) {
+    if (!sd || busy || sd.end || !begin()) return;
+    const r = playLever(live.current, sd, card);
+    setSd(r.sd);
+    setHideTable(false);
+    if (r.sd.end && r.sd.end !== 'done') finish(r.sd);
+  }
+
   function shake() {
     if (!sd) return;
     const chk = canShake(live.current, sd);
@@ -124,6 +132,23 @@ export function FamilyTalk({ s, rival, update, onClose }: { s: GameState; rival:
               {shakeable && !shakeable.ok && table.ok && <div className="mt-1 text-[11px] text-amber-300">{shakeable.why}</div>}
             </div>
           )}
+          {!over && live$ && sd.end !== 'done' && (() => {
+            const cards = leverCards(s, sd);
+            if (!cards.length) return null;
+            return (
+              <div className="rounded-md border border-noir-700 p-2 text-[12px]" data-testid="sit-levers">
+                <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">Leverage (once each)</div>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {cards.map((l) => (
+                    <button key={l.card} type="button" className="btn-ghost px-2 py-0.5 text-xs" disabled={busy}
+                      title={`${l.basis}. ${Math.round(l.odds * 100)}%: he bends (needs about $${-l.win.need} less), anger +${l.win.anger}. Otherwise he digs in: anger +${l.lose.anger}${l.lose.need ? `, needs $${l.lose.need} more` : ''}.`}
+                      onClick={() => lever(l.card)} data-testid={`lever-${l.card}`}>{l.label} · {Math.round(l.odds * 100)}%</button>
+                  ))}
+                </div>
+                <div className="mt-0.5 text-[11px] text-stone-500">{cards.map((l) => `${l.label}: ${l.basis}`).join(' · ')}</div>
+              </div>
+            );
+          })()}
           {!over && live$ && sd.end !== 'done' && <DealBuilder s={s} sd={sd} busy={busy} onPropose={(terms) => void exchange({ propose: terms })} />}
           {st && (
             <details className="text-[11px] text-stone-400" data-testid="sit-stance">

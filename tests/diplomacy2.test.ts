@@ -347,3 +347,41 @@ describe('new terms', () => {
     expect(termBounds(s, 'manno', 'venture').amount!.hi).toBe(40);
   });
 });
+
+import { leverCards, playLever } from '../src/engine/minds/diplomacy';
+
+describe('leverage cards', () => {
+  it('only real cards show; each once; odds shown; the roll moves need and anger; the engine re-reads the table', () => {
+    const s = game('diplo2-lever');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    s.hooks = s.hooks.filter((h) => !(h.holder === 'player' && h.targetId === r.leaderId));
+    s.secrets = s.secrets.filter((x) => !(x.knownBy.includes('player') && (x.ownerId === r.leaderId || s.characters[x.ownerId]?.faction === 'manno')));
+    const ph = s.rivals.find((x) => x.id === 'philly')!;
+    addOpinion(s, ph.leaderId, s.playerId, 'test', -100, 0);
+    r.muscle = 100;
+    let sd = openSitDown(s, 'manno')!;
+    expect(leverCards(s, sd).map((x) => x.card)).toEqual([]);
+    // Now give him real cards.
+    s.secrets.push({ id: 'sx', ownerId: r.leaderId, kind: 'debt', text: 'He owes a loan shark in Camden more than he can pay.', knownBy: ['player'], week: s.week });
+    addOpinion(s, ph.leaderId, s.playerId, 'test', 200, 0);
+    r.muscle = 5;
+    sd = openSitDown(s, 'manno')!;
+    const cards = leverCards(s, sd);
+    expect(cards.map((x) => x.card).sort()).toEqual(['dirt', 'philly', 'strength']);
+    for (const c of cards) { expect(c.odds).toBeGreaterThan(0); expect(c.odds).toBeLessThan(1); }
+    const st = stanceOf(s, 'manno')!;
+    const n0 = needNow(st, sd);
+    const a0 = sd.anger;
+    const p = playLever(s, sd, 'dirt');
+    expect(p.sd.played).toHaveLength(1);
+    expect(leverCards(s, p.sd).some((x) => x.card === 'dirt')).toBe(false);
+    if (p.won) expect(needNow(st, p.sd) - n0).toBeLessThan(0 + (p.sd.anger - a0) * 25 + 1);
+    else expect(p.sd.anger).toBeGreaterThan(a0);
+    expect(p.sd.log.some((l) => l.who === 'narrator' && /% it would land/.test(l.text))).toBe(true);
+    // Playing a card already played does nothing.
+    expect(playLever(s, p.sd, 'dirt').sd).toBe(p.sd);
+    // Whatever is on the table as theirs still meets their need.
+    if (p.sd.table?.by === 'them') expect(needNow(st, p.sd) - dealValue(s, 'manno', p.sd.table.terms)).toBeLessThanOrEqual(150);
+    expect(buildDiploPrompt(s, p.sd, { say: 'So?' }).messages[0].content).toMatch(/Leverage he laid on the table/);
+  });
+});

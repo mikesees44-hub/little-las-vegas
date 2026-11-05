@@ -446,9 +446,9 @@ export function dealValue(s: GameState, rival: string, deal: readonly Term[]): n
 }
 
 /** What this sit-down needs from a deal now: the stance, shaded by the room (warmth bends, anger stiffens). */
-export function needNow(st: Stance, sd?: Pick<SitDown, 'warmth' | 'anger'>): number {
+export function needNow(st: Stance, sd?: Pick<SitDown, 'warmth' | 'anger' | 'lev'>): number {
   if (!sd) return st.need;
-  return Math.round(st.need - (sd.warmth - 50) * 12 + Math.max(0, sd.anger - 20) * 25);
+  return Math.round(st.need - (sd.warmth - 50) * 12 + Math.max(0, sd.anger - 20) * 25 + (sd.lev ?? 0));
 }
 
 /** A deal the family would take is worth at least this much less than `need` (small give, so a fair offer lands). */
@@ -563,6 +563,9 @@ export interface SitDown {
   insults: number;
   /** He asked for this sit-down (minds/familyAsks.ts): what about. */
   agenda?: { kind: AskKind; text: string };
+  /** Leverage played (once each): the cards, and how far they moved what he needs (negative: he bends). */
+  played?: { card: LeverCard; won: boolean }[];
+  lev?: number;
 }
 
 /** Open the sit-down: the room's temperature from what he thinks of the boss; his opening ask on the table. */
@@ -855,6 +858,7 @@ export function diploPersona(s: GameState, rival: string, sd?: SitDown): string 
   if (r.kind !== 'philly' && ph) lines.push(`Philadelphia thinks ${ph >= 20 ? 'well' : ph <= -20 ? 'poorly' : 'little either way'} of him.`);
   lines.push(`How far you bend: ${st.bend}. What you came wanting: ${st.wantText}`);
   if (sd?.agenda) lines.push(`YOU asked for this sit-down: ${ASK_LABEL[sd.agenda.kind]}. Your agenda: "${sd.agenda.text}"`);
+  if (sd?.played?.length) lines.push(`Leverage he laid on the table: ${sd.played.map((p) => `${LEVER_LABEL[p.card]} (${p.won ? 'it landed: you must give more' : 'you shrugged it off'})`).join('; ')}.`);
   if (sd) lines.push(`The room now: your warmth ${sd.warmth}/100, your anger ${sd.anger}/100 (at ${SIT_WALK} you walk out). Exchange ${sd.round + 1} of ${sd.max}.${sd.table ? ` On the table (${sd.table.by === 'boss' ? 'his offer' : 'your offer'}): ${describeDeal(s, rival, sd.table.terms)}.` : ' Nothing on the table.'}`);
   lines.push(`DEAL MENU (only these, within these bounds):\n${dealMenu(s, rival).join('\n')}`);
   lines.push(`Districts (ids): ${s.districts.map((d) => `${d.id} = ${d.name} (his ${Math.round(d.influence.player ?? 0)}, yours ${Math.round(d.influence[r.id] ?? 0)})`).join('; ')}.`);
@@ -1108,4 +1112,112 @@ export function sitHeader(s: GameState, sd: SitDown): string {
   if (!st) return '';
   const w = wordWith(s, sd.rival);
   return `Thinks ${st.opinion >= 0 ? '+' : ''}${st.opinion} of you · your word ${w.score} (${w.text}) · bends ${st.bend}${st.war ? ` · war score ${st.war.score}` : ''} · ${st.ratio >= 1.15 ? 'stronger than you' : st.ratio <= 0.87 ? 'weaker than you' : 'about your strength'}`;
+}
+
+/* ------------------------------------------------------------------ */
+/* Leverage: once per sit-down each, only cards the boss really holds   */
+/* ------------------------------------------------------------------ */
+
+export type LeverCard = 'dirt' | 'philly' | 'strength';
+export const LEVER_LABEL: Record<LeverCard, string> = { dirt: 'Bring dirt', philly: 'Philadelphia\'s backing', strength: 'A show of strength' };
+
+export interface Lever {
+  card: LeverCard;
+  label: string;
+  /** Why the boss holds it (the secret, Philadelphia's view, the numbers). */
+  basis: string;
+  /** Chance it lands. */
+  odds: number;
+  /** What it does: his need moves (negative: he bends) and his anger. */
+  win: { need: number; anger: number };
+  lose: { need: number; anger: number };
+}
+
+/** The dirt the boss really holds on this family: a secret about the boss or his people, or a hook on him. */
+export function dirtOn(s: GameState, rival: string): { text: string; strong: boolean } | undefined {
+  const r = rivalOf(s, rival);
+  if (!r) return undefined;
+  const hook = s.hooks.find((h) => h.holder === 'player' && h.targetId === r.leaderId);
+  if (hook) return { text: hook.reason, strong: hook.strong };
+  const sec = s.secrets.find((x) => x.knownBy.includes('player') && (x.ownerId === r.leaderId || s.characters[x.ownerId]?.faction === r.id) && s.characters[x.ownerId]?.alive);
+  return sec ? { text: sec.text, strong: sec.ownerId === r.leaderId } : undefined;
+}
+
+/** The leverage cards the boss can play at this sit-down now (only real ones; each once). */
+export function leverCards(s: GameState, sd: SitDown): Lever[] {
+  const st = stanceOf(s, sd.rival);
+  const c = s.characters[sd.boss];
+  if (!st || !c || sd.end) return [];
+  const played = new Set((sd.played ?? []).map((p) => p.card));
+  const out: Lever[] = [];
+  const hot = hasTrait(c, 'Hot-headed') ? 1 : 0;
+  const dirt = dirtOn(s, sd.rival);
+  if (dirt && !played.has('dirt')) {
+    out.push({ card: 'dirt', label: LEVER_LABEL.dirt, basis: dirt.text, odds: clamp(0.6 + (dirt.strong ? 0.15 : 0) - hot * 0.1 + (hasTrait(c, 'Cowardly') ? 0.1 : 0), 0.15, 0.9), win: { need: -1800, anger: 8 }, lose: { need: 400, anger: 25 + hot * 8 } });
+  }
+  const ph = philly(s);
+  if (st.rival !== 'philly' && ph >= 30 && !played.has('philly')) {
+    out.push({ card: 'philly', label: LEVER_LABEL.philly, basis: `Philadelphia thinks well of you (+${ph})`, odds: clamp(0.45 + (ph - 30) / 120, 0.15, 0.85), win: { need: -1200, anger: 4 }, lose: { need: 0, anger: 12 + hot * 6 } });
+  }
+  const winning = (st.war?.score ?? 0) >= 20;
+  if ((st.ratio <= 0.85 || winning) && !played.has('strength')) {
+    out.push({ card: 'strength', label: LEVER_LABEL.strength, basis: winning ? `You are winning the war (score ${st.war!.score})` : 'You are the stronger family', odds: clamp(0.4 + (1 - Math.min(1, st.ratio)) * 0.8 + Math.max(0, st.war?.score ?? 0) / 200 + (hasTrait(c, 'Cowardly') ? 0.15 : 0) - hot * 0.1, 0.15, 0.9), win: { need: -1400, anger: 10 }, lose: { need: 500, anger: 22 + hot * 8 } });
+  }
+  return out;
+}
+
+const LEVER_LINE: Record<LeverCard, string> = {
+  dirt: 'Before we go on: I know some things. Things your people would not want said out loud.',
+  philly: 'You know who I had dinner with last week. Philadelphia likes how I run things.',
+  strength: 'Look around. Count my men, count yours. Then make me an offer.',
+};
+const LEVER_WON: Record<LeverCard, readonly string[]> = {
+  dirt: ['...All right. Let\'s keep this between us. What do you want?', 'You made your point. Lower your voice.'],
+  philly: ['I hear you. Nobody wants Philadelphia unhappy.', 'Fine. Philadelphia\'s friend gets a better price.'],
+  strength: ['All right, all right. Nobody needs a war.', 'I can count. Let\'s be reasonable.'],
+};
+const LEVER_LOST: Record<LeverCard, readonly string[]> = {
+  dirt: ['You come to my table with that? Everybody has a story. Careful with yours.', 'That\'s old news. And now I know what kind of man you are.'],
+  philly: ['Philadelphia isn\'t sitting at this table. I am.', 'Philadelphia likes whoever pays. Don\'t lean on them with me.'],
+  strength: ['You think I scare? I\'ve buried bigger men than you.', 'Muscle. Okay. Mine doesn\'t count itself.'],
+};
+
+/** Play a card: the roll (odds shown before), the room moves, the table is read again by the engine. Pure. */
+export function playLever(s: GameState, sd0: SitDown, card: LeverCard): SitStep & { won?: boolean; odds?: number } {
+  const lv = leverCards(s, sd0).find((x) => x.card === card);
+  if (!lv) return { sd: sd0, line: '' };
+  const st = stanceOf(s, sd0.rival)!;
+  const sd: SitDown = { ...sd0, log: sd0.log.slice(), played: [...(sd0.played ?? [])], ...(sd0.table ? { table: { ...sd0.table, terms: sd0.table.terms.map((t) => ({ ...t })) } } : {}) };
+  const key = `${s.seed}|${s.week}|lever|${sd.rival}|${card}|${sd.round}`;
+  const won = H(key) < lv.odds;
+  const fx = won ? lv.win : lv.lose;
+  sd.played!.push({ card, won });
+  sd.lev = (sd.lev ?? 0) + fx.need;
+  sd.anger = Math.round(clamp(sd.anger + fx.anger, 0, 100));
+  sd.round++;
+  sd.log.push({ who: 'boss', text: LEVER_LINE[card] });
+  const first = s.characters[sd.boss]?.firstName ?? 'He';
+  let line = pick(won ? LEVER_WON[card] : LEVER_LOST[card], key);
+  if (sd.anger >= SIT_WALK) {
+    sd.end = 'walkout';
+    sd.table = undefined;
+    sd.log.push({ who: 'narrator', text: `${LEVER_LABEL[card]}: ${Math.round(lv.odds * 100)}% it would land. It did not.` });
+    sd.log.push({ who: 'them', text: line });
+    sd.log.push({ who: 'narrator', text: `${first} walks out. His patience ran out.` });
+    return { sd, line, won, odds: lv.odds };
+  }
+  const need = needNow(st, sd);
+  if (sd.table) {
+    const fair = need - dealValue(s, sd.rival, sd.table.terms) <= SLACK;
+    if (sd.table.by === 'boss') sd.table.ok = fair;
+    else if (!fair) {
+      const ct = counterTo(s, st, sd.table.terms, need);
+      sd.table = ct ? { terms: ct, by: 'them', ok: true } : undefined;
+      if (ct) line += ` ${counterLine(s, sd.rival, ct, key)}`;
+    }
+  }
+  sd.log.push({ who: 'narrator', text: `${LEVER_LABEL[card]}: ${Math.round(lv.odds * 100)}% it would land. ${won ? `It landed: ${first} needs less from you now.` : `It did not: ${first} digs in.`}` });
+  sd.log.push({ who: 'them', text: line });
+  if (!sd.end && sd.round >= sd.max) sd.end = 'done';
+  return { sd, line, won, odds: lv.odds };
 }

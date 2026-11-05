@@ -153,7 +153,7 @@ function lapse(ctx: Ctx, a: FamAsk): void {
     case 'table': {
       const ph = s.rivals.find((x) => x.id === 'philly');
       if (ph && s.characters[ph.leaderId]?.alive) addOpinion(s, ph.leaderId, s.playerId, 'Ignored the Table', -8, 1);
-      s.heat.family = Math.min(100, s.heat.family + 4);
+      applyEffects(ctx, [{ type: 'heat', bar: 'family', amount: 4, label: 'Ignored Philadelphia\'s call to the Table' }], { label: '', because: '' });
       out.push('Philadelphia marks it down (−8); family heat +4.');
       break;
     }
