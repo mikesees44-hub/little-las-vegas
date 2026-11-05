@@ -89,7 +89,7 @@ export function relationWith(s: GameState, f: FactionId): SideRelation | undefin
   if (r?.feud) return 'feud';
   if (pactWith(s, f, 'alliance')) return 'allied';
   if (pactWith(s, f, 'partnership')) return 'partners';
-  if (pactWith(s, f, 'truce')) return 'truce';
+  if (pactWith(s, f, 'truce') || pactWith(s, f, 'tribute')) return 'truce';
   return f === 'philly' ? 'table' : 'peace';
 }
 

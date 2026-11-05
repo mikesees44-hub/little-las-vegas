@@ -26,11 +26,11 @@ import { mindView } from './view';
  * memory, the secrets and rumors he chose to tell from the allowlist. When
  * Claude is not there (outside claude.ai, in tests, consent refused, an
  * error), `scriptedReply` answers from his mind instead. A talk costs the
- * boss about an hour; six exchanges a talk, three talks a day.
+ * boss about an hour; twelve exchanges a talk, five talks a day.
  */
 
-export const TALK_TURNS = 6;
-export const TALK_PER_DAY = 3;
+export const TALK_TURNS = 12;
+export const TALK_PER_DAY = 5;
 export const TALK_HOURS = 1;
 /** Most a talk can move his opinion of the boss, all exchanges together (the modifier's cap). */
 export const TALK_OPINION_CAP = 12;

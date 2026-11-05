@@ -97,6 +97,8 @@ export const TIME_TABLE: Record<string, number> = {
   'tribute:ubRate': 0.5, 'tribute:allowance': 0.5,
   // Sit and talk with one of your people (minds/talk.ts): about an hour.
   'mind:talk': 1,
+  // A sit-down with another family's boss (minds/diplomacy.ts): two hours at the table.
+  'mind:sitdown': 2,
   'ledger:mode': 0.5, 'ledger:keeper': 1, 'ledger:check': 2, 'ledger:confront': 1, 'ledger:forgive': 1,
   'bones:assign': 0.5, 'bones:favor': 1,
   // The Family

@@ -2,7 +2,7 @@ import { ableness } from './aging';
 import { strengthTotal } from './strength';
 import { rivalTake } from './rivalBooks';
 import { alliedWithFaction } from './familyHouses';
-import { pactWith } from './talks';
+import { keepsOut, pactWith } from './talks';
 import { lawZeal } from './polIntegrity';
 import { perkMod } from './lifestyle';
 import { gameYear, isInSeason } from './calendar';
@@ -205,7 +205,8 @@ export function executeMove(ctx: Ctx, r: Rival, c: Candidate): void {
   switch (c.move) {
     case 'expand': {
       const owner: FactionId = c.target;
-      const ds = s.districts.filter((d) => (d.influence[owner] ?? 0) > 5);
+      // A family that gave its word to stay out of a district keeps it (talks.ts keepsOut).
+      const ds = s.districts.filter((d) => (d.influence[owner] ?? 0) > 5 && !keepsOut(s, r.id, d.id));
       if (!ds.length) return;
       const pref = ds.find((d) => d.id === r.homeDistrict) ?? ds.find((d) => d.id === 'causeway' || d.id === 'north');
       const d = pref && chance(s, 0.5) ? pref : pick(s, ds);

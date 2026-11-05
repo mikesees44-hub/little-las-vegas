@@ -30,7 +30,10 @@ import { FACTION_NAMES } from './world';
 
 export type TalkId = 'meeting' | 'job' | 'business' | 'partner' | 'advice' | 'grievance' | 'social' | 'negotiate' | 'succession';
 
-export type PactKind = 'alliance' | 'truce' | 'partnership';
+export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff';
+
+/** Pacts that keep a family from moving on the other side (a hands-off term binds one district only). */
+export const PEACE_PACTS: ReadonlySet<PactKind> = new Set<PactKind>(['alliance', 'truce', 'partnership', 'tribute']);
 
 export interface Pact {
   id: string;
@@ -40,9 +43,13 @@ export interface Pact {
   kind: PactKind;
   since: number;
   until: number;
-  /** Partnership: what it pays you a week. */
+  /** Partnership: what it pays you a week. Tribute: what you pay them a week. */
   weekly?: number;
   terms: string;
+  /** Hands-off (minds/diplomacy.ts): the district, the side that stays out, its influence there when they shook. */
+  district?: string;
+  bound?: FactionId;
+  base?: number;
 }
 
 export interface PendingTalk {
@@ -74,6 +81,8 @@ export interface TalkState {
   rivalCd: Record<string, number>;
   stats: { asked: number; agreed: number; refused: number; delayed: number; countered: number; independent: number; pacts: number; splits: number; disputes: number; settlements: number; alliances: number };
   lastMonth?: string;
+  /** Sit-downs with a family (minds/diplomacy.ts): family → the week the boss last sat down with them. */
+  sat?: Record<string, number>;
 }
 
 export type TalkOp = { t: 'ask'; talk: TalkId; target: string } | { t: 'answer'; id: string; yes: boolean };
@@ -104,9 +113,19 @@ function log(s: GameState, t: TalkState, text: string, kind: TalkLog['kind'], ta
   if (t.log.length > 80) t.log.splice(0, t.log.length - 80);
 }
 
-/** A family the player has an active pact of a kind with (or any kind). */
+/** A line in the talks log (Pacts & Families). */
+export function logTalk(s: GameState, text: string, kind: TalkLog['kind'], target?: string): void {
+  log(s, ensureTalks(s), text, kind, target);
+}
+
+/** A family the player has an active pact of a kind with (or any pact that keeps the peace). */
 export function pactWith(s: GameState, rival: FactionId, kind?: PactKind): Pact | undefined {
-  return s.talks?.pacts.find((p) => ((p.a === 'player' && p.b === rival) || (p.b === 'player' && p.a === rival)) && p.until > s.week && (!kind || p.kind === kind));
+  return s.talks?.pacts.find((p) => ((p.a === 'player' && p.b === rival) || (p.b === 'player' && p.a === rival)) && p.until > s.week && (kind ? p.kind === kind : PEACE_PACTS.has(p.kind)));
+}
+
+/** Has this family given its word to stay out of the district (a hands-off term in force)? */
+export function keepsOut(s: GameState, rival: FactionId, district: string): boolean {
+  return !!s.talks?.pacts.some((p) => p.kind === 'handsoff' && p.until > s.week && p.bound === rival && p.district === district);
 }
 
 function rivalLed(s: GameState, c: Character): RivalId | undefined {
@@ -453,17 +472,60 @@ export function talksWeek(ctx: Ctx): void {
     ctx.log.push(`An answer at last — ${text}`);
   }
   for (const p of tt.pacts) {
-    if (p.until <= s.week || !p.weekly || p.a !== 'player') continue;
+    if (p.until <= s.week || p.a !== 'player') continue;
+    if (p.kind === 'handsoff') { handsOffWeek(ctx, tt, p); continue; }
+    if (!p.weekly) continue;
     const r = s.rivals.find((x) => x.id === p.b);
-    if (!r || !s.characters[r.leaderId]?.alive) { p.until = s.week; log(s, tt, `The partnership with ${FACTION_NAMES[p.b]} died with its boss.`, 'pact'); continue; }
+    if (!r || !s.characters[r.leaderId]?.alive) { p.until = s.week; log(s, tt, `The ${p.kind} with ${FACTION_NAMES[p.b]} died with its boss.`, 'pact'); continue; }
+    if (p.kind === 'tribute') {
+      // The boss pays; a week he cannot, the deal is broken and they remember it.
+      if (s.money < p.weekly) {
+        p.until = s.week - 1;
+        addOpinion(s, r.leaderId, s.playerId, 'Stopped paying tribute', -20, 1);
+        const text = `You missed the tribute to ${FACTION_NAMES[p.b]}: the deal is off, and they are not happy.`;
+        log(s, tt, text, 'pact', r.leaderId);
+        journal(s, { t: `Missed the tribute to ${FACTION_NAMES[p.b]}`, x: 'Not enough Family money for the week\'s payment. The pact is broken.', p: [r.leaderId], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts' });
+        ctx.log.push(text);
+        continue;
+      }
+      money(ctx, -p.weekly, `Tribute to ${FACTION_NAMES[p.b]}`, 'cost');
+      r.money += p.weekly;
+      continue;
+    }
     money(ctx, p.weekly, `Partnership with ${FACTION_NAMES[p.b]}`, 'business');
   }
-  for (const p of tt.pacts) if (p.until === s.week) log(s, tt, `The ${p.kind} between ${p.a === 'player' ? 'your house' : FACTION_NAMES[p.a]} and ${FACTION_NAMES[p.b]} ran out.`, 'pact');
+  for (const p of tt.pacts) if (p.until === s.week) log(s, tt, `The ${p.kind === 'handsoff' ? 'hands-off pact' : p.kind} between ${p.a === 'player' ? 'your house' : FACTION_NAMES[p.a]} and ${FACTION_NAMES[p.b]} ran out.`, 'pact');
   tt.pacts = tt.pacts.filter((p) => p.until > s.week - 52);
   const mk = `${s.date.y}-${s.date.m}`;
   if (tt.lastMonth !== mk) {
     if (tt.lastMonth) rivalDiplomacy(ctx);
     tt.lastMonth = mk;
+  }
+}
+
+/** A hands-off term: the bound side's ground in the district may not grow; if it does, the word is broken. */
+function handsOffWeek(ctx: Ctx, tt: TalkState, p: Pact): void {
+  const s = ctx.s;
+  if (!p.district || !p.bound) return;
+  const d = s.districts.find((x) => x.id === p.district);
+  const r = s.rivals.find((x) => x.id === p.b);
+  if (!d || !r) return;
+  const now = d.influence[p.bound] ?? 0;
+  if (now <= (p.base ?? 0) + 2) return;
+  p.until = s.week - 1;
+  if (p.bound === 'player') {
+    addOpinion(s, r.leaderId, s.playerId, `Broke his word about ${d.name}`, -20, 1);
+    const text = `Your people moved into ${d.name} after you gave ${FACTION_NAMES[p.b]} your word: they call it a broken promise.`;
+    log(s, tt, text, 'pact', r.leaderId);
+    journal(s, { t: `You broke your word to ${FACTION_NAMES[p.b]} about ${d.name}`, x: 'Your ground there grew after you promised to stay out. They will remember.', p: [r.leaderId], pl: [`d:${d.id}`], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts' });
+    ctx.log.push(text);
+  } else {
+    // Their broken word is a grievance: a cause for war (war.ts casusBelli).
+    s.flags[`grievance_${r.id}`] = Math.max(1, s.week);
+    const text = `${FACTION_NAMES[p.b]} moved into ${d.name} after giving you their word. You have a grievance: a cause for war.`;
+    log(s, tt, text, 'pact', r.leaderId);
+    journal(s, { t: `${FACTION_NAMES[p.b]} broke their word about ${d.name}`, x: 'They gave their word to stay out, and moved in anyway. You hold a grievance against them (a cause for war).', p: [r.leaderId], pl: [`d:${d.id}`], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts' });
+    ctx.log.push(text);
   }
 }
 
