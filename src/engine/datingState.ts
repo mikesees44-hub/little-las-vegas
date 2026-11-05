@@ -74,6 +74,9 @@ export interface Bond {
   /** How the boss came to know her. */
   via: string;
   ended?: { week: number; why: string };
+  /** On the date (dateTalk.ts): a line or two she remembers from each talk (newest last, capped), and the week of the last one. Optional. */
+  notes?: { w: number; t: string; open?: string }[];
+  talkW?: number;
 }
 
 export type ProviderKind = 'street' | 'callgirl' | 'escort' | 'dancer';
