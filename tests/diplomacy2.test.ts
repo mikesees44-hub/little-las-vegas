@@ -6,7 +6,13 @@ import {
   buildDiploPrompt, closeSitDown, openSitDown, shakeOn, sitHeader, sitStep, stanceOf, termValue, type SitDown,
 } from '../src/engine/minds/diplomacy';
 import { noteBroken, noteKept, recordOf, wordWith } from '../src/engine/minds/familyWord';
-import type { GameState } from '../src/engine/types';
+import type { GameState, War } from '../src/engine/types';
+import { newCtx } from '../src/engine/ledger';
+import { opinion } from '../src/engine/relations';
+import { askFor, familyAsksWeek, openAsks, type AskKind } from '../src/engine/minds/familyAsks';
+import { beginSitDown } from '../src/engine/minds/diplomacy';
+import { inbox } from '../src/engine/inbox';
+import { lapsesThisWeek, readyReview } from '../src/engine/desk';
 import { randomChoices } from './helpers';
 
 function game(seed = 'diplo2-a'): GameState {
@@ -74,5 +80,93 @@ describe('memory and your word', () => {
     const g = advanceWeek(s, randomChoices(s, 2)).state;
     expect(recordOf(g, 'feldstein')?.kept).toBe(1);
     expect(recordOf(g, 'manno')?.broken).toBe(1);
+  });
+});
+
+function atWar(s: GameState, rival: 'manno' | 'feldstein' | 'kessler', score: number, ago = 0): War {
+  const r = s.rivals.find((x) => x.id === rival)!;
+  const d = s.districts.find((x) => (x.influence[rival] ?? 0) > 0) ?? s.districts[0];
+  const w: War = { id: `w${s.nextId++}`, rival, district: d.id, cb: 'claim', sanctioned: true, score, startWeek: s.week - ago, by: 'player' };
+  s.wars.push(w);
+  r.war = true;
+  return w;
+}
+
+/** Turn weeks over the ask layer only, until a family asks (or give up). */
+function untilAsk(s: GameState, kind?: AskKind, n = 60): GameState {
+  for (let i = 0; i < n; i++) {
+    const ctx = newCtx(s);
+    familyAsksWeek(ctx);
+    s.week++;
+    const a = openAsks(s)[0];
+    if (a && (!kind || a.kind === kind)) return s;
+    if (a) { s.talks!.asks = []; }
+  }
+  return s;
+}
+
+describe('they come to you', () => {
+  it('a family losing a war sends a peace feeler: on the Desk, in Ready to advance, the sit-down opens with it', () => {
+    const s = game('diplo2-ask');
+    atWar(s, 'kessler', 40);
+    untilAsk(s, 'peace');
+    const a = askFor(s, 'kessler')!;
+    expect(a).toBeDefined();
+    expect(a.offer.some((t) => t.kind === 'truce')).toBe(true);
+    const it = inbox(s).find((x) => x.key === `fam:${a.id}`)!;
+    expect(it.ref.family).toBe('kessler');
+    expect(it.title).toMatch(/asks for a sit-down/);
+    expect(lapsesThisWeek(s).some((l) => l.key === `famask:${a.id}`)).toBe(true);
+    expect(readyReview(s).lapses.some((l) => l.key === `famask:${a.id}`)).toBe(true);
+    const sd = openSitDown(s, 'kessler')!;
+    expect(sd.agenda?.kind).toBe('peace');
+    expect(sd.table?.terms.some((t) => t.kind === 'truce')).toBe(true);
+    expect(sd.log.some((l) => l.who === 'them' && l.text.includes(a.text))).toBe(true);
+    expect(buildDiploPrompt(s, sd, { say: 'Go on.' }).messages[0].content).toMatch(/asked for this sit-down/);
+    // Sitting down answers it.
+    const g = beginSitDown(s, 'kessler');
+    expect(askFor(g, 'kessler')).toBeUndefined();
+    expect(askFor(s, 'kessler')).toBeDefined();
+  });
+
+  it('ignored, it lapses with a consequence: a grievance makes them move; Philadelphia marks down an ignored Table', () => {
+    const s = game('diplo2-lapse');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    const d = s.districts[0];
+    ensureTalks(s).asks = [{ id: 'fa1', rival: 'manno', kind: 'grievance', w: s.week, until: s.week, text: 'Stop it.', district: d.id, offer: [] }];
+    const op0 = opinion(s, r.leaderId, s.playerId);
+    const inf0 = d.influence.manno ?? 0;
+    const g = advanceWeek(s, randomChoices(s, 1)).state;
+    expect(askFor(g, 'manno')).toBeUndefined();
+    expect(opinion(g, r.leaderId, g.playerId)).toBeLessThan(op0);
+    expect((g.districts.find((x) => x.id === d.id)!.influence.manno ?? 0)).toBeGreaterThan(inf0);
+    expect(g.journal!.e.some((e) => /ignored Manno/i.test(e.t))).toBe(true);
+    // The Table.
+    const t = game('diplo2-table');
+    const ph = t.rivals.find((x) => x.id === 'philly')!;
+    atWar(t, 'feldstein', 0, 10);
+    untilAsk(t, 'table');
+    const a = askFor(t, 'feldstein');
+    if (a) {
+      expect(a.kind).toBe('table');
+      const pop = opinion(t, ph.leaderId, t.playerId);
+      const h0 = t.heat.family;
+      const ctx = newCtx(t);
+      familyAsksWeek(ctx);
+      expect(opinion(t, ph.leaderId, t.playerId)).toBeLessThan(pop);
+      expect(t.heat.family).toBeGreaterThan(h0);
+    }
+  });
+
+  it('a stronger family demands tribute; a fresh game has no asks', () => {
+    expect(game().talks?.asks).toBeUndefined();
+    const s = game('diplo2-trib');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    r.muscle = 100;
+    for (const c of Object.values(s.characters)) if (c.faction === 'player' && c.id !== s.playerId) c.alive = false;
+    untilAsk(s, 'tribute', 120);
+    const a = openAsks(s)[0];
+    expect(a?.kind).toBe('tribute');
+    expect(a!.offer.some((t) => t.kind === 'tribute')).toBe(true);
   });
 });

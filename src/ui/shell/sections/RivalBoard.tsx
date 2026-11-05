@@ -14,6 +14,8 @@ import { useState } from 'react';
 import { useShell } from '../../shell/context';
 import { canSitDown, rivalOf } from '../../../engine/minds/diplomacy';
 import { recordOf, wordWith } from '../../../engine/minds/familyWord';
+import { askFor, askTitle, ignoreText } from '../../../engine/minds/familyAsks';
+import { describeDeal } from '../../../engine/minds/diplomacy';
 import { FamilyTalk } from '../../minds/FamilyTalk';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
@@ -72,6 +74,20 @@ export function RivalBoard({ s }: { s: GameState }) {
                   );
                 })()}
                 {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
+                {(() => {
+                  const a = askFor(s, r.id);
+                  if (!a) return null;
+                  const can = canSitDown(s, r.id);
+                  return (
+                    <div className="mt-1 rounded border border-amber-400/40 bg-amber-500/10 p-1.5 text-[11px]" data-testid={`famask-${r.id}`}>
+                      <div className="text-amber-200">{askTitle(a)}</div>
+                      <div className="text-stone-300 italic">"{a.text}"</div>
+                      {a.offer.length > 0 && <div className="text-stone-400">Their opening: {describeDeal(s, r.id, a.offer)}.</div>}
+                      <div className="text-stone-500">Waits until the week turns. If you ignore it: {ignoreText(s, a)}.</div>
+                      {shell.update && <button type="button" className="btn-gold mt-1 px-2 py-0.5 text-[11px]" disabled={!can.ok} title={can.ok ? 'Opens the sit-down with his agenda on the table.' : can.why} onClick={() => setSit(r.id)} data-testid={`famask-open-${r.id}`}>Hear him out</button>}
+                    </div>
+                  );
+                })()}
                 {shell.update && rivalOf(s, r.id) && leader.alive && (() => {
                   const can = canSitDown(s, r.id);
                   return (

@@ -5,6 +5,7 @@ import { weekCheckIns as weekCheckIns0 } from './checkins';
 import { DAY_NAMES, today } from './days';
 import { capoLevelOf, chosenOpt, docketOf, levelOf } from './lieutenants';
 import { displayName } from './characters';
+import { askFor, ignoreText } from './minds/familyAsks';
 import type { Choice, Effect, GameState } from './types';
 
 /**
@@ -215,6 +216,7 @@ export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
   if (it.ref.single === 'come') return { by: 'Nobody', does: 'she waits a little, then moves on' };
   if (it.ref.single === 'ma') return { by: 'Nobody', does: 'Ma waits; after six weeks she takes silence as "not now", and nags' };
   if (it.ref.trouble) return { ...ub, does: 'keeps an eye on it' };
+  if (it.ref.family) { const a = askFor(s, it.ref.family); return { by: 'Nobody', does: a ? ignoreText(s, a) : 'they wait' }; }
   if (it.ref.tip) return { by: 'Nobody', does: 'what they heard lands whether you listen or not' };
   if (it.kind === 'lawyer') return { by: 'Your lawyer', does: 'waits for an hour of your time' };
   return { ...ub, does: 'the usual' };

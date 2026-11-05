@@ -137,6 +137,7 @@ function inboxRow(it: InboxItem): PlanRow {
     : it.ref.day !== undefined ? { to: 'day', day: it.ref.day }
     : it.ref.brief ? { to: 'sitdown' }
     : it.kind === 'envelope' ? { to: 'envelope' }
+    : it.ref.family ? { to: 'route', route: { panel: 'diplomacy', section: 'board' } }
     : { to: 'route', route: { panel: 'town', section: 'case' } };
   const acts: PlanAct[] = [{ id: 'open', label: it.kind === 'urgent' ? 'See him' : 'Answer', do: open }];
   if (it.charId) acts.push({ id: 'go', label: 'Who is he?', do: { to: 'sheet', id: it.charId } });

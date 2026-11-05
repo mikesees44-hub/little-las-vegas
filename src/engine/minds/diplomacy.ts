@@ -17,6 +17,7 @@ import { toneEffect, type Dialogue, type Line, type Tone } from './dialogue';
 import { clamp } from './state';
 import { clean } from './talk';
 import { mindView } from './view';
+import { askFor, ASK_LABEL, type AskKind } from './familyAsks';
 import { lastTimeLine, noteSit, recordSummary, trustMult, wordWith } from './familyWord';
 
 /**
@@ -121,6 +122,8 @@ export function beginSitDown(s: GameState, rival: string): GameState {
   const next = cloneState(spendTime(s, SIT_ACTION).state);
   const t = ensureTalks(next);
   t.sat = { ...(t.sat ?? {}), [rival]: next.week };
+  // He asked for this one: the ask is answered.
+  if (t.asks?.some((a) => a.rival === rival)) { t.asks = t.asks.filter((a) => a.rival !== rival); if (!t.asks.length) delete t.asks; }
   t.met[rivalOf(next, rival)!.leaderId] = next.week;
   return next;
 }
@@ -475,6 +478,8 @@ export interface SitDown {
   deal?: Term[];
   /** Times the boss insulted him (each counts double on the anger meter). */
   insults: number;
+  /** He asked for this sit-down (minds/familyAsks.ts): what about. */
+  agenda?: { kind: AskKind; text: string };
 }
 
 /** Open the sit-down: the room's temperature from what he thinks of the boss; his opening ask on the table. */
@@ -484,13 +489,15 @@ export function openSitDown(s: GameState, rival: string): SitDown | undefined {
   const c = s.characters[st.boss];
   const warmth = Math.round(clamp(45 + st.opinion / 2, 5, 90));
   const anger = Math.round(clamp(Math.max(0, -st.opinion / 3) + (st.war ? 15 : 0) + (s.rivals.find((r) => r.id === rival)?.feud ? 15 : 0), 0, 60));
-  const sd: SitDown = { rival: st.rival, boss: st.boss, round: 0, max: SIT_TURNS, warmth, anger, w0: warmth, log: [], insults: 0 };
-  sd.log.push({ who: 'narrator', text: `${c ? displayName(c) : 'He'} sits across from you. ${st.war ? 'There is a war on, and both of you know the score.' : 'Coffee, nobody else at the table.'}` });
-  // Their ask, read against the room they walked into.
-  const base = openingAsk(s, st);
+  const fa = askFor(s, rival);
+  const sd: SitDown = { rival: st.rival, boss: st.boss, round: 0, max: SIT_TURNS, warmth, anger, w0: warmth, log: [], insults: 0, ...(fa ? { agenda: { kind: fa.kind, text: fa.text } } : {}) };
+  sd.log.push({ who: 'narrator', text: `${c ? displayName(c) : 'He'} sits across from you. ${fa ? `He asked for this one: ${ASK_LABEL[fa.kind]}.` : st.war ? 'There is a war on, and both of you know the score.' : 'Coffee, nobody else at the table.'}` });
+  // Their ask (the agenda he came with, else his usual opening), read against the room they walked into.
+  const agendaOffer = fa ? validateDeal(s, rival, fa.offer) : [];
+  const base = agendaOffer.length ? agendaOffer : openingAsk(s, st);
   const ask = base.length ? counterTo(s, st, base, needNow(st, sd), true) : undefined;
   if (ask) sd.table = { terms: ask, by: 'them', ok: true };
-  sd.log.push({ who: 'them', text: openingLine(s, st, ask) });
+  sd.log.push({ who: 'them', text: fa ? agendaLine(s, st, fa.text, ask) : openingLine(s, st, ask) });
   return sd;
 }
 
@@ -498,6 +505,12 @@ function openingLine(s: GameState, st: Stance, ask: Term[] | undefined): string 
   const last = lastTimeLine(s, st.rival);
   const head = openingHead(s, st, ask);
   return last ? `${last} ${head}` : head;
+}
+
+function agendaLine(s: GameState, st: Stance, text: string, ask: Term[] | undefined): string {
+  const last = lastTimeLine(s, st.rival);
+  const want = ask?.length ? ` Here's what I want: ${describeDeal(s, st.rival, ask)}.` : '';
+  return `${last ? `${last} ` : ''}${text}${want}`;
 }
 
 function openingHead(s: GameState, st: Stance, ask: Term[] | undefined): string {
@@ -757,6 +770,7 @@ export function diploPersona(s: GameState, rival: string, sd?: SitDown): string 
   const ph = philly(s);
   if (r.kind !== 'philly' && ph) lines.push(`Philadelphia thinks ${ph >= 20 ? 'well' : ph <= -20 ? 'poorly' : 'little either way'} of him.`);
   lines.push(`How far you bend: ${st.bend}. What you came wanting: ${st.wantText}`);
+  if (sd?.agenda) lines.push(`YOU asked for this sit-down: ${ASK_LABEL[sd.agenda.kind]}. Your agenda: "${sd.agenda.text}"`);
   if (sd) lines.push(`The room now: your warmth ${sd.warmth}/100, your anger ${sd.anger}/100 (at ${SIT_WALK} you walk out). Exchange ${sd.round + 1} of ${sd.max}.${sd.table ? ` On the table (${sd.table.by === 'boss' ? 'his offer' : 'your offer'}): ${describeDeal(s, rival, sd.table.terms)}.` : ' Nothing on the table.'}`);
   lines.push(`DEAL MENU (only these, within these bounds):\n${dealMenu(s, rival).join('\n')}`);
   lines.push(`Districts (ids): ${s.districts.map((d) => `${d.id} = ${d.name} (his ${Math.round(d.influence.player ?? 0)}, yours ${Math.round(d.influence[r.id] ?? 0)})`).join('; ')}.`);
@@ -908,7 +922,7 @@ export function shakeOn(input: GameState, sd: SitDown): ShakeResult {
   const said = describeDeal(s, r.id, terms);
   const text = `You and ${displayName(c)} shook on it: ${said}.`;
   logTalk(s, text, 'pact', c.id);
-  noteSit(s, r.id, { how: 'deal', terms: said, ...(sd.insults ? { insults: sd.insults } : {}) });
+  noteSit(s, r.id, { how: 'deal', terms: said, ...(sd.insults ? { insults: sd.insults } : {}), ...(sd.agenda ? { agenda: sd.agenda.text } : {}) });
   journal(s, { t: `Sat down with ${fam} and shook on a deal`, x: `${said}. ${sd.round} exchanges across the table with ${displayName(c)}.`, p: [c.id], c: 'rivals', src: 'talk', ln: 'diplomacy.pacts', mine: 1, m: s.money - m0, r: changes });
   s.chronicle.push({ week: s.week, date: { ...s.date }, text: `A sit-down with ${fam}: ${said}.`, kind: 'rival' });
   return { state: s, ok: true, text, changes };
@@ -931,7 +945,7 @@ export function closeSitDown(input: GameState, sd: SitDown): GameState {
   const how = sd.end === 'walkout' ? `${c.firstName} walked out` : sd.end === 'left' ? 'you walked out' : 'no deal';
   const text = `A sit-down with ${displayName(c)} of ${fam}: ${how}.`;
   ensureTalks(s);
-  noteSit(s, r.id, { how: sd.end === 'walkout' ? 'walkout' : sd.end === 'left' ? 'left' : 'done', ...(sd.insults ? { insults: sd.insults } : {}) });
+  noteSit(s, r.id, { how: sd.end === 'walkout' ? 'walkout' : sd.end === 'left' ? 'left' : 'done', ...(sd.insults ? { insults: sd.insults } : {}), ...(sd.agenda ? { agenda: sd.agenda.text } : {}) });
   logTalk(s, text, 'talk', c.id);
   journal(s, { t: `Sat down with ${fam}: ${how}`, x: `${sd.round} exchanges.${op ? ` His opinion of you ${op > 0 ? '+' : ''}${op}.` : ''}${sd.insults ? ' He will remember the insults.' : ''}`, p: [c.id], c: 'rivals', src: 'talk', mine: 1 });
   return s;

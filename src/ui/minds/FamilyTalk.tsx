@@ -108,6 +108,7 @@ export function FamilyTalk({ s, rival, update, onClose }: { s: GameState; rival:
       onClose={() => { if (started && sd.end !== 'deal') finish(sd.end ? sd : { ...sd, end: 'left' }); onClose(); }}
       footer={(
         <div className="space-y-2" data-testid="family-talk">
+          {sd.agenda && <div className="rounded border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-100" data-testid="sit-agenda">He asked for this sit-down: <i>"{sd.agenda.text}"</i></div>}
           {table && !hideTable && sd.end !== 'deal' && (
             <div className={`rounded-md border p-2 text-[12px] ${table.ok ? 'border-gold-500/60 bg-gold-500/10' : 'border-noir-600 bg-noir-800/60'}`} data-testid="deal-card">
               <div className="text-[10px] uppercase tracking-[0.2em] text-stone-500">On the table · {table.by === 'them' ? 'their offer' : 'your offer'}</div>

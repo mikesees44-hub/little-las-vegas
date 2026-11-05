@@ -67,6 +67,8 @@ export interface DeskApi {
   onWeekDoneClose?: () => void;
   /** Let them eat (a man's pitch). */
   onEat?: () => void;
+  /** A family asking for a sit-down (minds/familyAsks.ts): the Board, where the sit-down opens with their agenda. */
+  onFamily?: (rival: string) => void;
 }
 
 export type DeskFilter = 'all' | 'decisions' | 'capos' | 'lieutenants' | 'money' | 'people';
@@ -94,6 +96,7 @@ export function openItem(it: DeskItem, api: DeskApi) {
   else if (it.kind === 'envelope' && api.onEnvelope) api.onEnvelope();
   else if (it.kind === 'bill' || it.kind === 'envelope') api.onMoney();
   else if (it.ref.single && api.onSingle) api.onSingle();
+  else if (it.ref.family && api.onFamily) api.onFamily(it.ref.family);
   else if (it.ref.charId) api.onChar(it.ref.charId);
   else api.onSitDown();
 }
@@ -107,7 +110,7 @@ function verbOf(it: DeskItem): string | undefined {
     case 'lieutenant': return 'Your word';
     case 'envelope': return 'Split it';
     case 'bill': return 'Money';
-    case 'request': return it.ref.single ? 'See her' : 'Open';
+    case 'request': return it.ref.single ? 'See her' : it.ref.family ? 'Hear him out' : 'Open';
     case 'order': return undefined;
     default: return 'Open';
   }

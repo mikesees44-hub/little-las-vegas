@@ -17,6 +17,7 @@ import { isFree } from './characters';
 import { FIX_WEEKS, OPEN_WEEKS, openApproachOf, openFixOf } from './single';
 import { SILENCE_WEEKS, openProposal } from './matchmakers';
 import { missedCalls } from './phone';
+import { askLapses } from './minds/familyAsks';
 
 /**
  * THE BOSS'S DESK: everything that wants the boss this week, in one place —
@@ -57,7 +58,7 @@ export interface DeskItem {
   /** Where it goes: an event iid, a morning's day, a sit-down item, an order index, a lieutenant's job, a tip, a place ask. */
   /** A result's tone (how it went). */
   tone?: 'good' | 'bad';
-  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string; single?: 'come' | 'ma' };
+  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string; single?: 'come' | 'ma'; /** A family asking for a sit-down (minds/familyAsks.ts). */ family?: string };
 }
 
 export interface DeskGroup { kind: DeskGroupKind; title: string; items: DeskItem[] }
@@ -247,5 +248,7 @@ export function lapsesThisWeek(s: GameState): { key: string; title: string; what
   if (mp && next - mp.week >= SILENCE_WEEKS) out.push({ key: `match:${mp.id}`, title: `${nm(mp.by)}'s match for ${nm(mp.memberId)}`, what: 'Say nothing and she goes ahead with it.' });
   // A call to return before it goes cold.
   for (const m of missedCalls(s)) if (!m.p.once && m.until < next * 7) out.push({ key: `call:${m.id}`, title: `Call ${m.p.name} back`, what: "After this week the call can't be returned." });
+  // A family that asked for a sit-down (minds/familyAsks.ts): ignored, it has a consequence.
+  out.push(...askLapses(s));
   return out;
 }
