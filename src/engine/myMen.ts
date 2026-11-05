@@ -153,7 +153,7 @@ export type MenAction =
   | { op: 'demote'; id: string }
   | { op: 'shelf'; id: string }
   | { op: 'kill'; id: string; confirm: boolean }
-  /** Let them eat (eat.ts): answer a man's own pitch; put a man on a racket that is short. */
+  /** Let them eat (eat.ts): answer a man's own pitch, or put a man on a racket that is short. */
   | { op: 'pitch'; pitch: string; how: PitchHow }
   | { op: 'staff'; id: string; biz: string };
 
