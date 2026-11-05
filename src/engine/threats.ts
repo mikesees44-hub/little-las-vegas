@@ -25,6 +25,13 @@ import type { Character, Effect, GameState, Rival, RivalId } from './types';
 import { knobs } from './difficulty';
 import { spareFromWars } from './rankView';
 import { momentClone } from './momentClone';
+import { armedTurn } from './planner/gateCore';
+
+/** Does this family own the man at the boss's door (a turned gatekeeper, bought by them)? */
+function gateOwnedBy(s: GameState, r: RivalId): boolean {
+  const a = armedTurn(s);
+  return !!a && a.turn.why === 'rival' && a.turn.rival === r;
+}
 
 /**
  * THREATS AND URGENT MEETINGS.
@@ -97,6 +104,8 @@ export interface Threat {
   live?: 1;
   /** A raid the heat brought (heat.ts): cash seized, a bigger padlock, the pressure released. */
   heatRaid?: 1;
+  /** A setup: the turned gatekeeper booked the boss at its place and hour (planner/gateWeek.ts). Cleared if the boss calls it off. */
+  gk?: string;
 }
 
 export interface Tip {
@@ -134,6 +143,8 @@ export interface Tip {
   hour?: number;
   /** When he asks for the meeting: the week and day it comes out on the clock (absent: at once). */
   rel?: { w: number; d: number };
+  /** Held back at the door by a turned gatekeeper (his id): it never reaches the boss unless he reads the full list. */
+  held?: string;
 }
 
 export interface ThreatLog { week: number; text: string }
@@ -372,6 +383,7 @@ export function whenText(day: number | undefined, hour: number | undefined): str
 
 /** Has this urgent meeting come out yet on the clock? */
 export function tipOut(s: GameState, t: Tip): boolean {
+  if (t.held) return false;
   return !t.rel || s.week > t.rel.w || (s.week === t.rel.w && today(s) >= t.rel.d);
 }
 
@@ -410,6 +422,8 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
         ...soldiers.map((c) => [c.id, 1] as [string, number]),
         ...(op <= -50 ? fam.map((c) => [c.id, 0.4] as [string, number]) : []),
         ...(op <= -70 ? [[s.playerId, 0.5] as [string, number]] : []),
+        // A family that owns the man at the boss's door can deliver the boss (planner/gateCore.ts): it is tempted sooner.
+        ...(op > -70 && op <= -25 && gateOwnedBy(s, r.id) ? [[s.playerId, 0.5] as [string, number]] : []),
       ];
       t.targetId = weighted(T, pool);
       if (!t.targetId) return undefined;
@@ -778,12 +792,19 @@ function warned(T: ThreatsState, t: Threat): boolean {
   return T.tips.some((x) => x.threatId === t.id);
 }
 
+/** A setup keeps this share of the boss's blunting and his guards (the rest was spent in the wrong place). */
+export const SETUP_CUT = 0.45;
+/** When a setup hit is not stopped: the share of the time it kills the boss (the rest, he is badly hurt). */
+export const SETUP_DEADLY = 0.25;
+
 /** The share of the time a threat comes to nothing, now: its blunting so far and the guards on a hit. */
 export function foilOdds(s: GameState, t: Threat, extra = 0): number {
   const tgt = t.targetId ? s.characters[t.targetId] : undefined;
   // Guards on the target take a share off a hit (protect.ts): never all of it.
   const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id, t.lure ? 'night' : 'any').cut : 0;
-  return 1 - (1 - t.blunt) * (1 - guard) * (1 - Math.max(0, Math.min(0.95, extra)));
+  // A setup (planner/gateWeek.ts): his own gatekeeper put him at their place and hour. The guards were told where to wait; the answers were made for another night.
+  const su = t.gk ? SETUP_CUT : 1;
+  return 1 - (1 - t.blunt * su) * (1 - guard * su) * (1 - Math.max(0, Math.min(0.95, extra)));
 }
 
 /** A threat comes due: what is left of it after the boss's answers lands. `outcome`: already rolled (a strike in the moment). */
@@ -822,6 +843,18 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat, outcome?: 'foiled' | 'landed
         } else {
           tgt.health = Math.max(10, tgt.health - 30);
           note(ctx, T, `Room 9 at the Starlight. ${her ? her.firstName : 'She'} never came. ${by}'s men did, and you went out the bathroom window with a bullet in your shoulder.${tag}`);
+        }
+      } else if (tgt.id === s.playerId && t.gk) {
+        // The setup: he went where his own gatekeeper booked him.
+        const gk = s.characters[t.gk];
+        const gn = gk ? gk.firstName : 'Your own man';
+        respect(ctx, -2, `${by} came for the boss`, 'rival');
+        if (chance(T, SETUP_DEADLY)) {
+          note(ctx, T, `${gn} put the meeting in your book. ${by}'s men were waiting at the hour he wrote down.${tag}`);
+          killCharacter(ctx, tgt.id, `shot at a meeting his own ${gk ? 'man' : 'people'} booked for him${gk ? ` (${gk.firstName} ${gk.lastName})` : ''}, set up for ${by}`, r?.id);
+        } else {
+          tgt.health = Math.max(10, tgt.health - 35);
+          note(ctx, T, `${gn} put the meeting in your book. ${by}'s men were waiting at the hour he wrote down, and you came out of it on a stretcher.${tag}`);
         }
       } else if (tgt.id === s.playerId) {
         tgt.health = Math.max(10, tgt.health - 25);
@@ -915,6 +948,8 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat, outcome?: 'foiled' | 'landed
       if (t.kind === 'fed_wire') wireIn(s, 'fbi');
       if (t.kind === 'fed_under') { effects.push({ type: 'evidence', charId: s.playerId, amount: 6 }, { type: 'heat', bar: 'federal', amount: 5 }); const k = crew(s).find((c) => c.rank === 'capo' && isFree(s, c)); if (k) effects.push({ type: 'evidence', charId: k.id, amount: 10 }); }
       if (t.kind === 'fed_flip') effects.push({ type: 'heat', bar: 'federal', amount: 3 });
+      // A setup: his own gatekeeper sat him down where the Bureau was listening.
+      if (t.gk) effects.push({ type: 'evidence', charId: s.playerId, amount: 6 }, { type: 'heat', bar: 'federal', amount: 2 });
       if (t.kind === 'fed_gj') { effects.push({ type: 'evidence', charId: s.playerId, amount: 8 }, { type: 'heat', bar: 'federal', amount: 3 }); if (tgt?.alive) effects.push({ type: 'evidence', charId: tgt.id, amount: 6 }, { type: 'opinion', from: tgt.id, to: s.playerId, amount: -5, reason: 'Hauled in front of a grand jury', label: L }); }
       eff(effects, 'the FBI set up on you');
       if (t.kind === 'fed_flip' && tgt?.alive && tgt.faction === 'player' && !hasTrait(tgt, 'Loyal-to-a-fault') && opinion(s, tgt.id, s.playerId) < 30 && !s.flags.informant) {
@@ -1380,6 +1415,12 @@ function strikeTitle(s: GameState, t: Threat): string {
 }
 
 function strikeText(s: GameState, t: Threat): string {
+  const gk = t.gk ? s.characters[t.gk] : undefined;
+  const base = strikeBody(s, t);
+  return gk ? `You are where ${gk.firstName} booked you, at the hour he wrote down. ${base}` : base;
+}
+
+function strikeBody(s: GameState, t: Threat): string {
   const by = rivalName(s, t.by);
   switch (t.kind) {
     case 'hit': return t.targetId === s.playerId ? `Two cars with their lights off, one at each end of the block. The man on your door says they have been sitting there twenty minutes. ${by}.` : `A phone call: two men from out of town are waiting outside the bar where ${personName(s, t.targetId)} drinks. ${by} sent them.`;

@@ -12,6 +12,8 @@ import { allure } from './looks';
 import { getPerson } from './polPeople';
 import { mutP } from './polState';
 import { addSecret } from './secrets';
+import { addSuspicion } from './peopleRead';
+import { discoverGate, gateHolder, turnOf } from './planner/gateCore';
 import { ensureRomance } from './storyState';
 import { ensureThreats, isPoliceKind, KIND_LABEL, tipFromOutside, type Threat, type TipTruth } from './threats';
 import { ADULT_ROLES, ROLE_LABEL } from './nightlifeState';
@@ -769,6 +771,15 @@ export function hushItem(s: GameState, h: Hire, key: string): HushItem | undefin
       return mk('informant', `${on.firstName} meets two men in a car behind the church on Sundays. She thinks they are federal.`, { secret: sec.id, conf: 'likely' });
     }
     return mk('informant', `${on.firstName} has been taking calls he will not take in the house.`, { conf: 'rumor' });
+  });
+  // 5b. He keeps the boss's door, and he has turned (planner/gateCore.ts): at home he keeps the other book.
+  const gt = gateHolder(s);
+  const gturn = gt && gt.c.id === on.id ? turnOf(s, on.id) : undefined;
+  if (gturn && truth !== 'false') tries.push(() => {
+    const it = mk('plot', `${on.firstName} keeps a second little book at home, and takes calls about who gets in to see you: ${gturn.text}.`, { conf: truth === 'solid' ? 'likely' : 'rumor' });
+    addSuspicion(s, on.id, 'flip', truth === 'solid' ? 25 : 12, `His wife, on the quiet payroll: ${on.firstName} keeps a second book about who gets in to see you.`, 'payroll');
+    if (truth === 'solid' && rel >= 60) discoverGate(s, on.id, 'A quiet envelope');
+    return it;
   });
   // 6. City Hall: his vote, and the dirt that buys it.
   const pp = polOf(s, on.id);

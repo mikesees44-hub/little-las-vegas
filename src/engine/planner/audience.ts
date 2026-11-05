@@ -1,6 +1,6 @@
 import { attr } from '../attrs';
 import { officeVisitors, type OfficeUi, type VisitorKind } from '../bossOffice';
-import { displayName, hasTrait, isFree } from '../characters';
+import { displayName, hasTrait } from '../characters';
 import { holder } from '../council';
 import { tieOf } from '../deeds/state';
 import { pushAsk } from '../deeds/npc';
@@ -21,6 +21,14 @@ import { DAY_NAMES, today } from '../days';
 import type { Character, Effect, GameState, RivalId } from '../types';
 import { bookHours, nowHour, PLAN_HOURS, slotBlock } from './hours';
 import { ensurePlanner, plannerOf, pushDone } from './state';
+import { armedTurn, chosenRole, gateHolder, gateOdds, h01, type GateRole } from './gateCore';
+
+/** A warning held back at the door comes out (the boss found it himself). Pure. */
+export function releaseTip(s: GameState, id: string): GameState {
+  const T = s.threats;
+  if (!T || !T.tips.some((t) => t.id === id && t.held)) return s;
+  return { ...s, threats: { ...T, tips: T.tips.map((t) => { if (t.id !== id) return t; const n = { ...t }; delete n.held; return n; }) } };
+}
 
 /**
  * REQUESTS FOR AN AUDIENCE (DONS_PLANNER.md §3). Everybody wants time with the Don and he has eighteen
@@ -51,7 +59,7 @@ export const BIAS_BRIBE = 15;
 export type ReqKind = VisitorKind | 'warning';
 
 export interface ReqPart { v: number; why: string[] }
-export interface ReqBias { v: number; kind: 'friend' | 'rival' | 'bribe'; text: string; amount?: number }
+export interface ReqBias { v: number; kind: 'friend' | 'rival' | 'bribe' | 'stall' | 'push'; text: string; amount?: number }
 
 export interface AudienceReq {
   key: string;
@@ -78,9 +86,11 @@ export interface AudienceReq {
   refused: number;
   /** Already on the book (the scheduled item's id). */
   booked?: { id: string; w: number; d: number; h: number };
+  /** Held back at the door (only in the full list the boss reads himself): who held him. */
+  held?: string;
 }
 
-export interface Gatekeeper { id?: string; name: string; role: 'consigliere' | 'underboss' | 'none'; line: string }
+export interface Gatekeeper { id?: string; name: string; role: GateRole | 'none'; line: string; /** The role the boss gave the door (it may be empty: then the next seat keeps it). */ chosen: GateRole }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
 function hroll(str: string): number {
@@ -90,16 +100,17 @@ function hroll(str: string): number {
 }
 const first = (c: Character | undefined) => (c ? (c.nickname ? `"${c.nickname}"` : c.firstName) : 'He');
 
-/** Who keeps the door: the consigliere, else the underboss. */
+/** Who keeps the door: the one the boss picked (Standing Orders), else the consigliere, else the underboss. */
 export function gatekeeper(s: GameState): Gatekeeper {
-  for (const role of ['consigliere', 'underboss'] as const) {
-    const c = holder(s, role);
-    if (c && isFree(s, c) && c.id !== s.playerId) {
-      const greedy = hasTrait(c, 'Greedy') || attr(s, c, 'greed') >= 60;
-      return { id: c.id, name: displayName(c), role, line: `${first(c)} keeps the door.${greedy ? ' He has been known to take an envelope.' : ''}` };
-    }
+  const g = gateHolder(s);
+  const chosen = chosenRole(s);
+  if (g) {
+    const c = g.c;
+    const greedy = hasTrait(c, 'Greedy') || attr(s, c, 'greed') >= 60;
+    const she = c.gender === 'F';
+    return { id: c.id, name: displayName(c), role: g.role, chosen, line: `${first(c)} keeps the door.${greedy ? ` ${she ? 'She has' : 'He has'} been known to take an envelope.` : ''}` };
   }
-  return { name: 'Nobody', role: 'none', line: 'Nobody keeps the door: they line up in the order they came.' };
+  return { name: 'Nobody', role: 'none', chosen, line: 'Nobody keeps the door: they line up in the order they came.' };
 }
 
 /* ------------------------------------------------------------------ */
@@ -230,27 +241,70 @@ function raws(s: GameState, ui: OfficeUi): Raw[] {
   return out;
 }
 
-/** The requests for an audience, as the gatekeeper ranks them (best first). Below the chair there is no door: none. */
-export function audienceRequests(s: GameState, ui: OfficeUi = {}): AudienceReq[] {
+/**
+ * A turned gatekeeper's hand on the list (planner/gateCore.ts armedTurn): a loyal man's request is held back
+ * (it never reaches the boss) or stalled ("it can wait"), and the men on his side are pushed up. Each with
+ * his odds; hashed, so the list reads the same all week. Undefined for every request when he is loyal.
+ */
+function turnedHand(s: GameState, c: Character | undefined, key: string): { held?: string; bias?: ReqBias } {
+  const a = armedTurn(s);
+  if (!a || !c || c.id === a.c.id) return {};
+  const p = gateOdds(s, a.c);
+  const gk = a.c;
+  const theirs = a.turn.with.includes(c.id) || (a.turn.rival !== undefined && (c.informantFor === a.turn.rival || c.courtedBy?.rival === a.turn.rival));
+  if (theirs) return { bias: { v: 15, kind: 'push', text: `${first(gk)} says he should be heard` } };
+  const loyal = c.faction === 'player' && opinion(s, c.id, s.playerId) >= 35;
+  if (!loyal) return {};
+  const r = h01(s, `aud|${s.week}|${key}|${gk.id}`);
+  if (r < p * 0.5) return { held: gk.id };
+  if (r < p) return { bias: { v: -15, kind: 'stall', text: `${first(gk)} says it can wait` } };
+  return {};
+}
+
+/** Every request at the door, held ones included (marked): what the boss sees when he reads the full list himself. */
+export function allRequests(s: GameState, ui: OfficeUi = {}): AudienceReq[] {
   if (s.gameOver || inTheRanks(s)) return [];
   const g = gatekeeper(s);
   const P = plannerOf(s);
   const booked = new Map<string, { id: string; w: number; d: number; h: number }>();
   for (const it of s.action?.sched ?? []) if (it.kind === 'plan' && it.payload.pk === 'audience') booked.set(String(it.payload.key), { id: it.id, w: it.w, d: it.d, h: it.h });
-  const list = raws(s, ui).filter((r) => P.turned[r.key] === undefined || P.turned[r.key] < s.week).map((r): AudienceReq => {
+  const rs = raws(s, ui);
+  // The warnings he held back at the door (gateWeek): only the full list has them.
+  for (const t of s.threats?.tips ?? []) {
+    if (!t.held || t.status !== 'waiting' || t.deadline < s.week) continue;
+    const c = s.characters[t.sourceId];
+    if (c && !c.alive) continue;
+    rs.push({ key: `tip:${t.id}`, kind: 'warning', charId: c ? c.id : undefined, name: t.sourceName, role: t.sourceRole, why: `Wants an urgent word: ${t.hint}`, urgent: true, ref: { tip: t.id } });
+  }
+  const list = rs.filter((r) => P.turned[r.key] === undefined || P.turned[r.key] < s.week).map((r): AudienceReq => {
     const c = r.charId ? s.characters[r.charId] : undefined;
     const close = closeness(s, c);
     const desp = desperation(s, c, r.kind, !!r.urgent);
     const money = moneyPart(s, r.ref);
     const base = Math.round(W_CLOSE * close.v + W_DESP * desp.v + W_MONEY * money.v);
-    const bias = gateBias(s, g, c, desp.v);
+    const tip = r.ref.tip ? s.threats?.tips.find((x) => x.id === r.ref.tip) : undefined;
+    const hand = tip ? (tip.held ? { held: tip.held } : {}) : turnedHand(s, c, r.key);
+    const bias = [...gateBias(s, g, c, desp.v), ...(hand.bias ? [hand.bias] : [])];
     const score = Math.max(0, Math.min(100, base + bias.reduce((a, b) => a + b.v, 0)));
-    return { ...r, close, desp, money, base, score, bias, moved: 0, refused: c ? P.refused[c.id] ?? 0 : 0, ...(booked.has(r.key) ? { booked: booked.get(r.key) } : {}) };
+    return { ...r, close, desp, money, base, score, bias, moved: 0, refused: c ? P.refused[c.id] ?? 0 : 0, ...(booked.has(r.key) ? { booked: booked.get(r.key) } : {}), ...(hand.held ? { held: hand.held } : {}) };
   });
   const fair = list.slice().sort((a, b) => b.base - a.base || a.key.localeCompare(b.key)).map((x) => x.key);
-  list.sort((a, b) => b.score - a.score || a.key.localeCompare(b.key));
+  list.sort((a, b) => (a.held ? 1 : 0) - (b.held ? 1 : 0) || b.score - a.score || a.key.localeCompare(b.key));
   list.forEach((x, i) => { x.moved = fair.indexOf(x.key) - i; });
   return list;
+}
+
+/** The boss read the full list himself today (an hour of his day): the held ones show, marked. */
+export function fullToday(s: GameState): boolean {
+  return plannerOf(s).full === absDay(s);
+}
+
+/** The requests for an audience, as the gatekeeper ranks them (best first). Below the chair there is no door: none. */
+export function audienceRequests(s: GameState, ui: OfficeUi = {}): AudienceReq[] {
+  const all = allRequests(s, ui);
+  if (fullToday(s)) return all;
+  const shown = all.filter((r) => !r.held);
+  return shown.length === all.length ? all : shown;
 }
 
 /* ------------------------------------------------------------------ */
@@ -278,7 +332,9 @@ export function grantAudience(s: GameState, r: AudienceReq, at: Slot | 'now'): {
   const hours = PLAN_HOURS.audience;
   const c = r.charId ? s.characters[r.charId] : undefined;
   if (r.ref.tip) {
-    const x = meetTip(s, r.ref.tip, 'boss');
+    // A warning held back at the door, found in the full list: it comes out now.
+    const s1 = r.held ? releaseTip(s, r.ref.tip) : s;
+    const x = meetTip(s1, r.ref.tip, 'boss');
     if (x === s) return failed(s, 'You cannot meet him now');
     const y = phoneClone(x);
     const P = ensurePlanner(y);
@@ -299,7 +355,8 @@ export function grantAudience(s: GameState, r: AudienceReq, at: Slot | 'now'): {
     pushDone(P, { w: x.week, d: today(x), h: slot.h, t: `Audience: ${r.name}`, r: 'Heard him out', jid, k: 'audience', ...(c ? { who: c.id } : {}) });
     return { state: x, result: okResult(`An hour for ${r.name}`, r.name, `${r.name} sits down across the desk. His matter is in front of you.`, c ? [`${c.firstName} +3: the boss gave me his time`] : []), open: r.ref };
   }
-  scheduleInto(x, { kind: 'plan', day: slot.d, hour: slot.h, w: slot.w, payload: { pk: 'audience', key: r.key, who: c?.id ?? '', name: r.name, title: `Audience: ${r.name}`, why: r.why, hours, ref: r.ref } });
+  const by = gatekeeper(s).id ?? s.playerId;
+  scheduleInto(x, { kind: 'plan', day: slot.d, hour: slot.h, w: slot.w, payload: { pk: 'audience', key: r.key, who: c?.id ?? '', name: r.name, title: `Audience: ${r.name}`, why: r.why, hours, ref: r.ref, by } });
   if (c) addOpinion(x, c.id, x.playerId, 'The boss made time for me', 2, 2);
   journal(x, { d: today(x), c: 'crew', t: `${r.name} is on your book: ${whenWords(s, slot)}`, src: 'planner', mine: 1, ...(c ? { p: [c.id] } : {}) });
   return { state: x, result: okResult(`An hour for ${r.name}`, r.name, `${r.name} is on the book ${whenWords(s, slot)}. ${hours === 1 ? 'An hour' : `${hours} hours`} of that day are his.`) };
