@@ -1,4 +1,5 @@
-import { owned, staffNeed, expectedTake, isOpen } from './business';
+import { owned, staffNeed, expectedTake, isOpen, countKind, newBusiness, playerSlots } from './business';
+import { CATALOG, availableIn } from './catalog';
 import { crew, displayName, hasTrait, isFree } from './characters';
 import { holder, seatOf } from './council';
 import { level } from './crewXp';
@@ -14,7 +15,7 @@ import { turnOf } from './planner/gateCore';
 import { addOpinion, opinion } from './relations';
 import { hashSeed, rand } from './rng';
 import type { ActionPreview } from './actions';
-import type { Attributes, Character, Craft, Effect, GameState, PlayerAction, RivalId } from './types';
+import type { Attributes, BusinessKind, Character, Craft, Effect, GameState, PlayerAction, RivalId } from './types';
 
 /**
  * LET THEM EAT: the men are hungry for work, and they come to the boss with it.
@@ -44,7 +45,7 @@ import type { Attributes, Character, Craft, Effect, GameState, PlayerAction, Riv
  * Dice are hashes of (seed, week, purpose): the main stream is never touched.
  */
 
-export type PitchKind = 'score' | 'game' | 'partner' | 'hustle' | 'racket';
+export type PitchKind = 'score' | 'game' | 'partner' | 'hustle' | 'racket' | 'place';
 export type PitchHow = 'back' | 'piece' | 'join' | 'other' | 'no';
 
 export interface Pitch {
@@ -65,6 +66,8 @@ export interface Pitch {
   due: number;
   /** For a racket ask: the place. */
   biz?: string;
+  /** For a place of his own: what kind, and where. */
+  place?: { kind: BusinessKind; district: string };
 }
 
 export interface EatState {
@@ -463,7 +466,7 @@ export function stakeOf(p: Pitch, how: PitchHow): number {
 
 /** The answers that fit this pitch (a racket ask: put him on it, give it to someone else, or no). */
 export function hows(p: Pitch): PitchHow[] {
-  return p.kind === 'racket' ? ['back', 'other', 'no'] : ['back', 'piece', 'join', 'other', 'no'];
+  return p.kind === 'racket' ? ['back', 'other', 'no'] : p.kind === 'place' ? ['back', 'piece', 'no'] : ['back', 'piece', 'join', 'other', 'no'];
 }
 
 export function previewPitch(s: GameState, pid: string, how: PitchHow): ActionPreview {
@@ -484,6 +487,7 @@ export function previewPitch(s: GameState, pid: string, how: PitchHow): ActionPr
       disabledReason: block ?? (how !== 'no' && (!b || full) ? 'The place has its men now' : how === 'other' && !o ? 'Nobody else for it' : undefined),
     };
   }
+  if (p.kind === 'place') return previewPlace(s, p, c, how, X(), block);
   const stake = stakeOf(p, how);
   const o = how === 'other' ? otherFor(s, p) : undefined;
   const odds = how === 'no' ? undefined : pitchOdds(s, p, how, o ?? c);
@@ -535,6 +539,7 @@ export function answerPitch(ctx: Ctx, pid: string, how: PitchHow): void {
     book(how === 'back' ? `You put ${nm} on ${b?.name ?? 'the racket'}, as he asked` : `${nm} asked for ${b?.name ?? 'the racket'}; you put ${o.firstName} on it`, how === 'back' ? 'He asked for it and got it.' : `${c.firstName} will remember who got it.`, 0, [c.id, o.id]);
     return;
   }
+  if (p.kind === 'place') { answerPlace(ctx, p, c, how, lbl, book); return; }
   const doer = how === 'other' ? otherFor(s, p) : c;
   if (!doer) return;
   const stake = stakeOf(p, how);
@@ -574,6 +579,8 @@ function draftPitch(s: GameState, c: Character, id: string): Pitch {
   const stake = Math.round(((soldier ? 600 : 300) + roll(s, `stake:${c.id}`) * (soldier ? 900 : 400)) / 50) * 50;
   const ret = Math.round((0.45 + roll(s, `ret:${c.id}`) * 0.55) * 100) / 100;
   const base = { id, by: c.id, stake, ret, week: s.week, due: s.week + 4 };
+  // A made man wants a place of his own to earn from.
+  if (c.rank === 'soldier' && r > 0.75) { const pl = placePitch(s, c, id); if (pl) return pl; }
   // A racket short of men: "put me on it".
   const short = owned(s).find((b) => isOpen(s, b) && staffNeed(b) > (b.staffIds ?? []).filter((x) => s.characters[x]?.alive).length);
   if (short && (c.craft === 'collector' || c.craft === 'bookmaker' || c.craft === 'earner' || r < 0.3)) {
@@ -608,6 +615,107 @@ function draftPitch(s: GameState, c: Character, id: string): Pitch {
     ['a shylock book in the Crest', '"Guys in the Crest need money before the season. Front me a book and I\'ll work it."'],
   ]);
   return { ...base, kind: 'hustle', what, text };
+}
+
+/* ------------------------------------------------------------------ */
+/* A place of his own: a made man asks for a spot to earn from          */
+/* ------------------------------------------------------------------ */
+
+/** The fronts a made man asks to open, by what he is good at. */
+const PLACE_KINDS: Record<string, BusinessKind[]> = {
+  earner: ['restaurant', 'bar', 'vending'], talker: ['bar', 'restaurant', 'pizza'], bookmaker: ['bar', 'vending', 'pizza'],
+  driver: ['carlot', 'vending', 'pizza'], collector: ['vending', 'bar', 'pizza'], muscle: ['pizza', 'bar', 'carlot'], burglar: ['carlot', 'pizza', 'bar'],
+};
+const PLACE_WORDS: Partial<Record<BusinessKind, string>> = {
+  restaurant: 'A place with red booths and a back table. I run the room, the Family gets the kick and the books for the washing.',
+  bar: 'A bar and grill. Regulars all year, and a bar is where you hear things.',
+  vending: 'A jukebox and cigarette route. Every machine in every bar, and I collect.',
+  pizza: 'A pizza parlor. Tomato pie by the slice, and the register rings whether anyone ate or not.',
+  carlot: 'A used-car lot. Cash deals, and a back lot where nobody asks.',
+};
+
+/** Where and what he would open, if there is room for it (a district the Family holds with a storefront free). */
+export function placeFor(s: GameState, c: Character): { kind: BusinessKind; district: string } | undefined {
+  const kinds = (PLACE_KINDS[c.craft ?? ''] ?? ['pizza', 'bar', 'restaurant']).filter((k) => CATALOG[k] && availableIn(k, s.date.y) && countKind(s, k) < (CATALOG[k].max ?? 4));
+  const home = c.capoId ? s.districts.find((d) => d.capoId === c.capoId) : undefined;
+  const ds = s.districts.filter((d) => (d.influence.player ?? 0) >= 20 && (() => { const sl = playerSlots(s, d.id); return sl.used < sl.max; })())
+    .sort((a, b) => (a.id === home?.id ? -1 : b.id === home?.id ? 1 : (b.influence.player ?? 0) - (a.influence.player ?? 0)));
+  const k = kinds[0];
+  return k && ds[0] ? { kind: k, district: ds[0].id } : undefined;
+}
+
+function placePitch(s: GameState, c: Character, id: string, due = 4): Pitch | undefined {
+  const pl = placeFor(s, c);
+  if (!pl) return undefined;
+  const def = CATALOG[pl.kind];
+  const d = s.districts.find((x) => x.id === pl.district);
+  const what = `a ${def.name.toLowerCase()} in ${d?.name ?? 'town'}`;
+  return { id, by: c.id, kind: 'place', stake: def.cost, ret: 0, week: s.week, due: s.week + due, place: pl, what,
+    text: `"Boss, I need a place to make money. Help me open ${what}. ${PLACE_WORDS[pl.kind] ?? 'I run it, the Family gets its end.'}"` };
+}
+
+/** He asks now (Discuss business with your own made man). Returns the pitch, or undefined if there is no room or he already has one. */
+export function askForPlace(s: GameState, c: Character): Pitch | undefined {
+  const e = ensureEat(s);
+  if (c.faction !== 'player' || !(c.rank === 'soldier' || c.rank === 'capo')) return undefined;
+  const have = e.pitches.find((p) => p.by === c.id);
+  if (have) return have.kind === 'place' ? have : undefined;
+  const p = placePitch(s, c, `pi${e.next++}`, 6);
+  if (!p) return undefined;
+  e.pitches.push(p);
+  e.last[c.id] = s.week;
+  return p;
+}
+
+function placeWhy(s: GameState, p: Pitch, cost: number): string | undefined {
+  const pl = p.place;
+  if (!pl) return 'Nothing to open';
+  const d = s.districts.find((x) => x.id === pl.district);
+  const sl = playerSlots(s, pl.district);
+  if ((d?.influence.player ?? 0) < 20) return `You need 20% of ${d?.name ?? 'the district'} first`;
+  if (sl.used >= sl.max) return `No storefronts left for you in ${d?.name ?? 'the district'}`;
+  if (countKind(s, pl.kind) >= (CATALOG[pl.kind].max ?? 4)) return `You already own enough of those`;
+  if (s.money < cost) return `Needs ${fmtMoney(cost)}`;
+  return undefined;
+}
+
+/** His half of the money for a piece (he puts it up from what he has). */
+const HIS_HALF = (p: Pitch) => Math.round(p.stake / 2 / 50) * 50;
+
+function previewPlace(s: GameState, p: Pitch, c: Character, how: PitchHow, X: Effect, block?: string): ActionPreview {
+  const nm = c.firstName;
+  const def = CATALOG[p.place!.kind];
+  const half = HIS_HALF(p);
+  const cost = how === 'back' ? p.stake : how === 'piece' ? p.stake - half : 0;
+  const wk = Math.round(def.base);
+  const title = how === 'back' ? `Open it for ${nm} (${fmtMoney(p.stake)})` : how === 'piece' ? `Go halves with ${nm} (${fmtMoney(cost)})` : `Tell ${nm} no`;
+  const detail = how === 'no' ? 'He goes back to the street with nothing. A made man who asks for a place and gets no remembers it.'
+    : `${def.name}, ${p.what.replace(/^a .*? in /, 'in ')}. The Family owns it and ${nm} runs it: about ${fmtMoney(wk)}/wk before the season, upkeep ${fmtMoney(def.upkeep)}/wk${def.launder ? `, washes ${fmtMoney(def.launder)}/wk` : ''}. ${how === 'piece' ? `${nm} puts up ${fmtMoney(half)} of his own: it is half his, and he works it harder for that.` : 'He owes you for it.'}`;
+  const why = how === 'no' ? block : block ?? placeWhy(s, p, cost) ?? (how === 'piece' && c.wealth < half ? `${nm} doesn't have ${fmtMoney(half)}` : undefined);
+  return { title, detail, effects: [X], cost, because: how === 'no' ? `told ${nm} no on ${p.what}` : `opened ${p.what} for ${nm}`, category: 'event', disabledReason: why };
+}
+
+function answerPlace(ctx: Ctx, p: Pitch, c: Character, how: PitchHow, lbl: string, book: (t: string, x: string, m?: number, ids?: string[]) => void): void {
+  const s = ctx.s;
+  const half = HIS_HALF(p);
+  const cost = how === 'piece' ? p.stake - half : p.stake;
+  const why = placeWhy(s, p, cost) ?? (how === 'piece' && c.wealth < half ? 'he was short' : undefined);
+  const nm = displayName(c);
+  if (why || !p.place) { book(`${nm}'s place fell through`, `${why ?? 'There was no room for it'}. He is still waiting for a place.`); return; }
+  const b = newBusiness(s, p.place.kind, p.place.district);
+  const fx: Effect[] = [
+    { type: 'money', amount: -cost, label: `${lbl}: opening it` },
+    { type: 'addBusiness', business: b, label: lbl },
+    opn(s, c, how === 'piece' ? 12 : 10, how === 'piece' ? 'The boss went halves with me on my place' : 'The boss opened a place for me'),
+  ];
+  if (how === 'piece') fx.push({ type: 'wealth', charId: c.id, amount: -half });
+  applyEffects(ctx, fx, { label: lbl, because: `opened ${p.what} for ${c.firstName}`, category: 'event' });
+  const nb = s.businesses.find((x) => x.owner === 'player' && x.name === b.name && x.boughtWeek === s.week);
+  if (nb) applyStaff(ctx, c.id, nb.id);
+  const e = ensureEat(s);
+  e.fed[c.id] = s.week;
+  e.since[c.id] = s.week;
+  book(how === 'piece' ? `You went halves with ${nm}: ${b.name} is open` : `You opened ${b.name} for ${nm}`, `He runs it; the Family owns it.${how === 'piece' ? ` He put up ${fmtMoney(half)} of his own.` : ''}`, -cost, [c.id]);
 }
 
 /** The open pitch of a capo's man that he would bring to a morning (one at a time, the oldest first). */

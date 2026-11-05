@@ -2,6 +2,7 @@ import type { ActionPreview } from './actions';
 import { ageOn } from './calendar';
 import { displayName, hasTrait } from './characters';
 import { applyEffects, fmtMoney, shiftInfluence } from './effects';
+import { askForPlace } from './eat';
 import { ensureHood } from './hoodState';
 import type { Acceptance, Reason } from './interactions';
 import { money, type Ctx } from './ledger';
@@ -79,7 +80,7 @@ export type TalkOp = { t: 'ask'; talk: TalkId; target: string } | { t: 'answer';
 export const TALKS: Record<TalkId, { label: string; verb: string; base: number; counter: boolean; blurb: string }> = {
   meeting: { label: 'Request a meeting', verb: 'asked for a sit-down with', base: 45, counter: true, blurb: 'A table, coffee, nobody else. Opens the door to partnerships and settlements.' },
   job: { label: 'Offer employment', verb: 'offered a job to', base: 38, counter: true, blurb: 'A paycheck from one of your places. People on your payroll remember who signs it.' },
-  business: { label: 'Discuss business', verb: 'talked business with', base: 42, counter: true, blurb: 'Who is selling, who is overextended, where the money is going.' },
+  business: { label: 'Discuss business', verb: 'talked business with', base: 42, counter: true, blurb: 'Who is selling, who is overextended, where the money is going. Your own made man asks for a place to make money, and you help him open it.' },
   partner: { label: 'Form a partnership', verb: 'proposed a partnership to', base: 22, counter: true, blurb: 'A joint venture for a year: a weekly share, and a family that will not move on you.' },
   advice: { label: 'Ask for advice', verb: 'asked the advice of', base: 72, counter: false, blurb: 'People like being asked. Sometimes they are even right.' },
   grievance: { label: 'Discuss a grievance', verb: 'heard out', base: 45, counter: true, blurb: 'Let him say it to your face, before he says it to someone else.' },
@@ -165,6 +166,7 @@ export function talkOdds(s: GameState, talk: TalkId, c: Character): TalkOdds {
   const crew = c.faction === 'player' && c.rank !== 'civilian';
   const boss = rivalLed(s, c);
   if (crew) reasons.push({ label: 'He is one of yours', value: 15 });
+  if (crew && talk === 'business' && (c.rank === 'soldier' || c.rank === 'capo')) reasons.push({ label: 'A made man of yours: he has been waiting to ask for a place', value: 30 });
   else if (c.dynasty) reasons.push({ label: 'Family', value: 18 });
   else if (boss || s.rivals.some((r) => r.id === c.faction)) reasons.push({ label: 'Another family', value: -12 });
   const r = boss ? s.rivals.find((x) => x.id === boss) : undefined;
@@ -251,6 +253,13 @@ function agreeEffects(ctx: Ctx, talk: TalkId, c: Character, terms?: { weekly?: n
       break;
     }
     case 'business': {
+      // Your own made man: he asks for a place to make money, and you help him open it.
+      const ask = c.faction === 'player' ? askForPlace(s, c) : undefined;
+      if (ask) {
+        text = `${displayName(c)} wants a place of his own: ${ask.what}. Help him open it (Crew ▸ Let them eat).`;
+        eff.push({ type: 'opinion', from: c.id, to: s.playerId, amount: 4, reason: 'Talked business', decay: 1 });
+        break;
+      }
       const h = ensureHood(s);
       const lots = (s.econ?.lots ?? []).filter((l) => l.status === 'sale' && l.use && l.stage === 'open');
       const l = lots.length ? pick(t, lots) : undefined;
