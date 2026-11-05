@@ -5,6 +5,8 @@ import { SideChip, SideFilterBar } from '../components/Side';
 import { sideMatches, type SideFilter } from '../../engine/sides';
 import { VerbMenu } from '../plans/GoalMenu';
 import { FIND_KIND_LABEL, findAll, type FindResult } from './find';
+import { AskPanel } from '../ai/AskCounsel';
+import { askLabel } from '../../engine/ai/counsel';
 
 const ICON = { do: '✦', screen: '▤', person: '☺', place: '⌖' } as const;
 
@@ -17,7 +19,10 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
   const [sel, setSel] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const [who, setWho] = useState<SideFilter>('all');
+  // Not a known thing to do: put the question to the consigliere instead (ui/ai/AskCounsel.tsx).
+  const [asking, setAsking] = useState<string | undefined>();
   const hits = useMemo(() => findAll(s, q, { open }).filter((r) => r.kind !== 'person' || !r.side || sideMatches(r.side, who)), [s, q, open, who]);
+  const offerAsk = q.trim().length >= 2 && !hits.some((r) => r.kind === 'do');
   useEffect(() => { input.current?.focus(); }, []);
   useEffect(() => setSel(0), [q]);
   const pick = (r?: FindResult) => { if (r) onPick(r); };
@@ -25,9 +30,22 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
     if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onClose(); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); setSel((x) => Math.min(hits.length - 1, x + 1)); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); setSel((x) => Math.max(0, x - 1)); }
-    else if (e.key === 'Enter') { e.preventDefault(); pick(hits[sel]); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (hits[sel]) pick(hits[sel]); else if (offerAsk) setAsking(q.trim()); }
   };
   let lastKind = '';
+  if (asking !== undefined) {
+    return (
+      <Overlay z={1190} className="flex items-start justify-center bg-black/60 p-2 pt-[8vh] sm:pt-[12vh]" onClick={onClose} data-testid="find-palette">
+        <div className="panel w-full max-w-xl overflow-hidden border-gold-600/60 shadow-2xl shadow-black/80" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); onClose(); } }} role="dialog" aria-label="Ask the consigliere">
+          <AskPanel s={s} initialQ={asking} autoAsk />
+          <div className="flex justify-between border-t border-noir-800 px-3 py-1.5">
+            <button type="button" className="btn-quiet text-[11px]" onClick={() => setAsking(undefined)} data-testid="find-ask-back">◂ Back to Find</button>
+            <button type="button" className="btn-quiet text-[11px]" onClick={onClose}>Esc</button>
+          </div>
+        </div>
+      </Overlay>
+    );
+  }
   return (
     <Overlay z={1190} className="flex items-start justify-center bg-black/60 p-2 pt-[8vh] sm:pt-[12vh]" onClick={onClose} data-testid="find-palette">
       <div className="panel w-full max-w-xl overflow-hidden border-gold-600/60 shadow-2xl shadow-black/80" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Find">
@@ -42,8 +60,11 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
           {q.trim().length < 2 ? (
             <VerbMenu s={s} open={open} onPick={onPick} />
           ) : !hits.length ? (
-            <p className="px-2 py-3 text-xs text-stone-400">Nothing by that name. Try another word.</p>
-          ) : hits.map((r, i) => {
+            <>
+              <p className="px-2 py-3 text-xs text-stone-400">Nothing by that name. Try another word, or put it to your consigliere.</p>
+              <AskRow s={s} q={q} onAsk={() => setAsking(q.trim())} />
+            </>
+          ) : [...hits.map((r, i) => {
             const head = r.kind !== lastKind ? FIND_KIND_LABEL[r.kind] : undefined;
             lastKind = r.kind;
             return (
@@ -59,9 +80,25 @@ export function FindPalette({ s, open, onPick, onClose }: { s: GameState; open?:
                 </button>
               </div>
             );
-          })}
+          }), offerAsk ? <AskRow key="ask" s={s} q={q} onAsk={() => setAsking(q.trim())} /> : null]}
         </div>
       </div>
     </Overlay>
+  );
+}
+
+/** "Ask the consigliere": the question as typed, put to him. */
+function AskRow({ s, q, onAsk }: { s: GameState; q: string; onAsk: () => void }) {
+  return (
+    <div>
+      <div className="px-2 pb-0.5 pt-2 text-[10px] uppercase tracking-[0.25em] text-stone-500">Ask the consigliere</div>
+      <button type="button" onClick={onAsk} data-testid="find-ask" className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left hover:bg-noir-800">
+        <span className="mt-0.5 w-4 shrink-0 text-center text-gold-500" aria-hidden>✎</span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm text-stone-100">{askLabel(s).replace(/…$/, '')}: “{q.trim()}”</span>
+          <span className="block truncate text-[11px] text-stone-500">He answers from what he knows and puts the orders he'd give in front of you</span>
+        </span>
+      </button>
+    </div>
   );
 }

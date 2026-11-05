@@ -73,7 +73,7 @@ export function inventedNames(text: string, known: Set<string>): string[] {
  * first and last) found in the text, any case. A last name an allowed person
  * shares is not counted.
  */
-export function badCharNames(s: GameState, text: string, allowed: ReadonlySet<string>): string[] {
+export function badCharNames(s: GameState, text: string, allowed: ReadonlySet<string>, known?: ReadonlySet<string>): string[] {
   const okLast = new Set<string>();
   const okFirst = new Set<string>();
   for (const id of allowed) { const c = s.characters[id]; if (c) { okLast.add(c.lastName.toLowerCase()); okFirst.add(c.firstName.toLowerCase()); } }
@@ -82,13 +82,13 @@ export function badCharNames(s: GameState, text: string, allowed: ReadonlySet<st
   for (const c of Object.values(s.characters)) {
     if (allowed.has(c.id) || !c.lastName || c.lastName.length < 4) continue;
     const last = c.lastName.toLowerCase();
-    if (okLast.has(last) || COMMON.has(last)) continue;
+    if (okLast.has(last) || COMMON.has(last) || known?.has(last)) continue;
     if (t.includes(` ${last} `) || t.includes(` ${last}'s `)) out.add(c.lastName);
   }
   for (const d of s.departed ?? []) {
     const nm = (d as { name?: string }).name;
     const last = nm?.split(/\s+/).pop()?.toLowerCase();
-    if (last && last.length >= 4 && !okLast.has(last) && !COMMON.has(last) && t.includes(` ${last} `)) out.add(last);
+    if (last && last.length >= 4 && !okLast.has(last) && !COMMON.has(last) && !known?.has(last) && t.includes(` ${last} `)) out.add(last);
   }
   return [...out];
 }

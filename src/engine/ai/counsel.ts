@@ -1,5 +1,5 @@
 import { previewAction } from '../actions';
-import { recommendedActions } from '../briefing';
+import { briefing, recommendedActions, speakerLabel } from '../briefing';
 import { isInSeason } from '../calendar';
 import { displayName, isFree, player } from '../characters';
 import { holder } from '../council';
@@ -41,7 +41,7 @@ export const TOPIC_LABEL: Record<AskTopic, string> = { money: 'Money', men: 'The
 export const ANSWER_WORDS = 120;
 export const MAX_PICKS = 3;
 export const MAX_QUESTION = 300;
-export const MENU_SIZE = 12;
+export const MENU_SIZE = 16;
 
 export interface MenuItem {
   /** Index in the menu (what Claude picks by). */
@@ -163,7 +163,7 @@ export function counselBrief(s: GameState): CounselBrief {
   for (const r of fam) {
     const bits = [`muscle ${r.muscle}/100`];
     if (r.feud) bits.push('a blood feud with you');
-    if (r.lastMove && s.week - r.lastMove.week <= 3) bits.push(`lately: ${r.lastMove.text}`);
+    if (r.lastMove && s.week - r.lastMove.week <= 3) bits.push(`lately: ${r.lastMove.text.replace(/[.\s]+$/, '')}`);
     L.war.push(`${r.name}: ${bits.join('; ')}.`);
   }
   for (const p of (s.talks?.pacts ?? []).filter((p) => p.until >= s.week && (p.a === 'player' || p.b === 'player'))) {
@@ -193,10 +193,11 @@ export function counselBrief(s: GameState): CounselBrief {
   if (rv.mornings.length) L.next.push(`${rv.mornings.length} people still want a word with you this week.`);
   for (const l of rv.lapses.slice(0, 3)) L.next.push(`Runs out when the week turns: ${l.title}.`);
   for (const w of rv.warnings.slice(0, 2)) L.next.push(`Warning: ${w}`);
-  for (const r of recommendedActions(s).slice(0, 4)) {
-    const who = r.item.charId ? s.characters[r.item.charId] : undefined;
-    if (who) people.add(who.id);
-    L.next.push(`${who ? who.firstName : r.item.speaker} (${r.item.role}) on ${r.item.topic}: "${clean(r.item.line, 160)}" Recommends: ${r.option.label}.`);
+  const bf = briefing(s);
+  for (const r of recommendedActions(s, bf).slice(0, 4)) {
+    if (r.item.charId && s.characters[r.item.charId]) people.add(r.item.charId);
+    const sp = speakerLabel(bf, r.item.speaker);
+    L.next.push(`${/^your /.test(sp) ? sp.replace(/^your/, 'Your') : `${sp} (your ${r.item.role})`} on ${r.item.topic}: "${clean(r.item.line, 160)}" Recommends: ${r.option.label}.`);
   }
   if (!L.next.length) L.next.push('Nothing is pressing this week.');
 
@@ -215,7 +216,7 @@ const TOPIC_WORDS: [AskTopic, RegExp][] = [
   ['law', /\b(cops?|heat|law|lawyer|feds?|lay low|lie low|police|judge|pinch|bail)\b/i],
   ['war', /\b(war|rival|truce|peace|raid|pact|feud|family's|offers|muscle)\b/i],
   ['women', /\b(wife|wedding|woman|girl|kids|christening|her|marriage|date)\b/i],
-  ['men', /\b(capo|soldier|crew|man|men|loyal|envelope|short|score|job|earner|him|his)\b/i],
+  ['men', /\b(capo|soldier|crew|man|men|loyal|envelope|short|score|job|earner|dinner)\b/i],
   ['money', /\b(money|racket|buy|sell|business|cash|\$|earn|take|invest|bank)\b/i],
 ];
 
@@ -243,12 +244,15 @@ export function counselMenu(s: GameState): MenuItem[] {
     seen.add(k);
     const odds = p.acceptance ?? p.odds;
     out.push({
-      i: out.length, action, title: clean(title ?? p.title, 90), why: clean(why, 160), topics: topicsOf(`${title ?? p.title} ${why}`, topics),
+      i: out.length, action, title: clean(title ?? p.title, 90), why: clean(why, 160), topics: topicsOf(title ?? p.title, topics),
       cost: p.cost, pot: p.pot === 'pocket' ? 'pocket' : 'family', odds: odds ? odds.chance : undefined, disabled: p.disabledReason,
     });
   };
   // What his people already recommend (the brief's own picks).
-  for (const r of recommendedActions(s).slice(0, 4)) add(r.action, r.item.line, [], r.option.label);
+  for (const r of recommendedActions(s).slice(0, 4)) {
+    const lbl = r.option.label.split(/\s+/).length < 3 ? `${r.item.topic}: ${r.option.label}` : r.option.label;
+    add(r.action, r.item.line, topicsOf(`${r.item.topic} ${r.option.label}`), lbl);
+  }
   // The money: where it leaks, what is for sale.
   const mv = moneyView(s, true);
   if (mv.leak?.action) add(mv.leak.action, mv.leak.why, ['money'], mv.leak.fix);
@@ -274,7 +278,9 @@ export function counselMenu(s: GameState): MenuItem[] {
 
 /** The menu items that fit the question (any topic), the usable ones first. */
 function menuFor(menu: readonly MenuItem[], topics: readonly AskTopic[]): MenuItem[] {
-  return menu.filter((m) => m.topics.some((t) => topics.includes(t))).sort((a, b) => Number(!!a.disabled) - Number(!!b.disabled) || a.i - b.i);
+  // The question's main topic first, then the rest it touches; usable before unavailable; then the menu's own order.
+  const rank = (m: MenuItem) => Math.min(...topics.map((t, k) => (m.topics.includes(t) ? k : 99)));
+  return menu.filter((m) => rank(m) < 99).sort((a, b) => Number(!!a.disabled) - Number(!!b.disabled) || rank(a) - rank(b) || a.i - b.i);
 }
 
 /* ------------------------------------------------------------------ */
@@ -331,7 +337,7 @@ export function validateCounsel(s: GameState, raw: unknown, menu: readonly MenuI
     if (bad) return { ok: false, why: bad };
     const inv = inventedNames(t, known);
     if (inv.length) return { ok: false, why: `names not in the brief: ${inv.join(', ')}` };
-    const who = badCharNames(s, t, new Set(b.people));
+    const who = badCharNames(s, t, new Set(b.people), known);
     if (who.length) return { ok: false, why: `people not in the brief: ${who.join(', ')}` };
     const cash = strangeMoney(t, `${b.text}\n${menuText(menu)}`);
     if (cash.length) return { ok: false, why: `figures not in the brief: ${cash.join(', ')}` };
