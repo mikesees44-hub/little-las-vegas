@@ -176,6 +176,18 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'z10', m: false, age: [22, 40], tags: ['star', 'glam'] },
   { k: 'z12', m: false, age: [24, 44], tags: ['star', 'glam'], eth: 'Irish' },
   { k: 'z11', m: false, age: [21, 38], tags: [], reserved: true },
+  // The eleventh set: the house and the stage (one left out, two kept for later).
+  { k: 'q01', m: false, age: [24, 44], tags: ['star', 'glam'] },
+  { k: 'q02', m: false, age: [24, 44], tags: ['star', 'glam'] },
+  { k: 'q03', m: false, age: [22, 40], tags: ['glam'], eth: 'Irish' },
+  { k: 'q05', m: false, age: [36, 58], tags: ['pro', 'wife'] },
+  { k: 'q06', m: false, age: [20, 36], tags: ['glam'] },
+  { k: 'q09', m: false, age: [38, 60], tags: ['pro', 'star'], eth: 'Irish' },
+  { k: 'q10', m: false, age: [21, 34], tags: ['star', 'glam'] },
+  { k: 'q11', m: false, age: [21, 38], tags: ['star', 'glam'] },
+  { k: 'q12', m: false, age: [22, 46], tags: ['pro'], eth: 'Irish' },
+  { k: 'q04', m: false, age: [22, 42], tags: [], reserved: true },
+  { k: 'q08', m: false, age: [21, 38], tags: [], reserved: true },
   // A club singer and a woman whose families the game does not have yet: kept for when it does.
   { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
   { k: 'v07', m: false, age: [20, 40], tags: [], reserved: true },
