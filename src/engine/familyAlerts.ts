@@ -21,9 +21,9 @@ export function familyAlerts(s: GameState): Alert[] {
   if (pv) out.push({ kind: 'family', severity: 'warn', title: `${pv.by.firstName} has a match for ${pv.member.firstName}`, text: `${pv.spouse.firstName} ${pv.spouse.lastName} of ${pv.house.name}. Bless it, grumble, veto, or name your own.`, tab: 'house.marriages' });
   // Ma's match for the boss himself, and a woman who came to him (single.ts).
   const fx = fixView(s);
-  if (fx) out.push({ kind: 'family', severity: 'warn', title: `${fx.call} has a girl for you`, text: `${fx.c.firstName} ${fx.c.lastName}, ${fx.age}. Meet her, put ${fx.call} off, find your own, or let her decide.`, charId: fx.c.id, tab: 'you.dating' });
+  if (fx) out.push({ kind: 'family', severity: 'warn', title: `${fx.call} has a girl for you`, text: `${fx.c.firstName} ${fx.c.lastName}, ${fx.age}. Meet her, put ${fx.call} off, find your own, or let her decide.`, tab: 'you.dating' });
   const ap = approachView(s);
-  if (ap) out.push({ kind: 'family', severity: 'info', title: `${ap.c.firstName} came to you`, text: `${ap.info.label}. Take her out, slow it down, or turn her down.`, charId: ap.c.id, tab: 'you.dating' });
+  if (ap) out.push({ kind: 'family', severity: 'info', title: `${ap.c.firstName} came to you`, text: `${ap.info.label}. Take her out, slow it down, or turn her down.`, tab: 'you.dating' });
   const heir = chooseHeir(s, boss).heir;
   if (heir && !heir.spouseId && ageOn(heir.birth, s.date) >= 21 && fam(s, heir.id).path !== 'priest') out.push({ kind: 'family', severity: 'info', title: `${heir.firstName} needs a match`, text: 'Your heir is unmarried. A strong house is an alliance.', tab: 'family' });
   const wed = honoreeOptions(s, 'wedding')[0];

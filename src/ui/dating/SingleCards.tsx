@@ -24,7 +24,7 @@ export function SingleCards({ s }: { s: GameState }) {
     <Section domain="romance" title={single ? 'Who comes to you' : 'A woman came to you'} testid="single"
       aside={single ? <span data-testid="single-rate">about {rate.perYear} a year</span> : undefined}
       sub={single ? 'You are single, and the island knows it. Women come to you; your mother brings you girls. She always decides, and so does her family.' : 'You are married. A few still try; anything more is an affair.'}>
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-3 2xl:grid-cols-2">
         {ap ? <ApproachCard s={s} /> : (
           <PlayCard d="romance" testid="single-none" pip="☾" title="Nobody is waiting on you this week"
             lines={['When a woman comes to you, her card waits here and on the Desk for about three weeks.']}>
