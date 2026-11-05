@@ -32,7 +32,7 @@ import type { FamAsk } from './minds/askView';
 
 export type TalkId = 'meeting' | 'job' | 'business' | 'partner' | 'advice' | 'grievance' | 'social' | 'negotiate' | 'succession';
 
-export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff' | 'split';
+export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff' | 'split' | 'muscle';
 
 /** Pacts that keep a family from moving on the other side (a hands-off term binds one district only). */
 export const PEACE_PACTS: ReadonlySet<PactKind> = new Set<PactKind>(['alliance', 'truce', 'partnership', 'tribute']);
@@ -56,6 +56,8 @@ export interface Pact {
   payer?: FactionId;
   biz?: string;
   pct?: number;
+  /** Lent muscle (minds/diplomacy.ts): strength points the payer's men add to the other side (war.ts playerMuscle). */
+  lent?: number;
 }
 
 export interface PendingTalk {

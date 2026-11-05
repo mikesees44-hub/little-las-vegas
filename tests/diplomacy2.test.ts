@@ -252,3 +252,98 @@ describe('favors, both ways', () => {
     expect(owedBy(g, r.leaderId, g.playerId)).toBe(0);
   });
 });
+
+import { playerMuscle, rivalMuscle } from '../src/engine/war';
+import { addOpinion } from '../src/engine/relations';
+import { dealMenu, termBounds, validateTerm, ventureCost } from '../src/engine/minds/diplomacy';
+
+/** Put a deal on the table as a yes (their need forced low), and shake. */
+function shakeDeal(s: GameState, rival: string, terms: unknown[]) {
+  addOpinion(s, s.rivals.find((r) => r.id === rival)!.leaderId, s.playerId, 'test', 100, 0);
+  let deal = validateDeal(s, rival, terms);
+  const sd0: SitDown = { ...openSitDown(s, rival)!, warmth: 100, anger: 0 };
+  const gap = needNow(stanceOf(s, rival)!, sd0) - dealValue(s, rival, deal);
+  const cash = gap > 100 ? Math.round((gap + 100) / 50) * 50 : 0;
+  if (cash) deal = validateDeal(s, rival, [...deal, { kind: 'cash', dir: 'you', amount: cash }]);
+  const res = shakeOn(s, { ...sd0, table: { terms: deal, by: 'boss', ok: true } });
+  return { deal, res, cash };
+}
+
+describe('new terms', () => {
+  it('a racket split pays weekly through the books, both ways; bounds hold', () => {
+    const s = game('diplo2-split');
+    const mine = s.businesses.find((b) => b.owner === 'player' && b.weeklyBase > 0)!;
+    const t = validateTerm(s, 'manno', { kind: 'split', dir: 'you', biz: mine.id, amount: 99, weeks: 999 })!;
+    expect(t.amount).toBe(30);
+    expect(t.weeks).toBe(26);
+    expect(validateTerm(s, 'manno', { kind: 'split', dir: 'you', biz: 'nope' })).toBeUndefined();
+    const { res } = shakeDeal(s, 'manno', [{ kind: 'split', dir: 'you', biz: mine.id, amount: 20, weeks: 8 }]);
+    expect(res.ok).toBe(true);
+    const g = res.state;
+    const wk = advanceWeek(g, randomChoices(g, 1));
+    expect(reconcile(wk.report)).toEqual([]);
+    expect(wk.report.lines.some((l) => /Manno's split/.test(l.label) && l.amount < 0)).toBe(true);
+    expect(dealMenu(s, 'manno').some((l) => /biz one of/.test(l))).toBe(true);
+  });
+
+  it('lent muscle counts for the side it is lent to, bounded, and nobody is handed over', () => {
+    const s = game('diplo2-muscle');
+    s.wars.push({ id: 'wx', rival: 'kessler', district: s.districts[0].id, cb: 'claim', sanctioned: true, score: 0, startWeek: s.week, by: 'player' });
+    expect(validateTerm(s, 'kessler', { kind: 'muscle', dir: 'them' })).toBeUndefined();
+    const m0 = playerMuscle(s);
+    const men0 = Object.values(s.characters).filter((c) => c.faction === 'player' && c.alive).length;
+    const { res } = shakeDeal(s, 'manno', [{ kind: 'muscle', dir: 'them', amount: 500, weeks: 4 }]);
+    expect(res.ok).toBe(true);
+    expect(playerMuscle(res.state)).toBe(m0 + 20);
+    expect(Object.values(res.state.characters).filter((c) => c.faction === 'player' && c.alive).length).toBe(men0);
+    // Expires.
+    const later = cloneState(res.state);
+    later.week += 5;
+    expect(playerMuscle(later)).toBeCloseTo(m0, 5);
+    // Lend yours to a family with an enemy: you lose what they gain.
+    const s2 = game('diplo2-muscle2');
+    ensureTalks(s2).rivalRel['feldstein|manno'] = -60;
+    const r0 = rivalMuscle(s2, 'manno');
+    const p0 = playerMuscle(s2);
+    const r2 = shakeDeal(s2, 'manno', [{ kind: 'muscle', dir: 'you', amount: 8, weeks: 4 }]).res;
+    expect(r2.ok).toBe(true);
+    expect(rivalMuscle(r2.state, 'manno')).toBeCloseTo(r0 + 8, 5);
+    expect(playerMuscle(r2.state)).toBeCloseTo(Math.max(0, p0 - 8), 5);
+  });
+
+  it('information is something real when there is something (a mole of a third family), else a tip', () => {
+    const s = game('diplo2-info');
+    const man = Object.values(s.characters).find((c) => c.alive && c.faction === 'player' && c.id !== s.playerId && c.rank === 'soldier')!;
+    man.informantFor = 'feldstein';
+    const { res } = shakeDeal(s, 'manno', [{ kind: 'info' }]);
+    expect(res.ok).toBe(true);
+    expect(res.state.secrets.some((x) => x.ownerId === man.id && x.kind === 'informant' && x.knownBy.includes('player'))).toBe(true);
+    const s2 = game('diplo2-info2');
+    for (const c of Object.values(s2.characters)) if (c.informantFor) delete c.informantFor;
+    s2.secrets = [];
+    const m0 = s2.money;
+    const x2 = shakeDeal(s2, 'manno', [{ kind: 'info' }]);
+    expect(x2.res.state.money).toBeGreaterThan(m0 - x2.cash);
+  });
+
+  it('a joint venture: both put in half, you own the new place, they take a weekly share', () => {
+    const s = game('diplo2-venture');
+    const d = s.districts.find((x) => (x.influence.player ?? 0) >= 5)!;
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    r.money = 50000;
+    const cost = ventureCost(s, d.id);
+    const n0 = s.businesses.filter((b) => b.owner === 'player').length;
+    const m0 = s.money;
+    const rm0 = r.money;
+    const { res, cash } = shakeDeal(s, 'manno', [{ kind: 'venture', district: d.id, amount: 25, weeks: 12 }]);
+    expect(res.ok).toBe(true);
+    const g = res.state;
+    expect(g.businesses.filter((b) => b.owner === 'player').length).toBe(n0 + 1);
+    expect(g.money).toBe(m0 - Math.round(cost / 2) - cash);
+    expect(g.rivals.find((x) => x.id === 'manno')!.money).toBe(rm0 - Math.round(cost / 2) + cash);
+    expect(pactWith(g, 'manno', 'split')?.payer).toBe('player');
+    const wk = advanceWeek(g, randomChoices(g, 2));
+    expect(reconcile(wk.report)).toEqual([]);
+    expect(termBounds(s, 'manno', 'venture').amount!.hi).toBe(40);
+  });
+});
