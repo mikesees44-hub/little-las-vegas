@@ -50,6 +50,9 @@ import { MindSection } from '../minds/MindSection';
 import { LeansSection } from '../deeds/LeansSection';
 import { RelationsWeb } from '../deeds/RelationsWeb';
 import { DeedFeed } from '../deeds/DeedFeed';
+import { CrewBadge, LoyaltyMeter } from './Loyalty';
+import { BossSkills } from '../sheet/BossSkills';
+import { GodfatherSection } from '../sheet/GodfatherSection';
 
 /** The sheet's tabs. Each wraps existing sections, so a section added to one of them stays in its tab. */
 export type SheetTab = 'overview' | 'card' | 'relationships' | 'work' | 'skills' | 'actions' | 'history' | 'book';
@@ -105,6 +108,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
               <div className="mt-0.5 flex flex-wrap items-center gap-1" data-testid="sheet-side">
                 <SideChip side={side} full />
                 {!isBoss && <RelationChip relation={side.relation} />}
+                {!isBoss && c.alive && <CrewBadge s={s} c={c} />}
               </div>
               {c.maidenName && <div className="text-xs text-stone-500">née {c.maidenName}</div>}
               <HouseLine s={s} id={c.id} />
@@ -144,6 +148,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
 
         {tab === 'skills' && (
           <section className="mt-3 space-y-1.5" data-testid="sheet-skills">
+            {isBoss && c.alive && <BossSkills s={s} />}
             <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs">
               {SKILLS.map((k) => (
                 <div key={k} className="rounded bg-noir-800 border border-noir-700 px-2 py-1" title={SKILL_HELP[k]}>
@@ -189,6 +194,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
             <section className={`llv-card-box llv-card-plain p-2.5 ${domCard(pd)}`} data-domain={pd}>
               <CardHead d={pd} glyph="♥" title={`What ${c.firstName} thinks of you`} className="!mb-1"
                 aside={<span className={`font-display text-lg ${total >= 25 ? 'text-emerald-400' : total <= -25 ? 'text-red-400' : 'text-stone-200'}`}>{signed(total)}</span>} />
+              {c.alive && <LoyaltyMeter s={s} id={c.id} why className="mt-1" />}
               {mods.length === 0 && <div className="text-xs text-stone-500 mt-1">No strong feelings either way.</div>}
               <ul className="mt-1">
                 {mods.map((m) => (
@@ -212,6 +218,7 @@ export function CharacterSheet({ s, id, onClose, embedded, initialTab }: { s: Ga
         )}
 
         {tab === 'overview' && <>
+        {c.alive && <GodfatherSection s={s} c={c} />}
         {age >= 18 && <button type="button" className="btn-secondary mt-3 px-2 py-1 text-[11px]" onClick={() => setTab('card')} data-testid="sheet-open-card">{c.firstName}'s calling card ▸ <span className="text-stone-500">looks, family, money as known, you, rumors</span></button>}
         <DynastyFacts s={s} c={c} />
         {s.matchmakers?.circle[c.id] && <HerCircle s={s} id={c.id} sheet />}

@@ -39,6 +39,7 @@ import { ChainOfCommandPlace } from '../lieutenants/Lieutenants';
 import { TheRise } from '../borgata/TheRise';
 import { YourPlace } from '../borgata/YourPlace';
 import { CaposSection, MenRoster } from '../borgata/Capos';
+import { CrewStrip, MenByCapo } from '../components/Loyalty';
 import { MyMen } from '../borgata/MyMen';
 import { ProgressBoard } from '../borgata/CrewXp';
 import { Protection } from '../borgata/Protection';
@@ -161,7 +162,7 @@ export const PANELS: PanelDef[] = [
       { id: 'earnings', label: 'The Family\'s Earnings', wide: true, blurb: 'Everyone in the family, what each man earned, kicked up and kept this week, and how much money he has.', render: (s) => <EarningsBoard s={s} /> },
       { id: 'council', label: 'Council', blurb: 'Five seats, one job each a week. Click a face to open him; click an empty seat to compare candidates.', render: (s) => <CouncilSeats s={s} /> },
       { id: 'chain', label: 'Who handles what', blurb: 'The chain of command: what your underboss, your consigliere and each capo handle on their own, and what waits for you. One tap: Hands-on, Balanced, Chairman.', render: (s) => <ChainOfCommandPlace s={s} /> },
-      { id: 'capos', label: 'Capos & Men', render: (s) => stack(<CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
+      { id: 'capos', label: 'Capos & Men', blurb: 'Where you stand with every crew, your guys by capo with their loyalty, then each capo and man.', render: (s) => stack(<CrewStrip key="x" s={s} />, <MenByCapo key="g" s={s} />, <CaposSection key="c" s={s} />, <MenRoster key="m" s={s} />) },
       { id: 'mymen', label: 'My Men', wide: true, blurb: 'Take care of your men: their money, their safety, their back. The whole crew watches how you treat each one.', render: (s) => <MyMen s={s} /> },
       { id: 'progress', label: 'Coming up', blurb: 'Every man\'s level, title and specialty: who is ready to be made or to run a crew, who is waiting on your word, who feels slighted.', render: (s) => <ProgressBoard s={s} /> },
       { id: 'membership', label: 'Membership', blurb: 'Philadelphia\'s books, and the young men who want in.', render: (s) => stack(<BooksPanel key="b" s={s} />, <CrewListPart key="h" s={s} part="hire" />) },
