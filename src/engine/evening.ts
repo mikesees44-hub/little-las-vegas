@@ -198,8 +198,8 @@ export function floorPrice(s: GameState, id: string, kind: EveningKind | 'car'):
   const c = s.characters[id];
   const ask = askingPrice(s, id, kind).price;
   if (!c) return ask;
-  let f = 0.8;
-  if (hasTrait(c, 'Greedy')) f = 0.95;
+  let f = 0.72;
+  if (hasTrait(c, 'Greedy')) f = 0.9;
   if (hasTrait(c, 'Patient')) f -= 0.05;
   if (!isInSeason(s.date)) f -= 0.07;
   const like = opinion(s, id, s.playerId) + appeal(s, c, player(s)).value;
@@ -273,7 +273,7 @@ export function inviteAcceptance(s: GameState, c: Character, plan: EveningPlan):
   const reasons: Reason[] = [];
   let base: number;
   if (paid) {
-    base = { queen: 85, night: 78, something: 65 }[plan.approach];
+    base = { queen: 92, night: 88, something: 78 }[plan.approach];
     const op = opinion(s, c.id, boss.id);
     if (op) reasons.push({ label: op > 0 ? 'Thinks well of you' : 'Thinks little of you', value: Math.round(op * 0.4) });
     if (plan.tip) reasons.push({ label: 'A tip promised', value: 5 });
@@ -295,7 +295,7 @@ export function inviteAcceptance(s: GameState, c: Character, plan: EveningPlan):
   if (b?.no && s.week - b.no.week < 3) reasons.push({ label: 'You asked her very recently', value: -15 });
   if (p?.scorned && s.week - p.scorned < 26) reasons.push({ label: 'What you said last time', value: -20 });
   const sum = reasons.reduce((x, r) => x + r.value, base);
-  return { chance: Math.max(0.05, Math.min(0.9, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons.filter((r) => r.value !== 0)] };
+  return { chance: Math.max(0.05, Math.min(paid ? 0.95 : 0.9, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons.filter((r) => r.value !== 0)] };
 }
 
 /** If you ask her to stay: her odds (shown before, rolled on the evening). 0 when the setting or the plan rules it out. */

@@ -256,7 +256,8 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
   const b = bondOf(s, c.id);
   const aff = b?.aff ?? clamp(10 + Math.round(op / 4), 0, 40);
   const reasons: Reason[] = [];
-  const base = what === 'talk' ? 70 : what === 'date' ? 20 : what === 'askOut' ? 10 : what === 'reconcile' ? 10 : 5;
+  // Easier, by the owner's ask (2026-11-05): a date and asking her out start well up from where they did.
+  const base = what === 'talk' ? 75 : what === 'date' ? 35 : what === 'askOut' ? 22 : what === 'reconcile' ? 18 : 12;
   if (what !== 'talk' && what !== 'reconcile') {
     // Looks, charm, a ladies' man's practice and appetite at full weight (looks.ts allure); the rest of attraction at half.
     const al = allure(s, boss, c);

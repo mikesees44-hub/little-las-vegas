@@ -87,7 +87,7 @@ export function carAcceptance(s: GameState, c: Character, price?: number): Accep
   let base: number;
   if (isPro(s, c.id)) {
     if ((price ?? 0) < floorPrice(s, c.id, 'car')) return { chance: 0, reasons: [{ label: 'That is not her price', value: -100 }] };
-    base = p?.role === 'escort' ? 40 : 75;
+    base = p?.role === 'escort' ? 60 : 85;
     if (p?.role === 'escort') reasons.push({ label: 'An escort, in a car? Not her style', value: 0 });
   } else {
     base = Math.round(herDecision(s, c, 'date').chance * 60);
@@ -181,7 +181,7 @@ export function boldAcceptance(s: GameState, c: Character, amount: number, round
   let base: number;
   if (isPro(s, c.id)) {
     const ratio = amount / Math.max(50, askingPrice(s, c.id, 'car').price);
-    base = Math.round(Math.min(80, 25 + ratio * 25));
+    base = Math.round(Math.min(88, 35 + ratio * 30));
     reasons.push({ label: `${$(amount)} against her usual`, value: 0 });
   } else {
     base = Math.min(25, 3 + Math.round(amount / 60));
