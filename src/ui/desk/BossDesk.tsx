@@ -48,6 +48,8 @@ export interface DeskApi {
   onFile?: (entry?: string) => void;
   /** Everything in motion (the plans panel). */
   onMotion?: () => void;
+  /** A woman who came to him, or Ma's match (single.ts): Relationships & Dating. */
+  onSingle?: () => void;
   /** An old save's one-time offer: let the underboss handle the routine (true) or keep it as it was. */
   onOffer?: (take: boolean) => void;
 }
@@ -59,7 +61,7 @@ const FILTERS: { id: DeskFilter; label: string; kinds: DeskKind[] }[] = [
   { id: 'capos', label: '☕ Capos & sit-down', kinds: ['morning', 'sitdown'] },
   { id: 'lieutenants', label: '♜ Lieutenants', kinds: ['lieutenant'] },
   { id: 'money', label: '$ Money', kinds: ['envelope', 'request', 'bill'] },
-  { id: 'people', label: '☏ At the door', kinds: ['decision', 'petition', 'morning', 'sitdown', 'lawyer', 'urgent'] },
+  { id: 'people', label: '☏ At the door', kinds: ['decision', 'petition', 'morning', 'sitdown', 'lawyer', 'urgent', 'request'] },
 ];
 const inFilter = (f: DeskFilter, it: DeskItem) => f === 'all' || FILTERS.find((x) => x.id === f)!.kinds.includes(it.kind);
 
@@ -74,6 +76,7 @@ function openItem(it: DeskItem, api: DeskApi) {
   else if (it.kind === 'lieutenant' && api.onLt) api.onLt();
   else if (it.kind === 'envelope' && api.onEnvelope) api.onEnvelope();
   else if (it.kind === 'bill' || it.kind === 'envelope') api.onMoney();
+  else if (it.ref.single && api.onSingle) api.onSingle();
   else if (it.ref.charId) api.onChar(it.ref.charId);
   else api.onSitDown();
 }
@@ -87,6 +90,7 @@ function verbOf(it: DeskItem): string | undefined {
     case 'lieutenant': return 'Your word';
     case 'envelope': return 'Split it';
     case 'bill': return 'Money';
+    case 'request': return it.ref.single ? 'See her' : 'Open';
     case 'order': return undefined;
     default: return 'Open';
   }
