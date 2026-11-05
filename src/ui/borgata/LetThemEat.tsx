@@ -133,7 +133,8 @@ export function LetThemEat({ s }: { s: GameState }) {
   const k = picker(s);
   return (
     <div className="space-y-4" data-testid="eat">
-      <PageHeader title="Let them eat" sub={`Your men want work, and some bring their own. ${k ? `${k.firstName}, your consigliere,` : 'With no consigliere, your own read'} ranks the men for every open job.`} primary={<FeedAll s={s} jobs={jobs} />} />
+      <PageHeader title="Let them eat" sub={`Your men want work, and some bring their own. ${k ? `${k.firstName}, your consigliere,` : 'With no consigliere, your own read'} ranks the men for every open job.`} />
+      <FeedAll s={s} jobs={jobs} />
       <div className="flex flex-wrap gap-1.5">
         <StatChip domain="crew" label="Starving" value={count(['starving'])} tone={count(['starving']) ? 'bad' : undefined} />
         <StatChip domain="crew" label="Hungry" value={count(['hungry'])} tone={count(['hungry']) ? 'warn' : undefined} />

@@ -228,7 +228,7 @@ export function fitOf(s: GameState, c: Character, need: JobNeed, peers?: Charact
     else if (t <= -20) { add(`Bad blood with ${a.firstName}`, -10); bits.push(`he and ${a.firstName} don't get along`); }
   }
   const score = Math.max(0, Math.min(100, Math.round(40 + parts.reduce((x, p) => x + p.value, 0))));
-  if (!bits.length) bits.push(score >= 60 ? `${nm} can do it` : `${nm} is who there is`);
+  if (!bits.length) bits.push(score >= 60 ? `${nm} can do it` : `${nm} is who you have`);
   const why = `${bits[0].charAt(0).toUpperCase()}${bits[0].slice(1)}${bits.length > 1 ? ` and ${bits.slice(1, 3).join(', and ')}` : ''}.`;
   return { score, why, parts };
 }
