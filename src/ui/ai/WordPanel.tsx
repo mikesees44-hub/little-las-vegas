@@ -107,7 +107,7 @@ export function WordCard({ s, w, onAnswer }: { s: GameState; w: Word; onAnswer: 
               const why = replyBlock(s, r);
               return (
                 <button key={r.id} type="button" disabled={busy || !!why} title={why ?? r.hint} onClick={() => onAnswer(r.id)} data-testid={`word-reply-${w.id}-${r.id}`}
-                  className="rounded-md border border-noir-600 bg-noir-800/70 px-2 py-1 text-left hover:border-gold-500 disabled:opacity-50">
+                  className="llv-choice px-2 py-1 text-left disabled:opacity-50">
                   <span className="block text-[12px] font-semibold text-stone-100">{r.label}</span>
                   <span className="block text-[10px] text-stone-500">{why ?? r.hint}</span>
                 </button>
