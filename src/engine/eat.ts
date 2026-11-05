@@ -311,7 +311,7 @@ export function openJobs(s: GameState): OpenJob[] {
   }
   // 2. A capo with no steady earner of his own, and a place to give him.
   if (freeEarners(s).length) {
-    const capos = men.filter((c) => c.rank === 'capo' && !earnerOf(s, c.id));
+    const capos = men.filter((c) => (c.rank === 'capo' || c.rank === 'soldier') && !earnerOf(s, c.id)).sort((a, b) => (a.rank === 'capo' ? 0 : 1) - (b.rank === 'capo' ? 0 : 1));
     const taken = new Set<string>();
     const picks: JobPick[] = [];
     for (const c of capos) {
@@ -321,7 +321,7 @@ export function openJobs(s: GameState): OpenJob[] {
       picks.push({ id: c.id, fit: { ...fit, why: `${fit.why.replace(/\.$/, '')}; ${b.name} would bring about ${fmtMoney(earnerWeekly(s, b))} a week.` }, action: earnerAction(c.id, b.id) });
     }
     picks.sort((a, b) => b.fit.score - a.fit.score || (a.id < b.id ? -1 : 1));
-    if (picks.length) out.push({ key: 'earner', kind: 'earner', title: 'A steady earner for a capo', sub: `${capos.length} of your capos ${capos.length === 1 ? 'has' : 'have'} nothing steady of his own; a capo with one is more loyal and kicks up steadier.`, picks: picks.slice(0, 3) });
+    if (picks.length) out.push({ key: 'earner', kind: 'earner', title: 'A steady earner for one of your men', sub: `${capos.length} of your capos and made men ${capos.length === 1 ? 'has' : 'have'} nothing steady of his own; a man with one is more loyal and kicks up every week.`, picks: picks.slice(0, 3) });
   }
   // 3. A thin crew and men with no crew.
   const loose = street.filter((c) => !c.capoId || !s.characters[c.capoId]?.alive);

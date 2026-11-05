@@ -28,6 +28,7 @@ import { commitNyc, previewNyc } from './nyc';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
+import { yearMult as yearMultOf } from './earners';
 import type { Ctx } from './ledger';
 import { bookCapacity, LEND_AMOUNTS } from './loans';
 import { playerHook, previewInteraction, type Acceptance, type Reason } from './interactions';
@@ -789,7 +790,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
       if (def.category === 'racket' && def.heat >= 0.3) effects.push({ type: 'schedule', key: 'business_trouble', minWeeks: 2, maxWeeks: 8, chance: 0.25, hint: 'new places attract attention', label });
       return {
         title: label,
-        detail: `${def.name} in ${d?.name ?? '?'}: ${takeLine(s, a.biz, a.district)} · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}${firstWinterAhead(s) ? ` · the first winter: +${fmtMoney(FIRST_WINTER_PER_NEW)}/wk to winterize it` : ''}`,
+        detail: `${def.name} in ${d?.name ?? '?'}: ${takeLine(s, a.biz, a.district)} · upkeep ${fmtMoney(def.upkeep)}/wk${def.staff ? ` · needs ${def.staff} man${def.staff > 1 ? 'men' : ''}`.replace('manmen', 'men') : ''}${def.launder ? ` · washes ${fmtMoney(def.launder)}/wk` : ''}${firstWinterAhead(s) ? ` · the first winter: +${fmtMoney(FIRST_WINTER_PER_NEW)}/wk to winterize it` : ''}${(() => { const net = Math.round(def.base * yearMultOf(a.biz)) - def.upkeep; return net > 0 ? ` · pays for itself in about ${Math.ceil(def.cost / net)} weeks (~${fmtMoney(net)}/wk over the year)` : ' · never pays for itself on the take alone'; })()}`,
         effects,
         cost: def.cost,
         because: `bought ${b.name}`,

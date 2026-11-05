@@ -598,9 +598,10 @@ export function racketActions(s: GameState): PlayerAction[] {
     if (dialOf(s, b, d.id) !== o.id) out.push(RK({ c: 'dial', bizId: b.id, dial: d.id, opt: o.id }));
     out.push(RK({ c: 'advice', bizId: b.id }));
   }
-  // A steady earner for a man who has none (the boss or a capo).
+  // A steady earner for a man who has none (a capo, a made man, or the boss).
   // Capos first; the boss takes his own piece last.
-  for (const c of [...holders(s)].reverse()) {
+  const hs = holders(s);
+  for (const c of [...hs.filter((x) => x.rank === 'capo'), ...hs.filter((x) => x.rank === 'soldier'), ...hs.filter((x) => x.id === s.playerId)]) {
     if (earnerOf(s, c.id)) continue;
     const b = suggestFor(s, c);
     if (b) { out.push(RK({ c: 'earner', who: c.id, bizId: b.id })); break; }

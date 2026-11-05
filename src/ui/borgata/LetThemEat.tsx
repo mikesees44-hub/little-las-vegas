@@ -14,6 +14,7 @@ import { moneyWord, whoNeedsMoney, type MoneyNeed } from '../../engine/moneyNeed
 import { fmt$ } from '../format';
 import { deskBundles } from '../../engine/bundles';
 import { BundleCard } from '../desk/Bundles';
+import { PutMoneyToWork } from '../econ/PutMoneyToWork';
 
 /**
  * LET THEM EAT (engine/eat.ts), in Your men: who is hungry, idle, overworked
@@ -194,6 +195,7 @@ export function LetThemEat({ s }: { s: GameState }) {
     <div className="space-y-4" data-testid="eat">
       <PageHeader title="Let them eat" sub={`Your men want work, and some bring their own. ${k ? `${k.firstName}, your consigliere,` : 'With no consigliere, your own read'} ranks the men for every open job.`} />
       <NeedsMoney s={s} />
+      <PutMoneyToWork s={s} />
       <FeedAll s={s} jobs={jobs} />
       <div className="flex flex-wrap gap-1.5">
         <StatChip domain="crew" label="Starving" value={count(['starving'])} tone={count(['starving']) ? 'bad' : undefined} />

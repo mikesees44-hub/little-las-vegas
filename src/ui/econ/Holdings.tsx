@@ -18,6 +18,7 @@ import { ActionCard } from '../components/Orders';
 import { SellButton } from '../components/Businesses';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { CharLink } from '../components/People';
+import { PutMoneyToWork } from './PutMoneyToWork';
 
 /**
  * Holdings: every business and building the house owns, who runs it, what it
@@ -44,6 +45,8 @@ export function Holdings({ s }: { s: GameState }) {
         <Stat label="Managers" value={`${Object.keys(ms).length}`} sub={`${fmt$(salaries)}/wk in salaries`} />
         <Stat label="Under construction" value={`${building.length}`} sub={building.length ? building.map((l) => STAGE_LABEL[l.stage!]).join(', ') : 'nothing breaking ground'} />
       </section>
+
+      <PutMoneyToWork s={s} />
 
       <OwnedGroups s={s} biz={biz} lots={lots} ms={ms} />
 

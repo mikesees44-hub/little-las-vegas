@@ -3,7 +3,7 @@ import { isInSeason } from './calendar';
 import { capos, isFree } from './characters';
 import { expectedTake, isOpen, owned } from './business';
 import { ensureEcon } from './econState';
-import { venueTake } from './empire';
+import { BIZ_CONCEPT, venueTake } from './empire';
 import type { Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { xfer } from './tribute';
@@ -63,15 +63,15 @@ function map(s: GameState): Record<string, string> {
   return s.econ?.earners ?? {};
 }
 
-/** May this man hold a steady earner? The boss, or a capo of the family. */
+/** May this man hold a steady earner? The boss, a capo, or a made man of the family (a soldier earns too). */
 export function canHold(s: GameState, c: Character | undefined): c is Character {
-  return !!c && c.alive && c.faction === 'player' && (c.id === s.playerId || c.rank === 'capo');
+  return !!c && c.alive && c.faction === 'player' && (c.id === s.playerId || c.rank === 'capo' || c.rank === 'soldier');
 }
 
 /** May this business be somebody's steady earner? */
 export function eligible(s: GameState, b: Business): boolean {
   // A venue with its own books (payroll, supplies: empire.ts) is its manager's to run, not a steady earner.
-  return b.owner === 'player' && !NOT_EARNER.includes(b.kind) && venueTake(s, b) === undefined;
+  return b.owner === 'player' && !NOT_EARNER.includes(b.kind) && !BIZ_CONCEPT[b.kind] && venueTake(s, b) === undefined;
 }
 
 /** Who holds a business as his steady earner (the boss or a capo), if anyone. Cheap: called by expectedTake. */
@@ -107,7 +107,8 @@ export function earnerName(s: GameState, c: Character, b: Business): string {
 /** The boss, then every capo: the men who can hold a steady earner. */
 export function holders(s: GameState): Character[] {
   const boss = s.characters[s.playerId];
-  return [...(canHold(s, boss) ? [boss] : []), ...capos(s).filter((c) => c.faction === 'player').sort((a, b) => (a.id < b.id ? -1 : 1))];
+  const made = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.rank === 'soldier').sort((a, b) => (a.id < b.id ? -1 : 1));
+  return [...(canHold(s, boss) ? [boss] : []), ...capos(s).filter((c) => c.faction === 'player').sort((a, b) => (a.id < b.id ? -1 : 1)), ...made];
 }
 
 /** Businesses that could be given to somebody now (eligible, open or not, held by nobody). */
@@ -146,7 +147,7 @@ export function earnerPreview(s: GameState, who: string, bizId: string): { title
   const cur = c ? earnerOf(s, c.id) : undefined;
   const boss = who === s.playerId;
   const op: Effect = { type: 'econ', op: { op: 'racket', cmd: 'earner', who, bizId }, label: 'Steady earner' };
-  if (!canHold(s, c)) return { title: 'Steady earner', detail: '', effects: [], because: '', disabledReason: 'Only the boss or a capo holds a steady earner' };
+  if (!canHold(s, c)) return { title: 'Steady earner', detail: '', effects: [], because: '', disabledReason: 'Only the boss, a capo or a made man holds a steady earner' };
   if (!bizId) {
     return {
       title: `Take back ${cur ? earnerName(s, c, cur) : 'his earner'}`, detail: 'The money goes back to the family.', effects: [op, ...(!boss ? [{ type: 'opinion', from: c.id, to: s.playerId, amount: -6, reason: 'Took my earner away', decay: 1, label: 'Steady earner' } as Effect] : [])],
