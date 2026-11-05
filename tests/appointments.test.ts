@@ -1,5 +1,10 @@
 import { advanceWeek } from '../src/engine/engine';
 import { describe, expect, it } from 'vitest';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { ShellContext } from '../src/ui/shell/context';
+import { StandingButton, StandingDialog, StandingList } from '../src/ui/appts/Standing';
+import { menuFor } from '../src/ui/sheet/menuCatalog';
 import { newGame } from '../src/engine/newGame';
 import { makeCharacter } from '../src/engine/characters';
 import { reconcile } from '../src/engine/ledger';
@@ -156,6 +161,7 @@ describe('mature content, adults, nothing grave', () => {
     let s = fresh('appts-adult');
     s = setDatingSettings(s, { mature: 'standard' });
     const prov = Object.values(s.dating!.providers).find((p) => p.status === 'working' && p.offers && s.characters[p.id]?.alive);
+    expect(prov).toBeDefined();
     if (!prov) return;
     const opt = apptOptions(s, prov.id).find((o) => o.adult);
     expect(opt).toBeDefined();
@@ -232,5 +238,26 @@ describe('the hand-off and the save', () => {
     const back = upgradeSave(JSON.parse(raw));
     expect(back.appts).toEqual(s.appts);
     expect(apptViews(back)[0].span).toMatch(/through week/);
+  });
+});
+
+describe('what the boss sees', () => {
+  it('the dialog, the list, the button and the menu item', () => {
+    let s = fresh('appts-ui');
+    const ear = anEar(s);
+    const dlg = renderToString(createElement(StandingDialog, { s, ask: { who: ear.id, action: meet(ear.id) }, onClose: () => {}, onSave: () => {} }));
+    for (const id of ['standing-dialog', 'standing-what', 'standing-weekly', 'standing-daily', 'standing-slot-evening', 'standing-span-open', 'standing-budget', 'standing-cost', 'standing-save']) expect(dlg).toContain(`data-testid="${id}"`);
+    expect(renderToString(createElement(StandingList, { s }))).toContain('standing-empty');
+    s = add(s, { who: ear.id, action: meet(ear.id), cadence: 'weekly', day: 6, slot: 'morning' });
+    const list = renderToString(createElement(StandingList, { s }));
+    expect(list).toContain('data-testid="standing-row"');
+    expect(list).toContain('standing-pause');
+    // The button needs the shell to open the dialog (absent in isolated renders).
+    expect(renderToString(createElement(StandingButton, { who: ear.id }))).toBe('');
+    const withShell = renderToString(createElement(ShellContext.Provider, { value: { go: () => {}, focus: () => {}, standing: () => {} } }, createElement(StandingButton, { who: ear.id })));
+    expect(withShell).toContain('standing-open');
+    const keys = menuFor(s, s.characters[ear.id]).flatMap((c) => c.items.map((i) => i.key));
+    expect(keys).toContain('standing');
+    expect(keys).toContain('ear:meet');
   });
 });
