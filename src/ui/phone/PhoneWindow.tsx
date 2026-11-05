@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { GameState } from '../../engine/types';
 import { canCallBack, lineStatus, missedCalls } from '../../engine/phone';
+import { meetDefault } from '../../engine/planner/gate';
 import { dialPreview, MEET_HOURS, meetDays, meetPlaces, meetsAhead, phoneBook, PURPOSE_LABEL, type BookEntry, type DialSpec, type PlaceId, type Purpose } from '../../engine/phoneMeet';
 import { LINE_LABEL } from '../../engine/phone';
 import { DAY_NAMES } from '../../engine/days';
@@ -33,13 +34,15 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack, prefill }: {
   const [purpose, setPurpose] = useState<Purpose | undefined>(prefill?.who && prefill.purpose ? prefill.purpose : undefined);
   const days = meetDays(s);
   const places = meetPlaces(s);
-  const [place, setPlace] = useState<PlaceId>(prefill?.place ?? 'diner');
+  // The gatekeeper puts down the place and the hour (planner/gate.ts meetDefault); the boss can change both.
+  const dflt = useMemo(() => meetDefault(s, prefill?.who), [s, prefill?.who]);
+  const [place, setPlace] = useState<PlaceId>(prefill?.place ?? dflt.place);
   const [day, setDay] = useState(() => Math.max(0, prefill?.d !== undefined ? days.findIndex((x) => x.w === (prefill.w ?? s.week) && x.d === prefill.d) : 0));
-  const [hour, setHour] = useState(() => (prefill?.hour !== undefined ? MEET_HOURS.reduce((a, b) => (Math.abs(b - prefill.hour!) < Math.abs(a - prefill.hour!) ? b : a)) : 21));
+  const [hour, setHour] = useState(() => (prefill?.hour !== undefined ? MEET_HOURS.reduce((a, b) => (Math.abs(b - prefill.hour!) < Math.abs(a - prefill.hour!) ? b : a)) : dflt.hour));
   const [pay, setPay] = useState(false);
   const [code, setCode] = useState(false);
   const entry = book.find((e) => e.id === who);
-  const spec: DialSpec | undefined = entry && purpose ? { who: entry.id, purpose, pay, code, ...(purpose === 'meet' && days[day] ? { place, w: days[day].w, d: days[day].d, hour } : {}) } : undefined;
+  const spec: DialSpec | undefined = entry && purpose ? { who: entry.id, purpose, pay, code, ...(purpose === 'meet' && days[day] ? { place, w: days[day].w, d: days[day].d, hour, ...(dflt.byId && !prefill?.place && place === dflt.place && hour === dflt.hour ? { by: dflt.byId } : {}) } : {}) } : undefined;
   const pv = spec ? dialPreview(s, spec) : undefined;
   const ahead = meetsAhead(s);
   const tabBtn = (t: Tab, label: string, n?: number) => (
@@ -126,7 +129,7 @@ export function PhoneWindow({ s, onClose, onDial, onCallBack, prefill }: {
                     {MEET_HOURS.map((h) => <option key={h} value={h}>{hourText(h)}</option>)}
                   </select>
                 </label>
-                <p className="sm:col-span-3 text-[11px] text-stone-500">{places.find((p) => p.id === place)?.hint}</p>
+                <p className="sm:col-span-3 text-[11px] text-stone-500">{dflt.by && !prefill?.place && <span data-testid="dial-by">Place and hour as {dflt.by} put them down. </span>}{places.find((p) => p.id === place)?.hint}</p>
               </div>
             )}
             {spec && pv && (

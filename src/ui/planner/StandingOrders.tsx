@@ -4,6 +4,7 @@ import { DelegationPicker } from './DelegationPicker';
 import { setTrust } from '../../engine/briefing';
 import { edictOrder, LEVEL_LABEL, LEVELS, splitOrder, standingOrders } from '../../engine/planner/orders';
 import { setAutoBrief } from '../../engine/planner/state';
+import { setGateRole } from '../../engine/planner/gate';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
 
@@ -54,6 +55,22 @@ export function StandingOrders({ s, act, onOrder }: { s: GameState; act: Act; on
               </li>
             ))}
           </ul>
+        </section>
+      )}
+      {so.door.length > 0 && (
+        <section className="mt-3" data-testid="so-door">
+          <h4 className="llv-brief-h">Who keeps your door</h4>
+          <p className="text-[11.5px] text-[#6b5a44]">The gatekeeper ranks who gets in to see you, writes the bookings in your datebook and sets the place and the hour of a meet. You can still book anybody yourself.</p>
+          <div className="mt-1 flex flex-wrap gap-1.5" role="radiogroup" aria-label="Who keeps your door">
+            {so.door.map((r) => (
+              <button key={r.role} type="button" role="radio" aria-checked={r.on} disabled={!!r.block && !r.on} title={r.block}
+                className={`llv-ink-btn ${r.on ? 'llv-ink-btn-primary' : ''} disabled:opacity-50`}
+                onClick={() => act((x) => setGateRole(x, r.role), `Standing order: ${r.name ?? r.label.toLowerCase()} keeps your door`)} data-testid={`so-door-${r.role}`}>
+                {r.label.replace('Your ', '').replace(/^./, (c) => c.toUpperCase())}{r.name ? <span className="ml-1 text-[11px] opacity-80">· {r.name}</span> : null}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-[11.5px]" data-testid="so-door-now">At the door now: <b>{so.keeper}</b>{so.door.find((r) => r.on)?.block ? ` (${so.door.find((r) => r.on)!.block!.toLowerCase()}, so the next seat keeps it)` : ''}.</p>
         </section>
       )}
       {so.advisors.length > 0 && (

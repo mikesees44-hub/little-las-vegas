@@ -6,6 +6,7 @@ import { opinion } from '../relations';
 import { isPoliceKind, KIND_LABEL, tipOut, whenText, type SourceKind, type Tip } from '../threats';
 import { today } from '../days';
 import type { GameState, PlayerAction } from '../types';
+import { slantOf } from './gateCore';
 
 /**
  * WHAT THE DON IS TOLD, AND HOW SURE HIS PEOPLE ARE. A threat line in the brief is a claim from a
@@ -82,6 +83,10 @@ export function tipConfidence(s: GameState, t: Tip): TipRead {
   if (corroborated) est += 0.15;
   if (t.status === 'met' || t.status === 'sent') est += 0.08;
   est = Math.max(0.05, Math.min(0.97, est));
+  // A turned gatekeeper types the brief (gateCore.ts slantOf): a real warning against the boss comes in as a rumor, a planted story as confirmed.
+  const sl = slantOf(s, t);
+  if (sl === 'down') est = Math.min(est, 0.4);
+  if (sl === 'up') est = Math.max(est, 0.86);
   const conf: Conf = est >= 0.8 ? 'confirmed' : est >= 0.58 ? 'likely' : 'rumor';
   return { conf, est, src, corroborated, by: r ? displayName(r) : 'You' };
 }

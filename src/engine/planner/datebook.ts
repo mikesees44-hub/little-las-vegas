@@ -62,6 +62,8 @@ export interface BookEntry {
   done?: { r: string; jid?: string };
   /** It overlaps another block of time that day (the other's title). */
   clash?: string;
+  /** Who wrote it in the book ("booked by"): the gatekeeper, the boss himself ("you"), or the phone. */
+  by?: string;
   /** A scheduled item that can be moved or cancelled. */
   sid?: string;
   move?: true;
@@ -107,14 +109,23 @@ function sched(s: GameState): ScheduledItem[] {
 
 const KIND_DOM: Record<string, BookEntry['dom']> = { audience: 'crew', dinner: 'family', visit: 'crew', meet: 'crew' };
 
+/** "Booked by Carmine Russo" / "Booked by you" (a plan's payload `by`). */
+export function bookedBy(s: GameState, by: unknown): string | undefined {
+  if (typeof by !== 'string' || !by) return undefined;
+  if (by === s.playerId) return 'you';
+  const c = s.characters[by];
+  return c ? displayName(c) : undefined;
+}
+
 /** What a plan item on the scheduler shows. */
 function planEntry(s: GameState, it: ScheduledItem): BookEntry {
-  const p = it.payload as { pk: PlanKind; who?: string; name?: string; title?: string; why?: string; hours?: number; ref?: Go };
+  const p = it.payload as { pk: PlanKind; who?: string; name?: string; title?: string; why?: string; hours?: number; ref?: Go; by?: string };
   const c = p.who ? s.characters[p.who] : undefined;
   const dom = p.pk === 'dinner' && c && !c.dynasty && c.id !== wifeOf(s)?.id ? (c.faction === 'player' ? 'crew' : 'town') : KIND_DOM[p.pk] ?? 'crew';
+  const by = bookedBy(s, p.by);
   return {
-    id: `sched:${it.id}`, kind: p.pk === 'audience' ? 'audience' : p.pk === 'dinner' ? 'dinner' : 'visit', w: it.w, d: it.d, h: it.h, dur: p.hours ?? PLAN_HOURS[p.pk] ?? 1,
-    title: p.title ?? 'Plans', sub: p.why, dom, who: c?.id, sid: it.id, move: true, cancel: true,
+    id: `sched:${it.id}`, kind: p.pk === 'audience' ? 'audience' : p.pk === 'dinner' ? 'dinner' : p.pk === 'meet' ? 'meet' : 'visit', w: it.w, d: it.d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: p.hours ?? PLAN_HOURS[p.pk] ?? 1,
+    title: p.title ?? 'Plans', sub: p.why, dom, who: c?.id, sid: it.id, move: true, cancel: true, ...(by ? { by } : {}),
     go: p.ref && (p.ref.event || p.ref.day !== undefined || p.ref.brief || p.ref.tip) ? p.ref : c ? { char: c.id } : undefined,
   };
 }
@@ -141,9 +152,9 @@ export function dayEntries(s: GameState, w: number, d: number): BookEntry[] {
       if (it.w !== w || it.d !== d) continue;
       if (it.kind === 'plan') out.push(planEntry(s, it));
       else if (it.kind === 'meet') {
-        const p = it.payload as { who: string; place: string };
+        const p = it.payload as { who: string; place: string; by?: string };
         const c = s.characters[p.who];
-        out.push({ id: `sched:${it.id}`, kind: 'meet', w, d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: PLAN_HOURS.meet, title: `Meet ${c ? displayName(c) : 'him'}`, sub: `At ${placeOf(s, p.place).name}. Set by phone.`, dom: c && s.rivals.some((r) => r.leaderId === c.id) ? 'rivals' : 'crew', who: c?.id, sid: it.id, move: true, cancel: true, go: c ? { char: c.id } : undefined });
+        out.push({ id: `sched:${it.id}`, kind: 'meet', w, d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: PLAN_HOURS.meet, title: `Meet ${c ? displayName(c) : 'him'}`, sub: `At ${placeOf(s, p.place).name}. Set by phone.`, by: bookedBy(s, p.by) ?? 'you', dom: c && s.rivals.some((r) => r.leaderId === c.id) ? 'rivals' : 'crew', who: c?.id, sid: it.id, move: true, cancel: true, go: c ? { char: c.id } : undefined });
       } else if (it.kind === 'feds_handler') {
         out.push({ id: `sched:${it.id}`, kind: 'handler', w, d, h: it.h < DAY_START ? it.h + 24 : it.h, dur: 2, title: 'A drive to Cape May', sub: 'The men from Newark. Nobody else may read this line.', dom: 'law', hidden: true });
       }
@@ -342,7 +353,7 @@ export function planWith(s: GameState, kind: 'dinner' | 'visit', who: string, sl
   if (block) return fail(block);
   const x = phoneClone(bookHours(s, absOf(slot.w, slot.d), hours));
   const title = kind === 'dinner' ? `Dinner with ${displayName(c)}` : `Call on ${displayName(c)}`;
-  scheduleInto(x, { kind: 'plan', day: slot.d, hour: slot.h, w: slot.w, payload: { pk: kind, who, name: displayName(c), title, hours } });
+  scheduleInto(x, { kind: 'plan', day: slot.d, hour: slot.h, w: slot.w, payload: { pk: kind, who, name: displayName(c), title, hours, by: s.playerId } });
   const jid = journal(x, { d: today(x), c: c.dynasty ? 'family' : c.faction === 'player' ? 'crew' : 'rivals', t: `On your book: ${title}, ${DAY_NAMES[slot.d]} ${formatClock(slot.h)}`, src: 'planner', mine: 1, p: [who] });
   void jid;
   return { state: x, result: { ok: true, title: 'In the datebook', who: displayName(c), tier: 'success', headline: 'Done', line: `${title}, ${DAY_NAMES[slot.d]}${slot.w > s.week ? ' next week' : ''} at ${formatClock(slot.h)}. ${hoursLabel(hours)} of that day are spoken for.`, changes: [], leadsTo: [] } };
@@ -378,6 +389,7 @@ export function moveEntry(s: GameState, e: BookEntry, slot: { w: number; d: numb
   if (slotBlock(freed, slot.w, slot.d, slot.h, hours)) return s;
   let x = bookHours(freed, absOf(slot.w, slot.d), hours);
   x = { ...x, action: { ...x.action!, sched: sched(x).map((q) => (q.id === it.id ? { ...q, w: slot.w, d: slot.d, h: Math.min(23, slot.h) } : q)) } };
+  x = dropSetup(x, it);
   if (e.who && it.kind === 'meet') x = withOpinion(x, e.who, -2, 'Moved our meet around');
   return journalPlan(x, `Moved ${e.title} to ${DAY_NAMES[slot.d]}${slot.w > s.week ? ' next week' : ''}, ${formatClock(slot.h)}`, e.who);
 }
@@ -393,8 +405,17 @@ export function cancelEntry(s: GameState, e: BookEntry): GameState {
   if (!it) return s;
   let x = bookHours(s, absOf(it.w, it.d), -e.dur);
   x = { ...x, action: { ...x.action!, sched: sched(x).filter((q) => q.id !== it.id) } };
+  x = dropSetup(x, it);
   if (e.who) x = withOpinion(x, e.who, it.kind === 'meet' ? -4 : -3, it.kind === 'meet' ? 'Called off our meet' : 'Cancelled on me');
   return journalPlan(x, `Called off: ${e.title}`, e.who);
+}
+
+/** A meeting the gatekeeper booked at a threat's place and hour (gateWeek): moved or called off, the setup is off. Pure. */
+function dropSetup(s: GameState, it: ScheduledItem): GameState {
+  const su = it.payload.su;
+  const T = s.threats;
+  if (typeof su !== 'string' || !T || !T.threats.some((t) => t.id === su && t.gk)) return s;
+  return { ...s, threats: { ...T, threats: T.threats.map((t) => { if (t.id !== su) return t; const n = { ...t }; delete n.gk; return n; }) } };
 }
 
 /** The cost of cancelling, in words (shown before the click). */
@@ -418,6 +439,7 @@ function withOpinion(s: GameState, who: string, v: number, why: string): GameSta
 
 const RESULT: Record<string, (n: string) => string> = {
   audience: (n) => `Heard ${n} out.`,
+  meet: (n) => `Kept the meeting with ${n}, where it was booked.`,
   dinner: (n) => `Dinner with ${n}: the veal was good, and so was the talk.`,
   visit: (n) => `Called on ${n}. He will remember you came.`,
 };
@@ -437,7 +459,7 @@ registerDelivery({
       addOpinion(s, c.id, s.playerId, p.pk === 'dinner' ? 'Took me to dinner' : p.pk === 'audience' ? 'The boss gave me his time' : 'Came to see me', v, 2);
       changes.push(`${c.firstName} +${v}`);
     }
-    const r = (RESULT[p.pk] ?? RESULT.visit)(name);
+    const r = it.payload.waste ? `An hour on ${name}. It could have waited a month.` : (RESULT[p.pk] ?? RESULT.visit)(name);
     const jid = journal(s, { d: it.d, tm: formatClock(it.h), c: p.pk === 'dinner' && c?.dynasty ? 'family' : 'crew', t: String(p.title ?? 'Plans'), r: [r], src: 'planner', mine: 1, ...(c ? { p: [c.id] } : {}) });
     pushDone(ensurePlanner(s), { w: it.w, d: it.d, h: it.h, t: String(p.title ?? 'Plans'), r, jid, k: p.pk, ...(c ? { who: c.id } : {}) });
     return { state: s, result: { ok: true, title: String(p.title ?? 'Plans'), ...(c ? { who: displayName(c) } : {}), tier: 'success', headline: 'Done', line: r, changes, leadsTo: ['In Your File.'] } };

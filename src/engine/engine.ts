@@ -107,6 +107,7 @@ import { guardDefaults, safeDefault } from './handover';
 import { xpEventSource, xpWeek } from './crewXp';
 import { mindsWeek } from './minds';
 import { readsWeek } from './peopleRead';
+import { gateWeek } from './planner/gateWeek';
 import { argueWeek } from './argue/offer';
 import { deedsEventSource, deedsWeek } from './deeds';
 import { sceneEventSource } from './authored/run';
@@ -515,6 +516,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     xpWeek(ctx, input);
     // The boss's private read on people: the week's evidence counted, old suspicion fading (peopleRead.ts).
     readsWeek(ctx);
+    // The man at the door (planner/gateWeek.ts): a turned gatekeeper's week, the tells, the boss's cross-checks that take a month.
+    gateWeek(ctx);
   }
   s.unwashed = Math.max(0, Math.min(s.unwashed, Math.max(0, s.money)));
 

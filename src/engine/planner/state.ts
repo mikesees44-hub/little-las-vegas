@@ -43,6 +43,25 @@ export interface PlannerState {
   /** The brief opens itself at the morning's first stop. */
   auto: boolean;
   briefDay?: number;
+  /* ---- The gatekeeper (planner/gate.ts): all optional, absent in a game where nothing has happened at the door. ---- */
+  /** Who keeps the door, as the boss chose (absent: the consigliere). */
+  gk?: 'underboss' | 'wife';
+  /** The absolute day he last read the full list himself (an hour of his day). */
+  full?: number;
+  /** Requests held back at the door: request key -> the week it was first held. */
+  hb?: Record<string, number>;
+  /** What the boss noticed (tells and cross-checks), latest last: the week and the line. */
+  tl?: { w: number; t: string }[];
+  /** The gatekeeper found out: who, the week, how he had turned, what the boss did (absent: not decided yet), tries at confronting him. */
+  gx?: { id: string; w: number; why: string; how?: 'confront' | 'feed' | 'freeze' | 'clip'; n?: number };
+  /** A man frozen out of the door (never the gatekeeper again unless the boss picks his seat). */
+  frz?: string;
+  /** Switched for a month to compare: the old gatekeeper, the week, what the new one brought in that the old one held. */
+  cmp?: { id: string; w: number; n: number };
+  /** Brief lines he slanted (tip ids), to hold against the street. */
+  sl?: string[];
+  /** Cross-check cooldowns: kind -> week last used. */
+  xc?: Record<string, number>;
 }
 
 export const DONE_CAP = 160;
@@ -69,7 +88,8 @@ export function plannerOf(s: GameState): PlannerState {
 /** A copy of the state with its own planner record, for a pure edit. */
 export function withPlanner(s: GameState, f: (p: PlannerState, x: GameState) => void): GameState {
   const P = plannerOf(s);
-  const x: GameState = { ...s, planner: { ...P, done: P.done.slice(), notes: { ...P.notes }, refused: { ...P.refused }, lastRefused: { ...P.lastRefused }, turned: { ...P.turned } } };
+  const x: GameState = { ...s, planner: { ...P, done: P.done.slice(), notes: { ...P.notes }, refused: { ...P.refused }, lastRefused: { ...P.lastRefused }, turned: { ...P.turned },
+    ...(P.hb ? { hb: { ...P.hb } } : {}), ...(P.tl ? { tl: P.tl.slice() } : {}), ...(P.gx ? { gx: { ...P.gx } } : {}), ...(P.cmp ? { cmp: { ...P.cmp } } : {}), ...(P.sl ? { sl: P.sl.slice() } : {}), ...(P.xc ? { xc: { ...P.xc } } : {}) } };
   ensurePlanner(x);
   f(x.planner!, x);
   return x;

@@ -7,6 +7,8 @@ import { inTheRanks } from '../rankView';
 import { DEFAULT_POLICY, splitText } from '../tributeState';
 import type { EdictId, GameState, PlayerAction } from '../types';
 import { plannerOf } from './state';
+import { gatekeeper } from './audience';
+import { roleRows, type RoleRow } from './gate';
 
 /**
  * STANDING ORDERS: one page with every rule the boss has set and delegated, editable in one place.
@@ -26,6 +28,9 @@ export interface StandingOrders {
   split: { personal: number; text: string; auto: boolean };
   edicts: { id: EdictId; name: string; text: string; on: boolean }[];
   brief: boolean;
+  /** Who keeps the door (planner/gate.ts): the consigliere, the underboss or the wife. */
+  door: RoleRow[];
+  keeper: string;
 }
 
 export const LEVELS: LtLevel[] = ['handle', 'ask', 'self'];
@@ -51,6 +56,8 @@ export function standingOrders(s: GameState): StandingOrders {
     split: { personal: Math.round(pol.personal / 100), text: splitText(pol), auto: pol.auto },
     edicts: low ? [] : (Object.keys(EDICTS) as EdictId[]).map((id) => ({ id, name: EDICTS[id].name, text: EDICTS[id].text, on: !!s.edicts?.[id] })),
     brief: plannerOf(s).auto !== false,
+    door: low ? [] : roleRows(s),
+    keeper: low ? '' : gatekeeper(s).name,
   };
 }
 
