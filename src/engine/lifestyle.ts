@@ -5,6 +5,7 @@ import { heat, type Ctx } from './ledger';
 import { addOpinion } from './relations';
 import { chance, pick } from './rng';
 import { spendPerk } from './spendState';
+import { skillMod } from './bossSkills';
 import type { Attributes, Character, GameState, LifestyleId } from './types';
 export type { LifestyleId };
 
@@ -19,7 +20,9 @@ export type { LifestyleId };
 
 export type PerkKey =
   | 'hitPower' | 'heistPower' | 'secrecy' | 'raid' | 'guard' | 'strikeDamage' | 'income' | 'street' | 'launder' | 'upkeep' | 'vig' | 'tribute'
-  | 'accept' | 'vote' | 'bribe' | 'favor' | 'localHeat' | 'fedHeat' | 'familyOpinion' | 'crewOpinion' | 'defection' | 'heirGrowth' | 'intel' | 'envoy';
+  | 'accept' | 'vote' | 'bribe' | 'favor' | 'localHeat' | 'fedHeat' | 'familyOpinion' | 'crewOpinion' | 'defection' | 'heirGrowth' | 'intel' | 'envoy'
+  /** The skill perks' own (bossSkills.ts): a sit-down's settle point, the quiet envelope, a clean hit, less skimming, capos' loyalty. */
+  | 'sitdown' | 'quietEnv' | 'cleanHit' | 'skim' | 'capoLoyal';
 
 export interface Perk {
   id: string;
@@ -102,6 +105,8 @@ export function perkMod(s: GameState, key: PerkKey): number {
   const b = s.characters[s.playerId];
   // What he owns and keeps on retainer counts too (spendState.ts): bodyguards guard, a captain on the pad cools the heat.
   let v = s.spend ? spendPerk(s, key) : 0;
+  // The skills he put points into (bossSkills.ts): their small perks.
+  if (s.bsk) v += skillMod(s, key);
   if (!b?.lifestyle) return v;
   for (const id of b.lifestyle.perks) v += findPerkCached(id)?.mods[key] ?? 0;
   return v;
@@ -154,6 +159,8 @@ export function lifestyleMonth(ctx: Ctx): void {
   if (fo) for (const m of livingDynasty(s)) if (m.id !== b.id) addOpinion(s, m.id, b.id, 'A good head of the family', fo, 1);
   const co = perkMod(s, 'crewOpinion');
   if (co) for (const m of crew(s)) addOpinion(s, m.id, b.id, 'Keeps the old ways', co, 1);
+  const cl = perkMod(s, 'capoLoyal');
+  if (cl) for (const m of crew(s)) if (m.rank === 'capo') addOpinion(s, m.id, b.id, 'The boss stands by his capos', cl, 1);
   const hg = perkMod(s, 'heirGrowth');
   if (hg) {
     for (const id of b.childrenIds) {

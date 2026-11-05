@@ -1402,7 +1402,7 @@ export function previewCapo(s: GameState, a: CapoAction): ActionPreview {
     case 'kin': {
       const mt = kinMatch(s, k);
       const why = b?.tied ? `Already family (${b.tied.how})` : 500 > s.money ? 'Needs $500' : undefined;
-      return { ...base, title: mt ? `A match: ${fn(mt.ours)} and ${fn(mt.theirs)}` : `Stand godfather to ${fn(k)}'s child`, detail: mt ? `Your ${mt.ours.gender === 'F' ? 'girl' : 'boy'} marries into ${fn(k)}'s family: he is family now, for good.` : `Compare: you hold his child at the font. He is family now, for good.`, effects: [{ type: 'money', amount: -500, label: mt ? 'The wedding' : 'The christening' }, { type: 'opinion', from: k.id, to: s.playerId, amount: 20, reason: mt ? 'Our families are joined' : 'My compare', decay: 0 }], cost: 500, because: mt ? `married into ${fn(k)}'s family` : `stood godfather to ${fn(k)}'s child`, disabledReason: why };
+      return { ...base, title: mt ? `A match: ${fn(mt.ours)} and ${fn(mt.theirs)}` : `Stand godfather to ${fn(k)}'s child`, detail: mt ? `Your ${mt.ours.gender === 'F' ? 'girl' : 'boy'} marries into ${fn(k)}'s family: he is family now, for good.` : `Compare: you hold his child at the font. He is family now, for good.`, effects: [{ type: 'money', amount: -500, label: mt ? 'The wedding' : 'The christening' }, { type: 'opinion', from: k.id, to: s.playerId, amount: 20, reason: mt ? 'Our families are joined' : 'My compare', decay: 0 }, ...(mt ? [] : [{ type: 'gf', op: { op: 'god', who: k.id, nm: capoGodchild(k).name, male: capoGodchild(k).male ? 1 : 0 } } as Effect])], cost: 500, because: mt ? `married into ${fn(k)}'s family` : `stood godfather to ${fn(k)}'s child`, disabledReason: why };
     }
     case 'watch':
       return { ...base, title: `Put a guy on ${fn(k)}`, detail: 'Eight weeks: who he sees, where he goes. If he is up to something, you will likely know. If he spots the tail, he will not like it.', effects: [{ type: 'money', amount: -300, label: `A man on ${fn(k)}` }], cost: 300, because: `put a man on ${fn(k)}`, disabledReason: (b?.watch ?? -1) >= s.week ? 'You already have a man on him' : 300 > s.money ? 'Needs $300' : undefined };
@@ -1550,3 +1550,10 @@ export function intelKindLabel(k: IntelKind): string {
 }
 
 export type { CapoPlot };
+
+/** The child the boss holds at the font for a capo (godfather.ts records it): his youngest, else a new baby. */
+function capoGodchild(k: Character): { name: string; male: boolean } {
+  const kids = k.household?.kids ?? [];
+  const y = kids[kids.length - 1];
+  return y ? { name: y.name, male: y.male } : { name: `${k.firstName}'s baby`, male: true };
+}

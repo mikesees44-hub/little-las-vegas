@@ -12,6 +12,9 @@ import { ensureDirty } from './dirtyWork';
 import { ensurePaper } from './paper';
 import { ensureWork } from './bizRacket';
 import { ensureXp } from './crewXp';
+import { ensureLoyal } from './loyalty';
+import { ensureBskSave } from './bossSkills';
+import { ensureGfSave } from './godfather';
 import { ensureProtect } from './protect';
 import { ensureWomen } from './womenState';
 import { ensureHoney } from './honeyState';
@@ -70,7 +73,7 @@ export function upgradeSave(s: GameState): GameState {
   // created by the weekly update itself, so loading never changes the dice.
   const steps: [keyof GameState, (s: GameState) => unknown][] = [
     ['econ', ensureEcon], ['empire', ensureEmpire], ['bones', ensureBones], ['dyn' as keyof GameState, ensureDynState], ['ledgerBook', ensureLedgerBook],
-    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['matchmakers', ensureMatchmakers], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos], ['reactions', ensureReactions], ['argue', ensureArgue], ['cut', ensureCut], ['oc', ensureOc], ['feds', ensureFeds], ['planner', ensurePlanner], ['ambitions', ensureAmbitions], ['petitions', ensurePetitions], ['reads', ensureReads], ['pins', ensurePins], ['payroll', ensurePayroll], ['herway', ensureHerWay],
+    ['arcs', ensureArcs], ['story', ensureStory], ['romance', ensureRomance], ['travel', ensureTravel], ['pol', ensurePol], ['ears', ensureEars], ['tribute' as keyof GameState, ensureTribute], ['dirty', ensureDirty], ['shadow', ensureShadow], ['dev', ensureDev], ['living', ensureLiving], ['dating', ensureDating], ['nightlife', ensureNightlife], ['bonds', ensureBonds], ['matchmakers', ensureMatchmakers], ['paper', ensurePaper], ['work', ensureWork], ['mymen' as keyof GameState, ensureMyMen], ['xp', ensureXp], ['protect', ensureProtect], ['women', ensureWomen], ['honey', ensureHoney], ['minds', ensureMinds], ['army', ensureArmy], ['deeds', ensureDeeds], ['capos', ensureCapos], ['reactions', ensureReactions], ['argue', ensureArgue], ['cut', ensureCut], ['oc', ensureOc], ['feds', ensureFeds], ['planner', ensurePlanner], ['ambitions', ensureAmbitions], ['petitions', ensurePetitions], ['reads', ensureReads], ['pins', ensurePins], ['payroll', ensurePayroll], ['herway', ensureHerWay], ['loyal', ensureLoyal], ['bsk', ensureBskSave], ['gf', ensureGfSave],
   ];
   for (const [key, step] of steps) {
     if (s[key] === undefined) continue;

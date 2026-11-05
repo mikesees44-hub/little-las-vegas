@@ -268,6 +268,8 @@ export function schemeOdds(s: GameState, kind: SchemeKind, targetId: string | un
   const pk = kind === 'murder' ? perkMod(s, 'hitPower') : kind === 'heist' ? perkMod(s, 'heistPower') : kind === 'envoy' ? perkMod(s, 'envoy') : 0;
   if (pk) reasons.push({ label: 'Your perks', value: pk });
   if (kind !== 'envoy' && kind !== 'befriend' && kind !== 'sway') secrecy += perkMod(s, 'secrecy');
+  // Clean work (bossSkills.ts, Muscle 10): a hit leaves less behind.
+  if (kind === 'murder') secrecy += perkMod(s, 'cleanHit');
   const sum = reasons.reduce((a, r) => a + r.value, 0);
   return {
     chance: Math.max(0.05, Math.min(0.95, sum / 100)),

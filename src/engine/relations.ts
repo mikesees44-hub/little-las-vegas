@@ -1,6 +1,7 @@
 import { fearFade } from './aging';
 import { hasTrait } from './characters';
 import type { GameState, OpinionModifier, Relation } from './types';
+import { noteLoyalty } from './loyalty';
 
 /**
  * Relationships are directional: relation(A, B) is what A thinks of B.
@@ -69,6 +70,8 @@ export function addOpinion(
     else if (value < 0 && hasTrait(fromChar, 'Patient') && decay > 0) decay += 1;
   }
   const r = ensureRelation(s, from, to);
+  // Loyalty that moves (loyalty.ts): the change, its reason, for the meter's trend and the floaters.
+  noteLoyalty(s, from, to, reason, value);
   const existing = r.modifiers.find((m) => m.reason === reason);
   if (existing) {
     existing.value = Math.max(-100, Math.min(100, existing.value + value));

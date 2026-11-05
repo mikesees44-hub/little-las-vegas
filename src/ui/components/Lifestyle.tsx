@@ -31,6 +31,11 @@ const MOD_LABEL: Record<PerkKey, (v: number) => string> = {
   heirGrowth: (v) => `children +${v}% skill growth`,
   intel: (v) => `+${v}% digging`,
   envoy: (v) => `+${v} envoy odds`,
+  sitdown: (v) => `sit-downs settle ${v} closer to you`,
+  quietEnv: (v) => `quiet envelopes ${v}% less likely to be told`,
+  cleanHit: (v) => `+${v} secrecy on hits`,
+  skim: (v) => `men short ${v}% less often`,
+  capoLoyal: (v) => `capos +${v} opinion a month`,
 };
 
 /** The boss's lifestyle: focus, experience and the three perk trees. */
