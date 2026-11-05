@@ -135,6 +135,8 @@ const DATING_PURPOSE: Record<string, string> = {
   meet: 'A proper introduction to a woman from the neighborhood. Nothing is promised.',
   paid: 'An evening of company, agreed and paid, between adults. It makes no feelings and no relationship; it has risks you can see before you confirm.',
   askOut: 'Ask a woman who works nights out as yourself, off the clock. She can say no, keep it professional, or take it personally.',
+  come: 'She came to you. Take her out, take it slow, or turn her down kindly or cold: each lands differently, with her and her family.',
+  ma: 'Your mother found you a girl. Meet her, put Ma off, tell her you will find your own, or let Ma arrange it. Ma remembers, and the girl decides too.',
 };
 
 const BOND_PURPOSE: Record<string, string> = {

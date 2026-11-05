@@ -212,6 +212,8 @@ export function handlerOf(s: GameState, it: InboxItem): Omit<Handled, 'item'> {
   }
   if (it.kind === 'envelope') return { ...ub, does: 'takes the standing split', day: 0 };
   if (it.ref.ask) return { ...ub, does: 'lets the offer stand until you answer' };
+  if (it.ref.single === 'come') return { by: 'Nobody', does: 'she waits a little, then moves on' };
+  if (it.ref.single === 'ma') return { by: 'Nobody', does: 'Ma waits; after six weeks she takes silence as "not now", and nags' };
   if (it.ref.trouble) return { ...ub, does: 'keeps an eye on it' };
   if (it.ref.tip) return { by: 'Nobody', does: 'what they heard lands whether you listen or not' };
   if (it.kind === 'lawyer') return { by: 'Your lawyer', does: 'waits for an hour of your time' };

@@ -25,7 +25,7 @@ import {
   $, addSign, adultC, clamp, closeLately, fn, honeyBlock, hlog, hpick, hroll, involvedWith, manOf, marriedOf, nm, pct, perception, watchFor,
 } from './honeyCore';
 import { CLOSE_INFO, END_TEXT, runDare, type DareAt, type DareMove } from './honeyScript';
-import { approachSlotFree, isSingle, takeHoneyApproach } from './single';
+import { approachSlotFree, isSingle, SINGLE_TEST, takeHoneyApproach } from './single';
 import {
   AGENT_TEXT, ensureHoney, LEVER_TEXT, WANT_COST, WANT_TEXT,
   type Agent, type AgentKind, type Claim, type HoneyState, type Lever, type Mistress, type Scorn, type SettleHow, type Want,
@@ -797,7 +797,7 @@ function approachWeek(ctx: Ctx, H: HoneyState): void {
   const boss = player(s);
   if (!boss.alive || !isFree(s, boss) || !adultC(s, boss)) return;
   // A single boss gets her as his card (single.ts), not a popup: only when the card is free.
-  const single = isSingle(s) && boss.gender === 'M';
+  const single = !SINGLE_TEST.off && isSingle(s) && boss.gender === 'M';
   if (single && !approachSlotFree(s)) return;
   const hostile = hostileRival(s);
   const fed = (s.threats?.fed.stage ?? 0) >= 1;

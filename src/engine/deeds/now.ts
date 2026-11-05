@@ -144,7 +144,7 @@ function diff(s: GameState, a: Snap, b: Snap, t?: string): { changes: string[]; 
 /** Critical ends of the old verbs (interactions.ts, women, dating, nightlife, bonds, gifts): the teeth. */
 /** The matchmaker's card (matchmakers.ts). */
 function matchCard(a: PlayerAction): boolean {
-  return a.kind === 'bond' && (a.op.op === 'match' || a.op.op === 'herFavor');
+  return (a.kind === 'bond' && (a.op.op === 'match' || a.op.op === 'herFavor')) || (a.kind === 'dating' && (a.op.op === 'come' || a.op.op === 'ma'));
 }
 
 /** The last line the order wrote to Your File (the matchmaker's own words for the result card). */

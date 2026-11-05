@@ -112,7 +112,7 @@ export function ensureSingle(s: GameState): SingleState {
   const S = s.single;
   S.nag ??= 0;
   S.wed ??= [];
-  S.n = { appr: 0, fix: 0, yes: 0, ...(S.n ?? {}) };
+  S.n ??= { appr: 0, fix: 0, yes: 0 };
   return S;
 }
 
@@ -624,7 +624,7 @@ export function previewSingle(s: GameState, a: SingleAction): ActionPreview {
       };
     case 'decide':
       return {
-        ...pre(title, `let ${call} arrange it with ${her}`, ready),
+        ...pre(title, `let ${call} arrange it with ${her}`, ready ?? (!drawnTo(s, boss, c) ? 'You are not drawn to her that way (Sunday dinner is still just dinner)' : undefined)),
         detail: `${coffee} ${call} arranges the courtship the old way, mother to mother: if ${her} says yes, you are seeing each other, with the whole parish watching. ${call} is delighted; her standing rises the most. ${her} decides; so does her family.`,
         effects: [{ type: 'storyOp', op: { op: 'romance', a: boss.id, b: c.id }, label: lbl } as Effect, X(a, lbl)], acceptance: maOdds(s, f, 'decide'), oddsLabel: 'She and her family say yes',
         refuseEffects: [X({ op: 'maNo', id: a.id, a: 'decide' }, lbl)], verb: 'Let Ma decide',
@@ -661,7 +661,11 @@ export function applySingleOp(ctx: Ctx, o: SingleOp): void {
   const boss = player(s);
   const c = s.characters[o.id];
   const S = ensureSingle(s);
-  if (!c?.alive || !isAdult(s, c) || !isAdult(s, boss) || kin(boss, c)) { S.open = undefined; return; }
+  if (!c?.alive || !isAdult(s, c) || !isAdult(s, boss) || kin(boss, c)) {
+    if (S.open?.id === o.id) S.open = undefined;
+    if (S.fix?.id === o.id) S.fix = undefined;
+    return;
+  }
   const D = ensureDating(s);
   if (o.op === 'come' || o.op === 'comeNo') {
     const ap = S.open?.id === c.id ? S.open : undefined;
@@ -821,9 +825,12 @@ function weddings(ctx: Ctx, S: SingleState): void {
   S.wed = S.wed.filter((x) => s.week - x.w < 156 && s.characters[x.id]?.alive && !s.characters[x.id].spouseId);
 }
 
+/** Tests only: switch the layer off (tests/single.test.ts compares the popups with and without it). */
+export const SINGLE_TEST = { off: false };
+
 export function singleWeek(ctx: Ctx): void {
   const s = ctx.s;
-  if (s.gameOver) return;
+  if (s.gameOver || SINGLE_TEST.off) return;
   const S0 = s.single;
   if (S0) {
     // She waited; he never called.

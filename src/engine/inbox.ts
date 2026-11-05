@@ -5,6 +5,7 @@ import { actTitle, docketOf, ifSilent, pendingAsks } from './lieutenants';
 import { openAsks, TRADES, TROUBLE_WORD, troubled } from './placeAsks';
 import { today } from './days';
 import { eventsOut } from './eventDays';
+import { approachView, fixView } from './single';
 import type { GameState, PlayerAction } from './types';
 import type { Stakes } from './attention';
 
@@ -37,7 +38,7 @@ export interface InboxItem {
   charId?: string;
   /** What is on the line (engine/attention.ts fills it; the inbox itself never does). */
   stakes?: Stakes;
-  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string; /** Trouble at a tenant's racket (placeAsks.ts). */ trouble?: string };
+  ref: { event?: string; day?: number; brief?: string; tip?: string; envelope?: string; /** A lieutenant's proposal (lieutenants.ts act id). */ lt?: string; /** A man asking to run his racket at your place (placeAsks.ts). */ ask?: string; /** Trouble at a tenant's racket (placeAsks.ts). */ trouble?: string; /** A woman who came to him, or Ma's match (single.ts). */ single?: 'come' | 'ma' };
 }
 
 export interface InboxUi {
@@ -91,6 +92,13 @@ export function inbox(s: GameState, ui: InboxUi = {}): InboxItem[] {
       if (covered.has(`trouble:${id}`)) continue;
       out.push({ key: `trouble:${id}`, kind: 'request', tone: s.week - t.trouble!.w >= 3 ? 'amber' : 'gold', title: `Trouble at ${t.placeName}`, why: `${t.name}'s ${TRADES[t.trade].what}: ${TROUBLE_WORD[t.trouble!.k]}. Left alone a month, it gets worse.`, charId: t.who, ref: { trouble: id } });
     }
+  }
+  // A woman who came to him, and Ma's match (single.ts): a request, so it takes a Desk seat only where one is free.
+  {
+    const a = approachView(s);
+    if (a) out.push({ key: `single:${a.a.id}`, kind: 'request', tone: 'gold', title: `${a.c.firstName} ${a.c.lastName} came to you`, why: `${a.info.label}, ${a.age}. ${a.info.how}. She waits ${a.left ? `about ${a.left} more week${a.left === 1 ? '' : 's'}` : 'until the week is out'}.`, charId: a.c.id, ref: { single: 'come' } });
+    const f = fixView(s);
+    if (f) out.push({ key: `ma:${f.c.id}`, kind: 'request', tone: 'gold', title: `${f.call} has a girl for you: ${f.c.firstName} ${f.c.lastName}`, why: `${f.age}, ${f.house ? `of ${f.house.name}` : 'from the parish'}. Meet her, "not now, Ma", find your own, or let ${f.call} decide.`, charId: f.c.id, ref: { single: 'ma' } });
   }
   const rep = latestReport(s);
   // One envelope: once the boss has taken it (the count answered in the Office or on the Desk, or a split ordered),
