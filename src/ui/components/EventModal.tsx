@@ -1,3 +1,4 @@
+import { touchesAMan } from '../../engine/bundles';
 import { useState } from 'react';
 import { rankWordOf } from '../../engine/rankView';
 import { aboveLabel } from '../../engine/valente';
@@ -55,7 +56,14 @@ export function EventModal({ s, ev, index, total, selected, onChoose, onClose }:
   const cpMan = cp?.byId ? s.characters[cp.byId] : undefined;
   const cpName = cpMan?.firstName;
   const cpWho = cpMan?.rank === 'consigliere' ? 'the consigliere' : cpName ?? 'your people';
+  // The recommended answer, picked when the card opens (never given until he taps): the consigliere's pick,
+  // unless it would cost one of his men his life or freedom (that pick is always the boss's own tap).
+  const rec = cp ?? consiglierePick(s, ev);
+  const recId = rec && !touchesAMan(ev.choices.find((c) => c.id === rec.choiceId)?.effects ?? []) ? rec.choiceId : undefined;
+  const recWho = rec?.byId && s.characters[rec.byId] ? (s.characters[rec.byId].rank === 'consigliere' ? 'The consigliere' : s.characters[rec.byId].firstName) : 'Your people';
   const options: DecisionOption[] = ev.choices.map((c) => ({
+    recommended: c.id === recId,
+    pickedBy: c.id === recId ? `${recWho}'s pick` : undefined,
     id: c.id,
     label: c.label,
     detail: c.detail,

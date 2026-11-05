@@ -3,6 +3,7 @@ import { oddsOfPreview, stakesLine, worstOfPreview } from '../../engine/decide';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { useOrders } from '../components/Orders';
 import { sameOrder } from '../verbs';
+import { touchesAMan } from '../../engine/bundles';
 import { DecisionCard, type DecisionOption, type Voice } from './DecisionCard';
 
 /**
@@ -10,7 +11,7 @@ import { DecisionCard, type DecisionOption, type Voice } from './DecisionCard';
  * no): the one decision card, each option with the order's odds (or
  * "certain"), its worst way and its cost; the primary gives the picked order.
  */
-export function OrderChoice({ s, title, text, options, voices, testid, onHandOff, handOffLabel }: {
+export function OrderChoice({ s, title, text, options, voices, testid, onHandOff, handOffLabel, recommended }: {
   s: GameState;
   title?: string;
   text?: string;
@@ -19,11 +20,18 @@ export function OrderChoice({ s, title, text, options, voices, testid, onHandOff
   testid?: string;
   onHandOff?: () => void;
   handOffLabel?: string;
+  /** The option to open on (already picked, never given until he taps); default: the surest friendly order he can give. */
+  recommended?: string;
 }) {
   const { orders, queue } = useOrders();
   const pv = options.map((o) => previewAction(s, o.action));
   const given = options.find((o) => orders.some((x) => sameOrder(x, o.action)));
+  // Smart default: the order that is surest to work, of the friendly ones he can give now (never one that costs a man).
+  const rec = recommended ?? options.map((o, i) => ({ o, p: pv[i], odds: oddsOfPreview(pv[i]) }))
+    .filter((x) => !x.o.hostile && !x.p.disabledReason && !touchesAMan(x.p.effects))
+    .sort((a, b) => (b.odds.known ? b.odds.chance ?? 1 : 1) - (a.odds.known ? a.odds.chance ?? 1 : 1))[0]?.o.id;
   const opts: DecisionOption[] = options.map((o, i) => ({
+    recommended: o.id === rec, pickedBy: o.id === rec ? 'best bet' : undefined,
     id: o.id, label: o.label ?? pv[i].title, effects: pv[i].effects, odds: oddsOfPreview(pv[i]), worst: worstOfPreview(pv[i]),
     cost: pv[i].cost || undefined, pocket: pv[i].pot === 'pocket', disabled: pv[i].disabledReason, hostile: o.hostile, done: given?.id === o.id, rowTestId: o.rowTestId,
   }));

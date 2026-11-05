@@ -52,13 +52,13 @@ function GiftPicker({ s, c }: { s: GameState; c: Character }) {
   );
 }
 
-function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; onDone?: () => void }) {
+function Item({ s, c, it, onDone, open }: { s: GameState; c: Character; it: MenuItem; onDone?: () => void; /** Open on its full card: the recommended order, one tap from given. */ open?: boolean }) {
   const { plan } = usePlanner();
   const travel = useTravel();
   const { openPicker } = useClarity();
   const shell = useShell();
   const [gifts, setGifts] = useState(false);
-  if (it.action) return <ActionRow s={s} action={it.action} label={it.label} hostile={it.hostile} />;
+  if (it.action) return <ActionRow s={s} action={it.action} label={it.label} hostile={it.hostile} open={open} />;
   const o = it.open!;
   if (o.type === 'gifts' && gifts) return <GiftPicker s={s} c={c} />;
   if (o.type === 'dirty' && gifts) return <div className="sm:col-span-2 rounded-md border border-blood-500/40 p-2"><DirtyOnPerson s={s} charId={c.id} onGo={() => { onDone?.(); shell.go('holdings.dirty'); }} /></div>;
@@ -86,9 +86,14 @@ function Item({ s, c, it, onDone }: { s: GameState; c: Character; it: MenuItem; 
 }
 
 /** A category's rows, under their finer groups' subheads when it holds more than one. */
-function Grouped({ s, c, items, onDone, sub }: { s: GameState; c: Character; items: MenuItem[]; onDone?: () => void; sub: boolean }) {
+function Grouped({ s, c, items, onDone, sub, openFirst }: { s: GameState; c: Character; items: MenuItem[]; onDone?: () => void; sub: boolean; /** "Best now": the top order opens already picked (smart default; nothing is given until he taps). */ openFirst?: boolean }) {
   const groups = [...new Set(items.map((it) => it.group))];
-  if (!sub || groups.length < 2) return <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5">{sortItems(s, items).map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} />)}</div>;
+  if (!sub || groups.length < 2) {
+    // Best now: the first order he can give now opens on its card.
+    const rows = sortItems(s, items);
+    const top = openFirst ? rows.find((it) => it.action && !it.hostile && !HARSH.test(it.key) && !previewAction(s, it.action).disabledReason)?.key : undefined;
+    return <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-1.5">{rows.map((it) => <Item key={it.key} s={s} c={c} it={it} onDone={onDone} open={it.key === top} />)}</div>;
+  }
   return (
     <div className="mt-2 space-y-2">
       {groups.map((g) => (
@@ -178,7 +183,7 @@ export function InteractionMenu({ s, c, initial, onDone, cats: given }: { s: Gam
               </button>
             ))}
           </nav>
-          <Grouped s={s} c={c} items={cat.items} onDone={onDone} sub={cat.id !== 'best'} />
+          <Grouped key={cat.id} s={s} c={c} items={cat.items} onDone={onDone} sub={cat.id !== 'best'} openFirst={cat.id === 'best'} />
         </>
       )}
     </section>

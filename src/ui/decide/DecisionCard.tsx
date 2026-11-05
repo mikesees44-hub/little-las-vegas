@@ -191,7 +191,9 @@ export interface DecisionCardProps {
 
 export function DecisionCard(p: DecisionCardProps) {
   const { s, options, compact } = p;
-  const [sel, setSel] = useState<string | undefined>(p.selected ?? (options.length === 1 ? options[0].id : undefined));
+  // Smart default (STREAMLINE_2 addendum): the card opens on the recommended answer, already picked, so most
+  // decisions are one tap; nothing is given until the boss taps the primary.
+  const [sel, setSel] = useState<string | undefined>(p.selected ?? (options.length === 1 ? options[0].id : options.find((o) => o.recommended && !o.disabled)?.id));
   const [confirm, setConfirm] = useState<{ id: string; v: ConfirmView } | undefined>();
   const chosen = options.find((o) => o.id === sel);
   const give = (id: string) => {
