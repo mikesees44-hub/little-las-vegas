@@ -69,6 +69,8 @@ export interface BookEntry {
   go?: Go;
 }
 
+const GF_DEFS = new Set(['gf_wedding', 'gf_baptism', 'crew_wedding', 'crew_christening']);
+
 /** Absolute day <-> week and day. */
 export const absOf = (w: number, d: number) => w * 7 + d;
 export const wdOf = (abs: number) => ({ w: Math.floor(abs / 7), d: ((abs % 7) + 7) % 7 });
@@ -206,6 +208,12 @@ export function dayEntries(s: GameState, w: number, d: number): BookEntry[] {
     if (!c.dynasty || c.alive || !c.death) continue;
     const fd = addDays(c.death.date, 3);
     if (toDays(fd) === toDays(dt)) out.push({ id: `fun:${c.id}`, kind: 'family', w, d, h: 10, dur: 3, title: `${c.firstName}'s funeral`, sub: 'St. Ann\'s, then the cemetery in Cape May Court House.', dom: 'church' });
+  }
+  // A wedding or a christening he has been asked to (godfather.ts, crewEvents.ts): Saturday, at the church.
+  if (live && w === s.week && d === 5) for (const ev of s.pendingEvents) {
+    if (!GF_DEFS.has(ev.defId)) continue;
+    const who = typeof ev.meta?.charId === 'string' ? ev.meta.charId : ev.actors?.[0];
+    out.push({ id: `gf:${ev.iid}`, kind: 'family', w, d, h: 11, dur: 4, title: ev.title, sub: 'Pay for it, stand godfather, send something, or stay away: answer on the card or on his sheet.', dom: 'church', ...(who ? { who, go: { char: who } } : {}) });
   }
   for (const [m, dd, t] of SAINTS) if (inMonthDay(dt, m, dd)) out.push({ id: `saint:${m}:${dd}:${y}`, kind: 'saint', w, d, h: 8, dur: 0, title: t, dom: 'church' });
   // The paper's entertainment: Friday, who is playing in town (this week and next, as far as the paper knows).

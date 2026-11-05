@@ -257,7 +257,7 @@ export function buildOffer(s: GameState, o: Offer): EventInstance {
   const who = displayName(c);
   const where = c.ethnicity === 'Jewish' ? 'Beth Judah' : 'St. Ann\'s';
   const iid = `ev${s.nextId++}`;
-  const meta = { charId: c.id, gf: o.k, nm: o.nm, sex: o.male, day: DAY, ...(fr ? { fr } : {}) };
+  const meta = { charId: c.id, gf: o.k, nm: o.nm, sex: o.male, sat: DAY, ...(fr ? { fr } : {}) };
   if (o.k === 'w') {
     const text = fr
       ? `${who}'s daughter ${o.nm} marries Saturday at ${where}, reception at the Hotel Dorset. Half the island is invited, and so are you. Paying for the reception would be noticed in every family in South Jersey.`
