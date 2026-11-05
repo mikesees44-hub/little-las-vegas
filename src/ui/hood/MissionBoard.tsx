@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { displayName } from '../../engine/characters';
 import { MISSION_DEFS, type MissionRun } from '../../engine/missions';
-import { rivalRelation, TALKS } from '../../engine/talks';
+import { rivalRelation, TALKS, type Pact } from '../../engine/talks';
+import { breakablePacts, breakCost, breakLabel, breakPact } from '../../engine/minds/breakWord';
+import { useShell } from '../shell/context';
 import type { GameState, RivalId } from '../../engine/types';
 import { FACTION_NAMES } from '../../engine/world';
 import { ActionCard } from '../components/Orders';
@@ -129,12 +131,13 @@ export function PactsPanel({ s }: { s: GameState }) {
   const pacts = (t?.pacts ?? []).filter((p) => p.until > s.week);
   const mobs = s.rivals.filter((r) => r.kind === 'mob' && s.characters[r.leaderId]?.alive);
   const name = (f: string) => (f === 'player' ? 'Your house' : FACTION_NAMES[f as RivalId] ?? f);
+  const breakable = new Set(breakablePacts(s).map((p) => p.id));
   return (
     <div className="space-y-4" data-testid="pacts-panel">
       <section>
         <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Pacts</div>
         {pacts.length === 0 && <p className="text-xs text-stone-500">No pacts. Sit down with a family (Rivals ▸ The Board, or a boss's Talk & Favors) and shake on a truce, an alliance, a partnership, tribute or a hands-off term.</p>}
-        <ul className="text-sm space-y-1">{pacts.map((p) => <li key={p.id}><span className="text-gold-300 capitalize">{p.kind}</span> · {name(p.a)} & {name(p.b)} <span className="text-stone-500 text-xs">— {p.terms}{p.weekly ? ` (${fmt$(p.weekly)}/wk)` : ''} · until week {p.until}</span></li>)}</ul>
+        <ul className="text-sm space-y-1">{pacts.map((p) => <li key={p.id}><span className="text-gold-300 capitalize">{p.kind}</span> · {name(p.a)} & {name(p.b)} <span className="text-stone-500 text-xs">— {p.terms}{p.weekly ? ` (${fmt$(p.weekly)}/wk)` : ''} · until week {p.until}</span>{breakable.has(p.id) && <BreakWord s={s} p={p} />}</li>)}</ul>
       </section>
       {mobs.length > 1 && (
         <section>
@@ -153,5 +156,29 @@ export function PactsPanel({ s }: { s: GameState }) {
         {!(t?.log ?? []).some((l) => l.kind !== 'talk') && <p className="text-xs text-stone-500">Quiet, for now.</p>}
       </section>
     </div>
+  );
+}
+
+/** Break your word on purpose: the confirm spells out the cost first. */
+function BreakWord({ s, p }: { s: GameState; p: Pact }) {
+  const shell = useShell();
+  const [ask, setAsk] = useState(false);
+  if (!shell.update) return null;
+  const cost = breakCost(s, p.id);
+  return (
+    <span className="ml-2 inline-block align-top">
+      {!ask ? (
+        <button type="button" className="btn-ghost border-red-400/40 px-2 py-0 text-[11px] text-red-200" onClick={() => setAsk(true)} data-testid={`break-${p.id}`}>{breakLabel(p)}…</button>
+      ) : (
+        <span className="mt-1 block rounded border border-red-400/50 bg-red-500/10 p-1.5 text-[11px] text-stone-200" data-testid={`break-confirm-box-${p.id}`}>
+          <b className="text-red-200">{breakLabel(p)}? This breaks your word.</b>
+          <ul className="list-disc pl-4">{cost.map((x) => <li key={x}>{x}</li>)}</ul>
+          <span className="mt-1 flex gap-1.5">
+            <button type="button" className="btn-ghost border-red-400/60 px-2 py-0 text-[11px]" onClick={() => { shell.update!((g) => breakPact(g, p.id).state); setAsk(false); }} data-testid={`break-confirm-${p.id}`}>Yes, break it</button>
+            <button type="button" className="btn-ghost px-2 py-0 text-[11px]" onClick={() => setAsk(false)}>Keep my word</button>
+          </span>
+        </span>
+      )}
+    </span>
   );
 }

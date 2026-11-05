@@ -385,3 +385,63 @@ describe('leverage cards', () => {
     expect(buildDiploPrompt(s, p.sd, { say: 'So?' }).messages[0].content).toMatch(/Leverage he laid on the table/);
   });
 });
+
+import { breakablePacts, breakCost, breakPact } from '../src/engine/minds/breakWord';
+import { track } from '../src/engine/intrigue';
+
+describe('breaking your word on purpose', () => {
+  it('the confirm spells out the cost; breaking it drops your word everywhere, Philadelphia, and gives them cause for war', () => {
+    const s = game('diplo2-break');
+    const { res } = shakeDeal(s, 'kessler', [{ kind: 'truce', weeks: 26 }]);
+    const g = res.state;
+    const p = breakablePacts(g, 'kessler').find((x) => x.kind === 'truce')!;
+    expect(p).toBeDefined();
+    const cost = breakCost(g, p.id);
+    expect(cost.join(' ')).toMatch(/every other family/);
+    expect(cost.join(' ')).toMatch(/Philadelphia/);
+    expect(cost.join(' ')).toMatch(/cause for war/);
+    const r = g.rivals.find((x) => x.id === 'kessler')!;
+    const ph = g.rivals.find((x) => x.id === 'philly')!;
+    const w0 = wordWith(g, 'kessler').score;
+    const wm0 = wordWith(g, 'manno').score;
+    const op0 = opinion(g, r.leaderId, g.playerId);
+    const ph0 = opinion(g, ph.leaderId, g.playerId);
+    const t0 = track(g, 'player', 'kessler')?.tension ?? 0;
+    const b = breakPact(g, p.id);
+    expect(b.ok).toBe(true);
+    const h = b.state;
+    expect(pactWith(h, 'kessler', 'truce')).toBeUndefined();
+    expect(wordWith(h, 'kessler').score).toBeLessThan(w0);
+    expect(wordWith(h, 'manno').score).toBeLessThan(wm0);
+    expect(opinion(h, r.leaderId, h.playerId)).toBeLessThan(op0);
+    expect(opinion(h, ph.leaderId, h.playerId)).toBeLessThan(ph0);
+    if (track(g, 'player', 'kessler')) expect(track(h, 'player', 'kessler')!.tension).toBeGreaterThan(t0);
+    expect(h.journal!.e.some((e) => /broke your word to Kessler/i.test(e.t) && e.mine)).toBe(true);
+    // The input is untouched; a broken pact never counts as kept.
+    expect(pactWith(g, 'kessler', 'truce')).toBeDefined();
+    const later = advanceWeek(h, randomChoices(h, 5)).state;
+    expect(recordOf(later, 'kessler')!.kept).toBe(0);
+  });
+});
+
+describe('on screen', () => {
+  it('the window shows the agenda, the leverage with odds and your word; the board shows the ask and your word', async () => {
+    const { createElement } = await import('react');
+    const { renderToString } = await import('react-dom/server');
+    const { FamilyTalk } = await import('../src/ui/minds/FamilyTalk');
+    const s = game('diplo2-ui');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    r.muscle = 5;
+    ensureTalks(s).asks = [{ id: 'fu', rival: 'manno', kind: 'grievance', w: s.week, until: s.week, text: 'Your people are crowding my corners.', offer: [], offerText: 'you stay out of the Boardwalk for 26 weeks' }];
+    const html = renderToString(createElement(FamilyTalk, { s, rival: 'manno', update: () => undefined, onClose: () => undefined }));
+    expect(html).toContain('sit-agenda');
+    expect(html).toContain('sit-levers');
+    expect(html).toContain('lever-strength');
+    expect(html).toMatch(/your word \d+/);
+    const { RivalBoard } = await import('../src/ui/shell/sections/RivalBoard');
+    const b = renderToString(createElement(RivalBoard, { s }));
+    expect(b).toContain('famask-manno');
+    expect(b).toContain('famask-open-manno');
+    expect(b).toContain('word-manno');
+  });
+});
