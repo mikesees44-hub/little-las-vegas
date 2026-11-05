@@ -4,6 +4,7 @@ import { weekCheckIns } from './checkins';
 import { daysOf } from './days';
 import { alwaysOn, consiglierePick, counselor, delegatedAsk, delegationLevel, notRoutine, SMALL_MONEY } from './delegation';
 import { eventsOut } from './eventDays';
+import { weekApptActions, weekAppts } from './appointments';
 import { hows, openPitches, pitchById, type PitchHow } from './eat';
 import { capoLevelOf } from './lieutenants';
 import { displayName } from './characters';
@@ -118,7 +119,8 @@ export function pitchPick(s: GameState, pid: string): PitchHow | undefined {
 /** Every small open item of the week, each with its answers and the pick. */
 export function settleItems(s: GameState, ui: SettleUi = {}): SettleItem[] {
   const answers = ui.answers ?? {};
-  const orders = ui.orders ?? [];
+  // Standing appointments (appointments.ts) are orders already decided: what they give is not asked again.
+  const orders = [...(ui.orders ?? []), ...weekApptActions(s)];
   const taken = new Set(ui.taken ?? []);
   const limit = settleLimit(s);
   const man = counselor(s);
@@ -234,6 +236,8 @@ export interface WeekPlan {
   yours: { key: string; title: string; why: string }[];
   cost: number;
   odds: string;
+  /** This week's standing appointments: already decided, they go as they are ("Standing: dinner with Rosa Tue evening"). */
+  standing?: string[];
 }
 
 /**
@@ -245,7 +249,8 @@ export interface WeekPlan {
 export function handleWeekPlan(s: GameState, ui: SettleUi = {}): WeekPlan {
   const settle: WeekPlanRow[] = [];
   const yours: WeekPlan['yours'] = [];
-  let left = queuedMoney(s, ui.orders ?? []).familyLeft;
+  // The money his standing appointments will take is spoken for first.
+  let left = queuedMoney(s, [...(ui.orders ?? []), ...weekApptActions(s)]).familyLeft;
   for (const it of settleItems(s, ui)) {
     if (it.yours) { yours.push({ key: it.key, title: it.title, why: it.yours }); continue; }
     const o = chosen(it);
@@ -255,7 +260,8 @@ export function handleWeekPlan(s: GameState, ui: SettleUi = {}): WeekPlan {
     settle.push({ key: it.key, kind: it.kind, title: it.title, label: o.label, by: it.kind === 'mornings' ? `${it.by}, his way` : it.by, cost: o.cost, odds: o.odds, answer: o.answer });
   }
   const sum = summarize(settle.map((r) => ({ id: r.key, label: r.label, cost: r.cost, odds: r.odds, answer: r.answer })));
-  return { settle, yours, ...sum };
+  const standing = weekAppts(s).map((x) => x.text);
+  return { settle, yours, ...sum, ...(standing.length ? { standing } : {}) };
 }
 
 /** In words, what one settled row does ("Tommy: do him the favor"). */

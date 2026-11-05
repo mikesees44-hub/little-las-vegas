@@ -428,9 +428,9 @@ export function apptsWeek(ctx: Ctx): string[] {
     if (a.budget !== undefined && spent + cost > a.budget) { skip(ctx, o, `over its budget of $${a.budget.toLocaleString('en-US')} a week`, lines); continue; }
     const fb = fundingBlock(s, a.action, p);
     if (fb) { skip(ctx, o, fb, lines); continue; }
-    let outcome: 'done' | 'refused' | 'blocked' = 'blocked';
-    let why: string | undefined;
-    resolveActions(ctx, [a.action], { strictFunding: true, own: 1, onOutcome: (_i, x, w) => { outcome = x; why = w; } });
+    const res: { outcome: 'done' | 'refused' | 'blocked'; why?: string } = { outcome: 'blocked' };
+    resolveActions(ctx, [a.action], { strictFunding: true, own: 1, onOutcome: (_i, x, w) => { res.outcome = x; res.why = w; } });
+    const { outcome, why } = res;
     const when = `${DAY_SHORT[o.d]} ${SLOT_LABEL[a.slot]}`;
     if (outcome === 'done') {
       a.spent = { w: s.week, n: spent + cost };
