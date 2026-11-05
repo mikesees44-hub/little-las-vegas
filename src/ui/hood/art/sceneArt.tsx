@@ -35,7 +35,7 @@ export function tripArt(destId: string | undefined, year: number): AssetKey[] {
 export const ACTIVITY_ART: Partial<Record<string, AssetKey[]>> = {
   fishing: ['scene_capemay_harbor'],
   clambake: ['walk_pier_beach'],
-  club500: ['scene_club_stage'],
+  club500: ['club_stage_1960', 'scene_club_stage'],
   wedding: ['scene_club_stage'],
   sunday: ['cutout_shingle_estate'],
 };
