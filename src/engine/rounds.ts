@@ -13,6 +13,7 @@ import { personalRounds, roll } from './roundsPersonal';
 import { payFromPersonal } from './tribute';
 import { pocketCash } from './tributeState';
 import { adultOn, datingEvenings } from './datingState';
+import { reservedEvenings } from './apptsState';
 import { suggestGuests } from './activities';
 import type { Character, Effect, GameState, PlayerAction, PlayerChoices, RivalId } from './types';
 
@@ -109,6 +110,9 @@ export function roundSlots(s: GameState): { slots: number; why: { label: string;
   let slots = why.reduce((a, w) => a + w.value, 0);
   const dates = datingEvenings(s);
   if (dates) { why.push({ label: `Dates and company this week`, value: -dates }); slots -= dates; }
+  // Standing appointments (apptsState.ts) hold their evenings first.
+  const held = reservedEvenings(s);
+  if (held) { why.push({ label: 'Standing appointments', value: -held }); slots -= held; }
   if (boss.imprisonedUntil !== undefined && boss.imprisonedUntil > s.week) { slots = 1; why.push({ label: 'In prison: visiting day only', value: 0 }); }
   if (s.travel?.fugitives.some((f) => !f.end && f.personId === boss.id)) { slots = Math.min(slots, 2); why.push({ label: 'In hiding', value: 0 }); }
   return { slots: Math.max(1, Math.min(6, slots)), why };

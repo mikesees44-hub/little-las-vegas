@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { MapMode } from '../components/IslandMap';
 import type { Route } from './routes';
-import type { GameState } from '../../engine/types';
+import type { GameState, PlayerAction } from '../../engine/types';
 
 /** A request to point the map at something (alerts, In Motion chips, the street feed). */
 export interface MapFocus {
@@ -23,6 +23,10 @@ export interface ShellApi {
   update?: (f: (s: GameState) => GameState) => void;
   /** The boss does something that takes effect at once: the click's feedback ("✓ Done — …") and an entry in Your File. */
   act?: (f: (s: GameState) => GameState, what?: string) => void;
+  /** "Make it a standing date/meeting…" (ui/appts/Standing.tsx): the dialog for this person, the order pre-picked. */
+  standing?: (who: string, action?: PlayerAction) => void;
+  /** Change a standing appointment (the same dialog, filled in). */
+  standingEdit?: (id: string) => void;
 }
 
 export const ShellContext = createContext<ShellApi>({ go: () => {}, focus: () => {} });

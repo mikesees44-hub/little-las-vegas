@@ -52,6 +52,8 @@ export interface NowResult {
   art?: string;
   /** She said yes to an evening: the card offers to spend it talking (dateTalk.ts). */
   dateWith?: string;
+  /** The order it was (set by the screen that gave it): the card can offer to make it standing ("Same time next week?"). */
+  again?: { who: string; action: PlayerAction };
 }
 
 /** The tier's banner (STREAMLINE §4.3). */

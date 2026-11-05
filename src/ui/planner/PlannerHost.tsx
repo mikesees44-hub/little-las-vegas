@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { StandingList } from '../appts/Standing';
 import { audienceRequests, gatekeeper, grantAudience, turnAway, type AudienceReq, type Slot } from '../../engine/planner/audience';
 import { briefDue, dailyBrief, oldManPick, type Rec } from '../../engine/planner/brief';
 import { cancelEntry, moveEntry, planEvening, planWith, type BookEntry } from '../../engine/planner/datebook';
@@ -153,6 +154,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
                   onNote: (abs, text) => update((x) => setNote(x, abs, text)),
                 }} />
               )}
+              {tab === 'datebook' && <div className="mx-auto mt-2 max-w-[1100px]"><StandingList s={s} onAct={(f, what) => act(f, what)} /></div>}
               {tab === 'book' && <BlackBook s={s} onChar={(id) => sheet.open(id)} onPhone={(p) => setPhone(p)} onOrder={(a) => orders.queue(a)} />}
               {tab === 'orders' && <StandingOrders s={s} act={act} onOrder={(a) => orders.queue(a)} onPlace={(k) => { close(); shell.go(k); }} />}
             </div>

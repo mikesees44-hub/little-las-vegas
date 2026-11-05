@@ -15,6 +15,7 @@ import { stormName } from '../setPieces';
 import { absDay, DAY_HOURS, DAY_START, formatClock, hoursLabel } from '../timeCost';
 import { above, chiefOf, quotaNow } from '../valente';
 import { wifeOf } from '../bonds';
+import { weekAppts } from '../appointments';
 import type { Character, GameDate, GameState } from '../types';
 import { bookHours, freeOn, nowHour, PLAN_HOURS, slotBlock, weekLeft, type PlanKind } from './hours';
 import { byName, knownTips, tipConfidence, tipLine, type Conf, type Go } from './intel';
@@ -37,7 +38,7 @@ import { ensurePlanner, plannerOf, pushDone } from './state';
  * hours come off the day they are on (hours.ts), and when the day comes they are done, with one line in Your File.
  */
 
-export type EntryKind = 'meet' | 'audience' | 'dinner' | 'visit' | 'evening' | 'envelope' | 'sitdown' | 'quota' | 'orders' | 'court' | 'handler'
+export type EntryKind = 'meet' | 'audience' | 'dinner' | 'visit' | 'evening' | 'standing' | 'envelope' | 'sitdown' | 'quota' | 'orders' | 'court' | 'handler'
   | 'setpiece' | 'storm' | 'threat' | 'family' | 'saint' | 'paper' | 'done';
 
 export interface BookEntry {
@@ -184,6 +185,14 @@ export function dayEntries(s: GameState, w: number, d: number): BookEntry[] {
       const r = roundOptions(s).find((x) => x.id === id);
       out.push({ id: `eve:${w}:${d}`, kind: 'evening', w, d, h: 20, dur: 4, title: r?.label ?? 'Your evening', sub: r?.text, dom: id.startsWith('fam') ? 'family' : id.startsWith('date') || id.includes('goomar') ? 'romance' : 'crew', move: true, cancel: true, ...(r?.who ? { who: r.who } : {}) });
     }
+  }
+  // Standing appointments (appointments.ts): fixed entries, their hours held first; they are given at the week's turn.
+  if (live) for (const x of weekAppts(s, w)) {
+    if (x.d !== d) continue;
+    const a = s.appts?.list.find((y) => x.id.startsWith(`${y.id}:`));
+    const k = a?.action.kind;
+    const dom: BookEntry['dom'] = k === 'dating' || k === 'nightlife' ? 'romance' : k === 'bond' ? (s.characters[x.who]?.dynasty || wifeOf(s)?.id === x.who ? 'family' : 'town') : k === 'ears' ? 'town' : 'crew';
+    out.push({ id: `appt:${x.id}:${w}`, kind: 'standing', w, d, h: x.h, dur: x.hours, title: x.title, sub: a?.last ? `Last time: ${a.last.text}.` : 'Every time it comes round, unless you pause it.', dom, who: x.who, by: 'you', go: { char: x.who } });
   }
   // Court dates.
   for (const x of s.mg?.docket ?? []) {

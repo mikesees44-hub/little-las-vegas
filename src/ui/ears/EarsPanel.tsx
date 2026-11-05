@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { StandingButton } from '../appts/Standing';
 import { ageOn } from '../../engine/calendar';
 import { earViews, madamOf, trustWord } from '../../engine/ears';
 import { BOUNDARY_TEXT, CUT_INFO, GOAL_TEXT, WORK_LABEL, type CutTier } from '../../engine/earsState';
@@ -109,7 +110,9 @@ export function EarsList({ s }: { s: GameState }) {
               <>
                 <div className="mt-1"><ConnectionsList s={s} id={c.id} compact /></div>
                 <div className="mt-1.5 grid gap-1.5">
+                  <ActionCard s={s} compact action={{ kind: 'ears', op: { op: 'meet', earId: e.id } }} />
                   <ActionCard s={s} compact action={{ kind: 'ears', op: { op: 'retain', earId: e.id } }} />
+                  <StandingButton who={e.id} action={{ kind: 'ears', op: { op: 'meet', earId: e.id } }} label="Make it a standing meet (daily or weekly)…" className="text-left text-[11px] text-gold-400 hover:text-gold-300" testid="ear-standing" />
                   {e.underOp && !e.protectedFrom && <ActionCard s={s} compact action={{ kind: 'ears', op: { op: 'protect', earId: e.id } }} />}
                 </div>
               </>

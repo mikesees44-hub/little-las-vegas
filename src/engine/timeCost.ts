@@ -139,7 +139,7 @@ export const TIME_TABLE: Record<string, number> = {
   'pol:propose': 2, 'pol:enter': 2, 'pol:declare': 2,
   underbelly: 1, 'underbelly:investigate': 1, 'underbelly:expose': 1, 'underbelly:runout': 0.25, 'underbelly:ally': 2,
   'living:ask': 1, 'living:give': 1,
-  'ears:ask': 1, 'ears:retain': 1, 'ears:protect': 1, 'ears:madamCall': 2, 'ears:madamCut': 1, 'ears:madamIntel': 1,
+  'ears:ask': 1, 'ears:retain': 1, 'ears:meet': 1, 'ears:protect': 1, 'ears:madamCall': 2, 'ears:madamCut': 1, 'ears:madamIntel': 1,
   'ears:madamVenture': 2, 'ears:madamFavor': 1,
   'ears:opDig': 0.5, 'ears:opRunoff': 0.25, 'ears:opExpose': 1, 'ears:opMadam': 1,
   // Nightlife: a night with her is an evening; business with the houses is a meeting.

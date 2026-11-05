@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { StandingButton, StandingList } from '../appts/Standing';
 import { datingView, personRow, PREGNANCY_RULES, type FamilyLine, type PersonRow, type ProviderRow } from '../../engine/dating';
 import {
   MATURE_BLURB, MATURE_LABEL, PREGNANCY_LABEL, setDatingSettings,
@@ -123,6 +124,7 @@ export function PersonCard({ s, r, compact }: { s: GameState; r: PersonRow; comp
       lines={[<>{r.age} · {r.via}{r.notes.length ? ` · ${r.notes.join(' · ')}` : ''}</>, <span className="flex items-center gap-2"><span className="h-1.5 w-16 shrink-0 overflow-hidden rounded bg-noir-700"><span className="block h-full bg-rose-400" style={{ width: `${r.aff}%` }} /></span>Her feelings: {r.feelings}</span>]}>
       {first && <div className="mt-2"><ActionCard s={s} action={first} compact={compact} /></div>}
       <DateTalkFor s={s} r={r} />
+      <div className="mt-1"><StandingButton who={r.id} label="Make it a standing date…" className="text-[11px] text-gold-400 hover:text-gold-300" testid="dating-standing" /></div>
       {rest.length > 0 && (
         <div className="mt-1">
           <button type="button" className="text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more} data-testid="dating-more">{more ? 'Less' : `More… (${rest.length})`}</button>
@@ -166,6 +168,7 @@ function ProviderCard({ s, p }: { s: GameState; p: ProviderRow }) {
       </div>
       <div className="mt-2"><ActionCard s={s} action={paid} compact /></div>
       <DateTalkButton s={s} id={p.id} step="paid" />
+      <div className="mt-1"><StandingButton who={p.id} action={paid} label="Make it a standing evening…" className="text-[11px] text-gold-400 hover:text-gold-300" testid="dating-provider-standing" /></div>
       <button type="button" className="mt-1 text-[11px] text-gold-400 hover:text-gold-300" onClick={() => setMore((x) => !x)} aria-expanded={more}>{more ? 'Less' : 'More… (ask her out as yourself, a night on your arm, a weekend away, hostess your game, help her out)'}</button>
       {more && <div className="mt-1 space-y-1.5" data-testid="dating-provider-more"><ActionCard s={s} action={ask} compact />{extras.map((a, i) => <ActionCard key={i} s={s} action={a} compact />)}</div>}
     </li>
@@ -237,6 +240,7 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
         <section data-testid="dating-together">
           {v.relationships.length === 0 && <p className="text-xs text-stone-400">No one yet. Start with <button type="button" className="text-gold-400 underline" onClick={() => setTab('people')}>people you know</button>: talk first, then ask her out. Each step is hers to take.</p>}
           <ul className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">{v.relationships.map((r) => <PersonCard key={r.id} s={s} r={r} />)}</ul>
+          {s.appts?.list.length ? <div className="mt-3"><StandingList s={s} /></div> : null}
         </section>
       )}
 

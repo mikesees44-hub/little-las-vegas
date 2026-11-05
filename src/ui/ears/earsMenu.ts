@@ -24,6 +24,7 @@ export function addEarsItems(s: GameState, c: Character, add: (id: MenuGroupId, 
     if (E.madam.favors > 0) add('spies', { key: 'ears:favor', action: { kind: 'ears', op: { op: 'madamFavor', targetId: c.id } } });
   }
   if (ear && ear.known && ear.status !== 'gone') {
+    add('nightlife', { key: 'ear:meet', action: { kind: 'ears', op: { op: 'meet', earId: c.id } } });
     add('nightlife', { key: 'ear:retain', action: { kind: 'ears', op: { op: 'retain', earId: c.id } } });
     if (ear.underOp && !ear.protectedFrom) add('nightlife', { key: 'ear:protect', action: { kind: 'ears', op: { op: 'protect', earId: c.id } } });
   }
