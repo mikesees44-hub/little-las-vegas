@@ -29,6 +29,7 @@ import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
 import { yearMult as yearMultOf } from './earners';
+import { bizSalePrice, bizWorth } from './worth';
 import type { Ctx } from './ledger';
 import { bookCapacity, LEND_AMOUNTS } from './loans';
 import { playerHook, previewInteraction, type Acceptance, type Reason } from './interactions';
@@ -802,11 +803,12 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   sellBusiness: {
     preview: (s, a) => {
       const b = s.businesses.find((x) => x.id === a.businessId && x.owner === 'player');
-      const price = b ? Math.round((b.cost ?? CATALOG[b.kind].cost) * 0.5) : 0;
-      const label = `Sell: ${b?.name ?? '?'}`;
+      const w = b ? bizWorth(s, b) : undefined;
+      const price = b ? bizSalePrice(s, b) : 0;
+      const label = `Sell: ${b?.name ?? '?'} (${fmtMoney(price)})`;
       return {
         title: label,
-        detail: 'Half what it cost, cash on the table.',
+        detail: w ? `Worth about ${fmtMoney(w.worth)} today: you paid ${fmtMoney(w.paid)}, it has gained ${Math.round(w.growth * 100)}% while you held it${w.income ? `, and a buyer pays ${fmtMoney(w.income)} for what it earns` : isOpen(s, b!) ? '' : ' (padlocked: it sells cheap)'}. The buyer pays 90%: ${fmtMoney(price)}, ${price >= w.paid ? `${fmtMoney(price - w.paid)} more than you paid` : `${fmtMoney(w.paid - price)} less than you paid`}.` : '',
         effects: b ? [{ type: 'money', amount: price, label }, { type: 'removeBusiness', businessId: b.id, label }] : [],
         cost: 0,
         because: `sold ${b?.name ?? 'a business'}`,

@@ -116,6 +116,7 @@ export function controlFactor(s: GameState, b: Business): number {
 /** Expected weekly take this week (before random scores), for the UI and the economy. */
 export function expectedTake(s: GameState, b: Business): number {
   if (!isOpen(s, b)) return 0;
+  if (b.leasedTo) return b.leaseRent ?? 0;
   const ven = venueTake(s, b);
   if (ven !== undefined) return ven;
   // A steady earner (earners.ts) pays the same all year: the year's average season, summer and winter alike.

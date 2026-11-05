@@ -1,7 +1,6 @@
 import { previewAction } from './actions';
-import { expectedTake, newBusiness, owned, playerSlots } from './business';
-import { CATALOG, availableIn, seasonalMult } from './catalog';
-import { isInSeason } from './calendar';
+import { newBusiness, owned, playerSlots } from './business';
+import { CATALOG, availableIn } from './catalog';
 import { canHold, earnerOf, earnerWeekly, freeEarners, holderOf, suggestFor, yearMult } from './earners';
 import { consigliereWay, eaters, openPitches, pitchOdds, pitchTake } from './eat';
 import type { Business, BusinessKind, Character, GameState, PlayerAction } from './types';
@@ -17,13 +16,8 @@ export interface BuyIdea { kind: BusinessKind; district: string; name: string; w
 export interface Held { b: Business; weekly: number; upkeep: number; net: number; cost: number; weeks: number; earned: number; paidBack: number; holder?: string }
 export interface EarnIdea { c: Character; b: Business; weekly: number; action: PlayerAction }
 
-/** What a place brings in a week across the whole year (the season and the dead months averaged). */
-export function yearTake(s: GameState, b: Business): number {
-  const now = seasonalMult(b.kind, isInSeason(s.date));
-  const t = expectedTake(s, b);
-  if (holderOf(s, b.id)) return t;
-  return Math.round(now > 0 ? (t * yearMult(b.kind)) / now : b.weeklyBase * yearMult(b.kind));
-}
+export { yearTake } from './worth';
+import { yearTake } from './worth';
 
 /** Weeks to pay for itself (Infinity when it never does). */
 export const paybackWeeks = (cost: number, net: number) => (net > 0 ? Math.ceil(cost / net) : Infinity);

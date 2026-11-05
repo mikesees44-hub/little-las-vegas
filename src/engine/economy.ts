@@ -315,6 +315,12 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
   let upkeep = 0;
   const hasFence = ownsKind(s, 'fencing', true);
   for (const b of owned(s)) {
+    // Leased to an operator (worth.ts): his rent, his upkeep, his worries.
+    if (b.leasedTo) {
+      const rent = b.leaseRent ?? 0;
+      if (rent > 0) { gross += money(ctx, rent, `Rent: ${b.name} (leased to ${b.leasedTo})`, 'business'); clean += rent; }
+      continue;
+    }
     upkeep += b.upkeep;
     if (!isOpen(s, b)) {
       ctx.log.push(`${b.name} is padlocked (raid) — no income.`);

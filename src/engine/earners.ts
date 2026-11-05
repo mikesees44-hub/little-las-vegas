@@ -71,7 +71,7 @@ export function canHold(s: GameState, c: Character | undefined): c is Character 
 /** May this business be somebody's steady earner? */
 export function eligible(s: GameState, b: Business): boolean {
   // A venue with its own books (payroll, supplies: empire.ts) is its manager's to run, not a steady earner.
-  return b.owner === 'player' && !NOT_EARNER.includes(b.kind) && !BIZ_CONCEPT[b.kind] && venueTake(s, b) === undefined;
+  return b.owner === 'player' && !b.leasedTo && !NOT_EARNER.includes(b.kind) && !BIZ_CONCEPT[b.kind] && venueTake(s, b) === undefined;
 }
 
 /** Who holds a business as his steady earner (the boss or a capo), if anyone. Cheap: called by expectedTake. */

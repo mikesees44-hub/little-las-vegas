@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { expectedTake, isOpen, owned } from '../../engine/business';
 import { CATALOG } from '../../engine/catalog';
-import { placeName } from '../../engine/econ';
+import { marketValue, placeName } from '../../engine/econ';
 import type { Lot, Manager, Oversight } from '../../engine/econState';
 import {
   OVERSIGHT, ROLE_LABEL, SOURCE_LABEL, assistantCandidates, crewCandidates, familyCandidates, isClub, managerSkimRate, proCandidates, staffAmbition,
@@ -16,6 +16,7 @@ import type { Business, GameState } from '../../engine/types';
 import { fmt$ } from '../format';
 import { ActionCard } from '../components/Orders';
 import { SellButton } from '../components/Businesses';
+import { bizWorth, leasable } from '../../engine/worth';
 import { CandidatePicker } from '../clarity/CandidatePicker';
 import { CharLink } from '../components/People';
 import { PutMoneyToWork } from './PutMoneyToWork';
@@ -173,8 +174,9 @@ function BizRow({ s, b, m }: { s: GameState; b: Business; m?: Manager }) {
         <div className="text-right text-xs tabular-nums">
           <div className={isOpen(s, b) ? 'text-gold-300' : 'text-red-400'}>{isOpen(s, b) ? `~${fmt$(expectedTake(s, b))}/wk expected` : `padlocked to wk ${b.closedUntil}`}</div>
           {lastNet !== undefined && <div className={lastNet < 0 ? 'text-red-400' : 'text-stone-400'}>last week {fmt$(lastNet)}</div>}
+          {(() => { const w = bizWorth(s, b); const up = w.worth - w.paid; return <div className="text-stone-300" data-testid="holding-worth">worth ~{fmt$(w.worth)} <span className={up >= 0 ? 'text-emerald-300' : 'text-red-300'}>({up >= 0 ? '+' : '−'}{fmt$(Math.abs(up))})</span></div>; })()}
           {b.kind !== 'casino' && <SellButton s={s} id={b.id} />}
-          <div className="text-stone-500">upkeep {fmt$(b.upkeep)}</div>
+          <div className="text-stone-500">{b.leasedTo ? `leased to ${b.leasedTo} · ${fmt$(b.leaseRent ?? 0)}/wk` : `upkeep ${fmt$(b.upkeep)}`}</div>
         </div>
       </div>
       <ManagerLine s={s} k={b.id} m={m} />
@@ -195,6 +197,7 @@ function BizRow({ s, b, m }: { s: GameState; b: Business; m?: Manager }) {
       )}
       <div className="mt-1.5 grid gap-1.5 sm:grid-cols-2">
         {nxt && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'upgrade', bizId: b.id } }} compact />}
+        {leasable(b) && <ActionCard s={s} action={b.leasedTo ? { kind: 'econ', op: { type: 'endLease', bizId: b.id } } : { kind: 'econ', op: { type: 'leaseOut', bizId: b.id } }} compact />}
         {/* The book's markers come in on their own every week (money.ts markerPayRate); no chasing them by hand. */}
         {['vending', 'numbers', 'cargo'].includes(b.kind) && !collectPreview(s, b).why && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'collect', bizId: b.id } }} compact />}
       </div>
@@ -218,6 +221,7 @@ function LotRow({ s, l, m }: { s: GameState; l: Lot; m?: Manager }) {
             {l.stage === 'open' && <> · built {l.builtYear} · condition {Math.round(l.condition)}%{l.renovated ? ` · renovated ${l.renovated}` : ''}</>}
             {l.tenant && !l.operating && <> · tenant: {l.tenant}</>}
             {l.bizId && <> · runs as {s.businesses.find((b) => b.id === l.bizId)?.name}</>}
+            {l.status === 'owned' && !underConstruction(l) && <> · <span className="text-stone-300" data-testid="lot-worth">worth ~{fmt$(marketValue(s, l))}</span></>}
           </div>
         </div>
         {net && <div className="text-right text-xs tabular-nums"><div className={net.rev - net.exp >= 0 ? 'text-gold-300' : 'text-red-400'}>{fmt$(net.rev - net.exp)}/wk</div><div className="text-stone-500">takes {fmt$(net.rev)} · costs {fmt$(net.exp)}</div></div>}
@@ -235,6 +239,7 @@ function LotRow({ s, l, m }: { s: GameState; l: Lot; m?: Manager }) {
         {l.stopWork && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'fixCode', lotId: l.id } }} compact />}
         {l.stage === 'open' && u && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'renovate', lotId: l.id } }} compact />}
         {l.status === 'owned' && !underConstruction(l) && <ActionCard s={s} action={{ kind: 'econ', op: { type: 'sellLot', lotId: l.id } }} compact />}
+        {l.status === 'owned' && l.stage === 'open' && l.use && !l.bizId && !l.hh && <ActionCard s={s} action={l.tenant && !l.operating ? { kind: 'econ', op: { type: 'endLease', lotId: l.id } } : { kind: 'econ', op: { type: 'leaseOut', lotId: l.id } }} compact />}
       </div>
       {l.stage === 'purchase' && (
         <div className="mt-1.5">

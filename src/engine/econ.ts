@@ -8,6 +8,10 @@ import { styleDraw } from './design';
 import { commitEmpire, empireActions, empireWeek, previewEmpire, venueBusiness } from './empire';
 import { commitLux, goodLifeWeek, luxActions, previewLux, truckBonus } from './goodlife';
 import { expectedTake, isOpen, newBusiness } from './business';
+import { INCOME_WEEKS, bizLeaseRent, growthOf, heldWeeks, leasable, yearTake } from './worth';
+import { hashSeed } from './rng';
+
+const OPERATORS = ['Gus Papadakis', 'the Mahaffey brothers', 'Abe Kaplan', 'the Sorensen family', 'Vince DiNardo', 'Mrs. Hallahan', 'Sid Weintraub', 'Lou Castellano', 'Joe Pirelli', 'Harry Lenz'];
 import { isInSeason, monthKey } from './calendar';
 import { CATALOG } from './catalog';
 import { crew, hasTrait, isFree, shortName } from './characters';
@@ -24,7 +28,7 @@ import {
   managerSkimRate, managing, newStaff, proCandidates, staffAmbition, ROLE_LABEL,
 } from './managers';
 import {
-  STAGE_COST, USES_BY_ID, ZONES, ZONES_BY_ID, buildCost, districtTilt, generateLots, goodwill, inflation, lotName, propertyNet,
+  STAGE_COST, USES_BY_ID, ZONES, ZONES_BY_ID, buildCost, districtTilt, generateLots, goodwill, inflation, lotName, propertyNet, tenantRent,
   propertyWash, supplyChain, underConstruction,
 } from './property';
 import {
@@ -676,6 +680,23 @@ export function applyEconOp(ctx: Ctx, op: EconOp, label: string): void {
       if (l) l.tenant = op.name;
       break;
     }
+    case 'lease': {
+      if (op.bizId) {
+        const b = s.businesses.find((x) => x.id === op.bizId && x.owner === 'player');
+        if (!b) break;
+        if (op.to) {
+          b.leasedTo = op.to; b.leaseRent = op.rent; b.staffIds = [];
+          if (s.econ?.earners) for (const k of Object.keys(s.econ.earners)) if (s.econ.earners[k] === b.id) delete s.econ.earners[k];
+          ctx.log.push(`${b.name} is leased to ${op.to}: ${fmtMoney(op.rent ?? 0)} a week.`);
+        } else { delete b.leasedTo; delete b.leaseRent; ctx.log.push(`${b.name} is yours to run again.`); }
+        break;
+      }
+      const l = e.lots.find((x) => x.id === op.lotId);
+      if (!l) break;
+      if (op.to) { l.tenant = op.to; l.rent = op.rent ?? l.rent; delete l.operating; delete e.managers[`lot:${l.id}`]; ctx.log.push(`${op.to} leases ${lotName(l)}: ${fmtMoney(l.rent)} a week.`); }
+      else { delete l.tenant; l.operating = true; ctx.log.push(`${lotName(l)} is yours to run again.`); }
+      break;
+    }
     case 'clearStop': {
       const l = e.lots.find((x) => x.id === op.lotId);
       if (l) { delete l.stopWork; delete l.stalled; }
@@ -730,6 +751,7 @@ export function describeEconOp(s: GameState, op: EconOp): string | undefined {
     case 'ticket': return `${TEAMS[op.team].name} season tickets`;
     case 'lotSold': return 'The building changes hands';
     case 'tenant': return undefined;
+    case 'lease': return op.to ? `Leased to ${op.to}` : 'Taken back';
     case 'clearStop': return 'Work resumes';
     case 'bribeStop': return 'If he takes it, work resumes';
     case 'outbid': return 'The rival gets the lot';
@@ -747,7 +769,18 @@ export function marketValue(s: GameState, l: Lot): number {
   const u = l.use ? USES_BY_ID[l.use] : undefined;
   const land = 1500 * z.land;
   const bldg = u && l.stage === 'open' ? u.cost * z.land * 0.85 * (0.6 + 0.4 * l.condition / 100) * (l.renovated ? 1.1 : 1) : (l.invested ?? 0) * 0.7;
-  return Math.round((land + bldg) * inflation(s) / 50) * 50;
+  // Held: it goes up while you hold it (worth.ts); open and earning: a buyer pays for what it makes.
+  const mine = l.status === 'owned';
+  const held = heldWeeks(s, l.boughtWeek);
+  const growth = mine ? growthOf(held) : 0;
+  const track = Math.min(1, held / INCOME_WEEKS);
+  let income = 0;
+  if (mine && l.stage === 'open' && l.use && !l.hh) {
+    if (l.bizId) { const b = s.businesses.find((x) => x.id === l.bizId); if (b) income = Math.max(0, yearTake(s, b) - b.upkeep) * INCOME_WEEKS; }
+    else if (l.tenant && !l.operating) income = l.rent * INCOME_WEEKS;
+    else { const n = propertyNet(s, l); income = Math.max(0, n.rev - n.exp) * INCOME_WEEKS; }
+  }
+  return Math.round(((land + bldg) * inflation(s) * (1 + growth) + income * track) / 50) * 50;
 }
 
 export function previewEcon(s: GameState, a: EconAction): ActionPreview {
@@ -856,13 +889,38 @@ export function previewEcon(s: GameState, a: EconAction): ActionPreview {
         cost, because: `renovated ${lotName(l)}`, disabledReason: l.status !== 'owned' ? 'You don\'t own it' : l.stage !== 'open' ? 'Not built yet' : l.condition >= 90 && l.renovated && s.date.y - l.renovated < 10 ? 'Renovated recently' : s.money < cost ? `Needs ${fmtMoney(cost)}` : undefined, category: 'event',
       };
     }
+    case 'leaseOut': {
+      if (a.bizId) {
+        const b = s.businesses.find((x) => x.id === a.bizId && x.owner === 'player');
+        if (!b) return noop('Lease it out', 'Not yours');
+        const rent = bizLeaseRent(s, b);
+        const title = `Lease ${b.name} to an operator: ${fmtMoney(rent)}/wk`;
+        return { title, detail: `An operator runs it and pays you ${fmtMoney(rent)} a week, every week, summer and winter. He pays the upkeep (${fmtMoney(b.upkeep)}/wk); your men come off it. You still own it, and it still gains value. Take it back any week.`, effects: [{ type: 'econ', op: { op: 'lease', bizId: b.id, to: pick({ rng: hashSeed(`${s.seed}:${b.id}:op`) }, OPERATORS), rent }, label: title }], cost: 0, because: `leased ${b.name} out`, disabledReason: b.leasedTo ? `Already leased to ${b.leasedTo}` : !leasable(b) ? 'Only a front with no books of its own can be leased' : !isOpen(s, b) ? 'Padlocked' : undefined, category: 'event' };
+      }
+      const l = e?.lots.find((x) => x.id === a.lotId);
+      if (!l) return noop('Lease it out', 'No such lot');
+      const rent = tenantRent(s, { ...l, tenant: 'x' });
+      const who = `${pick({ rng: hashSeed(`${s.seed}:${l.id}:tn`) }, OPERATORS)}'s ${(USES_BY_ID[l.use ?? '']?.name ?? 'place').toLowerCase()}`;
+      const title = `Lease ${lotName(l)} to a tenant: ${fmtMoney(rent)}/wk`;
+      return { title, detail: `${who} moves in and pays you ${fmtMoney(rent)} a week. No staff, no running costs; you still own the building and it still gains value. Take it back any week.`, effects: [{ type: 'econ', op: { op: 'lease', lotId: l.id, to: who, rent }, label: title }], cost: 0, because: `leased ${lotName(l)} to a tenant`, disabledReason: l.status !== 'owned' ? 'Not yours' : l.stage !== 'open' || !l.use ? 'Nothing built to lease' : l.bizId ? 'Lease the business inside instead' : l.hh ? 'A family lives there' : l.tenant && !l.operating ? `Already leased to ${l.tenant}` : undefined, category: 'event' };
+    }
+    case 'endLease': {
+      if (a.bizId) {
+        const b = s.businesses.find((x) => x.id === a.bizId && x.owner === 'player');
+        const title = `Take ${b?.name ?? 'it'} back from ${b?.leasedTo ?? 'the operator'}`;
+        return { title, detail: 'You run it again: its take and its upkeep are yours, and it needs your men.', effects: [{ type: 'econ', op: { op: 'lease', bizId: a.bizId }, label: title }], cost: 0, because: `took ${b?.name ?? 'a place'} back`, disabledReason: !b ? 'Not yours' : !b.leasedTo ? 'Not leased' : undefined, category: 'event' };
+      }
+      const l = e?.lots.find((x) => x.id === a.lotId);
+      const title = `Take ${l ? lotName(l) : 'it'} back from ${l?.tenant ?? 'the tenant'}`;
+      return { title, detail: 'You run it yourself again (put a manager on it).', effects: [{ type: 'econ', op: { op: 'lease', lotId: a.lotId }, label: title }], cost: 0, because: `took ${l ? lotName(l) : 'a building'} back`, disabledReason: !l || l.status !== 'owned' ? 'Not yours' : !l.tenant || l.operating ? 'No tenant' : undefined, category: 'event' };
+    }
     case 'sellLot': {
       const l = e?.lots.find((x) => x.id === a.lotId);
       if (!l) return noop('Sell', 'No such lot');
       const v = marketValue(s, l);
       const title = `Sell ${lotName(l)}`;
       return {
-        title, detail: `Market value ${fmtMoney(v)}.${l.bizId ? ' The business inside goes with it.' : ''}`,
+        title, detail: `Market value ${fmtMoney(v)}${l.invested || l.price ? ` (you put in ${fmtMoney(l.invested ?? l.price)})` : ''}: it gains value while you hold it, and more while it is open and earning.${l.bizId ? ' The business inside goes with it.' : ''}`,
         effects: [{ type: 'money', amount: v, label: title }, { type: 'econ', op: { op: 'lotSold', lotId: l.id, to: 'private', price: v }, label: title }],
         cost: 0, because: `sold ${lotName(l)}`, disabledReason: l.status === 'leased' ? 'You only lease it' : l.status !== 'owned' ? 'Not yours' : underConstruction(l) ? 'Finish building first' : undefined, category: 'event',
       };
@@ -1281,6 +1339,8 @@ export function commitEcon(ctx: Ctx, a: EconAction): void {
       break;
     case 'gift':
     case 'sellLot':
+    case 'leaseOut':
+    case 'endLease':
       break;
   }
 }

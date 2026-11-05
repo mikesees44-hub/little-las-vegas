@@ -312,6 +312,7 @@ export type EconOp =
   | { op: 'ticket'; team: TeamId; holderId: string; box: boolean }
   | { op: 'lotSold'; lotId: string; to: FactionId | 'private'; price: number }
   | { op: 'tenant'; lotId: string; name?: string }
+  | { op: 'lease'; lotId?: string; bizId?: string; to?: string; rent?: number }
   | { op: 'clearStop'; lotId: string }
   | { op: 'bribeStop'; lotId: string }
   | { op: 'outbid'; lotId: string }
@@ -341,6 +342,8 @@ export type EconAction =
   | { type: 'build'; lotId: string; use: string }
   | { type: 'renovate'; lotId: string }
   | { type: 'sellLot'; lotId: string }
+  | { type: 'leaseOut'; lotId?: string; bizId?: string }
+  | { type: 'endLease'; lotId?: string; bizId?: string }
   | { type: 'permits'; lotId: string }
   | { type: 'bribeInspector'; lotId: string }
   | { type: 'puppetPermit'; lotId: string }

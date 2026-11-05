@@ -391,6 +391,9 @@ export interface Business {
   boughtWeek?: number;
   /** What it cost, for resale. */
   cost?: number;
+  /** Leased to an operator (worth.ts): he runs it and pays this rent a week; no upkeep, no take. */
+  leasedTo?: string;
+  leaseRent?: number;
 }
 
 /** A shylock loan on the street. */
