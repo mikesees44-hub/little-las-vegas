@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DateAfterButton } from '../dating/DateTalk';
 import { TIER_BANNER, type NowResult } from '../../engine/deeds/now';
 import { domainOfText, domClass } from '../domain';
 
@@ -87,6 +88,7 @@ export function ResultCard({ r, onClose, onFile }: { r: NowResult; onClose: () =
             <ul className="text-xs text-amber-200/90">{r.leadsTo.map((c, i) => <li key={i}>· {c}</li>)}</ul>
           </div>
         )}
+        {r.dateWith && <DateAfterButton id={r.dateWith} onOpen={onClose} />}
         <div className="mt-3 flex items-center gap-2">
           {onFile && <button type="button" className="btn-secondary text-xs" onClick={onFile} data-testid="result-file">In Your File ▸</button>}
           <button type="button" className="btn-primary ml-auto text-sm" onClick={onClose} data-testid="now-close">Go on</button>
