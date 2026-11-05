@@ -12,6 +12,7 @@ import type { GameState, RivalId } from '../types';
 import { FACTION_NAMES } from '../world';
 import { counterTo, describeDeal, rivalOf, stanceOf, validateDeal, type Term } from './diplomacy';
 import { recordMut } from './familyWord';
+import { ASK_LABEL, askFor, askTitle, openAsks, type FamAsk } from './askView';
 
 /**
  * THEY COME TO YOU. A family asks the boss for a sit-down on its own, with
@@ -31,62 +32,10 @@ import { recordMut } from './familyWord';
  * new ask a week, one open per family. State optional (`s.talks.asks`).
  */
 
-export type AskKind = 'grievance' | 'partnership' | 'tribute' | 'peace' | 'table';
-
-export interface FamAsk {
-  id: string;
-  rival: RivalId;
-  kind: AskKind;
-  /** The week it came in, and the last week it waits (it lapses when that week turns). */
-  w: number;
-  until: number;
-  /** Their agenda, in his words. */
-  text: string;
-  district?: string;
-  /** One of the boss's men it is about. */
-  charId?: string;
-  /** Their opening offer (validated again when the sit-down opens). */
-  offer: Term[];
-}
-
-export const ASK_LABEL: Record<AskKind, string> = {
-  grievance: 'a grievance', partnership: 'a partnership pitch', tribute: 'a demand for tribute', peace: 'a peace feeler', table: 'Philadelphia calls you both to the Table',
-};
+export { ASK_LABEL, askFor, askLapses, askTitle, askWhy, ignoreText, openAsks, type AskKind, type FamAsk, type FavorAsk, type FavorKind } from './askView';
 
 const H = (k: string) => hashSeed(k) / 4294967296;
 const dn = (s: GameState, id?: string) => s.districts.find((d) => d.id === id)?.name ?? 'the district';
-
-export function openAsks(s: GameState): FamAsk[] {
-  return (s.talks?.asks ?? []).filter((a) => a.until >= s.week);
-}
-
-/** The open ask from this family, if any. */
-export function askFor(s: GameState, rival: string): FamAsk | undefined {
-  return openAsks(s).find((a) => a.rival === rival);
-}
-
-/** What happens if the boss ignores it, in words. */
-export function ignoreText(s: GameState, a: FamAsk): string {
-  const fam = FACTION_NAMES[a.rival];
-  switch (a.kind) {
-    case 'grievance': return `${fam} takes it as an insult and moves on ${dn(s, a.district)} on its own`;
-    case 'tribute': return `${fam} takes it as a no: tension rises, and they think less of you`;
-    case 'peace': return 'the war goes on, and they will not ask again soon';
-    case 'table': return 'Philadelphia marks it down: their view of you drops, family heat rises';
-    case 'partnership': return `${fam} takes the business elsewhere, and thinks a little less of you`;
-  }
-}
-
-/** The title of the Desk row. */
-export function askTitle(a: FamAsk): string {
-  const fam = FACTION_NAMES[a.rival];
-  return a.kind === 'table' ? `Philadelphia calls you and ${fam} to the Table` : `${fam} asks for a sit-down: ${ASK_LABEL[a.kind]}`;
-}
-
-/** One line for the Desk: the agenda and their opening. */
-export function askWhy(s: GameState, a: FamAsk): string {
-  return `"${a.text}"${a.offer.length ? ` Their opening: ${describeDeal(s, a.rival, a.offer)}.` : ''}`;
-}
 
 /* ------------------------------------------------------------------ */
 /* Who asks, and for what                                               */
@@ -152,7 +101,7 @@ export function familyAsksWeek(ctx: Ctx): void {
     if ((t.rivalCd[`ask:${id}`] ?? -999) > s.week - 4) continue;
     const c = candidate(s, id);
     if (!c) continue;
-    const ask: FamAsk = { ...c, id: `fa${t.nextId++}`, w: s.week + 1, until: s.week + 1 };
+    const ask: FamAsk = { ...c, id: `fa${t.nextId++}`, w: s.week + 1, until: s.week + 1, ...(c.offer.length ? { offerText: describeDeal(s, id, c.offer as Term[]) } : {}) };
     (t.asks ??= []).push(ask);
     t.rivalCd[`ask:${id}`] = s.week;
     const boss = s.characters[rivalOf(s, id)!.leaderId];
@@ -214,11 +163,6 @@ export function answerAsk(input: GameState, rival: string): GameState {
   t.asks = (t.asks ?? []).filter((x) => x.id !== a.id);
   if (!t.asks.length) delete t.asks;
   return s;
-}
-
-/** Things the Desk lists as lapsing when the week turns (desk.ts lapsesThisWeek). */
-export function askLapses(s: GameState): { key: string; title: string; what: string }[] {
-  return openAsks(s).filter((a) => a.until <= s.week).map((a) => ({ key: `famask:${a.id}`, title: askTitle(a), what: `If you don't sit down: ${ignoreText(s, a)}. (Rivals ▸ The Board)` }));
 }
 
 /** His opinion now, for the Desk's line. */

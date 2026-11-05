@@ -17,7 +17,7 @@ import { toneEffect, type Dialogue, type Line, type Tone } from './dialogue';
 import { clamp } from './state';
 import { clean } from './talk';
 import { mindView } from './view';
-import { askFor, ASK_LABEL, type AskKind } from './familyAsks';
+import { askFor, ASK_LABEL, type AskKind } from './askView';
 import { lastTimeLine, noteSit, recordSummary, trustMult, wordWith } from './familyWord';
 
 /**

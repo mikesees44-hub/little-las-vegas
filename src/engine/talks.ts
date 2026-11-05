@@ -12,7 +12,7 @@ import { chance, hashSeed, pick, rand, randInt } from './rng';
 import type { Character, Effect, FactionId, GameState, RivalId, Trait } from './types';
 import { FACTION_NAMES } from './world';
 import { noteBroken, noteKept, noteTheyBroke, type FamRecord } from './minds/familyWord';
-import type { FamAsk } from './minds/familyAsks';
+import type { FamAsk } from './minds/askView';
 
 /**
  * Talks: the extended person interactions (request a meeting, offer a job,
@@ -32,7 +32,7 @@ import type { FamAsk } from './minds/familyAsks';
 
 export type TalkId = 'meeting' | 'job' | 'business' | 'partner' | 'advice' | 'grievance' | 'social' | 'negotiate' | 'succession';
 
-export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff';
+export type PactKind = 'alliance' | 'truce' | 'partnership' | 'tribute' | 'handsoff' | 'split';
 
 /** Pacts that keep a family from moving on the other side (a hands-off term binds one district only). */
 export const PEACE_PACTS: ReadonlySet<PactKind> = new Set<PactKind>(['alliance', 'truce', 'partnership', 'tribute']);
@@ -52,6 +52,10 @@ export interface Pact {
   district?: string;
   bound?: FactionId;
   base?: number;
+  /** A split (minds/diplomacy.ts): who pays ('player' or the family), a share of one named place's take, or a flat weekly. */
+  payer?: FactionId;
+  biz?: string;
+  pct?: number;
 }
 
 export interface PendingTalk {
@@ -482,6 +486,7 @@ export function talksWeek(ctx: Ctx): void {
   for (const p of tt.pacts) {
     if (p.until <= s.week || p.a !== 'player') continue;
     if (p.kind === 'handsoff') { handsOffWeek(ctx, tt, p); continue; }
+    if (p.kind === 'split') { splitWeek(ctx, tt, p); continue; }
     if (!p.weekly) continue;
     const r = s.rivals.find((x) => x.id === p.b);
     if (!r || !s.characters[r.leaderId]?.alive) { p.until = s.week; log(s, tt, `The ${p.kind} with ${FACTION_NAMES[p.b]} died with its boss.`, 'pact'); continue; }
@@ -510,6 +515,35 @@ export function talksWeek(ctx: Ctx): void {
   if (tt.lastMonth !== mk) {
     if (tt.lastMonth) rivalDiplomacy(ctx);
     tt.lastMonth = mk;
+  }
+}
+
+/** What a split pays this week: a share of the named place's take (nothing while it is closed), else the flat weekly. */
+export function splitAmount(s: GameState, p: Pact): number {
+  if (p.biz) {
+    const b = s.businesses.find((x) => x.id === p.biz);
+    if (!b || (b.closedUntil ?? 0) > s.week) return 0;
+    return Math.max(0, Math.round((b.weeklyBase * (p.pct ?? 0)) / 100));
+  }
+  return p.weekly ?? 0;
+}
+
+/** A split: the payer's share goes across through the books. */
+function splitWeek(ctx: Ctx, tt: TalkState, p: Pact): void {
+  const s = ctx.s;
+  const r = s.rivals.find((x) => x.id === p.b);
+  if (!r || !s.characters[r.leaderId]?.alive) { p.until = s.week; return; }
+  if (p.biz && !s.businesses.some((x) => x.id === p.biz)) { p.until = s.week - 1; log(s, tt, `The split with ${FACTION_NAMES[p.b]} ended: the place is gone.`, 'pact'); return; }
+  const amt = splitAmount(s, p);
+  if (!amt) return;
+  if (p.payer === 'player') {
+    money(ctx, -amt, `${FACTION_NAMES[p.b]}'s split`, 'cost');
+    r.money += amt;
+  } else {
+    const pay = Math.min(amt, Math.max(0, r.money));
+    if (!pay) return;
+    money(ctx, pay, `Split from ${FACTION_NAMES[p.b]}`, 'business');
+    r.money -= pay;
   }
 }
 

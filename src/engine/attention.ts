@@ -5,7 +5,7 @@ import { weekCheckIns as weekCheckIns0 } from './checkins';
 import { DAY_NAMES, today } from './days';
 import { capoLevelOf, chosenOpt, docketOf, levelOf } from './lieutenants';
 import { displayName } from './characters';
-import { askFor, ignoreText } from './minds/familyAsks';
+import { askFor, ignoreText } from './minds/askView';
 import type { Choice, Effect, GameState } from './types';
 
 /**

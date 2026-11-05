@@ -17,7 +17,7 @@ import { isFree } from './characters';
 import { FIX_WEEKS, OPEN_WEEKS, openApproachOf, openFixOf } from './single';
 import { SILENCE_WEEKS, openProposal } from './matchmakers';
 import { missedCalls } from './phone';
-import { askLapses } from './minds/familyAsks';
+import { askLapses } from './minds/askView';
 
 /**
  * THE BOSS'S DESK: everything that wants the boss this week, in one place —

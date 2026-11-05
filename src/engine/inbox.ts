@@ -8,7 +8,7 @@ import { eventsOut } from './eventDays';
 import { approachView, fixView } from './single';
 import type { GameState, PlayerAction } from './types';
 import type { Stakes } from './attention';
-import { askTitle, askWhy, openAsks as familyAsks } from './minds/familyAsks';
+import { askTitle, askWhy, openAsks as familyAsks } from './minds/askView';
 
 /**
  * THE INBOX: the one list of what wants the boss right now, and its one
