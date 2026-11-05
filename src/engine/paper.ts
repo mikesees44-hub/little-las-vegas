@@ -9,6 +9,7 @@ import { hashSeed } from './rng';
 import { addSecret } from './secrets';
 import { today } from './days';
 import { ENTERTAINMENT, type WorldPerson } from '../worldpack';
+import { billings } from './showbiz';
 import {
   BYLINES, DAILY, DAILY_SHORT, FACT_RUMORS, FALSE_RUMORS, FIGHTERS, FILMS, GRUMBLES, HELP_WANTED, HIGHS, HORSES, MOVIE_HOUSES, OPENERS,
   RAVES, ROOMS, ROOMS_TO_LET, SKIES, TEAMS, WEEKLY, WEEKLY_SHORT, WINTER_SKIES, type Room,
@@ -553,6 +554,8 @@ export function whosPlaying(s: GameState, week: number = s.week): Listing[] {
     ownNames.add(b.name.toLowerCase());
     out.push({ room: b.name, act: pickR(s, `hb:${b.id}:${week}`, OPENERS.lounge), times: 'Nightly from 9', cover: '$1 cover', own: true, ad: adOn(`biz:${b.id}`) });
   }
+  // The boss's own acts (showbiz.ts) headline his rooms the weeks he books them there.
+  if (week === s.week) for (const b of billings(s)) { const row = b.own ? out.find((o) => o.own && o.room === b.room) : undefined; if (row) row.act = b.act; }
   // The town's rooms, as the season has them open.
   for (const room of ROOMS) {
     if (curve < room.min || ownNames.has(room.name.toLowerCase()) || ownNames.has(room.name.replace(/^The /, '').toLowerCase())) continue;

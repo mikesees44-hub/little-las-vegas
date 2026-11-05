@@ -5,6 +5,7 @@ import { ensureProviders } from './dating';
 import { ensureDating } from './datingState';
 import { ensureNightlife } from './nightlife';
 import { ensureHerWay } from './herway';
+import { ensureShowbiz } from './showbiz';
 import { SCHEMA } from './trustMigrations';
 import { initEcon } from './econ';
 import { ensureHood } from './hoodState';
@@ -358,6 +359,8 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   ensureNightlife(s);
   // Her way: the women earners of the town (their own dice; after the night so the other ids stay put).
   ensureHerWay(s);
+  // Showbiz: the bench of acts on the shore (their own dice; last, so the other ids stay put).
+  ensureShowbiz(s);
   s.difficulty = s.difficulty ?? 'don';
   freeWidows(s);
   assignFaces(s);

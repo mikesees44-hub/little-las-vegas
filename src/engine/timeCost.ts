@@ -151,6 +151,9 @@ export const TIME_TABLE: Record<string, number> = {
   'payroll:hire': 1, 'payroll:fire': 0.5, 'payroll:raise': 0.25, 'payroll:main': 0.25,
   // Her way (herway.ts): a deal is a meeting; a loan or a word is quick; a campaign is an afternoon.
   'herway:partner': 2, 'herway:protect': 1, 'herway:hire': 1, 'herway:lend': 0.5, 'herway:back': 2, 'herway:ears': 1, 'herway:squeeze': 1, 'herway:leave': 0.25,
+  // Showbiz (showbiz.ts): signing an act is a lunch; leaning on an office is a word to your men; the label is a meeting.
+  'showbiz:sign': 2, 'showbiz:buyout': 2, 'showbiz:lean': 0.5, 'showbiz:book': 1, 'showbiz:renew': 1, 'showbiz:release': 0.5, 'showbiz:bonus': 0.25,
+  'showbiz:point': 3, 'showbiz:label': 3, 'showbiz:press': 1, 'showbiz:payola': 0.5,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
   // Your People (bonds.ts): an evening with your wife, an afternoon with a kid, a day fishing.
   'bond:date': 4, 'bond:anniversary': 4, 'bond:apologize': 1, 'bond:confess': 1, 'bond:deny': 0.5, 'bond:vacation': TRAVEL_DAY,
@@ -225,6 +228,7 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
   if (a.kind === 'payroll' && (a.op.op === 'hire' || a.op.op === 'star') && a.op.via) return 0.25;
   // Her way (herway.ts): an offer carried by one of his men costs the boss only the word to send him.
   if (a.kind === 'herway' && a.op.via && a.op.via !== 'boss') return 0.25;
+  if (a.kind === 'showbiz' && a.op.op === 'sign' && a.op.via) return 0.25;
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];
   if (a.kind in TIME_TABLE) return TIME_TABLE[a.kind];
   return DEFAULT_COST;

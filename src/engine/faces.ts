@@ -12,8 +12,8 @@ import type { Character, GameState } from './types';
 
 type Tag = 'boss' | 'capo' | 'old' | 'soldier' | 'assoc' | 'wife' | 'glam' | 'cop' | 'priest' | 'pol' | 'biz' | 'books' | 'pro' | 'star';
 
-/** `eth`: preferred for a sitter of that background (and kept back from the others while any is free). `reserved`: waits for a sitter the game does not have yet (never handed out). */
-export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[]; eth?: 'Irish' | 'Jewish'; reserved?: boolean }[] = [
+/** `eth`: preferred for a sitter of that background (and kept back from the others while any is free); a 'Black' face goes to a Black sitter only, and a Black sitter takes only those. `reserved`: waits for a sitter the game does not have yet (never handed out). */
+export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[]; eth?: 'Irish' | 'Jewish' | 'Black'; reserved?: boolean }[] = [
   { k: 'f01', m: true, age: [40, 72], tags: ['boss', 'capo'] },
   { k: 'f22', m: true, age: [55, 90], tags: ['boss', 'old'] },
   { k: 'f03', m: true, age: [50, 85], tags: ['boss', 'capo', 'old'] },
@@ -112,8 +112,9 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 's09', m: true, age: [20, 36], tags: ['star'] },
   { k: 's10', m: true, age: [28, 50], tags: ['star'] },
   { k: 's11', m: true, age: [22, 42], tags: ['star'] },
-  { k: 's05', m: true, age: [20, 40], tags: [], reserved: true },
-  { k: 's08', m: true, age: [24, 48], tags: [], reserved: true },
+  // The two Black singers of the set: for the Black performers of the showbiz bench (showbiz.ts), and nobody else.
+  { k: 's05', m: true, age: [20, 40], tags: ['star'], eth: 'Black' },
+  { k: 's08', m: true, age: [24, 48], tags: ['star'], eth: 'Black' },
   // The sixth set: the women of the town, girl to grandmother.
   { k: 'x01', m: false, age: [18, 30], tags: ['glam'] },
   { k: 'x02', m: false, age: [18, 34], tags: ['pro', 'glam'] },
@@ -186,7 +187,8 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'q10', m: false, age: [21, 34], tags: ['star', 'glam'] },
   { k: 'q11', m: false, age: [21, 38], tags: ['star', 'glam'] },
   { k: 'q12', m: false, age: [22, 46], tags: ['pro'], eth: 'Irish' },
-  { k: 'q04', m: false, age: [22, 42], tags: [], reserved: true },
+  // The Black woman singer in white feathers: the showbiz bench's Black women only.
+  { k: 'q04', m: false, age: [22, 42], tags: ['star', 'glam'], eth: 'Black' },
   { k: 'q08', m: false, age: [21, 38], tags: [], reserved: true },
   // The twelfth set: the dancers and the girls of the night (four left out, two kept for later).
   { k: 'g01', m: false, age: [22, 40], tags: ['star', 'glam'], eth: 'Irish' },
@@ -236,7 +238,7 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
 const STAGE = /singer|crooner|comic|comedian|headliner|bandleader|band|actor|performer|revue|entertainer|dancer|piano|trumpet|emcee/i;
 const STAGE_ROLES = new Set(['singer', 'dancer', 'recording', 'actress']);
 const nightRole = (s: GameState, c: Character) => s.nightlife?.people[c.id]?.role as string | undefined;
-const isStage = (s: GameState, c: Character) => STAGE.test(c.office ?? '') || STAGE_ROLES.has(nightRole(s, c) ?? '');
+const isStage = (s: GameState, c: Character) => STAGE.test(c.office ?? '') || STAGE_ROLES.has(nightRole(s, c) ?? '') || !!s.showbiz?.acts[c.id];
 
 function wants(c: Character, s: GameState, age: number): Tag[] {
   if (isStage(s, c)) return c.gender === 'M' ? ['star'] : ['star', 'glam'];
@@ -307,7 +309,8 @@ export function assignFaces(s: GameState): void {
     const age = ageOn(c.birth, date);
     if (age < 18) continue;
     const male = c.gender === 'M';
-    const fits = FACES.filter((f) => !f.reserved && !taken.has(f.k) && f.m === male && age >= f.age[0] - 3 && age <= f.age[1] + 5)
+    const black = c.ethnicity === 'Black';
+    const fits = FACES.filter((f) => !f.reserved && !taken.has(f.k) && f.m === male && (f.eth === 'Black') === black && age >= f.age[0] - 3 && age <= f.age[1] + 5)
       .sort((a, b) => rankEth(a.eth, c.ethnicity) - rankEth(b.eth, c.ethnicity));
     const tags = wants(c, s, age);
     let pick: (typeof FACES)[number] | undefined;

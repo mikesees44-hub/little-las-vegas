@@ -322,8 +322,8 @@ export function parseSeat(k: string | undefined): { office: string; seat: number
 export function packRow(p: PolPerson): string {
   return [p.id, p.first, p.last, p.sex, p.born, ETH_CODE[p.eth], p.inst, p.ladder, p.rung, p.since, p.integrity, p.party ?? '', p.strength, p.title.replace(/\|/g, '/'), p.dyn ?? '', p.arrived].join('|');
 }
-const ETH_CODE: Record<Ethnicity, string> = { Italian: 'T', Irish: 'R', Jewish: 'J' };
-const ETH_OF: Record<string, Ethnicity> = { T: 'Italian', R: 'Irish', J: 'Jewish' };
+const ETH_CODE: Record<Ethnicity, string> = { Italian: 'T', Irish: 'R', Jewish: 'J', Black: 'B' };
+const ETH_OF: Record<string, Ethnicity> = { T: 'Italian', R: 'Irish', J: 'Jewish', B: 'Black' };
 export function unpackRow(row: string): PolPerson {
   const f = row.split('|');
   const p: PolPerson = {

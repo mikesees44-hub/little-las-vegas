@@ -54,7 +54,7 @@ function pickFrom<T>(arr: readonly T[], x: number): T {
   return arr[Math.min(arr.length - 1, Math.floor(x * arr.length))];
 }
 
-/** 'Black': Great Migration families of the house trees (not an engine ethnicity). */
+/** 'Black': performers and the Great Migration families of the house trees. */
 const SKIN: Record<Ethnicity | 'Black', [string, string, string]> = {
   Italian: ['#ecc6a0', '#cf9f76', '#a57552'],
   Irish: ['#f7e0cf', '#efc9ae', '#dfb093'],
