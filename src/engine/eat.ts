@@ -1,8 +1,10 @@
 import { owned, staffNeed, expectedTake, isOpen, countKind, newBusiness, playerSlots } from './business';
+import { fitParts, pinchChance, streetOddsBonus } from './newSkills';
+import type { NewSkill } from './newSkillsCore';
 import { CATALOG, availableIn } from './catalog';
 import { crew, displayName, hasTrait, isFree } from './characters';
 import { holder, seatOf } from './council';
-import { level } from './crewXp';
+import { level, manPractice } from './crewXp';
 import { crewFor, jobAction, jobLock, JOBS_BY_ID, targetsFor, weekTip } from './dirtyWork';
 import { earnerAction, earnerOf, freeEarners, suggestFor, earnerWeekly } from './earners';
 import { applyEffects, fmtMoney } from './effects';
@@ -193,6 +195,8 @@ export const HUNGER_WORD: Record<Hunger['word'], string> = {
 export interface JobNeed {
   crafts: Craft[];
   attrs: (keyof Attributes)[];
+  /** The newer skills it wants (newSkillsCore.ts): his value and his perks in them count toward his fit. */
+  sk?: NewSkill[];
   /** The man the job sits next to (his capo, the partner): who he is tight with. */
   anchor?: string;
 }
@@ -210,6 +214,7 @@ export function fitOf(s: GameState, c: Character, need: JobNeed, peers?: Charact
   const at = need.attrs.length ? need.attrs.reduce((a, k) => a + c.attributes[k], 0) / need.attrs.length : 50;
   add('His ability at it', (at - 50) * 0.45);
   if (at >= 70 && !bits.length) bits.push(`${nm} is good at this`);
+  for (const r of fitParts(s, c, need.sk)) add(r.label, r.value);
   const lvl = level(s, c.id);
   if (lvl > 1) add(`Level ${lvl}`, Math.min(16, (lvl - 1) * 2.5));
   if (c.health < 50) add('In poor health', -10);
@@ -289,9 +294,10 @@ function rankPicks(s: GameState, pool: Character[], need: JobNeed, mk: (c: Chara
 }
 
 export const RACKET_NEED = (kind: string): JobNeed => {
-  if (/numbers|book|policy|card|dice|bingo|court/.test(kind)) return { crafts: ['bookmaker', 'earner'], attrs: ['business', 'discipline'] };
-  if (/loan|protection|collect|labor|waste/.test(kind)) return { crafts: ['collector', 'muscle'], attrs: ['force', 'discipline'] };
-  if (/hijack|truck|cigar|bootleg|fence|cars/.test(kind)) return { crafts: ['driver', 'burglar'], attrs: ['intrigue', 'force'] };
+  if (/numbers|book|policy|card|dice|bingo|court|casino/.test(kind)) return { crafts: ['bookmaker', 'earner'], attrs: ['business', 'discipline'], sk: ['gambling'] };
+  if (/loan|protection|collect|labor|waste/.test(kind)) return { crafts: ['collector', 'muscle'], attrs: ['force', 'discipline'], sk: ['streetwise'] };
+  if (/hijack|truck|cigar|bootleg|fence|cars/.test(kind)) return { crafts: ['driver', 'burglar'], attrs: ['intrigue', 'force'], sk: ['streetwise'] };
+  if (/club|burlesque|talent|label|afterhours|theater/.test(kind)) return { crafts: ['earner', 'talker'], attrs: ['business', 'diplomacy'], sk: ['showbiz'] };
   return { crafts: ['earner', 'talker'], attrs: ['business', 'diplomacy'] };
 };
 
@@ -419,8 +425,8 @@ export const HOW_LABEL: Record<PitchHow, string> = { back: 'Back him', piece: 'B
 
 function pitchNeed(p: Pitch): JobNeed {
   switch (p.kind) {
-    case 'score': return { crafts: ['driver', 'burglar', 'muscle'], attrs: ['intrigue', 'force'] };
-    case 'game': return { crafts: ['bookmaker', 'earner'], attrs: ['business', 'discipline'] };
+    case 'score': return { crafts: ['driver', 'burglar', 'muscle'], attrs: ['intrigue', 'force'], sk: ['streetwise'] };
+    case 'game': return { crafts: ['bookmaker', 'earner'], attrs: ['business', 'discipline'], sk: ['gambling'] };
     case 'partner': return { crafts: ['earner', 'talker'], attrs: ['business', 'diplomacy'] };
     case 'racket': return { crafts: ['collector', 'earner', 'bookmaker'], attrs: ['business', 'discipline'] };
     default: return { crafts: ['collector', 'muscle', 'talker'], attrs: ['force', 'diplomacy'] };
@@ -749,8 +755,9 @@ export const ownScoresOn = (s: GameState) => s.eat?.ownScores !== false;
 
 /** His odds on a score of his own (his skills), and what it is worth. Pure. */
 export function ownScoreOdds(s: GameState, c: Character): { chance: number; value: number } {
-  const f = fitOf(s, c, { crafts: ['driver', 'burglar', 'earner', 'bookmaker'], attrs: ['intrigue', 'business'] });
-  const chance = Math.max(0.35, Math.min(0.88, 0.45 + (f.score - 50) / 120 - (s.heat.local >= 50 ? 0.1 : 0)));
+  const f = fitOf(s, c, { crafts: ['driver', 'burglar', 'earner', 'bookmaker'], attrs: ['intrigue', 'business'], sk: ['streetwise'] });
+  // Knows Every Corner (newSkills.ts): the boss's word on the street.
+  const chance = Math.max(0.35, Math.min(0.9, 0.45 + (f.score - 50) / 120 - (s.heat.local >= 50 ? 0.1 : 0) + streetOddsBonus(s)));
   const value = Math.round(((c.rank === 'soldier' ? 500 : 260) * (0.8 + (c.attributes.business + c.attributes.intrigue) / 400)) / 10) * 10;
   return { chance, value };
 }
@@ -764,6 +771,8 @@ export function ownScore(ctx: Ctx, c: Character, forced = false): void {
   const v = Math.round((value * pick[1] * (0.75 + roll(s, `ownv:${c.id}`) * 0.5)) / 10) * 10;
   const ok = roll(s, `own:${c.id}`) < chance;
   e.since[c.id] = s.week;
+  // The street teaches him (crewXp.ts: his streetwise practice).
+  manPractice(s, c, 'streetwise', ok ? 4 : 2);
   const nm = displayName(c);
   const pct = Math.round(chance * 100);
   if (ok) {
@@ -773,7 +782,8 @@ export function ownScore(ctx: Ctx, c: Character, forced = false): void {
     journal(s, { t: `${nm} found his own score: ${pick[0]} (${pct}%)`, x: `${fmtMoney(v)} all told; ${fmtMoney(up)} kicked up to the Family.`, p: [c.id], m: up, c: 'crew', src: 'eat', ln: 'borgata.eat', mine: forced ? 1 : undefined });
     ctx.log.push(`${nm} found his own score (${pick[0]}): ${fmtMoney(up)} kicked up.`);
   } else {
-    const pinched = roll(s, `ownp:${c.id}`) < 0.2;
+    // His streetwise (newSkills.ts): a man who knows the street walks away more often.
+    const pinched = roll(s, `ownp:${c.id}`) < pinchChance(s, c);
     const fx: Effect[] = [{ type: 'heat', bar: 'local', amount: 1, label: `${c.firstName}'s own score went wrong` }];
     if (pinched) fx.push({ type: 'evidence', charId: c.id, amount: 6 });
     applyEffects(ctx, fx, { label: `${c.firstName}'s own score`, because: forced ? `sent ${c.firstName} out to find a score` : `let ${c.firstName} find his own`, category: 'event' });
@@ -787,12 +797,24 @@ export function previewOwnScore(s: GameState, id: string): ActionPreview {
   const c = s.characters[id];
   if (!c) return { title: 'Send him out for a score', effects: [], cost: 0, because: '', category: 'event', disabledReason: 'Nobody' };
   const { chance, value } = ownScoreOdds(s, c);
+  const sw = fitParts(s, c, ['streetwise'])[0];
   const busy = !c.alive ? 'He is gone' : !isFree(s, c) ? 'He is locked up' : c.faction !== 'player' ? 'Not one of yours' : c.rank === 'capo' ? 'A capo has his district' : undefined;
   return {
     title: `Send ${c.firstName} out to find a score`, detail: `He finds something on his own this week, worth around ${fmtMoney(value)}: half of it kicked up to the Family, half his. If it goes wrong, a little heat and maybe a pinch for him.`,
     effects: [{ type: 'mymen', op: { op: 'score', id } } as Effect], cost: 0, because: `sent ${c.firstName} out to find a score`, category: 'event', disabledReason: busy,
-    odds: { chance, reasons: [{ label: `${c.firstName}'s skills for it`, value: Math.round(chance * 100) }] },
+    odds: { chance, reasons: scoreReasons(s, c, chance, sw) },
   };
+}
+
+/** The odds of his own score as named parts: his streetwise and the boss's Knows Every Corner out of the whole (they add up to it). */
+function scoreReasons(s: GameState, c: Character, chance: number, sw: { label: string; value: number } | undefined): { label: string; value: number }[] {
+  const total = Math.round(chance * 100);
+  const swv = sw ? Math.round(sw.value / 1.2) : 0;
+  const kc = Math.round(streetOddsBonus(s) * 100);
+  const out = [{ label: `${c.firstName}'s skills for it`, value: total - swv - kc }];
+  if (swv) out.push({ label: `${c.firstName}'s streetwise`, value: swv });
+  if (kc) out.push({ label: 'Knows Every Corner', value: kc });
+  return out;
 }
 
 /** The standing order on the board: idle men find their own, or wait for work. */

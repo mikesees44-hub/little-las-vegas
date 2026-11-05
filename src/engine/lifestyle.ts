@@ -22,7 +22,10 @@ export type PerkKey =
   | 'hitPower' | 'heistPower' | 'secrecy' | 'raid' | 'guard' | 'strikeDamage' | 'income' | 'street' | 'launder' | 'upkeep' | 'vig' | 'tribute'
   | 'accept' | 'vote' | 'bribe' | 'favor' | 'localHeat' | 'fedHeat' | 'familyOpinion' | 'crewOpinion' | 'defection' | 'heirGrowth' | 'intel' | 'envoy'
   /** The skill perks' own (bossSkills.ts): a sit-down's settle point, the quiet envelope, a clean hit, less skimming, capos' loyalty. */
-  | 'sitdown' | 'quietEnv' | 'cleanHit' | 'skim' | 'capoLoyal';
+  | 'sitdown' | 'quietEnv' | 'cleanHit' | 'skim' | 'capoLoyal'
+  /** The five newer skills' perks (bossSkills.ts SKILL_PERKS; newSkills.ts reads them where they land). */
+  | 'firstImp' | 'smooth' | 'charm' | 'wifeOp' | 'cops' | 'streetOdds' | 'pinch' | 'ratNose' | 'padCost' | 'bribeOdds' | 'fedCase'
+  | 'booking' | 'venue' | 'gamble' | 'bookLoss';
 
 export interface Perk {
   id: string;
@@ -159,6 +162,10 @@ export function lifestyleMonth(ctx: Ctx): void {
   if (fo) for (const m of livingDynasty(s)) if (m.id !== b.id) addOpinion(s, m.id, b.id, 'A good head of the family', fo, 1);
   const co = perkMod(s, 'crewOpinion');
   if (co) for (const m of crew(s)) addOpinion(s, m.id, b.id, 'Keeps the old ways', co, 1);
+  // Leading Man (bossSkills.ts, Charm 10): his wife thinks better of him every month.
+  const wo = perkMod(s, 'wifeOp');
+  const wife = b.spouseId ? s.characters[b.spouseId] : undefined;
+  if (wo && wife?.alive) addOpinion(s, wife.id, b.id, 'A charming husband', wo, 1);
   const cl = perkMod(s, 'capoLoyal');
   if (cl) for (const m of crew(s)) if (m.rank === 'capo') addOpinion(s, m.id, b.id, 'The boss stands by his capos', cl, 1);
   const hg = perkMod(s, 'heirGrowth');

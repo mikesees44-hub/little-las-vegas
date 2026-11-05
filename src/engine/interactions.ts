@@ -1,4 +1,5 @@
 import { backReasons } from './myMen';
+import { bribeSkillPct, politicsReasons } from './newSkills';
 import { pocketPrice } from './pocket';
 import { bonesBlock } from './bones';
 import { perkMod } from './lifestyle';
@@ -187,7 +188,8 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
     case 'bribe': {
       if (!c.office || !OFFICE_BRIBE[c.office]) return undefined;
       const base = OFFICE_BRIBE[c.office];
-      const ob = { ...base, cost: Math.round(base.cost * (1 - perkMod(s, 'bribe') / 100) / 50) * 50 };
+      // Friends Downtown comes through perkMod('bribe'); a political boss knows the going rate (newSkills.ts).
+      const ob = { ...base, cost: Math.round(base.cost * (1 - (perkMod(s, 'bribe') + bribeSkillPct(s)) / 100) / 50) * 50 };
       const label = `Bribe: ${c.office === 'Police sergeant' ? 'Sgt. ' : ''}${c.office === 'Police sergeant' ? c.lastName : `${c.firstName} ${c.lastName}`}`;
       const acceptance = clampChance(40, [
         opinionReason(s, c, 0.5),
@@ -195,6 +197,7 @@ function previewInteractionBase(s: GameState, id: InteractionId, targetId: strin
         ...traitReasons(c, { Honest: -45, Greedy: 25, Gambler: 10, Paranoid: -10, Ambitious: 5 }),
         ...(c.traits.includes('Honest') && s.heat.local > 50 ? [{ label: 'Wants a headline', value: -10 }] : []),
         ...bribeReasons(s, c.id),
+        ...politicsReasons(s),
       ]);
       return {
         id, title: `Bribe ${displayName(c)}`, detail: `${c.office}. An envelope, discreetly.`, cost: ob.cost,

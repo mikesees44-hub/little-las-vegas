@@ -1,4 +1,5 @@
 import { ageOn } from './calendar';
+import { ratNose } from './newSkills';
 import { capos, crew, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { applyEffects } from './effects';
 import { addStory, capoOf } from './hierarchy';
@@ -1316,7 +1317,8 @@ export function brascoChecked(ctx: Ctx, bonus = 0, atTurn = false): boolean {
   const B = F.brasco;
   if (!B || B.end || B.found) return false;
   if (!B.tells.includes('uncle')) B.tells.push('uncle');
-  if (fr(F) < checkOdds(s, B) + bonus) {
+  // Smells a Rat (newSkills.ts): a streetwise boss knows what a badge looks like.
+  if (fr(F) < checkOdds(s, B) + bonus + ratNose(s)) {
     B.found = s.week;
     F.stats.brascoFound++;
     const late = !atTurn && today(s) >= 5;

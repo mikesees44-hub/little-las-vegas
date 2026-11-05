@@ -36,6 +36,21 @@ const MOD_LABEL: Record<PerkKey, (v: number) => string> = {
   cleanHit: (v) => `+${v} secrecy on hits`,
   skim: (v) => `men short ${v}% less often`,
   capoLoyal: (v) => `capos +${v} opinion a month`,
+  firstImp: (v) => `+${v} asking a woman out`,
+  smooth: (v) => `${v}% less chance the wife hears`,
+  charm: (v) => `+${v} on romantic answers`,
+  wifeOp: (v) => `wife +${v} opinion a month`,
+  cops: (v) => `cops' moves ${v}% likelier to fail`,
+  streetOdds: (v) => `men's own scores +${v}%`,
+  pinch: (v) => `${v}% fewer pinches`,
+  ratNose: (v) => `+${v}% to find a badge`,
+  padCost: (v) => `the pad ${v}% cheaper`,
+  bribeOdds: (v) => `+${v} officials take the envelope`,
+  fedCase: (v) => `federal case ${v}% slower`,
+  booking: (v) => `+${v} signings and bookings`,
+  venue: (v) => `clubs +${v}% take`,
+  gamble: (v) => `games +${v}% take`,
+  bookLoss: (v) => `book losses ${v}% smaller`,
 };
 
 /** The boss's lifestyle: focus, experience and the three perk trees. */

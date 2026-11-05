@@ -1,4 +1,5 @@
 import { ableness, isIncapable } from './aging';
+import { copsFoil } from './newSkills';
 import { ageOn, isInSeason } from './calendar';
 import { crew, displayName, hasTrait, isFree, player } from './characters';
 import { holder as seatHolder } from './council';
@@ -804,7 +805,9 @@ export function foilOdds(s: GameState, t: Threat, extra = 0): number {
   const guard = t.kind === 'hit' && tgt ? protectionFor(s, tgt.id, t.lure ? 'night' : 'any').cut : 0;
   // A setup (planner/gateWeek.ts): his own gatekeeper put him at their place and hour. The guards were told where to wait; the answers were made for another night.
   const su = t.gk ? SETUP_CUT : 1;
-  return 1 - (1 - t.blunt * su) * (1 - guard * su) * (1 - Math.max(0, Math.min(0.95, extra)));
+  // The cops' moves (raids, stake-outs, wires): a streetwise boss smells them coming (newSkills.ts, Nose for Cops).
+  const nose = isPoliceKind(t.kind) ? copsFoil(s) : 0;
+  return 1 - (1 - t.blunt * su) * (1 - guard * su) * (1 - Math.max(0, Math.min(0.95, extra))) * (1 - nose);
 }
 
 /** A threat comes due: what is left of it after the boss's answers lands. `outcome`: already rolled (a strike in the moment). */
