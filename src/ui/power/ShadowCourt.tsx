@@ -19,7 +19,7 @@ import { CharLink, Face } from '../components/People';
 import { Num } from '../shell/Num';
 
 /**
- * The Family › Succession: the heir question, who backs whom AS THE DON
+ * Family › Succession: the heir question, who backs whom AS THE DON
  * KNOWS IT, the underboss's court as far as it has reached him, the promises
  * he has heard of, the other families' reading, and the verbs. Nothing here
  * shows a fact the Don has not learned through a real channel: every line

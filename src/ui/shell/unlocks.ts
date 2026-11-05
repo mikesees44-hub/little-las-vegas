@@ -39,14 +39,15 @@ export function rung(s: GameState): number {
 }
 
 /**
- * Homes open by growth, not by the calendar: the Desk, the Family, Money & Business and the Map
- * from the start; Your Life with week 2 or the first family event; Rivals & the Law at rung 4
- * (a borgata) or the first rival move against you. A locked home stays on the rail, greyed, with
- * its reason, and still opens: nothing is hidden for good.
+ * Homes open by growth, not by the calendar: the Desk, Crew, Money and Town from the start; Family
+ * with week 2 or the first family event; Rivals at rung 4 (a borgata) or the first rival move
+ * against you; Law when there is a case, real federal heat, or headquarters to look after. A locked
+ * home stays on the rail, greyed, with its reason, and still opens: nothing is hidden for good.
  */
 export function homeLock(s: GameState, h: HomeId): string | undefined {
   if (seasoned(s)) return undefined;
-  if (h === 'life') return s.week >= 2 || s.pendingEvents.some((e) => /family|wife|son|daughter|wedding/i.test(e.title)) ? undefined : 'Opens next week, or with the first family event';
+  if (h === 'law') return sectionVisible(s, 'town.case') || sectionVisible(s, 'holdings.hq') ? undefined : 'Opens when the law takes an interest: federal heat, evidence, or a case';
+  if (h === 'house') return s.week >= 2 || s.pendingEvents.some((e) => /family|wife|son|daughter|wedding/i.test(e.title)) ? undefined : 'Opens next week, or with the first family event';
   if (h === 'rivals') return rung(s) >= 4 || s.rivals.some((r) => r.lastMove?.target === 'player') || s.wars.length > 0 || s.disputes.length > 0 ? undefined : 'Opens when you are a borgata (a dozen men, respect 40), or when a rival moves on you';
   return undefined;
 }

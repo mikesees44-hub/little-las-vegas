@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { HOMES, type HomeDef } from './nav';
 import type { HomeId } from './routes';
-import { domClass, type Domain } from '../domain';
-
-/** The homes that are one part of the Don's life carry its colour on the rail (the Desk is all of them). */
-const HOME_DOMAIN: Partial<Record<HomeId, Domain>> = { org: 'crew', money: 'money', map: 'shore', rivals: 'rivals', life: 'family' };
+import { domClass, HOME_DOMAIN } from '../domain';
 
 const glyph = (g: string) => <span aria-hidden style={{ fontVariantEmoji: 'text' } as never}>{g}&#xFE0E;</span>;
 
@@ -40,8 +37,8 @@ function RailButton({ h, active, badge, dot, onClick, compact, panelOpen, locked
 }
 
 /**
- * The six homes (nav.ts): a left rail on desktop, a bottom tab bar on
- * phones. Red badges count what needs the boss there; a gold dot means
+ * The seven homes (nav.ts): a left rail on desktop, a bottom tab bar on
+ * phones (seven ~54px buttons at 390px; the short labels fit). Red badges count what needs the boss there; a gold dot means
  * something new opened up.
  */
 export function LeftRail({ active, badges, dots, onOpen, locks = {} }: {
@@ -51,7 +48,7 @@ export function LeftRail({ active, badges, dots, onOpen, locks = {} }: {
   badges: Partial<Record<HomeId, number>>;
   dots: Set<HomeId>;
   onOpen: (h: HomeId) => void;
-  /** Help moved to the top bar's ☰ menu (the rail is the six homes only); kept for callers. */
+  /** Help moved to the top bar's ☰ menu (the rail is the seven homes only); kept for callers. */
   onHelp?: () => void;
 }) {
   return (

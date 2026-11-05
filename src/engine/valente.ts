@@ -710,7 +710,7 @@ export function aboveWeek(ctx: Ctx, schedule: (id: string, cast: Record<string, 
   if (st === 'associate' && s.books?.open && a.booksAsked === undefined && !s.flags.low_books_told) {
     s.flags.low_books_told = s.week;
     const ready = !callInBlock(s);
-    ctx.log.push(ready ? 'The books are open. Your name can go up now: Family › Your place.' : `The books are open. ${callInBlock(s)}.`);
+    ctx.log.push(ready ? 'The books are open. Your name can go up now: Crew › The Rise › Your place.' : `The books are open. ${callInBlock(s)}.`);
     s.chronicle.push({ week: s.week, date: { ...s.date }, text: `Word comes down: the books are open.${ready ? ' Your sponsor says it is time.' : ''}`, kind: 'misc' });
   }
   if (!s.books?.open) s.flags.low_books_told = 0;

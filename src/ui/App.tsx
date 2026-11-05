@@ -62,7 +62,7 @@ import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
-import { homeForKey, itemOf, KEYS_CHANGED, resolveRoute, type NavRoute } from './shell/nav';
+import { homeForKey, itemOf, KEYS_CHANGED, CHANGED_LETTERS, resolveRoute, type NavRoute } from './shell/nav';
 import { homeLock } from './shell/unlocks';
 import { can, inTheRanks } from '../engine/rankView';
 import { PlaceStrip } from './borgata/YourPlace';
@@ -851,8 +851,8 @@ export function App({ startOn = 'title' }: AppProps) {
       const h = homeForKey(e.key);
       if (h) {
         e.preventDefault();
-        // The letters that changed meaning with the six homes: say so once.
-        if ('mrbld'.includes(e.key.toLowerCase())) {
+        // The letters that changed meaning with the seven homes: say so once.
+        if (CHANGED_LETTERS.includes(e.key.toLowerCase())) {
           let seen = false;
           try { seen = localStorage.getItem('llv.keysChanged') === '1'; localStorage.setItem('llv.keysChanged', '1'); } catch { seen = true; }
           if (!seen) setClockNote(KEYS_CHANGED);
@@ -1042,7 +1042,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
     </section>
   ) : undefined;
-  const youTop = home === 'life' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'desk' })} /> : undefined;
+  const youTop = home === 'house' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'desk' })} /> : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />

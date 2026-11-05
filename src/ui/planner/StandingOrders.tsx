@@ -10,7 +10,7 @@ import { fmt$ } from '../format';
 import { CHAIN_PATH } from '../lieutenants/Lieutenants';
 
 /** Where the Family's standing orders page lives (nav.ts wherePath). */
-export const ORDERS_PATH = 'Family › Standing orders';
+export const ORDERS_PATH = 'Crew › Council & standing orders › Standing orders';
 
 type Act = (f: (s: GameState) => GameState, what: string) => void;
 

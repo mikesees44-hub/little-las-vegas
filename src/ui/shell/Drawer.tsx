@@ -188,7 +188,7 @@ export function Drawer({ s, home, sel, groups, ctx, onOpen, onClose, escEnabled,
             <Blurb key={key} text={sec?.blurb && (cur.keys.length > 1 || sec.blurb.length > cur.sub.length) ? sec.blurb : cur.sub} />
             {key && sectionLock(s, key) ? (
               <div className="rounded border border-amber-600/50 bg-amber-900/10 p-3 text-sm text-amber-100" data-testid="rank-locked">
-                🔒 {sectionLock(s, key)}. This is a boss's business, above your rank in the family for now. It opens as you climb: Family › Your place.
+                🔒 {sectionLock(s, key)}. This is a boss's business, above your rank in the family for now. It opens as you climb: Crew › The Rise › Your place.
               </div>
             ) : <Guard label={cur.label} resetKey={`${home}:${key}`}>{extras[key!] ?? (sec ? sec.render(s, ctx) : null)}</Guard>}
           </>

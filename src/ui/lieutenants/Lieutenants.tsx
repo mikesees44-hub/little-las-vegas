@@ -143,7 +143,7 @@ export function MorningReports({ s, update, onChar, onSettings }: { s: GameState
 }
 
 /**
- * THE CHAIN OF COMMAND (a place: The Family › Council & chain of command, and the "Who handles what"
+ * THE CHAIN OF COMMAND (a place: Crew › Council & standing orders, and the "Who handles what"
  * window): one-tap presets, each lieutenant's domains (Handle it / Ask me first / I'll do it) and
  * budget, and each capo's say over his own territory's routine.
  */
@@ -230,7 +230,7 @@ export function ChainOfCommandPlace({ s }: { s: GameState }) {
 }
 
 /** Where the chain of command lives (nav.ts wherePath; written out here: nav reads the panels, which read this file). */
-export const CHAIN_PATH = 'Family › Council & chain of command › Who handles what';
+export const CHAIN_PATH = 'Crew › Council & standing orders › Who handles what';
 
 /** "Who handles what": the chain of command in a window (from the Desk and the morning reports). */
 export function WhoHandlesWhat({ s, update, onClose }: { s: GameState; update: Update; onClose: () => void }) {

@@ -50,23 +50,24 @@ export interface DoNowInput {
 
 /** Alerts that carry no route: the home they belong to. */
 const KIND_HOME: Partial<Record<AlertKind, HomeId>> = {
-  unhappy: 'org', defector: 'org', faction: 'org', heir: 'life', family: 'life', books: 'org',
+  unhappy: 'org', defector: 'org', faction: 'org', heir: 'house', family: 'house', books: 'org',
   money: 'money', loan: 'money', debt: 'money',
   staff: 'money',
-  heat: 'rivals', law: 'rivals', evidence: 'rivals', lifestyle: 'life',
-  dispute: 'rivals', war: 'rivals', rival: 'rivals', courted: 'org', underbelly: 'map',
+  heat: 'law', law: 'law', evidence: 'law', lifestyle: 'house', protect: 'law',
+  dispute: 'rivals', war: 'rivals', rival: 'rivals', courted: 'org', underbelly: 'town',
   scheme: 'desk', goal: 'org',
 };
 
 /** Opportunities whose link points at a generic tab: the home they are really about. */
 function oppHome(o: Opportunity): HomeId | undefined {
-  if (/^heat:|^evidence$/.test(o.id)) return 'rivals';
-  if (/^stress$|^lifestyle$|^perk$/.test(o.id)) return 'life';
+  if (/^heat:|^evidence$/.test(o.id)) return 'law';
+  if (/^stress$|^lifestyle$|^perk$/.test(o.id)) return 'house';
   if (/^unwashed$|^broke$|^cut-|^lend$/.test(o.id)) return 'money';
   if (/^goal:/.test(o.id)) return 'org';
   if (/^idle$|^racket$|^staff$/.test(o.id)) return 'money';
   if (/^plot$|^unhappy:|^drift:|^pressure:|^heir$|^books$|^bones$/.test(o.id)) return 'org';
-  if (/^dispute:|^official$/.test(o.id)) return 'rivals';
+  if (/^dispute:/.test(o.id)) return 'rivals';
+  if (/^official$/.test(o.id)) return 'town';
   if (o.link.role?.kind === 'capo' || o.link.role?.kind === 'seat') return 'org';
   return o.link.tab ? resolveRoute(o.link.tab).home : undefined;
 }

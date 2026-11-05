@@ -480,7 +480,7 @@ export function jobLock(s: GameState, job: DirtyJobId, target?: string): { why: 
   if ((job === 'witness' || job === 'evidence') && (s.characters[s.playerId]?.evidence ?? 0) < (job === 'evidence' ? 15 : 8) && (s.legal?.stage ?? 'quiet') === 'quiet') return { why: 'Nobody is building a case on you yet', how: 'When the law has evidence on the boss, this cuts it.' };
   if (job === 'rigbid' && !s.districts.some((x) => (x.influence.player ?? 0) >= 40)) return { why: 'You do not run a district', how: 'Hold 40% of a district and its contracts are yours to steer.' };
   if (job === 'welsher' && !s.loans.some((l) => l.weeksLate > 0) && !owned(s).some((b) => b.kind === 'loansharking')) return { why: 'Nobody owes you', how: 'Put money on the street (a shylock book, or Money › Lend) and somebody will be late.' };
-  if (job === 'dope' && s.edicts.nojunk) return { why: 'You laid down the law: no junk', how: 'Lift the edict in The Family › Standing orders.' };
+  if (job === 'dope' && s.edicts.nojunk) return { why: 'You laid down the law: no junk', how: 'Lift the edict in Crew › Council & standing orders.' };
   if ((job === 'shakedown' || job === 'cardgame') && target) {
     // Aimed at a going concern: a place that closed has no till and no game (placeEligibility).
     const l = s.econ?.lots.find((x) => x.id === target);
