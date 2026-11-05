@@ -1,4 +1,5 @@
-import { answerOffer, godchildrenOf, openOffer } from '../../engine/godfather';
+import { godchildrenOf, openOffer } from '../../engine/godfather';
+import { answerOffer } from '../../engine/godfatherAct';
 import type { Character, Choice, GameState } from '../../engine/types';
 import { CardHead } from '../components/Layout';
 import { domCard } from '../domain';

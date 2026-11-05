@@ -55,9 +55,12 @@ export function watchedLoyalty(s: GameState, id: string): boolean {
 /** Called by relations.addOpinion with the change that landed. */
 export function noteLoyalty(s: GameState, from: string, to: string, reason: string, v: number): void {
   if (to !== s.playerId || Math.abs(v) < LOYAL_MIN || !watchedLoyalty(s, from)) return;
-  const L = ensureLoyal(s);
+  // Copy on write: pure actions copy the state shallowly (peopleRead's cloneForRead), so the input's layer is never touched.
+  const L0 = ensureLoyal(s);
+  const L: LoyalState = { ...L0, h: { ...L0.h }, f: L0.f.slice() };
+  s.loyal = L;
   const why = reason.length > 48 ? `${reason.slice(0, 47)}…` : reason;
-  const h = (L.h[from] ??= []);
+  const h = (L.h[from] = (L.h[from] ?? []).map((x) => [...x] as LoyalLine));
   const last = h[h.length - 1];
   if (last && last[0] === s.week && last[2] === why) last[1] += v;
   else h.push([s.week, v, why]);

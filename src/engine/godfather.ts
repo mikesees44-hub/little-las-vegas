@@ -1,10 +1,7 @@
 import { ageOn } from './calendar';
 import { displayName } from './characters';
-import { applyEffects } from './effects';
-import { practiceDeed } from './bossSkills';
-import { cloneState } from './engine';
 import { journal } from './journal';
-import { newCtx, type Ctx } from './ledger';
+import type { Ctx } from './ledger';
 import { FEMALE_FIRST, MALE_FIRST } from './names';
 import { inTheRanks } from './rankView';
 import { addOpinion, changeMeter, opinion } from './relations';
@@ -302,19 +299,4 @@ export function openOffer(s: GameState, id: string): EventInstance | undefined {
 /** Every open offer (the datebook). */
 export function openOffers(s: GameState): EventInstance[] {
   return s.pendingEvents.filter((e) => e.defId === 'gf_wedding' || e.defId === 'gf_baptism' || e.defId === 'crew_wedding' || e.defId === 'crew_christening');
-}
-
-/** Answer an offer now, from his sheet (pure): its effects land, it leaves the week's cards, and Your File has it. */
-export function answerOffer(input: GameState, iid: string, choiceId: string): GameState {
-  const ev = input.pendingEvents.find((e) => e.iid === iid);
-  const ch = ev?.choices.find((c) => c.id === choiceId && !c.disabledReason);
-  if (!ev || !ch) return input;
-  const s = cloneState(input);
-  s.pendingEvents = s.pendingEvents.filter((e) => e.iid !== iid);
-  const ctx = newCtx(s);
-  applyEffects(ctx, ch.effects, { label: `${ev.title}: ${ch.label}`, because: ch.because, category: 'event' });
-  s.chronicle.push({ week: s.week, date: { ...s.date }, text: `You ${ch.because}.`, kind: 'decision' });
-  practiceDeed(s, `${ev.title} ${ch.label} ${ch.because}`, 2);
-  journal(s, { t: `${ev.title}: ${ch.label}`, x: `You ${ch.because}.`, p: ev.actors, c: 'family', src: 'gf', mine: 1, ...(s.days && s.days.week === s.week ? { d: s.days.day } : {}) });
-  return s;
 }

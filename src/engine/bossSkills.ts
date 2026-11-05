@@ -152,7 +152,10 @@ export function skillOfDeed(text: string): Skill | undefined {
 /** Practice in one skill (the one entry point). Returns what he got after the focus and the weekly cap. */
 export function practice(s: GameState, k: Skill, n: number, why: string): number {
   if (s.gameOver || !(n > 0) || !s.characters[s.playerId]?.alive) return 0;
-  const b = ensureBsk(s);
+  const b0 = ensureBsk(s);
+  // Copy on write (a pure action may hold a shallow copy of the state).
+  const b: BskState = { ...b0, px: { ...b0.px }, lg: b0.lg.map((l) => [...l] as PracticeLine) };
+  s.bsk = b;
   if (b.wk !== s.week) { b.wk = s.week; b.wx = 0; }
   const want = Math.round(n * (focusSkill(s) === k ? 2 : 1));
   const got = Math.min(want, BSK_WEEK_CAP - (b.wx ?? 0));
