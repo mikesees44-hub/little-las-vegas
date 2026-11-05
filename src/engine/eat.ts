@@ -85,6 +85,10 @@ export interface EatState {
   /** Calendar month of the last monthly pass. */
   month?: string;
   next: number;
+  /** Idle men find their own scores (undefined: yes; false: the boss told them to wait for work). */
+  ownScores?: boolean;
+  /** The last score each man found on his own: week, what, what he kicked up (0: it went wrong). */
+  own?: Record<string, { w: number; what: string; up: number }>;
 }
 
 export function ensureEat(s: GameState): EatState {
@@ -718,6 +722,72 @@ function answerPlace(ctx: Ctx, p: Pitch, c: Character, how: PitchHow, lbl: strin
   book(how === 'piece' ? `You went halves with ${nm}: ${b.name} is open` : `You opened ${b.name} for ${nm}`, `He runs it; the Family owns it.${how === 'piece' ? ` He put up ${fmtMoney(half)} of his own.` : ''}`, -cost, [c.id]);
 }
 
+
+/* ------------------------------------------------------------------ */
+/* Their own scores: idle men go out and find something                 */
+/* ------------------------------------------------------------------ */
+
+const OWN_SCORES: [string, number][] = [
+  ['a load of cigarettes off a truck', 1], ['a crap game in a garage', 0.8], ['a fence for some hot watches', 0.9], ['a card game with the summer salesmen', 0.7],
+  ['a warehouse door somebody left open', 1.2], ['a shylock book in the Crest', 0.9], ['a load of liquor from a Cape May distributor', 1.1], ['a bust-out on a tourist\'s credit', 0.8],
+];
+
+/** Does the family let idle men go find their own (the default)? */
+export const ownScoresOn = (s: GameState) => s.eat?.ownScores !== false;
+
+/** His odds on a score of his own (his skills), and what it is worth. Pure. */
+export function ownScoreOdds(s: GameState, c: Character): { chance: number; value: number } {
+  const f = fitOf(s, c, { crafts: ['driver', 'burglar', 'earner', 'bookmaker'], attrs: ['intrigue', 'business'] });
+  const chance = Math.max(0.35, Math.min(0.88, 0.45 + (f.score - 50) / 120 - (s.heat.local >= 50 ? 0.1 : 0)));
+  const value = Math.round(((c.rank === 'soldier' ? 500 : 260) * (0.8 + (c.attributes.business + c.attributes.intrigue) / 400)) / 10) * 10;
+  return { chance, value };
+}
+
+/** A man works a score of his own: half of it to the Family, half his; a bad one is a little heat and maybe a pinch. */
+export function ownScore(ctx: Ctx, c: Character, forced = false): void {
+  const s = ctx.s;
+  const e = ensureEat(s);
+  const pick = OWN_SCORES[Math.floor(roll(s, `ownk:${c.id}`) * OWN_SCORES.length) % OWN_SCORES.length];
+  const { chance, value } = ownScoreOdds(s, c);
+  const v = Math.round((value * pick[1] * (0.75 + roll(s, `ownv:${c.id}`) * 0.5)) / 10) * 10;
+  const ok = roll(s, `own:${c.id}`) < chance;
+  e.since[c.id] = s.week;
+  const nm = displayName(c);
+  const pct = Math.round(chance * 100);
+  if (ok) {
+    const up = Math.round(v * 0.5);
+    applyEffects(ctx, [{ type: 'money', amount: up, label: `${c.firstName} found his own score: ${pick[0]} (kicked up half)` }, { type: 'wealth', charId: c.id, amount: v - up }, opn(s, c, forced ? 2 : 1, 'The boss lets me earn')], { label: `${c.firstName}'s own score`, because: forced ? `sent ${c.firstName} out to find a score` : `let ${c.firstName} find his own`, category: 'event' });
+    (e.own ??= {})[c.id] = { w: s.week, what: pick[0], up };
+    journal(s, { t: `${nm} found his own score: ${pick[0]} (${pct}%)`, x: `${fmtMoney(v)} all told; ${fmtMoney(up)} kicked up to the Family.`, p: [c.id], m: up, c: 'crew', src: 'eat', ln: 'borgata.eat', mine: forced ? 1 : undefined });
+    ctx.log.push(`${nm} found his own score (${pick[0]}): ${fmtMoney(up)} kicked up.`);
+  } else {
+    const pinched = roll(s, `ownp:${c.id}`) < 0.2;
+    const fx: Effect[] = [{ type: 'heat', bar: 'local', amount: 1, label: `${c.firstName}'s own score went wrong` }];
+    if (pinched) fx.push({ type: 'evidence', charId: c.id, amount: 6 });
+    applyEffects(ctx, fx, { label: `${c.firstName}'s own score`, because: forced ? `sent ${c.firstName} out to find a score` : `let ${c.firstName} find his own`, category: 'event' });
+    (e.own ??= {})[c.id] = { w: s.week, what: pick[0], up: 0 };
+    journal(s, { t: `${nm}'s own score went wrong: ${pick[0]} (${pct}%)`, x: pinched ? 'He got picked up and questioned. A little heat, and the cops have his name.' : 'Nothing came of it but a little heat.', p: [c.id], c: 'crew', src: 'eat', ln: 'borgata.eat', mine: forced ? 1 : undefined });
+  }
+}
+
+/** The order: send an idle man out to find a score this week. */
+export function previewOwnScore(s: GameState, id: string): ActionPreview {
+  const c = s.characters[id];
+  if (!c) return { title: 'Send him out for a score', effects: [], cost: 0, because: '', category: 'event', disabledReason: 'Nobody' };
+  const { chance, value } = ownScoreOdds(s, c);
+  const busy = !c.alive ? 'He is gone' : !isFree(s, c) ? 'He is locked up' : c.faction !== 'player' ? 'Not one of yours' : c.rank === 'capo' ? 'A capo has his district' : undefined;
+  return {
+    title: `Send ${c.firstName} out to find a score`, detail: `He finds something on his own this week, worth around ${fmtMoney(value)}: half of it kicked up to the Family, half his. If it goes wrong, a little heat and maybe a pinch for him.`,
+    effects: [{ type: 'mymen', op: { op: 'score', id } } as Effect], cost: 0, because: `sent ${c.firstName} out to find a score`, category: 'event', disabledReason: busy,
+    odds: { chance, reasons: [{ label: `${c.firstName}'s skills for it`, value: Math.round(chance * 100) }] },
+  };
+}
+
+/** The standing order on the board: idle men find their own, or wait for work. */
+export function setOwnScores(s: GameState, on: boolean): void {
+  ensureEat(s).ownScores = on ? undefined : false;
+}
+
 /** The open pitch of a capo's man that he would bring to a morning (one at a time, the oldest first). */
 export function pitchForCapo(s: GameState, capoId: string): Pitch | undefined {
   return openPitches(s).filter((p) => s.characters[p.by]?.capoId === capoId).sort((a, b) => a.week - b.week || (a.id < b.id ? -1 : 1))[0];
@@ -777,6 +847,15 @@ export function eatWeek(ctx: Ctx): void {
       e.pitches.push(p);
       e.last[who.id] = s.week;
       ctx.log.push(`${displayName(who)} has a pitch for you: ${p.what} (Your men › Let them eat).`);
+    }
+  }
+  // Idle men find their own scores (unless the boss told them to wait for work).
+  if (ownScoresOn(s)) {
+    for (const c of men) {
+      if (c.rank === 'capo' || !isFree(s, c) || loadOf(s, c).length) continue;
+      const h = hungerOf(s, c, men);
+      const p = 0.18 + (c.craft === 'driver' || c.craft === 'burglar' || c.craft === 'earner' ? 0.07 : 0) + (h.v >= 45 ? 0.07 : 0);
+      if (roll(s, `go:${c.id}`) < p) ownScore(ctx, c);
     }
   }
   // The month: the fed are loyal and kick up; the starving and the overloaded act.

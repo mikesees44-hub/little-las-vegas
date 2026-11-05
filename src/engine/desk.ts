@@ -12,7 +12,8 @@ import { roundOptions } from './rounds';
 import { SCHEME_INFO } from './schemes';
 import { obligations } from './tribute';
 import type { GameState, PlayerAction } from './types';
-import { openPitches } from './eat';
+import { eaters, loadOf, openPitches } from './eat';
+import { isFree } from './characters';
 import { FIX_WEEKS, OPEN_WEEKS, openApproachOf, openFixOf } from './single';
 import { SILENCE_WEEKS, openProposal } from './matchmakers';
 import { missedCalls } from './phone';
@@ -188,6 +189,8 @@ export interface ReadyReview {
   warnings: string[];
   /** What lapses if he advances without seeing to it (a pitch, a woman waiting, Ma's match, a call to return). */
   lapses: { key: string; title: string; what: string }[];
+  /** Men with nothing to do this week (they earn little or nothing); a note, never a block. */
+  idle: number;
   /** Nothing waiting: the review can be skipped. */
   clear: boolean;
 }
@@ -216,8 +219,9 @@ export function readyReview(s: GameState, ui: DeskUi = {}): ReadyReview {
   if (urgent.length) warnings.push(`${urgent.length === 1 ? `${urgent[0].who} is` : `${urgent.length} people are`} still waiting on an urgent meeting: what they heard lands whether you listen or not.`);
   if (q.pocketLeft - evenings < 0) warnings.push('Your evenings and pocket orders cost more than your pocket holds: the Family covers the evenings; pocket orders without your approval are skipped.');
   const lapses = lapsesThisWeek(s);
+  const idle = eaters(s).filter((c) => c.rank !== 'capo' && isFree(s, c) && !loadOf(s, c).length && !orders.some((o) => JSON.stringify(o).includes(`"${c.id}"`))).length;
   return {
-    unanswered, mornings, orders: os, lapses,
+    unanswered, mornings, orders: os, lapses, idle,
     costs: { orders: os.reduce((a, o) => a + o.cost, 0), evenings, bills, familyAfter: Math.round(q.familyLeft - bills), pocketAfter: Math.round(q.pocketLeft - evenings) },
     warnings,
     clear: !unanswered.length && !mornings.length && !warnings.length && !os.length && !lapses.length,

@@ -5,7 +5,7 @@ import { GOAL_INFO } from './hierarchy';
 import { isMyMan, isSurrender, actionSurrenders } from './handover';
 import type { Ctx } from './ledger';
 import { getRelation, opinion, setModifier } from './relations';
-import { answerPitch, applyStaff, previewPitch, previewStaff, type PitchHow } from './eat';
+import { answerPitch, applyStaff, ownScore, ownScoresOn, previewOwnScore, setOwnScores, previewPitch, previewStaff, type PitchHow } from './eat';
 import { hashSeed, rand } from './rng';
 import { fugitiveOf } from './travelState';
 import type { ActionPreview } from './actions';
@@ -155,7 +155,11 @@ export type MenAction =
   | { op: 'kill'; id: string; confirm: boolean }
   /** Let them eat (eat.ts): answer a man's own pitch, or put a man on a racket that is short. */
   | { op: 'pitch'; pitch: string; how: PitchHow }
-  | { op: 'staff'; id: string; biz: string };
+  | { op: 'staff'; id: string; biz: string }
+  /** Send an idle man out to find a score of his own this week. */
+  | { op: 'score'; id: string }
+  /** The standing order: idle men find their own scores (on), or wait for work (off). */
+  | { op: 'selfscore'; on: boolean };
 
 export type MenOp =
   | MenAction
@@ -169,7 +173,7 @@ export const MEN_TITLE: Record<MenAction['op'], string> = {
   tuition: 'His kid\'s tuition', hospital: 'The hospital bill', christmas: 'An envelope for every man', guard: 'Put a guy on him', safety: 'Move his family somewhere safe',
   lawyer: 'A lawyer and bail', inside: 'Take care of his family while he is inside', visit: 'Visit him inside', hide: 'Hide him', answer: 'Answer for him',
   warn: 'A warning', fine: 'Fine him', demote: 'Demote him', shelf: 'Put him on the shelf', kill: 'Have him killed',
-  pitch: 'Answer his pitch', staff: 'Put him on a racket',
+  pitch: 'Answer his pitch', staff: 'Put him on a racket', score: 'Send him out for a score', selfscore: 'Idle men find their own scores',
 };
 
 export const BONUS_AMOUNTS = [100, 250, 500, 1000];
@@ -231,6 +235,8 @@ export function previewMen(s: GameState, a: MenAction): ActionPreview {
   if (a.op === 'answer') return previewAnswer(s, a.wrong, a.how);
   if (a.op === 'pitch') return previewPitch(s, a.pitch, a.how);
   if (a.op === 'staff') return previewStaff(s, a.id, a.biz);
+  if (a.op === 'score') return previewOwnScore(s, a.id);
+  if (a.op === 'selfscore') return { title: a.on ? 'Let idle men find their own scores' : 'Tell idle men to wait for work', detail: a.on ? 'Any man with nothing to do goes out on his own now and then: half of what he finds is kicked up; a bad one is a little heat.' : 'They wait for you to give them something. Quieter, and hungrier.', effects: [{ type: 'mymen', op: a } as Effect], cost: 0, because: a.on ? 'let the idle men find their own scores' : 'told the idle men to wait for work', category: 'event', disabledReason: ownScoresOn(s) === a.on ? (a.on ? 'They already do' : 'They already wait') : undefined };
   const c = s.characters[a.id];
   const title0 = MEN_TITLE[a.op];
   if (!c || !isMyMan(s, c.id)) return none(title0, 'Not one of your men');
@@ -498,6 +504,8 @@ export function applyMenOp(ctx: Ctx, o: MenOp, label?: string): void {
   if (o.op === 'answer') { answerWrong(ctx, o.wrong, o.how); return; }
   if (o.op === 'pitch') { answerPitch(ctx, o.pitch, o.how); return; }
   if (o.op === 'staff') { applyStaff(ctx, o.id, o.biz); return; }
+  if (o.op === 'selfscore') { setOwnScores(ctx.s, o.on); return; }
+  if (o.op === 'score') { const c = ctx.s.characters[o.id]; if (c?.alive) ownScore(ctx, c, true); return; }
   const c = s.characters[o.id];
   if (!c) return;
   m.last[`${c.id}:${o.op}`] = s.week;

@@ -409,6 +409,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
             <ul className="mt-1 space-y-0.5 text-[12px]">{r.mornings.map((m) => <li key={m.key}><span className="text-stone-200">{m.title}</span> <span className="text-stone-500">→ his way:</span> <span className="text-stone-300">{m.becomes}</span></li>)}</ul>
           </div>
         )}
+        {r.idle > 0 && <div className="text-[12px] text-amber-300" data-testid="ready-idle">⚑ {r.idle} of your men have nothing to do this week and earn next to nothing. Give them a job in Crew ▸ Let them eat ▸ Who is earning{'\u00a0'}(or let them find their own scores).</div>}
         {r.lapses.length > 0 && (
           <div data-testid="ready-lapses" className="rounded border border-amber-700/60 bg-amber-950/30 p-2">
             <div className="text-[10px] uppercase tracking-[0.2em] text-amber-300">⚑ Will be missed if you advance ({r.lapses.length})</div>

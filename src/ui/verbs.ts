@@ -208,6 +208,7 @@ export function actionVerb(a: PlayerAction): Verb {
       if (o.op === 'kill') return v('Give the order', 'Ordered');
       if (o.op === 'pitch') return o.how === 'no' ? v('Say no', 'Told no') : o.how === 'other' ? v('Give it to him', 'Given') : v('Do it', 'Backed');
       if (o.op === 'staff') return v('Do it', 'Put on it');
+      if (o.op === 'score') return v('Send him out', 'Sent out');
       if (o.op === 'warn' || o.op === 'fine' || o.op === 'demote' || o.op === 'shelf') return v('Do it', 'Done');
       return v('Take care of it', 'Taken care of');
     }
