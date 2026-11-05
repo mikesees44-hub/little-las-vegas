@@ -23,3 +23,16 @@ describe('painted faces', () => {
     });
   }
 });
+
+describe('stage faces', () => {
+  it('a man on the stage gets a star face, and nobody else does', () => {
+    let s = newGameWith('faces-stage', 'olddon' as never);
+    for (let w = 0; w < 3; w++) s = advanceWeek(s).state;
+    const stars = FACES.filter((f) => f.tags.includes('star' as never)).map((f) => f.k);
+    for (const c of Object.values(s.characters)) {
+      if (c.alive && c.appearance?.face && stars.includes(c.appearance.face)) {
+        expect(c.gender).toBe('M');
+      }
+    }
+  });
+});

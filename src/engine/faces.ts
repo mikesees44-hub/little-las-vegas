@@ -10,7 +10,7 @@ import type { Character, GameState } from './types';
  * person has a face it stays his for life. Everyone else keeps the procedural portrait.
  */
 
-type Tag = 'boss' | 'capo' | 'old' | 'soldier' | 'assoc' | 'wife' | 'glam' | 'cop' | 'priest' | 'pol' | 'biz' | 'books' | 'pro';
+type Tag = 'boss' | 'capo' | 'old' | 'soldier' | 'assoc' | 'wife' | 'glam' | 'cop' | 'priest' | 'pol' | 'biz' | 'books' | 'pro' | 'star';
 
 /** `eth`: preferred for a sitter of that background (and kept back from the others while any is free). `reserved`: waits for a sitter the game does not have yet (never handed out). */
 export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[]; eth?: 'Irish' | 'Jewish'; reserved?: boolean }[] = [
@@ -103,12 +103,27 @@ export const FACES: { k: string; m: boolean; age: [number, number]; tags: Tag[];
   { k: 'v18', m: false, age: [18, 28], tags: ['glam'] },
   { k: 'v19', m: false, age: [22, 42], tags: ['glam'] },
   { k: 'v20', m: false, age: [20, 40], tags: ['glam', 'wife'], eth: 'Irish' },
+  // The fifth set: the men on the stage (two left out for looking like a real star).
+  { k: 's01', m: true, age: [26, 48], tags: ['star'] },
+  { k: 's03', m: true, age: [20, 36], tags: ['star'] },
+  { k: 's04', m: true, age: [26, 50], tags: ['star'] },
+  { k: 's06', m: true, age: [28, 50], tags: ['star'] },
+  { k: 's07', m: true, age: [22, 40], tags: ['star'] },
+  { k: 's09', m: true, age: [20, 36], tags: ['star'] },
+  { k: 's10', m: true, age: [28, 50], tags: ['star'] },
+  { k: 's11', m: true, age: [22, 42], tags: ['star'] },
+  { k: 's05', m: true, age: [20, 40], tags: [], reserved: true },
+  { k: 's08', m: true, age: [24, 48], tags: [], reserved: true },
   // A club singer and a woman whose families the game does not have yet: kept for when it does.
   { k: 'v03', m: false, age: [21, 40], tags: [], reserved: true },
   { k: 'v07', m: false, age: [20, 40], tags: [], reserved: true },
 ];
 
+const STAGE = /singer|crooner|comic|comedian|headliner|bandleader|band|actor|performer|revue|entertainer|dancer|piano|trumpet|emcee/i;
+const isStage = (s: GameState, c: Character) => STAGE.test(c.office ?? '') || s.nightlife?.people[c.id]?.role === 'singer';
+
 function wants(c: Character, s: GameState, age: number): Tag[] {
+  if (c.gender === 'M' && isStage(s, c)) return ['star'];
   const off = (c.office ?? '').toLowerCase();
   if (/pastor|priest|church|monsignor/.test(off)) return ['priest'];
   if (/chief|patrol|police|detective|sergeant|captain|sheriff|trooper/.test(off)) return ['cop'];
@@ -150,6 +165,7 @@ function priority(c: Character, s: GameState): number | undefined {
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.faction === me?.faction && s.characters[c.spouseId]?.rank !== 'civilian') return 10;
   if (c.gender !== 'M' && c.spouseId && s.characters[c.spouseId]?.rank === 'boss') return 11;
   if (c.gender !== 'M' && (s.romance?.rels ?? []).some((r) => r.a === c.id || r.b === c.id)) return 12;
+  if (c.gender === 'M' && isStage(s, c)) return 9;
   if (c.rank === 'capo') return 13;
   if (c.rank === 'soldier') return 14;
   if (c.office) return 15;
@@ -178,7 +194,7 @@ export function assignFaces(s: GameState): void {
     let pick: (typeof FACES)[number] | undefined;
     for (const t of tags) { pick = fits.find((f) => f.tags.includes(t)); if (pick) break; }
     // The top of the cast gets a face that fits his age and sex even if not his station.
-    if (!pick && p <= 4) pick = fits.find((f) => !f.tags.some((t) => t === 'cop' || t === 'priest' || t === 'pol'));
+    if (!pick && p <= 4) pick = fits.find((f) => !f.tags.some((t) => t === 'cop' || t === 'priest' || t === 'pol' || t === 'star'));
     if (!pick) continue;
     c.appearance = { ...(c.appearance ?? {}), face: pick.k };
     taken.add(pick.k);
