@@ -206,6 +206,8 @@ export function actionVerb(a: PlayerAction): Verb {
       const o = a.op;
       if (o.op === 'answer') return o.how === 'war' ? v('Go to war', 'War ordered') : o.how === 'payback' ? v('Pay them back', 'Ordered') : o.how === 'drop' ? v('Let it go', 'Letting go') : v('Call the sit-down', 'Sit-down called');
       if (o.op === 'kill') return v('Give the order', 'Ordered');
+      if (o.op === 'pitch') return o.how === 'no' ? v('Say no', 'Told no') : o.how === 'other' ? v('Give it to him', 'Given') : v('Do it', 'Backed');
+      if (o.op === 'staff') return v('Do it', 'Put on it');
       if (o.op === 'warn' || o.op === 'fine' || o.op === 'demote' || o.op === 'shelf') return v('Do it', 'Done');
       return v('Take care of it', 'Taken care of');
     }

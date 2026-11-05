@@ -1068,6 +1068,8 @@ export interface GameState {
   planner?: import('./planner/state').PlannerState;
   /** The boss's private read on people: suspicion they talk or steal, with the evidence (peopleRead.ts; optional, made by the first evidence). */
   reads?: import('./peopleRead').ReadsState;
+  /** Let them eat: when each man last worked, the pitches the hungry men bring, the men put on rackets (eat.ts; optional, made by the first week). */
+  eat?: import('./eat').EatState;
   /** Close people (the ★): the boss's own pins and the auto-pins he took off (pins.ts; optional, made by the first click). */
   pins?: import('./pins').PinsState;
 }

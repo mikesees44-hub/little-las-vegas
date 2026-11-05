@@ -9,6 +9,7 @@ import { roll } from './roundsPersonal';
 import { DAY_NAMES, missedMornings } from './days';
 import { whisperOn } from './shadow';
 import { capoLevelOf } from './lieutenants';
+import { hows, pitchForCapo, previewPitch } from './eat';
 import type { Character, Effect, GameState, RivalId } from './types';
 
 /**
@@ -141,6 +142,20 @@ function candidates(s: GameState, k: Character): CheckProblem[] {
   return out;
 }
 
+/** A man of his brings his own pitch through him (eat.ts): the same answers as the Let them eat screen. */
+function pitchProblem(s: GameState, k: Character): CheckProblem | undefined {
+  const p = pitchForCapo(s, k.id);
+  const c = p ? s.characters[p.by] : undefined;
+  if (!p || !c) return undefined;
+  const answers: CheckAnswer[] = hows(p).map((how) => {
+    const pv = previewPitch(s, p.id, how);
+    const odds = pv.odds ? ` · ${Math.round(pv.odds.chance * 100)}%` : '';
+    return { id: how, label: pv.title, hint: `${pv.cost ? `−$${pv.cost.toLocaleString('en-US')}` : 'no money'}${odds}`, effects: pv.disabledReason ? [] : pv.effects };
+  });
+  answers.push({ id: 'later', label: 'Let me think on it', hint: 'it waits in Let them eat', effects: [] });
+  return { kind: 'pitch', urgent: false, own: 'later', text: `${c.firstName} has something: ${p.text}`, answers };
+}
+
 const FLAVOR = (s: GameState, k: Character): string[] => {
   const idle = idleMen(s).filter((c) => c.capoId === k.id).length;
   const men = crewOf(s, k).length;
@@ -198,6 +213,15 @@ export function computeCheckIns(s: GameState): CheckIn[] {
         if (!slots[day]) { slots[day] = c; break; }
       }
     }
+    // Let them eat (eat.ts): one of his men's own pitches rides in on a free morning (never displacing a problem, never urgent).
+    const pp = pitchProblem(s, k);
+    if (pp) {
+      const first = Math.floor(roll(`${s.seed}|${s.week}|cd|${k.id}|pitch`) * ROUTINE_DAYS) % ROUTINE_DAYS;
+      for (let i = 0; i < ROUTINE_DAYS; i++) {
+        const day = (first + i) % ROUTINE_DAYS;
+        if (!slots[day]) { slots[day] = pp; break; }
+      }
+    }
     for (let day = 0; day < 7; day++) {
       const h = roll(`${s.seed}|${s.week}|ci|${k.id}|${day}`);
       const p = slots[day];
@@ -245,7 +269,8 @@ export function checkinsWeek(ctx: Ctx, list: CheckIn[], answers: Record<string, 
     const mine = p.answers.find((a) => a.id === p.own);
     if (mine?.effects.length) applyEffects(ctx, mine.effects, { label: `${c.name} did it his own way`, because: `left ${c.name} to it`, category: 'event' });
     // His territory's routine is his to handle (lieutenants.ts capoLevelOf): no grudge for not being asked.
-    if (!missed[c.day] && !(capoLevelOf(s, c.capoId) === 'handle' && !p.urgent)) {
+    // A pitch left unanswered at the table still waits in Let them eat: no grudge for that morning.
+    if (!missed[c.day] && p.kind !== 'pitch' && !(capoLevelOf(s, c.capoId) === 'handle' && !p.urgent)) {
       ignored++;
       applyEffects(ctx, [op(k.id, B, -2, 'The boss didn\'t answer me')], { label: `${c.name} waited for an answer`, because: 'never answered him', category: 'event' });
     }

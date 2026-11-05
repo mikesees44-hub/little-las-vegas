@@ -5,6 +5,7 @@ import { GOAL_INFO } from './hierarchy';
 import { isMyMan, isSurrender, actionSurrenders } from './handover';
 import type { Ctx } from './ledger';
 import { getRelation, opinion, setModifier } from './relations';
+import { answerPitch, applyStaff, previewPitch, previewStaff, type PitchHow } from './eat';
 import { hashSeed, rand } from './rng';
 import { fugitiveOf } from './travelState';
 import type { ActionPreview } from './actions';
@@ -151,7 +152,10 @@ export type MenAction =
   | { op: 'fine'; id: string; amount: number }
   | { op: 'demote'; id: string }
   | { op: 'shelf'; id: string }
-  | { op: 'kill'; id: string; confirm: boolean };
+  | { op: 'kill'; id: string; confirm: boolean }
+  /** Let them eat (eat.ts): answer a man's own pitch, or put a man on a racket that is short. */
+  | { op: 'pitch'; pitch: string; how: PitchHow }
+  | { op: 'staff'; id: string; biz: string };
 
 export type MenOp =
   | MenAction
@@ -165,6 +169,7 @@ export const MEN_TITLE: Record<MenAction['op'], string> = {
   tuition: 'His kid\'s tuition', hospital: 'The hospital bill', christmas: 'An envelope for every man', guard: 'Put a guy on him', safety: 'Move his family somewhere safe',
   lawyer: 'A lawyer and bail', inside: 'Take care of his family while he is inside', visit: 'Visit him inside', hide: 'Hide him', answer: 'Answer for him',
   warn: 'A warning', fine: 'Fine him', demote: 'Demote him', shelf: 'Put him on the shelf', kill: 'Have him killed',
+  pitch: 'Answer his pitch', staff: 'Put him on a racket',
 };
 
 export const BONUS_AMOUNTS = [100, 250, 500, 1000];
@@ -224,6 +229,8 @@ export function previewMen(s: GameState, a: MenAction): ActionPreview {
     };
   }
   if (a.op === 'answer') return previewAnswer(s, a.wrong, a.how);
+  if (a.op === 'pitch') return previewPitch(s, a.pitch, a.how);
+  if (a.op === 'staff') return previewStaff(s, a.id, a.biz);
   const c = s.characters[a.id];
   const title0 = MEN_TITLE[a.op];
   if (!c || !isMyMan(s, c.id)) return none(title0, 'Not one of your men');
@@ -463,6 +470,8 @@ export function describeMenOp(_s: GameState, o: MenOp): string | undefined {
   if (o.op === 'note') return o.amount ? `"Does the boss have our back?" ${o.amount > 0 ? '+' : ''}${o.amount}` : undefined;
   if (o.op === 'protect') return o.how === 'guard' ? 'A guy on him' : 'Out of sight for a month';
   if (o.op === 'christmas') return '"Does the boss have our back?" +4';
+  if (o.op === 'pitch') return o.how === 'no' ? 'He goes back to the street' : 'He eats: the answer rolls when the week turns';
+  if (o.op === 'staff') return 'He works the racket';
   if (o.op === 'answer') return o.how === 'drop' ? 'The men notice (−8)' : `The men see it (+${o.how === 'war' ? 6 : o.how === 'payback' ? 4 : 2})`;
   if (o.op === 'kill') return 'The men will never forget it (−20)';
   const v = BACK_FOR[o.op];
@@ -487,6 +496,8 @@ export function applyMenOp(ctx: Ctx, o: MenOp, label?: string): void {
     return;
   }
   if (o.op === 'answer') { answerWrong(ctx, o.wrong, o.how); return; }
+  if (o.op === 'pitch') { answerPitch(ctx, o.pitch, o.how); return; }
+  if (o.op === 'staff') { applyStaff(ctx, o.id, o.biz); return; }
   const c = s.characters[o.id];
   if (!c) return;
   m.last[`${c.id}:${o.op}`] = s.week;
