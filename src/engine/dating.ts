@@ -1,4 +1,5 @@
 import { fertility } from './aging';
+import { charmReasons, smoothMult } from './newSkills';
 import { allure } from './looks';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
@@ -328,6 +329,8 @@ export function herDecision(s: GameState, c: Character, what: 'talk' | 'date' | 
     v = Math.max(0, Math.min(15, v));
     if (v) reasons.push({ label: 'Intrigued by him: a man people whisper about', value: what === 'talk' ? Math.round(v / 2) : v });
   }
+  // His charm (newSkills.ts): the skill, First Impressions, Leading Man; half on a talk.
+  for (const r of charmReasons(s, what)) reasons.push(what === 'talk' ? { label: r.label, value: Math.round(r.value / 2) } : r);
   // A working woman he has been good to: she already knows him, and the money was never a problem.
   const prov = s.dating?.providers[c.id];
   if (prov && what !== 'talk') {
@@ -478,9 +481,11 @@ export function paidRisks(s: GameState, p: Provider): PaidRisk[] {
   const d = 1 - p.discretion / 150;
   const k = { street: 1.4, dancer: 1, callgirl: 0.8, escort: 0.4 }[p.kind] * (hasTrait(boss, 'Womanizer') ? 1.3 : 1) * d;
   const pc = (x: number) => Math.round(Math.min(0.5, x * k) * 100) / 100;
+  // What the wife and the island hear (newSkills.ts: Smooth It Over, a charming man's way).
+  const sm = smoothMult(s);
   const out: PaidRisk[] = [];
-  if (wife) out.push({ key: 'wife', chance: pc(0.1), text: `${wife.firstName} hears where you spent the night`, effects: [{ type: 'opinion', from: wife.id, to: boss.id, amount: -12, reason: 'Heard where you spent the night', decay: 1, label: 'She heard' }, { type: 'familyOpinion', amount: -2, reason: 'The boss and his nights out', label: 'She heard' }] });
-  out.push({ key: 'rumor', chance: pc(0.1), text: 'A rumor goes around the island (true or not, it is a rumor)', effects: [{ type: 'respect', amount: -1, label: 'Talk about the boss' }, ...(p.kind === 'street' ? [{ type: 'rivalOpinion', rival: 'philly', amount: -3, reason: 'A boss who gets talked about on Pacific Avenue', label: 'Philadelphia hears' } as Effect] : [])] });
+  if (wife) out.push({ key: 'wife', chance: pc(0.1 * sm), text: `${wife.firstName} hears where you spent the night`, effects: [{ type: 'opinion', from: wife.id, to: boss.id, amount: -12, reason: 'Heard where you spent the night', decay: 1, label: 'She heard' }, { type: 'familyOpinion', amount: -2, reason: 'The boss and his nights out', label: 'She heard' }] });
+  out.push({ key: 'rumor', chance: pc(0.1 * sm), text: 'A rumor goes around the island (true or not, it is a rumor)', effects: [{ type: 'respect', amount: -1, label: 'Talk about the boss' }, ...(p.kind === 'street' ? [{ type: 'rivalOpinion', rival: 'philly', amount: -3, reason: 'A boss who gets talked about on Pacific Avenue', label: 'Philadelphia hears' } as Effect] : [])] });
   out.push({ key: 'photo', chance: pc(0.05), text: 'Somebody has a photograph (a secret a rival can use)', effects: [] });
   if (p.kind === 'street') out.push({ key: 'vice', chance: pc(0.07), text: 'The vice squad was working the avenue that night', effects: [{ type: 'heat', bar: 'local', amount: 3, label: 'The vice squad saw your car' }] });
   if (p.ear && c) out.push({ key: 'ear', chance: pc(0.12), text: `${c.firstName} is one of the Ears, and she talks to the Madam`, effects: [{ type: 'heat', bar: 'local', amount: 1, label: 'The island knows where the boss spends his nights' }] });
@@ -633,6 +638,7 @@ function paidAcceptance(s: GameState, c: Character, p: Provider): Acceptance {
   const other = seeingSomeoneElse(s, c);
   if (other) reasons.push({ label: `Seeing ${other.firstName} now`, value: -25 });
   if (p.visits.length) reasons.push({ label: 'You were a gentleman last time', value: Math.min(10, p.visits.length * 3) });
+  reasons.push(...charmReasons(s, 'paid'));
   const base = 88;
   const sum = reasons.reduce((a, r) => a + r.value, base);
   return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: base }, ...reasons] };

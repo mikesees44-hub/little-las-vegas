@@ -1,3 +1,4 @@
+import { fedCaseMult } from './newSkills';
 import type { Character, GameState, RivalId } from './types';
 
 /**
@@ -258,6 +259,8 @@ export function fid(F: FedsState, p: string): string {
 export function addFedEvidence(s: GameState, charId: string, amount: number, why: string): number {
   const c = s.characters[charId];
   if (!c?.alive || !amount) return 0;
+  // The case on the boss builds slower for a man with friends in Trenton (newSkills.ts, Politics).
+  if (charId === s.playerId && amount > 0) amount *= fedCaseMult(s);
   const before = c.evidence ?? 0;
   c.evidence = Math.max(0, Math.min(100, before + amount));
   const got = c.evidence - before;

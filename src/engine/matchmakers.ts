@@ -1,4 +1,5 @@
 import { ageOn } from './calendar';
+import { charmReasons } from './newSkills';
 import { displayName, hasTrait, player } from './characters';
 import { stageOf as datingStage } from './dating';
 import { alliedHouse } from './familyHouses';
@@ -318,10 +319,12 @@ function reasonsFor(s: GameState, by: Character, member: Character, spouse: Char
 }
 
 export function matchOdds(s: GameState, by: Character, member: Character, spouse: Character, answer: MatchAnswer, weigh: Weigh): Acceptance {
-  const rs = reasonsFor(s, by, member, spouse, answer, weigh);
+  const rs: { label: string; value: number }[] = reasonsFor(s, by, member, spouse, answer, weigh).map(({ label, value }) => ({ label, value }));
+  // The boss asking himself: his charm (newSkills.ts).
+  if (by.id === s.playerId) rs.push(...charmReasons(s, 'match'));
   const base = 62;
   const sum = rs.reduce((a, r) => a + r.value, base);
-  return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: base }, ...rs.map(({ label, value }) => ({ label, value }))] };
+  return { chance: Math.max(0.05, Math.min(0.95, sum / 100)), reasons: [{ label: 'Base', value: base }, ...rs] };
 }
 
 /** Who said no: weighted by which side's reasons ran lowest. */

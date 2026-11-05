@@ -1,4 +1,5 @@
 import { collectTake, coverFromReserve, payFromPersonal } from './tribute';
+import { TakeTally } from './newSkills';
 import { greedSkim, incomeBoost, squeezeMult } from './money';
 import { econBusiness } from './econ';
 import { tagLast } from './ledgerbook';
@@ -314,6 +315,8 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
   let clean = 0;
   let upkeep = 0;
   const hasFence = ownsKind(s, 'fencing', true);
+  // The games and the rooms answer to the boss's (or the runner's) Gambling and Showbiz (newSkills.ts): own lines below.
+  const tally = new TakeTally();
   for (const b of owned(s)) {
     // Leased to an operator (worth.ts): his rent, his upkeep, his worries.
     if (b.leasedTo) {
@@ -369,6 +372,7 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
     // A steady earner (earners.ts): the boss's goes to his Pocket, a capo keeps his end and kicks up the rest.
     const er = routeEarner(ctx, b, amt);
     if (er) ({ amt, label } = er);
+    else tally.add(s, b, amt);
     if (amt !== 0) {
       // A losing week (the book paid out) is a loss, not negative gross.
       const got = Math.max(0, money(ctx, Math.round(amt), label, 'business'));
@@ -392,6 +396,10 @@ export function runBusinesses(ctx: Ctx): { gross: number; clean: number; upkeep:
         scheduleConsequence(s, 'narcotics_found_out', 1, 2, `ran a narcotics pipeline against Bruno's rule`, {});
       }
     }
+  }
+  for (const k of ['gambling', 'showbiz'] as const) {
+    const t = tally.sum[k];
+    if (t.amt > 0) gross += money(ctx, t.amt, k === 'gambling' ? `Gambling sense: the house's edge on the books and the games (${t.n} place${t.n > 1 ? 's' : ''})` : `Showbiz sense: a fuller house at the clubs (${t.n} place${t.n > 1 ? 's' : ''})`, 'business');
   }
   const bonusPct = perkMod(s, 'income');
   if (bonusPct && gross > 0) gross += money(ctx, Math.round(gross * bonusPct / 100), `Perks: an eye for a racket (+${bonusPct}% business income)`, 'business');

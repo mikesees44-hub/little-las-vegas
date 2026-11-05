@@ -1,3 +1,4 @@
+import { showbizReasons } from './newSkills';
 import type { ActionPreview } from './actions';
 import { ageOn } from './calendar';
 import { displayName, hasTrait, isFree, makeCharacter } from './characters';
@@ -220,6 +221,7 @@ export function signOdds(s: GameState, a: Act, pct: number, weeks: number, adv: 
   if (c && hasTrait(c, 'Honest') && s.heat.federal >= 50) r.push({ label: 'Does not want the papers to put them with you', value: -10 });
   if (c && hasTrait(c, 'Greedy')) r.push({ label: 'Likes money', value: adv >= expectedAdvance(a) ? 8 : -5 });
   r.push(...allureReasons(s, c, via, r));
+  r.push(...showbizReasons(s));
   return cap(35, r);
 }
 
@@ -250,6 +252,7 @@ export function bookOdds(s: GameState, a: Act, rung: number): Acceptance {
   ];
   if (a.top >= rung) r.push({ label: 'They have played this room before', value: 10 });
   if (a.fame >= 60) r.push({ label: 'A name the room knows', value: 6 });
+  r.push(...showbizReasons(s));
   return cap(50, r, 0.92);
 }
 

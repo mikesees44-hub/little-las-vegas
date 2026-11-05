@@ -1,4 +1,5 @@
 import { ageOn, isInSeason } from './calendar';
+import { padCostPct } from './newSkills';
 import { perkMod } from './lifestyle';
 import { displayName, hasTrait, isFree, makeCharacter, player } from './characters';
 import { adultOn } from './datingState';
@@ -897,13 +898,15 @@ export function payrollWeek(ctx: Ctx): void {
     if (!adult(s, c)) { leave(s, P, h, 'Not of age'); continue; }
     if (!isFree(s, c)) continue;
     const nm = displayName(c);
-    // The envelope.
+    // The envelope (the pad's own a little less for a political boss: newSkills.ts, Friends Downtown).
     if (h.wage > 0) {
-      if (s.money >= h.wage) {
-        money(ctx, -h.wage, `Payroll: ${nm} (${j.label.toLowerCase()})`, 'cost');
-        c.wealth += h.wage;
-        h.paid += h.wage;
-        P.stats.wages += h.wage;
+      const padCut = h.job === 'cop' || h.job === 'politician' || h.job === 'clerk' ? padCostPct(s) : 0;
+      const pay = padCut ? Math.max(5, Math.round(h.wage * (1 - padCut / 100))) : h.wage;
+      if (s.money >= pay) {
+        money(ctx, -pay, `Payroll: ${nm} (${j.label.toLowerCase()})${padCut ? ` (${padCut}% off: friends downtown)` : ''}`, 'cost');
+        c.wealth += pay;
+        h.paid += pay;
+        P.stats.wages += pay;
         h.unpaid = 0;
       } else {
         h.unpaid++;
