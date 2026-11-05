@@ -43,7 +43,7 @@ export function GatePanel({ s, v, api }: { s: GameState; v: GateView; api: GateA
         <span className="min-w-0 flex-1 text-[12px]" data-testid="gate-full-text">
           {v.full ? <>You read the full list today{v.heldNow ? <>: <b className="text-[#a3271d]">{v.heldNow} held back</b>, marked below.</> : '.'}</> : <>Read every request yourself, not just his list. <span className="text-[#6b5a44]">1 hour · if he is holding anybody back, about {pct(v.fullOdds)} you see it for what it is.</span></>}
         </span>
-        <button type="button" className="llv-ink-btn" disabled={!!v.fullBlock} title={v.fullBlock} onClick={api.onFull} data-testid="gate-full">{v.full ? 'Read today' : 'Read the full list'}</button>
+        <button type="button" className="llv-ink-btn shrink-0 whitespace-nowrap" disabled={!!v.fullBlock} title={v.fullBlock} onClick={api.onFull} data-testid="gate-full">{v.full ? 'Read today' : 'Read the full list'}</button>
       </div>
       {open && cs && (
         <div className="llv-pop mt-2 p-2" role="group" aria-label={`What to do about ${cs.name}`} data-testid="gate-case">
@@ -89,8 +89,8 @@ export function GatePanel({ s, v, api }: { s: GameState; v: GateView; api: GateA
               <ul className="space-y-1">
                 {v.sources.map((x) => (
                   <li key={x.id} className="flex items-center justify-between gap-1.5">
-                    <span className="min-w-0 truncate"><b>{x.name}</b> <span className="text-[11px] text-[#6b5a44]">{x.role}</span></span>
-                    <button type="button" className="llv-ink-btn !px-2 !py-0.5 text-[11.5px]" disabled={!!x.block} title={x.block ?? `${pct(x.odds)} he sees what is hidden, if anything is`} onClick={() => api.onAsk(x.id)} data-testid={`gate-ask-${x.id}`}>Ask · {pct(x.odds)}</button>
+                    <span className="min-w-0 flex-1 truncate"><b>{x.name}</b> <span className="text-[11px] text-[#6b5a44]">{x.role}</span></span>
+                    <button type="button" className="llv-ink-btn shrink-0 whitespace-nowrap !px-2 !py-0.5 text-[11.5px]" disabled={!!x.block} title={x.block ?? `${pct(x.odds)} he sees what is hidden, if anything is`} onClick={() => api.onAsk(x.id)} data-testid={`gate-ask-${x.id}`}>Ask · {pct(x.odds)}</button>
                   </li>
                 ))}
               </ul>

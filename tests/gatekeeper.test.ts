@@ -15,6 +15,11 @@ import { scheduleInto } from '../src/engine/schedule';
 import { gateWeek } from '../src/engine/planner/gateWeek';
 import { readOf } from '../src/engine/peopleRead';
 import type { GameState, RivalId } from '../src/engine/types';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { GatePanel } from '../src/ui/planner/GatePanel';
+import { gateView } from '../src/engine/planner/gate';
+import { writeFileSync } from 'node:fs';
 
 function game(seed = 'gate1'): GameState {
   const s = newGameWith(seed, 'olddon');
@@ -217,5 +222,17 @@ describe('the gatekeeper', () => {
     expect(seen).toBe(true);
     expect(discoverGate(s, id, 'Test') || s.planner!.gx?.id === id).toBe(true);
     expect(s.journal!.e.some((e) => /Found out/.test(e.t))).toBe(true);
+  });
+
+  it('the page: the door, the full list, the cross-checks and, found out, the four choices with the clip behind a second word', () => {
+    const { s, id } = turned(game('gate11'));
+    const P = (s.planner ??= { v: 1, done: [], notes: {}, refused: {}, lastRefused: {}, turned: {}, auto: true });
+    P.gx = { id, w: s.week, why: turnOf(s, id)!.text };
+    P.tl = [{ w: s.week, t: 'A man says he asked all week to see you.' }];
+    const noop = () => {};
+    const html = renderToStaticMarkup(createElement(GatePanel, { s, v: gateView(s), api: { onRole: noop, onFull: noop, onAsk: noop, onDecide: noop, onChar: noop } }));
+    for (const t of ['gate-keeper', 'gate-full', 'gate-case', 'gate-choice-confront', 'gate-choice-feed', 'gate-choice-freeze', 'gate-choice-clip', 'gate-clip', 'gate-tells', 'gate-checks']) expect(html).toContain(`data-testid="${t}"`);
+    expect(html).not.toContain('gate-clip-yes');
+    if (process.env.GK_HTML) writeFileSync(process.env.GK_HTML, html);
   });
 });
