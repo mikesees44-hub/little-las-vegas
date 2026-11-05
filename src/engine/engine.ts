@@ -84,6 +84,7 @@ import { earsWeek } from './ears';
 import { datingWeek } from './dating';
 import { nightlifeWeek } from './nightlife';
 import { payrollWeek, withFavorJobs } from './payroll';
+import { herwayWeek } from './herway';
 import { bondsWeek } from './bonds';
 import { spendWeek } from './spend';
 import { storeWeek } from './store';
@@ -453,6 +454,7 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     datingWeek(ctx);
     nightlifeWeek(ctx);
     payrollWeek(ctx);
+    herwayWeek(ctx);
     womenWeek(ctx);
     honeyWeek(ctx);
     bondsWeek(ctx);

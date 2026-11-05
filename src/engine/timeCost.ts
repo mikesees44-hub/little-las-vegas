@@ -149,6 +149,8 @@ export const TIME_TABLE: Record<string, number> = {
   'intrigue:plant': 1, 'intrigue:turn': 2, 'intrigue:recall': 0.5, 'intrigue:canary': 1, 'intrigue:question': 2, 'intrigue:moleFate': 1,
   'intrigue:rumor': 1, 'intrigue:forge': 1, 'intrigue:sabotage': 0.5, 'intrigue:proxy': 1, 'intrigue:sitdown': 3, 'intrigue:front': 0.5,
   'payroll:hire': 1, 'payroll:fire': 0.5, 'payroll:raise': 0.25, 'payroll:main': 0.25,
+  // Her way (herway.ts): a deal is a meeting; a loan or a word is quick; a campaign is an afternoon.
+  'herway:partner': 2, 'herway:protect': 1, 'herway:hire': 1, 'herway:lend': 0.5, 'herway:back': 2, 'herway:ears': 1, 'herway:squeeze': 1, 'herway:leave': 0.25,
   'nightlife:invite': 4, 'nightlife:car': 0.75, 'nightlife:bold': 0.5, 'nightlife:partner': 2, 'nightlife:askMan': 0.5,
   // Your People (bonds.ts): an evening with your wife, an afternoon with a kid, a day fishing.
   'bond:date': 4, 'bond:anniversary': 4, 'bond:apologize': 1, 'bond:confess': 1, 'bond:deny': 0.5, 'bond:vacation': TRAVEL_DAY,
@@ -221,6 +223,8 @@ export function timeCost(a: PlayerAction, s?: GameState): number {
   if (a.kind === 'work') return workHours(a.op, s?.playerId);
   // An offer made by one of his men takes the boss a quarter of an hour; in person, the hour.
   if (a.kind === 'payroll' && (a.op.op === 'hire' || a.op.op === 'star') && a.op.via) return 0.25;
+  // Her way (herway.ts): an offer carried by one of his men costs the boss only the word to send him.
+  if (a.kind === 'herway' && a.op.via && a.op.via !== 'boss') return 0.25;
   if (op !== undefined && `${a.kind}:${op}` in TIME_TABLE) return TIME_TABLE[`${a.kind}:${op}`];
   if (a.kind in TIME_TABLE) return TIME_TABLE[a.kind];
   return DEFAULT_COST;

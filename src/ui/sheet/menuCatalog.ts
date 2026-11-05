@@ -26,6 +26,7 @@ import { addEarsItems } from '../ears/earsMenu';
 import { addMore } from './menuMore';
 import { nightActionsFor } from '../../engine/nightlife';
 import { payrollActionsFor } from '../../engine/payroll';
+import { herActionsFor } from '../../engine/herway';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
 import { capoActionsFor } from '../../engine/capos';
@@ -254,6 +255,8 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   if (c.id !== s.playerId) add('talk', { key: 'pin', open: { type: 'pin' }, label: isPinned(s, c.id) ? `★ ${c.firstName} is a close person: unpin` : `☆ Keep ${c.firstName} close`, text: 'A quick link in the Black book\'s strip of close people, with news when something happens to them.' });
   if (isAdult(s, c)) add('talk', { key: 'card', open: { type: 'card' }, label: `${c.firstName}'s calling card…`, text: 'Who they are at a glance: looks, personality, skills, family, money as known, you, rumors.' });
   if (isAdult(s, c) && !(c.dynasty && s.characters[s.playerId]?.spouseId !== c.id) && s.characters[s.playerId]?.spouseId !== c.id) add('romance', { key: 'goomar', action: { kind: 'nightlife', op: { op: 'goomar', id: c.id } }, label: `Make ${c.firstName} your goomar` });
+  // Her way (herway.ts): a woman earner's career: partner, protect, hire, lend, back her run, her ears, squeeze, leave her be.
+  for (const a of herActionsFor(s, c.id)) if (a.kind === 'herway') add('business', { key: `her:${a.op.op}`, action: a });
   for (const a of nightActionsFor(s, c.id)) if (a.kind === 'nightlife' && a.op.op !== 'goomar') add(a.op.op === 'endGoomar' ? 'romance' : 'nightlife', { key: `nl:${JSON.stringify(a.op)}`, action: a });
 
   // The civilian payroll (payroll.ts): a job for anyone outside the Family, the quiet envelope, and for those on it a raise, a cut, letting go, the main earner.

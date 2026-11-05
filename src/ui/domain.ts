@@ -48,7 +48,7 @@ const MAP: Record<string, Domain> = {
   desk: 'crew', org: 'crew', borgata: 'crew', ops: 'crew', holdings: 'money', you: 'family', house: 'family', life: 'family',
   diplomacy: 'rivals', chronicle: 'politics', map: 'shore',
   'town.case': 'law', 'town.cityhall': 'politics', 'town.patronage': 'politics', 'town.underbelly': 'crew', 'town.hoods': 'shore',
-  'town.night': 'romance', 'town.nightlife': 'romance', 'town.attached': 'romance', 'town.happening': 'shore',
+  'town.night': 'romance', 'town.women': 'money', 'town.nightlife': 'romance', 'town.attached': 'romance', 'town.happening': 'shore',
   'diplomacy.table': 'politics', 'diplomacy.pacts': 'politics', 'ops.travel': 'shore', 'you.walk': 'shore', 'you.dating': 'romance',
   'you.store': 'money', 'you.pocket': 'money', 'you.spend': 'money', 'you.possessions': 'money', 'house.court': 'family', 'house.succession': 'family',
   'borgata.earnings': 'money', 'borgata.take': 'money', 'ops.missions': 'crew',
