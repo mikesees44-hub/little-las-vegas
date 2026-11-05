@@ -72,7 +72,7 @@ export function newSkillOfDeed(text: string): NewSkill | undefined {
   if (/\bbook(ed|ing)? (an|the|a|her|him|them) (act|room|singer|band|comic)/.test(t)) return 'showbiz';
   if (/(casino|numbers|bookmak|bookie|the book\b|sports ?book|card ?game|cards\b|poker|dice|crap game|\bbet|wager|gambl|the horses|race ?track|policy bank|bingo)/.test(t)) return 'gambling';
   if (/(showbiz|nightclub|\bclub\b|supper ?club|burlesque|\bact\b|acts\b|singer|comic|band\b|booking|\bbook (an|the|a) (act|room)|stage|marquee|label|record|talent|venue|show\b|\bsign(ed)? (an|the|with)|agent)/.test(t)) return 'showbiz';
-  if (/(dating|\bdate\b|ask(ed)? (her|out)|woman|women|girl|lady|ladies|wife|goomar|mistress|lover|romance|court(ing|ed)? her|flirt|flowers|an evening|night out|nightlife|dance|kiss|propos|matchmak)/.test(t)) return 'charm';
+  if (/(dating|\bdate\b|ask(ed)? (her|out|\w+ out)|woman|women|girl|lady|ladies|wife|goomar|mistress|lover|romance|court(ing|ed)? her|flirt|flowers|an evening|night out|nightlife|dance|kiss|propos|matchmak)/.test(t)) return 'charm';
   if (/(payoff|pay ?off|on the pad|\bpad\b|bribe|envelope downtown|city hall|mayor|council|alderman|judge|lawyer|attorney|prosecutor|grand jury|indict|fed(eral)? case|\bfbi\b|the feds|trenton|politic|election|vote|license|permit|inspector|commissioner)/.test(t)) return 'politics';
   if (/(own score|a score\b|scores\b|the street|corner|hijack|truck|fence|heist|job\b|jobs\b|stake-?out|tail|intel|dig|informer|stool|rat\b|wire|tip\b|ears?\b|word on the|shakedown|collect)/.test(t)) return 'streetwise';
   return undefined;
