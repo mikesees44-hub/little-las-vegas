@@ -81,7 +81,7 @@ export function Ladder({ s, compact }: { s: GameState; compact?: boolean }) {
   );
 }
 
-/** The Rise as a place (The Family › The Rise). */
+/** The Rise as a place (Crew › The Rise). */
 export function TheRise({ s }: { s: GameState }) {
   const chart = useMemo(() => riseChart(s), [s]);
   const sum = useMemo(() => riseSummary(s), [s]);

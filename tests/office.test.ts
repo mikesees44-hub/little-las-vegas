@@ -263,6 +263,6 @@ describe('the Office: every object is a door to a place, and says which (STREAML
       expect(hotspotOpens(h)).toContain(wherePath(k)!);
     }
     expect(places).toBeGreaterThanOrEqual(6);
-    expect(hotspotOpens(HOTSPOTS.find((h) => h.id === 'envelope')!)).toMatch(/Money › The envelope/);
+    expect(hotspotOpens(HOTSPOTS.find((h) => h.id === 'envelope')!)).toMatch(/Money › The money › The envelope/);
   });
 });

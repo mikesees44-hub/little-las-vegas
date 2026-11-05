@@ -26,6 +26,14 @@ export const DOMAINS: Record<Domain, { label: string; glyph: string; blurb: stri
   shore: { label: 'The shore & travel', glyph: '≈', blurb: 'The boardwalk, Ocean City, trips, the storm' },
 };
 
+/**
+ * The homes (shell/routes.ts HomeId) and the domain each is about: the rail's colour. The Desk is
+ * all of them. Kept here, not in nav.ts, so anything can read it without loading the screen list.
+ */
+export const HOME_DOMAIN: Partial<Record<'desk' | 'house' | 'org' | 'money' | 'law' | 'rivals' | 'town', Domain>> = {
+  house: 'family', org: 'crew', money: 'money', law: 'law', rivals: 'rivals', town: 'shore',
+};
+
 /** The class that sets a domain's colours (`--d`, `--d-ink`) on an element and its children. */
 export function domClass(d: Domain | undefined): string {
   return d ? `llv-d-${d}` : '';
@@ -46,7 +54,7 @@ const MAP: Record<string, Domain> = {
   envelope: 'money', bill: 'money', lawyer: 'law', lieutenant: 'crew', sitdown: 'crew', request: 'crew',
   // Homes and nav keys (shell/nav.ts): the prefix decides, a few sections are their own
   desk: 'crew', org: 'crew', borgata: 'crew', ops: 'crew', holdings: 'money', you: 'family', house: 'family', life: 'family',
-  diplomacy: 'rivals', chronicle: 'politics', map: 'shore',
+  diplomacy: 'rivals', chronicle: 'politics', map: 'shore', 'holdings.hq': 'law', 'borgata.protect': 'law', 'you.lifestyle': 'family',
   'town.case': 'law', 'town.cityhall': 'politics', 'town.patronage': 'politics', 'town.underbelly': 'crew', 'town.hoods': 'shore',
   'town.night': 'romance', 'town.women': 'money', 'town.nightlife': 'romance', 'town.attached': 'romance', 'town.happening': 'shore',
   'diplomacy.table': 'politics', 'diplomacy.pacts': 'politics', 'ops.travel': 'shore', 'you.walk': 'shore', 'you.dating': 'romance',

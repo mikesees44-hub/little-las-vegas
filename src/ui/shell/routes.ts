@@ -7,16 +7,22 @@
 export type PanelId = 'you' | 'house' | 'borgata' | 'holdings' | 'ops' | 'diplomacy' | 'town' | 'chronicle';
 
 /**
- * The six places a boss thinks in (see nav.ts): the rail and the phone's
- * bottom bar. A drawer section keeps its registry key ("holdings.money");
- * nav.ts says which home it lives in.
+ * The seven places a boss thinks in (see nav.ts; STREAMLINE_2 §3.1): the rail and the phone's
+ * bottom bar, one domain (or a close pair) each. A drawer section keeps its registry key
+ * ("holdings.money"); nav.ts says which home it lives in.
+ *
+ * `org` is the organisation (Crew) and `house` is blood (Family): `{ home: 'family' }` has always
+ * meant the organisation, so it still lands in Crew.
  */
-export type HomeId = 'desk' | 'org' | 'money' | 'map' | 'rivals' | 'life';
-export const HOME_IDS: HomeId[] = ['desk', 'org', 'money', 'map', 'rivals', 'life'];
+export type HomeId = 'desk' | 'house' | 'org' | 'money' | 'law' | 'rivals' | 'town';
+export const HOME_IDS: HomeId[] = ['desk', 'house', 'org', 'money', 'law', 'rivals', 'town'];
 
-/** The homes before the streamline (This Week, Money, Rackets, The Family, The Town, You): every one still lands. */
-export type LegacyHomeId = 'week' | 'biz' | 'family' | 'town' | 'you';
-export const LEGACY_HOME: Record<LegacyHomeId, HomeId> = { week: 'desk', biz: 'money', family: 'org', town: 'map', you: 'life' };
+/**
+ * The homes before (This Week, Money & Business, The Family, The Map, Your Life, You): every one
+ * still lands. (`town` was a legacy id for the Map; it is a home again, the same place.)
+ */
+export type LegacyHomeId = 'week' | 'biz' | 'family' | 'you' | 'life' | 'map';
+export const LEGACY_HOME: Record<LegacyHomeId, HomeId> = { week: 'desk', biz: 'money', family: 'org', you: 'house', life: 'house', map: 'town' };
 /** A home id, old or new, as the home it is now. */
 export function homeId(h: string | undefined): HomeId | undefined {
   if (!h) return undefined;
@@ -127,14 +133,14 @@ export const LEGACY_TAB_ROUTE: Record<string, Route> = {
   walk: { panel: 'you', section: 'walk' },
   hood: { panel: 'town', section: 'hoods' },
   plan: { panel: 'ops', section: 'plan' },
-  settings: { home: 'life', key: 'nav.settings' },
-  help: { home: 'life', key: 'nav.help' },
-  // The six homes by name (and the old ones).
+  settings: { home: 'desk', key: 'nav.settings' },
+  help: { home: 'desk', key: 'nav.help' },
+  // The seven homes by name (and the old ones).
   week: { home: 'desk' },
   desk: { home: 'desk' },
   biz: { home: 'money' },
   org: { home: 'org' },
-  life: { home: 'life' },
+  life: { home: 'house' },
   chain: { panel: 'borgata', section: 'chain' },
   rise: { panel: 'borgata', section: 'rise' },
   rackets: { home: 'money', key: 'holdings.hub' },

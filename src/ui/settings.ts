@@ -13,8 +13,12 @@ export interface Settings {
   pauseOnWarning: boolean;
   /** Open the Sit-Down at the start of every week (default on). */
   sitdownEachWeek?: boolean;
-  /** "Running clock": the days tick by (Crusader Kings style); "Turn-based": one Advance Week at a time. */
+  /** "Running clock": the days tick by (Crusader Kings style); "Turn-based": one turn (1, 2 or 4 weeks) at a time. */
   timeMode?: TimeMode;
+  /** The player picked the time mode himself (Settings): no default ever moves him again. */
+  timeModeChosen?: boolean;
+  /** The time mode was set by a new game's default (Story: turns), not by the player: the next new game may set it again. */
+  timeModeAuto?: boolean;
   /** Stop the clock on a hit or a killing in your family. */
   pauseOnViolence?: boolean;
   /** Stop the clock when one of yours is arrested. */
@@ -130,6 +134,25 @@ export const AUTO_PAUSE: { key: keyof Settings; label: string }[] = [
 /** The running clock is the default for new players. */
 export function timeMode(): TimeMode {
   return getSettings().timeMode ?? 'clock';
+}
+
+/**
+ * A new game's default time mode (STREAMLINE_2 §5.3): Story plays in turns (a two-week turn and the
+ * Round, the gentlest way to meet every part of the game once); Don and Grand Strategy keep the
+ * running clock. Only for a player who never chose: a mode he picked in Settings (timeModeChosen), or
+ * any mode stored from before this default existed, is never moved.
+ */
+export function newGameTimeMode(difficulty: 'story' | 'don' | 'grand'): TimeMode {
+  const st = getSettings();
+  if (st.timeModeChosen || (st.timeMode !== undefined && !st.timeModeAuto)) return timeMode();
+  const want: TimeMode = difficulty === 'story' ? 'turns' : 'clock';
+  if (st.timeMode !== want || !st.timeModeAuto) setSettings({ timeMode: want, timeModeAuto: true });
+  return want;
+}
+
+/** The player picks the time mode himself (Settings): remembered as his choice. */
+export function chooseTimeMode(m: TimeMode): Settings {
+  return setSettings({ timeMode: m, timeModeChosen: true, timeModeAuto: undefined });
 }
 
 /** An autopause rule (the new ones default on, the evening report off). */

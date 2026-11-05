@@ -264,8 +264,8 @@ export function SettingsPanel({ game, difficulty, onDifficulty }: { /** In a gam
           <option value="slow">Slow</option><option value="normal">Normal</option><option value="fast">Fast</option><option value="instant">Instant</option>
         </select>
       </label>
-      <label className={row}><span>Time <span className="block text-xs text-stone-500">Running clock: the days tick by, Monday to Sunday; Space pauses. Turn-based: one Advance Week at a time.</span></span>
-        <select value={st.timeMode ?? 'clock'} onChange={(e) => upd({ timeMode: e.target.value as TimeMode })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200" data-testid="setting-time-mode">
+      <label className={row}><span>Time <span className="block text-xs text-stone-500">Running clock: the days tick by, Monday to Sunday; Space pauses. Turn-based: one turn at a time (1, 2 or 4 weeks; it stops for a crisis). New Story games start turn-based until you pick.</span></span>
+        <select value={st.timeMode ?? 'clock'} onChange={(e) => upd({ timeMode: e.target.value as TimeMode, timeModeChosen: true, timeModeAuto: undefined })} className="rounded bg-noir-800 border border-noir-600 px-2 py-1 text-stone-200" data-testid="setting-time-mode">
           <option value="clock">Running clock</option><option value="turns">Turn-based</option>
         </select>
       </label>

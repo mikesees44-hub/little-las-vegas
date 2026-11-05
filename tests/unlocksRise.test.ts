@@ -6,10 +6,11 @@ import { HINTS, HINT_GAP_MS } from '../src/ui/shell/hints';
 import { playWeeks } from './helpers';
 
 describe('unlock by growth', () => {
-  it('week 1: Desk, Family, Money, Map open; Life and Rivals greyed with a reason', () => {
+  it('week 1: Desk, Crew, Money, Town open; Family, Law and Rivals greyed with a reason', () => {
     const s = newGameWith('unl-w1', 'rise');
-    for (const h of ['desk', 'org', 'money', 'map'] as const) expect(homeLock(s, h), h).toBeUndefined();
-    expect(homeLock(s, 'life')).toMatch(/Opens/);
+    for (const h of ['desk', 'org', 'money', 'town'] as const) expect(homeLock(s, h), h).toBeUndefined();
+    expect(homeLock(s, 'house')).toMatch(/Opens/);
+    if (!sectionVisible(s, 'town.case') && !sectionVisible(s, 'holdings.hq')) expect(homeLock(s, 'law')).toMatch(/Opens/);
     if (rung(s) < 4 && !s.rivals.some((r) => r.lastMove?.target === 'player')) expect(homeLock(s, 'rivals')).toMatch(/borgata/);
   });
   it('a seasoned save shows everything', () => {

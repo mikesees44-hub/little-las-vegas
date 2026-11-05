@@ -141,7 +141,7 @@ const clamp = (v: number) => Math.max(0, Math.min(1, v));
 
 export const LADDER: Rung[] = [
   {
-    n: 1, id: 'crew', title: 'A crew', milestone: 'Your own crew, and a summer that pays: $15,000 in the Family.', opens: 'The Desk, the Family, Money & Business, the Map',
+    n: 1, id: 'crew', title: 'A crew', milestone: 'Your own crew, and a summer that pays: $15,000 in the Family.', opens: 'The Desk, Crew, Money, Town; Family from week two',
     done: (s) => capos(s).length >= 1 || crew(s).length >= 3,
     progress: (s) => clamp(s.money / 15000), steps: (s) => (met(s, 'first_summer') ? [] : [goal('first_summer').title]),
     unlocks: ['desk', 'org', 'money', 'map'],
@@ -159,7 +159,7 @@ export const LADDER: Rung[] = [
     unlocks: ['borgata.membership', 'borgata.orders'],
   },
   {
-    n: 4, id: 'borgata', title: 'A borgata', milestone: 'A dozen men, and Philadelphia\'s notice (respect 40).', opens: 'Rivals & the Law: the Table, intrigue',
+    n: 4, id: 'borgata', title: 'A borgata', milestone: 'A dozen men, and Philadelphia\'s notice (respect 40).', opens: 'Rivals: the Table, intrigue',
     done: (s) => met(s, 'a_dozen') && met(s, 'philly_notice'), progress: (s) => clamp((Math.min(12, crew(s).length) / 12 + Math.min(40, s.respect) / 40) / 2),
     steps: (s) => [crew(s).length < 12 ? `${12 - crew(s).length} more men` : '', s.respect < 40 ? `Respect ${s.respect} of 40` : ''].filter(Boolean),
     unlocks: ['rivals', 'diplomacy.table', 'diplomacy.intrigue'],

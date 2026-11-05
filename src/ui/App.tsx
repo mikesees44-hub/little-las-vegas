@@ -47,7 +47,7 @@ import type { Candidate, Role } from '../engine/candidates';
 import { currentSlot, loadDesk, loadSlot, saveDesk, saveSlot, setCurrentSlot, type DeskState } from './save';
 import { StartMenu, type MenuScreen } from './menu/StartMenu';
 import { registerAppearances } from './portrait/genes';
-import { applySettings, getSettings, setSettings, helpLevel, OFFICE_HOME_FLAG, OPENING_SEEN_FLAG, SIMPLE_VIEW_FLAG, pausesOn, timeMode, weekStart } from './settings';
+import { type Settings, applySettings, getSettings, newGameTimeMode, setSettings, helpLevel, OFFICE_HOME_FLAG, OPENING_SEEN_FLAG, SIMPLE_VIEW_FLAG, pausesOn, timeMode, weekStart } from './settings';
 import { GoThere } from './travel/GoThere';
 import { CityScreen, VisitPill } from './travel/CityScreen';
 import { VacationPill, VacationScreen } from './travel/VacationScreen';
@@ -62,7 +62,7 @@ import { ElectionNight } from './cityhall/ElectionNight';
 import type { ElectionResult } from '../engine/polState';
 import type { SectionCtx } from './shell/panels';
 import type { HomeId, Route } from './shell/routes';
-import { homeForKey, itemOf, KEYS_CHANGED, resolveRoute, type NavRoute } from './shell/nav';
+import { homeForKey, HOMES_BY_ID, itemOf, KEYS_CHANGED, CHANGED_LETTERS, resolveRoute, type NavRoute } from './shell/nav';
 import { homeLock } from './shell/unlocks';
 import { can, inTheRanks } from '../engine/rankView';
 import { PlaceStrip } from './borgata/YourPlace';
@@ -74,14 +74,20 @@ import { alertHome, doNow as buildDoNow, type DoNowItem } from './shell/doNow';
 import { racketGaps } from '../engine/racketMenu';
 import { HelpBody } from './shell/ShellHelp';
 import { SettingsPanel } from './menu/StartMenu';
-import { knobs, setDifficulty } from '../engine/difficulty';
+import { difficultyOf, knobs, setDifficulty } from '../engine/difficulty';
+import { defaultSpan, turnLine, turnSteps, type TurnSpan } from '../engine/turn';
+import { crisisAt, type TurnStop } from '../engine/turnCrisis';
+import { spanDiff, type DiffLine } from '../engine/weekDiff';
+import { SpanReport } from './components/SpanReport';
 import { whatShouldIDo } from '../engine/opportunities';
 import { Providers } from './shell/Providers';
 import type { MapFocus, ShellApi } from './shell/context';
 import { Shell } from './shell/Shell';
 import { TopBar } from './shell/TopBar';
 import { LeftRail } from './shell/LeftRail';
-import { Drawer } from './shell/Drawer';
+import { Drawer, type FrontApi } from './shell/Drawer';
+import { roundOf } from './shell/round';
+import { RoundStrip } from './shell/FrontBands';
 import { FindPalette } from './shell/Find';
 import type { FindResult } from './shell/find';
 import { AlertsPanel, GoalsCard, StreetFeedCard, ThisWeekCard } from './shell/RightRail';
@@ -107,7 +113,7 @@ import { extraToday, markExtraShown, unreadCount } from '../engine/paper';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
 import { SitDown } from './sitdown/SitDown';
-import { BossDesk, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
+import { BossDesk, openItem, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import type { SettledRow, WeekDone } from './desk/Bundles';
 import { handleWeekPlan, type WeekPlanRow } from '../engine/bundles';
 import { WeekTurning } from './components/WeekTurning';
@@ -138,7 +144,21 @@ import { journalNow, seqOf } from '../engine/journal';
 
 /** Old tab ids still work everywhere (`goTab`, alerts): they resolve through LEGACY_TAB_ROUTE. */
 export type Tab = string;
-type Mode = 'week' | 'month' | 'season';
+/** The span picker remembers the boss's own choice per save (a per-browser convenience; the default is engine/turn.ts defaultSpan). */
+function loadTurnSpan(seed: string): TurnSpan | undefined {
+  try { const v = Number(localStorage.getItem(`llv.turnSpan.${seed}`)); return v === 1 || v === 2 || v === 4 ? v : undefined; } catch { return undefined; }
+}
+function saveTurnSpan(seed: string, n: TurnSpan): void {
+  try { localStorage.setItem(`llv.turnSpan.${seed}`, String(n)); } catch { /* not remembered */ }
+}
+/** One painted frame, then the rest of the task queue (a turn yields between its weeks). */
+function nextFrame(): Promise<void> {
+  if (import.meta.env.MODE === 'test' || typeof requestAnimationFrame === 'undefined') return Promise.resolve();
+  return new Promise((res) => requestAnimationFrame(() => setTimeout(res, 0)));
+}
+
+/** How far Advance goes: a week, a month, a season (no stops), or a turn of 1/2/4 weeks that stops for a crisis (STREAMLINE_2 §5). */
+type Mode = 'week' | 'month' | 'season' | 'turn';
 
 /** The opening title card: the scenario's own premise and the real date (engine/scenes.ts openingCard). */
 function openingCue(s: GameState): CutsceneCue {
@@ -173,6 +193,15 @@ export function App({ startOn = 'title' }: AppProps) {
   const [reports, setReports] = useState<WeeklyReport[] | null>(null);
   const [reportLog, setReportLog] = useState<WeeklyReport[]>([]);
   const [route, setRoute] = useState<NavRoute>({});
+  // The Round (shell/round.ts): which homes' front pages he looked at this turn (kept with the desk, per week).
+  const [visited, setVisited] = useState<{ week: number; homes: string[] }>(() => ({ week: boot.st.week, homes: boot.desk?.visited ?? [] }));
+  const visitedNow = visited.week === s.week ? visited.homes : [];
+  useEffect(() => {
+    const h = route.home;
+    if (!h || h === 'desk' || route.key || visitedNow.includes(h)) return;
+    setVisited({ week: s.week, homes: [...visitedNow, h] });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route.home, route.key, s.week]);
   const goRef = useRef<(r: Route | string) => void>(() => {});
   const [sheet, setSheet] = useState<string | undefined>();
   const [pendingLaw, setPendingLaw] = useState<SuccessionLaw | undefined>();
@@ -342,8 +371,8 @@ export function App({ startOn = 'title' }: AppProps) {
   // The desk is saved as it changes, so a reload or Continue keeps this week's orders and answers.
   useEffect(() => {
     if (menu) return;
-    saveDesk(slot, { seed: s.seed, week: s.week, orders, answers, moves: mgMoves, partial: mgPartial, auto: Object.keys(autoOpened).filter((k) => autoOpened[k]) });
-  }, [menu, slot, s.seed, s.week, orders, answers, mgMoves, mgPartial, autoOpened]);
+    saveDesk(slot, { seed: s.seed, week: s.week, orders, answers, moves: mgMoves, partial: mgPartial, visited: visitedNow, auto: Object.keys(autoOpened).filter((k) => autoOpened[k]) });
+  }, [menu, slot, s.seed, s.week, orders, answers, mgMoves, mgPartial, autoOpened, visited]);
   function restoreDesk(d: DeskState | undefined) {
     if (!d) return;
     setOrders(d.orders);
@@ -463,6 +492,96 @@ export function App({ startOn = 'title' }: AppProps) {
     // Two frames: the indicator is painted before the (synchronous) week runs.
     requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => { try { f(); } finally { setTurning(false); } }, 0)));
   }
+  /**
+   * A TURN (STREAMLINE_2 §5; engine/turn.ts): 1, 2 or 4 weeks as one, built on a local state and committed
+   * ONCE (one setS, so one save) at the end or at the crisis that stopped it. Between weeks it yields a frame,
+   * so "Week 2 of 4" paints and "Stop after this week" can be pressed. The settled mark is set BEFORE the
+   * first yield, so a second click (or the clock) can never commit the same span twice (engine/settle.ts).
+   */
+  const [turnSpan, setTurnSpanState] = useState<TurnSpan | undefined>(() => loadTurnSpan(boot.st.seed));
+  const spanNow: TurnSpan = turnSpan ?? defaultSpan(s);
+  useEffect(() => { setTurnSpanState(loadTurnSpan(s.seed)); }, [s.seed]);
+  const pickSpan = (n: TurnSpan) => { setTurnSpanState(n); saveTurnSpan(s.seed, n); };
+  const [turnProg, setTurnProg] = useState<{ done: number; of: number; line: string } | undefined>();
+  const stopAfterRef = useRef(false);
+  const [spanDone, setSpanDone] = useState<{ from: number; to: number; line: string; lines: DiffLine[]; reports: WeeklyReport[]; stop?: TurnStop } | undefined>();
+  async function runSpan(weeks: number, a: Record<string, string>, moves: Record<string, string[]> = mgMoves) {
+    const start = s;
+    if (!mayCommit(settledRef.current, start)) return;
+    const choices: PlayerChoices = weekChoices(start, { choices: { ...delegatedAnswers(start, a, takenKeys), ...a }, successionLaw: pendingLaw, designatedHeirId: pendingHeir, actions: orders, minigames: moves, ...(envelopeRef.current ? { envelope: envelopeRef.current } : {}), ...(briefSkip.length ? { briefingSkip: briefSkip } : {}) });
+    settledRef.current = { seed: start.seed, week: start.week };
+    stopAfterRef.current = false;
+    setSpeed(0);
+    const ui = { answers: {}, briefSkip: [] as string[] };
+    let acked = new Set(ackedRef.current);
+    let ledger = pauseLedgerRef.current;
+    // What stops it: the same switches and the same day's budget as the running clock.
+    const stop = (prev: GameState, next: GameState): TurnStop | undefined => {
+      let why: TurnStop | undefined = crisisAt(prev, next, { on: (k) => pausesOn(k as keyof Settings), acked, ui });
+      if (!why) {
+        const h = weekHeadlines(prev, next).find((x) => pausesOn(x.kind === 'hit' ? 'pauseOnViolence' : x.kind === 'arrest' ? 'pauseOnArrest' : 'pauseOnLife'));
+        if (h) why = { cat: h.kind === 'hit' ? 'war' : h.kind === 'arrest' ? 'feds' : 'death', text: h.text };
+      }
+      if (!why || why.cat === 'chair') return why;
+      const b = budgetPause(ledger, dayKey(next), why.cat, knobs(next).dayPauses);
+      if (!b.ok) return undefined;
+      ledger = b.ledger;
+      return why;
+    };
+    // Weeks 2+: what he left is settled by his standing orders and the delegation level (delegation.ts), else each event's default.
+    const later = (x: GameState): PlayerChoices => weekChoices(x, { choices: delegatedAnswers(x, {}, []) });
+    const reports: WeeklyReport[] = [];
+    let first: GameState | undefined;
+    let end = start;
+    let why: TurnStop | undefined;
+    let of = weeks;
+    for (const step of turnSteps(start, weeks, choices, { stop, later })) {
+      reports.push(step.report);
+      end = step.state;
+      of = step.of;
+      first ??= step.state;
+      acked = new Set([...acked, ...redKeys(step.state, ui)]);
+      if (step.stop) { why = step.stop; break; }
+      if (step.done >= step.of) break;
+      if (stopAfterRef.current) { why = { cat: 'red', text: 'you stopped the turn' }; break; }
+      setTurnProg({ done: step.done, of: step.of, line: step.report.lines.find((l) => l.stat === 'money')?.label ?? 'the envelope is counted' });
+      await nextFrame();
+    }
+    ackedRef.current = acked;
+    pauseLedgerRef.current = ledger;
+    setTurnProg(undefined);
+    // One commit, one save.
+    setS((cur) => acceptSettlement(cur, start, end));
+    setReportLog((l) => [...l, ...reports].slice(-26));
+    if (first) setWeekResults(weekResultCards(start, first, orders));
+    setNight(end.pol?.results.filter((x) => x.week >= start.week) ?? []);
+    setCues(cutscenesBetween(start, end));
+    setReels(end.mg?.reels ?? []);
+    const res = { weeks: reports.length, of, stop: why };
+    if (reports.length > 1 || why) setSpanDone({ from: start.week, to: start.week + reports.length - 1, line: turnLine(res), lines: spanDiff(start, end, reports), reports, stop: why });
+    if (why && why.cat !== 'chair') setClockNote(`Stopped: ${why.text}`);
+    setAnswers({});
+    setMgMoves({});
+    setMgPartial({});
+    setOrders([]);
+    setBriefSkip([]);
+    setSitdown(undefined);
+    setEnvelope(undefined);
+    setPendingLaw(undefined);
+    setPendingHeir(undefined);
+    setEventIdx(null);
+    setAdvancing(false);
+  }
+  /** Run what Advance asked for: a turn goes week by week (it yields); the rest as before. */
+  function go2(m: Mode, a: Record<string, string>, moves: Record<string, string[]> = mgMoves) {
+    if (m === 'turn') {
+      setTurning(true);
+      void runSpan(spanNow, a, moves).finally(() => setTurning(false));
+      return;
+    }
+    turnWeek(() => run(m, a, false, moves));
+  }
+
   /** Advance: the "Ready to advance?" review first, unless nothing is waiting and nothing is queued. */
   const [ready, setReady] = useState<Mode | undefined>();
   function startAdvance(m: Mode) {
@@ -472,7 +591,7 @@ export function App({ startOn = 'title' }: AppProps) {
     if (!readyReview(s, { answers, orders, briefSkip, taken: takenKeys }).clear) { setReady(m); return; }
     setMode(m);
     setAdvancing(true);
-    turnWeek(() => run(m, answers));
+    go2(m, answers);
   }
   /** "Review first": the decisions one by one (the week turns after the last), else the first unanswered morning. */
   function reviewFirst(m: Mode) {
@@ -487,7 +606,7 @@ export function App({ startOn = 'title' }: AppProps) {
     setReady(undefined);
     setMode(m);
     setAdvancing(true);
-    turnWeek(() => run(m, answers));
+    go2(m, answers);
   }
 
   function choose(choiceId: string) {
@@ -527,7 +646,7 @@ export function App({ startOn = 'title' }: AppProps) {
     }
     const nextIdx = firstOpen(next);
     if (nextIdx >= 0) setEventIdx(nextIdx);
-    else { setEventIdx(null); turnWeek(() => run(mode, next, false, mv)); }
+    else { setEventIdx(null); go2(mode, next, mv); }
   }
 
   function resetUi(st?: GameState) {
@@ -581,6 +700,8 @@ export function App({ startOn = 'title' }: AppProps) {
     next.flags[OFFICE_HOME_FLAG] = 1;
     // New games open in Simple view (the setting, or a screen's own switch, still wins).
     next.flags[SIMPLE_VIEW_FLAG] = 1;
+    // Story plays in turns for a player who never picked a time mode (settings.ts newGameTimeMode); Don and Grand keep the clock.
+    if (newGameTimeMode(difficultyOf(next)) === 'turns') setSpeed(0);
     setCurrentSlot(n);
     setSlot(n);
     setS(next);
@@ -851,8 +972,8 @@ export function App({ startOn = 'title' }: AppProps) {
       const h = homeForKey(e.key);
       if (h) {
         e.preventDefault();
-        // The letters that changed meaning with the six homes: say so once.
-        if ('mrbld'.includes(e.key.toLowerCase())) {
+        // The letters that changed meaning with the seven homes: say so once.
+        if (CHANGED_LETTERS.includes(e.key.toLowerCase())) {
           let seen = false;
           try { seen = localStorage.getItem('llv.keysChanged') === '1'; localStorage.setItem('llv.keysChanged', '1'); } catch { seen = true; }
           if (!seen) setClockNote(KEYS_CHANGED);
@@ -933,6 +1054,7 @@ export function App({ startOn = 'title' }: AppProps) {
     onOffer: (take: boolean) => act((x) => answerOffer(x, take), take ? 'Your underboss handles the routine' : 'Kept the chain of command as it was'),
   };
   const takenKeys = taken.week === s.week ? taken.keys : [];
+  const roundRows = !clockMode && !s.gameOver ? roundOf(s, { answers, orders, briefSkip, taken: takenKeys }, new Set(visitedNow)) : [];
   /** Bundled answers (engine/bundles.ts), each through its own path: the decision's answer, the capo's check-in, the order. */
   function giveAnswers(rows: readonly Pick<SettledRow, 'title' | 'label' | 'answer'>[]) {
     if (!rows.length) return;
@@ -961,6 +1083,9 @@ export function App({ startOn = 'title' }: AppProps) {
   }
   const weekDoneNow = weekDone?.week === s.week ? weekDone : undefined;
   const deskApi2 = { ...deskApi, onSettle: giveAnswers, onHandleWeek: handleWeek, weekDone: weekDoneNow, onUndo: undoSettled, onWeekDoneClose: () => setWeekDone(undefined), onEat: () => openRoute({ panel: 'borgata', section: 'eat' }) };
+  // A home's front page (Drawer's five bands): the Desk's papers for that home open as on the Desk; picks go as in Find.
+  const frontUi = { answers, orders, briefSkip, taken: takenKeys };
+  const frontApi: FrontApi = { ui: frontUi, onNeed: (it) => openItem(it, deskApi2), onPick: onFind, open: shellUi.open, onEveryone: () => openPlanner('book') };
   const openDesk = (f: DeskFilter = 'all') => { setOfficeView(undefined); setDeskFilter(f); setRoute({ home: 'desk' }); };
   const officeApi: OfficeApi = {
     openDesk: (f?: DeskFilter) => openDesk(f),
@@ -1042,7 +1167,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <div className="mt-1 text-[11px] text-stone-400">{gaps.rackets} racket{gaps.rackets === 1 ? '' : 's'} running{gaps.noEarner.length ? ` · ${gaps.noEarner.length} m${gaps.noEarner.length === 1 ? 'an' : 'en'} without a steady earner` : ' · every man has his steady earner'}. Rackets pay every week; dirty work is one job, one score: hijack a truck, shake down a shop, fix a fight, move a load.</div>
     </section>
   ) : undefined;
-  const youTop = home === 'life' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'desk' })} /> : undefined;
+  const youTop = home === 'house' && !s.gameOver ? <PersonalActions s={s} update={act} onWeek={() => setRoute({ home: 'desk' })} /> : undefined;
   const right = (
     <>
       <AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} />
@@ -1064,7 +1189,7 @@ export function App({ startOn = 'title' }: AppProps) {
       <EmpireHost s={s} setS={setS}>
       <Shell
         top={(<>
-          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={playAt} note={clockNote}
+          <TopBar s={s} inboxN={box.n} inboxTone={box.tone} clockMode={clockMode} turn={{ span: spanNow, onSpan: pickSpan }} onEndDay={() => { setSpeed(0); endDay(); }} speed={speed} setSpeed={playAt} note={clockNote}
             onAdvance={startAdvance} pending={outEvents.length} answered={outEvents.length - unanswered.length}
             urgent={urgentN} onUrgent={() => setUrgent(urgentMeetings(s)[0]?.id)}
             onReview={openDecisions}
@@ -1109,6 +1234,7 @@ export function App({ startOn = 'title' }: AppProps) {
                 <VacationPill s={s} onOpen={() => setVacOpen(true)} />
                 <div className="flex max-w-full items-center gap-1.5">
                   {clockMode && <div className="flex min-w-0"><TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} /></div>}
+                  {!clockMode && <div className="flex min-w-0"><RoundStrip rows={roundRows} onStop={(st) => (st === 'needs' ? openDesk() : setRoute({ home: st as HomeId }))} /></div>}
                   <ClubOnMap s={s} compact onOpen={() => setOfficeView('club')} />
                 </div>
               </div>
@@ -1140,7 +1266,7 @@ export function App({ startOn = 'title' }: AppProps) {
         drawer={home && (
           <Drawer s={s} home={home} sel={route.key} groups={homeGroups} ctx={sectionCtx} fresh={shellUi.fresh} escEnabled={!overlayOpen}
             onOpen={(key) => openRoute({ home, key })} onClose={() => setRoute({})}
-            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop ?? bizTop ?? youTop} />
+            doNow={homeDoNow} onDo={onDoNow} extras={navExtras} top={weekTop ?? bizTop ?? youTop} front={frontApi} />
         )}
         right={right}
         rightIcons={<AlertsPanel alerts={shellAlertList} onAlert={onAlert} onSnooze={(a) => shellUi.snooze(a.key, s.week + 4)} iconsOnly />}
@@ -1148,7 +1274,13 @@ export function App({ startOn = 'title' }: AppProps) {
         danger={shellAlertList.some((a) => a.severity === 'danger')}
       />
       {shellUi.toast && <Toast text={shellUi.toast} onDone={shellUi.clearToast} />}
-      {turning && <WeekTurning week={s.week} mode={mode} />}
+      {turning && <WeekTurning week={s.week} mode={mode} progress={turnProg} onStop={mode === 'turn' ? () => { stopAfterRef.current = true; } : undefined} />}
+      {spanDone && !current && !sheet && !cues.length && !night.length && !reels.length && !turning && (
+        <SpanReport from={spanDone.from} to={spanDone.to} line={spanDone.line} lines={spanDone.lines} stop={spanDone.stop}
+          onReports={() => { setReports(spanDone.reports); setSpanDone(undefined); }}
+          onFile={() => { setSpanDone(undefined); window.dispatchEvent(new Event('llv-open-file')); }}
+          onClose={() => setSpanDone(undefined)} />
+      )}
       {!menu && helpLevel() !== 'experienced' && <HintHost s={s} route={route} overlayOpen={overlayOpen || mondayCard} motion={motion.length} alerts={shellAlertList.length} speed={speed} />}
 
       {ltOpen && !s.gameOver && <WhoHandlesWhat s={s} update={act} onClose={() => setLtOpen(false)} />}
@@ -1228,7 +1360,7 @@ export function App({ startOn = 'title' }: AppProps) {
       {/* The Don's book (ui/planner): the brief, the audience, the datebook, the black book, the standing orders. */}
       {!s.gameOver && <PlannerHost s={s} ui={{ answers, briefSkip, orders }} speed={speed} note={clockNote} blocked={overlayOpen || busy || mondayCard || rxWaiting || phoneOpen}
         api={{ onEvent: deskApi.onEvent, onUrgent: (id) => setUrgent(id), onDay: deskApi.onDay, onSitDown: deskApi.onSitDown, onEnvelope: () => tributeApi.openAudience() }} />}
-      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} month={ready !== 'week'} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} onHandleWeek={handleWeek} weekDone={weekDoneNow} onUndo={undoSettled} />}
+      {ready && !current && <ReadyToAdvance s={s} ui={{ answers, orders, briefSkip, taken: takenKeys }} month={ready === 'month' || ready === 'season'} turn={ready === 'turn' ? { weeks: spanNow, unvisited: roundRows.filter((r) => !r.ticked && r.stop !== 'needs').map((r) => ({ stop: r.stop, label: HOMES_BY_ID[r.stop as HomeId]?.label ?? r.stop, open: r.open })) } : undefined} onClose={() => setReady(undefined)} onReview={() => reviewFirst(ready)} onAdvance={() => advanceAnyway(ready)} onAnswer={(iid, c) => { setAnswers((x) => ({ ...x, [iid]: c })); noteAnswer(iid, c); }} onHandleWeek={handleWeek} weekDone={weekDoneNow} onUndo={undoSettled} />}
       {cues.length > 0 && <CutscenePlayer key={`${s.week}:${cues.map((c) => c.key).join()}`} cues={cues} onDone={() => setCues([])} />}
       {night.length > 0 && !current && !cues.length && <ElectionNight s={s} results={night} onClose={() => setNight([])} />}
       {reels.length > 0 && !cues.length && !current && <NewspaperReel key={`${reels.length}:${reels[0].headline}`} reel={reels[0]} onDone={() => setReels((x) => x.slice(1))} />}

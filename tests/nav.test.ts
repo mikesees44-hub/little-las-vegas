@@ -18,11 +18,14 @@ import { deskQueue } from '../src/engine/attention';
 
 const configured = HOME_IDS.flatMap((h) => NAV[h].flatMap((g) => g.items.flatMap((it) => [...it.keys, ...(it.aliases ?? [])])));
 
-describe('the menus: six homes, every screen in exactly one', () => {
-  it('there are six homes with distinct letters, F-keys, labels and icons', () => {
+describe('the menus: seven homes, every screen in exactly one', () => {
+  it('there are seven homes with distinct letters, F-keys, labels and icons', () => {
     expect(HOMES.map((h) => h.id)).toEqual(HOME_IDS);
-    expect(new Set(HOMES.map((h) => h.key)).size).toBe(6);
-    expect(new Set(HOMES.map((h) => h.label)).size).toBe(6);
+    expect(new Set(HOMES.map((h) => h.key)).size).toBe(7);
+    expect(new Set(HOMES.map((h) => h.label)).size).toBe(7);
+    expect(new Set(HOMES.map((h) => h.icon)).size).toBe(7);
+    // The phone bar holds seven: short labels that fit a ~54px button at 390px.
+    for (const h of HOMES) expect(h.short.length, h.short).toBeLessThanOrEqual(7);
     for (const [i, h] of HOMES.entries()) {
       expect(homeForKey(h.key)).toBe(h.id);
       expect(homeForKey(`F${i + 1}`)).toBe(h.id);
@@ -50,8 +53,8 @@ describe('the menus: six homes, every screen in exactly one', () => {
 
   it('a duplicate is one place plus links: Who handles what, the standing orders, the audience, the books', async () => {
     const { wherePath } = await import('../src/ui/shell/nav');
-    expect(wherePath('borgata.chain')).toBe('Family › Council & chain of command › Who handles what');
-    expect(wherePath('holdings.take')).toMatch(/^Money › The envelope/);
+    expect(wherePath('borgata.chain')).toBe('Crew › Council & standing orders › Who handles what');
+    expect(wherePath('holdings.take')).toBe('Money › The money › The envelope');
     const { CHAIN_PATH } = await import('../src/ui/lieutenants/Lieutenants');
     const { ORDERS_PATH } = await import('../src/ui/planner/StandingOrders');
     expect(CHAIN_PATH).toBe(wherePath('borgata.chain'));
@@ -87,18 +90,24 @@ describe('the menus: six homes, every screen in exactly one', () => {
     for (const h of HOME_IDS) {
       const n = NAV_TREE[h].flatMap((g) => g.items).length;
       expect(n, h).toBeGreaterThan(0);
-      expect(n, h).toBeLessThanOrEqual(9);
+      expect(n, h).toBeLessThanOrEqual(8);
     }
     expect(NAV_ITEMS.length).toBeLessThanOrEqual(35);
   });
 
-  it('the six homes are the Desk, the Family, Money & Business, the Map, Rivals & the Law, Your Life; every old home and letter still lands', () => {
-    expect(HOMES.map((h) => [h.id, h.key])).toEqual([['desk', 'd'], ['org', 'f'], ['money', 'b'], ['map', 'm'], ['rivals', 'r'], ['life', 'l']]);
-    const old: Record<string, string> = { week: 'desk', money: 'money', biz: 'money', family: 'org', town: 'map', you: 'life' };
+  it('the seven homes are the Desk, Family, Crew, Money, Law, Rivals, Town; every old home and letter still lands', () => {
+    expect(HOMES.map((h) => [h.id, h.key])).toEqual([['desk', 'd'], ['house', 'f'], ['org', 'c'], ['money', 'b'], ['law', 'l'], ['rivals', 'r'], ['town', 't']]);
+    // Old home ids keep their meaning: `family` was always the organisation (Crew); Your Life is Family; the Map is Town.
+    const old: Record<string, string> = { week: 'desk', money: 'money', biz: 'money', family: 'org', town: 'town', you: 'house', life: 'house', map: 'town' };
     for (const [o, n] of Object.entries(old)) expect(resolveRoute({ home: o as HomeId }).home, o).toBe(n);
-    for (const [k, h] of Object.entries({ w: 'desk', t: 'map', y: 'life', h: 'life', o: 'desk', c: 'desk', $: 'money' })) expect(homeForKey(k), k).toBe(h);
-    for (const k of ['w', 'r', 't', 'y', 'h', 'b', 'l', 'o', 'd', 'c']) expect(homeForKey(k), k).toBeDefined();
-    expect(resolveRoute('home:you/nav.settings')).toEqual({ home: 'life', key: 'nav.settings' });
+    for (const [k, h] of Object.entries({ w: 'desk', t: 'town', m: 'town', y: 'house', h: 'house', o: 'desk', c: 'org', $: 'money' })) expect(homeForKey(k), k).toBe(h);
+    for (const k of ['w', 'r', 't', 'y', 'h', 'b', 'l', 'o', 'd', 'c', 'm', 'f']) expect(homeForKey(k), k).toBeDefined();
+    expect(homeForKey('F7')).toBe('town');
+    // Settings and help live in ☰; their nav entry is parked under the Desk.
+    expect(resolveRoute('home:you/nav.settings')).toEqual({ home: 'desk', key: 'nav.settings' });
+    expect(resolveRoute('home:life/nav.help')).toEqual({ home: 'desk', key: 'nav.help' });
+    // The moves (§3.2): headquarters and guards to Law, the front boss to Rivals, how you rule to Family, the Store to Money.
+    for (const [k, h] of Object.entries({ 'holdings.hq': 'law', 'borgata.protect': 'law', 'town.case': 'law', 'diplomacy.front': 'rivals', 'you.lifestyle': 'house', 'you.store': 'money', 'borgata.orders': 'org', 'town.cityhall': 'town', 'you.walk': 'town' })) expect(itemOf(k)!.home, k).toBe(h);
     expect(resolveRoute({ home: 'week' as HomeId, key: 'ops.plan' })).toEqual({ home: 'desk', key: 'ops.plan' });
   });
 
@@ -126,8 +135,8 @@ describe('the menus: six homes, every screen in exactly one', () => {
       expect(resolveRoute(p.id).home, p.id).toBeDefined();
     }
     for (const h of HOME_IDS) expect(resolveRoute({ home: h })).toEqual({ home: h });
-    expect(resolveRoute({ home: 'life', key: 'nav.settings' })).toEqual({ home: 'life', key: 'nav.settings' });
-    expect(resolveRoute('settings')).toEqual({ home: 'life', key: 'nav.settings' });
+    expect(resolveRoute({ home: 'life' as HomeId, key: 'nav.settings' })).toEqual({ home: 'desk', key: 'nav.settings' });
+    expect(resolveRoute('settings')).toEqual({ home: 'desk', key: 'nav.settings' });
     expect(resolveRoute('nonsense')).toEqual({});
   });
 

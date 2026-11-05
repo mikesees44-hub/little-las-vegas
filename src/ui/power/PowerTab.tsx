@@ -79,8 +79,8 @@ function StationStrip({ s }: { s: GameState }) {
       <Label>Your place in the family</Label>
       <div className="font-display text-xl text-gold-300">{STATION_INFO[p.station].name}</div>
       <p className="text-xs text-stone-400">{STATION_INFO[p.station].text}{over?.alive ? <> Above you: <CharLink s={s} id={over.id} />.</> : null}</p>
-      {/* In the ranks of the family above (valente.ts): the whole climb lives on Family › Your place. */}
-      {p.above && p.station !== 'boss' && <p className="mt-1 text-xs text-gold-200" data-testid="station-place">{placeSummary(s)?.line}. Standing, the quota, sponsors and the way up: Family › Your place.</p>}
+      {/* In the ranks of the family above (valente.ts): the whole climb lives on Crew › The Rise › Your place. */}
+      {p.above && p.station !== 'boss' && <p className="mt-1 text-xs text-gold-200" data-testid="station-place">{placeSummary(s)?.line}. Standing, the quota, sponsors and the way up: Crew › The Rise › Your place.</p>}
       {p.station !== 'boss' && (
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           <ActionCard s={s} action={{ kind: 'power', op: { op: 'climb' } }} />
