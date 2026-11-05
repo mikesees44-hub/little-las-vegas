@@ -48,6 +48,34 @@ describe('the menus: six homes, every screen in exactly one', () => {
     expect(resolveRoute({ panel: 'borgata', section: 'take' })).toEqual({ home: 'money', key: 'holdings.take' });
   });
 
+  it('a duplicate is one place plus links: Who handles what, the standing orders, the audience, the books', async () => {
+    const { wherePath } = await import('../src/ui/shell/nav');
+    expect(wherePath('borgata.chain')).toBe('Family › Council & chain of command › Who handles what');
+    expect(wherePath('holdings.take')).toMatch(/^Money › The envelope/);
+    const { CHAIN_PATH } = await import('../src/ui/lieutenants/Lieutenants');
+    const { ORDERS_PATH } = await import('../src/ui/planner/StandingOrders');
+    expect(CHAIN_PATH).toBe(wherePath('borgata.chain'));
+    expect(ORDERS_PATH).toBe(wherePath('borgata.orders'));
+    const s = newGame('nav-dupes');
+    // The modal is the same component as the place, and says where the place is.
+    const { WhoHandlesWhat, ChainOfCommandPlace } = await import('../src/ui/lieutenants/Lieutenants');
+    const modal = renderToString(createElement(WhoHandlesWhat, { s, update: () => {}, onClose: () => {} }));
+    const place = renderToString(createElement(ChainOfCommandPlace, { s }));
+    expect(modal).toContain('data-testid="lt-settings-place"');
+    expect(modal).toContain(wherePath('borgata.chain')!.replace(/&/g, '&amp;'));
+    const firstId = /data-testid="([^"]+)"/.exec(place)![1];
+    expect(modal).toContain(`data-testid="${firstId}"`);
+    // The book's Standing orders page links to the Family's pages.
+    const { StandingOrders } = await import('../src/ui/planner/StandingOrders');
+    const so = renderToString(createElement(StandingOrders, { s, act: () => {}, onOrder: () => {}, onPlace: () => {} }));
+    expect(so).toContain('data-testid="so-place-chain"');
+    expect(so).toContain('data-testid="so-place-orders"');
+    // The books' per-week money lines are the ledger, not "the envelope".
+    const books = readFileSync(join(__dirname, '../src/ui/books/TheBooks.tsx'), 'utf8');
+    expect(books).toContain('title="Ledger by week"');
+    expect(books).toContain('id="books-envelopes"');
+  });
+
   it('every place has a name, an icon and a one-line subtitle; names are unique', () => {
     const labels = NAV_ITEMS.map((it) => it.label);
     expect(new Set(labels).size).toBe(labels.length);

@@ -7,7 +7,10 @@ import { setAutoBrief } from '../../engine/planner/state';
 import { setGateRole } from '../../engine/planner/gate';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { fmt$ } from '../format';
-import { wherePath } from '../shell/nav';
+import { CHAIN_PATH } from '../lieutenants/Lieutenants';
+
+/** Where the Family's standing orders page lives (nav.ts wherePath). */
+export const ORDERS_PATH = 'Family › Standing orders';
 
 type Act = (f: (s: GameState) => GameState, what: string) => void;
 
@@ -32,8 +35,8 @@ export function StandingOrders({ s, act, onOrder, onPlace }: { s: GameState; act
       {onPlace && (
         <p className="mt-1 flex flex-wrap gap-x-3 text-[11.5px] text-[#6b5a44]" data-testid="so-places">
           <span>Also on the Family's pages:</span>
-          <button type="button" className="underline-offset-2 hover:underline" onClick={() => onPlace('borgata.chain')} data-testid="so-place-chain">{wherePath('borgata.chain')} ▸</button>
-          <button type="button" className="underline-offset-2 hover:underline" onClick={() => onPlace('borgata.orders')} data-testid="so-place-orders">{wherePath('borgata.orders')} ▸</button>
+          <button type="button" className="underline-offset-2 hover:underline" onClick={() => onPlace('borgata.chain')} data-testid="so-place-chain">{CHAIN_PATH} ▸</button>
+          <button type="button" className="underline-offset-2 hover:underline" onClick={() => onPlace('borgata.orders')} data-testid="so-place-orders">{ORDERS_PATH} ▸</button>
         </p>
       )}
       {!so.low && (

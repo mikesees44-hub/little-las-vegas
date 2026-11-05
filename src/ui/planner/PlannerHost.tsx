@@ -17,6 +17,7 @@ import { postNow } from '../deeds/NowResult';
 import { useEscape } from '../keys';
 import { PhoneWindow } from '../phone/PhoneWindow';
 import { useShell } from '../shell/context';
+import { wherePath } from '../shell/nav';
 import { AudienceList } from './AudienceList';
 import { BlackBook } from './BlackBook';
 import { BriefFolder } from './BriefFolder';
@@ -131,6 +132,7 @@ export function PlannerHost({ s, ui, speed, note, blocked, api }: {
             </div>
             <div className="pt-0">
               {tab === 'brief' && brief && old && <BriefFolder s={s} b={brief} old={old} onGo={go} onOld={doRec} />}
+              {tab === 'audience' && <p className="mx-auto max-w-[900px] px-1 pb-1 text-right text-[11.5px] text-[#e9d6b0]/80" data-testid="audience-place">The same people are on <button type="button" className="underline-offset-2 hover:underline" onClick={() => { close(); shell.go('you.court'); }}>{wherePath('you.court')} ▸</button></p>}
               {tab === 'audience' && <AudienceList s={s} reqs={reqs} keeper={gatekeeper(s)} gate={gate} onGrant={grant} onTurn={(r) => land(turnAway(s, r))} onChar={(id) => sheet.open(id)}
                 gateApi={{
                   onRole: (role, compare) => act((x) => setGateRole(x, role, !!compare), compare ? 'For a month, somebody else keeps your door' : 'Standing order: who keeps your door'),
