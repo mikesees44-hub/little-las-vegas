@@ -26,7 +26,9 @@ export type FindGo =
   /** The Don's book on a page (a recommendation that waits there). */
   | { to: 'planner'; tab: 'brief' | 'audience' | 'datebook' | 'book' | 'orders' }
   /** "pay Sal": his Deal with menu, opened on the verb's category. */
-  | { to: 'menu'; id: string; category: string };
+  | { to: 'menu'; id: string; category: string }
+  /** "hit Kessler": the hit planner with him chosen (it asks first if he is one of yours). */
+  | { to: 'hit'; id: string };
 
 export interface FindResult {
   kind: FindKind;
@@ -101,6 +103,7 @@ export function findAll(s: GameState, query: string, opts: { open?: (key: string
       if (!sc) continue;
       n++;
       const side = sideOf(s, c.id);
+      if (verb === 'hurt' && !c.office && c.faction !== 'law') out.push({ kind: 'person', id: `hit:${c.id}`, title: `Plan a hit on ${name}…`, sub: `The hit planner, ${name} chosen · ${side.full}`, go: { to: 'hit', id: c.id }, score: sc + 21, side, verb });
       out.push({ kind: 'person', id: `verb:${verb}:${c.id}`, title: `${v.label}: ${name}…`, sub: `Deal with › ${CATEGORY_LABEL[v.cat]} · ${side.full}`, go: { to: 'menu', id: c.id, category: v.cat }, score: sc + 20, side, verb });
     }
   }

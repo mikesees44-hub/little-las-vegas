@@ -9,13 +9,18 @@ import { OpinionBadge } from '../../components/CrewList';
 import { CharLink, Face } from '../../components/People';
 import { RelationChip, SideChip } from '../../components/Side';
 import { sideOf } from '../../../engine/sides';
+import { usePlanner } from '../../components/Schemes';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
+  const { plan } = usePlanner();
   const philly = s.rivals.find((r) => r.id === 'philly');
   return (
     <div className="space-y-3" data-testid="rival-board">
-      <p className="llv-prose">Every family and power you deal with. Click a face for the man himself and everything you can do to him: gifts, sit-downs, schemes, a dispute at the Table.</p>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <p className="llv-prose min-w-0 flex-1">Every family and power you deal with. Click a face for the man himself and everything you can do to him: gifts, sit-downs, schemes, a dispute at the Table.</p>
+        <button type="button" className="btn-ghost shrink-0 text-xs" onClick={() => plan('murder')} data-testid="rival-board-hit" title="Opens the hit planner: every target by family, with the odds and heat of each">Plan a hit…</button>
+      </div>
       {/* Below the chair: your own family comes first, the one you answer to (valente.ts). */}
       {inTheRanks(s) && (
         <div data-testid="rival-board-above">

@@ -154,3 +154,54 @@ describe('kin', () => {
     expect(sideMatches(sideOf(s, wife!.id), 'theirs')).toBe(true);
   });
 });
+
+describe('the hit picker: one picker, by family (STREAMLINE_2 §3.4)', () => {
+  it('groups targets in a fixed order: Your Family, Manno, Feldstein, Kessler, Philadelphia, the law, the town, others', async () => {
+    const { plotTargetsByFamily, GROUP_ORDER } = await import('../src/engine/sides');
+    const s = newGame('hitpicker-groups');
+    const groups = plotTargetsByFamily(s, 'murder');
+    const keys = groups.map((g) => g.key);
+    expect(keys.slice(0, 5)).toEqual(['yours', 'manno', 'feldstein', 'kessler', 'philly']);
+    // The order never breaks, whatever is present.
+    expect(keys).toEqual(GROUP_ORDER.filter((k) => keys.includes(k)));
+    // The same people as the side grouping, none lost, none twice, never the boss.
+    const all = plotTargets(s, 'murder').flatMap((g) => g.ids).sort();
+    expect(groups.flatMap((g) => g.ids).sort()).toEqual(all);
+    expect(groups.find((g) => g.key === 'manno')!.label).toMatch(/Manno/);
+    // Officials and the law are shown but off limits for a hit; no one of another family is.
+    for (const g of groups) for (const id of g.protectedIds) expect(!!s.characters[id].office || s.characters[id].faction === 'law').toBe(true);
+    expect(plotTargetsByFamily(s, 'murder', 'theirs').some((g) => g.key === 'yours')).toBe(false);
+  });
+
+  it('renders by family with the odds of a hit; your own men ask for your word first', async () => {
+    const { HitPicker, OwnHitConfirm, SchemePlanner } = await import('../src/ui/components/Schemes');
+    const s = newGame('hitpicker-ui');
+    const html = renderToString(createElement(HitPicker, { s }));
+    expect(html).toContain('data-testid="hit-picker"');
+    expect(html).toContain('data-group="yours"');
+    expect(html).toContain('only on your word');
+    expect(html).toContain('data-testid="target-odds"');
+    expect(html.indexOf('data-group="yours"')).toBeLessThan(html.indexOf('data-group="manno"'));
+    // The planner opened on one of your own shows the confirm, not the plan.
+    const mine = crew(s)[0];
+    const own = renderToString(createElement(SchemePlanner, { s, kind: 'murder', targetId: mine.id, onClose: () => {} }));
+    expect(own).toContain('data-testid="own-hit-confirm"');
+    expect(own).not.toContain('data-testid="scheme-planner"');
+    // On another family's man: the plan, with the target chosen and changeable here.
+    const them = renderToString(createElement(SchemePlanner, { s, kind: 'murder', targetId: man(s, 'manno').id, onClose: () => {} }));
+    expect(them).toContain('data-testid="scheme-planner"');
+    expect(them).toContain('data-testid="planner-target-change"');
+    // Opened with nobody chosen (Find "hit", the board, Bones): the picker is right there.
+    const none = renderToString(createElement(SchemePlanner, { s, kind: 'murder', onClose: () => {} }));
+    expect(none).toContain('data-testid="hit-picker"');
+    expect(renderToString(createElement(OwnHitConfirm, { s, id: mine.id, onYes: () => {}, onNo: () => {} }))).toMatch(/Nobody of yours dies unless you choose it/);
+  });
+
+  it('"hit" and a name finds the hit planner on him', async () => {
+    const { findAll } = await import('../src/ui/shell/find');
+    const s = newGame('hitpicker-find');
+    const m = man(s, 'kessler');
+    const r = findAll(s, `hit ${m.lastName}`);
+    expect(r.some((x) => x.go.to === 'hit' && x.go.id === m.id)).toBe(true);
+  });
+});

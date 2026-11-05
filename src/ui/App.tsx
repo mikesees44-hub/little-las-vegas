@@ -620,6 +620,7 @@ export function App({ startOn = 'title' }: AppProps) {
     else if (g.to === 'office') { setRoute({}); setOfficeView('office'); }
     else if (g.to === 'planner') window.dispatchEvent(new CustomEvent('llv-open-planner', { detail: { tab: g.tab } }));
     else if (g.to === 'menu') setCtxMenu({ id: g.id, category: g.category, x: 80, y: 120 });
+    else if (g.to === 'hit') plannerApi.plan('murder', g.id);
     // Done to a person: the family's chart, where every face opens "Deal with…".
     else openRoute({ panel: 'borgata', section: 'chart' });
   }
