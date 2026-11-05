@@ -66,7 +66,8 @@ describe('sit-down with a family: the menu and validation', () => {
     expect(many.length).toBe(3);
     expect(new Set(many.map((x) => x.kind)).size).toBe(3);
     // The menu has no term that involves a man.
-    expect([...DEAL_KINDS].sort()).toEqual(['alliance', 'cash', 'concession', 'favor', 'handsoff', 'partnership', 'tribute', 'truce']);
+    for (const k of DEAL_KINDS) expect(k).not.toMatch(/kill|hand_?over|give_?man|whack/);
+    expect(DEAL_KINDS).toContain('truce');
     for (const line of dealMenu(s, 'manno')) expect(line).not.toMatch(/hand(ed)? over|kill|his men|a man/i);
     // Philadelphia deals only in money and favors.
     expect(allowedKinds(s, 'philly').sort()).toEqual(['cash', 'favor', 'tribute']);

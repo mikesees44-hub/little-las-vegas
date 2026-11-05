@@ -170,3 +170,85 @@ describe('they come to you', () => {
     expect(a!.offer.some((t) => t.kind === 'tribute')).toBe(true);
   });
 });
+
+import { canHonor, honorFavor, lendableMen, refuseFavor } from '../src/engine/minds/familyAsks';
+import { owedBy } from '../src/engine/deeds/state';
+import { ensureDeeds } from '../src/engine/deeds/state';
+import { allowedKinds, dealValue, needNow, validateDeal } from '../src/engine/minds/diplomacy';
+import { pactWith } from '../src/engine/talks';
+import { reconcile } from '../src/engine/ledger';
+import type { FamAsk } from '../src/engine/minds/askView';
+
+function owe(s: GameState, by: string, to: string) {
+  ensureDeeds(s).owed.push({ by, to, w: s.week, y: 'test' });
+}
+
+describe('favors, both ways', () => {
+  it('a family you owe comes to collect; doing it spends the favor and keeps your word; men lent come back', () => {
+    const s = game('diplo2-fav');
+    const r = s.rivals.find((x) => x.id === 'manno')!;
+    owe(s, s.playerId, r.leaderId);
+    untilAsk(s, 'collect', 80);
+    const a = openAsks(s).find((x) => x.kind === 'collect');
+    expect(a?.favor).toBeDefined();
+    // Muscle: explicit, named, never harmed or handed over.
+    const men = lendableMen(s).slice(0, 2);
+    const ask: FamAsk = { id: 'fm', rival: 'manno', kind: 'collect', w: s.week, until: s.week, text: 'Lend me two.', offer: [], favor: { kind: 'muscle', menIds: men.map((c) => c.id) } };
+    const t = ensureTalks(s);
+    t.asks = [ask];
+    expect(canHonor(s, ask).ok).toBe(true);
+    const res = honorFavor(s, 'fm');
+    expect(res.ok).toBe(true);
+    const g = res.state;
+    expect(owedBy(g, g.playerId, r.leaderId)).toBe(owedBy(s, s.playerId, r.leaderId) - 1);
+    for (const c of men) { expect(g.characters[c.id].alive).toBe(true); expect(g.characters[c.id].faction).toBe('player'); expect(g.characters[c.id].busyUntil).toBe(g.week + 1); }
+    expect(recordOf(g, 'manno')!.kept).toBe(1);
+    expect(g.talks!.asks).toBeUndefined();
+    // A game in your territory pays you through the books.
+    const d = s.districts.find((x) => (x.influence.player ?? 0) >= 10) ?? s.districts[0];
+    t.asks = [{ ...ask, id: 'fg', favor: { kind: 'game', district: d.id, weeks: 8, cut: 100 } }];
+    const g2 = honorFavor(s, 'fg').state;
+    expect(pactWith(g2, 'manno', 'split')).toBeDefined();
+    const wk = advanceWeek(g2, randomChoices(g2, 4));
+    expect(reconcile(wk.report)).toEqual([]);
+    expect(wk.report.lines.some((l) => /Split from Manno/.test(l.label) && l.amount === 100)).toBe(true);
+  });
+
+  it('saying no costs your word, and the favor is still owed; silence is a no', () => {
+    const s = game('diplo2-no');
+    const r = s.rivals.find((x) => x.id === 'kessler')!;
+    owe(s, s.playerId, r.leaderId);
+    ensureTalks(s).asks = [{ id: 'fn', rival: 'kessler', kind: 'collect', w: s.week, until: s.week, text: 'Pay up.', offer: [], favor: { kind: 'vote', against: 'manno' } }];
+    const g = refuseFavor(s, 'fn');
+    expect(wordWith(g, 'kessler').score).toBeLessThan(50);
+    expect(owedBy(g, g.playerId, r.leaderId)).toBe(1);
+    const op0 = opinion(s, r.leaderId, s.playerId);
+    const g2 = advanceWeek(s, randomChoices(s, 3)).state;
+    expect(recordOf(g2, 'kessler')!.refused).toBe(1);
+    expect(opinion(g2, r.leaderId, g2.playerId)).toBeLessThan(op0);
+  });
+
+  it('call in the favor he owes: a term that makes him take a modest deal, and spends it', () => {
+    const s = game('diplo2-call');
+    const r = s.rivals.find((x) => x.id === 'feldstein')!;
+    expect(allowedKinds(s, 'feldstein')).not.toContain('callfavor');
+    owe(s, r.leaderId, s.playerId);
+    expect(allowedKinds(s, 'feldstein')).toContain('callfavor');
+    const sd: SitDown = { ...openSitDown(s, 'feldstein')!, table: undefined };
+    const st = stanceOf(s, 'feldstein')!;
+    const d = s.districts.find((x) => (x.influence.feldstein ?? 0) >= 2)!;
+    const modest = validateDeal(s, 'feldstein', [{ kind: 'concession', dir: 'them', district: d.id, amount: 1 }]);
+    const withCall = validateDeal(s, 'feldstein', [...modest, { kind: 'callfavor' }]);
+    expect(dealValue(s, 'feldstein', withCall)).toBeGreaterThan(dealValue(s, 'feldstein', modest));
+    // The favor carries a deal he would not take without it.
+    const need = needNow(st, sd);
+    const cash = validateDeal(s, 'feldstein', [{ kind: 'cash', dir: 'you', amount: Math.max(250, Math.round((need - 1800 + 100) / 50) * 50) }]);
+    const both = validateDeal(s, 'feldstein', [...cash, { kind: 'callfavor' }]);
+    if (need > 400) expect(need - dealValue(s, 'feldstein', cash)).toBeGreaterThan(150);
+    expect(need - dealValue(s, 'feldstein', both)).toBeLessThanOrEqual(150);
+    const p = sitStep(s, sd, { propose: both }).sd;
+    expect(p.table?.ok).toBe(true);
+    const g = shakeOn(s, p).state;
+    expect(owedBy(g, r.leaderId, g.playerId)).toBe(0);
+  });
+});

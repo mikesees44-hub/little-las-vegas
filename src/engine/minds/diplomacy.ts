@@ -15,6 +15,7 @@ import { playerMuscle } from '../war';
 import { FACTION_NAMES } from '../world';
 import { toneEffect, type Dialogue, type Line, type Tone } from './dialogue';
 import { clamp } from './state';
+import { owedBy } from '../deeds/state';
 import { clean } from './talk';
 import { mindView } from './view';
 import { askFor, ASK_LABEL, type AskKind } from './askView';
@@ -59,7 +60,7 @@ export const SIT_WALK = 75;
 export const SIT_OPINION_CAP = 8;
 export const MAX_TERMS = 3;
 
-export const DEAL_KINDS = ['truce', 'alliance', 'partnership', 'tribute', 'cash', 'concession', 'favor', 'handsoff'] as const;
+export const DEAL_KINDS = ['truce', 'alliance', 'partnership', 'tribute', 'cash', 'concession', 'favor', 'handsoff', 'callfavor'] as const;
 export type DealKind = (typeof DEAL_KINDS)[number];
 /** Who gives: 'them' (the family pays, cedes, owes, stays out) or 'you' (the boss does). */
 export type Dir = 'them' | 'you';
@@ -69,9 +70,19 @@ export interface Term { kind: DealKind; amount?: number; district?: string; week
 export const KIND_LABEL: Record<DealKind, string> = {
   truce: 'Truce', alliance: 'Alliance', partnership: 'Partnership (they pay you weekly)', tribute: 'Tribute (you pay them weekly)',
   cash: 'Cash settlement', concession: 'Give up ground in a district', favor: 'A favor owed', handsoff: 'Stay out of a district',
+  callfavor: 'Call in the favor he owes',
 };
 /** Kinds whose `dir` is chosen; the others have one direction. */
-export const HAS_DIR: Record<DealKind, boolean> = { truce: false, alliance: false, partnership: false, tribute: false, cash: true, concession: true, favor: true, handsoff: true };
+export const HAS_DIR: Record<DealKind, boolean> = { truce: false, alliance: false, partnership: false, tribute: false, cash: true, concession: true, favor: true, handsoff: true, callfavor: false };
+
+/** What calling in the favor he owes is worth at the table: enough to force a concession or a modest deal, never a big one. */
+export const CALL_FAVOR_VALUE = 1800;
+
+/** Favors this family's boss owes the boss (deeds/). */
+export function favorsHeOwes(s: GameState, rival: string): number {
+  const r = rivalOf(s, rival);
+  return r ? owedBy(s, r.leaderId, s.playerId) : 0;
+}
 
 export const DIPLO_INTENTS = ['agree', 'refuse', 'threaten', 'bargain', 'deflect', 'warn', 'flatter', 'complain', 'insulted'] as const;
 export type DiploIntent = (typeof DIPLO_INTENTS)[number];
@@ -123,7 +134,7 @@ export function beginSitDown(s: GameState, rival: string): GameState {
   const t = ensureTalks(next);
   t.sat = { ...(t.sat ?? {}), [rival]: next.week };
   // He asked for this one: the ask is answered.
-  if (t.asks?.some((a) => a.rival === rival)) { t.asks = t.asks.filter((a) => a.rival !== rival); if (!t.asks.length) delete t.asks; }
+  if (t.asks?.some((a) => a.rival === rival && a.kind !== 'collect')) { t.asks = t.asks.filter((a) => a.rival !== rival || a.kind === 'collect'); if (!t.asks.length) delete t.asks; }
   t.met[rivalOf(next, rival)!.leaderId] = next.week;
   return next;
 }
@@ -142,12 +153,14 @@ function inf(s: GameState, district: string, f: string): number {
 export function allowedKinds(s: GameState, rival: string): DealKind[] {
   const r = rivalOf(s, rival);
   if (!r) return [];
-  if (r.kind === 'philly') return ['tribute', 'cash', 'favor'];
+  const owes = owedBy(s, r.leaderId, s.playerId) > 0;
+  if (r.kind === 'philly') return owes ? ['tribute', 'cash', 'favor', 'callfavor'] : ['tribute', 'cash', 'favor'];
   const war = s.wars.some((w) => w.rival === r.id);
   return DEAL_KINDS.filter((k) => {
     if (k === 'alliance') return !pactWith(s, r.id, 'alliance');
     if (k === 'partnership') return !war && !pactWith(s, r.id, 'partnership');
     if (k === 'tribute') return !pactWith(s, r.id, 'tribute');
+    if (k === 'callfavor') return owes;
     if (k === 'concession' || k === 'handsoff') return districtsFor(s, rival, k, 'them').length > 0 || districtsFor(s, rival, k, 'you').length > 0;
     return true;
   });
@@ -183,6 +196,7 @@ export function termBounds(s: GameState, rival: string, kind: DealKind, dir: Dir
     }
     case 'handsoff': return { weeks: { lo: 8, hi: 52, def: 26 } };
     case 'favor': return {};
+    case 'callfavor': return {};
   }
 }
 
@@ -202,7 +216,7 @@ export function validateTerm(s: GameState, rival: string, raw: unknown): Term | 
   const kind = String(o.kind ?? '') as DealKind;
   if (!(DEAL_KINDS as readonly string[]).includes(kind)) return undefined;
   if (!allowedKinds(s, rival).includes(kind)) return undefined;
-  const dir: Dir = kind === 'partnership' ? 'them' : kind === 'tribute' ? 'you' : o.dir === 'you' ? 'you' : 'them';
+  const dir: Dir = kind === 'partnership' || kind === 'callfavor' ? 'them' : kind === 'tribute' ? 'you' : o.dir === 'you' ? 'you' : 'them';
   const t: Term = { kind };
   if (HAS_DIR[kind]) t.dir = dir;
   if (kind === 'concession' || kind === 'handsoff') {
@@ -355,6 +369,7 @@ export function termValue(s: GameState, rival: string, t: Term): number {
       return t.dir === 'you' ? amt * 400 : -amt * 450 * (home ? 2 : 1);
     }
     case 'favor': return t.dir === 'you' ? Math.round(800 * trustMult(s, r.id)) : -900;
+    case 'callfavor': return CALL_FAVOR_VALUE;
     case 'handsoff': {
       const d = t.district ?? '';
       const contested = inf(s, d, 'player') >= 8 && inf(s, d, r.id) >= 8;
@@ -450,6 +465,7 @@ export function describeTerm(s: GameState, rival: string, t: Term): string {
     case 'concession': return t.dir === 'you' ? `you give up ${t.amount} points of ${d}` : `${fam} gives up ${t.amount} points of ${d}`;
     case 'favor': return t.dir === 'you' ? `you owe ${fam} a favor` : `${fam} owes you a favor`;
     case 'handsoff': return t.dir === 'you' ? `you stay out of ${d} for ${t.weeks} weeks` : `${fam} stays out of ${d} for ${t.weeks} weeks`;
+    case 'callfavor': return `you call in the favor ${fam} owes you`;
   }
 }
 
@@ -489,7 +505,8 @@ export function openSitDown(s: GameState, rival: string): SitDown | undefined {
   const c = s.characters[st.boss];
   const warmth = Math.round(clamp(45 + st.opinion / 2, 5, 90));
   const anger = Math.round(clamp(Math.max(0, -st.opinion / 3) + (st.war ? 15 : 0) + (s.rivals.find((r) => r.id === rival)?.feud ? 15 : 0), 0, 60));
-  const fa = askFor(s, rival);
+  const fa0 = askFor(s, rival);
+  const fa = fa0?.kind === 'collect' ? undefined : fa0;
   const sd: SitDown = { rival: st.rival, boss: st.boss, round: 0, max: SIT_TURNS, warmth, anger, w0: warmth, log: [], insults: 0, ...(fa ? { agenda: { kind: fa.kind, text: fa.text } } : {}) };
   sd.log.push({ who: 'narrator', text: `${c ? displayName(c) : 'He'} sits across from you. ${fa ? `He asked for this one: ${ASK_LABEL[fa.kind]}.` : st.war ? 'There is a war on, and both of you know the score.' : 'Coffee, nobody else at the table.'}` });
   // Their ask (the agenda he came with, else his usual opening), read against the room they walked into.
@@ -908,6 +925,10 @@ export function shakeOn(input: GameState, sd: SitDown): ShakeResult {
       case 'favor':
         if (x.dir === 'you') { eff.push({ type: 'deed', op: { op: 'owe', by: s.playerId, to: r.leaderId, y: `a sit-down with ${fam}` } }); changes.push(`You owe ${displayName(c)} a favor`); }
         else { eff.push({ type: 'deed', op: { op: 'owe', by: r.leaderId, to: s.playerId, y: `a sit-down with ${fam}` } }); changes.push(`${displayName(c)} owes you a favor`); }
+        break;
+      case 'callfavor':
+        eff.push({ type: 'deed', op: { op: 'spendOwed', by: r.leaderId, to: s.playerId } });
+        changes.push(`You called in the favor ${displayName(c)} owed you`);
         break;
       case 'handsoff': {
         const bound = x.dir === 'you' ? 'player' : r.id;
