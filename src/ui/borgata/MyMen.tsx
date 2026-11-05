@@ -10,6 +10,10 @@ import { useOrders } from '../components/Orders';
 import { CharLink, Face } from '../components/People';
 import { SideChip } from '../components/Side';
 import { sameOrder } from '../verbs';
+import { hungerOf } from '../../engine/eat';
+import { HungerBar } from './LetThemEat';
+
+const eats = (c: { id: string; rank: string; specialty?: string }) => !c.specialty && (c.rank === 'soldier' || c.rank === 'associate' || c.rank === 'capo');
 
 /**
  * MY MEN (engine/myMen.ts): one place to take care of the crew. The meter
@@ -114,6 +118,7 @@ function ManCard({ s, r, picked, onPick }: { s: GameState; r: ManRow; picked: bo
             <SideChip s={s} id={c.id} />
             <span className="text-[11px] text-stone-500">{r.side}</span>
             {r.status.map((t) => <span key={t} className="rounded border border-sky-700/60 px-1 text-[10px] text-sky-200">{t}</span>)}
+            {eats(c) && <HungerBar h={hungerOf(s, c)} />}
           </div>
           <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px]">
             <Stat label="cash" value={r.cash} />
