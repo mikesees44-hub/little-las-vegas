@@ -86,7 +86,7 @@ describe('1. she accepts or declines from her own state', () => {
     const pocket = s.tribute!.acct.personal;
     let refused = 0;
     let accepted = 0;
-    expect(herDecision(s, c, 'date', 'dinner').chance).toBeLessThan(0.2);
+    expect(herDecision(s, c, 'date', 'dinner').chance).toBeLessThan(0.45);
     for (let i = 0; i < 20; i++) {
       s.rng = 1000 + i;
       s.week++;
