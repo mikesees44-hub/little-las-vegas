@@ -9,7 +9,9 @@ import { allRequests, audienceRequests, gatekeeper } from '../src/engine/planner
 import { cancelEntry, dayEntries } from '../src/engine/planner/datebook';
 import { tipConfidence } from '../src/engine/planner/intel';
 import { armedTurn, gateHolder, slantOf, turnOf } from '../src/engine/planner/gateCore';
-import { decideGate, gateCase, readFullList, setGateRole } from '../src/engine/planner/gate';
+import { decideGate, gateCase, meetDefault, readFullList, setGateRole } from '../src/engine/planner/gate';
+import { discoverGate } from '../src/engine/planner/gateCore';
+import { scheduleInto } from '../src/engine/schedule';
 import { gateWeek } from '../src/engine/planner/gateWeek';
 import { readOf } from '../src/engine/peopleRead';
 import type { GameState, RivalId } from '../src/engine/types';
@@ -187,5 +189,33 @@ describe('the gatekeeper', () => {
     const fd = decideGate(s, 'feed');
     expect(armedTurn(fd.state)).toBeUndefined();
     void capos;
+  });
+
+  it('the meet he puts down is labelled his in the datebook; a loyal one puts down the same place and hour as always', () => {
+    const s = game('gate9');
+    const d = meetDefault(s);
+    expect(d.place).toBe('diner');
+    expect(d.hour).toBe(21);
+    expect(d.byId).toBe(gatekeeper(s).id);
+    const who = sources(s)[0];
+    scheduleInto(s, { kind: 'meet', day: 3, hour: 21, w: s.week + 1, payload: { who, place: 'diner', purpose: 'meet', by: d.byId } });
+    const e = dayEntries(s, s.week + 1, 3).find((x) => x.kind === 'meet')!;
+    expect(e.by).toBe(gatekeeper(s).name);
+  });
+
+  it('two meets he set at odd places are a tell; found out lands in Your File', () => {
+    const { s, id } = turned(game('gate10'));
+    const who = sources(s);
+    for (let i = 0; i < 2; i++) scheduleInto(s, { kind: 'meet', day: 2 + i, hour: 23, w: s.week + 1, payload: { who: who[i], place: 'hotel', purpose: 'meet', by: id } });
+    let seen = false;
+    for (let k = 0; k < 12 && !seen; k++) {
+      s.week++;
+      for (const it of s.action!.sched) if (it.kind === 'meet') it.w = s.week + 1;
+      gateWeek(newCtx(s));
+      seen = (s.planner?.tl ?? []).some((x) => /odd places/.test(x.t));
+    }
+    expect(seen).toBe(true);
+    expect(discoverGate(s, id, 'Test') || s.planner!.gx?.id === id).toBe(true);
+    expect(s.journal!.e.some((e) => /Found out/.test(e.t))).toBe(true);
   });
 });
