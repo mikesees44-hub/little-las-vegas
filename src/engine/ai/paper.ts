@@ -155,7 +155,7 @@ Rules:
 Reply with ONLY one JSON object:
 {"headline": string, "deck": string (optional, one line under the headline), "stories": [{"h": string, "b": string, "facts": ["f1", ...]}], "gossip": {"h": string, "b": string}, "sports": {"h": string, "b": string}, "letter": {"from": string, "b": string} (optional)}`;
 
-export function paperPrompt(s: GameState, b: PaperBrief): { role: 'user'; content: string }[] {
+export function paperPrompt(_s: GameState, b: PaperBrief): { role: 'user'; content: string }[] {
   return [{ role: 'user', content: `${RULES}\n\nThe edition: ${formatDate(b.date)}, week ${b.week}.\n\nFACTS:\n${b.text}` }];
 }
 
