@@ -11,6 +11,7 @@ import { CharLink, Face } from '../components/People';
 import { PlayCard } from '../components/Layout';
 import { useShell } from '../shell/context';
 import { fmt$ } from '../format';
+import { SingleCards } from './SingleCards';
 
 /**
  * RELATIONSHIPS & DATING: one screen for the boss's love life and the paid
@@ -184,6 +185,7 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
         <p className="mt-1 text-[11px] text-stone-500">She decides, every time. Money and gifts never guarantee anything. Dates and paid evenings are paid from your pocket; Family money only if you approve it on the button.</p>
       </div>
       {showSettings && <DatingSettings s={s} />}
+      <SingleCards s={s} />
 
       <nav className="flex flex-wrap gap-1 border-b border-noir-700 pb-1.5" role="tablist" aria-label="Relationships & Dating" data-testid="dating-tabs">
         {TABS.map(([k, label]) => (

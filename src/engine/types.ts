@@ -992,6 +992,8 @@ export interface GameState {
   bonds?: import('./bondsState').BondsState;
   /** The matchmakers: the women of the house arrange the matches; her standing (matchmakers.ts; optional for old saves). */
   matchmakers?: import('./matchmakers').MatchState;
+  /** The women who come to a single boss, and Ma's match for him (single.ts). Optional: made the first time. */
+  single?: import('./single').SingleState;
   /** My Men (myMen.ts): the "Does the boss have our back?" meter, the wrongs done to the men, protection (optional for old saves). */
   mymen?: import('./myMen').MenState;
   /** Spend: the catalog's purchases, retainers, the IRS's count (spendState.ts; optional: absent until the first purchase). */

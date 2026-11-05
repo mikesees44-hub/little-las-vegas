@@ -17,6 +17,7 @@ import {
   adultOn, datingEvenings, datingSettings, ensureDating, PREGNANCY_ODDS, PROVIDER_LABEL, STAGE_LABEL,
   type Bond, type DatingState, type Provider, type ProviderKind, type Stage,
 } from './datingState';
+import { applySingleOp, describeSingleOp, previewSingle, type SingleAction, type SingleOp } from './single';
 import type { ActionPreview } from './actions';
 import type { Acceptance, Reason } from './interactions';
 import type { Ctx } from './ledger';
@@ -92,7 +93,8 @@ export type DatingAction =
   | { op: 'reconcile'; id: string }
   | { op: 'meet'; tp: string }
   | { op: 'paid'; id: string }
-  | { op: 'askOut'; id: string };
+  | { op: 'askOut'; id: string }
+  | SingleAction;
 
 export type DatingOp =
   | { op: 'talk'; id: string }
@@ -104,7 +106,8 @@ export type DatingOp =
   | { op: 'meet'; tp: string }
   | { op: 'paid'; id: string; price: number }
   | { op: 'askOut'; id: string }
-  | { op: 'refused'; id: string; what: string };
+  | { op: 'refused'; id: string; what: string }
+  | SingleOp;
 
 export const DATE_INFO: Record<DateKind, { label: string; cost: number; aff: number; where: string }> = {
   coffee: { label: 'Coffee', cost: 15, aff: 5, where: 'coffee and a pastry at the Doo Wop diner' },
@@ -197,7 +200,7 @@ export function bondOf(s: GameState, id: string): Bond | undefined {
   return s.dating?.bonds[id];
 }
 
-function ensureBond(s: GameState, D: DatingState, id: string, via: string): Bond {
+export function ensureBond(s: GameState, D: DatingState, id: string, via: string): Bond {
   let b = D.bonds[id];
   if (!b) {
     const op = opinion(s, id, s.playerId);
@@ -471,6 +474,8 @@ function base(title: string, because: string): ActionPreview {
 
 /** The button's own words: what you do, to whom, and the price. */
 export function previewDating(s: GameState, a: DatingAction): ActionPreview {
+  // The women who come to him, and Ma's match (single.ts).
+  if (a.op === 'come' || a.op === 'ma') return previewSingle(s, a);
   const p0 = previewDating0(s, a);
   const zero = p0.acceptance && p0.acceptance.chance === 0 ? p0.acceptance.reasons.find((r) => r.value <= -100)?.label : undefined;
   const p = zero && !p0.disabledReason ? { ...p0, disabledReason: zero } : p0;
@@ -479,7 +484,7 @@ export function previewDating(s: GameState, a: DatingAction): ActionPreview {
   const cost = p.cost ? ` — ${$(p.cost)}` : '';
   const words: Record<DatingAction['op'], string> = {
     talk: `Talk to ${n}`, invite: a.op === 'invite' ? `Ask ${n} to ${a.date === 'coffee' ? 'coffee' : a.date === 'dinner' ? 'dinner' : 'a night out'}` : '', gift: `Send the gift`, steady: `Ask ${n}`, commit: `Ask ${n}`,
-    reconcile: `Ask ${n} to come home`, meet: 'Arrange the introduction', paid: `Ask ${n} for the evening`, askOut: `Ask ${n} out`,
+    reconcile: `Ask ${n} to come home`, meet: 'Arrange the introduction', paid: `Ask ${n} for the evening`, askOut: `Ask ${n} out`, come: '', ma: '',
   };
   return { ...p, verb: `${words[a.op]}${cost}` };
 }
@@ -487,6 +492,7 @@ export function previewDating(s: GameState, a: DatingAction): ActionPreview {
 function previewDating0(s: GameState, a: DatingAction): ActionPreview {
   const D = s.dating;
   if (a.op === 'meet') return previewMeet(s, a.tp);
+  if (a.op === 'come' || a.op === 'ma') return previewSingle(s, a);
   const c = s.characters[a.id];
   const blocked = datingBlock(s, c) ?? bossOk(s);
   if (!c) return { ...base('Nobody', 'did nothing'), disabledReason: 'Not here' };
@@ -663,6 +669,10 @@ function previewMeet(s: GameState, tp: string): ActionPreview {
 /* Effect ops                                                          */
 /* ------------------------------------------------------------------ */
 
+export function datingLog(D: DatingState, s: GameState, text: string, kind: DatingState['log'][number]['kind'], charId?: string): void {
+  log(D, s, text, kind, charId);
+}
+
 function log(D: DatingState, s: GameState, text: string, kind: DatingState['log'][number]['kind'], charId?: string): void {
   D.log.push({ week: s.week, text, kind, charId });
   if (D.log.length > 60) D.log.splice(0, D.log.length - 60);
@@ -730,6 +740,7 @@ function rumor(s: GameState, D: DatingState, about: string, text: string, isTrue
 }
 
 export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
+  if (o.op === 'come' || o.op === 'comeNo' || o.op === 'ma' || o.op === 'maNo') { applySingleOp(ctx, o); return; }
   const s = ctx.s;
   const D = ensureDating(s);
   const boss = player(s);
@@ -891,6 +902,7 @@ export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
 }
 
 export function describeDatingOp(s: GameState, o: DatingOp): string | undefined {
+  if (o.op === 'come' || o.op === 'comeNo' || o.op === 'ma' || o.op === 'maNo') return describeSingleOp(s, o);
   if (o.op === 'meet') return 'An introduction (nothing promised)';
   const c = s.characters[o.id];
   const first = c?.firstName ?? 'her';

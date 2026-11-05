@@ -52,7 +52,7 @@ export interface DeskItem {
   /** Where it goes: an event iid, a morning's day, a sit-down item, an order index, a lieutenant's job, a tip, a place ask. */
   /** A result's tone (how it went). */
   tone?: 'good' | 'bad';
-  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string };
+  ref: { entry?: string; event?: string; day?: number; brief?: string; order?: number; charId?: string; lt?: string; tip?: string; ask?: string; trouble?: string; envelope?: string; single?: 'come' | 'ma' };
 }
 
 export interface DeskGroup { kind: DeskGroupKind; title: string; items: DeskItem[] }
