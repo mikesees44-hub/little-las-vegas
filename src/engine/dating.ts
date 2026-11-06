@@ -19,6 +19,7 @@ import {
   type Bond, type DatingState, type Provider, type ProviderKind, type Stage,
 } from './datingState';
 import { applySingleOp, describeSingleOp, previewSingle, type SingleAction, type SingleOp } from './single';
+import { applyWifeOp, describeWifeOp, type WifeOp } from './wife';
 import type { ActionPreview } from './actions';
 import type { Acceptance, Reason } from './interactions';
 import type { Ctx } from './ledger';
@@ -113,7 +114,9 @@ export type DatingOp =
   | { op: 'askOut'; id: string }
   | { op: 'pro'; id: string; what: ProExtra; price: number }
   | { op: 'refused'; id: string; what: string }
-  | SingleOp;
+  | SingleOp
+  /** Your wife (wife.ts): her answers at the scenes, the arrangement, the divorce. */
+  | WifeOp;
 
 export const DATE_INFO: Record<DateKind, { label: string; cost: number; aff: number; where: string }> = {
   coffee: { label: 'Coffee', cost: 15, aff: 5, where: 'coffee and a pastry at the Doo Wop diner' },
@@ -818,6 +821,7 @@ function rumor(s: GameState, D: DatingState, about: string, text: string, isTrue
 }
 
 export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
+  if (o.op === 'wife') { applyWifeOp(ctx, o); return; }
   if (o.op === 'come' || o.op === 'comeNo' || o.op === 'ma' || o.op === 'maNo') { applySingleOp(ctx, o); return; }
   const s = ctx.s;
   const D = ensureDating(s);
@@ -1022,6 +1026,7 @@ export function applyDatingOp(ctx: Ctx, o: DatingOp): void {
 }
 
 export function describeDatingOp(s: GameState, o: DatingOp): string | undefined {
+  if (o.op === 'wife') return describeWifeOp(s, o);
   if (o.op === 'come' || o.op === 'comeNo' || o.op === 'ma' || o.op === 'maNo') return describeSingleOp(s, o);
   if (o.op === 'meet') return 'An introduction (nothing promised)';
   const c = s.characters[o.id];

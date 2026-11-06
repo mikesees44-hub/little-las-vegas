@@ -975,6 +975,8 @@ export interface GameState {
   families?: import('./familyWeb').FamState;
   /** Gangs that crop up (gangs.ts): biker clubs in summer, street crews where there is an opening. Made the first week one could appear. */
   gangs?: import('./gangs').GangState;
+  /** Your wife (wife.ts): nights home, her suspicion, her calls, the arrangement, the divorce and alimony. Made the first week a married boss lives. */
+  wife?: import('./wife').WifeState;
   /** The army: men under arms, hired muscle, allies, pacts, campaigns and battles (army.ts). Optional for old saves. */
   army?: import('./armyState').ArmyState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */

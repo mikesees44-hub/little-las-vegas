@@ -20,6 +20,7 @@ import { missedCalls } from './phone';
 import { askLapses } from './minds/askView';
 import { heardOnDesk } from './ai/rivalMinds';
 import { wordThisWeek } from './ai/calls';
+import { wifeLapses } from './wife';
 
 /**
  * THE BOSS'S DESK: everything that wants the boss this week, in one place —
@@ -257,5 +258,7 @@ export function lapsesThisWeek(s: GameState): { key: string; title: string; what
   for (const m of missedCalls(s)) if (!m.p.once && m.until < next * 7) out.push({ key: `call:${m.id}`, title: `Call ${m.p.name} back`, what: "After this week the call can't be returned." });
   // A family that asked for a sit-down (minds/familyAsks.ts): ignored, it has a consequence.
   out.push(...askLapses(s));
+  // Your wife (wife.ts): falling short of the nights home, or standing her up.
+  out.push(...wifeLapses(s));
   return out;
 }
