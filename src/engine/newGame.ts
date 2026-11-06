@@ -25,6 +25,7 @@ import { initDynasty } from './family';
 import { setupHouses } from './housesLife';
 import { initPolitics } from './politics';
 import { initEars } from './ears';
+import { ensureFamilies } from './familyWeb';
 import { DISTRICTS, RIVALS } from './world';
 import type { BusinessKind, Character, FactionId, GameState, Rival, Trait } from './types';
 
@@ -366,5 +367,7 @@ export function newGame(seed: string | number = Date.now(), opts: { skipHouses?:
   freeWidows(s);
   assignFaces(s);
   forgetSetup(s);
+  // The families' web: every family's ties and strength on Memorial Day 1960 (its own dice; last, so nothing else moves).
+  ensureFamilies(s);
   return s;
 }

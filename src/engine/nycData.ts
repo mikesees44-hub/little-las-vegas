@@ -15,6 +15,13 @@
  * meet at 42nd Street). scripts/geo/5_nyc.ts reads this file at build time.
  */
 
+/**
+ * The five families carry their historical 1960 names (Genovese, Gambino,
+ * Lucchese, Profaci, Bonanno) at the owner's request: the organizations are
+ * historical backdrop only. Every PERSON in them (bosses, underbosses, capos,
+ * soldiers) is fictional, and no real individual or specific real crime is
+ * depicted. The ids are the old fictional keys, kept so saves stay valid.
+ */
 export type NycFamilyId = 'marchetti' | 'corvino' | 'saladino' | 'lobianco' | 'abbadessa';
 
 export interface NycFamily {
@@ -31,23 +38,23 @@ export interface NycFamily {
 
 export const NYC_FAMILIES: Record<NycFamilyId, NycFamily> = {
   marchetti: {
-    id: 'marchetti', name: 'The Marchetti family', short: 'Marchetti', boss: 'Gaetano Marchetti', seat: 'ny-marchetti', pride: 0.9,
+    id: 'marchetti', name: 'The Genovese family', short: 'Genovese', boss: 'Gaetano Marchetti', seat: 'ny-marchetti', pride: 0.9,
     flavor: 'The oldest and richest of the five: Mulberry Street, the Garment Center\'s trucks and the Broadway rooms.',
   },
   corvino: {
-    id: 'corvino', name: 'The Corvino family', short: 'Corvino', boss: 'Salvatore "Sally Hooks" Corvino', pride: 0.8,
+    id: 'corvino', name: 'The Gambino family', short: 'Gambino', boss: 'Salvatore "Sally Hooks" Corvino', pride: 0.8,
     flavor: 'The waterfront family: the Brooklyn piers, the West Side docks and Staten Island. The hiring boss answers to them.',
   },
   saladino: {
-    id: 'saladino', name: 'The Saladino family', short: 'Saladino', boss: 'Carlo "Charlie Ocean" Saladino', pride: 0.6,
+    id: 'saladino', name: 'The Profaci family', short: 'Profaci', boss: 'Carlo "Charlie Ocean" Saladino', pride: 0.6,
     flavor: 'South Brooklyn: social clubs on Eighty-Sixth Street and the games on the Coney Island boardwalk.',
   },
   lobianco: {
-    id: 'lobianco', name: 'The Lo Bianco family', short: 'Lo Bianco', boss: 'Ettore "the Teacher" Lo Bianco', pride: 0.7,
+    id: 'lobianco', name: 'The Lucchese family', short: 'Lucchese', boss: 'Ettore "the Teacher" Lo Bianco', pride: 0.7,
     flavor: 'Italian Harlem\'s policy banks and the Bronx produce trade. Old-fashioned, patient, and they keep score.',
   },
   abbadessa: {
-    id: 'abbadessa', name: 'The Abbadessa family', short: 'Abbadessa', boss: 'Raffaele "Ralphie Wings" Abbadessa', pride: 0.5,
+    id: 'abbadessa', name: 'The Bonanno family', short: 'Bonanno', boss: 'Raffaele "Ralphie Wings" Abbadessa', pride: 0.5,
     flavor: 'The smallest family and the newest money: air cargo at Idlewild and the fish on South Street.',
   },
 };
@@ -108,7 +115,7 @@ export const NYC_DISTRICTS: NycDistrict[] = [
   {
     id: 'littleitaly', name: 'Little Italy & Mulberry Street', borough: 'Manhattan', ntas: ['MN24'], at: [-73.9973, 40.7193], family: 'marchetti',
     rackets: ['numbers', 'shylock', 'clubs'], places: ['ny-marchetti', 'ny-bank'], rich: 1.1,
-    text: 'Mulberry and Mott: social clubs, the San Gennaro feast every September, and the Marchettis\' clubhouse. Nobody opens a door here without asking.',
+    text: 'Mulberry and Mott: social clubs, the San Gennaro feast every September, and the Genovese clubhouse. Nobody opens a door here without asking.',
   },
   {
     id: 'lowereast', name: 'The Lower East Side', borough: 'Manhattan', ntas: ['MN28'], at: [-73.9840, 40.7160],
@@ -140,7 +147,7 @@ export const NYC_DISTRICTS: NycDistrict[] = [
   {
     id: 'eastharlem', name: 'East Harlem (Italian Harlem)', borough: 'Manhattan', ntas: ['MN33', 'MN34'], at: [-73.9380, 40.7960], family: 'lobianco',
     rackets: ['numbers', 'shylock', 'clubs'], rich: 0.9,
-    text: 'Pleasant Avenue and 116th Street: the biggest policy banks in the city and the Lo Bianco family\'s oldest blocks.',
+    text: 'Pleasant Avenue and 116th Street: the biggest policy banks in the city and the Lucchese family\'s oldest blocks.',
   },
   {
     id: 'bronxmarket', name: 'The Bronx Terminal Market', borough: 'Bronx', ntas: ['BX63'], at: [-73.9290, 40.8250], family: 'lobianco',
@@ -155,12 +162,12 @@ export const NYC_DISTRICTS: NycDistrict[] = [
   {
     id: 'redhook', name: 'Red Hook & the Brooklyn waterfront', borough: 'Brooklyn', ntas: ['BK33', 'BK38'], at: [-74.0080, 40.6800], family: 'corvino',
     rackets: ['docks', 'shylock', 'numbers'], places: ['ny-hide'], rich: 1.1,
-    text: 'The busiest piers in the world: freighters three deep off Columbia Street, and a shape-up where the Corvinos pick who works.',
+    text: 'The busiest piers in the world: freighters three deep off Columbia Street, and a shape-up where the Gambino men pick who works.',
   },
   {
     id: 'bensonhurst', name: 'Bensonhurst', borough: 'Brooklyn', ntas: ['BK27', 'BK28', 'BK29'], at: [-73.9970, 40.6050], family: 'saladino',
     rackets: ['numbers', 'books', 'clubs'], rich: 0.9,
-    text: 'Eighty-Sixth Street under the West End el: bakeries, social clubs and two-family houses. The Saladinos grew up here.',
+    text: 'Eighty-Sixth Street under the West End el: bakeries, social clubs and two-family houses. The Profaci people grew up here.',
   },
   {
     id: 'coney', name: 'Coney Island', borough: 'Brooklyn', ntas: ['BK21', 'BK19'], at: [-73.9860, 40.5774], family: 'saladino',

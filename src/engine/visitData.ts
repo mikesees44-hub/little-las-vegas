@@ -100,7 +100,7 @@ const SCENES: CityScene[] = [
     cityId: 'newyork', name: 'New York', short: 'New York', hotel: 'a room at a hotel near Penn Station', nightly: 45,
     blurb: 'Three hours north. The garment center, the waterfront, the casino points — and the men who sit on the Commission.',
     places: [
-      P('ny-marchetti', 'family', 'A social club on Mulberry Street', 'The Marchetti family\'s clubhouse: espresso, the ball game on the radio, and a man by the door who never sits.', { contact: 'Gaetano Marchetti', role: 'boss of the Marchetti family' }),
+      P('ny-marchetti', 'family', 'A social club on Mulberry Street', 'The Genovese family\'s clubhouse: espresso, the ball game on the radio, and a man by the door who never sits.', { contact: 'Gaetano Marchetti', role: 'boss of the Genovese family' }),
       P('ny-feld', 'family', 'An office in the garment center', 'Ira Feldstein\'s people count money here, upstairs from a coat company.', { contact: 'Ira Feldstein\'s accountant, Mr. Lazar', role: 'the money man\'s man', rival: 'feldstein' }),
       P('ny-comm', 'commission', 'A private room on Arthur Avenue', 'The Commission does not meet for you. But its go-between does, if your name is good.', { contact: 'Aurelio "the Judge" Fontana', role: 'the Commission\'s go-between' }),
       P('ny-stork', 'club', 'The Stork Club', 'Fifty-third Street: columnists, ballplayers, debutantes, and a table by the Cub Room door if somebody vouches for you.', { contact: 'Billy Dunphy', role: 'the captain' }),

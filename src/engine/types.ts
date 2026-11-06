@@ -558,6 +558,8 @@ export type Effect =
   | ({ type: 'travel'; op: TravelOp } & EffectBase)
   /** New York (nyc.ts): the five families' opinion, grievance, a settlement. */
   | ({ type: 'nyc'; op: import('./nyc').NycOp } & EffectBase)
+  /** The families' web (familyWeb.ts): their view of you, ties made and broken, deals, a side taken. */
+  | ({ type: 'fam'; op: import('./familyWeb').FamOp } & EffectBase)
   /** Making your bones (bones.ts). */
   | ({ type: 'bones'; op: BonesOp } & EffectBase)
   /** The boss's books and the receipts (ledgerbook.ts). */
@@ -969,6 +971,8 @@ export interface GameState {
   travel?: TravelState;
   /** New York (nyc.ts): crews, rackets and the five families. Optional: made by the first New York order. */
   nyc?: import('./nyc').NycState;
+  /** The families' web: ties between every family, their strength, deals, Philadelphia/Atlantic City/New York's involvement (familyWeb.ts). Made at new game; at load for an old save. */
+  families?: import('./familyWeb').FamState;
   /** The army: men under arms, hired muscle, allies, pacts, campaigns and battles (army.ts). Optional for old saves. */
   army?: import('./armyState').ArmyState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
@@ -1180,6 +1184,8 @@ export type PlayerAction = ActionFunding & (
   | { kind: 'spend'; op: import('./spendState').SpendAction }
   /** New York (nyc.ts): open a crew, buy into a racket, the families' blessing, tribute, the Commission. */
   | { kind: 'nyc'; op: import('./nyc').NycAction }
+  /** The families' web (familyWeb.ts): an envoy, a favor, a partnership, a marriage, a truce brokered between two families. */
+  | { kind: 'fam'; op: import('./familyWeb').FamAction }
   /** The town papers (paper.ts): plant or spike a story, run an ad, buy the paper, sue it. */
   | { kind: 'paper'; op: import('./paper').PaperAction }
   /** Work this place (bizRacket.ts): protection, a skim, the back door, the owner's debts; putting him out of business. */

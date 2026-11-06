@@ -1,3 +1,4 @@
+import { applyFamOp, describeFamOp } from './familyWeb';
 import { applyMenOp, describeMenOp } from './myMen';
 import { applyLivingOp, describeLivingOp } from './livingAsk';
 import { earnPocket, spendPocket } from './pocket';
@@ -237,6 +238,8 @@ export function describeEffect(s: GameState, e: Effect): string | undefined {
       return describeTravelOp(s, e.op);
     case 'nyc':
       return describeNycOp(e.op);
+    case 'fam':
+      return describeFamOp(s, e.op);
     case 'bones':
       return describeBonesOp(s, e.op);
     case 'ledger':
@@ -914,6 +917,9 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       break;
     case 'nyc':
       applyNycOp(ctx, e.op);
+      break;
+    case 'fam':
+      applyFamOp(ctx, e.op, label);
       break;
     case 'bones':
       applyBonesOp(ctx, e.op, label);

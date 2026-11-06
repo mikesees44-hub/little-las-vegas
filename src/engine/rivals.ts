@@ -14,6 +14,7 @@ import { addOpinion, changeMeter, getRelation, opinion } from './relations';
 import { activeTask } from './council';
 import { changeScore } from './war';
 import { chance, pick, rand, randInt, weightedPick } from './rng';
+import { moveTieMult } from './familyWeb';
 import { FACTION_NAMES, RIVALS } from './world';
 import { noteRivalMove, rivalLean } from './minds/planner';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalGoal, RivalId, RivalMove } from './types';
@@ -145,6 +146,8 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
       }
       // An alliance by marriage (or pact): they won't move against your house.
       if (t === 'player' && (move === 'strike' || move === 'inform' || move === 'expand') && (alliedWithFaction(s, r.id) || !!pactWith(s, r.id))) sc = 0;
+      // The families' web (familyWeb.ts): a feud makes a strike likelier, kin and partners hold back, an ally at war with the boss joins in.
+      sc *= moveTieMult(s, r, t, move);
       // Rivals focus on the player but act on each other too.
       if (t !== 'player') sc *= 0.55;
       if (t === 'player' && (r.war || r.feud) && move === 'strike') sc *= 2.5;

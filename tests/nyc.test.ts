@@ -95,7 +95,7 @@ describe('New York: expansion plays', () => {
     const order = crewOrder(s, 'redhook');
     const p = previewAction(s, act(order));
     expect(ownerToAsk(s, 'redhook')).toBe('corvino');
-    expect(p.warning).toMatch(/Corvino/);
+    expect(p.warning).toMatch(/Gambino/);
     expect(p.verb).toMatch(/without asking/);
     s = week(s, [act(order), act({ op: 'racket', district: 'redhook', racket: 'docks' })]);
     expect(grievanceOf(s, 'corvino')).toBeGreaterThan(20);

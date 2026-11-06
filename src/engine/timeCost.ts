@@ -132,6 +132,8 @@ export const TIME_TABLE: Record<string, number> = {
   'travel:trip': TRAVEL_DAY, 'travel:cancel': 0.25, 'travel:recall': 0.25,
   // New York (nyc.ts): orders to a capo, a sit-down with a family or the Commission.
   'nyc:crew': 1, 'nyc:racket': 1, 'nyc:bless': 3, 'nyc:tribute': 0.5, 'nyc:sitdown': 3, 'nyc:recall': 0.25,
+  // The families' web (familyWeb.ts): a man sent, a favor, a deal, a wedding, two dinners for a truce.
+  'fam:envoy': 0.5, 'fam:favor': 1, 'fam:partner': 1, 'fam:marry': 1, 'fam:broker': 2,
   'travel:flee': TRAVEL_DAY, 'travel:surrender': 4, 'travel:comeHome': 2, 'travel:exile': 0.5, 'travel:hide': 2,
   // The town
   'pol:cultivate': 2, 'pol:payroll': 1, 'pol:dig': 0.5, 'pol:coerce': 1, 'pol:favor': 1, 'pol:recruit': 1, 'pol:groom': 2,

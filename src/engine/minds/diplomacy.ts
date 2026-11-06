@@ -23,6 +23,8 @@ import { clean } from './talk';
 import { mindView } from './view';
 import { askFor, ASK_LABEL, type AskKind } from './askView';
 import { lastTimeLine, noteSit, recordSummary, trustMult, wordWith } from './familyWord';
+import { tieShift, tiesBrief } from '../familyWeb';
+import type { FamKey } from '../familyWebData';
 
 /**
  * THE SIT-DOWN WITH A FAMILY. A real back-and-forth with another family's
@@ -348,6 +350,9 @@ export function stanceOf(s: GameState, rival: string): Stance | undefined {
   if (r.feud) reasons.push({ label: 'Blood feud', value: 1500 });
   const ph = philly(s);
   if (r.kind !== 'philly' && ph) reasons.push({ label: ph >= 0 ? 'Philadelphia thinks well of you' : 'Philadelphia thinks little of you', value: Math.round(-ph * 10) });
+  // The families' web (familyWeb.ts): their ties to the boss's friends and enemies.
+  const ties = tieShift(s, r.id as FamKey);
+  if (ties) reasons.push({ label: ties > 0 ? 'Their ties lean your way' : 'Their ties lean against you', value: Math.round(-ties * 20) });
   const heat = Math.round((s.heat.local + s.heat.federal) / 2);
   if (heat > 50) reasons.push({ label: 'You bring heat', value: (heat - 50) * 25 });
   const word = wordWith(s, r.id).score;
@@ -856,6 +861,8 @@ export function diploPersona(s: GameState, rival: string, sd?: SitDown): string 
   if (st.contested.length) lines.push(`Ground you both want: ${st.contested.map((d) => s.districts.find((x) => x.id === d)?.name ?? d).join(', ')}.`);
   const ph = philly(s);
   if (r.kind !== 'philly' && ph) lines.push(`Philadelphia thinks ${ph >= 20 ? 'well' : ph <= -20 ? 'poorly' : 'little either way'} of him.`);
+  const tb = tiesBrief(s, r.id as FamKey);
+  if (tb) lines.push(tb);
   lines.push(`How far you bend: ${st.bend}. What you came wanting: ${st.wantText}`);
   if (sd?.agenda) lines.push(`YOU asked for this sit-down: ${ASK_LABEL[sd.agenda.kind]}. Your agenda: "${sd.agenda.text}"`);
   if (sd?.played?.length) lines.push(`Leverage he laid on the table: ${sd.played.map((p) => `${LEVER_LABEL[p.card]} (${p.won ? 'it landed: you must give more' : 'you shrugged it off'})`).join('; ')}.`);
