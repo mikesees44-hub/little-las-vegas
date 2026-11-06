@@ -1108,7 +1108,7 @@ function jockeyWeek(ctx: Ctx, st: FamState): void {
     st.size[tgt] = Math.max(3, sizeOf(s, tgt) - n);
     if (!enemy) addTie(s, agg, tgt, 'feud', 20, `${A} poached a piece of ${B}'s ${racket} in ${s.date.y}.`);
     else for (const t of tieBetween(s, agg, tgt)) if (TIE_SIGN[t.kind] < 0) t.strength = clamp(t.strength + 5, 1, 100);
-    say(`${A} poached a piece of ${B}'s ${racket.replace(/^the /, '')} (${n} men went over).`, agg, tgt, 'neutral');
+    say(`${A} poached a piece of ${B}'s ${racket.replace(/^the /, '')} (${n} ${n === 1 ? 'man' : 'men'} went over).`, agg, tgt, 'neutral');
   } else {
     const la = Math.max(1, Math.round(Math.sqrt(sizeOf(s, agg)) / 4));
     const lb = Math.max(1, Math.round(Math.sqrt(sizeOf(s, tgt)) / 3));
@@ -1148,7 +1148,7 @@ function askForHelp(ctx: Ctx, st: FamState, from: FamKey, against: FamKey, say: 
     st.size[from] = sizeOf(s, from) + n;
     for (const t of tieBetween(s, y, from)) if (TIE_SIGN[t.kind] > 0) t.strength = clamp(t.strength + 6, 1, 100);
     addTie(s, y, against, 'feud', 15, `${Y} sent men to ${F} against ${X} in ${s.date.y}.`);
-    say(`${F} asked ${Y} for muscle against ${X}; ${Y} sent ${n} men.`, from, y, 'neutral');
+    say(`${F} asked ${Y} for muscle against ${X}; ${Y} sent ${n} ${n === 1 ? 'man' : 'men'}.`, from, y, 'neutral');
   } else {
     for (const t of tieBetween(s, y, from)) if (TIE_SIGN[t.kind] > 0) {
       t.strength = clamp(t.strength - 12, 1, 100);
