@@ -19,6 +19,7 @@ import {
   FAMILY_BY_ID, FAMILY_DEFS, FAM_KEYS, GRUDGE_TIE, SEED_EXTRAS, SEED_TIES, TIE_LABEL, TIE_SIGN,
   type FamDef, type FamGroup, type FamKey, type RosterMan, type SeedTie, type TieKind,
 } from './familyWebData';
+import { CITY_TIES } from './familyWebCitiesData';
 
 /**
  * THE FAMILIES' WEB: who is tied to whom, and how (familyWebData.ts holds
@@ -88,6 +89,8 @@ export interface FamState {
   /** Named men of an outfit the boss has met, made into full characters on demand (`fam:slot` → id). */
   minted: Record<string, string>;
   month?: string;
+  /** How many of the cities' ties (familyWebCitiesData.ts CITY_TIES) are in the web: a save from before them gets the rest, once. */
+  c2?: number;
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
@@ -112,6 +115,7 @@ export function ensureFamilies(s: GameState): FamState {
   const extra = SEED_EXTRAS[Math.floor(rand(st) * SEED_EXTRAS.length)];
   st.ties.push(fromSeed(extra, `t${st.next++}`, jit()));
   if (s.flags?.problem_grudge) st.ties.push(fromSeed(GRUDGE_TIE, `t${st.next++}`, 0));
+  seedCities(s, st);
   for (const r of s.rivals ?? []) if (r.kind !== 'law') st.bosses[r.id] = r.leaderId;
   // Philadelphia's capos and the far families come to the boss with a first look at him.
   st.cd = { 'philly:visit': 5, 'philly:favor': 9, 'ac:offer': 7, 'nyc:any': 3, 'reward': 13 };
@@ -119,11 +123,30 @@ export function ensureFamilies(s: GameState): FamState {
   return st;
 }
 
+/**
+ * The cities' families (Chicago, New Orleans, Florida, the Havana men, the
+ * Colombians): their strength and their 1960 ties, added once (each tie on
+ * dice of its own, so the web's own dice never move). A save from before a
+ * tie was written gets it at load (upgradeSave); a fresh game already has all.
+ */
+export function seedCities(s: GameState, st: FamState): boolean {
+  const have = st.c2 ?? 0;
+  let changed = false;
+  for (const d of FAMILY_DEFS) if (st.size[d.id] === undefined) { st.size[d.id] = d.men; changed = true; }
+  if (have >= CITY_TIES.length) return changed;
+  for (let i = have; i < CITY_TIES.length; i++) {
+    const jit = (hashSeed(`${s.seed}:c2:${i}`) % 17) - 8;
+    st.ties.push(fromSeed(CITY_TIES[i], `t${st.next++}`, jit));
+  }
+  st.c2 = CITY_TIES.length;
+  return true;
+}
+
 export function famOf(s: GameState): FamState | undefined {
   return s.families;
 }
 
-function note(st: FamState, w: number, t: string, tone: FamLog['tone'] = 'neutral'): void {
+export function note(st: FamState, w: number, t: string, tone: FamLog['tone'] = 'neutral'): void {
   st.log.push({ w, t, tone });
   if (st.log.length > LOG_MAX) st.log.splice(0, st.log.length - LOG_MAX);
 }
@@ -189,7 +212,7 @@ export function mintMan(s: GameState, f: FamKey, slot: number): Character | unde
 }
 
 /** The slot of a roster man by role (the first of that role that is not offstage). */
-function slotOf(f: FamKey, roles: RosterMan['role'][], pickN = 0): number {
+export function slotOf(f: FamKey, roles: RosterMan['role'][], pickN = 0): number {
   const d = famDef(f);
   if (!d) return -1;
   const idx = d.roster.map((m, i) => (roles.includes(m.role) && !m.offstage ? i : -1)).filter((i) => i >= 0);
@@ -403,7 +426,7 @@ export function describeFamOp(s: GameState, o: FamOp): string {
     case 'view': return `${famName(s, o.fam)} think${o.amount >= 0 ? 's better' : 's less'} of you (${o.amount > 0 ? '+' : ''}${o.amount})`;
     case 'tie': return `A new tie: ${TIE_LABEL[o.kind].toLowerCase()} between ${famName(s, o.a)} and ${famName(s, o.b)}`;
     case 'retie': return `The tie becomes ${TIE_LABEL[o.kind].toLowerCase()}`;
-    case 'deal': return `${famName(s, o.fam)} pays you ${fmt(o.weekly)} a week for ${o.weeks} weeks (${o.what})`;
+    case 'deal': return o.weekly < 0 ? `You pay ${famName(s, o.fam)} ${fmt(-o.weekly)} a week for ${o.weeks} weeks (${o.what})` : `${famName(s, o.fam)} pays you ${fmt(o.weekly)} a week for ${o.weeks} weeks (${o.what})`;
     case 'haggle': return `${Math.round(o.chance * 100)}% they take half (${fmt(o.amount / 2)}); otherwise they take it as a no`;
     case 'peace': return `The war with ${famName(s, o.rival as FamKey)} ends in a white peace`;
     case 'cd': return '';
@@ -414,7 +437,7 @@ export function describeFamOp(s: GameState, o: FamOp): string {
   }
 }
 
-function setView(s: GameState, f: FamKey, amount: number, reason: string): void {
+export function setView(s: GameState, f: FamKey, amount: number, reason: string): void {
   if (!amount || f === 'player') return;
   const r = rivalFor(s, f);
   if (r) { if (s.characters[r.leaderId]?.alive) addOpinion(s, r.leaderId, s.playerId, reason, amount, amount < 0 ? 1 : 2); return; }
@@ -675,18 +698,18 @@ const free = (st: FamState, key: string, w: number) => (st.cd[key] ?? 0) <= w;
 const roll = (st: FamState, p: number) => rand(st) < p;
 const pickOf = <T,>(st: FamState, xs: readonly T[]): T => xs[Math.floor(rand(st) * xs.length)];
 
-function famEvent(s: GameState, defId: string, title: string, text: string, choices: EventInstance['choices'], opts: { mandatory?: boolean; priority?: number; fam: string; actors?: string[] }): EventInstance {
+export function famEvent(s: GameState, defId: string, title: string, text: string, choices: EventInstance['choices'], opts: { mandatory?: boolean; priority?: number; fam: string; actors?: string[] }): EventInstance {
   return {
     iid: `ev${s.nextId++}`, defId, week: s.week, mandatory: !!opts.mandatory, priority: opts.priority ?? 48,
     title, text, choices, defaultChoiceId: choices[0].id, meta: { faction: opts.fam, asked: 1 }, actors: opts.actors ?? [],
   };
 }
 
-function pendingFam(s: GameState, defId: string): boolean {
+export function pendingFam(s: GameState, defId: string): boolean {
   return s.eventQueue.some((e) => e.defId === defId) || s.pendingEvents.some((e) => e.defId === defId);
 }
 
-function alive(s: GameState, f: FamKey): boolean {
+export function alive(s: GameState, f: FamKey): boolean {
   const r = rivalFor(s, f);
   return !r || !!s.characters[r.leaderId]?.alive;
 }
@@ -706,7 +729,7 @@ export function familiesWeek(ctx: Ctx): void {
   for (const d of st.deals) {
     if (d.until <= w) continue;
     if (!alive(s, d.fam) || s.wars.some((x) => x.rival === d.fam)) continue;
-    money(ctx, d.weekly, `${famName(s, d.fam)}: ${d.what}`, 'business');
+    money(ctx, d.weekly, `${famName(s, d.fam)}: ${d.what}`, d.weekly < 0 ? 'debt' : 'business');
   }
   const done = st.deals.filter((d) => d.until <= w);
   for (const d of done) note(st, w, `The deal with ${famName(s, d.fam)} (${d.what}) ran its term.`);
@@ -1036,7 +1059,7 @@ function rewardWeek(ctx: Ctx, st: FamState): void {
 }
 
 /** Your men who could be lent for a week (as minds/familyAsks.ts lendableMen; not imported: that module reaches the engine). */
-function lendableMen(s: GameState): Character[] {
+export function lendableMen(s: GameState): Character[] {
   return Object.values(s.characters)
     .filter((c) => c.alive && c.faction === 'player' && c.id !== s.playerId && (c.rank === 'soldier' || c.rank === 'associate') && (c.imprisonedUntil ?? 0) <= s.week && (c.busyUntil ?? 0) <= s.week)
     .sort((a, b) => (a.id < b.id ? -1 : 1));
@@ -1052,8 +1075,11 @@ const NEAR: Record<FamGroup, FamGroup[]> = {
   philly: ['philly', 'ac', 'local'],
   ac: ['ac', 'local', 'philly', 'nj'],
   nj: ['nj', 'nyc', 'ac'],
-  nyc: ['nyc', 'nj'],
-  out: ['out', 'nyc'],
+  nyc: ['nyc', 'nj', 'chi', 'fla'],
+  chi: ['chi', 'out', 'nyc', 'nola'],
+  nola: ['nola', 'fla', 'chi'],
+  fla: ['fla', 'nola', 'nyc'],
+  out: ['out', 'nyc', 'chi'],
 };
 
 export interface JockeyLine { w: number; t: string; a: FamKey; b: FamKey; kind: 'poach' | 'skirmish' | 'court' | 'help' | 'refuse' }

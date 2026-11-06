@@ -1,5 +1,6 @@
 import { NYC_FAMILIES, NYC_FAMILY_IDS, type NycFamilyId } from './nycData';
 import type { RivalId } from './types';
+import { CHICAGO_DEF, CITY_DEFS } from './familyWebCitiesData';
 
 /**
  * THE FAMILIES' WEB, the data: every crime family the house deals with, near
@@ -16,7 +17,7 @@ import type { RivalId } from './types';
  * Shore deals with are his underboss, his consigliere and his capos.
  */
 
-export type FamGroup = 'local' | 'philly' | 'ac' | 'nj' | 'nyc' | 'out';
+export type FamGroup = 'local' | 'philly' | 'ac' | 'nj' | 'nyc' | 'chi' | 'nola' | 'fla' | 'out';
 
 export const GROUP_TITLE: Record<FamGroup, string> = {
   local: 'On the island',
@@ -24,14 +25,19 @@ export const GROUP_TITLE: Record<FamGroup, string> = {
   ac: 'Atlantic City',
   nj: 'North Jersey',
   nyc: 'New York',
+  chi: 'Chicago',
+  nola: 'New Orleans',
+  fla: 'Florida',
   out: 'Out of town',
 };
 
-export const GROUP_ORDER: FamGroup[] = ['local', 'philly', 'ac', 'nj', 'nyc', 'out'];
+export const GROUP_ORDER: FamGroup[] = ['local', 'philly', 'ac', 'nj', 'nyc', 'chi', 'nola', 'fla', 'out'];
 
 /** Philadelphia's other outfits (South Philadelphia is the 'philly' family at the Table). */
 export type PhillyOutfit = 'westphilly' | 'nephilly' | 'northphilly';
-export type OutFamId = PhillyOutfit | 'chicago' | 'vegas' | 'cleveland' | 'newark' | 'boston';
+/** The cities (familyWebCities.ts): New Orleans, Florida's families, the Havana men, the Colombian connection. */
+export type CityFamId = 'nola' | 'tampa' | 'biscayne' | 'havana' | 'colombians';
+export type OutFamId = PhillyOutfit | 'chicago' | 'vegas' | 'cleveland' | 'newark' | 'boston' | CityFamId;
 
 /** A family in the web: a rival on the board, a New York family, an outfit out of town, or the boss's own house. */
 export type FamKey = 'player' | Exclude<RivalId, 'law'> | NycFamilyId | OutFamId;
@@ -225,12 +231,7 @@ export const FAMILY_DEFS: FamDef[] = [
     blurb: 'Southie\'s Irish gang. Danny Kessler\'s mother was a Corrigan.',
     roster: [{ name: 'Francis Corrigan', role: 'boss' }, { name: 'Kevin "Mouse" Corrigan', role: 'capo', note: 'the books' }],
   },
-  {
-    id: 'chicago', name: 'The Midway Outfit', short: 'Chicago', group: 'out', seat: 'Chicago', boss: 'Tony Varrone', city: 'chicago', reach: 3, men: 300, made: 110, crews: 20, eth: 'Italian',
-    rackets: ['everything west of Ohio', 'the racing wire', 'the desert skim'],
-    blurb: 'They run Las Vegas from Chicago and they do not share. Salvatore Pellegrini is their captain for the East.',
-    roster: [{ name: 'Tony Varrone', role: 'boss' }, { name: 'Salvatore Pellegrini', role: 'capo', note: 'the Pellegrini house; the unions' }],
-  },
+  CHICAGO_DEF,
   {
     id: 'vegas', name: 'The Silver Strip Partners', short: 'Las Vegas', group: 'out', seat: 'Las Vegas', boss: 'Sid Wexler', city: 'vegas', reach: 3, men: 60, made: 0, crews: 4, eth: 'Jewish',
     rackets: ['casino points', 'the count room'],
@@ -243,6 +244,7 @@ export const FAMILY_DEFS: FamDef[] = [
     blurb: 'Lake Erie money with a hand in the Vegas casinos. Angelo Galvani is the Syndicate\'s underboss.',
     roster: [{ name: 'Geza Kovacs', role: 'boss' }, { name: 'Angelo Galvani', role: 'underboss', note: 'the Galvani house' }],
   },
+  ...CITY_DEFS,
 ];
 
 export const FAMILY_BY_ID: Record<string, FamDef> = Object.fromEntries(FAMILY_DEFS.map((d) => [d.id, d]));
