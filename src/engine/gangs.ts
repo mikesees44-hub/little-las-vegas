@@ -306,8 +306,10 @@ function choices(s: GameState, g: Gang): EventInstance['choices'] {
 }
 
 function gangEvent(s: GameState, g: Gang, defId: string, title: string, text: string): EventInstance {
+  // A gang turning up is news the boss always hears; the reminders take their chances with the week's other business.
+  const first = defId === 'gang_new';
   return {
-    iid: `ev${s.nextId++}`, defId, week: s.week, mandatory: false, priority: 50, title, text,
+    iid: `ev${s.nextId++}`, defId, week: s.week, mandatory: first, priority: first ? 54 : 49, title, text,
     choices: choices(s, g), defaultChoiceId: 'ignore', meta: { gang: g.id }, actors: [],
   };
 }
