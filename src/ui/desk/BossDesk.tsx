@@ -24,6 +24,7 @@ import { deskBundles, type WeekPlanRow } from '../../engine/bundles';
 import { BundleCard, WeekDoneList, type SettledRow, type WeekDone } from './Bundles';
 import { useViewMode, ViewToggle } from '../components/ViewToggle';
 import { SameAsLastWeek } from './SameAsLastWeek';
+import { MoneyStrip } from './MoneyStrip';
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
 function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
@@ -290,6 +291,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         </div>
         {!inDrawer && <div className="hidden sm:block"><DeskClock s={s} className="text-[11px] sm:text-[13px]" /></div>}
       </div>
+      {(filter === 'all' || filter === 'money') && (!dom || dom === 'money') && <MoneyStrip s={s} />}
       {ltView(s).offer && api.onOffer && (
         <div className="mt-1.5 flex flex-wrap items-center gap-2 rounded border border-gold-600/60 bg-gold-500/10 px-2 py-1.5 text-[12px] text-stone-200" data-testid="desk-offer">
           <span className="min-w-0 flex-1">Your underboss offers to handle the routine: the crews, the rackets, the street, the papers and the quarrels, and each capo his own territory. Big steps still wait for you.</span>
