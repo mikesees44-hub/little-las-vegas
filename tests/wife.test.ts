@@ -324,8 +324,8 @@ describe('wife: on the screen', () => {
     s.wife!.why.push({ w: s.week, t: 'Home 3 of 4 nights', v: 4 });
     const html = renderToString(createElement(WifeCard, { s }));
     for (const id of ['wife-card', 'wife-nights', 'wife-week', 'wife-susp', 'wife-susp-why', 'wife-opinion', 'wife-acts', 'wife-act-propose', 'wife-auto', 'wife-dinner-6-home']) expect(html).toContain(`data-testid="${id}"`);
-    expect(html).toContain('Nights home this week: 3/4');
-    expect(html).toMatch(/Propose an arrangement \(\d+%\)/);
+    expect(html.replace(/<!-- -->/g, '')).toContain('Nights home this week: 3/4');
+    expect(html.replace(/<!-- -->/g, '')).toMatch(/Propose an arrangement \(\d+%\)/);
     const ask = renderToString(createElement(WifeDinnerAsk, { s }));
     expect(ask).toContain('Should I expect you for dinner?');
     for (const id of ['wife-dinner-home', 'wife-dinner-out', 'wife-dinner-late']) expect(ask).toContain(`data-testid="${id}"`);

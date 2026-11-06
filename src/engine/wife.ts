@@ -1135,6 +1135,8 @@ export function wifeNeeds(s: GameState, orders: readonly PlayerAction[] = []): s
   const W = wifeRecord(s);
   if (W && W.susp >= 50) return `${w.firstName} is ${suspWord(W.susp).toLowerCase()}`;
   if (dinnerAsk(s)) return `${w.firstName} asks if she should expect you for dinner`;
+  // The week's dinners still to tell her (unless he lets the card answer for him).
+  if (!W?.auto && p.rows.some((r) => r.day >= today(s) && !r.ans && r.kind !== 'neutral' && r.kind !== 'trip')) return `Tell ${w.firstName} which nights to expect you`;
   return undefined;
 }
 
