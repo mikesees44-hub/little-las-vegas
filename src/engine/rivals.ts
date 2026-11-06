@@ -320,6 +320,11 @@ export function executeMove(ctx: Ctx, r: Rival, c: Candidate): void {
   }
 }
 
+/** Odds a rival strike that catches one of your associates kills him (before your protection detail). */
+export const ASSOCIATE_KILL = 0.3;
+/** The same, when the rival boss is cruel or hot-headed. */
+export const ASSOCIATE_KILL_HARSH = 0.5;
+
 function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar: number }): void {
   const s = ctx.s;
   const boss = player(s);
@@ -363,7 +368,13 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
   const soldiers = crew(s).filter((c) => (c.rank === 'soldier' || c.rank === 'associate') && isFree(s, c));
   if (soldiers.length && chance(s, 0.25)) {
     const v = pick(s, soldiers);
-    const lethal = (hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed')) && chance(s, 0.15 * (1 - Math.min(0.7, 0.5 * protect)));
+    // An associate is not made: nobody has to ask the Table before killing him, so any crew will.
+    // A made soldier still takes a cruel or hot-headed boss.
+    const guard = 1 - Math.min(0.7, 0.5 * protect);
+    const harsh = hasTrait(leader, 'Cruel') || hasTrait(leader, 'Hot-headed');
+    const lethal = v.rank === 'associate'
+      ? chance(s, (harsh ? ASSOCIATE_KILL_HARSH : ASSOCIATE_KILL) * guard)
+      : harsh && chance(s, 0.15 * guard);
     if (lethal) {
       killCharacter(ctx, v.id, `shot by the ${r.shortName} crew`, r.id);
       extra = ` ${displayName(v)} was killed.`;

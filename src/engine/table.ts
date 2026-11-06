@@ -20,6 +20,8 @@ import type { Character, Choice, Dispute, DisputeKind, Effect, EventInstance, Fa
  */
 
 export const HEARING_DELAY = 2;
+/** How far every vote leans toward granting a sanction (a hit on a made man), whoever asks for it. */
+export const SANCTION_LEAN = 15;
 
 export function tableMembers(s: GameState): Character[] {
   const philly = s.rivals.find((r) => r.id === 'philly');
@@ -78,6 +80,8 @@ export function forecast(s: GameState, d: Dispute): Lean[] {
     if (s.flags.brunoKnows) reasons.push({ label: 'You touched narcotics', value: m.faction === 'philly' ? -30 : -10 });
     if (m.faction === 'philly' && m.id === chair(s)?.id) reasons.push({ label: 'Family heat on you', value: -Math.round(s.heat.family / 4) });
     if (d.kind === 'sanction' && d.plaintiff !== 'player') reasons.push({ label: 'You killed a made man without asking', value: -20 });
+    // The Table would rather sanction one death than watch a feud spread: a request to kill leans toward yes.
+    if (d.kind === 'sanction') reasons.push({ label: 'Better one man than a war', value: d.plaintiff === 'player' ? SANCTION_LEAN : -SANCTION_LEAN });
     reasons.push(...dynastyTableLean(s, m));
     const pv = perkMod(s, 'vote');
     if (pv) reasons.push({ label: 'Your standing at the Table (perks)', value: pv });
