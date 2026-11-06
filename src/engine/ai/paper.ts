@@ -212,14 +212,16 @@ export function validatePage(s: GameState, raw: unknown, b: PaperBrief): V {
     letter = { from: lf, b: lb };
   }
   // The words: nothing explicit or real, no name or figure that was not printed.
-  const printed = vocab(b.printed);
+  // Printed facts, plus the island's own places (a district is a place, not a person: "the Bay Docks" may be named in gossip).
+  const printed = vocab(b.printed, ...s.districts.map((d) => d.name), 'Wildwood', 'Boardwalk', 'Shore');
   const all = vocab(b.text);
   const texts = [headline, deck ?? '', ...stories.flatMap((x) => [x.h, x.b]), gh ?? '', gb, sh, sb, letter?.from ?? '', letter?.b ?? ''];
   for (const t of texts) {
     if (!t) continue;
     const bad = unfit(t, all);
     if (bad) return { ok: false, why: bad };
-    const inv = inventedNames(t, printed);
+    // A pen name is a pen name ("A Pacific Avenue Merchant", as the prompt itself suggests): real people are still checked below.
+    const inv = t === letter?.from ? [] : inventedNames(t, printed);
     if (inv.length) return { ok: false, why: `names not printed: ${inv.join(', ')}` };
     const who = badCharNames(s, t, new Set(), printed);
     if (who.length) return { ok: false, why: `people not printed: ${who.join(', ')}` };

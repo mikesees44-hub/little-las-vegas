@@ -132,6 +132,9 @@ export function counselBrief(s: GameState): CounselBrief {
     L.money.push(`Last week ${fmtMoney(mv.inTotal)} came in and ${fmtMoney(mv.outTotal)} went out: net ${fmtMoney(mv.net)}.`);
     const drains = mv.uses.filter((u) => u.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 3);
     if (drains.length) L.money.push(`Biggest drains: ${drains.map((d) => `${d.label} ${fmtMoney(d.amount)}`).join(', ')}.`);
+    // The single biggest lines out, by name (the groups alone say "Other").
+    const lines = (s.lastReport?.lines ?? []).filter((l) => l.amount < 0).sort((a, b) => a.amount - b.amount).slice(0, 4);
+    if (lines.length) L.money.push(`Biggest single payments last week: ${lines.map((l) => `${String(l.label).replace(/\s*\(.*$/, '').slice(0, 60)} ${fmtMoney(-l.amount)}`).join('; ')}.`);
     const srcs = mv.sources.filter((u) => u.amount > 0).sort((a, b) => b.amount - a.amount).slice(0, 3);
     if (srcs.length) L.money.push(`Biggest earners: ${srcs.map((d) => `${d.label} ${fmtMoney(d.amount)}`).join(', ')}.`);
   }

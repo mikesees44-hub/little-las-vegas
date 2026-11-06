@@ -638,6 +638,11 @@ export function validateDiplo(s: GameState, rival: string, raw: unknown): DiploA
   if (typeof o.reply !== 'string') return undefined;
   const reply = clean(o.reply, MAX_DIPLO_REPLY);
   if (!reply) return undefined;
+  // Never at this table: asking for one of the boss's men by name (the scripted line answers instead).
+  if (/\b(give me|hand (him )?over|turn (him )?over|deliver|send me)\b/i.test(reply)) {
+    const mine = Object.values(s.characters).filter((c) => c.alive && c.faction === 'player' && c.id !== s.playerId);
+    if (mine.some((c) => new RegExp(`\\b(${c.firstName}|${c.lastName})\\b`).test(reply))) return undefined;
+  }
   const intent = (DIPLO_INTENTS as readonly string[]).includes(String(o.intent)) ? (o.intent as DiploIntent) : 'deflect';
   let status = (DEAL_STATUS as readonly string[]).includes(String(o.deal_status)) ? (o.deal_status as DealStatus) : 'none';
   const deal = o.deal == null ? [] : validateDeal(s, rival, o.deal);
@@ -743,7 +748,9 @@ export function sitStep(s: GameState, sd0: SitDown, move: BossMove, ai?: DiploAi
         overridden = true;
         const ct = counterTo(s, st, ai.deal, need);
         sd.table = ct ? { terms: ct, by: 'them', ok: true } : sd.table;
-        line = ct ? `${ai.reply} ${counterLine(s, sd.rival, ct, key)}` : ai.reply;
+        // His words promised more than his family will give: the words go, the real counter stays.
+        sd.log.push({ who: 'narrator', text: `${first} thinks better of it.` });
+        line = ct ? counterLine(s, sd.rival, ct, key) : pick(REFUSE, key);
       }
     } else if (ai.status === 'accepting' && sd.table && sd.table.by === 'boss') {
       const fair = need - dealValue(s, sd.rival, sd.table.terms) <= SLACK;
