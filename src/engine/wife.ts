@@ -15,7 +15,6 @@ import { addSecret } from './secrets';
 import { fixerOf } from './single';
 import { houseById } from './familyState';
 import { chooseHeir } from './dynasty';
-import { cloneState } from './engine';
 import type { Character, Effect, EventInstance, FactionId, GameState, PlayerAction, RivalId } from './types';
 
 /**
@@ -203,7 +202,9 @@ function note(s: GameState, W: WifeState, t: string, p: string[] = [], heard = f
 function bump(s: GameState, W: WifeState, v: number, t: string): void {
   v = Math.round(v);
   if (!v) return;
+  const was = W.susp;
   W.susp = clamp(W.susp + v);
+  if (W.susp === was) return;
   W.why.push({ w: s.week, t, v });
   if (W.why.length > 16) W.why.splice(0, W.why.length - 16);
 }
@@ -1071,7 +1072,8 @@ export function wifeAct(s0: GameState, k: WifeKey, man?: string): { state: GameS
     s1 = setDinner(s1, free, 'home');
     return { state: s1, line: `${DAY_NAMES[free]}: an evening with ${w0.firstName}.`, ok: true };
   }
-  const s = cloneState(s0);
+  // A deep copy (not engine.ts' cloneState: importing the engine here would knot the module graph).
+  const s = structuredClone(s0);
   const ctx = newCtx(s);
   const W = ensureWife(s, wifeHere(s)!);
   const n0 = W.log.length;
