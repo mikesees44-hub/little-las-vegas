@@ -6,6 +6,7 @@ import type { GameState } from '../../engine/types';
 import { whatChanged } from '../../engine/weekDiff';
 import { domClass, type Domain } from '../domain';
 import { Glossed } from '../clarity/Term';
+import { SomewhereToGo } from '../shell/sections/Outposts';
 
 /**
  * THE TOP OF THE DESK (EASIER_NOT_SHALLOWER): three things a player reads before the papers.
@@ -124,6 +125,8 @@ export function DeskTop({ s, onGo, onFile }: { s: GameState; onGo: Go; onFile: (
     <>
       <GoalsStrip s={s} onGo={onGo} />
       <StormChips s={s} onGo={onGo} />
+      {/* Losing a war or heavy heat: somewhere to go (engine/outposts.ts safe passage), the odds before going. */}
+      <SomewhereToGo s={s} />
       <WhatChangedCard s={s} onFile={onFile} />
     </>
   );

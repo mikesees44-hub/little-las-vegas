@@ -8,6 +8,7 @@ import { CharLink } from '../../components/People';
 import { fmt$ } from '../../format';
 import { colOf, cokeActions, LEVEL_WORD, market, weeklyTake } from '../../../engine/colombia';
 import { gangActions, gangsOf, KIND_LABEL, KIND_WANT } from '../../../engine/gangs';
+import { LieLowPlanner, OutpostPlanner, Outposts, postCityOf } from './Outposts';
 import { CASINOS, holdersLine, lvActions, lvOf, pointsIn, pointWeekly } from '../../../engine/vegas';
 
 const fam = (op: FamAction): PlayerAction => ({ kind: 'fam', op });
@@ -42,6 +43,9 @@ export function TieList({ s, id, max }: { s: GameState; id: FamKey; max?: number
 
 function Card({ s, c }: { s: GameState; c: FamCard }) {
   const [open, setOpen] = useState(false);
+  const [go, setGo] = useState<'' | 'post' | 'lie'>('');
+  const city = postCityOf(c.id);
+  const haven = s.families && ['vegas', 'chicago', 'nola', 'biscayne', 'tampa', 'cleveland', 'boston'].includes(c.id);
   return (
     <li className="llv-card-box llv-card-plain p-2.5 min-w-0" data-testid={`fam-card-${c.id}`}>
       <div className="flex justify-between gap-2">
@@ -60,6 +64,14 @@ function Card({ s, c }: { s: GameState; c: FamCard }) {
       {c.deals.map((d) => <div key={d.what} className={`text-[11px] ${d.weekly < 0 ? 'text-amber-300' : 'text-emerald-300'}`}>{d.weekly < 0 ? `You pay ${fmt$(-d.weekly)}/wk` : `Pays you ${fmt$(d.weekly)}/wk`}: {d.what} (to week {d.until})</div>)}
       {c.id === 'colombians' && <CokePanel s={s} />}
       {c.id === 'vegas' && <StripPanel s={s} />}
+      {(city || haven) && (
+        <div className="mt-1 flex flex-wrap gap-1">
+          {city && <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => setGo(go === 'post' ? '' : 'post')} data-testid={`fam-post-${c.id}`}>Send a man to start something here…</button>}
+          {haven && <button type="button" className="btn-ghost px-2 py-0.5 text-[11px]" onClick={() => setGo(go === 'lie' ? '' : 'lie')} data-testid={`fam-lie-${c.id}`}>Lie low here…</button>}
+        </div>
+      )}
+      {go === 'post' && city && <div className="mt-1"><OutpostPlanner s={s} city={city} /></div>}
+      {go === 'lie' && <div className="mt-1"><LieLowPlanner s={s} /></div>}
       <button type="button" className="btn-ghost mt-1 px-2 py-0.5 text-[11px]" onClick={() => setOpen(!open)} data-testid={`fam-open-${c.id}`}>{open ? 'Close' : 'Roster & deal with them…'}</button>
       {open && (
         <div className="mt-1 space-y-1.5">
@@ -179,7 +191,7 @@ function Web({ s }: { s: GameState }) {
 
 /** Rivals ▸ The other families ▸ Connections: every family by where it sits, its ties and roster, the web, the news. */
 export function Connections({ s }: { s: GameState }) {
-  const [view, setView] = useState<'list' | 'web'>('list');
+  const [view, setView] = useState<'list' | 'web' | 'posts'>('list');
   const st = s.families;
   if (!st) return null;
   const feuds = st.ties.filter((t) => (t.kind === 'feud' || t.kind === 'broken') && t.a !== 'player' && t.b !== 'player');
@@ -190,10 +202,11 @@ export function Connections({ s }: { s: GameState }) {
         <div className="flex gap-1">
           <button type="button" className={view === 'list' ? 'btn-gold px-2 py-0.5 text-[11px]' : 'btn-ghost px-2 py-0.5 text-[11px]'} onClick={() => setView('list')} data-testid="connections-list-tab">By family</button>
           <button type="button" className={view === 'web' ? 'btn-gold px-2 py-0.5 text-[11px]' : 'btn-ghost px-2 py-0.5 text-[11px]'} onClick={() => setView('web')} data-testid="connections-web-tab">The web</button>
+          <button type="button" className={view === 'posts' ? 'btn-gold px-2 py-0.5 text-[11px]' : 'btn-ghost px-2 py-0.5 text-[11px]'} onClick={() => setView('posts')} data-testid="connections-outposts-tab">Outposts{s.posts?.list.some((o) => o.status === 'run') ? ` (${s.posts.list.filter((o) => o.status === 'run').length})` : ''}</button>
         </div>
       </div>
       <p className="llv-prose text-[12px]">A family's stance toward you is what it thinks of you plus its ties: friends of your friends warm to you, friends of your enemies cool. Send an envoy, do a favor, go into business, marry into them, or broker a truce between two families.</p>
-      {view === 'web' ? (
+      {view === 'posts' ? <Outposts s={s} /> : view === 'web' ? (
         <div className="space-y-2">
           <Web s={s} />
           {feuds.length > 0 && (
