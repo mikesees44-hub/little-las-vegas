@@ -2,13 +2,13 @@ import { previewAction } from './actions';
 import { touchesAMan } from './bundles';
 import { isOpen } from './business';
 import { seasonInfo } from './calendar';
-import { crewBoard } from './crewBoard';
+import { crewBoard as crewBoard0 } from './crewBoard';
 import { daysOf } from './days';
 import { lapsesThisWeek, readyReview } from './desk';
 import { fmtMoney } from './effects';
 import { heavyOf } from './heavy';
 import { heldReturns } from './invest';
-import { mensMoney } from './mensMoney';
+import { mensMoney as mensMoney0 } from './mensMoney';
 import { moneyView } from './money';
 import { opinion } from './relations';
 import { nightsPlan, wifeHere } from './wife';
@@ -22,6 +22,20 @@ import type { GameState, PlayerAction } from './types';
  * odds, and nothing here ever proposes an order that kills, jails, exiles or
  * hands over a man of the boss's ("Fix all" only takes safe ones).
  */
+
+/* One read of the crew board and the men's money per state (the top bar, the Desk and every face share it). */
+const boardMemo = new WeakMap<GameState, ReturnType<typeof crewBoard0>>();
+const moneyMemo = new WeakMap<GameState, ReturnType<typeof mensMoney0>>();
+function crewBoard(s: GameState): ReturnType<typeof crewBoard0> {
+  let v = boardMemo.get(s);
+  if (!v) { v = crewBoard0(s); boardMemo.set(s, v); }
+  return v;
+}
+function mensMoney(s: GameState): ReturnType<typeof mensMoney0> {
+  let v = moneyMemo.get(s);
+  if (!v) { v = mensMoney0(s); moneyMemo.set(s, v); }
+  return v;
+}
 
 /* ------------------------------------------------------------------ */
 /* Safe orders                                                         */

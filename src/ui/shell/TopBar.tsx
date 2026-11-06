@@ -20,7 +20,7 @@ import { Num, type Reason } from './Num';
 import { moneyTop } from '../../engine/money';
 import { useShell } from './context';
 import { OrdersTray, useOrders } from '../components/Orders';
-import { EarnChip } from './EarnChip';
+import { FixChips } from './FixChips';
 import { PinTray } from './PinTray';
 import { SameAsLastWeekList, useHasLastWeek } from '../desk/SameAsLastWeek';
 import { queuedMoney } from '../../engine/actions';
@@ -454,7 +454,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, turn, speed, s
             </div>
             <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />
             {phone}
-            <EarnChip s={s} />
+            <FixChips s={s} />
             <PinTray s={s} />
             {onFind && (
               <button type="button" onClick={onFind} data-testid="find-button" title="Do something (talk, pay, order, plan, buy, travel, hurt, protect) or find a person, a place, a screen (Ctrl+K or /)"
