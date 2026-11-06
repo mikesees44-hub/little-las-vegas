@@ -156,7 +156,7 @@ function candidates(s: GameState, adult: boolean): string[] {
 const ORDER: BookSection[] = BOOK_SECTIONS.map((x) => x.id);
 
 /** The little black book, derived from the game as it stands (adults only; adult sections only with mature content on). */
-export function blackBook(s: GameState): BlackBook {
+export function littleBlackBook(s: GameState): BlackBook {
   const adult = adultOn(s);
   const boss = player(s);
   const D = s.dating;

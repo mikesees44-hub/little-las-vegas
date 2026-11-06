@@ -8,6 +8,7 @@ import { Face } from './ink';
 import { CloseStrip, PinStar } from '../people/ClosePeople';
 import { PeopleLedger, takePendingPeople, type Mode as PeopleMode } from '../people/PeopleLedger';
 import { OfferCard } from '../borgata/Payroll';
+import { BlackBookPanel as LittleBlackBook } from '../dating/BlackBook';
 
 const GROUP_DOM: Record<BookGroup, string> = { men: 'crew', family: 'family', law: 'law', rivals: 'rivals', women: 'romance', business: 'money' };
 const DOM_RGB: Record<string, string> = { crew: 'var(--d-crew)', family: 'var(--d-family)', law: 'var(--d-law)', rivals: 'var(--d-rivals)', romance: 'var(--d-romance)', money: 'var(--d-money)' };
@@ -19,7 +20,7 @@ const DOM_RGB: Record<string, string> = { crew: 'var(--d-crew)', family: 'var(--
  */
 export function BlackBook({ s, onChar, onPhone, onOrder }: { s: GameState; onChar: (id: string) => void; onPhone: (p: Partial<DialSpec>) => void; onOrder: (a: PlayerAction) => void }) {
   // The people ledger (ui/people/PeopleLedger.tsx): the same people, with the boss's private read on each.
-  const [page, setPage] = useState<{ v: 'cards' | 'people'; mode?: PeopleMode }>(() => { const m = takePendingPeople(); return m ? { v: 'people', mode: m } : { v: 'cards' }; });
+  const [page, setPage] = useState<{ v: 'cards' | 'people' | 'women'; mode?: PeopleMode }>(() => { const m = takePendingPeople(); return m ? { v: 'people', mode: m } : { v: 'cards' }; });
   const all = useMemo(() => blackBook(s), [s]);
   const fav = useMemo(() => favorsLedger(s), [s]);
   const [g, setG] = useState<BookGroup | 'all'>('all');
@@ -32,8 +33,10 @@ export function BlackBook({ s, onChar, onPhone, onOrder }: { s: GameState; onCha
     <div className="mb-2 flex flex-wrap gap-1" role="tablist" aria-label="The black book">
       <button type="button" role="tab" aria-selected={page.v === 'cards'} className={`llv-ink-btn ${page.v === 'cards' ? 'llv-ink-btn-primary' : ''}`} onClick={() => setPage({ v: 'cards' })} data-testid="bb-page-cards">The cards</button>
       <button type="button" role="tab" aria-selected={page.v === 'people'} className={`llv-ink-btn ${page.v === 'people' ? 'llv-ink-btn-primary' : ''}`} onClick={() => setPage({ v: 'people' })} data-testid="bb-page-people">The people: your read on each</button>
+      <button type="button" role="tab" aria-selected={page.v === 'women'} className={`llv-ink-btn ${page.v === 'women' ? 'llv-ink-btn-primary' : ''}`} onClick={() => setPage({ v: 'women' })} data-testid="bb-page-women">The little black book</button>
     </div>
   );
+  if (page.v === 'women') return <div className="mx-auto max-w-[1100px]">{pages}<div className="rounded bg-noir-900 p-2"><LittleBlackBook s={s} /></div></div>;
   if (page.v === 'people') return <div className="mx-auto max-w-[1100px]">{pages}<PeopleLedger s={s} initialMode={page.mode} /></div>;
   return (
     <div className="llv-paper-plain mx-auto max-w-[1100px] rounded p-3 sm:p-4" data-testid="black-book">

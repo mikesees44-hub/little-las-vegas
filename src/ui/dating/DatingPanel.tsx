@@ -16,6 +16,7 @@ import { SingleCards } from './SingleCards';
 import { bestChances } from '../../engine/datingPicks';
 import { canDateTalk, dateStepFor, stepOf } from '../../engine/dateTalk';
 import { DateTalkButton } from './DateTalk';
+import { BlackBookPanel } from './BlackBook';
 
 /** Your best chances (engine/datingPicks.ts): the women most likely to say yes to the next step, each one tap. */
 function BestChances({ s }: { s: GameState }) {
@@ -47,7 +48,7 @@ function BestChances({ s }: { s: GameState }) {
  * advice). Nothing is removed: steps that can't be taken show why.
  */
 
-export type DatingTab = 'together' | 'people' | 'adult' | 'family';
+export type DatingTab = 'together' | 'people' | 'adult' | 'family' | 'book';
 
 /** Where the next opening of the screen should land (a venue, the phone): read once by the panel. */
 let pending: { tab?: DatingTab; venue?: string } | undefined;
@@ -69,7 +70,7 @@ export function DatingLink({ s, tab, venue, text }: { s: GameState; tab?: Dating
     </button>
   );
 }
-const TABS: [DatingTab, string][] = [['together', 'Dates & relationships'], ['people', 'People you know'], ['adult', 'Adult services'], ['family', 'Family & consequences']];
+const TABS: [DatingTab, string][] = [['together', 'Dates & relationships'], ['people', 'People you know'], ['adult', 'Adult services'], ['family', 'Family & consequences'], ['book', 'The little black book']];
 
 function Seg<T extends string>({ value, options, labels, onPick, testid }: { value: T; options: T[]; labels: Record<T, string>; onPick: (v: T) => void; testid: string }) {
   return (
@@ -301,7 +302,9 @@ export function DatingPanel({ s, initialTab, venue: venue0 }: { s: GameState; in
         </section>
       )}
 
-      {v.recent.length > 0 && (
+      {tab === 'book' && <BlackBookPanel s={s} />}
+
+      {v.recent.length > 0 && tab !== 'book' && (
         <section>
           <div className="text-[10px] uppercase tracking-[0.25em] text-stone-500">Lately</div>
           <ul className="mt-1 space-y-0.5 text-[11px] text-stone-400" data-testid="dating-recent">

@@ -65,6 +65,7 @@ import { NightPanel } from '../ears/EarsPanel';
 import { NightlifePanel } from '../nightlife/NightlifePanel';
 import { ShowbizPanel } from '../showbiz/ShowbizPanel';
 import { HerBook } from '../town/HerBook';
+import { BlackBookPanel } from '../dating/BlackBook';
 import { DatingPanel } from '../dating/DatingPanel';
 import { YourPeople } from '../bonds/YourPeople';
 import { AttachmentBoard } from '../ears/Connections';
@@ -129,6 +130,7 @@ export const PANELS: PanelDef[] = [
       { id: 'character', label: 'Character', render: (s) => stack(<PowerPart key="st" s={s} part="station" />, <CharacterSheet key="cs" s={s} id={s.playerId} onClose={() => {}} embedded />) },
       { id: 'people', label: 'Your people', blurb: 'Your wife, your goomars, your kids, your friends, your crew and your enemies: how they feel about you, what they remember, what they want right now.', render: (s) => <YourPeople s={s} /> },
       { id: 'dating', label: 'Relationships & Dating', blurb: 'People you know, dates and relationships, adult services with their prices, and family & consequences. She always decides.', render: (s) => <DatingPanel s={s} /> },
+      { id: 'blackbook', label: 'The little black book', blurb: 'Every woman in your life on one page: interested, dating, women who want you, business partners, secrets, loyal, trouble (and, with mature content on, one night and releases). Each one tap to act; she decides.', render: (s) => <BlackBookPanel s={s} /> },
       { id: 'lifestyle', label: 'Lifestyle & Perks', render: (s) => <LifestylePanel s={s} /> },
       { id: 'pocket', label: 'Your Pocket', wide: true, blurb: 'Spend it on yourself: his house, a summer place, a condo in Florida, cars, the watch and the cufflinks, jewelry and furs for her, nights out, her apartment. Every card says what it does before you buy: respect, who thinks better of you, the upkeep, and what the IRS counts.', render: (s) => <PocketShop s={s} /> },
       { id: 'store', label: 'The Store', wide: true, blurb: 'Everything money buys, in eight tabs: property and legitimate businesses, vehicles and race cars, crew & services, equipment, the armory, lifestyle (watches, jewelry, racehorses, vacations), investments, family & legacy. Inspect, ask your adviser, negotiate, buy or finance. Share the wealth, and plan a vacation for the whole family.', render: (s) => <StorePanel s={s} /> },

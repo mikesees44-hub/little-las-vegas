@@ -90,7 +90,7 @@ export const NAV: Record<HomeId, NavGroupDef[]> = {
   house: [
     { items: [
       { keys: ['you.character', 'you.lifestyle'], icon: '☺', label: 'You', sub: 'Your skills, health, traits and standing, and how you rule: lifestyle and perks.', views: ['Your sheet', 'How you rule'], words: 'your sheet character lifestyle perks how you rule' },
-      { keys: ['you.people', 'you.dating', 'house.activities'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel and want. Dates, and dinners and outings.', views: ['Your people', 'Relationships & Dating', 'Dinners & outings'], words: 'dinners outings activities host a dinner feast' },
+      { keys: ['you.people', 'you.dating', 'you.blackbook', 'house.activities'], icon: '♥', label: 'Your people & dating', sub: 'Wife, goomars, kids, friends, enemies: what they feel and want. Dates, the little black book, and dinners and outings.', views: ['Your people', 'Relationships & Dating', 'The little black book', 'Dinners & outings'], words: 'dinners outings activities host a dinner feast black book little black book women girls girlfriends' },
       { keys: ['house.tree', 'house.houses'], icon: '♔', label: 'Your house', sub: 'Your wife, your children, your house, and every family\'s tree back to the old country.', views: ['Family tree', 'Every house'] },
       { keys: ['house.marriages'], icon: '⚭', label: 'Marriages & children', sub: 'Matches between houses, and the kids growing up.' },
       { keys: ['house.court', 'house.succession'], icon: '♕', label: 'Succession', sub: 'Your heir, who backs whom as far as you know, the underboss\'s court, the promises.', views: ['Who backs whom', 'The heir & the law'], words: 'the succession heir shadow court' },

@@ -57,7 +57,7 @@ const MAP: Record<string, Domain> = {
   diplomacy: 'rivals', chronicle: 'politics', map: 'shore', 'holdings.hq': 'law', 'borgata.protect': 'law', 'you.lifestyle': 'family',
   'town.case': 'law', 'town.cityhall': 'politics', 'town.patronage': 'politics', 'town.underbelly': 'crew', 'town.hoods': 'shore',
   'town.night': 'romance', 'town.women': 'money', 'town.nightlife': 'romance', 'town.attached': 'romance', 'town.happening': 'shore',
-  'diplomacy.table': 'politics', 'diplomacy.pacts': 'politics', 'ops.travel': 'shore', 'you.walk': 'shore', 'you.dating': 'romance',
+  'diplomacy.table': 'politics', 'diplomacy.pacts': 'politics', 'ops.travel': 'shore', 'you.walk': 'shore', 'you.dating': 'romance', 'you.blackbook': 'romance',
   'you.store': 'money', 'you.pocket': 'money', 'you.spend': 'money', 'you.possessions': 'money', 'house.court': 'family', 'house.succession': 'family',
   'borgata.earnings': 'money', 'borgata.take': 'money', 'ops.missions': 'crew',
   // The Store's tabs (engine/storeData.ts STORE_TABS), namespaced: what the thing bought is part of
