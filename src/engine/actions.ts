@@ -26,6 +26,8 @@ import { commitTravel, directOrderBlock, messengerDelay, previewTravel } from '.
 import { homeOnlyBlock } from './visitAway';
 import { commitNyc, previewNyc } from './nyc';
 import { previewFam } from './familyWeb';
+import { previewCoke } from './colombia';
+import { previewGang } from './gangs';
 import { applyEffects, fmtMoney } from './effects';
 import { BANK_COST, bankChecklist, frontMan, frontManClean, LAND_COST, LAND_SALE, LICENSE_COST } from './goals';
 import { reached } from './history';
@@ -187,7 +189,7 @@ const DEFS: { [K in PlayerAction['kind']]: Def<K> } = {
   spend: { preview: (s, a) => previewSpend(s, a.op), commit: (ctx, a) => commitSpend(ctx, a.op) },
   nyc: { preview: (s, a) => previewNyc(s, a.op), commit: (ctx, a) => commitNyc(ctx, a.op) },
   /** The families' web (familyWeb.ts): everything lands through the 'fam' effect. */
-  fam: { preview: (s, a) => previewFam(s, a.op) },
+  fam: { preview: (s, a) => (a.op.op === 'coke' ? previewCoke(s, a.op) : a.op.op === 'gang' ? previewGang(s, a.op) : previewFam(s, a.op)) },
   askPermission: {
     preview: (s, a) => {
       const c = CITIES_BY_ID[a.city];

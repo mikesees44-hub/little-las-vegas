@@ -91,6 +91,22 @@ export interface FamState {
   month?: string;
   /** How many of the cities' ties (familyWebCitiesData.ts CITY_TIES) are in the web: a save from before them gets the rest, once. */
   c2?: number;
+  /** The Colombian connection (colombia.ts): absent until the boss touches it. */
+  col?: ColState;
+}
+
+/** The import racket the boss can touch (colombia.ts): abstract, never a method. */
+export interface ColState {
+  /** 0 out, 1 a trickle, 2 a steady line, 3 a big line. */
+  lvl: number;
+  /** The week he went in (first time). */
+  since: number;
+  /** What it has paid him in all. */
+  tot: number;
+  /** Philadelphia knows (the week it found out). */
+  known?: number;
+  /** A rival cut in: its id and its share (0 … 0.5). */
+  cut?: { fam: string; share: number };
 }
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
@@ -421,7 +437,11 @@ export type FamOp =
   /** An outfit's strength changes. */
   | { op: 'size'; fam: FamKey; amount: number }
   /** A stake on a long shot (the money is already spent): on the web's dice, a deal pays, or the money is gone. */
-  | { op: 'gamble'; fam: FamKey; chance: number; weekly: number; weeks: number; what: string; lost: string };
+  | { op: 'gamble'; fam: FamKey; chance: number; weekly: number; weeks: number; what: string; lost: string }
+  /** The import racket (colombia.ts applies it). */
+  | { op: 'coke'; set?: number; deny?: number; cut?: { fam: string; share: number }; refuse?: { fam: string; chance: number } }
+  /** A gang that cropped up (gangs.ts applies it). */
+  | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' | 'ignore'; chance: number; cost?: number };
 
 export function describeFamOp(s: GameState, o: FamOp): string {
   switch (o.op) {
@@ -436,6 +456,8 @@ export function describeFamOp(s: GameState, o: FamOp): string {
     case 'lend': return `${o.ids.length} of your men busy for a week with ${famName(s, o.fam)} (they come back unharmed)`;
     case 'weaken': return `Your tie with ${famName(s, o.a === 'player' ? o.b : o.a)} weakens`;
     case 'size': return `${famName(s, o.fam)} ${o.amount >= 0 ? '+' : ''}${o.amount} men`;
+    case 'coke': return o.set !== undefined ? (o.set > 0 ? `The import racket: ${['out', 'a trickle', 'a steady line', 'a big line'][o.set] ?? 'a big line'}` : 'Out of the import racket') : o.deny !== undefined ? `${Math.round(o.deny * 100)}% Philadelphia believes you` : o.cut ? `${famName(s, o.cut.fam as FamKey)} takes ${Math.round(o.cut.share * 100)}% of the import racket` : o.refuse ? `${Math.round(o.refuse.chance * 100)}% ${famName(s, o.refuse.fam as FamKey)} backs off` : '';
+    case 'gang': return o.how === 'ignore' ? 'Let them be' : `${Math.round(o.chance * 100)}% it works`;
     case 'gamble': return `${Math.round(o.chance * 100)}%: ${fmt(o.weekly)} a week for ${o.weeks} weeks (${o.what}); otherwise the money is gone`;
   }
 }
@@ -536,6 +558,10 @@ export function applyFamOp(ctx: Ctx, o: FamOp, label?: string): void {
     case 'size':
       st.size[o.fam] = Math.max(3, sizeOf(s, o.fam) + o.amount);
       break;
+    case 'coke':
+    case 'gang':
+      // Applied by colombia.ts and gangs.ts (effects.ts routes them).
+      break;
     case 'gamble': {
       const fam = famName(s, o.fam);
       if (rand(st) < o.chance) {
@@ -559,6 +585,10 @@ export function applyFamOp(ctx: Ctx, o: FamOp, label?: string): void {
 /* ------------------------------------------------------------------ */
 
 export type FamAction =
+  /** The import racket (colombia.ts): go in, grow it, get out. */
+  | { op: 'coke'; step: 'in' | 'more' | 'out' }
+  /** A gang that cropped up (gangs.ts): fight them, buy them off, recruit them, partner with them. */
+  | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' }
   | { op: 'envoy'; fam: FamKey }
   | { op: 'favor'; fam: FamKey }
   | { op: 'partner'; fam: FamKey }
@@ -621,6 +651,8 @@ export function previewFam(s: GameState, a: FamAction): ActionPreview {
       ...(cdLeft(s, `broker:${t.id}`) ? { disabledReason: `They will not sit again so soon (${cdLeft(s, `broker:${t.id}`)} weeks)` } : {}),
     };
   }
+  // The import racket and the gangs preview in their own modules (actions.ts routes them).
+  if (a.op === 'coke' || a.op === 'gang') return { title: a.op === 'coke' ? 'The import racket' : 'A gang', effects: [], cost: 0, because: '', category: 'cost', disabledReason: 'Not from here' };
   const f = a.fam;
   const d = famDef(f);
   const name = famName(s, f);

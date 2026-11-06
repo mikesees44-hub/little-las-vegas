@@ -12,6 +12,8 @@ import { fbankEventSource, fbankWeek } from './familyBank';
 import { talksWeek } from './talks';
 import { familiesWeek } from './familyWeb';
 import { citiesWeek } from './familyWebCities';
+import { colombiaWeek } from './colombia';
+import { gangsWeek } from './gangs';
 import { familyAsksWeek } from './minds/familyAsks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
@@ -509,6 +511,10 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     familiesWeek(ctx);
     // The cities (familyWebCities.ts): Chicago, New Orleans, Florida and the Havana men come with their own business.
     citiesWeek(ctx);
+    // The Colombian connection (colombia.ts): the trade grows by the year; if the boss is in it, the take, the heat, the disapproval.
+    colombiaWeek(ctx);
+    // Gangs that crop up (gangs.ts): bikers in summer, street crews where there is an opening.
+    gangsWeek(ctx);
     threatsWeek(ctx);
     // Feds and flipping: pinches at an hour, the government's offer, the wire, the hollow crown, the tip-off, the undercover (feds.ts).
     fedsWeek(ctx);

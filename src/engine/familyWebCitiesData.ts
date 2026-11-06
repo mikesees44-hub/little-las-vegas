@@ -87,6 +87,17 @@ export const CITY_DEFS: FamDef[] = [
       { name: 'Tomás Iglesias', role: 'soldier', note: 'a croupier without a table' },
     ],
   },
+  {
+    id: 'colombians', name: 'The Barranquilla Connection', short: 'Colombians', group: 'fla', seat: 'Barranquilla, and a cousin in Miami', boss: 'Aurelio Benavides', city: 'miami', reach: 3,
+    men: 8, made: 0, crews: 1, eth: 'Italian',
+    rackets: ['a trickle of marijuana and cocaine into Miami', 'the musicians\' trade', 'coffee money'],
+    blurb: 'A handful of smugglers from Colombia\'s Caribbean coast with a cousin in a Miami warehouse. In 1960 it is a trickle no serious family will touch: the old families forbid narcotics, and the federal narcotics men never sleep. By the seventies it will be the biggest money in the hemisphere.',
+    roster: [
+      { name: 'Aurelio Benavides', role: 'boss', note: 'a coffee exporter with a second business' },
+      { name: 'Rafael "el Flaco" Arbeláez', role: 'underboss', note: 'the Caribbean coast end' },
+      { name: 'Chucho Barrios', role: 'capo', note: 'the Miami warehouse; knows the Havana men' },
+    ],
+  },
 ];
 
 /**
@@ -108,4 +119,6 @@ export const CITY_TIES: SeedTie[] = [
   { a: 'biscayne', b: 'havana', kind: 'racket', since: 1959, strength: 45, story: 'Exile money comes off the boats and into the Biscayne hotels\' safes; Stahl takes a piece for keeping it.' },
   { a: 'havana', b: 'chicago', kind: 'debt', since: 1959, by: 'a', strength: 40, story: 'Chicago held points in the Havana casinos the Havana men ran; Castro took them, and Chicago says the Havana men owe it a casino.' },
   { a: 'saladino', b: 'tampa', kind: 'friends', since: 1955, strength: 35, story: 'The Saladino people winter in Tampa and play the bolita for fun.' },
+  { a: 'colombians', b: 'havana', kind: 'friends', since: 1959, strength: 30, story: 'An exile in a Miami hotel bar introduced Chucho Barrios to the Havana men; they need money, and he has a little.' },
+  { a: 'colombians', b: 'nola', kind: 'feud', since: 1958, strength: 40, story: 'New Orleans keeps narcotics off its port; two of the Colombians\' men were run out of the French Quarter in 1958.' },
 ];

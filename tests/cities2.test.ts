@@ -6,6 +6,9 @@ import { reconcile } from '../src/engine/ledger';
 import { mintMan, sizeOf, tiesOf } from '../src/engine/familyWeb';
 import { FAMILY_BY_ID, FAMILY_DEFS } from '../src/engine/familyWebData';
 import { CITY_TIES } from '../src/engine/familyWebCitiesData';
+import { previewAction } from '../src/engine/actions';
+import { market, maxLevel, OLD_SCHOOL } from '../src/engine/colombia';
+import { stanceTo } from '../src/engine/familyWeb';
 import type { GameState } from '../src/engine/types';
 
 /** Real people of the period (and later) who must never appear by name. */
@@ -23,7 +26,7 @@ const run = (s: GameState, n: number, check?: (s: GameState) => void): GameState
   return s;
 };
 
-const NEW_FAMS = ['chicago', 'nola', 'tampa', 'biscayne', 'havana'] as const;
+const NEW_FAMS = ['chicago', 'nola', 'tampa', 'biscayne', 'havana', 'colombians'] as const;
 
 describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
   it('the new families are in the web at the start: tied, compact, fictional, deterministic', () => {
@@ -78,5 +81,37 @@ describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
     const size = JSON.stringify(s).length;
     expect(size).toBeLessThan(3.7 * 1024 * 1024);
     console.log(`save after a year: ${(size / 1024 / 1024).toFixed(2)} MB`);
+  }, 600000);
+
+  it('the Colombia connection: a 1960 trickle that grows; touching it pays, draws federal heat and the old families\' disapproval; never instructional', () => {
+    expect(market(1960)).toBe(1);
+    expect(market(1975)).toBeGreaterThan(market(1966));
+    expect(maxLevel(1960)).toBe(1);
+    expect(maxLevel(1970)).toBe(3);
+    let s = newGame('c2-col');
+    s.money = 100000;
+    const p = previewAction(s, { kind: 'fam', op: { op: 'coke', step: 'in' } });
+    expect(p.acceptance!.chance).toBeGreaterThan(0);
+    expect(p.warning).toMatch(/forbid/);
+    expect(p.disabledReason).toBeUndefined();
+    expect(previewAction(s, { kind: 'fam', op: { op: 'coke', step: 'more' } }).disabledReason).toBeDefined();
+    const text = JSON.stringify([p.title, p.detail, p.warning]);
+    expect(text).not.toMatch(/\b(kilo|gram|pound|route|plane|boat|stash|cut it|process|lab)\b/i);
+    // Put him in it directly (the odds are tested above) and run three months.
+    const views0 = OLD_SCHOOL.map((f) => stanceTo(s, f).base);
+    s.families!.col = { lvl: 1, since: s.week, tot: 0 };
+    const fed0 = s.heat.federal;
+    let fedAdded = 0;
+    for (let i = 0; i < 13; i++) {
+      const r = advanceWeek(s, { actions: [] });
+      expect(reconcile(r.report)).toEqual([]);
+      fedAdded += r.report.lines.filter((l) => l.stat === 'heat.federal' && /narcotics/.test(l.label)).reduce((a, l) => a + l.amount, 0);
+      s = r.state;
+    }
+    expect(fedAdded).toBeGreaterThan(5);
+    expect(s.families!.col!.tot).toBeGreaterThan(0);
+    const views1 = OLD_SCHOOL.map((f) => stanceTo(s, f).base);
+    expect(views1.filter((v, i) => v < views0[i]).length).toBeGreaterThanOrEqual(3);
+    void fed0;
   }, 600000);
 });
