@@ -101,6 +101,7 @@ import { protectWeek } from './protect';
 import { womenWeek } from './women';
 import { honeyWeek } from './honey';
 import { singleWeek } from './single';
+import { nightsPlan, wifeHere, wifeWeek } from './wife';
 import { racketEventSource } from './racketLife';
 import { delegatedActions, recordDelegation } from './briefing';
 import { chosenRounds, roundOptions, roundsWeek } from './rounds';
@@ -397,6 +398,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
   // The lieutenants' week (lieutenants.ts): the docket and the boss's word on it, as he saw them.
   const ltDocket = docketOf(input);
   const ltCalls = ltView(input).calls;
+  // The boss's nights this week as he lived them (wife.ts), read before the days plan is dropped.
+  const nights = wifeHere(input) ? nightsPlan(input, choices.actions ?? []) : undefined;
   const s = cloneState(input);
   // The days plan is only the week's choices (sent in `choices`): the new week starts on a Monday with none.
   delete s.days;
@@ -484,6 +487,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     matchmakersWeek(ctx);
     // The women who come to a single boss, and Ma's match for him (single.ts).
     singleWeek(ctx);
+    // Your wife (wife.ts): nights home, her suspicion, her calls, the arrangement, the divorce, alimony.
+    wifeWeek(ctx, nights);
     myMenWeek(ctx);
     // Let them eat (eat.ts): who is hungry, the pitches they bring, the fed and the starving.
     eatWeek(ctx);

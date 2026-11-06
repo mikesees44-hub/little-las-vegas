@@ -2,6 +2,8 @@ import { TableButton } from '../advice/CounselTable';
 import { overbook, weekAppts } from '../../engine/appointments';
 import { AskButton } from '../ai/AskCounsel';
 import { openPlanner } from '../planner/ink';
+import { wifeNeeds } from '../../engine/wife';
+import { WifeCard } from '../family/WifeCard';
 import { bossDesk, deskHeaderCount, readyReview, type DeskGroup, type DeskItem, type DeskKind, type DeskUi } from '../../engine/desk';
 import type { Character, GameState } from '../../engine/types';
 import { DAY_NAMES } from '../../engine/days';
@@ -325,6 +327,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
       <div className="llv-desktop-rest">
       <div className={`grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
         <div className="min-w-0 space-y-2">
+          {wifeNeeds(s, ui.orders) && <WifeCard s={s} compact />}
           {handled && handled.items.length > 0 && (
             <div data-testid="desk-group-handled">
               <div className="llv-section-title mb-1 text-[14px]">Handled for you ({handled.items.length})</div>

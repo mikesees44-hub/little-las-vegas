@@ -25,6 +25,7 @@ import { ActivitiesPanel } from '../family/ActivitiesPanel';
 import { DecisionsPanel } from '../family/DecisionsPanel';
 import { DynastyTree } from '../family/DynastyTree';
 import { HouseHeader } from '../family/FamilyTab';
+import { WifeCard } from '../family/WifeCard';
 import { LegacyPanel } from '../family/LegacyPanel';
 import { MarriagePanel } from '../family/MarriagePanel';
 import { EnvoysAbroad } from '../map/MapView';
@@ -144,7 +145,7 @@ export const PANELS: PanelDef[] = [
     id: 'house', icon: '♔', label: 'The House', short: 'House', key: 'h',
     blurb: 'Your blood: the tree, marriages, the heir, the house\'s name.',
     sections: [
-      { id: 'tree', label: 'Family Tree', wide: true, render: (s) => <div className="space-y-3" data-testid="family-tab"><HouseHeader s={s} /><DynastyTree s={s} /></div> },
+      { id: 'tree', label: 'Family Tree', wide: true, render: (s) => <div className="space-y-3" data-testid="family-tab"><HouseHeader s={s} /><WifeCard s={s} /><DynastyTree s={s} /></div> },
       { id: 'houses', label: 'All the Houses', wide: true, blurb: 'Every family on the island and beyond: trees back to the old country, the living and the dead.', render: (s, c) => <HousesPanel s={s} selected={c.houseSel} onSelect={c.onHouseSel} /> },
       { id: 'marriages', label: 'Marriages & Children', render: (s) => <MarriagePanel s={s} /> },
       { id: 'succession', label: 'The heir & the law', blurb: 'One place for the heir: the law, how he is named, who is pushing.', render: (s, c) => <Succession s={s} pendingLaw={c.pendingLaw} pendingHeir={c.pendingHeir} onLaw={c.onLaw} onHeir={c.onHeir} /> },
