@@ -1,6 +1,6 @@
 import { ageOn } from './calendar';
 import { capos, displayName, hasTrait, isFree, makeCharacter, player } from './characters';
-import { adultOn, datingEvenings, ensureDating } from './datingState';
+import { adultOn, datingEvenings } from './datingState';
 import { awayReason, daysOf, DAY_NAMES, setEvening, today, weekPlan } from './days';
 import { usesEvening, weekOccurrences } from './apptsState';
 import { personOfAct } from './appointments';
@@ -448,7 +448,7 @@ function sceneEvent(s: GameState, w: Character, W: WifeState, key: string, title
   return ev(s, w, `wife_${key}`, title, text[key], choices, key === 'confront' ? 60 : 50);
 }
 
-function termsEvent(s: GameState, w: Character, W: WifeState): EventInstance {
+function termsEvent(s: GameState, w: Character): EventInstance {
   const a = herAllowance(s, w);
   const haggle = clampP(0.45 + opinion(s, w.id, player(s).id) / 300, 0.1, 0.7);
   return ev(s, w, 'wife_terms', `${w.firstName} has terms`,
@@ -1010,7 +1010,7 @@ function maybeEvent(ctx: Ctx, W: WifeState, w: Character, op: number): void {
   // Her terms: she knows, and she's done waiting.
   if (!W.arr && W.proof && W.susp >= 70 && op < 0 && (W.cd.terms ?? 0) <= s.week && roll(s, W, 'terms') < arrangementOdds(s, w, W) * 0.4) {
     W.cd.terms = s.week + 16;
-    s.eventQueue.push(termsEvent(s, w, W));
+    s.eventQueue.push(termsEvent(s, w));
     return;
   }
   if (W.arr) return;
