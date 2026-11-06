@@ -419,7 +419,9 @@ export type FamOp =
   /** A tie weakens (or breaks). */
   | { op: 'weaken'; a: FamKey; b: FamKey; amount: number }
   /** An outfit's strength changes. */
-  | { op: 'size'; fam: FamKey; amount: number };
+  | { op: 'size'; fam: FamKey; amount: number }
+  /** A stake on a long shot (the money is already spent): on the web's dice, a deal pays, or the money is gone. */
+  | { op: 'gamble'; fam: FamKey; chance: number; weekly: number; weeks: number; what: string; lost: string };
 
 export function describeFamOp(s: GameState, o: FamOp): string {
   switch (o.op) {
@@ -434,6 +436,7 @@ export function describeFamOp(s: GameState, o: FamOp): string {
     case 'lend': return `${o.ids.length} of your men busy for a week with ${famName(s, o.fam)} (they come back unharmed)`;
     case 'weaken': return `Your tie with ${famName(s, o.a === 'player' ? o.b : o.a)} weakens`;
     case 'size': return `${famName(s, o.fam)} ${o.amount >= 0 ? '+' : ''}${o.amount} men`;
+    case 'gamble': return `${Math.round(o.chance * 100)}%: ${fmt(o.weekly)} a week for ${o.weeks} weeks (${o.what}); otherwise the money is gone`;
   }
 }
 
@@ -533,6 +536,21 @@ export function applyFamOp(ctx: Ctx, o: FamOp, label?: string): void {
     case 'size':
       st.size[o.fam] = Math.max(3, sizeOf(s, o.fam) + o.amount);
       break;
+    case 'gamble': {
+      const fam = famName(s, o.fam);
+      if (rand(st) < o.chance) {
+        st.deals.push({ fam: o.fam, weekly: Math.round(o.weekly), until: s.week + o.weeks, what: o.what });
+        setView(s, o.fam, 4, 'The long shot came in');
+        note(st, s.week, `The long shot with ${fam} came in: ${o.what}, ${fmt(o.weekly)} a week.`, 'good');
+        ctx.log.push(`The long shot with ${fam} came in: ${o.what}.`);
+        journal(s, { t: `The long shot with ${fam} came in`, x: `${o.what}: ${fmt(o.weekly)} a week for ${o.weeks} weeks (it was ${Math.round(o.chance * 100)}%).`, c: 'rivals', src: 'families', ln: 'diplomacy.board' });
+      } else {
+        note(st, s.week, `The long shot with ${fam} did not come in: ${o.lost}`, 'bad');
+        ctx.log.push(`The long shot with ${fam} did not come in.`);
+        journal(s, { t: `The long shot with ${fam} did not come in`, x: `${o.lost} (it was ${Math.round(o.chance * 100)}%).`, c: 'rivals', src: 'families', ln: 'diplomacy.board' });
+      }
+      break;
+    }
   }
 }
 

@@ -9,7 +9,9 @@ import { CITY_TIES } from '../src/engine/familyWebCitiesData';
 import type { GameState } from '../src/engine/types';
 
 /** Real people of the period (and later) who must never appear by name. */
-const REAL = /\b(Giancana|Accardo|Ricca|Humphreys|Alderisio|Battaglia|Spilotro|Rosselli|Roselli|Marcello|Trafficante|Hoffa|Dalitz|Lansky|Siegel|Capone|Nitti|Lucchese|Gambino|Genovese|Bonanno|Profaci|Escobar|Ochoa|Lehder|Rodr[ií]guez Orejuela|Castro|Batista|Guevara|Kennedy|Maheu|Bistro|Bruno|Testa)\b/;
+const REAL = /\b(Giancana|Accardo|Ricca|Humphreys|Alderisio|Battaglia|Spilotro|Rosselli|Roselli|Marcello|Trafficante|Hoffa|Dalitz|Lansky|Siegel|Capone|Nitti|Lucchese|Gambino|Genovese|Bonanno|Profaci|Escobar|Ochoa|Lehder|Rodr[ií]guez Orejuela|Castro|Batista|Guevara|Kennedy|Maheu|Bruno|Testa)\b/;
+/** The period's real gangsters (stories may name Castro as history, never a real gangster). */
+const REAL_MOB = /\b(Giancana|Accardo|Ricca|Humphreys|Alderisio|Battaglia|Spilotro|Rosselli|Roselli|Marcello|Trafficante|Hoffa|Dalitz|Lansky|Siegel|Capone|Nitti|Lucchese|Gambino|Genovese|Bonanno|Profaci|Escobar|Ochoa|Lehder|Maheu)\b/;
 
 const run = (s: GameState, n: number, check?: (s: GameState) => void): GameState => {
   for (let i = 0; i < n; i++) {
@@ -21,7 +23,7 @@ const run = (s: GameState, n: number, check?: (s: GameState) => void): GameState
   return s;
 };
 
-const NEW_FAMS = ['chicago', 'nola'] as const;
+const NEW_FAMS = ['chicago', 'nola', 'tampa', 'biscayne', 'havana'] as const;
 
 describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
   it('the new families are in the web at the start: tied, compact, fictional, deterministic', () => {
@@ -34,11 +36,14 @@ describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
       expect(d.roster.length, `${f} compact`).toBeLessThanOrEqual(14);
       expect(sizeOf(s, f)).toBe(d.men);
       for (const m of d.roster) expect(m.name, `${f}: ${m.name}`).not.toMatch(REAL);
-      expect(d.blurb).not.toMatch(REAL);
+      expect(d.blurb).not.toMatch(REAL_MOB);
     }
     expect(FAMILY_BY_ID.chicago.men).toBeGreaterThanOrEqual(250);
     expect(FAMILY_BY_ID.chicago.group).toBe('chi');
-    for (const t of CITY_TIES) expect(t.story).not.toMatch(REAL);
+    for (const t of CITY_TIES) expect(t.story).not.toMatch(REAL_MOB);
+    expect(FAMILY_BY_ID.nola.blurb).toMatch(/oldest/);
+    expect(tiesOf(s, 'nola').some((t) => t.a === 'tampa' || t.b === 'tampa')).toBe(true);
+    expect(tiesOf(s, 'nola').some((t) => t.a === 'havana' || t.b === 'havana')).toBe(true);
     expect(newGame('c2-a').families).toEqual(s.families);
     // Nobody is a character until met.
     const before = Object.keys(s.characters).length;
@@ -67,7 +72,7 @@ describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
     s = run(s, 52, (x) => {
       for (const e of [...x.eventQueue, ...x.pendingEvents]) seen.add(e.defId);
     });
-    expect(seen.has('fam_chi') || seen.has('fam_nola')).toBe(true);
+    expect(['fam_chi', 'fam_nola', 'fam_fla'].filter((d) => seen.has(d)).length).toBeGreaterThanOrEqual(2);
     const log = s.families!.log.map((l) => l.t).join(' ');
     expect(log.length).toBeGreaterThan(0);
     const size = JSON.stringify(s).length;

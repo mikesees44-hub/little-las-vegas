@@ -3,7 +3,7 @@ import {
   alive, bond, ensureFamilies, famEvent, mintMan, note, pendingFam, sizeLine, slotOf, stanceTo, stanceWord,
   type FamLog, type FamState,
 } from './familyWeb';
-import type { FamKey } from './familyWebData';
+import type { FamKey, RosterMan } from './familyWebData';
 import { FAMILY_BY_ID } from './familyWebData';
 import { journal } from './journal';
 import type { Ctx } from './ledger';
@@ -27,7 +27,7 @@ const free = (st: FamState, key: string, w: number) => (st.cd[key] ?? 0) <= w;
 const pickOf = <T,>(st: FamState, xs: readonly T[]): T => xs[Math.floor(rand(st) * xs.length)];
 
 /** A named man of the outfit (by role), made a full character as he walks in; his name either way. */
-function envoyOf(s: GameState, f: FamKey, roles: ('underboss' | 'consigliere' | 'capo' | 'soldier')[], st: FamState, noteHas?: string): { name: string; actors: string[] } {
+function envoyOf(s: GameState, f: FamKey, roles: RosterMan['role'][], st: FamState, noteHas?: string): { name: string; actors: string[] } {
   const d = FAMILY_BY_ID[f];
   let slot = noteHas ? d.roster.findIndex((m) => !m.offstage && m.note?.includes(noteHas)) : -1;
   if (slot < 0) slot = slotOf(f, roles, Math.floor(rand(st) * 3));
@@ -128,6 +128,64 @@ function nolaVisit(s: GameState, st: FamState): EventInstance | undefined {
 }
 
 /* ------------------------------------------------------------------ */
+/* Florida and the Havana men                                           */
+/* ------------------------------------------------------------------ */
+
+const winter = (s: GameState) => s.date.m >= 11 || s.date.m <= 3;
+
+function floridaVisit(s: GameState, st: FamState): EventInstance | undefined {
+  const kinds = [
+    ...(winter(s) && alive(s, 'biscayne') ? ['winter', 'winter'] : []),
+    ...(alive(s, 'havana') ? ['casino', 'cause'] : []),
+    ...(alive(s, 'tampa') && stanceTo(s, 'tampa').value >= -10 ? ['bolita'] : []),
+  ];
+  if (!kinds.length) return undefined;
+  const k = pickOf(st, kinds);
+  if (k === 'winter') {
+    const m = envoyOf(s, 'biscayne', ['consigliere'], st);
+    const cost = 2500;
+    const nyc = (['marchetti', 'corvino', 'saladino', 'lobianco', 'abbadessa'] as FamKey[]).map((f) => view(f, 3, 'Wintered with us on the Beach'));
+    return famEvent(s, 'fam_fla', 'Winter on Miami Beach',
+      `${m.name} keeps a cabana for you at a Biscayne hotel: every family in the East is on the Beach this month, the bosses take the sun and settle in the cabanas what they could not settle in the snow. A week there costs ${fmt(cost)} and a man in your chair at home. Miami's stance toward you: ${stanceWord(stanceTo(s, 'biscayne').value)}.`,
+      [
+        { id: 'go', label: `Take the cabana for a week (${fmt(cost)})`, detail: 'Certain: Miami +8, every New York family +3, respect +1 (the boss is seen with the bosses).', because: 'wintered on Miami Beach with the families', effects: [{ type: 'money', amount: -cost, category: 'cost' }, view('biscayne', 8, 'Wintered with us'), ...nyc, { type: 'respect', amount: 1 }, tie('biscayne', 'player', 'friends', 30, `Your house has wintered at the Biscayne hotels since ${s.date.y}.`)] },
+        { id: 'home', label: 'Stay home this winter', detail: 'Certain: nothing changes.', because: 'stayed home for the winter', effects: [] },
+      ], { priority: 43, fam: 'biscayne', actors: m.actors });
+  }
+  if (k === 'casino') {
+    const m = envoyOf(s, 'havana', ['boss', 'underboss'], st, 'three casino');
+    const stake = 4000, weekly = 400;
+    const sv = stanceTo(s, 'havana').value;
+    const chance = Math.max(0.15, Math.min(0.6, 0.35 + sv / 300));
+    return famEvent(s, 'fam_fla', 'The Havana men want a stake for a casino in exile',
+      `${m.name} lost three casino floors in one night in 1959. Now he has a story about an island where the government will license a casino for the right men, and he wants partners: ${fmt(stake)} buys in. It is a long shot. The Havana men's stance toward you: ${stanceWord(sv)}.`,
+      [
+        { id: 'pass', label: 'Wish him luck', detail: 'Certain: the Havana men think a little less of you (−2).', because: 'passed on the casino in exile', effects: [view('havana', -2, 'Passed on the casino')] },
+        { id: 'in', label: `Stake him (${fmt(stake)}, ${Math.round(chance * 100)}%)`, detail: `The money goes now; the Havana men +6 either way. ${Math.round(chance * 100)}% the casino opens and pays ${fmt(weekly)} a week for 26 weeks; otherwise the island's government changes its mind and the money is gone.`, because: 'staked the Havana men\'s casino in exile', effects: [{ type: 'money', amount: -stake, category: 'cost' }, view('havana', 6, 'Staked us'), { type: 'fam', op: { op: 'gamble', fam: 'havana', chance, weekly, weeks: 26, what: 'the casino in exile', lost: 'The island\'s government changed its mind; the money went with the license.' } }, tie('havana', 'player', 'partners', 30, `Your house staked the Havana men's casino in exile in ${s.date.y}.`)] },
+      ], { priority: 44, fam: 'havana', actors: m.actors });
+  }
+  if (k === 'cause') {
+    const m = envoyOf(s, 'havana', ['capo'], st, 'exile captain');
+    const gift = 1500;
+    return famEvent(s, 'fam_fla', 'An exile captain asks for money for the cause',
+      `${m.name} is raising money to take Cuba back. He does not say for what, and you do not ask; in the Miami hotel bars they say there are crates going south and government men who look the other way. If the casinos ever reopen, he says, he will remember his friends.`,
+      [
+        { id: 'no', label: 'It is not your fight', detail: 'Certain: the Havana men think less of you (−4). Nobody federal hears your name.', because: 'kept out of the Cuban cause', effects: [view('havana', -4, 'Kept out of the cause')] },
+        { id: 'give', label: `Give to the cause (${fmt(gift)})`, detail: 'Certain: the Havana men +12 and Tampa +3; a gift like that gets written down somewhere: federal heat +5.', because: 'gave money to the Cuban exiles\' cause', effects: [{ type: 'money', amount: -gift, category: 'cost' }, view('havana', 12, 'Gave to the cause'), view('tampa', 3, 'Gave to the cause'), { type: 'heat', bar: 'federal', amount: 5 }] },
+        { id: 'store', label: 'Lend a warehouse, no questions', detail: 'Certain: the Havana men owe your house (a debt tie) and +15; crates nobody opens on the bay docks draw attention: federal heat +8, local heat +2.', because: 'lent the exiles a warehouse', effects: [view('havana', 15, 'Lent us a warehouse'), tie('havana', 'player', 'debt', 40, `The Havana men owe your house for a warehouse lent in ${s.date.y}, no questions asked.`, 'a'), { type: 'heat', bar: 'federal', amount: 8 }, { type: 'heat', bar: 'local', amount: 2 }] },
+      ], { priority: 46, fam: 'havana', actors: m.actors });
+  }
+  const m = envoyOf(s, 'tampa', ['underboss'], st, 'bolita');
+  const stake = 3000, weekly = 150;
+  return famEvent(s, 'fam_fla', 'Tampa offers a piece of its bolita',
+    `${m.name} runs the bolita in every cigar factory in Ybor City: a numbers game with a hundred little balls in a bag. ${fmt(stake)} into the bank, ${fmt(weekly)} a week back for half a year. Tampa's stance toward you: ${stanceWord(stanceTo(s, 'tampa').value)}.`,
+    [
+      { id: 'in', label: `Buy in (${fmt(stake)})`, detail: `Certain: ${fmt(weekly)} a week for 26 weeks; partners with Tampa (+5). New Orleans, Tampa's in-laws, notices (+2).`, because: 'bought into Tampa\'s bolita', effects: [{ type: 'money', amount: -stake, category: 'cost' }, deal('tampa', weekly, 26, 'the bolita bank'), view('tampa', 5, 'Came in with us'), view('nola', 2, 'Came in with our in-laws'), tie('tampa', 'player', 'partners', 35, `Partners in Tampa's bolita since ${s.date.y}.`)] },
+      { id: 'pass', label: 'Thank him and pass', detail: 'Certain: Tampa thinks a little less of you (−1).', because: 'passed on Tampa\'s bolita', effects: [view('tampa', -1, 'Passed on our offer')] },
+    ], { priority: 44, fam: 'tampa', actors: m.actors });
+}
+
+/* ------------------------------------------------------------------ */
 /* The week                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -136,6 +194,7 @@ type Visit = { key: string; defId: string; every: [number, number]; make: (s: Ga
 const VISITS: Visit[] = [
   { key: 'chi:any', defId: 'fam_chi', every: [12, 18], make: chicagoVisit },
   { key: 'nola:any', defId: 'fam_nola', every: [14, 20], make: nolaVisit },
+  { key: 'fla:any', defId: 'fam_fla', every: [10, 16], make: floridaVisit },
 ];
 
 /** Talk that goes round about the cities (once a while, on the web's dice). */
@@ -143,6 +202,10 @@ const RUMORS: { key: string; t: (s: GameState) => string; when?: (s: GameState) 
   { key: 'r:chi:pension', t: () => 'In the union halls they say the Teamsters\' pension fund lends to whatever casino Chicago and Cleveland point at. Nobody has ever proved it, and nobody tries.' },
   { key: 'r:nola:old', t: () => 'They say in New York that the Commission sent a man to New Orleans about the slot machines, and Henri Delacroix kept him waiting three days for coffee. New Orleans asks; it does not take orders.' },
   { key: 'r:nola:slots', t: () => 'A grand jury in Louisiana is asking about slot machines again. In the bars from Biloxi to Lake Charles, the machines went into the back room for a week and came out again.', when: (s) => s.date.m >= 9 || s.date.m <= 4 },
+  { key: 'r:fla:plot', t: () => 'In the Miami hotel bars they say the government\'s men have been asking the Havana casino men for help with Castro: old friends on the island, a way in. Nobody says it twice, and nobody has proved a word of it.' },
+  { key: 'r:fla:lost', t: () => 'A Havana man who lost a casino floor in 1959 is dealing blackjack in a Miami Beach hotel for tips. Everybody who knew him there leaves a big one.' },
+  { key: 'r:fla:winter', t: () => 'Half the bosses in the East are on Miami Beach this month. Whatever gets settled in a cabana comes north with the tans.', when: winter },
+  { key: 'r:fla:guns', t: () => 'They say a boat left the Florida Keys at night with crates for Cuba, and that the Coast Guard looked the other way. The exiles say nothing; the casino men smile.' },
   { key: 'r:chi:seat', t: (s) => `Chicago's man sat in on the Commission in New York this month; ${bond(s, 'chicago', 'marchetti') > 0 ? 'Varrone and Marchetti voted together, as usual' : 'Varrone and Marchetti did not speak'}.` },
 ];
 
