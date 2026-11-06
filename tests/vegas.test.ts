@@ -62,7 +62,7 @@ describe('Las Vegas, an open city', () => {
     const r = advanceWeek(s, { actions: [{ kind: 'fam', op: { op: 'lv', step: 'sell', casino: 'crown' } }] });
     expect(reconcile(r.report)).toEqual([]);
     expect(pointsIn(r.state, 'crown')).toBe(0);
-    expect(JSON.stringify(r.state.journal?.e.slice(-30) ?? [])).toMatch(/Desert Crown/);
+    expect(JSON.stringify((r.state.journal?.e ?? []).filter((x) => x.w === s.week))).toMatch(/Desert Crown/);
   }, 600000);
 
   it('the desert comes calling now and then (light), and the Connections card shows the Strip', () => {
