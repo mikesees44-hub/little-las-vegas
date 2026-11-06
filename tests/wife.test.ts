@@ -13,6 +13,9 @@ import {
   wifeHere, wifeLapses, wifeView, wifeWeek, type WifeKey,
 } from '../src/engine/wife';
 import type { GameState } from '../src/engine/types';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { WifeCard, WifeDinnerAsk } from '../src/ui/family/WifeCard';
 
 /** A married boss with an empty week (no evenings booked), a full pocket. */
 function married(seed: string): GameState {
@@ -310,5 +313,28 @@ describe('wife: an unmarried boss', () => {
     expect(wifeLapses(s)).toEqual([]);
     wifeWeek(newCtx(s));
     expect(s.wife).toBeUndefined();
+  });
+});
+
+describe('wife: on the screen', () => {
+  it('her card shows the nights, the meter with reasons, her opinion and the acts with odds; the clock asks about dinner', () => {
+    const s = married('wife-ui');
+    outNights(s, 4);
+    ensureWife(s, wifeHere(s)!).susp = 40;
+    s.wife!.why.push({ w: s.week, t: 'Home 3 of 4 nights', v: 4 });
+    const html = renderToString(createElement(WifeCard, { s }));
+    for (const id of ['wife-card', 'wife-nights', 'wife-week', 'wife-susp', 'wife-susp-why', 'wife-opinion', 'wife-acts', 'wife-act-propose', 'wife-auto', 'wife-dinner-6-home']) expect(html).toContain(`data-testid="${id}"`);
+    expect(html).toContain('Nights home this week: 3/4');
+    expect(html).toMatch(/Propose an arrangement \(\d+%\)/);
+    const ask = renderToString(createElement(WifeDinnerAsk, { s }));
+    expect(ask).toContain('Should I expect you for dinner?');
+    for (const id of ['wife-dinner-home', 'wife-dinner-out', 'wife-dinner-late']) expect(ask).toContain(`data-testid="${id}"`);
+  });
+
+  it('an unmarried boss sees no card and no question', () => {
+    const s = married('wife-ui-none');
+    s.characters[player(s).spouseId!].alive = false;
+    expect(renderToString(createElement(WifeCard, { s }))).toBe('');
+    expect(renderToString(createElement(WifeDinnerAsk, { s }))).toBe('');
   });
 });

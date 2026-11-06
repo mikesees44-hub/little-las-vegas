@@ -113,6 +113,7 @@ import { bookLater, refundTime, spendTime, timeBlock, unbook } from '../engine/t
 import { extraToday, markExtraShown, unreadCount } from '../engine/paper';
 import { WeekPlanner } from './rounds/WeekPlanner';
 import { EveningScene, PersonalActions, TodayStrip, type EveningCue } from './rounds/RoundsBits';
+import { WifeDinnerAsk } from './family/WifeCard';
 import { SitDown } from './sitdown/SitDown';
 import { BossDesk, openItem, ReadyToAdvance, type DeskFilter } from './desk/BossDesk';
 import type { SettledRow, WeekDone } from './desk/Bundles';
@@ -1244,6 +1245,7 @@ export function App({ startOn = 'title' }: AppProps) {
                 <VacationPill s={s} onOpen={() => setVacOpen(true)} />
                 <div className="flex max-w-full items-center gap-1.5">
                   {clockMode && <div className="flex min-w-0"><TodayStrip s={s} onOpen={() => { setSpeed(0); setDayWin(daysOf(s).day); }} /></div>}
+                  {clockMode && <WifeDinnerAsk s={s} />}
                   {!clockMode && <div className="flex min-w-0"><RoundStrip rows={roundRows} onStop={(st) => (st === 'needs' ? openDesk() : setRoute({ home: st as HomeId }))} /></div>}
                   <ClubOnMap s={s} compact onOpen={() => setOfficeView('club')} />
                 </div>
