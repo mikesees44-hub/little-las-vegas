@@ -975,6 +975,8 @@ export interface GameState {
   families?: import('./familyWeb').FamState;
   /** Gangs that crop up (gangs.ts): biker clubs in summer, street crews where there is an opening. Made the first week one could appear. */
   gangs?: import('./gangs').GangState;
+  /** Outposts and safe passage (outposts.ts): men sent to start something in another city, and people lying low. Made by the first man sent. */
+  posts?: import('./outpostsState').OutpostState;
   /** The army: men under arms, hired muscle, allies, pacts, campaigns and battles (army.ts). Optional for old saves. */
   army?: import('./armyState').ArmyState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */

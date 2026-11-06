@@ -445,7 +445,11 @@ export type FamOp =
   /** A gang that cropped up (gangs.ts applies it). */
   | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' | 'ignore'; chance: number; cost?: number }
   /** Las Vegas (vegas.ts applies it): a point bought or sold on the Strip, an audit of the count. */
-  | { op: 'lv'; buy?: string; sell?: string; audit?: { casino: string; chance: number; amount: number } };
+  | { op: 'lv'; buy?: string; sell?: string; audit?: { casino: string; chance: number; amount: number } }
+  /** An outpost (outposts.ts applies it): a man sent to start something in another city, and keeping him close. */
+  | { op: 'post'; do: 'start' | 'visit' | 'letter' | 'share' | 'wife' | 'wed' | 'home' | 'settle' | 'retake' | 'close' | 'askback'; id?: string; chance?: number; plan?: { city: import('./outpostsState').PostCity; spot: import('./outpostsState').SpotKind; man: string; crew: string[]; seed: number } }
+  /** Safe passage (outposts.ts applies it): lying low in another city, and the dangers there. */
+  | { op: 'lie'; do: 'start' | 'home' | 'move' | 'pay' | 'slip' | 'outbid' | 'guard'; id?: string; chance?: number; amount?: number; plan?: { who: string; at: string; weeks: number } };
 
 export function describeFamOp(s: GameState, o: FamOp): string {
   switch (o.op) {
@@ -462,6 +466,8 @@ export function describeFamOp(s: GameState, o: FamOp): string {
     case 'size': return `${famName(s, o.fam)} ${o.amount >= 0 ? '+' : ''}${o.amount} men`;
     case 'coke': return o.set !== undefined ? (o.set > 0 ? `The import racket: ${['out', 'a trickle', 'a steady line', 'a big line'][o.set] ?? 'a big line'}` : 'Out of the import racket') : o.deny !== undefined ? `${Math.round(o.deny * 100)}% Philadelphia believes you` : o.cut ? `${famName(s, o.cut.fam as FamKey)} takes ${Math.round(o.cut.share * 100)}% of the import racket` : o.refuse ? `${Math.round(o.refuse.chance * 100)}% ${famName(s, o.refuse.fam as FamKey)} backs off` : '';
     case 'gang': return o.how === 'ignore' ? 'Let them be' : `${Math.round(o.chance * 100)}% it works`;
+    case 'post': return o.do === 'start' ? 'A man of yours goes to start something in another city' : o.chance !== undefined && o.chance < 1 ? `${Math.round(o.chance * 100)}% it works` : '';
+    case 'lie': return o.do === 'start' ? 'Lying low in another city' : o.chance !== undefined ? `${Math.round(o.chance * 100)}% it works` : '';
     case 'lv': return o.buy ? 'A point on the Strip is yours' : o.sell ? 'You sell the point' : o.audit ? `${Math.round(o.audit.chance * 100)}% the audit finds the short count` : '';
     case 'gamble': return `${Math.round(o.chance * 100)}%: ${fmt(o.weekly)} a week for ${o.weeks} weeks (${o.what}); otherwise the money is gone`;
   }
@@ -566,6 +572,8 @@ export function applyFamOp(ctx: Ctx, o: FamOp, label?: string): void {
     case 'coke':
     case 'gang':
     case 'lv':
+    case 'post':
+    case 'lie':
       // Applied by colombia.ts, gangs.ts and vegas.ts (effects.ts routes them).
       break;
     case 'gamble': {
@@ -597,6 +605,10 @@ export type FamAction =
   | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' }
   /** Las Vegas (vegas.ts): buy a point in a Strip casino, or sell one. */
   | { op: 'lv'; step: 'buy' | 'sell'; casino: string }
+  /** Outposts (outposts.ts): send a man to start something in another city (step 'start'), keep him close, deal with a break. */
+  | { op: 'post'; step: 'start' | 'visit' | 'letter' | 'share' | 'wife' | 'wed' | 'home' | 'settle' | 'retake' | 'close' | 'askback'; id?: string; city?: string; spot?: string; man?: string; crew?: string[]; seed?: number }
+  /** Safe passage (outposts.ts): someone of yours lies low in another city for some weeks (or comes home: `home`). */
+  | { op: 'lie'; who?: string; at?: string; weeks?: number; home?: string }
   | { op: 'envoy'; fam: FamKey }
   | { op: 'favor'; fam: FamKey }
   | { op: 'partner'; fam: FamKey }
@@ -660,7 +672,7 @@ export function previewFam(s: GameState, a: FamAction): ActionPreview {
     };
   }
   // The import racket and the gangs preview in their own modules (actions.ts routes them).
-  if (a.op === 'coke' || a.op === 'gang' || a.op === 'lv') return { title: a.op === 'coke' ? 'The import racket' : 'A gang', effects: [], cost: 0, because: '', category: 'cost', disabledReason: 'Not from here' };
+  if (a.op === 'coke' || a.op === 'gang' || a.op === 'lv' || a.op === 'post' || a.op === 'lie') return { title: a.op === 'coke' ? 'The import racket' : 'A gang', effects: [], cost: 0, because: '', category: 'cost', disabledReason: 'Not from here' };
   const f = a.fam;
   const d = famDef(f);
   const name = famName(s, f);

@@ -2,6 +2,7 @@ import { applyFamOp, describeFamOp } from './familyWeb';
 import { applyCokeOp } from './colombia';
 import { applyGangOp } from './gangs';
 import { applyLvOp } from './vegas';
+import { applyLieOp, applyPostOp } from './outposts';
 import { applyMenOp, describeMenOp } from './myMen';
 import { applyLivingOp, describeLivingOp } from './livingAsk';
 import { earnPocket, spendPocket } from './pocket';
@@ -925,6 +926,8 @@ export function applyEffect(ctx: Ctx, e: Effect, src: EffectSource): void {
       if (e.op.op === 'coke') applyCokeOp(ctx, e.op);
       else if (e.op.op === 'gang') applyGangOp(ctx, e.op);
       else if (e.op.op === 'lv') applyLvOp(ctx, e.op);
+      else if (e.op.op === 'post') applyPostOp(ctx, e.op);
+      else if (e.op.op === 'lie') applyLieOp(ctx, e.op);
       else applyFamOp(ctx, e.op, label);
       break;
     case 'bones':

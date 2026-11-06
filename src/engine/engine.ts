@@ -15,6 +15,7 @@ import { citiesWeek } from './familyWebCities';
 import { colombiaWeek } from './colombia';
 import { gangsWeek } from './gangs';
 import { vegasWeek } from './vegas';
+import { outpostsWeek } from './outposts';
 import { familyAsksWeek } from './minds/familyAsks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
@@ -518,6 +519,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     gangsWeek(ctx);
     // Las Vegas, an open city (vegas.ts): the points pay out of the count; the desert comes calling now and then.
     vegasWeek(ctx);
+    // Outposts and safe passage (outposts.ts): the men out of town send money home (or start their own things); whoever lies low has his week.
+    outpostsWeek(ctx);
     threatsWeek(ctx);
     // Feds and flipping: pinches at an hour, the government's offer, the wire, the hollow crown, the tip-off, the undercover (feds.ts).
     fedsWeek(ctx);

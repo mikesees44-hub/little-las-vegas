@@ -138,6 +138,8 @@ export const TIME_TABLE: Record<string, number> = {
   'fam:coke': 1, 'fam:gang': 1,
   // Las Vegas (vegas.ts): a call to the desert and a wire of money.
   'fam:lv': 0.5,
+  // Outposts and safe passage (outposts.ts): sending a man and seeing him off; a hideout arranged.
+  'fam:post': 1, 'fam:lie': 1,
   'travel:flee': TRAVEL_DAY, 'travel:surrender': 4, 'travel:comeHome': 2, 'travel:exile': 0.5, 'travel:hide': 2,
   // The town
   'pol:cultivate': 2, 'pol:payroll': 1, 'pol:dig': 0.5, 'pol:coerce': 1, 'pol:favor': 1, 'pol:recruit': 1, 'pol:groom': 2,
