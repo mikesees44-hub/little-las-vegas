@@ -19,6 +19,9 @@ import { canHonor, favorTerms, honorFavor, refuseFavor } from '../../../engine/m
 import { postNow } from '../../deeds/NowResult';
 import { FamilyTalk } from '../../minds/FamilyTalk';
 import { RivalMind } from '../../ai/RivalMind';
+import { Connections, TieList } from './Connections';
+import { sizeLine } from '../../../engine/familyWeb';
+import { FAMILY_BY_ID, GROUP_TITLE } from '../../../engine/familyWebData';
 
 /** Diplomacy › The Board: every other power on the shore, what they want and what they did last. */
 export function RivalBoard({ s }: { s: GameState }) {
@@ -60,6 +63,7 @@ export function RivalBoard({ s }: { s: GameState }) {
                 </div>
                 <div className="mt-0.5 flex flex-wrap items-center gap-1"><SideChip s={s} id={leader.id} full /><RelationChip relation={sideOf(s, leader.id).relation} /></div>
                 <div className="text-xs text-stone-400 truncate"><CharLink s={s} id={leader.id}>{displayName(leader)}</CharLink></div>
+                {FAMILY_BY_ID[r.id] && <div className="text-[11px] text-stone-500" data-testid={`rival-size-${r.id}`}>{GROUP_TITLE[FAMILY_BY_ID[r.id].group]} · {sizeLine(s, r.id as never)}</div>}
                 <div className="text-[11px] text-stone-500">Wants to <span className="text-stone-300">{r.goal}</span> · muscle {r.muscle}{r.kind === 'mob' ? ` · ${fmt$(r.money)}` : ''}</div>
                 {war && <div className="text-[11px] text-red-300">At war · score {war.score}</div>}
                 {r.feud && <div className="text-[11px] text-red-300">Blood feud</div>}
@@ -75,6 +79,7 @@ export function RivalBoard({ s }: { s: GameState }) {
                     </div>
                   );
                 })()}
+                {FAMILY_BY_ID[r.id] && <TieList s={s} id={r.id as never} max={3} />}
                 {r.lastMove && <div className="text-[11px] text-stone-400 italic">Wk {r.lastMove.week}: {r.lastMove.text}</div>}
                 {(() => {
                   const a = askFor(s, r.id);
@@ -104,6 +109,7 @@ export function RivalBoard({ s }: { s: GameState }) {
           );
         })}
       </ul>
+      <Connections s={s} />
       {sit && shell.update && <FamilyTalk s={s} rival={sit} update={shell.update} onClose={() => setSit(undefined)} />}
     </div>
   );
