@@ -7,7 +7,7 @@ import { opinion } from './relations';
 import { earOf, madamOf } from './ears';
 import { WORK_LABEL } from './earsState';
 import { isGoomar } from './goomar';
-import { personOf, nightActionsFor } from './nightlife';
+import { personOf, nightActionsFor, roleText } from './nightlife';
 import { ADULT_ROLES, ROLE_LABEL } from './nightlifeState';
 import { earnerOf, herBestFirst, titleOf } from './herway';
 import { JOBS } from './payrollState';
@@ -327,14 +327,19 @@ export function littleBlackBook(s: GameState): BlackBook {
     const push = (a: PlayerAction | undefined) => { if (a && !acts.some((x) => JSON.stringify(x) === JSON.stringify(a))) acts.push(a); };
     if (appr?.id === id) push({ kind: 'dating', op: { op: 'come', id, a: 'out' } });
     if (fix?.id === id) push({ kind: 'dating', op: { op: 'ma', id, a: 'meet' } });
-    push(best.get(id));
-    if (dRow) for (const a of dRow.actions.slice(0, 2)) push(a);
-    if (earKnown && ear?.status === 'listening') push({ kind: 'ears', op: { op: 'meet', earId: id } });
+    // A woman he courts gets the dating step first; an ear, a partner or an earner gets her own business first.
+    const romantic = inDating || sec.has('interested') || sec.has('want');
+    const datingSteps = () => { push(best.get(id)); if (dRow) for (const a of dRow.actions.slice(0, 2)) push(a); };
+    const businessSteps = () => {
+      if (earKnown && ear?.status === 'listening') push({ kind: 'ears', op: { op: 'meet', earId: id } });
+      if (earner && earner.status === 'active') for (const a of herBestFirst(s, id).slice(0, 1)) push(a);
+      if (np?.role === 'madam' && adult) for (const a of nightActionsFor(s, id).slice(0, 1)) push(a);
+      if (hire) for (const a of payrollActionsFor(s, id).slice(0, 1)) push(a);
+    };
+    if (romantic) { datingSteps(); businessSteps(); } else { businessSteps(); datingSteps(); }
     if (H) for (const a of honeyActionsFor(s, id).slice(0, 1)) push(a);
-    if (np && (gOn || sec.has('releases') || sec.has('want'))) for (const a of nightActionsFor(s, id).slice(0, 1)) push(a);
+    if (np && np.role !== 'madam' && (gOn || sec.has('releases') || sec.has('want'))) for (const a of nightActionsFor(s, id).slice(0, 1)) push(a);
     if (adult && provs.get(id) && !provs.get(id)!.blocked) push({ kind: 'dating', op: { op: 'paid', id } });
-    if (earner && earner.status === 'active') for (const a of herBestFirst(s, id).slice(0, 1)) push(a);
-    if (hire) for (const a of payrollActionsFor(s, id).slice(0, 1)) push(a);
     // Never an adult order with mature content Off.
     const okActs = acts.filter((a) => adult || !(a.kind === 'dating' && (a.op.op === 'paid' || a.op.op === 'pro')) && !(a.kind === 'nightlife' && (a.op.op === 'car' || a.op.op === 'bold'))).slice(0, 4);
 
@@ -342,7 +347,7 @@ export function littleBlackBook(s: GameState): BlackBook {
     const sorted = ORDER.filter((k) => shown.includes(k));
     const head = sorted[0];
     const feel = bond ? (bond.aff >= 80 ? 'in love with you' : bond.aff >= 60 ? 'very fond of you' : bond.aff >= 40 ? 'fond of you' : bond.aff >= 25 ? 'warm' : 'polite') : op >= 40 ? 'likes you' : op <= -20 ? 'cool to you' : '';
-    const role = earKnown && ear ? `${WORK_LABEL[ear.work].toLowerCase()} at ${ear.venue}` : np && (adult || !ADULT_ROLES.includes(np.role)) ? `${ROLE_LABEL[np.role].toLowerCase()} · ${np.venue}` : earner ? titleOf(earner).toLowerCase() : hire ? JOBS[hire.job].label.toLowerCase() : jobOf(s, c);
+    const role = adult && s.ears?.madam.id === id ? 'The Madam' : earKnown && ear ? `${WORK_LABEL[ear.work].toLowerCase()} at ${ear.venue}` : np ? `${roleText(s, np).toLowerCase()} · ${np.venue}` : earner ? titleOf(earner).toLowerCase() : hire ? JOBS[hire.job].label.toLowerCase() : jobOf(s, c);
     const useful = (sec.has('business') ? 30 : 0) + (sec.has('secrets') ? 25 : 0) + (ear ? ear.loyalty / 4 : 0) + (hire ? Math.min(30, hire.made / 500) : 0) + (earner ? Math.min(30, earner.income / 100) : 0) + (np?.payroll ? 15 : 0);
     rows.push({
       id, name: displayName(c), age: ageOfChar(s, c), role: role.replace(/^./, (x) => x.toUpperCase()),
