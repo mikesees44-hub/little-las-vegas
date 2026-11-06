@@ -59,6 +59,18 @@ export function togglePinOrder(seed: string, a: PlayerAction): void {
   save({ ...p, orders: { ...p.orders, [seed]: next } });
 }
 
+/** Move a pinned order from one place in the tray to another (drag, or the arrow keys). */
+export function movePin(seed: string, from: number, to: number): void {
+  const p = load();
+  const cur = [...(p.orders[seed] ?? [])];
+  if (from < 0 || from >= cur.length) return;
+  const t = Math.max(0, Math.min(cur.length - 1, to));
+  if (t === from) return;
+  const [x] = cur.splice(from, 1);
+  cur.splice(t, 0, x);
+  save({ ...p, orders: { ...p.orders, [seed]: cur } });
+}
+
 export function isPinnedEntry(label: string): boolean {
   return load().entries.includes(label);
 }

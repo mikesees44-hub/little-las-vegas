@@ -22,6 +22,7 @@ import { DecisionCard, type DecisionOption } from '../decide/DecisionCard';
 import { heavyOf } from '../../engine/heavy';
 import { getSettings } from '../settings';
 import { voicesFor } from '../decide/voices';
+import { isPinnedOrder, togglePinOrder, usePins } from '../plans/pins';
 import { oddsOfPreview, worstOfPreview } from '../../engine/decide';
 
 
@@ -82,6 +83,8 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
   const [nowErr, setNowErr] = useState<string | undefined>();
   const odds = p.acceptance ?? p.odds;
   const [voicesOpen, setVoicesOpen] = useState(false);
+  usePins();
+  const pinned = isPinnedOrder(s.seed, action);
   const doNow = () => {
     const r = actNow(s, short > 0 ? { ...action, fund: 'family' } : action);
     if (!r.result.ok) { setNowErr(r.result.error); return; }
@@ -130,6 +133,7 @@ export function ActionCard({ s, action, compact, label }: { s: GameState; action
         onLater={tomorrow} laterLabel="Do it tomorrow"
         advice={<span className="flex flex-wrap items-center gap-2">
           <AdviceButton s={s} subject={{ kind: 'action', action }} />
+          <button type="button" className={`btn-quiet text-[11px] ${pinned ? 'text-gold-400' : ''}`} onClick={() => togglePinOrder(s.seed, action)} aria-pressed={pinned} title={pinned ? 'Unpin this order' : 'Pin it to the top bar: one tap gives it any week'} data-testid="action-card-pin">{pinned ? '★ Pinned' : '☆ Pin'}</button>
           {!compact && !voicesOpen && <button type="button" className="btn-quiet text-[11px]" onClick={() => setVoicesOpen(true)} data-testid="voices-open">Your people weigh in ▸</button>}
         </span>}
         testid="action-decision"
