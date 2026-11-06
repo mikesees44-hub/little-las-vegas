@@ -32,10 +32,12 @@ function crewOrder(s: GameState, district: string): Extract<NycAction, { op: 'cr
 }
 
 describe('New York: the families and the neighborhoods', () => {
-  it('five fictional families, every district owned by one of them or open, places that exist', () => {
+  it('the five families by their 1960 names, every person fictional; every district owned by one of them or open, places that exist', () => {
     expect(NYC_FAMILY_IDS.length).toBe(5);
+    // The owner asked for the historical family names; the people in them are all fictional.
+    expect(Object.values(NYC_FAMILIES).map((f) => f.short).sort()).toEqual(['Bonanno', 'Gambino', 'Genovese', 'Lucchese', 'Profaci']);
     const banned = /gambino|genovese|lucchese|luchese|bonanno|colombo|profaci|gotti|luciano|costello|anastasia|gigante|castellano|galante|lansky|siegel/i;
-    for (const f of Object.values(NYC_FAMILIES)) expect(`${f.name} ${f.boss}`).not.toMatch(banned);
+    for (const f of Object.values(NYC_FAMILIES)) expect(f.boss).not.toMatch(banned);
     const places = new Set(sceneOf('newyork')!.places.map((p) => p.id));
     for (const d of NYC_DISTRICTS) {
       expect(d.rackets.length, d.id).toBeGreaterThan(0);
