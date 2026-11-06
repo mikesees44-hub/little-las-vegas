@@ -1,0 +1,141 @@
+import { useState } from 'react';
+import { allTies, famCard, famName, stanceWord, tieLine, type FamAction, type FamCard, type Tie } from '../../../engine/familyWeb';
+import { FAMILY_DEFS, GROUP_ORDER, GROUP_TITLE, TIE_GLYPH, TIE_LABEL, TIE_SIGN, type FamKey } from '../../../engine/familyWebData';
+import type { GameState, PlayerAction } from '../../../engine/types';
+import { ActionCard } from '../../components/Orders';
+import { OpinionBadge } from '../../components/CrewList';
+import { CharLink } from '../../components/People';
+import { fmt$ } from '../../format';
+
+const fam = (op: FamAction): PlayerAction => ({ kind: 'fam', op });
+/** The orders on a family's card: op: 'envoy', op: 'favor', op: 'partner', op: 'marry' (and op: 'broker' on the web). */
+const ORDERS = ['envoy', 'favor', 'partner', 'marry'] as const;
+
+const tone = (t: Tie) => (TIE_SIGN[t.kind] >= 0.5 ? 'text-emerald-300' : TIE_SIGN[t.kind] < 0 ? 'text-red-300' : 'text-stone-300');
+
+/** A family's ties, one line each (on its card and on the board's rival cards). */
+export function TieList({ s, id, max }: { s: GameState; id: FamKey; max?: number }) {
+  const ties = allTies(s).filter((t) => t.a === id || t.b === id);
+  if (!ties.length) return null;
+  return (
+    <ul className="mt-1 space-y-0.5 text-[11px]" data-testid={`fam-ties-${id}`}>
+      {ties.slice(0, max ?? ties.length).map((t) => (
+        <li key={t.id} className={tone(t)} title={`${TIE_LABEL[t.kind]} since ${t.since}, strength ${t.strength}/100. ${t.story}`}>
+          <span className="mr-1">{TIE_GLYPH[t.kind]}</span>{tieLine(s, t, id)} <span className="text-stone-500">({t.strength})</span>
+        </li>
+      ))}
+      {max && ties.length > max ? <li className="text-stone-500">and {ties.length - max} more (Connections, below)</li> : null}
+    </ul>
+  );
+}
+
+function Card({ s, c }: { s: GameState; c: FamCard }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="llv-card-box llv-card-plain p-2.5 min-w-0" data-testid={`fam-card-${c.id}`}>
+      <div className="flex justify-between gap-2">
+        <div className="min-w-0">
+          <div className="font-display text-[15px] leading-tight text-stone-100 truncate">{c.def.name}</div>
+          <div className="text-[11px] text-stone-400">{c.def.seat} · <span data-testid={`fam-size-${c.id}`}>{c.size}</span></div>
+        </div>
+        <div className="shrink-0 text-right" title={c.stance.parts.map((p) => `${p.label}: ${p.value > 0 ? '+' : ''}${p.value}`).join('\n')} data-testid={`fam-stance-${c.id}`}>
+          <OpinionBadge v={c.stance.value} />
+          <div className="text-[10px] text-stone-500">{stanceWord(c.stance.value)}{c.stance.shift ? ` (ties ${c.stance.shift > 0 ? '+' : ''}${c.stance.shift})` : ''}</div>
+        </div>
+      </div>
+      <div className="text-[11px] text-stone-400">Boss: {c.bossId ? <CharLink s={s} id={c.bossId}>{c.boss}</CharLink> : c.boss}</div>
+      <div className="text-[11px] text-stone-500">Rackets: {c.def.rackets.join(', ')}</div>
+      <TieList s={s} id={c.id} />
+      {c.deals.map((d) => <div key={d.what} className="text-[11px] text-emerald-300">Pays you {fmt$(d.weekly)}/wk: {d.what} (to week {d.until})</div>)}
+      <button type="button" className="btn-ghost mt-1 px-2 py-0.5 text-[11px]" onClick={() => setOpen(!open)} data-testid={`fam-open-${c.id}`}>{open ? 'Close' : 'Roster & deal with them…'}</button>
+      {open && (
+        <div className="mt-1 space-y-1.5">
+          <p className="text-[11px] text-stone-400 italic">{c.def.blurb}</p>
+          <ul className="text-[11px] text-stone-300" data-testid={`fam-roster-${c.id}`}>
+            {c.roster.map((m) => (
+              <li key={m.name}><span className="text-stone-500">{m.role}:</span> {m.charId ? <CharLink s={s} id={m.charId}>{m.name}</CharLink> : m.name}{m.note ? <span className="text-stone-500"> — {m.note}</span> : null}</li>
+            ))}
+          </ul>
+          <div className="grid gap-1">
+            {ORDERS.map((op) => <ActionCard key={op} s={s} action={fam({ op, fam: c.id })} compact />)}
+          </div>
+        </div>
+      )}
+    </li>
+  );
+}
+
+/** The web drawn: every family on a ring, grouped, a line for each tie (green warm, red hostile). */
+function Web({ s }: { s: GameState }) {
+  const ids: FamKey[] = ['player', ...GROUP_ORDER.flatMap((g) => FAMILY_DEFS.filter((d) => d.group === g).map((d) => d.id))];
+  const R = 150, C = 190;
+  const at = new Map(ids.map((id, i) => {
+    const a = (i / ids.length) * Math.PI * 2 - Math.PI / 2;
+    return [id, [C + Math.cos(a) * R, C + Math.sin(a) * R] as const];
+  }));
+  const ties = allTies(s);
+  return (
+    <svg viewBox="0 0 380 380" className="w-full max-w-[460px] mx-auto" role="img" aria-label="The web of family ties" data-testid="connections-web">
+      {ties.map((t) => {
+        const p = at.get(t.a), q = at.get(t.b);
+        if (!p || !q) return null;
+        const col = TIE_SIGN[t.kind] >= 0.5 ? '#34d399' : TIE_SIGN[t.kind] < 0 ? '#f87171' : '#a8a29e';
+        return <line key={t.id} x1={p[0]} y1={p[1]} x2={q[0]} y2={q[1]} stroke={col} strokeOpacity={0.35 + t.strength / 200} strokeWidth={0.6 + t.strength / 40}><title>{`${famName(s, t.a)} — ${famName(s, t.b)}: ${TIE_LABEL[t.kind]} (${t.strength}). ${t.story}`}</title></line>;
+      })}
+      {ids.map((id) => {
+        const [x, y] = at.get(id)!;
+        const label = id === 'player' ? 'You' : famName(s, id);
+        return (
+          <g key={id}>
+            <circle cx={x} cy={y} r={id === 'player' ? 7 : 5} fill={id === 'player' ? '#d9b75f' : '#57534e'} stroke="#1c1917" />
+            <text x={x} y={y + (y > C ? 15 : -9)} textAnchor="middle" fontSize="9" fill="currentColor" className="text-stone-300">{label}</text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Rivals ▸ The other families ▸ Connections: every family by where it sits, its ties and roster, the web, the news. */
+export function Connections({ s }: { s: GameState }) {
+  const [view, setView] = useState<'list' | 'web'>('list');
+  const st = s.families;
+  if (!st) return null;
+  const feuds = st.ties.filter((t) => (t.kind === 'feud' || t.kind === 'broken') && t.a !== 'player' && t.b !== 'player');
+  return (
+    <section className="space-y-2" data-testid="connections">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="font-display text-[17px] text-gold-300">Connections: every family and who it is tied to</h3>
+        <div className="flex gap-1">
+          <button type="button" className={view === 'list' ? 'btn-gold px-2 py-0.5 text-[11px]' : 'btn-ghost px-2 py-0.5 text-[11px]'} onClick={() => setView('list')} data-testid="connections-list-tab">By family</button>
+          <button type="button" className={view === 'web' ? 'btn-gold px-2 py-0.5 text-[11px]' : 'btn-ghost px-2 py-0.5 text-[11px]'} onClick={() => setView('web')} data-testid="connections-web-tab">The web</button>
+        </div>
+      </div>
+      <p className="llv-prose text-[12px]">A family's stance toward you is what it thinks of you plus its ties: friends of your friends warm to you, friends of your enemies cool. Send an envoy, do a favor, go into business, marry into them, or broker a truce between two families.</p>
+      {view === 'web' ? (
+        <div className="space-y-2">
+          <Web s={s} />
+          {feuds.length > 0 && (
+            <div data-testid="connections-feuds">
+              <div className="text-[12px] text-stone-300">Bad blood you could settle:</div>
+              <div className="grid gap-1 sm:grid-cols-2">{feuds.slice(0, 6).map((t) => <ActionCard key={t.id} s={s} action={fam({ op: 'broker', tie: t.id })} compact />)}</div>
+            </div>
+          )}
+        </div>
+      ) : (
+        GROUP_ORDER.map((g) => (
+          <div key={g} data-testid={`fam-group-${g}`}>
+            <div className="mt-1 text-[12px] uppercase tracking-wide text-stone-400">{GROUP_TITLE[g]}{g === 'nyc' ? ' — the five families and the Commission (South Philadelphia sits in as a friend)' : ''}</div>
+            <ul className="grid gap-2 sm:grid-cols-2">{FAMILY_DEFS.filter((d) => d.group === g).map((d) => <Card key={d.id} s={s} c={famCard(s, d.id)} />)}</ul>
+          </div>
+        ))
+      )}
+      {st.log.length > 0 && (
+        <div data-testid="connections-news">
+          <div className="text-[12px] text-stone-300">Lately among the families:</div>
+          <ul className="text-[11px] text-stone-400 space-y-0.5">{st.log.slice(-10).reverse().map((l, i) => <li key={i} className={l.tone === 'bad' ? 'text-red-300/80' : l.tone === 'good' ? 'text-emerald-300/80' : ''}>Wk {l.w}: {l.t}</li>)}</ul>
+        </div>
+      )}
+    </section>
+  );
+}

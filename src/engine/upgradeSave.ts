@@ -65,6 +65,7 @@ import { capArchives } from './prune';
 import { startComeback } from './station';
 import { ensureEat } from './eat';
 import type { GameState } from './types';
+import { ensureFamilies } from './familyWeb';
 
 /**
  * Brings a save from an older build up to date the moment it is loaded, so
@@ -121,5 +122,7 @@ export function upgradeSave(s: GameState): GameState {
   try { topUpOldPocket(s); } catch { /* nothing to top up */ }
   // A save from before the family above (a low start, or a fallen boss in someone's ranks): the Valente family, once.
   try { ensureAbove(s); } catch { /* the station still works without it */ }
+  // The families' web (familyWeb.ts): a save from before it gets the 1960 ties, once (its own dice; only when absent).
+  if (s.families === undefined && s.rivals?.length) try { ensureFamilies(s); } catch { /* the weekly update will make it */ }
   return s;
 }

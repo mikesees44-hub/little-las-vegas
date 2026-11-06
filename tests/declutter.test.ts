@@ -75,6 +75,7 @@ const OP_UNIONS: Record<string, [file: string, type: string, disc: string, exclu
   hood: ['hood.ts', 'HoodAction', 'type'],
   spend: ['spendState.ts', 'SpendAction', 'op'],
   nyc: ['nyc.ts', 'NycAction', 'op'],
+  fam: ['familyWeb.ts', 'FamAction', 'op'],
   paper: ['paper.ts', 'PaperAction', 'op'],
   work: ['bizRacket.ts', 'WorkAction', 'op'],
   intrigue: ['intrigueState.ts', 'IntrigueAction', 'op'],

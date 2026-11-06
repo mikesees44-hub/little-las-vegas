@@ -10,6 +10,7 @@ import { housingWeek } from './housing';
 import { marketWeek } from './market';
 import { fbankEventSource, fbankWeek } from './familyBank';
 import { talksWeek } from './talks';
+import { familiesWeek } from './familyWeb';
 import { familyAsksWeek } from './minds/familyAsks';
 import { missionsWeek } from './missions';
 import { markCostlyChoices } from './costHints';
@@ -503,6 +504,8 @@ export function advanceWeek(input: GameState, choices: PlayerChoices = {}): Adva
     armyWeek(ctx);
     rivalDisputes(ctx);
     tableWeek(ctx);
+    // The families' web (familyWeb.ts): ties move, the families jockey and ask for help, Philadelphia, Atlantic City and New York come calling.
+    familiesWeek(ctx);
     threatsWeek(ctx);
     // Feds and flipping: pinches at an hour, the government's offer, the wire, the hollow crown, the tip-off, the undercover (feds.ts).
     fedsWeek(ctx);
