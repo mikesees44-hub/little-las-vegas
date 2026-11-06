@@ -20,6 +20,7 @@ import { Num, type Reason } from './Num';
 import { moneyTop } from '../../engine/money';
 import { useShell } from './context';
 import { OrdersTray, useOrders } from '../components/Orders';
+import { EarnChip } from './EarnChip';
 import { queuedMoney } from '../../engine/actions';
 import { PlansPanel, usePlansCount } from '../plans/PlansPanel';
 import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
@@ -449,6 +450,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, turn, speed, s
             </div>
             <WaitingButton count={inboxN} tone={inboxTone} onReview={onReview} onDesk={onDesk} />
             {phone}
+            <EarnChip s={s} />
             {onFind && (
               <button type="button" onClick={onFind} data-testid="find-button" title="Do something (talk, pay, order, plan, buy, travel, hurt, protect) or find a person, a place, a screen (Ctrl+K or /)"
                 className="h-8 rounded border border-noir-600 px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap text-stone-300 hover:border-gold-500">⌕<span className="hidden sm:inline"> Do / Find</span></button>

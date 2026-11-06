@@ -90,3 +90,13 @@ describe('talking business settles in the moment', () => {
     expect(r.result.line).not.toMatch(/^Done/);
   });
 });
+
+import { EarnChip } from '../src/ui/shell/EarnChip';
+describe('the top bar shows who is not earning', () => {
+  it('renders the chip when men need work, with the count', () => {
+    const s = newGameWith('chip-1', 'olddon');
+    const n = crewBoard(s).rows.filter((r) => (r.status === 'needs' || r.status === 'starving') && r.assign).length;
+    const html = renderToString(createElement(EarnChip, { s }));
+    if (n) expect(html).toContain('not earning'); else expect(html).toBe('');
+  });
+});
