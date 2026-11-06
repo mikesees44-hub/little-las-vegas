@@ -95,7 +95,7 @@ export function FixChip({ g, initialOpen }: { g: FixGroup; initialOpen?: boolean
     <div className="relative" ref={ref}>
       <button type="button" onClick={() => setOpen((v) => !v)} data-testid={t.chip} aria-expanded={shown}
         title={`${g.title}: tap to see why and fix them`}
-        className={`h-8 rounded border px-1.5 sm:px-2 text-xs font-semibold whitespace-nowrap ${todo ? (g.kind === 'grudges' || g.kind === 'lapses' ? 'border-red-500/60 text-red-200 hover:border-red-300' : 'border-amber-500/70 text-amber-300 hover:border-amber-300') : 'border-emerald-600/60 text-emerald-300'}`}>
+        className={`btn-secondary h-8 px-1.5 py-0 sm:px-2 text-xs font-semibold whitespace-nowrap ${todo ? (g.kind === 'grudges' || g.kind === 'lapses' ? 'border-red-500/60 text-red-200 hover:border-red-300' : 'border-amber-500/70 text-amber-300 hover:border-amber-300') : 'border-emerald-600/60 text-emerald-300'}`}>
         {g.glyph} {todo ? `${todo} ${g.label}` : 'all fixed'}
       </button>
       {shown && (
@@ -125,13 +125,13 @@ export function FixChips({ s }: { s: GameState }) {
       <div className="hidden items-center gap-1 md:flex" data-testid="fix-chips">{groups.map((g) => <FixChip key={g.kind} g={g} />)}</div>
       <div className="relative md:hidden" ref={ref}>
         <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} data-testid="fix-menu" title="What needs fixing: tap to see why and fix it"
-          className="h-8 rounded border border-amber-500/70 px-1.5 text-xs font-semibold whitespace-nowrap text-amber-300">⚑ {n} fix{n === 1 ? '' : 'es'}</button>
+          className="btn-secondary h-8 border-amber-500/70 px-1.5 py-0 text-xs font-semibold whitespace-nowrap text-amber-300">⚑ {n} fix{n === 1 ? '' : 'es'}</button>
         {open && (
           <div className="absolute right-0 z-[60] mt-1 w-[min(92vw,380px)] rounded-md border border-noir-600 bg-noir-900 p-2 text-xs shadow-xl" data-testid="fix-menu-pop">
             <div className="mb-1.5 flex flex-wrap gap-1" role="tablist">
               {groups.map((g) => (
                 <button key={g.kind} type="button" role="tab" aria-selected={cur.kind === g.kind} onClick={() => setSel(g.kind)} data-testid={`fix-tab-${g.kind}`}
-                  className={`rounded-full border px-2 py-0.5 text-[10px] ${cur.kind === g.kind ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400'}`}>{g.glyph} {g.rows.length} {g.label}</button>
+                  className={`btn-sm rounded-full border px-2 py-0.5 text-[10px] ${cur.kind === g.kind ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400'}`}>{g.glyph} {g.rows.length} {g.label}</button>
               ))}
             </div>
             <FixList g={cur} onClose={() => setOpen(false)} />

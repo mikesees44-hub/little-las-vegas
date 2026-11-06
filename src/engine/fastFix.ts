@@ -41,7 +41,7 @@ function mensMoney(s: GameState): ReturnType<typeof mensMoney0> {
 /* Safe orders                                                         */
 /* ------------------------------------------------------------------ */
 
-const HARM_KINDS = new Set<string>(['declareWar', 'raid', 'bones', 'army', 'underbelly', 'terms', 'dirty']);
+const HARM_KINDS = new Set<string>(['declareWar', 'raid', 'army', 'underbelly', 'terms', 'dirty']);
 const HARM_OPS = new Set<string>([
   'interact:whack', 'interact:threaten', 'interact:exile', 'interact:demote', 'interact:imprison',
   'mymen:warn', 'mymen:fine', 'mymen:demote', 'mymen:kill', 'mymen:shelf',
