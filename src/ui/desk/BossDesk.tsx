@@ -88,6 +88,11 @@ const FILTERS: { id: DeskFilter; label: string; kinds: DeskKind[] }[] = [
 ];
 /** The domain chips' words (the homes' names; shell/nav.ts cannot be imported here). */
 export const DOM_LABEL: Record<DomainHome, string> = { house: 'Family', org: 'Crew', money: 'Money', law: 'Law', rivals: 'Rivals', town: 'Town' };
+/** The quick filters (fast7): Money / Men / Women / Rivals / Law, each one part of his life (the domain chips, always shown). */
+export const QUICK: { h: DomainHome; label: string }[] = [
+  { h: 'money', label: '$ Money' }, { h: 'org', label: '⚑ Men' }, { h: 'house', label: '♥ Women' }, { h: 'rivals', label: '⚔ Rivals' }, { h: 'law', label: '§ Law' },
+];
+const QUICK_LABEL = Object.fromEntries(QUICK.map((q) => [q.h, q.label])) as Partial<Record<DomainHome, string>>;
 const inFilter = (f: DeskFilter, it: DeskItem) => f === 'all' || FILTERS.find((x) => x.id === f)!.kinds.includes(it.kind);
 
 const ICON: Record<DeskKind, string> = { decision: '✉', petition: '☏', urgent: '⚠', morning: '☕', sitdown: '♜', lieutenant: '♜', request: '♣', envelope: '$', lawyer: '§', order: '☰', bill: '$', upcoming: '◷', result: '✓' };
@@ -265,7 +270,8 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
   const nextKey = bundles.length ? undefined : needs?.items.find((x) => !x.done)?.key;
   const bundledN = bundles.reduce((a, b) => a + b.items.length, 0);
   const needsTitle = <div className="llv-blotter-title">Needs you ({(needs?.items.filter((x) => !x.done).length ?? 0) + bundledN})</div>;
-  const rest = (['result', 'order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')));
+  const rest = (['result', 'order', 'upcoming', 'bill'] as const).map(get).filter((g): g is DeskGroup => !!g && (filter === 'all' || (filter === 'money' && g.kind === 'bill')))
+    .map((g) => (dom ? { ...g, items: g.items.filter(inDom) } : g)).filter((g) => !dom || g.items.length > 0);
   return (
     <section className="llv-desktop" data-testid="boss-desk">
       <div className="llv-desktop-grid">
@@ -301,12 +307,12 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
       )}
       <div className="llv-blotter mt-1.5 flex flex-wrap gap-1" role="tablist" aria-label="Filter the desk">
         {counts.filter((f) => f.id === 'all' || f.n > 0 || f.id === filter).map((f) => (
-          <button key={f.id} type="button" role="tab" aria-selected={filter === f.id} onClick={() => setFilter(f.id)} data-testid={`desk-filter-${f.id}`}
+          <button key={f.id} type="button" role="tab" aria-selected={filter === f.id && (f.id !== 'all' || !dom)} onClick={() => { setFilter(f.id); if (f.id === 'all') setDom(undefined); }} data-testid={`desk-filter-${f.id}`}
             className={`rounded-full border px-2 py-0.5 text-[10px] ${filter === f.id ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}>{f.label}{f.id !== 'all' ? ` ${f.n}` : ''}</button>
         ))}
-        {domCounts.filter((d) => d.n > 0 || d.h === dom).map(({ h, n }) => (
-          <button key={h} type="button" role="tab" aria-selected={dom === h} onClick={() => setDom(dom === h ? undefined : h)} data-testid={`desk-dom-${h}`} title={`Only what is about ${DOM_LABEL[h]}`}
-            className={`btn-sm rounded-full border px-2 py-0.5 text-[10px] ${domClass(HOME_DOMAIN[h])} ${dom === h ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}><span className="llv-dom-ink">{DOM_LABEL[h]}</span> {n}</button>
+        {[...QUICK.map((q) => domCounts.find((d) => d.h === q.h)!), ...domCounts.filter((d) => !QUICK_LABEL[d.h] && (d.n > 0 || d.h === dom))].filter(Boolean).map(({ h, n }) => (
+          <button key={h} type="button" role="tab" aria-selected={dom === h} onClick={() => setDom(dom === h ? undefined : h)} data-testid={`desk-dom-${h}`} data-quick={QUICK_LABEL[h] ? h : undefined} title={`Only what is about ${DOM_LABEL[h]}`}
+            className={`btn-sm rounded-full border px-2 py-0.5 text-[10px] ${domClass(HOME_DOMAIN[h])} ${dom === h ? 'border-gold-500 bg-gold-500/15 text-gold-200' : 'border-noir-600 text-stone-400 hover:text-stone-200'}`}><span className="llv-dom-ink">{QUICK_LABEL[h] ?? DOM_LABEL[h]}</span> {n}</button>
         ))}
         <AskButton s={s} className="ml-auto" />
         <button type="button" className="btn-quiet text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
@@ -331,7 +337,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
       <div className="llv-desktop-rest">
       <div className={`grid gap-2 ${side ? 'lg:grid-cols-[1fr_minmax(220px,300px)]' : ''}`}>
         <div className="min-w-0 space-y-2">
-          {wifeNeeds(s, ui.orders) && <WifeCard s={s} compact />}
+          {wifeNeeds(s, ui.orders) && (!dom || dom === 'house') && <WifeCard s={s} compact />}
           {handled && handled.items.length > 0 && (
             <div data-testid="desk-group-handled">
               <div className="llv-section-title mb-1 text-[14px]">Handled for you ({handled.items.length})</div>
