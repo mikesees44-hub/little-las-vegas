@@ -234,9 +234,14 @@ export const FAMILY_DEFS: FamDef[] = [
   CHICAGO_DEF,
   {
     id: 'vegas', name: 'The Silver Strip Partners', short: 'Las Vegas', group: 'out', seat: 'Las Vegas', boss: 'Sid Wexler', city: 'vegas', reach: 3, men: 60, made: 0, crews: 4, eth: 'Jewish',
-    rackets: ['casino points', 'the count room'],
-    blurb: 'The count room in the desert. Everyone back east has a point in a Strip casino; the Adlers keep the skim honest.',
-    roster: [{ name: 'Sid Wexler', role: 'boss' }, { name: 'Meyer Adler', role: 'consigliere', note: 'the Adler house; the count room' }],
+    rackets: ['casino points', 'the count room', 'the junkets', 'the race book'],
+    blurb: 'The count room in the desert, and an open city: nobody owns the Strip. Chicago, Cleveland and the New York families hold points in its casinos, and the Silver Strip Partners count the money for all of them; the Adlers keep the skim honest. In every union hall they say a Teamsters\' pension fund lends to whatever gets built here. Nobody has ever proved it.',
+    roster: [
+      { name: 'Sid Wexler', role: 'boss' }, { name: 'Meyer Adler', role: 'consigliere', note: 'the Adler house; the count room' },
+      { name: 'Dutch Orloff', role: 'underboss', note: 'keeps the peace on the Strip: who holds which point' },
+      { name: 'Herbie "the Pencil" Glickman', role: 'capo', note: 'casino manager at the Coronado Palms' },
+      { name: 'Leo "Cards" Mandel', role: 'capo', note: 'the junkets: high rollers flown in from the East' },
+    ],
   },
   {
     id: 'cleveland', name: 'The Kovacs Syndicate', short: 'Cleveland', group: 'out', seat: 'Cleveland', boss: 'Geza Kovacs', city: 'cleveland', reach: 3, men: 90, made: 30, crews: 7, eth: 'Italian',

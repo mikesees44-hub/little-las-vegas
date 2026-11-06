@@ -8,6 +8,7 @@ import { CharLink } from '../../components/People';
 import { fmt$ } from '../../format';
 import { colOf, cokeActions, LEVEL_WORD, market, weeklyTake } from '../../../engine/colombia';
 import { gangActions, gangsOf, KIND_LABEL, KIND_WANT } from '../../../engine/gangs';
+import { CASINOS, holdersLine, lvActions, lvOf, pointsIn, pointWeekly } from '../../../engine/vegas';
 
 const fam = (op: FamAction): PlayerAction => ({ kind: 'fam', op });
 /** The orders on a family's card: op: 'envoy', op: 'favor', op: 'partner', op: 'marry' (and op: 'broker' on the web). */
@@ -18,6 +19,7 @@ const GROUP_NOTE: Partial<Record<string, string>> = {
   chi: 'the Outfit: the Midwest, the racing wire, the desert skim, a seat on the Commission',
   nola: 'the oldest family: the port, the Gulf\'s slot machines, the tracks',
   fla: 'Tampa, Miami Beach (the families\' winter base), the Havana men, and a Colombian trickle',
+  out: 'Boston, Cleveland, and Las Vegas: an open city where everybody holds a point and nobody holds the town',
 };
 
 const tone = (t: Tie) => (TIE_SIGN[t.kind] >= 0.5 ? 'text-emerald-300' : TIE_SIGN[t.kind] < 0 ? 'text-red-300' : 'text-stone-300');
@@ -57,6 +59,7 @@ function Card({ s, c }: { s: GameState; c: FamCard }) {
       <TieList s={s} id={c.id} />
       {c.deals.map((d) => <div key={d.what} className={`text-[11px] ${d.weekly < 0 ? 'text-amber-300' : 'text-emerald-300'}`}>{d.weekly < 0 ? `You pay ${fmt$(-d.weekly)}/wk` : `Pays you ${fmt$(d.weekly)}/wk`}: {d.what} (to week {d.until})</div>)}
       {c.id === 'colombians' && <CokePanel s={s} />}
+      {c.id === 'vegas' && <StripPanel s={s} />}
       <button type="button" className="btn-ghost mt-1 px-2 py-0.5 text-[11px]" onClick={() => setOpen(!open)} data-testid={`fam-open-${c.id}`}>{open ? 'Close' : 'Roster & deal with them…'}</button>
       {open && (
         <div className="mt-1 space-y-1.5">
@@ -84,6 +87,31 @@ function CokePanel({ s }: { s: GameState }) {
       <div className="text-stone-300">The import racket: <span className={lvl ? 'text-red-300' : 'text-stone-400'} data-testid="coke-level">{lvl ? LEVEL_WORD[lvl] : 'you are not in it'}</span>{lvl ? ` · about ${fmt$(Math.round(weeklyTake(s, lvl) * (1 - (col?.cut?.share ?? 0))))}/wk` : ''}</div>
       <div className="text-stone-500">The trade in {s.date.y}: {market(s.date.y) <= 1.2 ? 'a trickle' : market(s.date.y) < 3 ? 'growing' : 'big money'}.{col?.known ? ' Philadelphia knows.' : ''}{col?.cut ? ` ${col.cut.fam} takes ${Math.round(col.cut.share * 100)}%.` : ''}{col?.tot ? ` Paid you ${fmt$(col.tot)} so far.` : ''}</div>
       <div className="mt-1 grid gap-1">{cokeActions().map((a) => <ActionCard key={a.op === 'coke' ? a.step : ''} s={s} action={fam(a)} compact />)}</div>
+    </div>
+  );
+}
+
+/** Las Vegas, an open city: the Strip's casinos, who holds their points, the boss's own points (op: 'lv'). */
+function StripPanel({ s }: { s: GameState }) {
+  const [open, setOpen] = useState(false);
+  const lv = lvOf(s);
+  const held = lv?.pts ?? [];
+  return (
+    <div className="mt-1 rounded border border-gold-700/50 p-1.5 text-[11px]" data-testid="strip-panel">
+      <div className="text-stone-300">The Strip: <span data-testid="strip-held">{held.length ? held.map((p) => `${p.n} point${p.n > 1 ? 's' : ''} in ${CASINOS.find((c) => c.id === p.c)?.name ?? p.c}`).join(', ') : 'you hold no point'}</span>{lv?.tot ? ` · paid you ${fmt$(lv.tot)} so far` : ''}</div>
+      <div className="text-stone-500">An open city: nobody owns the Strip. The points pay every week out of the count; the skim draws a little federal attention.</div>
+      <button type="button" className="btn-ghost mt-1 px-2 py-0.5 text-[11px]" onClick={() => setOpen(!open)} data-testid="strip-open">{open ? 'Close the Strip' : 'The casinos and their points…'}</button>
+      {open && (
+        <ul className="mt-1 space-y-1.5" data-testid="strip-casinos">
+          {CASINOS.map((c) => (
+            <li key={c.id} data-testid={`casino-${c.id}`}>
+              <div className="text-stone-200 capitalize">{c.name}{c.downtown ? ' (downtown)' : ''} <span className="text-stone-500 normal-case">— {c.note}</span></div>
+              <div className="text-stone-500">Points held by {holdersLine(s, c)} · a point pays about {fmt$(pointWeekly(s, c))}/wk{pointsIn(s, c.id) ? <span className="text-emerald-300"> · you hold {pointsIn(s, c.id)}</span> : null}</div>
+              <div className="mt-0.5 grid gap-1">{lvActions(c).map((a) => <ActionCard key={a.op === 'lv' ? a.step : ''} s={s} action={fam(a)} compact />)}</div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

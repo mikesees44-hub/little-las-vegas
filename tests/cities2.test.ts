@@ -106,6 +106,8 @@ describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
     const fed0 = s.heat.federal;
     let fedAdded = 0;
     for (let i = 0; i < 13; i++) {
+      // The cities' offers left unanswered resolve on their defaults (a gift to New Orleans...): clear them, so only the racket moves the views.
+      s.eventQueue = []; s.pendingEvents = [];
       const r = advanceWeek(s, { actions: [] });
       expect(reconcile(r.report)).toEqual([]);
       fedAdded += r.report.lines.filter((l) => l.stat === 'heat.federal' && /narcotics/.test(l.label)).reduce((a, l) => a + l.amount, 0);

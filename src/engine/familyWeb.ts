@@ -93,6 +93,8 @@ export interface FamState {
   c2?: number;
   /** The Colombian connection (colombia.ts): absent until the boss touches it. */
   col?: ColState;
+  /** Las Vegas (vegas.ts): the boss's points on the Strip; absent until he holds one. */
+  lv?: import('./vegas').LvState;
 }
 
 /** The import racket the boss can touch (colombia.ts): abstract, never a method. */
@@ -441,7 +443,9 @@ export type FamOp =
   /** The import racket (colombia.ts applies it). */
   | { op: 'coke'; set?: number; deny?: number; cut?: { fam: string; share: number }; refuse?: { fam: string; chance: number } }
   /** A gang that cropped up (gangs.ts applies it). */
-  | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' | 'ignore'; chance: number; cost?: number };
+  | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' | 'ignore'; chance: number; cost?: number }
+  /** Las Vegas (vegas.ts applies it): a point bought or sold on the Strip, an audit of the count. */
+  | { op: 'lv'; buy?: string; sell?: string; audit?: { casino: string; chance: number; amount: number } };
 
 export function describeFamOp(s: GameState, o: FamOp): string {
   switch (o.op) {
@@ -458,6 +462,7 @@ export function describeFamOp(s: GameState, o: FamOp): string {
     case 'size': return `${famName(s, o.fam)} ${o.amount >= 0 ? '+' : ''}${o.amount} men`;
     case 'coke': return o.set !== undefined ? (o.set > 0 ? `The import racket: ${['out', 'a trickle', 'a steady line', 'a big line'][o.set] ?? 'a big line'}` : 'Out of the import racket') : o.deny !== undefined ? `${Math.round(o.deny * 100)}% Philadelphia believes you` : o.cut ? `${famName(s, o.cut.fam as FamKey)} takes ${Math.round(o.cut.share * 100)}% of the import racket` : o.refuse ? `${Math.round(o.refuse.chance * 100)}% ${famName(s, o.refuse.fam as FamKey)} backs off` : '';
     case 'gang': return o.how === 'ignore' ? 'Let them be' : `${Math.round(o.chance * 100)}% it works`;
+    case 'lv': return o.buy ? 'A point on the Strip is yours' : o.sell ? 'You sell the point' : o.audit ? `${Math.round(o.audit.chance * 100)}% the audit finds the short count` : '';
     case 'gamble': return `${Math.round(o.chance * 100)}%: ${fmt(o.weekly)} a week for ${o.weeks} weeks (${o.what}); otherwise the money is gone`;
   }
 }
@@ -560,7 +565,8 @@ export function applyFamOp(ctx: Ctx, o: FamOp, label?: string): void {
       break;
     case 'coke':
     case 'gang':
-      // Applied by colombia.ts and gangs.ts (effects.ts routes them).
+    case 'lv':
+      // Applied by colombia.ts, gangs.ts and vegas.ts (effects.ts routes them).
       break;
     case 'gamble': {
       const fam = famName(s, o.fam);
@@ -589,6 +595,8 @@ export type FamAction =
   | { op: 'coke'; step: 'in' | 'more' | 'out' }
   /** A gang that cropped up (gangs.ts): fight them, buy them off, recruit them, partner with them. */
   | { op: 'gang'; id: string; how: 'fight' | 'buy' | 'recruit' | 'partner' }
+  /** Las Vegas (vegas.ts): buy a point in a Strip casino, or sell one. */
+  | { op: 'lv'; step: 'buy' | 'sell'; casino: string }
   | { op: 'envoy'; fam: FamKey }
   | { op: 'favor'; fam: FamKey }
   | { op: 'partner'; fam: FamKey }
@@ -652,7 +660,7 @@ export function previewFam(s: GameState, a: FamAction): ActionPreview {
     };
   }
   // The import racket and the gangs preview in their own modules (actions.ts routes them).
-  if (a.op === 'coke' || a.op === 'gang') return { title: a.op === 'coke' ? 'The import racket' : 'A gang', effects: [], cost: 0, because: '', category: 'cost', disabledReason: 'Not from here' };
+  if (a.op === 'coke' || a.op === 'gang' || a.op === 'lv') return { title: a.op === 'coke' ? 'The import racket' : 'A gang', effects: [], cost: 0, because: '', category: 'cost', disabledReason: 'Not from here' };
   const f = a.fam;
   const d = famDef(f);
   const name = famName(s, f);
