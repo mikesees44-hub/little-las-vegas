@@ -5,6 +5,7 @@ import type { Character, FactionId, GameState, Trait } from '../../engine/types'
 import { Portrait } from '../portrait/Portrait';
 import { sideOf } from '../../engine/sides';
 import { SideBadge } from './Side';
+import { faceMark, type FaceMark } from '../../engine/fastFix';
 
 /** Opening a character sheet from anywhere. */
 export const SheetContext = createContext<{ open: (id: string) => void; menu?: (id: string, category?: string, at?: { x: number; y: number }) => void }>({ open: () => {} });
@@ -60,9 +61,21 @@ export function Face({ s, c, size = 48, className, noSide }: { s: GameState; c: 
         <Portrait c={c} seed={s.seed} date={s.date} size={size} tint={FACTION_TINT[c.faction]} opinion={c.alive && c.faction === 'player' && c.id !== s.playerId ? opinion(s, c.id, s.playerId) : undefined} />
       </button>
       {side && size >= 28 && <SideBadge side={side} size={size} />}
+      <HeatMark s={s} c={c} size={size} />
       <ActionsHandle c={c} size={size} />
     </span>
   );
+}
+
+const MARK_BG: Record<FaceMark['tone'], string> = { green: 'bg-emerald-400', amber: 'bg-amber-400', red: 'bg-red-500' };
+
+/** Hot or cold (fast7): a small dot on one of the boss's men — green earning, amber idle, red broke or a grudge — and why. */
+export function HeatMark({ s, c, size = 48 }: { s: GameState; c: Character; size?: number }) {
+  if (!c.alive || c.faction !== 'player' || c.id === s.playerId || size < 24) return null;
+  const m = faceMark(s, c.id);
+  if (!m) return null;
+  return <span role="img" aria-label={m.why} title={m.why} data-testid="face-mark" data-tone={m.tone}
+    className={`absolute -right-0.5 -top-0.5 z-[1] rounded-full ring-2 ring-noir-950 ${MARK_BG[m.tone]} ${size >= 40 ? 'h-2.5 w-2.5' : 'h-2 w-2'}`} />;
 }
 
 /** Trait icons: a glyph on a coloured disc, the meaning on hover. */
