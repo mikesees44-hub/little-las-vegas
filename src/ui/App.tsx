@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { acceptSettlement, mayCommit, type SettledMark } from '../engine/settle';
 import { sameOrder } from './verbs';
 import { nextConfirms } from './confirmQueue';
-import { clockSpaceAllowed, shortcutBlocked } from './keys';
+import { clockSpaceAllowed, digitsOwned, shortcutBlocked } from './keys';
 import { openingCard } from '../engine/scenes';
 import { OrderToast, type ToastItem } from './components/OrderToast';
 import { ConfirmOrder } from './components/ConfirmOrder';
@@ -972,7 +972,7 @@ export function App({ startOn = 'title' }: AppProps) {
       }
       // 1-5: the clock's speed, only while no decision card is open (inside one they pick a choice).
       if (timeMode() === 'clock' && !shortcutBlocked(e)) {
-        const sp = speedKey(e.key, cardOpenRef.current);
+        const sp = speedKey(e.key, cardOpenRef.current || digitsOwned());
         if (sp) { e.preventDefault(); setSpeed(sp); setClockNote(undefined); return; }
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k' && !menu) { e.preventDefault(); setFinding(true); return; }

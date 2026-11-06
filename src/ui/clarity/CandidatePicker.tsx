@@ -1,3 +1,5 @@
+import { useDialogKeys } from '../keys';
+import { KeyHint } from '../components/KeyHint';
 import { useMemo, useState } from 'react';
 import { rankCandidates, type Candidate, type Chip, type Ranking, type Role } from '../../engine/candidates';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -101,7 +103,7 @@ export function CandidateCard({ s, c, ranking, picked, onPick, pickLabel }: {
   );
 }
 
-export function CandidatePicker({ s, role, pool, onPick, selected, onToggle, limit = 6, hideAdvisors, ranking: given }: {
+export function CandidatePicker({ s, role, pool, onPick, selected, onToggle, limit = 6, hideAdvisors, ranking: given, keys }: {
   s: GameState;
   role: Role;
   pool?: string[];
@@ -111,6 +113,8 @@ export function CandidatePicker({ s, role, pool, onPick, selected, onToggle, lim
   limit?: number;
   hideAdvisors?: boolean;
   ranking?: Ranking;
+  /** Dialog keys: 1…9 pick that candidate, Enter the recommended one (the picker in its modal). */
+  keys?: boolean;
 }) {
   const { orders, queue } = useOrders();
   const [sort, setSort] = useState<SortKey>('outcome');
@@ -128,6 +132,18 @@ export function CandidatePicker({ s, role, pool, onPick, selected, onToggle, lim
     }
     return shown;
   }, [ranking, sort, all, limit]);
+  const handlerOf = (c: Candidate | undefined) => {
+    if (!c) return undefined;
+    const team = !!onToggle;
+    const picked = team ? !!selected?.includes(c.id) : !!c.action && orders.some((o) => same(o, c.action!));
+    if (picked && !team) return undefined;
+    return team ? () => onToggle!(c.id) : onPick ? () => onPick(c) : c.action ? () => queue(c.action!) : undefined;
+  };
+  useDialogKeys(!!keys && ranking.candidates.length > 0, {
+    count: Math.min(9, list.length),
+    pick: (i) => handlerOf(list[i])?.(),
+    confirm: () => handlerOf(list.find((c) => c.id === ranking.recommendedId))?.(),
+  });
   if (!ranking.candidates.length) return <div className="text-xs text-stone-500" data-testid="candidate-picker">Nobody can do this right now.</div>;
   return (
     <div className="space-y-2" data-testid="candidate-picker">
@@ -143,13 +159,14 @@ export function CandidatePicker({ s, role, pool, onPick, selected, onToggle, lim
       </div>
       {!hideAdvisors && <AdvisorQuotes s={s} ranking={ranking} />}
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {list.map((c) => {
+        {list.map((c, i) => {
           const team = !!onToggle;
           const picked = team ? !!selected?.includes(c.id) : !!c.action && orders.some((o) => same(o, c.action!));
           const handler = team ? () => onToggle!(c.id) : onPick ? () => onPick(c) : c.action ? () => queue(c.action!) : undefined;
           return (
-            <CandidateCard key={c.id} s={s} c={c} ranking={ranking} picked={picked || (!!selected && selected.includes(c.id))} onPick={picked && !team ? undefined : handler}
-              pickLabel={team ? (picked ? 'On the team ✓ (remove)' : 'Add to the team') : onPick ? (selected?.includes(c.id) ? 'Chosen' : 'Choose') : c.action ? specificButton(s, c.action) : 'Choose'} />
+            <div key={c.id} className="relative">{keys && i < 9 && <KeyHint k={String(i + 1)} className="absolute right-1 top-1 z-[1]" />}
+            <CandidateCard s={s} c={c} ranking={ranking} picked={picked || (!!selected && selected.includes(c.id))} onPick={picked && !team ? undefined : handler}
+              pickLabel={team ? (picked ? 'On the team ✓ (remove)' : 'Add to the team') : onPick ? (selected?.includes(c.id) ? 'Chosen' : 'Choose') : c.action ? specificButton(s, c.action) : 'Choose'} /></div>
           );
         })}
       </div>
@@ -167,9 +184,9 @@ export function PickerModal({ s, role, pool, onPick, onClose }: { s: GameState; 
       <div className="p-4 sm:p-5" data-testid="picker-modal">
         <div className="mb-2 flex items-start justify-between gap-2">
           <div className="text-[10px] uppercase tracking-[0.3em] text-stone-500">Compare candidates</div>
-          <button className="btn-ghost text-xs" onClick={onClose}>Close</button>
+          <button className="btn-ghost text-xs" onClick={onClose}>Close <KeyHint k="Esc" /></button>
         </div>
-        <CandidatePicker s={s} role={role} pool={pool} onPick={onPick ? (c) => { onPick(c); onClose(); } : undefined} />
+        <CandidatePicker keys s={s} role={role} pool={pool} onPick={onPick ? (c) => { onPick(c); onClose(); } : undefined} />
         <p className="mt-2 text-[11px] text-stone-500">Ordering a pick queues it for this week; it happens when you advance. Outcome mixes how good he is at it (70%) with how little can go wrong (30%), less a little for every job he already does.</p>
       </div>
     </Modal>

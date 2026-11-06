@@ -1,3 +1,4 @@
+import { ConfirmOrders } from '../components/ConfirmOrders';
 import { useMemo, useState } from 'react';
 import { buyBlock, buyIdeas, earnIdeas, heldReturns, pitchIdeas, workIdeas } from '../../engine/invest';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -19,13 +20,8 @@ function DoAll({ items, label, testid }: { items: { text: string; action: Player
     <div className="mb-2">
       <button type="button" className="btn-primary text-xs" onClick={() => setAsk(true)} data-testid={testid}>{label.replace('N', String(todo.length))}</button>
       {ask && (
-        <div className="mt-1 rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm" data-testid={`${testid}-confirm`}>
-          <ul className="mb-2 space-y-0.5 text-stone-300">{todo.map((x, i) => <li key={i}>• {x.text}</li>)}</ul>
-          <div className="flex gap-1.5">
-            <button type="button" className="btn-primary text-xs" onClick={() => { for (const x of todo) queue(x.action, true); setAsk(false); }} data-testid={`${testid}-yes`}>Give the orders</button>
-            <button type="button" className="btn-secondary text-xs" onClick={() => setAsk(false)}>Not now</button>
-          </div>
-        </div>
+        <ConfirmOrders className="mt-1" testid={`${testid}-confirm`} yesTestId={`${testid}-yes`} lines={todo.map((x) => x.text)}
+          onYes={() => { for (const x of todo) queue(x.action, true); setAsk(false); }} onNo={() => setAsk(false)} />
       )}
     </div>
   );

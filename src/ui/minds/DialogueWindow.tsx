@@ -4,7 +4,7 @@ import { displayName, player } from '../../engine/characters';
 import { suggestedOffer, toneOptions, type Dialogue, type Tone } from '../../engine/minds/dialogue';
 import type { GameState } from '../../engine/types';
 import { Face } from '../components/People';
-import { useNumberKeys } from '../keys';
+import { useEscape, useNumberKeys } from '../keys';
 
 /**
  * THE TWO-WAY WINDOW (a compact modal card over the current screen; phone
@@ -48,6 +48,7 @@ export function DialogueWindow({
   const end = useRef<HTMLDivElement>(null);
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'nearest' }); }, [d.log.length]);
   useNumberKeys(!busy && !d.end, Math.min(9, picks.length), (i) => picks[i]?.run());
+  useEscape(!busy, onClose);
   if (!c) return null;
   const st = d.stake;
   const fmt = (n: number) => (st?.unit === '%' ? `${Math.round(n)}%` : `$${Math.round(n).toLocaleString('en-US')}`);

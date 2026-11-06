@@ -5,7 +5,8 @@ import { Chips } from '../components/Chips';
 import { Glossed } from '../clarity/Term';
 import { Face } from '../components/People';
 import { fmt$ } from '../format';
-import { useNumberKeys } from '../keys';
+import { useDialogKeys } from '../keys';
+import { KeyHint } from '../components/KeyHint';
 import { DOMAINS, domClass, type Domain } from '../domain';
 
 /**
@@ -204,7 +205,17 @@ export function DecisionCard(p: DecisionCardProps) {
     if (v) { setConfirm({ id, v }); return; }
     p.onDecide(id);
   };
-  useNumberKeys(!!p.keys && !confirm, options.length, (i) => { const o = options[i]; if (o && !o.disabled) give(o.id); });
+  // Dialog keys (fast7): a number picks its option (the same number again gives it), Enter gives the picked
+  // (or recommended) one; on "Are you sure?" Enter says yes and Esc goes back. The host's Esc is "not now".
+  useDialogKeys(!!p.keys && !confirm, {
+    count: options.length,
+    pick: (i) => { const o = options[i]; if (!o || o.disabled) return; if (sel === o.id) give(o.id); else setSel(o.id); },
+    confirm: chosen && !chosen.disabled && !p.primaryDisabled ? () => give(chosen.id) : undefined,
+  });
+  useDialogKeys(!!p.keys && !!confirm, {
+    confirm: confirm ? () => { const id = confirm.id; setConfirm(undefined); p.onDecide(id); } : undefined,
+    close: () => setConfirm(undefined),
+  });
   if (confirm) {
     return (
       <div className={compact ? 'p-2' : 'p-4 sm:p-5'} data-testid="decision-confirm">
@@ -267,7 +278,7 @@ export function DecisionCard(p: DecisionCardProps) {
         {p.onHandOff && <button type="button" className={`btn-secondary min-w-0 ${compact ? 'btn-sm' : 'text-xs'}`} onClick={p.onHandOff} title={p.handOffLabel} data-testid="decision-handoff"><span className="truncate">{p.handOffLabel ?? 'Hand it off'}</span></button>}
         {p.advice && compact && <span className="text-[11px]">{p.advice}</span>}
         <button type="button" className={`btn-primary ml-auto min-w-0 max-w-[62%] shrink-0 ${compact ? 'btn-sm' : 'text-sm'}`} disabled={!chosen || !!chosen.disabled || p.primaryDisabled} onClick={() => chosen && give(chosen.id)} data-testid={p.primaryTestId ?? 'decision-primary'}>
-          <span className="truncate">{p.primaryLabel ? p.primaryLabel(chosen) : chosen ? `Decide: ${chosen.label} ▸` : 'Pick one'}</span>
+          <span className="truncate">{p.primaryLabel ? p.primaryLabel(chosen) : chosen ? `Decide: ${chosen.label} ▸` : 'Pick one'}</span>{p.keys && chosen && <KeyHint k="Enter" className="ml-1.5" />}
         </button>
       </div>
     </div>

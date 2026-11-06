@@ -11,7 +11,7 @@ import type { GameState } from '../../engine/types';
 import { ageOn } from '../../engine/calendar';
 import { Overlay } from '../components/Modal';
 import { Face } from '../components/People';
-import { useNumberKeys } from '../keys';
+import { useEscape, useNumberKeys } from '../keys';
 import { askJson, sampleOff, sampleWithin } from '../minds/sampleClient';
 import { useShell } from '../shell/context';
 
@@ -45,6 +45,9 @@ export function DateTalkWindow({ s, id, step, date, onClose }: { s: GameState; i
   useEffect(() => { end.current?.scrollIntoView?.({ block: 'nearest' }); }, [dt.log.length]);
   const tones = dateToneOptions(s, dt);
   useNumberKeys(!busy && !dt.end, tones.length, (i) => { const t = tones[i]; if (t) void exchange(t.tone, ''); });
+  // Esc is "End the night" / Close, like the button (fast7 dialog keys).
+  const closeRef = useRef<() => void>();
+  useEscape(!busy, () => closeRef.current?.());
   const can = canDateTalk(s, id, step, date);
 
   const finish = (d: DateTalk) => {
@@ -83,6 +86,7 @@ export function DateTalkWindow({ s, id, step, date, onClose }: { s: GameState; i
     }
     onClose();
   };
+  closeRef.current = close;
 
   if (!c) return null;
   const boss = player(s);

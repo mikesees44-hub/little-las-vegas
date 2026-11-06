@@ -1,3 +1,4 @@
+import { ConfirmOrders } from '../components/ConfirmOrders';
 import { useMemo, useState } from 'react';
 import { crewBoard, ownScoresOn, STATUS_WORD, type BoardStatus } from '../../engine/crewBoard';
 import type { GameState, PlayerAction } from '../../engine/types';
@@ -47,13 +48,8 @@ export function CrewBoard({ s }: { s: GameState }) {
         <button type="button" className="btn-secondary text-xs" onClick={() => setAll((v) => !v)} data-testid="crew-board-show">{all ? 'Only who needs something' : `Everyone (${board.rows.length})`}</button>
       </div>
       {ask && (
-        <div className="mb-2 rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm" data-testid="crew-board-confirm">
-          <ul className="mb-2 space-y-0.5 text-stone-300">{todo.map((r) => <li key={r.c.id}>• {r.c.firstName} {r.c.lastName}: {r.assign!.label}</li>)}</ul>
-          <div className="flex gap-1.5">
-            <button type="button" className="btn-primary text-xs" onClick={() => { for (const r of todo) queue(r.assign!.action, true); setAsk(false); }} data-testid="crew-board-yes">Give the orders</button>
-            <button type="button" className="btn-secondary text-xs" onClick={() => setAsk(false)}>Not now</button>
-          </div>
-        </div>
+        <ConfirmOrders testid="crew-board-confirm" yesTestId="crew-board-yes" lines={todo.map((r) => `${r.c.firstName} ${r.c.lastName}: ${r.assign!.label}`)}
+          onYes={() => { for (const r of todo) queue(r.assign!.action, true); setAsk(false); }} onNo={() => setAsk(false)} />
       )}
       {shown.length === 0 ? <p className="text-[11px] text-stone-400">Every man is earning. Nobody needs a job right now.</p> : (
         <ul className="space-y-1.5">

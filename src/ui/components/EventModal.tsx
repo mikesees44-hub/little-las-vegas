@@ -26,7 +26,7 @@ import { domainOf, domainOfText } from '../domain';
  * what is on the line, every option with its odds ("certain" when nothing is
  * rolled) and what may come of it, his people's voices in a line each, one
  * primary button, "Decide later" and "Hand it off" (the seat that would
- * answer it his way). Number keys pick and give.
+ * answer it his way). Number keys pick (again, or Enter, gives); Esc is "not now".
  */
 export function EventModal({ s, ev, index, total, selected, onChoose, onClose }: {
   s: GameState;

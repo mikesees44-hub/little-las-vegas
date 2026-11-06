@@ -1,3 +1,4 @@
+import { ConfirmOrders } from '../components/ConfirmOrders';
 import { useMemo, useState } from 'react';
 import { previewAction } from '../../engine/actions';
 import {
@@ -115,16 +116,9 @@ function FeedAll({ s, jobs }: { s: GameState; jobs: OpenJob[] }) {
         Feed the hungry ones the {k ? 'consigliere\'s' : 'best'} way{way.length ? ` (${way.length})` : ''}
       </button>
       {asking && (
-        <div className="rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm the assignments" data-testid="eat-feed-confirm">
-          <div className="mb-1 font-semibold text-stone-100">{k ? `${k.firstName}'s picks` : 'Your own read'}: {way.length} order{way.length === 1 ? '' : 's'}</div>
-          <ul className="mb-2 space-y-0.5 text-stone-300">
-            {way.map(({ job, pick }) => <li key={job.key}>• {s.characters[pick.id]?.firstName} {s.characters[pick.id]?.lastName} → {job.title} <span className="text-stone-500">(fit {pick.fit.score})</span></li>)}
-          </ul>
-          <div className="flex gap-1.5">
-            <button type="button" className="btn-primary text-xs" onClick={() => { for (const x of way) queue(x.pick.action, true); setAsking(false); }} data-testid="eat-feed-yes">Give the orders</button>
-            <button type="button" className="btn-ghost text-xs" onClick={() => setAsking(false)}>Not now</button>
-          </div>
-        </div>
+        <ConfirmOrders className="" label="Confirm the assignments" testid="eat-feed-confirm" yesTestId="eat-feed-yes" head={<>{k ? `${k.firstName}'s picks` : 'Your own read'}: {way.length} order{way.length === 1 ? '' : 's'}</>}
+          lines={way.map(({ pick, job }) => <>{s.characters[pick.id]?.firstName} {s.characters[pick.id]?.lastName} → {job.title} <span className="text-stone-500">(fit {pick.fit.score})</span></>)}
+          onYes={() => { for (const x of way) queue(x.pick.action, true); setAsking(false); }} onNo={() => setAsking(false)} />
       )}
     </div>
   );
@@ -167,13 +161,8 @@ export function NeedsMoney({ s }: { s: GameState }) {
         <button type="button" className="btn-secondary text-xs" onClick={() => setAll((v) => !v)} data-testid="mens-money-all">{all ? 'Only who needs help' : `Every man (${rep.rows.length})`}</button>
       </div>
       {asking && (
-        <div className="mb-2 rounded-md border border-gold-500/50 bg-noir-900/90 p-2 text-xs" role="dialog" aria-label="Confirm" data-testid="money-help-confirm">
-          <ul className="mb-2 space-y-0.5 text-stone-300">{todo.map((r) => <li key={r.c.id}>• {r.c.firstName} {r.c.lastName}: {r.need.fix!.label}{r.need.fix!.cost ? ` (${fmt$(r.need.fix!.cost)})` : ''}</li>)}</ul>
-          <div className="flex gap-1.5">
-            <button type="button" className="btn-primary text-xs" onClick={() => { for (const r of todo) queue(r.need.fix!.action, true); setAsking(false); }} data-testid="money-help-yes">Give the orders</button>
-            <button type="button" className="btn-secondary text-xs" onClick={() => setAsking(false)}>Not now</button>
-          </div>
-        </div>
+        <ConfirmOrders testid="money-help-confirm" yesTestId="money-help-yes" lines={todo.map((r) => `${r.c.firstName} ${r.c.lastName}: ${r.need.fix!.label}${r.need.fix!.cost ? ` (${fmt$(r.need.fix!.cost)})` : ''}`)}
+          onYes={() => { for (const r of todo) queue(r.need.fix!.action, true); setAsking(false); }} onNo={() => setAsking(false)} />
       )}
       {shown.length === 0 ? <p className="text-xs text-stone-400">Nobody is short right now. Every man is getting by.</p> : (
         <div className="overflow-x-auto">

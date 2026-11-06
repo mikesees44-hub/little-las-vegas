@@ -105,6 +105,12 @@ export function useEscape(active: boolean, fn: () => void): void {
 
 /* ---- Number keys on choice cards ---- */
 
+/** How many open dialogs own the number keys right now (the clock's 1–5 stand down while any does). */
+let digitOwners = 0;
+export function digitsOwned(): boolean {
+  return digitOwners > 0;
+}
+
 /**
  * Hook: while `active`, the number keys 1…9 pick the n-th choice (`pick(i)`, 0-based) when
  * there is one. Typing wins (no digits taken from a field), a held key is one press.
@@ -115,6 +121,7 @@ export function useNumberKeys(active: boolean, count: number, pick: (i: number) 
   ref.current = pick;
   useEffect(() => {
     if (!active || count <= 0 || typeof window === 'undefined') return;
+    digitOwners++;
     const onKey = (e: KeyboardEvent) => {
       if (shortcutBlocked(e)) return;
       const n = numberKey(e.key);
@@ -123,7 +130,7 @@ export function useNumberKeys(active: boolean, count: number, pick: (i: number) 
       ref.current(n);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => { digitOwners--; window.removeEventListener('keydown', onKey); };
   }, [active, count]);
 }
 
@@ -155,6 +162,8 @@ export function useDialogKeys(active: boolean, o: { count?: number; pick?: (i: n
   useEscape(active && !!o.close, () => ref.current.close?.());
   useEffect(() => {
     if (!active || typeof window === 'undefined') return;
+    const owns = !!ref.current.pick && (ref.current.count ?? 0) > 0;
+    if (owns) digitOwners++;
     const onKey = (e: KeyboardEvent) => {
       const k = dialogKey(e, ref.current.pick ? ref.current.count ?? 0 : 0);
       if (!k) return;
@@ -163,6 +172,6 @@ export function useDialogKeys(active: boolean, o: { count?: number; pick?: (i: n
       ref.current.pick?.(k.pick);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => { if (owns) digitOwners--; window.removeEventListener('keydown', onKey); };
   }, [active]);
 }
