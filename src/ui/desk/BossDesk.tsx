@@ -23,6 +23,7 @@ type DomainHome = (typeof DOMAIN_HOMES)[number];
 import { deskBundles, type WeekPlanRow } from '../../engine/bundles';
 import { BundleCard, WeekDoneList, type SettledRow, type WeekDone } from './Bundles';
 import { useViewMode, ViewToggle } from '../components/ViewToggle';
+import { SameAsLastWeek } from './SameAsLastWeek';
 
 /** The Desk is scannable by colour: each row takes the domain of its kind, else of its words (ui/domain.ts). */
 function deskDomain(s: GameState, it: DeskItem): Domain | undefined {
@@ -309,6 +310,7 @@ export function BossDesk({ s, ui, api, filter: filter0 = 'all', side, inDrawer }
         <button type="button" className="btn-quiet text-[10px]" onClick={() => openPlanner('brief')} data-testid="desk-planner" title="The morning brief, who wants an audience, the datebook, the black book, your standing orders">▥ The book ▸</button>
         {api.onMotion && <button type="button" className="btn-quiet text-[10px]" onClick={api.onMotion} data-testid="desk-in-motion">◐ In motion ▸</button>}
         <ViewToggle screen="desk" view={view} onChange={setView} />
+        <SameAsLastWeek s={s} />
         {api.onHandleWeek && <button type="button" className="btn-primary py-0.5 text-[11px]" onClick={api.onHandleWeek} data-testid="desk-handle-week" title="Your people settle every routine item their way; a life, a man, the law, a war or real money stays yours. Each one can be taken back until the week turns.">Handle the week for me ▸</button>}
       </div>
       {api.weekDone && api.weekDone.week === s.week && <div className="mt-1.5"><WeekDoneList s={s} done={api.weekDone} ui={ui} onUndo={(r) => api.onUndo?.(r)} onOpen={openKey} onClose={api.onWeekDoneClose} /></div>}
@@ -381,6 +383,7 @@ export function ReadyToAdvance({ s, ui, onReview, onAdvance, onClose, month, onA
             Handle the week for me ▸
           </button>
         )}
+        <SameAsLastWeek s={s} className="w-full text-sm" />
         {turn && turn.unvisited.length > 0 && (
           <div className="rounded border border-noir-700 px-2.5 py-1.5 text-[12px] text-stone-300" data-testid="ready-round">
             <span className="text-stone-400">Not looked at this turn: </span>{turn.unvisited.map((u) => `${u.label}${u.open ? ` (${u.open} waiting)` : ''}`).join(', ')}.

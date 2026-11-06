@@ -131,3 +131,38 @@ export function useNumberKeys(active: boolean, count: number, pick: (i: number) 
 export function numberKey(key: string): number | undefined {
   return /^[1-9]$/.test(key) ? Number(key) - 1 : undefined;
 }
+
+/* ---- Dialog keys (fast7): 1…9 pick, Enter gives, Esc is "not now" ---- */
+
+/** What a key does in a dialog: pick the n-th choice, confirm, or close (undefined: not the dialog's key). Pure. */
+export function dialogKey(e: Pick<KeyboardEvent, 'key' | 'target' | 'metaKey' | 'ctrlKey' | 'altKey' | 'repeat' | 'defaultPrevented'>, count: number): { pick: number } | 'confirm' | undefined {
+  if (shortcutBlocked(e)) return undefined;
+  const n = numberKey(e.key);
+  if (n !== undefined) return n < count ? { pick: n } : undefined;
+  // Enter on a focused button is that button's own (the browser presses it).
+  if (e.key === 'Enter' && !isActivatableTarget(e.target)) return 'confirm';
+  return undefined;
+}
+
+/**
+ * Hook: while `active` (the dialog is open and on top), the number keys pick a choice, Enter confirms the
+ * picked (or recommended) one, Escape closes ("not now"). Typing wins; a held key is one press. Scoped to the
+ * dialog, so the clock's 1–5 and the home letters are untouched while it is closed.
+ */
+export function useDialogKeys(active: boolean, o: { count?: number; pick?: (i: number) => void; confirm?: () => void; close?: () => void }): void {
+  const ref = useRef(o);
+  ref.current = o;
+  useEscape(active && !!o.close, () => ref.current.close?.());
+  useEffect(() => {
+    if (!active || typeof window === 'undefined') return;
+    const onKey = (e: KeyboardEvent) => {
+      const k = dialogKey(e, ref.current.pick ? ref.current.count ?? 0 : 0);
+      if (!k) return;
+      if (k === 'confirm') { if (!ref.current.confirm) return; e.preventDefault(); ref.current.confirm(); return; }
+      e.preventDefault();
+      ref.current.pick?.(k.pick);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [active]);
+}

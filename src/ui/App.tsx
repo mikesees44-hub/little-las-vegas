@@ -137,6 +137,7 @@ import { deskBadge } from '../engine/attention';
 import { answerOffer } from '../engine/lieutenants';
 import { MorningReports, WhoHandlesWhat } from './lieutenants/Lieutenants';
 import { markOrder, setRecentSeed } from './plans/orderMarks';
+import { rememberWeekOrders } from './plans/lastWeek';
 import { PlansContext, type PlansApi } from './plans/context';
 import { LiveAlerts } from './plans/LiveAlerts';
 import { UnderbossSuggests } from './plans/Suggests';
@@ -1008,6 +1009,13 @@ export function App({ startOn = 'title' }: AppProps) {
     return () => window.removeEventListener('llv-open-phone', on);
   });
 
+  // "Same as last week" (desk/SameAsLastWeek.tsx): when the week turns, the orders it ran with are remembered.
+  const weekOrdersRef = useRef<{ seed: string; week: number; orders: PlayerAction[] }>();
+  useEffect(() => {
+    const r = weekOrdersRef.current;
+    if (r && r.seed === s.seed && s.week > r.week) rememberWeekOrders(r.seed, r.week, r.orders);
+  }, [s.week, s.seed]);
+  useEffect(() => { weekOrdersRef.current = { seed: s.seed, week: s.week, orders }; }, [orders, s.week, s.seed]);
   const chair = useChairView(s);
   if (menu) {
     return (

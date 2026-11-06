@@ -22,6 +22,7 @@ import { useShell } from './context';
 import { OrdersTray, useOrders } from '../components/Orders';
 import { EarnChip } from './EarnChip';
 import { PinTray } from './PinTray';
+import { SameAsLastWeekList, useHasLastWeek } from '../desk/SameAsLastWeek';
 import { queuedMoney } from '../../engine/actions';
 import { PlansPanel, usePlansCount } from '../plans/PlansPanel';
 import { BigPots, MoveMoney, usePots, WeekPotsLine } from '../money/MoneyPots';
@@ -375,7 +376,8 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, turn, speed, s
   const { orders } = useOrders();
   const orderCost = queuedMoney(s, orders).family;
   const plans = usePlansCount(s);
-  const [pane, setPane] = useState<'orders' | 'plans' | undefined>();
+  const [pane, setPane] = useState<'orders' | 'plans' | 'same' | undefined>();
+  const hasLast = useHasLastWeek(s);
   // The playtesters' report form (feedback/ReportBug.tsx), with the screen it was opened from.
   const [report, setReport] = useState<string | undefined>();
   // The owner's Import art (artifact owner only; nothing anywhere else).
@@ -434,6 +436,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, turn, speed, s
               <Popover testid="advance-menu" button={(o, t) => <button className="btn-primary h-8 py-0 px-1.5 rounded-l-none border-l border-noir-900/40" aria-expanded={o} aria-label="More ways to advance" onClick={t}>▾</button>}>
                 {(close) => <>
                   {onEndDay && <button className={menuItem} onClick={() => { close(); onEndDay(); }} data-testid="skip-morning">Skip to the next morning</button>}
+                  {hasLast && <button className={menuItem} onClick={() => { close(); setPane('same'); }} data-testid="advance-same-last-week" title="Last week's orders again: see the list first, untick any">↻ Same orders as last week…</button>}
                   <button className={menuItem} onClick={() => { close(); onAdvance('week'); }} data-testid="skip-week">Skip to next week</button>
                   {turn && <>
                     <div className="px-3 pt-1.5 text-[10px] uppercase tracking-[0.2em] text-stone-500" data-testid="turn-span-picker">A turn: stops for a crisis{clockMode ? '' : ' (End turn)'}</div>
@@ -499,6 +502,7 @@ export function TopBar({ s, inboxN, inboxTone, clockMode = false, turn, speed, s
             </div>
             {/* Out of the bar's stacking context too, so on a phone the tab bar never covers the orders or the plans. */}
             {pane === 'orders' && typeof document !== 'undefined' && createPortal(<OrdersPane s={s} onClose={() => setPane(undefined)} />, document.body)}
+            {pane === 'same' && typeof document !== 'undefined' && createPortal(<SameAsLastWeekList s={s} onClose={() => setPane(undefined)} />, document.body)}
             {pane === 'plans' && typeof document !== 'undefined' && createPortal(<PlansPanel s={s} onClose={() => setPane(undefined)} />, document.body)}
             {/* Out of the bar's stacking context (z 1150), so the sheet sits over the phone's tab bar. */}
             {importing && typeof document !== 'undefined' && createPortal(<ImportArt s={s} onClose={() => setImporting(false)} />, document.body)}
