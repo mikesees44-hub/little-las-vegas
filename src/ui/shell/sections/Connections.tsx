@@ -6,10 +6,19 @@ import { ActionCard } from '../../components/Orders';
 import { OpinionBadge } from '../../components/CrewList';
 import { CharLink } from '../../components/People';
 import { fmt$ } from '../../format';
+import { colOf, cokeActions, LEVEL_WORD, market, weeklyTake } from '../../../engine/colombia';
+import { gangActions, gangsOf, KIND_LABEL, KIND_WANT } from '../../../engine/gangs';
 
 const fam = (op: FamAction): PlayerAction => ({ kind: 'fam', op });
 /** The orders on a family's card: op: 'envoy', op: 'favor', op: 'partner', op: 'marry' (and op: 'broker' on the web). */
 const ORDERS = ['envoy', 'favor', 'partner', 'marry'] as const;
+
+const GROUP_NOTE: Partial<Record<string, string>> = {
+  nyc: 'the five families and the Commission (South Philadelphia sits in as a friend)',
+  chi: 'the Outfit: the Midwest, the racing wire, the desert skim, a seat on the Commission',
+  nola: 'the oldest family: the port, the Gulf\'s slot machines, the tracks',
+  fla: 'Tampa, Miami Beach (the families\' winter base), the Havana men, and a Colombian trickle',
+};
 
 const tone = (t: Tie) => (TIE_SIGN[t.kind] >= 0.5 ? 'text-emerald-300' : TIE_SIGN[t.kind] < 0 ? 'text-red-300' : 'text-stone-300');
 
@@ -46,7 +55,8 @@ function Card({ s, c }: { s: GameState; c: FamCard }) {
       <div className="text-[11px] text-stone-400">Boss: {c.bossId ? <CharLink s={s} id={c.bossId}>{c.boss}</CharLink> : c.boss}</div>
       <div className="text-[11px] text-stone-500">Rackets: {c.def.rackets.join(', ')}</div>
       <TieList s={s} id={c.id} />
-      {c.deals.map((d) => <div key={d.what} className="text-[11px] text-emerald-300">Pays you {fmt$(d.weekly)}/wk: {d.what} (to week {d.until})</div>)}
+      {c.deals.map((d) => <div key={d.what} className={`text-[11px] ${d.weekly < 0 ? 'text-amber-300' : 'text-emerald-300'}`}>{d.weekly < 0 ? `You pay ${fmt$(-d.weekly)}/wk` : `Pays you ${fmt$(d.weekly)}/wk`}: {d.what} (to week {d.until})</div>)}
+      {c.id === 'colombians' && <CokePanel s={s} />}
       <button type="button" className="btn-ghost mt-1 px-2 py-0.5 text-[11px]" onClick={() => setOpen(!open)} data-testid={`fam-open-${c.id}`}>{open ? 'Close' : 'Roster & deal with them…'}</button>
       {open && (
         <div className="mt-1 space-y-1.5">
@@ -62,6 +72,49 @@ function Card({ s, c }: { s: GameState; c: FamCard }) {
         </div>
       )}
     </li>
+  );
+}
+
+/** The Colombian connection: the boss's place in the import racket (op: 'coke'), abstract and with its costs said plainly. */
+function CokePanel({ s }: { s: GameState }) {
+  const col = colOf(s);
+  const lvl = col?.lvl ?? 0;
+  return (
+    <div className="mt-1 rounded border border-red-900/50 p-1.5 text-[11px]" data-testid="coke-panel">
+      <div className="text-stone-300">The import racket: <span className={lvl ? 'text-red-300' : 'text-stone-400'} data-testid="coke-level">{lvl ? LEVEL_WORD[lvl] : 'you are not in it'}</span>{lvl ? ` · about ${fmt$(Math.round(weeklyTake(s, lvl) * (1 - (col?.cut?.share ?? 0))))}/wk` : ''}</div>
+      <div className="text-stone-500">The trade in {s.date.y}: {market(s.date.y) <= 1.2 ? 'a trickle' : market(s.date.y) < 3 ? 'growing' : 'big money'}.{col?.known ? ' Philadelphia knows.' : ''}{col?.cut ? ` ${col.cut.fam} takes ${Math.round(col.cut.share * 100)}%.` : ''}{col?.tot ? ` Paid you ${fmt$(col.tot)} so far.` : ''}</div>
+      <div className="mt-1 grid gap-1">{cokeActions().map((a) => <ActionCard key={a.op === 'coke' ? a.step : ''} s={s} action={fam(a)} compact />)}</div>
+    </div>
+  );
+}
+
+/** Gangs that cropped up: where they are, what they want, and the four ways to deal with them (op: 'gang'). */
+function Gangs({ s }: { s: GameState }) {
+  const gangs = gangsOf(s);
+  return (
+    <div data-testid="fam-group-gangs">
+      <div className="mt-1 text-[12px] uppercase tracking-wide text-stone-400">Gangs — biker clubs and street crews that turned up</div>
+      {!gangs.length ? <p className="text-[11px] text-stone-500" data-testid="gangs-none">None on the island now. They come where there is an opening: a summer rally, a district nobody holds, places with no capo, a war.</p> : (
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {gangs.map((g) => {
+            const where = s.districts.find((d) => d.id === g.district)?.name ?? g.district;
+            const patron = g.patron ? s.rivals.find((r) => r.id === g.patron)?.shortName : undefined;
+            return (
+              <li key={g.id} className="llv-card-box llv-card-plain p-2.5 min-w-0" data-testid={`gang-card-${g.id}`}>
+                <div className="font-display text-[15px] leading-tight text-stone-100 truncate">{g.name}</div>
+                <div className="text-[11px] text-stone-400">{KIND_LABEL[g.kind]} · {g.size} strong · led by {g.leader}</div>
+                <div className="text-[11px] text-stone-300" data-testid={`gang-where-${g.id}`}>In {where} since week {g.since}: {g.why}.</div>
+                <div className="text-[11px] text-stone-400" data-testid={`gang-want-${g.id}`}>They want {KIND_WANT[g.kind]}.</div>
+                <div className={`text-[11px] ${g.status === 'partner' ? 'text-emerald-300' : g.status === 'paid' ? 'text-stone-300' : 'text-red-300'}`} data-testid={`gang-status-${g.id}`}>
+                  {g.status === 'partner' ? 'Partners: they pay you a piece every week.' : g.status === 'paid' ? `Paid off until week ${g.until}.` : 'Making trouble: shakedowns, fights, heat.'}{patron ? ` On ${patron}'s payroll.` : ''}
+                </div>
+                <div className="mt-1 grid gap-1">{gangActions(g).map((a) => <ActionCard key={a.op === 'gang' ? a.how : ''} s={s} action={fam(a)} compact />)}</div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -123,12 +176,15 @@ export function Connections({ s }: { s: GameState }) {
           )}
         </div>
       ) : (
-        GROUP_ORDER.map((g) => (
-          <div key={g} data-testid={`fam-group-${g}`}>
-            <div className="mt-1 text-[12px] uppercase tracking-wide text-stone-400">{GROUP_TITLE[g]}{g === 'nyc' ? ' — the five families and the Commission (South Philadelphia sits in as a friend)' : ''}</div>
-            <ul className="grid gap-2 sm:grid-cols-2">{FAMILY_DEFS.filter((d) => d.group === g).map((d) => <Card key={d.id} s={s} c={famCard(s, d.id)} />)}</ul>
-          </div>
-        ))
+        <>
+          {GROUP_ORDER.map((g) => (
+            <div key={g} data-testid={`fam-group-${g}`}>
+              <div className="mt-1 text-[12px] uppercase tracking-wide text-stone-400">{GROUP_TITLE[g]}{GROUP_NOTE[g] ? ` — ${GROUP_NOTE[g]}` : ''}</div>
+              <ul className="grid gap-2 sm:grid-cols-2">{FAMILY_DEFS.filter((d) => d.group === g).map((d) => <Card key={d.id} s={s} c={famCard(s, d.id)} />)}</ul>
+            </div>
+          ))}
+          <Gangs s={s} />
+        </>
       )}
       {st.log.length > 0 && (
         <div data-testid="connections-news">

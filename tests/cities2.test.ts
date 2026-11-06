@@ -10,6 +10,9 @@ import { previewAction } from '../src/engine/actions';
 import { market, maxLevel, OLD_SCHOOL } from '../src/engine/colombia';
 import { stanceTo } from '../src/engine/familyWeb';
 import type { GameState } from '../src/engine/types';
+import { createElement } from 'react';
+import { renderToString } from 'react-dom/server';
+import { Connections } from '../src/ui/shell/sections/Connections';
 
 /** Real people of the period (and later) who must never appear by name. */
 const REAL = /\b(Giancana|Accardo|Ricca|Humphreys|Alderisio|Battaglia|Spilotro|Rosselli|Roselli|Marcello|Trafficante|Hoffa|Dalitz|Lansky|Siegel|Capone|Nitti|Lucchese|Gambino|Genovese|Bonanno|Profaci|Escobar|Ochoa|Lehder|Rodr[ií]guez Orejuela|Castro|Batista|Guevara|Kennedy|Maheu|Bruno|Testa)\b/;
@@ -114,4 +117,13 @@ describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
     expect(views1.filter((v, i) => v < views0[i]).length).toBeGreaterThanOrEqual(3);
     void fed0;
   }, 600000);
+
+  it('the Connections view shows Chicago, New Orleans, Florida and the gangs (where they are, what they want), and the import racket', () => {
+    const s = newGame('c2-ui');
+    s.gangs = { rng: 1, next: 2, list: [{ id: 'g1', kind: 'bikers', name: 'the Tuckahoe Road Saints MC', leader: 'Buck "Gravel" Loomis', district: 'causeway', size: 25, since: s.week, status: 'trouble', why: 'a summer motorcycle rally on the Shore' }], log: [], cd: {} };
+    const html = renderToString(createElement(Connections, { s }));
+    for (const id of ['fam-group-chi', 'fam-group-nola', 'fam-group-fla', 'fam-group-gangs', 'fam-card-chicago', 'fam-card-nola', 'fam-card-tampa', 'fam-card-biscayne', 'fam-card-havana', 'fam-card-colombians', 'coke-panel', 'gang-card-g1', 'gang-where-g1', 'gang-want-g1']) expect(html, id).toContain(`data-testid="${id}"`);
+    expect(html).toContain('Rio Grande Causeway');
+    expect(html).toMatch(/Chicago Outfit/);
+  });
 });
