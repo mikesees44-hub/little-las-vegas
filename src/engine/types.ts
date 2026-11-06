@@ -973,6 +973,8 @@ export interface GameState {
   nyc?: import('./nyc').NycState;
   /** The families' web: ties between every family, their strength, deals, Philadelphia/Atlantic City/New York's involvement (familyWeb.ts). Made at new game; at load for an old save. */
   families?: import('./familyWeb').FamState;
+  /** Gangs that crop up (gangs.ts): biker clubs in summer, street crews where there is an opening. Made the first week one could appear. */
+  gangs?: import('./gangs').GangState;
   /** The army: men under arms, hired muscle, allies, pacts, campaigns and battles (army.ts). Optional for old saves. */
   army?: import('./armyState').ArmyState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */
