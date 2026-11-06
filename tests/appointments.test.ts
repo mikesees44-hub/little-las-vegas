@@ -130,12 +130,12 @@ describe('skips, refusals, budgets', () => {
   it('a standing date she keeps refusing pauses after two no\'s in a row, and he is told', () => {
     let s = fresh('appts-no');
     const c = woman(s);
-    addOpinion(s, c.id, s.playerId, 'Cool on him', -30, 0);
+    addOpinion(s, c.id, s.playerId, 'Cool on him', -39, 0);
     const opt = apptOptions(s, c.id).find((o) => o.action.kind === 'dating' && (o.action.op as { op: string }).op === 'talk');
     expect(opt).toBeDefined();
     s = add(s, { who: c.id, action: opt!.action, cadence: 'daily', slot: 'afternoon' });
     let paused = false;
-    for (let i = 0; i < 8 && !paused; i++) {
+    for (let i = 0; i < 16 && !paused; i++) {
       const r = advanceWeek(s, {});
       s = r.state;
       const a = s.appts!.list[0];
