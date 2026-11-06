@@ -1,5 +1,6 @@
 import { hashSeed } from './rng';
 import type { GameState } from './types';
+import { awayOnPost } from './outpostsState';
 
 /**
  * Travel, trips and flight: the state.
@@ -355,6 +356,8 @@ function visitAway(s: GameState, charId: string): boolean {
 
 /** Is this character physically away from Wildwood during the current week? */
 export function isAway(s: GameState, charId: string): boolean {
+  // At an outpost in another city, or lying low there (outposts.ts).
+  if (s.posts && awayOnPost(s, charId)) return true;
   if (!s.travel) return false;
   if (s.travel.visits?.length && visitAway(s, charId)) return true;
   const mid = today(s) + 3;

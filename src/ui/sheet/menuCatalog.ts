@@ -32,6 +32,7 @@ import { herActionsFor } from '../../engine/herway';
 import { candidatesFor, isMinor, recommendGuards, sleuth } from '../../engine/protect';
 import { canHoldSpot, spotOf, spotOffers } from '../../engine/kickup';
 import { capoActionsFor } from '../../engine/capos';
+import { lieCandidates, lyingLow, postActions, postOf, sendableMen } from '../../engine/outposts';
 import type { Character, CrewPolicy, GameState, InteractionId, PlayerAction, RivalId, SchemeKind } from '../../engine/types';
 
 /**
@@ -96,7 +97,11 @@ export type Opener =
   /** A sit-down with the family he runs (minds/diplomacy.ts): the two-way window with a deal on the table. */
   | { type: 'sitdown'; rival: RivalId }
   /** A standing date or meeting with him or her (ui/appts/Standing.tsx): every week or every day, on the book. */
-  | { type: 'standing' };
+  | { type: 'standing' }
+  /** Send him to start something in another city (ui/shell/sections/Outposts.tsx OutpostPlanner, inline). */
+  | { type: 'outpost' }
+  /** Safe passage: lie low in another city (Outposts.tsx LieLowPlanner, inline). */
+  | { type: 'lielow' };
 
 export interface MenuItem {
   key: string;
@@ -146,6 +151,19 @@ export function rankedGifts(s: GameState, c: Character) {
   return { known, list: list.sort((a, b) => b.score - a.score) };
 }
 
+/** Outposts and safe passage (engine/outposts.ts): send him to start something, keep him close, lie low. */
+function addAway(s: GameState, c: Character, add: (id: MenuGroupId, item: MenuItem) => void): void {
+  if (c.faction !== 'player') return;
+  const isBoss = c.id === s.playerId;
+  const low = lyingLow(s, c.id);
+  if (low) add('travel', { key: 'lie-home', action: { kind: 'fam', op: { op: 'lie', home: low.id } } });
+  else if (lieCandidates(s).some((x) => x.id === c.id)) add('travel', { key: 'lielow', open: { type: 'lielow' }, label: isBoss ? 'Lie low in…' : 'Get him out of town to lie low…', text: isBoss ? 'An outpost or a friendly family\'s city for a few weeks; the odds before you go. The underboss runs things.' : 'An outpost or a friendly family\'s city; the odds before he goes.' });
+  if (isBoss) return;
+  const post = postOf(s, c.id);
+  if (post && post.manId === c.id) for (const a of postActions(post)) add('travel', { key: `post-${a.op === 'post' ? a.step : ''}`, action: { kind: 'fam', op: a } });
+  else if (!post && sendableMen(s).some((x) => x.id === c.id)) add('travel', { key: 'outpost', open: { type: 'outpost' }, label: 'Send him to start something in…', text: 'Las Vegas, Miami Beach, Chicago or New Orleans: seed money and a spot; he runs it and sends money home.' });
+}
+
 export function menuFor(s: GameState, c: Character): MenuCategory[] {
   const cats = new Map<MenuGroupId, MenuItem[]>();
   const add = (id: MenuGroupId, item: MenuItem) => { if (!cats.has(id)) cats.set(id, []); cats.get(id)!.push({ ...item, group: id }); };
@@ -164,6 +182,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
     addMore(s, c, add);
     add('travel', { key: 'trip', open: { type: 'trip' }, label: 'Plan a trip…', text: 'A vacation, or business in another city.' });
     if (wantedFor(s, c.id)) add('travel', { key: 'flee', open: { type: 'flee' }, label: 'Run for it…', text: 'Leave town before they come for you.', hostile: true });
+    addAway(s, c, add);
     return order(cats);
   }
 
@@ -284,6 +303,7 @@ export function menuFor(s: GameState, c: Character): MenuCategory[] {
   // Travel.
   if (c.faction === 'player') add('travel', { key: 'trip', open: { type: 'trip' }, label: 'Send him on a trip…', text: 'A vacation, or business in another city, with him leading.' });
   if (c.faction === 'player' && wantedFor(s, c.id)) add('travel', { key: 'flee', open: { type: 'flee' }, label: 'Get him out of town…', text: 'Hide him before the law comes.' });
+  addAway(s, c, add);
   const fug = s.travel?.fugitives.find((f) => !f.end && f.personId === c.id);
   if (fug) { add('travel', { key: 'home', action: { kind: 'travel', op: { type: 'comeHome', personId: c.id } } }); add('travel', { key: 'exile', action: { kind: 'travel', op: { type: 'exile', personId: c.id } } }); }
 

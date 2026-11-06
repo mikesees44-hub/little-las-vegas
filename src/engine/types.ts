@@ -977,6 +977,8 @@ export interface GameState {
   gangs?: import('./gangs').GangState;
   /** Your wife (wife.ts): nights home, her suspicion, her calls, the arrangement, the divorce and alimony. Made the first week a married boss lives. */
   wife?: import('./wife').WifeState;
+  /** Outposts and safe passage (outposts.ts): men sent to start something in another city, and people lying low. Made by the first man sent. */
+  posts?: import('./outpostsState').OutpostState;
   /** The army: men under arms, hired muscle, allies, pacts, campaigns and battles (army.ts). Optional for old saves. */
   army?: import('./armyState').ArmyState;
   /** Making your bones: jobs, favors, rival prospects (optional for old saves). */

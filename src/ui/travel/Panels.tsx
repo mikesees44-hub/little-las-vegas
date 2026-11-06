@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { LieLowPlanner } from '../shell/sections/Outposts';
 import { CardHead, PlaceBanner } from '../components/Layout';
 import { domCard } from '../domain';
 import { displayName } from '../../engine/characters';
@@ -23,6 +24,7 @@ const PHASE: Record<string, string> = { booked: 'Booked', out: 'On the way', the
 export function TravellersPanel({ s }: { s: GameState }) {
   const list = travellers(s).filter((x) => x.trip.purpose !== 'lam');
   const [open, setOpen] = useState<string | undefined>();
+  const [lie, setLie] = useState(false);
   const { plan, go, city, vacation } = useTravel();
   const visit = currentVisit(s);
   const acting = s.travel?.acting ? s.characters[s.travel.acting.id] : undefined;
@@ -33,6 +35,7 @@ export function TravellersPanel({ s }: { s: GameState }) {
         sub={list.length ? `${list.length} away from home` : 'Everybody is home'}
         aside={!s.gameOver && <>
           {!visit && go && <button className="btn-secondary h-8 bg-noir-950/70 px-2.5 py-0 text-xs" data-testid="go-somewhere" onClick={() => go()}>Go somewhere yourself…</button>}
+          <button className="btn-secondary h-8 bg-noir-950/70 px-2.5 py-0 text-xs" data-testid="travel-lie-low" onClick={() => setLie(!lie)} title="Safe passage: an outpost or a friendly family's city hides you for a few weeks. The odds before you go.">Lie low in…</button>
           <button className="btn-primary h-8 px-3 py-0 text-xs" onClick={() => plan(s.playerId)}>✈ Plan a trip…</button>
         </>} />
       {visit && (
@@ -40,6 +43,10 @@ export function TravellersPanel({ s }: { s: GameState }) {
           {whereAway(s, visit)} · {visit.agenda.filter((i) => !i.done).length} on the agenda{visit.homeDay !== undefined ? ` · home ${absLabel(s, visit.homeDay)}` : ''} — open the city
         </button>
       )}
+      {lie && <LieLowPlanner s={s} who={s.playerId} />}
+      {(s.posts?.lie ?? []).filter((l) => l.status === 'away').map((l) => (
+        <div key={l.id} className="mt-1 text-xs text-sky-300" data-testid="travel-lying-low">{l.who === s.playerId ? 'You are' : <><CharLink s={s} id={l.who} /> is</>} lying low in {l.city} until week {l.until} (Rivals ▸ Connections ▸ Outposts).</div>
+      ))}
       {bossAway(s) && acting && <div className="mt-1 text-xs text-amber-300">The boss is away. <CharLink s={s} id={acting.id} /> is running things{s.travel?.acting ? ` (${s.travel.acting.weeks} wk)` : ''}.</div>}
       {list.length === 0 && !visit && <p className="text-[13px] text-stone-300">Everybody is home. The Catskills in July, Miami in February, the old country in the spring — pick a destination on the map or plan a trip.</p>}
       <ul className="space-y-1.5">

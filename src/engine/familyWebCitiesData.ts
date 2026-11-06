@@ -121,4 +121,10 @@ export const CITY_TIES: SeedTie[] = [
   { a: 'saladino', b: 'tampa', kind: 'friends', since: 1955, strength: 35, story: 'The Saladino people winter in Tampa and play the bolita for fun.' },
   { a: 'colombians', b: 'havana', kind: 'friends', since: 1959, strength: 30, story: 'An exile in a Miami hotel bar introduced Chucho Barrios to the Havana men; they need money, and he has a little.' },
   { a: 'colombians', b: 'nola', kind: 'feud', since: 1958, strength: 40, story: 'New Orleans keeps narcotics off its port; two of the Colombians\' men were run out of the French Quarter in 1958.' },
+  // Las Vegas, an open city (vegas.ts): everybody holds a point, nobody holds the town.
+  { a: 'vegas', b: 'marchetti', kind: 'racket', since: 1955, strength: 50, story: 'New York\'s families hold points in the Starhaven; the Silver Strip Partners count them and send the envelopes east.' },
+  { a: 'vegas', b: 'saladino', kind: 'racket', since: 1957, strength: 35, story: 'The Saladino people bought into the Starhaven late and complain about the count every Christmas.' },
+  { a: 'vegas', b: 'biscayne', kind: 'partners', since: 1956, strength: 45, story: 'Miami Beach money built the Caravel, and every winter the junkets fly from the Biscayne hotels to the Strip.' },
+  { a: 'vegas', b: 'havana', kind: 'friends', since: 1959, strength: 40, story: 'When Castro closed the casinos, the Silver Strip Partners took on the Havana men\'s dealers and floor bosses: they run the tables at the Lucky Deuce.' },
+  { a: 'chicago', b: 'cleveland', kind: 'broken', since: 1959, strength: 25, story: 'The count at the Silver Mesa came up short in 1959; Chicago and Cleveland still share the desert, and still argue about who skims the skim.' },
 ];
