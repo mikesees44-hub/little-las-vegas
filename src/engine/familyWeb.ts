@@ -13,7 +13,6 @@ import { addOpinion, opinion } from './relations';
 import { hashSeed, rand } from './rng';
 import { logTalk } from './talks';
 import type { Character, Effect, EventInstance, GameState, Rank, Rival, RivalId } from './types';
-import { lendableMen } from './minds/familyAsks';
 import { noteKept } from './minds/familyWord';
 import { endWar } from './war';
 import {
@@ -1034,6 +1033,13 @@ function rewardWeek(ctx: Ctx, st: FamState): void {
     ctx.log.push(t);
     journal(s, { t: 'Philadelphia leaned on you', x: `${t} Family heat +6.`, r: why, c: 'rivals', src: 'families', ln: 'diplomacy.board' });
   }
+}
+
+/** Your men who could be lent for a week (as minds/familyAsks.ts lendableMen; not imported: that module reaches the engine). */
+function lendableMen(s: GameState): Character[] {
+  return Object.values(s.characters)
+    .filter((c) => c.alive && c.faction === 'player' && c.id !== s.playerId && (c.rank === 'soldier' || c.rank === 'associate') && (c.imprisonedUntil ?? 0) <= s.week && (c.busyUntil ?? 0) <= s.week)
+    .sort((a, b) => (a.id < b.id ? -1 : 1));
 }
 
 /* ------------------------------------------------------------------ */

@@ -8,6 +8,8 @@ import { CharLink } from '../../components/People';
 import { fmt$ } from '../../format';
 
 const fam = (op: FamAction): PlayerAction => ({ kind: 'fam', op });
+/** The orders on a family's card: op: 'envoy', op: 'favor', op: 'partner', op: 'marry' (and op: 'broker' on the web). */
+const ORDERS = ['envoy', 'favor', 'partner', 'marry'] as const;
 
 const tone = (t: Tie) => (TIE_SIGN[t.kind] >= 0.5 ? 'text-emerald-300' : TIE_SIGN[t.kind] < 0 ? 'text-red-300' : 'text-stone-300');
 
@@ -55,10 +57,7 @@ function Card({ s, c }: { s: GameState; c: FamCard }) {
             ))}
           </ul>
           <div className="grid gap-1">
-            <ActionCard s={s} action={fam({ op: 'envoy', fam: c.id })} compact />
-            <ActionCard s={s} action={fam({ op: 'favor', fam: c.id })} compact />
-            <ActionCard s={s} action={fam({ op: 'partner', fam: c.id })} compact />
-            <ActionCard s={s} action={fam({ op: 'marry', fam: c.id })} compact />
+            {ORDERS.map((op) => <ActionCard key={op} s={s} action={fam({ op, fam: c.id })} compact />)}
           </div>
         </div>
       )}
