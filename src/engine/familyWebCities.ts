@@ -89,6 +89,45 @@ function chicagoVisit(s: GameState, st: FamState): EventInstance | undefined {
 }
 
 /* ------------------------------------------------------------------ */
+/* New Orleans                                                          */
+/* ------------------------------------------------------------------ */
+
+function nolaVisit(s: GameState, st: FamState): EventInstance | undefined {
+  if (!alive(s, 'nola')) return undefined;
+  const stance = stanceTo(s, 'nola').value;
+  const sw = `New Orleans's stance toward you: ${stanceWord(stance)} (${sizeLine(s, 'nola')}).`;
+  const k = pickOf(st, [...(stance >= -10 ? ['slots', 'layoff'] : []), 'feast'] as const);
+  if (k === 'slots') {
+    const m = envoyOf(s, 'nola', ['capo'], st, 'slot machines');
+    const weekly = 180;
+    return famEvent(s, 'fam_nola', 'New Orleans offers slot machines for your clubs',
+      `${m.name} puts the Gulf Coast's slot machines in every bar from Biloxi to Lake Charles. He will ship a dozen to your clubs: his machines, his mechanic, the coin split down the middle. ${sw}`,
+      [
+        { id: 'in', label: 'Take the machines', detail: `Certain: ${fmt(weekly)} a week for 26 weeks, partners with New Orleans (+6). A bandit in every back room draws the local police: local heat +3.`, because: 'took New Orleans\'s slot machines', effects: [deal('nola', weekly, 26, 'slot machines in your clubs'), view('nola', 6, 'Took our machines'), tie('nola', 'player', 'partners', 40, `New Orleans's slot machines have stood in your clubs since ${s.date.y}.`), { type: 'heat', bar: 'local', amount: 3 }] },
+        { id: 'no', label: 'No machines on the island', detail: 'Certain: New Orleans thinks a little less of you (−3).', because: 'turned down New Orleans\'s slot machines', effects: [view('nola', -3, 'No room for our machines')] },
+      ], { priority: 45, fam: 'nola', actors: m.actors });
+  }
+  if (k === 'layoff') {
+    const m = envoyOf(s, 'nola', ['capo'], st, 'racetracks');
+    const stake = 2000, weekly = 110;
+    return famEvent(s, 'fam_nola', 'New Orleans will take your big bets',
+      `${m.name} runs the tracks for the Delacroix family and takes the layoff: when your bookmakers hold a bet too big to cover, New Orleans covers it, for a piece. ${fmt(stake)} opens the account. ${sw}`,
+      [
+        { id: 'in', label: `Open the account (${fmt(stake)})`, detail: `Certain: your books are safer and do ${fmt(weekly)} a week better for 26 weeks; a shared racket with New Orleans (+4).`, because: 'laid off your big bets with New Orleans', effects: [{ type: 'money', amount: -stake, category: 'cost' }, deal('nola', weekly, 26, 'the layoff (your big bets)'), view('nola', 4, 'Laid off with us'), tie('nola', 'player', 'racket', 35, `Your bookmakers have laid off their big bets with New Orleans since ${s.date.y}.`)] },
+        { id: 'no', label: 'Your books carry their own', detail: 'Certain: New Orleans thinks a little less of you (−2).', because: 'kept your big bets home', effects: [view('nola', -2, 'Kept the big bets home')] },
+      ], { priority: 44, fam: 'nola', actors: m.actors });
+  }
+  const m = envoyOf(s, 'nola', ['consigliere'], st);
+  const gift = 800;
+  return famEvent(s, 'fam_nola', 'The oldest family keeps its feast day',
+    `${m.name} writes, in a hand nobody uses anymore, that Henri Delacroix keeps the feast of his village saint and that the old families send something. Nobody says what happens to the families that do not. ${sw}`,
+    [
+      { id: 'gift', label: `Send a gift and a man (${fmt(gift)})`, detail: 'Certain: New Orleans thinks better of you (+10); the old families notice (Philadelphia +2).', because: 'honored New Orleans\'s feast day', effects: [{ type: 'money', amount: -gift, category: 'cost' }, view('nola', 10, 'Honored the feast'), { type: 'rivalOpinion', rival: 'philly', amount: 2, reason: 'Keeps the old ways' }] },
+      { id: 'card', label: 'Send a card', detail: 'Certain: New Orleans thinks a little less of you (−3).', because: 'sent New Orleans a card for the feast', effects: [view('nola', -3, 'A card, for the feast')] },
+    ], { priority: 42, fam: 'nola', actors: m.actors });
+}
+
+/* ------------------------------------------------------------------ */
 /* The week                                                             */
 /* ------------------------------------------------------------------ */
 
@@ -96,11 +135,14 @@ type Visit = { key: string; defId: string; every: [number, number]; make: (s: Ga
 
 const VISITS: Visit[] = [
   { key: 'chi:any', defId: 'fam_chi', every: [12, 18], make: chicagoVisit },
+  { key: 'nola:any', defId: 'fam_nola', every: [14, 20], make: nolaVisit },
 ];
 
 /** Talk that goes round about the cities (once a while, on the web's dice). */
 const RUMORS: { key: string; t: (s: GameState) => string; when?: (s: GameState) => boolean }[] = [
   { key: 'r:chi:pension', t: () => 'In the union halls they say the Teamsters\' pension fund lends to whatever casino Chicago and Cleveland point at. Nobody has ever proved it, and nobody tries.' },
+  { key: 'r:nola:old', t: () => 'They say in New York that the Commission sent a man to New Orleans about the slot machines, and Henri Delacroix kept him waiting three days for coffee. New Orleans asks; it does not take orders.' },
+  { key: 'r:nola:slots', t: () => 'A grand jury in Louisiana is asking about slot machines again. In the bars from Biloxi to Lake Charles, the machines went into the back room for a week and came out again.', when: (s) => s.date.m >= 9 || s.date.m <= 4 },
   { key: 'r:chi:seat', t: (s) => `Chicago's man sat in on the Commission in New York this month; ${bond(s, 'chicago', 'marchetti') > 0 ? 'Varrone and Marchetti voted together, as usual' : 'Varrone and Marchetti did not speak'}.` },
 ];
 

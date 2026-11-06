@@ -21,7 +21,7 @@ const run = (s: GameState, n: number, check?: (s: GameState) => void): GameState
   return s;
 };
 
-const NEW_FAMS = ['chicago'] as const;
+const NEW_FAMS = ['chicago', 'nola'] as const;
 
 describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
   it('the new families are in the web at the start: tied, compact, fictional, deterministic', () => {
@@ -67,7 +67,7 @@ describe('the cities: Chicago, New Orleans, Florida, the Colombians', () => {
     s = run(s, 52, (x) => {
       for (const e of [...x.eventQueue, ...x.pendingEvents]) seen.add(e.defId);
     });
-    expect([...seen].some((d) => d === 'fam_chi')).toBe(true);
+    expect(seen.has('fam_chi') || seen.has('fam_nola')).toBe(true);
     const log = s.families!.log.map((l) => l.t).join(' ');
     expect(log.length).toBeGreaterThan(0);
     const size = JSON.stringify(s).length;
