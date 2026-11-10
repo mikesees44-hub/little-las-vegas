@@ -174,8 +174,8 @@ const FLAVOR = (s: GameState, k: Character): string[] => {
 
 /** The chance a problem a capo could bring comes up at all this week (each kind once a week). */
 const PROBLEM_ODDS = 0.8;
-/** The days a routine problem can come in on (Monday … Saturday); an urgent one, Monday … Friday. */
-const ROUTINE_DAYS = 6;
+/** The days a routine problem can come in on (Monday … Sunday: a word after Mass counts); an urgent one, Monday … Friday. */
+const ROUTINE_DAYS = 7;
 const URGENT_DAYS = 5;
 
 /**

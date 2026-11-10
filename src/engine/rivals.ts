@@ -17,6 +17,7 @@ import { chance, pick, rand, randInt, weightedPick } from './rng';
 import { moveTieMult } from './familyWeb';
 import { FACTION_NAMES, RIVALS } from './world';
 import { noteRivalMove, rivalLean } from './minds/planner';
+import { escalation, noteHard } from './escalation';
 import type { Character, EventInstance, FactionId, GameState, Rival, RivalGoal, RivalId, RivalMove } from './types';
 
 /**
@@ -95,6 +96,7 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
   const goal: RivalGoal = r.kind === 'mob' && (getRelation(s, r.leaderId, s.playerId)?.grievance ?? 0) >= 50 ? 'revenge' : r.goal;
   const targets: FactionId[] = ['player', ...s.rivals.filter((x) => x.id !== r.id && x.kind === 'mob').map((x) => x.id)];
   const pMuscle = playerMuscle(s);
+  const esc = escalation(s);
   for (const move of KIND_MOVES[r.kind]) {
     const cd = r.moveCooldowns[move] ?? 0;
     if (cd > s.week) continue;
@@ -151,6 +153,8 @@ export function scoreMoves(s: GameState, r: Rival): Candidate[] {
       // Rivals focus on the player but act on each other too.
       if (t !== 'player') sc *= 0.55;
       if (t === 'player' && (r.war || r.feud) && move === 'strike') sc *= 2.5;
+      // The street heats up (escalation.ts): the longer he lasts and the higher he climbs, the more the crews come at him.
+      if (t === 'player' && r.kind === 'mob' && (move === 'strike' || move === 'expand')) sc *= 1 + 1.3 * esc;
       if (sc > 0) out.push({ move, target: t, score: sc });
     }
   }
@@ -181,7 +185,8 @@ export function rivalWeek(ctx: Ctx): void {
     executeMove(ctx, r, choice);
     noteRivalMove(s, r, choice.move, choice.target);
     // In season the island is loud and the money is out: a rival strikes again sooner (DAILY_LOGIC #9).
-    r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? (isInSeason(s.date) ? 2 : 3) : choice.move === 'offer_deal' ? (r.kind === 'philly' ? 12 : 8) : 1);
+    // A hot street (escalation.ts) shortens the wait between strikes too.
+    r.moveCooldowns[choice.move] = s.week + (choice.move === 'strike' ? (isInSeason(s.date) || escalation(s) >= 0.5 ? 2 : 3) : choice.move === 'offer_deal' ? (r.kind === 'philly' ? 12 : 8) : 1);
   }
 }
 
@@ -330,6 +335,7 @@ function strikePlayer(ctx: Ctx, r: Rival, caps: { moneyFrac: number; heatPerBar:
     record(ctx, r, 'strike', 'player', `Sal Moretti is telling people in Philadelphia that you've forgotten who you work for (+${amt} family heat).`);
     return;
   }
+  noteHard(s);
   if (r.kind === 'law') {
     const lost = rivalMoneyHit(ctx, randInt(s, 800, 3000), 'County detectives raid a wire room', caps.moneyFrac);
     rivalHeatHit(ctx, 'local', 3, 'County detectives raid a wire room', caps.heatPerBar);

@@ -110,7 +110,8 @@ export function FixChip({ g, initialOpen }: { g: FixGroup; initialOpen?: boolean
 /**
  * THE FIX CHIPS (top bar): men not earning, places losing money, what is owed you late, men with a grudge,
  * nights home short, what runs out this week — each a chip with why, the one fix, Fix all and the full
- * screen. On a narrow screen they fold into one "⚑ N fixes" menu. Nothing shows when nothing needs fixing.
+ * screen. They fold into one "⚑ N fixes" menu at every width (a tab per kind), so the bar stays one clean row.
+ * Nothing shows when nothing needs fixing.
  */
 export function FixChips({ s }: { s: GameState }) {
   const { orders } = useOrders();
@@ -122,8 +123,7 @@ export function FixChips({ s }: { s: GameState }) {
   const cur = groups.find((g) => g.kind === sel) ?? groups[0];
   return (
     <>
-      <div className="hidden items-center gap-1 md:flex" data-testid="fix-chips">{groups.map((g) => <FixChip key={g.kind} g={g} />)}</div>
-      <div className="relative md:hidden" ref={ref}>
+      <div className="relative" ref={ref}>
         <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} data-testid="fix-menu" title="What needs fixing: tap to see why and fix it"
           className="btn-secondary h-8 border-amber-500/70 px-1.5 py-0 text-xs font-semibold whitespace-nowrap text-amber-300">⚑ {n} fix{n === 1 ? '' : 'es'}</button>
         {open && (

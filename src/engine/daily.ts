@@ -32,18 +32,20 @@ import type { EventInstance, GameState } from './types';
  * Pure: every function returns a new state.
  */
 
-/** The last day a decision comes out (Friday): it leaves him the weekend to answer. */
-export const LAST_RELEASE_DAY = 4;
+/** The last day a decision comes out (Saturday): it leaves him Sunday to answer, and no day of the week sits empty. */
+export const LAST_RELEASE_DAY = 5;
 
 /** Decisions that must be on the desk the moment the week opens (the money, the chair, a summons, a set-piece). */
 const MONDAY = new Set(['tribute_audience', 'bagman', 'made_boss', 'philly_summons', 'bailout', 'making']);
 function mondayOnly(ev: EventInstance): boolean {
-  return ev.mandatory || MONDAY.has(ev.defId) || ev.defId.startsWith('setpiece_') || ev.priority >= 90 || !!ev.meta?.asked;
+  return ev.mandatory || MONDAY.has(ev.defId) || ev.defId.startsWith('setpiece_') || !!ev.meta?.asked;
 }
+/** Pressing but not binding (priority 90+): out on Tuesday, the first morning after the week opens. */
+const PRESSING = 90;
 
 /**
  * At the end of the week turn: Monday's decisions stay as they are, the rest are given the day they
- * come out (`meta.day`, Tuesday … Friday). Every decision stays in `pendingEvents` (the engine and
+ * come out (`meta.day`, Tuesday … Saturday). Every decision stays in `pendingEvents` (the engine and
  * an answer given early are unchanged); the screens show one only once it is out (`eventOut`).
  * Mutates `s` (the turn's working copy).
  */
@@ -51,9 +53,11 @@ export function scheduleWeek(s: GameState): void {
   if (s.gameOver || !s.pendingEvents.length) return;
   const later = s.pendingEvents.filter((e) => !mondayOnly(e)).sort((a, b) => b.priority - a.priority || a.iid.localeCompare(b.iid));
   const first = Math.floor(roll(`${s.seed}|${s.week}|rel`) * LAST_RELEASE_DAY);
-  later.forEach((ev, i) => {
-    ev.meta = { ...(ev.meta ?? {}), day: 1 + ((first + i) % LAST_RELEASE_DAY), dw: s.week };
-  });
+  let i = 0;
+  for (const ev of later) {
+    const day = ev.priority >= PRESSING ? 1 : 1 + ((first + i++) % LAST_RELEASE_DAY);
+    ev.meta = { ...(ev.meta ?? {}), day, dw: s.week };
+  }
 }
 
 /** Decisions still to come this week. */

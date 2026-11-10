@@ -6,7 +6,7 @@ import { newGameWith } from '../src/engine/starts';
 import { answerCheckIn, freezeWeek, tickDay, weekChoices } from '../src/engine/days';
 import { weekCheckIns } from '../src/engine/checkins';
 import { addOpinion } from '../src/engine/relations';
-import { advanceDay, answerMoment, eventOut, eventsOut, momentView, registerDelivery, releaseAll, scheduleAt } from '../src/engine/daily';
+import { LAST_RELEASE_DAY, advanceDay, answerMoment, eventOut, eventsOut, momentView, registerDelivery, releaseAll, scheduleAt } from '../src/engine/daily';
 import { scheduled } from '../src/engine/schedule';
 import { ensureThreats, liveStrikes, strikeView, tickingClocks, tipOut, type Threat } from '../src/engine/threats';
 import { ensureAction, raidedLately, noteRaided } from '../src/engine/actionState';
@@ -54,7 +54,7 @@ describe('B1: the week\'s check-ins are frozen once the week is touched', () => 
 });
 
 describe('the week spread across the days', () => {
-  it('Monday keeps the mandatory decisions (the money, the chair, a funeral); the rest come out Tuesday to Friday', () => {
+  it('Monday keeps the mandatory decisions (the money, the chair, a funeral); the rest come out Tuesday to Saturday', () => {
     let seen = 0, later = 0;
     let s = newGame('daily-spread');
     for (let w = 0; w < 20 && !s.gameOver; w++) {
@@ -64,14 +64,14 @@ describe('the week spread across the days', () => {
         if (d === undefined) continue;
         later++;
         expect(Number(d)).toBeGreaterThanOrEqual(1);
-        expect(Number(d)).toBeLessThanOrEqual(4);
+        expect(Number(d)).toBeLessThanOrEqual(LAST_RELEASE_DAY);
         expect(['bagman', 'tribute_audience', 'made_boss']).not.toContain(e.defId);
         expect(e.mandatory).toBe(false);
       }
       seen += s.pendingEvents.length;
-      // Walk the week: every decision is out by Friday, and only what is out is on the desk.
+      // Walk the week: every decision is out by Saturday, and only what is out is on the desk.
       let x = s;
-      for (let d = 0; d < 4; d++) {
+      for (let d = 0; d < LAST_RELEASE_DAY; d++) {
         const out = eventsOut(x).length;
         const r = advanceDay(x);
         x = r.state;

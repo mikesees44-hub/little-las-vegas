@@ -209,7 +209,7 @@ function candidates(s: GameState, P: PhoneState): { key: string; w: number; p: C
 
 /** No new callers before this week (the first weeks are for learning the island). */
 export const PHONE_GRACE = 3;
-/** The chance a new caller rings on a given day (Tuesday … Saturday). */
+/** The chance a new caller rings on a given day (Tuesday … Sunday). */
 export const CALL_DAY_ODDS = 0.25;
 /** New important calls that may stop the clock in a fortnight (the calls that replaced a popup are not counted). */
 export const NEW_STOPS_WEEK = 1;
@@ -254,7 +254,7 @@ export function phoneDay(s: GameState): GameState {
     if (k) scheduleInto(x, { kind: 'call', day: d, hour: 7, payload: { k: 'capo', who: k.id, name: displayName(k), role: u.title, key: u.key, kw: x.week, imp: 1 } });
   }
   // 3. Somebody else calls (at most one a day).
-  if (x.week >= PHONE_GRACE && d <= 5 && roll(`${x.seed}|${x.week}|${d}|ring`) < CALL_DAY_ODDS) {
+  if (x.week >= PHONE_GRACE && d <= 6 && roll(`${x.seed}|${x.week}|${d}|ring`) < CALL_DAY_ODDS) {
     const cs = candidates(x, P);
     const tot = cs.reduce((a, c) => a + c.w, 0);
     if (tot > 0) {

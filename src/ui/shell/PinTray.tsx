@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useEscape } from '../keys';
 import { previewAction, queuedMoney } from '../../engine/actions';
 import type { GameState, PlayerAction } from '../../engine/types';
 import { useOrders } from '../components/Orders';
@@ -37,12 +38,25 @@ export function PinTray({ s }: { s: GameState }) {
   const { orders, queue } = useOrders();
   const [drag, setDrag] = useState<number | undefined>();
   const [over, setOver] = useState<number | undefined>();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('mousedown', onDown);
+    return () => window.removeEventListener('mousedown', onDown);
+  }, [open]);
+  useEscape(open, () => setOpen(false));
   const pins = pinnedOrders(s.seed);
   if (!pins.length) return null;
   const drop = (to: number) => { if (drag !== undefined && drag !== to) movePin(s.seed, drag, to); setDrag(undefined); setOver(undefined); };
+  const ready = pins.filter((a) => { const v = pinView(s, a, orders); return !v.why && !v.queued; }).length;
+  // One "★ N" button in the bar; the pins open under it (the bar stays one row however many are pinned).
   return (
-    <div className="flex max-w-full items-center gap-1 overflow-x-auto" role="toolbar" aria-label="Pinned orders: tap to give one; drag or Shift+arrows to reorder" data-testid="pin-tray">
-      <span className="hidden text-[10px] text-gold-500 sm:inline" aria-hidden>★</span>
+    <div className="relative" ref={ref}>
+    <button type="button" onClick={() => setOpen((v) => !v)} aria-expanded={open} data-testid="pin-button" title={`Pinned orders: ${pins.length} (${ready} ready to give). Tap to open.`}
+      className="btn-secondary h-8 px-1.5 py-0 text-xs font-semibold whitespace-nowrap text-gold-300">★<span className="hidden sm:inline"> Pins</span> <span className="tabular-nums">{pins.length}</span></button>
+    <div className={`${open ? 'flex' : 'hidden'} absolute right-0 z-[60] mt-1 w-[min(92vw,360px)] flex-wrap items-center gap-1 rounded-md border border-noir-600 bg-noir-900 p-2 shadow-xl`} role="toolbar" aria-label="Pinned orders: tap to give one; drag or Shift+arrows to reorder" data-testid="pin-tray">
       {pins.map((a, i) => {
         const v = pinView(s, a, orders);
         return (
@@ -68,6 +82,7 @@ export function PinTray({ s }: { s: GameState }) {
           </span>
         );
       })}
+    </div>
     </div>
   );
 }
