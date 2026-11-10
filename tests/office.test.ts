@@ -174,7 +174,9 @@ describe("the Boss's Office room", () => {
       s = advanceWeek(s, {}).state;
     }
     // Nothing pending, nothing at the briefing: nobody at the door but (maybe) the lawyer.
-    const empty = { ...s, pendingEvents: [], days: { week: s.week, day: 6, answers: {}, skipped: [] } } as GameState;
+    // (A capo can bring a problem on Sunday too: it is answered here, so the door is empty.)
+    const answered = Object.fromEntries(weekCheckIns(s).filter((c) => c.problem).map((c) => [c.key, c.problem!.answers[0].id]));
+    const empty = { ...s, pendingEvents: [], days: { week: s.week, day: 6, answers: answered, skipped: [] } } as GameState;
     expect(officeVisitors(empty).filter((v) => v.kind === 'decision' || v.kind === 'morning' || v.kind === 'petition')).toEqual([]);
   });
 

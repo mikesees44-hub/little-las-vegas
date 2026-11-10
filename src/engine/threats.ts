@@ -10,6 +10,7 @@ import { newCtx as newCtxFor, respect, rivalMoneyHit, type Ctx } from './ledger'
 import { rivalCaps } from './rivals';
 import { awayReason, DAY_NAMES, today } from './days';
 import { noteRaided, raidedLately, ensureAction } from './actionState';
+import { aggressionCap, aggressionLift, escalation, noteHard, ranksLeanOdds, tooQuiet } from './escalation';
 import { journal } from './journal';
 import { wireIn } from './phoneState';
 import { JOBS, payrollEars } from './payrollState';
@@ -181,6 +182,12 @@ export const MAX_ACTIVE = 4;
 export const MEET_HOURS = 2;
 /** Most tips a single threat produces. */
 const TIPS_PER_THREAT = 2;
+/** The moves that hit him (the rest are quiet: a man courted, a car across the street). Escalation's clock runs on these. */
+const HARD_KINDS = new Set<ThreatKind>(['hit', 'setup', 'raid', 'racket', 'move']);
+/** What the dry-spell breaker sends: a move on him, not a frame-up for the police (a raid spiral is not action, it is a tax). */
+const BREAK_KINDS = new Set<ThreatKind>(['hit', 'racket', 'move']);
+/** The days an urgent meeting can come out on (Monday … Friday). */
+const TIP_DAYS = 5;
 /** New tips a week, at most (the desk is not a switchboard). */
 const TIPS_PER_WEEK = 3;
 
@@ -309,9 +316,11 @@ export function aggression(s: GameState, r: Rival): { chance: number; reasons: {
   const fat = wealthPressure(s);
   if (fat > 0) mul('You are getting fat: everybody wants a piece', 1 + 0.6 * fat);
   if (s.week < graceWeeks(s)) { p = 0; reasons.push({ label: 'Too early: they are still sizing you up', value: -100 }); }
+  // The street heats up (escalation.ts): the years he has lasted, the rung he stands on, a quiet stretch.
+  if (p > 0) mul('The street is heating up', aggressionLift(s));
   const dk = knobs(s).aggression;
   if (dk !== 1 && p > 0) mul(`Difficulty: ${knobs(s).label}`, dk);
-  return { chance: Math.max(0, Math.min(0.4, p)), reasons };
+  return { chance: Math.max(0, Math.min(aggressionCap(s), p)), reasons };
 }
 
 /* ------------------------------------------------------------------ */
@@ -406,7 +415,8 @@ function planRival(s: GameState, T: ThreatsState, r: Rival): Threat | undefined 
     ['poach', (soldiers.length ? 1.5 : 0) * (mk.poach ?? 1)],
     ['bribe', (men.length ? 1.2 * (hasTrait(leader, 'Greedy') || hasTrait(leader, 'Charming') ? 1.4 : 1) : 0) * (mk.bribe ?? 1)],
     ['setup', (hittable.length ? 1 + s.heat.local / 60 : 0) * (mk.setup ?? 1)],
-    ['hit', (caps.length + soldiers.length ? 0.9 : 0) * cruel * hate * (mk.hit ?? 1)],
+    // The higher the street runs, the uglier the move (escalation.ts).
+    ['hit', (caps.length + soldiers.length ? 0.9 : 0) * cruel * hate * (1 + escalation(s)) * (mk.hit ?? 1)],
   ]);
   if (!kind) return undefined;
   const t: Threat = { id: nid(T, 'th'), kind, by: r.id, start: s.week, due: s.week + randInt(T, 1, 3), blunt: 0 };
@@ -828,6 +838,7 @@ function land(ctx: Ctx, T: ThreatsState, t: Threat, outcome?: 'foiled' | 'landed
     return;
   }
   T.stats.landed++;
+  if (HARD_KINDS.has(t.kind)) noteHard(s);
   blame(ctx, T, t);
   const tag = warned(T, t) ? ' You were warned.' : '';
   const L = `${by}: ${KIND_LABEL[t.kind].toLowerCase()}`;
@@ -1077,12 +1088,22 @@ export function threatsWeek(ctx: Ctx): void {
     if (room() <= 0) break;
     if (r.kind !== 'mob' || T.threats.some((x) => x.by === r.id && !x.schemeId)) continue;
     // A man in the ranks is no family's target (B3): only now and then does a rival crew lean on him.
-    if (spareFromWars(s) && !chance(T, 0.25)) continue;
+    if (spareFromWars(s) && !chance(T, ranksLeanOdds(s))) continue;
     if (!chance(T, aggression(s, r).chance)) continue;
     const t = planRival(s, T, r);
     if (t) { planned.push(t); noteThreatPlan(s, r, t.kind, t.targetId); }
   }
   if (s.week >= GRACE_WEEKS && room() > 0) { const t = planPolice(s, T); if (t) planned.push(t); }
+  // Too quiet too long (escalation.ts): the rival who hates him most makes a move, whatever the dice said.
+  if (s.week >= graceWeeks(s) && room() > 0 && !planned.some((x) => HARD_KINDS.has(x.kind)) && !active(T).some((x) => HARD_KINDS.has(x.kind)) && tooQuiet(s)) {
+    const r = [...s.rivals]
+      .filter((x) => x.kind === 'mob' && !T.threats.some((y) => y.by === x.id) && !planned.some((y) => y.by === x.id) && aggression(s, x).chance > 0)
+      .sort((a, b) => opinion(s, a.leaderId, s.playerId) - opinion(s, b.leaderId, s.playerId))[0];
+    // A real move, not a quiet one (a few tries at the kind; the last word goes to the dice).
+    let t: Threat | undefined;
+    for (let i = 0; r && i < 4 && !(t && BREAK_KINDS.has(t.kind)); i++) t = planRival(s, T, r);
+    if (t && r) { t.due = s.week + 1; planned.push(t); noteThreatPlan(s, r, t.kind, t.targetId); }
+  }
   if (room() > 0) { const t = planFeds(s, T); if (t) planned.push(t); }
   for (const t of planned) stampWhen(s, t);
   T.threats.push(...planned);
@@ -1119,9 +1140,9 @@ export function threatsWeek(ctx: Ctx): void {
       tip.dueDay = 1 + (Math.floor(hroll(`${s.seed}|${tip.id}|fd`) * 6) % 6);
       tip.hour = hs[Math.floor(hroll(`${s.seed}|${tip.id}|fh`) * hs.length) % hs.length];
     }
-    const last = th && th.due === s.week + 1 && th.dueDay !== undefined ? th.dueDay - 1 : 4;
-    // Staggered over Monday … Thursday (never on or after the night it warns of).
-    const d = Math.min(last, (Math.floor(hroll(`${s.seed}|${tip.id}|rel`) * 4) + k++) % 4);
+    const last = th && th.due === s.week + 1 && th.dueDay !== undefined ? th.dueDay - 1 : TIP_DAYS;
+    // Staggered over Monday … Friday (never on or after the night it warns of).
+    const d = Math.min(last, (Math.floor(hroll(`${s.seed}|${tip.id}|rel`) * TIP_DAYS) + k++) % TIP_DAYS);
     tip.rel = { w: s.week + 1, d: Math.max(0, d) };
     T.tips.push(tip);
     T.stats.tips++;

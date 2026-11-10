@@ -19,6 +19,8 @@ export interface ActionState {
   summons?: number;
   /** The last week the boss showed strength (a strike beaten off, a war won): respect above 90 holds that week. */
   strength?: number;
+  /** The last week something landed on him (escalation.ts: the dry-spell breaker). */
+  lastHard?: number;
   /** Set-pieces fired: key ("memorial:1961") -> week. */
   sp: Record<string, number>;
   /** EXTRA front pages already shown as a card (paper item ids). */
@@ -34,6 +36,7 @@ export function ensureAction(s: GameState): ActionState {
   const A = s.action;
   A.raided ??= {};
   A.under ??= 0;
+  A.lastHard ??= s.week;
   A.sp ??= {};
   A.extras ??= [];
   A.stats ??= { strikes: 0, raids: 0, summons: 0, bail: 0, extras: 0, setPieces: 0 };

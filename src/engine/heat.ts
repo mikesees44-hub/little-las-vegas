@@ -3,6 +3,7 @@ import { booksRaid } from './ledgerbook';
 import { applyEffect } from './effects';
 import { heat, money, respect, type Ctx } from './ledger';
 import { addOpinion } from './relations';
+import { noteHard } from './escalation';
 import { chance, pick, randInt } from './rng';
 import { HEAT_BARS, type HeatBar } from './types';
 /** The raid planner (threats.ts planHeatRaid), wired in by engine.ts so this module stays a leaf. */
@@ -60,6 +61,7 @@ export function heatConsequences(ctx: Ctx): void {
       if (seized > 0) money(ctx, -seized, 'RAID: cash seized from a back room', 'heat');
       ctx.log.push('RAID: Police turn over a back room on Pacific Avenue.');
     }
+    noteHard(s);
     respect(ctx, -2, 'RAID: the papers print the photos', 'heat');
     booksRaid(ctx, 'police');
     heat(ctx, 'local', -20, 'RAID: pressure released after the raid', 'heat');
@@ -77,6 +79,7 @@ export function heatConsequences(ctx: Ctx): void {
     }
     const seized = Math.min(Math.max(0, s.money), 3000);
     if (seized > 0) money(ctx, -seized, 'ARREST: lawyers and bail', 'heat');
+    noteHard(s);
     respect(ctx, -3, 'ARREST: a made man in cuffs on the front page', 'heat');
     booksRaid(ctx, 'fbi');
     heat(ctx, 'federal', -25, 'ARREST: feds take their headline', 'heat');

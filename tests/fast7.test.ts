@@ -47,6 +47,8 @@ describe('fast7: pins you can drag', () => {
     expect(pinnedOrders('another-game')).toEqual([]);
     const html = renderToString(createElement(PinTray, { s }));
     expect(html.match(/data-testid="pin-chip"/g)?.length).toBe(3);
+    // One button in the bar; the pins sit under it until it is opened.
+    expect(html).toContain('data-testid="pin-button"');
     expect(html).toContain('draggable');
     const v = pinView(s, a);
     expect(v.title).toBe(previewAction(s, a).title);
@@ -168,7 +170,7 @@ describe('fast7: fix chips', () => {
       expect(html).toContain(g.kind === 'earn' ? 'earn-pop' : `fix-pop-${g.kind}`);
     }
     const all = renderToString(createElement(FixChips, { s }));
-    if (groups.length) { expect(all).toContain('fix-chips'); expect(all).toContain('fix-menu'); } else expect(all).toBe('');
+    if (groups.length) { expect(all).toContain('fix-menu'); expect(all).not.toContain('fix-chips'); } else expect(all).toBe('');
   });
   it('harmful orders are never safe', () => {
     const s = newGameWith('f7-harm', 'olddon');
