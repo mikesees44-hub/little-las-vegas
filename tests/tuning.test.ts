@@ -27,7 +27,8 @@ describe('the first off-season', () => {
   it('a slow-paying capo holds part of the winter envelope back and makes good in the season', () => {
     let s = newGame('slow');
     const k = capos(s)[0];
-    addOpinion(s, k.id, s.playerId, 'Test: does not think much of you', -60, 0);
+    // Sore, not mutinous: at -60 he plots against the boss, is busted down and walks out before the winter.
+    addOpinion(s, k.id, s.playerId, 'Test: does not think much of you', -30, 0);
     expect(slowPayers(s).map((c) => c.id)).toContain(k.id);
     expect(slowPayers(s).length).toBeLessThanOrEqual(2);
     s = play(s, 30); // into the winter
