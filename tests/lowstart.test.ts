@@ -163,14 +163,15 @@ describe('low starts: the climb', () => {
   it('the quota and the orders come down from above, and the week runs for every rank', () => {
     for (const st of LOW) {
       let s = newGameWith(`wk-${st}`, st);
-      const seen: string[] = [];
-      for (let i = 0; i < 10; i++) { s = advanceWeek(s, {}).state; seen.push(...s.pendingEvents.map((e) => e.defId)); }
+      const seen: EventInstance[] = [];
+      for (let i = 0; i < 10; i++) { s = advanceWeek(s, {}).state; seen.push(...s.pendingEvents); }
       const a = above(s)!;
       expect(a.lastKick).toBeDefined();
       expect(a.orders).toBeGreaterThan(0);
       // The orders reach his desk as scenes, and no boss-only popup does.
-      expect(seen.some((d) => d.startsWith('scene_low_')), `${st}: ${seen.join(',')}`).toBe(true);
-      for (const d of seen) expect(eventAllowed(s, ev(d)), `${st}: ${d}`).toBe(true);
+      expect(seen.some((e) => e.defId.startsWith('scene_low_')), `${st}: ${seen.map((e) => e.defId).join(',')}`).toBe(true);
+      // Check the real event: a petition a low man may hear is tagged meta.low when it is drawn (petitions.ts).
+      for (const e of seen) expect(eventAllowed(s, e), `${st}: ${e.defId}`).toBe(true);
       expect(s.lastReport!.lines.some((l) => /Kick-up to/.test(l.label) && !/Philadelphia/.test(l.label))).toBe(true);
       expect(validateHierarchy(s)).toEqual([]);
     }
